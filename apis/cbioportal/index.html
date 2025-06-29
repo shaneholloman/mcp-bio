@@ -12,13 +12,13 @@
         <meta name="author" content="Ian Maurer">
       
       
-        <link rel="canonical" href="https://biomcp.org/apis/pubtator3_api/">
+        <link rel="canonical" href="https://biomcp.org/apis/cbioportal/">
       
       
-        <link rel="prev" href="../clinicaltrials_gov/">
+        <link rel="prev" href="../myvariant_info/">
       
       
-        <link rel="next" href="../myvariant_info/">
+        <link rel="next" href="../../blog/what-is-biomcp/">
       
       
       <link rel="icon" href="../../assets/favicon.ico">
@@ -26,7 +26,7 @@
     
     
       
-        <title>PubTator3 - BioMCP</title>
+        <title>cBioPortal - BioMCP</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pubtator3-api" class="md-skip">
+        <a href="#cbioportal-integration" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              PubTator3
+              cBioPortal
             
           </span>
         </div>
@@ -731,32 +731,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    PubTator3
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../pubtator3_api/" class="md-nav__link">
         
   
   
@@ -767,212 +745,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Workflow
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Endpoints
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API Endpoints">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#entity-autocomplete-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      Entity Autocomplete API
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Entity Autocomplete API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-request-and-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example Request and Response
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#entity-search-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      Entity Search API
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Entity Search API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#parameters_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-request-and-response_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example Request and Response
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#article-fetch-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      Article Fetch API
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Article Fetch API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#parameters_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-request" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example Request
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#entity-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Entity Types
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-strategy-for-biomcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integration Strategy for BioMCP
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      Authentication
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rate-limits-and-best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rate Limits and Best Practices
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      Error Handling
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#more-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      More Information
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1005,10 +777,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../cbioportal/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    cBioPortal
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1019,6 +813,188 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How It Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automatic-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mutation-specific-searches" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mutation-Specific Searches
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Output
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gene-level-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Gene-Level Summary
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mutation-specific-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mutation-Specific Results
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-mutation-notations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported Mutation Notations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Details
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endpoints-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      Endpoints Used
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limiting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLI Usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Handling
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1407,47 +1383,28 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#api-workflow" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
-      API Workflow
+      How It Works
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Endpoints
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API Endpoints">
+    <nav class="md-nav" aria-label="How It Works">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#entity-autocomplete-api" class="md-nav__link">
+  <a href="#automatic-integration" class="md-nav__link">
     <span class="md-ellipsis">
-      Entity Autocomplete API
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Entity Autocomplete API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Parameters
+      Automatic Integration
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-request-and-response" class="md-nav__link">
+  <a href="#mutation-specific-searches" class="md-nav__link">
     <span class="md-ellipsis">
-      Example Request and Response
+      Mutation-Specific Searches
     </span>
   </a>
   
@@ -1457,30 +1414,30 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#entity-search-api" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#example-output" class="md-nav__link">
     <span class="md-ellipsis">
-      Entity Search API
+      Example Output
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Entity Search API">
+    <nav class="md-nav" aria-label="Example Output">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#parameters_1" class="md-nav__link">
+  <a href="#gene-level-summary" class="md-nav__link">
     <span class="md-ellipsis">
-      Parameters
+      Gene-Level Summary
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-request-and-response_1" class="md-nav__link">
+  <a href="#mutation-specific-results" class="md-nav__link">
     <span class="md-ellipsis">
-      Example Request and Response
+      Mutation-Specific Results
     </span>
   </a>
   
@@ -1490,64 +1447,45 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#article-fetch-api" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#supported-mutation-notations" class="md-nav__link">
     <span class="md-ellipsis">
-      Article Fetch API
+      Supported Mutation Notations
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Article Fetch API">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Details
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Details">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#parameters_2" class="md-nav__link">
+  <a href="#endpoints-used" class="md-nav__link">
     <span class="md-ellipsis">
-      Parameters
+      Endpoints Used
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-request" class="md-nav__link">
+  <a href="#rate-limiting" class="md-nav__link">
     <span class="md-ellipsis">
-      Example Request
+      Rate Limiting
     </span>
   </a>
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#entity-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Entity Types
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-strategy-for-biomcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integration Strategy for BioMCP
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
+          <li class="md-nav__item">
   <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       Authentication
@@ -1555,11 +1493,34 @@
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#rate-limits-and-best-practices" class="md-nav__link">
+  <a href="#cli-usage" class="md-nav__link">
     <span class="md-ellipsis">
-      Rate Limits and Best Practices
+      CLI Usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
     </span>
   </a>
   
@@ -1569,15 +1530,6 @@
   <a href="#error-handling" class="md-nav__link">
     <span class="md-ellipsis">
       Error Handling
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#more-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      More Information
     </span>
   </a>
   
@@ -1602,218 +1554,134 @@
   
 
 
-<h1 id="pubtator3-api">PubTator3 API<a class="headerlink" href="#pubtator3-api" title="Permanent link">&para;</a></h1>
-<p>This document describes the PubTator3 API used by BioMCP for searching biomedical literature and retrieving article details with annotations. Understanding this API provides context for how BioMCP's article commands function.</p>
+<h1 id="cbioportal-integration">cBioPortal Integration<a class="headerlink" href="#cbioportal-integration" title="Permanent link">&para;</a></h1>
+<p>BioMCP integrates with <a href="https://www.cbioportal.org/">cBioPortal</a>, a comprehensive cancer genomics portal that provides visualization and analysis tools for large-scale cancer genomics datasets.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>The PubTator3 API provides a way to search for and retrieve biomedical articles
-with entity annotations. This document outlines the API implementation details.
-PubTator3 is a web-based tool that provides annotations of biomedical entities
-in PubMed abstracts and PMC full-text articles. BioMCP uses the PubTator3 API
-to search for and retrieve biomedical articles and their annotated entities (
-genes, variants, diseases, chemicals, etc.).</p>
-<blockquote>
-<p><strong>CLI Documentation</strong>: For information on using these APIs through the BioMCP
-command line interface, see
-the <a href="../../cli/articles/">Articles CLI Documentation</a>.</p>
-</blockquote>
-<h2 id="api-workflow">API Workflow<a class="headerlink" href="#api-workflow" title="Permanent link">&para;</a></h2>
-<p>The PubTator3 integration follows a three-step workflow:</p>
+<p>The cBioPortal integration enhances article searches by automatically including relevant cancer genomics data when searching for genes. This integration provides:</p>
 <ol>
-<li><strong>Entity Autocomplete</strong>: Get standardized entity identifiers</li>
-<li><strong>Search</strong>: Find articles using entity identifiers and keywords</li>
-<li><strong>Fetch</strong>: Retrieve full article details by PMID</li>
+<li><strong>Gene-level summaries</strong> - Mutation frequency and distribution across cancer studies</li>
+<li><strong>Mutation-specific searches</strong> - Find studies containing specific mutations (e.g., BRAF V600E)</li>
+<li><strong>Cancer type resolution</strong> - Accurate cancer type categorization using cBioPortal's API</li>
 </ol>
-<h2 id="api-endpoints">API Endpoints<a class="headerlink" href="#api-endpoints" title="Permanent link">&para;</a></h2>
-<h3 id="entity-autocomplete-api">Entity Autocomplete API<a class="headerlink" href="#entity-autocomplete-api" title="Permanent link">&para;</a></h3>
-<p><strong>Endpoint:</strong>
-<code>https://www.ncbi.nlm.nih.gov/research/pubtator3-api/entity/autocomplete/</code></p>
-<p>This endpoint helps normalize entity names to their standard identifiers,
-improving search precision.</p>
-<h4 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h4>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>query</code></td>
-<td>Text to autocomplete</td>
-<td><code>BRAF</code></td>
-</tr>
-<tr>
-<td><code>concept</code></td>
-<td>Entity type</td>
-<td><code>GENE</code>, <code>CHEMICAL</code>, <code>DISEASE</code>, etc.</td>
-</tr>
-<tr>
-<td><code>limit</code></td>
-<td>Number of results to return</td>
-<td><code>2</code></td>
-</tr>
-</tbody>
-</table>
-<h4 id="example-request-and-response">Example Request and Response<a class="headerlink" href="#example-request-and-response" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span><span class="s2">&quot;https://www.ncbi.nlm.nih.gov/research/pubtator3-api/entity/autocomplete/?query=BRAF&amp;concept=GENE&amp;limit=2&quot;</span>
+<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<h3 id="automatic-integration">Automatic Integration<a class="headerlink" href="#automatic-integration" title="Permanent link">&para;</a></h3>
+<p>When you search for articles with a gene parameter, BioMCP automatically queries cBioPortal to provide additional context:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Basic gene search includes cBioPortal summary</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">search</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="s2">&quot;article&quot;</span><span class="p">,</span> <span class="n">genes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;BRAF&quot;</span><span class="p">],</span> <span class="n">diseases</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;melanoma&quot;</span><span class="p">])</span>
 </code></pre></div>
-<p>Response:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;@GENE_BRAF&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">&quot;biotype&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gene&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BRAF&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;All Species&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">&quot;match&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Matched on name &lt;m&gt;BRAF&lt;/m&gt;&quot;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="p">{</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">&quot;_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;@GENE_BRAFP1&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nt">&quot;biotype&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gene&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BRAFP1&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;All Species&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nt">&quot;match&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Matched on name &lt;m&gt;BRAFP1&lt;/m&gt;&quot;</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="p">]</span>
-</code></pre></div>
-<h3 id="entity-search-api">Entity Search API<a class="headerlink" href="#entity-search-api" title="Permanent link">&para;</a></h3>
-<p><strong>Endpoint:</strong> <code>https://www.ncbi.nlm.nih.gov/research/pubtator3-api/search/</code></p>
-<p>This endpoint allows searching for PMIDs (PubMed IDs) based on entity
-identifiers and keywords.</p>
-<h4 id="parameters_1">Parameters<a class="headerlink" href="#parameters_1" title="Permanent link">&para;</a></h4>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>text</code></td>
-<td>Entity identifier or text query</td>
-<td><code>@CHEMICAL_remdesivir</code></td>
-</tr>
-</tbody>
-</table>
-<h4 id="example-request-and-response_1">Example Request and Response<a class="headerlink" href="#example-request-and-response_1" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span><span class="s2">&quot;https://www.ncbi.nlm.nih.gov/research/pubtator3-api/search/?text=@CHEMICAL_remdesivir&quot;</span>
-</code></pre></div>
-<p>Response (truncated):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">      </span><span class="nt">&quot;_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;37711410&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="nt">&quot;pmid&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">37711410</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Remdesivir.&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="nt">&quot;journal&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hosp Pharm&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="nt">&quot;authors&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Levien TL&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Baker DE&quot;</span><span class="p">],</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">      </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2023-10-01T00:00:00Z&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">      </span><span class="nt">&quot;doi&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;10.1177/0018578721999804&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">      </span><span class="nt">&quot;meta_date_publication&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2023 Oct&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">      </span><span class="nt">&quot;meta_volume&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;58&quot;</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="c1">// More results...</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="article-fetch-api">Article Fetch API<a class="headerlink" href="#article-fetch-api" title="Permanent link">&para;</a></h3>
-<p><strong>Endpoint:</strong>
-<code>https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson</code></p>
-<p>This endpoint retrieves detailed information about specific articles, including
-annotations.</p>
-<h4 id="parameters_2">Parameters<a class="headerlink" href="#parameters_2" title="Permanent link">&para;</a></h4>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>pmids</code></td>
-<td>List of PubMed IDs to retrieve</td>
-<td><code>29355051</code></td>
-</tr>
-<tr>
-<td><code>full_text</code></td>
-<td>Whether to include full text (when available)</td>
-<td><code>true</code></td>
-</tr>
-</tbody>
-</table>
-<h4 id="example-request">Example Request<a class="headerlink" href="#example-request" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span><span class="s2">&quot;https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmids=29355051&amp;full=true&quot;</span>
-</code></pre></div>
-<p>Response format (truncated):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">&quot;PubTator3&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="nt">&quot;_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;29355051|PMC6142073&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;6142073&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">      </span><span class="nt">&quot;infons&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">      </span><span class="nt">&quot;passages&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">          </span><span class="nt">&quot;infons&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">            </span><span class="nt">&quot;name_3&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;surname:Hu;given-names:Minghua&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">            </span><span class="nt">&quot;name_2&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;surname:Luo;given-names:Xia&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">            </span><span class="nt">&quot;name_1&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;surname:Luo;given-names:Shuang&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">            </span><span class="nt">&quot;article-id_pmid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;29355051&quot;</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">            </span><span class="c1">// More metadata...</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">          </span><span class="p">}</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">        </span><span class="p">}</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">        </span><span class="c1">// More passages...</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">      </span><span class="p">]</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="entity-types">Entity Types<a class="headerlink" href="#entity-types" title="Permanent link">&para;</a></h2>
-<p>PubTator3 annotates several types of biomedical entities:</p>
-<ol>
-<li><strong>Genes/Proteins</strong>: Gene or protein names (e.g., BRAF, TP53)</li>
-<li><strong>Genetic Variants</strong>: Genetic variations (e.g., BRAF V600E)</li>
-<li><strong>Diseases</strong>: Disease names and conditions (e.g., Melanoma)</li>
-<li><strong>Chemicals/Drugs</strong>: Chemical substances or drugs (e.g., Vemurafenib)</li>
-</ol>
-<h2 id="integration-strategy-for-biomcp">Integration Strategy for BioMCP<a class="headerlink" href="#integration-strategy-for-biomcp" title="Permanent link">&para;</a></h2>
-<p>The recommended workflow for integrating with PubTator3 in BioMCP is:</p>
-<ol>
-<li><strong>Entity Normalization</strong>: Use the autocomplete API to convert user-provided
-   entity names to standardized identifiers</li>
-<li><strong>Literature Search</strong>: Use the search API with these identifiers to find
-   relevant PMIDs</li>
-<li><strong>Data Retrieval</strong>: Fetch detailed article data with annotations using the
-   fetch API</li>
-</ol>
-<p>This workflow ensures consistent entity handling and optimal search results.</p>
-<h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
-<p>The PubTator3 API is public and does not require authentication for basic
-usage. However, there are rate limits in place to prevent abuse.</p>
-<h2 id="rate-limits-and-best-practices">Rate Limits and Best Practices<a class="headerlink" href="#rate-limits-and-best-practices" title="Permanent link">&para;</a></h2>
+<p>This returns:</p>
 <ul>
-<li><strong>Request Limits</strong>: Approximately 30 requests per minute</li>
-<li><strong>Batch Requests</strong>: For article retrieval, batch multiple PMIDs in a single
-  request</li>
-<li><strong>Caching</strong>: Implement caching to minimize repeated requests</li>
-<li><strong>Specific Queries</strong>: Use specific entity names rather than general terms for
-  better results</li>
+<li>Standard PubMed/PubTator3 article results</li>
+<li>cBioPortal summary showing mutation frequency across cancer studies</li>
+<li>Top cancer types where the gene is mutated</li>
 </ul>
+<h3 id="mutation-specific-searches">Mutation-Specific Searches<a class="headerlink" href="#mutation-specific-searches" title="Permanent link">&para;</a></h3>
+<p>To search for specific mutations, include the mutation notation in keywords:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Search for BRAF V600E mutation</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">search</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="s2">&quot;article&quot;</span><span class="p">,</span> <span class="n">genes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;BRAF&quot;</span><span class="p">],</span> <span class="n">keywords</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;V600E&quot;</span><span class="p">])</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Search for SRSF2 F57Y mutation</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">search</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="s2">&quot;article&quot;</span><span class="p">,</span> <span class="n">genes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SRSF2&quot;</span><span class="p">],</span> <span class="n">keywords</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;F57Y&quot;</span><span class="p">])</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Use wildcards for mutation patterns (e.g., any amino acid at position 57)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">search</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="s2">&quot;article&quot;</span><span class="p">,</span> <span class="n">genes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SRSF2&quot;</span><span class="p">],</span> <span class="n">keywords</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;F57*&quot;</span><span class="p">])</span>
+</code></pre></div>
+<p>Mutation-specific searches return:</p>
+<ul>
+<li>Total number of studies in cBioPortal</li>
+<li>Number of studies containing the mutation</li>
+<li>Top studies ranked by mutation count</li>
+<li>Cancer type distribution</li>
+</ul>
+<h2 id="example-output">Example Output<a class="headerlink" href="#example-output" title="Permanent link">&para;</a></h2>
+<h3 id="gene-level-summary">Gene-Level Summary<a class="headerlink" href="#gene-level-summary" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>### cBioPortal Summary for BRAF
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>- **Mutation Frequency**: 76.7% (368 mutations in 480 samples)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>- **Top Cancer Types**: Melanoma (45%), Thyroid (23%), Colorectal (18%)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>- **Top Mutations**: V600E (89%), V600K (7%), G469A (2%)
+</code></pre></div>
+<h3 id="mutation-specific-results">Mutation-Specific Results<a class="headerlink" href="#mutation-specific-results" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>### cBioPortal Mutation Search: BRAF
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>**Specific Mutation**: V600E
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>- **Total Studies**: 2340
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>- **Studies with Mutation**: 170
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>- **Total Mutations Found**: 5780
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>**Top Studies by Mutation Count:**
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>| Count | Study ID | Cancer Type | Study Name |
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>|-------|----------|-------------|------------|
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>|   804 | msk_met_2021 | Mixed Cancer Types | MSK MetTropism (MSK, Cell 2021) |
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>|   555 | msk_chord_2024 | Mixed Cancer Types | MSK-CHORD (MSK, Nature 2024) |
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>|   295 | msk_impact_2017 | Mixed Cancer Types | MSK-IMPACT Clinical Sequencing Cohort |
+</code></pre></div>
+<h2 id="supported-mutation-notations">Supported Mutation Notations<a class="headerlink" href="#supported-mutation-notations" title="Permanent link">&para;</a></h2>
+<p>The integration recognizes standard protein change notation:</p>
+<ul>
+<li><strong>Specific mutations</strong>: <code>V600E</code>, <code>F57Y</code>, <code>T790M</code></li>
+<li><strong>Wildcard patterns</strong>: <code>F57*</code> (matches F57Y, F57L, etc.)</li>
+<li><strong>Multiple mutations</strong>: Include multiple keywords for OR search</li>
+</ul>
+<h2 id="api-details">API Details<a class="headerlink" href="#api-details" title="Permanent link">&para;</a></h2>
+<h3 id="endpoints-used">Endpoints Used<a class="headerlink" href="#endpoints-used" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Gene Information</strong>: <code>/api/genes/{gene}</code></li>
+<li><strong>Cancer Types</strong>: <code>/api/cancer-types</code></li>
+<li><strong>Mutation Data</strong>: <code>/api/mutations/fetch</code></li>
+<li><strong>Study Information</strong>: <code>/api/studies</code></li>
+</ol>
+<h3 id="rate-limiting">Rate Limiting<a class="headerlink" href="#rate-limiting" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Conservative rate limit of 5 requests/second</li>
+<li>Results cached for 15-30 minutes (mutations) or 24 hours (cancer types)</li>
+</ul>
+<h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
+<p>Optional authentication via environment variable:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CBIO_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-api-token&quot;</span>
+</code></pre></div>
+<p>Public cBioPortal instance works without authentication but may have rate limits.</p>
+<h2 id="cli-usage">CLI Usage<a class="headerlink" href="#cli-usage" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Gene-level search with cBioPortal summary</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRAF<span class="w"> </span>--disease<span class="w"> </span>melanoma
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Mutation-specific search</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRAF<span class="w"> </span>--keyword<span class="w"> </span>V600E
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Wildcard pattern search</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>SRSF2<span class="w"> </span>--keyword<span class="w"> </span><span class="s2">&quot;F57*&quot;</span>
+</code></pre></div>
+<h2 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>Caching</strong>: Results are cached to minimize API calls</p>
+</li>
+<li>
+<p>Gene summaries: 15 minutes</p>
+</li>
+<li>Mutation searches: 30 minutes</li>
+<li>
+<p>Cancer types: 24 hours</p>
+</li>
+<li>
+<p><strong>Graceful Degradation</strong>: If cBioPortal is unavailable, searches continue without the additional data</p>
+</li>
+<li>
+<p><strong>Parallel Processing</strong>: API calls are made in parallel with article searches for optimal performance</p>
+</li>
+</ol>
+<h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Only works with valid HUGO gene symbols</li>
+<li>Mutation searches require exact protein change notation</li>
+<li>Limited to mutations in cBioPortal's curated studies</li>
+<li>Rate limits may apply for high-volume usage</li>
+</ol>
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
-<p>Common error responses:</p>
+<p>The integration handles various error scenarios:</p>
 <ul>
-<li><strong>400</strong>: Invalid parameters</li>
-<li><strong>404</strong>: Articles not found</li>
-<li><strong>429</strong>: Rate limit exceeded</li>
-<li><strong>500</strong>: Server error</li>
+<li>Invalid gene symbols are validated before API calls</li>
+<li>Network timeouts fall back to article-only results</li>
+<li>API errors are logged but don't block search results</li>
 </ul>
-<h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
-<p>For complete API documentation, visit
-the <a href="https://www.ncbi.nlm.nih.gov/research/pubtator3/api">PubTator3 API Documentation</a>.</p>
 
 
 
