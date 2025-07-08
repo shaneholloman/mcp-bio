@@ -15,14 +15,14 @@
         <link rel="canonical" href="https://biomcp.org/tutorials/bigquery_logging/">
       
       
-        <link rel="prev" href="../stytch_oauth_setup/">
+        <link rel="prev" href="../cursor-ide/">
       
       
-        <link rel="next" href="../../cli/trials/">
+        <link rel="next" href="../mcp-client/">
       
       
       <link rel="icon" href="../../assets/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -322,6 +322,98 @@
   
   
     <li class="md-nav__item">
+      <a href="../alphagenome-api-key-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome API Key Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker-alphagenome/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome Docker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../alphagenome-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome Prompts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../alphagenome-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../claude-desktop/" class="md-nav__link">
         
   
@@ -368,98 +460,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp-inspector/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    MCP Inspector
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../python-sdk/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Python SDK
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp-client/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    MCP Client
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cursor-ide/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Cursor IDE
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../cloudflare-worker-deployment/" class="md-nav__link">
         
   
@@ -483,12 +483,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../stytch_oauth_setup/" class="md-nav__link">
+      <a href="../cursor-ide/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Setting Up Stytch OAuth for BioMCP
+    Cursor IDE
     
   </span>
   
@@ -616,6 +616,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Security Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automatic-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Sanitization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#excluded-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Excluded Queries
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -636,10 +660,126 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#javascript-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      JavaScript Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Client
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-inspector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Inspector
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../python-sdk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Python SDK
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stytch_oauth_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Setting Up Stytch OAuth for BioMCP
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -697,29 +837,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/trials/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Trials
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/articles/" class="md-nav__link">
         
   
@@ -743,12 +860,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/variants/" class="md-nav__link">
+      <a href="../../cli/health/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Variants
+    Health Check
     
   </span>
   
@@ -766,12 +883,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/health/" class="md-nav__link">
+      <a href="../../cli/trials/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Health Check
+    Trials
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/variants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Variants
     
   </span>
   
@@ -834,12 +974,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../apis/clinicaltrials_gov/" class="md-nav__link">
+      <a href="../../apis/cbioportal/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    ClinicalTrials.gov
+    cBioPortal
     
   </span>
   
@@ -857,12 +997,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../apis/pubtator3_api/" class="md-nav__link">
+      <a href="../../apis/clinicaltrials_gov/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    PubTator3
+    ClinicalTrials.gov
     
   </span>
   
@@ -903,12 +1043,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../apis/cbioportal/" class="md-nav__link">
+      <a href="../../apis/pubtator3_api/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    cBioPortal
+    PubTator3
     
   </span>
   
@@ -971,29 +1111,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../blog/what-is-biomcp/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    What is BioMCP?
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../blog/ai-assisted-clinical-trial-search-analysis/" class="md-nav__link">
         
   
@@ -1023,6 +1140,29 @@
   
   <span class="md-ellipsis">
     Deep Researcher Persona
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/what-is-biomcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    What is BioMCP?
     
   </span>
   
@@ -1353,6 +1493,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Security Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automatic-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Sanitization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#excluded-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Excluded Queries
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1370,6 +1534,30 @@
       Example Code
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#javascript-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      JavaScript Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1504,6 +1692,42 @@
 <li>Regularly audit logs to ensure compliance with HIPAA and other privacy regulations</li>
 <li>Remember that BigQuery logs are not designed for storing protected health information</li>
 </ul>
+<h3 id="automatic-sanitization">Automatic Sanitization<a class="headerlink" href="#automatic-sanitization" title="Permanent link">&para;</a></h3>
+<p>BioMCP automatically sanitizes sensitive data before logging to BigQuery:</p>
+<ul>
+<li><strong>API Keys and Secrets</strong>: Fields containing <code>api_key</code>, <code>apiKey</code>, <code>api-key</code>, <code>token</code>, <code>secret</code>, or <code>password</code> are automatically redacted</li>
+<li><strong>Nested Objects</strong>: Sanitization works recursively through nested objects and arrays</li>
+<li><strong>Case-Insensitive</strong>: Field name matching is case-insensitive to catch variations</li>
+<li><strong>Preserved Structure</strong>: The original request structure is maintained with sensitive values replaced by <code>[REDACTED]</code></li>
+</ul>
+<p>Example of sanitization:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// Original request</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="s2">&quot;params&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="s2">&quot;arguments&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">      </span><span class="s2">&quot;api_key&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;AIzaSyB1234567890&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">      </span><span class="s2">&quot;gene&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;BRAF&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">}</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1">// Sanitized for BigQuery</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="p">{</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span><span class="s2">&quot;params&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="s2">&quot;arguments&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">      </span><span class="s2">&quot;api_key&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;[REDACTED]&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">      </span><span class="s2">&quot;gene&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;BRAF&quot;</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="excluded-queries">Excluded Queries<a class="headerlink" href="#excluded-queries" title="Permanent link">&para;</a></h3>
+<p>Certain types of queries are automatically excluded from BigQuery logging:</p>
+<ul>
+<li><strong>Think Tool Calls</strong>: Any calls to the <code>think</code> tool are not logged</li>
+<li><strong>Thinking Domain</strong>: Queries with <code>domain="thinking"</code> or <code>domain="think"</code> are excluded</li>
+<li><strong>Privacy-First Design</strong>: This ensures that internal reasoning and analysis steps remain private</li>
+</ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Authentication Failures</strong>: Verify that the service account key is correctly formatted and has the necessary permissions</li>
@@ -1515,8 +1739,28 @@
 <ul>
 <li><code>getBQToken()</code>: Fetches and caches a BigQuery OAuth token</li>
 <li><code>insertEvent()</code>: Inserts a single row into BigQuery via streaming insert</li>
+<li><code>sanitizeObject()</code>: Recursively sanitizes sensitive fields from objects before logging</li>
 </ul>
 <p>These functions handle the authentication and data insertion process automatically.</p>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p>BioMCP includes comprehensive tests for the BigQuery logging functionality:</p>
+<h3 id="javascript-tests">JavaScript Tests<a class="headerlink" href="#javascript-tests" title="Permanent link">&para;</a></h3>
+<p>The sanitization logic is tested using Node.js built-in test framework:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Run JavaScript worker tests</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>make<span class="w"> </span>test-js
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Or run directly</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>node<span class="w"> </span>--test<span class="w"> </span>tests/tdd/workers/test_worker_sanitization.js
+</code></pre></div>
+<p>Tests cover:</p>
+<ul>
+<li>API key redaction</li>
+<li>Nested sensitive field handling</li>
+<li>Array sanitization</li>
+<li>Case-insensitive field matching</li>
+<li>Think tool detection</li>
+<li>Domain-based filtering</li>
+</ul>
 
 
 
@@ -1598,7 +1842,7 @@
       <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>

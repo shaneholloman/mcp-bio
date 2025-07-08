@@ -12,13 +12,13 @@
         <meta name="author" content="Ian Maurer">
       
       
-        <link rel="canonical" href="https://biomcp.org/tutorials/cloudflare-worker-deployment/">
+        <link rel="canonical" href="https://biomcp.org/tutorials/alphagenome-prompts/">
       
       
-        <link rel="prev" href="../macos-claude-desktop-dockerized-biomcp/">
+        <link rel="prev" href="../docker-alphagenome/">
       
       
-        <link rel="next" href="../cursor-ide/">
+        <link rel="next" href="../alphagenome-setup/">
       
       
       <link rel="icon" href="../../assets/favicon.ico">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Cloudflare Worker Deployment - BioMCP</title>
+        <title>AlphaGenome Prompts - BioMCP</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deploying-biomcp-as-a-cloudflare-worker" class="md-skip">
+        <a href="#alphagenome-prompt-examples" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Cloudflare Worker Deployment
+              AlphaGenome Prompts
             
           </span>
         </div>
@@ -365,10 +365,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../alphagenome-prompts/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome Prompts
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -379,6 +401,311 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#including-your-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Including Your API Key
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-variant-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Variant Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Variant Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#known-pathogenic-variants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Pathogenic Variants
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-coding-variant-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Non-coding Variant Analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#research-oriented-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Research-Oriented Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Research-Oriented Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variant-prioritization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variant Prioritization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#splicing-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Splicing Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tissue-specific-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tissue-Specific Analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clinical-research-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clinical Research Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Clinical Research Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variant-of-uncertain-significance-vus-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variant of Uncertain Significance (VUS) Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pharmacogenomics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pharmacogenomics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rare-disease-investigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rare Disease Investigation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparative-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparative Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparative Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multiple-variant-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple Variant Comparison
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#allele-specific-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Allele-Specific Analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-research-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Research Prompts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Research Prompts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#long-range-regulatory-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Long-Range Regulatory Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compound-heterozygote-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compound Heterozygote Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancer-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cancer Research
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-with-other-biomcp-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration with Other BioMCP Tools
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration with Other BioMCP Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#full-variant-characterization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full Variant Characterization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clinical-trial-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clinical Trial Context
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-for-effective-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips for Effective Prompts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips for Effective Prompts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Required Information
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-multi-step-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Multi-Step Workflow
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -457,32 +784,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Cloudflare Worker Deployment
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../cloudflare-worker-deployment/" class="md-nav__link">
         
   
   
@@ -493,203 +798,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      Prerequisites
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      Architecture
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Architecture">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#architecture-diagram" class="md-nav__link">
-    <span class="md-ellipsis">
-      Architecture Diagram
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      Setup
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-configure-your-remote-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Configure Your Remote MCP Server
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Configure Your Remote MCP Server">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using Docker Compose
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manual-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manual Installation
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-configure-cloudflare-worker" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Configure Cloudflare Worker
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-deploy-the-worker" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Deploy the Worker
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#benefits-of-remote-mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      Benefits of Remote MCP
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Usage
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#local-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      Local Development
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#worker-connection-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Worker Connection Issues
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#performance-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Performance Considerations
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Security Considerations
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1481,37 +1589,37 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#including-your-api-key" class="md-nav__link">
     <span class="md-ellipsis">
-      Overview
+      Including Your API Key
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#basic-variant-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Prerequisites
+      Basic Variant Analysis
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      Architecture
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Architecture">
+    <nav class="md-nav" aria-label="Basic Variant Analysis">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#architecture-diagram" class="md-nav__link">
+  <a href="#known-pathogenic-variants" class="md-nav__link">
     <span class="md-ellipsis">
-      Architecture Diagram
+      Known Pathogenic Variants
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-coding-variant-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Non-coding Variant Analysis
     </span>
   </a>
   
@@ -1523,61 +1631,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
+  <a href="#research-oriented-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Setup
+      Research-Oriented Analysis
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Setup">
+    <nav class="md-nav" aria-label="Research-Oriented Analysis">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-configure-your-remote-mcp-server" class="md-nav__link">
+  <a href="#variant-prioritization" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Configure Your Remote MCP Server
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Configure Your Remote MCP Server">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using Docker Compose
+      Variant Prioritization
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#manual-installation" class="md-nav__link">
+  <a href="#splicing-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Manual Installation
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-configure-cloudflare-worker" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Configure Cloudflare Worker
+      Splicing Analysis
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-deploy-the-worker" class="md-nav__link">
+  <a href="#tissue-specific-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Deploy the Worker
+      Tissue-Specific Analysis
     </span>
   </a>
   
@@ -1589,55 +1673,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#benefits-of-remote-mcp" class="md-nav__link">
+  <a href="#clinical-research-workflows" class="md-nav__link">
     <span class="md-ellipsis">
-      Benefits of Remote MCP
+      Clinical Research Workflows
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Usage
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#local-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      Local Development
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
+    <nav class="md-nav" aria-label="Clinical Research Workflows">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#worker-connection-issues" class="md-nav__link">
+  <a href="#variant-of-uncertain-significance-vus-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Worker Connection Issues
+      Variant of Uncertain Significance (VUS) Analysis
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#performance-considerations" class="md-nav__link">
+  <a href="#pharmacogenomics" class="md-nav__link">
     <span class="md-ellipsis">
-      Performance Considerations
+      Pharmacogenomics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rare-disease-investigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rare Disease Investigation
     </span>
   </a>
   
@@ -1649,9 +1715,159 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-considerations" class="md-nav__link">
+  <a href="#comparative-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Security Considerations
+      Comparative Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparative Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multiple-variant-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple Variant Comparison
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#allele-specific-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Allele-Specific Analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-research-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Research Prompts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Research Prompts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#long-range-regulatory-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Long-Range Regulatory Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compound-heterozygote-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compound Heterozygote Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancer-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cancer Research
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-with-other-biomcp-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration with Other BioMCP Tools
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration with Other BioMCP Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#full-variant-characterization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full Variant Characterization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clinical-trial-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clinical Trial Context
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-for-effective-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips for Effective Prompts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips for Effective Prompts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Required Information
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-multi-step-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Multi-Step Workflow
     </span>
   </a>
   
@@ -1676,143 +1892,209 @@
   
 
 
-<h1 id="deploying-biomcp-as-a-cloudflare-worker">Deploying BioMCP as a Cloudflare Worker<a class="headerlink" href="#deploying-biomcp-as-a-cloudflare-worker" title="Permanent link">&para;</a></h1>
-<p>This guide explains how to deploy BioMCP as a Cloudflare Worker using Server-Sent Events (SSE) for communication.</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>BioMCP now supports two deployment modes:</p>
+<h1 id="alphagenome-prompt-examples">AlphaGenome Prompt Examples<a class="headerlink" href="#alphagenome-prompt-examples" title="Permanent link">&para;</a></h1>
+<p>This guide provides example prompts for using AlphaGenome through BioMCP to analyze genetic variants. These prompts are designed for use with AI assistants like Claude that have BioMCP integrated.</p>
+<h2 id="including-your-api-key">Including Your API Key<a class="headerlink" href="#including-your-api-key" title="Permanent link">&para;</a></h2>
+<p>When using AlphaGenome through an AI assistant, include your API key in your request:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Analyze BRAF V600E mutation effects. My AlphaGenome API key is YOUR_KEY_HERE
+</code></pre></div>
+<p>Or for multiple analyses:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>My AlphaGenome API key is YOUR_KEY_HERE. Please analyze these variants:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>1. BRAF V600E (chr7:140753336 A&gt;T)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>2. TP53 R273H (chr17:7577121 C&gt;T)
+</code></pre></div>
+<h2 id="basic-variant-analysis">Basic Variant Analysis<a class="headerlink" href="#basic-variant-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="known-pathogenic-variants">Known Pathogenic Variants<a class="headerlink" href="#known-pathogenic-variants" title="Permanent link">&para;</a></h3>
+<p><strong>BRAF V600E (Melanoma)</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Use alphagenome_predictor to analyze the regulatory effects of the BRAF V600E mutation (chr7:140753336 A&gt;T)
+</code></pre></div>
+<p><strong>TP53 Hotspot Mutations</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Predict how the TP53 R175H mutation (chr17:7675088 C&gt;T) affects gene expression and chromatin accessibility
+</code></pre></div>
+<p><strong>EGFR Resistance Mutation</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>What are the predicted regulatory impacts of the EGFR T790M mutation (chr7:55181378 C&gt;T)?
+</code></pre></div>
+<h3 id="non-coding-variant-analysis">Non-coding Variant Analysis<a class="headerlink" href="#non-coding-variant-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Promoter Variants</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Analyze this promoter variant using AlphaGenome: chr1:45797505 G&gt;A in the MUTYH gene promoter
+</code></pre></div>
+<p><strong>Enhancer Variants</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Use alphagenome_predictor to assess this enhancer variant: chr8:128748315 T&gt;C near the MYC gene
+</code></pre></div>
+<p><strong>UTR Variants</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Predict the regulatory effects of this 5&#39; UTR variant: chr17:41244936 G&gt;A in BRCA1
+</code></pre></div>
+<h2 id="research-oriented-analysis">Research-Oriented Analysis<a class="headerlink" href="#research-oriented-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="variant-prioritization">Variant Prioritization<a class="headerlink" href="#variant-prioritization" title="Permanent link">&para;</a></h3>
+<p><strong>Multiple Variant Screening</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>I have a list of variants from whole genome sequencing. Can you use alphagenome_predictor to analyze these and identify which ones likely have the strongest regulatory effects:
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>- chr3:178936091 G&gt;A
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>- chr12:25398285 C&gt;T
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>- chr19:11224301 G&gt;T
+</code></pre></div>
+<p><strong>Regulatory Impact Ranking</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Analyze these non-coding variants and rank them by predicted regulatory impact:
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>1. chr5:1282543 C&gt;T (TERT promoter)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>2. chr8:128750412 A&gt;G (MYC enhancer)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>3. chr17:7571720 G&gt;A (TP53 promoter)
+</code></pre></div>
+<h3 id="splicing-analysis">Splicing Analysis<a class="headerlink" href="#splicing-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Intronic Variants</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Use AlphaGenome to predict if this intronic variant affects splicing: chr2:215593426 A&gt;G in the BARD1 gene
+</code></pre></div>
+<p><strong>Splice Site Variants</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Analyze these variants near splice sites for potential splicing alterations:
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>- chr11:108198135 C&gt;T (ATM gene, +5 position)
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>- chr13:32340700 G&gt;A (BRCA2 gene, -3 position)
+</code></pre></div>
+<h3 id="tissue-specific-analysis">Tissue-Specific Analysis<a class="headerlink" href="#tissue-specific-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Breast Tissue Analysis</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Predict the effects of chr7:140753336 A&gt;T specifically in breast tissue (UBERON:0000310)
+</code></pre></div>
+<p><strong>Liver-Specific Effects</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>Use alphagenome_predictor with liver tissue context (UBERON:0002107) for this variant: chr16:31356190 G&gt;A in the FTO gene
+</code></pre></div>
+<p><strong>Multi-Tissue Comparison</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Compare the effects of chr12:25398285 C&gt;T across:
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>- Brain tissue (UBERON:0000955)
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>- Liver tissue (UBERON:0002107)
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>- Lung tissue (UBERON:0002048)
+</code></pre></div>
+<h2 id="clinical-research-workflows">Clinical Research Workflows<a class="headerlink" href="#clinical-research-workflows" title="Permanent link">&para;</a></h2>
+<h3 id="variant-of-uncertain-significance-vus-analysis">Variant of Uncertain Significance (VUS) Analysis<a class="headerlink" href="#variant-of-uncertain-significance-vus-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Complete VUS Workup</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>I found a variant of uncertain significance in a cancer patient: chr9:21971076 C&gt;T in CDKN2A.
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>1. First use variant_getter to see known annotations
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>2. Then use alphagenome_predictor to assess potential regulatory impacts
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>3. Search for articles about similar CDKN2A variants
+</code></pre></div>
+<h3 id="pharmacogenomics">Pharmacogenomics<a class="headerlink" href="#pharmacogenomics" title="Permanent link">&para;</a></h3>
+<p><strong>Drug Metabolism Variants</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Analyze how the CYP2D6 variant chr22:42130692 G&gt;A might affect drug metabolism gene expression using AlphaGenome
+</code></pre></div>
+<p><strong>Warfarin Sensitivity</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Predict the regulatory effects of VKORC1 variant chr16:31107689 G&gt;A on warfarin sensitivity
+</code></pre></div>
+<h3 id="rare-disease-investigation">Rare Disease Investigation<a class="headerlink" href="#rare-disease-investigation" title="Permanent link">&para;</a></h3>
+<p><strong>Mitochondrial Disease</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>This patient has a rare variant chr15:89859516 C&gt;T in the POLG gene. Use alphagenome_predictor to understand if it might affect mitochondrial DNA polymerase expression
+</code></pre></div>
+<p><strong>Neurodevelopmental Disorders</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Analyze this de novo variant in a child with developmental delay: chr2:166199235 C&gt;G in the SCN1A gene
+</code></pre></div>
+<h2 id="comparative-analysis">Comparative Analysis<a class="headerlink" href="#comparative-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="multiple-variant-comparison">Multiple Variant Comparison<a class="headerlink" href="#multiple-variant-comparison" title="Permanent link">&para;</a></h3>
+<p><strong>Gene-Wide Analysis</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Compare the predicted regulatory effects of these three BRCA1 variants using AlphaGenome:
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>- chr17:41245237 G&gt;A (promoter)
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>- chr17:41244936 G&gt;A (5&#39; UTR)
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>- chr17:41243451 T&gt;C (intron 2)
+</code></pre></div>
+<p><strong>Hotspot Comparison</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>I&#39;m studying why some TP53 mutations are more severe than others. Use alphagenome_predictor to compare these hotspot mutations:
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>- R175H (chr17:7675088 C&gt;T)
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>- R248W (chr17:7674220 G&gt;A)
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>- R273H (chr17:7673802 C&gt;T)
+</code></pre></div>
+<h3 id="allele-specific-analysis">Allele-Specific Analysis<a class="headerlink" href="#allele-specific-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Alternative Alleles</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>This GWAS hit is at chr5:1280000. Use alphagenome_predictor to analyze all possible variants:
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>- chr5:1280000 A&gt;G
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>- chr5:1280000 A&gt;C
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>- chr5:1280000 A&gt;T
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>Which alternate allele has the strongest predicted effect?
+</code></pre></div>
+<h2 id="advanced-research-prompts">Advanced Research Prompts<a class="headerlink" href="#advanced-research-prompts" title="Permanent link">&para;</a></h2>
+<h3 id="long-range-regulatory-analysis">Long-Range Regulatory Analysis<a class="headerlink" href="#long-range-regulatory-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Extended Window Analysis</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>Use alphagenome_predictor with --interval 1048576 to analyze long-range regulatory effects of chr8:128750000 A&gt;G near the MYC oncogene
+</code></pre></div>
+<p><strong>TAD Boundary Variants</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Analyze this variant at a TAD boundary with maximum interval: chr3:186500000 C&gt;T (use 1Mb window)
+</code></pre></div>
+<h3 id="compound-heterozygote-analysis">Compound Heterozygote Analysis<a class="headerlink" href="#compound-heterozygote-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Trans Configuration</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Analyze these two variants in trans in the same gene:
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>- Maternal: chr11:47342697 C&gt;T (MYBPC3)
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>- Paternal: chr11:47380142 G&gt;A (MYBPC3)
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>What are their individual regulatory effects?
+</code></pre></div>
+<h3 id="cancer-research">Cancer Research<a class="headerlink" href="#cancer-research" title="Permanent link">&para;</a></h3>
+<p><strong>Driver vs Passenger</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Help distinguish driver from passenger mutations. Analyze these variants from a tumor:
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>1. chr7:140753336 A&gt;T (BRAF V600E)
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>2. chr3:41266101 C&gt;T (CTNNB1 S33F)
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>3. chr1:115256529 G&gt;A (NRAS Q61R)
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>Which show the strongest regulatory effects?
+</code></pre></div>
+<p><strong>Tumor Suppressor Analysis</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>Analyze non-coding variants near tumor suppressors:
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>- chr17:7565097 C&gt;T (TP53 promoter)
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>- chr13:32316461 A&gt;G (BRCA2 promoter)
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>- chr17:41196312 G&gt;C (BRCA1 promoter)
+</code></pre></div>
+<h2 id="integration-with-other-biomcp-tools">Integration with Other BioMCP Tools<a class="headerlink" href="#integration-with-other-biomcp-tools" title="Permanent link">&para;</a></h2>
+<h3 id="full-variant-characterization">Full Variant Characterization<a class="headerlink" href="#full-variant-characterization" title="Permanent link">&para;</a></h3>
+<p><strong>Literature + Prediction</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>1. Search for articles about KRAS G12D mutations using article_searcher
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>2. Then use alphagenome_predictor to analyze chr12:25245350 C&gt;T
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>3. Compare the literature findings with AlphaGenome predictions
+</code></pre></div>
+<p><strong>Database + AI Analysis</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>1. Use variant_searcher to find pathogenic variants in the BRCA2 gene
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>2. Pick the top 3 results
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>3. Analyze each with alphagenome_predictor
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>4. Which has the strongest predicted regulatory impact?
+</code></pre></div>
+<h3 id="clinical-trial-context">Clinical Trial Context<a class="headerlink" href="#clinical-trial-context" title="Permanent link">&para;</a></h3>
+<p><strong>Treatment Target Analysis</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>1. Find clinical trials for BRAF V600E melanoma
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>2. Use AlphaGenome to understand why this mutation (chr7:140753336 A&gt;T) is so impactful
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>3. Does the regulatory effect explain the treatment response?
+</code></pre></div>
+<h2 id="tips-for-effective-prompts">Tips for Effective Prompts<a class="headerlink" href="#tips-for-effective-prompts" title="Permanent link">&para;</a></h2>
+<h3 id="required-information">Required Information<a class="headerlink" href="#required-information" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Chromosome</strong>: Use "chr" prefix (e.g., chr7, chrX)</li>
+<li><strong>Position</strong>: 1-based coordinate from reference genome</li>
+<li><strong>Reference allele</strong>: Current base(s) at that position</li>
+<li><strong>Alternate allele</strong>: Changed base(s)</li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters<a class="headerlink" href="#optional-parameters" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Interval size</strong>: 2048, 16384, 131072, 524288, or 1048576</li>
+<li><strong>Tissue type</strong>: UBERON ontology terms</li>
+<li><strong>Multiple variants</strong>: Analyze in single prompt for comparison</li>
+</ul>
+<h3 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h3>
 <ol>
-<li><strong>Local STDIO Mode</strong>: The traditional mode where the server communicates via standard input/output.</li>
-<li><strong>Cloudflare Worker Mode</strong>: Deployment as a Cloudflare Worker using SSE for communication.</li>
+<li><strong>Be specific</strong> - Include exact coordinates</li>
+<li><strong>Provide context</strong> - Mention gene names and known effects</li>
+<li><strong>Ask for interpretation</strong> - Request specific insights</li>
+<li><strong>Combine tools</strong> - Use multiple BioMCP tools for comprehensive analysis</li>
+<li><strong>Consider mechanism</strong> - Ask about expression, splicing, or chromatin</li>
 </ol>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<ul>
-<li>A Cloudflare account with Workers enabled</li>
-<li><a href="https://developers.cloudflare.com/workers/wrangler/install-and-update/">Wrangler CLI</a> installed</li>
-<li>For local development of the Worker mode: <code>pip install biomcp-python[worker]</code></li>
-</ul>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<p>When deployed as a Cloudflare Worker, BioMCP works as follows:</p>
-<ol>
-<li>The Cloudflare Worker receives HTTP requests from clients</li>
-<li>The Worker forwards these requests to your remote MCP server</li>
-<li>The remote MCP server processes the requests and returns responses</li>
-<li>The Worker streams these responses back to clients using SSE</li>
-</ol>
-<h3 id="architecture-diagram">Architecture Diagram<a class="headerlink" href="#architecture-diagram" title="Permanent link">&para;</a></h3>
-<p>Below is an improved diagram of the setup:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+-----------------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|  Claude Desktop (or   |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|    other client)      |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>+----------+------------+
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>           |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>           v
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>+----------+------------+
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>|   Cloudflare Worker   |
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>+----------+------------+
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>           |
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>           v
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>+-------------------------------+
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|   FastMCP Python Service      |
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>|   (Docker, hosted server)     |
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>+-------------------------------+
+<h2 id="example-multi-step-workflow">Example Multi-Step Workflow<a class="headerlink" href="#example-multi-step-workflow" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>I&#39;m investigating a patient with suspected hereditary cancer syndrome. They have these variants:
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>1. First, check each variant in databases:
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>   - Use variant_getter on chr17:41245237 G&gt;A
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>   - Use variant_getter on chr13:32340700 G&gt;A
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>   - Use variant_getter on chr11:108198135 C&gt;T
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>2. Then predict regulatory effects:
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>   - Use alphagenome_predictor on each variant
+<a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a>   - Compare which has the strongest impact
+<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>
+<a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a>3. Search literature:
+<a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a>   - Find articles about each affected gene
+<a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a>   - Look for similar cases
+<a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a>
+<a id="__codelineno-31-16" name="__codelineno-31-16" href="#__codelineno-31-16"></a>4. Summarize findings:
+<a id="__codelineno-31-17" name="__codelineno-31-17" href="#__codelineno-31-17"></a>   - Which variant is most likely pathogenic?
+<a id="__codelineno-31-18" name="__codelineno-31-18" href="#__codelineno-31-18"></a>   - What functional evidence supports this?
 </code></pre></div>
-<h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
-<h3 id="1-configure-your-remote-mcp-server">1. Configure Your Remote MCP Server<a class="headerlink" href="#1-configure-your-remote-mcp-server" title="Permanent link">&para;</a></h3>
-<p>First, you need to set up a remote MCP server that will handle the actual processing:</p>
-<h4 id="using-docker-compose">Using Docker Compose<a class="headerlink" href="#using-docker-compose" title="Permanent link">&para;</a></h4>
-<p>A Docker Compose file is now provided for building and deploying the remote FastMCP Python service. You must set the <code>TAG</code> variable to specify the image version:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">TAG</span><span class="o">=</span>latest<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
-</code></pre></div>
-<ul>
-<li>The service will be accessible on the configured port (default: 8000).</li>
-<li>Ensure your server is reachable from Cloudflare Workers.</li>
-</ul>
-<h4 id="manual-installation">Manual Installation<a class="headerlink" href="#manual-installation" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Install with worker dependencies</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pip<span class="w"> </span>install<span class="w"> </span>biomcp-python<span class="o">[</span>worker<span class="o">]</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Run the server in worker mode</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>biomcp<span class="w"> </span>run<span class="w"> </span>--mode<span class="w"> </span>worker<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
-</code></pre></div>
-<p>Make sure this server is accessible from the internet, or at least from Cloudflare Workers.</p>
-<h3 id="2-configure-cloudflare-worker">2. Configure Cloudflare Worker<a class="headerlink" href="#2-configure-cloudflare-worker" title="Permanent link">&para;</a></h3>
-<p>Edit the <code>wrangler.toml</code> file to point to your remote MCP server:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">[vars]</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">REMOTE_MCP_SERVER_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://your-remote-mcp-server.com/mcp&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Add an API key if your server requires authentication</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">MCP_SERVER_API_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;your-api-key&quot;</span>
-</code></pre></div>
-<h3 id="3-deploy-the-worker">3. Deploy the Worker<a class="headerlink" href="#3-deploy-the-worker" title="Permanent link">&para;</a></h3>
-<p>Use Wrangler to deploy your Worker:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Login to Cloudflare</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>npx<span class="w"> </span>wrangler@latest<span class="w"> </span>login
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Deploy the worker</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>npx<span class="w"> </span>wrangler@latest<span class="w"> </span>deploy
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Tail logs for debugging</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>npx<span class="w"> </span>wrangler@latest<span class="w"> </span>tail
-</code></pre></div>
-<h2 id="benefits-of-remote-mcp">Benefits of Remote MCP<a class="headerlink" href="#benefits-of-remote-mcp" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Scalability:</strong> Offloads heavy computation to a dedicated server, reducing load on the Worker and improving performance.</li>
-<li><strong>Security:</strong> The Worker acts as a secure proxy, hiding your backend and enabling API key protection.</li>
-<li><strong>Flexibility:</strong> You can update or scale the Python service independently of the Worker.</li>
-<li><strong>Debugging:</strong> Use <code>npx wrangler tail</code> for real-time logs and easier troubleshooting.</li>
-<li><strong>Modern Deployment:</strong> Docker Compose simplifies environment setup and reproducibility.</li>
-</ul>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>Once deployed, your Cloudflare Worker will be available at a URL like:
-<code>https://biomcp-worker.&lt;your-worker-subdomain&gt;.workers.dev</code></p>
-<p>Clients can connect to this endpoint using SSE:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// Example client-side JavaScript</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">eventSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">EventSource</span><span class="p">(</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="s2">&quot;https://biomcp-worker.&lt;your-worker-subdomain&gt;.workers.dev&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">);</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nx">eventSource</span><span class="p">.</span><span class="nx">onmessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Received:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">);</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span><span class="c1">// Check for the end of the stream</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">data</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;[DONE]&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="nx">eventSource</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="p">};</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="nx">eventSource</span><span class="p">.</span><span class="nx">onerror</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;EventSource error:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">  </span><span class="nx">eventSource</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="p">};</span>
-</code></pre></div>
-<h2 id="local-development">Local Development<a class="headerlink" href="#local-development" title="Permanent link">&para;</a></h2>
-<p>For local development and testing, you can run the worker mode locally:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Run the server in worker mode on localhost</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>biomcp<span class="w"> </span>run<span class="w"> </span>--mode<span class="w"> </span>worker<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
-</code></pre></div>
-<p>Then use Wrangler to develop locally:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>npx<span class="w"> </span>wrangler@latest<span class="w"> </span>dev
-</code></pre></div>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="worker-connection-issues">Worker Connection Issues<a class="headerlink" href="#worker-connection-issues" title="Permanent link">&para;</a></h3>
-<p>If the Worker cannot connect to your remote MCP server:</p>
-<ol>
-<li>Ensure your remote server is publicly accessible</li>
-<li>Check that the <code>REMOTE_MCP_SERVER_URL</code> is correctly set</li>
-<li>Verify any authentication requirements</li>
-</ol>
-<h3 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Cloudflare Workers have execution time limits (typically 30 seconds for free accounts)</li>
-<li>Consider implementing timeouts and chunking for large responses</li>
-<li>Monitor your Worker's performance in the Cloudflare dashboard</li>
-</ul>
-<h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Always use HTTPS for communication between the Worker and your remote MCP server</li>
-<li>Consider implementing authentication for your remote MCP server</li>
-<li>Do not expose sensitive information in your Worker code</li>
-</ul>
+<p>This structured approach combines AlphaGenome's predictive power with BioMCP's database access for comprehensive variant analysis.</p>
 
 
 

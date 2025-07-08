@@ -12,13 +12,13 @@
         <meta name="author" content="Ian Maurer">
       
       
-        <link rel="canonical" href="https://biomcp.org/blog/ai-assisted-clinical-trial-search-analysis/">
+        <link rel="canonical" href="https://biomcp.org/tutorials/alphagenome-api-key-handling/">
       
       
-        <link rel="prev" href="../../apis/pubtator3_api/">
+        <link rel="prev" href="../..">
       
       
-        <link rel="next" href="../researcher-persona-resource/">
+        <link rel="next" href="../docker-alphagenome/">
       
       
       <link rel="icon" href="../../assets/favicon.ico">
@@ -26,7 +26,7 @@
     
     
       
-        <title>AI Assisted Clinical Trial Search - BioMCP</title>
+        <title>AlphaGenome API Key Handling - BioMCP</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ai-assisted-clinical-trial-search-how-biomcp-transforms-research" class="md-skip">
+        <a href="#alphagenome-api-key-handling" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              AI Assisted Clinical Trial Search
+              AlphaGenome API Key Handling
             
           </span>
         </div>
@@ -279,18 +279,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -306,7 +308,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -317,10 +319,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../tutorials/alphagenome-api-key-handling/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome API Key Handling
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -331,6 +355,164 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-request-api-key-recommended-for-hosted-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-Request API Key (Recommended for Hosted Environments)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-Request API Key (Recommended for Hosted Environments)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-natural-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: Natural Language
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-multiple-predictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 2: Multiple Predictions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variable-personal-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Environment Variable (Personal Use)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interactive-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interactive Prompt
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-an-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting an API Key
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ai-agent-doesnt-ask-for-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      AI Agent Doesn't Ask for Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-not-recognized" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Not Recognized
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-key-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invalid Key Error
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-conversation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Conversation
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -343,7 +525,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/docker-alphagenome/" class="md-nav__link">
+      <a href="../docker-alphagenome/" class="md-nav__link">
         
   
   
@@ -366,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/alphagenome-prompts/" class="md-nav__link">
+      <a href="../alphagenome-prompts/" class="md-nav__link">
         
   
   
@@ -389,7 +571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/alphagenome-setup/" class="md-nav__link">
+      <a href="../alphagenome-setup/" class="md-nav__link">
         
   
   
@@ -412,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/claude-desktop/" class="md-nav__link">
+      <a href="../claude-desktop/" class="md-nav__link">
         
   
   
@@ -435,7 +617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/macos-claude-desktop-dockerized-biomcp/" class="md-nav__link">
+      <a href="../macos-claude-desktop-dockerized-biomcp/" class="md-nav__link">
         
   
   
@@ -458,7 +640,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/cloudflare-worker-deployment/" class="md-nav__link">
+      <a href="../cloudflare-worker-deployment/" class="md-nav__link">
         
   
   
@@ -481,7 +663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/cursor-ide/" class="md-nav__link">
+      <a href="../cursor-ide/" class="md-nav__link">
         
   
   
@@ -504,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/bigquery_logging/" class="md-nav__link">
+      <a href="../bigquery_logging/" class="md-nav__link">
         
   
   
@@ -527,7 +709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/mcp-client/" class="md-nav__link">
+      <a href="../mcp-client/" class="md-nav__link">
         
   
   
@@ -550,7 +732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/mcp-inspector/" class="md-nav__link">
+      <a href="../mcp-inspector/" class="md-nav__link">
         
   
   
@@ -573,7 +755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/python-sdk/" class="md-nav__link">
+      <a href="../python-sdk/" class="md-nav__link">
         
   
   
@@ -596,7 +778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/stytch_oauth_setup/" class="md-nav__link">
+      <a href="../stytch_oauth_setup/" class="md-nav__link">
         
   
   
@@ -897,20 +1079,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -926,7 +1106,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             Blog
@@ -937,32 +1117,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    AI Assisted Clinical Trial Search
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../blog/ai-assisted-clinical-trial-search-analysis/" class="md-nav__link">
         
   
   
@@ -973,62 +1131,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#breaking-down-the-barriers-to-clinical-trial-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      Breaking Down the Barriers to Clinical Trial Information
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#from-natural-language-to-precise-database-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      From Natural Language to Precise Database Queries
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#beyond-basic-search-understanding-trial-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Beyond Basic Search: Understanding Trial Details
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#transforming-clinical-research-workflows" class="md-nav__link">
-    <span class="md-ellipsis">
-      Transforming Clinical Research Workflows
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1041,7 +1143,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../researcher-persona-resource/" class="md-nav__link">
+      <a href="../../blog/researcher-persona-resource/" class="md-nav__link">
         
   
   
@@ -1064,7 +1166,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../what-is-biomcp/" class="md-nav__link">
+      <a href="../../blog/what-is-biomcp/" class="md-nav__link">
         
   
   
@@ -1340,36 +1442,138 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#breaking-down-the-barriers-to-clinical-trial-information" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
-      Breaking Down the Barriers to Clinical Trial Information
+      Overview
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#from-natural-language-to-precise-database-queries" class="md-nav__link">
+  <a href="#per-request-api-key-recommended-for-hosted-environments" class="md-nav__link">
     <span class="md-ellipsis">
-      From Natural Language to Precise Database Queries
+      Per-Request API Key (Recommended for Hosted Environments)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-Request API Key (Recommended for Hosted Environments)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-natural-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: Natural Language
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-multiple-predictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 2: Multiple Predictions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variable-personal-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Environment Variable (Personal Use)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#beyond-basic-search-understanding-trial-details" class="md-nav__link">
+  <a href="#interactive-prompt" class="md-nav__link">
     <span class="md-ellipsis">
-      Beyond Basic Search: Understanding Trial Details
+      Interactive Prompt
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#transforming-clinical-research-workflows" class="md-nav__link">
+  <a href="#security-considerations" class="md-nav__link">
     <span class="md-ellipsis">
-      Transforming Clinical Research Workflows
+      Security Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-an-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting an API Key
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ai-agent-doesnt-ask-for-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      AI Agent Doesn't Ask for Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-not-recognized" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Not Recognized
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-key-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invalid Key Error
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-conversation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Conversation
     </span>
   </a>
   
@@ -1394,72 +1598,99 @@
   
 
 
-<h1 id="ai-assisted-clinical-trial-search-how-biomcp-transforms-research">AI-Assisted Clinical Trial Search: How BioMCP Transforms Research<a class="headerlink" href="#ai-assisted-clinical-trial-search-how-biomcp-transforms-research" title="Permanent link">&para;</a></h1>
-<p>Finding the right clinical trial for a research project has traditionally been
-a complex process requiring specialized knowledge of database syntax and
-medical terminology. BioMCP is changing this landscape by making clinical trial
-data accessible through natural language conversation.</p>
-<p>Video Link:
-<a href="https://www.youtube.com/watch?v=jqGXXnVesjg&amp;list=PLu1amIF_MEfPWhhEsXSuBi90S_xtmVJIW&amp;index=2"><img alt="▶️ Watch the video" src="../images/trial-search-assistant.png" /></a></p>
-<h2 id="breaking-down-the-barriers-to-clinical-trial-information">Breaking Down the Barriers to Clinical Trial Information<a class="headerlink" href="#breaking-down-the-barriers-to-clinical-trial-information" title="Permanent link">&para;</a></h2>
-<p>BioMCP serves as a specialized Model Context Protocol (MCP) server that
-empowers AI assistants and agents with tools to interact with critical
-biomedical resources. For clinical trials specifically, BioMCP connects to the
-ClinicalTrials.gov API, allowing researchers and clinicians to search and
-retrieve trial information through simple conversational queries.</p>
-<p>The power of this approach becomes apparent when we look at how it transforms a
-complex search requirement. Imagine needing to find active clinical trials for
-pembrolizumab (a cancer immunotherapy drug) specifically for non-small cell
-lung carcinoma near Cleveland, Ohio. Traditionally, this would require:</p>
+<h1 id="alphagenome-api-key-handling">AlphaGenome API Key Handling<a class="headerlink" href="#alphagenome-api-key-handling" title="Permanent link">&para;</a></h1>
+<p>This guide explains how to use AlphaGenome predictions in BioMCP, especially in hosted environments where users need to provide their own API keys.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>AlphaGenome requires an API key for predictions. BioMCP supports three ways to provide it:</p>
 <ol>
-<li>Navigating to ClinicalTrials.gov</li>
-<li>Understanding the proper search fields and syntax</li>
-<li>Creating multiple filters for intervention (pembrolizumab), condition (
-   non-small cell lung carcinoma), status (recruiting), and location (Cleveland
-   area)</li>
-<li>Interpreting the results</li>
+<li><strong>Per-request API key</strong> (recommended for hosted environments)</li>
+<li><strong>Environment variable</strong> (for personal use)</li>
+<li><strong>Interactive prompt</strong> (AI agents will ask for it)</li>
 </ol>
-<h2 id="from-natural-language-to-precise-database-queries">From Natural Language to Precise Database Queries<a class="headerlink" href="#from-natural-language-to-precise-database-queries" title="Permanent link">&para;</a></h2>
-<p>With BioMCP, this entire process is streamlined into a simple natural language
-request. The underlying large language model (LLM) interprets the query,
-identifies the key entities (drug name, cancer type, location), and translates
-these into the precise parameters needed for the ClinicalTrials.gov API.</p>
-<p>The system returns relevant trials that match all criteria, presenting them in
-an easy-to-understand format. But the interaction doesn't end there—BioMCP
-maintains context throughout the conversation, enabling follow-up questions
-like:</p>
+<h2 id="per-request-api-key-recommended-for-hosted-environments">Per-Request API Key (Recommended for Hosted Environments)<a class="headerlink" href="#per-request-api-key-recommended-for-hosted-environments" title="Permanent link">&para;</a></h2>
+<p>When using BioMCP through a hosted service or AI assistant, include your API key directly in your request:</p>
+<h3 id="example-1-natural-language">Example 1: Natural Language<a class="headerlink" href="#example-1-natural-language" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&quot;Predict regulatory effects of BRAF V600E mutation: chr7:140753336 A&gt;T.
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>My AlphaGenome API key is YOUR_KEY_HERE&quot;
+</code></pre></div>
+<p>The AI agent will recognize the pattern "My AlphaGenome API key is..." and extract the key automatically.</p>
+<h3 id="example-2-multiple-predictions">Example 2: Multiple Predictions<a class="headerlink" href="#example-2-multiple-predictions" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&quot;I need to analyze several variants. My AlphaGenome API key is YOUR_KEY_HERE.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Please predict effects for:
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>1. BRAF V600E (chr7:140753336 A&gt;T)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>2. TP53 R273H (chr17:7577121 C&gt;T)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>3. EGFR L858R (chr7:55259515 T&gt;G)&quot;
+</code></pre></div>
+<h2 id="environment-variable-personal-use">Environment Variable (Personal Use)<a class="headerlink" href="#environment-variable-personal-use" title="Permanent link">&para;</a></h2>
+<p>For personal use or development, set the API key as an environment variable:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ALPHAGENOME_API_KEY</span><span class="o">=</span><span class="s1">&#39;your-key-here&#39;</span>
+</code></pre></div>
+<h2 id="interactive-prompt">Interactive Prompt<a class="headerlink" href="#interactive-prompt" title="Permanent link">&para;</a></h2>
+<p>If no API key is provided, the AI agent will receive a clear action request:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>❌ **AlphaGenome API key required**
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>I need an API key to use AlphaGenome. Please provide it by either:
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>**Option 1: Include your key in your request**
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>Say: &quot;My AlphaGenome API key is YOUR_KEY_HERE&quot; and I&#39;ll use it for this prediction.
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>**Option 2: Set it as an environment variable (for persistent use)**
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>```bash
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>export ALPHAGENOME_API_KEY=&#39;your-key&#39;
+</code></pre></div>
+<p>Get a free API key at: https://deepmind.google.com/science/alphagenome</p>
+<p><strong>ACTION REQUIRED</strong>: Please provide your API key using Option 1 above to continue.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>## CLI Usage
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>The CLI also supports per-request API keys:
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>```bash
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a># Using environment variable
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>export ALPHAGENOME_API_KEY=&#39;your-key&#39;
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>biomcp variant predict chr7 140753336 A T
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a># Using command-line option
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>biomcp variant predict chr7 140753336 A T --api-key YOUR_KEY
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a># The --api-key option overrides the environment variable
+</code></pre></div>
+<h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Hosted Environments</strong>: Always use per-request API keys to ensure users' keys aren't shared</li>
+<li><strong>Never commit API keys</strong> to version control</li>
+<li><strong>Use environment variables</strong> only on trusted personal machines</li>
+<li><strong>API keys are user-specific</strong> - each user should obtain their own</li>
+</ol>
+<h2 id="getting-an-api-key">Getting an API Key<a class="headerlink" href="#getting-an-api-key" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Visit https://deepmind.google.com/science/alphagenome</li>
+<li>Register for a free API key (non-commercial use)</li>
+<li>Keep your key secure and don't share it</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="ai-agent-doesnt-ask-for-key">AI Agent Doesn't Ask for Key<a class="headerlink" href="#ai-agent-doesnt-ask-for-key" title="Permanent link">&para;</a></h3>
+<p>If the AI agent doesn't proactively ask for your API key, include it in your initial request:</p>
 <ul>
-<li>Where exactly are these trials located and how far are they from downtown
-  Cleveland?</li>
-<li>What biomarker eligibility criteria do these trials require?</li>
-<li>Are there exclusion criteria I should be aware of?</li>
+<li>✅ "Predict effects of chr7:140753336 A&gt;T. My AlphaGenome API key is KEY123"</li>
+<li>❌ "Predict effects of chr7:140753336 A&gt;T" (agent may continue without asking)</li>
 </ul>
-<p>For each of these questions, BioMCP calls the appropriate tool (trial
-locations, trial protocols) and processes the information to provide meaningful
-answers without requiring the user to navigate different interfaces or learn
-new query languages.</p>
-<h2 id="beyond-basic-search-understanding-trial-details">Beyond Basic Search: Understanding Trial Details<a class="headerlink" href="#beyond-basic-search-understanding-trial-details" title="Permanent link">&para;</a></h2>
-<p>What truly sets BioMCP apart is its ability to go beyond simple listings. When
-asked about biomarker eligibility criteria, the system can extract this
-information from the full trial protocol, synthesize it, and present a clear
-summary of requirements. This capability transforms what would typically be
-hours of reading dense clinical documentation into a conversational exchange
-that delivers precisely what the researcher needs.</p>
-<h2 id="transforming-clinical-research-workflows">Transforming Clinical Research Workflows<a class="headerlink" href="#transforming-clinical-research-workflows" title="Permanent link">&para;</a></h2>
-<p>The implications for clinical research are significant. By lowering the
-technical barriers to accessing trial information, BioMCP can help:</p>
-<ul>
-<li>Researchers understand the landscape of current research in their field</li>
-<li>Research teams identify promising studies more efficiently</li>
-<li>Clinical research organizations track competing or complementary trials</li>
-<li>Research coordinators identify potential recruitment sites based on location</li>
-</ul>
-<p>As part of the broader BioMCP ecosystem—which also includes access to genomic
-variant information and PubMed literature—this clinical trial search capability
-represents a fundamental shift in how we interact with biomedical information.
-By bringing the power of natural language processing to specialized databases,
-BioMCP is helping to democratize access to critical health information and
-accelerate the research process.</p>
+<h3 id="key-not-recognized">Key Not Recognized<a class="headerlink" href="#key-not-recognized" title="Permanent link">&para;</a></h3>
+<p>Ensure you use the exact phrase "My AlphaGenome API key is" followed by your key.</p>
+<h3 id="invalid-key-error">Invalid Key Error<a class="headerlink" href="#invalid-key-error" title="Permanent link">&para;</a></h3>
+<p>Verify your key is correct and active at the AlphaGenome website.</p>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>For AI Assistants</strong>: Always include your API key in the initial request</li>
+<li><strong>For Scripts</strong>: Use environment variables for automation</li>
+<li><strong>For Hosted Services</strong>: Never store users' API keys; always use per-request keys</li>
+<li><strong>For Development</strong>: Use a separate development API key</li>
+</ol>
+<h2 id="example-conversation">Example Conversation<a class="headerlink" href="#example-conversation" title="Permanent link">&para;</a></h2>
+<p><strong>User</strong>: "Can you predict the effects of the BRAF V600E mutation?"</p>
+<p><strong>AI</strong>: "I'll help you predict the effects of the BRAF V600E mutation using AlphaGenome. I'll need your AlphaGenome API key to proceed. Please provide it by saying 'My AlphaGenome API key is YOUR_KEY_HERE'."</p>
+<p><strong>User</strong>: "My AlphaGenome API key is AIzaSyB..."</p>
+<p><strong>AI</strong>: "Thank you! Now analyzing the BRAF V600E mutation (chr7:140753336 A&gt;T)..."</p>
+<p>[Results follow]</p>
 
 
 

@@ -12,13 +12,13 @@
         <meta name="author" content="Ian Maurer">
       
       
-        <link rel="canonical" href="https://biomcp.org/blog/ai-assisted-clinical-trial-search-analysis/">
+        <link rel="canonical" href="https://biomcp.org/tutorials/docker-alphagenome/">
       
       
-        <link rel="prev" href="../../apis/pubtator3_api/">
+        <link rel="prev" href="../alphagenome-api-key-handling/">
       
       
-        <link rel="next" href="../researcher-persona-resource/">
+        <link rel="next" href="../alphagenome-prompts/">
       
       
       <link rel="icon" href="../../assets/favicon.ico">
@@ -26,7 +26,7 @@
     
     
       
-        <title>AI Assisted Clinical Trial Search - BioMCP</title>
+        <title>AlphaGenome Docker - BioMCP</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ai-assisted-clinical-trial-search-how-biomcp-transforms-research" class="md-skip">
+        <a href="#using-alphagenome-with-docker" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              AI Assisted Clinical Trial Search
+              AlphaGenome Docker
             
           </span>
         </div>
@@ -279,18 +279,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -306,7 +308,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -320,7 +322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/alphagenome-api-key-handling/" class="md-nav__link">
+      <a href="../alphagenome-api-key-handling/" class="md-nav__link">
         
   
   
@@ -340,10 +342,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../tutorials/docker-alphagenome/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome Docker
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -354,6 +378,197 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#docker-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker Setup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-build-the-docker-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Build the Docker Image
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-run-with-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Run with Docker Compose
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-set-your-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Set Your API Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-start-the-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Start the Container
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-in-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage in Container
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage in Container">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-docker-exec" class="md-nav__link">
+    <span class="md-ellipsis">
+      Via Docker Exec
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-mcp-worker-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Via MCP Worker Mode
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dockerfile-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dockerfile Details
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#container-cant-find-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Container Can't Find API Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alphagenome-import-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      AlphaGenome Import Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rebuilding-after-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rebuilding After Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-docker-run-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Docker Run Command
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Notes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -366,7 +581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/alphagenome-prompts/" class="md-nav__link">
+      <a href="../alphagenome-prompts/" class="md-nav__link">
         
   
   
@@ -389,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/alphagenome-setup/" class="md-nav__link">
+      <a href="../alphagenome-setup/" class="md-nav__link">
         
   
   
@@ -412,7 +627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/claude-desktop/" class="md-nav__link">
+      <a href="../claude-desktop/" class="md-nav__link">
         
   
   
@@ -435,7 +650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/macos-claude-desktop-dockerized-biomcp/" class="md-nav__link">
+      <a href="../macos-claude-desktop-dockerized-biomcp/" class="md-nav__link">
         
   
   
@@ -458,7 +673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/cloudflare-worker-deployment/" class="md-nav__link">
+      <a href="../cloudflare-worker-deployment/" class="md-nav__link">
         
   
   
@@ -481,7 +696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/cursor-ide/" class="md-nav__link">
+      <a href="../cursor-ide/" class="md-nav__link">
         
   
   
@@ -504,7 +719,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/bigquery_logging/" class="md-nav__link">
+      <a href="../bigquery_logging/" class="md-nav__link">
         
   
   
@@ -527,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/mcp-client/" class="md-nav__link">
+      <a href="../mcp-client/" class="md-nav__link">
         
   
   
@@ -550,7 +765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/mcp-inspector/" class="md-nav__link">
+      <a href="../mcp-inspector/" class="md-nav__link">
         
   
   
@@ -573,7 +788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/python-sdk/" class="md-nav__link">
+      <a href="../python-sdk/" class="md-nav__link">
         
   
   
@@ -596,7 +811,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/stytch_oauth_setup/" class="md-nav__link">
+      <a href="../stytch_oauth_setup/" class="md-nav__link">
         
   
   
@@ -897,20 +1112,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -926,7 +1139,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             Blog
@@ -937,32 +1150,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    AI Assisted Clinical Trial Search
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../blog/ai-assisted-clinical-trial-search-analysis/" class="md-nav__link">
         
   
   
@@ -973,62 +1164,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#breaking-down-the-barriers-to-clinical-trial-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      Breaking Down the Barriers to Clinical Trial Information
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#from-natural-language-to-precise-database-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      From Natural Language to Precise Database Queries
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#beyond-basic-search-understanding-trial-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Beyond Basic Search: Understanding Trial Details
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#transforming-clinical-research-workflows" class="md-nav__link">
-    <span class="md-ellipsis">
-      Transforming Clinical Research Workflows
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1041,7 +1176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../researcher-persona-resource/" class="md-nav__link">
+      <a href="../../blog/researcher-persona-resource/" class="md-nav__link">
         
   
   
@@ -1064,7 +1199,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../what-is-biomcp/" class="md-nav__link">
+      <a href="../../blog/what-is-biomcp/" class="md-nav__link">
         
   
   
@@ -1340,36 +1475,171 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#breaking-down-the-barriers-to-clinical-trial-information" class="md-nav__link">
+  <a href="#docker-setup" class="md-nav__link">
     <span class="md-ellipsis">
-      Breaking Down the Barriers to Clinical Trial Information
+      Docker Setup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-build-the-docker-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Build the Docker Image
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-run-with-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Run with Docker Compose
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-set-your-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Set Your API Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-start-the-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Start the Container
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-in-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage in Container
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage in Container">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-docker-exec" class="md-nav__link">
+    <span class="md-ellipsis">
+      Via Docker Exec
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-mcp-worker-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Via MCP Worker Mode
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dockerfile-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dockerfile Details
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#from-natural-language-to-precise-database-queries" class="md-nav__link">
+  <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
-      From Natural Language to Precise Database Queries
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#container-cant-find-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Container Can't Find API Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alphagenome-import-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      AlphaGenome Import Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rebuilding-after-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rebuilding After Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Considerations
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#beyond-basic-search-understanding-trial-details" class="md-nav__link">
+  <a href="#example-docker-run-command" class="md-nav__link">
     <span class="md-ellipsis">
-      Beyond Basic Search: Understanding Trial Details
+      Example Docker Run Command
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#transforming-clinical-research-workflows" class="md-nav__link">
+  <a href="#performance-notes" class="md-nav__link">
     <span class="md-ellipsis">
-      Transforming Clinical Research Workflows
+      Performance Notes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
     </span>
   </a>
   
@@ -1394,72 +1664,113 @@
   
 
 
-<h1 id="ai-assisted-clinical-trial-search-how-biomcp-transforms-research">AI-Assisted Clinical Trial Search: How BioMCP Transforms Research<a class="headerlink" href="#ai-assisted-clinical-trial-search-how-biomcp-transforms-research" title="Permanent link">&para;</a></h1>
-<p>Finding the right clinical trial for a research project has traditionally been
-a complex process requiring specialized knowledge of database syntax and
-medical terminology. BioMCP is changing this landscape by making clinical trial
-data accessible through natural language conversation.</p>
-<p>Video Link:
-<a href="https://www.youtube.com/watch?v=jqGXXnVesjg&amp;list=PLu1amIF_MEfPWhhEsXSuBi90S_xtmVJIW&amp;index=2"><img alt="▶️ Watch the video" src="../images/trial-search-assistant.png" /></a></p>
-<h2 id="breaking-down-the-barriers-to-clinical-trial-information">Breaking Down the Barriers to Clinical Trial Information<a class="headerlink" href="#breaking-down-the-barriers-to-clinical-trial-information" title="Permanent link">&para;</a></h2>
-<p>BioMCP serves as a specialized Model Context Protocol (MCP) server that
-empowers AI assistants and agents with tools to interact with critical
-biomedical resources. For clinical trials specifically, BioMCP connects to the
-ClinicalTrials.gov API, allowing researchers and clinicians to search and
-retrieve trial information through simple conversational queries.</p>
-<p>The power of this approach becomes apparent when we look at how it transforms a
-complex search requirement. Imagine needing to find active clinical trials for
-pembrolizumab (a cancer immunotherapy drug) specifically for non-small cell
-lung carcinoma near Cleveland, Ohio. Traditionally, this would require:</p>
+<h1 id="using-alphagenome-with-docker">Using AlphaGenome with Docker<a class="headerlink" href="#using-alphagenome-with-docker" title="Permanent link">&para;</a></h1>
+<p>This guide explains how to use AlphaGenome with BioMCP in Docker containers.</p>
+<h2 id="docker-setup">Docker Setup<a class="headerlink" href="#docker-setup" title="Permanent link">&para;</a></h2>
+<p>The BioMCP Docker image now includes AlphaGenome pre-installed. Here's how to use it:</p>
+<h3 id="1-build-the-docker-image">1. Build the Docker Image<a class="headerlink" href="#1-build-the-docker-image" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>biomcp-alphagenome<span class="w"> </span>.
+</code></pre></div>
+<h3 id="2-run-with-docker-compose">2. Run with Docker Compose<a class="headerlink" href="#2-run-with-docker-compose" title="Permanent link">&para;</a></h3>
+<p>Create or update your <code>docker-compose.yml</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">biomcp-server</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">biomcp-alphagenome:latest</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">biomcp-server</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;8000:8000&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MCP_MODE=worker</span><span class="w"> </span><span class="c1"># Can be &#39;stdio&#39; or &#39;worker&#39;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ALPHAGENOME_API_KEY=${ALPHAGENOME_API_KEY}</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
+</code></pre></div>
+<h3 id="3-set-your-api-key">3. Set Your API Key<a class="headerlink" href="#3-set-your-api-key" title="Permanent link">&para;</a></h3>
+<p>Create a <code>.env</code> file in the same directory as your <code>docker-compose.yml</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">ALPHAGENOME_API_KEY</span><span class="o">=</span>your-api-key-here
+</code></pre></div>
+<p>Or set it in your shell:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ALPHAGENOME_API_KEY</span><span class="o">=</span><span class="s1">&#39;your-api-key-here&#39;</span>
+</code></pre></div>
+<h3 id="4-start-the-container">4. Start the Container<a class="headerlink" href="#4-start-the-container" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<h2 id="usage-in-container">Usage in Container<a class="headerlink" href="#usage-in-container" title="Permanent link">&para;</a></h2>
+<h3 id="via-docker-exec">Via Docker Exec<a class="headerlink" href="#via-docker-exec" title="Permanent link">&para;</a></h3>
+<p>You can run AlphaGenome predictions directly in the container:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Basic prediction</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>biomcp-server<span class="w"> </span>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># With tissue specificity</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>biomcp-server<span class="w"> </span>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T<span class="w"> </span>--tissue<span class="w"> </span>UBERON:0000310
+</code></pre></div>
+<h3 id="via-mcp-worker-mode">Via MCP Worker Mode<a class="headerlink" href="#via-mcp-worker-mode" title="Permanent link">&para;</a></h3>
+<p>When running in worker mode, the container exposes port 8000 for MCP connections. Configure your MCP client to connect to:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>http://localhost:8000
+</code></pre></div>
+<h2 id="dockerfile-details">Dockerfile Details<a class="headerlink" href="#dockerfile-details" title="Permanent link">&para;</a></h2>
+<p>The Dockerfile includes these AlphaGenome-specific changes:</p>
 <ol>
-<li>Navigating to ClinicalTrials.gov</li>
-<li>Understanding the proper search fields and syntax</li>
-<li>Creating multiple filters for intervention (pembrolizumab), condition (
-   non-small cell lung carcinoma), status (recruiting), and location (Cleveland
-   area)</li>
-<li>Interpreting the results</li>
+<li><strong>Git Installation</strong>: Required to clone AlphaGenome repository</li>
 </ol>
-<h2 id="from-natural-language-to-precise-database-queries">From Natural Language to Precise Database Queries<a class="headerlink" href="#from-natural-language-to-precise-database-queries" title="Permanent link">&para;</a></h2>
-<p>With BioMCP, this entire process is streamlined into a simple natural language
-request. The underlying large language model (LLM) interprets the query,
-identifies the key entities (drug name, cancer type, location), and translates
-these into the precise parameters needed for the ClinicalTrials.gov API.</p>
-<p>The system returns relevant trials that match all criteria, presenting them in
-an easy-to-understand format. But the interaction doesn't end there—BioMCP
-maintains context throughout the conversation, enabling follow-up questions
-like:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">RUN</span><span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>git
+</code></pre></div>
+<ol>
+<li><strong>AlphaGenome Installation</strong>: Cloned and installed during build</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">RUN</span><span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/google-deepmind/alphagenome.git<span class="w"> </span>/tmp/alphagenome<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>pip<span class="w"> </span>install<span class="w"> </span>/tmp/alphagenome<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>rm<span class="w"> </span>-rf<span class="w"> </span>/tmp/alphagenome
+</code></pre></div>
+<ol>
+<li><strong>Environment Variable</strong>: API key passed through docker-compose
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ALPHAGENOME_API_KEY=${ALPHAGENOME_API_KEY}</span>
+</code></pre></div></li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="container-cant-find-api-key">Container Can't Find API Key<a class="headerlink" href="#container-cant-find-api-key" title="Permanent link">&para;</a></h3>
+<p>Check that the environment variable is set:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>biomcp-server<span class="w"> </span>env<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>ALPHAGENOME
+</code></pre></div>
+<h3 id="alphagenome-import-errors">AlphaGenome Import Errors<a class="headerlink" href="#alphagenome-import-errors" title="Permanent link">&para;</a></h3>
+<p>Verify AlphaGenome is installed in the container:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>biomcp-server<span class="w"> </span>pip<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>alphagenome
+</code></pre></div>
+<h3 id="rebuilding-after-changes">Rebuilding After Changes<a class="headerlink" href="#rebuilding-after-changes" title="Permanent link">&para;</a></h3>
+<p>If you update the Dockerfile or dependencies:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>docker-compose<span class="w"> </span>build<span class="w"> </span>--no-cache
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>API Key Security</strong>: Never commit your API key to version control</li>
+<li><strong>Use .env Files</strong>: Keep API keys in <code>.env</code> files (add to <code>.gitignore</code>)</li>
+<li><strong>Network Security</strong>: In production, use proper network isolation</li>
+<li><strong>Volume Mounts</strong>: Be careful with volume mounts that might expose sensitive data</li>
+</ol>
+<h2 id="example-docker-run-command">Example Docker Run Command<a class="headerlink" href="#example-docker-run-command" title="Permanent link">&para;</a></h2>
+<p>For standalone container without docker-compose:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--name<span class="w"> </span>biomcp-alphagenome<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">8000</span>:8000<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">MCP_MODE</span><span class="o">=</span>worker<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">ALPHAGENOME_API_KEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$ALPHAGENOME_API_KEY</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span>biomcp-alphagenome:latest
+</code></pre></div>
+<h2 id="performance-notes">Performance Notes<a class="headerlink" href="#performance-notes" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Where exactly are these trials located and how far are they from downtown
-  Cleveland?</li>
-<li>What biomarker eligibility criteria do these trials require?</li>
-<li>Are there exclusion criteria I should be aware of?</li>
+<li>AlphaGenome predictions require network calls to Google's API</li>
+<li>Container startup is slightly slower due to AlphaGenome installation</li>
+<li>Consider using volume mounts for caching if making many predictions</li>
+<li>The 1Mb genomic window option uses more memory and takes longer</li>
 </ul>
-<p>For each of these questions, BioMCP calls the appropriate tool (trial
-locations, trial protocols) and processes the information to provide meaningful
-answers without requiring the user to navigate different interfaces or learn
-new query languages.</p>
-<h2 id="beyond-basic-search-understanding-trial-details">Beyond Basic Search: Understanding Trial Details<a class="headerlink" href="#beyond-basic-search-understanding-trial-details" title="Permanent link">&para;</a></h2>
-<p>What truly sets BioMCP apart is its ability to go beyond simple listings. When
-asked about biomarker eligibility criteria, the system can extract this
-information from the full trial protocol, synthesize it, and present a clear
-summary of requirements. This capability transforms what would typically be
-hours of reading dense clinical documentation into a conversational exchange
-that delivers precisely what the researcher needs.</p>
-<h2 id="transforming-clinical-research-workflows">Transforming Clinical Research Workflows<a class="headerlink" href="#transforming-clinical-research-workflows" title="Permanent link">&para;</a></h2>
-<p>The implications for clinical research are significant. By lowering the
-technical barriers to accessing trial information, BioMCP can help:</p>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Researchers understand the landscape of current research in their field</li>
-<li>Research teams identify promising studies more efficiently</li>
-<li>Clinical research organizations track competing or complementary trials</li>
-<li>Research coordinators identify potential recruitment sites based on location</li>
+<li>See <a href="../alphagenome-setup/">AlphaGenome Setup Guide</a> for general setup</li>
+<li>See <a href="../alphagenome-prompts/">AlphaGenome Prompt Examples</a> for usage patterns</li>
+<li>Check the main <a href="../../Dockerfile">Dockerfile</a> for implementation details</li>
 </ul>
-<p>As part of the broader BioMCP ecosystem—which also includes access to genomic
-variant information and PubMed literature—this clinical trial search capability
-represents a fundamental shift in how we interact with biomedical information.
-By bringing the power of natural language processing to specialized databases,
-BioMCP is helping to democratize access to critical health information and
-accelerate the research process.</p>
 
 
 

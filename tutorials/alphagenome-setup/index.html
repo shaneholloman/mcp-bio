@@ -12,13 +12,13 @@
         <meta name="author" content="Ian Maurer">
       
       
-        <link rel="canonical" href="https://biomcp.org/tutorials/cloudflare-worker-deployment/">
+        <link rel="canonical" href="https://biomcp.org/tutorials/alphagenome-setup/">
       
       
-        <link rel="prev" href="../macos-claude-desktop-dockerized-biomcp/">
+        <link rel="prev" href="../alphagenome-prompts/">
       
       
-        <link rel="next" href="../cursor-ide/">
+        <link rel="next" href="../claude-desktop/">
       
       
       <link rel="icon" href="../../assets/favicon.ico">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Cloudflare Worker Deployment - BioMCP</title>
+        <title>AlphaGenome Setup - BioMCP</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deploying-biomcp-as-a-cloudflare-worker" class="md-skip">
+        <a href="#alphagenome-setup-and-usage-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Cloudflare Worker Deployment
+              AlphaGenome Setup
             
           </span>
         </div>
@@ -388,10 +388,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../alphagenome-setup/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome Setup
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -402,6 +424,341 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-instructions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setup Instructions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup Instructions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-get-an-alphagenome-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Get an AlphaGenome API Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-configure-the-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Configure the API Key
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Configure the API Key">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-per-request-recommended-for-ai-assistants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option A: Per-Request (Recommended for AI Assistants)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-environment-variable-personal-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option B: Environment Variable (Personal Use)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-using-env-file-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option C: Using .env file (Development)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-claude-desktop-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option C: Claude Desktop Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-install-alphagenome" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Install AlphaGenome
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-test-the-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Test the Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-variant-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Variant Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-in-claude-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using in Claude Desktop
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using in Claude Desktop">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#known-pathogenic-variants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Pathogenic Variants
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-coding-variant-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Non-coding Variant Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#splicing-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Splicing Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#research-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Research Workflows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-variant-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-variant Analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tissue-specific-predictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tissue-Specific Predictions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interval-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interval Sizes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interpreting-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interpreting Results
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alphagenome-api-key-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      "AlphaGenome API key not found"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alphagenome-not-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      "AlphaGenome not installed"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sequence-length-x-not-supported" class="md-nav__link">
+    <span class="md-ellipsis">
+      "Sequence length X not supported"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protobuf-warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Protobuf warnings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      Further Resources
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -457,32 +814,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Cloudflare Worker Deployment
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../cloudflare-worker-deployment/" class="md-nav__link">
         
   
   
@@ -493,203 +828,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      Prerequisites
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      Architecture
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Architecture">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#architecture-diagram" class="md-nav__link">
-    <span class="md-ellipsis">
-      Architecture Diagram
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      Setup
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-configure-your-remote-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Configure Your Remote MCP Server
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Configure Your Remote MCP Server">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using Docker Compose
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manual-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manual Installation
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-configure-cloudflare-worker" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Configure Cloudflare Worker
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-deploy-the-worker" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Deploy the Worker
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#benefits-of-remote-mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      Benefits of Remote MCP
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Usage
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#local-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      Local Development
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#worker-connection-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Worker Connection Issues
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#performance-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Performance Considerations
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Security Considerations
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1499,19 +1637,88 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#setup-instructions" class="md-nav__link">
     <span class="md-ellipsis">
-      Architecture
+      Setup Instructions
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Architecture">
+    <nav class="md-nav" aria-label="Setup Instructions">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#architecture-diagram" class="md-nav__link">
+  <a href="#step-1-get-an-alphagenome-api-key" class="md-nav__link">
     <span class="md-ellipsis">
-      Architecture Diagram
+      Step 1: Get an AlphaGenome API Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-configure-the-api-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Configure the API Key
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Configure the API Key">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-per-request-recommended-for-ai-assistants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option A: Per-Request (Recommended for AI Assistants)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-environment-variable-personal-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option B: Environment Variable (Personal Use)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-using-env-file-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option C: Using .env file (Development)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-claude-desktop-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option C: Claude Desktop Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-install-alphagenome" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Install AlphaGenome
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-test-the-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Test the Integration
     </span>
   </a>
   
@@ -1523,38 +1730,74 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
+  <a href="#usage-examples" class="md-nav__link">
     <span class="md-ellipsis">
-      Setup
+      Usage Examples
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Setup">
+    <nav class="md-nav" aria-label="Usage Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-configure-your-remote-mcp-server" class="md-nav__link">
+  <a href="#basic-variant-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Configure Your Remote MCP Server
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Configure Your Remote MCP Server">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using Docker Compose
+      Basic Variant Analysis
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#manual-installation" class="md-nav__link">
+  <a href="#using-in-claude-desktop" class="md-nav__link">
     <span class="md-ellipsis">
-      Manual Installation
+      Using in Claude Desktop
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using in Claude Desktop">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#known-pathogenic-variants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Pathogenic Variants
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-coding-variant-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Non-coding Variant Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#splicing-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Splicing Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#research-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Research Workflows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-variant-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-variant Analysis
     </span>
   </a>
   
@@ -1565,19 +1808,43 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#2-configure-cloudflare-worker" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-usage" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Configure Cloudflare Worker
+      Advanced Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tissue-specific-predictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tissue-Specific Predictions
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-deploy-the-worker" class="md-nav__link">
+  <a href="#interval-sizes" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Deploy the Worker
+      Interval Sizes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interpreting-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interpreting Results
     </span>
   </a>
   
@@ -1585,33 +1852,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#benefits-of-remote-mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      Benefits of Remote MCP
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Usage
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#local-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      Local Development
-    </span>
-  </a>
   
 </li>
       
@@ -1626,18 +1866,36 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#worker-connection-issues" class="md-nav__link">
+  <a href="#alphagenome-api-key-not-found" class="md-nav__link">
     <span class="md-ellipsis">
-      Worker Connection Issues
+      "AlphaGenome API key not found"
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#performance-considerations" class="md-nav__link">
+  <a href="#alphagenome-not-installed" class="md-nav__link">
     <span class="md-ellipsis">
-      Performance Considerations
+      "AlphaGenome not installed"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sequence-length-x-not-supported" class="md-nav__link">
+    <span class="md-ellipsis">
+      "Sequence length X not supported"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protobuf-warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Protobuf warnings
     </span>
   </a>
   
@@ -1649,9 +1907,27 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-considerations" class="md-nav__link">
+  <a href="#best-practices" class="md-nav__link">
     <span class="md-ellipsis">
-      Security Considerations
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      Further Resources
     </span>
   </a>
   
@@ -1676,142 +1952,252 @@
   
 
 
-<h1 id="deploying-biomcp-as-a-cloudflare-worker">Deploying BioMCP as a Cloudflare Worker<a class="headerlink" href="#deploying-biomcp-as-a-cloudflare-worker" title="Permanent link">&para;</a></h1>
-<p>This guide explains how to deploy BioMCP as a Cloudflare Worker using Server-Sent Events (SSE) for communication.</p>
+<h1 id="alphagenome-setup-and-usage-guide">AlphaGenome Setup and Usage Guide<a class="headerlink" href="#alphagenome-setup-and-usage-guide" title="Permanent link">&para;</a></h1>
+<p>This guide covers how to set up and use Google DeepMind's AlphaGenome with BioMCP for advanced variant effect prediction.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>BioMCP now supports two deployment modes:</p>
-<ol>
-<li><strong>Local STDIO Mode</strong>: The traditional mode where the server communicates via standard input/output.</li>
-<li><strong>Cloudflare Worker Mode</strong>: Deployment as a Cloudflare Worker using SSE for communication.</li>
-</ol>
+<p>AlphaGenome is a state-of-the-art AI model that predicts how genetic variants affect gene regulation. It analyzes variants in their genomic context to predict impacts on:</p>
+<ul>
+<li>Gene expression (RNA-seq)</li>
+<li>Chromatin accessibility (ATAC-seq, DNase-seq)</li>
+<li>Splicing patterns</li>
+<li>Promoter activity (CAGE)</li>
+<li>Transcription factor binding</li>
+<li>3D chromatin structure</li>
+</ul>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<ul>
-<li>A Cloudflare account with Workers enabled</li>
-<li><a href="https://developers.cloudflare.com/workers/wrangler/install-and-update/">Wrangler CLI</a> installed</li>
-<li>For local development of the Worker mode: <code>pip install biomcp-python[worker]</code></li>
-</ul>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<p>When deployed as a Cloudflare Worker, BioMCP works as follows:</p>
 <ol>
-<li>The Cloudflare Worker receives HTTP requests from clients</li>
-<li>The Worker forwards these requests to your remote MCP server</li>
-<li>The remote MCP server processes the requests and returns responses</li>
-<li>The Worker streams these responses back to clients using SSE</li>
+<li><strong>BioMCP Installation</strong>: Ensure BioMCP is installed and working</li>
+<li><strong>Python 3.10+</strong>: Required for AlphaGenome compatibility</li>
+<li><strong>Git</strong>: For cloning the AlphaGenome repository</li>
 </ol>
-<h3 id="architecture-diagram">Architecture Diagram<a class="headerlink" href="#architecture-diagram" title="Permanent link">&para;</a></h3>
-<p>Below is an improved diagram of the setup:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+-----------------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|  Claude Desktop (or   |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|    other client)      |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>+----------+------------+
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>           |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>           v
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>+----------+------------+
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>|   Cloudflare Worker   |
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>+----------+------------+
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>           |
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>           v
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>+-------------------------------+
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|   FastMCP Python Service      |
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>|   (Docker, hosted server)     |
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>+-------------------------------+
+<h2 id="setup-instructions">Setup Instructions<a class="headerlink" href="#setup-instructions" title="Permanent link">&para;</a></h2>
+<h3 id="step-1-get-an-alphagenome-api-key">Step 1: Get an AlphaGenome API Key<a class="headerlink" href="#step-1-get-an-alphagenome-api-key" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Visit <a href="https://deepmind.google.com/science/alphagenome">Google DeepMind AlphaGenome</a></li>
+<li>Click "Get Started" or "Request Access"</li>
+<li>Fill out the registration form (free for non-commercial use)</li>
+<li>You'll receive an API key that looks like: <code>AIzaSy...</code></li>
+</ol>
+<h3 id="step-2-configure-the-api-key">Step 2: Configure the API Key<a class="headerlink" href="#step-2-configure-the-api-key" title="Permanent link">&para;</a></h3>
+<p>You have three options for providing your API key:</p>
+<h4 id="option-a-per-request-recommended-for-ai-assistants">Option A: Per-Request (Recommended for AI Assistants)<a class="headerlink" href="#option-a-per-request-recommended-for-ai-assistants" title="Permanent link">&para;</a></h4>
+<p>Include your API key directly in your request to the AI assistant:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&quot;Predict effects of BRAF V600E. My AlphaGenome API key is YOUR_KEY_HERE&quot;
 </code></pre></div>
-<h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
-<h3 id="1-configure-your-remote-mcp-server">1. Configure Your Remote MCP Server<a class="headerlink" href="#1-configure-your-remote-mcp-server" title="Permanent link">&para;</a></h3>
-<p>First, you need to set up a remote MCP server that will handle the actual processing:</p>
-<h4 id="using-docker-compose">Using Docker Compose<a class="headerlink" href="#using-docker-compose" title="Permanent link">&para;</a></h4>
-<p>A Docker Compose file is now provided for building and deploying the remote FastMCP Python service. You must set the <code>TAG</code> variable to specify the image version:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">TAG</span><span class="o">=</span>latest<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+<p>See the <a href="../alphagenome-api-key-handling/">API Key Handling Guide</a> for detailed examples.</p>
+<h4 id="option-b-environment-variable-personal-use">Option B: Environment Variable (Personal Use)<a class="headerlink" href="#option-b-environment-variable-personal-use" title="Permanent link">&para;</a></h4>
+<p>Set it in your shell profile (<code>~/.zshrc</code> or <code>~/.bashrc</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ALPHAGENOME_API_KEY</span><span class="o">=</span><span class="s1">&#39;your-api-key-here&#39;</span>
 </code></pre></div>
+<h4 id="option-c-using-env-file-development">Option C: Using .env file (Development)<a class="headerlink" href="#option-c-using-env-file-development" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Create a <code>.env</code> file in your BioMCP directory:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>~/code/biomcp<span class="w">  </span><span class="c1"># or your BioMCP installation directory</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;ALPHAGENOME_API_KEY=your-api-key-here&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.env
+</code></pre></div>
+<ol>
+<li>Replace <code>your-api-key-here</code> with your actual API key</li>
+</ol>
+<h4 id="option-c-claude-desktop-configuration">Option C: Claude Desktop Configuration<a class="headerlink" href="#option-c-claude-desktop-configuration" title="Permanent link">&para;</a></h4>
+<p>Add to your Claude Desktop MCP settings:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">&quot;biomcp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uv&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="s2">&quot;--directory&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="s2">&quot;/path/to/biomcp&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="s2">&quot;run&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="s2">&quot;biomcp&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="s2">&quot;run&quot;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">&quot;ALPHAGENOME_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-api-key-here&quot;</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="step-3-install-alphagenome">Step 3: Install AlphaGenome<a class="headerlink" href="#step-3-install-alphagenome" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Clone the AlphaGenome repository:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>~/code<span class="w">  </span><span class="c1"># or any directory you prefer</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/google-deepmind/alphagenome.git
+</code></pre></div>
+<ol>
+<li>Install AlphaGenome in BioMCP's environment:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">cd</span><span class="w"> </span>~/code/biomcp<span class="w">  </span><span class="c1"># Navigate to BioMCP directory</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>~/code/alphagenome
+</code></pre></div>
+<ol>
+<li>Verify installation:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import alphagenome; print(&#39;AlphaGenome installed successfully&#39;)&quot;</span>
+</code></pre></div></li>
+</ol>
+<h3 id="step-4-test-the-integration">Step 4: Test the Integration<a class="headerlink" href="#step-4-test-the-integration" title="Permanent link">&para;</a></h3>
+<p>Test via CLI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>uv<span class="w"> </span>run<span class="w"> </span>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T
+</code></pre></div>
+<p>Expected output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>## AlphaGenome Variant Effect Predictions
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>**Variant**: chr7:140753336 A&gt;T
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>**Analysis window**: 131,072 bp
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>### Gene Expression
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>- **BRAF**: -0.85 log₂ fold change (↓ decreases expression)
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>...
+</code></pre></div>
+<h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
+<h3 id="basic-variant-analysis">Basic Variant Analysis<a class="headerlink" href="#basic-variant-analysis" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Analyze a known pathogenic variant (BRAF V600E)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Analyze with larger genomic context (1Mb window)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T<span class="w"> </span>--interval<span class="w"> </span><span class="m">1048576</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Analyze with tissue-specific context</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T<span class="w"> </span>--tissue<span class="w"> </span>UBERON:0000310<span class="w">  </span><span class="c1"># breast tissue</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># Analyze with custom significance threshold</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.3
+</code></pre></div>
+<h3 id="using-in-claude-desktop">Using in Claude Desktop<a class="headerlink" href="#using-in-claude-desktop" title="Permanent link">&para;</a></h3>
+<p>Once configured, you can use these prompts in Claude:</p>
+<h4 id="known-pathogenic-variants">Known Pathogenic Variants<a class="headerlink" href="#known-pathogenic-variants" title="Permanent link">&para;</a></h4>
 <ul>
-<li>The service will be accessible on the configured port (default: 8000).</li>
-<li>Ensure your server is reachable from Cloudflare Workers.</li>
+<li>"Use alphagenome_predictor to analyze the regulatory effects of the BRAF V600E mutation (chr7:140753336 A&gt;T)"</li>
+<li>"Predict how the TP53 R175H mutation (chr17:7675088 C&gt;T) affects gene expression and chromatin accessibility"</li>
+<li>"What are the predicted regulatory impacts of the EGFR T790M mutation (chr7:55181378 C&gt;T)?"</li>
 </ul>
-<h4 id="manual-installation">Manual Installation<a class="headerlink" href="#manual-installation" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Install with worker dependencies</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pip<span class="w"> </span>install<span class="w"> </span>biomcp-python<span class="o">[</span>worker<span class="o">]</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Run the server in worker mode</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>biomcp<span class="w"> </span>run<span class="w"> </span>--mode<span class="w"> </span>worker<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
-</code></pre></div>
-<p>Make sure this server is accessible from the internet, or at least from Cloudflare Workers.</p>
-<h3 id="2-configure-cloudflare-worker">2. Configure Cloudflare Worker<a class="headerlink" href="#2-configure-cloudflare-worker" title="Permanent link">&para;</a></h3>
-<p>Edit the <code>wrangler.toml</code> file to point to your remote MCP server:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">[vars]</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">REMOTE_MCP_SERVER_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://your-remote-mcp-server.com/mcp&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Add an API key if your server requires authentication</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">MCP_SERVER_API_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;your-api-key&quot;</span>
-</code></pre></div>
-<h3 id="3-deploy-the-worker">3. Deploy the Worker<a class="headerlink" href="#3-deploy-the-worker" title="Permanent link">&para;</a></h3>
-<p>Use Wrangler to deploy your Worker:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Login to Cloudflare</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>npx<span class="w"> </span>wrangler@latest<span class="w"> </span>login
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Deploy the worker</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>npx<span class="w"> </span>wrangler@latest<span class="w"> </span>deploy
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Tail logs for debugging</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>npx<span class="w"> </span>wrangler@latest<span class="w"> </span>tail
-</code></pre></div>
-<h2 id="benefits-of-remote-mcp">Benefits of Remote MCP<a class="headerlink" href="#benefits-of-remote-mcp" title="Permanent link">&para;</a></h2>
+<h4 id="non-coding-variant-analysis">Non-coding Variant Analysis<a class="headerlink" href="#non-coding-variant-analysis" title="Permanent link">&para;</a></h4>
 <ul>
-<li><strong>Scalability:</strong> Offloads heavy computation to a dedicated server, reducing load on the Worker and improving performance.</li>
-<li><strong>Security:</strong> The Worker acts as a secure proxy, hiding your backend and enabling API key protection.</li>
-<li><strong>Flexibility:</strong> You can update or scale the Python service independently of the Worker.</li>
-<li><strong>Debugging:</strong> Use <code>npx wrangler tail</code> for real-time logs and easier troubleshooting.</li>
-<li><strong>Modern Deployment:</strong> Docker Compose simplifies environment setup and reproducibility.</li>
+<li>"Analyze this promoter variant using AlphaGenome: chr1:45797505 G&gt;A in the MUTYH gene promoter"</li>
+<li>"Use alphagenome_predictor to assess this enhancer variant: chr8:128748315 T&gt;C near the MYC gene"</li>
+<li>"Predict the regulatory effects of this 5' UTR variant: chr17:41244936 G&gt;A in BRCA1"</li>
 </ul>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>Once deployed, your Cloudflare Worker will be available at a URL like:
-<code>https://biomcp-worker.&lt;your-worker-subdomain&gt;.workers.dev</code></p>
-<p>Clients can connect to this endpoint using SSE:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// Example client-side JavaScript</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">eventSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">EventSource</span><span class="p">(</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="s2">&quot;https://biomcp-worker.&lt;your-worker-subdomain&gt;.workers.dev&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">);</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nx">eventSource</span><span class="p">.</span><span class="nx">onmessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Received:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">);</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span><span class="c1">// Check for the end of the stream</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">data</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;[DONE]&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="nx">eventSource</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="p">};</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="nx">eventSource</span><span class="p">.</span><span class="nx">onerror</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;EventSource error:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">  </span><span class="nx">eventSource</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="p">};</span>
+<h4 id="splicing-analysis">Splicing Analysis<a class="headerlink" href="#splicing-analysis" title="Permanent link">&para;</a></h4>
+<ul>
+<li>"Use AlphaGenome to predict if this intronic variant affects splicing: chr2:215593426 A&gt;G in the BARD1 gene"</li>
+<li>"Analyze these variants near splice sites for potential splicing alterations: chr11:108198135 C&gt;T (ATM)"</li>
+</ul>
+<h4 id="research-workflows">Research Workflows<a class="headerlink" href="#research-workflows" title="Permanent link">&para;</a></h4>
+<ul>
+<li>"I found a variant of uncertain significance: chr9:21971076 C&gt;T in CDKN2A. First use variant_getter to see known annotations, then use alphagenome_predictor to assess regulatory impacts"</li>
+<li>"Compare the predicted effects of these BRCA1 variants: chr17:41245237 G&gt;A vs chr17:41244936 G&gt;A"</li>
+</ul>
+<h4 id="multi-variant-analysis">Multi-variant Analysis<a class="headerlink" href="#multi-variant-analysis" title="Permanent link">&para;</a></h4>
+<ul>
+<li>"I have variants from whole genome sequencing. Analyze these for regulatory effects: chr3:178936091 G&gt;A, chr12:25398285 C&gt;T, chr19:11224301 G&gt;T"</li>
+</ul>
+<h2 id="advanced-usage">Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permanent link">&para;</a></h2>
+<h3 id="tissue-specific-predictions">Tissue-Specific Predictions<a class="headerlink" href="#tissue-specific-predictions" title="Permanent link">&para;</a></h3>
+<p>AlphaGenome can provide tissue-specific predictions using UBERON ontology terms:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Common tissue codes:</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># UBERON:0000310 - breast</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># UBERON:0002107 - liver</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># UBERON:0002367 - prostate</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># UBERON:0000955 - brain</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="c1"># UBERON:0002048 - lung</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># UBERON:0001157 - colon</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="c1"># Example: Liver-specific analysis</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">alphagenome_predictor</span><span class="p">(</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    <span class="n">chromosome</span><span class="o">=</span><span class="s2">&quot;chr16&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>    <span class="n">position</span><span class="o">=</span><span class="mi">31356190</span><span class="p">,</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;G&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    <span class="n">alternate</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>    <span class="n">tissue_types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;UBERON:0002107&quot;</span><span class="p">]</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="p">)</span>
 </code></pre></div>
-<h2 id="local-development">Local Development<a class="headerlink" href="#local-development" title="Permanent link">&para;</a></h2>
-<p>For local development and testing, you can run the worker mode locally:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Run the server in worker mode on localhost</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>biomcp<span class="w"> </span>run<span class="w"> </span>--mode<span class="w"> </span>worker<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
-</code></pre></div>
-<p>Then use Wrangler to develop locally:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>npx<span class="w"> </span>wrangler@latest<span class="w"> </span>dev
-</code></pre></div>
+<h3 id="interval-sizes">Interval Sizes<a class="headerlink" href="#interval-sizes" title="Permanent link">&para;</a></h3>
+<p>AlphaGenome supports specific interval sizes:</p>
+<ul>
+<li>2,048 bp (2kb) - Very local effects</li>
+<li>16,384 bp (16kb) - Local regulatory elements</li>
+<li>131,072 bp (128kb) - Default, captures most regulatory elements</li>
+<li>524,288 bp (512kb) - Extended regulatory landscape</li>
+<li>1,048,576 bp (1Mb) - Long-range interactions</li>
+</ul>
+<p>Choose based on your hypothesis:</p>
+<ul>
+<li>Promoter variants: 16kb</li>
+<li>Enhancer variants: 128kb-512kb</li>
+<li>Long-range regulatory: 1Mb</li>
+</ul>
+<p><strong>Note</strong>: If you request a size larger than 1Mb, the system automatically uses 1Mb. If you request a size between supported values, it rounds up to the next supported size.</p>
+<h3 id="interpreting-results">Interpreting Results<a class="headerlink" href="#interpreting-results" title="Permanent link">&para;</a></h3>
+<p><strong>Gene Expression (log₂ fold change)</strong>:</p>
+<ul>
+<li>&gt; +1.0: Strong increase (2x or more)</li>
+<li>+0.5 to +1.0: Moderate increase</li>
+<li>-0.5 to +0.5: Minimal change</li>
+<li>-1.0 to -0.5: Moderate decrease</li>
+<li>&lt; -1.0: Strong decrease (2x or less)</li>
+</ul>
+<p><strong>Chromatin Accessibility</strong>:</p>
+<ul>
+<li>Positive values: More open chromatin (increased accessibility)</li>
+<li>Negative values: More closed chromatin (decreased accessibility)</li>
+</ul>
+<p><strong>Summary Statistics</strong>:</p>
+<ul>
+<li>Total tracks: Number of cell types/conditions analyzed</li>
+<li>Significant changes: Tracks with |log₂| &gt; 0.5 (default threshold)</li>
+<li>Custom threshold: You can adjust the significance threshold using the <code>--threshold</code> parameter</li>
+</ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="worker-connection-issues">Worker Connection Issues<a class="headerlink" href="#worker-connection-issues" title="Permanent link">&para;</a></h3>
-<p>If the Worker cannot connect to your remote MCP server:</p>
-<ol>
-<li>Ensure your remote server is publicly accessible</li>
-<li>Check that the <code>REMOTE_MCP_SERVER_URL</code> is correctly set</li>
-<li>Verify any authentication requirements</li>
-</ol>
-<h3 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h3>
+<h3 id="alphagenome-api-key-not-found">"AlphaGenome API key not found"<a class="headerlink" href="#alphagenome-api-key-not-found" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Cloudflare Workers have execution time limits (typically 30 seconds for free accounts)</li>
-<li>Consider implementing timeouts and chunking for large responses</li>
-<li>Monitor your Worker's performance in the Cloudflare dashboard</li>
+<li>Check your <code>.env</code> file exists and contains <code>ALPHAGENOME_API_KEY=your-key</code></li>
+<li>Ensure you're running commands from the BioMCP directory</li>
+<li>Try: <code>cat .env | grep ALPHAGENOME</code> to verify</li>
 </ul>
-<h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h2>
+<h3 id="alphagenome-not-installed">"AlphaGenome not installed"<a class="headerlink" href="#alphagenome-not-installed" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Always use HTTPS for communication between the Worker and your remote MCP server</li>
-<li>Consider implementing authentication for your remote MCP server</li>
-<li>Do not expose sensitive information in your Worker code</li>
+<li>Make sure you installed AlphaGenome: <code>uv pip install ~/code/alphagenome</code></li>
+<li>Check installation: <code>uv pip list | grep alphagenome</code></li>
+</ul>
+<h3 id="sequence-length-x-not-supported">"Sequence length X not supported"<a class="headerlink" href="#sequence-length-x-not-supported" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use one of the supported sizes: 2048, 16384, 131072, 524288, 1048576</li>
+<li>The tool automatically rounds up to the nearest supported size</li>
+</ul>
+<h3 id="protobuf-warnings">Protobuf warnings<a class="headerlink" href="#protobuf-warnings" title="Permanent link">&para;</a></h3>
+<ul>
+<li>You may see warnings like "Protobuf gencode version 5.27.2 is exactly one major version older..."</li>
+<li>These warnings are harmless and don't affect functionality</li>
+<li>They occur because AlphaGenome's proto files were compiled with an older protobuf version</li>
+<li>To suppress in your own code:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Protobuf gencode version.*is exactly one major version older&quot;</span><span class="p">)</span>
+</code></pre></div></li>
+</ul>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Start with default settings</strong> - The 128kb window captures most regulatory elements</li>
+<li><strong>Use tissue context when relevant</strong> - Especially for tissue-specific diseases</li>
+<li><strong>Combine with other tools</strong> - Use <code>variant_getter</code> first for known annotations</li>
+<li><strong>Consider multiple variants</strong> - Analyze all variants in a gene for comprehensive view</li>
+<li><strong>Document your findings</strong> - Save important predictions for future reference</li>
+<li><strong>Validate inputs</strong> - Ensure chromosome format (chr1-22, chrX, chrY, chrM/chrMT) and valid nucleotides (A, C, G, T)</li>
+<li><strong>Leverage caching</strong> - Results are cached for 30 minutes to improve performance for repeated queries</li>
+<li><strong>Adjust thresholds</strong> - Use lower thresholds (e.g., 0.3) to detect subtle effects, higher (e.g., 1.0) for strong effects only</li>
+</ol>
+<h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Human genome only (GRCh38/hg38)</li>
+<li>Requires exact genomic coordinates</li>
+<li>Cannot analyze structural variants or complex indels</li>
+<li>Predictions are computational and should be validated experimentally</li>
+<li>API rate limits may apply for high-volume usage</li>
+<li>Chromosome format must include 'chr' prefix (e.g., chr1, not 1)</li>
+<li>Only standard nucleotides supported (A, C, G, T) - no ambiguity codes</li>
+</ul>
+<h2 id="further-resources">Further Resources<a class="headerlink" href="#further-resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://deepmind.google/science/alphagenome">AlphaGenome Paper</a></li>
+<li><a href="../../cli/variants/">BioMCP Variant Documentation</a></li>
+<li><a href="https://www.ebi.ac.uk/ols/ontologies/uberon">UBERON Tissue Ontology</a></li>
 </ul>
 
 
