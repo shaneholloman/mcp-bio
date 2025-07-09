@@ -12,11 +12,13 @@
         <meta name="author" content="Ian Maurer">
       
       
-        <link rel="canonical" href="https://biomcp.org/changelog/">
+        <link rel="canonical" href="https://biomcp.org/INTEGRATION_TESTING/">
       
       
-        <link rel="prev" href="../genomoncology/">
+        <link rel="prev" href="../HTTP_CLIENT_GUIDE/">
       
+      
+        <link rel="next" href="../MIGRATION_EXAMPLES/">
       
       
       <link rel="icon" href="../assets/favicon.ico">
@@ -24,7 +26,7 @@
     
     
       
-        <title>Changelog - BioMCP</title>
+        <title>Integration Testing - BioMCP</title>
       
     
     
@@ -78,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#changelog" class="md-skip">
+        <a href="#integration-testing-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Changelog
+              Integration Testing
             
           </span>
         </div>
@@ -1009,18 +1011,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -1036,7 +1040,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Developer Guides
@@ -1093,10 +1097,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../INTEGRATION_TESTING/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Integration Testing
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1107,6 +1133,338 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running Integration Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running Integration Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-all-tests-including-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run All Tests (Including Integration)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-only-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Only Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skip Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-flaky-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling Flaky Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handling Flaky Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-api-unavailability" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. API Unavailability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Rate Limiting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-data-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Data Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Design Principles
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Design Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-graceful-skipping" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Graceful Skipping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-flexible-assertions" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Flexible Assertions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-retry-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Retry Logic
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-cache-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Cache Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-integration-test-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Integration Test Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Integration Test Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#testing-search-functionality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Search Functionality
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-data-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Data Retrieval
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging-failed-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging Failed Integration Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Debugging Failed Integration Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-enable-debug-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Enable Debug Logging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-check-api-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Check API Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-inspect-response-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Inspect Response Data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables-for-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Environment Variables for Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environment Variables for Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Tokens
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offline-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Offline Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Timeouts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      CI/CD Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI/CD Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-separate-test-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Separate Test Runs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-scheduled-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Scheduled Runs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-result-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Result Monitoring
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1373,32 +1731,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Changelog
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
         
   
   
@@ -1409,230 +1745,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
-    <span class="md-ellipsis">
-      [Unreleased]
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="[Unreleased]">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added" class="md-nav__link">
-    <span class="md-ellipsis">
-      Added
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fixed
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#040-2025-06-27" class="md-nav__link">
-    <span class="md-ellipsis">
-      [0.4.0] - 2025-06-27
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="[0.4.0] - 2025-06-27">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Added
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
-    <span class="md-ellipsis">
-      Changed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fixed_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fixed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#improved" class="md-nav__link">
-    <span class="md-ellipsis">
-      Improved
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#030-2025-06-19" class="md-nav__link">
-    <span class="md-ellipsis">
-      [0.3.0] - 2025-06-19
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="[0.3.0] - 2025-06-19">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Added
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Changed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#enhanced" class="md-nav__link">
-    <span class="md-ellipsis">
-      Enhanced
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fixed_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fixed
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#020-2025-06-19" class="md-nav__link">
-    <span class="md-ellipsis">
-      [0.2.0] - 2025-06-19
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="[0.2.0] - 2025-06-19">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Breaking Changes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#added_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      Added
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Changed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#migration-guide" class="md-nav__link">
-    <span class="md-ellipsis">
-      Migration Guide
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#011-2025-04-14" class="md-nav__link">
-    <span class="md-ellipsis">
-      [0.1.1] - 2025-04-14
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#010-2025-04-08" class="md-nav__link">
-    <span class="md-ellipsis">
-      [0.1.0] - 2025-04-08
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1664,28 +1776,46 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
-      [Unreleased]
+      Overview
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[Unreleased]">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running Integration Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running Integration Tests">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added" class="md-nav__link">
+  <a href="#run-all-tests-including-integration" class="md-nav__link">
     <span class="md-ellipsis">
-      Added
+      Run All Tests (Including Integration)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed" class="md-nav__link">
+  <a href="#run-only-integration-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      Fixed
+      Run Only Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skip Integration Tests
     </span>
   </a>
   
@@ -1697,46 +1827,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#040-2025-06-27" class="md-nav__link">
+  <a href="#handling-flaky-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.4.0] - 2025-06-27
+      Handling Flaky Tests
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.4.0] - 2025-06-27">
+    <nav class="md-nav" aria-label="Handling Flaky Tests">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_1" class="md-nav__link">
+  <a href="#1-api-unavailability" class="md-nav__link">
     <span class="md-ellipsis">
-      Added
+      1. API Unavailability
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#2-rate-limiting" class="md-nav__link">
     <span class="md-ellipsis">
-      Changed
+      2. Rate Limiting
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_1" class="md-nav__link">
+  <a href="#3-data-changes" class="md-nav__link">
     <span class="md-ellipsis">
-      Fixed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#improved" class="md-nav__link">
-    <span class="md-ellipsis">
-      Improved
+      3. Data Changes
     </span>
   </a>
   
@@ -1748,46 +1869,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#030-2025-06-19" class="md-nav__link">
+  <a href="#test-design-principles" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.3.0] - 2025-06-19
+      Test Design Principles
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.3.0] - 2025-06-19">
+    <nav class="md-nav" aria-label="Test Design Principles">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_2" class="md-nav__link">
+  <a href="#1-graceful-skipping" class="md-nav__link">
     <span class="md-ellipsis">
-      Added
+      1. Graceful Skipping
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#2-flexible-assertions" class="md-nav__link">
     <span class="md-ellipsis">
-      Changed
+      2. Flexible Assertions
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#enhanced" class="md-nav__link">
+  <a href="#3-retry-logic" class="md-nav__link">
     <span class="md-ellipsis">
-      Enhanced
+      3. Retry Logic
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_2" class="md-nav__link">
+  <a href="#4-cache-management" class="md-nav__link">
     <span class="md-ellipsis">
-      Fixed
+      4. Cache Management
     </span>
   </a>
   
@@ -1799,46 +1920,28 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#020-2025-06-19" class="md-nav__link">
+  <a href="#common-integration-test-patterns" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.2.0] - 2025-06-19
+      Common Integration Test Patterns
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.2.0] - 2025-06-19">
+    <nav class="md-nav" aria-label="Common Integration Test Patterns">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#testing-search-functionality" class="md-nav__link">
     <span class="md-ellipsis">
-      Breaking Changes
+      Testing Search Functionality
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#added_3" class="md-nav__link">
+  <a href="#testing-data-retrieval" class="md-nav__link">
     <span class="md-ellipsis">
-      Added
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Changed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#migration-guide" class="md-nav__link">
-    <span class="md-ellipsis">
-      Migration Guide
+      Testing Data Retrieval
     </span>
   </a>
   
@@ -1850,18 +1953,135 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#011-2025-04-14" class="md-nav__link">
+  <a href="#debugging-failed-integration-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.1.1] - 2025-04-14
+      Debugging Failed Integration Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Debugging Failed Integration Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-enable-debug-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Enable Debug Logging
     </span>
   </a>
   
 </li>
+        
+          <li class="md-nav__item">
+  <a href="#2-check-api-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Check API Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-inspect-response-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Inspect Response Data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#010-2025-04-08" class="md-nav__link">
+  <a href="#environment-variables-for-testing" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.1.0] - 2025-04-08
+      Environment Variables for Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environment Variables for Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Tokens
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offline-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Offline Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Timeouts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      CI/CD Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI/CD Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-separate-test-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Separate Test Runs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-scheduled-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Scheduled Runs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-result-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Result Monitoring
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
     </span>
   </a>
   
@@ -1886,151 +2106,156 @@
   
 
 
-<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
-<h2 id="unreleased">[Unreleased]<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
-<h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
+<h1 id="integration-testing-guide">Integration Testing Guide<a class="headerlink" href="#integration-testing-guide" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>BioMCP includes integration tests that make real API calls to external services. These tests verify that our integrations work correctly with live data but can be affected by API availability, rate limits, and data changes.</p>
+<h2 id="running-integration-tests">Running Integration Tests<a class="headerlink" href="#running-integration-tests" title="Permanent link">&para;</a></h2>
+<h3 id="run-all-tests-including-integration">Run All Tests (Including Integration)<a class="headerlink" href="#run-all-tests-including-integration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>make<span class="w"> </span><span class="nb">test</span>
+</code></pre></div>
+<h3 id="run-only-integration-tests">Run Only Integration Tests<a class="headerlink" href="#run-only-integration-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pytest<span class="w"> </span>-m<span class="w"> </span>integration
+</code></pre></div>
+<h3 id="skip-integration-tests">Skip Integration Tests<a class="headerlink" href="#skip-integration-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pytest<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not integration&quot;</span>
+</code></pre></div>
+<h2 id="handling-flaky-tests">Handling Flaky Tests<a class="headerlink" href="#handling-flaky-tests" title="Permanent link">&para;</a></h2>
+<p>Integration tests may fail or skip for various reasons:</p>
+<h3 id="1-api-unavailability">1. API Unavailability<a class="headerlink" href="#1-api-unavailability" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom</strong>: Tests skip with "API returned no data" message
+<strong>Cause</strong>: The external service is down or experiencing issues
+<strong>Action</strong>: Re-run tests later or check service status</p>
+<h3 id="2-rate-limiting">2. Rate Limiting<a class="headerlink" href="#2-rate-limiting" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom</strong>: Multiple test failures after initial successes
+<strong>Cause</strong>: Too many requests in a short time
+<strong>Action</strong>: Run tests with delays between them or use API tokens</p>
+<h3 id="3-data-changes">3. Data Changes<a class="headerlink" href="#3-data-changes" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom</strong>: Assertions about specific data fail
+<strong>Cause</strong>: The external data has changed (e.g., new mutations discovered)
+<strong>Action</strong>: Update tests to use more flexible assertions</p>
+<h2 id="test-design-principles">Test Design Principles<a class="headerlink" href="#test-design-principles" title="Permanent link">&para;</a></h2>
+<h3 id="1-graceful-skipping">1. Graceful Skipping<a class="headerlink" href="#1-graceful-skipping" title="Permanent link">&para;</a></h3>
+<p>Tests should skip rather than fail when:</p>
 <ul>
-<li><strong>Europe PMC DOI Support for Article Fetching</strong>:</li>
-<li><code>article_getter</code> tool now accepts DOIs in addition to PMIDs</li>
-<li><code>fetch</code> unified tool supports DOIs for the article domain</li>
-<li>CLI <code>biomcp article get</code> command accepts both PMIDs and DOIs</li>
-<li>Automatically routes DOIs to Europe PMC API for preprint retrieval</li>
-<li>Supports mixed lists of PMIDs and DOIs in batch requests</li>
+<li>API returns no data</li>
+<li>Service is unavailable</li>
+<li>Rate limits are hit</li>
 </ul>
-<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">data</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">total_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;API returned no data - possible service issue&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="2-flexible-assertions">2. Flexible Assertions<a class="headerlink" href="#2-flexible-assertions" title="Permanent link">&para;</a></h3>
+<p>Avoid assertions on specific data values that might change:</p>
+<p>❌ <strong>Bad</strong>: Expecting exact mutation counts</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">assert</span> <span class="n">summary</span><span class="o">.</span><span class="n">total_mutations</span> <span class="o">==</span> <span class="mi">1234</span>
+</code></pre></div>
+<p>✅ <strong>Good</strong>: Checking data exists and has reasonable structure</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">assert</span> <span class="n">summary</span><span class="o">.</span><span class="n">total_mutations</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">summary</span><span class="p">,</span> <span class="s1">&#39;hotspots&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="3-retry-logic">3. Retry Logic<a class="headerlink" href="#3-retry-logic" title="Permanent link">&para;</a></h3>
+<p>For critical tests, implement retry with delay:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_with_retry</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="n">max_attempts</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_attempts</span><span class="p">):</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="k">if</span> <span class="n">result</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>            <span class="k">return</span> <span class="n">result</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">max_attempts</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
+<h3 id="4-cache-management">4. Cache Management<a class="headerlink" href="#4-cache-management" title="Permanent link">&para;</a></h3>
+<p>Clear caches before tests to ensure fresh data:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">biomcp.utils.request_cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">clear_cache</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">await</span> <span class="n">clear_cache</span><span class="p">()</span>
+</code></pre></div>
+<h2 id="common-integration-test-patterns">Common Integration Test Patterns<a class="headerlink" href="#common-integration-test-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="testing-search-functionality">Testing Search Functionality<a class="headerlink" href="#testing-search-functionality" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_gene_search</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">client</span> <span class="o">=</span> <span class="n">SearchClient</span><span class="p">()</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;BRAF&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="c1"># Flexible assertions</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="k">assert</span> <span class="n">results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="k">assert</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">gene_symbol</span> <span class="o">==</span> <span class="s2">&quot;BRAF&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>        <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;No results returned - API may be unavailable&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="testing-data-retrieval">Testing Data Retrieval<a class="headerlink" href="#testing-data-retrieval" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_variant_details</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">client</span> <span class="o">=</span> <span class="n">VariantClient</span><span class="p">()</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">variant</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get_variant</span><span class="p">(</span><span class="s2">&quot;rs121913529&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">variant</span><span class="p">:</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;Variant not found - may have been removed from database&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="c1"># Check structure, not specific values</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">variant</span><span class="p">,</span> <span class="s1">&#39;chromosome&#39;</span><span class="p">)</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">variant</span><span class="p">,</span> <span class="s1">&#39;position&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="debugging-failed-integration-tests">Debugging Failed Integration Tests<a class="headerlink" href="#debugging-failed-integration-tests" title="Permanent link">&para;</a></h2>
+<h3 id="1-enable-debug-logging">1. Enable Debug Logging<a class="headerlink" href="#1-enable-debug-logging" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nv">BIOMCP_LOG_LEVEL</span><span class="o">=</span>DEBUG<span class="w"> </span>pytest<span class="w"> </span>tests/integration/test_failing.py<span class="w"> </span>-v
+</code></pre></div>
+<h3 id="2-check-api-status">2. Check API Status<a class="headerlink" href="#2-check-api-status" title="Permanent link">&para;</a></h3>
+<p>Many services provide status pages:</p>
 <ul>
-<li><strong>Preprint Fetch Error</strong>: Fixed "Error 400: Could not retrieve publications" when trying to fetch Europe PMC preprints found in search results</li>
-<li>Added DOI detection logic to distinguish from PMIDs</li>
-<li>Implemented Europe PMC article fetch functionality</li>
-<li>Updated routing logic in both unified and individual tools</li>
+<li>PubMed: https://www.ncbi.nlm.nih.gov/home/about/website-updates/</li>
+<li>ClinicalTrials.gov: https://clinicaltrials.gov/about/announcements</li>
+<li>cBioPortal: https://www.cbioportal.org/</li>
 </ul>
-<h2 id="040-2025-06-27">[0.4.0] - 2025-06-27<a class="headerlink" href="#040-2025-06-27" title="Permanent link">&para;</a></h2>
-<h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Dedicated Think Tool</strong>: Sequential thinking is now a separate, mandatory tool</li>
-<li><code>think</code> tool MUST be used before any search operations</li>
-<li>Provides systematic step-by-step analysis for all biomedical queries</li>
-<li>Includes automatic reminders if not used</li>
-<li><strong>10 Individual Tools Restored</strong>: Direct access tools for specific functionality</li>
-<li>Article tools: <code>article_searcher</code>, <code>article_getter</code></li>
-<li>Trial tools: <code>trial_searcher</code>, <code>trial_getter</code>, <code>trial_protocol_getter</code>, <code>trial_references_getter</code>, <code>trial_outcomes_getter</code>, <code>trial_locations_getter</code></li>
-<li>Variant tools: <code>variant_searcher</code>, <code>variant_getter</code></li>
-<li><strong>Enhanced cBioPortal Integration</strong>: Now available in individual tools</li>
-<li><code>article_searcher</code> and <code>variant_searcher</code> include <code>include_cbioportal</code> parameter</li>
-<li>Centralized helper module for consistent integration</li>
-<li><strong>Thinking Usage Tracker</strong>: Monitors and encourages proper thinking tool usage</li>
-<li>Context-aware tracking across MCP sessions</li>
-<li>Automatic reminders in search results when thinking hasn't been used</li>
-</ul>
-<h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>13 Total Tools</strong>: 3 core tools (think, search, fetch) + 10 individual tools</li>
-<li><strong>Sequential Thinking</strong>: Moved from <code>search(domain="thinking")</code> to dedicated <code>think</code> tool</li>
-<li><strong>Search Tool Simplified</strong>: Removed thinking domain and parameters from search tool</li>
-<li><strong>Query Parameter</strong>: Changed from optional (<code>str | None = None</code>) to required with empty default (<code>str = ""</code>) for ChatGPT compatibility</li>
-</ul>
-<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>MyVariant.info Timeouts</strong>: Fixed HTTP client not using configured 120s timeout</li>
-<li>Added "myvariant" to aggressive retry domains</li>
-<li>Improved error messages for timeout scenarios</li>
-<li>Optimized BRAF V600E query pattern</li>
-<li><strong>Location Parameter Validation</strong>: Added proper validation for trial search location parameters</li>
-<li>Ensures lat/long are provided together</li>
-<li>Validates distance requires coordinates</li>
-</ul>
-<h3 id="improved">Improved<a class="headerlink" href="#improved" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Code Organization</strong>: Created <code>cbioportal_helper.py</code> to centralize integration logic</li>
-<li><strong>Type Safety</strong>: Added proper type annotations throughout new modules</li>
-<li><strong>Error Handling</strong>: Consistent logger usage and error messages</li>
-</ul>
-<h2 id="030-2025-06-19">[0.3.0] - 2025-06-19<a class="headerlink" href="#030-2025-06-19" title="Permanent link">&para;</a></h2>
-<h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Unified Query Language</strong>: Integrated into the <code>search</code> tool</li>
-<li>Use <code>query</code> parameter for structured field syntax</li>
-<li>Natural language queries: <code>"BRAF melanoma"</code></li>
-<li>Field-specific queries: <code>"gene:BRAF AND trials.condition:melanoma"</code></li>
-<li>Cross-domain searches from a single query</li>
-<li>Support for boolean operators (AND, OR, NOT) and comparisons (&gt;, &lt;, ..)</li>
-<li><strong>Schema Discovery</strong>: Access via <code>search(get_schema=True)</code></li>
-<li><strong>Query Explanation</strong>: Use <code>explain_query=True</code> to see how queries are parsed</li>
-<li><strong>Integrated Sequential Thinking</strong>: Access via <code>search(domain="thinking")</code></li>
-<li>Clients should explicitly call this before biomedical searches</li>
-<li>Provides systematic step-by-step analysis</li>
-<li>Supports thought revision and branching</li>
-</ul>
-<h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Two Core Tools</strong>: <code>search</code> and <code>fetch</code> (following OpenAI MCP guidelines)</li>
-<li><strong>Sequential Thinking Integration</strong>: Now accessible through <code>search(domain="thinking")</code> instead of a separate tool</li>
-<li><strong>Triple-Mode Search</strong>: The <code>search</code> tool supports sequential thinking, unified query, and legacy domain-based modes</li>
-<li><strong>Backward Compatible</strong>: All existing integrations continue to work</li>
-</ul>
-<h3 id="enhanced">Enhanced<a class="headerlink" href="#enhanced" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Improved result formatting for all search domains</li>
-<li>Better handling of JSON string parameters from MCP clients</li>
-<li>More robust error handling and result parsing</li>
-</ul>
-<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Fixed variant fetch error with incorrect parameter names (<code>include_external</code> instead of <code>include_tcga</code>)</li>
-<li>Fixed article fetch error where <code>_article_details</code> was called with non-existent <code>fetch_full_text</code> parameter</li>
-<li>Fixed article search returning 0 results due to overly restrictive AND logic for keywords</li>
-<li>Fixed JSON parsing error in article fetch by calling <code>fetch_articles</code> directly with <code>output_json=True</code></li>
-<li>Fixed trial search "'list' object has no attribute 'get'" error by handling ClinicalTrials.gov API v2 response format</li>
-<li>Fixed trial search phase validation error by normalizing phase values (e.g., "Phase 3" → "PHASE3")</li>
-<li>Fixed trial search KeyError 'nct_id' by handling nested ClinicalTrials.gov API v2 structure in <code>format_results</code></li>
-<li>Fixed parameter validation errors by accepting both string and list types for search parameters</li>
-</ul>
-<h2 id="020-2025-06-19">[0.2.0] - 2025-06-19<a class="headerlink" href="#020-2025-06-19" title="Permanent link">&para;</a></h2>
-<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>MCP Tools Consolidation</strong>: Consolidated 10 separate MCP tools into 2 unified tools (<code>search</code> and <code>fetch</code>) to align with OpenAI MCP guidelines</li>
-<li>Removed individual MCP tool decorators from legacy functions</li>
-<li>Legacy functions renamed with leading underscore to indicate internal use</li>
-<li>Sequential thinking tool removed from MCP interface (now internal)</li>
-</ul>
-<h3 id="added_3">Added<a class="headerlink" href="#added_3" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Unified Search Tool</strong>: Single <code>search</code> tool that handles articles, trials, and variants with domain parameter</li>
-<li><strong>Unified Fetch Tool</strong>: Single <code>fetch</code> tool that retrieves details for any domain type</li>
-<li><strong>OpenAI MCP Compatibility</strong>: Search results now follow OpenAI's standardized format with id, title, snippet, url, and metadata fields</li>
-</ul>
-<h3 id="changed_2">Changed<a class="headerlink" href="#changed_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li>CLI interface remains unchanged - all <code>biomcp</code> commands continue to work as before</li>
-<li>Internal functions preserved for backward compatibility with CLI</li>
-</ul>
-<h3 id="migration-guide">Migration Guide<a class="headerlink" href="#migration-guide" title="Permanent link">&para;</a></h3>
-<p>If you were using the MCP tools directly:</p>
-<ul>
-<li>Replace <code>article_searcher(...)</code> with <code>search(domain="article", ...)</code></li>
-<li>Replace <code>trial_searcher(...)</code> with <code>search(domain="trial", ...)</code></li>
-<li>Replace <code>variant_searcher(...)</code> with <code>search(domain="variant", ...)</code></li>
-<li>Replace <code>article_details(pmid=X)</code> with <code>fetch(domain="article", id=X)</code></li>
-<li>Replace <code>trial_protocol(nct_id=X)</code> with <code>fetch(domain="trial", id=X, detail="protocol")</code></li>
-<li>Remove usage of <code>sequential_thinking</code> tool (use LLM's internal reasoning instead)</li>
-</ul>
-<h2 id="011-2025-04-14">[0.1.1] - 2025-04-14<a class="headerlink" href="#011-2025-04-14" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Simplified <code>biomcp run</code>.</li>
-<li>Added tutorials on Claude Desktop, MCP Inspector, and Python SDK.</li>
-</ul>
-<h2 id="010-2025-04-08">[0.1.0] - 2025-04-08<a class="headerlink" href="#010-2025-04-08" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Initial release of BioMCP CLI and server.</li>
-<li>Support for searching ClinicalTrials.gov (<code>biomcp trial search</code>).</li>
-<li>Support for retrieving trial details (<code>biomcp trial get</code>).</li>
-<li>Support for searching PubMed/PubTator3 (<code>biomcp article search</code>).</li>
-<li>Support for retrieving article details (<code>biomcp article get</code>).</li>
-<li>Support for searching MyVariant.info (<code>biomcp variant search</code>).</li>
-<li>Support for retrieving variant details (<code>biomcp variant get</code>).</li>
-<li>Basic HTTP caching for API requests.</li>
-<li>Initial documentation structure.</li>
-</ul>
+<h3 id="3-inspect-response-data">3. Inspect Response Data<a class="headerlink" href="#3-inspect-response-data" title="Permanent link">&para;</a></h3>
+<p>Add debugging output to see actual responses:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">expected_data</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;Data structure changed&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="environment-variables-for-testing">Environment Variables for Testing<a class="headerlink" href="#environment-variables-for-testing" title="Permanent link">&para;</a></h2>
+<h3 id="api-tokens">API Tokens<a class="headerlink" href="#api-tokens" title="Permanent link">&para;</a></h3>
+<p>Some services provide higher rate limits with authentication:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CBIO_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-token-here&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PUBMED_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key-here&quot;</span>
+</code></pre></div>
+<h3 id="offline-mode">Offline Mode<a class="headerlink" href="#offline-mode" title="Permanent link">&para;</a></h3>
+<p>Test offline behavior:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BIOMCP_OFFLINE</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>pytest<span class="w"> </span>tests/
+</code></pre></div>
+<h3 id="custom-timeouts">Custom Timeouts<a class="headerlink" href="#custom-timeouts" title="Permanent link">&para;</a></h3>
+<p>Adjust timeouts for slow connections:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BIOMCP_REQUEST_TIMEOUT</span><span class="o">=</span><span class="m">60</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>pytest<span class="w"> </span>tests/integration/
+</code></pre></div>
+<h2 id="cicd-considerations">CI/CD Considerations<a class="headerlink" href="#cicd-considerations" title="Permanent link">&para;</a></h2>
+<h3 id="1-separate-test-runs">1. Separate Test Runs<a class="headerlink" href="#1-separate-test-runs" title="Permanent link">&para;</a></h3>
+<p>Run integration tests separately in CI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Unit Tests</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest -m &quot;not integration&quot;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Integration Tests</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest -m integration</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span><span class="nt">continue-on-error</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="2-scheduled-runs">2. Scheduled Runs<a class="headerlink" href="#2-scheduled-runs" title="Permanent link">&para;</a></h3>
+<p>Run integration tests on a schedule to detect API changes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nt">on</span><span class="p">:</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">schedule</span><span class="p">:</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">6</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*&quot;</span><span class="w"> </span><span class="c1"># Daily at 6 AM</span>
+</code></pre></div>
+<h3 id="3-result-monitoring">3. Result Monitoring<a class="headerlink" href="#3-result-monitoring" title="Permanent link">&para;</a></h3>
+<p>Track integration test success rates over time to identify patterns.</p>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Keep integration tests focused</strong> - Test integration points, not business logic</li>
+<li><strong>Use reasonable timeouts</strong> - Don't wait forever for slow APIs</li>
+<li><strong>Document expected failures</strong> - Add comments explaining why tests might skip</li>
+<li><strong>Monitor external changes</strong> - Subscribe to API change notifications</li>
+<li><strong>Provide escape hatches</strong> - Allow skipping integration tests when needed</li>
+</ol>
 
 
 
