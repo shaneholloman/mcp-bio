@@ -492,9 +492,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#tool-parameters" class="md-nav__link">
+  <a href="#optional-parameters-for-better-results" class="md-nav__link">
     <span class="md-ellipsis">
-      Tool Parameters
+      Optional Parameters for Better Results
     </span>
   </a>
   
@@ -1333,6 +1333,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1621,9 +1644,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#tool-parameters" class="md-nav__link">
+  <a href="#optional-parameters-for-better-results" class="md-nav__link">
     <span class="md-ellipsis">
-      Tool Parameters
+      Optional Parameters for Better Results
     </span>
   </a>
   
@@ -1781,13 +1804,21 @@ clicking the "connector" icon below the chat that says "Attach from MCP".</p>
 MCP resource will be added as text.</p>
 <p>You should see at least 10 tools that can be accessed with BioMCP, including
 the built-in sequential thinking tool.</p>
-<h3 id="tool-parameters">Tool Parameters<a class="headerlink" href="#tool-parameters" title="Permanent link">&para;</a></h3>
-<p>Most BioMCP data retrieval tools include a required <code>call_benefit</code> parameter that helps the model explain why it's using a particular tool. When using these tools, you must provide:</p>
+<h3 id="optional-parameters-for-better-results">Optional Parameters for Better Results<a class="headerlink" href="#optional-parameters-for-better-results" title="Permanent link">&para;</a></h3>
+<p>The <code>search</code> and <code>fetch</code> tools include optional parameters:</p>
+<p><strong>For search and fetch tools:</strong></p>
 <ul>
-<li><code>call_benefit</code>: A brief description of why the tool is being called and what benefit is expected from using it</li>
+<li><code>call_benefit</code>: Helps the AI think about why it's making the call, improving accuracy and providing context for analytics</li>
 </ul>
-<p>This parameter helps improve tool usage transparency and allows for better reasoning about tool selection.</p>
-<p>Note: The <code>sequential_thinking</code> tool does not require the <code>call_benefit</code> parameter as it has its own structured parameters for managing the thinking process.</p>
+<p><strong>For fetch tool:</strong></p>
+<ul>
+<li><code>domain</code>: Usually not needed as BioMCP automatically detects the domain from the ID format:</li>
+<li>NCT12345 → trial</li>
+<li>12345678 → article (PMID)</li>
+<li>10.1038/nature12345 → article (DOI)</li>
+<li>rs12345 → variant</li>
+</ul>
+<p>When using these tools, the AI will automatically provide this context when it understands the benefit.</p>
 <h3 id="example-queries">Example Queries<a class="headerlink" href="#example-queries" title="Permanent link">&para;</a></h3>
 <p>Below are some example questions to try based on your use cases/research.</p>
 <h3 id="clinical-trials-queries">Clinical Trials Queries<a class="headerlink" href="#clinical-trials-queries" title="Permanent link">&para;</a></h3>

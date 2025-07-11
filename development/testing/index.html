@@ -12,13 +12,13 @@
         <meta name="author" content="Ian Maurer">
       
       
-        <link rel="canonical" href="https://biomcp.org/policies/biomcp-security/">
+        <link rel="canonical" href="https://biomcp.org/development/testing/">
       
       
-        <link rel="prev" href="../biomcp-privacy/">
+        <link rel="prev" href="../../performance-optimizations/">
       
       
-        <link rel="next" href="../biomcp-terms/">
+        <link rel="next" href="../../policies/biomcp-privacy/">
       
       
       <link rel="icon" href="../../assets/favicon.ico">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Security Policy - BioMCP</title>
+        <title>Testing - BioMCP</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#security-policy" class="md-skip">
+        <a href="#testing-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Security Policy
+              Testing
             
           </span>
         </div>
@@ -1011,18 +1011,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -1038,7 +1040,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Developer Guides
@@ -1164,99 +1166,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/testing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Testing
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Policies
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_7">
-            <span class="md-nav__icon md-icon"></span>
-            Policies
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../biomcp-privacy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Privacy Policy
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -1274,7 +1183,7 @@
   
   
   <span class="md-ellipsis">
-    Security Policy
+    Testing
     
   </span>
   
@@ -1287,7 +1196,7 @@
   
   
   <span class="md-ellipsis">
-    Security Policy
+    Testing
     
   </span>
   
@@ -1310,55 +1219,37 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#reporting-a-vulnerability" class="md-nav__link">
+  <a href="#running-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      Reporting a Vulnerability
+      Running Tests
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Reporting a Vulnerability">
+    <nav class="md-nav" aria-label="Running Tests">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#please-do-not" class="md-nav__link">
+  <a href="#all-tests-local-development" class="md-nav__link">
     <span class="md-ellipsis">
-      Please do NOT:
+      All Tests (Local Development)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#please-do" class="md-nav__link">
+  <a href="#unit-tests-only-excluding-integration-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      Please DO:
+      Unit Tests Only (Excluding Integration Tests)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#what-to-expect" class="md-nav__link">
+  <a href="#integration-tests-only" class="md-nav__link">
     <span class="md-ellipsis">
-      What to expect:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scope
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#out-of-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      Out of Scope:
+      Integration Tests Only
     </span>
   </a>
   
@@ -1370,29 +1261,110 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#disclosure-policy" class="md-nav__link">
+  <a href="#test-categories" class="md-nav__link">
     <span class="md-ellipsis">
-      Disclosure Policy
+      Test Categories
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd-testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      CI/CD Testing Strategy
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#safe-harbor" class="md-nav__link">
+  <a href="#writing-new-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      Safe Harbor
+      Writing New Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writing New Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-test-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Test Example
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#contact" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#integration-test-example" class="md-nav__link">
     <span class="md-ellipsis">
-      Contact
+      Integration Test Example
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-test-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Test Failures
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting Test Failures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integration-test-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Test Failures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-tests-with-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running Tests with Coverage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1405,6 +1377,51 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Policies
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Policies
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
                 
   
@@ -1412,7 +1429,53 @@
   
   
     <li class="md-nav__item">
-      <a href="../biomcp-terms/" class="md-nav__link">
+      <a href="../../policies/biomcp-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Privacy Policy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policies/biomcp-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Policy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policies/biomcp-terms/" class="md-nav__link">
         
   
   
@@ -1574,55 +1637,37 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#reporting-a-vulnerability" class="md-nav__link">
+  <a href="#running-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      Reporting a Vulnerability
+      Running Tests
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Reporting a Vulnerability">
+    <nav class="md-nav" aria-label="Running Tests">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#please-do-not" class="md-nav__link">
+  <a href="#all-tests-local-development" class="md-nav__link">
     <span class="md-ellipsis">
-      Please do NOT:
+      All Tests (Local Development)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#please-do" class="md-nav__link">
+  <a href="#unit-tests-only-excluding-integration-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      Please DO:
+      Unit Tests Only (Excluding Integration Tests)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#what-to-expect" class="md-nav__link">
+  <a href="#integration-tests-only" class="md-nav__link">
     <span class="md-ellipsis">
-      What to expect:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scope
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#out-of-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      Out of Scope:
+      Integration Tests Only
     </span>
   </a>
   
@@ -1634,29 +1679,110 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#disclosure-policy" class="md-nav__link">
+  <a href="#test-categories" class="md-nav__link">
     <span class="md-ellipsis">
-      Disclosure Policy
+      Test Categories
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd-testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      CI/CD Testing Strategy
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#safe-harbor" class="md-nav__link">
+  <a href="#writing-new-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      Safe Harbor
+      Writing New Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writing New Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-test-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Test Example
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#contact" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#integration-test-example" class="md-nav__link">
     <span class="md-ellipsis">
-      Contact
+      Integration Test Example
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-test-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Test Failures
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting Test Failures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integration-test-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Test Failures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-tests-with-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running Tests with Coverage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1679,60 +1805,85 @@
   
 
 
-<h1 id="security-policy">Security Policy<a class="headerlink" href="#security-policy" title="Permanent link">&para;</a></h1>
-<h2 id="reporting-a-vulnerability">Reporting a Vulnerability<a class="headerlink" href="#reporting-a-vulnerability" title="Permanent link">&para;</a></h2>
-<p>We take the security of biomcp seriously. If you believe you have found a security vulnerability, please report it to us as described below.</p>
-<h3 id="please-do-not">Please do NOT:<a class="headerlink" href="#please-do-not" title="Permanent link">&para;</a></h3>
+<h1 id="testing-guide">Testing Guide<a class="headerlink" href="#testing-guide" title="Permanent link">&para;</a></h1>
+<h2 id="running-tests">Running Tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h2>
+<h3 id="all-tests-local-development">All Tests (Local Development)<a class="headerlink" href="#all-tests-local-development" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>make<span class="w"> </span><span class="nb">test</span>
+</code></pre></div>
+<h3 id="unit-tests-only-excluding-integration-tests">Unit Tests Only (Excluding Integration Tests)<a class="headerlink" href="#unit-tests-only-excluding-integration-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not integration&quot;</span>
+</code></pre></div>
+<h3 id="integration-tests-only">Integration Tests Only<a class="headerlink" href="#integration-tests-only" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;integration&quot;</span>
+</code></pre></div>
+<h2 id="test-categories">Test Categories<a class="headerlink" href="#test-categories" title="Permanent link">&para;</a></h2>
+<h3 id="unit-tests">Unit Tests<a class="headerlink" href="#unit-tests" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Open a public GitHub issue</li>
-<li>Discuss the vulnerability publicly before it has been addressed</li>
+<li>Run without external API calls</li>
+<li>Fast and reliable</li>
+<li>Always run in CI</li>
 </ul>
-<h3 id="please-do">Please DO:<a class="headerlink" href="#please-do" title="Permanent link">&para;</a></h3>
+<h3 id="integration-tests">Integration Tests<a class="headerlink" href="#integration-tests" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Email us at <strong>security@genomoncology.com</strong></li>
-<li>Include the word "SECURITY" in the subject line</li>
-<li>Provide detailed steps to reproduce the vulnerability</li>
-<li>Include the impact and potential attack scenarios</li>
+<li>Make real API calls to external services (PubMed, cBioPortal, etc.)</li>
+<li>Marked with <code>@pytest.mark.integration</code></li>
+<li>May fail due to:</li>
+<li>Network issues</li>
+<li>API rate limiting</li>
+<li>Service availability</li>
+<li>Run separately in CI with <code>continue-on-error: true</code></li>
 </ul>
-<h3 id="what-to-expect">What to expect:<a class="headerlink" href="#what-to-expect" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Acknowledgment</strong>: Within 24 hours</li>
-<li><strong>Initial Assessment</strong>: Within 72 hours</li>
-<li><strong>Status Updates</strong>: At least every 5 business days</li>
-<li><strong>Resolution Target</strong>: Critical issues within 30 days</li>
-</ul>
-<h3 id="scope">Scope<a class="headerlink" href="#scope" title="Permanent link">&para;</a></h3>
-<p>Vulnerabilities in the following areas are in scope:</p>
-<ul>
-<li>Authentication bypass or privilege escalation</li>
-<li>Data exposure or unauthorized access to user queries</li>
-<li>Injection vulnerabilities (SQL, command, etc.)</li>
-<li>Cross-site scripting (XSS) or request forgery (CSRF)</li>
-<li>Denial of service vulnerabilities</li>
-<li>Insecure cryptographic implementations</li>
-<li>Third-party API key exposure</li>
-</ul>
-<h3 id="out-of-scope">Out of Scope:<a class="headerlink" href="#out-of-scope" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Vulnerabilities in third-party services (PubMed, bioRxiv, etc.)</li>
-<li>Issues in dependencies with existing patches</li>
-<li>Social engineering attacks</li>
-<li>Physical attacks</li>
-<li>Attacks requiring authenticated admin access</li>
-</ul>
-<h2 id="disclosure-policy">Disclosure Policy<a class="headerlink" href="#disclosure-policy" title="Permanent link">&para;</a></h2>
-<ul>
-<li>We will work with you to understand and validate the issue</li>
-<li>We will prepare a fix and release it as soon as possible</li>
-<li>We will publicly disclose the vulnerability after the fix is released</li>
-<li>We will credit you for the discovery (unless you prefer to remain anonymous)</li>
-</ul>
-<h2 id="safe-harbor">Safe Harbor<a class="headerlink" href="#safe-harbor" title="Permanent link">&para;</a></h2>
-<p>Any activities conducted in a manner consistent with this policy will be considered authorized conduct, and we will not initiate legal action against you. If legal action is initiated by a third party against you in connection with activities conducted under this policy, we will take steps to make it known that your actions were conducted in compliance with this policy.</p>
-<h2 id="contact">Contact<a class="headerlink" href="#contact" title="Permanent link">&para;</a></h2>
-<p><strong>Security Team Email</strong>: security@genomoncology.com
-<strong>PGP Key</strong>: Available upon request</p>
-<p>Thank you for helping keep biomcp and our users safe!</p>
+<h2 id="cicd-testing-strategy">CI/CD Testing Strategy<a class="headerlink" href="#cicd-testing-strategy" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>Pull Requests &amp; Main Branch</strong>:</p>
+</li>
+<li>
+<p>Run unit tests only (<code>-m "not integration"</code>)</p>
+</li>
+<li>Ensures fast, reliable CI runs</li>
+<li>
+<p>Prevents flaky test failures</p>
+</li>
+<li>
+<p><strong>Integration Tests</strong>:</p>
+</li>
+<li>Run in a separate optional job</li>
+<li>Allowed to fail without blocking CI</li>
+<li>Useful for monitoring API availability</li>
+</ol>
+<h2 id="writing-new-tests">Writing New Tests<a class="headerlink" href="#writing-new-tests" title="Permanent link">&para;</a></h2>
+<h3 id="unit-test-example">Unit Test Example<a class="headerlink" href="#unit-test-example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_search_articles</span><span class="p">():</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test article search functionality.&quot;&quot;&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="c1"># Mock external API calls</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">&quot;biomcp.articles.search.fetch_articles&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mock_fetch</span><span class="p">:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">mock_fetch</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">]}</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="c1"># Test code here</span>
+</code></pre></div>
+<h3 id="integration-test-example">Integration Test Example<a class="headerlink" href="#integration-test-example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>  <span class="c1"># This marks it as an integration test</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_real_api_call</span><span class="p">():</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test real API interaction.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="c1"># Makes actual API calls</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">fetch_from_pubmed</span><span class="p">(</span><span class="s2">&quot;BRAF&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="k">assert</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</code></pre></div>
+<h2 id="troubleshooting-test-failures">Troubleshooting Test Failures<a class="headerlink" href="#troubleshooting-test-failures" title="Permanent link">&para;</a></h2>
+<h3 id="integration-test-failures">Integration Test Failures<a class="headerlink" href="#integration-test-failures" title="Permanent link">&para;</a></h3>
+<p>If integration tests fail in CI:</p>
+<ol>
+<li>Check if the external API is available</li>
+<li>Look for rate limiting messages</li>
+<li>Verify network connectivity</li>
+<li>These failures don't block merges</li>
+</ol>
+<h3 id="running-tests-with-coverage">Running Tests with Coverage<a class="headerlink" href="#running-tests-with-coverage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>make<span class="w"> </span>cov
+</code></pre></div>
+<p>This generates an HTML coverage report in <code>htmlcov/</code>.</p>
 
 
 
