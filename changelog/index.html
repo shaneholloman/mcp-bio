@@ -15,8 +15,10 @@
         <link rel="canonical" href="https://biomcp.org/changelog/">
       
       
-        <link rel="prev" href="../genomoncology/">
+        <link rel="prev" href="../blog/researcher-persona-resource/">
       
+      
+        <link rel="next" href="../policies/">
       
       
       <link rel="icon" href="../assets/favicon.ico">
@@ -51,6 +53,10 @@
     
     
       <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../stylesheets/announcement.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -92,7 +98,7 @@
 
   
 
-<header class="md-header md-header--shadow" data-md-component="header">
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="BioMCP" class="md-header__button md-logo" aria-label="BioMCP" data-md-component="logo">
       
@@ -176,6 +182,8 @@
         </button>
       </nav>
       
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
@@ -206,13 +214,165 @@
     
   </nav>
   
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/01-quickstart-cli/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../concepts/01-what-is-biomcp/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/quick-reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/quick-architecture/" class="md-tabs__link">
+          
+  
+  
+  Developer
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../blog/ai-assisted-clinical-trial-search-analysis/" class="md-tabs__link">
+          
+  
+  
+  About
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
 </header>
     
     <div class="md-container" data-md-component="container">
       
       
-        
-          
         
       
       <main class="md-main" data-md-component="main">
@@ -226,8 +386,10 @@
                     
 
 
+  
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="BioMCP" class="md-nav__button md-logo" aria-label="BioMCP" data-md-component="logo">
       
@@ -283,6 +445,11 @@
     
     
     
+      
+      
+        
+      
+    
     
     <li class="md-nav__item md-nav__item--nested">
       
@@ -296,7 +463,7 @@
   
   
   <span class="md-ellipsis">
-    Tutorials
+    Getting Started
     
   </span>
   
@@ -307,7 +474,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            Tutorials
+            Getting Started
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -318,12 +485,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/alphagenome-api-key-handling/" class="md-nav__link">
+      <a href="../getting-started/01-quickstart-cli/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    AlphaGenome API Key Handling
+    Quick Start
     
   </span>
   
@@ -341,122 +508,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/docker-alphagenome/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    AlphaGenome Docker
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorials/alphagenome-prompts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    AlphaGenome Prompts
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorials/alphagenome-setup/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    AlphaGenome Setup
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorials/biothings-prompts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    BioThings Integration Prompts
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorials/claude-code-biomcp-alphagenome/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Claude Code with BioMCP
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorials/claude-desktop/" class="md-nav__link">
+      <a href="../getting-started/02-claude-desktop-integration/" class="md-nav__link">
         
   
   
@@ -479,12 +531,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/macos-claude-desktop-dockerized-biomcp/" class="md-nav__link">
+      <a href="../getting-started/03-authentication-and-api-keys/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Claude Desktop, for Macos and containerized
+    API Keys
     
   </span>
   
@@ -502,12 +554,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/cloudflare-worker-deployment/" class="md-nav__link">
+      <a href="../faq-condensed/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Cloudflare Worker Deployment
+    FAQ
     
   </span>
   
@@ -525,12 +577,85 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/cursor-ide/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Cursor IDE
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/01-what-is-biomcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
     
   </span>
   
@@ -548,12 +673,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/bigquery_logging/" class="md-nav__link">
+      <a href="../how-to-guides/01-find-articles-and-cbioportal-data/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Logging with BigQuery
+    Finding Articles
     
   </span>
   
@@ -571,12 +696,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/mcp-client/" class="md-nav__link">
+      <a href="../how-to-guides/02-find-trials-with-nci-and-biothings/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    MCP Client
+    Finding Trials
     
   </span>
   
@@ -594,12 +719,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/mcp-inspector/" class="md-nav__link">
+      <a href="../how-to-guides/03-get-comprehensive-variant-annotations/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    MCP Inspector
+    Analyzing Variants
     
   </span>
   
@@ -617,7 +742,524 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/python-sdk/" class="md-nav__link">
+      <a href="../how-to-guides/04-predict-variant-effects-with-alphagenome/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Predicting Effects
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to-guides/06-search-nci-organizations-and-interventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Searching Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflows/all-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Research Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_8">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/remote-connection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Remote Connection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/biothings-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BioThings Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/nci-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    NCI Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/claude-code-biomcp-alphagenome/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome Tutorial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/openfda-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenFDA Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_9">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/02-the-deep-researcher-persona/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deep Researcher
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/03-sequential-thinking-with-the-think-tool/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sequential Thinking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guides/01-command-line-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Commands
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guides/02-mcp-tools-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Tools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Documentation
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            API Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../apis/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../apis/python-sdk/" class="md-nav__link">
         
   
   
@@ -640,12 +1282,43 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/stytch_oauth_setup/" class="md-nav__link">
+      <a href="../apis/error-codes/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Setting Up Stytch OAuth for BioMCP
+    Error Codes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guides/03-integrating-with-ides-and-clients/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IDE Integration
     
   </span>
   
@@ -673,20 +1346,25 @@
     
     
     
+      
+      
+        
+      
+    
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    CLI Reference
+    Developer
     
   </span>
   
@@ -694,10 +1372,53 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            CLI Reference
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -708,12 +1429,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/articles/" class="md-nav__link">
+      <a href="../reference/quick-architecture/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Articles
+    Overview
     
   </span>
   
@@ -731,12 +1452,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/health/" class="md-nav__link">
+      <a href="../reference/visual-architecture/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Health Check
+    Visual Diagrams
     
   </span>
   
@@ -754,35 +1475,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/trials/" class="md-nav__link">
+      <a href="../reference/architecture-diagrams/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Trials
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cli/variants/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Variants
+    Detailed Diagrams
     
   </span>
   
@@ -799,31 +1497,37 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
     
       
       
-  
-  
-  
-  
-    
-    
-    
+        
+      
     
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    API Reference
+    Data Sources
     
   </span>
   
@@ -831,10 +1535,10 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
             <span class="md-nav__icon md-icon"></span>
-            API Reference
+            Data Sources
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -845,12 +1549,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../apis/cbioportal/" class="md-nav__link">
+      <a href="../backend-services-reference/01-overview/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    cBioPortal
+    Overview
     
   </span>
   
@@ -868,7 +1572,30 @@
   
   
     <li class="md-nav__item">
-      <a href="../apis/clinicaltrials_gov/" class="md-nav__link">
+      <a href="../backend-services-reference/06-pubtator3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PubTator3/PubMed
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backend-services-reference/04-clinicaltrials-gov/" class="md-nav__link">
         
   
   
@@ -891,12 +1618,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../apis/myvariant_info/" class="md-nav__link">
+      <a href="../backend-services-reference/05-nci-cts-api/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    MyVariant.info
+    NCI CTS API
     
   </span>
   
@@ -914,80 +1641,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../apis/pubtator3_api/" class="md-nav__link">
+      <a href="../backend-services-reference/02-biothings-suite/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    PubTator3
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Blog
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
-            <span class="md-nav__icon md-icon"></span>
-            Blog
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../blog/ai-assisted-clinical-trial-search-analysis/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    AI Assisted Clinical Trial Search
+    BioThings Suite
     
   </span>
   
@@ -1005,12 +1664,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../blog/researcher-persona-resource/" class="md-nav__link">
+      <a href="../backend-services-reference/03-cbioportal/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Deep Researcher Persona
+    cBioPortal
     
   </span>
   
@@ -1028,12 +1687,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../blog/what-is-biomcp/" class="md-nav__link">
+      <a href="../backend-services-reference/07-alphagenome/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    What is BioMCP?
+    AlphaGenome
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/openfda-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenFDA
     
   </span>
   
@@ -1050,31 +1732,37 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
     
       
       
-  
-  
-  
-  
-    
-    
-    
+        
+      
     
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    Developer Guides
+    Development
     
   </span>
   
@@ -1082,10 +1770,10 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
             <span class="md-nav__icon md-icon"></span>
-            Developer Guides
+            Development
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1096,7 +1784,127 @@
   
   
     <li class="md-nav__item">
-      <a href="../transport-protocol/" class="md-nav__link">
+      <a href="../developer-guides/02-contributing-and-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer-guides/01-server-deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to-guides/05-logging-and-monitoring-with-bigquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BigQuery Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Technical Details
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Technical Details
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer-guides/04-transport-protocol/" class="md-nav__link">
         
   
   
@@ -1119,7 +1927,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../error-handling/" class="md-nav__link">
+      <a href="../developer-guides/05-error-handling/" class="md-nav__link">
         
   
   
@@ -1142,12 +1950,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../http-client-guide/" class="md-nav__link">
+      <a href="../developer-guides/06-http-client-and-caching/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    HTTP Client Guide
+    HTTP Client
     
   </span>
   
@@ -1165,12 +1973,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../integration-testing/" class="md-nav__link">
+      <a href="../developer-guides/07-performance-optimizations/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Integration Testing
+    Performance
     
   </span>
   
@@ -1188,58 +1996,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../migration-examples/" class="md-nav__link">
+      <a href="../developer-guides/03-third-party-endpoints/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Migration Examples
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../performance-optimizations/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Performance Optimizations
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../development/testing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Testing
+    Third-Party APIs
     
   </span>
   
@@ -1256,31 +2018,37 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
     
       
       
-  
-  
-  
-  
-    
-    
-    
+        
+      
     
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    Policies
+    Security
     
   </span>
   
@@ -1288,10 +2056,10 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
             <span class="md-nav__icon md-icon"></span>
-            Policies
+            Security
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1302,58 +2070,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../policies/biomcp-privacy/" class="md-nav__link">
+      <a href="../FDA_SECURITY/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Privacy Policy
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../policies/biomcp-security/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Security Policy
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../policies/biomcp-terms/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Terms & Conditions
+    FDA Integration Security
     
   </span>
   
@@ -1370,31 +2092,49 @@
     </li>
   
 
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
     
       
       
   
   
+    
   
   
+  
     
     
     
     
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
             
   
   
   <span class="md-ellipsis">
-    Troubleshooting
+    About
     
   </span>
   
@@ -1402,10 +2142,56 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
-            Troubleshooting
+            About
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Blog
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Blog
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1416,12 +2202,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/macos/" class="md-nav__link">
+      <a href="../blog/ai-assisted-clinical-trial-search-analysis/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    MacOS
+    Clinical Trial Search
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../blog/researcher-persona-resource/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Researcher Persona
     
   </span>
   
@@ -1438,31 +2247,58 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
     
       
       
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../genomoncology/" class="md-nav__link">
         
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="">
+            
   
   
   <span class="md-ellipsis">
-    About GenomOncology
+    Project
     
   </span>
   
 
-      </a>
-    </li>
-  
-
-    
-      
-      
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Project
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
   
   
     
@@ -1518,19 +2354,178 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
+  <a href="#062-2025-08-05" class="md-nav__link">
     <span class="md-ellipsis">
-      [Unreleased]
+      0.6.2 - 2025-08-05
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[Unreleased]">
+    <nav class="md-nav" aria-label="0.6.2 - 2025-08-05">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#added" class="md-nav__link">
     <span class="md-ellipsis">
       Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added-cli-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added CLI Commands
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060-2025-08-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.0 - 2025-08-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.6.0 - 2025-08-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050-2025-08-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.0 - 2025-08-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.5.0 - 2025-08-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#046-2025-07-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.6 - 2025-07-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.6 - 2025-07-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#045-2025-07-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.5 - 2025-07-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.5 - 2025-07-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
     </span>
   </a>
   
@@ -1551,28 +2546,19 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#040-2025-06-27" class="md-nav__link">
+  <a href="#044-2025-07-08" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.4.0] - 2025-06-27
+      0.4.4 - 2025-07-08
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.4.0] - 2025-06-27">
+    <nav class="md-nav" aria-label="0.4.4 - 2025-07-08">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_1" class="md-nav__link">
+  <a href="#added_5" class="md-nav__link">
     <span class="md-ellipsis">
       Added
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
-    <span class="md-ellipsis">
-      Changed
     </span>
   </a>
   
@@ -1587,32 +2573,23 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#improved" class="md-nav__link">
-    <span class="md-ellipsis">
-      Improved
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#030-2025-06-19" class="md-nav__link">
+  <a href="#043-2025-07-08" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.3.0] - 2025-06-19
+      0.4.3 - 2025-07-08
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.3.0] - 2025-06-19">
+    <nav class="md-nav" aria-label="0.4.3 - 2025-07-08">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_2" class="md-nav__link">
+  <a href="#added_6" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1621,18 +2598,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_4" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#enhanced" class="md-nav__link">
-    <span class="md-ellipsis">
-      Enhanced
     </span>
   </a>
   
@@ -1653,26 +2621,17 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#020-2025-06-19" class="md-nav__link">
+  <a href="#042-2025-07-07" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.2.0] - 2025-06-19
+      0.4.2 - 2025-07-07
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.2.0] - 2025-06-19">
+    <nav class="md-nav" aria-label="0.4.2 - 2025-07-07">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Breaking Changes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#added_3" class="md-nav__link">
+  <a href="#added_7" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1681,7 +2640,217 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
+  <a href="#changed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#041-2025-07-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.1 - 2025-07-03
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.1 - 2025-07-03">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040-2025-06-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.0 - 2025-06-27
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.0 - 2025-06-27">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#033-2025-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.3 - 2025-06-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.3 - 2025-06-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#032-2025-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.2 - 2025-06-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.2 - 2025-06-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#031-2025-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.1 - 2025-06-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.1 - 2025-06-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030-2025-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.0 - 2025-06-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.0 - 2025-06-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2025-06-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.1 - 2025-06-19
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.2.1 - 2025-06-19">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-2025-06-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.0 - 2025-06-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.2.0 - 2025-06-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_8" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -1690,9 +2859,234 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#migration-guide" class="md-nav__link">
+  <a href="#removed" class="md-nav__link">
     <span class="md-ellipsis">
-      Migration Guide
+      Removed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0111-2025-06-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.11 - 2025-06-12
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.11 - 2025-06-12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0110-2025-05-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.10 - 2025-05-21
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.10 - 2025-05-21">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#019-2025-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.9 - 2025-05-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.9 - 2025-05-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#018-2025-05-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.8 - 2025-05-14
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.8 - 2025-05-14">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#017-2025-05-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.7 - 2025-05-07
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.7 - 2025-05-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#016-2025-05-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.6 - 2025-05-05
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.6 - 2025-05-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#015-2025-05-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.5 - 2025-05-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.5 - 2025-05-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#013-2025-05-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.3 - 2025-05-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.3 - 2025-05-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#012-2025-04-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.2 - 2025-04-18
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.2 - 2025-04-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
     </span>
   </a>
   
@@ -1706,24 +3100,134 @@
         <li class="md-nav__item">
   <a href="#011-2025-04-14" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.1.1] - 2025-04-14
+      0.1.1 - 2025-04-14
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="0.1.1 - 2025-04-14">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#010-2025-04-08" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.1.0] - 2025-04-08
+      0.1.0 - 2025-04-08
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="0.1.0 - 2025-04-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
     </ul>
   
 </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policies
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../genomoncology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GenomOncology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -1756,19 +3260,178 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
+  <a href="#062-2025-08-05" class="md-nav__link">
     <span class="md-ellipsis">
-      [Unreleased]
+      0.6.2 - 2025-08-05
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[Unreleased]">
+    <nav class="md-nav" aria-label="0.6.2 - 2025-08-05">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#added" class="md-nav__link">
     <span class="md-ellipsis">
       Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added-cli-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added CLI Commands
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060-2025-08-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.0 - 2025-08-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.6.0 - 2025-08-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050-2025-08-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.0 - 2025-08-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.5.0 - 2025-08-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#046-2025-07-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.6 - 2025-07-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.6 - 2025-07-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#045-2025-07-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.5 - 2025-07-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.5 - 2025-07-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
     </span>
   </a>
   
@@ -1789,28 +3452,19 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#040-2025-06-27" class="md-nav__link">
+  <a href="#044-2025-07-08" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.4.0] - 2025-06-27
+      0.4.4 - 2025-07-08
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.4.0] - 2025-06-27">
+    <nav class="md-nav" aria-label="0.4.4 - 2025-07-08">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_1" class="md-nav__link">
+  <a href="#added_5" class="md-nav__link">
     <span class="md-ellipsis">
       Added
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
-    <span class="md-ellipsis">
-      Changed
     </span>
   </a>
   
@@ -1825,32 +3479,23 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#improved" class="md-nav__link">
-    <span class="md-ellipsis">
-      Improved
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#030-2025-06-19" class="md-nav__link">
+  <a href="#043-2025-07-08" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.3.0] - 2025-06-19
+      0.4.3 - 2025-07-08
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.3.0] - 2025-06-19">
+    <nav class="md-nav" aria-label="0.4.3 - 2025-07-08">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_2" class="md-nav__link">
+  <a href="#added_6" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1859,18 +3504,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_4" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#enhanced" class="md-nav__link">
-    <span class="md-ellipsis">
-      Enhanced
     </span>
   </a>
   
@@ -1891,26 +3527,17 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#020-2025-06-19" class="md-nav__link">
+  <a href="#042-2025-07-07" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.2.0] - 2025-06-19
+      0.4.2 - 2025-07-07
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[0.2.0] - 2025-06-19">
+    <nav class="md-nav" aria-label="0.4.2 - 2025-07-07">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Breaking Changes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#added_3" class="md-nav__link">
+  <a href="#added_7" class="md-nav__link">
     <span class="md-ellipsis">
       Added
     </span>
@@ -1919,7 +3546,217 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
+  <a href="#changed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#041-2025-07-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.1 - 2025-07-03
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.1 - 2025-07-03">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040-2025-06-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.0 - 2025-06-27
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.0 - 2025-06-27">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#033-2025-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.3 - 2025-06-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.3 - 2025-06-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#032-2025-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.2 - 2025-06-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.2 - 2025-06-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#031-2025-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.1 - 2025-06-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.1 - 2025-06-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030-2025-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.0 - 2025-06-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.0 - 2025-06-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2025-06-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.1 - 2025-06-19
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.2.1 - 2025-06-19">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-2025-06-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.0 - 2025-06-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.2.0 - 2025-06-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_8" class="md-nav__link">
     <span class="md-ellipsis">
       Changed
     </span>
@@ -1928,9 +3765,234 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#migration-guide" class="md-nav__link">
+  <a href="#removed" class="md-nav__link">
     <span class="md-ellipsis">
-      Migration Guide
+      Removed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0111-2025-06-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.11 - 2025-06-12
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.11 - 2025-06-12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0110-2025-05-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.10 - 2025-05-21
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.10 - 2025-05-21">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#019-2025-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.9 - 2025-05-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.9 - 2025-05-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#018-2025-05-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.8 - 2025-05-14
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.8 - 2025-05-14">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#017-2025-05-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.7 - 2025-05-07
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.7 - 2025-05-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#016-2025-05-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.6 - 2025-05-05
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.6 - 2025-05-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#015-2025-05-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.5 - 2025-05-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.5 - 2025-05-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#013-2025-05-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.3 - 2025-05-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.3 - 2025-05-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#012-2025-04-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.2 - 2025-04-18
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.1.2 - 2025-04-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
     </span>
   </a>
   
@@ -1944,18 +4006,66 @@
         <li class="md-nav__item">
   <a href="#011-2025-04-14" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.1.1] - 2025-04-14
+      0.1.1 - 2025-04-14
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="0.1.1 - 2025-04-14">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#010-2025-04-08" class="md-nav__link">
     <span class="md-ellipsis">
-      [0.1.0] - 2025-04-08
+      0.1.0 - 2025-04-08
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="0.1.0 - 2025-04-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1979,149 +4089,343 @@
 
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
-<h2 id="unreleased">[Unreleased]<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<p>All notable changes to the BioMCP project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="062-2025-08-05"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.6.2">0.6.2</a> - 2025-08-05<a class="headerlink" href="#062-2025-08-05" title="Permanent link">&para;</a></h2>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Europe PMC DOI Support for Article Fetching</strong>:</li>
-<li><code>article_getter</code> tool now accepts DOIs in addition to PMIDs</li>
-<li><code>fetch</code> unified tool supports DOIs for the article domain</li>
-<li>CLI <code>biomcp article get</code> command accepts both PMIDs and DOIs</li>
-<li>Automatically routes DOIs to Europe PMC API for preprint retrieval</li>
-<li>Supports mixed lists of PMIDs and DOIs in batch requests</li>
+<li><strong>NCI Clinical Trials Search API Integration</strong> - Enhanced cancer trial search capabilities:</li>
+<li>Dual source support for trial search/getter tools (ClinicalTrials.gov + NCI)</li>
+<li>NCI API key handling via <code>NCI_API_KEY</code> environment variable or parameter</li>
+<li>Advanced trial filters: biomarkers, prior therapy, brain metastases acceptance</li>
+<li><strong>6 New MCP Tools</strong> for NCI-specific searches:<ul>
+<li><code>nci_organization_searcher</code> / <code>nci_organization_getter</code>: Cancer centers, hospitals, research institutions</li>
+<li><code>nci_intervention_searcher</code> / <code>nci_intervention_getter</code>: Drugs, devices, procedures, biologicals</li>
+<li><code>nci_biomarker_searcher</code>: Trial eligibility biomarkers (reference genes, branches)</li>
+<li><code>nci_disease_searcher</code>: NCI's controlled vocabulary of cancer conditions</li>
 </ul>
-<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Preprint Fetch Error</strong>: Fixed "Error 400: Could not retrieve publications" when trying to fetch Europe PMC preprints found in search results</li>
-<li>Added DOI detection logic to distinguish from PMIDs</li>
-<li>Implemented Europe PMC article fetch functionality</li>
-<li>Updated routing logic in both unified and individual tools</li>
-</ul>
-<h2 id="040-2025-06-27">[0.4.0] - 2025-06-27<a class="headerlink" href="#040-2025-06-27" title="Permanent link">&para;</a></h2>
-<h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Dedicated Think Tool</strong>: Sequential thinking is now a separate, mandatory tool</li>
-<li><code>think</code> tool MUST be used before any search operations</li>
-<li>Provides systematic step-by-step analysis for all biomedical queries</li>
-<li>Includes automatic reminders if not used</li>
-<li><strong>10 Individual Tools Restored</strong>: Direct access tools for specific functionality</li>
-<li>Article tools: <code>article_searcher</code>, <code>article_getter</code></li>
-<li>Trial tools: <code>trial_searcher</code>, <code>trial_getter</code>, <code>trial_protocol_getter</code>, <code>trial_references_getter</code>, <code>trial_outcomes_getter</code>, <code>trial_locations_getter</code></li>
-<li>Variant tools: <code>variant_searcher</code>, <code>variant_getter</code></li>
-<li><strong>Enhanced cBioPortal Integration</strong>: Now available in individual tools</li>
-<li><code>article_searcher</code> and <code>variant_searcher</code> include <code>include_cbioportal</code> parameter</li>
-<li>Centralized helper module for consistent integration</li>
-<li><strong>Thinking Usage Tracker</strong>: Monitors and encourages proper thinking tool usage</li>
-<li>Context-aware tracking across MCP sessions</li>
-<li>Automatic reminders in search results when thinking hasn't been used</li>
+</li>
+<li><strong>OR Query Support</strong>: All NCI endpoints support OR queries (e.g., "PD-L1 OR CD274")</li>
+<li>Real-time access to NCI's curated cancer trials database</li>
+<li>Automatic cBioPortal integration for gene searches</li>
+<li>Proper NCI parameter mapping (org_city, org_state_or_province, etc.)</li>
+<li>Comprehensive error handling for Elasticsearch limits</li>
 </ul>
 <h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>13 Total Tools</strong>: 3 core tools (think, search, fetch) + 10 individual tools</li>
-<li><strong>Sequential Thinking</strong>: Moved from <code>search(domain="thinking")</code> to dedicated <code>think</code> tool</li>
-<li><strong>Search Tool Simplified</strong>: Removed thinking domain and parameters from search tool</li>
-<li><strong>Query Parameter</strong>: Changed from optional (<code>str | None = None</code>) to required with empty default (<code>str = ""</code>) for ChatGPT compatibility</li>
+<li>Enhanced unified search router to properly handle NCI domains</li>
+<li>Trial search/getter tools now accept <code>source</code> parameter ("clinicaltrials" or "nci")</li>
+<li>Improved domain-specific search logic for query+domain combinations</li>
 </ul>
-<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
+<h3 id="added-cli-commands">Added CLI Commands<a class="headerlink" href="#added-cli-commands" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Organization search/get</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>biomcp<span class="w"> </span>organization<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;MD Anderson&quot;</span><span class="w"> </span>--api-key<span class="w"> </span>YOUR_KEY
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>biomcp<span class="w"> </span>organization<span class="w"> </span>get<span class="w"> </span><span class="m">12345</span><span class="w"> </span>--api-key<span class="w"> </span>YOUR_KEY
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Intervention search/get</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>biomcp<span class="w"> </span>intervention<span class="w"> </span>search<span class="w"> </span>pembrolizumab<span class="w"> </span>--type<span class="w"> </span>Drug<span class="w"> </span>--api-key<span class="w"> </span>YOUR_KEY
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>biomcp<span class="w"> </span>intervention<span class="w"> </span>get<span class="w"> </span><span class="m">67890</span><span class="w"> </span>--api-key<span class="w"> </span>YOUR_KEY
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Biomarker search</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>biomcp<span class="w"> </span>biomarker<span class="w"> </span>search<span class="w"> </span>--name<span class="w"> </span><span class="s2">&quot;PD-L1&quot;</span><span class="w"> </span>--api-key<span class="w"> </span>YOUR_KEY
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># Disease search</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>biomcp<span class="w"> </span>disease<span class="w"> </span>search<span class="w"> </span>melanoma<span class="w"> </span>--source<span class="w"> </span>nci<span class="w"> </span>--api-key<span class="w"> </span>YOUR_KEY
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># Enhanced trial commands with source selection</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>biomcp<span class="w"> </span>trial<span class="w"> </span>search<span class="w"> </span>--condition<span class="w"> </span>melanoma<span class="w"> </span>--source<span class="w"> </span>nci<span class="w"> </span>--api-key<span class="w"> </span>YOUR_KEY
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>biomcp<span class="w"> </span>trial<span class="w"> </span>get<span class="w"> </span>NCT04280705<span class="w"> </span>--source<span class="w"> </span>nci<span class="w"> </span>--api-key<span class="w"> </span>YOUR_KEY
+</code></pre></div>
+<h3 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>MyVariant.info Timeouts</strong>: Fixed HTTP client not using configured 120s timeout</li>
-<li>Added "myvariant" to aggressive retry domains</li>
-<li>Improved error messages for timeout scenarios</li>
-<li>Optimized BRAF V600E query pattern</li>
-<li><strong>Location Parameter Validation</strong>: Added proper validation for trial search location parameters</li>
-<li>Ensures lat/long are provided together</li>
-<li>Validates distance requires coordinates</li>
+<li>Added NCI tutorial with example prompts: <code>docs/tutorials/nci-prompts.md</code></li>
+<li>Created API parameter reference: <code>docs/api-changes/nci-api-parameters.md</code></li>
+<li>Updated CLAUDE.md with NCI usage instructions and parameter notes</li>
+<li>Requires NCI API key from: https://clinicaltrialsapi.cancer.gov/</li>
 </ul>
-<h3 id="improved">Improved<a class="headerlink" href="#improved" title="Permanent link">&para;</a></h3>
+<h2 id="060-2025-08-01"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.6.0">0.6.0</a> - 2025-08-01<a class="headerlink" href="#060-2025-08-01" title="Permanent link">&para;</a></h2>
+<h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Code Organization</strong>: Created <code>cbioportal_helper.py</code> to centralize integration logic</li>
-<li><strong>Type Safety</strong>: Added proper type annotations throughout new modules</li>
-<li><strong>Error Handling</strong>: Consistent logger usage and error messages</li>
-</ul>
-<h2 id="030-2025-06-19">[0.3.0] - 2025-06-19<a class="headerlink" href="#030-2025-06-19" title="Permanent link">&para;</a></h2>
-<h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Unified Query Language</strong>: Integrated into the <code>search</code> tool</li>
-<li>Use <code>query</code> parameter for structured field syntax</li>
-<li>Natural language queries: <code>"BRAF melanoma"</code></li>
-<li>Field-specific queries: <code>"gene:BRAF AND trials.condition:melanoma"</code></li>
-<li>Cross-domain searches from a single query</li>
-<li>Support for boolean operators (AND, OR, NOT) and comparisons (&gt;, &lt;, ..)</li>
-<li><strong>Schema Discovery</strong>: Access via <code>search(get_schema=True)</code></li>
-<li><strong>Query Explanation</strong>: Use <code>explain_query=True</code> to see how queries are parsed</li>
-<li><strong>Integrated Sequential Thinking</strong>: Access via <code>search(domain="thinking")</code></li>
-<li>Clients should explicitly call this before biomedical searches</li>
-<li>Provides systematic step-by-step analysis</li>
-<li>Supports thought revision and branching</li>
+<li><strong>Streamable HTTP Transport Support</strong> (#45) - MCP specification version 2025-03-26:</li>
+<li>Enabled FastMCP's native <code>/mcp</code> endpoint for Streamable HTTP transport</li>
+<li>MCP specification compliant transport (2025-03-26 spec) via FastMCP 1.12.3+</li>
+<li>CLI support via <code>biomcp run --mode streamable_http</code> (uses native FastMCP implementation)</li>
+<li>Full backward compatibility with legacy SSE endpoints</li>
+<li>Cloudflare Worker updated with POST /mcp route for full spec compliance</li>
+<li>Simplified worker implementation to leverage FastMCP's built-in transport support</li>
+<li>Added comprehensive integration tests for streamable HTTP functionality</li>
+<li>New transport protocol documentation guide</li>
 </ul>
 <h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Two Core Tools</strong>: <code>search</code> and <code>fetch</code> (following OpenAI MCP guidelines)</li>
-<li><strong>Sequential Thinking Integration</strong>: Now accessible through <code>search(domain="thinking")</code> instead of a separate tool</li>
-<li><strong>Triple-Mode Search</strong>: The <code>search</code> tool supports sequential thinking, unified query, and legacy domain-based modes</li>
-<li><strong>Backward Compatible</strong>: All existing integrations continue to work</li>
+<li>Enhanced CLI with transport modes (stdio, worker, streamable_http)</li>
+<li>Added configurable host and port options for HTTP-based transports</li>
+<li>Simplified server modes by removing redundant <code>http</code> mode</li>
+<li>Cloudflare Worker now supports both GET and POST methods on /mcp endpoint</li>
+<li>Pinned FastMCP dependency to version range &gt;=1.12.3,&lt;2.0.0 for stability</li>
+<li>Standardized documentation file naming to lowercase with hyphens for consistency</li>
 </ul>
-<h3 id="enhanced">Enhanced<a class="headerlink" href="#enhanced" title="Permanent link">&para;</a></h3>
+<h3 id="migration-notes">Migration Notes<a class="headerlink" href="#migration-notes" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Improved result formatting for all search domains</li>
-<li>Better handling of JSON string parameters from MCP clients</li>
-<li>More robust error handling and result parsing</li>
+<li><strong>From SSE to Streamable HTTP</strong>: Update your server startup from <code>--mode worker</code> to <code>--mode streamable_http</code></li>
+<li><strong>Docker deployments</strong>: Ensure you're using <code>--host 0.0.0.0</code> for proper container networking</li>
+<li><strong>Cloudflare Workers</strong>: The worker now automatically handles both transport types on <code>/mcp</code></li>
+<li>See the new <a href="https://biomcp.org/transport-protocol/">Transport Protocol Guide</a> for detailed migration instructions</li>
 </ul>
-<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
+<h2 id="050-2025-08-01"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.5.0">0.5.0</a> - 2025-08-01<a class="headerlink" href="#050-2025-08-01" title="Permanent link">&para;</a></h2>
+<h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Fixed variant fetch error with incorrect parameter names (<code>include_external</code> instead of <code>include_tcga</code>)</li>
-<li>Fixed article fetch error where <code>_article_details</code> was called with non-existent <code>fetch_full_text</code> parameter</li>
-<li>Fixed article search returning 0 results due to overly restrictive AND logic for keywords</li>
-<li>Fixed JSON parsing error in article fetch by calling <code>fetch_articles</code> directly with <code>output_json=True</code></li>
-<li>Fixed trial search "'list' object has no attribute 'get'" error by handling ClinicalTrials.gov API v2 response format</li>
-<li>Fixed trial search phase validation error by normalizing phase values (e.g., "Phase 3" → "PHASE3")</li>
-<li>Fixed trial search KeyError 'nct_id' by handling nested ClinicalTrials.gov API v2 structure in <code>format_results</code></li>
-<li>Fixed parameter validation errors by accepting both string and list types for search parameters</li>
+<li><strong>BioThings Integration</strong> for real-time biomedical data access:</li>
+<li><strong>New MCP Tools</strong> (3 tools added, total now 17):<ul>
+<li><code>gene_getter</code>: Query MyGene.info for gene information (symbols, names, summaries)</li>
+<li><code>drug_getter</code>: Query MyChem.info for drug/chemical data (formulas, indications, mechanisms)</li>
+<li><code>disease_getter</code>: Query MyDisease.info for disease information (definitions, synonyms, ontologies)</li>
 </ul>
-<h2 id="020-2025-06-19">[0.2.0] - 2025-06-19<a class="headerlink" href="#020-2025-06-19" title="Permanent link">&para;</a></h2>
-<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>MCP Tools Consolidation</strong>: Consolidated 10 separate MCP tools into 2 unified tools (<code>search</code> and <code>fetch</code>) to align with OpenAI MCP guidelines</li>
-<li>Removed individual MCP tool decorators from legacy functions</li>
-<li>Legacy functions renamed with leading underscore to indicate internal use</li>
-<li>Sequential thinking tool removed from MCP interface (now internal)</li>
+</li>
+<li><strong>Unified Search/Fetch Enhancement</strong>:<ul>
+<li>Added <code>gene</code>, <code>drug</code>, <code>disease</code> as new searchable domains alongside article, trial, variant</li>
+<li>Integrated into unified search syntax: <code>search(domain="gene", keywords=["BRAF"])</code></li>
+<li>Query language support: <code>gene:BRAF</code>, <code>drug:pembrolizumab</code>, <code>disease:melanoma</code></li>
+<li>Full fetch support: <code>fetch(domain="drug", id="DB00945")</code></li>
 </ul>
-<h3 id="added_3">Added<a class="headerlink" href="#added_3" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Unified Search Tool</strong>: Single <code>search</code> tool that handles articles, trials, and variants with domain parameter</li>
-<li><strong>Unified Fetch Tool</strong>: Single <code>fetch</code> tool that retrieves details for any domain type</li>
-<li><strong>OpenAI MCP Compatibility</strong>: Search results now follow OpenAI's standardized format with id, title, snippet, url, and metadata fields</li>
+</li>
+<li><strong>Clinical Trial Enhancement</strong>:<ul>
+<li>Automatic disease synonym expansion for trial searches</li>
+<li>Real-time synonym lookup from MyDisease.info</li>
+<li>Example: searching for "GIST" automatically includes "gastrointestinal stromal tumor"</li>
+</ul>
+</li>
+<li><strong>Smart Caching &amp; Performance</strong>:<ul>
+<li>Batch operations for multiple gene/drug lookups</li>
+<li>Intelligent caching with TTL (gene: 24h, drug: 48h, disease: 72h)</li>
+<li>Rate limiting to respect API guidelines</li>
+</ul>
+</li>
 </ul>
 <h3 id="changed_2">Changed<a class="headerlink" href="#changed_2" title="Permanent link">&para;</a></h3>
 <ul>
-<li>CLI interface remains unchanged - all <code>biomcp</code> commands continue to work as before</li>
-<li>Internal functions preserved for backward compatibility with CLI</li>
+<li>Trial search now expands disease terms by default (disable with <code>expand_synonyms=False</code>)</li>
+<li>Enhanced error handling for BioThings API responses</li>
+<li>Improved network reliability with automatic retries</li>
 </ul>
-<h3 id="migration-guide">Migration Guide<a class="headerlink" href="#migration-guide" title="Permanent link">&para;</a></h3>
-<p>If you were using the MCP tools directly:</p>
+<h2 id="046-2025-07-09"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.4.6">0.4.6</a> - 2025-07-09<a class="headerlink" href="#046-2025-07-09" title="Permanent link">&para;</a></h2>
+<h3 id="added_3">Added<a class="headerlink" href="#added_3" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Replace <code>article_searcher(...)</code> with <code>search(domain="article", ...)</code></li>
-<li>Replace <code>trial_searcher(...)</code> with <code>search(domain="trial", ...)</code></li>
-<li>Replace <code>variant_searcher(...)</code> with <code>search(domain="variant", ...)</code></li>
-<li>Replace <code>article_details(pmid=X)</code> with <code>fetch(domain="article", id=X)</code></li>
-<li>Replace <code>trial_protocol(nct_id=X)</code> with <code>fetch(domain="trial", id=X, detail="protocol")</code></li>
-<li>Remove usage of <code>sequential_thinking</code> tool (use LLM's internal reasoning instead)</li>
+<li>MkDocs documentation deployment</li>
 </ul>
-<h2 id="011-2025-04-14">[0.1.1] - 2025-04-14<a class="headerlink" href="#011-2025-04-14" title="Permanent link">&para;</a></h2>
+<h2 id="045-2025-07-09"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.4.5">0.4.5</a> - 2025-07-09<a class="headerlink" href="#045-2025-07-09" title="Permanent link">&para;</a></h2>
+<h3 id="added_4">Added<a class="headerlink" href="#added_4" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Simplified <code>biomcp run</code>.</li>
-<li>Added tutorials on Claude Desktop, MCP Inspector, and Python SDK.</li>
+<li>Unified search and fetch tools following OpenAI MCP guidelines</li>
+<li>Additional variant sources (TCGA/GDC, 1000 Genomes) enabled by default in fetch operations</li>
+<li>Additional article sources (bioRxiv, medRxiv, Europe PMC) enabled by default in search operations</li>
 </ul>
-<h2 id="010-2025-04-08">[0.1.0] - 2025-04-08<a class="headerlink" href="#010-2025-04-08" title="Permanent link">&para;</a></h2>
+<h3 id="changed_3">Changed<a class="headerlink" href="#changed_3" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Initial release of BioMCP CLI and server.</li>
-<li>Support for searching ClinicalTrials.gov (<code>biomcp trial search</code>).</li>
-<li>Support for retrieving trial details (<code>biomcp trial get</code>).</li>
-<li>Support for searching PubMed/PubTator3 (<code>biomcp article search</code>).</li>
-<li>Support for retrieving article details (<code>biomcp article get</code>).</li>
-<li>Support for searching MyVariant.info (<code>biomcp variant search</code>).</li>
-<li>Support for retrieving variant details (<code>biomcp variant get</code>).</li>
-<li>Basic HTTP caching for API requests.</li>
-<li>Initial documentation structure.</li>
+<li>Consolidated 10 separate MCP tools into 2 unified tools (search and fetch)</li>
+<li>Updated response formats to comply with OpenAI MCP specifications</li>
+</ul>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>OpenAI MCP compliance issues to enable integration</li>
+</ul>
+<h2 id="044-2025-07-08"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.4.4">0.4.4</a> - 2025-07-08<a class="headerlink" href="#044-2025-07-08" title="Permanent link">&para;</a></h2>
+<h3 id="added_5">Added<a class="headerlink" href="#added_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Performance Optimizations</strong>:</li>
+<li>Connection pooling with event loop lifecycle management (30% latency reduction)</li>
+<li>Parallel test execution with pytest-xdist (5x faster test runs)</li>
+<li>Request batching for cBioPortal API calls (80% fewer API calls)</li>
+<li>Smart caching with LRU eviction and fast hash keys (10x faster cache operations)</li>
+<li>Major performance improvements achieving ~3x faster test execution (120s → 42s)</li>
+</ul>
+<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Non-critical ASGI errors suppressed</li>
+<li>Performance issues in article_searcher</li>
+</ul>
+<h2 id="043-2025-07-08"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.4.3">0.4.3</a> - 2025-07-08<a class="headerlink" href="#043-2025-07-08" title="Permanent link">&para;</a></h2>
+<h3 id="added_6">Added<a class="headerlink" href="#added_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Complete HTTP centralization and improved code quality</li>
+<li>Comprehensive constants module for better maintainability</li>
+<li>Domain-specific handlers for result formatting</li>
+<li>Parameter parser for robust input validation</li>
+<li>Custom exception hierarchy for better error handling</li>
+</ul>
+<h3 id="changed_4">Changed<a class="headerlink" href="#changed_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Refactored domain handlers to use static methods for better performance</li>
+<li>Enhanced type safety throughout the codebase</li>
+<li>Refactored complex functions to meet code quality standards</li>
+</ul>
+<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Type errors in router.py for full mypy compliance</li>
+<li>Complex functions exceeding cyclomatic complexity thresholds</li>
+</ul>
+<h2 id="042-2025-07-07"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.4.2">0.4.2</a> - 2025-07-07<a class="headerlink" href="#042-2025-07-07" title="Permanent link">&para;</a></h2>
+<h3 id="added_7">Added<a class="headerlink" href="#added_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Europe PMC DOI support for article fetching</li>
+<li>Pagination support for Europe PMC searches</li>
+<li>OR logic support for variant notation searches (e.g., R173 vs Arg173 vs p.R173)</li>
+</ul>
+<h3 id="changed_5">Changed<a class="headerlink" href="#changed_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Enhanced variant notation search capabilities</li>
+</ul>
+<h2 id="041-2025-07-03"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.4.1">0.4.1</a> - 2025-07-03<a class="headerlink" href="#041-2025-07-03" title="Permanent link">&para;</a></h2>
+<h3 id="added_8">Added<a class="headerlink" href="#added_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>AlphaGenome as an optional dependency to predict variant effects on gene regulation</li>
+<li>Per-request API key support for AlphaGenome integration</li>
+<li>AI predictions to complement existing database lookups</li>
+</ul>
+<h3 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Comprehensive sanitization in Cloudflare Worker to prevent sensitive data logging</li>
+<li>Secure usage in hosted environments where users provide their own keys</li>
+</ul>
+<h2 id="040-2025-06-27"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.4.0">0.4.0</a> - 2025-06-27<a class="headerlink" href="#040-2025-06-27" title="Permanent link">&para;</a></h2>
+<h3 id="added_9">Added<a class="headerlink" href="#added_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>cBioPortal Integration</strong> for article searches:</li>
+<li>Automatic gene-level mutation summaries when searching with gene parameters</li>
+<li>Mutation-specific search capabilities (e.g., BRAF V600E, SRSF2 F57*)</li>
+<li>Dynamic cancer type resolution using cBioPortal API</li>
+<li>Smart caching and rate limiting for optimal performance</li>
+</ul>
+<h2 id="033-2025-06-20"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.3.3">0.3.3</a> - 2025-06-20<a class="headerlink" href="#033-2025-06-20" title="Permanent link">&para;</a></h2>
+<h3 id="changed_6">Changed<a class="headerlink" href="#changed_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Release workflow updates</li>
+</ul>
+<h2 id="032-2025-06-20"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.3.2">0.3.2</a> - 2025-06-20<a class="headerlink" href="#032-2025-06-20" title="Permanent link">&para;</a></h2>
+<h3 id="changed_7">Changed<a class="headerlink" href="#changed_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Release workflow updates</li>
+</ul>
+<h2 id="031-2025-06-20"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.3.1">0.3.1</a> - 2025-06-20<a class="headerlink" href="#031-2025-06-20" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_3">Fixed<a class="headerlink" href="#fixed_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Build and release process improvements</li>
+</ul>
+<h2 id="030-2025-06-20"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.3.0">0.3.0</a> - 2025-06-20<a class="headerlink" href="#030-2025-06-20" title="Permanent link">&para;</a></h2>
+<h3 id="added_10">Added<a class="headerlink" href="#added_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Expanded search capabilities</li>
+<li>Integration tests for MCP server functionality</li>
+<li>Utility modules for gene validation, mutation filtering, and request caching</li>
+</ul>
+<h2 id="021-2025-06-19"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.2.1">0.2.1</a> - 2025-06-19<a class="headerlink" href="#021-2025-06-19" title="Permanent link">&para;</a></h2>
+<h3 id="added_11">Added<a class="headerlink" href="#added_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Remote MCP policies</li>
+</ul>
+<h2 id="020-2025-06-17"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.2.0">0.2.0</a> - 2025-06-17<a class="headerlink" href="#020-2025-06-17" title="Permanent link">&para;</a></h2>
+<h3 id="added_12">Added<a class="headerlink" href="#added_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Sequential thinking tool for systematic problem-solving</li>
+<li>Session-based thinking to replace global state</li>
+<li>Extracted router handlers to reduce complexity</li>
+</ul>
+<h3 id="changed_8">Changed<a class="headerlink" href="#changed_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Replaced global state in thinking module with session management</li>
+</ul>
+<h3 id="removed">Removed<a class="headerlink" href="#removed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Global state from sequential thinking module</li>
+</ul>
+<h3 id="fixed_4">Fixed<a class="headerlink" href="#fixed_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Race conditions in sequential thinking with concurrent usage</li>
+</ul>
+<h2 id="0111-2025-06-12"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.11">0.1.11</a> - 2025-06-12<a class="headerlink" href="#0111-2025-06-12" title="Permanent link">&para;</a></h2>
+<h3 id="added_13">Added<a class="headerlink" href="#added_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Advanced eligibility criteria filters to clinical trial search</li>
+</ul>
+<h2 id="0110-2025-05-21"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.10">0.1.10</a> - 2025-05-21<a class="headerlink" href="#0110-2025-05-21" title="Permanent link">&para;</a></h2>
+<h3 id="added_14">Added<a class="headerlink" href="#added_14" title="Permanent link">&para;</a></h3>
+<ul>
+<li>OAuth support on the Cloudflare worker via Stytch</li>
+</ul>
+<h2 id="019-2025-05-17"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.9">0.1.9</a> - 2025-05-17<a class="headerlink" href="#019-2025-05-17" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_5">Fixed<a class="headerlink" href="#fixed_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Refactor: Bump minimum Python version to 3.10</li>
+</ul>
+<h2 id="018-2025-05-14"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.8">0.1.8</a> - 2025-05-14<a class="headerlink" href="#018-2025-05-14" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_6">Fixed<a class="headerlink" href="#fixed_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Article searcher fixes</li>
+</ul>
+<h2 id="017-2025-05-07"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.7">0.1.7</a> - 2025-05-07<a class="headerlink" href="#017-2025-05-07" title="Permanent link">&para;</a></h2>
+<h3 id="added_15">Added<a class="headerlink" href="#added_15" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Remote OAuth support</li>
+</ul>
+<h2 id="016-2025-05-05"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.6">0.1.6</a> - 2025-05-05<a class="headerlink" href="#016-2025-05-05" title="Permanent link">&para;</a></h2>
+<h3 id="added_16">Added<a class="headerlink" href="#added_16" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Updates to handle cursor integration</li>
+</ul>
+<h2 id="015-2025-05-01"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.5">0.1.5</a> - 2025-05-01<a class="headerlink" href="#015-2025-05-01" title="Permanent link">&para;</a></h2>
+<h3 id="added_17">Added<a class="headerlink" href="#added_17" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Updates to smithery yaml to account for object types needed for remote calls</li>
+<li>Documentation and Lzyank updates</li>
+</ul>
+<h2 id="013-2025-05-01"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.3">0.1.3</a> - 2025-05-01<a class="headerlink" href="#013-2025-05-01" title="Permanent link">&para;</a></h2>
+<h3 id="added_18">Added<a class="headerlink" href="#added_18" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Health check functionality to assist with API call issues</li>
+<li>System resources and network &amp; environment information gathering</li>
+<li>Remote MCP capability via Cloudflare using SSE</li>
+</ul>
+<h2 id="012-2025-04-18"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.2">0.1.2</a> - 2025-04-18<a class="headerlink" href="#012-2025-04-18" title="Permanent link">&para;</a></h2>
+<h3 id="added_19">Added<a class="headerlink" href="#added_19" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Researcher persona and BioMCP v0.1.2 release</li>
+<li>Deep Researcher Persona blog post</li>
+<li>Researcher persona video demo</li>
+</ul>
+<h2 id="011-2025-04-14"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.1">0.1.1</a> - 2025-04-14<a class="headerlink" href="#011-2025-04-14" title="Permanent link">&para;</a></h2>
+<h3 id="added_20">Added<a class="headerlink" href="#added_20" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Claude Desktop and MCP Inspector tutorials</li>
+<li>Improved Claude Desktop Tutorial for BioMCP</li>
+<li>Troubleshooting guide and blog post</li>
+</ul>
+<h3 id="fixed_7">Fixed<a class="headerlink" href="#fixed_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Log tool names as comma separated string</li>
+<li>Server hanging issues</li>
+<li>Error responses in variant count check</li>
+</ul>
+<h2 id="010-2025-04-08"><a href="https://github.com/genomoncology/biomcp/releases/tag/v0.1.0">0.1.0</a> - 2025-04-08<a class="headerlink" href="#010-2025-04-08" title="Permanent link">&para;</a></h2>
+<h3 id="added_21">Added<a class="headerlink" href="#added_21" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Initial release of BioMCP</li>
+<li>PubMed/PubTator3 article search integration</li>
+<li>ClinicalTrials.gov trial search integration</li>
+<li>MyVariant.info variant search integration</li>
+<li>CLI interface for direct usage</li>
+<li>MCP server for AI assistant integration</li>
+<li>Cloudflare Worker support for remote deployment</li>
+<li>Comprehensive test suite with pytest-bdd</li>
+<li>GenomOncology introduction</li>
+<li>Blog post on AI-assisted clinical trial search</li>
+<li>MacOS troubleshooting guide</li>
+</ul>
+<h3 id="security_1">Security<a class="headerlink" href="#security_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>API keys properly externalized</li>
+<li>Input validation using Pydantic models</li>
+<li>Safe string handling in all API calls</li>
 </ul>
 
 
@@ -2142,6 +4446,12 @@
           
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
         
       </main>
       
@@ -2201,7 +4511,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.instant", "navigation.tracking", "navigation.top", "toc.follow", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.50899def.min.js"></script>

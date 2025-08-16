@@ -16,7 +16,7 @@
       
       
       
-        <link rel="next" href="tutorials/alphagenome-api-key-handling/">
+        <link rel="next" href="getting-started/01-quickstart-cli/">
       
       
       <link rel="icon" href="assets/favicon.ico">
@@ -52,6 +52,10 @@
     
       <link rel="stylesheet" href="assets/_mkdocstrings.css">
     
+      <link rel="stylesheet" href="stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="stylesheets/announcement.css">
+    
     <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -78,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#biomcp-biomedical-model-context-protocol-server" class="md-skip">
+        <a href="#biomcp-ai-powered-biomedical-research" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +96,7 @@
 
   
 
-<header class="md-header md-header--shadow" data-md-component="header">
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="BioMCP" class="md-header__button md-logo" aria-label="BioMCP" data-md-component="logo">
       
@@ -176,6 +180,8 @@
         </button>
       </nav>
       
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
@@ -206,13 +212,163 @@
     
   </nav>
   
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="getting-started/01-quickstart-cli/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="concepts/01-what-is-biomcp/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="reference/quick-reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="reference/quick-architecture/" class="md-tabs__link">
+          
+  
+  
+  Developer
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="blog/ai-assisted-clinical-trial-search-analysis/" class="md-tabs__link">
+          
+  
+  
+  About
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
 </header>
     
     <div class="md-container" data-md-component="container">
       
       
-        
-          
         
       
       <main class="md-main" data-md-component="main">
@@ -226,8 +382,10 @@
                     
 
 
+  
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="." title="BioMCP" class="md-nav__button md-logo" aria-label="BioMCP" data-md-component="logo">
       
@@ -317,136 +475,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start-claude-desktop-setup" class="md-nav__link">
+  <a href="#what-can-you-do-with-biomcp" class="md-nav__link">
     <span class="md-ellipsis">
-      Quick Start: Claude Desktop Setup
+      What Can You Do with BioMCP?
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-biomcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      What is BioMCP?
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-tools-and-capabilities" class="md-nav__link">
-    <span class="md-ellipsis">
-      MCP Tools and Capabilities
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MCP Tools and Capabilities">
+    <nav class="md-nav" aria-label="What Can You Do with BioMCP?">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#core-tools-3" class="md-nav__link">
+  <a href="#search-research-literature" class="md-nav__link">
     <span class="md-ellipsis">
-      Core Tools (3)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Core Tools (3)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#think-tool-critical-always-use-first" class="md-nav__link">
-    <span class="md-ellipsis">
-      Think Tool (CRITICAL - ALWAYS USE FIRST!)
+      Search Research Literature
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#unified-tools" class="md-nav__link">
+  <a href="#discover-clinical-trials" class="md-nav__link">
     <span class="md-ellipsis">
-      Unified Tools
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#individual-tools-10" class="md-nav__link">
-    <span class="md-ellipsis">
-      Individual Tools (10)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Individual Tools (10)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#article-tools-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Article Tools (2)
+      Discover Clinical Trials
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#clinical-trial-tools-5" class="md-nav__link">
+  <a href="#analyze-genetic-variants" class="md-nav__link">
     <span class="md-ellipsis">
-      Clinical Trial Tools (5)
+      Analyze Genetic Variants
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#genomic-variant-tools-2" class="md-nav__link">
+  <a href="#ai-powered-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Genomic Variant Tools (2)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      MCP Resources
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MCP Resources">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#instructions-resource" class="md-nav__link">
-    <span class="md-ellipsis">
-      Instructions Resource
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#researcher-persona-resource" class="md-nav__link">
-    <span class="md-ellipsis">
-      Researcher Persona Resource
+      AI-Powered Analysis
     </span>
   </a>
   
@@ -458,25 +526,165 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tutorials" class="md-nav__link">
+  <a href="#5-minute-quick-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Tutorials
+      5-Minute Quick Start
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Tutorials">
+    <nav class="md-nav" aria-label="5-Minute Quick Start">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
+  <a href="#choose-your-interface" class="md-nav__link">
     <span class="md-ellipsis">
-      Getting Started
+      Choose Your Interface
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unified-search-across-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unified Search Across Databases
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
+  <a href="#intelligent-query-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intelligent Query Processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#built-for-ai-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built for AI Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#learn-by-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Learn by Example
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Learn by Example">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-articles-about-a-specific-mutation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find Articles About a Specific Mutation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discover-trials-near-you" class="md-nav__link">
+    <span class="md-ellipsis">
+      Discover Trials Near You
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-gene-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get Gene Information
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#popular-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Popular Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Popular Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#literature-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Literature Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variant-interpretation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variant Interpretation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trial-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trial Matching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drug-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drug Research
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#advanced-features" class="md-nav__link">
     <span class="md-ellipsis">
       Advanced Features
@@ -484,60 +692,22 @@
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#verification-and-testing" class="md-nav__link">
+  <a href="#documentation" class="md-nav__link">
     <span class="md-ellipsis">
-      Verification and Testing
+      Documentation
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#additional-usage-options" class="md-nav__link">
+  <a href="#community-support" class="md-nav__link">
     <span class="md-ellipsis">
-      Additional Usage Options
+      Community &amp; Support
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Additional Usage Options">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#command-line-interface" class="md-nav__link">
-    <span class="md-ellipsis">
-      Command Line Interface
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#python-sdk" class="md-nav__link">
-    <span class="md-ellipsis">
-      Python SDK
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-client-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      MCP Client Integration
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -568,6 +738,11 @@
     
     
     
+      
+      
+        
+      
+    
     
     <li class="md-nav__item md-nav__item--nested">
       
@@ -581,7 +756,7 @@
   
   
   <span class="md-ellipsis">
-    Tutorials
+    Getting Started
     
   </span>
   
@@ -592,7 +767,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            Tutorials
+            Getting Started
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -603,12 +778,12 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/alphagenome-api-key-handling/" class="md-nav__link">
+      <a href="getting-started/01-quickstart-cli/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    AlphaGenome API Key Handling
+    Quick Start
     
   </span>
   
@@ -626,122 +801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/docker-alphagenome/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    AlphaGenome Docker
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="tutorials/alphagenome-prompts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    AlphaGenome Prompts
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="tutorials/alphagenome-setup/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    AlphaGenome Setup
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="tutorials/biothings-prompts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    BioThings Integration Prompts
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="tutorials/claude-code-biomcp-alphagenome/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Claude Code with BioMCP
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="tutorials/claude-desktop/" class="md-nav__link">
+      <a href="getting-started/02-claude-desktop-integration/" class="md-nav__link">
         
   
   
@@ -764,12 +824,12 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/macos-claude-desktop-dockerized-biomcp/" class="md-nav__link">
+      <a href="getting-started/03-authentication-and-api-keys/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Claude Desktop, for Macos and containerized
+    API Keys
     
   </span>
   
@@ -787,12 +847,12 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/cloudflare-worker-deployment/" class="md-nav__link">
+      <a href="faq-condensed/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Cloudflare Worker Deployment
+    FAQ
     
   </span>
   
@@ -810,12 +870,85 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/cursor-ide/" class="md-nav__link">
+      <a href="troubleshooting/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Cursor IDE
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/01-what-is-biomcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
     
   </span>
   
@@ -833,12 +966,12 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/bigquery_logging/" class="md-nav__link">
+      <a href="how-to-guides/01-find-articles-and-cbioportal-data/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Logging with BigQuery
+    Finding Articles
     
   </span>
   
@@ -856,12 +989,12 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/mcp-client/" class="md-nav__link">
+      <a href="how-to-guides/02-find-trials-with-nci-and-biothings/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    MCP Client
+    Finding Trials
     
   </span>
   
@@ -879,12 +1012,12 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/mcp-inspector/" class="md-nav__link">
+      <a href="how-to-guides/03-get-comprehensive-variant-annotations/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    MCP Inspector
+    Analyzing Variants
     
   </span>
   
@@ -902,7 +1035,524 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/python-sdk/" class="md-nav__link">
+      <a href="how-to-guides/04-predict-variant-effects-with-alphagenome/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Predicting Effects
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to-guides/06-search-nci-organizations-and-interventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Searching Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="workflows/all-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Research Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_8">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/remote-connection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Remote Connection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/biothings-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BioThings Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/nci-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    NCI Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/claude-code-biomcp-alphagenome/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AlphaGenome Tutorial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/openfda-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenFDA Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_9">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/02-the-deep-researcher-persona/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deep Researcher
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/03-sequential-thinking-with-the-think-tool/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sequential Thinking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user-guides/01-command-line-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Commands
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user-guides/02-mcp-tools-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Tools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Documentation
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            API Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="apis/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="apis/python-sdk/" class="md-nav__link">
         
   
   
@@ -925,12 +1575,43 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/stytch_oauth_setup/" class="md-nav__link">
+      <a href="apis/error-codes/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Setting Up Stytch OAuth for BioMCP
+    Error Codes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user-guides/03-integrating-with-ides-and-clients/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IDE Integration
     
   </span>
   
@@ -958,20 +1639,25 @@
     
     
     
+      
+      
+        
+      
+    
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    CLI Reference
+    Developer
     
   </span>
   
@@ -979,10 +1665,53 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            CLI Reference
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -993,12 +1722,12 @@
   
   
     <li class="md-nav__item">
-      <a href="cli/articles/" class="md-nav__link">
+      <a href="reference/quick-architecture/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Articles
+    Overview
     
   </span>
   
@@ -1016,12 +1745,12 @@
   
   
     <li class="md-nav__item">
-      <a href="cli/health/" class="md-nav__link">
+      <a href="reference/visual-architecture/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Health Check
+    Visual Diagrams
     
   </span>
   
@@ -1039,35 +1768,12 @@
   
   
     <li class="md-nav__item">
-      <a href="cli/trials/" class="md-nav__link">
+      <a href="reference/architecture-diagrams/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Trials
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="cli/variants/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Variants
+    Detailed Diagrams
     
   </span>
   
@@ -1084,31 +1790,37 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
     
       
       
-  
-  
-  
-  
-    
-    
-    
+        
+      
     
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    API Reference
+    Data Sources
     
   </span>
   
@@ -1116,10 +1828,10 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
             <span class="md-nav__icon md-icon"></span>
-            API Reference
+            Data Sources
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1130,12 +1842,12 @@
   
   
     <li class="md-nav__item">
-      <a href="apis/cbioportal/" class="md-nav__link">
+      <a href="backend-services-reference/01-overview/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    cBioPortal
+    Overview
     
   </span>
   
@@ -1153,7 +1865,30 @@
   
   
     <li class="md-nav__item">
-      <a href="apis/clinicaltrials_gov/" class="md-nav__link">
+      <a href="backend-services-reference/06-pubtator3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PubTator3/PubMed
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="backend-services-reference/04-clinicaltrials-gov/" class="md-nav__link">
         
   
   
@@ -1176,12 +1911,12 @@
   
   
     <li class="md-nav__item">
-      <a href="apis/myvariant_info/" class="md-nav__link">
+      <a href="backend-services-reference/05-nci-cts-api/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    MyVariant.info
+    NCI CTS API
     
   </span>
   
@@ -1199,80 +1934,12 @@
   
   
     <li class="md-nav__item">
-      <a href="apis/pubtator3_api/" class="md-nav__link">
+      <a href="backend-services-reference/02-biothings-suite/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    PubTator3
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Blog
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
-            <span class="md-nav__icon md-icon"></span>
-            Blog
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="blog/ai-assisted-clinical-trial-search-analysis/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    AI Assisted Clinical Trial Search
+    BioThings Suite
     
   </span>
   
@@ -1290,12 +1957,12 @@
   
   
     <li class="md-nav__item">
-      <a href="blog/researcher-persona-resource/" class="md-nav__link">
+      <a href="backend-services-reference/03-cbioportal/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Deep Researcher Persona
+    cBioPortal
     
   </span>
   
@@ -1313,12 +1980,35 @@
   
   
     <li class="md-nav__item">
-      <a href="blog/what-is-biomcp/" class="md-nav__link">
+      <a href="backend-services-reference/07-alphagenome/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    What is BioMCP?
+    AlphaGenome
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/openfda-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenFDA
     
   </span>
   
@@ -1335,31 +2025,37 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
     
       
       
-  
-  
-  
-  
-    
-    
-    
+        
+      
     
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    Developer Guides
+    Development
     
   </span>
   
@@ -1367,10 +2063,10 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
             <span class="md-nav__icon md-icon"></span>
-            Developer Guides
+            Development
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1381,7 +2077,127 @@
   
   
     <li class="md-nav__item">
-      <a href="transport-protocol/" class="md-nav__link">
+      <a href="developer-guides/02-contributing-and-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="developer-guides/01-server-deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to-guides/05-logging-and-monitoring-with-bigquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BigQuery Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Technical Details
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Technical Details
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="developer-guides/04-transport-protocol/" class="md-nav__link">
         
   
   
@@ -1404,7 +2220,7 @@
   
   
     <li class="md-nav__item">
-      <a href="error-handling/" class="md-nav__link">
+      <a href="developer-guides/05-error-handling/" class="md-nav__link">
         
   
   
@@ -1427,12 +2243,12 @@
   
   
     <li class="md-nav__item">
-      <a href="http-client-guide/" class="md-nav__link">
+      <a href="developer-guides/06-http-client-and-caching/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    HTTP Client Guide
+    HTTP Client
     
   </span>
   
@@ -1450,12 +2266,12 @@
   
   
     <li class="md-nav__item">
-      <a href="integration-testing/" class="md-nav__link">
+      <a href="developer-guides/07-performance-optimizations/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Integration Testing
+    Performance
     
   </span>
   
@@ -1473,58 +2289,12 @@
   
   
     <li class="md-nav__item">
-      <a href="migration-examples/" class="md-nav__link">
+      <a href="developer-guides/03-third-party-endpoints/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Migration Examples
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="performance-optimizations/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Performance Optimizations
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="development/testing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Testing
+    Third-Party APIs
     
   </span>
   
@@ -1541,31 +2311,37 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
     
       
       
-  
-  
-  
-  
-    
-    
-    
+        
+      
     
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    Policies
+    Security
     
   </span>
   
@@ -1573,10 +2349,10 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
             <span class="md-nav__icon md-icon"></span>
-            Policies
+            Security
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1587,12 +2363,12 @@
   
   
     <li class="md-nav__item">
-      <a href="policies/biomcp-privacy/" class="md-nav__link">
+      <a href="FDA_SECURITY/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Privacy Policy
+    FDA Integration Security
     
   </span>
   
@@ -1603,47 +2379,9 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="policies/biomcp-security/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Security Policy
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="policies/biomcp-terms/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Terms & Conditions
-    
-  </span>
-  
-
-      </a>
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -1666,20 +2404,25 @@
     
     
     
+      
+      
+        
+      
+    
     
     <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    Troubleshooting
+    About
     
   </span>
   
@@ -1687,10 +2430,53 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
-            Troubleshooting
+            About
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Blog
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Blog
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1701,12 +2487,35 @@
   
   
     <li class="md-nav__item">
-      <a href="troubleshooting/macos/" class="md-nav__link">
+      <a href="blog/ai-assisted-clinical-trial-search-analysis/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    MacOS
+    Clinical Trial Search
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="blog/researcher-persona-resource/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Researcher Persona
     
   </span>
   
@@ -1723,31 +2532,53 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
     
       
       
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="genomoncology/" class="md-nav__link">
         
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
-    About GenomOncology
+    Project
     
   </span>
   
 
-      </a>
-    </li>
-  
-
-    
-      
-      
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Project
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
   
   
   
@@ -1764,6 +2595,68 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="policies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policies
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="genomoncology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GenomOncology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -1804,136 +2697,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start-claude-desktop-setup" class="md-nav__link">
+  <a href="#what-can-you-do-with-biomcp" class="md-nav__link">
     <span class="md-ellipsis">
-      Quick Start: Claude Desktop Setup
+      What Can You Do with BioMCP?
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-biomcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      What is BioMCP?
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-tools-and-capabilities" class="md-nav__link">
-    <span class="md-ellipsis">
-      MCP Tools and Capabilities
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MCP Tools and Capabilities">
+    <nav class="md-nav" aria-label="What Can You Do with BioMCP?">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#core-tools-3" class="md-nav__link">
+  <a href="#search-research-literature" class="md-nav__link">
     <span class="md-ellipsis">
-      Core Tools (3)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Core Tools (3)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#think-tool-critical-always-use-first" class="md-nav__link">
-    <span class="md-ellipsis">
-      Think Tool (CRITICAL - ALWAYS USE FIRST!)
+      Search Research Literature
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#unified-tools" class="md-nav__link">
+  <a href="#discover-clinical-trials" class="md-nav__link">
     <span class="md-ellipsis">
-      Unified Tools
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#individual-tools-10" class="md-nav__link">
-    <span class="md-ellipsis">
-      Individual Tools (10)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Individual Tools (10)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#article-tools-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Article Tools (2)
+      Discover Clinical Trials
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#clinical-trial-tools-5" class="md-nav__link">
+  <a href="#analyze-genetic-variants" class="md-nav__link">
     <span class="md-ellipsis">
-      Clinical Trial Tools (5)
+      Analyze Genetic Variants
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#genomic-variant-tools-2" class="md-nav__link">
+  <a href="#ai-powered-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Genomic Variant Tools (2)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      MCP Resources
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MCP Resources">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#instructions-resource" class="md-nav__link">
-    <span class="md-ellipsis">
-      Instructions Resource
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#researcher-persona-resource" class="md-nav__link">
-    <span class="md-ellipsis">
-      Researcher Persona Resource
+      AI-Powered Analysis
     </span>
   </a>
   
@@ -1945,25 +2748,165 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tutorials" class="md-nav__link">
+  <a href="#5-minute-quick-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Tutorials
+      5-Minute Quick Start
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Tutorials">
+    <nav class="md-nav" aria-label="5-Minute Quick Start">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
+  <a href="#choose-your-interface" class="md-nav__link">
     <span class="md-ellipsis">
-      Getting Started
+      Choose Your Interface
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unified-search-across-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unified Search Across Databases
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
+  <a href="#intelligent-query-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intelligent Query Processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#built-for-ai-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built for AI Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#learn-by-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Learn by Example
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Learn by Example">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-articles-about-a-specific-mutation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find Articles About a Specific Mutation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discover-trials-near-you" class="md-nav__link">
+    <span class="md-ellipsis">
+      Discover Trials Near You
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-gene-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get Gene Information
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#popular-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Popular Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Popular Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#literature-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Literature Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variant-interpretation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variant Interpretation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trial-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trial Matching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drug-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drug Research
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#advanced-features" class="md-nav__link">
     <span class="md-ellipsis">
       Advanced Features
@@ -1971,60 +2914,22 @@
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#verification-and-testing" class="md-nav__link">
+  <a href="#documentation" class="md-nav__link">
     <span class="md-ellipsis">
-      Verification and Testing
+      Documentation
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#additional-usage-options" class="md-nav__link">
+  <a href="#community-support" class="md-nav__link">
     <span class="md-ellipsis">
-      Additional Usage Options
+      Community &amp; Support
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Additional Usage Options">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#command-line-interface" class="md-nav__link">
-    <span class="md-ellipsis">
-      Command Line Interface
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#python-sdk" class="md-nav__link">
-    <span class="md-ellipsis">
-      Python SDK
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-client-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      MCP Client Integration
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2056,158 +2961,216 @@
   
 
 
-<h1 id="biomcp-biomedical-model-context-protocol-server">BioMCP: Biomedical Model Context Protocol Server<a class="headerlink" href="#biomcp-biomedical-model-context-protocol-server" title="Permanent link">&para;</a></h1>
+<h1 id="biomcp-ai-powered-biomedical-research">BioMCP: AI-Powered Biomedical Research<a class="headerlink" href="#biomcp-ai-powered-biomedical-research" title="Permanent link">&para;</a></h1>
 <p><a href="https://github.com/genomoncology/biomcp/tags"><img alt="Release" src="https://img.shields.io/github/v/tag/genomoncology/biomcp" /></a>
 <a href="https://github.com/genomoncology/biomcp/actions/workflows/main.yml?query=branch%3Amain"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/genomoncology/biomcp/main.yml?branch=main" /></a>
-<a href="https://img.shields.io/github/commit-activity/m/genomoncology/biomcp"><img alt="Commit activity" src="https://img.shields.io/github/commit-activity/m/genomoncology/biomcp" /></a>
 <a href="https://img.shields.io/github/license/genomoncology/biomcp"><img alt="License" src="https://img.shields.io/github/license/genomoncology/biomcp" /></a></p>
-<p>BioMCP is a specialized Model Context Protocol (MCP) server that connects AI assistants like Claude to biomedical data sources, including ClinicalTrials.gov, PubMed, MyVariant.info, and cBioPortal.</p>
+<p><strong>Transform how you search and analyze biomedical data</strong> with BioMCP - a powerful tool that connects AI assistants and researchers to critical biomedical databases through natural language.</p>
 <h3 id="built-and-maintained-by">Built and Maintained by <a href="https://www.genomoncology.com"><img src="./assets/logo.png" width=200 valign="middle" /></a><a class="headerlink" href="#built-and-maintained-by" title="Permanent link">&para;</a></h3>
-<h2 id="quick-start-claude-desktop-setup">Quick Start: Claude Desktop Setup<a class="headerlink" href="#quick-start-claude-desktop-setup" title="Permanent link">&para;</a></h2>
-<p>The fastest way to get started with BioMCP is to set it up with Claude Desktop:</p>
+<div class="announcement-banner">
+  <div class="announcement-content">
+    <h2>
+      <span class="badge-new">NEW</span>
+      Remote BioMCP Now Available!
+    </h2>
+    <p>Connect to BioMCP instantly through Claude - no installation required!</p>
+
+    <div class="announcement-features">
+      <div class="feature-item">
+        <strong>🚀 Instant Access</strong>
+        <span>Start using BioMCP in under 2 minutes</span>
+      </div>
+      <div class="feature-item">
+        <strong>☁️ Cloud-Powered</strong>
+        <span>Always up-to-date with latest features</span>
+      </div>
+      <div class="feature-item">
+        <strong>🔒 Secure Auth</strong>
+        <span>Google OAuth authentication</span>
+      </div>
+      <div class="feature-item">
+        <strong>🛠️ 23+ Tools</strong>
+        <span>Full suite of biomedical research tools</span>
+      </div>
+    </div>
+
+    <a href="tutorials/remote-connection/" class="cta-button">
+      Connect to Remote BioMCP Now
+    </a>
+
+  </div>
+</div>
+
+<h2 id="what-can-you-do-with-biomcp">What Can You Do with BioMCP?<a class="headerlink" href="#what-can-you-do-with-biomcp" title="Permanent link">&para;</a></h2>
+<h3 id="search-research-literature">Search Research Literature<a class="headerlink" href="#search-research-literature" title="Permanent link">&para;</a></h3>
+<p>Find articles about genes, variants, diseases, and drugs with automatic cancer genomics data from cBioPortal</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRAF<span class="w"> </span>--disease<span class="w"> </span>melanoma
+</code></pre></div>
+<h3 id="discover-clinical-trials">Discover Clinical Trials<a class="headerlink" href="#discover-clinical-trials" title="Permanent link">&para;</a></h3>
+<p>Search active trials by condition, location, phase, and eligibility criteria including genetic biomarkers</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>biomcp<span class="w"> </span>trial<span class="w"> </span>search<span class="w"> </span>--condition<span class="w"> </span><span class="s2">&quot;lung cancer&quot;</span><span class="w"> </span>--status<span class="w"> </span>RECRUITING
+</code></pre></div>
+<h3 id="analyze-genetic-variants">Analyze Genetic Variants<a class="headerlink" href="#analyze-genetic-variants" title="Permanent link">&para;</a></h3>
+<p>Query variant databases, predict effects, and understand clinical significance</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>TP53<span class="w"> </span>--significance<span class="w"> </span>pathogenic
+</code></pre></div>
+<h3 id="ai-powered-analysis">AI-Powered Analysis<a class="headerlink" href="#ai-powered-analysis" title="Permanent link">&para;</a></h3>
+<p>Use with Claude Desktop for conversational biomedical research with sequential thinking</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Claude automatically uses BioMCP tools</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="s2">&quot;What BRAF mutations are found in melanoma?&quot;</span>
+</code></pre></div>
+<h2 id="5-minute-quick-start">5-Minute Quick Start<a class="headerlink" href="#5-minute-quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="choose-your-interface">Choose Your Interface<a class="headerlink" href="#choose-your-interface" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Claude Desktop (Recommended)</label><label for="__tabbed_1_2">Command Line</label><label for="__tabbed_1_3">Python SDK</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><strong>Best for</strong>: Conversational research, complex queries, AI-assisted analysis</p>
 <ol>
 <li>
-<p><strong>Install Claude Desktop</strong> from <a href="https://claude.ai/desktop">Anthropic</a></p>
+<p><strong>Install Claude Desktop</strong> from <a href="https://claude.ai/desktop">claude.ai/desktop</a></p>
 </li>
 <li>
-<p><strong>Ensure <code>uv</code> is installed</strong>:</p>
+<p><strong>Configure BioMCP</strong>:
+   <code>json
+   {
+     "mcpServers": {
+       "biomcp": {
+         "command": "uv",
+         "args": [
+    "run", "--with", "biomcp-python",
+    "biomcp", "run"
+  ]
+       }
+     }
+   }</code></p>
+</li>
+<li>
+<p><strong>Start researching</strong>: Ask Claude about any biomedical topic!</p>
 </li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Install uv if you don&#39;t have it</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># MacOS: brew install uv</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Windows: pip install uv</span>
-</code></pre></div>
+<p><a href="getting-started/02-claude-desktop-integration/">Full Claude Desktop Guide →</a></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Best for</strong>: Direct queries, scripting, automation</p>
 <ol>
 <li>
-<p><strong>Configure Claude Desktop</strong>:</p>
+<p><strong>Install BioMCP</strong>:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Using uv (recommended)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>biomcp
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Or using pip</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>pip<span class="w"> </span>install<span class="w"> </span>biomcp-python
+</code></pre></div></p>
 </li>
 <li>
-<p>Open Claude Desktop settings</p>
+<p><strong>Run your first search</strong>:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--gene<span class="w"> </span>BRAF<span class="w"> </span>--disease<span class="w"> </span>melanoma<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--limit<span class="w"> </span><span class="m">5</span>
+</code></pre></div></p>
 </li>
-<li>Navigate to Developer section</li>
-<li>Click "Edit Config" and add:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;biomcp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uv&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;run&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--with&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;biomcp-python&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;biomcp&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;run&quot;</span><span class="p">]</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
-</code></pre></div>
-<ul>
-<li>
-<p>Save and restart Claude Desktop</p>
-</li>
-<li>
-<p><strong>Start chatting with Claude</strong> about biomedical topics!</p>
-</li>
-</ul>
-<p>For detailed setup instructions and examples, see our <a href="tutorials/claude-desktop/">Claude Desktop Tutorial</a>.</p>
-<h2 id="what-is-biomcp">What is BioMCP?<a class="headerlink" href="#what-is-biomcp" title="Permanent link">&para;</a></h2>
-<p>BioMCP is a specialized MCP (Model Context Protocol) server that bridges the gap between AI systems and critical biomedical data sources. While Large Language Models (LLMs) like Claude have extensive general knowledge, they often lack real-time access to specialized databases needed for in-depth biomedical research.</p>
-<p>Using the Model Context Protocol, BioMCP provides Claude and other AI assistants with structured, real-time access to:</p>
+<p><a href="user-guides/01-command-line-interface/">CLI Reference →</a></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Best for</strong>: Integration, custom applications, bulk operations</p>
 <ol>
-<li><strong>Clinical Trials</strong> - Searchable access to ClinicalTrials.gov for finding relevant studies</li>
-<li><strong>Research Literature</strong> - Query PubMed/PubTator3 for the latest biomedical research with automatic cBioPortal cancer genomics integration</li>
-<li><strong>Genomic Variants</strong> - Explore detailed genetic variant information from MyVariant.info</li>
-<li><strong>Cancer Genomics</strong> - Automatic integration with cBioPortal for mutation occurrence data in cancer studies</li>
+<li>
+<p><strong>Install the package</strong>:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pip<span class="w"> </span>install<span class="w"> </span>biomcp-python
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Use in your code</strong>:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">biomcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">BioMCPClient</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">async</span> <span class="k">with</span> <span class="n">BioMCPClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">articles</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">articles</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>        <span class="n">genes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;BRAF&quot;</span><span class="p">],</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="n">diseases</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;melanoma&quot;</span><span class="p">]</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="p">)</span>
+</code></pre></div></p>
+</li>
 </ol>
-<p>Through MCP, AI assistants can seamlessly invoke BioMCP tools during conversations, retrieving precise biomedical information without the user needing to understand complex query syntax or database-specific parameters.</p>
-<h2 id="mcp-tools-and-capabilities">MCP Tools and Capabilities<a class="headerlink" href="#mcp-tools-and-capabilities" title="Permanent link">&para;</a></h2>
-<p>BioMCP provides 13 specialized tools through the MCP interface:</p>
-<h3 id="core-tools-3">Core Tools (3)<a class="headerlink" href="#core-tools-3" title="Permanent link">&para;</a></h3>
-<h4 id="think-tool-critical-always-use-first">Think Tool (CRITICAL - ALWAYS USE FIRST!)<a class="headerlink" href="#think-tool-critical-always-use-first" title="Permanent link">&para;</a></h4>
+<p><a href="apis/python-sdk/">Python SDK Docs →</a></p>
+</div>
+</div>
+</div>
+<h2 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h2>
+<h3 id="unified-search-across-databases">Unified Search Across Databases<a class="headerlink" href="#unified-search-across-databases" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>think</code>: A sequential thinking tool for systematic analysis of biomedical problems. <strong>MUST be used BEFORE any search operations</strong> to ensure comprehensive research planning and analysis.</li>
+<li><strong>PubMed/PubTator3</strong>: 30M+ research articles with entity recognition</li>
+<li><strong>ClinicalTrials.gov</strong>: 400K+ clinical trials worldwide</li>
+<li><strong>MyVariant.info</strong>: Comprehensive variant annotations</li>
+<li><strong>cBioPortal</strong>: Automatic cancer genomics integration</li>
 </ul>
-<h4 id="unified-tools">Unified Tools<a class="headerlink" href="#unified-tools" title="Permanent link">&para;</a></h4>
+<h3 id="intelligent-query-processing">Intelligent Query Processing<a class="headerlink" href="#intelligent-query-processing" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>search</code>: Powerful unified search across all biomedical data sources with cross-domain query support</li>
-<li><code>fetch</code>: Retrieve detailed information for specific articles, trials, or variants</li>
+<li>Natural language to structured queries</li>
+<li>Automatic synonym expansion</li>
+<li>OR logic support for flexible matching</li>
+<li>Cross-domain relationship discovery</li>
 </ul>
-<h3 id="individual-tools-10">Individual Tools (10)<a class="headerlink" href="#individual-tools-10" title="Permanent link">&para;</a></h3>
-<h4 id="article-tools-2">Article Tools (2)<a class="headerlink" href="#article-tools-2" title="Permanent link">&para;</a></h4>
+<h3 id="built-for-ai-integration">Built for AI Integration<a class="headerlink" href="#built-for-ai-integration" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>article_searcher</code>: Search PubMed/PubTator3 and preprints with automatic cBioPortal integration</li>
-<li><code>article_getter</code>: Fetch detailed article content and metadata</li>
+<li>24 specialized MCP tools</li>
+<li>Sequential thinking for complex analysis</li>
+<li>Streaming responses for real-time updates</li>
+<li>Context preservation across queries</li>
 </ul>
-<p><strong>Note</strong>: When searching articles with gene parameters, cBioPortal data is automatically included, providing:</p>
-<ul>
-<li>Gene-level mutation summaries across cancer studies</li>
-<li>Mutation-specific search capabilities (e.g., BRAF V600E)</li>
-<li>Dynamic cancer type categorization</li>
-</ul>
-<p><strong>NEW: OR Logic for Keywords</strong>: The article searcher now supports OR logic using pipe separators in keywords:</p>
-<ul>
-<li><code>"R173|Arg173|p.R173"</code> finds articles with any variant notation</li>
-<li><code>"immunotherapy|checkpoint inhibitor"</code> matches either term</li>
-<li>Multiple keywords are still combined with AND logic</li>
-</ul>
-<h4 id="clinical-trial-tools-5">Clinical Trial Tools (5)<a class="headerlink" href="#clinical-trial-tools-5" title="Permanent link">&para;</a></h4>
-<ul>
-<li><code>trial_searcher</code>: Search for trials by condition, intervention, location, phase, etc.</li>
-<li><code>trial_getter</code>: Fetch all details for a specific trial</li>
-<li><code>trial_protocol_getter</code>: Get protocol information only</li>
-<li><code>trial_references_getter</code>: Find publications related to trials</li>
-<li><code>trial_outcomes_getter</code>: Access trial results and outcome data</li>
-<li><code>trial_locations_getter</code>: Find where trials are conducted</li>
-</ul>
-<h4 id="genomic-variant-tools-2">Genomic Variant Tools (2)<a class="headerlink" href="#genomic-variant-tools-2" title="Permanent link">&para;</a></h4>
-<ul>
-<li><code>variant_searcher</code>: Search MyVariant.info with clinical and functional filters</li>
-<li><code>variant_getter</code>: Get comprehensive annotations including TCGA, 1000 Genomes, and cBioPortal data</li>
-</ul>
-<h2 id="mcp-resources">MCP Resources<a class="headerlink" href="#mcp-resources" title="Permanent link">&para;</a></h2>
-<p>BioMCP provides the following resources through the MCP interface:</p>
-<h3 id="instructions-resource">Instructions Resource<a class="headerlink" href="#instructions-resource" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>get_instructions</code>: Returns operational instructions and guidelines for effective use of BioMCP tools. This resource helps AI assistants understand best practices for biomedical research tasks.</li>
-</ul>
-<h3 id="researcher-persona-resource">Researcher Persona Resource<a class="headerlink" href="#researcher-persona-resource" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>get_researcher</code>: Provides a detailed biomedical researcher persona with extensive expertise across multiple domains. This persona helps AI assistants adopt appropriate research methodologies and communication styles for biomedical tasks.</li>
-</ul>
-<h2 id="tutorials">Tutorials<a class="headerlink" href="#tutorials" title="Permanent link">&para;</a></h2>
-<h3 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h3>
-<ul>
-<li><a href="tutorials/claude-desktop/"><strong>Claude Desktop Tutorial</strong></a> - Set up and use BioMCP with Claude Desktop</li>
-<li><a href="tutorials/mcp-inspector/"><strong>MCP Inspector Tutorial</strong></a> - Test and debug BioMCP directly</li>
-<li><a href="tutorials/python-sdk/"><strong>Python SDK Tutorial</strong></a> - Use BioMCP as a Python library</li>
-<li><a href="tutorials/mcp-client/"><strong>MCP Client Tutorial</strong></a> - Integrate with MCP clients programmatically</li>
-</ul>
-<h3 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h3>
-<ul>
-<li><a href="tutorials/alphagenome-setup/"><strong>AlphaGenome Setup Guide</strong></a> - Configure Google DeepMind's AlphaGenome for variant effect prediction</li>
-<li><a href="tutorials/alphagenome-prompts/"><strong>AlphaGenome Prompt Examples</strong></a> - Example prompts and workflows for variant analysis with AI</li>
-<li><a href="tutorials/docker-alphagenome/"><strong>AlphaGenome with Docker</strong></a> - Run AlphaGenome in Docker containers</li>
-</ul>
-<h2 id="verification-and-testing">Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permanent link">&para;</a></h2>
-<p>The easiest way to test your BioMCP setup is with the MCP Inspector:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>npx<span class="w"> </span>@modelcontextprotocol/inspector<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>--with<span class="w"> </span>biomcp-python<span class="w"> </span>biomcp<span class="w"> </span>run
+<p><a href="concepts/01-what-is-biomcp/">Explore All Features →</a></p>
+<h2 id="learn-by-example">Learn by Example<a class="headerlink" href="#learn-by-example" title="Permanent link">&para;</a></h2>
+<h3 id="find-articles-about-a-specific-mutation">Find Articles About a Specific Mutation<a class="headerlink" href="#find-articles-about-a-specific-mutation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Search for BRAF V600E mutations</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRAF<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--keyword<span class="w"> </span><span class="s2">&quot;V600E|p.V600E|c.1799T&gt;A&quot;</span>
 </code></pre></div>
-<p>This launches a web interface where you can test each BioMCP tool directly. For detailed instructions, see the <a href="tutorials/mcp-inspector/">MCP Inspector Tutorial</a>.</p>
-<h2 id="additional-usage-options">Additional Usage Options<a class="headerlink" href="#additional-usage-options" title="Permanent link">&para;</a></h2>
-<p>While BioMCP is primarily designed as an MCP server for AI assistants, it can also be used in other ways:</p>
-<h3 id="command-line-interface">Command Line Interface<a class="headerlink" href="#command-line-interface" title="Permanent link">&para;</a></h3>
-<p>BioMCP includes a comprehensive CLI for direct interaction with biomedical databases:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Examples of CLI usage</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>biomcp<span class="w"> </span>trial<span class="w"> </span>search<span class="w"> </span>--condition<span class="w"> </span><span class="s2">&quot;Melanoma&quot;</span><span class="w"> </span>--phase<span class="w"> </span>PHASE3
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRAF<span class="w"> </span>--disease<span class="w"> </span>Melanoma<span class="w">  </span><span class="c1"># Includes cBioPortal data</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRAF<span class="w"> </span>--keyword<span class="w"> </span>V600E<span class="w">     </span><span class="c1"># Mutation-specific search</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>TP53<span class="w"> </span>--significance<span class="w"> </span>pathogenic
+<h3 id="discover-trials-near-you">Discover Trials Near You<a class="headerlink" href="#discover-trials-near-you" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Find cancer trials in Boston area</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>biomcp<span class="w"> </span>trial<span class="w"> </span>search<span class="w"> </span>--condition<span class="w"> </span>cancer<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--latitude<span class="w"> </span><span class="m">42</span>.3601<span class="w"> </span>--longitude<span class="w"> </span>-71.0589<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>--distance<span class="w"> </span><span class="m">50</span>
 </code></pre></div>
-<h3 id="python-sdk">Python SDK<a class="headerlink" href="#python-sdk" title="Permanent link">&para;</a></h3>
-<p>For programmatic access, BioMCP can be used as a Python library:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Install the package</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pip<span class="w"> </span>install<span class="w"> </span>biomcp-python
+<h3 id="get-gene-information">Get Gene Information<a class="headerlink" href="#get-gene-information" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Get comprehensive gene data</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>biomcp<span class="w"> </span>gene<span class="w"> </span>get<span class="w"> </span>TP53
 </code></pre></div>
-<p>See the <a href="tutorials/python-sdk/">Python SDK Tutorial</a> for code examples.</p>
-<h3 id="mcp-client-integration">MCP Client Integration<a class="headerlink" href="#mcp-client-integration" title="Permanent link">&para;</a></h3>
-<p>For developers building MCP-compatible applications, BioMCP can be integrated using the MCP client libraries. See the <a href="tutorials/mcp-client/">MCP Client Tutorial</a> for details.</p>
+<p><a href="tutorials/biothings-prompts/">More Examples →</a></p>
+<h2 id="popular-workflows">Popular Workflows<a class="headerlink" href="#popular-workflows" title="Permanent link">&para;</a></h2>
+<h3 id="literature-review">Literature Review<a class="headerlink" href="#literature-review" title="Permanent link">&para;</a></h3>
+<p>Systematic search across papers, preprints, and clinical trials
+<a href="workflows/all-workflows/#1-literature-review-workflow">Workflow Guide →</a></p>
+<h3 id="variant-interpretation">Variant Interpretation<a class="headerlink" href="#variant-interpretation" title="Permanent link">&para;</a></h3>
+<p>From variant ID to clinical significance and treatment implications
+<a href="workflows/all-workflows/#3-variant-interpretation-workflow">Workflow Guide →</a></p>
+<h3 id="trial-matching">Trial Matching<a class="headerlink" href="#trial-matching" title="Permanent link">&para;</a></h3>
+<p>Find eligible trials based on patient criteria and biomarkers
+<a href="workflows/all-workflows/#2-clinical-trial-matching-workflow">Workflow Guide →</a></p>
+<h3 id="drug-research">Drug Research<a class="headerlink" href="#drug-research" title="Permanent link">&para;</a></h3>
+<p>Connect drugs to targets, trials, and research literature
+<a href="workflows/all-workflows/">Workflow Guide →</a></p>
+<h2 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="getting-started/03-authentication-and-api-keys/#nci-clinical-trials-api">NCI Integration</a></strong>: Enhanced cancer trial search with biomarker filtering</li>
+<li><strong><a href="how-to-guides/04-predict-variant-effects-with-alphagenome/">AlphaGenome</a></strong>: Predict variant effects on gene regulation</li>
+<li><strong><a href="how-to-guides/05-logging-and-monitoring-with-bigquery/">BigQuery Logging</a></strong>: Monitor usage and performance</li>
+<li><strong><a href="developer-guides/01-server-deployment/">HTTP Server Mode</a></strong>: Deploy as a service</li>
+</ul>
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="getting-started/01-quickstart-cli/">Getting Started</a></strong> - Installation and first steps</li>
+<li><strong><a href="user-guides/01-command-line-interface/">User Guides</a></strong> - Detailed usage instructions</li>
+<li><strong><a href="apis/overview/">API Reference</a></strong> - Technical documentation</li>
+<li><strong><a href="faq-condensed/">FAQ</a></strong> - Quick answers to common questions</li>
+</ul>
+<h2 id="community-support">Community &amp; Support<a class="headerlink" href="#community-support" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>GitHub</strong>: <a href="https://github.com/genomoncology/biomcp">github.com/genomoncology/biomcp</a></li>
+<li><strong>Issues</strong>: <a href="https://github.com/genomoncology/biomcp/issues">Report bugs or request features</a></li>
+<li><strong>Discussions</strong>: <a href="https://github.com/genomoncology/biomcp/discussions">Ask questions and share tips</a></li>
+</ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
-<p>BioMCP is licensed under the MIT License.</p>
+<p>BioMCP is licensed under the MIT License. See <a href="https://github.com/genomoncology/biomcp/blob/main/LICENSE">LICENSE</a> for details.</p>
 
 
 
@@ -2227,6 +3190,12 @@
           
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
         
       </main>
       
@@ -2286,7 +3255,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": ".", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.instant", "navigation.tracking", "navigation.top", "toc.follow", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="assets/javascripts/bundle.50899def.min.js"></script>
