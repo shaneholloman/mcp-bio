@@ -261,21 +261,36 @@ biomcp variant search --chromosome 7 --start 140753336 --end 140753337
 Retrieve detailed information about a specific variant.
 
 ```bash
-biomcp variant get VARIANT_ID
+biomcp variant get VARIANT_ID [OPTIONS]
 ```
 
 **Arguments:**
 
 - `VARIANT_ID`: Variant identifier (HGVS, rsID, or genomic)
 
+**Options:**
+
+- `--json, -j`: Output in JSON format
+- `--include-external / --no-external`: Include/exclude external annotations (default: include)
+- `--assembly TEXT`: Genome assembly (hg19 or hg38, default: hg19)
+
 **Examples:**
 
 ```bash
-# Get variant by HGVS
+# Get variant by HGVS (defaults to hg19)
 biomcp variant get "NM_007294.4:c.5266dupC"
 
 # Get variant by rsID
 biomcp variant get rs121913529
+
+# Specify hg38 assembly
+biomcp variant get rs113488022 --assembly hg38
+
+# JSON output with hg38
+biomcp variant get rs113488022 --json --assembly hg38
+
+# Without external annotations
+biomcp variant get rs113488022 --no-external
 
 # Get variant by genomic coordinates
 biomcp variant get "chr17:g.43082434G>A"

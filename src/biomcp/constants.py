@@ -96,6 +96,9 @@ MAX_AUTOCOMPLETE_LIMIT = 100
 MAX_WIDTH = 72  # Maximum width for text wrapping in console output
 SNIPPET_LENGTH = 200  # Maximum length for text snippets in search results
 
+# Genome Assembly
+DEFAULT_ASSEMBLY = "hg19"  # Default genome assembly for MyVariant.info API
+
 # Rate Limiting
 DEFAULT_RATE_LIMIT_PER_SECOND = 10.0
 DEFAULT_BURST_SIZE = 20

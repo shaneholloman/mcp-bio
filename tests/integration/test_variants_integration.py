@@ -9,6 +9,7 @@ from biomcp.variants.external import (
     TCGAClient,
     ThousandGenomesClient,
 )
+from biomcp.variants.getter import get_variant
 
 
 class TestTCGAIntegration:
@@ -108,6 +109,125 @@ class TestExternalAggregatorIntegration:
         assert result.variant_id == "chr1:g.12345678A>G"
 
 
+class TestAssemblyParameter:
+    """Integration tests for assembly parameter."""
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_variant_hg19_assembly(self):
+        """Test get_variant with hg19 assembly on real API."""
+        # Use a well-known variant: BRAF V600E
+        variant_id = "rs113488022"
+
+        result = await get_variant(
+            variant_id,
+            output_json=True,
+            include_external=False,
+            assembly="hg19",
+        )
+
+        # Should return valid JSON
+        assert result is not None
+        assert len(result) > 0
+
+        # Parse and check for hg19 data
+        import json
+
+        data = json.loads(result)
+        if data and len(data) > 0:
+            variant_data = data[0]
+            # BRAF V600E should have hg19 coordinates
+            if "hg19" in variant_data:
+                print(f"hg19 coordinates: {variant_data['hg19']}")
+                assert "start" in variant_data["hg19"]
+                assert "end" in variant_data["hg19"]
+            else:
+                pytest.skip("hg19 data not available in API response")
+        else:
+            pytest.skip("No data returned from API")
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_get_variant_hg38_assembly(self):
+        """Test get_variant with hg38 assembly on real API."""
+        # Use the same variant but request hg38
+        variant_id = "rs113488022"
+
+        result = await get_variant(
+            variant_id,
+            output_json=True,
+            include_external=False,
+            assembly="hg38",
+        )
+
+        # Should return valid JSON
+        assert result is not None
+        assert len(result) > 0
+
+        # Parse and check for hg38 data
+        import json
+
+        data = json.loads(result)
+        if data and len(data) > 0:
+            variant_data = data[0]
+            # Should have hg38 coordinates
+            if "hg38" in variant_data:
+                print(f"hg38 coordinates: {variant_data['hg38']}")
+                assert "start" in variant_data["hg38"]
+                assert "end" in variant_data["hg38"]
+            else:
+                pytest.skip("hg38 data not available in API response")
+        else:
+            pytest.skip("No data returned from API")
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_assembly_coordinate_differences(self):
+        """Test that hg19 and hg38 return different coordinates for same variant."""
+        variant_id = "rs113488022"  # BRAF V600E
+
+        # Get both assemblies
+        result_hg19 = await get_variant(
+            variant_id,
+            output_json=True,
+            include_external=False,
+            assembly="hg19",
+        )
+
+        result_hg38 = await get_variant(
+            variant_id,
+            output_json=True,
+            include_external=False,
+            assembly="hg38",
+        )
+
+        import json
+
+        data_hg19 = json.loads(result_hg19)
+        data_hg38 = json.loads(result_hg38)
+
+        # Both should return data
+        if not data_hg19 or not data_hg38:
+            pytest.skip("API did not return data for both assemblies")
+
+        # Compare coordinates if available
+        if len(data_hg19) > 0 and len(data_hg38) > 0:
+            v19 = data_hg19[0]
+            v38 = data_hg38[0]
+
+            # BRAF V600E has different coordinates in hg19 vs hg38
+            # hg19: chr7:140453136
+            # hg38: chr7:140753336
+            if "hg19" in v19 and "hg38" in v38:
+                print(f"hg19 start: {v19['hg19']['start']}")
+                print(f"hg38 start: {v38['hg38']['start']}")
+
+                # Coordinates should be different (BRAF moved between assemblies)
+                assert v19["hg19"]["start"] != v38["hg38"]["start"]
+            else:
+                pytest.skip("Assembly-specific coordinates not in response")
+
+
 if __name__ == "__main__":
     print("Testing TCGA/GDC...")
     asyncio.run(TestTCGAIntegration().test_tcga_real_variant())
@@ -125,3 +245,9 @@ if __name__ == "__main__":
     asyncio.run(
         TestExternalAggregatorIntegration().test_aggregator_partial_failures()
     )
+
+    print("\n" + "=" * 50 + "\n")
+    print("Testing assembly parameter...")
+    asyncio.run(TestAssemblyParameter().test_get_variant_hg19_assembly())
+    asyncio.run(TestAssemblyParameter().test_get_variant_hg38_assembly())
+    asyncio.run(TestAssemblyParameter().test_assembly_coordinate_differences())
