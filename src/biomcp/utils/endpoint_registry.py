@@ -289,6 +289,49 @@ class EndpointRegistry:
             ),
         )
 
+        # OncoKB API endpoints (demo server by default)
+        self.register(
+            "oncokb_curated_genes",
+            EndpointInfo(
+                url="https://demo.oncokb.org/api/v1/utils/allCuratedGenes",
+                category=EndpointCategory.CANCER_GENOMICS,
+                data_types=[DataType.GENE_ANNOTATIONS],
+                description="OncoKB demo API for retrieving curated cancer genes (BRAF, ROS1, TP53)",
+                compliance_notes="Public MSK OncoKB demo service, no authentication required. Production (www.oncokb.org) requires ONCOKB_TOKEN.",
+                rate_limit="Not specified",
+                authentication="None (demo server). Set ONCOKB_TOKEN for production access.",
+            ),
+        )
+
+        self.register(
+            "oncokb_gene_annotation",
+            EndpointInfo(
+                url="https://demo.oncokb.org/api/v1/genes/{gene}",
+                category=EndpointCategory.CANCER_GENOMICS,
+                data_types=[DataType.GENE_ANNOTATIONS],
+                description="OncoKB demo API for gene-level annotations and therapeutic implications",
+                compliance_notes="Public MSK OncoKB demo service, limited to 3 genes. Production (www.oncokb.org) requires ONCOKB_TOKEN.",
+                rate_limit="Not specified",
+                authentication="None (demo server). Set ONCOKB_TOKEN for production access.",
+            ),
+        )
+
+        self.register(
+            "oncokb_variant_annotation",
+            EndpointInfo(
+                url="https://demo.oncokb.org/api/v1/annotate/mutations/byProteinChange",
+                category=EndpointCategory.CANCER_GENOMICS,
+                data_types=[
+                    DataType.GENE_ANNOTATIONS,
+                    DataType.CANCER_MUTATIONS,
+                ],
+                description="OncoKB demo API for variant-level annotations with clinical actionability",
+                compliance_notes="Public MSK OncoKB demo service, works for BRAF/ROS1/TP53 variants. Production (www.oncokb.org) requires ONCOKB_TOKEN.",
+                rate_limit="Not specified",
+                authentication="None (demo server). Set ONCOKB_TOKEN for production access.",
+            ),
+        )
+
         # BioThings Suite APIs
         self.register(
             "mygene_query",

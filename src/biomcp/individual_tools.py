@@ -20,6 +20,7 @@ from biomcp.diseases.getter import _disease_details
 from biomcp.drugs.getter import _drug_details
 from biomcp.genes.getter import _gene_details
 from biomcp.metrics import track_performance
+from biomcp.oncokb_helper import get_oncokb_summary_for_genes
 from biomcp.trials.getter import (
     _trial_locations,
     _trial_outcomes,
@@ -521,6 +522,12 @@ async def variant_searcher(
             description="Include cBioPortal cancer genomics summary when searching by gene"
         ),
     ] = True,
+    include_oncokb: Annotated[
+        bool,
+        Field(
+            description="Include OncoKB precision oncology summary when searching by gene"
+        ),
+    ] = True,
     page: Annotated[
         int,
         Field(description="Page number (1-based)", ge=1),
@@ -567,6 +574,12 @@ async def variant_searcher(
         cbioportal_summary = await get_variant_cbioportal_summary(gene)
         if cbioportal_summary:
             result = cbioportal_summary + "\n\n" + result
+
+    # Add OncoKB summary if searching by gene
+    if include_oncokb and gene:
+        oncokb_summary = await get_oncokb_summary_for_genes([gene])
+        if oncokb_summary:
+            result = oncokb_summary + "\n\n" + result
 
     return result
 

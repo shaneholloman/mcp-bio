@@ -13,6 +13,7 @@ from .. import http_client
 
 # Import CBioPortalVariantData from the new module
 from .cbio_external_client import CBioPortalVariantData
+from .oncokb_client import OncoKBClient
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,19 @@ class ThousandGenomesData(BaseModel):
 # CBioPortalVariantData is now imported from cbio_external_client.py
 
 
+class OncoKBVariantData(BaseModel):
+    """OncoKB variant annotation data."""
+
+    oncogenic: str | None = None
+    mutation_effect: str | None = None
+    highest_sensitive_level: str | None = None
+    highest_resistance_level: str | None = None
+    treatments_count: int = 0
+    diagnostic_implications_count: int = 0
+    prognostic_implications_count: int = 0
+    is_hotspot: bool = False
+
+
 class EnhancedVariantAnnotation(BaseModel):
     """Enhanced variant annotation combining multiple sources."""
 
@@ -68,6 +82,7 @@ class EnhancedVariantAnnotation(BaseModel):
     tcga: TCGAVariantData | None = None
     thousand_genomes: ThousandGenomesData | None = None
     cbioportal: CBioPortalVariantData | None = None
+    oncokb: OncoKBVariantData | None = None
     error_sources: list[str] = Field(default_factory=list)
 
 
@@ -363,6 +378,7 @@ class ExternalVariantAggregator:
         from .cbio_external_client import CBioPortalExternalClient
 
         self.cbioportal_client = CBioPortalExternalClient()
+        self.oncokb_client = OncoKBClient()
 
     def _extract_gene_aa_change(
         self, variant_data: dict[str, Any]
@@ -462,6 +478,7 @@ class ExternalVariantAggregator:
         include_tcga: bool = True,
         include_1000g: bool = True,
         include_cbioportal: bool = True,
+        include_oncokb: bool = True,
         variant_data: dict[str, Any] | None = None,
     ) -> EnhancedVariantAnnotation:
         """Fetch and aggregate variant annotations from external sources.
@@ -471,6 +488,7 @@ class ExternalVariantAggregator:
             include_tcga: Whether to include TCGA data
             include_1000g: Whether to include 1000 Genomes data
             include_cbioportal: Whether to include cBioPortal data
+            include_oncokb: Whether to include OncoKB data
             variant_data: Optional variant data from MyVariant.info to extract gene/protein info
         """
         logger.info(
@@ -515,6 +533,24 @@ class ExternalVariantAggregator:
                 "Skipping cBioPortal: no gene/AA change could be extracted"
             )
 
+        if include_oncokb and gene_aa_change:
+            # OncoKB requires gene/AA format
+            logger.info(
+                f"Adding OncoKB task with gene_aa_change: {gene_aa_change}"
+            )
+            # Split gene_aa_change into gene and protein_change
+            parts = gene_aa_change.split(" ", 1)
+            if len(parts) == 2:
+                gene, protein_change = parts
+                tasks.append(
+                    self._get_oncokb_variant_data(gene, protein_change)
+                )
+                task_names.append("oncokb")
+        elif include_oncokb and not gene_aa_change:
+            logger.warning(
+                "Skipping OncoKB: no gene/AA change could be extracted"
+            )
+
         # Run all queries in parallel
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -533,6 +569,65 @@ class ExternalVariantAggregator:
                 pass
 
         return annotation
+
+    async def _get_oncokb_variant_data(
+        self, gene: str, protein_change: str
+    ) -> OncoKBVariantData | None:
+        """Get OncoKB variant data and convert to simplified format.
+
+        Args:
+            gene: Gene symbol (e.g., "BRAF")
+            protein_change: Protein change notation (e.g., "V600E")
+
+        Returns:
+            OncoKBVariantData or None if unavailable
+        """
+        try:
+            (
+                annotation,
+                error,
+            ) = await self.oncokb_client.get_variant_annotation(
+                gene, protein_change
+            )
+
+            if error or not annotation:
+                logger.warning(
+                    f"Failed to get OncoKB annotation for {gene} {protein_change}"
+                )
+                return None
+
+            # Extract key fields into simplified model
+            mutation_effect_obj = annotation.get("mutationEffect", {})
+            mutation_effect = (
+                mutation_effect_obj.get("knownEffect")
+                if isinstance(mutation_effect_obj, dict)
+                else None
+            )
+
+            return OncoKBVariantData(
+                oncogenic=annotation.get("oncogenic"),
+                mutation_effect=mutation_effect,
+                highest_sensitive_level=annotation.get(
+                    "highestSensitiveLevel"
+                ),
+                highest_resistance_level=annotation.get(
+                    "highestResistanceLevel"
+                ),
+                treatments_count=len(annotation.get("treatments", [])),
+                diagnostic_implications_count=len(
+                    annotation.get("diagnosticImplications", [])
+                ),
+                prognostic_implications_count=len(
+                    annotation.get("prognosticImplications", [])
+                ),
+                is_hotspot=annotation.get("hotspot", False),
+            )
+
+        except Exception as e:
+            logger.warning(
+                f"Error getting OncoKB data for {gene} {protein_change}: {e}"
+            )
+            return None
 
 
 def format_enhanced_annotations(
@@ -597,6 +692,42 @@ def format_enhanced_annotations(
             cbio_data["sample_types"] = annotation.cbioportal.sample_types
 
         external_annot["cbioportal"] = cbio_data
+
+    if annotation.oncokb:
+        oncokb_data: dict[str, Any] = {
+            "oncogenic": annotation.oncokb.oncogenic,
+            "mutation_effect": annotation.oncokb.mutation_effect,
+        }
+
+        # Add evidence levels if available
+        if annotation.oncokb.highest_sensitive_level:
+            oncokb_data["highest_sensitive_level"] = (
+                annotation.oncokb.highest_sensitive_level
+            )
+        if annotation.oncokb.highest_resistance_level:
+            oncokb_data["highest_resistance_level"] = (
+                annotation.oncokb.highest_resistance_level
+            )
+
+        # Add counts if > 0
+        if annotation.oncokb.treatments_count > 0:
+            oncokb_data["treatments_count"] = (
+                annotation.oncokb.treatments_count
+            )
+        if annotation.oncokb.diagnostic_implications_count > 0:
+            oncokb_data["diagnostic_implications_count"] = (
+                annotation.oncokb.diagnostic_implications_count
+            )
+        if annotation.oncokb.prognostic_implications_count > 0:
+            oncokb_data["prognostic_implications_count"] = (
+                annotation.oncokb.prognostic_implications_count
+            )
+
+        # Add hotspot flag if true
+        if annotation.oncokb.is_hotspot:
+            oncokb_data["is_hotspot"] = annotation.oncokb.is_hotspot
+
+        external_annot["oncokb"] = oncokb_data
 
     if annotation.error_sources:
         external_annot["errors"] = annotation.error_sources
