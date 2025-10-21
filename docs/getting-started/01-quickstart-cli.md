@@ -92,6 +92,17 @@ biomcp variant search \
   --limit 5
 ```
 
+### Analyze a Clinically Actionable Variant
+
+Get OncoKB clinical interpretations for known cancer variants. BioMCP uses a demo server for key genes like BRAF out-of-the-box, no setup required!
+
+```bash
+# Get clinical actionability for BRAF V600E
+biomcp variant search --gene BRAF
+```
+
+This will automatically prepend an "OncoKB Gene Summary" table to the search results.
+
 ## Next Steps
 
 ### Set Up API Keys (Optional but Recommended)

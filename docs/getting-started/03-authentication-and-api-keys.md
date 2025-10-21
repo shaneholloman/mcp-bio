@@ -9,6 +9,7 @@ BioMCP integrates with multiple biomedical databases. While many features work w
 | **NCI API**     | Optional   | Advanced clinical trial filters, biomarker search | [api.cancer.gov](https://api.cancer.gov)                               |
 | **AlphaGenome** | Required\* | Variant effect predictions                        | [deepmind.google.com](https://deepmind.google.com/science/alphagenome) |
 | **cBioPortal**  | Optional   | Enhanced cancer genomics queries                  | [cbioportal.org](https://www.cbioportal.org/webAPI)                    |
+| **OncoKB**      | Optional   | Clinical actionability for all genes              | [oncokb.org](https://www.oncokb.org/licensing)                         |
 
 \*Required only when using AlphaGenome features
 
@@ -23,6 +24,7 @@ Set environment variables in your shell configuration:
 export NCI_API_KEY="your-nci-api-key"
 export ALPHAGENOME_API_KEY="your-alphagenome-key"
 export CBIO_TOKEN="your-cbioportal-token"
+export ONCOKB_TOKEN="your-oncokb-api-token"
 ```
 
 ### Method 2: Configuration Files
@@ -40,7 +42,8 @@ Add keys to your Claude Desktop configuration:
       "env": {
         "NCI_API_KEY": "your-nci-api-key",
         "ALPHAGENOME_API_KEY": "your-alphagenome-key",
-        "CBIO_TOKEN": "your-cbioportal-token"
+        "CBIO_TOKEN": "your-cbioportal-token",
+        "ONCOKB_TOKEN": "your-oncokb-api-token"
       }
     }
   }
@@ -55,6 +58,7 @@ Include in your Docker run command:
 docker run -e NCI_API_KEY="your-key" \
            -e ALPHAGENOME_API_KEY="your-key" \
            -e CBIO_TOKEN="your-token" \
+           -e ONCOKB_TOKEN="your-token" \
            biomcp:latest
 ```
 
@@ -167,6 +171,28 @@ export CBIO_TOKEN="your-token"
 biomcp article search --gene BRAF --disease melanoma
 ```
 
+### OncoKB (Optional for Full Access)
+
+BioMCP integrates with [OncoKB](https://www.oncokb.org/), a precision oncology knowledge base, to provide clinical interpretations of cancer variants.
+
+- **Default (No Key Needed):** By default, BioMCP uses a public demo server that provides data for three key genes: **BRAF, ROS1, and TP53**. This works immediately without any configuration.
+- **Full Access:** To access OncoKB's complete knowledge base for all genes, you need a license from OncoKB and an API token.
+
+#### Getting Your Token
+
+1. Obtain a license from [OncoKB](https://www.oncokb.org/licensing).
+2. Find your token in your account settings: [www.oncokb.org/account/settings](https://www.oncokb.org/account/settings).
+
+#### Setting the Token
+
+Set the `ONCOKB_TOKEN` environment variable:
+
+```bash
+export ONCOKB_TOKEN="your-oncokb-api-token"
+```
+
+Once set, BioMCP will automatically switch from the demo server to the full production API.
+
 ## Security Best Practices
 
 ### DO:
@@ -249,7 +275,7 @@ git secrets --register-aws  # Detects common key patterns
 
 ```bash
 # List all BioMCP-related environment variables
-env | grep -E "(NCI_API_KEY|ALPHAGENOME_API_KEY|CBIO_TOKEN)"
+env | grep -E "(NCI_API_KEY|ALPHAGENOME_API_KEY|CBIO_TOKEN|ONCOKB_TOKEN)"
 ```
 
 ### Test Each Service

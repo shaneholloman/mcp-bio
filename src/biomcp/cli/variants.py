@@ -32,7 +32,7 @@ def get_variant(
         bool,
         typer.Option(
             "--include-external/--no-external",
-            help="Include annotations from external sources (TCGA, 1000 Genomes, cBioPortal)",
+            help="Include annotations from external sources (TCGA, 1000 Genomes, cBioPortal, OncoKB)",
         ),
     ] = True,
 ):
@@ -59,6 +59,11 @@ def get_variant(
         )
     )
     typer.echo(result)
+
+    # Exit with error code if the result is an error message
+    # (formatted errors start with "# Record 1\nError:")
+    if result.startswith("# Record 1\nError:"):
+        raise typer.Exit(code=1)
 
 
 @variant_app.command("search")

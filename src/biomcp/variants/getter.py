@@ -6,11 +6,36 @@ from typing import Annotated
 
 from .. import ensure_list, http_client, render
 from ..constants import MYVARIANT_GET_URL
+from ..oncokb_helper import get_oncokb_annotation_for_variant
 from .external import ExternalVariantAggregator, format_enhanced_annotations
 from .filters import filter_variants
 from .links import inject_links
 
 logger = logging.getLogger(__name__)
+
+
+def _format_error_response(
+    error: http_client.RequestError, variant_id: str
+) -> list[dict[str, str]]:
+    """Format error response for consistent rendering.
+
+    Args:
+        error: The error object from the API request
+        variant_id: The variant identifier that was queried
+
+    Returns:
+        List containing error dict for markdown/json rendering
+    """
+    if error.code == 404:
+        error_msg = (
+            f"Variant '{variant_id}' not found in MyVariant.info database. "
+            "Please verify the variant identifier (e.g., rs113488022 or "
+            "chr7:g.140453136A>T)."
+        )
+    else:
+        error_msg = f"Error {error.code}: {error.message}"
+
+    return [{"error": error_msg}]
 
 
 async def get_variant(
@@ -35,47 +60,72 @@ async def get_variant(
         domain="myvariant",
     )
 
-    data_to_return: list = ensure_list(response)
+    # Handle errors gracefully with user-friendly messages
+    if error:
+        data_to_return = _format_error_response(error, variant_id)
+        # Skip all processing for error responses
+        if output_json:
+            return json.dumps(data_to_return, indent=2)
+        else:
+            return render.to_markdown(data_to_return)
+
+    data_to_return = ensure_list(response)
 
     # Inject database links into the variant data
-    if not error:
-        data_to_return = inject_links(data_to_return)
-        data_to_return = filter_variants(data_to_return)
+    data_to_return = inject_links(data_to_return)
+    data_to_return = filter_variants(data_to_return)
 
-        # Add external annotations if requested
-        if include_external and data_to_return:
+    # Collect OncoKB annotations separately for markdown appendage
+    oncokb_annotations: list[str] = []
+
+    # Add external annotations if requested
+    if include_external and data_to_return:
+        logger.info(
+            f"Adding external annotations for {len(data_to_return)} variants"
+        )
+        aggregator = ExternalVariantAggregator()
+
+        for _i, variant_data in enumerate(data_to_return):
             logger.info(
-                f"Adding external annotations for {len(data_to_return)} variants"
+                f"Processing variant {_i}: keys={list(variant_data.keys())}"
             )
-            aggregator = ExternalVariantAggregator()
+            # Get enhanced annotations
+            enhanced = await aggregator.get_enhanced_annotations(
+                variant_id,
+                include_tcga=True,
+                include_1000g=True,
+                include_cbioportal=True,
+                variant_data=variant_data,
+            )
 
-            for _i, variant_data in enumerate(data_to_return):
-                logger.info(
-                    f"Processing variant {_i}: keys={list(variant_data.keys())}"
-                )
-                # Get enhanced annotations
-                enhanced = await aggregator.get_enhanced_annotations(
-                    variant_id,
-                    include_tcga=True,
-                    include_1000g=True,
-                    include_cbioportal=True,
-                    variant_data=variant_data,
-                )
+            # Add formatted annotations to the variant data
+            formatted = format_enhanced_annotations(enhanced)
+            logger.info(
+                f"Formatted external annotations: {formatted['external_annotations'].keys()}"
+            )
+            variant_data.update(formatted["external_annotations"])
 
-                # Add formatted annotations to the variant data
-                formatted = format_enhanced_annotations(enhanced)
-                logger.info(
-                    f"Formatted external annotations: {formatted['external_annotations'].keys()}"
-                )
-                variant_data.update(formatted["external_annotations"])
-
-    if error:
-        data_to_return = [{"error": f"Error {error.code}: {error.message}"}]
+            # Get formatted OncoKB annotation separately
+            gene_aa = aggregator._extract_gene_aa_change(variant_data)
+            if gene_aa:
+                parts = gene_aa.split(" ", 1)
+                if len(parts) == 2:
+                    gene, variant = parts
+                    oncokb_formatted = await get_oncokb_annotation_for_variant(
+                        gene, variant
+                    )
+                    if oncokb_formatted:
+                        oncokb_annotations.append(oncokb_formatted)
 
     if output_json:
         return json.dumps(data_to_return, indent=2)
     else:
-        return render.to_markdown(data_to_return)
+        # Render base markdown and append OncoKB annotations
+        base_markdown = render.to_markdown(data_to_return)
+        if oncokb_annotations:
+            # Append OncoKB annotations as separate markdown sections
+            return base_markdown + "\n" + "\n".join(oncokb_annotations)
+        return base_markdown
 
 
 async def _variant_details(
