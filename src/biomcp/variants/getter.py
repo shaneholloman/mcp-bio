@@ -5,8 +5,8 @@ import logging
 from typing import Annotated
 
 from .. import ensure_list, http_client, render
-from ..oncokb_helper import get_oncokb_annotation_for_variant
 from ..constants import DEFAULT_ASSEMBLY, MYVARIANT_GET_URL
+from ..oncokb_helper import get_oncokb_annotation_for_variant
 from .external import ExternalVariantAggregator, format_enhanced_annotations
 from .filters import filter_variants
 from .links import inject_links
