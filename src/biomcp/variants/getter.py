@@ -1,5 +1,6 @@
 """Getter module for retrieving variant details."""
 
+import inspect
 import json
 import logging
 from typing import Annotated
@@ -38,7 +39,7 @@ def _format_error_response(
     return [{"error": error_msg}]
 
 
-async def get_variant(
+async def get_variant(  # noqa: C901
     variant_id: str,
     output_json: bool = False,
     include_external: bool = False,
@@ -117,6 +118,9 @@ async def get_variant(
 
             # Get formatted OncoKB annotation separately
             gene_aa = aggregator._extract_gene_aa_change(variant_data)
+            # Handle case where method might be mocked as async in tests
+            if inspect.iscoroutine(gene_aa) or inspect.isawaitable(gene_aa):
+                gene_aa = await gene_aa
             if gene_aa:
                 parts = gene_aa.split(" ", 1)
                 if len(parts) == 2:
