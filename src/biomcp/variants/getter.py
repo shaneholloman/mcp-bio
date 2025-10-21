@@ -5,8 +5,8 @@ import logging
 from typing import Annotated
 
 from .. import ensure_list, http_client, render
-from ..constants import MYVARIANT_GET_URL
 from ..oncokb_helper import get_oncokb_annotation_for_variant
+from ..constants import DEFAULT_ASSEMBLY, MYVARIANT_GET_URL
 from .external import ExternalVariantAggregator, format_enhanced_annotations
 from .filters import filter_variants
 from .links import inject_links
@@ -42,6 +42,7 @@ async def get_variant(
     variant_id: str,
     output_json: bool = False,
     include_external: bool = False,
+    assembly: str = DEFAULT_ASSEMBLY,
 ) -> str:
     """
     Get variant details from MyVariant.info using the variant identifier.
@@ -50,12 +51,21 @@ async def get_variant(
     or an rsID (e.g. "rs113488022"). The API response is expected to include a
     "hits" array; this function extracts the first hit.
 
+    Args:
+        variant_id: Variant identifier (HGVS or rsID)
+        output_json: Return JSON format if True, else Markdown
+        include_external: Include external annotations (TCGA, 1000 Genomes, cBioPortal)
+        assembly: Genome assembly (hg19 or hg38), defaults to hg19
+
+    Returns:
+        Formatted variant data as JSON or Markdown string
+
     If output_json is True, the result is returned as a formatted JSON string;
     otherwise, it is rendered as Markdown.
     """
     response, error = await http_client.request_api(
         url=f"{MYVARIANT_GET_URL}/{variant_id}",
-        request={"fields": "all"},
+        request={"fields": "all", "assembly": assembly},
         method="GET",
         domain="myvariant",
     )
@@ -138,6 +148,10 @@ async def _variant_details(
         bool,
         "Include annotations from external sources (TCGA, 1000 Genomes, cBioPortal)",
     ] = True,
+    assembly: Annotated[
+        str,
+        "Genome assembly (hg19 or hg38). Default: hg19",
+    ] = DEFAULT_ASSEMBLY,
 ) -> str:
     """
     Retrieves detailed information for a *single* genetic variant.
@@ -146,6 +160,7 @@ async def _variant_details(
     - call_benefit: Define and summarize why this function is being called and the intended benefit
     - variant_id: A variant identifier ("chr7:g.140453136A>T")
     - include_external: Include annotations from TCGA, 1000 Genomes, cBioPortal, and Mastermind
+    - assembly: Genome assembly (hg19 or hg38). Default: hg19
 
     Process: Queries the MyVariant.info GET endpoint, optionally fetching
             additional annotations from external databases
@@ -155,5 +170,8 @@ async def _variant_details(
     Note: Use the variant_searcher to find the variant id first.
     """
     return await get_variant(
-        variant_id, output_json=False, include_external=include_external
+        variant_id,
+        output_json=False,
+        include_external=include_external,
+        assembly=assembly,
     )

@@ -5,7 +5,7 @@ from typing import Annotated
 
 import typer
 
-from ..constants import SYSTEM_PAGE_SIZE
+from ..constants import DEFAULT_ASSEMBLY, SYSTEM_PAGE_SIZE
 from ..variants import getter, search
 
 variant_app = typer.Typer(help="Search and get variants from MyVariant.info.")
@@ -35,6 +35,14 @@ def get_variant(
             help="Include annotations from external sources (TCGA, 1000 Genomes, cBioPortal, OncoKB)",
         ),
     ] = True,
+    assembly: Annotated[
+        str,
+        typer.Option(
+            "--assembly",
+            help="Genome assembly (hg19 or hg38)",
+            case_sensitive=False,
+        ),
+    ] = DEFAULT_ASSEMBLY,
 ):
     """
     Get detailed information about a specific genetic variant.
@@ -46,9 +54,18 @@ def get_variant(
         Get by rsID: biomcp variant get rs113488022
         Get as JSON: biomcp variant get rs113488022 --json
         Get without external annotations: biomcp variant get rs113488022 --no-external
+        Get with hg38 assembly: biomcp variant get rs113488022 --assembly hg38
     """
     if not variant_id:
         typer.echo("Error: A variant identifier must be provided.", err=True)
+        raise typer.Exit(code=1)
+
+    # Validate assembly value
+    if assembly not in ["hg19", "hg38"]:
+        typer.echo(
+            f"Error: Invalid assembly '{assembly}'. Must be 'hg19' or 'hg38'.",
+            err=True,
+        )
         raise typer.Exit(code=1)
 
     result = asyncio.run(
@@ -56,6 +73,7 @@ def get_variant(
             variant_id,
             output_json=output_json,
             include_external=include_external,
+            assembly=assembly,
         )
     )
     typer.echo(result)
