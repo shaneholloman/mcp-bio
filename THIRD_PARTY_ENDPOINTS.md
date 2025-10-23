@@ -4,7 +4,7 @@ _This file is auto-generated from the endpoint registry._
 
 ## Overview
 
-BioMCP connects to 14 external domains across 35 endpoints.
+BioMCP connects to 15 external domains across 38 endpoints.
 
 ## Endpoints by Category
 
@@ -254,6 +254,33 @@ BioMCP connects to 14 external domains across 35 endpoints.
 - **Rate Limit**: 5 requests/second
 - **Compliance Notes**: Public MSKCC/Dana-Farber service, study metadata
 
+#### oncokb_curated_genes
+
+- **URL**: `https://demo.oncokb.org/api/v1/utils/allCuratedGenes`
+- **Description**: OncoKB demo API for retrieving curated cancer genes (BRAF, ROS1, TP53)
+- **Data Types**: gene_annotations
+- **Rate Limit**: Not specified
+- **Authentication**: None (demo server). Set ONCOKB_TOKEN for production access.
+- **Compliance Notes**: Public MSK OncoKB demo service, no authentication required. Production (www.oncokb.org) requires ONCOKB_TOKEN.
+
+#### oncokb_gene_annotation
+
+- **URL**: `https://demo.oncokb.org/api/v1/genes/{gene}`
+- **Description**: OncoKB demo API for gene-level annotations and therapeutic implications
+- **Data Types**: gene_annotations
+- **Rate Limit**: Not specified
+- **Authentication**: None (demo server). Set ONCOKB_TOKEN for production access.
+- **Compliance Notes**: Public MSK OncoKB demo service, limited to 3 genes. Production (www.oncokb.org) requires ONCOKB_TOKEN.
+
+#### oncokb_variant_annotation
+
+- **URL**: `https://demo.oncokb.org/api/v1/annotate/mutations/byProteinChange`
+- **Description**: OncoKB demo API for variant-level annotations with clinical actionability
+- **Data Types**: gene_annotations, cancer_mutations
+- **Rate Limit**: Not specified
+- **Authentication**: None (demo server). Set ONCOKB_TOKEN for production access.
+- **Compliance Notes**: Public MSK OncoKB demo service, works for BRAF/ROS1/TP53 variants. Production (www.oncokb.org) requires ONCOKB_TOKEN.
+
 ### Regulatory Data
 
 #### fda_drug_shortages
@@ -319,6 +346,7 @@ BioMCP connects to 14 external domains across 35 endpoints.
 | api.gdc.cancer.gov           | variant_databases     | 2         |
 | clinicaltrials.gov           | clinical_trials       | 1         |
 | clinicaltrialsapi.cancer.gov | clinical_trials       | 5         |
+| demo.oncokb.org              | cancer_genomics       | 3         |
 | mychem.info                  | variant_databases     | 2         |
 | mydisease.info               | variant_databases     | 2         |
 | mygene.info                  | variant_databases     | 2         |

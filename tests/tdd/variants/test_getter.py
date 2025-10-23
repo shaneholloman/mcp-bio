@@ -1,6 +1,6 @@
 """Tests for variant getter module."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -111,6 +111,10 @@ class TestGetVariant:
             mock_agg_instance = AsyncMock()
             mock_agg_instance.get_enhanced_annotations = AsyncMock(
                 return_value=mock_enhanced
+            )
+            # _extract_gene_aa_change is a regular (non-async) method
+            mock_agg_instance._extract_gene_aa_change = Mock(
+                return_value="BRAF V600E"
             )
             mock_aggregator.return_value = mock_agg_instance
 

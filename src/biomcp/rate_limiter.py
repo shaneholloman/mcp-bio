@@ -90,6 +90,7 @@ class DomainRateLimiter:
             "mydisease": {"rps": 10.0, "burst": 20},  # MyDisease.info
             "mychem": {"rps": 10.0, "burst": 20},  # MyChem.info
             "myvariant": {"rps": 15.0, "burst": 30},  # MyVariant.info
+            "oncokb": {"rps": 5.0, "burst": 10},  # OncoKB conservative limits
         }
 
     def get_limiter(self, domain: str) -> RateLimiter:

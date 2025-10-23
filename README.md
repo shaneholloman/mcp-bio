@@ -50,6 +50,10 @@ BioMCP integrates with multiple biomedical data sources:
 - **TCGA/GDC** - The Cancer Genome Atlas for cancer variant data
 - **1000 Genomes** - Population frequency data via Ensembl
 - **cBioPortal** - Cancer genomics portal with mutation occurrence data
+- **OncoKB** - Precision oncology knowledge base for clinical variant interpretation (demo server with BRAF, ROS1, TP53)
+  - Therapeutic implications and FDA-approved treatments
+  - Oncogenicity and mutation effect annotations
+  - Works immediately without authentication
 
 ### Regulatory & Safety Sources
 
@@ -258,6 +262,11 @@ BioMCP supports optional environment variables for enhanced functionality:
 export CBIO_TOKEN="your-api-token"  # For authenticated access
 export CBIO_BASE_URL="https://www.cbioportal.org/api"  # Custom API endpoint
 
+# OncoKB demo server (optional - advanced users only)
+# By default: Uses free demo server with BRAF, ROS1, TP53 (no setup required)
+# For full gene access: Set ONCOKB_TOKEN from your OncoKB license
+# export ONCOKB_TOKEN="your-oncokb-token"  # www.oncokb.org/account/settings
+
 # Performance tuning
 export BIOMCP_USE_CONNECTION_POOL="true"  # Enable HTTP connection pooling (default: true)
 export BIOMCP_METRICS_ENABLED="false"     # Enable performance metrics (default: false)
@@ -356,6 +365,9 @@ biomcp variant search --gene TP53 --significance pathogenic
 biomcp variant get rs113488022  # Includes TCGA, 1000 Genomes, and cBioPortal data by default
 biomcp variant get rs113488022 --no-external  # Core annotations only
 
+# OncoKB integration (uses free demo server automatically)
+biomcp variant search --gene BRAF --include-oncokb  # Works with BRAF, ROS1, TP53
+
 # NCI-specific examples (requires NCI API key)
 biomcp organization search "MD Anderson" --api-key YOUR_KEY
 biomcp organization get ORG123456 --api-key YOUR_KEY
@@ -430,8 +442,8 @@ think(thought="Analyzing BRAF V600E in melanoma treatment", thoughtNumber=1)
 # 2. Get gene context
 gene_getter("BRAF")
 
-# 3. Search for pathogenic variants
-variant_searcher(gene="BRAF", hgvsp="V600E", significance="pathogenic")
+# 3. Search for pathogenic variants with OncoKB clinical interpretation (uses free demo server)
+variant_searcher(gene="BRAF", hgvsp="V600E", significance="pathogenic", include_oncokb=True)
 
 # 4. Find relevant clinical trials with disease expansion
 trial_searcher(conditions=["melanoma"], interventions=["BRAF inhibitor"])

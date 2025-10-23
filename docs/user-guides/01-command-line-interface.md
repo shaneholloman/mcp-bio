@@ -239,6 +239,8 @@ biomcp variant search [OPTIONS]
 - `--limit INTEGER`: Maximum results (default: 10)
 - `--no-cbioportal`: Disable cBioPortal integration
 
+**Note:** When searching by gene, OncoKB clinical actionability data is automatically included for BRAF, ROS1, and TP53 (or all genes if ONCOKB_TOKEN is set).
+
 **Examples:**
 
 ```bash
@@ -254,11 +256,14 @@ biomcp variant search --gene TP53 --max-frequency 0.01 \
 
 # Search genomic region
 biomcp variant search --chromosome 7 --start 140753336 --end 140753337
+
+# OncoKB integration (uses free demo server for BRAF, ROS1, TP53 automatically)
+biomcp variant search --gene BRAF
 ```
 
 ### variant get
 
-Retrieve detailed information about a specific variant.
+Retrieve detailed information about a specific variant. The `--include-external` flag also retrieves clinical actionability data from OncoKB for variants in BRAF, ROS1, and TP53 (or all genes if ONCOKB_TOKEN is set).
 
 ```bash
 biomcp variant get VARIANT_ID [OPTIONS]
@@ -270,8 +275,8 @@ biomcp variant get VARIANT_ID [OPTIONS]
 
 **Options:**
 
+- `--include-external / --no-external`: Include annotations from external sources (TCGA, 1000 Genomes, cBioPortal, OncoKB) (default: true)
 - `--json, -j`: Output in JSON format
-- `--include-external / --no-external`: Include/exclude external annotations (default: include)
 - `--assembly TEXT`: Genome assembly (hg19 or hg38, default: hg19)
 
 **Examples:**
@@ -511,6 +516,7 @@ Configure default behavior with environment variables:
 export NCI_API_KEY="your-nci-key"
 export ALPHAGENOME_API_KEY="your-alphagenome-key"
 export CBIO_TOKEN="your-cbioportal-token"
+export ONCOKB_TOKEN="your-oncokb-token"
 
 # Logging
 export BIOMCP_LOG_LEVEL="DEBUG"

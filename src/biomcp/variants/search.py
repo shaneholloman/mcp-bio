@@ -199,13 +199,66 @@ async def convert_query(query: VariantQuery) -> dict[str, Any]:
     }
 
 
+async def _get_cbioportal_summary(gene: str) -> str | None:
+    """Fetch cBioPortal summary for a gene."""
+    try:
+        from .cbioportal_search import (
+            CBioPortalSearchClient,
+            format_cbioportal_search_summary,
+        )
+
+        client = CBioPortalSearchClient()
+        summary = await client.get_gene_search_summary(gene)
+        if summary:
+            return format_cbioportal_search_summary(summary)
+    except Exception as e:
+        logger.warning(f"Failed to get cBioPortal summary: {e}")
+    return None
+
+
+async def _get_oncokb_summary(gene: str) -> str | None:
+    """Fetch OncoKB summary for a gene."""
+    try:
+        from ..oncokb_helper import get_oncokb_summary_for_genes
+
+        return await get_oncokb_summary_for_genes([gene])
+    except Exception as e:
+        logger.warning(f"Failed to get OncoKB summary: {e}")
+    return None
+
+
+def _format_output(
+    data: list,
+    cbioportal_summary: str | None,
+    oncokb_summary: str | None,
+    output_json: bool,
+) -> str:
+    """Format search results with optional summaries."""
+    if not output_json:
+        result = render.to_markdown(data)
+        if oncokb_summary:
+            result = oncokb_summary + "\n\n" + result
+        if cbioportal_summary:
+            result = cbioportal_summary + "\n\n" + result
+        return result
+
+    summaries = {}
+    if cbioportal_summary:
+        summaries["cbioportal_summary"] = cbioportal_summary
+    if oncokb_summary:
+        summaries["oncokb_summary"] = oncokb_summary
+    if summaries:
+        return json.dumps({**summaries, "variants": data}, indent=2)
+    return json.dumps(data, indent=2)
+
+
 async def search_variants(
     query: VariantQuery,
     output_json: bool = False,
     include_cbioportal: bool = True,
+    include_oncokb: bool = True,
 ) -> str:
-    """Search variants using the MyVariant.info API with optional cBioPortal summary."""
-
+    """Search variants using the MyVariant.info API with optional cBioPortal and OncoKB summaries."""
     params = await convert_query(query)
 
     response, error = await http_client.request_api(
@@ -217,47 +270,32 @@ async def search_variants(
     data: list = response.get("hits", []) if response else []
 
     if error:
-        # Provide more specific error messages for common issues
-        if "timed out" in error.message.lower():
-            error_msg = (
-                "MyVariant.info API request timed out. This can happen with complex queries. "
-                "Try narrowing your search criteria or searching by specific identifiers (rsID, HGVS)."
-            )
-        else:
-            error_msg = f"Error {error.code}: {error.message}"
+        error_msg = (
+            "MyVariant.info API request timed out. This can happen with complex queries. "
+            "Try narrowing your search criteria or searching by specific identifiers (rsID, HGVS)."
+            if "timed out" in error.message.lower()
+            else f"Error {error.code}: {error.message}"
+        )
         data = [{"error": error_msg}]
     else:
         data = inject_links(data)
         data = filter_variants(data)
 
-    # Get cBioPortal summary if searching by gene
-    cbioportal_summary = None
-    if include_cbioportal and query.gene and not error:
-        try:
-            from .cbioportal_search import (
-                CBioPortalSearchClient,
-                format_cbioportal_search_summary,
-            )
+    # Get enrichment summaries if searching by gene
+    cbioportal_summary = (
+        await _get_cbioportal_summary(query.gene)
+        if include_cbioportal and query.gene and not error
+        else None
+    )
+    oncokb_summary = (
+        await _get_oncokb_summary(query.gene)
+        if include_oncokb and query.gene and not error
+        else None
+    )
 
-            client = CBioPortalSearchClient()
-            summary = await client.get_gene_search_summary(query.gene)
-            if summary:
-                cbioportal_summary = format_cbioportal_search_summary(summary)
-        except Exception as e:
-            logger.warning(f"Failed to get cBioPortal summary: {e}")
-
-    if not output_json:
-        result = render.to_markdown(data)
-        if cbioportal_summary:
-            result = cbioportal_summary + "\n\n" + result
-        return result
-    else:
-        if cbioportal_summary:
-            return json.dumps(
-                {"cbioportal_summary": cbioportal_summary, "variants": data},
-                indent=2,
-            )
-        return json.dumps(data, indent=2)
+    return _format_output(
+        data, cbioportal_summary, oncokb_summary, output_json
+    )
 
 
 async def _variant_searcher(
@@ -338,5 +376,5 @@ async def _variant_searcher(
         offset=offset,
     )
     return await search_variants(
-        query, output_json=False, include_cbioportal=True
+        query, output_json=False, include_cbioportal=True, include_oncokb=True
     )
