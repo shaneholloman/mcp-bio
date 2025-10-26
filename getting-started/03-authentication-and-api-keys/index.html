@@ -794,6 +794,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#oncokb-optional-for-full-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      OncoKB (Optional for Full Access)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OncoKB (Optional for Full Access)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#getting-your-token_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting Your Token
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setting-the-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setting the Token
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3057,6 +3090,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#oncokb-optional-for-full-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      OncoKB (Optional for Full Access)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OncoKB (Optional for Full Access)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#getting-your-token_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting Your Token
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setting-the-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setting the Token
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3280,6 +3346,12 @@
 <td>Enhanced cancer genomics queries</td>
 <td><a href="https://www.cbioportal.org/webAPI">cbioportal.org</a></td>
 </tr>
+<tr>
+<td><strong>OncoKB</strong></td>
+<td>Optional</td>
+<td>Clinical actionability for all genes</td>
+<td><a href="https://www.oncokb.org/licensing">oncokb.org</a></td>
+</tr>
 </tbody>
 </table>
 <p>*Required only when using AlphaGenome features</p>
@@ -3290,6 +3362,7 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-nci-api-key&quot;</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ALPHAGENOME_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-alphagenome-key&quot;</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CBIO_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-cbioportal-token&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ONCOKB_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-oncokb-api-token&quot;</span>
 </code></pre></div>
 <h3 id="method-2-configuration-files">Method 2: Configuration Files<a class="headerlink" href="#method-2-configuration-files" title="Permanent link">&para;</a></h3>
 <h4 id="for-claude-desktop">For Claude Desktop<a class="headerlink" href="#for-claude-desktop" title="Permanent link">&para;</a></h4>
@@ -3302,18 +3375,20 @@
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">        </span><span class="nt">&quot;NCI_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-nci-api-key&quot;</span><span class="p">,</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">        </span><span class="nt">&quot;ALPHAGENOME_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-alphagenome-key&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">        </span><span class="nt">&quot;CBIO_TOKEN&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-cbioportal-token&quot;</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="p">}</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">        </span><span class="nt">&quot;CBIO_TOKEN&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-cbioportal-token&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">        </span><span class="nt">&quot;ONCOKB_TOKEN&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-oncokb-api-token&quot;</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="p">}</span>
 </code></pre></div>
 <h4 id="for-docker-deployments">For Docker Deployments<a class="headerlink" href="#for-docker-deployments" title="Permanent link">&para;</a></h4>
 <p>Include in your Docker run command:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">           </span>-e<span class="w"> </span><span class="nv">ALPHAGENOME_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">           </span>-e<span class="w"> </span><span class="nv">CBIO_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-token&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">           </span>biomcp:latest
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">           </span>-e<span class="w"> </span><span class="nv">ONCOKB_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-token&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">           </span>biomcp:latest
 </code></pre></div>
 <h3 id="method-3-per-request-keys-for-hosted-environments">Method 3: Per-Request Keys (For Hosted Environments)<a class="headerlink" href="#method-3-per-request-keys-for-hosted-environments" title="Permanent link">&para;</a></h3>
 <p>When using BioMCP through AI assistants or hosted services, provide keys in your request:</p>
@@ -3395,6 +3470,22 @@
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CBIO_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-token&quot;</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRAF<span class="w"> </span>--disease<span class="w"> </span>melanoma
 </code></pre></div>
+<h3 id="oncokb-optional-for-full-access">OncoKB (Optional for Full Access)<a class="headerlink" href="#oncokb-optional-for-full-access" title="Permanent link">&para;</a></h3>
+<p>BioMCP integrates with <a href="https://www.oncokb.org/">OncoKB</a>, a precision oncology knowledge base, to provide clinical interpretations of cancer variants.</p>
+<ul>
+<li><strong>Default (No Key Needed):</strong> By default, BioMCP uses a public demo server that provides data for three key genes: <strong>BRAF, ROS1, and TP53</strong>. This works immediately without any configuration.</li>
+<li><strong>Full Access:</strong> To access OncoKB's complete knowledge base for all genes, you need a license from OncoKB and an API token.</li>
+</ul>
+<h4 id="getting-your-token_1">Getting Your Token<a class="headerlink" href="#getting-your-token_1" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Obtain a license from <a href="https://www.oncokb.org/licensing">OncoKB</a>.</li>
+<li>Find your token in your account settings: <a href="https://www.oncokb.org/account/settings">www.oncokb.org/account/settings</a>.</li>
+</ol>
+<h4 id="setting-the-token">Setting the Token<a class="headerlink" href="#setting-the-token" title="Permanent link">&para;</a></h4>
+<p>Set the <code>ONCOKB_TOKEN</code> environment variable:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ONCOKB_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-oncokb-api-token&quot;</span>
+</code></pre></div>
+<p>Once set, BioMCP will automatically switch from the demo server to the full production API.</p>
 <h2 id="security-best-practices">Security Best Practices<a class="headerlink" href="#security-best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="do">DO:<a class="headerlink" href="#do" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3412,19 +3503,19 @@
 </ul>
 <h3 id="git-security">Git Security<a class="headerlink" href="#git-security" title="Permanent link">&para;</a></h3>
 <p>Add to <code>.gitignore</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>.env
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>.env.local
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>*.key
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>config/secrets/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>.env
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>.env.local
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>*.key
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>config/secrets/
 </code></pre></div>
 <p>Use git-secrets to prevent accidental commits:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Install git-secrets</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>brew<span class="w"> </span>install<span class="w"> </span>git-secrets<span class="w">  </span><span class="c1"># macOS</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># or follow instructions at github.com/awslabs/git-secrets</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># Set up in your repo</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>git<span class="w"> </span>secrets<span class="w"> </span>--install
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>git<span class="w"> </span>secrets<span class="w"> </span>--register-aws<span class="w">  </span><span class="c1"># Detects common key patterns</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Install git-secrets</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>brew<span class="w"> </span>install<span class="w"> </span>git-secrets<span class="w">  </span><span class="c1"># macOS</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># or follow instructions at github.com/awslabs/git-secrets</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Set up in your repo</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>git<span class="w"> </span>secrets<span class="w"> </span>--install
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>git<span class="w"> </span>secrets<span class="w"> </span>--register-aws<span class="w">  </span><span class="c1"># Detects common key patterns</span>
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="api-key-required-errors">"API Key Required" Errors<a class="headerlink" href="#api-key-required-errors" title="Permanent link">&para;</a></h3>
@@ -3462,51 +3553,51 @@
 </ul>
 <h2 id="testing-your-setup">Testing Your Setup<a class="headerlink" href="#testing-your-setup" title="Permanent link">&para;</a></h2>
 <h3 id="check-environment-variables">Check Environment Variables<a class="headerlink" href="#check-environment-variables" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># List all BioMCP-related environment variables</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>env<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;(NCI_API_KEY|ALPHAGENOME_API_KEY|CBIO_TOKEN)&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># List all BioMCP-related environment variables</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>env<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;(NCI_API_KEY|ALPHAGENOME_API_KEY|CBIO_TOKEN|ONCOKB_TOKEN)&quot;</span>
 </code></pre></div>
 <h3 id="test-each-service">Test Each Service<a class="headerlink" href="#test-each-service" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Test NCI API</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>biomcp<span class="w"> </span>trial<span class="w"> </span>search<span class="w"> </span>--condition<span class="w"> </span>cancer<span class="w"> </span>--source<span class="w"> </span>nci<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Test AlphaGenome (requires key)</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Test cBioPortal integration</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>TP53<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Test NCI API</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>biomcp<span class="w"> </span>trial<span class="w"> </span>search<span class="w"> </span>--condition<span class="w"> </span>cancer<span class="w"> </span>--source<span class="w"> </span>nci<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Test AlphaGenome (requires key)</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>predict<span class="w"> </span>chr7<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>A<span class="w"> </span>T<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1"># Test cBioPortal integration</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>biomcp<span class="w"> </span>article<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>TP53<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 <h2 id="api-key-management-tools">API Key Management Tools<a class="headerlink" href="#api-key-management-tools" title="Permanent link">&para;</a></h2>
 <p>For managing multiple API keys securely:</p>
 <h3 id="1-direnv-recommended">1. direnv (Recommended)<a class="headerlink" href="#1-direnv-recommended" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Install direnv</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>brew<span class="w"> </span>install<span class="w"> </span>direnv<span class="w">  </span><span class="c1"># macOS</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Add to shell: eval &quot;$(direnv hook zsh)&quot;</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># Create .envrc in project</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export NCI_API_KEY=&quot;your-key&quot;&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>.envrc
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>direnv<span class="w"> </span>allow
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Install direnv</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>brew<span class="w"> </span>install<span class="w"> </span>direnv<span class="w">  </span><span class="c1"># macOS</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="c1"># Add to shell: eval &quot;$(direnv hook zsh)&quot;</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="c1"># Create .envrc in project</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export NCI_API_KEY=&quot;your-key&quot;&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>.envrc
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>direnv<span class="w"> </span>allow
 </code></pre></div>
 <h3 id="2-1password-cli">2. 1Password CLI<a class="headerlink" href="#2-1password-cli" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Store in 1Password</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>op<span class="w"> </span>item<span class="w"> </span>create<span class="w"> </span>--category<span class="o">=</span>password<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--title<span class="o">=</span><span class="s2">&quot;BioMCP API Keys&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>--vault<span class="o">=</span><span class="s2">&quot;Development&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key&quot;</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Load in shell</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="k">$(</span>op<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="s2">&quot;op://Development/BioMCP API Keys/NCI_API_KEY&quot;</span><span class="k">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Store in 1Password</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>op<span class="w"> </span>item<span class="w"> </span>create<span class="w"> </span>--category<span class="o">=</span>password<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>--title<span class="o">=</span><span class="s2">&quot;BioMCP API Keys&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>--vault<span class="o">=</span><span class="s2">&quot;Development&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key&quot;</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Load in shell</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="k">$(</span>op<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="s2">&quot;op://Development/BioMCP API Keys/NCI_API_KEY&quot;</span><span class="k">)</span>
 </code></pre></div>
 <h3 id="3-aws-secrets-manager">3. AWS Secrets Manager<a class="headerlink" href="#3-aws-secrets-manager" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Store secret</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>--name<span class="w"> </span>biomcp/api-keys<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>--secret-string<span class="w"> </span><span class="s1">&#39;{&quot;NCI_API_KEY&quot;:&quot;your-key&quot;}&#39;</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Retrieve in script</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">  </span>--secret-id<span class="w"> </span>biomcp/api-keys<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">  </span>--output<span class="w"> </span>text<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span>.NCI_API_KEY<span class="k">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Store secret</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span>--name<span class="w"> </span>biomcp/api-keys<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span>--secret-string<span class="w"> </span><span class="s1">&#39;{&quot;NCI_API_KEY&quot;:&quot;your-key&quot;}&#39;</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># Retrieve in script</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">  </span>--secret-id<span class="w"> </span>biomcp/api-keys<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">  </span>--output<span class="w"> </span>text<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span>.NCI_API_KEY<span class="k">)</span>
 </code></pre></div>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <p>Now that you have API keys configured:</p>

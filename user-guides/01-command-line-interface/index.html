@@ -3302,6 +3302,7 @@
 <li><code>--limit INTEGER</code>: Maximum results (default: 10)</li>
 <li><code>--no-cbioportal</code>: Disable cBioPortal integration</li>
 </ul>
+<p><strong>Note:</strong> When searching by gene, OncoKB clinical actionability data is automatically included for BRAF, ROS1, and TP53 (or all genes if ONCOKB_TOKEN is set).</p>
 <p><strong>Examples:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Search pathogenic BRCA1 variants</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRCA1<span class="w"> </span>--significance<span class="w"> </span>pathogenic
@@ -3315,9 +3316,12 @@
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="c1"># Search genomic region</span>
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>search<span class="w"> </span>--chromosome<span class="w"> </span><span class="m">7</span><span class="w"> </span>--start<span class="w"> </span><span class="m">140753336</span><span class="w"> </span>--end<span class="w"> </span><span class="m">140753337</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="c1"># OncoKB integration (uses free demo server for BRAF, ROS1, TP53 automatically)</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>search<span class="w"> </span>--gene<span class="w"> </span>BRAF
 </code></pre></div>
 <h3 id="variant-get">variant get<a class="headerlink" href="#variant-get" title="Permanent link">&para;</a></h3>
-<p>Retrieve detailed information about a specific variant.</p>
+<p>Retrieve detailed information about a specific variant. The <code>--include-external</code> flag also retrieves clinical actionability data from OncoKB for variants in BRAF, ROS1, and TP53 (or all genes if ONCOKB_TOKEN is set).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>biomcp<span class="w"> </span>variant<span class="w"> </span>get<span class="w"> </span>VARIANT_ID<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
@@ -3326,8 +3330,8 @@
 </ul>
 <p><strong>Options:</strong></p>
 <ul>
+<li><code>--include-external / --no-external</code>: Include annotations from external sources (TCGA, 1000 Genomes, cBioPortal, OncoKB) (default: true)</li>
 <li><code>--json, -j</code>: Output in JSON format</li>
-<li><code>--include-external / --no-external</code>: Include/exclude external annotations (default: include)</li>
 <li><code>--assembly TEXT</code>: Genome assembly (hg19 or hg38, default: hg19)</li>
 </ul>
 <p><strong>Examples:</strong></p>
@@ -3496,10 +3500,11 @@
 <a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NCI_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-nci-key&quot;</span>
 <a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ALPHAGENOME_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-alphagenome-key&quot;</span>
 <a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CBIO_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-cbioportal-token&quot;</span>
-<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>
-<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a><span class="c1"># Logging</span>
-<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BIOMCP_LOG_LEVEL</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span>
-<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BIOMCP_CACHE_DIR</span><span class="o">=</span><span class="s2">&quot;/path/to/cache&quot;</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ONCOKB_TOKEN</span><span class="o">=</span><span class="s2">&quot;your-oncokb-token&quot;</span>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="c1"># Logging</span>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BIOMCP_LOG_LEVEL</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span>
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BIOMCP_CACHE_DIR</span><span class="o">=</span><span class="s2">&quot;/path/to/cache&quot;</span>
 </code></pre></div>
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <p>Every command has a built-in help flag:</p>
