@@ -1,7 +1,7 @@
 # BioMCP: AI-Powered Biomedical Research
 
 [![Release](https://img.shields.io/github/v/tag/genomoncology/biomcp)](https://github.com/genomoncology/biomcp/tags)
-[![Build status](https://img.shields.io/github/actions/workflow/status/genomoncology/biomcp/main.yml?branch=main)](https://github.com/genomoncology/biomcp/actions/workflows/main.yml?query=branch%3Amain)
+[![Build status](https://img.shields.io/github/actions/workflow/status/genomoncology/biomcp/ci.yml?branch=main)](https://github.com/genomoncology/biomcp/actions/workflows/ci.yml?query=branch%3Amain)
 [![License](https://img.shields.io/github/license/genomoncology/biomcp)](https://img.shields.io/github/license/genomoncology/biomcp)
 
 **Transform how you search and analyze biomedical data** with BioMCP - a powerful tool that connects AI assistants and researchers to critical biomedical databases through natural language.
