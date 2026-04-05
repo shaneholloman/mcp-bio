@@ -24,6 +24,7 @@ Gene-based literature search is a common evidence collection step in variant and
 out="$(biomcp search article -g BRAF --limit 3)"
 echo "$out" | mustmatch like "# Articles: gene=BRAF"
 echo "$out" | mustmatch like "Ranking: calibrated PubMed rescue + lexical directness"
+echo "$out" | mustmatch like "at least one anchor hit"
 echo "$out" | mustmatch like "| PMID | Title |"
 ```
 
@@ -320,6 +321,7 @@ local relevance policy.
 out="$(env -u S2_API_KEY biomcp --json search article -g BRAF --limit 3)"
 echo "$out" | mustmatch like '"semantic_scholar_enabled": true'
 echo "$out" | mustmatch like '"ranking_policy": "calibrated PubMed rescue + lexical directness'
+echo "$out" | mustmatch like 'at least one anchor hit'
 echo "$out" | mustmatch like '"ranking": {'
 echo "$out" | mustmatch like '"pubmed_rescue":'
 ```

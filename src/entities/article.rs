@@ -399,7 +399,7 @@ Unsupported identifier format. BioMCP resolves PMID (digits only, e.g., 22663011
 PMCID (starts with PMC, e.g., PMC9984800), and DOI (starts with 10., \
 e.g., 10.1056/NEJMoa1203421). publisher PIIs (e.g., S1535610826000103) are not \
 indexed by PubMed or Europe PMC and cannot be resolved.";
-pub const ARTICLE_RELEVANCE_RANKING_POLICY: &str = "calibrated PubMed rescue + lexical directness (top-ranked weak PubMed unique/led rows > title coverage > title+abstract coverage > study/review cue > citation support > source-local position)";
+pub const ARTICLE_RELEVANCE_RANKING_POLICY: &str = "calibrated PubMed rescue + lexical directness (top-ranked weak PubMed unique/led rows with at least one anchor hit > title coverage > title+abstract coverage > study/review cue > citation support > source-local position)";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum BackendPlan {
@@ -1241,6 +1241,7 @@ fn pubmed_rescue_metadata(
     row: &ArticleSearchResult,
     source_positions: &[ArticleSourcePosition],
     directness_tier: u8,
+    combined_hits: usize,
 ) -> (bool, Option<ArticlePubMedRescueKind>, Option<usize>) {
     let Some(pubmed_position) = source_positions
         .iter()
@@ -1250,7 +1251,7 @@ fn pubmed_rescue_metadata(
         return (false, None, None);
     };
 
-    if pubmed_position > PUBMED_RESCUE_POSITION_MAX || directness_tier > 1 {
+    if pubmed_position > PUBMED_RESCUE_POSITION_MAX || directness_tier > 1 || combined_hits == 0 {
         return (false, None, None);
     }
 
@@ -1313,8 +1314,12 @@ fn rank_articles_by_directness(rows: &mut [ArticleCandidate], filters: &ArticleS
             0
         };
         let study_or_review_cue = has_study_or_review_cue(&row.row);
-        let (pubmed_rescue, pubmed_rescue_kind, pubmed_source_position) =
-            pubmed_rescue_metadata(&row.row, &row.source_positions, directness_tier);
+        let (pubmed_rescue, pubmed_rescue_kind, pubmed_source_position) = pubmed_rescue_metadata(
+            &row.row,
+            &row.source_positions,
+            directness_tier,
+            combined_hits,
+        );
 
         row.row.ranking = Some(ArticleRankingMetadata {
             directness_tier,
@@ -5881,7 +5886,7 @@ mod tests {
         }
 
         #[test]
-        fn mesh_synonym_pubmed_rescue_surfaces_above_literal_competitor() {
+        fn mesh_synonym_zero_overlap_pubmed_row_does_not_rescue_above_literal_competitor() {
             let (filters, candidates) = lb100_mesh_synonym_fixture();
             let page = finalize_article_candidates(candidates, 10, 0, None, &filters);
             let pubmed = row_by_pmid(&page.results, "31832001");
@@ -5903,15 +5908,12 @@ mod tests {
             let pubmed_pos = row_position(&page.results, "31832001");
             let competitor_pos = row_position(&page.results, "99000001");
             assert!(
-                pubmed_pos < competitor_pos,
-                "a top-ranked PubMed-only weak lexical row should rescue above the literal-match Europe PMC competitor",
+                pubmed_pos > competitor_pos,
+                "a zero-overlap PubMed row must not rescue above the literal-match Europe PMC competitor",
             );
-            assert!(pubmed_ranking.pubmed_rescue);
-            assert_eq!(
-                pubmed_ranking.pubmed_rescue_kind,
-                Some(ArticlePubMedRescueKind::Unique)
-            );
-            assert_eq!(pubmed_ranking.pubmed_source_position, Some(0));
+            assert!(!pubmed_ranking.pubmed_rescue);
+            assert_eq!(pubmed_ranking.pubmed_rescue_kind, None);
+            assert_eq!(pubmed_ranking.pubmed_source_position, None);
         }
 
         #[test]
@@ -5948,6 +5950,67 @@ mod tests {
                 Some(ArticlePubMedRescueKind::Unique)
             );
             assert_eq!(pubmed_ranking.pubmed_source_position, Some(0));
+        }
+
+        #[test]
+        fn zero_overlap_pubmed_unique_position_zero_is_not_rescued() {
+            let mut filters = empty_filters();
+            filters.keyword = Some("ncRNA promoter prediction tools".into());
+
+            let pubmed = calibration_row(
+                "41721224",
+                ArticleSource::PubMed,
+                "Genome-wide survey and expression analysis of peptides containing tyrosine sulfation in human and animal proteins",
+                "",
+                0,
+            );
+
+            let page = finalize_article_candidates(vec![pubmed], 10, 0, None, &filters);
+            let pubmed = row_by_pmid(&page.results, "41721224");
+            let pubmed_ranking = pubmed.ranking.as_ref().expect("ranking should be present");
+
+            assert_eq!(pubmed_ranking.combined_anchor_hits, 0);
+            assert_eq!(pubmed_ranking.directness_tier, 0);
+            assert!(!pubmed_ranking.pubmed_rescue);
+            assert_eq!(pubmed_ranking.pubmed_rescue_kind, None);
+            assert_eq!(pubmed_ranking.pubmed_source_position, None);
+        }
+
+        #[test]
+        fn exactly_one_anchor_hit_pubmed_unique_position_zero_is_rescued() {
+            let mut filters = empty_filters();
+            filters.gene = Some("AMPK".into());
+            filters.disease = Some("hepatic steatosis".into());
+            filters.keyword = Some("PP2A inhibitor".into());
+
+            let pubmed = calibration_row(
+                "99000003",
+                ArticleSource::PubMed,
+                "AMPK signaling in hepatocytes",
+                "",
+                0,
+            );
+            let competitor = calibration_row(
+                "99000004",
+                ArticleSource::EuropePmc,
+                "PP2A inhibitor response in hepatic steatosis",
+                "",
+                1,
+            );
+
+            let page = finalize_article_candidates(vec![competitor, pubmed], 10, 0, None, &filters);
+            let pubmed = row_by_pmid(&page.results, "99000003");
+            let pubmed_ranking = pubmed.ranking.as_ref().expect("ranking should be present");
+
+            assert_eq!(pubmed_ranking.combined_anchor_hits, 1);
+            assert_eq!(pubmed_ranking.directness_tier, 1);
+            assert!(pubmed_ranking.pubmed_rescue);
+            assert_eq!(
+                pubmed_ranking.pubmed_rescue_kind,
+                Some(ArticlePubMedRescueKind::Unique)
+            );
+            assert_eq!(row_position(&page.results, "99000003"), 0);
+            assert_eq!(row_position(&page.results, "99000004"), 1);
         }
 
         #[test]
@@ -6101,11 +6164,8 @@ mod tests {
                 .ranking
                 .as_ref()
                 .expect("ranking should be present");
-            assert_eq!(
-                unique.pubmed_rescue_kind,
-                Some(ArticlePubMedRescueKind::Unique)
-            );
-            assert_eq!(unique.pubmed_source_position, Some(0));
+            assert_eq!(unique.pubmed_rescue_kind, None);
+            assert_eq!(unique.pubmed_source_position, None);
         }
 
         #[test]
