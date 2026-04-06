@@ -1,5 +1,7 @@
 # Generate Charts Easily from Study Data
 
+![Generate Charts Easily from Study Data](images/slide-06-charting.png)
+
 You downloaded a cBioPortal study. Now you want to see what's in it — survival differences, mutation patterns, expression distributions, co-mutation relationships. Normally that means opening R, writing ggplot code, managing dependencies, and iterating in a notebook.
 
 BioMCP ships 12 chart types compiled directly into the binary. No Python, no R, no subprocess calls, no package installs. One command produces a chart as a PNG, SVG, or directly in the terminal.
@@ -30,7 +32,7 @@ $ biomcp study query --study brca_tcga_pan_can_atlas_2018 \
     --gene TP53 --type mutations --chart pie -o tp53-pie.png
 ```
 
-![Pie chart](images/pie-light.png)
+![Pie chart](images/pie.png)
 
 Missense 61.3%, frameshift deletion 13%, nonsense 12.4%.
 
@@ -43,7 +45,7 @@ $ biomcp study query --study brca_tcga_pan_can_atlas_2018 \
     --gene ERBB2 --type expression --chart histogram -o erbb2-histogram.png
 ```
 
-![Histogram](images/histogram-light.png)
+![Histogram](images/histogram.png)
 
 The right-hand bump is the HER2-amplified subgroup — roughly 15-20% of breast cancers.
 
@@ -68,7 +70,7 @@ $ biomcp study compare --study brca_tcga_pan_can_atlas_2018 \
     --chart box -o erbb2-by-tp53-box.png
 ```
 
-![Box plot](images/box-light.png)
+![Box plot](images/box.png)
 
 ERBB2 expression stratified by TP53 mutation status.
 
@@ -82,7 +84,7 @@ $ biomcp study compare --study brca_tcga_pan_can_atlas_2018 \
     --chart violin -o erbb2-by-tp53-violin.png
 ```
 
-![Violin plot](images/violin-light.png)
+![Violin plot](images/violin.png)
 
 The bimodal HER2 pattern is visible in both groups.
 
@@ -96,7 +98,7 @@ $ biomcp study compare --study brca_tcga_pan_can_atlas_2018 \
     --chart ridgeline -o erbb2-by-tp53-ridgeline.png
 ```
 
-![Ridgeline plot](images/ridgeline-light.png)
+![Ridgeline plot](images/ridgeline.png)
 
 TP53-mutant (blue) vs wildtype (orange). The wildtype group has a wider right tail.
 
