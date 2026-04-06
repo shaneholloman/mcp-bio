@@ -10,7 +10,7 @@ BioMCP is a single Rust binary. All dependencies are compiled in — no runtime 
 
 Kuva is linked as a Rust library, not called as a subprocess. Charts are generated in-process with no additional runtime dependencies.
 
-See the [charting guide](../blog/kuva-charting-guide.md) for examples of every chart type.
+See the [charting guide](../blog/biomcp-charts.md) for examples of every chart type.
 
 ### RMCP — Model Context Protocol
 
