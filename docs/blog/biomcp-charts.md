@@ -1,20 +1,14 @@
-# 10 Built-In Charts for Cancer Genomics Data
-
-![Agent Charting Superpowers](images/biomcp-charts.png)
+# Generate Charts Easily from Study Data
 
 You downloaded a cBioPortal study. Now you want to see what's in it — survival differences, mutation patterns, expression distributions, co-mutation relationships. Normally that means opening R, writing ggplot code, managing dependencies, and iterating in a notebook.
 
-BioMCP ships 10 chart types compiled directly into the binary. No Python, no R, no subprocess calls, no package installs. One command produces a chart in three formats:
-
-- **Terminal** — Unicode Braille characters rendered inline. Your agent sees the chart in its own context window. You see it in your terminal. No files, no round-trips.
-- **SVG** — structured XML that agents can parse for exact values. 36x smaller than PNG. Perfect for pipelines.
-- **PNG** — for humans, presentations, and social media.
+BioMCP ships 12 chart types compiled directly into the binary. No Python, no R, no subprocess calls, no package installs. One command produces a chart as a PNG, SVG, or directly in the terminal.
 
 The charting engine is [Kuva](https://github.com/Psy-Fer/kuva), an open-source Rust library linked at compile time. It's part of the binary — not a dependency you install.
 
-## The 10 chart types
+## Chart types
 
-### 1. Bar
+### Bar
 
 Mutation class counts for a single gene. The first thing you run to understand a gene's mutation landscape.
 
@@ -27,33 +21,33 @@ $ biomcp study query --study msk_impact_2017 --gene TP53 \
 
 3,157 missense mutations dominate TP53 in MSK-IMPACT, followed by 683 nonsense and 517 frameshift deletions.
 
-### 2. Pie
+### Pie
 
 Same mutation data as proportions. Useful when the relative share matters more than absolute counts.
 
 ```
 $ biomcp study query --study brca_tcga_pan_can_atlas_2018 \
-    --gene TP53 --type mutations --chart pie --terminal
+    --gene TP53 --type mutations --chart pie -o tp53-pie.png
 ```
 
-![Pie chart](images/02-pie-v2.png)
+![Pie chart](images/pie-light.png)
 
-Braille circle rendering — missense 61.3%, frameshift deletion 13%, nonsense 12.4%.
+Missense 61.3%, frameshift deletion 13%, nonsense 12.4%.
 
-### 3. Histogram
+### Histogram
 
 Expression distribution for a single gene. Reveals bimodal patterns, outliers, and subgroups.
 
 ```
 $ biomcp study query --study brca_tcga_pan_can_atlas_2018 \
-    --gene ERBB2 --type expression --chart histogram --terminal
+    --gene ERBB2 --type expression --chart histogram -o erbb2-histogram.png
 ```
 
-![Histogram](images/03-histogram-v2.png)
+![Histogram](images/histogram-light.png)
 
 The right-hand bump is the HER2-amplified subgroup — roughly 15-20% of breast cancers.
 
-### 4. Density
+### Density
 
 Smoothed kernel density estimate of the same expression data. Cleaner view of the distribution shape.
 
@@ -64,49 +58,49 @@ $ biomcp study query --study brca_tcga_pan_can_atlas_2018 \
 
 ![Density plot](images/04-density-v2.png)
 
-### 5. Box
+### Box
 
 Expression grouped by mutation status. Whiskers, quartiles, outliers — the standard statistical summary.
 
 ```
 $ biomcp study compare --study brca_tcga_pan_can_atlas_2018 \
     --gene TP53 --target ERBB2 --type expression \
-    --chart box --terminal
+    --chart box -o erbb2-by-tp53-box.png
 ```
 
-![Box plot](images/05-box-v2.png)
+![Box plot](images/box-light.png)
 
 ERBB2 expression stratified by TP53 mutation status.
 
-### 6. Violin
+### Violin
 
 Same grouped comparison, but showing the full distribution shape instead of just quartiles.
 
 ```
 $ biomcp study compare --study brca_tcga_pan_can_atlas_2018 \
     --gene TP53 --target ERBB2 --type expression \
-    --chart violin --terminal
+    --chart violin -o erbb2-by-tp53-violin.png
 ```
 
-![Violin plot](images/06-violin-v2.png)
+![Violin plot](images/violin-light.png)
 
 The bimodal HER2 pattern is visible in both groups.
 
-### 7. Ridgeline
+### Ridgeline
 
 Overlapping density curves stacked vertically. Best for comparing two distributions at a glance.
 
 ```
 $ biomcp study compare --study brca_tcga_pan_can_atlas_2018 \
     --gene TP53 --target ERBB2 --type expression \
-    --chart ridgeline --terminal
+    --chart ridgeline -o erbb2-by-tp53-ridgeline.png
 ```
 
-![Ridgeline plot](images/07-ridgeline-v2.png)
+![Ridgeline plot](images/ridgeline-light.png)
 
 TP53-mutant (blue) vs wildtype (orange). The wildtype group has a wider right tail.
 
-### 8. Survival (Kaplan-Meier)
+### Survival (Kaplan-Meier)
 
 Time-to-event curves split by mutation status. The chart most clinicians look at first.
 
@@ -119,9 +113,9 @@ $ biomcp study survival --study brca_tcga_pan_can_atlas_2018 \
 
 TP53-mutant patients have worse overall survival, with curves diverging over 300 months.
 
-### 9. Heatmap
+### Heatmap
 
-Co-mutation matrix across multiple genes. Viridis colormap with Braille rendering — the most visually striking terminal chart.
+Co-mutation matrix across multiple genes. Viridis colormap — the most visually striking chart type.
 
 ```
 $ biomcp study co-occurrence \
@@ -134,7 +128,7 @@ $ biomcp study co-occurrence \
 
 4x4 co-mutation matrix. TP53/PIK3CA has the strongest off-diagonal signal — the two most commonly co-mutated genes in breast cancer.
 
-### 10. Stacked Bar
+### Stacked Bar
 
 Mutation counts grouped and stacked by mutation status. Shows both the total count and the composition.
 
@@ -148,6 +142,25 @@ $ biomcp study compare --study brca_tcga_pan_can_atlas_2018 \
 
 ERBB2 mutation counts stacked by TP53 status: mutated (blue) vs not-mutated (orange).
 
+### Waterfall
+
+Sorted values across samples, commonly used for mutation burden or expression ranking.
+
+```
+$ biomcp study query --study brca_tcga_pan_can_atlas_2018 \
+    --gene ERBB2 --type expression --chart waterfall --terminal
+```
+
+### Scatter
+
+Two-variable scatter plot for expression comparisons across genes.
+
+```
+$ biomcp study compare --study brca_tcga_pan_can_atlas_2018 \
+    --gene TP53 --target ERBB2 --type expression \
+    --chart scatter --terminal
+```
+
 ## Three formats, one flag
 
 Every chart command accepts the same output options:
@@ -156,26 +169,26 @@ Every chart command accepts the same output options:
 # Terminal — inline, no files
 biomcp study survival ... --chart survival --terminal
 
-# SVG — structured, parseable, 36x smaller than PNG
+# SVG — structured, parseable, lightweight
 biomcp study survival ... --chart survival -o survival.svg
 
 # PNG — for presentations and sharing
 biomcp study survival ... --chart survival -o survival.png
 ```
 
-SVG is the best format for agents. An agent can parse `<rect height="405.9">` to recover exact values without a vision model. Terminal is the best format for interactive exploration — the chart appears right in your output stream.
+## Themes and palettes
 
-## Themes and accessibility
-
-Four themes and twelve color palettes, including five designed for colorblind accessibility:
+Four themes and twelve color palettes, including three designed for colorblind accessibility:
 
 ```bash
 biomcp study query ... --chart bar --theme dark --palette wong
 ```
 
-| Themes | Accessible palettes |
-|--------|-------------------|
-| `light`, `dark`, `solarized`, `minimal` | `wong`, `okabe-ito`, `deuteranopia`, `protanopia`, `tritanopia` |
+| Themes | Colorblind-accessible palettes |
+|--------|-------------------------------|
+| `light`, `dark`, `solarized`, `minimal` | `deuteranopia`, `protanopia`, `tritanopia` |
+
+All 12 palettes: wong, okabe-ito, tol-bright, tol-muted, tol-light, ibm, deuteranopia, protanopia, tritanopia, category10, pastel, bold.
 
 ## Try it
 
