@@ -880,6 +880,7 @@ mod tests {
         assert!(trial.contains("NCI disease ID"));
         assert!(trial.contains("one normalized status at a time"));
         assert!(trial.contains("I_II"));
+        assert!(trial.contains("early_phase1"));
         assert!(trial.contains("sites.org_coordinates"));
         assert!(trial.contains("no separate NCI keyword flag"));
 

@@ -7990,6 +7990,7 @@ mod tests {
         assert!(help.contains("grounds to an NCI disease ID when available"));
         assert!(help.contains("one mapped status at a time"));
         assert!(help.contains("I_II"));
+        assert!(help.contains("early_phase1"));
         assert!(help.contains("sites.org_coordinates"));
         assert!(help.contains("no separate NCI keyword flag"));
     }
