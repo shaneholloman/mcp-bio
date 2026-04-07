@@ -46,13 +46,48 @@ biomcp search trial -c melanoma --line-of-therapy 2L --limit 5
 
 ## Search trials (NCI source)
 
-Use NCI CTS when needed:
+Use NCI CTS when you want the shared BioMCP trial CLI to target the NCI trial
+catalog instead of ClinicalTrials.gov.
 
 ```bash
 biomcp search trial -c melanoma --source nci --limit 5
 ```
 
-For higher limits/reliability, set `NCI_API_KEY`.
+`--condition` remains the NCI entry point. BioMCP first tries to ground the
+condition through MyDisease and, when the best match has an NCI Thesaurus
+cross-reference, sends `diseases.nci_thesaurus_concept_id=<C-code>`. When no
+grounded NCI ID is available, BioMCP falls back to CTS `keyword=<text>`.
+There is no separate NCI keyword flag in this ticket.
+
+NCI status handling is source-specific. Use one normalized status at a time:
+
+- `recruiting` maps to CTS `sites.recruitment_status=ACTIVE`
+- `not yet recruiting`, `enrolling by invitation`, `active, not recruiting`,
+  `completed`, `suspended`, `terminated`, and `withdrawn` map to the closest
+  documented CTS lifecycle or site-status value
+- comma-separated status lists are rejected for `--source nci`
+
+NCI phase handling is also source-specific:
+
+- `1`, `2`, `3`, and `4` map to CTS `I`, `II`, `III`, and `IV`
+- `1/2` maps to CTS `I_II`
+- `NA` stays `NA`
+- `early_phase1` is rejected for `--source nci`
+
+```bash
+biomcp search trial -c melanoma --source nci --status recruiting --phase 1/2 --limit 5
+```
+
+NCI geographic filtering is direct CTS filtering rather than CTGov's
+geo-verify mode. When `--lat`, `--lon`, and `--distance` are all present,
+BioMCP sends `sites.org_coordinates_lat`, `sites.org_coordinates_lon`, and
+`sites.org_coordinates_dist=<N>mi`.
+
+```bash
+biomcp search trial -c melanoma --source nci --lat 42.36 --lon -71.06 --distance 50 --limit 5
+```
+
+For higher limits and reliable authenticated access, set `NCI_API_KEY`.
 
 ## Get a trial by NCT ID
 

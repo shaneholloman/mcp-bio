@@ -1057,7 +1057,7 @@ fn rerank_disease_search_hits(
     ranked.into_iter().map(|(_, _, _, _, _, hit)| hit).collect()
 }
 
-async fn resolve_disease_hit_by_name(
+pub(crate) async fn resolve_disease_hit_by_name(
     client: &MyDiseaseClient,
     name_or_id: &str,
 ) -> Result<MyDiseaseHit, BioMcpError> {
