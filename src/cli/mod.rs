@@ -818,7 +818,7 @@ See also: biomcp list article")]
         #[arg(long = "debug-plan")]
         debug_plan: bool,
     },
-    /// Search trials by condition, intervention, mutation, or location (ClinicalTrials.gov)
+    /// Search trials by condition, intervention, mutation, or location (CTGov by default; NCI with --source nci)
     #[command(after_help = "\
 EXAMPLES:
   biomcp search trial -c melanoma -s recruiting
@@ -827,8 +827,17 @@ EXAMPLES:
   biomcp search trial --age 0.5 --count-only          # infants eligible (6 months)
   biomcp search trial --mutation \"BRAF V600E\" --status recruiting --study-type interventional --has-results --limit 5
   biomcp search trial -c \"endometrial cancer\" --criteria \"mismatch repair deficient\" -s recruiting
+  biomcp search trial -c melanoma --source nci --status recruiting --limit 5
 
 Trial search is filter-based (no free-text query).
+
+Source-specific notes:
+  - CTGov: `--phase 1/2` keeps the combined Phase 1/Phase 2 label semantics, not Phase 1 OR Phase 2.
+  - NCI: `--condition` grounds to an NCI disease ID when available and otherwise falls back to CTS `keyword`.
+  - NCI: `--status` accepts one mapped status at a time; comma-separated status lists are rejected.
+  - NCI: `--phase 1/2` maps to CTS `I_II`; `early_phase1` is not supported on `--source nci`.
+  - NCI: `--lat`/`--lon`/`--distance` use direct `sites.org_coordinates_*` CTS filters.
+  - NCI: there is no separate NCI keyword flag in this ticket.
 See also: biomcp list trial")]
     Trial {
         /// Filter by condition/disease
@@ -3535,6 +3544,8 @@ fn trial_search_query_summary(
         filters.lat.map(|v| format!("lat={v}")),
         filters.lon.map(|v| format!("lon={v}")),
         filters.distance.map(|v| format!("distance={v}")),
+        matches!(filters.source, crate::entities::trial::TrialSource::NciCts)
+            .then(|| "source=nci".to_string()),
         filters
             .results_available
             .then(|| "has_results=true".to_string()),
@@ -7972,6 +7983,19 @@ mod tests {
     }
 
     #[test]
+    fn trial_help_documents_nci_source_specific_notes() {
+        let help = render_trial_search_long_help();
+
+        assert!(help.contains("Source-specific notes"));
+        assert!(help.contains("grounds to an NCI disease ID when available"));
+        assert!(help.contains("one mapped status at a time"));
+        assert!(help.contains("I_II"));
+        assert!(help.contains("early_phase1"));
+        assert!(help.contains("sites.org_coordinates"));
+        assert!(help.contains("no separate NCI keyword flag"));
+    }
+
+    #[test]
     fn chart_help_lists_descriptions_for_all_chart_topics() {
         let help = render_chart_long_help();
 
@@ -8338,6 +8362,22 @@ mod tests {
         assert!(summary.contains("lat=40.7128"));
         assert!(summary.contains("lon=-74.006"));
         assert!(summary.contains("distance=50"));
+    }
+
+    #[test]
+    fn trial_search_query_summary_includes_nci_source_marker() {
+        let summary = trial_search_query_summary(
+            &crate::entities::trial::TrialSearchFilters {
+                condition: Some("melanoma".into()),
+                source: crate::entities::trial::TrialSource::NciCts,
+                ..Default::default()
+            },
+            0,
+            None,
+        );
+
+        assert!(summary.contains("condition=melanoma"));
+        assert!(summary.contains("source=nci"));
     }
 
     #[test]

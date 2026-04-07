@@ -215,6 +215,21 @@ biomcp search trial -c melanoma --lat 42.3601 --lon -71.0589 --distance 50 --lim
 | `phase3` | `PHASE3` |
 | `phase4` | `PHASE4` |
 
+## NCI CTS trial notes
+
+`search trial --source nci` keeps the shared BioMCP flags but translates them
+to NCI CTS semantics:
+
+- `--condition` remains the entry point. BioMCP prefers
+  `diseases.nci_thesaurus_concept_id=<C-code>` when grounding succeeds and
+  falls back to CTS `keyword=<text>` when it does not. There is no separate
+  NCI keyword flag.
+- `--status` accepts one normalized value at a time and maps it to CTS
+  recruitment or lifecycle filters instead of sending raw CTGov status values.
+- `--phase 1/2` becomes CTS `I_II`; `early_phase1` is unsupported on NCI.
+- `--lat/--lon/--distance` becomes `sites.org_coordinates_lat`,
+  `sites.org_coordinates_lon`, and `sites.org_coordinates_dist=<N>mi`.
+
 ## Clinical significance values (variant search)
 
 Use these with `biomcp search variant --significance <value>`.

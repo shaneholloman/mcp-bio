@@ -5,11 +5,15 @@ use std::sync::OnceLock;
 use tracing::warn;
 
 use crate::entities::SearchPage;
+use crate::entities::disease::resolve_disease_hit_by_name;
 use crate::error::BioMcpError;
 use crate::sources::clinicaltrials::{
     ClinicalTrialsClient, CtGovLocation, CtGovSearchParams, CtGovStudy,
 };
-use crate::sources::nci_cts::{NciCtsClient, NciSearchParams};
+use crate::sources::mydisease::MyDiseaseClient;
+use crate::sources::nci_cts::{
+    NciCtsClient, NciDiseaseFilter, NciGeoFilter, NciSearchParams, NciStatusFilter,
+};
 use crate::transform;
 use crate::utils::date::validate_since;
 
@@ -659,6 +663,114 @@ fn normalized_facility_filter(filters: &TrialSearchFilters) -> Option<String> {
         .map(str::trim)
         .filter(|v| !v.is_empty())
         .map(str::to_string)
+}
+
+async fn resolve_nci_disease_filter(
+    condition: Option<&str>,
+) -> Result<Option<NciDiseaseFilter>, BioMcpError> {
+    let Some(condition) = condition.map(str::trim).filter(|value| !value.is_empty()) else {
+        return Ok(None);
+    };
+
+    let client = MyDiseaseClient::new()?;
+    match resolve_disease_hit_by_name(&client, condition).await {
+        Ok(hit) => {
+            let mut disease = transform::disease::from_mydisease_hit(hit);
+            if let Some(nci_id) = disease
+                .xrefs
+                .remove("NCI")
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty())
+            {
+                Ok(Some(NciDiseaseFilter::ConceptId(nci_id)))
+            } else {
+                Ok(Some(NciDiseaseFilter::Keyword(condition.to_string())))
+            }
+        }
+        Err(BioMcpError::NotFound { .. }) => {
+            Ok(Some(NciDiseaseFilter::Keyword(condition.to_string())))
+        }
+        Err(err) => {
+            warn!(
+                condition,
+                error = %err,
+                "NCI disease grounding failed, falling back to keyword"
+            );
+            Ok(Some(NciDiseaseFilter::Keyword(condition.to_string())))
+        }
+    }
+}
+
+fn nci_status_filter(value: Option<&str>) -> Result<Option<NciStatusFilter>, BioMcpError> {
+    let Some(value) = value.map(str::trim).filter(|value| !value.is_empty()) else {
+        return Ok(None);
+    };
+
+    if value.contains(',') {
+        return Err(BioMcpError::InvalidArgument(
+            "--status accepts one mapped status at a time for --source nci; comma-separated status lists are not supported".into(),
+        ));
+    }
+
+    let filter = match value {
+        "RECRUITING" => NciStatusFilter::SiteRecruitmentStatus("ACTIVE".into()),
+        "NOT_YET_RECRUITING" => NciStatusFilter::CurrentTrialStatus("Approved".into()),
+        "ENROLLING_BY_INVITATION" => {
+            NciStatusFilter::CurrentTrialStatus("Enrolling by Invitation".into())
+        }
+        "ACTIVE_NOT_RECRUITING" => {
+            NciStatusFilter::SiteRecruitmentStatus("CLOSED_TO_ACCRUAL".into())
+        }
+        "COMPLETED" => NciStatusFilter::CurrentTrialStatus("Complete".into()),
+        "SUSPENDED" => NciStatusFilter::CurrentTrialStatus("Temporarily Closed to Accrual".into()),
+        "TERMINATED" => NciStatusFilter::CurrentTrialStatus("INACTIVE".into()),
+        "WITHDRAWN" => NciStatusFilter::CurrentTrialStatus("Withdrawn".into()),
+        other => {
+            return Err(BioMcpError::InvalidArgument(format!(
+                "--status {other} is not supported for --source nci"
+            )));
+        }
+    };
+
+    Ok(Some(filter))
+}
+
+fn nci_phase_filters(value: Option<&[String]>) -> Result<Vec<String>, BioMcpError> {
+    let Some(phases) = value else {
+        return Ok(Vec::new());
+    };
+    if phases == ["PHASE1", "PHASE2"] {
+        return Ok(vec!["I_II".to_string()]);
+    }
+
+    phases
+        .iter()
+        .map(|phase| match phase.as_str() {
+            "PHASE1" => Ok("I".to_string()),
+            "PHASE2" => Ok("II".to_string()),
+            "PHASE3" => Ok("III".to_string()),
+            "PHASE4" => Ok("IV".to_string()),
+            "NA" => Ok("NA".to_string()),
+            "EARLY_PHASE1" => Err(BioMcpError::InvalidArgument(
+                "--phase early_phase1 is not supported for --source nci".into(),
+            )),
+            other => Err(BioMcpError::InvalidArgument(format!(
+                "--phase {other} is not supported for --source nci"
+            ))),
+        })
+        .collect()
+}
+
+fn nci_geo_filter(filters: &TrialSearchFilters) -> Option<NciGeoFilter> {
+    let (Some(lat), Some(lon), Some(distance_miles)) = (filters.lat, filters.lon, filters.distance)
+    else {
+        return None;
+    };
+    Some(NciGeoFilter {
+        lat,
+        lon,
+        distance_miles,
+    })
 }
 
 fn normalize_facility_text(value: &str) -> Option<String> {
@@ -1446,6 +1558,25 @@ fn validate_trial_search(
     let normalized_phase = normalized_phase_filter(filters)?;
     validate_location(filters)?;
 
+    if matches!(filters.source, TrialSource::NciCts)
+        && normalized_status
+            .as_deref()
+            .is_some_and(|value| value.contains(','))
+    {
+        return Err(BioMcpError::InvalidArgument(
+            "--status accepts one mapped status at a time for --source nci; comma-separated status lists are not supported".into(),
+        ));
+    }
+    if matches!(filters.source, TrialSource::NciCts)
+        && normalized_phase
+            .as_ref()
+            .is_some_and(|phases| phases.iter().any(|phase| phase == "EARLY_PHASE1"))
+    {
+        return Err(BioMcpError::InvalidArgument(
+            "--phase early_phase1 is not supported for --source nci".into(),
+        ));
+    }
+
     if matches!(filters.source, TrialSource::NciCts) && has_essie_filters(filters) {
         return Err(BioMcpError::InvalidArgument(
             "--prior-therapies, --progression-on, and --line-of-therapy are only supported for --source ctgov".into(),
@@ -1791,16 +1922,12 @@ pub async fn search_page(
             let client = NciCtsClient::new()?;
 
             let params = NciSearchParams {
-                diseases: filters.condition.clone(),
+                disease: resolve_nci_disease_filter(filters.condition.as_deref()).await?,
                 interventions: filters.intervention.clone(),
                 sites_org_name: normalized_facility_filter(filters),
-                recruitment_status: normalized.normalized_status,
-                phase: normalized
-                    .normalized_phase
-                    .and_then(|phases| phases.into_iter().next()),
-                latitude: filters.lat,
-                longitude: filters.lon,
-                distance: filters.distance,
+                status: nci_status_filter(normalized.normalized_status.as_deref())?,
+                phases: nci_phase_filters(normalized.normalized_phase.as_deref())?,
+                geo: nci_geo_filter(filters),
                 biomarkers: filters
                     .biomarker
                     .clone()
@@ -1905,8 +2032,75 @@ pub async fn get(
 mod tests {
     use super::*;
     use serde_json::json;
+    use tokio::sync::MutexGuard;
     use wiremock::matchers::{method, path, query_param, query_param_is_missing};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    async fn env_lock() -> MutexGuard<'static, ()> {
+        crate::test_support::env_lock().lock().await
+    }
+
+    struct EnvVarGuard {
+        name: &'static str,
+        previous: Option<String>,
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            // Safety: tests serialize environment mutation with `env_lock()`.
+            unsafe {
+                match &self.previous {
+                    Some(value) => std::env::set_var(self.name, value),
+                    None => std::env::remove_var(self.name),
+                }
+            }
+        }
+    }
+
+    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
+        let previous = std::env::var(name).ok();
+        // Safety: tests serialize environment mutation with `env_lock()`.
+        unsafe {
+            match value {
+                Some(value) => std::env::set_var(name, value),
+                None => std::env::remove_var(name),
+            }
+        }
+        EnvVarGuard { name, previous }
+    }
+
+    fn nci_search_response(nct_id: &str) -> serde_json::Value {
+        json!({
+            "data": [{
+                "nct_id": nct_id,
+                "brief_title": "Fixture NCI Trial",
+                "current_trial_status": "ACTIVE",
+                "phase": "II",
+                "diseases": ["Melanoma"]
+            }],
+            "total": 1
+        })
+    }
+
+    fn mydisease_query_response(hit: serde_json::Value) -> serde_json::Value {
+        json!({
+            "total": 1,
+            "hits": [hit]
+        })
+    }
+
+    async fn mount_keyword_nci_search(nci: &MockServer, keyword: &str, nct_id: &str) {
+        Mock::given(method("GET"))
+            .and(path("/trials"))
+            .and(query_param("keyword", keyword))
+            .and(query_param_is_missing("diseases.nci_thesaurus_concept_id"))
+            .and(query_param("size", "1"))
+            .and(query_param("from", "0"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(nci_search_response(nct_id)))
+            .expect(1)
+            .mount(nci)
+            .await;
+    }
 
     fn ctgov_study_fixture(locations: serde_json::Value) -> CtGovStudy {
         serde_json::from_value(json!({
@@ -2550,6 +2744,367 @@ AREA[OfficialTitle](\"G12D\") OR AREA[BriefSummary](\"G12D\") OR AREA[Keyword](\
             }
             other => panic!("expected InvalidArgument, got: {other}"),
         }
+    }
+
+    #[tokio::test]
+    async fn nci_search_page_prefers_grounded_disease_concept_id() {
+        let _lock = env_lock().await;
+        let mydisease = MockServer::start().await;
+        let nci = MockServer::start().await;
+        let mydisease_base = format!("{}/v1", mydisease.uri());
+        let _mydisease_base = set_env_var("BIOMCP_MYDISEASE_BASE", Some(&mydisease_base));
+        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
+        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
+
+        Mock::given(method("GET"))
+            .and(path("/v1/query"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(mydisease_query_response(json!({
+                    "_id": "MONDO:0005105",
+                    "mondo": {
+                        "name": "Melanoma",
+                        "xrefs": {
+                            "ncit": ["C3224"]
+                        }
+                    }
+                }))),
+            )
+            .mount(&mydisease)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/trials"))
+            .and(query_param("diseases.nci_thesaurus_concept_id", "C3224"))
+            .and(query_param_is_missing("keyword"))
+            .and(query_param("size", "1"))
+            .and(query_param("from", "0"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(nci_search_response("NCT00000001")),
+            )
+            .expect(1)
+            .mount(&nci)
+            .await;
+
+        let filters = TrialSearchFilters {
+            source: TrialSource::NciCts,
+            condition: Some("melanoma".into()),
+            ..Default::default()
+        };
+
+        let page = search_page(&filters, 1, 0, None)
+            .await
+            .expect("grounded NCI search should succeed");
+        assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].nct_id, "NCT00000001");
+    }
+
+    #[tokio::test]
+    async fn nci_search_page_falls_back_to_keyword_when_grounding_is_unavailable() {
+        let _lock = env_lock().await;
+        let mydisease = MockServer::start().await;
+        let nci = MockServer::start().await;
+        let mydisease_base = format!("{}/v1", mydisease.uri());
+        let _mydisease_base = set_env_var("BIOMCP_MYDISEASE_BASE", Some(&mydisease_base));
+        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
+        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
+
+        Mock::given(method("GET"))
+            .and(path("/v1/query"))
+            .respond_with(ResponseTemplate::new(500).set_body_string("resolver unavailable"))
+            .mount(&mydisease)
+            .await;
+
+        mount_keyword_nci_search(&nci, "melanoma", "NCT00000002").await;
+
+        let filters = TrialSearchFilters {
+            source: TrialSource::NciCts,
+            condition: Some("melanoma".into()),
+            ..Default::default()
+        };
+
+        let page = search_page(&filters, 1, 0, None)
+            .await
+            .expect("keyword fallback should keep NCI search available");
+        assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].nct_id, "NCT00000002");
+    }
+
+    #[tokio::test]
+    async fn nci_search_page_falls_back_to_keyword_when_best_hit_lacks_nci_xref() {
+        let _lock = env_lock().await;
+        let mydisease = MockServer::start().await;
+        let nci = MockServer::start().await;
+        let mydisease_base = format!("{}/v1", mydisease.uri());
+        let _mydisease_base = set_env_var("BIOMCP_MYDISEASE_BASE", Some(&mydisease_base));
+        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
+        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
+
+        Mock::given(method("GET"))
+            .and(path("/v1/query"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(mydisease_query_response(json!({
+                    "_id": "MONDO:0005105",
+                    "mondo": {
+                        "name": "Melanoma"
+                    }
+                }))),
+            )
+            .mount(&mydisease)
+            .await;
+
+        mount_keyword_nci_search(&nci, "melanoma", "NCT00000008").await;
+
+        let filters = TrialSearchFilters {
+            source: TrialSource::NciCts,
+            condition: Some("melanoma".into()),
+            ..Default::default()
+        };
+
+        let page = search_page(&filters, 1, 0, None)
+            .await
+            .expect("missing NCI xrefs should fall back to keyword search");
+        assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].nct_id, "NCT00000008");
+    }
+
+    #[tokio::test]
+    async fn nci_search_page_falls_back_to_keyword_when_grounding_returns_no_hit() {
+        let _lock = env_lock().await;
+        let mydisease = MockServer::start().await;
+        let nci = MockServer::start().await;
+        let mydisease_base = format!("{}/v1", mydisease.uri());
+        let _mydisease_base = set_env_var("BIOMCP_MYDISEASE_BASE", Some(&mydisease_base));
+        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
+        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
+
+        Mock::given(method("GET"))
+            .and(path("/v1/query"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "total": 0,
+                "hits": []
+            })))
+            .mount(&mydisease)
+            .await;
+
+        mount_keyword_nci_search(&nci, "melanoma", "NCT00000009").await;
+
+        let filters = TrialSearchFilters {
+            source: TrialSource::NciCts,
+            condition: Some("melanoma".into()),
+            ..Default::default()
+        };
+
+        let page = search_page(&filters, 1, 0, None)
+            .await
+            .expect("missing MyDisease hits should fall back to keyword search");
+        assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].nct_id, "NCT00000009");
+    }
+
+    #[tokio::test]
+    async fn nci_status_mapping_uses_documented_single_value_filters() {
+        let _lock = env_lock().await;
+        let nci = MockServer::start().await;
+        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
+        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
+
+        let cases = [
+            (
+                "recruiting",
+                "sites.recruitment_status",
+                "ACTIVE",
+                "NCT00000003",
+            ),
+            (
+                "not yet recruiting",
+                "current_trial_status",
+                "Approved",
+                "NCT00000004",
+            ),
+            (
+                "enrolling by invitation",
+                "current_trial_status",
+                "Enrolling by Invitation",
+                "NCT00000005",
+            ),
+            (
+                "active, not recruiting",
+                "sites.recruitment_status",
+                "CLOSED_TO_ACCRUAL",
+                "NCT00000006",
+            ),
+            (
+                "completed",
+                "current_trial_status",
+                "Complete",
+                "NCT00000007",
+            ),
+            (
+                "suspended",
+                "current_trial_status",
+                "Temporarily Closed to Accrual",
+                "NCT00000010",
+            ),
+            (
+                "terminated",
+                "current_trial_status",
+                "INACTIVE",
+                "NCT00000011",
+            ),
+            (
+                "withdrawn",
+                "current_trial_status",
+                "Withdrawn",
+                "NCT00000012",
+            ),
+        ];
+
+        for &(_, query_key, query_value, nct_id) in &cases {
+            match query_key {
+                "current_trial_status" => {
+                    Mock::given(method("GET"))
+                        .and(path("/trials"))
+                        .and(query_param("current_trial_status", query_value))
+                        .and(query_param_is_missing("sites.recruitment_status"))
+                        .and(query_param("size", "1"))
+                        .and(query_param("from", "0"))
+                        .respond_with(
+                            ResponseTemplate::new(200).set_body_json(nci_search_response(nct_id)),
+                        )
+                        .expect(1)
+                        .mount(&nci)
+                        .await;
+                }
+                "sites.recruitment_status" => {
+                    Mock::given(method("GET"))
+                        .and(path("/trials"))
+                        .and(query_param("sites.recruitment_status", query_value))
+                        .and(query_param_is_missing("current_trial_status"))
+                        .and(query_param("size", "1"))
+                        .and(query_param("from", "0"))
+                        .respond_with(
+                            ResponseTemplate::new(200).set_body_json(nci_search_response(nct_id)),
+                        )
+                        .expect(1)
+                        .mount(&nci)
+                        .await;
+                }
+                other => panic!("unexpected query key: {other}"),
+            }
+        }
+
+        for &(input, _, _, nct_id) in &cases {
+            let filters = TrialSearchFilters {
+                source: TrialSource::NciCts,
+                status: Some(input.into()),
+                ..Default::default()
+            };
+
+            let page = search_page(&filters, 1, 0, None)
+                .await
+                .unwrap_or_else(|_| panic!("{input} should map to a documented NCI status"));
+            assert_eq!(page.results.len(), 1);
+            assert_eq!(page.results[0].nct_id, nct_id);
+        }
+    }
+
+    #[tokio::test]
+    async fn nci_source_rejects_status_lists() {
+        let _lock = env_lock().await;
+        let nci = MockServer::start().await;
+        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
+        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
+
+        Mock::given(method("GET"))
+            .and(path("/trials"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(nci_search_response("NCT00000005")),
+            )
+            .mount(&nci)
+            .await;
+
+        let filters = TrialSearchFilters {
+            source: TrialSource::NciCts,
+            status: Some("recruiting,completed".into()),
+            ..Default::default()
+        };
+
+        let err = search(&filters, 1, 0)
+            .await
+            .expect_err("NCI should reject comma-separated status lists");
+        assert!(err.to_string().contains("one mapped status at a time"));
+        assert!(err.to_string().contains("--source nci"));
+    }
+
+    #[tokio::test]
+    async fn nci_phase_mapping_uses_i_ii_for_combined_phase() {
+        let _lock = env_lock().await;
+        let nci = MockServer::start().await;
+        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
+        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
+
+        let cases = [
+            ("1", "I", "NCT00000016"),
+            ("2", "II", "NCT00000013"),
+            ("3", "III", "NCT00000017"),
+            ("4", "IV", "NCT00000018"),
+            ("na", "NA", "NCT00000014"),
+            ("1/2", "I_II", "NCT00000015"),
+        ];
+
+        for &(_, expected_phase, nct_id) in &cases {
+            Mock::given(method("GET"))
+                .and(path("/trials"))
+                .and(query_param("phase", expected_phase))
+                .and(query_param("size", "1"))
+                .and(query_param("from", "0"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(nci_search_response(nct_id)))
+                .expect(1)
+                .mount(&nci)
+                .await;
+        }
+
+        for &(input_phase, _, nct_id) in &cases {
+            let filters = TrialSearchFilters {
+                source: TrialSource::NciCts,
+                phase: Some(input_phase.into()),
+                ..Default::default()
+            };
+
+            let page = search_page(&filters, 1, 0, None)
+                .await
+                .unwrap_or_else(|_| panic!("{input_phase} should map to a documented NCI phase"));
+            assert_eq!(page.results.len(), 1);
+            assert_eq!(page.results[0].nct_id, nct_id);
+        }
+    }
+
+    #[tokio::test]
+    async fn nci_source_rejects_early_phase1() {
+        let _lock = env_lock().await;
+        let nci = MockServer::start().await;
+        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
+        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
+
+        Mock::given(method("GET"))
+            .and(path("/trials"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(nci_search_response("NCT00000007")),
+            )
+            .mount(&nci)
+            .await;
+
+        let filters = TrialSearchFilters {
+            source: TrialSource::NciCts,
+            phase: Some("early_phase1".into()),
+            ..Default::default()
+        };
+
+        let err = search(&filters, 1, 0)
+            .await
+            .expect_err("NCI should reject early_phase1");
+        assert!(err.to_string().contains("early_phase1"));
+        assert!(err.to_string().contains("--source nci"));
     }
 
     #[tokio::test]

@@ -212,7 +212,7 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
         api: "NCI CTS",
         affects: Some("trial --source nci"),
         probe: ProbeKind::AuthGet {
-            url: "https://clinicaltrialsapi.cancer.gov/api/v2/trials?size=1&diseases=melanoma",
+            url: "https://clinicaltrialsapi.cancer.gov/api/v2/trials?size=1&keyword=melanoma",
             env_var: "NCI_API_KEY",
             header_name: "X-API-KEY",
             header_value_prefix: "",
@@ -1764,6 +1764,21 @@ mod tests {
         assert_eq!(outcome.row.status, "excluded (set NCI_API_KEY)");
         assert_eq!(outcome.row.latency, "n/a");
         assert_eq!(outcome.row.key_configured, Some(false));
+    }
+
+    #[test]
+    fn nci_health_probe_uses_keyword_query() {
+        let source = health_sources()
+            .iter()
+            .find(|source| source.api == "NCI CTS")
+            .expect("nci health source");
+
+        let ProbeKind::AuthGet { url, .. } = source.probe else {
+            panic!("NCI CTS health source should use an authenticated GET probe");
+        };
+
+        assert!(url.contains("keyword=melanoma"));
+        assert!(!url.contains("diseases=melanoma"));
     }
 
     #[test]

@@ -279,6 +279,13 @@ fn list_trial() -> String {
 - `--date-from <YYYY-MM-DD> --date-to <YYYY-MM-DD>`
 - `--count-only`
 - `--limit <N> --offset <N>`
+
+## NCI source notes
+
+- `--source nci --condition <name>` first tries to ground the name to an NCI disease ID and falls back to CTS `keyword`; there is no separate NCI keyword flag.
+- `--source nci --status <status>` accepts one normalized status at a time and maps it to CTS recruitment or lifecycle filters.
+- `--source nci --phase 1/2` maps to CTS `I_II`; `--phase early_phase1` is not supported.
+- `--source nci --lat/--lon/--distance` uses direct `sites.org_coordinates_*` CTS filters and serializes distance with the required `mi` suffix.
 "#
     .to_string()
 }
@@ -869,6 +876,13 @@ mod tests {
     fn list_trial_and_article_include_missing_flags() {
         let trial = render(Some("trial")).expect("list trial should render");
         assert!(trial.contains("--biomarker <text>"));
+        assert!(trial.contains("## NCI source notes"));
+        assert!(trial.contains("NCI disease ID"));
+        assert!(trial.contains("one normalized status at a time"));
+        assert!(trial.contains("I_II"));
+        assert!(trial.contains("early_phase1"));
+        assert!(trial.contains("sites.org_coordinates"));
+        assert!(trial.contains("no separate NCI keyword flag"));
 
         let article = render(Some("article")).expect("list article should render");
         assert!(article.contains("## When to use this surface"));

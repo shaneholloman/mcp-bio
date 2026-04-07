@@ -7,10 +7,12 @@ Trial search in BioMCP supports condition-first exploration with clinical filter
 | Condition search | `search trial -c melanoma` | Confirms baseline trial retrieval |
 | Status filter | `search trial ... -s recruiting` | Confirms recruitment filtering |
 | Phase filter | `search trial ... -p 3` | Confirms phase filtering |
+| NCI source search | `search trial --source nci` | Documents keyed and auth-gated NCI behavior |
 | Mutation search | `search trial ... --mutation G12D` | Confirms mutation search query echo and table shape |
 | Trial detail | `get trial NCT02576665` | Confirms trial card structure |
 | Eligibility section | `get trial ... eligibility` | Confirms criteria expansion |
 | Locations section | `get trial ... locations` | Confirms site listing expansion |
+| Trial help and list docs | `search trial --help`, `list trial` | Documents source-specific NCI notes |
 
 ## Searching by Condition
 
@@ -202,4 +204,55 @@ echo "$out" | mustmatch like "combined Phase 1/Phase 2 label"
 echo "$out" | mustmatch like "not Phase 1 OR Phase 2"
 echo "$out" | mustmatch like "no sex restriction"
 echo "$out" | tr '\n' ' ' | mustmatch like "age-only CTGov searches report an approximate upstream total"
+```
+
+## NCI Source Search
+
+NCI CTS keeps the shared BioMCP trial flags but depends on the current CTS
+contract and, in normal live use, an `NCI_API_KEY`. This section documents both
+the keyed success path and the explicit auth guidance path so the spec remains
+executable on keyed and unkeyed machines.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+if out="$("$bin" search trial --source nci -c melanoma --limit 3 2>&1)"; then
+  echo "$out" | mustmatch like "source=nci"
+  echo "$out" | mustmatch like "|NCT ID|Title|Status|Phase|Conditions|"
+else
+  echo "$out" | mustmatch '/(NCI_API_KEY|auth|HTTP 401|unauthorized)/i'
+fi
+```
+
+## Trial Help Documents NCI Source Semantics
+
+The shared `search trial` help should call out which semantics stay CTGov-
+specific and which are remapped for NCI. This keeps operators from assuming the
+CTGov status and phase vocabulary is universal.
+
+```bash
+out="$(biomcp search trial --help)"
+echo "$out" | mustmatch like "Source-specific notes"
+echo "$out" | mustmatch like "grounds to an NCI disease ID when available"
+echo "$out" | mustmatch like "one mapped status at a time"
+echo "$out" | mustmatch like "maps to CTS \`I_II\`"
+echo "$out" | mustmatch like "\`early_phase1\` is not supported on \`--source nci\`"
+echo "$out" | mustmatch like "sites.org_coordinates"
+echo "$out" | mustmatch like "no separate NCI keyword flag"
+```
+
+## Trial List Documents NCI Filters
+
+`biomcp list trial` is the compact operator reference. It should summarize the
+NCI-specific disease grounding, status, phase, and geo rules without inventing
+new flags.
+
+```bash
+out="$(biomcp list trial)"
+echo "$out" | mustmatch like "## NCI source notes"
+echo "$out" | mustmatch like "NCI disease ID"
+echo "$out" | mustmatch like "one normalized status at a time"
+echo "$out" | mustmatch like "\`--source nci --phase 1/2\` maps to CTS \`I_II\`"
+echo "$out" | mustmatch like "\`--phase early_phase1\` is not supported"
+echo "$out" | mustmatch like "sites.org_coordinates"
+echo "$out" | mustmatch like "no separate NCI keyword flag"
 ```
