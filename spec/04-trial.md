@@ -223,6 +223,25 @@ else
 fi
 ```
 
+## NCI Terminated Status Search
+
+The normalized `terminated` filter must map to the live CTS status value that
+still returns melanoma trials. This proof accepts the existing auth guidance on
+unkeyed machines, but when `NCI_API_KEY` is present it must return at least one
+NCI result row.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+if out="$("$bin" search trial --source nci -c melanoma -s terminated --limit 1 2>&1)"; then
+  echo "$out" | mustmatch like "source=nci"
+  echo "$out" | mustmatch like "status=terminated"
+  echo "$out" | mustmatch like "|NCT ID|Title|Status|Phase|Conditions|"
+  echo "$out" | mustmatch '/\|NCT[0-9]{8}\|/'
+else
+  echo "$out" | mustmatch '/(NCI_API_KEY|auth|HTTP 401|unauthorized)/i'
+fi
+```
+
 ## Trial Help Documents NCI Source Semantics
 
 The shared `search trial` help should call out which semantics stay CTGov-

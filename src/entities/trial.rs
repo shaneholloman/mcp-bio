@@ -723,7 +723,7 @@ fn nci_status_filter(value: Option<&str>) -> Result<Option<NciStatusFilter>, Bio
         }
         "COMPLETED" => NciStatusFilter::CurrentTrialStatus("Complete".into()),
         "SUSPENDED" => NciStatusFilter::CurrentTrialStatus("Temporarily Closed to Accrual".into()),
-        "TERMINATED" => NciStatusFilter::CurrentTrialStatus("INACTIVE".into()),
+        "TERMINATED" => NciStatusFilter::CurrentTrialStatus("Administratively Complete".into()),
         "WITHDRAWN" => NciStatusFilter::CurrentTrialStatus("Withdrawn".into()),
         other => {
             return Err(BioMcpError::InvalidArgument(format!(
@@ -2948,7 +2948,7 @@ AREA[OfficialTitle](\"G12D\") OR AREA[BriefSummary](\"G12D\") OR AREA[Keyword](\
             (
                 "terminated",
                 "current_trial_status",
-                "INACTIVE",
+                "Administratively Complete",
                 "NCT00000011",
             ),
             (
