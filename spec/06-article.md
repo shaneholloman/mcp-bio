@@ -93,7 +93,8 @@ echo "$out" | mustmatch not like "Semantic Scholar"
 ## Article Date Flag Help Advertises Accepted Formats
 
 The article command help and list output should both advertise the shared date
-parser contract: `YYYY`, `YYYY-MM`, and `YYYY-MM-DD`.
+parser contract: `YYYY`, `YYYY-MM`, and `YYYY-MM-DD`. They should also expose
+the repaired LitSense2 source roster anywhere article sources are shown.
 
 ```bash
 help_out="$(biomcp search article --help)"
@@ -101,11 +102,14 @@ echo "$help_out" | mustmatch like "Published after date (YYYY, YYYY-MM, or YYYY-
 echo "$help_out" | mustmatch like "Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)"
 echo "$help_out" | mustmatch '/\[aliases: --since\]/'
 echo "$help_out" | mustmatch '/\[aliases: --until\]/'
+printf '%s\n' "$help_out" | grep -F -- '[possible values: all, pubtator, europepmc, pubmed, litsense2]' >/dev/null
 
 list_out="$(biomcp list article)"
 echo "$list_out" | mustmatch like "--date-from <YYYY|YYYY-MM|YYYY-MM-DD>"
 echo "$list_out" | mustmatch like "--date-to <YYYY|YYYY-MM|YYYY-MM-DD>"
 echo "$list_out" | mustmatch like "--since <YYYY|YYYY-MM|YYYY-MM-DD>"
+echo "$list_out" | mustmatch like "--source <all, pubtator, europepmc, pubmed, litsense2>"
+echo "$list_out" | mustmatch like "search article --source litsense2"
 ```
 
 ## Source-Specific PubTator Search Uses Default Retraction Filter
@@ -166,6 +170,12 @@ typed_out="$(biomcp search article -k melanoma --source litsense2 --type review 
 test "$typed_status" -ne 0
 echo "$typed_out" | mustmatch like "--source litsense2"
 echo "$typed_out" | mustmatch like "does not support --type"
+
+open_status=0
+open_out="$(biomcp search article -k melanoma --source litsense2 --open-access --limit 1 2>&1)" || open_status=$?
+test "$open_status" -ne 0
+echo "$open_out" | mustmatch like "--source litsense2"
+echo "$open_out" | mustmatch like "does not support --open-access"
 ```
 
 ## Federated Search Preserves Non-EuropePMC Matches Under Default Retraction Filter

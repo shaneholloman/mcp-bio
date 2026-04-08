@@ -3634,6 +3634,23 @@ mod tests {
     }
 
     #[test]
+    fn build_free_text_article_query_preserves_mixed_semantic_anchors() {
+        let mut filters = empty_filters();
+        filters.gene = Some(" RET ".into());
+        filters.disease = Some(" Hirschsprung disease ".into());
+        filters.drug = Some(" selpercatinib ".into());
+        filters.keyword = Some(" ganglion cells ".into());
+        filters.author = Some(" Alice Smith ".into());
+
+        let query = build_free_text_article_query(&filters);
+
+        assert_eq!(
+            query,
+            "RET Hirschsprung disease selpercatinib ganglion cells Alice Smith"
+        );
+    }
+
+    #[test]
     fn planner_routes_all_with_type_to_type_capable() {
         let mut filters = empty_filters();
         filters.gene = Some("BRAF".into());
@@ -3722,6 +3739,19 @@ mod tests {
         let msg = err.to_string();
         assert!(msg.contains("--source litsense2"));
         assert!(msg.contains("--type"));
+    }
+
+    #[test]
+    fn planner_rejects_litsense2_open_access_filter() {
+        let mut filters = empty_filters();
+        filters.keyword = Some("melanoma".into());
+        filters.open_access = true;
+
+        let err = plan_backends(&filters, ArticleSourceFilter::LitSense2)
+            .expect_err("planner should reject --open-access for litsense2");
+        let msg = err.to_string();
+        assert!(msg.contains("--source litsense2"));
+        assert!(msg.contains("--open-access"));
     }
 
     #[test]
@@ -4572,6 +4602,30 @@ mod tests {
     }
 
     #[test]
+    fn litsense2_search_enabled_requires_keyword_and_non_strict_filters() {
+        let mut keyword_filters = empty_filters();
+        keyword_filters.keyword = Some("Hirschsprung disease".into());
+        assert!(litsense2_search_enabled(
+            &keyword_filters,
+            ArticleSourceFilter::All
+        ));
+
+        let mut strict_filters = keyword_filters.clone();
+        strict_filters.article_type = Some("review".into());
+        assert!(!litsense2_search_enabled(
+            &strict_filters,
+            ArticleSourceFilter::All
+        ));
+
+        let mut no_keyword_filters = empty_filters();
+        no_keyword_filters.gene = Some("RET".into());
+        assert!(!litsense2_search_enabled(
+            &no_keyword_filters,
+            ArticleSourceFilter::All
+        ));
+    }
+
+    #[test]
     fn pubmed_unique_row_survives_first_page_in_mixed_federation() {
         // Design: "construct a mixed candidate set with one PubMed-only row that
         // has stronger title-anchor coverage than some competing rows, run it
@@ -4787,6 +4841,32 @@ mod tests {
         assert_eq!(merged.results[2].pmid, "300");
         assert_eq!(merged.results[1].source, ArticleSource::PubTator);
         assert_eq!(merged.total, None);
+    }
+
+    #[test]
+    fn merge_federated_pages_records_litsense2_in_matched_sources() {
+        let pubtator_page = SearchPage::offset(vec![row("100", ArticleSource::PubTator)], Some(1));
+        let europe_page = SearchPage::offset(Vec::new(), Some(0));
+        let litsense2_rows = vec![row("100", ArticleSource::LitSense2)];
+
+        let merged = merge_federated_pages(
+            Ok(pubtator_page),
+            Ok(europe_page),
+            None,
+            Ok(Vec::new()),
+            Ok(litsense2_rows),
+            10,
+            0,
+            &empty_filters(),
+        )
+        .expect("federated merge should succeed");
+
+        assert_eq!(merged.results.len(), 1);
+        assert_eq!(merged.results[0].source, ArticleSource::PubTator);
+        assert_eq!(
+            merged.results[0].matched_sources,
+            vec![ArticleSource::PubTator, ArticleSource::LitSense2]
+        );
     }
 
     #[test]
@@ -5599,10 +5679,18 @@ mod tests {
         assert_eq!(rows[0].pmid, "22663011");
         assert_eq!(rows[0].title, "Hydrated LitSense2 title");
         assert_eq!(rows[0].pmcid.as_deref(), Some("PMC9984800"));
+        assert_eq!(rows[0].journal.as_deref(), Some("Journal One"));
+        assert_eq!(rows[0].date.as_deref(), Some("2024-01-15"));
         assert_eq!(rows[0].score, Some(0.9));
         assert_eq!(rows[0].source, ArticleSource::LitSense2);
         assert_eq!(rows[0].matched_sources, vec![ArticleSource::LitSense2]);
         assert_eq!(rows[0].source_local_position, 0);
+        assert!(
+            rows[0]
+                .abstract_snippet
+                .as_deref()
+                .is_some_and(|snippet| snippet.contains("Stronger sentence for the same PMID"))
+        );
         assert_eq!(rows[1].pmid, "24200969");
         assert!(!rows[1].title.trim().is_empty());
         assert_eq!(rows[1].score, Some(0.7));
@@ -5613,6 +5701,90 @@ mod tests {
                 .as_deref()
                 .is_some_and(|snippet| snippet.contains("Fallback title text"))
         );
+    }
+
+    #[tokio::test]
+    async fn litsense2_candidates_apply_hydrated_journal_and_date_filters() {
+        let _guard = lock_env().await;
+        let litsense2 = MockServer::start().await;
+        let pubmed = MockServer::start().await;
+        let _litsense2_base = set_env_var("BIOMCP_LITSENSE2_BASE", Some(&litsense2.uri()));
+        let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&pubmed.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/sentences/"))
+            .and(query_param("query", "Hirschsprung disease"))
+            .and(query_param("rerank", "true"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "pmid": 22663011,
+                    "pmcid": "PMC9984800",
+                    "text": "Hydrated row",
+                    "score": 0.9,
+                    "section": "INTRO",
+                    "annotations": []
+                },
+                {
+                    "pmid": 24200969,
+                    "pmcid": null,
+                    "text": "Fallback row",
+                    "score": 0.7,
+                    "section": null,
+                    "annotations": null
+                }
+            ])))
+            .expect(1)
+            .mount(&litsense2)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esummary.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("id", "22663011,24200969"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "result": {
+                    "uids": ["22663011", "24200969"],
+                    "22663011": {
+                        "uid": "22663011",
+                        "title": "Hydrated LitSense2 title",
+                        "sortpubdate": "2024/01/15 00:00",
+                        "pubdate": "2024 Jan 15",
+                        "fulljournalname": "Journal One",
+                        "source": "J1"
+                    },
+                    "24200969": {
+                        "uid": "24200969",
+                        "title": "Fallback title",
+                        "sortpubdate": "2023/01/15 00:00",
+                        "pubdate": "2023 Jan 15",
+                        "fulljournalname": "Journal Two",
+                        "source": "J2"
+                    }
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        let rows = search_litsense2_candidates(
+            &ArticleSearchFilters {
+                keyword: Some("Hirschsprung disease".into()),
+                journal: Some("Journal One".into()),
+                date_from: Some("2024".into()),
+                date_to: Some("2024-12".into()),
+                exclude_retracted: true,
+                ..empty_filters()
+            },
+            10,
+        )
+        .await
+        .expect("litsense2 search should respect hydrated filters");
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].pmid, "22663011");
+        assert_eq!(rows[0].journal.as_deref(), Some("Journal One"));
+        assert_eq!(rows[0].date.as_deref(), Some("2024-01-15"));
     }
 
     #[tokio::test]

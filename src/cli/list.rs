@@ -897,6 +897,8 @@ mod tests {
         assert!(article.contains("--date-from <YYYY|YYYY-MM|YYYY-MM-DD>"));
         assert!(article.contains("--date-to <YYYY|YYYY-MM|YYYY-MM-DD>"));
         assert!(article.contains("--since <YYYY|YYYY-MM|YYYY-MM-DD>"));
+        assert!(article.contains("--source <all, pubtator, europepmc, pubmed, litsense2>"));
+        assert!(article.contains("search article --source litsense2"));
         assert!(article.contains("article batch <id> [<id>...]"));
     }
 
