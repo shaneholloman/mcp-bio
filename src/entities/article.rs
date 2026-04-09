@@ -5142,6 +5142,141 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn pubmed_search_falls_back_to_article_base_when_s2_returns_null_abstract() {
+        let _guard = lock_env().await;
+        let pubmed = MockServer::start().await;
+        let pubtator = MockServer::start().await;
+        let europepmc = MockServer::start().await;
+        let s2 = MockServer::start().await;
+        let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&pubmed.uri()));
+        let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+        let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+        let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+        let _s2_key = set_env_var("S2_API_KEY", None);
+
+        Mock::given(method("GET"))
+            .and(path("/esearch.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("retstart", "0"))
+            .and(query_param("retmax", "100"))
+            .and(query_param("term", "GDNF RET Hirschsprung 1996"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "esearchresult": {"count": "1", "idlist": ["8896569"]}
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esummary.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("id", "8896569"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "result": {
+                    "uids": ["8896569"],
+                    "8896569": {
+                        "uid": "8896569",
+                        "title": "A mutation of the RET proto-oncogene in Hirschsprung's disease",
+                        "sortpubdate": "1996/10/24 00:00",
+                        "pubdate": "1996 Oct 24",
+                        "fulljournalname": "Nature",
+                        "source": "Nature"
+                    }
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        // S2 batch returns citation count but no abstract (null)
+        Mock::given(method("POST"))
+            .and(path("/graph/v1/paper/batch"))
+            .and(query_param(
+                "fields",
+                "paperId,externalIds,citationCount,influentialCitationCount,abstract",
+            ))
+            .and(body_string_contains("\"PMID:8896569\""))
+            .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "paperId": "paper-8896569",
+                    "externalIds": {"PubMed": "8896569"},
+                    "citationCount": 231,
+                    "influentialCitationCount": 17,
+                    "abstract": null
+                }
+            ])))
+            .expect(1)
+            .mount(&s2)
+            .await;
+
+        // Article-base fallback: PubTator provides the abstract
+        // Note: PubTatorInfons uses `#[serde(rename = "type")]` for the `kind` field,
+        // so the JSON key must be "type", not "kind".
+        Mock::given(method("GET"))
+            .and(path("/publications/export/biocjson"))
+            .and(query_param("pmids", "8896569"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "PubTator3": [{
+                    "pmid": 8896569,
+                    "passages": [
+                        {
+                            "infons": {"type": "abstract"},
+                            "text": "Hirschsprung disease is a congenital malformation of the enteric nervous system."
+                        }
+                    ]
+                }]
+            })))
+            .expect(1)
+            .mount(&pubtator)
+            .await;
+
+        // EuropePMC lookup triggered by resolve_article_from_pmid to merge citation metadata
+        Mock::given(method("GET"))
+            .and(path("/search"))
+            .and(query_param("query", "EXT_ID:8896569 AND SRC:MED"))
+            .and(query_param("format", "json"))
+            .and(query_param("page", "1"))
+            .and(query_param("pageSize", "1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "hitCount": 0,
+                "resultList": {"result": []}
+            })))
+            .mount(&europepmc)
+            .await;
+
+        let page = search_page(
+            &ArticleSearchFilters {
+                keyword: Some("GDNF RET Hirschsprung 1996".into()),
+                ..empty_filters()
+            },
+            1,
+            0,
+            ArticleSourceFilter::PubMed,
+        )
+        .await
+        .expect("search should succeed with article-base abstract fallback");
+
+        assert_eq!(page.results.len(), 1);
+        let row = &page.results[0];
+        assert_eq!(row.pmid, "8896569");
+        assert_eq!(row.source, ArticleSource::PubMed);
+        assert_eq!(row.matched_sources, vec![ArticleSource::PubMed]);
+        // S2 citation count is preserved
+        assert_eq!(row.citation_count, Some(231));
+        assert_eq!(row.influential_citation_count, Some(17));
+        // Abstract comes from PubTator fallback since S2 returned null
+        assert!(
+            row.abstract_snippet
+                .as_deref()
+                .is_some_and(|value| value.contains("Hirschsprung"))
+        );
+        assert!(row.normalized_abstract.contains("hirschsprung"));
+    }
+
+    #[tokio::test]
     async fn federated_search_enrichment_overwrites_europepmc_zero_citation_count() {
         let _guard = lock_env().await;
         let pubtator = MockServer::start().await;
