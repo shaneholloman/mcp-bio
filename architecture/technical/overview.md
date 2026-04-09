@@ -81,11 +81,12 @@ possible, then re-rank locally with an effective relevance mode:
 
 - `lexical` preserves the calibrated PubMed rescue plus lexical directness
   comparator byte-for-byte;
-- `semantic` sorts LitSense2 score descending and falls back to the lexical
-  comparator; and
+- `semantic` sorts the LitSense2-derived semantic signal descending and falls
+  back to the lexical comparator; and
 - `hybrid` scores each row as
-  `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default,
-  with CLI weight overrides for experimentation.
+  `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default
+  using the same LitSense2-derived semantic signal, with `semantic=0` when
+  LitSense2 did not match, plus CLI weight overrides for experimentation.
 
 Keyword-bearing article queries default to `hybrid`, while entity-only article
 queries default to `lexical`. The local ranking pipeline still has three
@@ -98,8 +99,8 @@ explicit responsibilities:
    source-local backend position through merge and dedup so backend-local rank
    survives federation.
 3. **Mode-aware scoring:** keep the existing lexical comparator as a stable
-   fallback while exposing semantic score, citation support, and average
-   source-local position as explicit ranking signals.
+   fallback while exposing the LitSense2-derived semantic signal, citation
+   support, and average source-local position as explicit ranking signals.
 
 The architectural invariants for the shipped contract are:
 

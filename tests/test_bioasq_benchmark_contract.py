@@ -34,6 +34,8 @@ def test_ranking_calibration_readme_records_verified_scenarios_and_provenance() 
         "hybrid_entity_only_falls_back_without_nan",
         "hybrid_custom_weights_shift_ordering",
         "hybrid_scoring_is_zero_safe",
+        "hybrid_uses_litsense2_signal_for_semantic_score",
+        "semantic_mode_ignores_non_litsense2_raw_scores",
         "hf-public-pre2026",
         "uv run --quiet --script benchmarks/bioasq/ingest_public.py --bundle hf-public-pre2026",
         "benchmarks/bioasq/datasets/manifest.json",
@@ -41,6 +43,8 @@ def test_ranking_calibration_readme_records_verified_scenarios_and_provenance() 
         "docs/reference/bioasq-benchmark.md",
         "spec/06-article.md",
         "spec/09-search-all.md",
+        "including zero semantic score on rows without",
+        "LitSense2 provenance",
         "Historical leads",
         "unresolved",
     ]:

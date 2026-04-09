@@ -23,6 +23,8 @@ biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 
 On the default `--source all` route, adding `-k/--keyword` also brings LitSense2
 into compatible federated searches and makes the default relevance mode
 `hybrid`.
+That semantic-aware path uses the LitSense2-derived semantic signal; rows
+without LitSense2 provenance contribute `semantic=0`.
 
 ## When `--keyword` should be combined with typed filters
 

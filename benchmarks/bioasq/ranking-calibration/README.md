@@ -17,6 +17,9 @@ All verified automated cases live in the `#[cfg(test)]` module of
 | Worked example 3 | Entity-only no-semantic fixture | `hybrid_entity_only_falls_back_without_nan` | Hybrid degrades cleanly to lexical/citation/position scoring without NaN output |
 | Worked example 4 | Same five-paper fixture with weight overrides | `hybrid_custom_weights_shift_ordering` | Lexical-heavy weights rank `C > B > D > A > E` |
 | Zero-safe normalization | All-zero citations and all-zero positions | `hybrid_scoring_is_zero_safe` | Hybrid component normalization stays finite when citation or position maxima collapse |
+| PubTator-only semantic clamp | Source-specific PubTator row with raw score `285.0` | `hybrid_uses_litsense2_signal_for_semantic_score` | PubTator-only rows contribute `semantic_score = 0.0` even when the raw score is large |
+| Merged LitSense2 semantic preservation | PubTator-first duplicate plus LitSense2 duplicate | `hybrid_uses_litsense2_signal_for_semantic_score` | Hybrid ranking keeps the LitSense2-derived semantic signal even when the public merged `score` still comes from PubTator |
+| Semantic-mode source gating | PubTator-only row vs LitSense2 row | `semantic_mode_ignores_non_litsense2_raw_scores` | Semantic ranking ignores non-LitSense2 raw scores and orders by the LitSense2-derived signal |
 
 ## Public bundle regeneration
 
@@ -43,9 +46,10 @@ boundaries, and the public-lane versus official-lane runbook.
 
 The existing structural ranking-metadata proof remains in the article specs, and
 the keyword-default hybrid contract is exercised through `spec/06-article.md`
-plus `spec/09-search-all.md`. Live upstream result order still drifts, so the
-stable calibration surface for ranking-order proofs stays in these Rust
-fixtures plus the benchmark docs.
+plus `spec/09-search-all.md`, including zero semantic score on rows without
+LitSense2 provenance. Live upstream result order still drifts, so the stable
+calibration surface for ranking-order proofs stays in these Rust fixtures plus
+the benchmark docs.
 
 ## Historical leads
 

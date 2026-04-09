@@ -743,7 +743,8 @@ EXAMPLES:
 RANKING:
   - `--sort relevance` accepts `--ranking-mode lexical|semantic|hybrid`.
   - Omit `--ranking-mode` to use `hybrid` when `--keyword` is present and `lexical` otherwise.
-  - Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default.
+  - `semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties.
+  - Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default, using the same LitSense2-derived semantic signal and `semantic=0` when LitSense2 did not match.
   - Use `--weight-semantic`, `--weight-lexical`, `--weight-citations`, and `--weight-position` to retune hybrid ranking.
 
 QUERY FORMULATION:
@@ -7812,6 +7813,12 @@ mod tests {
         ));
         assert!(help.contains(
             "Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance."
+        ));
+        assert!(help.contains(
+            "`semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties."
+        ));
+        assert!(help.contains(
+            "Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default, using the same LitSense2-derived semantic signal and `semantic=0` when LitSense2 did not match."
         ));
         assert!(
             help.contains(

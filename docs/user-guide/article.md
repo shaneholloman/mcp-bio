@@ -95,11 +95,14 @@ deduplicated by PMID when BioMCP can resolve one.
 Default `--sort relevance` is mode-aware:
 
 - Keyword-bearing queries default to `--ranking-mode hybrid`, using
-  `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`.
+  `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` with the
+  LitSense2-derived semantic signal.
 - Entity-only queries default to `--ranking-mode lexical`, preserving the
   existing calibrated PubMed rescue plus lexical directness comparator.
-- `--ranking-mode semantic` sorts LitSense2 score first and falls back to the
-  lexical comparator for deterministic ties.
+- `--ranking-mode semantic` sorts the LitSense2-derived semantic signal first
+  and falls back to the lexical comparator for deterministic ties.
+- Rows without LitSense2 provenance contribute `ranking.semantic_score = 0`
+  in semantic-aware ranking modes.
 - `--weight-semantic`, `--weight-lexical`, `--weight-citations`, and
   `--weight-position` retune the hybrid formula.
 
@@ -210,9 +213,11 @@ so article workflows can promote the next likely pivots and preserve section
 provenance without scraping markdown. JSON `search article` responses also echo
 `query`, `sort`, `semantic_scholar_enabled`, and row-level ranking/provenance
 metadata. In relevance mode, ranking metadata now includes the effective mode
-and, for hybrid rows, normalized semantic, lexical, citation, position, and
-composite scores. JSON `article batch` responses are a bare array of compact
-cards so callers can map results back to the original input order.
+plus normalized lexical, citation, and position components; semantic-aware
+rows expose `ranking.semantic_score` as the LitSense2-derived signal and use
+`0` when LitSense2 did not match. Hybrid rows also include the composite
+score. JSON `article batch` responses are a bare array of compact cards so
+callers can map results back to the original input order.
 
 ## Practical tips
 

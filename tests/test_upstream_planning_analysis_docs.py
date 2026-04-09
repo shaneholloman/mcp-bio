@@ -216,6 +216,12 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         in technical_ws
     )
     assert (
+        "`semantic` sorts the LitSense2-derived semantic signal descending and falls "
+        "back to the lexical comparator"
+        in technical_ws
+    )
+    assert "with `semantic=0` when LitSense2 did not match" in technical_ws
+    assert (
         "0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"
         in technical_ws
     )
@@ -232,6 +238,8 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "When a non-empty keyword is present, BioMCP also adds LitSense2 to the federated route."
         in article_guide_ws
     )
+    assert "LitSense2-derived semantic signal" in article_guide_ws
+    assert "Rows without LitSense2 provenance contribute `ranking.semantic_score = 0`" in article_guide_ws
     assert "## Query formulation" in article_guide
     assert (
         "Put a known gene, disease, or drug in `-g/--gene`, `-d/--disease`, or `--drug`."
@@ -242,6 +250,8 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         in article_guide
     )
     assert "MeSH/title/abstract" not in find_articles_ws
+    assert "LitSense2-derived semantic signal" in find_articles_ws
+    assert "semantic=0" in find_articles_ws
     assert "Do not guess `-g`, `-d`, or `--drug` when the question is trying to identify the entity itself." in find_articles_ws
     assert 'biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5' in find_articles_ws
     assert "MeSH/title/abstract" not in article_keyword_reference_ws
@@ -249,12 +259,16 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "On the default `--source all` route, adding `-k/--keyword` also brings LitSense2 into compatible federated searches and makes the default relevance mode `hybrid`."
         in article_keyword_reference_ws
     )
+    assert "LitSense2-derived semantic signal" in article_keyword_reference_ws
+    assert "semantic=0" in article_keyword_reference_ws
     assert "do not guess a disease or drug name just to fill `-d` or `--drug`" in article_keyword_reference_ws
     assert "Turn a literature question into article filters" in cli_list_reference_ws
     assert (
         "known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`"
         in cli_list_reference_ws
     )
+    assert "LitSense2-derived semantic signal" in cli_list_reference_ws
+    assert "semantic=0" in cli_list_reference_ws
     assert "PubTator3 + Europe PMC + PubMed + LitSense2 + optional Semantic Scholar" in (
         data_sources_ws
     )

@@ -272,7 +272,9 @@ Worked examples:
 - `search article --type ...` on `--source all` uses Europe PMC + PubMed when PubMed-compatible filters are selected, and collapses to Europe PMC-only when `--open-access` or `--no-preprints` makes PubMed ineligible.
 - `search article --sort relevance` accepts `--ranking-mode lexical|semantic|hybrid`.
 - When `--ranking-mode` is omitted, keyword-bearing article queries default to hybrid ranking and entity-only queries default to lexical ranking.
+- `--ranking-mode semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties.
 - Default hybrid scoring is `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`; `--weight-*` flags retune those components.
+- Hybrid ranking uses the same LitSense2-derived semantic signal, and rows without LitSense2 provenance contribute `semantic=0`.
 - Weight flags are part of the hybrid contract and pair with `--sort relevance`.
 "#
     .to_string()
@@ -945,7 +947,11 @@ mod tests {
         assert!(article.contains("search article --source litsense2"));
         assert!(article.contains("keyword-bearing article queries default to hybrid"));
         assert!(article.contains("entity-only queries default to lexical"));
+        assert!(
+            article.contains("LitSense2-derived semantic signal and falls back to lexical ties")
+        );
         assert!(article.contains("0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"));
+        assert!(article.contains("rows without LitSense2 provenance contribute `semantic=0`"));
         assert!(article.contains("article batch <id> [<id>...]"));
         assert!(article.contains("## Query formulation"));
         assert!(article.contains("Known gene/disease/drug already identified"));

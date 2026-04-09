@@ -69,17 +69,19 @@ search mode, and the remediation example must be shell-safe for multi-word
 queries.
 
 ```bash
-unset status
-out="$(biomcp search pathway 2>&1)" || status=$?
-test "${status:-0}" -eq 1
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+unset pathway_status
+out="$("$bin" search pathway 2>&1)" || pathway_status=$?
+test "${pathway_status:-0}" -eq 1
 echo "$out" | mustmatch like 'Invalid argument: Query is required.'
 echo "$out" | mustmatch like 'biomcp search pathway -q "MAPK signaling"'
 ```
 
 ```bash
-unset status
-out="$(biomcp search pathway --top-level 2>&1)" || status=$?
-test "${status:-0}" -eq 0
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+unset pathway_status
+out="$("$bin" search pathway --top-level 2>&1)" || pathway_status=$?
+test "${pathway_status:-0}" -eq 0
 echo "$out" | mustmatch like "# Pathways"
 ```
 

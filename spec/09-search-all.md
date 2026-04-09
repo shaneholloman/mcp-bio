@@ -56,26 +56,19 @@ echo "$out" | mustmatch like "## Articles"
 
 The article section in `search all` should reuse the stabilized article search
 pipeline rather than flattening away row-level source and ranking metadata.
+Keyword-driven requests should also preserve the LitSense2-only semantic-score
+contract on article rows that did not match LitSense2.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" --json search all -g BRAF --limit 3)"
 echo "$out" | mustmatch like '"entity": "article"'
 echo "$out" | mustmatch like '"source": "'
 echo "$out" | mustmatch like '"ranking": {'
 echo "$out" | mustmatch like '"mode": "lexical"'
-```
-
-## JSON Keyword Search Uses Hybrid Article Ranking
-
-Keyword-driven `search all` requests should reuse the same article default as
-`search article`: the article leg should emit hybrid ranking metadata when the
-query is keyword-bearing.
-
-```bash
-bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" --json search all -k 'checkpoint inhibitor' --limit 3)"
-echo "$out" | jq -e '.sections[] | select(.entity == "article") | (.results | length > 0 and all(.[]; .ranking.mode == "hybrid"))' > /dev/null
+keyword_out="$("$bin" --json search all -g BRAF -k melanoma --limit 10)"
+echo "$keyword_out" | jq -e '.sections[] | select(.entity == "article") | (.results | length > 0 and all(.[]; .ranking.mode == "hybrid"))' > /dev/null
+echo "$keyword_out" | jq -e '[.sections[] | select(.entity == "article") | .results[]] | all(.[]; ((.matched_sources | index("litsense2")) != null) or (.ranking.semantic_score == 0))' > /dev/null
 ```
 
 ## Debug Plan

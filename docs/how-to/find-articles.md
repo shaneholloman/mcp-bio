@@ -72,9 +72,11 @@ biomcp search article -k "Hirschsprung disease ganglion cells" --ranking-mode hy
 ```
 
 Use `--ranking-mode lexical` to force the old directness comparator on a
-keyword query, `--ranking-mode semantic` to sort by LitSense2 score first, or
-`--weight-*` flags to retune the default hybrid formula
-`0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`.
+keyword query, `--ranking-mode semantic` to sort by the LitSense2-derived
+semantic signal first, or `--weight-*` flags to retune the default hybrid
+formula `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`. Rows
+without LitSense2 provenance contribute `semantic=0` in semantic-aware
+ranking modes.
 
 ## Constrain by date
 

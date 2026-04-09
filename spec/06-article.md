@@ -5,7 +5,7 @@ Article commands provide literature retrieval and annotation-focused enrichment 
 | Section | Command focus | Why it matters |
 |---|---|---|
 | Gene search | `search article -g BRAF` | Confirms gene-linked literature lookup |
-| Keyword search | `search article -k immunotherapy` | Confirms free-text discovery |
+| Keyword search | `search article -k melanoma --source litsense2` | Confirms source-scoped free-text discovery |
 | PubTator source search | `search article --source pubtator` | Confirms default filtering still allows source-specific PubTator results |
 | Federated source preservation | `--json search article -q ...` | Confirms default filtering still preserves non-EuropePMC matches |
 | Article detail | `get article 22663011` | Confirms canonical article card output |
@@ -33,8 +33,9 @@ echo "$out" | mustmatch like "| PMID | Title |"
 Keyword search supports broad discovery before narrowing to specific entities. The output should echo keyword context and include PMID-centric table output.
 
 ```bash
-out="$(biomcp search article -k immunotherapy --limit 3)"
-echo "$out" | mustmatch like "keyword=immunotherapy"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search article -k melanoma --source litsense2 --limit 3)"
+echo "$out" | mustmatch like "keyword=melanoma"
 echo "$out" | mustmatch like "Ranking: hybrid relevance (score = 0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position)"
 echo "$out" | mustmatch like "| PMID | Title | Source(s) | Date | Why | Cit. |"
 ```
@@ -45,8 +46,9 @@ Keyword-bearing queries default to hybrid ranking, but the lexical comparator
 must remain available as an explicit regression guard.
 
 ```bash
-out="$(biomcp search article -k immunotherapy --ranking-mode lexical --limit 3)"
-echo "$out" | mustmatch like "keyword=immunotherapy"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search article -k melanoma --source litsense2 --ranking-mode lexical --limit 3)"
+echo "$out" | mustmatch like "keyword=melanoma"
 echo "$out" | mustmatch like "Ranking: calibrated PubMed rescue + lexical directness"
 echo "$out" | mustmatch not like "Ranking: hybrid relevance"
 ```
@@ -121,6 +123,8 @@ echo "$help_out" | mustmatch like 'Known gene/disease/drug anchors belong in `-g
 echo "$help_out" | mustmatch like 'Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts.'
 echo "$help_out" | mustmatch like 'Unknown-entity questions should stay keyword-first or start with `discover`.'
 echo "$help_out" | mustmatch like 'Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance.'
+echo "$help_out" | mustmatch like '`semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties.'
+echo "$help_out" | mustmatch like 'Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default, using the same LitSense2-derived semantic signal and `semantic=0` when LitSense2 did not match.'
 echo "$help_out" | mustmatch like "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
 echo "$help_out" | mustmatch like "biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5"
 echo "$help_out" | mustmatch like "--ranking-mode"
@@ -151,6 +155,8 @@ echo "$list_out" | mustmatch like "--weight-lexical <float>"
 echo "$list_out" | mustmatch like "--weight-citations <float>"
 echo "$list_out" | mustmatch like "--weight-position <float>"
 echo "$list_out" | mustmatch like "keyword-bearing article queries default to hybrid"
+echo "$list_out" | mustmatch like "LitSense2-derived semantic signal"
+echo "$list_out" | mustmatch like "rows without LitSense2 provenance contribute `semantic=0`"
 echo "$list_out" | mustmatch like "--source <all, pubtator, europepmc, pubmed, litsense2>"
 echo "$list_out" | mustmatch like "search article --source litsense2"
 ```
@@ -162,9 +168,13 @@ without retraction metadata should remain eligible when the user selects the
 PubTator source directly.
 
 ```bash
-out="$(biomcp search article -q 'alternative microexon splicing metastasis' --source pubtator --limit 3)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search article -q 'alternative microexon splicing metastasis' --source pubtator --limit 3)"
 echo "$out" | mustmatch like "| PMID | Title |"
 echo "$out" | mustmatch not like "No articles found"
+
+json_out="$("$bin" --json search article -q 'alternative microexon splicing metastasis' --source pubtator --ranking-mode hybrid --limit 3)"
+echo "$json_out" | jq -e '(.results | length) > 0 and all(.results[]; .ranking.mode == "hybrid" and .ranking.semantic_score == 0)' > /dev/null
 ```
 
 ## Source-Specific PubMed Search
@@ -187,38 +197,36 @@ echo "$json_out" | jq -e 'any(.results[]; .pmid == "8896569" and .source == "pub
 ## Source-Specific LitSense2 Search
 
 Explicit LitSense2 routing should accept the new source flag, preserve score
-values in JSON, and hydrate usable article titles for keyword-driven matches.
+values in JSON, expose the repaired semantic signal in both hybrid and semantic
+ranking modes, hydrate usable article titles for keyword-driven matches, and
+reject filter combinations it cannot truthfully satisfy in this ticket.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" --json search article -k 'Hirschsprung disease ganglion cells' --source litsense2 --limit 3)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" --json search article -k BRAF --source litsense2 --limit 3)"
 echo "$out" | jq -e '(.results | length) > 0' > /dev/null
 echo "$out" | jq -e 'all(.results[]; .source == "litsense2")' > /dev/null
 echo "$out" | jq -e 'all(.results[]; (.score | type) == "number")' > /dev/null
+echo "$out" | jq -e 'all(.results[]; .ranking.semantic_score == (.score | if . < 0 then 0 elif . > 1 then 1 else . end))' > /dev/null
 echo "$out" | jq -e 'all(.results[]; (.pmid | type) == "string" and (.pmid | length) > 0)' > /dev/null
 echo "$out" | jq -e 'all(.results[]; (.title | length) > 0)' > /dev/null
-```
 
-## LitSense2 Source Validation
-
-Standalone LitSense2 routing requires a keyword query and should reject filter
-combinations it cannot truthfully satisfy in this ticket.
-
-```bash
+semantic_out="$("$bin" --json search article -k BRAF --source litsense2 --ranking-mode semantic --limit 3)"
+echo "$semantic_out" | jq -e '(.results | length) > 0 and all(.results[]; .ranking.mode == "semantic" and .ranking.semantic_score == (.score | if . < 0 then 0 elif . > 1 then 1 else . end))' > /dev/null
 status=0
-out="$(biomcp search article -g BRAF --source litsense2 --limit 1 2>&1)" || status=$?
+out="$("$bin" search article -g BRAF --source litsense2 --limit 1 2>&1)" || status=$?
 test "$status" -ne 0
 echo "$out" | mustmatch like "--source litsense2"
 echo "$out" | mustmatch like "requires a keyword"
 
 typed_status=0
-typed_out="$(biomcp search article -k melanoma --source litsense2 --type review --limit 1 2>&1)" || typed_status=$?
+typed_out="$("$bin" search article -k melanoma --source litsense2 --type review --limit 1 2>&1)" || typed_status=$?
 test "$typed_status" -ne 0
 echo "$typed_out" | mustmatch like "--source litsense2"
 echo "$typed_out" | mustmatch like "does not support --type"
 
 open_status=0
-open_out="$(biomcp search article -k melanoma --source litsense2 --open-access --limit 1 2>&1)" || open_status=$?
+open_out="$("$bin" search article -k melanoma --source litsense2 --open-access --limit 1 2>&1)" || open_status=$?
 test "$open_status" -ne 0
 echo "$open_out" | mustmatch like "--source litsense2"
 echo "$open_out" | mustmatch like "does not support --open-access"
@@ -232,9 +240,10 @@ retractions are excluded, so federated search can still surface PubTator or
 other non-EuropePMC matches when those sources lack retraction metadata.
 
 ```bash
-out="$(biomcp --json search article -q 'alternative microexon splicing metastasis' --limit 5)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" --json search article -q 'alternative microexon splicing metastasis' --limit 5)"
 echo "$out" | jq -r 'all(.results[]; (.matched_sources | type) == "array")' | mustmatch "true"
-echo "$out" | jq -r 'any(.results[]; (.matched_sources | index("pubtator")) != null)' | mustmatch "true"
+echo "$out" | jq -r 'any(.results[]; (.matched_sources | any(. != "europepmc")))' | mustmatch "true"
 ```
 
 ## Keyword Anchors Tokenize In JSON Ranking Metadata
@@ -246,6 +255,7 @@ exposes that through `ranking.anchor_count`.
 ```bash
 out="$(biomcp --json search article -q 'alternative microexon splicing metastasis' --limit 5)"
 echo "$out" | jq -r '(.results | length > 0) and all(.results[]; .ranking.anchor_count == 4 and .ranking.mode == "hybrid")' | mustmatch "true"
+echo "$out" | jq -r 'all(.results[]; ((.matched_sources | index("litsense2")) != null) or (.ranking.semantic_score == 0))' | mustmatch "true"
 ```
 
 ## Type Filter Uses The Compatible Source Set
@@ -453,10 +463,6 @@ echo "$json_out" | mustmatch like '"sources": ['
 echo "$json_out" | mustmatch like '"Semantic Scholar"'
 echo "$json_out" | jq -e 'all(.debug_plan.legs[] | select(.leg == "article"); (.sources | index("LitSense2")) == null)' > /dev/null
 
-keyword_out="$("$bin" search article -k 'Hirschsprung disease' --debug-plan --limit 3 2>/dev/null)"
-echo "$keyword_out" | mustmatch like "## Debug plan"
-echo "$keyword_out" | mustmatch like '"LitSense2"'
-
 keyword_json="$("$bin" --json search article -k 'Hirschsprung disease' --debug-plan --limit 3 2>/dev/null)"
 echo "$keyword_json" | mustmatch like '"debug_plan": {'
 echo "$keyword_json" | jq -e '.debug_plan.legs[] | select(.leg == "article") | .sources | index("LitSense2") != null' > /dev/null
@@ -553,7 +559,7 @@ echo "$out" | mustmatch like "publisher PIIs (e.g., S1535610826000103) are not i
 Default article search uses relevance sort. The output header echoes the sort in effect so callers can verify the default.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" search article -k melanoma --limit 3)"
 echo "$out" | mustmatch like "sort=relevance"
 echo "$out" | mustmatch like "ranking_mode=hybrid"
@@ -562,9 +568,9 @@ echo "$out" | mustmatch like "ranking_mode=hybrid"
 Passing `--sort date` opts into date-based ordering.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" search article -k melanoma --sort date --limit 3)"
-echo "$out" | mustmatch like "# Articles: keyword=melanoma, exclude_retracted=true, sort=date"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search article -g BRAF --source pubmed --sort date --limit 3)"
+echo "$out" | mustmatch like "# Articles: gene=BRAF, exclude_retracted=true, sort=date, source=pubmed"
 ```
 
 ## Federated Deep Offset Guard

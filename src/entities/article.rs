@@ -226,6 +226,7 @@ struct ArticleSourcePosition {
 struct ArticleCandidate {
     row: ArticleSearchResult,
     source_positions: Vec<ArticleSourcePosition>,
+    semantic_signal: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -1263,6 +1264,8 @@ fn article_candidate_from_row(mut row: ArticleSearchResult) -> ArticleCandidate 
             source: row.source,
             local_position: row.source_local_position,
         }],
+        semantic_signal: (row.source == ArticleSource::LitSense2)
+            .then(|| row.score.unwrap_or(0.0).clamp(0.0, 1.0)),
         row,
     }
 }
@@ -1315,6 +1318,7 @@ fn merge_article_candidate(target: &mut ArticleCandidate, incoming: ArticleCandi
     let ArticleCandidate {
         row: incoming_row,
         mut source_positions,
+        semantic_signal,
     } = incoming;
     let target_row = &mut target.row;
     merge_missing_string(&mut target_row.pmcid, incoming_row.pmcid);
@@ -1361,6 +1365,9 @@ fn merge_article_candidate(target: &mut ArticleCandidate, incoming: ArticleCandi
     ensure_matched_sources(target_row);
     target.source_positions.append(&mut source_positions);
     collapse_source_positions(&mut target.source_positions);
+    if target.semantic_signal.is_none() {
+        target.semantic_signal = semantic_signal;
+    }
     if let Some(local_position) = min_source_local_position(&target.source_positions) {
         target_row.source_local_position = local_position;
     }
@@ -1664,12 +1671,8 @@ fn compare_article_candidates_lexical(
         })
 }
 
-fn semantic_sort_score(row: &ArticleSearchResult) -> f64 {
-    row.score.unwrap_or(0.0)
-}
-
-fn normalized_semantic_score(row: &ArticleSearchResult) -> f64 {
-    row.score.unwrap_or(0.0).clamp(0.0, 1.0)
+fn semantic_signal(candidate: &ArticleCandidate) -> f64 {
+    candidate.semantic_signal.unwrap_or(0.0)
 }
 
 fn avg_source_rank(source_positions: &[ArticleSourcePosition], fallback_position: usize) -> f64 {
@@ -1712,15 +1715,15 @@ fn rank_articles_by_directness(rows: &mut [ArticleCandidate], filters: &ArticleS
 fn rank_articles_by_semantic(rows: &mut [ArticleCandidate], filters: &ArticleSearchFilters) {
     populate_lexical_ranking_metadata(rows, filters);
     for row in rows.iter_mut() {
-        let semantic_score = normalized_semantic_score(&row.row);
+        let semantic_score = semantic_signal(row);
         if let Some(ranking) = row.row.ranking.as_mut() {
             ranking.mode = Some(ArticleRankingMode::Semantic);
             ranking.semantic_score = Some(semantic_score);
         }
     }
     rows.sort_by(|left, right| {
-        semantic_sort_score(&right.row)
-            .total_cmp(&semantic_sort_score(&left.row))
+        semantic_signal(right)
+            .total_cmp(&semantic_signal(left))
             .then_with(|| compare_article_candidates_lexical(left, right))
     });
 }
@@ -1744,7 +1747,7 @@ fn rank_articles_hybrid(rows: &mut [ArticleCandidate], filters: &ArticleSearchFi
         .fold(0.0, f64::max);
 
     for row in rows.iter_mut() {
-        let semantic_score = normalized_semantic_score(&row.row);
+        let semantic_score = semantic_signal(row);
         let lexical_score = row
             .row
             .ranking
@@ -8536,6 +8539,171 @@ mod tests {
                         .composite_score
                         .is_some_and(|score| score.is_finite())
             }));
+        }
+
+        #[test]
+        fn hybrid_uses_litsense2_signal_for_semantic_score() {
+            let mut filters = empty_filters();
+            filters.keyword = Some("BRAF melanoma".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Hybrid);
+
+            let pubtator_only = worked_example_row(
+                "4001",
+                ArticleSource::PubTator,
+                "BRAF melanoma resistance map",
+                "",
+                0,
+                10,
+                Some(285.0),
+            );
+            let litsense2_only = worked_example_row(
+                "4002",
+                ArticleSource::LitSense2,
+                "BRAF melanoma pathway atlas",
+                "",
+                1,
+                5,
+                Some(0.85),
+            );
+            let pubtator_duplicate = worked_example_row(
+                "4003",
+                ArticleSource::PubTator,
+                "Merged BRAF melanoma evidence",
+                "",
+                0,
+                12,
+                Some(285.0),
+            );
+            let litsense2_duplicate = worked_example_row(
+                "4003",
+                ArticleSource::LitSense2,
+                "Merged BRAF melanoma evidence",
+                "",
+                2,
+                12,
+                Some(0.95),
+            );
+
+            let page = finalize_article_candidates(
+                vec![
+                    pubtator_only,
+                    litsense2_only,
+                    pubtator_duplicate,
+                    litsense2_duplicate,
+                ],
+                10,
+                0,
+                None,
+                &filters,
+            );
+
+            let pubtator = row_by_pmid(&page.results, "4001");
+            let litsense2 = row_by_pmid(&page.results, "4002");
+            let merged = row_by_pmid(&page.results, "4003");
+
+            assert_eq!(
+                pubtator
+                    .ranking
+                    .as_ref()
+                    .expect("ranking should be present")
+                    .semantic_score,
+                Some(0.0)
+            );
+            assert_eq!(
+                litsense2
+                    .ranking
+                    .as_ref()
+                    .expect("ranking should be present")
+                    .semantic_score,
+                Some(0.85)
+            );
+            assert_eq!(merged.score, Some(285.0));
+            assert_eq!(
+                merged
+                    .ranking
+                    .as_ref()
+                    .expect("ranking should be present")
+                    .semantic_score,
+                Some(0.95)
+            );
+        }
+
+        #[test]
+        fn semantic_mode_ignores_non_litsense2_raw_scores() {
+            let mut filters = empty_filters();
+            filters.keyword = Some("BRAF melanoma".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Semantic);
+
+            let pubtator_only = worked_example_row(
+                "5001",
+                ArticleSource::PubTator,
+                "BRAF melanoma resistance map",
+                "",
+                0,
+                10,
+                Some(285.0),
+            );
+            let litsense2_only = worked_example_row(
+                "5002",
+                ArticleSource::LitSense2,
+                "BRAF melanoma pathway atlas",
+                "",
+                1,
+                5,
+                Some(0.85),
+            );
+
+            let page = finalize_article_candidates(
+                vec![pubtator_only, litsense2_only],
+                10,
+                0,
+                None,
+                &filters,
+            );
+
+            assert_eq!(
+                page.results
+                    .iter()
+                    .map(|row| row.pmid.as_str())
+                    .collect::<Vec<_>>(),
+                vec!["5002", "5001"]
+            );
+
+            let litsense2 = row_by_pmid(&page.results, "5002");
+            let pubtator = row_by_pmid(&page.results, "5001");
+
+            assert_eq!(
+                litsense2
+                    .ranking
+                    .as_ref()
+                    .expect("ranking should be present")
+                    .mode,
+                Some(ArticleRankingMode::Semantic)
+            );
+            assert_eq!(
+                litsense2
+                    .ranking
+                    .as_ref()
+                    .expect("ranking should be present")
+                    .semantic_score,
+                Some(0.85)
+            );
+            assert_eq!(
+                pubtator
+                    .ranking
+                    .as_ref()
+                    .expect("ranking should be present")
+                    .mode,
+                Some(ArticleRankingMode::Semantic)
+            );
+            assert_eq!(
+                pubtator
+                    .ranking
+                    .as_ref()
+                    .expect("ranking should be present")
+                    .semantic_score,
+                Some(0.0)
+            );
         }
     }
 
