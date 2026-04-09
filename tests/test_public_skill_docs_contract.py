@@ -22,6 +22,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     cli_reference = _read("docs/user-guide/cli-reference.md")
     article_guide = _read("docs/user-guide/article.md")
     find_articles = _read("docs/how-to/find-articles.md")
+    keyword_reference = _read("docs/reference/article-keyword-search.md")
     data_sources = _read("docs/reference/data-sources.md")
     quick_reference = _read("docs/reference/quick-reference.md")
     pivot_guide = _read("docs/how-to/cross-entity-pivots.md")
@@ -133,11 +134,30 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "`--type` on `--source all` uses Europe PMC + PubMed" in article_guide
     assert "PMC-only note" in article_guide
     assert (
+        "Put a known gene, disease, or drug in `-g/--gene`, `-d/--disease`, or `--drug`."
+        in article_guide
+    )
+    assert (
+        'biomcp search article -k \'"cafe-au-lait spots" neurofibromas disease\' --type review --limit 5'
+        in article_guide
+    )
+    assert (
+        'biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5'
+        in article_guide
+    )
+    assert (
         "Use `article batch` after search when you already know the candidate PMIDs or"
         in find_articles
     )
     assert "`--type` on the default `--source all` route uses Europe PMC + PubMed" in find_articles
     assert "Europe PMC-only with an explicit note" in find_articles
+    assert "Do not guess `-g`, `-d`, or `--drug`" in find_articles
+    assert 'biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5' in find_articles
+    assert "On the default `--source all` route, adding `-k/--keyword` also brings LitSense2" in keyword_reference
+    assert (
+        'biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5'
+        in keyword_reference
+    )
 
     assert "# Pattern: Treatment / approved-drug lookup" in treatment_use_case
     assert 'biomcp search drug --indication "myasthenia gravis" --limit 5' in treatment_use_case

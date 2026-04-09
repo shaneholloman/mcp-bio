@@ -110,11 +110,19 @@ parser contract: `YYYY`, `YYYY-MM`, and `YYYY-MM-DD`. They should also expose
 the repaired LitSense2 source roster anywhere article sources are shown.
 
 ```bash
-help_out="$(biomcp search article --help)"
+bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
+help_out="$("$bin" search article --help)"
 echo "$help_out" | mustmatch like "Published after date (YYYY, YYYY-MM, or YYYY-MM-DD)"
 echo "$help_out" | mustmatch like "Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)"
 echo "$help_out" | mustmatch '/\[aliases: --since\]/'
 echo "$help_out" | mustmatch '/\[aliases: --until\]/'
+echo "$help_out" | mustmatch like "QUERY FORMULATION:"
+echo "$help_out" | mustmatch like 'Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`.'
+echo "$help_out" | mustmatch like 'Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts.'
+echo "$help_out" | mustmatch like 'Unknown-entity questions should stay keyword-first or start with `discover`.'
+echo "$help_out" | mustmatch like 'Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance.'
+echo "$help_out" | mustmatch like "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
+echo "$help_out" | mustmatch like "biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5"
 echo "$help_out" | mustmatch like "--ranking-mode"
 echo "$help_out" | mustmatch like "--weight-semantic"
 echo "$help_out" | mustmatch like "--weight-lexical"
@@ -123,7 +131,15 @@ echo "$help_out" | mustmatch like "--weight-position"
 echo "$help_out" | mustmatch like "0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"
 printf '%s\n' "$help_out" | grep -F -- '[possible values: all, pubtator, europepmc, pubmed, litsense2]' >/dev/null
 
-list_out="$(biomcp list article)"
+list_out="$("$bin" list article)"
+echo "$list_out" | mustmatch like "## Query formulation"
+echo "$list_out" | mustmatch like "Known gene/disease/drug already identified"
+echo "$list_out" | mustmatch like "biomcp search article -g BRAF --limit 5"
+echo "$list_out" | mustmatch like "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
+echo "$list_out" | mustmatch like "biomcp search article --drug amiodarone -k \"photosensitivity mechanism\" --limit 5"
+echo "$list_out" | mustmatch like "biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5"
+echo "$list_out" | mustmatch like "biomcp search article -k \"TCGA mutation analysis dataset\" --type review --limit 5"
+echo "$list_out" | mustmatch like "typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed"
 echo "$list_out" | mustmatch like "--date-from <YYYY|YYYY-MM|YYYY-MM-DD>"
 echo "$list_out" | mustmatch like "--date-to <YYYY|YYYY-MM|YYYY-MM-DD>"
 echo "$list_out" | mustmatch like "--since <YYYY|YYYY-MM|YYYY-MM-DD>"

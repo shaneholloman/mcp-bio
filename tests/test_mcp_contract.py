@@ -78,7 +78,13 @@ async def test_biomcp_description_matches_list_contract(
         "search trial [filters]",
         "get <entity> <id> [section...]",
     ]
+    article_markers = [
+        "Turn a literature question into article filters",
+        "known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`",
+    ]
     for marker in required:
+        assert marker in list_contract
+    for marker in article_markers:
         assert marker in list_contract
 
     async with mcp_session_factory() as (session, _initialize_result):
@@ -87,6 +93,8 @@ async def test_biomcp_description_matches_list_contract(
         description = biomcp.description
         assert "read-only" in description.lower()
         for marker in required:
+            assert marker in description
+        for marker in article_markers:
             assert marker in description
         assert "SEARCH FILTERS:" in description
         assert "AGENT GUIDANCE:" in description

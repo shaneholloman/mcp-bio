@@ -746,6 +746,17 @@ RANKING:
   - Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default.
   - Use `--weight-semantic`, `--weight-lexical`, `--weight-citations`, and `--weight-position` to retune hybrid ranking.
 
+QUERY FORMULATION:
+  - Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`.
+  - Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts.
+  - Unknown-entity questions should stay keyword-first or start with `discover`.
+  - Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance.
+  - Prefer `--type review` for synthesis or list-style questions; it can narrow the compatible default backend set.
+  - Avoid: `biomcp search article \"TP53 apoptosis gene regulation\"`
+    Prefer: `biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5`
+  - Avoid: `biomcp search article -d neurofibromatosis -k \"cafe-au-lait spots neurofibromas\"`
+    Prefer: `biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5`
+
 See also: biomcp list article")]
     Article {
         /// Filter by gene symbol
@@ -7783,6 +7794,33 @@ mod tests {
         assert!(help.contains("When to use:"));
         assert!(help.contains("keyword search to scan a topic"));
         assert!(help.contains("Prefer --type review"));
+    }
+
+    #[test]
+    fn search_article_help_includes_query_formulation_guidance() {
+        let help = render_article_search_long_help();
+
+        assert!(help.contains("QUERY FORMULATION:"));
+        assert!(help.contains(
+            "Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`."
+        ));
+        assert!(help.contains(
+            "Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts."
+        ));
+        assert!(help.contains(
+            "Unknown-entity questions should stay keyword-first or start with `discover`."
+        ));
+        assert!(help.contains(
+            "Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance."
+        ));
+        assert!(
+            help.contains(
+                "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
+            )
+        );
+        assert!(help.contains(
+            "biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5"
+        ));
     }
 
     #[test]

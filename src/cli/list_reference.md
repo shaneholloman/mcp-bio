@@ -25,6 +25,7 @@ New to BioMCP? Try:
 | Tissue expression or localization of a gene product | `get gene <symbol> hpa` or `get gene <symbol> protein` |
 | Drug safety or adverse events | `drug adverse-events <name>` or `get drug <name> safety` |
 | Review literature that synthesizes a topic | `search article -k "<query>" --type review --limit 5` |
+| Turn a literature question into article filters | `biomcp list article` (known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`) |
 | Follow one article into related evidence | `article citations <id> --limit 5` or `article recommendations <id> --limit 5` |
 | I know the entities but not the next pivot | `search all --gene BRAF --disease melanoma` |
 | I only have free text and need routing | `discover "<free text>"` |
@@ -68,6 +69,7 @@ New to BioMCP? Try:
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
 - `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed, litsense2>`
+- For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
 - `search drug ... --region <us|eu|all>` (omitting `--region` checks both U.S. and EU for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `eu|all` with structured filters errors)
 
 ## Helpers
@@ -109,8 +111,10 @@ Results depend on source document wording and may vary across sources.
 
 - Set `NCBI_API_KEY` to increase NCBI request throughput for article annotation/full-text paths.
 - Set `S2_API_KEY` for authenticated Semantic Scholar requests at 1 req/sec; without it, BioMCP uses the shared pool at 1 req/2sec.
-- `search article` defaults to PubTator3 + Europe PMC + PubMed when the filter set is compatible; LitSense2 joins keyword-driven federated searches, and Semantic Scholar is still automatic on compatible queries.
+- On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible, and Semantic Scholar is still automatic on compatible queries.
+- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
+- `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.
 - EU drug commands auto-download the EMA human-medicines JSON feeds on first use into the default data dir or `BIOMCP_EMA_DIR`, then refresh stale files after 72 hours.
 - Run `ema sync` to force-refresh the EMA local data feeds.
 - Use `biomcp health --apis-only` for upstream/API checks and full `biomcp health` for local EMA/cache readiness plus cache-limit warnings.
