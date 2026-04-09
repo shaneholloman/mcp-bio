@@ -136,6 +136,9 @@ echo "$out" | mustmatch like "source=pubmed"
 echo "$out" | mustmatch like "| PMID | Title |"
 echo "$out" | mustmatch not like "No articles found"
 printf '%s\n' "$out" | grep -F -- '--source <all|pubtator|europepmc|pubmed|litsense2>' >/dev/null
+
+json_out="$(env -u S2_API_KEY "$bin" --json search article -k 'GDNF RET Hirschsprung 1996' --source pubmed --limit 5)"
+echo "$json_out" | jq -e 'any(.results[]; .pmid == "8896569" and .source == "pubmed" and .matched_sources == ["pubmed"] and (.citation_count // 0) > 0 and ((.abstract_snippet // "") | length > 0))' >/dev/null
 ```
 
 ## Source-Specific LitSense2 Search
