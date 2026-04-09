@@ -235,12 +235,40 @@ fn list_article() -> String {
 - `search article --debug-plan` - include executed planner/routing metadata in markdown or JSON
 - `search article ... --limit <N> --offset <N>`
 
+## Query formulation
+
+| Question shape | How to map it |
+|---|---|
+| Known gene/disease/drug already identified | Put the anchor in `-g/--gene`, `-d/--disease`, or `--drug` |
+| Known anchor plus mechanism, phenotype, process, or outcome | Keep the anchor typed and put the free-text concept in `-k/--keyword` |
+| Keyword-only topic, dataset, or method question | Use `-k/--keyword`; add `--type review` for synthesis or survey questions |
+| Unknown gene/disease/drug; identify it from symptoms, mechanisms, or evidence first | Do not invent `-g/-d/--drug`; stay keyword-first or start with `discover` |
+
+Entity-only quick start:
+
+- `biomcp search article -g BRAF --limit 5`
+
+Routing note:
+
+- On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
+- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
+- `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.
+
+Worked examples:
+
+- Disease-identification question: `biomcp search article -k '"cafe-au-lait spots" neurofibromas disease' --type review --limit 5` keeps the search keyword-first because the disease is the unknown answer.
+- Known-gene question: `biomcp search article -g TP53 -k "apoptosis gene regulation" --limit 5` keeps TP53 typed and the regulatory process in free text.
+- Known-drug question: `biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5` keeps the drug typed and the adverse-effect mechanism in free text.
+- Method/dataset question: `biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5` stays keyword-only because the question is about a dataset, not a typed biomedical entity.
+
 ## Notes
 
 - Set `NCBI_API_KEY` to increase throughput for NCBI-backed article enrichment.
 - Set `S2_API_KEY` to send authenticated Semantic Scholar requests at 1 req/sec. Without it, BioMCP uses the shared pool at 1 req/2sec.
-- `search article` defaults to PubTator3 + Europe PMC + PubMed when the filter set is compatible; LitSense2 joins the federated route when a non-empty keyword is present, and Semantic Scholar is still automatic when the filter set is compatible, with or without the key.
+- On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
+- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
+- `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.
 - `search article --type ...` on `--source all` uses Europe PMC + PubMed when PubMed-compatible filters are selected, and collapses to Europe PMC-only when `--open-access` or `--no-preprints` makes PubMed ineligible.
 - `search article --sort relevance` accepts `--ranking-mode lexical|semantic|hybrid`.
 - When `--ranking-mode` is omitted, keyword-bearing article queries default to hybrid ranking and entity-only queries default to lexical ranking.
@@ -741,6 +769,7 @@ mod tests {
         assert!(out.contains("discover \"<free text>\""));
         assert!(out.contains("article citations <id>"));
         assert!(out.contains("enrich <GENE1,GENE2,...>"));
+        assert!(out.contains("Turn a literature question into article filters"));
         assert!(out.contains("`skill install` - install BioMCP skill guidance to your agent"));
         assert!(out.contains("`discover <query>`"));
         assert!(out.contains("`cache path`"));
@@ -748,6 +777,8 @@ mod tests {
         assert!(
             out.contains("`cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]`")
         );
+        assert!(!out.contains("## Query formulation"));
+        assert!(!out.contains("photosensitivity mechanism"));
     }
 
     #[test]
@@ -916,6 +947,32 @@ mod tests {
         assert!(article.contains("entity-only queries default to lexical"));
         assert!(article.contains("0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"));
         assert!(article.contains("article batch <id> [<id>...]"));
+        assert!(article.contains("## Query formulation"));
+        assert!(article.contains("Known gene/disease/drug already identified"));
+        assert!(article.contains("Keyword-only topic, dataset, or method question"));
+        assert!(
+            article.contains(
+                "Do not invent `-g/-d/--drug`; stay keyword-first or start with `discover`"
+            )
+        );
+        assert!(article.contains("biomcp search article -g BRAF --limit 5"));
+        assert!(
+            article.contains(
+                "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
+            )
+        );
+        assert!(article.contains(
+            "biomcp search article --drug amiodarone -k \"photosensitivity mechanism\" --limit 5"
+        ));
+        assert!(article.contains(
+            "biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5"
+        ));
+        assert!(article.contains(
+            "biomcp search article -k \"TCGA mutation analysis dataset\" --type review --limit 5"
+        ));
+        assert!(article.contains(
+            "typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed"
+        ));
     }
 
     #[test]

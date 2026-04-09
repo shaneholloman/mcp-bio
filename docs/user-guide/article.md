@@ -41,16 +41,56 @@ Exclude preprints when supported by source metadata:
 biomcp search article -g BRAF --since 2024-01-01 --no-preprints --limit 5
 ```
 
+## Query formulation
+
+Turn a natural-language literature question into two parts:
+
+- Put a known gene, disease, or drug in `-g/--gene`, `-d/--disease`, or `--drug`.
+- Put mechanisms, phenotypes, outcomes, datasets, and other free-text concepts in `-k/--keyword`.
+- If the question is asking which gene, disease, or drug fits the evidence and you do not know the entity yet, do not guess a typed flag. Start with keyword-only article search or run `biomcp discover "<question>"` first.
+- Use `--type review` for synthesis questions, list-style questions, and dataset surveys.
+
+Known anchor only:
+
+```bash
+biomcp search article -g BRAF --limit 5
+```
+
+Known anchor plus mechanism or process:
+
+```bash
+biomcp search article -g TP53 -k "apoptosis gene regulation" --limit 5
+```
+
+Unknown-entity disease-identification question:
+
+```bash
+biomcp search article -k '"cafe-au-lait spots" neurofibromas disease' --type review --limit 5
+```
+
+Known drug plus mechanism:
+
+```bash
+biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5
+```
+
+Dataset or method question:
+
+```bash
+biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5
+```
+
 ### Multi-source federation
 
 Article search fans out to PubTator3, Europe PMC, and PubMed by default when
-the filter set is compatible. When a non-empty keyword is present, BioMCP also
-adds LitSense2 to the federated route. Semantic Scholar can still join the same
-typed query when the filter set is compatible. BioMCP merges duplicates across
-PMID, PMCID, and DOI where possible. `S2_API_KEY` upgrades the Semantic Scholar
-leg to authenticated requests at 1 req/sec; without it, BioMCP uses the shared
-unauthenticated pool at 1 req/2sec. Search results are still deduplicated by
-PMID when BioMCP can resolve one.
+the filter set is compatible. Known gene, disease, and drug anchors
+participate in that typed route. When a non-empty keyword is present, BioMCP
+also adds LitSense2 to the federated route. Semantic Scholar can still join
+the same query when the filter set is compatible. BioMCP merges duplicates
+across PMID, PMCID, and DOI where possible. `S2_API_KEY` upgrades the Semantic
+Scholar leg to authenticated requests at 1 req/sec; without it, BioMCP uses
+the shared unauthenticated pool at 1 req/2sec. Search results are still
+deduplicated by PMID when BioMCP can resolve one.
 
 Default `--sort relevance` is mode-aware:
 
@@ -73,6 +113,8 @@ Default article search excludes confirmed retractions unless you pass
 `--include-retracted`. Sources that do not expose retraction metadata still
 participate in the search, and JSON search rows keep the tri-state contract:
 `"is_retracted": true`, `false`, or `null`.
+`--type`, `--open-access`, and `--no-preprints` are backend-compatibility
+constraints rather than universal filters across every article source.
 `--type` on `--source all` uses Europe PMC + PubMed when `--open-access` and
 `--no-preprints` are both absent. If you add `--open-access` or
 `--no-preprints`, PubMed becomes ineligible and BioMCP surfaces the Europe

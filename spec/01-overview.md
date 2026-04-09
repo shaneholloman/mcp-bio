@@ -56,9 +56,12 @@ echo "$out" | mustmatch like "## When to Use What"
 echo "$out" | mustmatch like "search drug --indication \"<disease>\""
 echo "$out" | mustmatch like "discover \"<free text>\""
 echo "$out" | mustmatch like "search all --gene BRAF --disease melanoma"
+echo "$out" | mustmatch like "Turn a literature question into article filters"
 echo "$out" | mustmatch like "article citations <id>"
 echo "$out" | mustmatch like "batch <entity> <id1,id2,...>"
 echo "$out" | mustmatch like "enrich <GENE1,GENE2,...>"
+echo "$out" | mustmatch not like "## Query formulation"
+echo "$out" | mustmatch not like "photosensitivity mechanism"
 echo "$out" | mustmatch like '- `cache path` - print the managed HTTP cache directory `<resolved cache_root>/http`; output stays plain text and ignores `--json`'
 echo "$out" | mustmatch like '- `cache stats` - show HTTP cache statistics (total blob inventory, referenced blob bytes, age range, resolved limits including min disk free); supports `--json` for machine-readable output'
 echo "$out" | mustmatch like '- `cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]` - remove orphan blobs and optionally age- or size-evict the HTTP cache; supports `--json` for machine-readable output'
@@ -83,14 +86,27 @@ echo "$out" | mustmatch like 'Use `get gene <symbol>` for the default card'
 
 ## Article Routing Help
 
-`biomcp list article` should explain when to start with keyword search, when to pin the search to a known gene, when review articles are better than more pagination, and how to follow a paper into citations or recommendations.
+`biomcp list article` should explain how to turn a literature question into
+typed article filters: known anchors go in `-g/-d/--drug`, free-text concepts
+go in `-k`, unknown-entity questions stay keyword-first, review questions can
+add `--type review`, and strong papers still pivot to citations or
+recommendations.
 
 ```bash
 bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
 out="$("$bin" list article)"
 echo "$out" | mustmatch like "## When to use this surface"
+echo "$out" | mustmatch like "## Query formulation"
 echo "$out" | mustmatch like "Use keyword search to scan a topic before you know the entities."
+echo "$out" | mustmatch like "Known gene/disease/drug already identified"
+echo "$out" | mustmatch like "Keyword-only topic, dataset, or method question"
+echo "$out" | mustmatch like 'Do not invent `-g/-d/--drug`; stay keyword-first or start with `discover`'
 echo "$out" | mustmatch like "Prefer `--type review`"
+echo "$out" | mustmatch like "biomcp search article -g BRAF --limit 5"
+echo "$out" | mustmatch like "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
+echo "$out" | mustmatch like "biomcp search article --drug amiodarone -k \"photosensitivity mechanism\" --limit 5"
+echo "$out" | mustmatch like "biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5"
+echo "$out" | mustmatch like "biomcp search article -k \"TCGA mutation analysis dataset\" --type review --limit 5"
 echo "$out" | mustmatch like "--ranking-mode <lexical|semantic|hybrid>"
 echo "$out" | mustmatch like "keyword-bearing article queries default to hybrid"
 echo "$out" | mustmatch like "article citations <id>"

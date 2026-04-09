@@ -2,7 +2,44 @@
 
 This guide shows practical literature-search patterns.
 
-## Broad start
+## Translate a question into filters
+
+When the gene, disease, or drug is already known, put that anchor in a typed
+flag and keep the mechanism, phenotype, dataset, or outcome in `-k`.
+
+Known anchor plus concept:
+
+```bash
+biomcp search article -g TP53 -k "apoptosis gene regulation" --limit 5
+```
+
+Unknown entity, keyword first:
+
+```bash
+biomcp search article -k '"cafe-au-lait spots" neurofibromas disease' --type review --limit 5
+```
+
+Do not guess `-g`, `-d`, or `--drug` when the question is trying to identify
+the entity itself. Keep the first search keyword-only, or start with
+`biomcp discover "<question>"` if you want a typed follow-up command first.
+
+Dataset or method question:
+
+```bash
+biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5
+```
+
+Refine with typed flags before paginating:
+
+```bash
+biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5
+```
+
+If the first page reveals the gene, disease, or drug that actually anchors the
+question, rerun with that typed flag before you spend time paginating a noisy
+keyword-only result set.
+
+## Start from a known anchor
 
 ```bash
 biomcp search article -g BRAF --limit 10
@@ -78,7 +115,7 @@ biomcp search article -g BRAF --type review --limit 5
 other selected filters are PubMed-compatible. If you also need
 `--open-access` or `--no-preprints`, PubMed drops out and the search collapses
 to Europe PMC-only with an explicit note. Use `--source pubmed` when you want
-PubMed's own MeSH/title/abstract search directly and do not need those
+PubMed-only article search on the compatible filter set and do not need those
 PubMed-incompatible filters.
 
 ## Inspect the ranking rationale in JSON

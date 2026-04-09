@@ -281,7 +281,7 @@ def test_gene_guide_includes_new_sections_and_positional_search() -> None:
 def test_article_guide_documents_federated_search_and_source_flag() -> None:
     article_guide = _read("docs/user-guide/article.md")
 
-    assert "PubTator3 and Europe PMC" in article_guide
+    assert "PubTator3, Europe PMC, and PubMed" in article_guide
     assert "deduplicated by PMID" in article_guide
     assert "Semantic Scholar" in article_guide
     assert "S2_API_KEY" in article_guide
@@ -304,11 +304,11 @@ def test_data_sources_reference_covers_new_gene_and_article_sources() -> None:
     assert "gnomAD v4 GRCh38 gene constraint" in data_sources
     assert "HPA protein tissue expression and subcellular localization" in data_sources
     assert (
-        "| Article search & metadata | PubTator3 + Europe PMC + optional Semantic Scholar |"
+        "| Article search & metadata | PubTator3 + Europe PMC + PubMed + LitSense2 + optional Semantic Scholar |"
         in data_sources
     )
     assert "| Article enrichment and graph helpers | Semantic Scholar |" in data_sources
-    assert "PubTator3 + Europe PMC for federated search" in data_sources
+    assert "PubTator3 + Europe PMC + PubMed for federated search" in data_sources
     assert "1 request / second" in data_sources
 
 
