@@ -55,4 +55,11 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Prefer review articles for synthesis questions and structured sections for direct facts.
 - Use `_meta.next_commands` from JSON mode as the executable follow-up contract.
 
+## Answer commitment
+
+- Only add more commands if a needed claim is still unsupported. If one command already answers the question, stop searching and answer.
+- If a structured section already contains the answer, use it. Anti-pattern: after `biomcp get drug nivolumab regulatory` shows `Sponsor: BRISTOL MYERS SQUIBB`, do not search articles just to confirm who developed nivolumab.
+- If 1-2 papers you already fetched state the answer in the abstract or TLDR, answer from those papers instead of hunting for a third paper.
+- If 3+ searches keep returning relevant papers, the answer is in what you already have or you need a different approach. If you keep reformulating the same search with different keywords, the answer is in what you already have or you need a different approach. Example: once repeated tau PET or European influenza vaccine searches keep surfacing relevant review papers, stop keyword-churning and extract the answer from those results.
+
 Run `biomcp skill list` for worked examples.

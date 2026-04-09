@@ -596,8 +596,21 @@ mod tests {
         assert!(overview.contains("## Section reference"));
         assert!(overview.contains("## Cross-entity pivot rules"));
         assert!(overview.contains("## Output and evidence rules"));
+        assert!(overview.contains("## Answer commitment"));
         assert!(overview.contains("biomcp search drug --indication \"<disease>\""));
         assert!(overview.contains("biomcp discover \"<free text>\""));
+        assert!(
+            overview.contains(
+                "If one command already answers the question, stop searching and answer."
+            )
+        );
+        assert!(
+            overview.find("## Output and evidence rules") < overview.find("## Answer commitment")
+        );
+        assert!(
+            overview.find("## Answer commitment")
+                < overview.find("Run `biomcp skill list` for worked examples")
+        );
         assert!(overview.contains("Run `biomcp skill list` for worked examples"));
 
         Ok(())
