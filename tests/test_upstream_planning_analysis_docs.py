@@ -182,7 +182,10 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "`--source pubtator` with strict Europe PMC-only filters is rejected at the front door"
         in article_validation_section
     )
-    assert "`--source` remains `all|pubtator|europepmc` in v1" in article_validation_section
+    assert (
+        "`--source` remains `all|pubtator|europepmc|pubmed|litsense2` in v1"
+        in article_validation_section
+    )
     assert (
         "deduplicate across PMID, PMCID, and DOI where possible, then re-rank locally"
         in article_validation_section

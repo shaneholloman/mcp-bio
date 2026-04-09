@@ -72,8 +72,9 @@ optional compatible search leg on that path. Strict Europe PMC-only filters
 such as `--open-access` and `--type` disable the federated planner and route
 to Europe PMC only.
 `--source pubtator` with strict Europe PMC-only filters is rejected at the
-front door. `--source` remains `all|pubtator|europepmc` in v1; the CLI does
-not expose a user-facing `--source semanticscholar` mode.
+front door. `--source` remains
+`all|pubtator|europepmc|pubmed|litsense2` in v1; the CLI does not expose a
+user-facing `--source semanticscholar` mode.
 
 After fetch, article results deduplicate across PMID, PMCID, and DOI where
 possible, then re-rank locally with an effective relevance mode:

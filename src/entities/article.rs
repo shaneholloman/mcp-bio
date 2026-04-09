@@ -4278,6 +4278,18 @@ mod tests {
             "Invalid argument: --weight-* flags require --ranking-mode hybrid or no explicit ranking mode"
         );
 
+        let mut entity_default_weights = empty_filters();
+        entity_default_weights.gene = Some("BRAF".into());
+        entity_default_weights.ranking =
+            ArticleRankingOptions::from_inputs(None, Some(0.5), None, None, None)
+                .expect("options should parse");
+        let err = validate_article_ranking_options(&entity_default_weights)
+            .expect_err("entity-only default lexical mode should reject weights");
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: --weight-* flags require --ranking-mode hybrid or no explicit ranking mode"
+        );
+
         let mut zero_weights = empty_filters();
         zero_weights.keyword = Some("melanoma".into());
         zero_weights.ranking = ArticleRankingOptions::from_inputs(
@@ -4293,6 +4305,18 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "Invalid argument: At least one hybrid ranking weight must be > 0"
+        );
+
+        let mut negative_weight = empty_filters();
+        negative_weight.keyword = Some("melanoma".into());
+        negative_weight.ranking =
+            ArticleRankingOptions::from_inputs(Some("hybrid"), Some(-0.1), None, None, None)
+                .expect("options should parse");
+        let err = validate_article_ranking_options(&negative_weight)
+            .expect_err("negative weights should fail validation");
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: --weight-semantic must be >= 0"
         );
 
         let mut invalid_weight = empty_filters();

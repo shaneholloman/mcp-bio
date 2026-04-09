@@ -1960,6 +1960,34 @@ mod tests {
     }
 
     #[test]
+    fn article_filters_follow_keyword_dependent_ranking_defaults() {
+        let keyword_prepared = PreparedInput::new(&SearchAllInput {
+            gene: None,
+            variant: None,
+            disease: None,
+            drug: None,
+            keyword: Some("checkpoint inhibitor".to_string()),
+            since: None,
+            limit: 3,
+            counts_only: false,
+            debug_plan: false,
+        })
+        .expect("valid prepared input");
+        let keyword_filters = article_filters(&keyword_prepared);
+        assert_eq!(
+            crate::entities::article::article_effective_ranking_mode(&keyword_filters),
+            Some(ArticleRankingMode::Hybrid)
+        );
+
+        let gene_prepared = PreparedInput::new(&input_with_gene()).expect("valid prepared input");
+        let gene_filters = article_filters(&gene_prepared);
+        assert_eq!(
+            crate::entities::article::article_effective_ranking_mode(&gene_filters),
+            Some(ArticleRankingMode::Lexical)
+        );
+    }
+
+    #[test]
     fn build_dispatch_plan_variant_with_gene_fanout() {
         let plan = build_dispatch_plan(&SearchAllInput {
             gene: None,
