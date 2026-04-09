@@ -11,10 +11,9 @@ use crate::entities::adverse_event::{
     DeviceEvent, DeviceEventSearchResult, RecallSearchResult,
 };
 use crate::entities::article::{
-    ARTICLE_RELEVANCE_RANKING_POLICY, AnnotationCount, Article, ArticleAnnotations,
-    ArticleBatchEntitySummary, ArticleBatchItem, ArticleGraphResult, ArticleRankingMetadata,
-    ArticleRecommendationsResult, ArticleRelatedPaper, ArticleSearchResult, ArticleSort,
-    ArticleSource,
+    AnnotationCount, Article, ArticleAnnotations, ArticleBatchEntitySummary, ArticleBatchItem,
+    ArticleGraphResult, ArticleRankingMetadata, ArticleRankingMode, ArticleRecommendationsResult,
+    ArticleRelatedPaper, ArticleSearchFilters, ArticleSearchResult, ArticleSort, ArticleSource,
 };
 use crate::entities::discover::{DiscoverResult, DiscoverType};
 use crate::entities::disease::{
@@ -2251,28 +2250,74 @@ fn article_lexical_ranking_label(ranking: &ArticleRankingMetadata) -> Option<Str
     None
 }
 
-fn article_ranking_why(row: &ArticleSearchResult, sort: ArticleSort) -> String {
-    if sort != ArticleSort::Relevance {
+fn article_lexical_reason(ranking: &ArticleRankingMetadata) -> Option<String> {
+    let lexical_label = article_lexical_ranking_label(ranking);
+    if ranking.pubmed_rescue {
+        return Some(lexical_label.map_or_else(
+            || "pubmed-rescue".to_string(),
+            |label| format!("pubmed-rescue + {label}"),
+        ));
+    }
+    lexical_label
+}
+
+fn format_article_score(value: f64) -> String {
+    let mut out = format!("{value:.3}");
+    while out.contains('.') && out.ends_with('0') {
+        out.pop();
+    }
+    if out.ends_with('.') {
+        out.pop();
+    }
+    if out == "-0" { "0".to_string() } else { out }
+}
+
+fn article_ranking_why(row: &ArticleSearchResult, filters: &ArticleSearchFilters) -> String {
+    if filters.sort != ArticleSort::Relevance {
         return "-".to_string();
     }
     let Some(ranking) = row.ranking.as_ref() else {
         return "-".to_string();
     };
     let lexical_label = article_lexical_ranking_label(ranking);
-    if ranking.pubmed_rescue {
-        return lexical_label.map_or_else(
-            || "pubmed-rescue".to_string(),
-            |label| format!("pubmed-rescue + {label}"),
-        );
+    match ranking
+        .mode
+        .or_else(|| crate::entities::article::article_effective_ranking_mode(filters))
+        .unwrap_or(ArticleRankingMode::Lexical)
+    {
+        ArticleRankingMode::Lexical => {
+            article_lexical_reason(ranking).unwrap_or_else(|| "-".to_string())
+        }
+        ArticleRankingMode::Semantic => {
+            let mut why = format!(
+                "semantic {}",
+                format_article_score(ranking.semantic_score.unwrap_or(0.0))
+            );
+            if let Some(label) = lexical_label {
+                why.push_str(" + ");
+                why.push_str(&label);
+            }
+            why
+        }
+        ArticleRankingMode::Hybrid => {
+            let mut why = format!(
+                "hybrid {}",
+                format_article_score(ranking.composite_score.unwrap_or(0.0))
+            );
+            if let Some(label) = lexical_label {
+                why.push_str(" + ");
+                why.push_str(&label);
+            }
+            why
+        }
     }
-    lexical_label.unwrap_or_else(|| "-".to_string())
 }
 
 pub fn article_search_markdown_with_footer_and_context(
     query: &str,
     results: &[ArticleSearchResult],
     pagination_footer: &str,
-    sort: ArticleSort,
+    filters: &ArticleSearchFilters,
     semantic_scholar_enabled: bool,
     note: Option<&str>,
     debug_plan: Option<&DebugPlan>,
@@ -2284,7 +2329,7 @@ pub fn article_search_markdown_with_footer_and_context(
             title: row.title.clone(),
             sources: article_sources_label(row),
             date: row.date.clone(),
-            why: article_ranking_why(row, sort),
+            why: article_ranking_why(row, filters),
             citation_count: row.citation_count,
             is_retracted: row.is_retracted,
         })
@@ -2297,8 +2342,8 @@ pub fn article_search_markdown_with_footer_and_context(
         rows => rows,
         semantic_scholar_enabled => semantic_scholar_enabled,
         note => note,
-        sort => sort.as_str(),
-        ranking_policy => ARTICLE_RELEVANCE_RANKING_POLICY,
+        sort => filters.sort.as_str(),
+        ranking_policy => crate::entities::article::article_relevance_ranking_policy(filters),
         pagination_footer => pagination_footer,
     })?;
     let body = with_pagination_footer(body, pagination_footer);
@@ -4388,7 +4433,8 @@ pub(crate) mod tests {
     use super::*;
     use crate::entities::adverse_event::DeviceEvent;
     use crate::entities::article::{
-        AnnotationCount, Article, ArticleAnnotations, ArticleSearchResult, ArticleSource,
+        AnnotationCount, Article, ArticleAnnotations, ArticleRankingOptions, ArticleSearchFilters,
+        ArticleSearchResult, ArticleSource,
     };
     use crate::entities::disease::{Disease, DiseaseVariantAssociation};
     use crate::entities::drug::Drug;
@@ -4412,6 +4458,26 @@ pub(crate) mod tests {
         TopMutatedGenesResult as StudyTopMutatedGenesResult,
     };
     use crate::entities::variant::{TreatmentImplication, Variant, VariantOncoKbResult};
+
+    fn article_filters_for_test(sort: ArticleSort) -> ArticleSearchFilters {
+        ArticleSearchFilters {
+            gene: None,
+            gene_anchored: false,
+            disease: None,
+            drug: None,
+            author: None,
+            keyword: None,
+            date_from: None,
+            date_to: None,
+            article_type: None,
+            journal: None,
+            open_access: false,
+            no_preprints: true,
+            exclude_retracted: true,
+            sort,
+            ranking: ArticleRankingOptions::default(),
+        }
+    }
 
     #[test]
     fn quote_arg_wraps_whitespace_and_escapes_quotes() {
@@ -8577,6 +8643,13 @@ pub(crate) mod tests {
                     pubmed_rescue: false,
                     pubmed_rescue_kind: None,
                     pubmed_source_position: None,
+                    mode: Some(crate::entities::article::ArticleRankingMode::Lexical),
+                    semantic_score: None,
+                    lexical_score: None,
+                    citation_score: None,
+                    position_score: None,
+                    composite_score: None,
+                    avg_source_rank: None,
                 }),
                 matched_sources: vec![ArticleSource::PubTator, ArticleSource::SemanticScholar],
                 normalized_title: "entity-ranked".into(),
@@ -8609,6 +8682,13 @@ pub(crate) mod tests {
                     pubmed_rescue: false,
                     pubmed_rescue_kind: None,
                     pubmed_source_position: None,
+                    mode: Some(crate::entities::article::ArticleRankingMode::Lexical),
+                    semantic_score: None,
+                    lexical_score: None,
+                    citation_score: None,
+                    position_score: None,
+                    composite_score: None,
+                    avg_source_rank: None,
                 }),
                 matched_sources: vec![ArticleSource::EuropePmc],
                 normalized_title: "field-ranked".into(),
@@ -8622,7 +8702,7 @@ pub(crate) mod tests {
             "gene=BRAF",
             &rows,
             "",
-            crate::entities::article::ArticleSort::Relevance,
+            &article_filters_for_test(crate::entities::article::ArticleSort::Relevance),
             true,
             Some(
                 "Note: --type restricts article search to Europe PMC and PubMed. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering.",
@@ -8677,13 +8757,20 @@ pub(crate) mod tests {
                 pubmed_rescue: false,
                 pubmed_rescue_kind: None,
                 pubmed_source_position: None,
+                mode: Some(crate::entities::article::ArticleRankingMode::Lexical),
+                semantic_score: None,
+                lexical_score: None,
+                citation_score: None,
+                position_score: None,
+                composite_score: None,
+                avg_source_rank: None,
             }),
             normalized_title: "partial coverage".into(),
             normalized_abstract: String::new(),
             publication_type: None,
             source_local_position: 0,
         };
-        let why = article_ranking_why(&row, ArticleSort::Relevance);
+        let why = article_ranking_why(&row, &article_filters_for_test(ArticleSort::Relevance));
         assert_eq!(why, "title+abstract 2/3");
     }
 
@@ -8715,6 +8802,13 @@ pub(crate) mod tests {
                 pubmed_rescue: true,
                 pubmed_rescue_kind: Some(crate::entities::article::ArticlePubMedRescueKind::Unique),
                 pubmed_source_position: Some(0),
+                mode: Some(crate::entities::article::ArticleRankingMode::Lexical),
+                semantic_score: None,
+                lexical_score: None,
+                citation_score: None,
+                position_score: None,
+                composite_score: None,
+                avg_source_rank: None,
             }),
             normalized_title: "rescued partial coverage".into(),
             normalized_abstract: String::new(),
@@ -8722,8 +8816,100 @@ pub(crate) mod tests {
             source_local_position: 0,
         };
 
-        let why = article_ranking_why(&row, ArticleSort::Relevance);
+        let why = article_ranking_why(&row, &article_filters_for_test(ArticleSort::Relevance));
         assert_eq!(why, "pubmed-rescue + title+abstract 2/3");
+    }
+
+    #[test]
+    fn article_ranking_why_semantic_includes_score_and_lexical_context() {
+        let row = ArticleSearchResult {
+            pmid: "1".into(),
+            title: "Semantic lead".into(),
+            pmcid: None,
+            doi: None,
+            journal: None,
+            date: None,
+            citation_count: None,
+            influential_citation_count: None,
+            source: ArticleSource::EuropePmc,
+            matched_sources: vec![ArticleSource::EuropePmc],
+            score: Some(0.81234),
+            is_retracted: None,
+            abstract_snippet: None,
+            ranking: Some(crate::entities::article::ArticleRankingMetadata {
+                directness_tier: 2,
+                anchor_count: 3,
+                title_anchor_hits: 2,
+                abstract_anchor_hits: 0,
+                combined_anchor_hits: 2,
+                all_anchors_in_title: true,
+                all_anchors_in_text: false,
+                study_or_review_cue: false,
+                pubmed_rescue: false,
+                pubmed_rescue_kind: None,
+                pubmed_source_position: None,
+                mode: Some(crate::entities::article::ArticleRankingMode::Semantic),
+                semantic_score: Some(0.81234),
+                lexical_score: None,
+                citation_score: None,
+                position_score: None,
+                composite_score: None,
+                avg_source_rank: None,
+            }),
+            normalized_title: "semantic lead".into(),
+            normalized_abstract: String::new(),
+            publication_type: None,
+            source_local_position: 0,
+        };
+
+        let why = article_ranking_why(&row, &article_filters_for_test(ArticleSort::Relevance));
+        assert_eq!(why, "semantic 0.812 + title 2/3");
+    }
+
+    #[test]
+    fn article_ranking_why_hybrid_includes_score_and_lexical_context() {
+        let row = ArticleSearchResult {
+            pmid: "1".into(),
+            title: "Hybrid lead".into(),
+            pmcid: None,
+            doi: None,
+            journal: None,
+            date: None,
+            citation_count: None,
+            influential_citation_count: None,
+            source: ArticleSource::EuropePmc,
+            matched_sources: vec![ArticleSource::EuropePmc],
+            score: Some(0.9),
+            is_retracted: None,
+            abstract_snippet: None,
+            ranking: Some(crate::entities::article::ArticleRankingMetadata {
+                directness_tier: 1,
+                anchor_count: 3,
+                title_anchor_hits: 1,
+                abstract_anchor_hits: 1,
+                combined_anchor_hits: 2,
+                all_anchors_in_title: false,
+                all_anchors_in_text: false,
+                study_or_review_cue: false,
+                pubmed_rescue: false,
+                pubmed_rescue_kind: None,
+                pubmed_source_position: None,
+                mode: Some(crate::entities::article::ArticleRankingMode::Hybrid),
+                semantic_score: Some(0.9),
+                lexical_score: Some(1.0 / 3.0),
+                citation_score: Some(0.1),
+                position_score: Some(0.4),
+                composite_score: Some(0.61234),
+                avg_source_rank: Some(1.0),
+            }),
+            normalized_title: "hybrid lead".into(),
+            normalized_abstract: String::new(),
+            publication_type: None,
+            source_local_position: 0,
+        };
+
+        let why = article_ranking_why(&row, &article_filters_for_test(ArticleSort::Relevance));
+        assert_eq!(why, "hybrid 0.612 + title+abstract 2/3");
     }
 
     #[test]
@@ -8803,7 +8989,7 @@ pub(crate) mod tests {
             "gene=BRAF",
             &rows,
             "",
-            crate::entities::article::ArticleSort::Relevance,
+            &article_filters_for_test(crate::entities::article::ArticleSort::Relevance),
             true,
             None,
             Some(&debug_plan),

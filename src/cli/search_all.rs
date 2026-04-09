@@ -617,6 +617,7 @@ fn article_filters(input: &PreparedInput) -> crate::entities::article::ArticleSe
         no_preprints: false,
         exclude_retracted: true,
         sort: crate::entities::article::ArticleSort::Relevance,
+        ranking: crate::entities::article::ArticleRankingOptions::default(),
     }
 }
 
@@ -1907,7 +1908,9 @@ fn dedupe_gwas_rows(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::entities::article::{ArticleRankingMetadata, ArticleSearchResult, ArticleSource};
+    use crate::entities::article::{
+        ArticleRankingMetadata, ArticleRankingMode, ArticleSearchResult, ArticleSource,
+    };
     use crate::entities::drug::DrugSearchResult;
     use crate::entities::trial::TrialSearchResult;
     use crate::entities::variant::VariantGwasAssociation;
@@ -1954,6 +1957,34 @@ mod tests {
         });
         let entities = plan.iter().map(|spec| spec.entity).collect::<Vec<_>>();
         assert_eq!(entities, vec!["article"]);
+    }
+
+    #[test]
+    fn article_filters_follow_keyword_dependent_ranking_defaults() {
+        let keyword_prepared = PreparedInput::new(&SearchAllInput {
+            gene: None,
+            variant: None,
+            disease: None,
+            drug: None,
+            keyword: Some("checkpoint inhibitor".to_string()),
+            since: None,
+            limit: 3,
+            counts_only: false,
+            debug_plan: false,
+        })
+        .expect("valid prepared input");
+        let keyword_filters = article_filters(&keyword_prepared);
+        assert_eq!(
+            crate::entities::article::article_effective_ranking_mode(&keyword_filters),
+            Some(ArticleRankingMode::Hybrid)
+        );
+
+        let gene_prepared = PreparedInput::new(&input_with_gene()).expect("valid prepared input");
+        let gene_filters = article_filters(&gene_prepared);
+        assert_eq!(
+            crate::entities::article::article_effective_ranking_mode(&gene_filters),
+            Some(ArticleRankingMode::Lexical)
+        );
     }
 
     #[test]
@@ -2150,6 +2181,13 @@ mod tests {
                 pubmed_rescue: false,
                 pubmed_rescue_kind: None,
                 pubmed_source_position: None,
+                mode: Some(ArticleRankingMode::Lexical),
+                semantic_score: None,
+                lexical_score: None,
+                citation_score: None,
+                position_score: None,
+                composite_score: None,
+                avg_source_rank: None,
             }),
             normalized_title: "braf melanoma review".into(),
             normalized_abstract: "abstract".into(),

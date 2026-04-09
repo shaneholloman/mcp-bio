@@ -66,61 +66,51 @@ integration.
 
 ## Article Federation and Front-Door Validation
 
-`search article --source all` plans PubTator3 plus Europe PMC. Semantic
-Scholar is an optional third search leg on that path when the filter set is
-compatible. Strict Europe PMC-only filters such as `--open-access` and
-`--type` disable the federated planner and route to Europe PMC only.
+`search article --source all` plans PubTator3 plus Europe PMC plus PubMed.
+Keyword-bearing queries also add LitSense2, and Semantic Scholar remains an
+optional compatible search leg on that path. Strict Europe PMC-only filters
+such as `--open-access` and `--type` disable the federated planner and route
+to Europe PMC only.
 `--source pubtator` with strict Europe PMC-only filters is rejected at the
-front door. `--source` remains `all|pubtator|europepmc` in v1; the CLI does
-not expose a user-facing `--source semanticscholar` mode.
+front door. `--source` remains
+`all|pubtator|europepmc|pubmed|litsense2` in v1; the CLI does not expose a
+user-facing `--source semanticscholar` mode.
 
 After fetch, article results deduplicate across PMID, PMCID, and DOI where
-possible, then re-rank locally.
+possible, then re-rank locally with an effective relevance mode:
 
-### Current ranking problem
+- `lexical` preserves the calibrated PubMed rescue plus lexical directness
+  comparator byte-for-byte;
+- `semantic` sorts LitSense2 score descending and falls back to the lexical
+  comparator; and
+- `hybrid` scores each row as
+  `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default,
+  with CLI weight overrides for experimentation.
 
-The current article relevance ranker is directness-first in a way that works
-for literal title and abstract matches but under-ranks PubMed's unique value in
-federated search. Today the ranker:
-
-- treats a multi-concept `--keyword` string as one exact normalized phrase;
-- preserves whitespace but not compound-name punctuation variants such as
-  `LB-100` vs `LB100`;
-- ignores `matched_sources` and PubMed's own backend ordering after merge; and
-- uses cross-source append order as the late `insertion_index` tiebreaker.
-
-That combination buries PubMed-unique rows that were found through MeSH or
-author-keyword synonymy when the title and abstract do not repeat the user's
-literal query terms.
-
-### Target state
-
-The target architecture keeps local post-fetch ranking, but the article
-pipeline should be split into three explicit responsibilities:
+Keyword-bearing article queries default to `hybrid`, while entity-only article
+queries default to `lexical`. The local ranking pipeline still has three
+explicit responsibilities:
 
 1. **Lexical preparation:** build ranking concepts from structured filters plus
    decomposed keyword terms, then normalize query-side and document-side text
    symmetrically.
 2. **Per-source provenance:** preserve `matched_sources` together with
-   source-local backend position through merge and dedup so PubMed rank survives
-   federation.
-3. **Explicit source-aware rescue:** allow source evidence such as
-   "found only by PubMed" and PubMed-local rank to rescue otherwise weak lexical
-   rows above competing results, but only for top-ranked PubMed-unique rows or
-   strictly PubMed-led merged rows. The rescue is calibrated: PubMed must be
-   local position `0`, the row must stay in the weak lexical tiers, and merged
-   rows only qualify when PubMed beat every other contributing source.
+   source-local backend position through merge and dedup so backend-local rank
+   survives federation.
+3. **Mode-aware scoring:** keep the existing lexical comparator as a stable
+   fallback while exposing semantic score, citation support, and average
+   source-local position as explicit ranking signals.
 
-The architectural invariants for the target state are:
+The architectural invariants for the shipped contract are:
 
 - merge order must never act as an implicit source priority;
 - compound-name normalization must stay symmetric between anchor creation and
   result normalization;
 - multi-concept keywords must not collapse into one exact-phrase anchor for
   ranking; and
-- calibrated PubMed rescue may let top-ranked weak PubMed-unique or strictly
-  PubMed-led rows outrank lexically stronger competitors, but only inside the
-  explicit guardrails above; it is not a blanket "PubMed always wins" rule.
+- calibrated PubMed rescue still applies inside lexical fallback paths, but it
+  is one signal inside the explicit ranking contract rather than an invisible
+  source preference.
 
 The validation boundary is also part of the architecture contract:
 

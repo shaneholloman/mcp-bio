@@ -1787,6 +1787,10 @@ async fn enrich_targets(drug: &mut Drug, civic_context: Option<&CivicContext>) {
     drug.variant_targets.truncate(12);
     drug.target_family = None;
     drug.target_family_name = None;
+    let inferred_target_family = strict_target_family_label(&drug.targets);
+    let inferred_target_family_name = inferred_target_family
+        .as_ref()
+        .and_then(|_| derive_target_family_name(&drug.targets, &opentargets_targets));
 
     if drug.targets.len() >= 2
         && let Some(target_chembl_id) = family_target_chembl_id(&chembl_rows, &drug.targets)
@@ -1795,14 +1799,21 @@ async fn enrich_targets(drug: &mut Drug, civic_context: Option<&CivicContext>) {
             Ok(client) => match client.target_summary(&target_chembl_id).await {
                 Ok(summary) if summary.target_type.eq_ignore_ascii_case("PROTEIN FAMILY") => {
                     let _family_pref_name = summary.pref_name.trim();
-                    drug.target_family = strict_target_family_label(&drug.targets);
-                    drug.target_family_name =
-                        derive_target_family_name(&drug.targets, &opentargets_targets);
+                    drug.target_family = inferred_target_family.clone();
+                    drug.target_family_name = inferred_target_family_name.clone();
                 }
                 Ok(_) => {}
-                Err(err) => warn!("ChEMBL unavailable for drug target family summary: {err}"),
+                Err(err) => {
+                    warn!("ChEMBL unavailable for drug target family summary: {err}");
+                    drug.target_family = inferred_target_family.clone();
+                    drug.target_family_name = inferred_target_family_name.clone();
+                }
             },
-            Err(err) => warn!("ChEMBL client init failed: {err}"),
+            Err(err) => {
+                warn!("ChEMBL client init failed: {err}");
+                drug.target_family = inferred_target_family.clone();
+                drug.target_family_name = inferred_target_family_name.clone();
+            }
         }
     }
 

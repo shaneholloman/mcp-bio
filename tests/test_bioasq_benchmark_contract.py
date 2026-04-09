@@ -29,15 +29,18 @@ def test_ranking_calibration_readme_records_verified_scenarios_and_provenance() 
 
     assert "# BioASQ Ranking Calibration" in readme
     for snippet in [
-        "mesh_synonym_gap_records_pubmed_tier0_baseline",
-        "anchor_count_gap_records_pubmed_title_hit_deficit_baseline",
-        "pubmed_unique_row_survives_first_page_in_mixed_federation",
+        "hybrid_default_weights_orders_example_one",
+        "lexical_mode_matches_current_ordering",
+        "hybrid_entity_only_falls_back_without_nan",
+        "hybrid_custom_weights_shift_ordering",
+        "hybrid_scoring_is_zero_safe",
         "hf-public-pre2026",
         "uv run --quiet --script benchmarks/bioasq/ingest_public.py --bundle hf-public-pre2026",
         "benchmarks/bioasq/datasets/manifest.json",
         "benchmarks/bioasq/datasets/README.md",
         "docs/reference/bioasq-benchmark.md",
-        "spec/06-article.md::Keyword Anchors Tokenize In JSON Ranking Metadata",
+        "spec/06-article.md",
+        "spec/09-search-all.md",
         "Historical leads",
         "unresolved",
     ]:

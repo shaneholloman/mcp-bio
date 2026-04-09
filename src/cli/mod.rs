@@ -736,8 +736,15 @@ EXAMPLES:
   biomcp search article -d melanoma --type review --journal Nature --limit 5
   biomcp search article -g BRAF --source pubtator --limit 20
   biomcp search article -k \"Hirschsprung disease ganglion cells\" --source litsense2 --limit 5
+  biomcp search article -k \"Hirschsprung disease ganglion cells\" --ranking-mode hybrid --weight-semantic 0.5 --weight-lexical 0.2 --limit 5
   biomcp search article -g BRAF --source pubmed --limit 5
   biomcp search article -g BRAF --debug-plan --limit 5
+
+RANKING:
+  - `--sort relevance` accepts `--ranking-mode lexical|semantic|hybrid`.
+  - Omit `--ranking-mode` to use `hybrid` when `--keyword` is present and `lexical` otherwise.
+  - Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default.
+  - Use `--weight-semantic`, `--weight-lexical`, `--weight-citations`, and `--weight-position` to retune hybrid ranking.
 
 See also: biomcp list article")]
     Article {
@@ -804,6 +811,26 @@ See also: biomcp list article")]
         /// Sort order [values: date, citations, relevance] (default: relevance)
         #[arg(long, default_value = "relevance", value_parser = ["date", "citations", "relevance"])]
         sort: String,
+
+        /// Relevance ranking mode [values: lexical, semantic, hybrid] (default: hybrid with keyword, lexical otherwise)
+        #[arg(long = "ranking-mode", value_parser = ["lexical", "semantic", "hybrid"])]
+        ranking_mode: Option<String>,
+
+        /// Hybrid semantic weight (default: 0.4; requires --sort relevance)
+        #[arg(long = "weight-semantic")]
+        weight_semantic: Option<f64>,
+
+        /// Hybrid lexical weight (default: 0.3; requires --sort relevance)
+        #[arg(long = "weight-lexical")]
+        weight_lexical: Option<f64>,
+
+        /// Hybrid citation weight (default: 0.2; requires --sort relevance)
+        #[arg(long = "weight-citations")]
+        weight_citations: Option<f64>,
+
+        /// Hybrid source-position weight (default: 0.1; requires --sort relevance)
+        #[arg(long = "weight-position")]
+        weight_position: Option<f64>,
 
         /// Article source [values: all, pubtator, europepmc, pubmed, litsense2] (default: all)
         #[arg(
@@ -2053,6 +2080,7 @@ fn related_article_filters() -> crate::entities::article::ArticleSearchFilters {
         no_preprints: true,
         exclude_retracted: true,
         sort: crate::entities::article::ArticleSort::Relevance,
+        ranking: crate::entities::article::ArticleRankingOptions::default(),
     }
 }
 
@@ -3205,7 +3233,7 @@ fn article_query_summary(
     include_retracted: bool,
     offset: usize,
 ) -> String {
-    vec![
+    let mut query = vec![
         filters.gene.as_deref().map(|v| format!("gene={v}")),
         filters.disease.as_deref().map(|v| format!("disease={v}")),
         filters.drug.as_deref().map(|v| format!("drug={v}")),
@@ -3233,18 +3261,22 @@ fn article_query_summary(
         (source_filter != crate::entities::article::ArticleSourceFilter::All)
             .then(|| format!("source={}", source_filter.as_str())),
         (offset > 0).then(|| format!("offset={offset}")),
-    ]
-    .into_iter()
-    .flatten()
-    .collect::<Vec<_>>()
-    .join(", ")
+    ];
+    if let Some(mode) = crate::entities::article::article_effective_ranking_mode(filters) {
+        query.push(Some(format!("ranking_mode={}", mode.as_str())));
+        query.push(
+            crate::entities::article::article_relevance_ranking_policy(filters)
+                .map(|policy| format!("ranking_policy={policy}")),
+        );
+    }
+    query.into_iter().flatten().collect::<Vec<_>>().join(", ")
 }
 
 fn article_debug_filters(
     filters: &crate::entities::article::ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
 ) -> Vec<String> {
-    vec![
+    let mut values = vec![
         filters.gene.as_deref().map(|v| format!("gene={v}")),
         filters.disease.as_deref().map(|v| format!("disease={v}")),
         filters.drug.as_deref().map(|v| format!("drug={v}")),
@@ -3264,10 +3296,15 @@ fn article_debug_filters(
         Some(format!("exclude_retracted={}", filters.exclude_retracted)),
         Some(format!("sort={}", filters.sort.as_str())),
         Some(format!("source={}", source_filter.as_str())),
-    ]
-    .into_iter()
-    .flatten()
-    .collect()
+    ];
+    if let Some(mode) = crate::entities::article::article_effective_ranking_mode(filters) {
+        values.push(Some(format!("ranking_mode={}", mode.as_str())));
+        values.push(
+            crate::entities::article::article_relevance_ranking_policy(filters)
+                .map(|policy| format!("ranking_policy={policy}")),
+        );
+    }
+    values.into_iter().flatten().collect()
 }
 
 fn build_article_debug_plan(
@@ -3299,7 +3336,7 @@ fn build_article_debug_plan(
 
 fn article_search_json(
     query: &str,
-    sort: crate::entities::article::ArticleSort,
+    filters: &crate::entities::article::ArticleSearchFilters,
     semantic_scholar_enabled: bool,
     note: Option<String>,
     debug_plan: Option<DebugPlan>,
@@ -3312,7 +3349,7 @@ fn article_search_json(
         sort: String,
         semantic_scholar_enabled: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
-        ranking_policy: Option<&'static str>,
+        ranking_policy: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         note: Option<String>,
         pagination: PaginationMeta,
@@ -3325,10 +3362,9 @@ fn article_search_json(
     let count = results.len();
     crate::render::json::to_pretty(&ArticleSearchResponse {
         query: query.to_string(),
-        sort: sort.as_str().to_string(),
+        sort: filters.sort.as_str().to_string(),
         semantic_scholar_enabled,
-        ranking_policy: (sort == crate::entities::article::ArticleSort::Relevance)
-            .then_some(crate::entities::article::ARTICLE_RELEVANCE_RANKING_POLICY),
+        ranking_policy: crate::entities::article::article_relevance_ranking_policy(filters),
         note,
         pagination,
         count,
@@ -4088,7 +4124,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                             &query,
                             &results,
                             "",
-                            filters.sort,
+                            &filters,
                             crate::entities::article::semantic_scholar_search_enabled(
                                 &filters,
                                 crate::entities::article::ArticleSourceFilter::All,
@@ -4310,7 +4346,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                             &query,
                             &results,
                             "",
-                            filters.sort,
+                            &filters,
                             crate::entities::article::semantic_scholar_search_enabled(
                                 &filters,
                                 crate::entities::article::ArticleSourceFilter::All,
@@ -4553,7 +4589,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                             &query,
                             &results,
                             "",
-                            filters.sort,
+                            &filters,
                             crate::entities::article::semantic_scholar_search_enabled(
                                 &filters,
                                 crate::entities::article::ArticleSourceFilter::All,
@@ -4655,7 +4691,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                             &query,
                             &results,
                             "",
-                            filters.sort,
+                            &filters,
                             crate::entities::article::semantic_scholar_search_enabled(
                                 &filters,
                                 crate::entities::article::ArticleSourceFilter::All,
@@ -5745,6 +5781,11 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     exclude_retracted,
                     include_retracted,
                     sort,
+                    ranking_mode,
+                    weight_semantic,
+                    weight_lexical,
+                    weight_citations,
+                    weight_position,
                     source,
                     limit,
                     offset,
@@ -5763,6 +5804,13 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     let source_filter =
                         crate::entities::article::ArticleSourceFilter::from_flag(&source)?;
                     let exclude_retracted = exclude_retracted || !include_retracted;
+                    let ranking = crate::entities::article::ArticleRankingOptions::from_inputs(
+                        ranking_mode.as_deref(),
+                        weight_semantic,
+                        weight_lexical,
+                        weight_citations,
+                        weight_position,
+                    )?;
                     let gene_anchored = gene
                         .as_deref()
                         .map(str::trim)
@@ -5798,6 +5846,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         no_preprints,
                         exclude_retracted,
                         sort,
+                        ranking,
                     };
 
                     let query = article_query_summary(
@@ -5832,7 +5881,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     if cli.json {
                         article_search_json(
                             &query,
-                            filters.sort,
+                            &filters,
                             semantic_scholar_enabled,
                             crate::entities::article::article_type_limitation_note(
                                 &filters,
@@ -5848,7 +5897,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                             &query,
                             &results,
                             &footer,
-                            filters.sort,
+                            &filters,
                             semantic_scholar_enabled,
                             crate::entities::article::article_type_limitation_note(
                                 &filters,
@@ -8140,9 +8189,17 @@ mod tests {
     #[test]
     fn article_search_json_includes_query_and_ranking_context() {
         let pagination = PaginationMeta::offset(0, 3, 1, Some(1));
+        let mut filters = super::related_article_filters();
+        filters.gene = Some("BRAF".into());
+        let query = super::article_query_summary(
+            &filters,
+            crate::entities::article::ArticleSourceFilter::All,
+            false,
+            0,
+        );
         let json = article_search_json(
-            "gene=BRAF, sort=relevance",
-            crate::entities::article::ArticleSort::Relevance,
+            &query,
+            &filters,
             true,
             Some(
                 "Note: --type restricts article search to Europe PMC and PubMed. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering.".into(),
@@ -8177,6 +8234,13 @@ mod tests {
                     pubmed_rescue: false,
                     pubmed_rescue_kind: None,
                     pubmed_source_position: None,
+                    mode: Some(crate::entities::article::ArticleRankingMode::Lexical),
+                    semantic_score: None,
+                    lexical_score: None,
+                    citation_score: None,
+                    position_score: None,
+                    composite_score: None,
+                    avg_source_rank: None,
                 }),
                 normalized_title: "braf melanoma review".into(),
                 normalized_abstract: "abstract".into(),
@@ -8189,7 +8253,7 @@ mod tests {
 
         let value: serde_json::Value =
             serde_json::from_str(&json).expect("json should parse successfully");
-        assert_eq!(value["query"], "gene=BRAF, sort=relevance");
+        assert_eq!(value["query"], query);
         assert_eq!(value["sort"], "relevance");
         assert_eq!(value["semantic_scholar_enabled"], true);
         assert_eq!(
@@ -8273,6 +8337,7 @@ mod tests {
             no_preprints: false,
             exclude_retracted: false,
             sort: crate::entities::article::ArticleSort::Relevance,
+            ranking: crate::entities::article::ArticleRankingOptions::default(),
         };
         let pagination = PaginationMeta::offset(0, 3, 0, Some(0));
 
@@ -9009,6 +9074,49 @@ mod tests {
     }
 
     #[test]
+    fn search_article_parses_ranking_mode_and_weight_flags() {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "search",
+            "article",
+            "-k",
+            "melanoma",
+            "--ranking-mode",
+            "hybrid",
+            "--weight-semantic",
+            "0.5",
+            "--weight-lexical",
+            "0.2",
+            "--weight-citations",
+            "0.2",
+            "--weight-position",
+            "0.1",
+        ])
+        .expect("search article with ranking flags should parse");
+
+        match cli.command {
+            Commands::Search {
+                entity:
+                    super::SearchEntity::Article {
+                        ranking_mode,
+                        weight_semantic,
+                        weight_lexical,
+                        weight_citations,
+                        weight_position,
+                        ..
+                    },
+            } => {
+                assert_eq!(ranking_mode.as_deref(), Some("hybrid"));
+                assert_eq!(weight_semantic, Some(0.5));
+                assert_eq!(weight_lexical, Some(0.2));
+                assert_eq!(weight_citations, Some(0.2));
+                assert_eq!(weight_position, Some(0.1));
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+
+    #[test]
     fn search_article_parses_multi_token_keyword_and_until_alias() {
         let cli = Cli::try_parse_from([
             "biomcp",
@@ -9100,6 +9208,37 @@ mod tests {
         assert!(!filters.open_access);
         assert!(filters.no_preprints);
         assert!(filters.exclude_retracted);
+    }
+
+    #[test]
+    fn article_query_and_debug_filters_include_effective_ranking_context() {
+        let mut filters = super::related_article_filters();
+        filters.keyword = Some("melanoma".into());
+
+        let summary = super::article_query_summary(
+            &filters,
+            crate::entities::article::ArticleSourceFilter::All,
+            false,
+            0,
+        );
+        assert!(summary.contains("ranking_mode=hybrid"));
+        assert!(summary.contains(
+            "ranking_policy=hybrid relevance (score = 0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position)"
+        ));
+
+        let debug_filters = super::article_debug_filters(
+            &filters,
+            crate::entities::article::ArticleSourceFilter::All,
+        );
+        assert!(
+            debug_filters
+                .iter()
+                .any(|entry| entry == "ranking_mode=hybrid")
+        );
+        assert!(debug_filters.iter().any(|entry| {
+            entry
+                == "ranking_policy=hybrid relevance (score = 0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position)"
+        }));
     }
 
     #[test]

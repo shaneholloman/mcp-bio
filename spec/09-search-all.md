@@ -58,10 +58,24 @@ The article section in `search all` should reuse the stabilized article search
 pipeline rather than flattening away row-level source and ranking metadata.
 
 ```bash
-out="$(biomcp --json search all -g BRAF --limit 3)"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" --json search all -g BRAF --limit 3)"
 echo "$out" | mustmatch like '"entity": "article"'
 echo "$out" | mustmatch like '"source": "'
 echo "$out" | mustmatch like '"ranking": {'
+echo "$out" | mustmatch like '"mode": "lexical"'
+```
+
+## JSON Keyword Search Uses Hybrid Article Ranking
+
+Keyword-driven `search all` requests should reuse the same article default as
+`search article`: the article leg should emit hybrid ranking metadata when the
+query is keyword-bearing.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" --json search all -k 'checkpoint inhibitor' --limit 3)"
+echo "$out" | jq -e '.sections[] | select(.entity == "article") | (.results | length > 0 and all(.[]; .ranking.mode == "hybrid"))' > /dev/null
 ```
 
 ## Debug Plan

@@ -91,6 +91,8 @@ out="$("$bin" list article)"
 echo "$out" | mustmatch like "## When to use this surface"
 echo "$out" | mustmatch like "Use keyword search to scan a topic before you know the entities."
 echo "$out" | mustmatch like "Prefer `--type review`"
+echo "$out" | mustmatch like "--ranking-mode <lexical|semantic|hybrid>"
+echo "$out" | mustmatch like "keyword-bearing article queries default to hybrid"
 echo "$out" | mustmatch like "article citations <id>"
 echo "$out" | mustmatch like "article recommendations <id>"
 ```

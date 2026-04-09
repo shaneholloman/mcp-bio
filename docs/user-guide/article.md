@@ -23,6 +23,12 @@ By keyword:
 biomcp search article -k "immunotherapy resistance" --limit 5
 ```
 
+Tune keyword-bearing relevance:
+
+```bash
+biomcp search article -k "Hirschsprung disease ganglion cells" --ranking-mode hybrid --weight-semantic 0.5 --weight-lexical 0.2 --limit 5
+```
+
 By date:
 
 ```bash
@@ -38,21 +44,31 @@ biomcp search article -g BRAF --since 2024-01-01 --no-preprints --limit 5
 ### Multi-source federation
 
 Article search fans out to PubTator3, Europe PMC, and PubMed by default when
-the filter set is compatible. When the filter set is also Semantic
-Scholar-compatible, BioMCP adds that search leg for the same typed query and
-merges duplicates across PMID, PMCID, and DOI where possible. `S2_API_KEY`
-upgrades the Semantic Scholar leg to authenticated requests at 1 req/sec;
-without it, BioMCP uses the shared unauthenticated pool at 1 req/2sec. Search
-results are still deduplicated by PMID when BioMCP can resolve one.
+the filter set is compatible. When a non-empty keyword is present, BioMCP also
+adds LitSense2 to the federated route. Semantic Scholar can still join the same
+typed query when the filter set is compatible. BioMCP merges duplicates across
+PMID, PMCID, and DOI where possible. `S2_API_KEY` upgrades the Semantic Scholar
+leg to authenticated requests at 1 req/sec; without it, BioMCP uses the shared
+unauthenticated pool at 1 req/2sec. Search results are still deduplicated by
+PMID when BioMCP can resolve one.
 
-Default `--sort relevance` is directness-first: title coverage ranks ahead of
-title+abstract coverage, then study/review cues, then citation support.
+Default `--sort relevance` is mode-aware:
+
+- Keyword-bearing queries default to `--ranking-mode hybrid`, using
+  `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`.
+- Entity-only queries default to `--ranking-mode lexical`, preserving the
+  existing calibrated PubMed rescue plus lexical directness comparator.
+- `--ranking-mode semantic` sorts LitSense2 score first and falls back to the
+  lexical comparator for deterministic ties.
+- `--weight-semantic`, `--weight-lexical`, `--weight-citations`, and
+  `--weight-position` retune the hybrid formula.
+
 Markdown preserves the merged rank order, and JSON includes row-level
 `matched_sources`, `ranking`, `citation_count`, and
 `influential_citation_count`.
 
-Use `--source <all, pubtator, europepmc, pubmed>` to select one backend or keep
-the default federated search.
+Use `--source <all, pubtator, europepmc, pubmed, litsense2>` to select one
+backend or keep the default federated search.
 Default article search excludes confirmed retractions unless you pass
 `--include-retracted`. Sources that do not expose retraction metadata still
 participate in the search, and JSON search rows keep the tri-state contract:
@@ -85,8 +101,8 @@ Default article output can include an optional Semantic Scholar section with
 TLDR text, influence counts, and open-access PDF metadata when that paper
 resolves in Semantic Scholar. `S2_API_KEY` makes those requests authenticated;
 without it, BioMCP uses the shared pool. `search article --source` now supports
-`all`, `pubtator`, `europepmc`, and `pubmed`; Semantic Scholar remains an automatic
-compatible-leg rather than a directly selectable backend.
+`all`, `pubtator`, `europepmc`, `pubmed`, and `litsense2`; Semantic Scholar
+remains an automatic compatible leg rather than a directly selectable backend.
 
 ## Request specific sections
 
@@ -151,8 +167,10 @@ JSON article responses include `_meta.next_commands` and `_meta.section_sources`
 so article workflows can promote the next likely pivots and preserve section
 provenance without scraping markdown. JSON `search article` responses also echo
 `query`, `sort`, `semantic_scholar_enabled`, and row-level ranking/provenance
-metadata. JSON `article batch` responses are a bare array of compact cards so
-callers can map results back to the original input order.
+metadata. In relevance mode, ranking metadata now includes the effective mode
+and, for hybrid rows, normalized semantic, lexical, citation, position, and
+composite scores. JSON `article batch` responses are a bare array of compact
+cards so callers can map results back to the original input order.
 
 ## Practical tips
 
