@@ -91,6 +91,7 @@ nav:
       - Drug Approvals & AE Summary: reference/drug-approvals-and-ae-summary.md
       - Dependencies: reference/dependencies.md
   - Blog:
+      - blog/kras-g12c-treatment-landscape.md
       - blog/biomcp-charts.md
       - blog/biomcp-pubmed-articles.md
       - blog/skillbench-biomcp-skills.md
