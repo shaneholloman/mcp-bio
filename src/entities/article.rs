@@ -184,7 +184,7 @@ pub enum ArticlePubMedRescueKind {
     Led,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArticleRankingMetadata {
     pub directness_tier: u8,
     pub anchor_count: u8,
@@ -200,6 +200,20 @@ pub struct ArticleRankingMetadata {
     pub pubmed_rescue_kind: Option<ArticlePubMedRescueKind>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pubmed_source_position: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<ArticleRankingMode>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub semantic_score: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lexical_score: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub citation_score: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub position_score: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub composite_score: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub avg_source_rank: Option<f64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -355,6 +369,88 @@ impl ArticleSort {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ArticleRankingMode {
+    Lexical,
+    Semantic,
+    Hybrid,
+}
+
+impl ArticleRankingMode {
+    pub fn from_flag(value: &str) -> Result<Self, BioMcpError> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "lexical" => Ok(Self::Lexical),
+            "semantic" => Ok(Self::Semantic),
+            "hybrid" => Ok(Self::Hybrid),
+            _ => Err(BioMcpError::InvalidArgument(
+                "Invalid article ranking mode. Expected one of: lexical, semantic, hybrid".into(),
+            )),
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Lexical => "lexical",
+            Self::Semantic => "semantic",
+            Self::Hybrid => "hybrid",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ArticleRankingWeights {
+    pub semantic: f64,
+    pub lexical: f64,
+    pub citations: f64,
+    pub position: f64,
+}
+
+impl Default for ArticleRankingWeights {
+    fn default() -> Self {
+        Self {
+            semantic: 0.4,
+            lexical: 0.3,
+            citations: 0.2,
+            position: 0.1,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ArticleRankingOptions {
+    pub requested_mode: Option<ArticleRankingMode>,
+    pub weights: ArticleRankingWeights,
+    pub weights_overridden: bool,
+}
+
+impl ArticleRankingOptions {
+    pub fn from_inputs(
+        requested_mode: Option<&str>,
+        weight_semantic: Option<f64>,
+        weight_lexical: Option<f64>,
+        weight_citations: Option<f64>,
+        weight_position: Option<f64>,
+    ) -> Result<Self, BioMcpError> {
+        let defaults = ArticleRankingWeights::default();
+        Ok(Self {
+            requested_mode: requested_mode
+                .map(ArticleRankingMode::from_flag)
+                .transpose()?,
+            weights: ArticleRankingWeights {
+                semantic: weight_semantic.unwrap_or(defaults.semantic),
+                lexical: weight_lexical.unwrap_or(defaults.lexical),
+                citations: weight_citations.unwrap_or(defaults.citations),
+                position: weight_position.unwrap_or(defaults.position),
+            },
+            weights_overridden: weight_semantic.is_some()
+                || weight_lexical.is_some()
+                || weight_citations.is_some()
+                || weight_position.is_some(),
+        })
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ArticleSearchFilters {
     pub gene: Option<String>,
@@ -371,6 +467,7 @@ pub struct ArticleSearchFilters {
     pub no_preprints: bool,
     pub exclude_retracted: bool,
     pub sort: ArticleSort,
+    pub ranking: ArticleRankingOptions,
 }
 
 const ARTICLE_SECTION_ANNOTATIONS: &str = "annotations";
@@ -407,6 +504,8 @@ PMCID (starts with PMC, e.g., PMC9984800), and DOI (starts with 10., \
 e.g., 10.1056/NEJMoa1203421). publisher PIIs (e.g., S1535610826000103) are not \
 indexed by PubMed or Europe PMC and cannot be resolved.";
 pub const ARTICLE_RELEVANCE_RANKING_POLICY: &str = "calibrated PubMed rescue + lexical directness (top-ranked weak PubMed unique/led rows with at least one anchor hit > title coverage > title+abstract coverage > study/review cue > citation support > source-local position)";
+pub const ARTICLE_SEMANTIC_RANKING_POLICY: &str =
+    "semantic relevance (semantic score first, lexical directness fallback)";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum BackendPlan {
@@ -687,6 +786,110 @@ fn has_keyword_query(filters: &ArticleSearchFilters) -> bool {
         .as_deref()
         .map(str::trim)
         .is_some_and(|value| !value.is_empty())
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ResolvedArticleRanking {
+    mode: ArticleRankingMode,
+    weights: ArticleRankingWeights,
+}
+
+fn resolve_article_ranking(filters: &ArticleSearchFilters) -> ResolvedArticleRanking {
+    ResolvedArticleRanking {
+        mode: filters.ranking.requested_mode.unwrap_or_else(|| {
+            if has_keyword_query(filters) {
+                ArticleRankingMode::Hybrid
+            } else {
+                ArticleRankingMode::Lexical
+            }
+        }),
+        weights: filters.ranking.weights,
+    }
+}
+
+pub(crate) fn article_effective_ranking_mode(
+    filters: &ArticleSearchFilters,
+) -> Option<ArticleRankingMode> {
+    (filters.sort == ArticleSort::Relevance).then(|| resolve_article_ranking(filters).mode)
+}
+
+fn format_article_ranking_number(value: f64) -> String {
+    let mut out = format!("{value:.3}");
+    while out.contains('.') && out.ends_with('0') {
+        out.pop();
+    }
+    if out.ends_with('.') {
+        out.pop();
+    }
+    if out == "-0" { "0".to_string() } else { out }
+}
+
+pub(crate) fn article_relevance_ranking_policy(filters: &ArticleSearchFilters) -> Option<String> {
+    if filters.sort != ArticleSort::Relevance {
+        return None;
+    }
+
+    let ranking = resolve_article_ranking(filters);
+    Some(match ranking.mode {
+        ArticleRankingMode::Lexical => ARTICLE_RELEVANCE_RANKING_POLICY.to_string(),
+        ArticleRankingMode::Semantic => ARTICLE_SEMANTIC_RANKING_POLICY.to_string(),
+        ArticleRankingMode::Hybrid => format!(
+            "hybrid relevance (score = {}*semantic + {}*lexical + {}*citations + {}*position)",
+            format_article_ranking_number(ranking.weights.semantic),
+            format_article_ranking_number(ranking.weights.lexical),
+            format_article_ranking_number(ranking.weights.citations),
+            format_article_ranking_number(ranking.weights.position),
+        ),
+    })
+}
+
+fn validate_article_ranking_options(filters: &ArticleSearchFilters) -> Result<(), BioMcpError> {
+    let requested_mode = filters.ranking.requested_mode;
+    let weights_overridden = filters.ranking.weights_overridden;
+    if filters.sort != ArticleSort::Relevance {
+        if requested_mode.is_some() || weights_overridden {
+            return Err(BioMcpError::InvalidArgument(
+                "--ranking-mode and --weight-* require --sort relevance".into(),
+            ));
+        }
+        return Ok(());
+    }
+
+    for (flag, value) in [
+        ("--weight-semantic", filters.ranking.weights.semantic),
+        ("--weight-lexical", filters.ranking.weights.lexical),
+        ("--weight-citations", filters.ranking.weights.citations),
+        ("--weight-position", filters.ranking.weights.position),
+    ] {
+        if !value.is_finite() {
+            return Err(BioMcpError::InvalidArgument(format!(
+                "{flag} must be finite"
+            )));
+        }
+        if value < 0.0 {
+            return Err(BioMcpError::InvalidArgument(format!("{flag} must be >= 0")));
+        }
+    }
+
+    let resolved = resolve_article_ranking(filters);
+    if weights_overridden && resolved.mode != ArticleRankingMode::Hybrid {
+        return Err(BioMcpError::InvalidArgument(
+            "--weight-* flags require --ranking-mode hybrid or no explicit ranking mode".into(),
+        ));
+    }
+
+    if resolved.mode == ArticleRankingMode::Hybrid
+        && filters.ranking.weights.semantic == 0.0
+        && filters.ranking.weights.lexical == 0.0
+        && filters.ranking.weights.citations == 0.0
+        && filters.ranking.weights.position == 0.0
+    {
+        return Err(BioMcpError::InvalidArgument(
+            "At least one hybrid ranking weight must be > 0".into(),
+        ));
+    }
+
+    Ok(())
 }
 
 fn pubmed_filter_compatible(filters: &ArticleSearchFilters) -> bool {
@@ -1341,102 +1544,248 @@ fn pubmed_rescue_metadata(
     )
 }
 
-fn rank_articles_by_directness(rows: &mut [ArticleCandidate], filters: &ArticleSearchFilters) {
+fn lexical_ranking_metadata(
+    row: &ArticleSearchResult,
+    source_positions: &[ArticleSourcePosition],
+    anchors: &[String],
+) -> ArticleRankingMetadata {
+    let title_hits = anchors
+        .iter()
+        .filter(|anchor| anchor_matches_text(&row.normalized_title, anchor))
+        .count();
+    let abstract_hits = anchors
+        .iter()
+        .filter(|anchor| anchor_matches_text(&row.normalized_abstract, anchor))
+        .count();
+    let combined_hits = anchors
+        .iter()
+        .filter(|anchor| {
+            anchor_matches_text(&row.normalized_title, anchor)
+                || anchor_matches_text(&row.normalized_abstract, anchor)
+        })
+        .count();
+    let anchor_count = anchors.len();
+    let all_anchors_in_title = anchor_count > 0 && title_hits == anchor_count;
+    let all_anchors_in_text = anchor_count > 0 && combined_hits == anchor_count;
+    let directness_tier = if all_anchors_in_title {
+        3
+    } else if all_anchors_in_text {
+        2
+    } else if combined_hits > 0 {
+        1
+    } else {
+        0
+    };
+    let study_or_review_cue = has_study_or_review_cue(row);
+    let (pubmed_rescue, pubmed_rescue_kind, pubmed_source_position) =
+        pubmed_rescue_metadata(row, source_positions, directness_tier, combined_hits);
+
+    ArticleRankingMetadata {
+        directness_tier,
+        anchor_count: anchor_count.min(u8::MAX as usize) as u8,
+        title_anchor_hits: title_hits.min(u8::MAX as usize) as u8,
+        abstract_anchor_hits: abstract_hits.min(u8::MAX as usize) as u8,
+        combined_anchor_hits: combined_hits.min(u8::MAX as usize) as u8,
+        all_anchors_in_title,
+        all_anchors_in_text,
+        study_or_review_cue,
+        pubmed_rescue,
+        pubmed_rescue_kind,
+        pubmed_source_position,
+        mode: None,
+        semantic_score: None,
+        lexical_score: None,
+        citation_score: None,
+        position_score: None,
+        composite_score: None,
+        avg_source_rank: None,
+    }
+}
+
+fn populate_lexical_ranking_metadata(
+    rows: &mut [ArticleCandidate],
+    filters: &ArticleSearchFilters,
+) {
     let anchors = build_anchor_set(filters);
 
     for row in rows.iter_mut() {
         ensure_matched_sources(&mut row.row);
-        let title_hits = anchors
-            .iter()
-            .filter(|anchor| anchor_matches_text(&row.row.normalized_title, anchor))
-            .count();
-        let abstract_hits = anchors
-            .iter()
-            .filter(|anchor| anchor_matches_text(&row.row.normalized_abstract, anchor))
-            .count();
-        let combined_hits = anchors
-            .iter()
-            .filter(|anchor| {
-                anchor_matches_text(&row.row.normalized_title, anchor)
-                    || anchor_matches_text(&row.row.normalized_abstract, anchor)
-            })
-            .count();
-        let anchor_count = anchors.len();
-        let all_anchors_in_title = anchor_count > 0 && title_hits == anchor_count;
-        let all_anchors_in_text = anchor_count > 0 && combined_hits == anchor_count;
-        let directness_tier = if all_anchors_in_title {
-            3
-        } else if all_anchors_in_text {
-            2
-        } else if combined_hits > 0 {
-            1
-        } else {
-            0
-        };
-        let study_or_review_cue = has_study_or_review_cue(&row.row);
-        let (pubmed_rescue, pubmed_rescue_kind, pubmed_source_position) = pubmed_rescue_metadata(
+        row.row.ranking = Some(lexical_ranking_metadata(
             &row.row,
             &row.source_positions,
-            directness_tier,
-            combined_hits,
-        );
+            &anchors,
+        ));
+    }
+}
 
-        row.row.ranking = Some(ArticleRankingMetadata {
-            directness_tier,
-            anchor_count: anchor_count.min(u8::MAX as usize) as u8,
-            title_anchor_hits: title_hits.min(u8::MAX as usize) as u8,
-            abstract_anchor_hits: abstract_hits.min(u8::MAX as usize) as u8,
-            combined_anchor_hits: combined_hits.min(u8::MAX as usize) as u8,
-            all_anchors_in_title,
-            all_anchors_in_text,
-            study_or_review_cue,
-            pubmed_rescue,
-            pubmed_rescue_kind,
-            pubmed_source_position,
-        });
+fn compare_article_candidates_lexical(
+    left: &ArticleCandidate,
+    right: &ArticleCandidate,
+) -> Ordering {
+    let left_ranking = left.row.ranking.as_ref();
+    let right_ranking = right.row.ranking.as_ref();
+    right_ranking
+        .map(|ranking| ranking.pubmed_rescue)
+        .cmp(&left_ranking.map(|ranking| ranking.pubmed_rescue))
+        .then_with(|| {
+            right_ranking
+                .map(|ranking| ranking.directness_tier)
+                .cmp(&left_ranking.map(|ranking| ranking.directness_tier))
+        })
+        .then_with(|| {
+            right_ranking
+                .map(|ranking| ranking.title_anchor_hits)
+                .cmp(&left_ranking.map(|ranking| ranking.title_anchor_hits))
+        })
+        .then_with(|| {
+            right_ranking
+                .map(|ranking| ranking.combined_anchor_hits)
+                .cmp(&left_ranking.map(|ranking| ranking.combined_anchor_hits))
+        })
+        .then_with(|| {
+            right_ranking
+                .map(|ranking| ranking.study_or_review_cue)
+                .cmp(&left_ranking.map(|ranking| ranking.study_or_review_cue))
+        })
+        .then_with(|| compare_optional_citations_desc(Some(&left.row), Some(&right.row)))
+        .then_with(|| {
+            right
+                .row
+                .influential_citation_count
+                .cmp(&left.row.influential_citation_count)
+        })
+        .then_with(|| {
+            left.row
+                .source_local_position
+                .cmp(&right.row.source_local_position)
+        })
+        .then_with(|| {
+            stable_article_identifier(&left.row).cmp(&stable_article_identifier(&right.row))
+        })
+}
+
+fn semantic_sort_score(row: &ArticleSearchResult) -> f64 {
+    row.score.unwrap_or(0.0)
+}
+
+fn normalized_semantic_score(row: &ArticleSearchResult) -> f64 {
+    row.score.unwrap_or(0.0).clamp(0.0, 1.0)
+}
+
+fn avg_source_rank(source_positions: &[ArticleSourcePosition], fallback_position: usize) -> f64 {
+    if source_positions.is_empty() {
+        return fallback_position as f64 + 1.0;
+    }
+    source_positions
+        .iter()
+        .map(|entry| entry.local_position as f64 + 1.0)
+        .sum::<f64>()
+        / source_positions.len() as f64
+}
+
+fn normalized_citation_score(citation_count: Option<u64>, max_citation_count: u64) -> f64 {
+    if max_citation_count == 0 {
+        return 0.0;
+    }
+    let citations = citation_count.unwrap_or(0) as f64;
+    (1.0 + citations).ln() / (1.0 + max_citation_count as f64).ln()
+}
+
+fn normalized_position_score(avg_source_rank: f64, max_avg_source_rank: f64) -> f64 {
+    if max_avg_source_rank <= 1.0 {
+        0.0
+    } else {
+        1.0 - (avg_source_rank / max_avg_source_rank)
+    }
+}
+
+fn rank_articles_by_directness(rows: &mut [ArticleCandidate], filters: &ArticleSearchFilters) {
+    populate_lexical_ranking_metadata(rows, filters);
+    for row in rows.iter_mut() {
+        if let Some(ranking) = row.row.ranking.as_mut() {
+            ranking.mode = Some(ArticleRankingMode::Lexical);
+        }
+    }
+    rows.sort_by(compare_article_candidates_lexical);
+}
+
+fn rank_articles_by_semantic(rows: &mut [ArticleCandidate], filters: &ArticleSearchFilters) {
+    populate_lexical_ranking_metadata(rows, filters);
+    for row in rows.iter_mut() {
+        let semantic_score = normalized_semantic_score(&row.row);
+        if let Some(ranking) = row.row.ranking.as_mut() {
+            ranking.mode = Some(ArticleRankingMode::Semantic);
+            ranking.semantic_score = Some(semantic_score);
+        }
+    }
+    rows.sort_by(|left, right| {
+        semantic_sort_score(&right.row)
+            .total_cmp(&semantic_sort_score(&left.row))
+            .then_with(|| compare_article_candidates_lexical(left, right))
+    });
+}
+
+fn rank_articles_hybrid(rows: &mut [ArticleCandidate], filters: &ArticleSearchFilters) {
+    populate_lexical_ranking_metadata(rows, filters);
+    let ranking = resolve_article_ranking(filters);
+    let max_citation_count = rows
+        .iter()
+        .filter_map(|candidate| candidate.row.citation_count)
+        .max()
+        .unwrap_or(0);
+    let max_avg_source_rank = rows
+        .iter()
+        .map(|candidate| {
+            avg_source_rank(
+                &candidate.source_positions,
+                candidate.row.source_local_position,
+            )
+        })
+        .fold(0.0, f64::max);
+
+    for row in rows.iter_mut() {
+        let semantic_score = normalized_semantic_score(&row.row);
+        let lexical_score = row
+            .row
+            .ranking
+            .as_ref()
+            .map(|entry| entry.directness_tier as f64 / 3.0)
+            .unwrap_or(0.0);
+        let citation_score = normalized_citation_score(row.row.citation_count, max_citation_count);
+        let avg_source_rank = avg_source_rank(&row.source_positions, row.row.source_local_position);
+        let position_score = normalized_position_score(avg_source_rank, max_avg_source_rank);
+        let composite_score = ranking.weights.semantic * semantic_score
+            + ranking.weights.lexical * lexical_score
+            + ranking.weights.citations * citation_score
+            + ranking.weights.position * position_score;
+
+        if let Some(metadata) = row.row.ranking.as_mut() {
+            metadata.mode = Some(ArticleRankingMode::Hybrid);
+            metadata.semantic_score = Some(semantic_score);
+            metadata.lexical_score = Some(lexical_score);
+            metadata.citation_score = Some(citation_score);
+            metadata.position_score = Some(position_score);
+            metadata.composite_score = Some(composite_score);
+            metadata.avg_source_rank = Some(avg_source_rank);
+        }
     }
 
     rows.sort_by(|left, right| {
-        let left_ranking = left.row.ranking.as_ref();
-        let right_ranking = right.row.ranking.as_ref();
-        right_ranking
-            .map(|ranking| ranking.pubmed_rescue)
-            .cmp(&left_ranking.map(|ranking| ranking.pubmed_rescue))
-            .then_with(|| {
-                right_ranking
-                    .map(|ranking| ranking.directness_tier)
-                    .cmp(&left_ranking.map(|ranking| ranking.directness_tier))
-            })
-            .then_with(|| {
-                right_ranking
-                    .map(|ranking| ranking.title_anchor_hits)
-                    .cmp(&left_ranking.map(|ranking| ranking.title_anchor_hits))
-            })
-            .then_with(|| {
-                right_ranking
-                    .map(|ranking| ranking.combined_anchor_hits)
-                    .cmp(&left_ranking.map(|ranking| ranking.combined_anchor_hits))
-            })
-            .then_with(|| {
-                right_ranking
-                    .map(|ranking| ranking.study_or_review_cue)
-                    .cmp(&left_ranking.map(|ranking| ranking.study_or_review_cue))
-            })
-            .then_with(|| compare_optional_citations_desc(Some(&left.row), Some(&right.row)))
-            .then_with(|| {
-                right
-                    .row
-                    .influential_citation_count
-                    .cmp(&left.row.influential_citation_count)
-            })
-            .then_with(|| {
-                left.row
-                    .source_local_position
-                    .cmp(&right.row.source_local_position)
-            })
-            .then_with(|| {
-                stable_article_identifier(&left.row).cmp(&stable_article_identifier(&right.row))
-            })
+        let left_score = left
+            .row
+            .ranking
+            .as_ref()
+            .and_then(|ranking| ranking.composite_score)
+            .unwrap_or(0.0);
+        let right_score = right
+            .row
+            .ranking
+            .as_ref()
+            .and_then(|ranking| ranking.composite_score)
+            .unwrap_or(0.0);
+        right_score.total_cmp(&left_score).then_with(|| {
+            stable_article_identifier(&left.row).cmp(&stable_article_identifier(&right.row))
+        })
     });
 }
 
@@ -1446,7 +1795,11 @@ fn sort_article_rows(
     filters: &ArticleSearchFilters,
 ) {
     match sort {
-        ArticleSort::Relevance => rank_articles_by_directness(rows, filters),
+        ArticleSort::Relevance => match resolve_article_ranking(filters).mode {
+            ArticleRankingMode::Lexical => rank_articles_by_directness(rows, filters),
+            ArticleRankingMode::Semantic => rank_articles_by_semantic(rows, filters),
+            ArticleRankingMode::Hybrid => rank_articles_hybrid(rows, filters),
+        },
         ArticleSort::Citations => rows.sort_by(|left, right| {
             compare_optional_citations_desc(Some(&left.row), Some(&right.row))
                 .then_with(|| compare_optional_dates_desc(Some(&left.row), Some(&right.row)))
@@ -1462,6 +1815,7 @@ fn sort_article_rows(
 
 fn build_search_query(filters: &ArticleSearchFilters) -> Result<String, BioMcpError> {
     validate_required_search_filters(filters)?;
+    validate_article_ranking_options(filters)?;
     let (normalized_date_from, normalized_date_to) = normalized_date_bounds(filters)?;
     let mut terms: Vec<String> = Vec::new();
 
@@ -3237,6 +3591,7 @@ pub async fn search_page(
     validate_required_search_filters(filters)?;
     normalized_date_bounds(filters)?;
     validate_search_filter_values(filters)?;
+    validate_article_ranking_options(filters)?;
     let plan = plan_backends(filters, source)?;
     if filters.sort == ArticleSort::Relevance {
         return search_relevance_page(filters, limit, offset, plan).await;
@@ -3506,6 +3861,7 @@ mod tests {
             no_preprints: false,
             exclude_retracted: false,
             sort: ArticleSort::Relevance,
+            ranking: ArticleRankingOptions::default(),
         }
     }
 
@@ -3814,6 +4170,142 @@ mod tests {
             ArticleSort::Relevance
         );
         assert!(ArticleSort::from_flag("newest").is_err());
+    }
+
+    #[test]
+    fn article_ranking_mode_parses_supported_values() {
+        assert_eq!(
+            ArticleRankingMode::from_flag("lexical").expect("lexical should parse"),
+            ArticleRankingMode::Lexical
+        );
+        assert_eq!(
+            ArticleRankingMode::from_flag("semantic").expect("semantic should parse"),
+            ArticleRankingMode::Semantic
+        );
+        assert_eq!(
+            ArticleRankingMode::from_flag("hybrid").expect("hybrid should parse"),
+            ArticleRankingMode::Hybrid
+        );
+        assert!(ArticleRankingMode::from_flag("auto").is_err());
+    }
+
+    #[test]
+    fn default_ranking_mode_depends_on_keyword_presence() {
+        let mut keyword_filters = empty_filters();
+        keyword_filters.keyword = Some("melanoma".into());
+        assert_eq!(
+            resolve_article_ranking(&keyword_filters).mode,
+            ArticleRankingMode::Hybrid
+        );
+
+        let mut entity_filters = empty_filters();
+        entity_filters.gene = Some("BRAF".into());
+        assert_eq!(
+            resolve_article_ranking(&entity_filters).mode,
+            ArticleRankingMode::Lexical
+        );
+    }
+
+    #[test]
+    fn article_relevance_ranking_policy_formats_modes() {
+        let mut lexical_filters = empty_filters();
+        lexical_filters.gene = Some("BRAF".into());
+        assert_eq!(
+            article_effective_ranking_mode(&lexical_filters),
+            Some(ArticleRankingMode::Lexical)
+        );
+        assert_eq!(
+            article_relevance_ranking_policy(&lexical_filters).as_deref(),
+            Some(ARTICLE_RELEVANCE_RANKING_POLICY)
+        );
+
+        let mut semantic_filters = empty_filters();
+        semantic_filters.keyword = Some("melanoma".into());
+        semantic_filters.ranking.requested_mode = Some(ArticleRankingMode::Semantic);
+        assert_eq!(
+            article_effective_ranking_mode(&semantic_filters),
+            Some(ArticleRankingMode::Semantic)
+        );
+        assert_eq!(
+            article_relevance_ranking_policy(&semantic_filters).as_deref(),
+            Some(ARTICLE_SEMANTIC_RANKING_POLICY)
+        );
+
+        let mut hybrid_filters = empty_filters();
+        hybrid_filters.keyword = Some("melanoma".into());
+        hybrid_filters.ranking = ArticleRankingOptions::from_inputs(
+            Some("hybrid"),
+            Some(0.5),
+            Some(0.25),
+            Some(0.2),
+            Some(0.05),
+        )
+        .expect("hybrid options should parse");
+        assert_eq!(
+            article_effective_ranking_mode(&hybrid_filters),
+            Some(ArticleRankingMode::Hybrid)
+        );
+        assert_eq!(
+            article_relevance_ranking_policy(&hybrid_filters).as_deref(),
+            Some(
+                "hybrid relevance (score = 0.5*semantic + 0.25*lexical + 0.2*citations + 0.05*position)"
+            )
+        );
+    }
+
+    #[test]
+    fn search_article_ranking_flags_validate_cleanly() {
+        let mut non_relevance = empty_filters();
+        non_relevance.gene = Some("BRAF".into());
+        non_relevance.sort = ArticleSort::Date;
+        non_relevance.ranking.requested_mode = Some(ArticleRankingMode::Hybrid);
+        let err = validate_article_ranking_options(&non_relevance)
+            .expect_err("ranking mode should be rejected outside relevance sort");
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: --ranking-mode and --weight-* require --sort relevance"
+        );
+
+        let mut lexical_weights = empty_filters();
+        lexical_weights.keyword = Some("melanoma".into());
+        lexical_weights.ranking =
+            ArticleRankingOptions::from_inputs(Some("lexical"), Some(0.5), None, None, None)
+                .expect("options should parse");
+        let err = validate_article_ranking_options(&lexical_weights)
+            .expect_err("weights should require hybrid mode");
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: --weight-* flags require --ranking-mode hybrid or no explicit ranking mode"
+        );
+
+        let mut zero_weights = empty_filters();
+        zero_weights.keyword = Some("melanoma".into());
+        zero_weights.ranking = ArticleRankingOptions::from_inputs(
+            Some("hybrid"),
+            Some(0.0),
+            Some(0.0),
+            Some(0.0),
+            Some(0.0),
+        )
+        .expect("options should parse");
+        let err = validate_article_ranking_options(&zero_weights)
+            .expect_err("hybrid weights must not all be zero");
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: At least one hybrid ranking weight must be > 0"
+        );
+
+        let mut invalid_weight = empty_filters();
+        invalid_weight.keyword = Some("melanoma".into());
+        invalid_weight.ranking =
+            ArticleRankingOptions::from_inputs(Some("hybrid"), Some(f64::NAN), None, None, None)
+                .expect("options should parse");
+        let err = validate_article_ranking_options(&invalid_weight)
+            .expect_err("non-finite weights should fail validation");
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: --weight-semantic must be finite"
+        );
     }
 
     #[test]
@@ -7416,6 +7908,7 @@ mod tests {
         fn lb100_mesh_synonym_fixture() -> (ArticleSearchFilters, Vec<ArticleSearchResult>) {
             let mut filters = empty_filters();
             filters.keyword = Some("hepatic steatosis PP2A phosphatase inhibitor".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Lexical);
 
             let pubmed_answer = calibration_row(
                 "31832001",
@@ -7440,6 +7933,7 @@ mod tests {
             filters.drug = Some("LB-100".into());
             filters.disease = Some("hepatic steatosis".into());
             filters.keyword = Some("LB-100 hepatic steatosis AMPK".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Lexical);
 
             let pubmed_answer = calibration_row(
                 "31832001",
@@ -7469,6 +7963,76 @@ mod tests {
             rows.iter()
                 .position(|row| row.pmid == pmid)
                 .unwrap_or_else(|| panic!("missing row for PMID {pmid}"))
+        }
+
+        fn worked_example_row(
+            pmid: &str,
+            source: ArticleSource,
+            title: &str,
+            abstract_snippet: &str,
+            source_local_position: usize,
+            citations: u64,
+            score: Option<f64>,
+        ) -> ArticleSearchResult {
+            let mut row =
+                calibration_row(pmid, source, title, abstract_snippet, source_local_position);
+            row.citation_count = Some(citations);
+            row.score = score;
+            row
+        }
+
+        fn hybrid_worked_example_fixture() -> (ArticleSearchFilters, Vec<ArticleSearchResult>) {
+            let mut filters = empty_filters();
+            filters.keyword = Some("congenital absence ganglion cells".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Hybrid);
+
+            let paper_a = worked_example_row(
+                "1001",
+                ArticleSource::LitSense2,
+                "Enteric neural crest migration in gut development",
+                "",
+                4,
+                53,
+                Some(0.95),
+            );
+            let paper_b = worked_example_row(
+                "1002",
+                ArticleSource::EuropePmc,
+                "Congenital absence ganglion cells in rectal biopsy",
+                "",
+                0,
+                0,
+                None,
+            );
+            let paper_c = worked_example_row(
+                "1003",
+                ArticleSource::LitSense2,
+                "Ganglion deficiency pathology cohort",
+                "Congenital absence ganglion cells were confirmed across the cohort",
+                2,
+                231,
+                Some(0.72),
+            );
+            let paper_d = worked_example_row(
+                "1004",
+                ArticleSource::EuropePmc,
+                "Ganglion review note",
+                "",
+                7,
+                10,
+                None,
+            );
+            let paper_e = worked_example_row(
+                "1005",
+                ArticleSource::LitSense2,
+                "Enteric neuropathy pathway atlas",
+                "",
+                11,
+                6,
+                Some(0.80),
+            );
+
+            (filters, vec![paper_a, paper_b, paper_c, paper_d, paper_e])
         }
 
         #[test]
@@ -7542,6 +8106,7 @@ mod tests {
         fn zero_overlap_pubmed_unique_position_zero_is_not_rescued() {
             let mut filters = empty_filters();
             filters.keyword = Some("ncRNA promoter prediction tools".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Lexical);
 
             let pubmed = calibration_row(
                 "41721224",
@@ -7568,6 +8133,7 @@ mod tests {
             filters.gene = Some("AMPK".into());
             filters.disease = Some("hepatic steatosis".into());
             filters.keyword = Some("PP2A inhibitor".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Lexical);
 
             let pubmed = calibration_row(
                 "99000003",
@@ -7759,6 +8325,7 @@ mod tests {
             let mut filters = empty_filters();
             filters.gene = Some("BRAF".into());
             filters.keyword = Some("melanoma review".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Lexical);
 
             let mut weak = calibration_row("100", ArticleSource::PubMed, "BRAF case report", "", 0);
             weak.citation_count = Some(1);
@@ -7787,6 +8354,164 @@ mod tests {
                     .collect::<Vec<_>>(),
                 vec!["200", "300", "100"]
             );
+        }
+
+        #[test]
+        fn hybrid_default_weights_orders_example_one() {
+            let (filters, candidates) = hybrid_worked_example_fixture();
+            let page = finalize_article_candidates(candidates, 10, 0, None, &filters);
+
+            assert_eq!(
+                page.results
+                    .iter()
+                    .map(|row| row.pmid.as_str())
+                    .collect::<Vec<_>>(),
+                vec!["1003", "1001", "1002", "1005", "1004"]
+            );
+        }
+
+        #[test]
+        fn lexical_mode_matches_current_ordering() {
+            let (mut filters, candidates) = hybrid_worked_example_fixture();
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Lexical);
+            let page = finalize_article_candidates(candidates, 10, 0, None, &filters);
+
+            assert_eq!(
+                page.results
+                    .iter()
+                    .map(|row| row.pmid.as_str())
+                    .collect::<Vec<_>>(),
+                vec!["1002", "1003", "1004", "1001", "1005"]
+            );
+        }
+
+        #[test]
+        fn semantic_mode_prefers_score_before_lexical_fallback() {
+            let (mut filters, candidates) = hybrid_worked_example_fixture();
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Semantic);
+            let page = finalize_article_candidates(candidates, 10, 0, None, &filters);
+
+            assert_eq!(
+                page.results
+                    .iter()
+                    .map(|row| row.pmid.as_str())
+                    .collect::<Vec<_>>(),
+                vec!["1001", "1005", "1003", "1002", "1004"]
+            );
+        }
+
+        #[test]
+        fn hybrid_entity_only_falls_back_without_nan() {
+            let mut filters = empty_filters();
+            filters.disease = Some("Hirschsprung disease".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Hybrid);
+
+            let rows = vec![
+                worked_example_row(
+                    "2001",
+                    ArticleSource::EuropePmc,
+                    "Hirschsprung disease review",
+                    "",
+                    0,
+                    5,
+                    None,
+                ),
+                worked_example_row(
+                    "2002",
+                    ArticleSource::EuropePmc,
+                    "Enteric neuropathy mechanisms",
+                    "Hirschsprung disease cases were reviewed in the cohort",
+                    0,
+                    100,
+                    None,
+                ),
+                worked_example_row(
+                    "2003",
+                    ArticleSource::EuropePmc,
+                    "Ganglion development note",
+                    "",
+                    0,
+                    1000,
+                    None,
+                ),
+            ];
+
+            let page = finalize_article_candidates(rows, 10, 0, None, &filters);
+
+            assert_eq!(
+                page.results
+                    .iter()
+                    .map(|row| row.pmid.as_str())
+                    .collect::<Vec<_>>(),
+                vec!["2001", "2002", "2003"]
+            );
+            assert!(page.results.iter().all(|row| {
+                let ranking = row.ranking.as_ref().expect("ranking should be present");
+                ranking.semantic_score == Some(0.0)
+                    && ranking
+                        .composite_score
+                        .is_some_and(|score| score.is_finite())
+            }));
+        }
+
+        #[test]
+        fn hybrid_custom_weights_shift_ordering() {
+            let (mut filters, candidates) = hybrid_worked_example_fixture();
+            filters.ranking = ArticleRankingOptions::from_inputs(
+                Some("hybrid"),
+                Some(0.1),
+                Some(0.6),
+                Some(0.2),
+                Some(0.1),
+            )
+            .expect("options should parse");
+            let page = finalize_article_candidates(candidates, 10, 0, None, &filters);
+
+            assert_eq!(
+                page.results
+                    .iter()
+                    .map(|row| row.pmid.as_str())
+                    .collect::<Vec<_>>(),
+                vec!["1003", "1002", "1004", "1001", "1005"]
+            );
+        }
+
+        #[test]
+        fn hybrid_scoring_is_zero_safe() {
+            let mut filters = empty_filters();
+            filters.keyword = Some("ganglion".into());
+            filters.ranking.requested_mode = Some(ArticleRankingMode::Hybrid);
+
+            let rows = vec![
+                worked_example_row(
+                    "3001",
+                    ArticleSource::LitSense2,
+                    "Ganglion atlas",
+                    "",
+                    0,
+                    0,
+                    Some(0.8),
+                ),
+                worked_example_row(
+                    "3002",
+                    ArticleSource::EuropePmc,
+                    "Ganglion case note",
+                    "",
+                    0,
+                    0,
+                    None,
+                ),
+            ];
+
+            let page = finalize_article_candidates(rows, 10, 0, None, &filters);
+            assert!(page.results.iter().all(|row| {
+                let ranking = row.ranking.as_ref().expect("ranking should be present");
+                ranking.citation_score == Some(0.0)
+                    && ranking.position_score == Some(0.0)
+                    && ranking
+                        .composite_score
+                        .is_some_and(|score| score.is_finite())
+            }));
         }
     }
 

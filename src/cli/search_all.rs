@@ -617,6 +617,7 @@ fn article_filters(input: &PreparedInput) -> crate::entities::article::ArticleSe
         no_preprints: false,
         exclude_retracted: true,
         sort: crate::entities::article::ArticleSort::Relevance,
+        ranking: crate::entities::article::ArticleRankingOptions::default(),
     }
 }
 
@@ -1907,7 +1908,9 @@ fn dedupe_gwas_rows(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::entities::article::{ArticleRankingMetadata, ArticleSearchResult, ArticleSource};
+    use crate::entities::article::{
+        ArticleRankingMetadata, ArticleRankingMode, ArticleSearchResult, ArticleSource,
+    };
     use crate::entities::drug::DrugSearchResult;
     use crate::entities::trial::TrialSearchResult;
     use crate::entities::variant::VariantGwasAssociation;
@@ -2150,6 +2153,13 @@ mod tests {
                 pubmed_rescue: false,
                 pubmed_rescue_kind: None,
                 pubmed_source_position: None,
+                mode: Some(ArticleRankingMode::Lexical),
+                semantic_score: None,
+                lexical_score: None,
+                citation_score: None,
+                position_score: None,
+                composite_score: None,
+                avg_source_rank: None,
             }),
             normalized_title: "braf melanoma review".into(),
             normalized_abstract: "abstract".into(),
