@@ -227,6 +227,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "Article search fans out to PubTator3, Europe PMC, and PubMed by default when the filter set is compatible."
         in article_guide_ws
     )
+    assert "MeSH/title/abstract" not in article_guide_ws
     assert (
         "When a non-empty keyword is present, BioMCP also adds LitSense2 to the federated route."
         in article_guide_ws
@@ -240,12 +241,15 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         'biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5'
         in article_guide
     )
+    assert "MeSH/title/abstract" not in find_articles_ws
     assert "Do not guess `-g`, `-d`, or `--drug` when the question is trying to identify the entity itself." in find_articles_ws
     assert 'biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5' in find_articles_ws
+    assert "MeSH/title/abstract" not in article_keyword_reference_ws
     assert (
         "On the default `--source all` route, adding `-k/--keyword` also brings LitSense2 into compatible federated searches and makes the default relevance mode `hybrid`."
         in article_keyword_reference_ws
     )
+    assert "do not guess a disease or drug name just to fill `-d` or `--drug`" in article_keyword_reference_ws
     assert "Turn a literature question into article filters" in cli_list_reference_ws
     assert (
         "known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`"

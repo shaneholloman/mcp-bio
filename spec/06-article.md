@@ -134,6 +134,8 @@ printf '%s\n' "$help_out" | grep -F -- '[possible values: all, pubtator, europep
 list_out="$("$bin" list article)"
 echo "$list_out" | mustmatch like "## Query formulation"
 echo "$list_out" | mustmatch like "Known gene/disease/drug already identified"
+echo "$list_out" | mustmatch like "Keyword-only topic, dataset, or method question"
+echo "$list_out" | mustmatch like 'Do not invent `-g/-d/--drug`; stay keyword-first or start with `discover`'
 echo "$list_out" | mustmatch like "biomcp search article -g BRAF --limit 5"
 echo "$list_out" | mustmatch like "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
 echo "$list_out" | mustmatch like "biomcp search article --drug amiodarone -k \"photosensitivity mechanism\" --limit 5"

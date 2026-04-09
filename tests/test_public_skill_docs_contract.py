@@ -133,6 +133,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "Use `article batch` as the default follow-up after `search article`" in article_guide
     assert "`--type` on `--source all` uses Europe PMC + PubMed" in article_guide
     assert "PMC-only note" in article_guide
+    assert "MeSH/title/abstract" not in article_guide
     assert (
         "Put a known gene, disease, or drug in `-g/--gene`, `-d/--disease`, or `--drug`."
         in article_guide
@@ -151,9 +152,12 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     )
     assert "`--type` on the default `--source all` route uses Europe PMC + PubMed" in find_articles
     assert "Europe PMC-only with an explicit note" in find_articles
+    assert "MeSH/title/abstract" not in find_articles
     assert "Do not guess `-g`, `-d`, or `--drug`" in find_articles
     assert 'biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5' in find_articles
+    assert "MeSH/title/abstract" not in keyword_reference
     assert "On the default `--source all` route, adding `-k/--keyword` also brings LitSense2" in keyword_reference
+    assert "do not guess a disease or drug name" in keyword_reference
     assert (
         'biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5'
         in keyword_reference

@@ -115,7 +115,7 @@ biomcp search article -g BRAF --type review --limit 5
 other selected filters are PubMed-compatible. If you also need
 `--open-access` or `--no-preprints`, PubMed drops out and the search collapses
 to Europe PMC-only with an explicit note. Use `--source pubmed` when you want
-PubMed's own MeSH/title/abstract search directly and do not need those
+PubMed-only article search on the compatible filter set and do not need those
 PubMed-incompatible filters.
 
 ## Inspect the ranking rationale in JSON

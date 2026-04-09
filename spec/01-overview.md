@@ -56,9 +56,12 @@ echo "$out" | mustmatch like "## When to Use What"
 echo "$out" | mustmatch like "search drug --indication \"<disease>\""
 echo "$out" | mustmatch like "discover \"<free text>\""
 echo "$out" | mustmatch like "search all --gene BRAF --disease melanoma"
+echo "$out" | mustmatch like "Turn a literature question into article filters"
 echo "$out" | mustmatch like "article citations <id>"
 echo "$out" | mustmatch like "batch <entity> <id1,id2,...>"
 echo "$out" | mustmatch like "enrich <GENE1,GENE2,...>"
+echo "$out" | mustmatch not like "## Query formulation"
+echo "$out" | mustmatch not like "photosensitivity mechanism"
 echo "$out" | mustmatch like '- `cache path` - print the managed HTTP cache directory `<resolved cache_root>/http`; output stays plain text and ignores `--json`'
 echo "$out" | mustmatch like '- `cache stats` - show HTTP cache statistics (total blob inventory, referenced blob bytes, age range, resolved limits including min disk free); supports `--json` for machine-readable output'
 echo "$out" | mustmatch like '- `cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]` - remove orphan blobs and optionally age- or size-evict the HTTP cache; supports `--json` for machine-readable output'
@@ -96,6 +99,8 @@ echo "$out" | mustmatch like "## When to use this surface"
 echo "$out" | mustmatch like "## Query formulation"
 echo "$out" | mustmatch like "Use keyword search to scan a topic before you know the entities."
 echo "$out" | mustmatch like "Known gene/disease/drug already identified"
+echo "$out" | mustmatch like "Keyword-only topic, dataset, or method question"
+echo "$out" | mustmatch like 'Do not invent `-g/-d/--drug`; stay keyword-first or start with `discover`'
 echo "$out" | mustmatch like "Prefer `--type review`"
 echo "$out" | mustmatch like "biomcp search article -g BRAF --limit 5"
 echo "$out" | mustmatch like "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"

@@ -769,6 +769,7 @@ mod tests {
         assert!(out.contains("discover \"<free text>\""));
         assert!(out.contains("article citations <id>"));
         assert!(out.contains("enrich <GENE1,GENE2,...>"));
+        assert!(out.contains("Turn a literature question into article filters"));
         assert!(out.contains("`skill install` - install BioMCP skill guidance to your agent"));
         assert!(out.contains("`discover <query>`"));
         assert!(out.contains("`cache path`"));
@@ -776,6 +777,8 @@ mod tests {
         assert!(
             out.contains("`cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]`")
         );
+        assert!(!out.contains("## Query formulation"));
+        assert!(!out.contains("photosensitivity mechanism"));
     }
 
     #[test]
@@ -946,6 +949,12 @@ mod tests {
         assert!(article.contains("article batch <id> [<id>...]"));
         assert!(article.contains("## Query formulation"));
         assert!(article.contains("Known gene/disease/drug already identified"));
+        assert!(article.contains("Keyword-only topic, dataset, or method question"));
+        assert!(
+            article.contains(
+                "Do not invent `-g/-d/--drug`; stay keyword-first or start with `discover`"
+            )
+        );
         assert!(article.contains("biomcp search article -g BRAF --limit 5"));
         assert!(
             article.contains(
