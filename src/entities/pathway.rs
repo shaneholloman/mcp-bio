@@ -582,10 +582,12 @@ pub async fn search_with_filters(
             (Vec::new(), Some(err))
         }
     };
-    if reactome_hits.is_empty() && kegg_hits.is_empty() && wikipathways_hits.is_empty() {
-        if let Some(err) = reactome_error.or(kegg_error).or(wikipathways_error) {
-            return Err(err);
-        }
+    if reactome_hits.is_empty()
+        && kegg_hits.is_empty()
+        && wikipathways_hits.is_empty()
+        && let Some(err) = reactome_error.or(kegg_error).or(wikipathways_error)
+    {
+        return Err(err);
     }
     let total = if !kegg_hits.is_empty() || !wikipathways_hits.is_empty() {
         None
