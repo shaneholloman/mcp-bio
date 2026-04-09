@@ -77,7 +77,13 @@ front door. `--source` remains
 user-facing `--source semanticscholar` mode.
 
 After fetch, article results deduplicate across PMID, PMCID, and DOI where
-possible, then re-rank locally with an effective relevance mode:
+possible, then re-rank locally. Before local ranking, the PMID-eligible
+deduplicated pool caps each federated source's contribution after
+deduplication and before ranking. Default: 40% of `--limit` on federated pools
+with at least three surviving primary sources. Rows count against their
+primary source after deduplication. `--max-per-source 0` uses the default cap,
+and setting it equal to `--limit` disables capping. The capped pool then
+re-ranks locally with an effective relevance mode:
 
 - `lexical` preserves the calibrated PubMed rescue plus lexical directness
   comparator byte-for-byte;
@@ -89,7 +95,7 @@ possible, then re-rank locally with an effective relevance mode:
   LitSense2 did not match, plus CLI weight overrides for experimentation.
 
 Keyword-bearing article queries default to `hybrid`, while entity-only article
-queries default to `lexical`. The local ranking pipeline still has three
+queries default to `lexical`. The local ranking pipeline still has four
 explicit responsibilities:
 
 1. **Lexical preparation:** build ranking concepts from structured filters plus
@@ -98,7 +104,10 @@ explicit responsibilities:
 2. **Per-source provenance:** preserve `matched_sources` together with
    source-local backend position through merge and dedup so backend-local rank
    survives federation.
-3. **Mode-aware scoring:** keep the existing lexical comparator as a stable
+3. **Pre-ranking source balancing:** cap one source before local ranking can
+   flood the visible pool, but only after deduplication decides the primary
+   source for each row.
+4. **Mode-aware scoring:** keep the existing lexical comparator as a stable
    fallback while exposing the LitSense2-derived semantic signal, citation
    support, and average source-local position as explicit ranking signals.
 

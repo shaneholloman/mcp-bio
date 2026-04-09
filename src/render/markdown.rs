@@ -4474,6 +4474,7 @@ pub(crate) mod tests {
             open_access: false,
             no_preprints: true,
             exclude_retracted: true,
+            max_per_source: None,
             sort,
             ranking: ArticleRankingOptions::default(),
         }

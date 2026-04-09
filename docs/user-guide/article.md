@@ -112,6 +112,12 @@ Markdown preserves the merged rank order, and JSON includes row-level
 
 Use `--source <all, pubtator, europepmc, pubmed, litsense2>` to select one
 backend or keep the default federated search.
+BioMCP caps each federated source's contribution after deduplication and before
+ranking. Default: 40% of `--limit` on federated pools with at least three
+surviving primary sources. Rows count against their primary source after
+deduplication. Use `--max-per-source <N>` to override that cap, use
+`--max-per-source 0` for the default cap explicitly, and set it equal to
+`--limit` to disable capping.
 Default article search excludes confirmed retractions unless you pass
 `--include-retracted`. Sources that do not expose retraction metadata still
 participate in the search, and JSON search rows keep the tri-state contract:
@@ -130,6 +136,12 @@ To search a single backend:
 biomcp search article -g BRAF --source pubtator --limit 5
 biomcp search article -g BRAF --source europepmc --limit 5
 biomcp search article -g BRAF --source pubmed --limit 5
+```
+
+To force a tighter federated balance:
+
+```bash
+biomcp search article -k "Kartagener syndrome ciliopathy" --limit 50 --max-per-source 10
 ```
 
 ## Get an article

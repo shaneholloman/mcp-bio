@@ -25,6 +25,12 @@ into compatible federated searches and makes the default relevance mode
 `hybrid`.
 That semantic-aware path uses the LitSense2-derived semantic signal; rows
 without LitSense2 provenance contribute `semantic=0`.
+BioMCP caps each federated source's contribution after deduplication and before
+ranking. Default: 40% of `--limit` on federated pools with at least three
+surviving primary sources. Rows count against their primary source after
+deduplication. Use `--max-per-source <N>` to override that cap, use
+`--max-per-source 0` for the default cap explicitly, and set it equal to
+`--limit` to disable capping.
 
 ## When `--keyword` should be combined with typed filters
 

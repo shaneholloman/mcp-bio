@@ -20,7 +20,7 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 | Trial (default) | ClinicalTrials.gov API v2 | `https://clinicaltrials.gov/api/v2` | No | Default trial search/get source |
 | Trial (optional) | NCI CTS API | `https://clinicaltrialsapi.cancer.gov/api/v2` | Yes (`NCI_API_KEY`) | Enabled via `--source nci` |
 | NCI CTS trial search | NCI CTS API | `https://clinicaltrialsapi.cancer.gov/api/v2` | Yes (`NCI_API_KEY`) | `search trial --source nci` |
-| Article search & metadata | PubTator3 + Europe PMC + PubMed + LitSense2 + optional Semantic Scholar | `https://www.ncbi.nlm.nih.gov/research/pubtator3-api`, `https://www.ebi.ac.uk/europepmc/webservices/rest`, `https://eutils.ncbi.nlm.nih.gov/entrez/eutils`, `https://www.ncbi.nlm.nih.gov/research/litsense2-api/api`, `https://api.semanticscholar.org` | Optional (`S2_API_KEY`) | Federated search with identifier-aware merge plus lexical, semantic, or weighted hybrid relevance ranking |
+| Article search & metadata | PubTator3 + Europe PMC + PubMed + LitSense2 + optional Semantic Scholar | `https://www.ncbi.nlm.nih.gov/research/pubtator3-api`, `https://www.ebi.ac.uk/europepmc/webservices/rest`, `https://eutils.ncbi.nlm.nih.gov/entrez/eutils`, `https://www.ncbi.nlm.nih.gov/research/litsense2-api/api`, `https://api.semanticscholar.org` | Optional (`S2_API_KEY`) | Federated search with identifier-aware merge, per-source capping after deduplication and before ranking, plus lexical, semantic, or weighted hybrid relevance ranking |
 | Article enrichment and graph helpers | Semantic Scholar | `https://api.semanticscholar.org` | Optional (`S2_API_KEY`) | Search-leg metadata, TLDR, influential citations, citation/reference graph, recommendations |
 | Article annotations | PubTator3 | `https://www.ncbi.nlm.nih.gov/research/pubtator3-api` | No | Entity annotations |
 | Article full-text resolution | PMC OA + NCBI ID Converter | `https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi`, `https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles` | No | Full-text and PMID/PMCID/DOI bridging |
@@ -107,7 +107,7 @@ BioMCP supports two trial backends with similar command syntax but different ret
 
 Article workflows compose multiple APIs for different tasks:
 
-1. PubTator3 + Europe PMC + PubMed for federated search, with LitSense2 added for keyword-bearing queries and an optional Semantic Scholar leg when the filter set is compatible (parallel fan-out, identifier-aware merge across PMID/PMCID/DOI, local lexical/semantic/hybrid relevance ranking)
+1. PubTator3 + Europe PMC + PubMed for federated search, with LitSense2 added for keyword-bearing queries and an optional Semantic Scholar leg when the filter set is compatible (parallel fan-out, identifier-aware merge across PMID/PMCID/DOI, per-source capping after deduplication and before ranking, local lexical/semantic/hybrid relevance ranking)
 2. Europe PMC for bibliographic metadata
 3. PubTator3 for entity annotations
 4. Semantic Scholar for the optional search leg, TLDR, citation graph, influential citation counts, and recommendations
