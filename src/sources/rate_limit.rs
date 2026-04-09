@@ -48,6 +48,12 @@ impl RateLimiter {
                 pubmed_eutils_min_interval(has_ncbi_api_key),
             ),
             policy(
+                "litsense2",
+                "BIOMCP_LITSENSE2_BASE",
+                "https://www.ncbi.nlm.nih.gov/research/litsense2-api/api",
+                Duration::from_secs(1),
+            ),
+            policy(
                 "ncbi-idconv",
                 "BIOMCP_NCBI_IDCONV_BASE",
                 "https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles",
@@ -413,5 +419,31 @@ mod tests {
             )
             .expect("pubmed E-utilities URL should parse");
         assert_eq!(key, "policy:pubmed-eutils");
+    }
+
+    #[test]
+    fn litsense2_policy_uses_one_second_interval() {
+        let limiter = RateLimiter::from_env();
+        let policy = limiter
+            .policies
+            .iter()
+            .find(|policy| policy.key == "litsense2")
+            .expect("litsense2 policy should be registered");
+        assert_eq!(policy.min_interval, Duration::from_secs(1));
+        assert_eq!(
+            policy.prefix.as_ref(),
+            "https://www.ncbi.nlm.nih.gov/research/litsense2-api/api"
+        );
+    }
+
+    #[test]
+    fn litsense2_urls_resolve_to_litsense2_policy() {
+        let limiter = RateLimiter::from_env();
+        let key = limiter
+            .resolve_key_for_str(
+                "https://www.ncbi.nlm.nih.gov/research/litsense2-api/api/sentences/?query=test&rerank=true",
+            )
+            .expect("litsense2 URL should parse");
+        assert_eq!(key, "policy:litsense2");
     }
 }

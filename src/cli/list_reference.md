@@ -67,7 +67,7 @@ New to BioMCP? Try:
 - `search gene ... --region --pathway --go` (use GO IDs like `GO:0004672`; search output includes Coordinates/UniProt/OMIM)
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
-- `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed>`
+- `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed, litsense2>`
 - `search drug ... --region <us|eu|all>` (omitting `--region` checks both U.S. and EU for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `eu|all` with structured filters errors)
 
 ## Helpers
@@ -109,6 +109,8 @@ Results depend on source document wording and may vary across sources.
 
 - Set `NCBI_API_KEY` to increase NCBI request throughput for article annotation/full-text paths.
 - Set `S2_API_KEY` for authenticated Semantic Scholar requests at 1 req/sec; without it, BioMCP uses the shared pool at 1 req/2sec.
+- `search article` defaults to PubTator3 + Europe PMC + PubMed when the filter set is compatible; LitSense2 joins keyword-driven federated searches, and Semantic Scholar is still automatic on compatible queries.
+- `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
 - EU drug commands auto-download the EMA human-medicines JSON feeds on first use into the default data dir or `BIOMCP_EMA_DIR`, then refresh stale files after 72 hours.
 - Run `ema sync` to force-refresh the EMA local data feeds.
 - Use `biomcp health --apis-only` for upstream/API checks and full `biomcp health` for local EMA/cache readiness plus cache-limit warnings.

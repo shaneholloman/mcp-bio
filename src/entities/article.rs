@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use futures::future::try_join_all;
@@ -10,6 +10,7 @@ use crate::error::BioMcpError;
 use crate::sources::europepmc::{
     EuropePmcClient, EuropePmcResult, EuropePmcSearchResponse, EuropePmcSort,
 };
+use crate::sources::litsense2::LitSense2Client;
 use crate::sources::ncbi_idconv::NcbiIdConverterClient;
 use crate::sources::pmc_oa::PmcOaClient;
 use crate::sources::pubmed::{PubMedClient, PubMedESearchParams};
@@ -264,6 +265,7 @@ pub enum ArticleSource {
     EuropePmc,
     SemanticScholar,
     PubMed,
+    LitSense2,
 }
 
 impl ArticleSource {
@@ -273,6 +275,7 @@ impl ArticleSource {
             Self::EuropePmc => "Europe PMC",
             Self::SemanticScholar => "Semantic Scholar",
             Self::PubMed => "PubMed",
+            Self::LitSense2 => "LitSense2",
         }
     }
 }
@@ -285,6 +288,7 @@ pub enum ArticleSourceFilter {
     PubTator,
     EuropePmc,
     PubMed,
+    LitSense2,
 }
 
 impl ArticleSourceFilter {
@@ -294,8 +298,9 @@ impl ArticleSourceFilter {
             "pubtator" => Ok(Self::PubTator),
             "europepmc" | "europe-pmc" => Ok(Self::EuropePmc),
             "pubmed" => Ok(Self::PubMed),
+            "litsense2" => Ok(Self::LitSense2),
             other => Err(BioMcpError::InvalidArgument(format!(
-                "Unknown --source '{other}'. Expected one of: all, pubtator, europepmc, pubmed."
+                "Unknown --source '{other}'. Expected one of: all, pubtator, europepmc, pubmed, litsense2."
             ))),
         }
     }
@@ -306,6 +311,7 @@ impl ArticleSourceFilter {
             Self::PubTator => "pubtator",
             Self::EuropePmc => "europepmc",
             Self::PubMed => "pubmed",
+            Self::LitSense2 => "litsense2",
         }
     }
 }
@@ -406,6 +412,7 @@ enum BackendPlan {
     EuropeOnly,
     PubTatorOnly,
     PubMedOnly,
+    LitSense2Only,
     TypeCapable,
     Both,
 }
@@ -673,6 +680,14 @@ fn has_article_type_filter(filters: &ArticleSearchFilters) -> bool {
         .is_some_and(|value| !value.is_empty())
 }
 
+fn has_keyword_query(filters: &ArticleSearchFilters) -> bool {
+    filters
+        .keyword
+        .as_deref()
+        .map(str::trim)
+        .is_some_and(|value| !value.is_empty())
+}
+
 fn pubmed_filter_compatible(filters: &ArticleSearchFilters) -> bool {
     !filters.open_access && !filters.no_preprints
 }
@@ -712,6 +727,25 @@ fn pubmed_source_filter_error(filters: &ArticleSearchFilters) -> BioMcpError {
     }
 }
 
+fn litsense2_source_filter_error(filters: &ArticleSearchFilters) -> BioMcpError {
+    if !has_keyword_query(filters) {
+        return BioMcpError::InvalidArgument(
+            "--source litsense2 requires a keyword query. Add -k/--keyword (or a positional query) or use --source all.".into(),
+        );
+    }
+    if has_article_type_filter(filters) {
+        return BioMcpError::InvalidArgument(
+            "--source litsense2 does not support --type. Use --source europepmc, --source pubmed, or remove --type.".into(),
+        );
+    }
+    if filters.open_access {
+        return BioMcpError::InvalidArgument(
+            "--source litsense2 does not support --open-access. Use --source europepmc or remove --open-access.".into(),
+        );
+    }
+    unreachable!("litsense2_source_filter_error called with compatible filters");
+}
+
 fn plan_backends(
     filters: &ArticleSearchFilters,
     source: ArticleSourceFilter,
@@ -729,6 +763,15 @@ fn plan_backends(
                 return Err(pubmed_source_filter_error(filters));
             }
             Ok(BackendPlan::PubMedOnly)
+        }
+        ArticleSourceFilter::LitSense2 => {
+            if !has_keyword_query(filters)
+                || has_article_type_filter(filters)
+                || filters.open_access
+            {
+                return Err(litsense2_source_filter_error(filters));
+            }
+            Ok(BackendPlan::LitSense2Only)
         }
         ArticleSourceFilter::All => {
             if filters.open_access {
@@ -753,6 +796,15 @@ pub fn semantic_scholar_search_enabled(
     source == ArticleSourceFilter::All && !has_strict_europepmc_filters(filters)
 }
 
+pub fn litsense2_search_enabled(
+    filters: &ArticleSearchFilters,
+    source: ArticleSourceFilter,
+) -> bool {
+    source == ArticleSourceFilter::All
+        && !has_strict_europepmc_filters(filters)
+        && has_keyword_query(filters)
+}
+
 pub(crate) fn article_type_limitation_note(
     filters: &ArticleSearchFilters,
     source: ArticleSourceFilter,
@@ -762,12 +814,12 @@ pub(crate) fn article_type_limitation_note(
     }
     if pubmed_filter_compatible(filters) {
         Some(
-            "Note: --type restricts article search to Europe PMC and PubMed. PubTator3 and Semantic Scholar do not support publication-type filtering."
+            "Note: --type restricts article search to Europe PMC and PubMed. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering."
                 .into(),
         )
     } else {
         Some(
-            "Note: --type restricts this article search to Europe PMC. PubTator3 and Semantic Scholar do not support publication-type filtering, and PubMed does not support the other selected filters."
+            "Note: --type restricts this article search to Europe PMC. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering, and PubMed does not support the other selected filters."
                 .into(),
         )
     }
@@ -796,6 +848,7 @@ pub(crate) fn summarize_debug_plan(
         (BackendPlan::EuropeOnly, _) => "planner=europe_only",
         (BackendPlan::PubTatorOnly, _) => "planner=pubtator_only",
         (BackendPlan::PubMedOnly, _) => "planner=pubmed_only",
+        (BackendPlan::LitSense2Only, _) => "planner=litsense2_only",
         (BackendPlan::TypeCapable, _) => "planner=type_capable",
         (BackendPlan::Both, _) => "planner=federated",
     };
@@ -804,11 +857,15 @@ pub(crate) fn summarize_debug_plan(
         BackendPlan::EuropeOnly => vec!["Europe PMC".to_string()],
         BackendPlan::PubTatorOnly => vec!["PubTator3".to_string()],
         BackendPlan::PubMedOnly => vec!["PubMed".to_string()],
+        BackendPlan::LitSense2Only => vec!["LitSense2".to_string()],
         BackendPlan::TypeCapable => vec!["Europe PMC".to_string(), "PubMed".to_string()],
         BackendPlan::Both => {
             let mut sources = vec!["PubTator3".to_string(), "Europe PMC".to_string()];
             if pubmed_filter_compatible(filters) {
                 sources.push("PubMed".to_string());
+            }
+            if litsense2_search_enabled(filters, source) {
+                sources.push("LitSense2".to_string());
             }
             sources
         }
@@ -822,6 +879,7 @@ pub(crate) fn summarize_debug_plan(
         ArticleSource::EuropePmc,
         ArticleSource::PubMed,
         ArticleSource::SemanticScholar,
+        ArticleSource::LitSense2,
     ]
     .into_iter()
     .filter(|candidate| {
@@ -974,6 +1032,7 @@ fn article_source_priority(source: ArticleSource) -> u8 {
         ArticleSource::EuropePmc => 1,
         ArticleSource::PubMed => 2,
         ArticleSource::SemanticScholar => 3,
+        ArticleSource::LitSense2 => 4,
     }
 }
 
@@ -2450,7 +2509,7 @@ async fn search_pubtator_page(
     Ok(SearchPage::offset(out, total))
 }
 
-fn build_semantic_scholar_query(filters: &ArticleSearchFilters) -> String {
+fn build_free_text_article_query(filters: &ArticleSearchFilters) -> String {
     [
         filters.gene.as_deref(),
         filters.disease.as_deref(),
@@ -2472,7 +2531,7 @@ async fn search_semantic_scholar_candidates(
 ) -> Result<Vec<ArticleSearchResult>, BioMcpError> {
     let client = SemanticScholarClient::new()?;
 
-    let query = build_semantic_scholar_query(filters);
+    let query = build_free_text_article_query(filters);
     if query.trim().is_empty() {
         return Ok(Vec::new());
     }
@@ -2557,6 +2616,124 @@ async fn search_semantic_scholar_candidates(
     Ok(rows)
 }
 
+async fn search_litsense2_candidates(
+    filters: &ArticleSearchFilters,
+    limit: usize,
+) -> Result<Vec<ArticleSearchResult>, BioMcpError> {
+    let query = build_free_text_article_query(filters);
+    if query.trim().is_empty() {
+        return Ok(Vec::new());
+    }
+    let (normalized_date_from, normalized_date_to) = normalized_date_bounds(filters)?;
+    let response = LitSense2Client::new()?.sentence_search(&query).await?;
+
+    let mut deduped: HashMap<u64, (crate::sources::litsense2::LitSense2SearchHit, usize)> =
+        HashMap::new();
+    for (index, hit) in response.into_iter().enumerate() {
+        match deduped.get_mut(&hit.pmid) {
+            Some((best, _)) if hit.score > best.score => *best = hit,
+            Some(_) => {}
+            None => {
+                deduped.insert(hit.pmid, (hit, index));
+            }
+        }
+    }
+
+    let mut deduped = deduped.into_values().collect::<Vec<_>>();
+    deduped.sort_by(
+        |(left_hit, left_first_seen), (right_hit, right_first_seen)| {
+            right_hit
+                .score
+                .total_cmp(&left_hit.score)
+                .then_with(|| left_first_seen.cmp(right_first_seen))
+        },
+    );
+
+    let pmids = deduped
+        .iter()
+        .map(|(hit, _)| hit.pmid.to_string())
+        .collect::<Vec<_>>();
+    let mut hydrated = PubMedClient::new()?
+        .esummary(&pmids)
+        .await?
+        .into_iter()
+        .filter_map(|entry| {
+            transform::article::from_pubmed_esummary_entry(&entry)
+                .map(|row| (row.pmid.clone(), row))
+        })
+        .collect::<HashMap<_, _>>();
+
+    let mut rows = Vec::with_capacity(deduped.len());
+    let mut source_position = 0usize;
+    for (hit, _) in deduped {
+        let pmid = hit.pmid.to_string();
+        let cleaned_text = transform::article::clean_abstract(&hit.text);
+        let fallback_title = if cleaned_text.is_empty() {
+            format!("PMID {pmid}")
+        } else {
+            transform::article::article_search_fallback_title(&cleaned_text)
+        };
+        let mut row = hydrated
+            .remove(&pmid)
+            .unwrap_or_else(|| ArticleSearchResult {
+                pmid: pmid.clone(),
+                pmcid: hit.pmcid.clone(),
+                doi: None,
+                title: fallback_title.clone(),
+                journal: None,
+                date: None,
+                citation_count: None,
+                influential_citation_count: None,
+                source: ArticleSource::LitSense2,
+                matched_sources: vec![ArticleSource::LitSense2],
+                score: Some(hit.score),
+                is_retracted: None,
+                abstract_snippet: transform::article::article_search_abstract_snippet(
+                    &cleaned_text,
+                ),
+                ranking: None,
+                normalized_title: transform::article::normalize_article_search_text(
+                    &fallback_title,
+                ),
+                normalized_abstract: transform::article::normalize_article_search_text(
+                    &cleaned_text,
+                ),
+                publication_type: None,
+                source_local_position: 0,
+            });
+        row.source = ArticleSource::LitSense2;
+        row.matched_sources = vec![ArticleSource::LitSense2];
+        row.score = Some(hit.score);
+        if row.pmcid.is_none() {
+            row.pmcid = hit.pmcid.clone();
+        }
+        if row.title.trim().is_empty() {
+            row.title = fallback_title.clone();
+        }
+        row.abstract_snippet = transform::article::article_search_abstract_snippet(&cleaned_text);
+        row.normalized_title = transform::article::normalize_article_search_text(&row.title);
+        row.normalized_abstract = transform::article::normalize_article_search_text(&cleaned_text);
+        row.is_retracted = None;
+        row.publication_type = None;
+        if !matches_result_filters(
+            &row,
+            filters,
+            normalized_date_from.as_deref(),
+            normalized_date_to.as_deref(),
+        ) {
+            continue;
+        }
+        row.source_local_position = source_position;
+        source_position = source_position.saturating_add(1);
+        rows.push(row);
+        if rows.len() >= limit {
+            break;
+        }
+    }
+
+    Ok(rows)
+}
+
 fn finalize_article_candidates(
     mut rows: Vec<ArticleSearchResult>,
     limit: usize,
@@ -2592,7 +2769,8 @@ async fn search_federated_page(
         )));
     }
     let include_pubmed = pubmed_filter_compatible(filters);
-    let (pubtator_leg, europe_leg, pubmed_leg, semantic_scholar_leg) = tokio::join!(
+    let include_litsense2 = litsense2_search_enabled(filters, ArticleSourceFilter::All);
+    let (pubtator_leg, europe_leg, pubmed_leg, semantic_scholar_leg, litsense2_leg) = tokio::join!(
         search_pubtator_page(filters, fetch_count, 0),
         search_europepmc_page(filters, fetch_count, 0),
         async {
@@ -2602,7 +2780,14 @@ async fn search_federated_page(
                 None
             }
         },
-        search_semantic_scholar_candidates(filters, fetch_count)
+        search_semantic_scholar_candidates(filters, fetch_count),
+        async {
+            if include_litsense2 {
+                search_litsense2_candidates(filters, fetch_count).await
+            } else {
+                Ok(Vec::new())
+            }
+        }
     );
 
     merge_federated_pages(
@@ -2610,17 +2795,20 @@ async fn search_federated_page(
         europe_leg,
         pubmed_leg,
         semantic_scholar_leg,
+        litsense2_leg,
         limit,
         offset,
         filters,
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn merge_federated_pages(
     pubtator_leg: Result<SearchPage<ArticleSearchResult>, BioMcpError>,
     europe_leg: Result<SearchPage<ArticleSearchResult>, BioMcpError>,
     pubmed_leg: Option<Result<SearchPage<ArticleSearchResult>, BioMcpError>>,
     semantic_scholar_leg: Result<Vec<ArticleSearchResult>, BioMcpError>,
+    litsense2_leg: Result<Vec<ArticleSearchResult>, BioMcpError>,
     limit: usize,
     offset: usize,
     filters: &ArticleSearchFilters,
@@ -2632,6 +2820,13 @@ fn merge_federated_pages(
                 ?err,
                 "Semantic Scholar search leg failed; continuing without it"
             );
+            Vec::new()
+        }
+    };
+    let litsense2_rows = match litsense2_leg {
+        Ok(rows) => rows,
+        Err(err) => {
+            warn!(?err, "LitSense2 search leg failed; continuing without it");
             Vec::new()
         }
     };
@@ -2650,6 +2845,7 @@ fn merge_federated_pages(
             merged.extend(europe_page.results);
             merged.extend(pubmed_rows);
             merged.extend(semantic_scholar_rows);
+            merged.extend(litsense2_rows);
             Ok(finalize_article_candidates(
                 merged, limit, offset, None, filters,
             ))
@@ -2662,6 +2858,7 @@ fn merge_federated_pages(
             let mut rows = pubtator_page.results;
             rows.extend(pubmed_rows);
             rows.extend(semantic_scholar_rows);
+            rows.extend(litsense2_rows);
             Ok(finalize_article_candidates(
                 rows, limit, offset, None, filters,
             ))
@@ -2674,6 +2871,7 @@ fn merge_federated_pages(
             let mut rows = europe_page.results;
             rows.extend(pubmed_rows);
             rows.extend(semantic_scholar_rows);
+            rows.extend(litsense2_rows);
             Ok(finalize_article_candidates(
                 rows, limit, offset, None, filters,
             ))
@@ -2781,6 +2979,12 @@ async fn search_relevance_page(
                 filters,
             ))
         }
+        BackendPlan::LitSense2Only => {
+            let rows = search_litsense2_candidates(filters, fetch_count).await?;
+            Ok(finalize_article_candidates(
+                rows, limit, offset, None, filters,
+            ))
+        }
         BackendPlan::TypeCapable => {
             search_type_capable_page(filters, fetch_count, limit, offset).await
         }
@@ -2809,7 +3013,7 @@ pub async fn search_page(
     match plan {
         BackendPlan::EuropeOnly => search_europepmc_page(filters, limit, offset).await,
         BackendPlan::PubTatorOnly => search_pubtator_page(filters, limit, offset).await,
-        BackendPlan::PubMedOnly | BackendPlan::TypeCapable => {
+        BackendPlan::PubMedOnly | BackendPlan::LitSense2Only | BackendPlan::TypeCapable => {
             search_relevance_page(filters, limit, offset, plan).await
         }
         BackendPlan::Both => search_federated_page(filters, limit, offset).await,
@@ -3393,6 +3597,10 @@ mod tests {
             ArticleSourceFilter::from_flag("pubmed").expect("pubmed should parse"),
             ArticleSourceFilter::PubMed
         );
+        assert!(
+            ArticleSourceFilter::from_flag("litsense2").is_ok(),
+            "litsense2 should parse"
+        );
     }
 
     #[test]
@@ -3413,6 +3621,33 @@ mod tests {
         let plan =
             plan_backends(&filters, ArticleSourceFilter::PubMed).expect("planner should work");
         assert!(matches!(plan, BackendPlan::PubMedOnly));
+    }
+
+    #[test]
+    fn planner_routes_litsense2_to_litsense2_only() {
+        let mut filters = empty_filters();
+        filters.keyword = Some("Hirschsprung disease".into());
+
+        let plan =
+            plan_backends(&filters, ArticleSourceFilter::LitSense2).expect("planner should work");
+        assert!(matches!(plan, BackendPlan::LitSense2Only));
+    }
+
+    #[test]
+    fn build_free_text_article_query_preserves_mixed_semantic_anchors() {
+        let mut filters = empty_filters();
+        filters.gene = Some(" RET ".into());
+        filters.disease = Some(" Hirschsprung disease ".into());
+        filters.drug = Some(" selpercatinib ".into());
+        filters.keyword = Some(" ganglion cells ".into());
+        filters.author = Some(" Alice Smith ".into());
+
+        let query = build_free_text_article_query(&filters);
+
+        assert_eq!(
+            query,
+            "RET Hirschsprung disease selpercatinib ganglion cells Alice Smith"
+        );
     }
 
     #[test]
@@ -3482,6 +3717,44 @@ mod tests {
     }
 
     #[test]
+    fn planner_rejects_litsense2_without_keyword() {
+        let mut filters = empty_filters();
+        filters.gene = Some("BRAF".into());
+
+        let err = plan_backends(&filters, ArticleSourceFilter::LitSense2)
+            .expect_err("planner should reject keyword-less litsense2 source");
+        let msg = err.to_string();
+        assert!(msg.contains("--source litsense2"));
+        assert!(msg.contains("keyword"));
+    }
+
+    #[test]
+    fn planner_rejects_litsense2_type_filter() {
+        let mut filters = empty_filters();
+        filters.keyword = Some("melanoma".into());
+        filters.article_type = Some("review".into());
+
+        let err = plan_backends(&filters, ArticleSourceFilter::LitSense2)
+            .expect_err("planner should reject --type for litsense2");
+        let msg = err.to_string();
+        assert!(msg.contains("--source litsense2"));
+        assert!(msg.contains("--type"));
+    }
+
+    #[test]
+    fn planner_rejects_litsense2_open_access_filter() {
+        let mut filters = empty_filters();
+        filters.keyword = Some("melanoma".into());
+        filters.open_access = true;
+
+        let err = plan_backends(&filters, ArticleSourceFilter::LitSense2)
+            .expect_err("planner should reject --open-access for litsense2");
+        let msg = err.to_string();
+        assert!(msg.contains("--source litsense2"));
+        assert!(msg.contains("--open-access"));
+    }
+
+    #[test]
     fn build_pubmed_esearch_params_reuses_article_type_aliases() {
         let mut filters = empty_filters();
         filters.gene = Some("BRAF".into());
@@ -3539,8 +3812,18 @@ mod tests {
     }
 
     #[test]
+    fn article_source_litsense2_display_name() {
+        assert_eq!(ArticleSource::LitSense2.display_name(), "LitSense2");
+    }
+
+    #[test]
     fn article_source_pubmed_priority() {
         assert_eq!(article_source_priority(ArticleSource::PubMed), 2);
+    }
+
+    #[test]
+    fn article_source_litsense2_priority() {
+        assert_eq!(article_source_priority(ArticleSource::LitSense2), 4);
     }
 
     #[test]
@@ -3988,7 +4271,7 @@ mod tests {
         assert_eq!(
             article_type_limitation_note(&filters, ArticleSourceFilter::All),
             Some(
-                "Note: --type restricts article search to Europe PMC and PubMed. PubTator3 and Semantic Scholar do not support publication-type filtering."
+                "Note: --type restricts article search to Europe PMC and PubMed. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering."
                     .into()
             )
         );
@@ -4009,7 +4292,7 @@ mod tests {
         assert_eq!(
             article_type_limitation_note(&filters, ArticleSourceFilter::All),
             Some(
-                "Note: --type restricts this article search to Europe PMC. PubTator3 and Semantic Scholar do not support publication-type filtering, and PubMed does not support the other selected filters."
+                "Note: --type restricts this article search to Europe PMC. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering, and PubMed does not support the other selected filters."
                     .into()
             )
         );
@@ -4305,6 +4588,44 @@ mod tests {
     }
 
     #[test]
+    fn summarize_debug_plan_keyword_enables_litsense2() {
+        let mut filters = empty_filters();
+        filters.keyword = Some("Hirschsprung disease".into());
+
+        let summary =
+            summarize_debug_plan(&filters, ArticleSourceFilter::All, &[]).expect("summary");
+
+        assert!(
+            summary.sources.contains(&"LitSense2".to_string()),
+            "keyword-driven federated debug plan should advertise LitSense2"
+        );
+    }
+
+    #[test]
+    fn litsense2_search_enabled_requires_keyword_and_non_strict_filters() {
+        let mut keyword_filters = empty_filters();
+        keyword_filters.keyword = Some("Hirschsprung disease".into());
+        assert!(litsense2_search_enabled(
+            &keyword_filters,
+            ArticleSourceFilter::All
+        ));
+
+        let mut strict_filters = keyword_filters.clone();
+        strict_filters.article_type = Some("review".into());
+        assert!(!litsense2_search_enabled(
+            &strict_filters,
+            ArticleSourceFilter::All
+        ));
+
+        let mut no_keyword_filters = empty_filters();
+        no_keyword_filters.gene = Some("RET".into());
+        assert!(!litsense2_search_enabled(
+            &no_keyword_filters,
+            ArticleSourceFilter::All
+        ));
+    }
+
+    #[test]
     fn pubmed_unique_row_survives_first_page_in_mixed_federation() {
         // Design: "construct a mixed candidate set with one PubMed-only row that
         // has stronger title-anchor coverage than some competing rows, run it
@@ -4508,6 +4829,7 @@ mod tests {
             Ok(europe_page),
             None,
             Ok(Vec::new()),
+            Ok(Vec::new()),
             3,
             0,
             &empty_filters(),
@@ -4519,6 +4841,32 @@ mod tests {
         assert_eq!(merged.results[2].pmid, "300");
         assert_eq!(merged.results[1].source, ArticleSource::PubTator);
         assert_eq!(merged.total, None);
+    }
+
+    #[test]
+    fn merge_federated_pages_records_litsense2_in_matched_sources() {
+        let pubtator_page = SearchPage::offset(vec![row("100", ArticleSource::PubTator)], Some(1));
+        let europe_page = SearchPage::offset(Vec::new(), Some(0));
+        let litsense2_rows = vec![row("100", ArticleSource::LitSense2)];
+
+        let merged = merge_federated_pages(
+            Ok(pubtator_page),
+            Ok(europe_page),
+            None,
+            Ok(Vec::new()),
+            Ok(litsense2_rows),
+            10,
+            0,
+            &empty_filters(),
+        )
+        .expect("federated merge should succeed");
+
+        assert_eq!(merged.results.len(), 1);
+        assert_eq!(merged.results[0].source, ArticleSource::PubTator);
+        assert_eq!(
+            merged.results[0].matched_sources,
+            vec![ArticleSource::PubTator, ArticleSource::LitSense2]
+        );
     }
 
     #[test]
@@ -4589,6 +4937,7 @@ mod tests {
             Err(europe_err),
             None,
             Ok(Vec::new()),
+            Ok(Vec::new()),
             2,
             0,
             &empty_filters(),
@@ -4623,6 +4972,7 @@ mod tests {
             Err(pubtator_err),
             Ok(europe_page),
             None,
+            Ok(Vec::new()),
             Ok(Vec::new()),
             2,
             0,
@@ -4677,6 +5027,7 @@ mod tests {
             Ok(europe_page),
             None,
             Ok(Vec::new()),
+            Ok(Vec::new()),
             1,
             1,
             &ArticleSearchFilters {
@@ -4704,6 +5055,7 @@ mod tests {
             Err(pubtator_err),
             Err(europe_err),
             None,
+            Ok(Vec::new()),
             Ok(Vec::new()),
             10,
             0,
@@ -4738,6 +5090,7 @@ mod tests {
             Ok(pubtator_page),
             Ok(europe_page),
             None,
+            Ok(Vec::new()),
             Ok(Vec::new()),
             2,
             3,
@@ -4795,6 +5148,7 @@ mod tests {
             Ok(citation_europe_page),
             None,
             Ok(Vec::new()),
+            Ok(Vec::new()),
             10,
             0,
             &ArticleSearchFilters {
@@ -4847,6 +5201,7 @@ mod tests {
             Ok(date_pubtator_page),
             Ok(date_europe_page),
             None,
+            Ok(Vec::new()),
             Ok(Vec::new()),
             10,
             0,
@@ -5238,6 +5593,201 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn litsense2_candidates_deduplicate_and_hydrate_pubmed_metadata() {
+        let _guard = lock_env().await;
+        let litsense2 = MockServer::start().await;
+        let pubmed = MockServer::start().await;
+        let _litsense2_base = set_env_var("BIOMCP_LITSENSE2_BASE", Some(&litsense2.uri()));
+        let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&pubmed.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/sentences/"))
+            .and(query_param("query", "Hirschsprung disease ganglion cells"))
+            .and(query_param("rerank", "true"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "pmid": 22663011,
+                    "pmcid": "PMC9984800",
+                    "text": "First weaker sentence",
+                    "score": 0.5,
+                    "section": "INTRO",
+                    "annotations": ["0|12|disease|MESH:D006627"]
+                },
+                {
+                    "pmid": 22663011,
+                    "pmcid": "PMC9984800",
+                    "text": "Stronger sentence for the same PMID",
+                    "score": 0.9,
+                    "section": "RESULTS",
+                    "annotations": []
+                },
+                {
+                    "pmid": 24200969,
+                    "pmcid": null,
+                    "text": "Fallback title text that should be truncated when PubMed has no title",
+                    "score": 0.7,
+                    "section": null,
+                    "annotations": null
+                }
+            ])))
+            .expect(1)
+            .mount(&litsense2)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esummary.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("id", "22663011,24200969"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "result": {
+                    "uids": ["22663011", "24200969"],
+                    "22663011": {
+                        "uid": "22663011",
+                        "title": "Hydrated LitSense2 title",
+                        "sortpubdate": "2024/01/15 00:00",
+                        "pubdate": "2024 Jan 15",
+                        "fulljournalname": "Journal One",
+                        "source": "J1"
+                    },
+                    "24200969": {
+                        "uid": "24200969",
+                        "title": " ",
+                        "sortpubdate": null,
+                        "pubdate": null,
+                        "fulljournalname": null,
+                        "source": null
+                    }
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        let rows = search_litsense2_candidates(
+            &ArticleSearchFilters {
+                keyword: Some("Hirschsprung disease ganglion cells".into()),
+                exclude_retracted: true,
+                ..empty_filters()
+            },
+            10,
+        )
+        .await
+        .expect("litsense2 search should succeed");
+
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].pmid, "22663011");
+        assert_eq!(rows[0].title, "Hydrated LitSense2 title");
+        assert_eq!(rows[0].pmcid.as_deref(), Some("PMC9984800"));
+        assert_eq!(rows[0].journal.as_deref(), Some("Journal One"));
+        assert_eq!(rows[0].date.as_deref(), Some("2024-01-15"));
+        assert_eq!(rows[0].score, Some(0.9));
+        assert_eq!(rows[0].source, ArticleSource::LitSense2);
+        assert_eq!(rows[0].matched_sources, vec![ArticleSource::LitSense2]);
+        assert_eq!(rows[0].source_local_position, 0);
+        assert!(
+            rows[0]
+                .abstract_snippet
+                .as_deref()
+                .is_some_and(|snippet| snippet.contains("Stronger sentence for the same PMID"))
+        );
+        assert_eq!(rows[1].pmid, "24200969");
+        assert!(!rows[1].title.trim().is_empty());
+        assert_eq!(rows[1].score, Some(0.7));
+        assert_eq!(rows[1].source_local_position, 1);
+        assert!(
+            rows[1]
+                .abstract_snippet
+                .as_deref()
+                .is_some_and(|snippet| snippet.contains("Fallback title text"))
+        );
+    }
+
+    #[tokio::test]
+    async fn litsense2_candidates_apply_hydrated_journal_and_date_filters() {
+        let _guard = lock_env().await;
+        let litsense2 = MockServer::start().await;
+        let pubmed = MockServer::start().await;
+        let _litsense2_base = set_env_var("BIOMCP_LITSENSE2_BASE", Some(&litsense2.uri()));
+        let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&pubmed.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/sentences/"))
+            .and(query_param("query", "Hirschsprung disease"))
+            .and(query_param("rerank", "true"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "pmid": 22663011,
+                    "pmcid": "PMC9984800",
+                    "text": "Hydrated row",
+                    "score": 0.9,
+                    "section": "INTRO",
+                    "annotations": []
+                },
+                {
+                    "pmid": 24200969,
+                    "pmcid": null,
+                    "text": "Fallback row",
+                    "score": 0.7,
+                    "section": null,
+                    "annotations": null
+                }
+            ])))
+            .expect(1)
+            .mount(&litsense2)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esummary.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("id", "22663011,24200969"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "result": {
+                    "uids": ["22663011", "24200969"],
+                    "22663011": {
+                        "uid": "22663011",
+                        "title": "Hydrated LitSense2 title",
+                        "sortpubdate": "2024/01/15 00:00",
+                        "pubdate": "2024 Jan 15",
+                        "fulljournalname": "Journal One",
+                        "source": "J1"
+                    },
+                    "24200969": {
+                        "uid": "24200969",
+                        "title": "Fallback title",
+                        "sortpubdate": "2023/01/15 00:00",
+                        "pubdate": "2023 Jan 15",
+                        "fulljournalname": "Journal Two",
+                        "source": "J2"
+                    }
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        let rows = search_litsense2_candidates(
+            &ArticleSearchFilters {
+                keyword: Some("Hirschsprung disease".into()),
+                journal: Some("Journal One".into()),
+                date_from: Some("2024".into()),
+                date_to: Some("2024-12".into()),
+                exclude_retracted: true,
+                ..empty_filters()
+            },
+            10,
+        )
+        .await
+        .expect("litsense2 search should respect hydrated filters");
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].pmid, "22663011");
+        assert_eq!(rows[0].journal.as_deref(), Some("Journal One"));
+        assert_eq!(rows[0].date.as_deref(), Some("2024-01-15"));
+    }
+
+    #[tokio::test]
     async fn federated_search_keeps_non_europepmc_matches_under_default_retraction_filter() {
         let _guard = lock_env().await;
         let pubtator = MockServer::start().await;
@@ -5353,6 +5903,221 @@ mod tests {
             row.source == ArticleSource::PubTator
                 || row.matched_sources.contains(&ArticleSource::PubTator)
         }));
+    }
+
+    #[tokio::test]
+    async fn federated_search_keyword_includes_litsense2_matches() {
+        let _guard = lock_env().await;
+        let pubtator = MockServer::start().await;
+        let europepmc = MockServer::start().await;
+        let pubmed = MockServer::start().await;
+        let s2 = MockServer::start().await;
+        let litsense2 = MockServer::start().await;
+        let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+        let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+        let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&pubmed.uri()));
+        let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+        let _litsense2_base = set_env_var("BIOMCP_LITSENSE2_BASE", Some(&litsense2.uri()));
+        let _s2_key = set_env_var("S2_API_KEY", None);
+
+        Mock::given(method("GET"))
+            .and(path("/graph/v1/paper/search"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "total": 0,
+                "data": []
+            })))
+            .mount(&s2)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(query_param("page", "1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "results": [],
+                "count": 0,
+                "total_pages": 1,
+                "current": 1,
+                "page_size": 25,
+                "facets": {}
+            })))
+            .expect(1)
+            .mount(&pubtator)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/search"))
+            .and(query_param("page", "1"))
+            .and(query_param("format", "json"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "hitCount": 0,
+                "resultList": {
+                    "result": []
+                }
+            })))
+            .expect(1)
+            .mount(&europepmc)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esearch.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "esearchresult": {
+                    "count": "0",
+                    "idlist": []
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/sentences/"))
+            .and(query_param("query", "Hirschsprung disease"))
+            .and(query_param("rerank", "true"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "pmid": 22663011,
+                    "pmcid": "PMC9984800",
+                    "text": "Hirschsprung disease semantic hit",
+                    "score": 0.8,
+                    "section": "INTRO",
+                    "annotations": []
+                }
+            ])))
+            .expect(1)
+            .mount(&litsense2)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esummary.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("id", "22663011"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "result": {
+                    "uids": ["22663011"],
+                    "22663011": {
+                        "uid": "22663011",
+                        "title": "Hydrated LitSense2 federated title",
+                        "sortpubdate": "2024/01/15 00:00",
+                        "pubdate": "2024 Jan 15",
+                        "fulljournalname": "Journal One",
+                        "source": "J1"
+                    }
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        let page = search_page(
+            &ArticleSearchFilters {
+                keyword: Some("Hirschsprung disease".into()),
+                exclude_retracted: true,
+                ..empty_filters()
+            },
+            5,
+            0,
+            ArticleSourceFilter::All,
+        )
+        .await
+        .expect("federated search should succeed");
+
+        assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].source, ArticleSource::LitSense2);
+        assert_eq!(
+            page.results[0].matched_sources,
+            vec![ArticleSource::LitSense2]
+        );
+        assert_eq!(page.results[0].score, Some(0.8));
+    }
+
+    #[tokio::test]
+    async fn federated_search_gene_only_skips_litsense2() {
+        let _guard = lock_env().await;
+        let pubtator = MockServer::start().await;
+        let europepmc = MockServer::start().await;
+        let pubmed = MockServer::start().await;
+        let s2 = MockServer::start().await;
+        let litsense2 = MockServer::start().await;
+        let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+        let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+        let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&pubmed.uri()));
+        let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+        let _litsense2_base = set_env_var("BIOMCP_LITSENSE2_BASE", Some(&litsense2.uri()));
+        let _s2_key = set_env_var("S2_API_KEY", None);
+
+        Mock::given(method("GET"))
+            .and(path("/graph/v1/paper/search"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "total": 0,
+                "data": []
+            })))
+            .mount(&s2)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(query_param("page", "1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "results": [],
+                "count": 0,
+                "total_pages": 1,
+                "current": 1,
+                "page_size": 25,
+                "facets": {}
+            })))
+            .expect(1)
+            .mount(&pubtator)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/search"))
+            .and(query_param("page", "1"))
+            .and(query_param("format", "json"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "hitCount": 0,
+                "resultList": {
+                    "result": []
+                }
+            })))
+            .expect(1)
+            .mount(&europepmc)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esearch.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "esearchresult": {
+                    "count": "0",
+                    "idlist": []
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/sentences/"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
+            .expect(0)
+            .mount(&litsense2)
+            .await;
+
+        let page = search_page(
+            &ArticleSearchFilters {
+                gene: Some("BRAF".into()),
+                exclude_retracted: true,
+                ..empty_filters()
+            },
+            5,
+            0,
+            ArticleSourceFilter::All,
+        )
+        .await
+        .expect("federated search should succeed");
+
+        assert!(page.results.is_empty());
     }
 
     #[tokio::test]
@@ -5561,6 +6326,7 @@ mod tests {
             Ok(pubtator_page),
             Ok(europe_page),
             None,
+            Ok(Vec::new()),
             Ok(Vec::new()),
             10,
             0,

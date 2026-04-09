@@ -69,10 +69,13 @@ pub fn normalize_article_search_text(value: &str) -> String {
     normalize_compound_hyphens(&base)
 }
 
-#[cfg(test)]
 fn truncate_title(title: &str) -> String {
     const MAX_TITLE_BYTES: usize = 60;
     truncate_utf8(&clean_title(title), MAX_TITLE_BYTES, "…")
+}
+
+pub fn article_search_fallback_title(text: &str) -> String {
+    truncate_title(text)
 }
 
 pub fn truncate_abstract(text: &str) -> String {

@@ -93,7 +93,8 @@ echo "$out" | mustmatch not like "Semantic Scholar"
 ## Article Date Flag Help Advertises Accepted Formats
 
 The article command help and list output should both advertise the shared date
-parser contract: `YYYY`, `YYYY-MM`, and `YYYY-MM-DD`.
+parser contract: `YYYY`, `YYYY-MM`, and `YYYY-MM-DD`. They should also expose
+the repaired LitSense2 source roster anywhere article sources are shown.
 
 ```bash
 help_out="$(biomcp search article --help)"
@@ -101,11 +102,14 @@ echo "$help_out" | mustmatch like "Published after date (YYYY, YYYY-MM, or YYYY-
 echo "$help_out" | mustmatch like "Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)"
 echo "$help_out" | mustmatch '/\[aliases: --since\]/'
 echo "$help_out" | mustmatch '/\[aliases: --until\]/'
+printf '%s\n' "$help_out" | grep -F -- '[possible values: all, pubtator, europepmc, pubmed, litsense2]' >/dev/null
 
 list_out="$(biomcp list article)"
 echo "$list_out" | mustmatch like "--date-from <YYYY|YYYY-MM|YYYY-MM-DD>"
 echo "$list_out" | mustmatch like "--date-to <YYYY|YYYY-MM|YYYY-MM-DD>"
 echo "$list_out" | mustmatch like "--since <YYYY|YYYY-MM|YYYY-MM-DD>"
+echo "$list_out" | mustmatch like "--source <all, pubtator, europepmc, pubmed, litsense2>"
+echo "$list_out" | mustmatch like "search article --source litsense2"
 ```
 
 ## Source-Specific PubTator Search Uses Default Retraction Filter
@@ -131,7 +135,47 @@ out="$("$bin" search article -g BRAF --source pubmed --limit 3)"
 echo "$out" | mustmatch like "source=pubmed"
 echo "$out" | mustmatch like "| PMID | Title |"
 echo "$out" | mustmatch not like "No articles found"
-printf '%s\n' "$out" | grep -F -- '--source <all|pubtator|europepmc|pubmed>' >/dev/null
+printf '%s\n' "$out" | grep -F -- '--source <all|pubtator|europepmc|pubmed|litsense2>' >/dev/null
+```
+
+## Source-Specific LitSense2 Search
+
+Explicit LitSense2 routing should accept the new source flag, preserve score
+values in JSON, and hydrate usable article titles for keyword-driven matches.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" --json search article -k 'Hirschsprung disease ganglion cells' --source litsense2 --limit 3)"
+echo "$out" | jq -e '(.results | length) > 0' > /dev/null
+echo "$out" | jq -e 'all(.results[]; .source == "litsense2")' > /dev/null
+echo "$out" | jq -e 'all(.results[]; (.score | type) == "number")' > /dev/null
+echo "$out" | jq -e 'all(.results[]; (.pmid | type) == "string" and (.pmid | length) > 0)' > /dev/null
+echo "$out" | jq -e 'all(.results[]; (.title | length) > 0)' > /dev/null
+```
+
+## LitSense2 Source Validation
+
+Standalone LitSense2 routing requires a keyword query and should reject filter
+combinations it cannot truthfully satisfy in this ticket.
+
+```bash
+status=0
+out="$(biomcp search article -g BRAF --source litsense2 --limit 1 2>&1)" || status=$?
+test "$status" -ne 0
+echo "$out" | mustmatch like "--source litsense2"
+echo "$out" | mustmatch like "requires a keyword"
+
+typed_status=0
+typed_out="$(biomcp search article -k melanoma --source litsense2 --type review --limit 1 2>&1)" || typed_status=$?
+test "$typed_status" -ne 0
+echo "$typed_out" | mustmatch like "--source litsense2"
+echo "$typed_out" | mustmatch like "does not support --type"
+
+open_status=0
+open_out="$(biomcp search article -k melanoma --source litsense2 --open-access --limit 1 2>&1)" || open_status=$?
+test "$open_status" -ne 0
+echo "$open_out" | mustmatch like "--source litsense2"
+echo "$open_out" | mustmatch like "does not support --open-access"
 ```
 
 ## Federated Search Preserves Non-EuropePMC Matches Under Default Retraction Filter
@@ -318,7 +362,7 @@ eligible Semantic Scholar leg while still surfacing ranking metadata from the
 local relevance policy.
 
 ```bash
-out="$(env -u S2_API_KEY biomcp --json search article -g BRAF --limit 3)"
+out="$(env -u S2_API_KEY biomcp --json search article -g BRAF --limit 3 2>/dev/null)"
 echo "$out" | mustmatch like '"semantic_scholar_enabled": true'
 echo "$out" | mustmatch like '"ranking_policy": "calibrated PubMed rescue + lexical directness'
 echo "$out" | mustmatch like 'at least one anchor hit'
@@ -345,30 +389,40 @@ markers, and sources in both markdown and JSON without changing default output.
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-out="$(env -u S2_API_KEY "$bin" search article -g BRAF --debug-plan --limit 3)"
+out="$(env -u S2_API_KEY "$bin" search article -g BRAF --debug-plan --limit 3 2>/dev/null)"
 echo "$out" | mustmatch like "## Debug plan"
 echo "$out" | mustmatch like '"surface": "search_article"'
 echo "$out" | mustmatch like '"planner=federated"'
 printf '%s\n' "$out" | grep -F '"PubMed"' >/dev/null
 echo "$out" | mustmatch like "Semantic Scholar"
+echo "$out" | mustmatch not like "LitSense2"
 
-json_out="$(env -u S2_API_KEY "$bin" --json search article -g BRAF --debug-plan --limit 3)"
+json_out="$(env -u S2_API_KEY "$bin" --json search article -g BRAF --debug-plan --limit 3 2>/dev/null)"
 echo "$json_out" | mustmatch like '"debug_plan": {'
 echo "$json_out" | mustmatch like '"surface": "search_article"'
 echo "$json_out" | mustmatch like '"leg": "article"'
 echo "$json_out" | mustmatch like '"sources": ['
 echo "$json_out" | mustmatch like '"Semantic Scholar"'
+echo "$json_out" | jq -e 'all(.debug_plan.legs[] | select(.leg == "article"); (.sources | index("LitSense2")) == null)' > /dev/null
 
-typed_out="$("$bin" search article -g BRAF --type review --debug-plan --limit 3)"
+keyword_out="$("$bin" search article -k 'Hirschsprung disease' --debug-plan --limit 3 2>/dev/null)"
+echo "$keyword_out" | mustmatch like "## Debug plan"
+echo "$keyword_out" | mustmatch like '"LitSense2"'
+
+keyword_json="$("$bin" --json search article -k 'Hirschsprung disease' --debug-plan --limit 3 2>/dev/null)"
+echo "$keyword_json" | mustmatch like '"debug_plan": {'
+echo "$keyword_json" | jq -e '.debug_plan.legs[] | select(.leg == "article") | .sources | index("LitSense2") != null' > /dev/null
+
+typed_out="$("$bin" search article -g BRAF --type review --include-retracted --debug-plan --limit 3 2>/dev/null)"
 echo "$typed_out" | mustmatch like '"planner=type_capable"'
 printf '%s\n' "$typed_out" | grep -F '"PubMed"' >/dev/null
 echo "$typed_out" | mustmatch like '"Note: --type restricts article search to Europe PMC and PubMed'
 
-typed_json="$("$bin" --json search article -g BRAF --type review --debug-plan --limit 3)"
+typed_json="$("$bin" --json search article -g BRAF --type review --include-retracted --debug-plan --limit 3 2>/dev/null)"
 echo "$typed_json" | mustmatch like '"planner=type_capable"'
 echo "$typed_json" | mustmatch like '"note": "Note: --type restricts article search to Europe PMC and PubMed'
 
-strict_json="$("$bin" --json search article -g BRAF --type review --no-preprints --debug-plan --limit 3)"
+strict_json="$("$bin" --json search article -g BRAF --type review --no-preprints --debug-plan --limit 3 2>/dev/null)"
 echo "$strict_json" | mustmatch like '"planner=europe_only_strict_filters"'
 echo "$strict_json" | mustmatch like '"Europe PMC"'
 echo "$strict_json" | mustmatch not like '"PubMed"'

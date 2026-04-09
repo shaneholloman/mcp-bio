@@ -1,62 +1,83 @@
-# Code Review Log — Ticket 152
+# Code Review Log — Ticket 154
 
 ## Critique
 
 I reviewed `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`,
-`.march/code-log.md`, and the full `git diff main..HEAD` against the final NCI
-contract. The implementation already covered the runtime request model, the NCI
-trial branch, the health probe, and the named docs/help/spec surfaces from the
-design.
+`.march/code-log.md`, and the full `git diff main..HEAD`. The runtime
+implementation covered the designed LitSense2 client, planner wiring,
+dedupe+hydrate flow, federated leg, health registration, rate limiting,
+search-all source registries, and the named docs/spec surfaces. I also checked
+the changed paths for security issues, searched for equivalent existing helpers
+before accepting the new additions, and confirmed from `.march/code-log.md`
+that docs/help/spec work landed before the runtime edits.
 
-I also checked the changed path for security regressions (untrusted input into
-URLs/auth handling/output), searched for reinvention before accepting the new
-helpers, verified that the executable specs remain outside-in, and confirmed
-from `.march/code-log.md` that docs/help/spec work landed before the runtime
-translation. No additional runtime defects surfaced in those passes.
+The defects I found were proof and contract-coverage gaps rather than broken
+runtime logic:
 
-The defects I found were in proof strength rather than runtime translation:
-
-1. The keyword-fallback regression only exercised the MyDisease upstream-error
-   path. The final design also requires keyword fallback when the best hit lacks
-   an NCI xref and when MyDisease returns no hit.
-2. The NCI status regression only proved `recruiting` and `completed`, leaving
-   the rest of the documented single-value mapping table unprotected.
-3. The NCI phase/help/list proof did not lock the direct CTS token mapping for
-   `2 -> II` / `NA -> NA` or the operator-facing `early_phase1` rejection note.
+1. The repaired proof matrix says help/list surfaces must advertise
+   `--source litsense2`, but the outside-in spec and `list article` unit test
+   did not lock those user-visible strings.
+2. The proof matrix promises unit coverage for the shared free-text article
+   query helper and LitSense2 enablement rules, but those tests were missing.
+3. Explicit-source validation coverage was incomplete for
+   `--source litsense2 --open-access`.
+4. The LitSense2 dedupe/hydration regression was too weak: it did not prove the
+   highest-scoring sentence text was the one preserved, and it did not prove
+   hydrated journal/date metadata survives filter application.
+5. There was no direct merge/finalize proof that `matched_sources` records
+   `LitSense2` when duplicate PMIDs collapse across backends.
 
 ## Fix Plan
 
-1. Add trial-layer fallback regressions for no-xref and no-hit resolution paths
-   and tighten the keyword-fallback request assertion to the current CTS concept
-   key.
-2. Expand the NCI status and phase regression tests so they cover the full
-   documented mapping set instead of only representative happy paths.
-3. Extend help/list/spec assertions so the user-visible `early_phase1` note is
-   locked alongside the existing NCI status/phase/geo guidance.
+1. Tighten the article help/list executable spec and `list article` unit test
+   so the LitSense2 source roster is locked where users see it.
+2. Add article-layer unit tests for the shared free-text query helper,
+   LitSense2 enablement rules, and `--open-access` rejection.
+3. Strengthen LitSense2 candidate tests to prove strongest-hit preservation and
+   hydrated date/journal filter survival.
+4. Add a merge regression proving `matched_sources` gains `LitSense2` on merged
+   duplicate PMIDs.
 
 ## Repair
 
-- Added a shared keyword-fallback mock helper in `src/entities/trial.rs` tests
-  and new regressions for the no-xref and no-hit fallback paths.
-- Expanded `nci_status_mapping_uses_documented_single_value_filters` to cover
-  every documented single-value NCI status mapping.
-- Expanded `nci_phase_mapping_uses_i_ii_for_combined_phase` to prove direct
-  `II`, `NA`, and combined `I_II` emission.
-- Tightened `spec/04-trial.md`, `src/cli/mod.rs`, and `src/cli/list.rs` tests
-  so the `early_phase1` rejection note remains part of the documented NCI
-  operator contract.
-- Re-ran `make spec` and `make check` after the review repairs.
+- Added `build_free_text_article_query_preserves_mixed_semantic_anchors`,
+  `litsense2_search_enabled_requires_keyword_and_non_strict_filters`, and
+  `planner_rejects_litsense2_open_access_filter` in
+  `src/entities/article.rs`.
+- Strengthened `litsense2_candidates_deduplicate_and_hydrate_pubmed_metadata`
+  to assert hydrated journal/date fields and strongest-sentence snippet
+  preservation.
+- Added
+  `litsense2_candidates_apply_hydrated_journal_and_date_filters` to prove
+  hydrated PubMed metadata survives LitSense2 post-filtering.
+- Added `merge_federated_pages_records_litsense2_in_matched_sources` to lock
+  merged `matched_sources` behavior.
+- Extended `src/cli/list.rs` coverage so `list article` now locks the
+  `litsense2` source roster and explicit-source guidance.
+- Extended `spec/06-article.md` so article help/list output asserts the
+  `litsense2` source roster and LitSense2 validation now covers
+  `--open-access` rejection.
+- Re-ran targeted collateral scans after each fix:
+  `cargo test --lib build_free_text_article_query_preserves_mixed_semantic_anchors`,
+  `cargo test --lib litsense2 -- --nocapture`,
+  `cargo test --lib list_trial_and_article_include_missing_flags -- --nocapture`,
+  and the targeted `spec/06-article.md` slices.
+- Re-ran full verification:
+  `make spec` passed with `321 passed, 6 skipped`
+  and `make check` passed cleanly.
 
 ## Residual Concerns
 
-None. The live NCI/MyDisease behavior still depends on upstream auth and
-availability, but the request translation and operator-facing contract are now
-covered by hermetic regression proof.
+No code-level residual defects remain from this review. Verify should only keep
+normal watch for upstream variability on the live LitSense2-facing article
+specs, because those assertions still depend on public NCBI availability.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | missing-test | yes | Design-required NCI keyword fallback paths for no-xref and no-hit resolution were not covered by tests. |
-| 2 | weak-assertion | no | NCI status proof only exercised a subset of the documented single-value mappings. |
-| 3 | weak-assertion | no | NCI phase/help/list proof did not lock direct CTS phase tokens and the `early_phase1` operator note. |
+| 1 | missing-test | no | Help/list contract coverage did not explicitly prove that user-visible article source surfaces advertise `litsense2`. |
+| 2 | missing-test | no | The design-required shared free-text query helper and LitSense2 enablement rules had no direct regression tests. |
+| 3 | missing-test | no | Explicit-source validation coverage did not include `--source litsense2 --open-access`. |
+| 4 | weak-assertion | no | The LitSense2 dedupe/hydration proof did not verify strongest-hit preservation or hydrated journal/date filter survival. |
+| 5 | missing-test | no | No regression proved that merged duplicate PMIDs add `LitSense2` to `matched_sources`. |

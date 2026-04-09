@@ -188,6 +188,13 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
         },
     },
     SourceDescriptor {
+        api: "LitSense2",
+        affects: Some("keyword-gated semantic article search"),
+        probe: ProbeKind::Get {
+            url: "https://www.ncbi.nlm.nih.gov/research/litsense2-api/api/sentences/?query=test&rerank=true",
+        },
+    },
+    SourceDescriptor {
         api: "PMC OA",
         affects: Some("article fulltext resolution"),
         probe: ProbeKind::Get {
@@ -1513,6 +1520,7 @@ mod tests {
                 "PubTator3",
                 "PubMed",
                 "Europe PMC",
+                "LitSense2",
                 "PMC OA",
                 "NCBI ID Converter",
                 "ClinicalTrials.gov",

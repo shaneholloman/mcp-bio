@@ -576,6 +576,12 @@ fn leg_sources(kind: SectionKind, input: &PreparedInput) -> Vec<String> {
                 "Europe PMC".to_string(),
                 "PubMed".to_string(),
             ];
+            if crate::entities::article::litsense2_search_enabled(
+                &filters,
+                crate::entities::article::ArticleSourceFilter::All,
+            ) {
+                sources.push("LitSense2".to_string());
+            }
             if crate::entities::article::semantic_scholar_search_enabled(
                 &filters,
                 crate::entities::article::ArticleSourceFilter::All,
@@ -616,7 +622,13 @@ fn article_filters(input: &PreparedInput) -> crate::entities::article::ArticleSe
 
 fn article_matched_sources(section: &SearchAllSection) -> Vec<String> {
     let mut matched = Vec::new();
-    for source in ["pubtator", "europepmc", "pubmed", "semanticscholar"] {
+    for source in [
+        "pubtator",
+        "europepmc",
+        "pubmed",
+        "semanticscholar",
+        "litsense2",
+    ] {
         let present = section.results.iter().any(|row| {
             row.get("matched_sources")
                 .and_then(Value::as_array)
@@ -640,6 +652,7 @@ fn article_source_display_name(source: &str) -> Option<&'static str> {
         "europepmc" => Some("Europe PMC"),
         "pubmed" => Some("PubMed"),
         "semanticscholar" => Some("Semantic Scholar"),
+        "litsense2" => Some("LitSense2"),
         _ => None,
     }
 }
@@ -2233,6 +2246,52 @@ mod tests {
                 "PubMed".to_string(),
                 "Semantic Scholar".to_string()
             ]
+        );
+    }
+
+    #[test]
+    fn build_result_plan_keyword_article_leg_includes_litsense2_source_and_match() {
+        let prepared = PreparedInput::new(&SearchAllInput {
+            gene: None,
+            variant: None,
+            disease: None,
+            drug: None,
+            keyword: Some("Hirschsprung disease".to_string()),
+            since: None,
+            limit: 3,
+            counts_only: false,
+            debug_plan: true,
+        })
+        .expect("valid prepared input");
+        let sections = vec![SearchAllSection {
+            entity: "article".to_string(),
+            label: "Articles".to_string(),
+            count: 1,
+            total: Some(10),
+            error: None,
+            note: None,
+            results: vec![json!({
+                "pmid": "36741595",
+                "matched_sources": ["litsense2", "pubmed"]
+            })],
+            links: Vec::new(),
+        }];
+
+        let plan = build_result_plan(&prepared, &sections);
+        let article_leg = plan
+            .legs
+            .iter()
+            .find(|leg| leg.leg == "article")
+            .expect("article leg");
+
+        assert_eq!(plan.surface, "search_all");
+        assert_eq!(plan.anchor, Some("keyword"));
+        assert_eq!(plan.query, "keyword=Hirschsprung disease");
+        assert!(article_leg.sources.contains(&"LitSense2".to_string()));
+        assert!(article_leg.sources.contains(&"PubMed".to_string()));
+        assert_eq!(
+            article_leg.matched_sources,
+            vec!["PubMed".to_string(), "LitSense2".to_string()]
         );
     }
 
