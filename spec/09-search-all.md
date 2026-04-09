@@ -62,6 +62,7 @@ out="$(biomcp --json search all -g BRAF --limit 3)"
 echo "$out" | mustmatch like '"entity": "article"'
 echo "$out" | mustmatch like '"source": "'
 echo "$out" | mustmatch like '"ranking": {'
+echo "$out" | mustmatch like '"mode": "lexical"'
 ```
 
 ## Debug Plan

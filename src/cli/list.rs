@@ -226,6 +226,11 @@ fn list_article() -> String {
 - `search article --exclude-retracted`
 - `search article --include-retracted`
 - `search article --sort <date|citations|relevance>`
+- `search article --ranking-mode <lexical|semantic|hybrid>`
+- `search article --weight-semantic <float>`
+- `search article --weight-lexical <float>`
+- `search article --weight-citations <float>`
+- `search article --weight-position <float>`
 - `search article --source <all, pubtator, europepmc, pubmed, litsense2>`
 - `search article --debug-plan` - include executed planner/routing metadata in markdown or JSON
 - `search article ... --limit <N> --offset <N>`
@@ -237,7 +242,10 @@ fn list_article() -> String {
 - `search article` defaults to PubTator3 + Europe PMC + PubMed when the filter set is compatible; LitSense2 joins the federated route when a non-empty keyword is present, and Semantic Scholar is still automatic when the filter set is compatible, with or without the key.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
 - `search article --type ...` on `--source all` uses Europe PMC + PubMed when PubMed-compatible filters are selected, and collapses to Europe PMC-only when `--open-access` or `--no-preprints` makes PubMed ineligible.
-- Default `search article --sort relevance` is directness-first rather than citation-first.
+- `search article --sort relevance` accepts `--ranking-mode lexical|semantic|hybrid`.
+- When `--ranking-mode` is omitted, keyword-bearing article queries default to hybrid ranking and entity-only queries default to lexical ranking.
+- Default hybrid scoring is `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`; `--weight-*` flags retune those components.
+- Weight flags are part of the hybrid contract and pair with `--sort relevance`.
 "#
     .to_string()
 }
@@ -897,8 +905,16 @@ mod tests {
         assert!(article.contains("--date-from <YYYY|YYYY-MM|YYYY-MM-DD>"));
         assert!(article.contains("--date-to <YYYY|YYYY-MM|YYYY-MM-DD>"));
         assert!(article.contains("--since <YYYY|YYYY-MM|YYYY-MM-DD>"));
+        assert!(article.contains("--ranking-mode <lexical|semantic|hybrid>"));
+        assert!(article.contains("--weight-semantic <float>"));
+        assert!(article.contains("--weight-lexical <float>"));
+        assert!(article.contains("--weight-citations <float>"));
+        assert!(article.contains("--weight-position <float>"));
         assert!(article.contains("--source <all, pubtator, europepmc, pubmed, litsense2>"));
         assert!(article.contains("search article --source litsense2"));
+        assert!(article.contains("keyword-bearing article queries default to hybrid"));
+        assert!(article.contains("entity-only queries default to lexical"));
+        assert!(article.contains("0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"));
         assert!(article.contains("article batch <id> [<id>...]"));
     }
 

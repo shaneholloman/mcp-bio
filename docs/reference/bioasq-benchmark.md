@@ -55,8 +55,10 @@ That mismatch is provenance to surface, not a bug to hide.
 
 Article-ranking calibration lives in the repo-local guide at
 `benchmarks/bioasq/ranking-calibration/README.md`. That guide records the
-stable LB-100 fixture surface used for future ranking tuning, points back to the
-committed provenance files, and references the existing positive-control test.
+worked-example fixture surface used for future ranking tuning, points back to
+the committed provenance files, and records the lexical-regression,
+hybrid-default, entity-only fallback, and weight-override proofs that gate
+ranking changes.
 
 This is not a new benchmark lane. The calibration surface stays in Rust tests
 and benchmark docs because live ranking-order assertions against upstream

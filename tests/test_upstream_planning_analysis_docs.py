@@ -167,10 +167,13 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
 
     assert "## Article Federation and Front-Door Validation" in technical
     assert (
-        "`search article --source all` plans PubTator3 plus Europe PMC"
+        "`search article --source all` plans PubTator3 plus Europe PMC plus PubMed"
         in article_validation_section
     )
-    assert "Semantic Scholar is an optional third search leg" in article_validation_section
+    assert "Keyword-bearing queries also add LitSense2" in article_validation_section
+    assert "Semantic Scholar remains an optional compatible search leg" in (
+        article_validation_section
+    )
     assert (
         "Strict Europe PMC-only filters such as `--open-access` and `--type` "
         "disable the federated planner"
@@ -199,12 +202,12 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         in article_validation_section
     )
     assert (
-        "Semantic Scholar participates in article search fan-out only on the compatible "
-        "`search article --source all` path"
+        "Keyword-bearing article queries default to `hybrid`, while entity-only article "
+        "queries default to `lexical`"
         in technical_ws
     )
     assert (
-        "Semantic Scholar always owns TLDR, citations, references, and recommendations"
+        "0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"
         in technical_ws
     )
     assert (
@@ -216,13 +219,15 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         in article_guide_ws
     )
     assert (
-        "When the filter set is also Semantic Scholar-compatible, BioMCP adds that search leg for the same typed query"
+        "When a non-empty keyword is present, BioMCP also adds LitSense2 to the federated route."
         in article_guide_ws
     )
-    assert "PubTator3 + Europe PMC + optional Semantic Scholar" in data_sources_ws
+    assert "PubTator3 + Europe PMC + PubMed + LitSense2 + optional Semantic Scholar" in (
+        data_sources_ws
+    )
     assert (
-        "PubTator3 + Europe PMC for federated search, with an optional Semantic Scholar leg "
-        "when the filter set is compatible"
+        "PubTator3 + Europe PMC + PubMed for federated search, with LitSense2 added for "
+        "keyword-bearing queries and an optional Semantic Scholar leg"
         in data_sources_ws
     )
     assert "fn has_strict_europepmc_filters(filters: &ArticleSearchFilters) -> bool {" in article_impl

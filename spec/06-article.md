@@ -35,7 +35,20 @@ Keyword search supports broad discovery before narrowing to specific entities. T
 ```bash
 out="$(biomcp search article -k immunotherapy --limit 3)"
 echo "$out" | mustmatch like "keyword=immunotherapy"
+echo "$out" | mustmatch like "Ranking: hybrid relevance (score = 0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position)"
 echo "$out" | mustmatch like "| PMID | Title | Source(s) | Date | Why | Cit. |"
+```
+
+## Keyword Search Can Force Lexical Ranking
+
+Keyword-bearing queries default to hybrid ranking, but the lexical comparator
+must remain available as an explicit regression guard.
+
+```bash
+out="$(biomcp search article -k immunotherapy --ranking-mode lexical --limit 3)"
+echo "$out" | mustmatch like "keyword=immunotherapy"
+echo "$out" | mustmatch like "Ranking: calibrated PubMed rescue + lexical directness"
+echo "$out" | mustmatch not like "Ranking: hybrid relevance"
 ```
 
 ## Invalid Date Fails Before Backend Warnings
@@ -102,12 +115,24 @@ echo "$help_out" | mustmatch like "Published after date (YYYY, YYYY-MM, or YYYY-
 echo "$help_out" | mustmatch like "Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)"
 echo "$help_out" | mustmatch '/\[aliases: --since\]/'
 echo "$help_out" | mustmatch '/\[aliases: --until\]/'
+echo "$help_out" | mustmatch like "--ranking-mode"
+echo "$help_out" | mustmatch like "--weight-semantic"
+echo "$help_out" | mustmatch like "--weight-lexical"
+echo "$help_out" | mustmatch like "--weight-citations"
+echo "$help_out" | mustmatch like "--weight-position"
+echo "$help_out" | mustmatch like "0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"
 printf '%s\n' "$help_out" | grep -F -- '[possible values: all, pubtator, europepmc, pubmed, litsense2]' >/dev/null
 
 list_out="$(biomcp list article)"
 echo "$list_out" | mustmatch like "--date-from <YYYY|YYYY-MM|YYYY-MM-DD>"
 echo "$list_out" | mustmatch like "--date-to <YYYY|YYYY-MM|YYYY-MM-DD>"
 echo "$list_out" | mustmatch like "--since <YYYY|YYYY-MM|YYYY-MM-DD>"
+echo "$list_out" | mustmatch like "--ranking-mode <lexical|semantic|hybrid>"
+echo "$list_out" | mustmatch like "--weight-semantic <float>"
+echo "$list_out" | mustmatch like "--weight-lexical <float>"
+echo "$list_out" | mustmatch like "--weight-citations <float>"
+echo "$list_out" | mustmatch like "--weight-position <float>"
+echo "$list_out" | mustmatch like "keyword-bearing article queries default to hybrid"
 echo "$list_out" | mustmatch like "--source <all, pubtator, europepmc, pubmed, litsense2>"
 echo "$list_out" | mustmatch like "search article --source litsense2"
 ```
@@ -202,7 +227,7 @@ exposes that through `ranking.anchor_count`.
 
 ```bash
 out="$(biomcp --json search article -q 'alternative microexon splicing metastasis' --limit 5)"
-echo "$out" | jq -r '(.results | length > 0) and all(.results[]; .ranking.anchor_count == 4)' | mustmatch "true"
+echo "$out" | jq -r '(.results | length > 0) and all(.results[]; .ranking.anchor_count == 4 and .ranking.mode == "hybrid")' | mustmatch "true"
 ```
 
 ## Type Filter Uses The Compatible Source Set
@@ -371,6 +396,7 @@ echo "$out" | mustmatch like '"ranking_policy": "calibrated PubMed rescue + lexi
 echo "$out" | mustmatch like 'at least one anchor hit'
 echo "$out" | mustmatch like '"ranking": {'
 echo "$out" | mustmatch like '"pubmed_rescue":'
+echo "$out" | jq -e 'all(.results[]; .ranking.mode == "lexical")' > /dev/null
 ```
 
 ## Article Search JSON With Semantic Scholar Key
@@ -383,6 +409,7 @@ out="$(biomcp --json search article -g BRAF -d melanoma --include-retracted --li
 echo "$out" | mustmatch like '"semantic_scholar_enabled": true'
 echo "$out" | mustmatch like '"matched_sources": ['
 echo "$out" | mustmatch like '"ranking": {'
+echo "$out" | jq -e 'all(.results[]; .ranking.mode == "lexical")' > /dev/null
 ```
 
 ## Article Debug Plan
@@ -511,6 +538,7 @@ Default article search uses relevance sort. The output header echoes the sort in
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" search article -k melanoma --limit 3)"
 echo "$out" | mustmatch like "sort=relevance"
+echo "$out" | mustmatch like "ranking_mode=hybrid"
 ```
 
 Passing `--sort date` opts into date-based ordering.

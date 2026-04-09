@@ -1,20 +1,22 @@
 # BioASQ Ranking Calibration
 
 This directory documents the repo-local calibration surface for article-ranking
-tuning. It does not create a new benchmark lane or change shipped ranking
-behavior; it records the current LB-100 lexical baseline so future ranking work
-can compare rescue logic against stable fixtures.
+tuning. It does not create a new benchmark lane; it records the worked-example
+and fixture surface used to verify lexical, semantic, and weighted hybrid
+ranking behavior inside Rust tests before future BioASQ sweeps.
 
 ## Verified automated scenarios
 
 All verified automated cases live in the `#[cfg(test)]` module of
 `src/entities/article.rs`.
 
-| Scenario | Fixture surface | Rust test | Current baseline |
+| Scenario | Fixture surface | Rust test | Expected behavior |
 |---|---|---|---|
-| LB-100 MeSH synonym gap | `lb100_mesh_synonym_fixture()` around PMID `31832001` | `mesh_synonym_gap_records_pubmed_tier0_baseline` | The PubMed answer stays `directness_tier == 0` and ranks below a literal-match Europe PMC row |
-| LB-100 anchor-count asymmetry | `lb100_anchor_count_fixture()` around PMID `31832001` | `anchor_count_gap_records_pubmed_title_hit_deficit_baseline` | The PubMed answer and Europe PMC row both land in tier 1, but Europe PMC wins on `title_anchor_hits` |
-| Positive control | Existing mixed-federation candidate set | `pubmed_unique_row_survives_first_page_in_mixed_federation` | Strong lexical PubMed coverage still ranks first without any rescue signal |
+| Worked example 1 | Five-paper semantic-vs-lexical fixture | `hybrid_default_weights_orders_example_one` | Default hybrid weights rank `C > A > B = E > D` |
+| Worked example 2 | Same five-paper fixture | `lexical_mode_matches_current_ordering` | Lexical mode stays byte-identical to the current directness comparator |
+| Worked example 3 | Entity-only no-semantic fixture | `hybrid_entity_only_falls_back_without_nan` | Hybrid degrades cleanly to lexical/citation/position scoring without NaN output |
+| Worked example 4 | Same five-paper fixture with weight overrides | `hybrid_custom_weights_shift_ordering` | Lexical-heavy weights rank `C > B > D > A > E` |
+| Zero-safe normalization | All-zero citations and all-zero positions | `hybrid_scoring_is_zero_safe` | Hybrid component normalization stays finite when citation or position maxima collapse |
 
 ## Public bundle regeneration
 
@@ -25,8 +27,8 @@ command:
 uv run --quiet --script benchmarks/bioasq/ingest_public.py --bundle hf-public-pre2026
 ```
 
-Use that bundle when you want to compare future ranking rescue logic against the
-public BioASQ lane after the unit-test fixtures are green.
+Use that bundle when you want to compare future ranking-weight sweeps against
+the public BioASQ lane after the unit-test fixtures are green.
 
 ## Provenance pointers
 
@@ -39,11 +41,11 @@ boundaries, and the public-lane versus official-lane runbook.
 
 ## Existing live JSON proof
 
-The existing structural ranking-metadata proof remains
-`spec/06-article.md::Keyword Anchors Tokenize In JSON Ranking Metadata`.
-Ticket 149 does not add a new live ranking-order spec because upstream article
-responses drift; the stable calibration surface is these Rust fixtures plus the
-benchmark docs.
+The existing structural ranking-metadata proof remains in the article specs, and
+the keyword-default hybrid contract is exercised through `spec/06-article.md`
+plus `spec/09-search-all.md`. Live upstream result order still drifts, so the
+stable calibration surface for ranking-order proofs stays in these Rust
+fixtures plus the benchmark docs.
 
 ## Historical leads
 

@@ -9,10 +9,12 @@ biomcp search article -g BRAF --limit 10
 ```
 
 `search article` always works without credentials. BioMCP keeps
-`sort=relevance` directness-first instead of citation-first, and the
-Semantic Scholar leg is eligible whenever the filter set is compatible.
-`S2_API_KEY` upgrades those Semantic Scholar requests to authenticated quota;
-without it, BioMCP uses the shared pool.
+`sort=relevance` as the default, but the effective ranking mode depends on the
+query: keyword-bearing searches default to hybrid scoring, while entity-only
+searches default to lexical directness. LitSense2 joins keyword-bearing
+federated searches, and the Semantic Scholar leg is still eligible whenever the
+filter set is compatible. `S2_API_KEY` upgrades those Semantic Scholar
+requests to authenticated quota; without it, BioMCP uses the shared pool.
 
 ## Search PubMed directly
 
@@ -25,6 +27,17 @@ biomcp search article -g BRAF --source pubmed --limit 5
 ```bash
 biomcp search article -g BRAF -d melanoma --limit 10
 ```
+
+## Tune semantic versus lexical balance
+
+```bash
+biomcp search article -k "Hirschsprung disease ganglion cells" --ranking-mode hybrid --weight-semantic 0.5 --weight-lexical 0.2 --limit 5
+```
+
+Use `--ranking-mode lexical` to force the old directness comparator on a
+keyword query, `--ranking-mode semantic` to sort by LitSense2 score first, or
+`--weight-*` flags to retune the default hybrid formula
+`0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`.
 
 ## Constrain by date
 
@@ -75,7 +88,9 @@ env -u S2_API_KEY biomcp --json search article -g BRAF --limit 3
 ```
 
 Look for `semantic_scholar_enabled`, row-level `matched_sources`, and
-`ranking` metadata to see why a paper ranked where it did.
+`ranking` metadata to see why a paper ranked where it did. Hybrid rows expose
+normalized semantic, lexical, citation, and source-position components plus the
+composite score; lexical rows preserve the existing directness metadata.
 
 ## Inspect the executed search plan
 
