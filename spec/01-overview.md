@@ -66,8 +66,8 @@ echo "$out" | mustmatch like '- `cache path` - print the managed HTTP cache dire
 echo "$out" | mustmatch like '- `cache stats` - show HTTP cache statistics (total blob inventory, referenced blob bytes, age range, resolved limits including min disk free); supports `--json` for machine-readable output'
 echo "$out" | mustmatch like '- `cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]` - remove orphan blobs and optionally age- or size-evict the HTTP cache; supports `--json` for machine-readable output'
 echo "$out" | mustmatch like '- `cache clear [--yes]` - destructively wipe `<resolved cache_root>/http`; never touches `downloads/`; supports `--json` on success and requires a TTY unless `--yes` is passed'
-echo "$out" | mustmatch like "- `discover <query>`"
-echo "$out" | mustmatch like "- `ema sync`"
+echo "$out" | mustmatch like '- `discover <query>`'
+echo "$out" | mustmatch like '- `ema sync`'
 echo "$out" | mustmatch like $'## Entities\n\n- gene\n- variant\n- article\n- trial'
 ```
 
@@ -101,7 +101,7 @@ echo "$out" | mustmatch like "Use keyword search to scan a topic before you know
 echo "$out" | mustmatch like "Known gene/disease/drug already identified"
 echo "$out" | mustmatch like "Keyword-only topic, dataset, or method question"
 echo "$out" | mustmatch like 'Do not invent `-g/-d/--drug`; stay keyword-first or start with `discover`'
-echo "$out" | mustmatch like "Prefer `--type review`"
+echo "$out" | mustmatch like 'Prefer `--type review`'
 echo "$out" | mustmatch like "biomcp search article -g BRAF --limit 5"
 echo "$out" | mustmatch like "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
 echo "$out" | mustmatch like "biomcp search article --drug amiodarone -k \"photosensitivity mechanism\" --limit 5"
@@ -110,7 +110,7 @@ echo "$out" | mustmatch like "biomcp search article -k \"TCGA mutation analysis 
 echo "$out" | mustmatch like "--ranking-mode <lexical|semantic|hybrid>"
 echo "$out" | mustmatch like "--max-per-source <N>"
 echo "$out" | mustmatch like "Cap each federated source's contribution after deduplication and before ranking."
-echo "$out" | mustmatch like "Default: 40% of `--limit` on federated pools with at least three surviving primary sources."
+echo "$out" | mustmatch like 'Default: 40% of `--limit` on federated pools with at least three surviving primary sources.'
 echo "$out" | mustmatch like "keyword-bearing article queries default to hybrid"
 echo "$out" | mustmatch like "article citations <id>"
 echo "$out" | mustmatch like "article recommendations <id>"

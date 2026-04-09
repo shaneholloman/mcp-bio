@@ -134,9 +134,9 @@ echo "$help_out" | mustmatch like "--weight-citations"
 echo "$help_out" | mustmatch like "--weight-position"
 echo "$help_out" | mustmatch like "--max-per-source <N>"
 echo "$help_out" | mustmatch like "Cap each federated source's contribution after deduplication and before ranking."
-echo "$help_out" | mustmatch like "Default: 40% of `--limit` on federated pools with at least three surviving primary sources."
-echo "$help_out" | mustmatch like "`0` uses the default cap."
-echo "$help_out" | mustmatch like "Setting it equal to `--limit` disables capping."
+echo "$help_out" | mustmatch like 'Default: 40% of `--limit` on federated pools with at least three surviving primary sources.'
+echo "$help_out" | mustmatch like '`0` uses the default cap.'
+echo "$help_out" | mustmatch like 'Setting it equal to `--limit` disables capping.'
 echo "$help_out" | mustmatch like "Rows count against their primary source after deduplication."
 echo "$help_out" | mustmatch like "0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"
 printf '%s\n' "$help_out" | grep -F -- '[possible values: all, pubtator, europepmc, pubmed, litsense2]' >/dev/null
@@ -162,12 +162,12 @@ echo "$list_out" | mustmatch like "--weight-citations <float>"
 echo "$list_out" | mustmatch like "--weight-position <float>"
 echo "$list_out" | mustmatch like "keyword-bearing article queries default to hybrid"
 echo "$list_out" | mustmatch like "LitSense2-derived semantic signal"
-echo "$list_out" | mustmatch like "rows without LitSense2 provenance contribute `semantic=0`"
+echo "$list_out" | mustmatch like 'rows without LitSense2 provenance contribute `semantic=0`'
 echo "$list_out" | mustmatch like "--source <all, pubtator, europepmc, pubmed, litsense2>"
 echo "$list_out" | mustmatch like "--max-per-source <N>"
 echo "$list_out" | mustmatch like "Cap each federated source's contribution after deduplication and before ranking."
-echo "$list_out" | mustmatch like "Default: 40% of `--limit` on federated pools with at least three surviving primary sources."
-echo "$list_out" | mustmatch like "`0` uses the default cap; setting it equal to `--limit` disables capping."
+echo "$list_out" | mustmatch like 'Default: 40% of `--limit` on federated pools with at least three surviving primary sources.'
+echo "$list_out" | mustmatch like '`0` uses the default cap; setting it equal to `--limit` disables capping.'
 echo "$list_out" | mustmatch like "Rows count against their primary source after deduplication."
 echo "$list_out" | mustmatch like "search article --source litsense2"
 ```
@@ -179,7 +179,7 @@ so operators can verify which cap mode the search ran with.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" search article -g BRAF --max-per-source 10 --limit 1)"
+out="$("$bin" search article -g BRAF --max-per-source 10 --limit 25)"
 echo "$out" | mustmatch like "max_per_source=10"
 ```
 
