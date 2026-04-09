@@ -392,6 +392,7 @@ const PUBTATOR_PAGE_SIZE: usize = 25;
 const PUBMED_PAGE_SIZE: usize = 100;
 const MAX_PAGE_FETCHES: usize = 50;
 const WARN_PAGE_THRESHOLD: usize = 20;
+const SEMANTIC_SCHOLAR_BATCH_LOOKUP_MAX_IDS: usize = 500;
 const FEDERATED_PAGE_SIZE_CAP: usize = if EUROPE_PMC_PAGE_SIZE < PUBTATOR_PAGE_SIZE {
     EUROPE_PMC_PAGE_SIZE
 } else {
@@ -2734,6 +2735,221 @@ async fn search_litsense2_candidates(
     Ok(rows)
 }
 
+fn article_search_semantic_scholar_lookup_id(row: &ArticleSearchResult) -> Option<String> {
+    let pmid = row.pmid.trim();
+    if !pmid.is_empty() {
+        return Some(format!("PMID:{pmid}"));
+    }
+    row.doi
+        .as_deref()
+        .map(str::trim)
+        .filter(|doi| !doi.is_empty())
+        .map(|doi| format!("DOI:{doi}"))
+}
+
+fn article_search_row_needs_semantic_scholar_enrichment(row: &ArticleSearchResult) -> bool {
+    row.source != ArticleSource::SemanticScholar
+        && (row.citation_count.is_none()
+            || row.influential_citation_count.is_none()
+            || row
+                .abstract_snippet
+                .as_deref()
+                .is_none_or(|snippet| snippet.trim().is_empty())
+            || row.normalized_abstract.trim().is_empty())
+}
+
+fn merge_semantic_scholar_search_citation(target: &mut Option<u64>, incoming: Option<u64>) {
+    match (*target, incoming) {
+        (None, Some(value)) | (Some(0), Some(value)) => *target = Some(value),
+        _ => {}
+    }
+}
+
+fn merge_article_search_row_abstract_text(row: &mut ArticleSearchResult, abstract_text: &str) {
+    let cleaned_abstract = transform::article::clean_abstract(abstract_text);
+    if cleaned_abstract.is_empty() {
+        return;
+    }
+
+    if row
+        .abstract_snippet
+        .as_deref()
+        .is_none_or(|snippet| snippet.trim().is_empty())
+    {
+        row.abstract_snippet =
+            transform::article::article_search_abstract_snippet(&cleaned_abstract);
+    }
+    if row.normalized_abstract.trim().is_empty() {
+        row.normalized_abstract =
+            transform::article::normalize_article_search_text(&cleaned_abstract);
+    }
+}
+
+fn merge_article_search_row_with_semantic_scholar(
+    row: &mut ArticleSearchResult,
+    paper: &SemanticScholarPaper,
+) {
+    merge_semantic_scholar_search_citation(&mut row.citation_count, paper.citation_count);
+    merge_semantic_scholar_search_citation(
+        &mut row.influential_citation_count,
+        paper.influential_citation_count,
+    );
+
+    let Some(abstract_text) = paper.abstract_text.as_deref() else {
+        return;
+    };
+    merge_article_search_row_abstract_text(row, abstract_text);
+}
+
+async fn enrich_article_search_rows_with_semantic_scholar(rows: &mut [ArticleSearchResult]) {
+    let mut lookup_ids = Vec::new();
+    let mut lookup_positions: HashMap<String, Vec<usize>> = HashMap::new();
+
+    for (idx, row) in rows.iter().enumerate() {
+        if !article_search_row_needs_semantic_scholar_enrichment(row) {
+            continue;
+        }
+        let Some(lookup_id) = article_search_semantic_scholar_lookup_id(row) else {
+            continue;
+        };
+        match lookup_positions.get_mut(&lookup_id) {
+            Some(positions) => positions.push(idx),
+            None => {
+                lookup_positions.insert(lookup_id.clone(), vec![idx]);
+                lookup_ids.push(lookup_id);
+            }
+        }
+    }
+
+    if lookup_ids.is_empty() {
+        return;
+    }
+
+    let client = match SemanticScholarClient::new() {
+        Ok(client) => client,
+        Err(err) => {
+            warn!(?err, "Semantic Scholar search-row enrichment unavailable");
+            return;
+        }
+    };
+
+    for (chunk_idx, chunk) in lookup_ids
+        .chunks(SEMANTIC_SCHOLAR_BATCH_LOOKUP_MAX_IDS)
+        .enumerate()
+    {
+        let chunk_start = chunk_idx * SEMANTIC_SCHOLAR_BATCH_LOOKUP_MAX_IDS;
+        let chunk_end = chunk_start + chunk.len();
+        match client.paper_batch_search_enrichment(chunk).await {
+            Ok(papers) => {
+                for (lookup_id, paper) in chunk.iter().zip(papers.into_iter()) {
+                    let Some(paper) = paper else {
+                        continue;
+                    };
+                    let Some(row_positions) = lookup_positions.get(lookup_id) else {
+                        continue;
+                    };
+                    for row_idx in row_positions {
+                        merge_article_search_row_with_semantic_scholar(&mut rows[*row_idx], &paper);
+                    }
+                }
+            }
+            Err(err) => {
+                warn!(
+                    ?err,
+                    chunk_start,
+                    chunk_end,
+                    "Semantic Scholar article-search batch enrichment failed",
+                );
+                break;
+            }
+        }
+    }
+}
+
+fn article_search_row_needs_visible_article_fallback(row: &ArticleSearchResult) -> bool {
+    (row.source == ArticleSource::PubMed || row.matched_sources.contains(&ArticleSource::PubMed))
+        && parse_pmid(&row.pmid).is_some()
+        && (row.citation_count.is_none()
+            || matches!(row.citation_count, Some(0))
+            || row
+                .abstract_snippet
+                .as_deref()
+                .is_none_or(|snippet| snippet.trim().is_empty())
+            || row.normalized_abstract.trim().is_empty())
+}
+
+fn merge_article_search_row_with_article_base(row: &mut ArticleSearchResult, article: &Article) {
+    merge_semantic_scholar_search_citation(&mut row.citation_count, article.citation_count);
+    if let Some(abstract_text) = article.abstract_text.as_deref() {
+        merge_article_search_row_abstract_text(row, abstract_text);
+    }
+}
+
+async fn enrich_visible_article_search_rows_with_article_base(rows: &mut [ArticleSearchResult]) {
+    let lookup_positions = rows
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, row)| {
+            article_search_row_needs_visible_article_fallback(row)
+                .then(|| parse_pmid(&row.pmid).map(|pmid| (idx, pmid)))
+                .flatten()
+        })
+        .collect::<Vec<_>>();
+    if lookup_positions.is_empty() {
+        return;
+    }
+
+    let pubtator = match PubTatorClient::new() {
+        Ok(client) => client,
+        Err(err) => {
+            warn!(?err, "PubTator visible-row metadata fallback unavailable");
+            return;
+        }
+    };
+    let europe = match EuropePmcClient::new() {
+        Ok(client) => client,
+        Err(err) => {
+            warn!(?err, "Europe PMC visible-row metadata fallback unavailable");
+            return;
+        }
+    };
+
+    for (row_idx, pmid) in lookup_positions {
+        let lookup_id = rows[row_idx].pmid.clone();
+        match resolve_article_from_pmid(pmid, &lookup_id, &lookup_id, &pubtator, &europe, None)
+            .await
+        {
+            Ok(article) => merge_article_search_row_with_article_base(&mut rows[row_idx], &article),
+            Err(err) => warn!(
+                ?err,
+                pmid = lookup_id,
+                "Visible article-search metadata fallback failed",
+            ),
+        }
+    }
+}
+
+async fn enrich_and_finalize_article_candidates(
+    mut rows: Vec<ArticleSearchResult>,
+    limit: usize,
+    offset: usize,
+    total: Option<usize>,
+    filters: &ArticleSearchFilters,
+) -> SearchPage<ArticleSearchResult> {
+    enrich_article_search_rows_with_semantic_scholar(&mut rows).await;
+    let mut page = finalize_article_candidates(rows, limit, offset, total, filters);
+    enrich_visible_article_search_rows_with_article_base(&mut page.results).await;
+    page
+}
+
+async fn enrich_visible_article_search_page(
+    mut page: SearchPage<ArticleSearchResult>,
+) -> SearchPage<ArticleSearchResult> {
+    enrich_article_search_rows_with_semantic_scholar(&mut page.results).await;
+    enrich_visible_article_search_rows_with_article_base(&mut page.results).await;
+    page
+}
+
 fn finalize_article_candidates(
     mut rows: Vec<ArticleSearchResult>,
     limit: usize,
@@ -2790,29 +3006,25 @@ async fn search_federated_page(
         }
     );
 
-    merge_federated_pages(
+    let rows = collect_federated_article_rows(
         pubtator_leg,
         europe_leg,
         pubmed_leg,
         semantic_scholar_leg,
         litsense2_leg,
-        limit,
-        offset,
-        filters,
-    )
+    )?;
+
+    Ok(enrich_and_finalize_article_candidates(rows, limit, offset, None, filters).await)
 }
 
 #[allow(clippy::too_many_arguments)]
-fn merge_federated_pages(
+fn collect_federated_article_rows(
     pubtator_leg: Result<SearchPage<ArticleSearchResult>, BioMcpError>,
     europe_leg: Result<SearchPage<ArticleSearchResult>, BioMcpError>,
     pubmed_leg: Option<Result<SearchPage<ArticleSearchResult>, BioMcpError>>,
     semantic_scholar_leg: Result<Vec<ArticleSearchResult>, BioMcpError>,
     litsense2_leg: Result<Vec<ArticleSearchResult>, BioMcpError>,
-    limit: usize,
-    offset: usize,
-    filters: &ArticleSearchFilters,
-) -> Result<SearchPage<ArticleSearchResult>, BioMcpError> {
+) -> Result<Vec<ArticleSearchResult>, BioMcpError> {
     let semantic_scholar_rows = match semantic_scholar_leg {
         Ok(rows) => rows,
         Err(err) => {
@@ -2846,9 +3058,7 @@ fn merge_federated_pages(
             merged.extend(pubmed_rows);
             merged.extend(semantic_scholar_rows);
             merged.extend(litsense2_rows);
-            Ok(finalize_article_candidates(
-                merged, limit, offset, None, filters,
-            ))
+            Ok(merged)
         }
         (Ok(pubtator_page), Err(err)) => {
             warn!(
@@ -2859,9 +3069,7 @@ fn merge_federated_pages(
             rows.extend(pubmed_rows);
             rows.extend(semantic_scholar_rows);
             rows.extend(litsense2_rows);
-            Ok(finalize_article_candidates(
-                rows, limit, offset, None, filters,
-            ))
+            Ok(rows)
         }
         (Err(err), Ok(europe_page)) => {
             warn!(
@@ -2872,15 +3080,37 @@ fn merge_federated_pages(
             rows.extend(pubmed_rows);
             rows.extend(semantic_scholar_rows);
             rows.extend(litsense2_rows);
-            Ok(finalize_article_candidates(
-                rows, limit, offset, None, filters,
-            ))
+            Ok(rows)
         }
         (Err(pubtator_err), Err(europe_err)) => {
             warn!(?europe_err, "Europe PMC leg also failed");
             Err(pubtator_err)
         }
     }
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+#[allow(clippy::too_many_arguments)]
+fn merge_federated_pages(
+    pubtator_leg: Result<SearchPage<ArticleSearchResult>, BioMcpError>,
+    europe_leg: Result<SearchPage<ArticleSearchResult>, BioMcpError>,
+    pubmed_leg: Option<Result<SearchPage<ArticleSearchResult>, BioMcpError>>,
+    semantic_scholar_leg: Result<Vec<ArticleSearchResult>, BioMcpError>,
+    litsense2_leg: Result<Vec<ArticleSearchResult>, BioMcpError>,
+    limit: usize,
+    offset: usize,
+    filters: &ArticleSearchFilters,
+) -> Result<SearchPage<ArticleSearchResult>, BioMcpError> {
+    let rows = collect_federated_article_rows(
+        pubtator_leg,
+        europe_leg,
+        pubmed_leg,
+        semantic_scholar_leg,
+        litsense2_leg,
+    )?;
+    Ok(finalize_article_candidates(
+        rows, limit, offset, None, filters,
+    ))
 }
 
 async fn search_type_capable_page(
@@ -2898,35 +3128,35 @@ async fn search_type_capable_page(
         (Ok(europe_page), Ok(pubmed_page)) => {
             let mut rows = europe_page.results;
             rows.extend(pubmed_page.results);
-            Ok(finalize_article_candidates(
-                rows, limit, offset, None, filters,
-            ))
+            Ok(enrich_and_finalize_article_candidates(rows, limit, offset, None, filters).await)
         }
         (Ok(europe_page), Err(err)) => {
             warn!(
                 ?err,
                 "PubMed type-capable leg failed; returning Europe PMC-only results"
             );
-            Ok(finalize_article_candidates(
+            Ok(enrich_and_finalize_article_candidates(
                 europe_page.results,
                 limit,
                 offset,
                 europe_page.total,
                 filters,
-            ))
+            )
+            .await)
         }
         (Err(err), Ok(pubmed_page)) => {
             warn!(
                 ?err,
                 "Europe PMC type-capable leg failed; returning PubMed-only results"
             );
-            Ok(finalize_article_candidates(
+            Ok(enrich_and_finalize_article_candidates(
                 pubmed_page.results,
                 limit,
                 offset,
                 pubmed_page.total,
                 filters,
-            ))
+            )
+            .await)
         }
         (Err(europe_err), Err(pubmed_err)) => {
             warn!(?pubmed_err, "PubMed type-capable leg also failed");
@@ -2951,39 +3181,40 @@ async fn search_relevance_page(
     match plan {
         BackendPlan::EuropeOnly => {
             let page = search_europepmc_page(filters, fetch_count, 0).await?;
-            Ok(finalize_article_candidates(
+            Ok(enrich_and_finalize_article_candidates(
                 page.results,
                 limit,
                 offset,
                 page.total,
                 filters,
-            ))
+            )
+            .await)
         }
         BackendPlan::PubTatorOnly => {
             let page = search_pubtator_page(filters, fetch_count, 0).await?;
-            Ok(finalize_article_candidates(
+            Ok(enrich_and_finalize_article_candidates(
                 page.results,
                 limit,
                 offset,
                 page.total,
                 filters,
-            ))
+            )
+            .await)
         }
         BackendPlan::PubMedOnly => {
             let page = search_pubmed_page(filters, fetch_count, 0).await?;
-            Ok(finalize_article_candidates(
+            Ok(enrich_and_finalize_article_candidates(
                 page.results,
                 limit,
                 offset,
                 page.total,
                 filters,
-            ))
+            )
+            .await)
         }
         BackendPlan::LitSense2Only => {
             let rows = search_litsense2_candidates(filters, fetch_count).await?;
-            Ok(finalize_article_candidates(
-                rows, limit, offset, None, filters,
-            ))
+            Ok(enrich_and_finalize_article_candidates(rows, limit, offset, None, filters).await)
         }
         BackendPlan::TypeCapable => {
             search_type_capable_page(filters, fetch_count, limit, offset).await
@@ -3011,8 +3242,14 @@ pub async fn search_page(
         return search_relevance_page(filters, limit, offset, plan).await;
     }
     match plan {
-        BackendPlan::EuropeOnly => search_europepmc_page(filters, limit, offset).await,
-        BackendPlan::PubTatorOnly => search_pubtator_page(filters, limit, offset).await,
+        BackendPlan::EuropeOnly => {
+            let page = search_europepmc_page(filters, limit, offset).await?;
+            Ok(enrich_visible_article_search_page(page).await)
+        }
+        BackendPlan::PubTatorOnly => {
+            let page = search_pubtator_page(filters, limit, offset).await?;
+            Ok(enrich_visible_article_search_page(page).await)
+        }
         BackendPlan::PubMedOnly | BackendPlan::LitSense2Only | BackendPlan::TypeCapable => {
             search_relevance_page(filters, limit, offset, plan).await
         }
@@ -4805,6 +5042,454 @@ mod tests {
         for (slot, candidate) in rows.iter_mut().zip(candidates.into_iter()) {
             *slot = candidate.row;
         }
+    }
+
+    #[tokio::test]
+    async fn pubmed_source_search_enriches_citation_count_and_abstract_from_semantic_scholar_batch()
+    {
+        let _guard = lock_env().await;
+        let pubmed = MockServer::start().await;
+        let s2 = MockServer::start().await;
+        let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&pubmed.uri()));
+        let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+        let _s2_key = set_env_var("S2_API_KEY", None);
+
+        Mock::given(method("GET"))
+            .and(path("/esearch.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("retstart", "0"))
+            .and(query_param("retmax", "100"))
+            .and(query_param("term", "GDNF RET Hirschsprung 1996"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "esearchresult": {
+                    "count": "1",
+                    "idlist": ["8896569"]
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esummary.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("id", "8896569"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "result": {
+                    "uids": ["8896569"],
+                    "8896569": {
+                        "uid": "8896569",
+                        "title": "A mutation of the RET proto-oncogene in Hirschsprung's disease increases its sensitivity to glial cell line-derived neurotrophic factor",
+                        "sortpubdate": "1996/10/24 00:00",
+                        "pubdate": "1996 Oct 24",
+                        "fulljournalname": "Nature",
+                        "source": "Nature"
+                    }
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/graph/v1/paper/batch"))
+            .and(query_param(
+                "fields",
+                "paperId,externalIds,citationCount,influentialCitationCount,abstract",
+            ))
+            .and(body_string_contains("\"PMID:8896569\""))
+            .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "paperId": "paper-8896569",
+                    "externalIds": {"PubMed": "8896569"},
+                    "citationCount": 231,
+                    "influentialCitationCount": 17,
+                    "abstract": "Glial cell line-derived neurotrophic factor signaling through RET is increased by the Hirschsprung disease mutation."
+                }
+            ])))
+            .expect(1)
+            .mount(&s2)
+            .await;
+
+        let page = search_page(
+            &ArticleSearchFilters {
+                keyword: Some("GDNF RET Hirschsprung 1996".into()),
+                ..empty_filters()
+            },
+            1,
+            0,
+            ArticleSourceFilter::PubMed,
+        )
+        .await
+        .expect("pubmed source search should succeed");
+
+        assert_eq!(page.results.len(), 1);
+        let row = &page.results[0];
+        assert_eq!(row.pmid, "8896569");
+        assert_eq!(row.source, ArticleSource::PubMed);
+        assert_eq!(row.matched_sources, vec![ArticleSource::PubMed]);
+        assert_eq!(row.citation_count, Some(231));
+        assert_eq!(row.influential_citation_count, Some(17));
+        assert!(
+            row.abstract_snippet
+                .as_deref()
+                .is_some_and(|value| !value.trim().is_empty())
+        );
+        assert!(!row.normalized_abstract.is_empty());
+    }
+
+    #[tokio::test]
+    async fn federated_search_enrichment_overwrites_europepmc_zero_citation_count() {
+        let _guard = lock_env().await;
+        let pubtator = MockServer::start().await;
+        let europepmc = MockServer::start().await;
+        let pubmed = MockServer::start().await;
+        let s2 = MockServer::start().await;
+        let litsense2 = MockServer::start().await;
+        let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+        let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+        let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&pubmed.uri()));
+        let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+        let _litsense2_base = set_env_var("BIOMCP_LITSENSE2_BASE", Some(&litsense2.uri()));
+        let _s2_key = set_env_var("S2_API_KEY", None);
+
+        Mock::given(method("GET"))
+            .and(query_param("page", "1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "results": [],
+                "count": 0,
+                "total_pages": 1,
+                "current": 1,
+                "page_size": 25,
+                "facets": {}
+            })))
+            .expect(1)
+            .mount(&pubtator)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/search"))
+            .and(query_param("format", "json"))
+            .and(query_param("page", "1"))
+            .and(query_param("pageSize", "25"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "hitCount": 2,
+                "resultList": {
+                    "result": [
+                        {
+                            "id": "EP-1",
+                            "pmid": "8896569",
+                            "title": "RET mutation study",
+                            "journalTitle": "Nature",
+                            "firstPublicationDate": "1996-10-24",
+                            "citedByCount": 0,
+                            "abstractText": "Primary source abstract.",
+                            "pubType": "journal article"
+                        },
+                        {
+                            "id": "EP-2",
+                            "pmid": "99900001",
+                            "title": "Comparator study",
+                            "journalTitle": "Science",
+                            "firstPublicationDate": "1995-01-01",
+                            "citedByCount": 5,
+                            "abstractText": "Comparator abstract.",
+                            "pubType": "journal article"
+                        }
+                    ]
+                }
+            })))
+            .expect(1)
+            .mount(&europepmc)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/esearch.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("retmode", "json"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "esearchresult": {
+                    "count": "0",
+                    "idlist": []
+                }
+            })))
+            .expect(1)
+            .mount(&pubmed)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/graph/v1/paper/search"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "total": 0,
+                "data": []
+            })))
+            .expect(1)
+            .mount(&s2)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/sentences/"))
+            .and(query_param("query", "GDNF RET Hirschsprung 1996"))
+            .and(query_param("rerank", "true"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
+            .expect(1)
+            .mount(&litsense2)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/graph/v1/paper/batch"))
+            .and(query_param(
+                "fields",
+                "paperId,externalIds,citationCount,influentialCitationCount,abstract",
+            ))
+            .and(body_string_contains("\"PMID:8896569\""))
+            .and(body_string_contains("\"PMID:99900001\""))
+            .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "paperId": "paper-8896569",
+                    "externalIds": {"PubMed": "8896569"},
+                    "citationCount": 231,
+                    "influentialCitationCount": 17,
+                    "abstract": "Semantic Scholar abstract for RET mutation study."
+                },
+                {
+                    "paperId": "paper-99900001",
+                    "externalIds": {"PubMed": "99900001"},
+                    "citationCount": 5,
+                    "influentialCitationCount": 1,
+                    "abstract": "Semantic Scholar abstract for comparator study."
+                }
+            ])))
+            .expect(1)
+            .mount(&s2)
+            .await;
+
+        let page = search_page(
+            &ArticleSearchFilters {
+                keyword: Some("GDNF RET Hirschsprung 1996".into()),
+                sort: ArticleSort::Citations,
+                ..empty_filters()
+            },
+            2,
+            0,
+            ArticleSourceFilter::All,
+        )
+        .await
+        .expect("federated search should succeed");
+
+        assert_eq!(
+            page.results
+                .iter()
+                .map(|row| row.pmid.as_str())
+                .collect::<Vec<_>>(),
+            vec!["8896569", "99900001"]
+        );
+        assert_eq!(page.results[0].source, ArticleSource::EuropePmc);
+        assert_eq!(
+            page.results[0].matched_sources,
+            vec![ArticleSource::EuropePmc]
+        );
+        assert_eq!(page.results[0].citation_count, Some(231));
+    }
+
+    #[tokio::test]
+    async fn article_search_enrichment_preserves_existing_nonempty_primary_metadata() {
+        let _guard = lock_env().await;
+        let s2 = MockServer::start().await;
+        let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+        let _s2_key = set_env_var("S2_API_KEY", None);
+
+        Mock::given(method("POST"))
+            .and(path("/graph/v1/paper/batch"))
+            .and(query_param(
+                "fields",
+                "paperId,externalIds,citationCount,influentialCitationCount,abstract",
+            ))
+            .and(body_string_contains("\"PMID:8896569\""))
+            .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "paperId": "paper-8896569",
+                    "externalIds": {"PubMed": "8896569"},
+                    "citationCount": 231,
+                    "influentialCitationCount": 17,
+                    "abstract": "Semantic Scholar replacement abstract."
+                }
+            ])))
+            .expect(1)
+            .mount(&s2)
+            .await;
+
+        let primary_abstract = "Primary source abstract.";
+        let primary_normalized =
+            crate::transform::article::normalize_article_search_text(primary_abstract);
+        let mut rows = vec![ArticleSearchResult {
+            abstract_snippet: Some(primary_abstract.into()),
+            normalized_abstract: primary_normalized.clone(),
+            ..row_with(
+                "8896569",
+                ArticleSource::PubMed,
+                Some("1996-10-24"),
+                Some(99),
+                Some(false),
+            )
+        }];
+
+        enrich_article_search_rows_with_semantic_scholar(&mut rows).await;
+
+        let row = &rows[0];
+        assert_eq!(row.citation_count, Some(99));
+        assert_eq!(row.influential_citation_count, Some(17));
+        assert_eq!(row.abstract_snippet.as_deref(), Some(primary_abstract));
+        assert_eq!(row.normalized_abstract, primary_normalized);
+    }
+
+    #[tokio::test]
+    async fn article_search_semantic_scholar_batch_failure_is_non_fatal() {
+        let _guard = lock_env().await;
+        let pubtator = MockServer::start().await;
+        let s2 = MockServer::start().await;
+        let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+        let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+        let _s2_key = set_env_var("S2_API_KEY", None);
+
+        Mock::given(method("GET"))
+            .and(query_param("page", "1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "results": [{
+                    "_id": "pt-1",
+                    "pmid": 22663011,
+                    "title": "Alternative microexon splicing in metastasis",
+                    "journal": "Cancer Cell",
+                    "date": "2025-01-01",
+                    "score": 42.0
+                }],
+                "count": 1,
+                "total_pages": 1,
+                "current": 1,
+                "page_size": 25,
+                "facets": {}
+            })))
+            .expect(1)
+            .mount(&pubtator)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/graph/v1/paper/batch"))
+            .and(query_param(
+                "fields",
+                "paperId,externalIds,citationCount,influentialCitationCount,abstract",
+            ))
+            .and(body_string_contains("\"PMID:22663011\""))
+            .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
+            .respond_with(ResponseTemplate::new(429).set_body_string("shared rate limit"))
+            .expect(1)
+            .mount(&s2)
+            .await;
+
+        let page = search_page(
+            &ArticleSearchFilters {
+                keyword: Some("alternative microexon splicing metastasis".into()),
+                sort: ArticleSort::Date,
+                ..empty_filters()
+            },
+            1,
+            0,
+            ArticleSourceFilter::PubTator,
+        )
+        .await
+        .expect("search should survive Semantic Scholar batch failures");
+
+        assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].source, ArticleSource::PubTator);
+        assert_eq!(
+            page.results[0].matched_sources,
+            vec![ArticleSource::PubTator]
+        );
+        assert_eq!(page.results[0].citation_count, None);
+        assert_eq!(page.results[0].abstract_snippet, None);
+    }
+
+    #[tokio::test]
+    async fn article_search_semantic_scholar_batch_enrichment_chunks_after_500_ids() {
+        let _guard = lock_env().await;
+        let s2 = MockServer::start().await;
+        let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+        let _s2_key = set_env_var("S2_API_KEY", None);
+
+        let first_chunk_body = (1..=SEMANTIC_SCHOLAR_BATCH_LOOKUP_MAX_IDS)
+            .map(|pmid| {
+                serde_json::json!({
+                    "paperId": format!("paper-{pmid}"),
+                    "citationCount": pmid as u64,
+                    "influentialCitationCount": 1,
+                    "abstract": format!("Abstract for PMID {pmid}.")
+                })
+            })
+            .collect::<Vec<_>>();
+        Mock::given(method("POST"))
+            .and(path("/graph/v1/paper/batch"))
+            .and(query_param(
+                "fields",
+                "paperId,externalIds,citationCount,influentialCitationCount,abstract",
+            ))
+            .and(body_string_contains("\"PMID:1\""))
+            .and(body_string_contains("\"PMID:500\""))
+            .and(|request: &wiremock::Request| {
+                !String::from_utf8_lossy(&request.body).contains("\"PMID:501\"")
+            })
+            .respond_with(ResponseTemplate::new(200).set_body_json(first_chunk_body))
+            .expect(1)
+            .mount(&s2)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/graph/v1/paper/batch"))
+            .and(query_param(
+                "fields",
+                "paperId,externalIds,citationCount,influentialCitationCount,abstract",
+            ))
+            .and(body_string_contains("\"PMID:501\""))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "paperId": "paper-501",
+                    "citationCount": 501,
+                    "influentialCitationCount": 1,
+                    "abstract": "Abstract for PMID 501."
+                }
+            ])))
+            .expect(1)
+            .mount(&s2)
+            .await;
+
+        let mut rows = (1..=501)
+            .map(|pmid| {
+                row_with(
+                    &pmid.to_string(),
+                    ArticleSource::PubMed,
+                    Some("2025-01-01"),
+                    None,
+                    Some(false),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        enrich_article_search_rows_with_semantic_scholar(&mut rows).await;
+
+        assert_eq!(rows[0].citation_count, Some(1));
+        assert_eq!(rows[499].citation_count, Some(500));
+        assert_eq!(rows[500].citation_count, Some(501));
+        assert!(
+            rows[500]
+                .abstract_snippet
+                .as_deref()
+                .is_some_and(|value| value.contains("Abstract"))
+        );
+        assert!(!rows[500].normalized_abstract.is_empty());
     }
 
     #[test]

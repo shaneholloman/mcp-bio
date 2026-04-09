@@ -14,6 +14,8 @@ const GRAPH_PAPER_FIELDS: &str = "paperId,externalIds,title,venue,year,tldr,cita
 const BATCH_PAPER_FIELDS: &str = "paperId,externalIds,title,venue,year";
 const BATCH_PAPER_COMPACT_FIELDS: &str =
     "paperId,externalIds,title,venue,year,tldr,citationCount,influentialCitationCount";
+const BATCH_PAPER_SEARCH_ENRICHMENT_FIELDS: &str =
+    "paperId,externalIds,citationCount,influentialCitationCount,abstract";
 const SEARCH_PAPER_FIELDS: &str =
     "paperId,externalIds,title,venue,year,citationCount,influentialCitationCount,abstract";
 const CITATION_EDGE_FIELDS: &str = "contexts,intents,isInfluential,citingPaper.paperId,citingPaper.externalIds,citingPaper.title,citingPaper.venue,citingPaper.year";
@@ -170,6 +172,14 @@ impl SemanticScholarClient {
         ids: &[String],
     ) -> Result<Vec<Option<SemanticScholarPaper>>, BioMcpError> {
         self.paper_batch_with_fields(ids, BATCH_PAPER_COMPACT_FIELDS)
+            .await
+    }
+
+    pub async fn paper_batch_search_enrichment(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<Option<SemanticScholarPaper>>, BioMcpError> {
+        self.paper_batch_with_fields(ids, BATCH_PAPER_SEARCH_ENRICHMENT_FIELDS)
             .await
     }
 
@@ -542,6 +552,43 @@ mod tests {
             );
             assert_eq!(paper.citation_count, Some(12));
             assert_eq!(paper.influential_citation_count, Some(3));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    async fn paper_batch_search_enrichment_requests_abstract_and_citation_fields() {
+        run_no_cache_test(async {
+            let server = MockServer::start().await;
+            Mock::given(method("POST"))
+                .and(path("/graph/v1/paper/batch"))
+                .and(query_param("fields", BATCH_PAPER_SEARCH_ENRICHMENT_FIELDS))
+                .and(header("x-api-key", "test-key"))
+                .and(body_string_contains("\"PMID:22663011\""))
+                .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                    {
+                        "paperId": "paper-1",
+                        "externalIds": {"PubMed": "22663011"},
+                        "citationCount": 12,
+                        "influentialCitationCount": 3,
+                        "abstract": "Enrichment abstract."
+                    }
+                ])))
+                .mount(&server)
+                .await;
+
+            let client =
+                SemanticScholarClient::new_for_test(server.uri(), Some("test-key".to_string()))
+                    .unwrap();
+            let rows = client
+                .paper_batch_search_enrichment(&["PMID:22663011".to_string()])
+                .await
+                .unwrap();
+            assert_eq!(rows.len(), 1);
+            let paper = rows[0].as_ref().expect("paper");
+            assert_eq!(paper.citation_count, Some(12));
+            assert_eq!(paper.influential_citation_count, Some(3));
+            assert_eq!(paper.abstract_text.as_deref(), Some("Enrichment abstract."));
         })
         .await;
     }
