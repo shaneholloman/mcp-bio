@@ -544,32 +544,49 @@ pub async fn search_with_filters(
             wikipathways.search_pathways(&effective_query, limit)
         )
     };
-    let (reactome_hits, reactome_total) = reactome_res?;
-    let reactome_hits = reactome_hits
-        .into_iter()
-        .map(transform::pathway::from_reactome_hit)
-        .collect::<Vec<_>>();
+    let (reactome_hits, reactome_total, reactome_error) = match reactome_res {
+        Ok((hits, total)) => (
+            hits.into_iter()
+                .map(transform::pathway::from_reactome_hit)
+                .collect::<Vec<_>>(),
+            total,
+            None,
+        ),
+        Err(err) => {
+            warn!("Reactome pathway search unavailable: {err}");
+            (Vec::new(), None, Some(err))
+        }
+    };
 
-    let kegg_hits = match kegg_res {
-        Ok(hits) => hits
-            .into_iter()
-            .map(transform::pathway::from_kegg_hit)
-            .collect::<Vec<_>>(),
+    let (kegg_hits, kegg_error) = match kegg_res {
+        Ok(hits) => (
+            hits.into_iter()
+                .map(transform::pathway::from_kegg_hit)
+                .collect::<Vec<_>>(),
+            None,
+        ),
         Err(err) => {
             warn!("KEGG pathway search unavailable: {err}");
-            Vec::new()
+            (Vec::new(), Some(err))
         }
     };
-    let wikipathways_hits = match wikipathways_res {
-        Ok(hits) => hits
-            .into_iter()
-            .map(transform::pathway::from_wikipathways_hit)
-            .collect::<Vec<_>>(),
+    let (wikipathways_hits, wikipathways_error) = match wikipathways_res {
+        Ok(hits) => (
+            hits.into_iter()
+                .map(transform::pathway::from_wikipathways_hit)
+                .collect::<Vec<_>>(),
+            None,
+        ),
         Err(err) => {
             warn!("WikiPathways search unavailable: {err}");
-            Vec::new()
+            (Vec::new(), Some(err))
         }
     };
+    if reactome_hits.is_empty() && kegg_hits.is_empty() && wikipathways_hits.is_empty() {
+        if let Some(err) = reactome_error.or(kegg_error).or(wikipathways_error) {
+            return Err(err);
+        }
+    }
     let total = if !kegg_hits.is_empty() || !wikipathways_hits.is_empty() {
         None
     } else {
@@ -983,6 +1000,46 @@ mod tests {
             .collect::<Vec<_>>();
         assert_eq!(ids, vec!["R-HSA-109581", "WP254"]);
         assert_eq!(results[1].source, "WikiPathways");
+        assert_eq!(total, None);
+    }
+
+    #[tokio::test]
+    async fn search_with_filters_tolerates_reactome_failure_when_other_sources_succeed() {
+        let _guard = env_lock_async().await;
+        let reactome = MockServer::start().await;
+        let wikipathways = MockServer::start().await;
+        let _reactome_base = set_env_var("BIOMCP_REACTOME_BASE", Some(&reactome.uri()));
+        let _wikipathways_base = set_env_var("BIOMCP_WIKIPATHWAYS_BASE", Some(&wikipathways.uri()));
+        let _disable_kegg = set_env_var("BIOMCP_DISABLE_KEGG", Some("1"));
+
+        Mock::given(method("GET"))
+            .and(path("/search/query"))
+            .and(query_param("query", "apoptosis"))
+            .respond_with(ResponseTemplate::new(504))
+            .expect(4)
+            .mount(&reactome)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/findPathwaysByText.json"))
+            .respond_with(ResponseTemplate::new(200).set_body_raw(
+                r#"{"pathwayInfo":[{"id":"WP254","name":"Apoptosis","species":"Homo sapiens"}]}"#,
+                "application/json",
+            ))
+            .expect(1)
+            .mount(&wikipathways)
+            .await;
+
+        let filters = PathwaySearchFilters {
+            query: Some("apoptosis".to_string()),
+            pathway_type: None,
+            top_level: false,
+        };
+        let (results, total) = search_with_filters(&filters, 5).await.unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, "WP254");
+        assert_eq!(results[0].source, "WikiPathways");
         assert_eq!(total, None);
     }
 
