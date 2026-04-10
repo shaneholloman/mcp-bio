@@ -37,7 +37,7 @@ biomcp get disease "Marfan syndrome" survival
 Returns the stable no-data note when the disease does not map to one SEER cancer site.
 
 ```bash
-biomcp get disease "CML" all
+biomcp get disease "chronic myeloid leukemia" all
 ```
 
 Returns the full disease card with the survival section included alongside the other non-key-gated disease sections.

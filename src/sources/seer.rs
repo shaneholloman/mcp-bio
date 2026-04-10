@@ -40,7 +40,12 @@ const CURATED_SITE_ALIASES: &[(&str, u16)] = &[
     ("chronic myeloid leukemia", 97),
     ("chronic myelogenous leukemia", 97),
     ("chronic myelocytic leukemia", 97),
+    // "breast cancer" is the user-facing query term; MyDisease resolves it to
+    // "breast carcinoma" (and synonyms below), so all three forms are listed.
     ("breast cancer", 55),
+    ("breast carcinoma", 55),
+    ("carcinoma of breast", 55),
+    ("carcinoma of the breast", 55),
     ("hodgkin disease", 83),
 ];
 
@@ -845,13 +850,28 @@ mod tests {
         };
         assert_eq!(resolve_site(&ambiguous, &catalog), None);
 
+        // "breast cancer" alias (user query term)
         let breast = Disease {
             name: "breast cancer".to_string(),
             synonyms: Vec::new(),
-            ..cml
+            ..cml.clone()
         };
         assert_eq!(
             resolve_site(&breast, &catalog),
+            Some(ResolvedSeerSite {
+                site_code: 55,
+                site_label: "Breast".to_string(),
+            })
+        );
+
+        // "breast carcinoma" is the name MyDisease returns when the user queries "breast cancer"
+        let breast_carcinoma = Disease {
+            name: "breast carcinoma".to_string(),
+            synonyms: vec!["carcinoma of breast".to_string()],
+            ..cml
+        };
+        assert_eq!(
+            resolve_site(&breast_carcinoma, &catalog),
             Some(ResolvedSeerSite {
                 site_code: 55,
                 site_label: "Breast".to_string(),

@@ -290,7 +290,7 @@ SOURCE_PAGE_SPECS = {
             'biomcp get disease "chronic myeloid leukemia" survival',
             'biomcp get disease "Hodgkin lymphoma" survival',
             'biomcp get disease "Marfan syndrome" survival',
-            'biomcp get disease "CML" all',
+            'biomcp get disease "chronic myeloid leukemia" all',
         ],
     },
     "civic.md": {
