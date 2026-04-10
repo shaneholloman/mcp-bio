@@ -134,6 +134,8 @@ bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get drug pembrolizumab label)"
 echo "$out" | mustmatch like "## FDA Label"
 echo "$out" | mustmatch like "### Approved Indications"
+echo "$out" | mustmatch like "- Melanoma"
+echo "$out" | mustmatch like "Non-Small Cell Lung Cancer"
 echo "$out" | mustmatch like "Triple-Negative Breast Cancer"
 echo "$out" | mustmatch like 'Use `--raw` for the full truncated FDA label text.'
 echo "$out" | mustmatch not like "who: are not eligible"
@@ -141,10 +143,26 @@ echo "$out" | mustmatch not like "adults with locally advanced unresectable"
 echo "$out" | mustmatch not like "### Warnings and Precautions"
 echo "$out" | mustmatch not like "### Dosage and Administration"
 json="$("$bin" --json get drug pembrolizumab label)"
-echo "$json" | jq -e '.label.indication_summary | type == "array" and length > 0' > /dev/null
+echo "$json" | jq -e '.label.indication_summary | type == "array" and length > 5' > /dev/null
 echo "$json" | jq -e '.label.indications == null' > /dev/null
 echo "$json" | jq -e '.label.warnings == null' > /dev/null
 echo "$json" | jq -e '.label.dosage == null' > /dev/null
+```
+
+## Compact FDA Label Summary Lists All Approved Section 1 Indications
+
+The compact summary should surface every approved indication block from label
+section 1, including multi-indication labels such as thalidomide.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get drug thalidomide label)"
+echo "$out" | mustmatch like "### Approved Indications"
+echo "$out" | mustmatch like "Multiple Myeloma"
+echo "$out" | mustmatch like "Erythema Nodosum Leprosum"
+json="$("$bin" --json get drug thalidomide label)"
+echo "$json" | jq -e '[.label.indication_summary[].name] | any(test("multiple myeloma"; "i"))' > /dev/null
+echo "$json" | jq -e '[.label.indication_summary[].name] | any(test("erythema nodosum leprosum"; "i"))' > /dev/null
 ```
 
 ## Raw FDA Label Output

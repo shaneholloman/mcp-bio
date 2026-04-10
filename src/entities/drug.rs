@@ -983,6 +983,18 @@ fn label_subsection_boundary_regex() -> &'static Regex {
     REGEX.get_or_init(|| Regex::new(r"\(\s*1\.\d+\s*\)").expect("valid label subsection regex"))
 }
 
+fn label_numbered_subsection_heading_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"\b1\.\d+\s+[A-Z]").expect("valid subsection heading regex"))
+}
+
+fn label_numbered_subsection_prefix_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(r"^\s*1\.\d+\s+").expect("valid subsection heading prefix regex")
+    })
+}
+
 fn label_heading_regex() -> &'static Regex {
     static REGEX: OnceLock<Regex> = OnceLock::new();
     REGEX.get_or_init(|| {
@@ -992,6 +1004,17 @@ fn label_heading_regex() -> &'static Regex {
 
 fn normalize_label_whitespace(value: &str) -> String {
     value.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn find_ascii_case_insensitive(haystack: &str, needle: &str) -> Option<usize> {
+    let needle = needle.trim();
+    if needle.is_empty() {
+        return None;
+    }
+
+    haystack
+        .to_ascii_lowercase()
+        .find(&needle.to_ascii_lowercase())
 }
 
 fn strip_label_intro_prefix(segment: &str) -> &str {
@@ -1141,6 +1164,71 @@ fn extract_label_indication_name(segment: &str) -> Option<String> {
     normalize_label_indication_name(patient_slice)
 }
 
+fn label_drug_markers(label_response: &serde_json::Value) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut seen: HashSet<String> = HashSet::new();
+    for key in ["brand_name", "generic_name"] {
+        for value in extract_openfda_values(label_response, key) {
+            let trimmed = value.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            let dedupe_key = trimmed.to_ascii_lowercase();
+            if seen.insert(dedupe_key) {
+                out.push(trimmed.to_string());
+            }
+        }
+    }
+    out
+}
+
+fn extract_label_numbered_subsection_name(
+    section: &str,
+    drug_markers: &[String],
+) -> Option<String> {
+    let section = label_numbered_subsection_prefix_regex()
+        .replace(section, "")
+        .into_owned();
+    let section = section.trim();
+    if section.is_empty() {
+        return None;
+    }
+
+    let end = drug_markers
+        .iter()
+        .filter_map(|marker| find_ascii_case_insensitive(section, marker))
+        .filter(|idx| *idx > 0)
+        .min();
+    let candidate = end.map(|idx| &section[..idx]).unwrap_or(section);
+    let candidate = candidate
+        .trim()
+        .trim_matches(|c: char| c.is_whitespace() || matches!(c, ':' | ';' | '.' | '-' | '•'))
+        .trim();
+    if candidate.is_empty() {
+        return None;
+    }
+    Some(candidate.to_string())
+}
+
+fn push_label_indication_summary_row(
+    out: &mut Vec<DrugLabelIndication>,
+    seen: &mut HashSet<String>,
+    name: String,
+    max_rows: usize,
+) -> bool {
+    let dedupe_key = name.to_ascii_lowercase();
+    if !seen.insert(dedupe_key) {
+        return false;
+    }
+
+    out.push(DrugLabelIndication {
+        name,
+        approval_date: None,
+        pivotal_trial: None,
+    });
+    out.len() >= max_rows
+}
+
 fn extract_label_indication_summary(
     label_response: &serde_json::Value,
 ) -> Vec<DrugLabelIndication> {
@@ -1160,20 +1248,37 @@ fn extract_label_indication_summary(
 
     let mut out: Vec<DrugLabelIndication> = Vec::new();
     let mut seen: HashSet<String> = HashSet::new();
+    let subsection_starts = label_numbered_subsection_heading_regex()
+        .find_iter(&stripped)
+        .map(|m| m.start())
+        .collect::<Vec<_>>();
+    if !subsection_starts.is_empty() {
+        let drug_markers = label_drug_markers(label_response);
+        for (idx, start) in subsection_starts.iter().enumerate() {
+            let end = subsection_starts
+                .get(idx + 1)
+                .copied()
+                .unwrap_or(stripped.len());
+            let section = stripped[*start..end].trim();
+            let Some(name) = extract_label_numbered_subsection_name(section, &drug_markers)
+                .or_else(|| extract_label_indication_name(section))
+            else {
+                continue;
+            };
+            if push_label_indication_summary_row(&mut out, &mut seen, name, MAX_SUMMARY_ROWS) {
+                return out;
+            }
+        }
+        if !out.is_empty() {
+            return out;
+        }
+    }
+
     for segment in label_subsection_boundary_regex().split(&stripped) {
         let Some(name) = extract_label_indication_name(segment) else {
             continue;
         };
-        let dedupe_key = name.to_ascii_lowercase();
-        if !seen.insert(dedupe_key) {
-            continue;
-        }
-        out.push(DrugLabelIndication {
-            name,
-            approval_date: None,
-            pivotal_trial: None,
-        });
-        if out.len() >= MAX_SUMMARY_ROWS {
+        if push_label_indication_summary_row(&mut out, &mut seen, name, MAX_SUMMARY_ROWS) {
             break;
         }
     }
@@ -2839,6 +2944,31 @@ mod tests {
                 "locally advanced or metastatic urothelial carcinoma",
                 "locally advanced unresectable or metastatic HER2-negative gastric or gastroesophageal junction (GEJ) adenocarcinoma"
             ]
+        );
+    }
+
+    #[test]
+    fn extract_inline_label_summary_mode_uses_numbered_subsection_titles() {
+        let response = serde_json::json!({
+            "results": [{
+                "indications_and_usage": [
+                    "1 INDICATIONS AND USAGE • THALOMID in combination with dexamethasone is indicated for the treatment of patients with newly diagnosed multiple myeloma (MM). ( 1.1 ) • THALOMID is indicated for the acute treatment of the cutaneous manifestations of moderate to severe erythema nodosum leprosum (ENL). THALOMID is not indicated as monotherapy for such ENL treatment in the presence of moderate to severe neuritis. THALOMID is also indicated as maintenance therapy for prevention and suppression of the cutaneous manifestations of ENL recurrence. ( 1.2 ) 1.1 Multiple Myeloma THALOMID in combination with dexamethasone is indicated for the treatment of patients with newly diagnosed multiple myeloma (MM) [see Clinical Studies (14.1) ] . 1.2 Erythema Nodosum Leprosum THALOMID is indicated for the acute treatment of the cutaneous manifestations of moderate to severe erythema nodosum leprosum (ENL). THALOMID is not indicated as monotherapy for such ENL treatment in the presence of moderate to severe neuritis. THALOMID is also indicated as maintenance therapy for prevention and suppression of the cutaneous manifestations of ENL recurrence [see Clinical Studies (14.2) ]."
+                ],
+                "openfda": {
+                    "brand_name": ["THALOMID"],
+                    "generic_name": ["thalidomide"]
+                }
+            }]
+        });
+
+        let label = extract_inline_label(&response, false).expect("summary label");
+        assert_eq!(
+            label
+                .indication_summary
+                .iter()
+                .map(|row| row.name.as_str())
+                .collect::<Vec<_>>(),
+            vec!["Multiple Myeloma", "Erythema Nodosum Leprosum"]
         );
     }
 
