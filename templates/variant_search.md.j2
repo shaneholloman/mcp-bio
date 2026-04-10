@@ -14,6 +14,10 @@ No variants found matching the filters.
 
 Use `get variant <id>` for details.
 Filters: -g <gene>, --hgvsp <protein>, --significance <value>, --max-frequency <0-1>, --min-cadd <score>, --consequence <term>, --review-status <stars>, --population <pop>, --revel-min <score>, --gerp-min <score>, --tumor-site <site>, --condition <name>, --impact <level>, --lof, --has <field>, --missing <field>, --therapy <name>
+{% if related_block %}
+
+{{ related_block }}
+{% endif %}
 {% if pagination_footer %}
 
 {{ pagination_footer }}

@@ -3039,7 +3039,13 @@ async fn render_variant_search_outcome(
 
     let footer = pagination_footer_offset(&pagination);
     Ok(CommandOutcome::stdout(
-        crate::render::markdown::variant_search_markdown_with_footer(&query, &results, &footer)?,
+        crate::render::markdown::variant_search_markdown_with_context(
+            &query,
+            &results,
+            &footer,
+            filters.gene.as_deref(),
+            filters.condition.as_deref(),
+        )?,
     ))
 }
 
@@ -11773,7 +11779,7 @@ mod next_commands_validity {
     fn disease_next_commands_parse() {
         assert_parses("biomcp search trial -c melanoma");
         assert_parses("biomcp search article -d melanoma");
-        assert_parses("biomcp search drug --indication melanoma");
+        assert_parses(r#"biomcp search drug --indication "melanoma""#);
     }
 
     #[test]

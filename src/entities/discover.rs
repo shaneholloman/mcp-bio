@@ -213,9 +213,9 @@ pub(crate) async fn resolve_query(
         DiscoverMode::AliasFallback => None,
     };
 
-    let query_owned = query.to_string();
+    let ols_query = symptom_disease_lookup_query(query);
     let ols_future = async {
-        match tokio::time::timeout(OLS4_TIMEOUT, ols_client.search(&query_owned)).await {
+        match tokio::time::timeout(OLS4_TIMEOUT, ols_client.search(&ols_query)).await {
             Ok(result) => result,
             Err(_) => Err(BioMcpError::Api {
                 api: "ols4".to_string(),
@@ -1293,6 +1293,28 @@ fn is_disease_symptom_request(query: &str) -> bool {
     )
 }
 
+fn symptom_disease_lookup_query(query: &str) -> String {
+    let trimmed = query.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+
+    static SYMPTOM_DISEASE_LOOKUP_PREFIX_RE: OnceLock<Regex> = OnceLock::new();
+    let stripped = SYMPTOM_DISEASE_LOOKUP_PREFIX_RE
+        .get_or_init(|| {
+            Regex::new(r"(?i)^\s*(symptoms of|signs of|phenotypes of)\s+")
+                .expect("valid symptom disease lookup regex")
+        })
+        .replace(trimmed, "");
+    let stripped = stripped.trim();
+
+    if stripped.is_empty() {
+        trimmed.to_string()
+    } else {
+        stripped.to_string()
+    }
+}
+
 fn gene_disease_focus(query: &str, concepts: &[DiscoverConcept]) -> Option<(String, String)> {
     if matches!(
         concepts.first().map(|concept| concept.primary_type),
@@ -1486,7 +1508,7 @@ mod tests {
     use super::{
         AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept, DiscoverConfidence,
         DiscoverIntent, DiscoverResult, DiscoverType, MatchTier, build_result,
-        classify_alias_fallback, concept_from_ols, generate_commands,
+        classify_alias_fallback, concept_from_ols, generate_commands, symptom_disease_lookup_query,
     };
     use crate::sources::medlineplus::MedlinePlusTopic;
     use crate::sources::ols4::OlsDoc;
@@ -1732,6 +1754,22 @@ mod tests {
         assert_eq!(
             result.next_commands[0],
             "biomcp search drug --indication \"Myasthenia gravis\" --limit 5"
+        );
+    }
+
+    #[test]
+    fn symptom_disease_lookup_query_strips_intent_prefixes() {
+        assert_eq!(
+            symptom_disease_lookup_query("symptoms of Marfan syndrome"),
+            "Marfan syndrome"
+        );
+        assert_eq!(
+            symptom_disease_lookup_query(" Signs of Brugada syndrome "),
+            "Brugada syndrome"
+        );
+        assert_eq!(
+            symptom_disease_lookup_query("PHENOTYPES OF Loeys-Dietz syndrome"),
+            "Loeys-Dietz syndrome"
         );
     }
 

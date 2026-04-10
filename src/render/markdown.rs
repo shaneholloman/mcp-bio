@@ -864,6 +864,14 @@ pub(crate) fn quote_arg(value: &str) -> String {
     v.to_string()
 }
 
+fn force_quote_arg(value: &str) -> String {
+    let v = value.trim();
+    if v.is_empty() {
+        return String::new();
+    }
+    format!("\"{}\"", v.replace('\"', "\\\""))
+}
+
 pub(crate) fn alias_fallback_suggestion(
     decision: &crate::entities::discover::AliasFallbackDecision,
 ) -> String {
@@ -1389,6 +1397,35 @@ pub(crate) fn related_variant(variant: &Variant) -> Vec<String> {
     out
 }
 
+pub(crate) fn related_variant_search_results(
+    results: &[VariantSearchResult],
+    gene_filter: Option<&str>,
+    condition_filter: Option<&str>,
+) -> Vec<String> {
+    let mut out = Vec::new();
+
+    if let Some(id) = results
+        .first()
+        .map(|result| quote_arg(&result.id))
+        .filter(|id| !id.is_empty())
+    {
+        out.push(format!("biomcp get variant {id}"));
+    }
+
+    if let Some(gene) = gene_filter.map(str::trim).filter(|gene| !gene.is_empty()) {
+        out.push(format!("biomcp get gene {gene}"));
+    }
+
+    if let Some(condition) = condition_filter
+        .map(quote_arg)
+        .filter(|value| !value.is_empty())
+    {
+        out.push(format!("biomcp search disease --query {condition}"));
+    }
+
+    dedupe_markdown_commands(out)
+}
+
 #[derive(Clone, Copy)]
 enum ArticleAnnotationBucket {
     Gene,
@@ -1556,7 +1593,7 @@ pub(crate) fn related_trial(trial: &Trial) -> Vec<String> {
 }
 
 pub(crate) fn related_disease(disease: &Disease) -> Vec<String> {
-    let name = quote_arg(&disease_literature_query(disease));
+    let name = force_quote_arg(&disease_literature_query(disease));
     if name.is_empty() {
         return Vec::new();
     }
@@ -2749,11 +2786,26 @@ pub fn variant_search_markdown_with_footer(
     results: &[VariantSearchResult],
     pagination_footer: &str,
 ) -> Result<String, BioMcpError> {
+    variant_search_markdown_with_context(query, results, pagination_footer, None, None)
+}
+
+pub fn variant_search_markdown_with_context(
+    query: &str,
+    results: &[VariantSearchResult],
+    pagination_footer: &str,
+    gene_filter: Option<&str>,
+    condition_filter: Option<&str>,
+) -> Result<String, BioMcpError> {
     let tmpl = env()?.get_template("variant_search.md.j2")?;
     let body = tmpl.render(context! {
         query => query,
         count => results.len(),
         results => results,
+        related_block => format_related_block(related_variant_search_results(
+            results,
+            gene_filter,
+            condition_filter,
+        )),
         pagination_footer => pagination_footer,
     })?;
     Ok(with_pagination_footer(body, pagination_footer))
@@ -6215,6 +6267,37 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn related_disease_quotes_single_word_indication_search() {
+        let disease = Disease {
+            id: "MONDO:0005105".to_string(),
+            name: "melanoma".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            civic: None,
+            disgenet: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let related = related_disease(&disease);
+        assert!(related.contains(&"biomcp search drug --indication \"melanoma\"".to_string()));
+    }
+
+    #[test]
     fn related_disease_oncology_without_local_match_falls_back_to_download_list() {
         let _guard = crate::test_support::env_lock().blocking_lock();
         let disease = Disease {
@@ -6787,6 +6870,48 @@ pub(crate) mod tests {
         assert!(markdown.contains("| ID | Gene | Protein | Legacy Name | Significance |"));
         assert!(markdown.contains("| chr6:g.118880200T>G | PLN | p.L39X | PLN L39stop |"));
         assert!(markdown.contains("| chr6:g.118880100A>G | PLN | p.K3R | - |"));
+    }
+
+    #[test]
+    fn variant_search_markdown_renders_related_commands_from_context() {
+        let results = vec![
+            VariantSearchResult {
+                id: "rs199473688".to_string(),
+                gene: "SCN5A".to_string(),
+                hgvs_p: Some("p.Arg282His".to_string()),
+                legacy_name: None,
+                significance: Some("Pathogenic".to_string()),
+                clinvar_stars: Some(2),
+                gnomad_af: None,
+                revel: Some(0.91),
+                gerp: Some(5.7),
+            },
+            VariantSearchResult {
+                id: "rs7626962".to_string(),
+                gene: "SCN5A".to_string(),
+                hgvs_p: Some("p.Gly514Cys".to_string()),
+                legacy_name: None,
+                significance: Some("Likely pathogenic".to_string()),
+                clinvar_stars: Some(1),
+                gnomad_af: None,
+                revel: Some(0.88),
+                gerp: Some(5.1),
+            },
+        ];
+
+        let markdown = variant_search_markdown_with_context(
+            "gene=SCN5A, condition=Brugada",
+            &results,
+            "",
+            Some("SCN5A"),
+            Some("Brugada"),
+        )
+        .expect("rendered markdown");
+
+        assert!(markdown.contains("See also:"));
+        assert!(markdown.contains("biomcp get variant rs199473688"));
+        assert!(markdown.contains("biomcp get gene SCN5A"));
+        assert!(markdown.contains("biomcp search disease --query Brugada"));
     }
 
     #[test]

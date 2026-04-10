@@ -10,6 +10,7 @@ empty-state must surface the structured path directly.
 | Drug to PGx | `get drug warfarin` | Teaches the structured PGx surface from a drug card |
 | Gene to PGx | `get gene TP53` | Teaches the PGx search from a gene card |
 | Disease to Drug | `get disease melanoma` | Teaches indication-oriented drug search from a disease card |
+| Variant Search Follow-up | `search variant -g SCN5A --condition "Brugada"` | Restores HATEOAS follow-up commands on variant result pages |
 | Gene More ordering | `get gene NANOG` | Keeps `ontology` at equal prominence in follow-up sections |
 | Oncology study local match | `get disease "breast cancer" genes` | Prefers executable `study top-mutated` when a local study exists |
 | Oncology study fallback | `get disease melanoma genes` | Falls back to `study download --list` when no local study can be chosen |
@@ -70,7 +71,7 @@ returns treatment-oriented drug results instead of name matches.
 
 ```bash
 out="$(biomcp get disease melanoma)"
-echo "$out" | mustmatch like "biomcp search drug --indication melanoma"
+echo "$out" | mustmatch like 'biomcp search drug --indication "melanoma"'
 echo "$out" | mustmatch like "treatment options for this condition"
 if echo "$out" | grep -F "biomcp search drug melanoma" >/dev/null; then
   echo "unexpected positional disease->drug command" >&2
@@ -80,11 +81,24 @@ fi
 
 ```bash
 out="$(biomcp --json get disease melanoma)"
-echo "$out" | jq -e '._meta.next_commands | index("biomcp search drug --indication melanoma") != null' > /dev/null
+echo "$out" | jq -e '._meta.next_commands | index("biomcp search drug --indication \"melanoma\"") != null' > /dev/null
 
-drug_out="$(biomcp search drug --indication melanoma --limit 5)"
+drug_out="$(biomcp search drug --indication "melanoma" --limit 5)"
 echo "$drug_out" | mustmatch like "# Drugs: indication=melanoma"
 echo "$drug_out" | mustmatch like "pembrolizumab"
+```
+
+## Variant Search Follow-up
+
+Variant search result pages should expose the next executable detail pivot plus
+the gene and condition context that produced the list.
+
+```bash
+out="$(biomcp search variant -g SCN5A --condition "Brugada" --limit 3)"
+echo "$out" | mustmatch like "See also:"
+echo "$out" | mustmatch like "biomcp get variant "
+echo "$out" | mustmatch like "biomcp get gene SCN5A"
+echo "$out" | mustmatch like "biomcp search disease --query Brugada"
 ```
 
 ## Gene More Ordering

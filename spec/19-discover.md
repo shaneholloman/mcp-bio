@@ -78,7 +78,7 @@ echo "$out" | jq -e '._meta.next_commands[0] | ascii_downcase == "biomcp search 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json discover "symptoms of Marfan syndrome")"
-echo "$out" | jq -e '._meta.next_commands[0] | test("^biomcp get disease .+ phenotypes$")' > /dev/null
+echo "$out" | jq -e '._meta.next_commands[0] == "biomcp get disease MONDO:0007947 phenotypes"' > /dev/null
 ```
 
 ## Gene + Disease
