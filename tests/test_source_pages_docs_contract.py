@@ -270,6 +270,29 @@ SOURCE_PAGE_SPECS = {
             "biomcp get drug pembrolizumab targets",
         ],
     },
+    "seer.md": {
+        "title": "SEER Explorer MCP Tool for Cancer Survival | BioMCP",
+        "description": "Use BioMCP to surface SEER Explorer 5-year relative survival summaries for mapped cancers in the BioMCP disease survival section.",
+        "api_access": "No BioMCP API key required.",
+        "official_url": "https://seer.cancer.gov/statistics-network/explorer/",
+        "required_intro_phrases": [
+            "disease `survival` section",
+            "5-year relative survival",
+            "all-ages and all-races",
+            "sex-split",
+            "undocumented SEER Explorer UI endpoints",
+        ],
+        "exposes": [
+            "get disease <id> survival",
+            "get disease <id> all",
+        ],
+        "example_commands": [
+            'biomcp get disease "chronic myeloid leukemia" survival',
+            'biomcp get disease "Hodgkin lymphoma" survival',
+            'biomcp get disease "Marfan syndrome" survival',
+            'biomcp get disease "chronic myeloid leukemia" all',
+        ],
+    },
     "civic.md": {
         "title": "CIViC MCP Tool for Clinical Variant Evidence | BioMCP",
         "description": "Use BioMCP to surface CIViC evidence, disease-associated variants, and therapy context across BioMCP variant, gene, drug, and disease workflows.",
@@ -481,6 +504,7 @@ EXPECTED_NAV_BLOCK = """  - Sources:
       - Semantic Scholar: sources/semantic-scholar.md
       - ChEMBL: sources/chembl.md
       - OpenTargets: sources/opentargets.md
+      - SEER Explorer: sources/seer.md
       - CIViC: sources/civic.md
       - OncoKB: sources/oncokb.md
       - cBioPortal: sources/cbioportal.md
@@ -576,7 +600,7 @@ def test_sources_overview_page_has_required_metadata_and_links() -> None:
     )
     assert (
         _front_matter_value(overview, "description")
-        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, CIViC, OncoKB, cBioPortal, EMA, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
     )
 
     assert "# Biomedical Data Sources for AI Agents" in overview

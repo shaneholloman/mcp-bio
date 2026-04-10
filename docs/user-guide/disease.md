@@ -1,6 +1,8 @@
 # Disease
 
 Use disease commands for normalization and disease-centric cross-entity pivots.
+For cancer-outcome questions, the disease `survival` section adds SEER Explorer
+survival context without creating a separate survival entity.
 
 ## Search diseases
 
@@ -76,6 +78,16 @@ Prevalence (prevalence data):
 biomcp get disease MONDO:0005105 prevalence
 ```
 
+Survival (SEER Explorer 5-year relative survival by sex for mapped cancers):
+
+```bash
+biomcp get disease "chronic myeloid leukemia" survival
+```
+
+The survival section is filtered to all ages and all races / ethnicities. When
+the normalized disease does not map cleanly to one SEER cancer site, BioMCP
+returns a stable `survival_note` instead of failing the disease card.
+
 CIViC (clinical evidence):
 
 ```bash
@@ -86,6 +98,7 @@ Combined sections:
 
 ```bash
 biomcp get disease MONDO:0005105 genes phenotypes variants models
+biomcp get disease "chronic myeloid leukemia" survival
 biomcp get disease MONDO:0005105 all
 ```
 
@@ -110,13 +123,14 @@ You can pass terms space-separated or comma-separated.
 ## Typical disease-centric workflow
 
 1. Normalize disease label.
-2. Pull disease sections (`genes`, `phenotypes`, `variants`, `models`) for context.
+2. Pull disease sections (`genes`, `phenotypes`, `variants`, `models`, and `survival` for cancers) for context.
 3. Use normalized concept for trial or article searches.
 
 Example:
 
 ```bash
 biomcp get disease MONDO:0005105 genes phenotypes
+biomcp get disease "chronic myeloid leukemia" survival
 biomcp search trial -c melanoma --status recruiting --limit 5
 biomcp search article -d melanoma --limit 5
 ```

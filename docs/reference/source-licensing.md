@@ -52,6 +52,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | HPO JAX API | 1 | direct_api | none | open HPO data with attribution and integrity requirements | reuse is allowed, but users should preserve attribution, version context, and source integrity | <https://human-phenotype-ontology.github.io/license.html> |
 | InterPro | 1 | direct_api | none | EMBL-EBI open data resource | reuse follows InterPro/EMBL-EBI resource terms and any embedded member-database obligations | <https://www.ebi.ac.uk/interpro/> |
 | KEGG | 3 | direct_api | none | custom KEGG terms; academic users may freely use the website, non-academic use requires a commercial license | do not assume commercial redistribution rights; query access does not grant a redistribution license | <https://www.kegg.jp/kegg/legal.html> |
+| LitSense2 | 1 | direct_api | none | NCBI/NLM public-domain literature service | query results are broadly reusable, but preserve article-level provenance and record rights separately | <https://www.ncbi.nlm.nih.gov/research/litsense2-api/> |
 | MedlinePlus | 1 | direct_api | none | NLM public-information service with trademark and endorsement guidance | content is widely reusable, but preserve attribution and avoid implying MedlinePlus/NLM endorsement | <https://medlineplus.gov/about/using/> |
 | Monarch Initiative | 1 | direct_api | none | open integrated knowledge graph; underlying source licenses still matter | results can be queried openly, but downstream reuse should respect the original sources folded into Monarch | <https://monarchinitiative.org/> |
 | MyChem.info | 1 | direct_api | none | BioThings aggregation service; upstream source terms continue to apply | do not assume aggregator responses are relicensed; preserve source provenance for downstream reuse | <https://docs.mychem.info/en/latest/> |
@@ -67,9 +68,11 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | OpenTargets | 1 | direct_api | none | Open Targets data is CC0; platform code is Apache 2.0 | platform data is dedicated to the public domain, but linked evidence still carries source provenance | <https://platform-docs.opentargets.org/licence> |
 | PharmGKB | 3 | direct_api | none | ClinPGx API data is CC BY-SA 4.0 and subject to the provider's data usage policy | reuse is allowed with attribution and ShareAlike; some underlying annotations and external assets may add extra constraints | <https://api.pharmgkb.org/> |
 | PMC OA | 1 | direct_api | optional_env | open-access subset only; article licenses vary within PMC OA | full text is reusable only according to each article's specific PMC Open Access license | <https://pmc.ncbi.nlm.nih.gov/tools/openftlist/> |
+| PubMed | 1 | direct_api | optional_env | NLM public-domain search and metadata service | search results are broadly reusable, but article-level abstracts, full text, and downstream reuse still depend on the returned record context | <https://www.ncbi.nlm.nih.gov/books/NBK25501/> |
 | PubTator3 | 1 | direct_api | optional_env | NCBI/NLM public-domain annotation service | results are broadly reusable, but preserve PMID/source provenance and article-level rights separately | <https://www.ncbi.nlm.nih.gov/research/pubtator3/api> |
 | QuickGO | 1 | direct_api | none | GO/EMBL-EBI open data service | query results are generally reusable; preserve GO/EMBL-EBI attribution where expected | <https://www.ebi.ac.uk/QuickGO/> |
 | Reactome | 1 | direct_api | none | Reactome pathway content is CC BY 4.0, with some data exports additionally placed under CC0 | reuse is allowed with attribution; preserve pathway/source provenance in downstream materials | <https://reactome.org/license> |
+| SEER Explorer | 1 | direct_api | none | U.S. government cancer-statistics website and public explorer | summary survival statistics are broadly reusable, but users should preserve SEER/NCI attribution and understand the explorer endpoints are undocumented UI routes | <https://seer.cancer.gov/about/using-website.html> |
 | Semantic Scholar | 2 | direct_api | optional_env | custom API license agreement | the API license restricts repackaging, resale, and broad commercial redistribution without expanded licensing | <https://www.semanticscholar.org/product/api/license> |
 | STRING | 1 | direct_api | none | CC BY 4.0 | reuse is allowed with attribution to STRING and the original publication/resource | <https://string-db.org/cgi/access?footer_active_subpage=licensing> |
 | UMLS | 2 | direct_api | required_env | custom UMLS Metathesaurus license and terminology-specific appendices | do not assume unrestricted redistribution; some embedded vocabularies add their own restrictions or affiliate licenses | <https://www.nlm.nih.gov/databases/umls.html> |
@@ -415,6 +418,19 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Reviewed on: `2026-03-20`
 - Notes: BioMCP queries PMC OA on demand and does not ship the article corpus. Returned full text is still governed by article-level licenses.
 
+### PubMed
+
+- BioMCP surfaces: `search article; get article <id>`
+- Integration mode: `direct_api`
+- BioMCP auth: `optional_env` via `NCBI_API_KEY`
+- Provider access / registration: open public search/metadata service; optional My NCBI API key improves throughput
+- License / terms summary: NLM public-domain search and metadata service
+- Redistribution / reuse summary: search results are broadly reusable, but article-level abstracts, full text, and downstream reuse still depend on the returned record context
+- Official terms URL: <https://www.ncbi.nlm.nih.gov/books/NBK25501/>
+- API key / account URL: <https://www.ncbi.nlm.nih.gov/account/settings/>
+- Reviewed on: `2026-04-10`
+- Notes: BioMCP uses PubMed as a first-class article search source while keeping separate rows for PubTator3 annotations, PMC OA full text, and other NCBI article helpers.
+
 ### PubTator3
 
 - BioMCP surfaces: `search article; get article <pmid> annotations`
@@ -451,6 +467,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://reactome.org/license>
 - Reviewed on: `2026-03-20`
 - Notes: Reactome announced in 2017 that some annotation files moved to CC0 while core site/code materials remained under CC BY 4.0.
+
+### SEER Explorer
+
+- BioMCP surfaces: `get disease <id> survival`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: public website endpoints; no BioMCP account or key path
+- License / terms summary: U.S. government cancer-statistics website and public explorer
+- Redistribution / reuse summary: summary survival statistics are broadly reusable, but users should preserve SEER/NCI attribution and understand the explorer endpoints are undocumented UI routes
+- Official terms URL: <https://seer.cancer.gov/about/using-website.html>
+- Reviewed on: `2026-04-10`
+- Notes: BioMCP uses the public SEER Explorer site catalog and explorer endpoints for cancer survival summaries. The shipped contract treats malformed or mismatched explorer payloads as temporary unavailability rather than trustworthy data.
 
 ### STRING
 
@@ -618,6 +646,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Reviewed on: `2026-03-20`
 - Notes: KEGG's official legal page was updated on October 1, 2024 and explicitly distinguishes academic from non-academic use.
 
+### LitSense2
+
+- BioMCP surfaces: `search article -k <query>`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: open public API
+- License / terms summary: NCBI/NLM public-domain literature service
+- Redistribution / reuse summary: query results are broadly reusable, but preserve article-level provenance and record rights separately
+- Official terms URL: <https://www.ncbi.nlm.nih.gov/research/litsense2-api/>
+- Reviewed on: `2026-04-10`
+- Notes: LitSense2 is only used for keyword-bearing article search paths and contributes semantic-signal metadata rather than acting as the sole article backend.
+
 ### PharmGKB
 
 - BioMCP surfaces: `get pgx <gene_or_drug> annotations`
@@ -742,7 +782,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ## Source notes
 
-- `PubMed` is a direct article-search source in BioMCP and also an identifier namespace that appears alongside `PubTator3`, `Europe PMC`, `NCBI E-utilities`, `PMC OA`, and `NCBI ID Converter`. This page maps those related provider labels back to the actual inventory rows instead of duplicating coverage notes.
+- `PubMed`, `PubTator3`, `Europe PMC`, `LitSense2`, `NCBI E-utilities`, `PMC OA`, and `NCBI ID Converter` are separate direct inventory rows inside BioMCP's article stack because search, annotation, identifier, and full-text responsibilities come from different NCBI/EMBL service surfaces.
 - `OpenFDA FAERS`, `OpenFDA label`, `OpenFDA shortage`, and `Drugs@FDA` are user-facing provenance labels that resolve back to the `OpenFDA` direct row plus the `Drugs@FDA` indirect row.
 - `AlphaFold DB` and `PDB` are indirect-only because BioMCP currently surfaces those structure IDs via `UniProt` cross-references rather than maintaining standalone source clients.
 - `COSMIC` is indirect-only provenance through `MyVariant.info`. Direct COSMIC integration is not part of BioMCP's supported source surface because the provider's licensing model creates unacceptable redistribution and deployment risk for an MIT-licensed open tool.

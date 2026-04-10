@@ -463,6 +463,8 @@ mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs,

@@ -46,6 +46,7 @@ nav:
       - Semantic Scholar: sources/semantic-scholar.md
       - ChEMBL: sources/chembl.md
       - OpenTargets: sources/opentargets.md
+      - SEER Explorer: sources/seer.md
       - CIViC: sources/civic.md
       - OncoKB: sources/oncokb.md
       - cBioPortal: sources/cbioportal.md

@@ -506,6 +506,13 @@ pub(crate) fn disease_section_sources(disease: &Disease) -> Vec<SectionSource> {
     );
     push_section(
         &mut out,
+        disease.survival.is_some() || has_opt_text(&disease.survival_note),
+        "survival",
+        "Survival",
+        ["SEER Explorer"],
+    );
+    push_section(
+        &mut out,
         disease.civic.is_some(),
         "civic",
         "CIViC",
@@ -1101,6 +1108,43 @@ mod tests {
             source.key == "variant_targets"
                 && source.label == "Variant Targets"
                 && source.sources == vec!["CIViC".to_string()]
+        }));
+    }
+
+    #[test]
+    fn disease_section_sources_include_survival_when_note_present() {
+        let disease = Disease {
+            id: "MONDO:0007947".to_string(),
+            name: "Marfan syndrome".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: Some("SEER survival data not available for this condition.".into()),
+            civic: None,
+            disgenet: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let sources = disease_section_sources(&disease);
+        assert!(sources.iter().any(|source| {
+            source.key == "survival"
+                && source.label == "Survival"
+                && source.sources == vec!["SEER Explorer".to_string()]
         }));
     }
 }

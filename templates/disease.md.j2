@@ -134,6 +134,31 @@ No model associations found for this disease.
 No prevalence data available.
 {% endif -%}
 {% endif -%}
+{% if show_survival_section -%}
+## Survival (SEER Explorer)
+
+{% if survival -%}
+Source: {{ survival_source_line }}
+
+| Sex | Latest observed year | 5-year relative survival | 95% CI | Cases | Latest modeled |
+|---|---|---|---|---|---|
+{% for row in survival_summary_rows -%}
+| {{ row.sex }} | {% if row.latest_observed_year is not none %}{{ row.latest_observed_year }}{% else %}-{% endif %} | {{ row.relative_survival or "-" }} | {{ row.ci_95 or "-" }} | {% if row.cases is not none %}{{ row.cases }}{% else %}-{% endif %} | {{ row.latest_modeled or "-" }} |
+{% endfor -%}
+
+### Recent History
+
+| Sex | Year | 5-year relative survival | 95% CI | Cases |
+|---|---|---|---|---|
+{% for row in survival_history_rows -%}
+| {{ row.sex }} | {{ row.year }} | {{ row.relative_survival }} | {{ row.ci_95 or "-" }} | {% if row.cases is not none %}{{ row.cases }}{% else %}-{% endif %} |
+{% endfor -%}
+{% elif survival_note -%}
+{{ survival_note }}
+{% else -%}
+No SEER survival data available.
+{% endif -%}
+{% endif -%}
 {% if show_civic_section -%}
 ## CIViC
 

@@ -20,6 +20,7 @@ New to BioMCP? Try:
 | You want to know... | Start with |
 |---|---|
 | What drugs treat a disease | `search drug --indication "<disease>" --limit 5` |
+| What the 5-year survival outlook is for a cancer | `get disease <name_or_id> survival` |
 | Symptoms or phenotypes of a disease | `get disease <name_or_id> phenotypes` |
 | Which diseases match HPO IDs or symptom text | `search phenotype "<HP:... HP:...>"` or `search phenotype "seizure, developmental delay"` |
 | What a gene does | `get gene <symbol>` |

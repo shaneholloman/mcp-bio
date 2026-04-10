@@ -27,6 +27,8 @@
   mustmatch lint, MCP allowlist coverage, and source-registry drift. (075)
 - Added the study top-mutated helper plus disease literature fallback for
   missing direct evidence paths.
+- Added SEER Explorer-backed disease survival sections so `get disease <name_or_id> survival`
+  can show 5-year relative survival by sex for mapped cancers. (173)
 
 ### Improvements
 

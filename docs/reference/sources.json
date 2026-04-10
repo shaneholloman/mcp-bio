@@ -379,6 +379,23 @@
     "notes": "BioMCP uses MedlinePlus only for best-effort plain-language discover context."
   },
   {
+    "id": "litsense2",
+    "name": "LitSense2",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": ["search article -k <query>"],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "open public API",
+    "license_summary": "NCBI/NLM public-domain literature service",
+    "redistribution_summary": "query results are broadly reusable, but preserve article-level provenance and record rights separately",
+    "terms_url": "https://www.ncbi.nlm.nih.gov/research/litsense2-api/",
+    "key_url": null,
+    "reviewed_on": "2026-04-10",
+    "notes": "LitSense2 is only used for keyword-bearing article search paths and contributes semantic-signal metadata rather than acting as the sole article backend."
+  },
+  {
     "id": "monarch-initiative",
     "name": "Monarch Initiative",
     "tier": 1,
@@ -634,6 +651,23 @@
     "notes": "BioMCP uses PubTator3 for article search fan-out and article annotation. `NCBI_API_KEY` is optional quota uplift only."
   },
   {
+    "id": "pubmed",
+    "name": "PubMed",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": ["search article", "get article <id>"],
+    "bioMcp_auth": "optional_env",
+    "env_var": "NCBI_API_KEY",
+    "provider_access": "open public search/metadata service; optional My NCBI API key improves throughput",
+    "license_summary": "NLM public-domain search and metadata service",
+    "redistribution_summary": "search results are broadly reusable, but article-level abstracts, full text, and downstream reuse still depend on the returned record context",
+    "terms_url": "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
+    "key_url": "https://www.ncbi.nlm.nih.gov/account/settings/",
+    "reviewed_on": "2026-04-10",
+    "notes": "BioMCP uses PubMed as a first-class article search source while keeping separate rows for PubTator3 annotations, PMC OA full text, and other NCBI article helpers."
+  },
+  {
     "id": "quickgo",
     "name": "QuickGO",
     "tier": 1,
@@ -683,6 +717,23 @@
     "key_url": "https://www.semanticscholar.org/product/api",
     "reviewed_on": "2026-03-20",
     "notes": "BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability."
+  },
+  {
+    "id": "seer-explorer",
+    "name": "SEER Explorer",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": ["get disease <id> survival"],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "public website endpoints; no BioMCP account or key path",
+    "license_summary": "U.S. government cancer-statistics website and public explorer",
+    "redistribution_summary": "summary survival statistics are broadly reusable, but users should preserve SEER/NCI attribution and understand the explorer endpoints are undocumented UI routes",
+    "terms_url": "https://seer.cancer.gov/about/using-website.html",
+    "key_url": null,
+    "reviewed_on": "2026-04-10",
+    "notes": "BioMCP uses the public SEER Explorer site catalog and explorer endpoints for cancer survival summaries. The shipped contract treats malformed or mismatched explorer payloads as temporary unavailability rather than trustworthy data."
   },
   {
     "id": "string",

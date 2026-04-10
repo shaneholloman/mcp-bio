@@ -220,7 +220,8 @@ biomcp get gene BRAF all
 biomcp get disease melanoma
 biomcp get disease MONDO:0005105 genes phenotypes
 biomcp get disease MONDO:0005105 variants models
-biomcp get disease MONDO:0005105 pathways prevalence civic
+biomcp get disease MONDO:0005105 pathways prevalence civic survival
+biomcp get disease "chronic myeloid leukemia" survival
 biomcp get disease MONDO:0005105 all
 ```
 

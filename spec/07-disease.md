@@ -6,6 +6,7 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 |---|---|---|
 | Disease search | `search disease melanoma` | Confirms disease normalization output |
 | Disease detail | `get disease melanoma` | Confirms canonical disease card |
+| Disease survival | `get disease "chronic myeloid leukemia" survival` | Confirms SEER-backed disease survival rendering |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
 | Disease to trials | `disease trials melanoma` | Confirms trial helper path |
@@ -127,6 +128,63 @@ out="$(biomcp get disease melanoma)"
 echo "$out" | mustmatch like "# melanoma"
 echo "$out" | mustmatch like "ID: MONDO:0005105"
 echo "$out" | mustmatch like "Genes (Open Targets): CDKN2A (OT"
+```
+
+## Disease Survival
+
+The survival section should expose SEER Explorer output for a mapped cancer
+without turning survival into a standalone entity. We assert the section
+heading, source metadata, compact table shape, and JSON field contract rather
+than pinning numeric rates.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "chronic myeloid leukemia" survival)"
+echo "$out" | mustmatch like "## Survival (SEER Explorer)"
+echo "$out" | mustmatch like "site code 97"
+echo "$out" | mustmatch like "All Ages · All Races / Ethnicities"
+echo "$out" | mustmatch like "All Races / Ethnicities"
+echo "$out" | mustmatch like "| Sex | Latest observed year | 5-year relative survival | 95% CI | Cases | Latest modeled |"
+echo "$out" | mustmatch like "Both Sexes"
+json="$("$bin" --json get disease "chronic myeloid leukemia" survival)"
+echo "$json" | jq -e '.survival.site_code == 97' > /dev/null
+echo "$json" | jq -e '.survival.site_label | contains("CML")' > /dev/null
+echo "$json" | jq -e '.survival.series | length >= 1' > /dev/null
+echo "$json" | jq -e '.survival.series[0].points | length >= 1' > /dev/null
+echo "$json" | jq -e '.survival_note == null' > /dev/null
+```
+
+## Disease Survival No-Data Note
+
+Non-cancer or unmapped diseases should keep the command successful and surface
+the stable SEER no-data note instead of failing or guessing at a cancer site.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "Marfan syndrome" survival)"
+echo "$out" | mustmatch like "## Survival (SEER Explorer)"
+echo "$out" | mustmatch like "SEER survival data not available for this condition."
+json="$("$bin" --json get disease "Marfan syndrome" survival)"
+echo "$json" | jq -e '.survival == null' > /dev/null
+echo "$json" | jq -e '.survival_note == "SEER survival data not available for this condition."' > /dev/null
+```
+
+## Disease Survival Hodgkin Mapping
+
+Common disease wording that differs from the upstream ontology label should
+still resolve to the intended cancer site instead of falling through to a
+different lymphoma subtype or the no-data note.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "Hodgkin lymphoma" survival)"
+echo "$out" | mustmatch like "## Survival (SEER Explorer)"
+echo "$out" | mustmatch like "Hodgkin Lymphoma (site code 83)"
+echo "$out" | mustmatch like "Both Sexes"
+json="$("$bin" --json get disease "Hodgkin lymphoma" survival)"
+echo "$json" | jq -e '.id == "MONDO:0004952"' > /dev/null
+echo "$json" | jq -e '.survival.site_code == 83' > /dev/null
+echo "$json" | jq -e '.survival_note == null' > /dev/null
 ```
 
 ## Disease Crosswalk Identifier Resolution

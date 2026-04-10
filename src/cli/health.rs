@@ -324,6 +324,13 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
         },
     },
     SourceDescriptor {
+        api: "SEER Explorer",
+        affects: Some("disease survival section"),
+        probe: ProbeKind::Get {
+            url: "https://seer.cancer.gov/statistics-network/explorer/source/content_writers/get_var_formats.php",
+        },
+    },
+    SourceDescriptor {
         api: "CIViC",
         affects: Some("disease genes and variants sections"),
         probe: ProbeKind::PostJson {
@@ -1544,6 +1551,7 @@ mod tests {
                 "Monarch",
                 "HPO",
                 "MyDisease",
+                "SEER Explorer",
                 "CIViC",
                 "GWAS Catalog",
                 "GTEx",

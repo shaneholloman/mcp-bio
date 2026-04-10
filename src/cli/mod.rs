@@ -1355,12 +1355,13 @@ When to use: use this for the normalized disease card, then pivot to search arti
 EXAMPLES:
   biomcp get disease melanoma
   biomcp get disease MONDO:0005105 genes
+  biomcp get disease \"chronic myeloid leukemia\" survival
 
 See also: biomcp list disease")]
     Disease {
         /// Disease name (e.g., melanoma) or ID (e.g., MONDO:0005105)
         name_or_id: String,
-        /// Sections to include (genes, pathways, phenotypes, variants, models, prevalence, civic, disgenet, all)
+        /// Sections to include (genes, pathways, phenotypes, variants, models, prevalence, survival, civic, disgenet, all)
         #[arg(trailing_var_arg = true)]
         sections: Vec<String>,
     },
@@ -7065,6 +7066,28 @@ pub async fn run_outcome(cli: Cli) -> anyhow::Result<CommandOutcome> {
     run_outcome_inner(cli, false).await
 }
 
+async fn run_outcome_with_worker_stack(cli: Cli) -> anyhow::Result<CommandOutcome> {
+    const EXECUTE_STACK_BYTES: usize = 8 * 1024 * 1024;
+
+    tokio::task::spawn_blocking(move || {
+        let handle = std::thread::Builder::new()
+            .name("biomcp-cli-execute".into())
+            .stack_size(EXECUTE_STACK_BYTES)
+            .spawn(move || -> anyhow::Result<CommandOutcome> {
+                let runtime = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()?;
+                runtime.block_on(run_outcome(cli))
+            })?;
+
+        handle
+            .join()
+            .map_err(|_| anyhow::anyhow!("in-process CLI worker panicked"))?
+    })
+    .await
+    .map_err(|err| anyhow::anyhow!("failed to join in-process CLI worker: {err}"))?
+}
+
 /// Main CLI execution - called by the MCP `biomcp` tool.
 ///
 /// # Errors
@@ -7075,9 +7098,10 @@ pub async fn execute(mut args: Vec<String>) -> anyhow::Result<String> {
         args.push("biomcp".to_string());
     }
     let cli = Cli::try_parse_from(args)?;
-    // Box the command future so in-process callers do not need a large worker
-    // stack just to dispatch the full CLI match tree.
-    let outcome = Box::pin(run_outcome(cli)).await?;
+    // Run CLI dispatch on a dedicated worker with a normal thread stack so
+    // in-process callers do not inherit the giant command future on a small
+    // async worker stack.
+    let outcome = run_outcome_with_worker_stack(cli).await?;
     if outcome.exit_code == 0 {
         Ok(outcome.text)
     } else {
@@ -12074,6 +12098,8 @@ mod next_commands_json_property {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),

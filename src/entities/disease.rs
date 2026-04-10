@@ -19,6 +19,7 @@ use crate::sources::mydisease::{MyDiseaseClient, MyDiseaseHit};
 use crate::sources::ols4::OlsClient;
 use crate::sources::opentargets::OpenTargetsClient;
 use crate::sources::reactome::ReactomeClient;
+use crate::sources::seer::{SeerClient, SeerSurvivalPayload, resolve_site};
 use crate::transform;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,6 +60,10 @@ pub struct Disease {
     pub prevalence: Vec<DiseasePrevalenceEvidence>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prevalence_note: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub survival: Option<DiseaseSurvival>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub survival_note: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub civic: Option<CivicContext>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -161,6 +166,42 @@ pub struct DiseasePrevalenceEvidence {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiseaseSurvival {
+    pub site_code: u16,
+    pub site_label: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub series: Vec<DiseaseSurvivalSeries>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiseaseSurvivalSeries {
+    pub sex: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latest_observed: Option<DiseaseSurvivalPoint>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latest_modeled: Option<DiseaseSurvivalPoint>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub points: Vec<DiseaseSurvivalPoint>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiseaseSurvivalPoint {
+    pub year: u16,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub relative_survival_rate: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub standard_error: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lower_ci: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub upper_ci: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modeled_relative_survival_rate: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub case_count: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiseaseDisgenetAssociation {
     pub symbol: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -215,6 +256,7 @@ const DISEASE_SECTION_PHENOTYPES: &str = "phenotypes";
 const DISEASE_SECTION_VARIANTS: &str = "variants";
 const DISEASE_SECTION_MODELS: &str = "models";
 const DISEASE_SECTION_PREVALENCE: &str = "prevalence";
+const DISEASE_SECTION_SURVIVAL: &str = "survival";
 const DISEASE_SECTION_CIVIC: &str = "civic";
 const DISEASE_SECTION_DISGENET: &str = "disgenet";
 const DISEASE_SECTION_ALL: &str = "all";
@@ -226,12 +268,16 @@ pub const DISEASE_SECTION_NAMES: &[&str] = &[
     DISEASE_SECTION_VARIANTS,
     DISEASE_SECTION_MODELS,
     DISEASE_SECTION_PREVALENCE,
+    DISEASE_SECTION_SURVIVAL,
     DISEASE_SECTION_CIVIC,
     DISEASE_SECTION_DISGENET,
     DISEASE_SECTION_ALL,
 ];
 
 const OPTIONAL_ENRICHMENT_TIMEOUT: Duration = Duration::from_secs(8);
+const MIN_DIRECT_DISEASE_MATCH_SCORE: i32 = 120;
+const SURVIVAL_NO_DATA_NOTE: &str = "SEER survival data not available for this condition.";
+const SURVIVAL_UNAVAILABLE_NOTE: &str = "SEER survival data is temporarily unavailable.";
 
 #[derive(Debug, Clone, Copy, Default)]
 struct DiseaseSections {
@@ -241,6 +287,7 @@ struct DiseaseSections {
     include_variants: bool,
     include_models: bool,
     include_prevalence: bool,
+    include_survival: bool,
     include_civic: bool,
     include_disgenet: bool,
 }
@@ -265,6 +312,7 @@ fn parse_sections(sections: &[String]) -> Result<DiseaseSections, BioMcpError> {
             DISEASE_SECTION_VARIANTS => out.include_variants = true,
             DISEASE_SECTION_MODELS => out.include_models = true,
             DISEASE_SECTION_PREVALENCE => out.include_prevalence = true,
+            DISEASE_SECTION_SURVIVAL => out.include_survival = true,
             DISEASE_SECTION_CIVIC => out.include_civic = true,
             DISEASE_SECTION_DISGENET => out.include_disgenet = true,
             DISEASE_SECTION_ALL => include_all = true,
@@ -284,6 +332,7 @@ fn parse_sections(sections: &[String]) -> Result<DiseaseSections, BioMcpError> {
         out.include_variants = true;
         out.include_models = true;
         out.include_prevalence = true;
+        out.include_survival = true;
         out.include_civic = true;
     }
 
@@ -645,7 +694,11 @@ async fn resolve_fallback_row(
 ) -> Result<Option<DiseaseSearchResult>, BioMcpError> {
     let row = match source_id {
         DiseaseFallbackId::CanonicalOntology(id) => {
-            let hit = client.get(id).await?;
+            let hit = match client.get(id).await {
+                Ok(hit) => hit,
+                Err(BioMcpError::NotFound { .. }) => return Ok(None),
+                Err(err) => return Err(err),
+            };
             let mut row = transform::disease::from_mydisease_search_hit(&hit);
             if prefer_doid && let Some(doid) = transform::disease::doid_from_mydisease_hit(&hit) {
                 row.id = doid;
@@ -975,23 +1028,50 @@ fn best_disease_candidate_score(query: &str, hit: &MyDiseaseHit) -> i32 {
         .unwrap_or(i32::MIN / 2)
 }
 
-fn scored_best_candidate(query: &str, hits: Vec<MyDiseaseHit>) -> Option<MyDiseaseHit> {
-    let mut ranked: Vec<(i32, usize, String, MyDiseaseHit)> = hits
+fn best_disease_candidate_score_for_queries(queries: &[String], hit: &MyDiseaseHit) -> i32 {
+    queries
+        .iter()
+        .map(|query| best_disease_candidate_score(query, hit))
+        .max()
+        .unwrap_or(i32::MIN / 2)
+}
+
+fn scored_best_candidate_for_queries(
+    queries: &[String],
+    hits: Vec<MyDiseaseHit>,
+) -> Option<MyDiseaseHit> {
+    if queries.is_empty() {
+        return None;
+    }
+
+    let mut ranked: Vec<(i32, u8, usize, String, MyDiseaseHit)> = hits
         .into_iter()
         .map(|hit| {
             let primary_name = transform::disease::name_from_mydisease_hit(&hit);
-            let best_score = best_disease_candidate_score(query, &hit);
+            let best_score = best_disease_candidate_score_for_queries(queries, &hit);
+            let best_exact_rank = queries
+                .iter()
+                .map(|query| disease_exact_rank(&primary_name, query))
+                .max()
+                .unwrap_or(0);
             let normalized_len = normalize_disease_text(&primary_name).len();
-            (best_score, normalized_len, hit.id.clone(), hit)
+            (
+                best_score,
+                best_exact_rank,
+                normalized_len,
+                hit.id.clone(),
+                hit,
+            )
         })
         .collect();
 
     ranked.sort_by(|a, b| {
         b.0.cmp(&a.0)
-            .then_with(|| a.1.cmp(&b.1))
+            .then_with(|| b.1.cmp(&a.1))
             .then_with(|| a.2.cmp(&b.2))
+            .then_with(|| a.3.cmp(&b.3))
     });
-    ranked.into_iter().next().map(|(_, _, _, hit)| hit)
+    ranked.into_iter().next().map(|(_, _, _, _, hit)| hit)
 }
 
 fn resolver_queries(name_or_id: &str) -> Vec<String> {
@@ -1001,11 +1081,37 @@ fn resolver_queries(name_or_id: &str) -> Vec<String> {
     }
 
     let mut queries = vec![query.to_string()];
-    if query.to_ascii_lowercase().contains("cancer") {
-        let fallback = query.to_ascii_lowercase().replace("cancer", "carcinoma");
-        if !fallback.eq_ignore_ascii_case(query) {
-            queries.push(fallback);
+    let mut push_query = |candidate: String| {
+        if queries
+            .iter()
+            .any(|existing| existing.eq_ignore_ascii_case(&candidate))
+        {
+            return;
         }
+        queries.push(candidate);
+    };
+
+    let lower = query.to_ascii_lowercase();
+    if lower.contains("cancer") {
+        push_query(lower.replace("cancer", "carcinoma"));
+    }
+    for (from, to) in [
+        ("myeloid leukemia", "myelogenous leukemia"),
+        ("myeloid leukaemia", "myelogenous leukaemia"),
+        ("myelogenous leukemia", "myeloid leukemia"),
+        ("myelogenous leukaemia", "myeloid leukaemia"),
+        ("hodgkin lymphoma", "hodgkins lymphoma"),
+        ("hodgkins lymphoma", "hodgkin lymphoma"),
+    ] {
+        if lower.contains(from) {
+            push_query(lower.replace(from, to));
+        }
+    }
+    if lower == "chronic myeloid leukemia" {
+        push_query("chronic myelogenous leukemia, bcr-abl1 positive".to_string());
+    }
+    if matches!(lower.as_str(), "hodgkin lymphoma" | "hodgkins lymphoma") {
+        push_query("hodgkin disease".to_string());
     }
     queries
 }
@@ -1061,23 +1167,72 @@ pub(crate) async fn resolve_disease_hit_by_name(
     client: &MyDiseaseClient,
     name_or_id: &str,
 ) -> Result<MyDiseaseHit, BioMcpError> {
+    if let Some(best) = resolve_disease_hit_by_name_direct(client, name_or_id).await? {
+        return Ok(best);
+    }
+    if let Some(best) = resolve_disease_hit_via_discover_fallback(client, name_or_id).await? {
+        return Ok(best);
+    }
+
+    Err(BioMcpError::NotFound {
+        entity: "disease".into(),
+        id: name_or_id.into(),
+        suggestion: format!("Try searching: biomcp search disease -q \"{name_or_id}\""),
+    })
+}
+
+async fn resolve_disease_hit_by_name_direct(
+    client: &MyDiseaseClient,
+    name_or_id: &str,
+) -> Result<Option<MyDiseaseHit>, BioMcpError> {
+    let queries = resolver_queries(name_or_id);
+    if queries.is_empty() {
+        return Ok(None);
+    }
+
     let mut candidates: HashMap<String, MyDiseaseHit> = HashMap::new();
-    for query in resolver_queries(name_or_id) {
-        let resp = client.query(&query, 15, 0, None, None, None, None).await?;
+    for query in &queries {
+        let resp = client.query(query, 15, 0, None, None, None, None).await?;
         for hit in resp.hits {
             candidates.entry(hit.id.clone()).or_insert(hit);
         }
     }
 
-    let best =
-        scored_best_candidate(name_or_id, candidates.into_values().collect()).ok_or_else(|| {
-            BioMcpError::NotFound {
-                entity: "disease".into(),
-                id: name_or_id.into(),
-                suggestion: format!("Try searching: biomcp search disease -q \"{name_or_id}\""),
+    Ok(
+        scored_best_candidate_for_queries(&queries, candidates.into_values().collect()).filter(
+            |hit| {
+                best_disease_candidate_score_for_queries(&queries, hit)
+                    >= MIN_DIRECT_DISEASE_MATCH_SCORE
+            },
+        ),
+    )
+}
+
+async fn resolve_disease_hit_via_discover_fallback(
+    client: &MyDiseaseClient,
+    name_or_id: &str,
+) -> Result<Option<MyDiseaseHit>, BioMcpError> {
+    for query in resolver_queries(name_or_id) {
+        let filters = DiseaseSearchFilters {
+            query: Some(query),
+            ..Default::default()
+        };
+        let Some(page) = fallback_search_page(&filters, 1, 0).await? else {
+            continue;
+        };
+        let Some(row) = page.results.into_iter().next() else {
+            continue;
+        };
+
+        match client.get(&row.id).await {
+            Ok(hit) => return Ok(Some(hit)),
+            Err(err) => {
+                warn!("Disease get fallback canonical fetch failed: {err}");
             }
-        })?;
-    Ok(best)
+        }
+    }
+
+    Ok(None)
 }
 
 async fn add_genes_section(disease: &mut Disease) -> Result<(), BioMcpError> {
@@ -1865,6 +2020,104 @@ async fn add_prevalence_section(disease: &mut Disease) -> Result<(), BioMcpError
     Ok(())
 }
 
+fn map_survival_payload(payload: SeerSurvivalPayload) -> DiseaseSurvival {
+    DiseaseSurvival {
+        site_code: payload.site_code,
+        site_label: payload.site_label,
+        series: payload
+            .series
+            .into_iter()
+            .map(map_survival_series)
+            .collect(),
+    }
+}
+
+fn map_survival_series(series: crate::sources::seer::SeerSurvivalSeries) -> DiseaseSurvivalSeries {
+    let points = series
+        .points
+        .into_iter()
+        .map(map_survival_point)
+        .collect::<Vec<_>>();
+    let latest_observed = points
+        .iter()
+        .rev()
+        .find(|point| point.relative_survival_rate.is_some())
+        .cloned();
+    let latest_observed_year = latest_observed.as_ref().map(|point| point.year);
+    let latest_modeled = points
+        .iter()
+        .rev()
+        .find(|point| {
+            point.modeled_relative_survival_rate.is_some()
+                && latest_observed_year.is_none_or(|year| point.year > year)
+        })
+        .cloned();
+
+    DiseaseSurvivalSeries {
+        sex: series.sex_label,
+        latest_observed,
+        latest_modeled,
+        points,
+    }
+}
+
+fn map_survival_point(point: crate::sources::seer::SeerSurvivalPoint) -> DiseaseSurvivalPoint {
+    DiseaseSurvivalPoint {
+        year: point.year,
+        relative_survival_rate: point.relative_survival_rate,
+        standard_error: point.standard_error,
+        lower_ci: point.lower_ci,
+        upper_ci: point.upper_ci,
+        modeled_relative_survival_rate: point.modeled_relative_survival_rate,
+        case_count: point.case_count,
+    }
+}
+
+async fn add_survival_section(disease: &mut Disease) -> Result<(), BioMcpError> {
+    let client = match SeerClient::new() {
+        Ok(client) => client,
+        Err(err) => {
+            warn!("SEER Explorer unavailable for disease survival section: {err}");
+            disease.survival = None;
+            disease.survival_note = Some(SURVIVAL_UNAVAILABLE_NOTE.into());
+            return Ok(());
+        }
+    };
+
+    let catalog = match client.site_catalog().await {
+        Ok(catalog) => catalog,
+        Err(err) => {
+            warn!("SEER Explorer catalog unavailable for disease survival section: {err}");
+            disease.survival = None;
+            disease.survival_note = Some(SURVIVAL_UNAVAILABLE_NOTE.into());
+            return Ok(());
+        }
+    };
+
+    let Some(site) = resolve_site(disease, &catalog) else {
+        disease.survival = None;
+        disease.survival_note = Some(SURVIVAL_NO_DATA_NOTE.into());
+        return Ok(());
+    };
+
+    match client.fetch_survival(site.site_code, &catalog).await {
+        Ok(payload) => {
+            disease.survival = Some(map_survival_payload(payload));
+            disease.survival_note = None;
+        }
+        Err(err) => {
+            warn!(
+                "SEER Explorer survival unavailable for disease {} at site {}: {err}",
+                disease.id, site.site_code
+            );
+            disease.survival = None;
+            disease.survival_note = Some(SURVIVAL_UNAVAILABLE_NOTE.into());
+        }
+    }
+
+    Ok(())
+}
+
 async fn add_civic_section(disease: &mut Disease) {
     let Some(query) = disease_query_value(disease) else {
         disease.civic = Some(CivicContext::default());
@@ -1988,6 +2241,9 @@ async fn apply_requested_sections(
         disease.prevalence.clear();
         disease.prevalence_note = Some("No prevalence data available from OpenTargets.".into());
     }
+    if sections.include_survival {
+        add_survival_section(disease).await?;
+    }
     if sections.include_civic {
         add_civic_section(disease).await;
     }
@@ -2012,6 +2268,10 @@ async fn apply_requested_sections(
     if !sections.include_prevalence {
         disease.prevalence.clear();
         disease.prevalence_note = None;
+    }
+    if !sections.include_survival {
+        disease.survival = None;
+        disease.survival_note = None;
     }
     if !sections.include_civic {
         disease.civic = None;
@@ -2546,6 +2806,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: HashMap::new(),
@@ -2599,6 +2861,38 @@ pub(crate) mod tests {
                 "studies": [],
                 "nextPageToken": null,
                 "totalCount": 0
+            })))
+            .mount(server)
+            .await;
+    }
+
+    async fn mock_seer_catalog(server: &MockServer) {
+        Mock::given(method("GET"))
+            .and(path("/get_var_formats.php"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "VariableFormats": {
+                    "site": {
+                        "1": "All Cancer Sites Combined",
+                        "83": "Hodgkin Lymphoma",
+                        "97": "Chronic Myeloid Leukemia (CML)"
+                    },
+                    "sex": {
+                        "1": "Both Sexes",
+                        "2": "Male",
+                        "3": "Female"
+                    },
+                    "race": {
+                        "1": "All Races / Ethnicities"
+                    },
+                    "age_range": {
+                        "1": "All Ages"
+                    }
+                },
+                "CancerSites": [
+                    {"value": 1, "active": true},
+                    {"value": 83, "active": true},
+                    {"value": 97, "active": true}
+                ]
             })))
             .mount(server)
             .await;
@@ -2665,6 +2959,7 @@ pub(crate) mod tests {
             "variants".to_string(),
             "models".to_string(),
             "prevalence".to_string(),
+            "survival".to_string(),
             "disgenet".to_string(),
             "all".to_string(),
         ])
@@ -2675,6 +2970,7 @@ pub(crate) mod tests {
         assert!(flags.include_variants);
         assert!(flags.include_models);
         assert!(flags.include_prevalence);
+        assert!(flags.include_survival);
         assert!(flags.include_civic);
         assert!(flags.include_disgenet);
     }
@@ -2682,7 +2978,102 @@ pub(crate) mod tests {
     #[test]
     fn parse_sections_all_keeps_disgenet_opt_in() {
         let flags = parse_sections(&["all".to_string()]).expect("sections should parse");
+        assert!(flags.include_survival);
         assert!(!flags.include_disgenet);
+    }
+
+    #[test]
+    fn resolver_queries_adds_cml_fallback_variant() {
+        let queries = resolver_queries("chronic myeloid leukemia");
+        assert!(
+            queries
+                .iter()
+                .any(|query| query == "chronic myelogenous leukemia")
+        );
+        assert!(
+            queries
+                .iter()
+                .any(|query| query == "chronic myelogenous leukemia, bcr-abl1 positive")
+        );
+    }
+
+    #[test]
+    fn resolver_queries_adds_hodgkin_alias_variants() {
+        let queries = resolver_queries("Hodgkin lymphoma");
+        assert!(queries.iter().any(|query| query == "hodgkins lymphoma"));
+        assert!(queries.iter().any(|query| query == "hodgkin disease"));
+    }
+
+    #[tokio::test]
+    async fn add_survival_section_sets_truthful_note_for_unmapped_disease() {
+        let _lock = lock_env().await;
+        let server = MockServer::start().await;
+        mock_seer_catalog(&server).await;
+        let _seer_base = set_env_var("BIOMCP_SEER_BASE", Some(&server.uri()));
+
+        let mut disease = test_disease("MONDO:0007947", "Marfan syndrome");
+        add_survival_section(&mut disease)
+            .await
+            .expect("survival section");
+
+        assert!(disease.survival.is_none());
+        assert_eq!(
+            disease.survival_note.as_deref(),
+            Some(SURVIVAL_NO_DATA_NOTE)
+        );
+    }
+
+    #[tokio::test]
+    async fn add_survival_section_sets_unavailable_note_when_catalog_fails() {
+        let _lock = lock_env().await;
+        let server = MockServer::start().await;
+        let _seer_base = set_env_var("BIOMCP_SEER_BASE", Some(&server.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/get_var_formats.php"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&server)
+            .await;
+
+        let mut disease = test_disease("MONDO:0004952", "Hodgkin's lymphoma");
+        add_survival_section(&mut disease)
+            .await
+            .expect("survival section");
+
+        assert!(disease.survival.is_none());
+        assert_eq!(
+            disease.survival_note.as_deref(),
+            Some(SURVIVAL_UNAVAILABLE_NOTE)
+        );
+    }
+
+    #[tokio::test]
+    async fn resolve_disease_hit_by_name_direct_rejects_weak_contains_only_match() {
+        let _guard = lock_env().await;
+        let server = MockServer::start().await;
+        let _env = set_env_var(
+            "BIOMCP_MYDISEASE_BASE",
+            Some(&format!("{}/v1", server.uri())),
+        );
+
+        Mock::given(method("GET"))
+            .and(path("/v1/query"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "total": 1,
+                "hits": [{
+                    "_id": "MONDO:0015760",
+                    "mondo": {"name": "T-cell non-Hodgkin lymphoma"}
+                }]
+            })))
+            .mount(&server)
+            .await;
+
+        let client = MyDiseaseClient::new().expect("client");
+        let best = resolve_disease_hit_by_name_direct(&client, "Hodgkin lymphoma")
+            .await
+            .expect("weak direct match should not error");
+
+        assert!(best.is_none());
     }
 
     #[test]
@@ -2730,6 +3121,26 @@ pub(crate) mod tests {
             "hereditary nonpolyposis colorectal cancer type 6",
         );
         assert!(broad > subtype);
+    }
+
+    #[test]
+    fn scored_best_candidate_for_queries_prefers_hodgkin_alias_over_non_hodgkin_contains_match() {
+        let queries = resolver_queries("Hodgkin lymphoma");
+        let best = scored_best_candidate_for_queries(
+            &queries,
+            vec![
+                test_disease_hit("MONDO:0015760", "T-cell non-Hodgkin lymphoma", &[], &[]),
+                test_disease_hit(
+                    "MONDO:0004952",
+                    "Hodgkins lymphoma",
+                    &["Hodgkin disease"],
+                    &[],
+                ),
+            ],
+        )
+        .expect("a best hit should be selected");
+
+        assert_eq!(best.id, "MONDO:0004952");
     }
 
     fn test_disease_hit(
@@ -3023,6 +3434,34 @@ pub(crate) mod tests {
         assert_eq!(page.results.len(), 1);
         assert_eq!(page.results[0].id, "MONDO:0002115");
         assert_eq!(page.results[0].source_id.as_deref(), Some("ICD10CM:Q07.0"));
+    }
+
+    #[tokio::test]
+    async fn resolve_fallback_row_ignores_not_found_canonical_ids() {
+        let _guard = lock_env().await;
+        let server = MockServer::start().await;
+        let _env = set_env_var(
+            "BIOMCP_MYDISEASE_BASE",
+            Some(&format!("{}/v1", server.uri())),
+        );
+
+        Mock::given(method("GET"))
+            .and(path("/v1/disease/DOID:8552"))
+            .respond_with(ResponseTemplate::new(404))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = MyDiseaseClient::new().expect("client");
+        let row = resolve_fallback_row(
+            &client,
+            false,
+            &DiseaseFallbackId::CanonicalOntology("DOID:8552".into()),
+        )
+        .await
+        .expect("canonical not-found should degrade cleanly");
+
+        assert!(row.is_none());
     }
 
     #[test]
