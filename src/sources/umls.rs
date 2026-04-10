@@ -37,7 +37,7 @@ impl UmlsClient {
     #[cfg(test)]
     fn new_for_test(base: String, api_key: &str) -> Result<Self, BioMcpError> {
         Ok(Self {
-            client: crate::sources::shared_client()?,
+            client: crate::sources::test_client()?,
             base: Cow::Owned(base),
             api_key: api_key.to_string(),
         })

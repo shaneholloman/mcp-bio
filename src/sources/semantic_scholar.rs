@@ -49,11 +49,7 @@ impl SemanticScholarClient {
             .map(|value| value.trim().to_string())
             .filter(|value| !value.is_empty());
         Ok(Self {
-            client: if api_key.is_some() {
-                crate::sources::shared_client()?
-            } else {
-                crate::sources::semantic_scholar_shared_pool_client()?
-            },
+            client: crate::sources::test_client()?,
             base: Cow::Owned(base),
             api_key,
         })

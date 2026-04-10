@@ -299,6 +299,17 @@ fn build_http_client(kind: SharedHttpClientKind) -> Result<ClientWithMiddleware,
     Ok(builder.with(rate_limit::RateLimitMiddleware::new()).build())
 }
 
+#[cfg(test)]
+pub(crate) fn test_client() -> Result<ClientWithMiddleware, BioMcpError> {
+    let base_client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .connect_timeout(std::time::Duration::from_secs(10))
+        .user_agent(concat!("biomcp-cli/", env!("CARGO_PKG_VERSION")))
+        .build()
+        .map_err(BioMcpError::HttpClientInit)?;
+    Ok(reqwest_middleware::ClientBuilder::new(base_client).build())
+}
+
 pub(crate) fn shared_client() -> Result<ClientWithMiddleware, BioMcpError> {
     if let Some(client) = HTTP_CLIENT.get() {
         return Ok(client.clone());

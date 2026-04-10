@@ -54,7 +54,7 @@ impl DgidbClient {
     #[cfg(test)]
     fn new_for_test(base: String) -> Result<Self, BioMcpError> {
         Ok(Self {
-            client: crate::sources::shared_client()?,
+            client: crate::sources::test_client()?,
             base: Cow::Owned(base),
         })
     }
