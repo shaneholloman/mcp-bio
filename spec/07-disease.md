@@ -169,6 +169,24 @@ echo "$json" | jq -e '.survival == null' > /dev/null
 echo "$json" | jq -e '.survival_note == "SEER survival data not available for this condition."' > /dev/null
 ```
 
+## Disease Survival Hodgkin Mapping
+
+Common disease wording that differs from the upstream ontology label should
+still resolve to the intended cancer site instead of falling through to a
+different lymphoma subtype or the no-data note.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "Hodgkin lymphoma" survival)"
+echo "$out" | mustmatch like "## Survival (SEER Explorer)"
+echo "$out" | mustmatch like "Hodgkin Lymphoma (site code 83)"
+echo "$out" | mustmatch like "Both Sexes"
+json="$("$bin" --json get disease "Hodgkin lymphoma" survival)"
+echo "$json" | jq -e '.id == "MONDO:0004952"' > /dev/null
+echo "$json" | jq -e '.survival.site_code == 83' > /dev/null
+echo "$json" | jq -e '.survival_note == null' > /dev/null
+```
+
 ## Disease Crosswalk Identifier Resolution
 
 Crosswalkable identifiers such as MeSH should resolve through MyDisease xrefs

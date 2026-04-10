@@ -1739,6 +1739,17 @@ fn normalize_match_text(value: &str) -> String {
         .join(" ")
 }
 
+fn token_subset_match(left: &str, right: &str) -> bool {
+    let left_tokens = left.split_whitespace().collect::<Vec<_>>();
+    let right_tokens = right.split_whitespace().collect::<Vec<_>>();
+    if left_tokens.is_empty() || right_tokens.is_empty() {
+        return false;
+    }
+
+    left_tokens.iter().all(|token| right_tokens.contains(token))
+        || right_tokens.iter().all(|token| left_tokens.contains(token))
+}
+
 fn best_oncology_study_id(
     disease: &Disease,
     studies: &[crate::sources::cbioportal_study::StudyLookupRow],
@@ -1766,6 +1777,11 @@ fn best_oncology_study_id(
                 candidate.contains(&normalized_term) || normalized_term.contains(candidate)
             }) {
                 Some(1)
+            } else if candidate_labels
+                .iter()
+                .any(|candidate| token_subset_match(candidate, &normalized_term))
+            {
+                Some(2)
             } else {
                 None
             };
@@ -6511,6 +6527,85 @@ pub(crate) mod tests {
             name: "breast cancer".to_string(),
             definition: None,
             synonyms: vec!["mammary carcinoma".to_string()],
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: vec![crate::entities::disease::DiseaseTargetScore {
+                symbol: "TP53".to_string(),
+                summary: crate::entities::disease::DiseaseAssociationScoreSummary {
+                    overall_score: 0.8,
+                    gwas_score: None,
+                    rare_variant_score: None,
+                    somatic_mutation_score: Some(0.4),
+                },
+            }],
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let original = std::env::var_os("BIOMCP_STUDY_DIR");
+        unsafe { std::env::set_var("BIOMCP_STUDY_DIR", &root) };
+        let related = related_disease(&disease);
+        match original {
+            Some(value) => unsafe { std::env::set_var("BIOMCP_STUDY_DIR", value) },
+            None => unsafe { std::env::remove_var("BIOMCP_STUDY_DIR") },
+        }
+        let _ = std::fs::remove_dir_all(&root);
+
+        assert!(related.contains(
+            &"biomcp study top-mutated --study brca_tcga_pan_can_atlas_2018".to_string()
+        ));
+        assert!(!related.contains(&"biomcp study download --list".to_string()));
+    }
+
+    #[test]
+    fn related_disease_oncology_matches_noncontiguous_carcinoma_study_labels() {
+        let _guard = crate::test_support::env_lock().blocking_lock();
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!(
+            "biomcp-render-study-carcinoma-{}-{unique}",
+            std::process::id()
+        ));
+        let study_dir = root.join("brca_tcga_pan_can_atlas_2018");
+        std::fs::create_dir_all(&study_dir).expect("create study dir");
+        std::fs::write(
+            study_dir.join("meta_study.txt"),
+            "cancer_study_identifier: brca_tcga_pan_can_atlas_2018\nname: BRCA TCGA PanCan Atlas 2018\ntype_of_cancer: brca\n",
+        )
+        .expect("write meta");
+        std::fs::write(
+            study_dir.join("data_mutations.txt"),
+            "Hugo_Symbol\tTumor_Sample_Barcode\tVariant_Classification\tHGVSp_Short\nTP53\tS1\tMissense_Mutation\tp.R175H\n",
+        )
+        .expect("write mutations");
+        std::fs::write(
+            study_dir.join("data_clinical_sample.txt"),
+            "# comment\nPATIENT_ID\tSAMPLE_ID\tCANCER_TYPE\tCANCER_TYPE_DETAILED\tONCOTREE_CODE\nP1\tS1\tBreast Cancer\tBreast Invasive Carcinoma\tBRCA\n",
+        )
+        .expect("write clinical sample");
+
+        let disease = Disease {
+            id: "MONDO:0004989".to_string(),
+            name: "breast carcinoma".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
             parents: Vec::new(),
             associated_genes: Vec::new(),
             gene_associations: Vec::new(),

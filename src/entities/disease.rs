@@ -275,6 +275,7 @@ pub const DISEASE_SECTION_NAMES: &[&str] = &[
 ];
 
 const OPTIONAL_ENRICHMENT_TIMEOUT: Duration = Duration::from_secs(8);
+const MIN_DIRECT_DISEASE_MATCH_SCORE: i32 = 120;
 const SURVIVAL_NO_DATA_NOTE: &str = "SEER survival data not available for this condition.";
 const SURVIVAL_UNAVAILABLE_NOTE: &str = "SEER survival data is temporarily unavailable.";
 
@@ -693,7 +694,11 @@ async fn resolve_fallback_row(
 ) -> Result<Option<DiseaseSearchResult>, BioMcpError> {
     let row = match source_id {
         DiseaseFallbackId::CanonicalOntology(id) => {
-            let hit = client.get(id).await?;
+            let hit = match client.get(id).await {
+                Ok(hit) => hit,
+                Err(BioMcpError::NotFound { .. }) => return Ok(None),
+                Err(err) => return Err(err),
+            };
             let mut row = transform::disease::from_mydisease_search_hit(&hit);
             if prefer_doid && let Some(doid) = transform::disease::doid_from_mydisease_hit(&hit) {
                 row.id = doid;
@@ -1023,23 +1028,50 @@ fn best_disease_candidate_score(query: &str, hit: &MyDiseaseHit) -> i32 {
         .unwrap_or(i32::MIN / 2)
 }
 
-fn scored_best_candidate(query: &str, hits: Vec<MyDiseaseHit>) -> Option<MyDiseaseHit> {
-    let mut ranked: Vec<(i32, usize, String, MyDiseaseHit)> = hits
+fn best_disease_candidate_score_for_queries(queries: &[String], hit: &MyDiseaseHit) -> i32 {
+    queries
+        .iter()
+        .map(|query| best_disease_candidate_score(query, hit))
+        .max()
+        .unwrap_or(i32::MIN / 2)
+}
+
+fn scored_best_candidate_for_queries(
+    queries: &[String],
+    hits: Vec<MyDiseaseHit>,
+) -> Option<MyDiseaseHit> {
+    if queries.is_empty() {
+        return None;
+    }
+
+    let mut ranked: Vec<(i32, u8, usize, String, MyDiseaseHit)> = hits
         .into_iter()
         .map(|hit| {
             let primary_name = transform::disease::name_from_mydisease_hit(&hit);
-            let best_score = best_disease_candidate_score(query, &hit);
+            let best_score = best_disease_candidate_score_for_queries(queries, &hit);
+            let best_exact_rank = queries
+                .iter()
+                .map(|query| disease_exact_rank(&primary_name, query))
+                .max()
+                .unwrap_or(0);
             let normalized_len = normalize_disease_text(&primary_name).len();
-            (best_score, normalized_len, hit.id.clone(), hit)
+            (
+                best_score,
+                best_exact_rank,
+                normalized_len,
+                hit.id.clone(),
+                hit,
+            )
         })
         .collect();
 
     ranked.sort_by(|a, b| {
         b.0.cmp(&a.0)
-            .then_with(|| a.1.cmp(&b.1))
+            .then_with(|| b.1.cmp(&a.1))
             .then_with(|| a.2.cmp(&b.2))
+            .then_with(|| a.3.cmp(&b.3))
     });
-    ranked.into_iter().next().map(|(_, _, _, hit)| hit)
+    ranked.into_iter().next().map(|(_, _, _, _, hit)| hit)
 }
 
 fn resolver_queries(name_or_id: &str) -> Vec<String> {
@@ -1068,6 +1100,8 @@ fn resolver_queries(name_or_id: &str) -> Vec<String> {
         ("myeloid leukaemia", "myelogenous leukaemia"),
         ("myelogenous leukemia", "myeloid leukemia"),
         ("myelogenous leukaemia", "myeloid leukaemia"),
+        ("hodgkin lymphoma", "hodgkins lymphoma"),
+        ("hodgkins lymphoma", "hodgkin lymphoma"),
     ] {
         if lower.contains(from) {
             push_query(lower.replace(from, to));
@@ -1075,6 +1109,9 @@ fn resolver_queries(name_or_id: &str) -> Vec<String> {
     }
     if lower == "chronic myeloid leukemia" {
         push_query("chronic myelogenous leukemia, bcr-abl1 positive".to_string());
+    }
+    if matches!(lower.as_str(), "hodgkin lymphoma" | "hodgkins lymphoma") {
+        push_query("hodgkin disease".to_string());
     }
     queries
 }
@@ -1148,18 +1185,27 @@ async fn resolve_disease_hit_by_name_direct(
     client: &MyDiseaseClient,
     name_or_id: &str,
 ) -> Result<Option<MyDiseaseHit>, BioMcpError> {
+    let queries = resolver_queries(name_or_id);
+    if queries.is_empty() {
+        return Ok(None);
+    }
+
     let mut candidates: HashMap<String, MyDiseaseHit> = HashMap::new();
-    for query in resolver_queries(name_or_id) {
-        let resp = client.query(&query, 15, 0, None, None, None, None).await?;
+    for query in &queries {
+        let resp = client.query(query, 15, 0, None, None, None, None).await?;
         for hit in resp.hits {
             candidates.entry(hit.id.clone()).or_insert(hit);
         }
     }
 
-    Ok(scored_best_candidate(
-        name_or_id,
-        candidates.into_values().collect(),
-    ))
+    Ok(
+        scored_best_candidate_for_queries(&queries, candidates.into_values().collect()).filter(
+            |hit| {
+                best_disease_candidate_score_for_queries(&queries, hit)
+                    >= MIN_DIRECT_DISEASE_MATCH_SCORE
+            },
+        ),
+    )
 }
 
 async fn resolve_disease_hit_via_discover_fallback(
@@ -2951,6 +2997,13 @@ pub(crate) mod tests {
         );
     }
 
+    #[test]
+    fn resolver_queries_adds_hodgkin_alias_variants() {
+        let queries = resolver_queries("Hodgkin lymphoma");
+        assert!(queries.iter().any(|query| query == "hodgkins lymphoma"));
+        assert!(queries.iter().any(|query| query == "hodgkin disease"));
+    }
+
     #[tokio::test]
     async fn add_survival_section_sets_truthful_note_for_unmapped_disease() {
         let _lock = lock_env().await;
@@ -2968,6 +3021,59 @@ pub(crate) mod tests {
             disease.survival_note.as_deref(),
             Some(SURVIVAL_NO_DATA_NOTE)
         );
+    }
+
+    #[tokio::test]
+    async fn add_survival_section_sets_unavailable_note_when_catalog_fails() {
+        let _lock = lock_env().await;
+        let server = MockServer::start().await;
+        let _seer_base = set_env_var("BIOMCP_SEER_BASE", Some(&server.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/get_var_formats.php"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&server)
+            .await;
+
+        let mut disease = test_disease("MONDO:0004952", "Hodgkin's lymphoma");
+        add_survival_section(&mut disease)
+            .await
+            .expect("survival section");
+
+        assert!(disease.survival.is_none());
+        assert_eq!(
+            disease.survival_note.as_deref(),
+            Some(SURVIVAL_UNAVAILABLE_NOTE)
+        );
+    }
+
+    #[tokio::test]
+    async fn resolve_disease_hit_by_name_direct_rejects_weak_contains_only_match() {
+        let _guard = lock_env().await;
+        let server = MockServer::start().await;
+        let _env = set_env_var(
+            "BIOMCP_MYDISEASE_BASE",
+            Some(&format!("{}/v1", server.uri())),
+        );
+
+        Mock::given(method("GET"))
+            .and(path("/v1/query"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "total": 1,
+                "hits": [{
+                    "_id": "MONDO:0015760",
+                    "mondo": {"name": "T-cell non-Hodgkin lymphoma"}
+                }]
+            })))
+            .mount(&server)
+            .await;
+
+        let client = MyDiseaseClient::new().expect("client");
+        let best = resolve_disease_hit_by_name_direct(&client, "Hodgkin lymphoma")
+            .await
+            .expect("weak direct match should not error");
+
+        assert!(best.is_none());
     }
 
     #[test]
@@ -3015,6 +3121,26 @@ pub(crate) mod tests {
             "hereditary nonpolyposis colorectal cancer type 6",
         );
         assert!(broad > subtype);
+    }
+
+    #[test]
+    fn scored_best_candidate_for_queries_prefers_hodgkin_alias_over_non_hodgkin_contains_match() {
+        let queries = resolver_queries("Hodgkin lymphoma");
+        let best = scored_best_candidate_for_queries(
+            &queries,
+            vec![
+                test_disease_hit("MONDO:0015760", "T-cell non-Hodgkin lymphoma", &[], &[]),
+                test_disease_hit(
+                    "MONDO:0004952",
+                    "Hodgkins lymphoma",
+                    &["Hodgkin disease"],
+                    &[],
+                ),
+            ],
+        )
+        .expect("a best hit should be selected");
+
+        assert_eq!(best.id, "MONDO:0004952");
     }
 
     fn test_disease_hit(
@@ -3308,6 +3434,34 @@ pub(crate) mod tests {
         assert_eq!(page.results.len(), 1);
         assert_eq!(page.results[0].id, "MONDO:0002115");
         assert_eq!(page.results[0].source_id.as_deref(), Some("ICD10CM:Q07.0"));
+    }
+
+    #[tokio::test]
+    async fn resolve_fallback_row_ignores_not_found_canonical_ids() {
+        let _guard = lock_env().await;
+        let server = MockServer::start().await;
+        let _env = set_env_var(
+            "BIOMCP_MYDISEASE_BASE",
+            Some(&format!("{}/v1", server.uri())),
+        );
+
+        Mock::given(method("GET"))
+            .and(path("/v1/disease/DOID:8552"))
+            .respond_with(ResponseTemplate::new(404))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = MyDiseaseClient::new().expect("client");
+        let row = resolve_fallback_row(
+            &client,
+            false,
+            &DiseaseFallbackId::CanonicalOntology("DOID:8552".into()),
+        )
+        .await
+        .expect("canonical not-found should degrade cleanly");
+
+        assert!(row.is_none());
     }
 
     #[test]
