@@ -25,6 +25,7 @@ SOURCE_PAGE_SPECS = {
             '"PubMed" is an umbrella label',
             "PubTator3",
             "Europe PMC",
+            "NCBI E-utilities",
             "PMC OA",
             "NCBI ID Converter",
             "Semantic Scholar",

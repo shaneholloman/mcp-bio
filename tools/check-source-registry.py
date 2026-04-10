@@ -14,6 +14,7 @@ HEALTH_ALIASES = {
     "clinicaltrials": "ClinicalTrials.gov",
     "gprofiler": "g:Profiler",
     "gwas": "GWAS Catalog",
+    "ncbi_efetch": "NCBI E-utilities",
     "ncbi_idconv": "NCBI ID Converter",
     "nci_cts": "NCI CTS",
     "pmc_oa": "PMC OA",

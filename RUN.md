@@ -73,7 +73,7 @@ Owned routes:
 | Variable | Purpose |
 |----------|---------|
 | `BIOMCP_CACHE_MODE` | Set `infinite` to replay cached responses locally |
-| `NCBI_API_KEY` | Higher rate limits for PubTator3, PMC OA, and NCBI helpers |
+| `NCBI_API_KEY` | Higher rate limits for PubTator3, PubMed/efetch, PMC OA, and NCBI helpers |
 | `S2_API_KEY` | Optional Semantic Scholar TLDR, citation graph, and recommendations |
 | `OPENFDA_API_KEY` | Higher OpenFDA rate limits |
 | `NCI_API_KEY` | Required for NCI CTS trial queries |

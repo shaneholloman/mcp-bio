@@ -58,6 +58,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | MyDisease.info | 1 | direct_api | none | BioThings aggregation service; source ontologies and datasets keep their own terms | treat payloads as aggregated source data rather than a new umbrella license | <https://docs.mydisease.info/en/latest/> |
 | MyGene.info | 1 | direct_api | none | BioThings aggregation service; source-specific terms remain attached to underlying records | reuse should preserve provenance back to NCBI Gene, UniProt, and other upstream sources | <https://docs.mygene.info/en/latest/> |
 | MyVariant.info | 1 | direct_api | none | BioThings aggregation service; indirect providers retain their own terms | ClinVar, COSMIC, Cancer Genome Interpreter, and gnomAD-related fields should be treated according to their original providers' terms | <https://docs.myvariant.info/en/latest/> |
+| NCBI E-utilities | 1 | direct_api | optional_env | NLM public-domain utility service | utility responses are broadly reusable; article-level full text still follows the returned record's license context | <https://www.ncbi.nlm.nih.gov/books/NBK25501/> |
 | NCBI ID Converter | 1 | direct_api | optional_env | NLM public-domain utility service | utility results are broadly reusable; keep article-level identifiers and downstream article licenses distinct | <https://pmc.ncbi.nlm.nih.gov/tools/idconv/> |
 | NCI CTS | 2 | direct_api | required_env | custom provider API terms for the NCI Clinical Trials Search API | query output is usable for search and review, but downstream reuse should follow NCI API terms and record provenance | <https://clinicaltrialsapi.cancer.gov/> |
 | OLS4 | 1 | direct_api | none | EMBL-EBI ontology browser; each ontology keeps its own license | ontology metadata is queryable, but downstream reuse depends on the specific ontology surfaced | <https://www.ebi.ac.uk/ols4/> |
@@ -350,6 +351,19 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - API key / account URL: <https://www.ncbi.nlm.nih.gov/account/settings/>
 - Reviewed on: `2026-03-20`
 - Notes: NCBI API keys increase throughput but are not required for baseline BioMCP usage.
+
+### NCBI E-utilities
+
+- BioMCP surfaces: `get article <id> fulltext`
+- Integration mode: `direct_api`
+- BioMCP auth: `optional_env` via `NCBI_API_KEY`
+- Provider access / registration: open public E-utilities endpoint; optional My NCBI API key improves throughput
+- License / terms summary: NLM public-domain utility service
+- Redistribution / reuse summary: utility responses are broadly reusable; article-level full text still follows the returned record's license context
+- Official terms URL: <https://www.ncbi.nlm.nih.gov/books/NBK25501/>
+- API key / account URL: <https://www.ncbi.nlm.nih.gov/account/settings/>
+- Reviewed on: `2026-04-10`
+- Notes: BioMCP uses PMC `efetch` as a full-text fallback when Europe PMC does not serve the article. `NCBI_API_KEY` raises the baseline NCBI E-utilities budget but is not required.
 
 ### OLS4
 
@@ -728,7 +742,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ## Source notes
 
-- `PubMed` is a direct article-search source in BioMCP and also an identifier namespace that appears alongside `PubTator3`, `Europe PMC`, `PMC OA`, and `NCBI ID Converter`. This page maps those related provider labels back to the actual inventory rows instead of duplicating coverage notes.
+- `PubMed` is a direct article-search source in BioMCP and also an identifier namespace that appears alongside `PubTator3`, `Europe PMC`, `NCBI E-utilities`, `PMC OA`, and `NCBI ID Converter`. This page maps those related provider labels back to the actual inventory rows instead of duplicating coverage notes.
 - `OpenFDA FAERS`, `OpenFDA label`, `OpenFDA shortage`, and `Drugs@FDA` are user-facing provenance labels that resolve back to the `OpenFDA` direct row plus the `Drugs@FDA` indirect row.
 - `AlphaFold DB` and `PDB` are indirect-only because BioMCP currently surfaces those structure IDs via `UniProt` cross-references rather than maintaining standalone source clients.
 - `COSMIC` is indirect-only provenance through `MyVariant.info`. Direct COSMIC integration is not part of BioMCP's supported source surface because the provider's licensing model creates unacceptable redistribution and deployment risk for an MIT-licensed open tool.
