@@ -409,7 +409,7 @@ fn list_disease() -> String {
 - `get disease <name_or_id> all` - include all disease sections
 - `search disease <query>` - positional search by name
 - `search disease -q <query>` - search by name
-- `search phenotype "<HP terms>"` - HPO term set to ranked diseases
+- `search phenotype "<HP terms or symptom phrases>"` - HPO IDs or resolved symptom text to ranked diseases
 - `search disease -q <query> --source <mondo|doid|mesh>` - constrain ontology source
 - `search disease -q <query> --inheritance <pattern>`
 - `search disease -q <query> --phenotype <HP:...>`
@@ -432,6 +432,7 @@ fn list_phenotype() -> String {
 ## Commands
 
 - `search phenotype "<HP:... HP:...>"` - rank diseases by phenotype similarity
+- `search phenotype "<symptom phrase[, symptom phrase]>"` - resolve symptom text to HPO IDs, then rank diseases
 - `search phenotype "<HP:...>" --limit <N> --offset <N>` - page ranked disease matches
 
 ## Examples
@@ -439,11 +440,13 @@ fn list_phenotype() -> String {
 - `search phenotype "HP:0001250 HP:0001263"`
 - `search phenotype "HP:0001250" --limit <N> --offset <N>`
 - `search phenotype "HP:0001250,HP:0001263" --limit 10`
+- `search phenotype "seizure, developmental delay" --limit 10`
 
 ## Workflow tips
 
-- Start with 2-5 high-confidence HPO terms for better ranking signal.
+- Start with 2-5 high-confidence HPO terms when you have them; otherwise use one symptom phrase or comma-separated symptom phrases.
 - Use specific neurologic/cancer phenotype terms before broad umbrella terms.
+- Run `discover "<symptom text>"` first when you want BioMCP to surface candidate `HP:` terms before ranking diseases.
 - Follow with `get disease <id> all` to inspect phenotypes, genes, and pathways.
 
 ## Related
@@ -920,6 +923,13 @@ mod tests {
     }
 
     #[test]
+    fn list_disease_mentions_phenotype_search_supports_symptom_phrases() {
+        let out = render(Some("disease")).expect("list disease should render");
+        assert!(out.contains("search phenotype \"<HP terms or symptom phrases>\""));
+        assert!(out.contains("HPO IDs or resolved symptom text to ranked diseases"));
+    }
+
+    #[test]
     fn list_trial_and_article_include_missing_flags() {
         let trial = render(Some("trial")).expect("list trial should render");
         assert!(trial.contains("--biomarker <text>"));
@@ -1022,6 +1032,16 @@ mod tests {
         let gwas = render(Some("gwas")).expect("list gwas should render");
         assert!(gwas.contains("## Workflow tips"));
         assert!(gwas.contains("--p-value"));
+    }
+
+    #[test]
+    fn phenotype_list_mentions_hpo_ids_and_symptom_phrases() {
+        let phenotype = render(Some("phenotype")).expect("list phenotype should render");
+        assert!(phenotype.contains("search phenotype \"HP:0001250 HP:0001263\""));
+        assert!(phenotype.contains("search phenotype \"<symptom phrase[, symptom phrase]>\""));
+        assert!(phenotype.contains("search phenotype \"seizure, developmental delay\" --limit 10"));
+        assert!(phenotype.contains("resolve symptom text to HPO IDs"));
+        assert!(phenotype.contains("Run `discover \"<symptom text>\"` first"));
     }
 
     #[test]

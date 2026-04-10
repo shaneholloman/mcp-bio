@@ -12,7 +12,9 @@ use crate::utils::date::validate_since;
 const MAX_SEARCH_ALL_LIMIT: usize = 50;
 const EXPAND_LIMIT: usize = 20;
 const SECTION_TIMEOUT: Duration = Duration::from_secs(12);
-const ARTICLE_SECTION_TIMEOUT: Duration = Duration::from_secs(20);
+// Article fan-out can legitimately run longer than the other sections when the
+// shared Semantic Scholar pool throttles unauthenticated enrichment.
+const ARTICLE_SECTION_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Debug, Clone)]
 pub struct SearchAllInput {
@@ -2785,7 +2787,7 @@ mod tests {
 
     #[test]
     fn section_timeout_uses_article_specific_budget() {
-        assert_eq!(section_timeout(SectionKind::Article).as_secs(), 20);
+        assert_eq!(section_timeout(SectionKind::Article).as_secs(), 60);
         assert_eq!(section_timeout(SectionKind::Trial).as_secs(), 12);
     }
 

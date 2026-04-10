@@ -16,6 +16,7 @@ already trust.
 biomcp discover ERBB1
 biomcp discover Keytruda
 biomcp discover "chest pain"
+biomcp discover "developmental delay"
 biomcp --json discover diabetes
 ```
 
@@ -24,11 +25,19 @@ biomcp --json discover diabetes
 - Queries OLS4 for structured ontology-backed matches.
 - Adds optional UMLS crosswalks when `UMLS_API_KEY` is set.
 - Adds MedlinePlus plain-language context for disease and symptom queries.
+- Suggests `biomcp search phenotype "HP:..."` first when symptom concepts
+  resolve to HPO-backed IDs.
 - Returns suggested BioMCP follow-up commands without auto-executing them.
 
 ## Output
 
 Markdown groups concepts by type and shows suggested commands.
+
+For symptom-first queries such as `biomcp discover "developmental delay"`,
+discover can surface `HP:` identifiers directly in the concept list and suggest
+`biomcp search phenotype "HP:..."` as the next command. Disease-specific
+queries like `biomcp discover "symptoms of Marfan syndrome"` still route to
+`biomcp get disease ... phenotypes`.
 
 JSON preserves the same concepts and adds:
 
@@ -42,7 +51,7 @@ JSON preserves the same concepts and adds:
 - OLS4 is required; if it fails, `discover` fails.
 - UMLS is optional. Without `UMLS_API_KEY`, discover still works and reports
   that clinical crosswalk enrichment is unavailable.
-- MedlinePlus is best-effort and only shown for disease or symptom flows.
+- MedlinePlus is supplemental and only shown for disease or symptom flows.
 - Queries are sent to third-party biomedical APIs. Do not send PHI or other
   patient-identifying text.
 

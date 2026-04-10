@@ -290,6 +290,21 @@ def test_discover_guide_uses_direct_copy_and_related_guides() -> None:
     assert "## Related guides" in discover
 
 
+def test_discover_and_phenotype_guides_cover_hpo_bridge_and_text_resolution() -> None:
+    discover = _read("docs/user-guide/discover.md")
+    phenotype = _read("docs/user-guide/phenotype.md")
+
+    assert 'biomcp discover "developmental delay"' in discover
+    assert 'biomcp search phenotype "HP:..."' in discover
+    assert 'biomcp discover "symptoms of Marfan syndrome"' in discover
+    assert 'biomcp search phenotype "seizure, developmental delay"' in phenotype
+    assert "space- or comma-separated" in phenotype
+    assert "one symptom phrase" in phenotype
+    assert "multiple symptom phrases separated by commas" in phenotype
+    assert "Free-text symptom phrases are resolved to HPO IDs" in phenotype
+    assert 'biomcp discover "<symptom text>"' in phenotype
+
+
 def test_chart_reference_pages_use_shared_compact_shape() -> None:
     for path in CHART_REFERENCE_PAGES:
         page = _read(path)

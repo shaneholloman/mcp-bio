@@ -678,15 +678,16 @@ See also: biomcp list pgx")]
         #[arg(long, default_value = "0")]
         offset: usize,
     },
-    /// Search disease matches from an HPO term set (Monarch semsim)
+    /// Search disease matches from HPO IDs or symptom phrases (Monarch semsim)
     #[command(after_help = "\
 EXAMPLES:
   biomcp search phenotype \"HP:0001250 HP:0001263\"
-  biomcp search phenotype \"HP:0001250\" --limit 5
+  biomcp search phenotype \"HP:0001250,HP:0001263\" --limit 5
+  biomcp search phenotype \"seizure, developmental delay\" --limit 5
 
-See also: biomcp list disease")]
+See also: biomcp list phenotype")]
     Phenotype {
-        /// HPO term list (space- or comma-separated, e.g., \"HP:0001250 HP:0001263\")
+        /// HPO IDs (space- or comma-separated) or one symptom phrase / comma-separated symptom phrases
         terms: String,
         /// Maximum results (default: 10)
         #[arg(short, long, default_value = "10")]
@@ -7888,6 +7889,18 @@ mod tests {
         assert!(help.contains("pick the next typed command"));
     }
 
+    #[test]
+    fn search_phenotype_help_mentions_hpo_ids_and_symptom_phrases() {
+        let help = render_phenotype_search_long_help();
+
+        assert!(help.contains("HPO IDs"));
+        assert!(help.contains("space- or comma-separated"));
+        assert!(help.contains("one symptom phrase"));
+        assert!(help.contains("comma-separated symptom phrases"));
+        assert!(help.contains("seizure, developmental delay"));
+        assert!(help.contains("biomcp list phenotype"));
+    }
+
     fn render_trial_search_long_help() -> String {
         let mut command = Cli::command();
         let search = command
@@ -7912,6 +7925,21 @@ mod tests {
         discover
             .write_long_help(&mut help)
             .expect("discover help should render");
+        String::from_utf8(help).expect("help should be utf-8")
+    }
+
+    fn render_phenotype_search_long_help() -> String {
+        let mut command = Cli::command();
+        let search = command
+            .find_subcommand_mut("search")
+            .expect("search subcommand should exist");
+        let phenotype = search
+            .find_subcommand_mut("phenotype")
+            .expect("phenotype subcommand should exist");
+        let mut help = Vec::new();
+        phenotype
+            .write_long_help(&mut help)
+            .expect("phenotype help should render");
         String::from_utf8(help).expect("help should be utf-8")
     }
 

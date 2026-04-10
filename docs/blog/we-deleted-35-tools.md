@@ -105,9 +105,9 @@ The rewrite to Rust wasn't about language preference. Agent sessions are interac
 A single Rust binary with async parallel API fan-out means a `search all` that hits 8 APIs completes in the time of the slowest single call, not the sum. No runtime, no virtual environment, no dependency conflicts — install and first query in under 60 seconds:
 
 ```bash
-curl -fsSL https://biomcp.org/install.sh | bash
-# or:
 uv tool install biomcp-cli
+# or:
+curl -fsSL https://biomcp.org/install.sh | bash
 # or:
 pip install biomcp-cli
 ```
@@ -178,9 +178,9 @@ The common thread: **get out of the model's way.** The scaffolding that helped l
 Install BioMCP and run your first query in under a minute:
 
 ```bash
-curl -fsSL https://biomcp.org/install.sh | bash
-# or:
 uv tool install biomcp-cli
+# or:
+curl -fsSL https://biomcp.org/install.sh | bash
 # or:
 pip install biomcp-cli
 biomcp get variant "BRAF V600E"

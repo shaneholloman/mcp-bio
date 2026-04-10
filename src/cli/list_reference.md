@@ -21,6 +21,7 @@ New to BioMCP? Try:
 |---|---|
 | What drugs treat a disease | `search drug --indication "<disease>" --limit 5` |
 | Symptoms or phenotypes of a disease | `get disease <name_or_id> phenotypes` |
+| Which diseases match HPO IDs or symptom text | `search phenotype "<HP:... HP:...>"` or `search phenotype "seizure, developmental delay"` |
 | What a gene does | `get gene <symbol>` |
 | Tissue expression or localization of a gene product | `get gene <symbol> hpa` or `get gene <symbol> protein` |
 | Drug safety or adverse events | `drug adverse-events <name>` or `get drug <name> safety` |
@@ -98,7 +99,7 @@ New to BioMCP? Try:
 - `study survival --study <id> --gene <symbol> [--endpoint <os|dfs|pfs|dss>]`
 - `study compare --study <id> --gene <symbol> --type <expression|mutations> --target <symbol>`
 - `study co-occurrence --study <id> --genes <g1,g2,...>`
-- `search phenotype \"HP:... HP:...\"`
+- `search phenotype \"HP:... HP:...\"` or `search phenotype \"seizure, developmental delay\"`
 - `search gwas -g <gene> | --trait <text>`
 
 ## Best-Effort Searches

@@ -332,7 +332,7 @@ tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 out="$(TMPDIR="$tmpdir" "$bin" get article 27083046 fulltext)"
 if false; then
-  echo "collector" | mustmatch like "collector"
+  echo "collector" | mustmatch "collector"
 fi
 printf '%s\n' "$out" | grep -F -- "## Full Text" >/dev/null
 path="$(printf '%s\n' "$out" | sed -n 's/^Saved to: //p' | head -n1)"

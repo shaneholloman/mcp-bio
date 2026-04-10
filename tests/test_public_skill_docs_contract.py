@@ -70,6 +70,8 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "biomcp cache clean" in cli_reference
     assert "biomcp cache clear" in cli_reference
     assert "biomcp skill list                 # list embedded worked examples" in cli_reference
+    assert 'biomcp discover "developmental delay"' in cli_reference
+    assert 'biomcp search phenotype "seizure, developmental delay" --limit 10' in cli_reference
     assert (
         "`--json` normally returns structured output, but `biomcp cache path` "
         "is a plain-text exception. `biomcp cache stats`, `biomcp cache clean`, "
@@ -180,6 +182,9 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert 'biomcp search drug --indication "myasthenia gravis" --limit 5' in treatment_use_case
     assert "# Pattern: Symptom / phenotype lookup" in symptom_use_case
     assert 'biomcp get disease "Marfan syndrome" phenotypes' in symptom_use_case
+    assert 'biomcp discover "developmental delay"' in symptom_use_case
+    assert 'biomcp search phenotype "HP:0001263 HP:0001250"' in symptom_use_case
+    assert 'biomcp search phenotype "seizure, developmental delay" --limit 5' in symptom_use_case
     assert "# Pattern: Gene-in-disease orientation" in orientation_use_case
     assert 'biomcp search all --gene BRAF --disease "melanoma"' in orientation_use_case
     assert "# Pattern: Article follow-up via citations and recommendations" in article_follow_up

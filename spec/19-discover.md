@@ -9,6 +9,7 @@ examples against stable structural markers and suggestion contracts.
 | Gene Alias | `discover ERBB1` | Confirms alias resolution and gene suggestion |
 | Drug Brand Name | `discover Keytruda` | Confirms brand-name normalization to generic drug |
 | Symptom Query | `discover "chest pain"` | Confirms symptom-safe suggestions and MedlinePlus overlay |
+| HPO Symptom Bridge | `discover "developmental delay"` | Confirms HPO-backed symptom queries suggest phenotype search first |
 | Treatment Query | `discover "what drugs treat myasthenia gravis"` | Confirms treatment intent leads with structured indication search |
 | Disease Symptoms | `discover "symptoms of Marfan syndrome"` | Confirms disease-linked symptom routing prefers phenotypes |
 | Gene + Disease | `discover "BRAF melanoma"` | Confirms combined orientation queries prefer `search all` |
@@ -49,6 +50,19 @@ echo "$out" | mustmatch like "MedlinePlus"
 echo "$out" | mustmatch like "biomcp search disease -q \"chest pain\" --limit 10"
 echo "$out" | mustmatch like "biomcp search trial -c \"chest pain\" --limit 5"
 echo "$out" | mustmatch like "biomcp search article -k \"chest pain\" --limit 5"
+```
+
+## HPO Symptom Bridge
+
+When `discover` finds an HPO-backed symptom concept, it should surface the
+normalized `HP:` identifier and make phenotype ranking the first next step.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" discover "developmental delay")"
+echo "$out" | mustmatch like "### Symptom"
+echo "$out" | mustmatch like '**Global developmental delay** (`HP:0001263`)'
+echo "$out" | mustmatch like $'## Suggested Commands\n- `biomcp search phenotype "HP:0001263"`'
 ```
 
 ## Treatment Query

@@ -2337,13 +2337,24 @@ pub fn search_query_summary(filters: &DiseaseSearchFilters) -> String {
     parts.join(", ")
 }
 
+const PHENOTYPE_QUERY_EXAMPLES: &str = "Examples: biomcp search phenotype \"HP:0001250 HP:0001263\" or biomcp search phenotype \"seizure, developmental delay\"";
+
+fn phenotype_query_required_error() -> BioMcpError {
+    BioMcpError::InvalidArgument(format!(
+        "Phenotype terms are required. Use HPO IDs or symptom phrases. {PHENOTYPE_QUERY_EXAMPLES}"
+    ))
+}
+
+fn phenotype_query_no_match_error(raw: &str) -> BioMcpError {
+    BioMcpError::InvalidArgument(format!(
+        "No HPO terms matched query: {raw}. Try HPO IDs like HP:0001250 or refine the symptom phrases."
+    ))
+}
+
 fn parse_hpo_query_terms(raw: &str) -> Result<Vec<String>, BioMcpError> {
     let raw = raw.trim();
     if raw.is_empty() {
-        return Err(BioMcpError::InvalidArgument(
-            "HPO terms are required. Example: biomcp search phenotype \"HP:0001250 HP:0001263\""
-                .into(),
-        ));
+        return Err(phenotype_query_required_error());
     }
 
     let mut terms = Vec::new();
@@ -2364,10 +2375,7 @@ fn parse_hpo_query_terms(raw: &str) -> Result<Vec<String>, BioMcpError> {
     }
 
     if terms.is_empty() {
-        return Err(BioMcpError::InvalidArgument(
-            "HPO terms are required. Example: biomcp search phenotype \"HP:0001250 HP:0001263\""
-                .into(),
-        ));
+        return Err(phenotype_query_required_error());
     }
 
     Ok(terms)
@@ -2394,10 +2402,7 @@ async fn resolve_phenotype_query_terms(raw: &str) -> Result<Vec<String>, BioMcpE
 
     let raw = raw.trim();
     if raw.is_empty() {
-        return Err(BioMcpError::InvalidArgument(
-            "HPO terms are required. Example: biomcp search phenotype \"HP:0001250 HP:0001263\""
-                .into(),
-        ));
+        return Err(phenotype_query_required_error());
     }
 
     if let Ok(terms) = parse_hpo_query_terms(raw) {
@@ -2406,10 +2411,7 @@ async fn resolve_phenotype_query_terms(raw: &str) -> Result<Vec<String>, BioMcpE
 
     let queries = split_phenotype_queries(raw);
     if queries.is_empty() {
-        return Err(BioMcpError::InvalidArgument(
-            "HPO terms are required. Example: biomcp search phenotype \"HP:0001250 HP:0001263\""
-                .into(),
-        ));
+        return Err(phenotype_query_required_error());
     }
 
     let hpo = HpoClient::new()?;
@@ -2428,9 +2430,7 @@ async fn resolve_phenotype_query_terms(raw: &str) -> Result<Vec<String>, BioMcpE
     }
 
     if resolved.is_empty() {
-        return Err(BioMcpError::InvalidArgument(format!(
-            "No HPO terms matched query: {raw}. Try HPO IDs like HP:0001250"
-        )));
+        return Err(phenotype_query_no_match_error(raw));
     }
 
     Ok(resolved)
@@ -2688,8 +2688,38 @@ pub(crate) mod tests {
     #[test]
     fn parse_hpo_query_terms_requires_valid_ids() {
         let parsed = parse_hpo_query_terms("HP:0001250 HP:0001263").expect("valid terms");
-        assert_eq!(parsed.len(), 2);
+        assert_eq!(parsed, vec!["HP:0001250", "HP:0001263"]);
+        let comma_separated = parse_hpo_query_terms("hp:0001250, HP:0001263").expect("comma terms");
+        assert_eq!(comma_separated, vec!["HP:0001250", "HP:0001263"]);
         assert!(parse_hpo_query_terms("NOT_AN_HPO").is_err());
+    }
+
+    #[test]
+    fn split_phenotype_queries_preserves_single_phrase_and_splits_commas() {
+        assert_eq!(
+            split_phenotype_queries("developmental delay"),
+            vec!["developmental delay"]
+        );
+        assert_eq!(
+            split_phenotype_queries("seizure, developmental delay,  hypotonia "),
+            vec!["seizure", "developmental delay", "hypotonia"]
+        );
+    }
+
+    #[tokio::test]
+    async fn resolve_phenotype_query_terms_empty_input_mentions_hpo_ids_and_symptom_phrases() {
+        let err = resolve_phenotype_query_terms("   ")
+            .await
+            .expect_err("empty phenotype query should fail");
+
+        match err {
+            BioMcpError::InvalidArgument(message) => {
+                assert!(message.contains("Use HPO IDs or symptom phrases"));
+                assert!(message.contains("HP:0001250 HP:0001263"));
+                assert!(message.contains("seizure, developmental delay"));
+            }
+            other => panic!("expected InvalidArgument, got: {other}"),
+        }
     }
 
     #[test]

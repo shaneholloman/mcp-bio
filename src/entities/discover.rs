@@ -493,7 +493,13 @@ fn concept_from_ols(doc: &OlsDoc, query: &str) -> DiscoverConcept {
         .as_deref()
         .or(doc.short_form.as_deref())
         .and_then(normalize_primary_id);
-    let primary_type = infer_ols_type(doc, query);
+    let mut primary_type = infer_ols_type(doc, query);
+    if primary_id
+        .as_deref()
+        .is_some_and(|id| id.starts_with("HP:"))
+    {
+        primary_type = DiscoverType::Symptom;
+    }
     let mut xrefs = Vec::new();
     if let Some(id) = primary_id.clone() {
         let (source, bare_id) = split_prefixed_id(&id);
@@ -704,6 +710,10 @@ fn normalize_primary_id(value: &str) -> Option<String> {
     let value = value.trim();
     if value.is_empty() {
         return None;
+    }
+    let upper = value.to_ascii_uppercase();
+    if let Some(id) = upper.strip_prefix("HP_") {
+        return Some(format!("HP:{id}"));
     }
     Some(
         value
@@ -1086,6 +1096,10 @@ fn generate_commands(
                     quote_query_term(&disease.label)
                 ));
             } else {
+                let hpo_ids = collect_hpo_ids(concepts);
+                if !hpo_ids.is_empty() {
+                    commands.push(format!("biomcp search phenotype \"{}\"", hpo_ids.join(" ")));
+                }
                 commands.push(format!(
                     "biomcp search disease -q {} --limit 10",
                     quote_query_term(query.trim())
@@ -1207,6 +1221,28 @@ fn top_concept_of_type(
     kind: DiscoverType,
 ) -> Option<&DiscoverConcept> {
     concepts.iter().find(|concept| concept.primary_type == kind)
+}
+
+fn collect_hpo_ids(concepts: &[DiscoverConcept]) -> Vec<String> {
+    let mut ids = Vec::new();
+    let mut seen = HashSet::new();
+
+    for concept in concepts {
+        let Some(id) = concept.primary_id.as_deref() else {
+            continue;
+        };
+        if concept.primary_type == DiscoverType::Symptom
+            && id.starts_with("HP:")
+            && seen.insert(id.to_string())
+        {
+            ids.push(id.to_string());
+            if ids.len() == 5 {
+                break;
+            }
+        }
+    }
+
+    ids
 }
 
 fn disease_concept_for_label<'a>(
@@ -1448,8 +1484,9 @@ fn alias_candidates(result: &DiscoverResult) -> Vec<AliasCandidateSummary> {
 #[cfg(test)]
 mod tests {
     use super::{
-        AliasFallbackDecision, DiscoverConfidence, DiscoverIntent, DiscoverResult, DiscoverType,
-        MatchTier, build_result, classify_alias_fallback,
+        AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept, DiscoverConfidence,
+        DiscoverIntent, DiscoverResult, DiscoverType, MatchTier, build_result,
+        classify_alias_fallback, concept_from_ols, generate_commands,
     };
     use crate::sources::medlineplus::MedlinePlusTopic;
     use crate::sources::ols4::OlsDoc;
@@ -1507,6 +1544,79 @@ mod tests {
         }
     }
 
+    fn symptom_concept(label: &str, primary_id: &str) -> DiscoverConcept {
+        let bare_id = primary_id.trim().trim_start_matches("HP:").to_string();
+        DiscoverConcept {
+            label: label.to_string(),
+            primary_id: Some(primary_id.to_string()),
+            primary_type: DiscoverType::Symptom,
+            synonyms: Vec::new(),
+            xrefs: vec![ConceptXref {
+                source: "HP".to_string(),
+                id: bare_id.clone(),
+            }],
+            sources: vec![ConceptSource {
+                source: "OLS4".to_string(),
+                id: primary_id.to_string(),
+                label: label.to_string(),
+                source_type: "HP".to_string(),
+            }],
+            match_tier: MatchTier::Exact,
+            confidence: DiscoverConfidence::CanonicalId,
+        }
+    }
+
+    #[test]
+    fn ols_hpo_identifier_overrides_non_hp_prefix_to_symptom() {
+        let concept = concept_from_ols(
+            &OlsDoc {
+                iri: "http://example.org/doid/9256".to_string(),
+                ontology_name: "hp".to_string(),
+                ontology_prefix: "doid".to_string(),
+                short_form: Some("HP_0001263".to_string()),
+                obo_id: None,
+                label: "Global developmental delay".to_string(),
+                description: Vec::new(),
+                exact_synonyms: Vec::new(),
+                is_defining_ontology: true,
+                doc_type: Some("class".to_string()),
+            },
+            "developmental delay",
+        );
+
+        assert_eq!(concept.primary_id.as_deref(), Some("HP:0001263"));
+        assert_eq!(concept.primary_type, DiscoverType::Symptom);
+    }
+
+    #[test]
+    fn symptom_search_with_hpo_ids_suggests_capped_phenotype_bridge_first() {
+        let commands = generate_commands(
+            "developmental delay",
+            &[
+                symptom_concept("Global developmental delay", "HP:0001263"),
+                symptom_concept("Seizure", "HP:0001250"),
+                symptom_concept("Microcephaly", "HP:0000252"),
+                symptom_concept("Hypotonia", "HP:0001252"),
+                symptom_concept("Ataxia", "HP:0001251"),
+                symptom_concept("Developmental regression", "HP:0002376"),
+                symptom_concept("Duplicate developmental delay", "HP:0001263"),
+            ],
+            false,
+            DiscoverIntent::SymptomSearch,
+        );
+
+        assert_eq!(
+            commands[0],
+            "biomcp search phenotype \"HP:0001263 HP:0001250 HP:0000252 HP:0001252 HP:0001251\""
+        );
+        assert_eq!(
+            commands[1],
+            "biomcp search disease -q \"developmental delay\" --limit 10"
+        );
+        assert_eq!(commands.len(), 4);
+        assert!(!commands[0].contains("HP:0002376"));
+    }
+
     #[test]
     fn symptom_queries_keep_search_suggestions_and_plain_language() {
         let result = build_result(
@@ -1534,10 +1644,19 @@ mod tests {
         assert_eq!(result.intent, DiscoverIntent::SymptomSearch);
         assert_eq!(result.concepts[0].primary_type, DiscoverType::Symptom);
         assert!(result.plain_language.is_some());
+        assert_eq!(
+            result.next_commands,
+            vec![
+                "biomcp search disease -q \"chest pain\" --limit 10".to_string(),
+                "biomcp search trial -c \"chest pain\" --limit 5".to_string(),
+                "biomcp search article -k \"chest pain\" --limit 5".to_string(),
+            ]
+        );
         assert!(
-            result
+            !result
                 .next_commands
-                .contains(&"biomcp search disease -q \"chest pain\" --limit 10".to_string())
+                .iter()
+                .any(|command| command.starts_with("biomcp search phenotype "))
         );
     }
 

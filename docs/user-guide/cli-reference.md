@@ -99,6 +99,7 @@ TTY, and refuses non-interactive runs with plain stderr unless you pass
 ```bash
 biomcp discover ERBB1
 biomcp discover "chest pain"
+biomcp discover "developmental delay"
 biomcp --json discover diabetes
 ```
 
@@ -106,6 +107,8 @@ Use `discover` when the user starts with free text rather than a known entity
 type. Markdown output groups resolved concepts by type and suggests concrete
 follow-up BioMCP commands. JSON adds `_meta.discovery_sources` alongside the
 standard `_meta.next_commands` and `_meta.section_sources` metadata.
+Symptom-first queries that resolve to HPO concepts can suggest
+`biomcp search phenotype "HP:..."` as the first follow-up.
 
 ### All (cross-entity)
 
@@ -141,6 +144,7 @@ biomcp search pgx -d warfarin --limit 10
 
 ```bash
 biomcp search phenotype "HP:0001250 HP:0001263" --limit 10
+biomcp search phenotype "seizure, developmental delay" --limit 10
 ```
 
 ### GWAS

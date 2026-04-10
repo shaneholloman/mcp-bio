@@ -1,19 +1,27 @@
 # Phenotype
 
-Use phenotype commands to search HPO terms and phenotype-gene associations from the Monarch Initiative.
+Use phenotype commands to rank disease matches from HPO IDs or symptom phrases
+via the Monarch Initiative similarity search.
 
 ## Search phenotypes
 
-By HPO identifiers (space-separated):
+By HPO identifiers (space- or comma-separated):
 
 ```bash
 biomcp search phenotype "HP:0001250 HP:0001263"
+biomcp search phenotype "HP:0001250,HP:0001263"
 ```
 
-By name or keyword:
+By one symptom phrase:
 
 ```bash
-biomcp search phenotype seizure
+biomcp search phenotype "developmental delay"
+```
+
+By multiple symptom phrases (comma-separated):
+
+```bash
+biomcp search phenotype "seizure, developmental delay"
 ```
 
 Multiple terms with limit:
@@ -22,8 +30,14 @@ Multiple terms with limit:
 biomcp search phenotype "HP:0001250 HP:0001263" --limit 20
 ```
 
-The positional `terms` argument accepts HPO IDs or keywords, space-separated or
-comma-separated. Use `--limit` and `--offset` when you need bounded paging.
+The positional `terms` argument accepts:
+
+- canonical HPO IDs, space- or comma-separated
+- one symptom phrase
+- multiple symptom phrases separated by commas
+
+Free-text symptom phrases are resolved to HPO IDs before the Monarch similarity
+search runs. Use `--limit` and `--offset` when you need bounded paging.
 
 ## Get records
 
@@ -37,8 +51,9 @@ or `get disease <id> phenotypes` when you want a normalized disease follow-up.
 ## Helper commands
 
 Phenotype is search-only. Start with `search phenotype` for HPO term sets or
-keyword discovery, then switch to disease commands once you have the right
-normalized concept.
+symptom phrases, then switch to disease commands once you have the right
+normalized concept. If you want to inspect candidate HPO terms first, run
+`biomcp discover "<symptom text>"` and use the suggested `HP:` IDs.
 
 ## JSON mode
 
@@ -49,8 +64,9 @@ biomcp --json search phenotype "HP:0001250"
 ## Practical tips
 
 - Use HPO IDs for precise lookups when you know the exact term.
-- Use plain-text keywords for exploratory searches across phenotype names.
+- Use commas to separate multiple symptom phrases in one search.
 - Combine multiple HPO IDs in a single query to retrieve a phenotype set.
+- Prefer 2-5 high-confidence HPO IDs when you already know them.
 
 ## Related guides
 

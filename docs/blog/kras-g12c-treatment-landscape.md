@@ -260,7 +260,7 @@ Seven entity types queried. Ten-plus data sources: CIViC, ClinVar, OpenTargets, 
 
 ---
 
-## Try It
+## Try it
 
 ```bash
 curl -fsSL https://biomcp.org/install.sh | bash

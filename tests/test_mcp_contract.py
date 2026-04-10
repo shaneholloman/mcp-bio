@@ -77,6 +77,7 @@ async def test_biomcp_description_matches_list_contract(
         "search <entity> [query|filters]",
         "search trial [filters]",
         "get <entity> <id> [section...]",
+        'search phenotype "seizure, developmental delay"',
     ]
     article_markers = [
         "Turn a literature question into article filters",
