@@ -148,7 +148,7 @@ echo "$out" | mustmatch like "| Sex | Latest observed year | 5-year relative sur
 echo "$out" | mustmatch like "Both Sexes"
 json="$("$bin" --json get disease "chronic myeloid leukemia" survival)"
 echo "$json" | jq -e '.survival.site_code == 97' > /dev/null
-echo "$json" | jq -e '.survival.site_label | type == "string"' > /dev/null
+echo "$json" | jq -e '.survival.site_label | contains("CML")' > /dev/null
 echo "$json" | jq -e '.survival.series | length >= 1' > /dev/null
 echo "$json" | jq -e '.survival.series[0].points | length >= 1' > /dev/null
 echo "$json" | jq -e '.survival_note == null' > /dev/null

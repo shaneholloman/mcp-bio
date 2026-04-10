@@ -2,53 +2,73 @@
 
 ## Critique
 
-- Read `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, and `git diff main..HEAD`.
-- Ran the design-completeness audit against the final design:
-  - Help-query formulation contract mapped to [src/cli/mod.rs](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/src/cli/mod.rs) and [spec/06-article.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/spec/06-article.md).
-  - `biomcp list article` guidance mapped to [src/cli/list.rs](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/src/cli/list.rs), [spec/01-overview.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/spec/01-overview.md), and [spec/06-article.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/spec/06-article.md).
-  - Top-level compact hint / MCP description contract mapped to [src/cli/list_reference.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/src/cli/list_reference.md) and [tests/test_mcp_contract.py](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/tests/test_mcp_contract.py).
-  - Public docs alignment mapped to [docs/user-guide/article.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/docs/user-guide/article.md), [docs/how-to/find-articles.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/docs/how-to/find-articles.md), [docs/reference/article-keyword-search.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/docs/reference/article-keyword-search.md), [tests/test_public_skill_docs_contract.py](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/tests/test_public_skill_docs_contract.py), and [tests/test_upstream_planning_analysis_docs.py](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/tests/test_upstream_planning_analysis_docs.py).
-  - Confirmed no runtime planner/ranking edits in `src/entities/article.rs`.
-- Findings:
-  - [docs/how-to/find-articles.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/docs/how-to/find-articles.md) still claimed `--source pubmed` gives direct “MeSH/title/abstract” behavior, which the implementation and final design do not promise.
-  - Top-level list/MCP proofs were too loose: they checked for the new compact hint but not for the required absence of the full article tutorial on those surfaces.
-  - `list article` proofs checked the worked examples but missed the explicit keyword-only and unknown-entity guidance rows required by the design.
-  - Docs-contract tests did not prevent future reintroduction of the banned PubMed wording or missing unknown-entity guidance on the keyword reference page.
+- Read `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, `.march/ticket.md`, and `git diff main..HEAD`.
+- Re-ran the required local gates independently: `make check < /dev/null` and `make spec < /dev/null`.
+- Design completeness audit:
+  - Mapped the final design's runtime, docs, health, and proof-matrix items to the SEER source, disease entity/render/provenance, health/help surfaces, and source-doc inventory files.
+  - Found two design-listed inventory surfaces with no matching code change: `docs/index.md` and `architecture/functional/overview.md`.
+  - Confirmed from `.march/code-log.md` that help/docs/spec surfaces were updated before runtime implementation, which matches the mandatory code-step order.
+- Test-design traceability audit:
+  - Found no outside-in proof for the acceptance criterion that `biomcp get disease "Hodgkin lymphoma" survival` resolves to site `83`.
+  - Found no regression proof for the SEER-unavailable note path required by the truthful-unavailable contract.
+- Runtime/code review findings:
+  - `biomcp get disease "Hodgkin lymphoma" survival` could resolve a weak contains-only non-Hodgkin hit and degrade to `SEER survival data not available for this condition.` instead of returning site `83`.
+  - Canonical fallback misses during disease resolution could emit noisy warnings instead of degrading quietly to "no matching fallback row".
+  - `make spec` exposed a real follow-up defect in `spec/21-cross-entity-see-also.md::Oncology Study Local Match`: the study matcher only handled exact or contiguous labels, so resolved names like `breast carcinoma` missed `Breast Invasive Carcinoma` and incorrectly fell back to `biomcp study download --list`.
 
 ## Fixes Applied
 
-- Reworded [docs/how-to/find-articles.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/docs/how-to/find-articles.md) to describe `--source pubmed` as PubMed-only article search on the compatible filter set, removing the unsupported MeSH/title/abstract claim.
-- Strengthened root-list proofs in [src/cli/list.rs](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/src/cli/list.rs) and [spec/01-overview.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/spec/01-overview.md) so `biomcp list` must contain the compact article-routing hint and must not contain the full `## Query formulation` tutorial or detailed worked-example text.
-- Strengthened article-list proofs in [src/cli/list.rs](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/src/cli/list.rs), [spec/01-overview.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/spec/01-overview.md), and [spec/06-article.md](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/spec/06-article.md) so the explicit keyword-only and unknown-entity guidance rows are asserted, not just implied by examples.
-- Strengthened contract tests in [tests/test_mcp_contract.py](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/tests/test_mcp_contract.py), [tests/test_public_skill_docs_contract.py](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/tests/test_public_skill_docs_contract.py), and [tests/test_upstream_planning_analysis_docs.py](/home/ian/workspace/worktrees/157-document-article-search-query-decomposition-for-agent-skills/tests/test_upstream_planning_analysis_docs.py) to reject top-level tutorial leakage and MeSH/title/abstract drift.
+- Updated the missing design-listed inventory/help surfaces:
+  - `docs/index.md`
+  - `architecture/functional/overview.md`
+  These now list `SEER Explorer` on the disease surface and use a survival example command.
+- Repaired disease survival resolution in `src/entities/disease.rs`:
+  - added Hodgkin alias query variants (`hodgkins lymphoma`, `hodgkin disease`)
+  - scored direct candidates across all resolver query variants
+  - rejected weak contains-only direct matches below a direct-match threshold so non-Hodgkin hits do not win a Hodgkin query
+  - treated canonical fallback `NotFound` as `Ok(None)` so CML fallback misses do not leak warnings
+  - added regression tests for alias expansion, weak-match rejection, unavailable-note degradation, and quiet canonical fallback misses
+- Added the missing outside-in proof in `spec/07-disease.md` for Hodgkin survival mapping to site `83`.
+- Repaired oncology study follow-up matching in `src/render/markdown.rs`:
+  - added token-subset label matching so non-contiguous clinical labels can still resolve local study hints
+  - added a regression test covering `breast carcinoma` against `Breast Invasive Carcinoma`
+
+## Post-Fix Collateral Scan
+
+- After the disease resolver changes, rechecked for dead code, unused imports/variables, stale error handling, and shadowing via `cargo clippy`, targeted tests, and live probes. No collateral issues remained.
+- After the study-matcher change, rechecked the touched render path for stale fallback text, dead branches, and over-broad matching via targeted render tests and the failing spec slice. No new collateral issues remained.
 
 ## Verification
 
-- `cargo fmt --check`
-- `cargo test list_root_includes_routing_table_and_quickstart`
-- `cargo test list_trial_and_article_include_missing_flags`
-- `uv run --extra dev pytest tests/test_public_skill_docs_contract.py::test_public_skill_docs_match_current_cli_contract tests/test_upstream_planning_analysis_docs.py::test_technical_and_ux_docs_match_current_cli_and_workflow_contracts tests/test_mcp_contract.py::test_biomcp_description_matches_list_contract -q --mcp-cmd "./target/release/biomcp serve"`
-- `uv run --extra dev pytest spec/01-overview.md spec/06-article.md --mustmatch-lang bash --mustmatch-timeout 60 -v`
-- `uv run --extra dev mkdocs build --strict`
-- `make check < /dev/null` — passed
-- `make spec` — did not stabilize; full-suite runs timed out in existing live smoke specs rather than failing on deterministic assertion mismatches
+- Focused proofs:
+  - `cargo test resolver_queries_adds_hodgkin_alias_variants -- --nocapture`
+  - `cargo test scored_best_candidate_for_queries_prefers_hodgkin_alias_over_non_hodgkin_contains_match -- --nocapture`
+  - `cargo test resolve_fallback_row_ignores_not_found_canonical_ids -- --nocapture`
+  - `cargo test add_survival_section_sets_unavailable_note_when_catalog_fails -- --nocapture`
+  - `cargo test related_disease_oncology -- --nocapture`
+  - `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest spec/21-cross-entity-see-also.md -k "Oncology and Study" --mustmatch-lang bash --mustmatch-timeout 120 -v'`
+- Live-path checks:
+  - `target/release/biomcp --json get disease "Hodgkin lymphoma" survival` returned site `83` with no `survival_note`
+  - `target/release/biomcp get disease "chronic myeloid leukemia" survival` no longer emitted the fallback-resolution warning
+- Docs/source-contract checks:
+  - `uv run pytest tests/test_source_pages_docs_contract.py tests/test_source_licensing_docs_contract.py tests/test_documentation_consistency_audit_contract.py tests/test_upstream_planning_analysis_docs.py -v`
+  - `uv run mkdocs build --strict`
+- Full gates:
+  - `make check < /dev/null` — passed
+  - `make spec < /dev/null` — passed (`331 passed, 6 skipped`)
 
 ## Residual Concerns
 
-- `make spec` remains flaky because existing live mustmatch specs exceeded the 60s timeout budget on repeated full-suite runs. Observed failing nodes:
-  - `spec/06-article.md::Keyword Anchors Tokenize In JSON Ranking Metadata`
-  - `spec/06-article.md::Article Debug Plan`
-  - `spec/06-article.md::Sort Behavior`
-  - `spec/17-cross-entity-pivots.md::Variant pivots`
-  - `spec/18-source-labels.md::Markdown Source Labels`
-- Isolated reruns with larger timeout budgets passed, which points to suite/runtime variability rather than a stable regression from this review patch.
-- Filed out-of-scope reliability follow-up: [/home/ian/workspace/planning/biomcp/issues/157-live-spec-mustmatch-timeouts.md](/home/ian/workspace/planning/biomcp/issues/157-live-spec-mustmatch-timeouts.md).
+- No remaining blocking defects found in scope.
+- Verify should still expect normal live-provider drift risk from MyDisease and SEER Explorer because both integrations depend on external data/services; the repaired tests now cover the concrete failure modes seen during review.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | stale-doc | no | `docs/how-to/find-articles.md` claimed unsupported PubMed “MeSH/title/abstract” behavior |
-| 2 | weak-assertion | no | Top-level `biomcp list` / MCP description proofs did not enforce the “compact hint, not full tutorial” contract |
-| 3 | missing-test | no | `list article` proofs did not assert the explicit keyword-only and unknown-entity guidance rows required by the design |
-| 4 | weak-assertion | no | Docs-contract tests did not guard against reintroducing banned PubMed wording or missing keyword-reference unknown-entity guidance |
+| 1 | stale-doc | no | Design-listed source inventory surfaces `docs/index.md` and `architecture/functional/overview.md` had no matching SEER update |
+| 2 | missing-test | yes | Design acceptance/proof required an outside-in Hodgkin survival mapping proof for site `83`, but no matching spec assertion existed |
+| 3 | missing-test | yes | The truthful-unavailable SEER note path had no regression test |
+| 4 | validation-gap | no | Direct disease resolution accepted weak contains-only non-Hodgkin matches for a Hodgkin query, producing a false no-data survival result |
+| 5 | error-classification | no | Canonical fallback `NotFound` surfaced as warning-producing failure instead of benign no-row degradation during disease fallback resolution |
+| 6 | validation-gap | no | Oncology study matching only handled exact/contiguous labels, so `breast carcinoma` missed `Breast Invasive Carcinoma` and violated the study follow-up contract |
