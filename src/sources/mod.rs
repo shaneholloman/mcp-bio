@@ -460,28 +460,86 @@ pub(crate) fn body_excerpt(bytes: &[u8]) -> String {
     s
 }
 
+fn html_sniff_prefix(body: &[u8]) -> String {
+    let prefix_len = body.len().min(128);
+    String::from_utf8_lossy(&body[..prefix_len])
+        .trim_start()
+        .to_ascii_lowercase()
+}
+
+pub(crate) fn response_body_is_html(content_type: Option<&HeaderValue>, body: &[u8]) -> bool {
+    if let Some(content_type) = content_type
+        && let Ok(raw) = content_type.to_str()
+    {
+        let raw = raw.trim();
+        if !raw.is_empty() {
+            let media_type = raw
+                .split(';')
+                .next()
+                .map(str::trim)
+                .unwrap_or_default()
+                .to_ascii_lowercase();
+            return matches!(media_type.as_str(), "text/html" | "application/xhtml+xml");
+        }
+    }
+
+    let sniff = html_sniff_prefix(body);
+    sniff.starts_with("<!doctype") || sniff.starts_with("<html")
+}
+
+pub(crate) fn summarize_http_error_body(content_type: Option<&HeaderValue>, body: &[u8]) -> String {
+    if response_body_is_html(content_type, body) {
+        "HTML error page".to_string()
+    } else {
+        body_excerpt(body)
+    }
+}
+
 pub(crate) fn ensure_json_content_type(
     api: &str,
     content_type: Option<&HeaderValue>,
     body: &[u8],
 ) -> Result<(), BioMcpError> {
-    let Some(content_type) = content_type else {
-        return Ok(());
+    let mut invalid_content_type = false;
+    let raw = match content_type {
+        Some(content_type) => match content_type.to_str() {
+            Ok(value) => Some(value.trim()),
+            Err(_) => {
+                invalid_content_type = true;
+                None
+            }
+        },
+        None => None,
     };
 
-    let raw = match content_type.to_str() {
-        Ok(v) => v.trim(),
-        Err(_) => {
-            warn!(
-                source = api,
-                "Response content-type header was not valid UTF-8; attempting JSON parse"
-            );
-            return Ok(());
-        }
-    };
-    if raw.is_empty() {
+    if response_body_is_html(content_type, body) {
+        let message = match raw.filter(|value| !value.is_empty()) {
+            Some(raw) => format!(
+                "Unexpected HTML response (content-type: {raw}): {}",
+                summarize_http_error_body(content_type, body)
+            ),
+            None => format!(
+                "Unexpected HTML response: {}",
+                summarize_http_error_body(content_type, body)
+            ),
+        };
+        return Err(BioMcpError::Api {
+            api: api.to_string(),
+            message,
+        });
+    }
+
+    if invalid_content_type {
+        warn!(
+            source = api,
+            "Response content-type header was not valid UTF-8; attempting JSON parse"
+        );
         return Ok(());
     }
+
+    let Some(raw) = raw.filter(|value| !value.is_empty()) else {
+        return Ok(());
+    };
 
     let media_type = raw
         .split(';')
@@ -489,17 +547,6 @@ pub(crate) fn ensure_json_content_type(
         .map(str::trim)
         .unwrap_or_default()
         .to_ascii_lowercase();
-    let is_html = matches!(media_type.as_str(), "text/html" | "application/xhtml+xml");
-    if is_html {
-        return Err(BioMcpError::Api {
-            api: api.to_string(),
-            message: format!(
-                "Unexpected HTML response (content-type: {raw}): {}",
-                body_excerpt(body)
-            ),
-        });
-    }
-
     let is_json = media_type == "application/json"
         || media_type == "text/json"
         || media_type.ends_with("+json");
@@ -692,6 +739,43 @@ mod tests {
     #[test]
     fn resolve_cache_mode_defaults_to_none() {
         assert!(resolve_cache_mode(false, false, None).is_none());
+    }
+
+    #[test]
+    fn response_body_is_html_detects_html_from_content_type() {
+        assert!(response_body_is_html(
+            Some(&HeaderValue::from_static("text/html; charset=utf-8")),
+            b"upstream failure",
+        ));
+    }
+
+    #[test]
+    fn response_body_is_html_detects_html_from_doctype_without_header() {
+        assert!(response_body_is_html(
+            None,
+            b"<!DOCTYPE html><html><body>upstream error</body></html>",
+        ));
+    }
+
+    #[test]
+    fn summarize_http_error_body_sanitizes_html() {
+        let summary = summarize_http_error_body(
+            None,
+            b"<html><head><title>404</title></head><body>File not found</body></html>",
+        );
+        assert!(summary.contains("HTML error page"));
+        assert!(!summary.contains("<html"));
+        assert!(!summary.contains("<head"));
+    }
+
+    #[test]
+    fn summarize_http_error_body_preserves_json_excerpt() {
+        let summary = summarize_http_error_body(
+            Some(&HeaderValue::from_static("application/json")),
+            br#"{"error":"not found","code":404}"#,
+        );
+        assert!(summary.contains("not found"));
+        assert!(!summary.contains("HTML error page"));
     }
 
     #[test]
