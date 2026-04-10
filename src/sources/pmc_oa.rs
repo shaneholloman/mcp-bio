@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::sync::OnceLock;
 
+use http_cache_reqwest::CacheMode;
 use regex::Regex;
 
 use crate::error::BioMcpError;
@@ -50,9 +51,7 @@ impl PmcOaClient {
         &self,
         req: reqwest_middleware::RequestBuilder,
     ) -> Result<String, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode_with_auth(req, self.api_key.is_some())
-            .send()
-            .await?;
+        let resp = req.with_extension(CacheMode::NoStore).send().await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, PMC_OA_API).await?;
         if !status.is_success() {
@@ -115,7 +114,10 @@ impl PmcOaClient {
             return Ok(None);
         };
 
-        let resp = crate::sources::apply_cache_mode(self.client.get(&tgz_url))
+        let resp = self
+            .client
+            .get(&tgz_url)
+            .with_extension(CacheMode::NoStore)
             .send()
             .await?;
         let status = resp.status();

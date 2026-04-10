@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::sync::OnceLock;
 
+use http_cache_reqwest::CacheMode;
 use regex::Regex;
 use roxmltree::Document;
 
@@ -81,9 +82,7 @@ impl NcbiEfetchClient {
         &self,
         req: reqwest_middleware::RequestBuilder,
     ) -> Result<String, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode_with_auth(req, self.api_key.is_some())
-            .send()
-            .await?;
+        let resp = req.with_extension(CacheMode::NoStore).send().await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, NCBI_EFETCH_API).await?;
         if !status.is_success() {
