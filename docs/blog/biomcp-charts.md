@@ -195,7 +195,9 @@ All 12 palettes: wong, okabe-ito, tol-bright, tol-muted, tol-light, ibm, deutera
 ## Try it
 
 ```bash
-uv tool install biomcp-cli
+curl -fsSL https://biomcp.org/install.sh | bash
+# or: uv tool install biomcp-cli
+# or: pip install biomcp-cli
 biomcp study download msk_impact_2017
 biomcp study survival --study msk_impact_2017 --gene TP53 \
   --chart survival --terminal

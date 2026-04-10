@@ -10,6 +10,12 @@ binary also runs local study analytics on downloaded cBioPortal datasets.
 
 ## Install
 
+### Binary install
+
+```bash
+curl -fsSL https://biomcp.org/install.sh | bash
+```
+
 ### PyPI tool install
 
 ```bash
@@ -20,12 +26,6 @@ uv tool install biomcp-cli
 
 Install the `biomcp-cli` package, then use `biomcp` for the commands shown
 throughout the docs.
-
-### Binary install
-
-```bash
-curl -fsSL https://biomcp.org/install.sh | bash
-```
 
 ### Install skills
 

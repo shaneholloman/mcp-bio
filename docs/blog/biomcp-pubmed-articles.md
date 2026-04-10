@@ -193,7 +193,9 @@ Check your configuration with `biomcp health --apis-only` — it shows which API
 ## Try it
 
 ```bash
-uv tool install biomcp-cli
+curl -fsSL https://biomcp.org/install.sh | bash
+# or: uv tool install biomcp-cli
+# or: pip install biomcp-cli
 biomcp skill install
 ```
 

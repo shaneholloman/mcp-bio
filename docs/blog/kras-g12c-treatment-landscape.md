@@ -263,7 +263,9 @@ Seven entity types queried. Ten-plus data sources: CIViC, ClinVar, OpenTargets, 
 ## Try It
 
 ```bash
-uv tool install biomcp-cli
+curl -fsSL https://biomcp.org/install.sh | bash
+# or: uv tool install biomcp-cli
+# or: pip install biomcp-cli
 ```
 
 Then start with your own mutation:

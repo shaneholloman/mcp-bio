@@ -151,7 +151,9 @@ biomcp study download msk_impact_2017
 Install BioMCP and download a study:
 
 ```bash
-uv tool install biomcp-cli
+curl -fsSL https://biomcp.org/install.sh | bash
+# or: uv tool install biomcp-cli
+# or: pip install biomcp-cli
 biomcp study download msk_impact_2017
 ```
 

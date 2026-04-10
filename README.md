@@ -30,6 +30,12 @@ get compact, evidence-oriented results across live public data plus local study 
 
 ## Installation
 
+### Binary install
+
+```bash
+curl -fsSL https://biomcp.org/install.sh | bash
+```
+
 ### PyPI tool install
 
 ```bash
@@ -38,12 +44,6 @@ uv tool install biomcp-cli
 ```
 
 This installs the `biomcp` binary on your PATH.
-
-### Binary install
-
-```bash
-curl -fsSL https://biomcp.org/install.sh | bash
-```
 
 ### Claude Desktop extension (.mcpb)
 

@@ -103,7 +103,9 @@ A smaller, cheaper model with the right procedural guidance outperforms a larger
 ## Try it
 
 ```bash
-uv tool install biomcp-cli
+curl -fsSL https://biomcp.org/install.sh | bash
+# or: uv tool install biomcp-cli
+# or: pip install biomcp-cli
 biomcp skill install
 ```
 
