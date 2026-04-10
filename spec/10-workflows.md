@@ -13,8 +13,9 @@ numbered or slugged examples through the existing `show_use_case()` path.
 
 ## Skill Overview
 
-The overview should teach routing rules and then point the user to the worked
-examples instead of inlining every workflow.
+The overview should teach routing rules, teach when to stop searching and
+answer from supported evidence, and then point the user to the worked examples
+instead of inlining every workflow.
 
 ```bash
 out="$(biomcp skill)"
@@ -22,6 +23,10 @@ echo "$out" | mustmatch like "## Routing rules"
 echo "$out" | mustmatch like "## Section reference"
 echo "$out" | mustmatch like "## Cross-entity pivot rules"
 echo "$out" | mustmatch like "## Output and evidence rules"
+echo "$out" | mustmatch like "## Answer commitment"
+echo "$out" | mustmatch like "If one command already answers the question, stop searching and answer"
+echo "$out" | mustmatch like "biomcp get drug nivolumab regulatory"
+echo "$out" | mustmatch like "If 3+ searches keep returning relevant papers"
 echo "$out" | mustmatch like 'Run `biomcp skill list` for worked examples'
 ```
 

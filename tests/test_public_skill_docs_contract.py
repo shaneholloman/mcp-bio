@@ -109,6 +109,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "## Section reference" in skill_file
     assert "## Cross-entity pivot rules" in skill_file
     assert "## Output and evidence rules" in skill_file
+    assert "## Answer commitment" in skill_file
     assert 'biomcp search drug --indication "<disease>"' in skill_file
     assert 'biomcp discover "<free text>"' in skill_file
     assert (
@@ -127,6 +128,12 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
         "Avoid `--type` when recall matters across sources. `--type` is Europe PMC only today because PubTator3 and Semantic Scholar search results do not expose publication-type filtering."
         in skill_file
     )
+    assert "Only add more commands if a needed claim is still unsupported." in skill_file
+    assert "If one command already answers the question, stop searching and answer." in skill_file
+    assert "biomcp get drug nivolumab regulatory" in skill_file
+    assert "If 1-2 papers you already fetched state the answer" in skill_file
+    assert "If 3+ searches keep returning relevant papers" in skill_file
+    assert "If you keep reformulating the same search with different keywords" in skill_file
     assert "_meta.next_commands" in skill_file
     assert "Run `biomcp skill list` for worked examples" in skill_file
 
