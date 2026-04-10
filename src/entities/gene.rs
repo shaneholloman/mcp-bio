@@ -487,9 +487,10 @@ async fn enrich_gene(
     Ok((ontology, diseases))
 }
 
-fn parse_sections(sections: &[String]) -> Result<Vec<GeneIncludeType>, BioMcpError> {
+fn parse_sections(symbol: &str, sections: &[String]) -> Result<Vec<GeneIncludeType>, BioMcpError> {
     let mut include: Vec<GeneIncludeType> = Vec::new();
     let mut include_all = false;
+    let symbol = symbol.trim();
 
     for raw in sections {
         let section = raw.trim().to_ascii_lowercase();
@@ -503,6 +504,12 @@ fn parse_sections(sections: &[String]) -> Result<Vec<GeneIncludeType>, BioMcpErr
         if section == GENE_SECTION_ALL {
             include_all = true;
             continue;
+        }
+
+        if section == "variants" {
+            return Err(BioMcpError::InvalidArgument(format!(
+                "Gene does not have a \"variants\" section. Use: `biomcp search variant -g {symbol}` to find variants for this gene."
+            )));
         }
 
         let kind = GeneIncludeType::from_section(&section).ok_or_else(|| {
@@ -1141,7 +1148,7 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
         ));
     }
 
-    let include = parse_sections(sections)?;
+    let include = parse_sections(symbol, sections)?;
 
     let client = MyGeneClient::new()?;
     let resp = client.get(symbol, false).await?;
@@ -1603,23 +1610,37 @@ mod tests {
 
     #[test]
     fn parse_sections_accepts_new_enrichment_sections() {
-        let parsed = parse_sections(&[
-            "expression".to_string(),
-            "hpa".to_string(),
-            "druggability".to_string(),
-            "clingen".to_string(),
-            "constraint".to_string(),
-            "disgenet".to_string(),
-        ])
+        let parsed = parse_sections(
+            "BRAF",
+            &[
+                "expression".to_string(),
+                "hpa".to_string(),
+                "druggability".to_string(),
+                "clingen".to_string(),
+                "constraint".to_string(),
+                "disgenet".to_string(),
+            ],
+        )
         .expect("new gene sections should parse");
         assert_eq!(parsed.len(), 6);
     }
 
     #[test]
     fn parse_sections_all_keeps_disgenet_opt_in() {
-        let parsed = parse_sections(&["all".to_string()]).expect("all should parse");
+        let parsed = parse_sections("BRAF", &["all".to_string()]).expect("all should parse");
         assert_eq!(parsed.len(), 12);
         assert!(!parsed.contains(&GeneIncludeType::Disgenet));
+    }
+
+    #[test]
+    fn parse_sections_redirects_variants_to_variant_search() {
+        let err = parse_sections("SCN5A", &["variants".to_string()])
+            .expect_err("variants should redirect");
+
+        let message = err.to_string();
+        assert!(message.contains("Gene does not have a \"variants\" section."));
+        assert!(message.contains("`biomcp search variant -g SCN5A`"));
+        assert!(!message.contains("Available:"));
     }
 
     #[test]

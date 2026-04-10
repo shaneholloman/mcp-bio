@@ -4658,6 +4658,8 @@ pub(crate) mod tests {
         assert!(gene_markdown.contains("## Protein (UniProt)"));
         assert!(gene_markdown.contains("## GO Terms (QuickGO)"));
         assert!(gene_markdown.contains("## Interactions (STRING)"));
+        assert!(gene_markdown.contains("See also:"));
+        assert!(gene_markdown.contains("biomcp search variant -g CFTR"));
 
         let drug = Drug {
             name: "ivacaftor".to_string(),
