@@ -1915,6 +1915,42 @@ mod tests {
     use crate::entities::trial::TrialSearchResult;
     use crate::entities::variant::VariantGwasAssociation;
     use serde_json::json;
+    use tokio::sync::MutexGuard;
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    async fn env_lock_async() -> MutexGuard<'static, ()> {
+        crate::test_support::env_lock().lock().await
+    }
+
+    struct EnvVarGuard {
+        name: &'static str,
+        previous: Option<String>,
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            // Safety: tests serialize environment mutation with `env_lock_async()`.
+            unsafe {
+                match &self.previous {
+                    Some(value) => std::env::set_var(self.name, value),
+                    None => std::env::remove_var(self.name),
+                }
+            }
+        }
+    }
+
+    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
+        let previous = std::env::var(name).ok();
+        // Safety: tests serialize environment mutation with `env_lock_async()`.
+        unsafe {
+            match value {
+                Some(value) => std::env::set_var(name, value),
+                None => std::env::remove_var(name),
+            }
+        }
+        EnvVarGuard { name, previous }
+    }
 
     fn input_with_gene() -> SearchAllInput {
         SearchAllInput {
@@ -2658,6 +2694,92 @@ mod tests {
             "6e-22"
         );
         assert_eq!(format_search_all_p_value(&json!(0.005)), "0.005");
+    }
+
+    #[tokio::test]
+    async fn dispatch_section_pathway_surfaces_sanitized_wikipathways_404_without_timeout() {
+        let _guard = env_lock_async().await;
+        let reactome = MockServer::start().await;
+        let kegg = MockServer::start().await;
+        let wikipathways = MockServer::start().await;
+        let _reactome_base = set_env_var("BIOMCP_REACTOME_BASE", Some(&reactome.uri()));
+        let _kegg_base = set_env_var("BIOMCP_KEGG_BASE", Some(&kegg.uri()));
+        let _wikipathways_base = set_env_var("BIOMCP_WIKIPATHWAYS_BASE", Some(&wikipathways.uri()));
+        let _disable_kegg = set_env_var("BIOMCP_DISABLE_KEGG", None);
+
+        Mock::given(method("GET"))
+            .and(path("/search/query"))
+            .and(query_param("query", "BRAF"))
+            .and(query_param("species", "Homo sapiens"))
+            .and(query_param("pageSize", "3"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_raw(r#"{"results":[],"totalResults":0}"#, "application/json"),
+            )
+            .expect(1)
+            .mount(&reactome)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/find/pathway/BRAF"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(""))
+            .expect(1)
+            .mount(&kegg)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/findPathwaysByText.json"))
+            .respond_with(ResponseTemplate::new(404).set_body_raw(
+                "<!DOCTYPE html><html><head><title>404</title></head><body>File not found</body></html>",
+                "text/html; charset=utf-8",
+            ))
+            .expect(1)
+            .mount(&wikipathways)
+            .await;
+
+        let prepared = PreparedInput::new(&SearchAllInput {
+            gene: Some("BRAF".to_string()),
+            variant: None,
+            disease: None,
+            drug: None,
+            keyword: None,
+            since: None,
+            limit: 3,
+            counts_only: true,
+            debug_plan: false,
+        })
+        .expect("valid prepared input");
+
+        let section = dispatch_section(SectionKind::Pathway, &prepared).await;
+        let error = section.error.clone().expect("pathway section should fail");
+        assert_eq!(section.entity, "pathway");
+        assert_eq!(section.count, 0);
+        assert!(error.contains("wikipathways"));
+        assert!(error.contains("HTTP 404"));
+        assert!(error.contains("HTML error page"));
+        assert!(!error.contains("timed out"));
+        assert!(!error.contains("<!DOCTYPE"));
+        assert!(!error.contains("<html"));
+        assert!(!error.contains("<head"));
+
+        let markdown = crate::render::markdown::search_all_markdown(
+            &SearchAllResults {
+                query: prepared.query_summary(),
+                sections: vec![section],
+                searches_dispatched: 1,
+                searches_with_results: 0,
+                wall_time_ms: 0,
+                debug_plan: None,
+            },
+            true,
+        )
+        .expect("counts-only markdown should render");
+        assert!(markdown.contains("## Pathways (0)"));
+        assert!(markdown.contains("Error: API error from wikipathways: HTTP 404"));
+        assert!(markdown.contains("HTML error page"));
+        assert!(!markdown.contains("<!DOCTYPE"));
+        assert!(!markdown.contains("<html"));
+        assert!(!markdown.contains("<head"));
     }
 
     #[test]

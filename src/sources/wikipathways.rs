@@ -54,7 +54,7 @@ impl WikiPathwaysClient {
         )
         .await?;
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
             return Err(BioMcpError::Api {
                 api: WIKIPATHWAYS_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
@@ -476,6 +476,30 @@ mod tests {
 
         let err = client.search_pathways("apoptosis", 1).await.unwrap_err();
         assert!(err.to_string().contains("Unexpected HTML response"));
+    }
+
+    #[tokio::test]
+    async fn search_sanitizes_404_html_error_body() {
+        let server = MockServer::start().await;
+        let client = WikiPathwaysClient::new_for_test(server.uri()).unwrap();
+
+        Mock::given(method("GET"))
+            .and(path("/findPathwaysByText.json"))
+            .respond_with(ResponseTemplate::new(404).set_body_raw(
+                "<!DOCTYPE html><html><head><title>404</title></head><body>File not found</body></html>",
+                "text/html; charset=utf-8",
+            ))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let err = client.search_pathways("apoptosis", 1).await.unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("HTTP 404"));
+        assert!(msg.contains("HTML error page"));
+        assert!(!msg.contains("<!DOCTYPE"));
+        assert!(!msg.contains("<html"));
+        assert!(!msg.contains("<head"));
     }
 
     #[tokio::test]
