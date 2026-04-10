@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use http_cache_reqwest::CacheMode;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
@@ -205,7 +206,10 @@ impl EuropePmcClient {
         };
 
         let url = self.endpoint(&format!("{normalized_id}/fullTextXML"));
-        let resp = crate::sources::apply_cache_mode(self.client.get(&url))
+        let resp = self
+            .client
+            .get(&url)
+            .with_extension(CacheMode::NoStore)
             .send()
             .await?;
         if resp.status() == reqwest::StatusCode::NOT_FOUND {
@@ -272,6 +276,39 @@ mod tests {
     use super::*;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    async fn env_lock_async() -> tokio::sync::MutexGuard<'static, ()> {
+        crate::test_support::env_lock().lock().await
+    }
+
+    struct EnvVarGuard {
+        name: &'static str,
+        previous: Option<String>,
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            // Safety: tests serialize environment mutation with `env_lock_async()`.
+            unsafe {
+                match &self.previous {
+                    Some(value) => std::env::set_var(self.name, value),
+                    None => std::env::remove_var(self.name),
+                }
+            }
+        }
+    }
+
+    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
+        let previous = std::env::var(name).ok();
+        // Safety: tests serialize environment mutation with `env_lock_async()`.
+        unsafe {
+            match value {
+                Some(value) => std::env::set_var(name, value),
+                None => std::env::remove_var(name),
+            }
+        }
+        EnvVarGuard { name, previous }
+    }
 
     #[tokio::test]
     async fn search_query_sets_expected_params() {
@@ -351,5 +388,35 @@ mod tests {
         let client = EuropePmcClient::new_for_test(server.uri()).unwrap();
         let xml = client.get_full_text_xml("PMC", "PMC123").await.unwrap();
         assert_eq!(xml, Some("<article/>".to_string()));
+    }
+
+    #[tokio::test]
+    async fn get_full_text_xml_bypasses_persistent_cache_when_response_recovers() {
+        let _guard = env_lock_async().await;
+        let server = MockServer::start().await;
+        let _base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&server.uri()));
+        let client = EuropePmcClient::new().unwrap();
+
+        Mock::given(method("GET"))
+            .and(path("/PMC987654/fullTextXML"))
+            .respond_with(ResponseTemplate::new(404))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let first = client.get_full_text_xml("PMC", "PMC987654").await.unwrap();
+        assert!(first.is_none());
+
+        server.reset().await;
+
+        Mock::given(method("GET"))
+            .and(path("/PMC987654/fullTextXML"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("<article>fresh</article>"))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let second = client.get_full_text_xml("PMC", "PMC987654").await.unwrap();
+        assert_eq!(second, Some("<article>fresh</article>".to_string()));
     }
 }
