@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::collections::HashSet;
 
+use http_cache_reqwest::CacheMode;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
@@ -38,6 +39,11 @@ impl WikiPathwaysClient {
             self.base.as_ref().trim_end_matches('/'),
             path.trim_start_matches('/')
         )
+    }
+
+    fn search_request(&self) -> reqwest_middleware::RequestBuilder {
+        let url = self.endpoint("findPathwaysByText.json");
+        self.client.get(&url).with_extension(CacheMode::NoStore)
     }
 
     async fn get_json<T: DeserializeOwned>(
@@ -79,8 +85,7 @@ impl WikiPathwaysClient {
             ));
         }
 
-        let url = self.endpoint("findPathwaysByText.json");
-        let resp: WikiPathwaysSearchResponse = self.get_json(self.client.get(&url)).await?;
+        let resp: WikiPathwaysSearchResponse = self.get_json(self.search_request()).await?;
 
         let mut ranked = Vec::new();
         let mut seen = HashSet::new();
@@ -382,6 +387,39 @@ mod tests {
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
+    async fn env_lock_async() -> tokio::sync::MutexGuard<'static, ()> {
+        crate::test_support::env_lock().lock().await
+    }
+
+    struct EnvVarGuard {
+        name: &'static str,
+        previous: Option<String>,
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            // Safety: tests serialize environment mutation with `env_lock_async()`.
+            unsafe {
+                match &self.previous {
+                    Some(value) => std::env::set_var(self.name, value),
+                    None => std::env::remove_var(self.name),
+                }
+            }
+        }
+    }
+
+    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
+        let previous = std::env::var(name).ok();
+        // Safety: tests serialize environment mutation with `env_lock_async()`.
+        unsafe {
+            match value {
+                Some(value) => std::env::set_var(name, value),
+                None => std::env::remove_var(name),
+            }
+        }
+        EnvVarGuard { name, previous }
+    }
+
     #[test]
     fn validates_wikipathways_id_shape() {
         assert!(is_wikipathways_id("WP254"));
@@ -476,6 +514,44 @@ mod tests {
 
         let err = client.search_pathways("apoptosis", 1).await.unwrap_err();
         assert!(err.to_string().contains("Unexpected HTML response"));
+    }
+
+    #[tokio::test]
+    async fn search_bypasses_persistent_cache_when_mock_responses_change() {
+        let _guard = env_lock_async().await;
+        let server = MockServer::start().await;
+        let _base = set_env_var("BIOMCP_WIKIPATHWAYS_BASE", Some(&server.uri()));
+        let client = WikiPathwaysClient::new().unwrap();
+
+        Mock::given(method("GET"))
+            .and(path("/findPathwaysByText.json"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_raw("<html><body>error page</body></html>", "text/html"),
+            )
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let first_err = client.search_pathways("apoptosis", 1).await.unwrap_err();
+        assert!(first_err.to_string().contains("Unexpected HTML response"));
+
+        server.reset().await;
+
+        Mock::given(method("GET"))
+            .and(path("/findPathwaysByText.json"))
+            .respond_with(ResponseTemplate::new(404).set_body_raw(
+                "<!DOCTYPE html><html><head><title>404</title></head><body>File not found</body></html>",
+                "text/html; charset=utf-8",
+            ))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let second_err = client.search_pathways("apoptosis", 1).await.unwrap_err();
+        let second_msg = second_err.to_string();
+        assert!(second_msg.contains("HTTP 404"));
+        assert!(second_msg.contains("HTML error page"));
     }
 
     #[tokio::test]
