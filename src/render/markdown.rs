@@ -114,6 +114,25 @@ struct DiseaseModelAssociationRenderRow {
     evidence_count: Option<u32>,
 }
 
+#[derive(serde::Serialize)]
+struct DiseaseSurvivalSummaryRenderRow {
+    sex: String,
+    latest_observed_year: Option<u16>,
+    relative_survival: Option<String>,
+    ci_95: Option<String>,
+    cases: Option<u32>,
+    latest_modeled: Option<String>,
+}
+
+#[derive(serde::Serialize)]
+struct DiseaseSurvivalHistoryRenderRow {
+    sex: String,
+    year: u16,
+    relative_survival: String,
+    ci_95: Option<String>,
+    cases: Option<u32>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PaginationFooterMode {
     Offset,
@@ -439,6 +458,84 @@ fn disease_model_rows(disease: &Disease) -> Vec<DiseaseModelAssociationRenderRow
             evidence_count: row.evidence_count,
         })
         .collect()
+}
+
+fn format_survival_percent(value: Option<f64>) -> Option<String> {
+    value.map(|value| format!("{value:.1}%"))
+}
+
+fn format_survival_ci(lower_ci: Option<f64>, upper_ci: Option<f64>) -> Option<String> {
+    match (lower_ci, upper_ci) {
+        (Some(lower), Some(upper)) => Some(format!("{lower:.1}%-{upper:.1}%")),
+        _ => None,
+    }
+}
+
+fn disease_survival_source_line(disease: &Disease) -> Option<String> {
+    disease.survival.as_ref().map(|survival| {
+        format!(
+            "{} (site code {}) · All Ages · All Races / Ethnicities",
+            survival.site_label, survival.site_code
+        )
+    })
+}
+
+fn disease_survival_summary_rows(disease: &Disease) -> Vec<DiseaseSurvivalSummaryRenderRow> {
+    let Some(survival) = disease.survival.as_ref() else {
+        return Vec::new();
+    };
+
+    survival
+        .series
+        .iter()
+        .map(|series| {
+            let latest_observed = series.latest_observed.as_ref();
+            let latest_modeled = series.latest_modeled.as_ref().and_then(|point| {
+                point
+                    .modeled_relative_survival_rate
+                    .map(|value| format!("{}: {value:.1}%", point.year))
+            });
+
+            DiseaseSurvivalSummaryRenderRow {
+                sex: series.sex.clone(),
+                latest_observed_year: latest_observed.map(|point| point.year),
+                relative_survival: format_survival_percent(
+                    latest_observed.and_then(|point| point.relative_survival_rate),
+                ),
+                ci_95: latest_observed
+                    .and_then(|point| format_survival_ci(point.lower_ci, point.upper_ci)),
+                cases: latest_observed.and_then(|point| point.case_count),
+                latest_modeled,
+            }
+        })
+        .collect()
+}
+
+fn disease_survival_history_rows(disease: &Disease) -> Vec<DiseaseSurvivalHistoryRenderRow> {
+    let Some(survival) = disease.survival.as_ref() else {
+        return Vec::new();
+    };
+
+    let mut rows = Vec::new();
+    for series in &survival.series {
+        for point in series
+            .points
+            .iter()
+            .rev()
+            .filter(|point| point.relative_survival_rate.is_some())
+            .take(10)
+        {
+            rows.push(DiseaseSurvivalHistoryRenderRow {
+                sex: series.sex.clone(),
+                year: point.year,
+                relative_survival: format!("{:.1}%", point.relative_survival_rate.unwrap_or(0.0)),
+                ci_95: format_survival_ci(point.lower_ci, point.upper_ci),
+                cases: point.case_count,
+            });
+        }
+    }
+
+    rows
 }
 
 fn source_matches(source: Option<&str>, needle: &str) -> bool {
@@ -2422,6 +2519,7 @@ pub fn disease_markdown(
     let show_variants_section = include_all || has_requested("variants");
     let show_models_section = include_all || has_requested("models");
     let show_prevalence_section = include_all || has_requested("prevalence");
+    let show_survival_section = include_all || has_requested("survival");
     let show_civic_section = include_all || has_requested("civic");
     let show_disgenet_section = include_all || has_requested("disgenet");
     let disease_label = if disease.name.trim().is_empty() {
@@ -2435,6 +2533,9 @@ pub fn disease_markdown(
     let gene_association_rows = disease_gene_association_rows(disease);
     let phenotype_rows = disease_phenotype_rows(disease);
     let model_rows = disease_model_rows(disease);
+    let survival_source_line = disease_survival_source_line(disease);
+    let survival_summary_rows = disease_survival_summary_rows(disease);
+    let survival_history_rows = disease_survival_history_rows(disease);
     let body = tmpl.render(context! {
         section_only => section_only,
         section_header => section_header(disease_label, requested_sections),
@@ -2461,6 +2562,11 @@ pub fn disease_markdown(
         models => model_rows,
         prevalence => &disease.prevalence,
         prevalence_note => &disease.prevalence_note,
+        survival => &disease.survival,
+        survival_note => &disease.survival_note,
+        survival_source_line => survival_source_line,
+        survival_summary_rows => survival_summary_rows,
+        survival_history_rows => survival_history_rows,
         civic => &disease.civic,
         disgenet => &disease.disgenet,
         show_genes_section => show_genes_section,
@@ -2469,6 +2575,7 @@ pub fn disease_markdown(
         show_variants_section => show_variants_section,
         show_models_section => show_models_section,
         show_prevalence_section => show_prevalence_section,
+        show_survival_section => show_survival_section,
         show_civic_section => show_civic_section,
         show_disgenet_section => show_disgenet_section,
         xrefs => xrefs,
@@ -4786,6 +4893,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -5320,6 +5429,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -5401,6 +5512,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -5447,6 +5560,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -5499,6 +5614,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -5544,6 +5661,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -5590,6 +5709,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -6174,6 +6295,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -6223,6 +6346,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -6257,6 +6382,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -6288,6 +6415,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -6320,6 +6449,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: Some(crate::sources::civic::CivicContext::default()),
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -6403,6 +6534,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -6946,6 +7079,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::new(),
@@ -6955,6 +7090,166 @@ pub(crate) mod tests {
         assert!(markdown.contains(
             "Top Variant: BRAF V600E - associated with disease (CIViC, 3 evidence items)"
         ));
+    }
+
+    #[test]
+    fn disease_markdown_renders_survival_summary_and_note() {
+        let disease = Disease {
+            id: "MONDO:0001234".to_string(),
+            name: "chronic myeloid leukemia".to_string(),
+            definition: None,
+            synonyms: vec!["CML".to_string()],
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: Some(crate::entities::disease::DiseaseSurvival {
+                site_code: 97,
+                site_label: "Chronic Myeloid Leukemia (CML)".to_string(),
+                series: vec![
+                    crate::entities::disease::DiseaseSurvivalSeries {
+                        sex: "Both Sexes".to_string(),
+                        latest_observed: Some(crate::entities::disease::DiseaseSurvivalPoint {
+                            year: 2017,
+                            relative_survival_rate: Some(69.4),
+                            standard_error: Some(1.1),
+                            lower_ci: Some(67.2),
+                            upper_ci: Some(71.3),
+                            modeled_relative_survival_rate: Some(70.4),
+                            case_count: Some(471),
+                        }),
+                        latest_modeled: Some(crate::entities::disease::DiseaseSurvivalPoint {
+                            year: 2018,
+                            relative_survival_rate: None,
+                            standard_error: None,
+                            lower_ci: None,
+                            upper_ci: None,
+                            modeled_relative_survival_rate: Some(70.0),
+                            case_count: None,
+                        }),
+                        points: vec![
+                            crate::entities::disease::DiseaseSurvivalPoint {
+                                year: 2016,
+                                relative_survival_rate: Some(67.1),
+                                standard_error: Some(1.2),
+                                lower_ci: Some(64.8),
+                                upper_ci: Some(69.5),
+                                modeled_relative_survival_rate: Some(67.1),
+                                case_count: Some(450),
+                            },
+                            crate::entities::disease::DiseaseSurvivalPoint {
+                                year: 2017,
+                                relative_survival_rate: Some(69.4),
+                                standard_error: Some(1.1),
+                                lower_ci: Some(67.2),
+                                upper_ci: Some(71.3),
+                                modeled_relative_survival_rate: Some(70.4),
+                                case_count: Some(471),
+                            },
+                            crate::entities::disease::DiseaseSurvivalPoint {
+                                year: 2018,
+                                relative_survival_rate: None,
+                                standard_error: None,
+                                lower_ci: None,
+                                upper_ci: None,
+                                modeled_relative_survival_rate: Some(70.0),
+                                case_count: None,
+                            },
+                        ],
+                    },
+                    crate::entities::disease::DiseaseSurvivalSeries {
+                        sex: "Male".to_string(),
+                        latest_observed: Some(crate::entities::disease::DiseaseSurvivalPoint {
+                            year: 2017,
+                            relative_survival_rate: Some(63.9),
+                            standard_error: Some(1.6),
+                            lower_ci: Some(60.8),
+                            upper_ci: Some(66.9),
+                            modeled_relative_survival_rate: Some(64.8),
+                            case_count: Some(284),
+                        }),
+                        latest_modeled: Some(crate::entities::disease::DiseaseSurvivalPoint {
+                            year: 2018,
+                            relative_survival_rate: None,
+                            standard_error: None,
+                            lower_ci: None,
+                            upper_ci: None,
+                            modeled_relative_survival_rate: Some(64.2),
+                            case_count: None,
+                        }),
+                        points: vec![
+                            crate::entities::disease::DiseaseSurvivalPoint {
+                                year: 2016,
+                                relative_survival_rate: Some(61.3),
+                                standard_error: Some(1.7),
+                                lower_ci: Some(58.1),
+                                upper_ci: Some(64.4),
+                                modeled_relative_survival_rate: Some(61.3),
+                                case_count: Some(273),
+                            },
+                            crate::entities::disease::DiseaseSurvivalPoint {
+                                year: 2017,
+                                relative_survival_rate: Some(63.9),
+                                standard_error: Some(1.6),
+                                lower_ci: Some(60.8),
+                                upper_ci: Some(66.9),
+                                modeled_relative_survival_rate: Some(64.8),
+                                case_count: Some(284),
+                            },
+                            crate::entities::disease::DiseaseSurvivalPoint {
+                                year: 2018,
+                                relative_survival_rate: None,
+                                standard_error: None,
+                                lower_ci: None,
+                                upper_ci: None,
+                                modeled_relative_survival_rate: Some(64.2),
+                                case_count: None,
+                            },
+                        ],
+                    },
+                ],
+            }),
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let markdown = disease_markdown(&disease, &["survival".to_string()]).expect("markdown");
+        assert!(markdown.contains("## Survival (SEER Explorer)"));
+        assert!(markdown.contains("site code 97"));
+        assert!(markdown.contains("All Ages"));
+        assert!(markdown.contains("All Races / Ethnicities"));
+        assert!(markdown.contains(
+            "| Sex | Latest observed year | 5-year relative survival | 95% CI | Cases | Latest modeled |",
+        ));
+        assert!(
+            markdown.contains("| Both Sexes | 2017 | 69.4% | 67.2%-71.3% | 471 | 2018: 70.0% |",)
+        );
+        assert!(markdown.contains("### Recent History"));
+        assert!(markdown.contains("| Male | 2017 | 63.9% | 60.8%-66.9% | 284 |"));
+
+        let mut note_disease = disease.clone();
+        note_disease.survival = None;
+        note_disease.survival_note =
+            Some("SEER survival data not available for this condition.".to_string());
+
+        let note_markdown =
+            disease_markdown(&note_disease, &["survival".to_string()]).expect("note markdown");
+        assert!(note_markdown.contains("## Survival (SEER Explorer)"));
+        assert!(note_markdown.contains("SEER survival data not available for this condition."));
+        assert!(!note_markdown.contains("| Sex | Latest observed year |"));
     }
 
     #[test]
@@ -7527,6 +7822,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: Some(crate::entities::disease::DiseaseDisgenet {
                 associations: vec![crate::entities::disease::DiseaseDisgenetAssociation {
@@ -7573,6 +7870,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: Some(crate::entities::disease::DiseaseDisgenet {
                 associations: vec![crate::entities::disease::DiseaseDisgenetAssociation {
@@ -7697,6 +7996,8 @@ pub(crate) mod tests {
             }],
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::from([
@@ -7761,6 +8062,8 @@ pub(crate) mod tests {
             }],
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: None,
             disgenet: None,
             xrefs: std::collections::HashMap::from([
@@ -8527,6 +8830,8 @@ pub(crate) mod tests {
             models: Vec::new(),
             prevalence: Vec::new(),
             prevalence_note: None,
+            survival: None,
+            survival_note: None,
             civic: Some(crate::sources::civic::CivicContext::default()),
             disgenet: None,
             xrefs: std::collections::HashMap::new(),

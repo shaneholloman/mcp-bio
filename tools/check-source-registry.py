@@ -19,6 +19,7 @@ HEALTH_ALIASES = {
     "nci_cts": "NCI CTS",
     "pmc_oa": "PMC OA",
     "pubtator": "PubTator3",
+    "seer": "SEER Explorer",
     "semantic_scholar": "Semantic Scholar",
 }
 

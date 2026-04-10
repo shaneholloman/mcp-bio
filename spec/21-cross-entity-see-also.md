@@ -95,7 +95,7 @@ the gene and condition context that produced the list.
 
 ```bash
 out="$(biomcp search variant -g SCN5A --condition "Brugada" --limit 3)"
-echo "$out" | mustmatch like "See also: biomcp"
+echo "$out" | mustmatch like $'See also:\n  biomcp get variant '
 echo "$out" | mustmatch like "biomcp get variant "
 echo "$out" | mustmatch like "biomcp get gene SCN5A"
 echo "$out" | mustmatch like "biomcp search disease --query Brugada"

@@ -14,6 +14,7 @@ This matrix tracks which upstream API endpoints are version-pinned and where unv
 | g:Profiler | `https://biit.cs.ut.ee/gprofiler/api` | Unversioned | Public endpoint does not expose version path segment | 2026-02-15 |
 | HPO JAX API | `https://ontology.jax.org/api/hp` | Unversioned | API path is canonical and currently unversioned | 2026-02-15 |
 | InterPro | `https://www.ebi.ac.uk/interpro/api` | Unversioned | Public endpoint has no URL versioning model | 2026-02-15 |
+| LitSense2 | `https://www.ncbi.nlm.nih.gov/research/litsense2-api/api` | Versioned-by-product (`litsense2-api`) | Version identity is in the product namespace rather than the path suffix | 2026-04-10 |
 | MyChem.info | `https://mychem.info/v1` | Versioned (`v1`) | Endpoint already pinned | 2026-02-15 |
 | MyDisease.info | `https://mydisease.info/v1` | Versioned (`v1`) | Endpoint already pinned | 2026-02-15 |
 | MyGene.info | `https://mygene.info/v3` | Versioned (`v3`) | Endpoint already pinned | 2026-02-15 |
@@ -24,9 +25,11 @@ This matrix tracks which upstream API endpoints are version-pinned and where unv
 | OpenFDA | `https://api.fda.gov` | Unversioned | Public OpenFDA API is path-stable without version segment | 2026-02-15 |
 | OpenTargets | `https://api.platform.opentargets.org/api/v4/graphql` | Versioned (`v4`) | Endpoint already pinned | 2026-02-15 |
 | PMC OA | `https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi` | Unversioned | Legacy utility endpoint; no version path available | 2026-02-15 |
+| PubMed | `https://eutils.ncbi.nlm.nih.gov/entrez/eutils` | Unversioned | PubMed search still uses legacy E-utilities endpoints without explicit path versioning | 2026-04-10 |
 | PubTator3 | `https://www.ncbi.nlm.nih.gov/research/pubtator3-api` | Versioned-by-product (`pubtator3`) | Version identity is in product namespace | 2026-02-15 |
 | QuickGO | `https://www.ebi.ac.uk/QuickGO/services` | Unversioned | Service endpoint is canonical and not path-versioned | 2026-02-15 |
 | Reactome Content Service | `https://reactome.org/ContentService` | Unversioned | No explicit major version path in public endpoint | 2026-02-15 |
+| SEER Explorer | `https://seer.cancer.gov/statistics-network/explorer/source/content_writers` | Unversioned | Undocumented PHP endpoints have no stable version segment; BioMCP validates requested site codes and decoded payload structure | 2026-04-10 |
 | Semantic Scholar | `https://api.semanticscholar.org` | Unversioned | Public API base is stable without a version segment; endpoint versions live below the base path | 2026-03-15 |
 | STRING | `https://string-db.org/api` | Unversioned | API route uses format path segment; no stable version URL segment | 2026-02-15 |
 | UniProt REST | `https://rest.uniprot.org` | Unversioned | REST base is canonical and not versioned in URL | 2026-02-15 |

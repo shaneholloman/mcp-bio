@@ -392,6 +392,7 @@ fn list_disease() -> String {
 ## When to use this surface
 
 - Use `get disease <name_or_id>` when you want the normalized disease card with genes, pathways, and phenotypes.
+- Use `get disease <name_or_id> survival` when the question is specifically about cancer survival outcomes.
 - Use `get disease <name_or_id> phenotypes` for symptom-style questions.
 - Use `search article -d <disease>` when you need broader review literature or want to supplement sparse structured data.
 
@@ -404,6 +405,7 @@ fn list_disease() -> String {
 - `get disease <name_or_id> variants` - CIViC disease-associated molecular profiles
 - `get disease <name_or_id> models` - Monarch model-organism evidence
 - `get disease <name_or_id> prevalence` - OpenTargets prevalence-like evidence
+- `get disease <name_or_id> survival` - SEER Explorer 5-year relative survival by sex for mapped cancers
 - `get disease <name_or_id> civic` - CIViC disease-context evidence
 - `get disease <name_or_id> disgenet` - DisGeNET scored disease-gene associations (requires `DISGENET_API_KEY`)
 - `get disease <name_or_id> all` - include all disease sections
@@ -918,6 +920,7 @@ mod tests {
                 "Use `get disease <name_or_id>` when you want the normalized disease card"
             )
         );
+        assert!(out.contains("get disease <name_or_id> survival"));
         assert!(out.contains("Use `search article -d <disease>` when you need broader review"));
         assert!(out.contains("get disease <name_or_id> disgenet"));
     }

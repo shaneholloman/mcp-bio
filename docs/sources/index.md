@@ -1,6 +1,6 @@
 ---
 title: "Biomedical Data Sources for AI Agents | BioMCP"
-description: "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, CIViC, OncoKB, cBioPortal, EMA, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+description: "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
 ---
 
 # Biomedical Data Sources for AI Agents
@@ -23,6 +23,7 @@ Use these pages when you already know the provider you trust, the keyword you ar
 | Semantic Scholar | TLDRs, citation graphs, references, and recommendations | [Semantic Scholar](semantic-scholar.md) |
 | ChEMBL | Drug-target activity, mechanism context, and indication enrichment | [ChEMBL](chembl.md) |
 | OpenTargets | Target-disease scores, druggability, and disease-gene evidence | [OpenTargets](opentargets.md) |
+| SEER Explorer | Cancer survival statistics and disease `survival` section output | [SEER Explorer](seer.md) |
 | CIViC | Clinical variant evidence, therapy context, and disease-associated variants | [CIViC](civic.md) |
 | OncoKB | Oncology actionability tiers and treatment implications for actionable variants | [OncoKB](oncokb.md) |
 | cBioPortal | Cancer cohort frequencies and local study analytics workflows | [cBioPortal](cbioportal.md) |

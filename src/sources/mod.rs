@@ -60,6 +60,7 @@ pub(crate) mod pubtator;
 pub(crate) mod quickgo;
 pub(crate) mod rate_limit;
 pub(crate) mod reactome;
+pub(crate) mod seer;
 pub(crate) mod semantic_scholar;
 pub(crate) mod string;
 pub(crate) mod umls;
