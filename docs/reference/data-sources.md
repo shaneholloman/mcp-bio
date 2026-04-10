@@ -71,7 +71,7 @@ BioMCP only requires API keys for a subset of sources.
 | NCI CTS API | `NCI_API_KEY` | Trial operations with `--source nci` |
 | OncoKB | `ONCOKB_TOKEN` | Running `variant oncokb <id>` |
 | DisGeNET | `DISGENET_API_KEY` | Running `get gene <symbol> disgenet` or `get disease <name_or_id> disgenet` |
-| NCBI E-utilities | `NCBI_API_KEY` | Optional; improves PubTator3, PMC OA, and NCBI ID Converter quota headroom |
+| NCBI E-utilities | `NCBI_API_KEY` | Optional; improves PubTator3, PubMed/efetch, PMC OA, and NCBI ID Converter quota headroom |
 | OpenFDA | `OPENFDA_API_KEY` | Optional; improves quota headroom |
 | UMLS | `UMLS_API_KEY` | Optional clinical crosswalk enrichment for `biomcp discover <query>` |
 

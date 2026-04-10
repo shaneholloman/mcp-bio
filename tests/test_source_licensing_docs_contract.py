@@ -34,6 +34,7 @@ DIRECT_SOURCE_MODULES = {
     "mydisease": "MyDisease.info",
     "mygene": "MyGene.info",
     "myvariant": "MyVariant.info",
+    "ncbi_efetch": "NCBI E-utilities",
     "ncbi_idconv": "NCBI ID Converter",
     "nci_cts": "NCI CTS",
     "ols4": "OLS4",
@@ -204,7 +205,7 @@ def test_api_keys_page_policies_data_sources_and_nav_link_to_licensing_reference
         assert env_var in api_keys
 
     assert "[Source licensing reference](reference/source-licensing.md)" in policies
-    assert "| NCBI E-utilities | `NCBI_API_KEY` | Optional; improves PubTator3, PMC OA, and NCBI ID Converter quota headroom |" in data_sources
+    assert "| NCBI E-utilities | `NCBI_API_KEY` | Optional; improves PubTator3, PubMed/efetch, PMC OA, and NCBI ID Converter quota headroom |" in data_sources
     assert "      - Source Licensing: reference/source-licensing.md" in mkdocs
 
 

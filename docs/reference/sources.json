@@ -464,6 +464,23 @@
     "notes": "BioMCP intentionally documents several indirect-only provenance rows that arrive through MyVariant.info payloads."
   },
   {
+    "id": "ncbi-e-utilities",
+    "name": "NCBI E-utilities",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": ["get article <id> fulltext"],
+    "bioMcp_auth": "optional_env",
+    "env_var": "NCBI_API_KEY",
+    "provider_access": "open public E-utilities endpoint; optional My NCBI API key improves throughput",
+    "license_summary": "NLM public-domain utility service",
+    "redistribution_summary": "utility responses are broadly reusable; article-level full text still follows the returned record's license context",
+    "terms_url": "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
+    "key_url": "https://www.ncbi.nlm.nih.gov/account/settings/",
+    "reviewed_on": "2026-04-10",
+    "notes": "BioMCP uses PMC `efetch` as a full-text fallback when Europe PMC does not serve the article. `NCBI_API_KEY` raises the baseline NCBI E-utilities budget but is not required."
+  },
+  {
     "id": "ncbi-id-converter",
     "name": "NCBI ID Converter",
     "tier": 1,

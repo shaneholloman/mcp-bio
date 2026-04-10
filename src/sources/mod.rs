@@ -46,6 +46,7 @@ pub(crate) mod mychem;
 pub(crate) mod mydisease;
 pub(crate) mod mygene;
 pub(crate) mod myvariant;
+pub(crate) mod ncbi_efetch;
 pub(crate) mod ncbi_idconv;
 pub(crate) mod nci_cts;
 pub(crate) mod ols4;

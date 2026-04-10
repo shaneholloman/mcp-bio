@@ -188,6 +188,13 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
         },
     },
     SourceDescriptor {
+        api: "NCBI E-utilities",
+        affects: Some("article fulltext fallback resolution"),
+        probe: ProbeKind::Get {
+            url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=9984800&rettype=xml",
+        },
+    },
+    SourceDescriptor {
         api: "LitSense2",
         affects: Some("keyword-gated semantic article search"),
         probe: ProbeKind::Get {
@@ -1520,6 +1527,7 @@ mod tests {
                 "PubTator3",
                 "PubMed",
                 "Europe PMC",
+                "NCBI E-utilities",
                 "LitSense2",
                 "PMC OA",
                 "NCBI ID Converter",
