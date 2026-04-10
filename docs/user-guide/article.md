@@ -170,7 +170,9 @@ biomcp get article 22663011 fulltext
 ```
 
 This prints a local `Saved to:` path for cached full-text Markdown when PMC
-full text is available.
+full text is available. The saved Markdown preserves JATS section structure
+and renders the bibliography under `## References` when the source XML
+includes `<ref-list>`.
 
 Annotation section:
 

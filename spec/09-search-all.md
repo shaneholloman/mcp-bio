@@ -66,7 +66,7 @@ echo "$out" | mustmatch like '"entity": "article"'
 echo "$out" | mustmatch like '"source": "'
 echo "$out" | mustmatch like '"ranking": {'
 echo "$out" | mustmatch like '"mode": "lexical"'
-keyword_out="$("$bin" --json search all -g BRAF -k melanoma --limit 10)"
+keyword_out="$(env -u S2_API_KEY "$bin" --json search all -g BRAF -k melanoma --limit 5)"
 echo "$keyword_out" | jq -e '.sections[] | select(.entity == "article") | (.results | length > 0 and all(.[]; .ranking.mode == "hybrid"))' > /dev/null
 echo "$keyword_out" | jq -e '[.sections[] | select(.entity == "article") | .results[]] | all(.[]; ((.matched_sources | index("litsense2")) != null) or (.ranking.semantic_score == 0))' > /dev/null
 ```

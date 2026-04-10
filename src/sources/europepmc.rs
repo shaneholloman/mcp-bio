@@ -194,7 +194,17 @@ impl EuropePmcClient {
             return Ok(None);
         }
 
-        let url = self.endpoint(&format!("{source}/{id}/fullTextXML"));
+        let normalized_id = if source.eq_ignore_ascii_case("PMC")
+            && !id
+                .get(..3)
+                .is_some_and(|prefix| prefix.eq_ignore_ascii_case("PMC"))
+        {
+            format!("PMC{id}")
+        } else {
+            id.to_string()
+        };
+
+        let url = self.endpoint(&format!("{normalized_id}/fullTextXML"));
         let resp = crate::sources::apply_cache_mode(self.client.get(&url))
             .send()
             .await?;
@@ -319,7 +329,7 @@ mod tests {
     async fn get_full_text_xml_returns_none_on_not_found() {
         let server = MockServer::start().await;
         Mock::given(method("GET"))
-            .and(path("/MED/22663011/fullTextXML"))
+            .and(path("/22663011/fullTextXML"))
             .respond_with(ResponseTemplate::new(404))
             .mount(&server)
             .await;
@@ -327,5 +337,19 @@ mod tests {
         let client = EuropePmcClient::new_for_test(server.uri()).unwrap();
         let xml = client.get_full_text_xml("MED", "22663011").await.unwrap();
         assert!(xml.is_none());
+    }
+
+    #[tokio::test]
+    async fn get_full_text_xml_uses_id_only_endpoint() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/PMC123/fullTextXML"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("<article/>"))
+            .mount(&server)
+            .await;
+
+        let client = EuropePmcClient::new_for_test(server.uri()).unwrap();
+        let xml = client.get_full_text_xml("PMC", "PMC123").await.unwrap();
+        assert_eq!(xml, Some("<article/>".to_string()));
     }
 }

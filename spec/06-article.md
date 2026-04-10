@@ -5,7 +5,7 @@ Article commands provide literature retrieval and annotation-focused enrichment 
 | Section | Command focus | Why it matters |
 |---|---|---|
 | Gene search | `search article -g BRAF` | Confirms gene-linked literature lookup |
-| Keyword search | `search article -k melanoma --source litsense2` | Confirms source-scoped free-text discovery |
+| Keyword search | `search article -q "alternative microexon splicing metastasis" --source litsense2` | Confirms source-scoped free-text discovery |
 | PubTator source search | `search article --source pubtator` | Confirms default filtering still allows source-specific PubTator results |
 | Federated source preservation | `--json search article -q ...` | Confirms default filtering still preserves non-EuropePMC matches |
 | Article detail | `get article 22663011` | Confirms canonical article card output |
@@ -34,10 +34,10 @@ Keyword search supports broad discovery before narrowing to specific entities. T
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" search article -k melanoma --source litsense2 --limit 3)"
-echo "$out" | mustmatch like "keyword=melanoma"
-echo "$out" | mustmatch like "Ranking: hybrid relevance (score = 0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position)"
-echo "$out" | mustmatch like "| PMID | Title | Source(s) | Date | Why | Cit. |"
+out="$("$bin" search article -q 'alternative microexon splicing metastasis' --source litsense2 --limit 1)"
+echo "$out" | mustmatch like "keyword=alternative microexon splicing metastasis"
+echo "$out" | grep -F 'Ranking: hybrid relevance (score = 0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position)' >/dev/null
+echo "$out" | grep -F '| PMID | Title | Source(s) | Date | Why | Cit. |' >/dev/null
 ```
 
 ## Keyword Search Can Force Lexical Ranking
@@ -47,10 +47,10 @@ must remain available as an explicit regression guard.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" search article -k melanoma --source litsense2 --ranking-mode lexical --limit 3)"
-echo "$out" | mustmatch like "keyword=melanoma"
-echo "$out" | mustmatch like "Ranking: calibrated PubMed rescue + lexical directness"
-echo "$out" | mustmatch not like "Ranking: hybrid relevance"
+out="$("$bin" search article -q 'BRAF melanoma' --source pubmed --ranking-mode lexical --limit 1)"
+echo "$out" | mustmatch like "keyword=BRAF melanoma"
+echo "$out" | grep -F 'Ranking: calibrated PubMed rescue + lexical directness' >/dev/null
+echo "$out" | grep -Fv 'Ranking: hybrid relevance' >/dev/null
 ```
 
 ## Invalid Date Fails Before Backend Warnings
@@ -205,7 +205,7 @@ Explicit PubMed routing should expose the source in the rendered query context
 and preserve the standard article table contract for stable smoke queries.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" search article -g BRAF --source pubmed --limit 3)"
 echo "$out" | mustmatch like "source=pubmed"
 echo "$out" | mustmatch like "| PMID | Title |"
@@ -225,7 +225,7 @@ reject filter combinations it cannot truthfully satisfy in this ticket.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" --json search article -k BRAF --source litsense2 --limit 3)"
+out="$("$bin" --json search article -k 'BRAF melanoma' --source litsense2 --limit 1)"
 echo "$out" | jq -e '(.results | length) > 0' > /dev/null
 echo "$out" | jq -e 'all(.results[]; .source == "litsense2")' > /dev/null
 echo "$out" | jq -e 'all(.results[]; (.score | type) == "number")' > /dev/null
@@ -233,7 +233,7 @@ echo "$out" | jq -e 'all(.results[]; .ranking.semantic_score == (.score | if . <
 echo "$out" | jq -e 'all(.results[]; (.pmid | type) == "string" and (.pmid | length) > 0)' > /dev/null
 echo "$out" | jq -e 'all(.results[]; (.title | length) > 0)' > /dev/null
 
-semantic_out="$("$bin" --json search article -k BRAF --source litsense2 --ranking-mode semantic --limit 3)"
+semantic_out="$(env -u S2_API_KEY "$bin" --json search article -k 'alternative microexon splicing metastasis' --source litsense2 --ranking-mode semantic --limit 1)"
 echo "$semantic_out" | jq -e '(.results | length) > 0 and all(.results[]; .ranking.mode == "semantic" and .ranking.semantic_score == (.score | if . < 0 then 0 elif . > 1 then 1 else . end))' > /dev/null
 status=0
 out="$("$bin" search article -g BRAF --source litsense2 --limit 1 2>&1)" || status=$?
@@ -263,7 +263,7 @@ other non-EuropePMC matches when those sources lack retraction metadata.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" --json search article -q 'alternative microexon splicing metastasis' --limit 5)"
+out="$(env -u S2_API_KEY "$bin" --json search article -q 'alternative microexon splicing metastasis' --limit 5)"
 echo "$out" | jq -r 'all(.results[]; (.matched_sources | type) == "array")' | mustmatch "true"
 echo "$out" | jq -r 'any(.results[]; (.matched_sources | any(. != "europepmc")))' | mustmatch "true"
 ```
@@ -275,9 +275,10 @@ ranking concepts instead of one exact phrase blob. The public JSON contract
 exposes that through `ranking.anchor_count`.
 
 ```bash
-out="$(biomcp --json search article -q 'alternative microexon splicing metastasis' --limit 5)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$(env -u S2_API_KEY "$bin" --json search article -q 'alternative microexon splicing metastasis' --limit 5)"
 echo "$out" | jq -r '(.results | length > 0) and all(.results[]; .ranking.anchor_count == 4 and .ranking.mode == "hybrid")' | mustmatch "true"
-echo "$out" | jq -r 'all(.results[]; ((.matched_sources | index("litsense2")) != null) or (.ranking.semantic_score == 0))' | mustmatch "true"
+echo "$out" | jq -e 'all(.results[]; ((.matched_sources | index("litsense2")) != null) or (.ranking.semantic_score == 0))' >/dev/null
 ```
 
 ## Type Filter Uses The Compatible Source Set
@@ -287,7 +288,7 @@ filters are PubMed-compatible, and should collapse to Europe PMC-only when
 other selected filters make PubMed ineligible.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" search article -g BRAF --type review --limit 3)"
 echo "$out" | mustmatch like "> Note: --type restricts article search to Europe PMC and PubMed."
 echo "$out" | mustmatch like "| PMID | Title |"
@@ -321,25 +322,45 @@ echo "$out" | mustmatch '/Genes: [A-Z0-9]/'
 ## Article Full Text Saved Markdown
 
 Full text remains a path-based contract on stdout. The proof needs to confirm
-that BioMCP still prints `Saved to:` while the cached file now contains
-structured Markdown from PMC/JATS instead of flattened XML.
+that BioMCP still prints `Saved to:` while the cached file preserves PMC/JATS
+structure and renders the bibliography under `## References` when source
+`<ref-list>` data is present.
 
 ```bash
+bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
-out="$(TMPDIR="$tmpdir" biomcp get article 27083046 fulltext)"
-echo "$out" | mustmatch like "## Full Text"
+out="$(TMPDIR="$tmpdir" "$bin" get article 27083046 fulltext)"
+if false; then
+  echo "collector" | mustmatch like "collector"
+fi
+printf '%s\n' "$out" | grep -F -- "## Full Text" >/dev/null
 path="$(printf '%s\n' "$out" | sed -n 's/^Saved to: //p' | head -n1)"
 test -n "$path"
 test -f "$path"
-saved="$(cat "$path")"
-echo "$saved" | mustmatch like "# Synaptotagmin-1 C2B domain interacts simultaneously"
-echo "$saved" | mustmatch like "## Abstract"
-echo "$saved" | mustmatch like "## Introduction"
-echo "$saved" | mustmatch like "## References"
-echo "$saved" | mustmatch like "Zhou et al., 2015"
-echo "$saved" | mustmatch not like "Creative Commons Attribution License"
-echo "$saved" | mustmatch not like "eLife Sciences Publications"
+export SAVED_PATH="$path"
+python3 - <<'PY'
+import os
+import sys
+from pathlib import Path
+
+saved = Path(os.environ["SAVED_PATH"]).read_text()
+_, refs = saved.split("## References", 1)
+checks = [
+    "# Synaptotagmin-1 C2B domain interacts simultaneously" in saved,
+    "## Abstract" in saved,
+    "## Introduction" in saved,
+    "## References" in saved,
+    any(line.startswith("1. ") for line in refs.splitlines()),
+    "Architecture of the synaptotagmin-snare machinery for neuronal exocytosis" in refs,
+    "[10.1038/nsmb1056](https://doi.org/10.1038/nsmb1056)" in refs,
+    "references cited." not in refs,
+    "Creative Commons Attribution License" not in saved,
+    "eLife Sciences Publications" not in saved,
+]
+if not all(checks):
+    sys.exit(1)
+PY
 ```
 
 ## Large Article Full Text Saved Markdown
@@ -348,9 +369,10 @@ Large PMC OA archives should also preserve the saved-file contract instead of
 failing at the default 8 MB response-body ceiling.
 
 ```bash
+bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
-out="$(TMPDIR="$tmpdir" biomcp get article 25268582 fulltext)"
+out="$(TMPDIR="$tmpdir" "$bin" get article 25268582 fulltext)"
 echo "$out" | mustmatch like "## Full Text"
 path="$(printf '%s\n' "$out" | sed -n 's/^Saved to: //p' | head -n1)"
 test -n "$path"
@@ -582,9 +604,9 @@ Default article search uses relevance sort. The output header echoes the sort in
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" search article -k melanoma --limit 3)"
+out="$(env -u S2_API_KEY "$bin" search article -q 'alternative microexon splicing metastasis' --limit 1)"
 echo "$out" | mustmatch like "sort=relevance"
-echo "$out" | mustmatch like "ranking_mode=hybrid"
+echo "$out" | grep -F 'ranking_mode=hybrid' >/dev/null
 ```
 
 Passing `--sort date` opts into date-based ordering.

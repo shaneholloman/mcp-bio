@@ -498,7 +498,7 @@ const FEDERATED_PAGE_SIZE_CAP: usize = if EUROPE_PMC_PAGE_SIZE < PUBTATOR_PAGE_S
     PUBTATOR_PAGE_SIZE
 };
 const MAX_FEDERATED_FETCH_RESULTS: usize = MAX_PAGE_FETCHES * FEDERATED_PAGE_SIZE_CAP;
-const FULLTEXT_CACHE_VERSION: &str = "jats-v1";
+const FULLTEXT_CACHE_VERSION: &str = "jats-v2";
 const PUBMED_RESCUE_POSITION_MAX: usize = 0;
 const INVALID_ARTICLE_ID_MSG: &str = "\
 Unsupported identifier format. BioMCP resolves PMID (digits only, e.g., 22663011), \
@@ -3995,7 +3995,7 @@ mod tests {
     #[test]
     fn fulltext_cache_key_is_versioned() {
         let key = fulltext_cache_key("22663011");
-        assert!(key.starts_with("article-fulltext-jats-v1:"));
+        assert!(key.starts_with("article-fulltext-jats-v2:"));
         assert!(key.ends_with("22663011"));
     }
 

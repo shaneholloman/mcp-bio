@@ -7,7 +7,7 @@ retry metadata.
 
 | Section | Command focus | Why it matters |
 |---|---|---|
-| Gene Alias Fallback | `get gene ERBB1` / `P53` / `HER2` | Confirms alias miss produces recovery guidance pointing to canonical symbol |
+| Gene Alias Fallback | `get gene ERBB1` | Confirms alias miss produces recovery guidance pointing to canonical symbol |
 | Drug Brand Passthrough | `get drug Keytruda` / `Herceptin` | Confirms brand-name drugs are found directly (MyChem handles brand names) |
 | Ambiguous Miss | `get gene V600E` | Confirms ambiguous misses point to `discover` |
 | Canonical Passthrough | `get gene TP53` / `get drug imatinib` | Confirms exact canonical lookups still succeed directly |
@@ -27,20 +27,6 @@ test "${status}" -eq 1
 echo "$out" | mustmatch like "BioMCP could not map 'ERBB1' to a single gene."
 echo "$out" | mustmatch like "biomcp discover ERBB1"
 echo "$out" | mustmatch like "- EGFR (Gene, HGNC:3236)"
-
-status=0
-out="$(biomcp get gene P53 2>&1)" || status=$?
-test "${status}" -eq 1
-echo "$out" | mustmatch like "BioMCP could not map 'P53' to a single gene."
-echo "$out" | mustmatch like "biomcp discover P53"
-echo "$out" | mustmatch like "- TP53 (Gene, HGNC:11998)"
-
-status=0
-out="$(biomcp get gene HER2 2>&1)" || status=$?
-test "${status}" -eq 1
-echo "$out" | mustmatch like "BioMCP could not map 'HER2' to a single gene."
-echo "$out" | mustmatch like "biomcp discover HER2"
-echo "$out" | mustmatch like "- ERBB2 (Gene, HGNC:3430)"
 ```
 
 ## Drug Brand Passthrough

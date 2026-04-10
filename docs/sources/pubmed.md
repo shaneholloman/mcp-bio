@@ -23,7 +23,7 @@ page because they come from a different provider surface.
 | `search article` | PMID-ranked literature search results with typed filters | Direct `--source pubmed` route plus default compatible federation with PubTator3 and Europe PMC |
 | `get article <id>` | Article summary card with identifiers, journal, and abstract context | Uses Europe PMC metadata with BioMCP normalization |
 | `get article <id> annotations` | PubTator entity annotations for a paper | PubTator3-only section |
-| `get article <id> fulltext` | Open-access full-text handoff with saved Markdown path | Uses PMC OA plus NCBI ID Converter |
+| `get article <id> fulltext` | Open-access full-text handoff with saved Markdown path and rendered references when available | Uses PMC OA plus NCBI ID Converter |
 | `article entities <pmid>` | Entity-grouped follow-up view for a PMID | Derived from PubTator3 annotation output |
 
 ## Example commands
@@ -62,7 +62,7 @@ Returns an entity-grouped follow-up view with separate genes, diseases, and drug
 biomcp get article 27083046 fulltext
 ```
 
-Returns a full-text section when PMC OA is available and prints a `Saved to:` cache path.
+Returns a full-text section when PMC OA is available, prints a `Saved to:` cache path, and includes rendered references when PMC JATS provides bibliography data.
 
 ## API access
 

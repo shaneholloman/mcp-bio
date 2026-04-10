@@ -16,7 +16,7 @@ examples against stable structural markers and suggestion contracts.
 | Pathway Query | `discover "MAPK signaling"` | Confirms pathway-oriented suggestion generation |
 | Underspecified Variant | `discover V600E` | Confirms the command avoids false gene certainty |
 | OLS4-only Mode | `env -u UMLS_API_KEY discover BRCA1` | Confirms truthful degradation without UMLS |
-| JSON Metadata | `--json discover Keytruda` | Confirms discover-specific `_meta` contract |
+| JSON Metadata | `--json discover ERBB1` | Confirms discover-specific `_meta` contract |
 | UMLS Crosswalks | `--json discover "cystic fibrosis"` | Confirms optional clinical crosswalk enrichment |
 
 ## Gene Alias
@@ -120,7 +120,7 @@ echo "$out" | mustmatch like "UMLS enrichment unavailable"
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" --json discover Keytruda)"
+out="$("$bin" --json discover ERBB1)"
 echo "$out" | mustmatch like '"concepts": ['
 echo "$out" | jq -e '._meta.next_commands | type == "array" and length > 0' > /dev/null
 echo "$out" | jq -e 'has("next_commands") | not' > /dev/null
