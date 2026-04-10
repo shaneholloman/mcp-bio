@@ -616,6 +616,7 @@ fn article_filters(input: &PreparedInput) -> crate::entities::article::ArticleSe
         open_access: false,
         no_preprints: false,
         exclude_retracted: true,
+        max_per_source: None,
         sort: crate::entities::article::ArticleSort::Relevance,
         ranking: crate::entities::article::ArticleRankingOptions::default(),
     }

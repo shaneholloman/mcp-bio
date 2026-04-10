@@ -232,6 +232,7 @@ fn list_article() -> String {
 - `search article --weight-citations <float>`
 - `search article --weight-position <float>`
 - `search article --source <all, pubtator, europepmc, pubmed, litsense2>`
+- `search article --max-per-source <N>`
 - `search article --debug-plan` - include executed planner/routing metadata in markdown or JSON
 - `search article ... --limit <N> --offset <N>`
 
@@ -252,6 +253,10 @@ Routing note:
 
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
 - Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
+- Cap each federated source's contribution after deduplication and before ranking.
+- Default: 40% of `--limit` on federated pools with at least three surviving primary sources.
+- `0` uses the default cap; setting it equal to `--limit` disables capping.
+- Rows count against their primary source after deduplication.
 - `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.
 
 Worked examples:
@@ -944,6 +949,7 @@ mod tests {
         assert!(article.contains("--weight-citations <float>"));
         assert!(article.contains("--weight-position <float>"));
         assert!(article.contains("--source <all, pubtator, europepmc, pubmed, litsense2>"));
+        assert!(article.contains("--max-per-source <N>"));
         assert!(article.contains("search article --source litsense2"));
         assert!(article.contains("keyword-bearing article queries default to hybrid"));
         assert!(article.contains("entity-only queries default to lexical"));
@@ -952,6 +958,18 @@ mod tests {
         );
         assert!(article.contains("0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position"));
         assert!(article.contains("rows without LitSense2 provenance contribute `semantic=0`"));
+        assert!(article.contains(
+            "Cap each federated source's contribution after deduplication and before ranking."
+        ));
+        assert!(article.contains(
+            "Default: 40% of `--limit` on federated pools with at least three surviving primary sources."
+        ));
+        assert!(
+            article.contains(
+                "`0` uses the default cap; setting it equal to `--limit` disables capping."
+            )
+        );
+        assert!(article.contains("Rows count against their primary source after deduplication."));
         assert!(article.contains("article batch <id> [<id>...]"));
         assert!(article.contains("## Query formulation"));
         assert!(article.contains("Known gene/disease/drug already identified"));

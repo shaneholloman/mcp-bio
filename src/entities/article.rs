@@ -467,6 +467,7 @@ pub struct ArticleSearchFilters {
     pub open_access: bool,
     pub no_preprints: bool,
     pub exclude_retracted: bool,
+    pub max_per_source: Option<usize>,
     pub sort: ArticleSort,
     pub ranking: ArticleRankingOptions,
 }
@@ -523,6 +524,13 @@ enum EntityBiotype {
     Gene,
     Disease,
     Chemical,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ArticleSourceCapMode {
+    Default(usize),
+    Explicit(usize),
+    Disabled,
 }
 
 fn is_doi(id: &str) -> bool {
@@ -1248,6 +1256,31 @@ fn stable_article_identifier(row: &ArticleSearchResult) -> String {
         .unwrap_or_else(|| row.title.to_ascii_lowercase())
 }
 
+fn validate_article_source_cap(
+    filters: &ArticleSearchFilters,
+    limit: usize,
+) -> Result<(), BioMcpError> {
+    if let Some(max_per_source) = filters.max_per_source
+        && max_per_source > limit
+    {
+        return Err(BioMcpError::InvalidArgument(
+            "--max-per-source must be <= --limit".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn resolve_article_source_cap(
+    filters: &ArticleSearchFilters,
+    limit: usize,
+) -> ArticleSourceCapMode {
+    match filters.max_per_source {
+        None | Some(0) => ArticleSourceCapMode::Default((limit.saturating_mul(40) / 100).max(1)),
+        Some(value) if value == limit => ArticleSourceCapMode::Disabled,
+        Some(value) => ArticleSourceCapMode::Explicit(value),
+    }
+}
+
 fn ensure_matched_sources(row: &mut ArticleSearchResult) {
     if !row.matched_sources.contains(&row.source) {
         row.matched_sources.push(row.source);
@@ -1400,6 +1433,67 @@ fn merge_article_candidates(results: Vec<ArticleSearchResult>) -> Vec<ArticleCan
     }
 
     merged
+}
+
+fn primary_source_native_position(candidate: &ArticleCandidate) -> usize {
+    candidate
+        .source_positions
+        .iter()
+        .find(|entry| entry.source == candidate.row.source)
+        .map(|entry| entry.local_position)
+        .unwrap_or(candidate.row.source_local_position)
+}
+
+fn distinct_primary_source_count(candidates: &[ArticleCandidate]) -> usize {
+    let mut seen = Vec::new();
+    for candidate in candidates {
+        if !seen.contains(&candidate.row.source) {
+            seen.push(candidate.row.source);
+        }
+    }
+    seen.len()
+}
+
+fn cap_article_candidates_by_source(
+    candidates: Vec<ArticleCandidate>,
+    cap_mode: ArticleSourceCapMode,
+) -> Vec<ArticleCandidate> {
+    let source_count = distinct_primary_source_count(&candidates);
+    let effective_cap = match cap_mode {
+        ArticleSourceCapMode::Disabled => return candidates,
+        ArticleSourceCapMode::Default(_) if source_count < 3 => return candidates,
+        ArticleSourceCapMode::Default(cap) | ArticleSourceCapMode::Explicit(cap)
+            if source_count < 2 =>
+        {
+            return candidates;
+        }
+        ArticleSourceCapMode::Default(cap) | ArticleSourceCapMode::Explicit(cap) => cap,
+    };
+
+    let mut buckets: Vec<(ArticleSource, Vec<ArticleCandidate>)> = Vec::new();
+    for candidate in candidates {
+        if let Some((_, rows)) = buckets
+            .iter_mut()
+            .find(|(source, _)| *source == candidate.row.source)
+        {
+            rows.push(candidate);
+        } else {
+            buckets.push((candidate.row.source, vec![candidate]));
+        }
+    }
+
+    let mut retained = Vec::new();
+    for (_, mut bucket) in buckets {
+        bucket.sort_by(|left, right| {
+            primary_source_native_position(left)
+                .cmp(&primary_source_native_position(right))
+                .then_with(|| {
+                    stable_article_identifier(&left.row).cmp(&stable_article_identifier(&right.row))
+                })
+        });
+        retained.extend(bucket.into_iter().take(effective_cap));
+    }
+    retained
 }
 
 fn compare_optional_dates_desc(
@@ -3319,12 +3413,13 @@ fn finalize_article_candidates(
     }
 
     let mut rows = merge_article_candidates(rows);
+    rows.retain(|candidate| !candidate.row.pmid.trim().is_empty());
+    rows = cap_article_candidates_by_source(rows, resolve_article_source_cap(filters, limit));
     sort_article_rows(&mut rows, filters.sort, filters);
     let mut rows = rows
         .into_iter()
         .map(|candidate| candidate.row)
         .collect::<Vec<_>>();
-    rows.retain(|row| !row.pmid.trim().is_empty());
     rows.drain(0..offset.min(rows.len()));
     rows.truncate(limit);
     SearchPage::offset(rows, total)
@@ -3591,6 +3686,7 @@ pub async fn search_page(
             "--limit must be between 1 and {MAX_SEARCH_LIMIT}"
         )));
     }
+    validate_article_source_cap(filters, limit)?;
     validate_required_search_filters(filters)?;
     normalized_date_bounds(filters)?;
     validate_search_filter_values(filters)?;
@@ -3863,6 +3959,7 @@ mod tests {
             open_access: false,
             no_preprints: false,
             exclude_retracted: false,
+            max_per_source: None,
             sort: ArticleSort::Relevance,
             ranking: ArticleRankingOptions::default(),
         }
@@ -4155,6 +4252,23 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "Invalid argument: --type must be one of: review, research, research-article, case-reports, meta-analysis"
+        );
+    }
+
+    #[tokio::test]
+    async fn search_page_rejects_max_per_source_above_limit_before_backend_planning() {
+        let mut filters = empty_filters();
+        filters.gene = Some("BRAF".into());
+        filters.open_access = true;
+        filters.max_per_source = Some(11);
+
+        let err = search_page(&filters, 10, 0, ArticleSourceFilter::PubTator)
+            .await
+            .expect_err("invalid max-per-source should fail before planner-specific errors");
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: --max-per-source must be <= --limit"
         );
     }
 
@@ -5515,6 +5629,10 @@ mod tests {
         );
     }
 
+    fn count_primary_source(rows: &[ArticleSearchResult], source: ArticleSource) -> usize {
+        rows.iter().filter(|row| row.source == source).count()
+    }
+
     fn row(pmid: &str, source: ArticleSource) -> ArticleSearchResult {
         row_with(pmid, source, Some("2025-01-01"), Some(1), Some(false))
     }
@@ -5561,6 +5679,241 @@ mod tests {
         for (slot, candidate) in rows.iter_mut().zip(candidates.into_iter()) {
             *slot = candidate.row;
         }
+    }
+
+    #[test]
+    fn finalize_article_candidates_default_cap_skips_two_source_pools() {
+        let mut filters = empty_filters();
+        filters.sort = ArticleSort::Date;
+
+        let mut rows = Vec::new();
+        for (idx, pmid) in ["100", "101", "102"].into_iter().enumerate() {
+            let mut row = row(pmid, ArticleSource::PubTator);
+            row.source_local_position = idx;
+            rows.push(row);
+        }
+        for (idx, pmid) in ["200", "201", "202"].into_iter().enumerate() {
+            let mut row = row(pmid, ArticleSource::EuropePmc);
+            row.source_local_position = idx;
+            rows.push(row);
+        }
+
+        let page = finalize_article_candidates(rows, 5, 0, None, &filters);
+
+        assert_eq!(
+            page.results.len(),
+            5,
+            "default capping should not shrink a two-source federated pool"
+        );
+    }
+
+    #[test]
+    fn finalize_article_candidates_default_cap_limits_three_source_pool() {
+        let mut filters = empty_filters();
+        filters.sort = ArticleSort::Date;
+
+        let mut rows = Vec::new();
+        for (idx, pmid) in ["100", "101", "102", "103"].into_iter().enumerate() {
+            let mut row = row(pmid, ArticleSource::PubTator);
+            row.source_local_position = idx;
+            rows.push(row);
+        }
+        for (idx, pmid) in ["200", "201"].into_iter().enumerate() {
+            let mut row = row(pmid, ArticleSource::EuropePmc);
+            row.source_local_position = idx;
+            rows.push(row);
+        }
+        let mut pubmed = row("300", ArticleSource::PubMed);
+        pubmed.source_local_position = 0;
+        rows.push(pubmed);
+
+        let page = finalize_article_candidates(rows, 5, 0, None, &filters);
+
+        assert_eq!(
+            count_primary_source(&page.results, ArticleSource::PubTator),
+            2,
+            "default cap should keep at most floor(40% of limit) rows from one source when three primary sources survive"
+        );
+    }
+
+    #[test]
+    fn finalize_article_candidates_explicit_cap_applies_on_two_source_pools() {
+        let mut filters = empty_filters();
+        filters.sort = ArticleSort::Date;
+        filters.max_per_source = Some(1);
+
+        let mut rows = Vec::new();
+        for (idx, pmid) in ["100", "101", "102"].into_iter().enumerate() {
+            let mut row = row(pmid, ArticleSource::PubTator);
+            row.source_local_position = idx;
+            rows.push(row);
+        }
+        for (idx, pmid) in ["200", "201", "202"].into_iter().enumerate() {
+            let mut row = row(pmid, ArticleSource::EuropePmc);
+            row.source_local_position = idx;
+            rows.push(row);
+        }
+
+        let page = finalize_article_candidates(rows, 5, 0, None, &filters);
+
+        assert_eq!(page.results.len(), 2);
+        assert_eq!(
+            count_primary_source(&page.results, ArticleSource::PubTator),
+            1
+        );
+        assert_eq!(
+            count_primary_source(&page.results, ArticleSource::EuropePmc),
+            1
+        );
+    }
+
+    #[test]
+    fn finalize_article_candidates_explicit_cap_uses_primary_source_native_position() {
+        let mut filters = empty_filters();
+        filters.sort = ArticleSort::Date;
+        filters.max_per_source = Some(2);
+
+        let mut pubmed_duplicate = row("100", ArticleSource::PubMed);
+        pubmed_duplicate.source_local_position = 8;
+
+        let mut europe_duplicate = row("100", ArticleSource::EuropePmc);
+        europe_duplicate.source_local_position = 1;
+
+        let mut pubmed_best = row("101", ArticleSource::PubMed);
+        pubmed_best.source_local_position = 2;
+
+        let mut pubmed_second = row("102", ArticleSource::PubMed);
+        pubmed_second.source_local_position = 4;
+
+        let mut europe = row("201", ArticleSource::EuropePmc);
+        europe.source_local_position = 0;
+
+        let mut pubtator = row("301", ArticleSource::PubTator);
+        pubtator.source_local_position = 0;
+
+        let page = finalize_article_candidates(
+            vec![
+                pubmed_duplicate,
+                europe_duplicate,
+                pubmed_best,
+                pubmed_second,
+                europe,
+                pubtator,
+            ],
+            10,
+            0,
+            None,
+            &filters,
+        );
+
+        let pmids = page
+            .results
+            .iter()
+            .map(|row| row.pmid.as_str())
+            .collect::<Vec<_>>();
+        assert!(
+            pmids.contains(&"101") && pmids.contains(&"102"),
+            "the two best PubMed-primary rows should survive the explicit per-source cap"
+        );
+        assert!(
+            !pmids.contains(&"100"),
+            "the merged row should be capped by the PubMed primary-source position, not the min merged position"
+        );
+    }
+
+    #[test]
+    fn finalize_article_candidates_explicit_cap_equal_limit_disables_capping() {
+        let mut filters = empty_filters();
+        filters.sort = ArticleSort::Citations;
+        filters.max_per_source = Some(5);
+
+        let mut rows = Vec::new();
+        for (idx, (pmid, citations)) in [
+            ("100", 1_u64),
+            ("101", 2),
+            ("102", 3),
+            ("103", 4),
+            ("104", 5),
+            ("105", 500),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let mut row = row(pmid, ArticleSource::PubTator);
+            row.source_local_position = idx;
+            row.citation_count = Some(citations);
+            rows.push(row);
+        }
+
+        let mut europe = row("200", ArticleSource::EuropePmc);
+        europe.citation_count = Some(10);
+        rows.push(europe);
+
+        let mut pubmed = row("300", ArticleSource::PubMed);
+        pubmed.citation_count = Some(9);
+        rows.push(pubmed);
+
+        let page = finalize_article_candidates(rows, 5, 0, None, &filters);
+        let pmids = page
+            .results
+            .iter()
+            .map(|row| row.pmid.as_str())
+            .collect::<Vec<_>>();
+
+        assert!(
+            pmids.contains(&"105"),
+            "setting --max-per-source equal to --limit should disable capping before ranking"
+        );
+    }
+
+    #[test]
+    fn finalize_article_candidates_default_cap_ignores_empty_pmid_rows() {
+        let mut filters = empty_filters();
+        filters.sort = ArticleSort::Date;
+
+        let mut pubtator_first = row("100", ArticleSource::PubTator);
+        pubtator_first.source_local_position = 0;
+
+        let mut pubtator_empty = row("", ArticleSource::PubTator);
+        pubtator_empty.title = "title-empty".into();
+        pubtator_empty.normalized_title = "title-empty".into();
+        pubtator_empty.source_local_position = 1;
+
+        let mut pubtator_second = row("101", ArticleSource::PubTator);
+        pubtator_second.source_local_position = 2;
+
+        let mut europe_first = row("200", ArticleSource::EuropePmc);
+        europe_first.source_local_position = 0;
+
+        let mut europe_second = row("201", ArticleSource::EuropePmc);
+        europe_second.source_local_position = 1;
+
+        let mut pubmed = row("300", ArticleSource::PubMed);
+        pubmed.source_local_position = 0;
+
+        let page = finalize_article_candidates(
+            vec![
+                pubtator_first,
+                pubtator_empty,
+                pubtator_second,
+                europe_first,
+                europe_second,
+                pubmed,
+            ],
+            5,
+            0,
+            None,
+            &filters,
+        );
+
+        let pmids = page
+            .results
+            .iter()
+            .map(|row| row.pmid.as_str())
+            .collect::<Vec<_>>();
+        assert!(pmids.contains(&"100"));
+        assert!(pmids.contains(&"101"));
+        assert!(!pmids.iter().any(|pmid| pmid.trim().is_empty()));
     }
 
     #[tokio::test]

@@ -68,7 +68,7 @@ New to BioMCP? Try:
 - `search gene ... --region --pathway --go` (use GO IDs like `GO:0004672`; search output includes Coordinates/UniProt/OMIM)
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
-- `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed, litsense2>`
+- `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N>`
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
 - `search drug ... --region <us|eu|all>` (omitting `--region` checks both U.S. and EU for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `eu|all` with structured filters errors)
 
@@ -113,6 +113,10 @@ Results depend on source document wording and may vary across sources.
 - Set `S2_API_KEY` for authenticated Semantic Scholar requests at 1 req/sec; without it, BioMCP uses the shared pool at 1 req/2sec.
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible, and Semantic Scholar is still automatic on compatible queries.
 - Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
+- Cap each federated source's contribution after deduplication and before ranking.
+- Default: 40% of `--limit` on federated pools with at least three surviving primary sources.
+- `0` uses the default cap, and setting it equal to `--limit` disables capping.
+- Rows count against their primary source after deduplication.
 - `--ranking-mode semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties.
 - Hybrid ranking uses the same LitSense2-derived semantic signal, and rows without LitSense2 provenance contribute `semantic=0`.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.

@@ -52,6 +52,12 @@ searches default to lexical directness. LitSense2 joins keyword-bearing
 federated searches, and the Semantic Scholar leg is still eligible whenever the
 filter set is compatible. `S2_API_KEY` upgrades those Semantic Scholar
 requests to authenticated quota; without it, BioMCP uses the shared pool.
+BioMCP also caps each federated source's contribution after deduplication and
+before ranking. Default: 40% of `--limit` on federated pools with at least
+three surviving primary sources. Rows count against their primary source after
+deduplication. Use `--max-per-source <N>` to override that cap, use
+`--max-per-source 0` for the default cap explicitly, and set it equal to
+`--limit` to disable capping.
 
 ## Search PubMed directly
 
@@ -77,6 +83,12 @@ semantic signal first, or `--weight-*` flags to retune the default hybrid
 formula `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`. Rows
 without LitSense2 provenance contribute `semantic=0` in semantic-aware
 ranking modes.
+
+## Cap one source explicitly
+
+```bash
+biomcp search article -k "Kartagener syndrome ciliopathy" --limit 50 --max-per-source 10
+```
 
 ## Constrain by date
 

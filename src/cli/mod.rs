@@ -734,6 +734,7 @@ EXAMPLES:
   biomcp search article -q \"immunotherapy resistance\" --limit 5
   biomcp search article -g BRAF --date-from 2024-01-01
   biomcp search article -d melanoma --type review --journal Nature --limit 5
+  biomcp search article -k \"Kartagener syndrome ciliopathy\" --limit 50 --max-per-source 10
   biomcp search article -g BRAF --source pubtator --limit 20
   biomcp search article -k \"Hirschsprung disease ganglion cells\" --source litsense2 --limit 5
   biomcp search article -k \"Hirschsprung disease ganglion cells\" --ranking-mode hybrid --weight-semantic 0.5 --weight-lexical 0.2 --limit 5
@@ -746,6 +747,13 @@ RANKING:
   - `semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties.
   - Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default, using the same LitSense2-derived semantic signal and `semantic=0` when LitSense2 did not match.
   - Use `--weight-semantic`, `--weight-lexical`, `--weight-citations`, and `--weight-position` to retune hybrid ranking.
+
+CAPPING:
+  - Cap each federated source's contribution after deduplication and before ranking.
+  - Default: 40% of `--limit` on federated pools with at least three surviving primary sources.
+  - `0` uses the default cap.
+  - Setting it equal to `--limit` disables capping.
+  - Rows count against their primary source after deduplication.
 
 QUERY FORMULATION:
   - Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`.
@@ -851,6 +859,10 @@ See also: biomcp list article")]
             value_parser = ["all", "pubtator", "europepmc", "pubmed", "litsense2"]
         )]
         source: String,
+
+        /// Cap each federated source's contribution after deduplication and before ranking (default: 40% of --limit on federated pools with at least three surviving primary sources; 0 uses the default cap; equal to --limit disables capping)
+        #[arg(long = "max-per-source", value_name = "N")]
+        max_per_source: Option<usize>,
 
         /// Maximum results (default: 10)
         #[arg(short, long, default_value = "10")]
@@ -2091,6 +2103,7 @@ fn related_article_filters() -> crate::entities::article::ArticleSearchFilters {
         open_access: false,
         no_preprints: true,
         exclude_retracted: true,
+        max_per_source: None,
         sort: crate::entities::article::ArticleSort::Relevance,
         ranking: crate::entities::article::ArticleRankingOptions::default(),
     }
@@ -3243,6 +3256,7 @@ fn article_query_summary(
     filters: &crate::entities::article::ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
     include_retracted: bool,
+    limit: usize,
     offset: usize,
 ) -> String {
     let mut query = vec![
@@ -3272,6 +3286,7 @@ fn article_query_summary(
         Some(format!("sort={}", filters.sort.as_str())),
         (source_filter != crate::entities::article::ArticleSourceFilter::All)
             .then(|| format!("source={}", source_filter.as_str())),
+        article_max_per_source_summary(filters.max_per_source, limit),
         (offset > 0).then(|| format!("offset={offset}")),
     ];
     if let Some(mode) = crate::entities::article::article_effective_ranking_mode(filters) {
@@ -3284,9 +3299,19 @@ fn article_query_summary(
     query.into_iter().flatten().collect::<Vec<_>>().join(", ")
 }
 
+fn article_max_per_source_summary(max_per_source: Option<usize>, limit: usize) -> Option<String> {
+    match max_per_source {
+        None => None,
+        Some(0) => Some("max_per_source=default".to_string()),
+        Some(value) if value == limit => Some("max_per_source=disabled".to_string()),
+        Some(value) => Some(format!("max_per_source={value}")),
+    }
+}
+
 fn article_debug_filters(
     filters: &crate::entities::article::ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
+    limit: usize,
 ) -> Vec<String> {
     let mut values = vec![
         filters.gene.as_deref().map(|v| format!("gene={v}")),
@@ -3308,6 +3333,7 @@ fn article_debug_filters(
         Some(format!("exclude_retracted={}", filters.exclude_retracted)),
         Some(format!("sort={}", filters.sort.as_str())),
         Some(format!("source={}", source_filter.as_str())),
+        article_max_per_source_summary(filters.max_per_source, limit),
     ];
     if let Some(mode) = crate::entities::article::article_effective_ranking_mode(filters) {
         values.push(Some(format!("ranking_mode={}", mode.as_str())));
@@ -3323,6 +3349,7 @@ fn build_article_debug_plan(
     query: &str,
     filters: &crate::entities::article::ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
+    limit: usize,
     results: &[crate::entities::article::ArticleSearchResult],
     pagination: &PaginationMeta,
 ) -> Result<DebugPlan, crate::error::BioMcpError> {
@@ -3334,7 +3361,7 @@ fn build_article_debug_plan(
         legs: vec![DebugPlanLeg {
             leg: "article".to_string(),
             entity: "article".to_string(),
-            filters: article_debug_filters(filters, source_filter),
+            filters: article_debug_filters(filters, source_filter, limit),
             routing: summary.routing,
             sources: summary.sources,
             matched_sources: summary.matched_sources,
@@ -5799,6 +5826,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     weight_citations,
                     weight_position,
                     source,
+                    max_per_source,
                     limit,
                     offset,
                     debug_plan,
@@ -5857,6 +5885,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         open_access,
                         no_preprints,
                         exclude_retracted,
+                        max_per_source,
                         sort,
                         ranking,
                     };
@@ -5865,6 +5894,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         &filters,
                         source_filter,
                         include_retracted,
+                        limit,
                         offset,
                     );
 
@@ -5884,6 +5914,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                             &query,
                             &filters,
                             source_filter,
+                            limit,
                             &results,
                             &pagination,
                         )?)
@@ -8071,6 +8102,15 @@ mod tests {
         assert!(help.contains("Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)"));
         assert!(help.contains("[aliases: --since]"));
         assert!(help.contains("[aliases: --until]"));
+        assert!(help.contains("--max-per-source <N>"));
+        assert!(help.contains(
+            "Cap each federated source's contribution after deduplication and before ranking."
+        ));
+        assert!(help.contains(
+            "Default: 40% of `--limit` on federated pools with at least three surviving primary sources."
+        ));
+        assert!(help.contains("`0` uses the default cap."));
+        assert!(help.contains("Setting it equal to `--limit` disables capping."));
     }
 
     #[test]
@@ -8240,6 +8280,7 @@ mod tests {
             &filters,
             crate::entities::article::ArticleSourceFilter::All,
             false,
+            3,
             0,
         );
         let json = article_search_json(
@@ -8381,6 +8422,7 @@ mod tests {
             open_access: false,
             no_preprints: false,
             exclude_retracted: false,
+            max_per_source: None,
             sort: crate::entities::article::ArticleSort::Relevance,
             ranking: crate::entities::article::ArticleRankingOptions::default(),
         };
@@ -8390,6 +8432,7 @@ mod tests {
             "gene=BRAF, type=review",
             &filters,
             crate::entities::article::ArticleSourceFilter::All,
+            3,
             &[],
             &pagination,
         )
@@ -9106,6 +9149,39 @@ mod tests {
     }
 
     #[test]
+    fn search_article_parses_max_per_source_flag() {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "search",
+            "article",
+            "-g",
+            "BRAF",
+            "--max-per-source",
+            "10",
+            "--limit",
+            "25",
+        ])
+        .expect("search article with --max-per-source should parse");
+
+        match cli.command {
+            Commands::Search {
+                entity:
+                    super::SearchEntity::Article {
+                        gene,
+                        max_per_source,
+                        limit,
+                        ..
+                    },
+            } => {
+                assert_eq!(gene.as_deref(), Some("BRAF"));
+                assert_eq!(max_per_source, Some(10));
+                assert_eq!(limit, 25);
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+
+    #[test]
     fn search_article_defaults_to_relevance_sort() {
         let cli = Cli::try_parse_from(["biomcp", "search", "article", "-k", "melanoma"])
             .expect("search article without --sort should parse");
@@ -9253,20 +9329,24 @@ mod tests {
         assert!(!filters.open_access);
         assert!(filters.no_preprints);
         assert!(filters.exclude_retracted);
+        assert_eq!(filters.max_per_source, None);
     }
 
     #[test]
     fn article_query_and_debug_filters_include_effective_ranking_context() {
         let mut filters = super::related_article_filters();
         filters.keyword = Some("melanoma".into());
+        filters.max_per_source = Some(10);
 
         let summary = super::article_query_summary(
             &filters,
             crate::entities::article::ArticleSourceFilter::All,
             false,
+            25,
             0,
         );
         assert!(summary.contains("ranking_mode=hybrid"));
+        assert!(summary.contains("max_per_source=10"));
         assert!(summary.contains(
             "ranking_policy=hybrid relevance (score = 0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position)"
         ));
@@ -9274,16 +9354,70 @@ mod tests {
         let debug_filters = super::article_debug_filters(
             &filters,
             crate::entities::article::ArticleSourceFilter::All,
+            25,
         );
         assert!(
             debug_filters
                 .iter()
                 .any(|entry| entry == "ranking_mode=hybrid")
         );
+        assert!(
+            debug_filters
+                .iter()
+                .any(|entry| entry == "max_per_source=10")
+        );
         assert!(debug_filters.iter().any(|entry| {
             entry
                 == "ranking_policy=hybrid relevance (score = 0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position)"
         }));
+    }
+
+    #[test]
+    fn article_query_and_debug_filters_render_default_and_disabled_max_per_source_modes() {
+        let mut filters = super::related_article_filters();
+        filters.gene = Some("BRAF".into());
+        filters.max_per_source = Some(0);
+
+        let summary = super::article_query_summary(
+            &filters,
+            crate::entities::article::ArticleSourceFilter::All,
+            false,
+            25,
+            0,
+        );
+        assert!(summary.contains("max_per_source=default"));
+
+        let debug_filters = super::article_debug_filters(
+            &filters,
+            crate::entities::article::ArticleSourceFilter::All,
+            25,
+        );
+        assert!(
+            debug_filters
+                .iter()
+                .any(|entry| entry == "max_per_source=default")
+        );
+
+        filters.max_per_source = Some(25);
+        let disabled_summary = super::article_query_summary(
+            &filters,
+            crate::entities::article::ArticleSourceFilter::All,
+            false,
+            25,
+            0,
+        );
+        assert!(disabled_summary.contains("max_per_source=disabled"));
+
+        let disabled_debug_filters = super::article_debug_filters(
+            &filters,
+            crate::entities::article::ArticleSourceFilter::All,
+            25,
+        );
+        assert!(
+            disabled_debug_filters
+                .iter()
+                .any(|entry| entry == "max_per_source=disabled")
+        );
     }
 
     #[test]
