@@ -165,11 +165,37 @@ trials_line="$(printf '%s\n' "$out" | grep -n 'biomcp variant trials ' | head -n
 test -n "$drug_line"
 test -n "$trials_line"
 test "$drug_line" -lt "$trials_line"
+if printf '%s\n' "$out" | grep -F 'biomcp search article' | grep -qF ' -k '; then
+  echo "unexpected VUS literature pivot in pathogenic variant output" >&2
+  exit 1
+fi
 ```
 
 ```bash
 out="$(biomcp --json get variant "BRAF V600E" clinvar)"
 echo "$out" | jq -e '._meta.next_commands | index("biomcp search drug --target BRAF") != null' > /dev/null
+echo "$out" | jq -e '[._meta.next_commands[] | select(startswith("biomcp search article") and contains("-k "))] | length == 0' > /dev/null
+```
+
+## VUS Variant Gets Literature Pivot
+
+Variants classified as uncertain significance or VUS should get a literature
+search follow-up ahead of the generic drug-target pivot, using the gene, disease,
+and variant keyword to narrow the search.
+
+```bash
+out="$(biomcp get variant "chr17:g.41228596T>G" clinvar)"
+echo "$out" | mustmatch like "literature follow-up for an uncertain-significance variant"
+article_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search article' | grep -F ' -k ' | head -n1 | cut -d: -f1)"
+drug_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search drug --target BRCA1' | head -n1 | cut -d: -f1)"
+test -n "$article_line"
+test -n "$drug_line"
+test "$article_line" -lt "$drug_line"
+```
+
+```bash
+out="$(biomcp --json get variant "chr17:g.41228596T>G" clinvar)"
+echo "$out" | jq -e '[._meta.next_commands[] | select(startswith("biomcp search article") and contains("-k ") and endswith("--limit 5"))] | length >= 1' > /dev/null
 ```
 
 ## Gene More Ordering
