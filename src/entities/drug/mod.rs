@@ -1,3 +1,5 @@
+//! Drug entity models and workflows exposed through the stable drug facade.
+
 use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use std::sync::OnceLock;
