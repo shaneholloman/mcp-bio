@@ -10,9 +10,10 @@ use crate::sources::pubtator::PubTatorClient;
 use crate::sources::semantic_scholar::{SemanticScholarClient, SemanticScholarPaper};
 
 use super::candidates::finalize_article_candidates;
+use super::detail::{parse_pmid, resolve_article_from_pmid};
 use super::{
     Article, ArticleSearchFilters, ArticleSearchResult, ArticleSource,
-    SEMANTIC_SCHOLAR_BATCH_LOOKUP_MAX_IDS, parse_pmid, resolve_article_from_pmid,
+    SEMANTIC_SCHOLAR_BATCH_LOOKUP_MAX_IDS,
 };
 
 fn article_search_semantic_scholar_lookup_id(row: &ArticleSearchResult) -> Option<String> {
