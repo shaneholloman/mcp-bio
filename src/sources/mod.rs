@@ -49,6 +49,7 @@ pub(crate) mod myvariant;
 pub(crate) mod ncbi_efetch;
 pub(crate) mod ncbi_idconv;
 pub(crate) mod nci_cts;
+pub(crate) mod nih_reporter;
 pub(crate) mod ols4;
 pub(crate) mod oncokb;
 pub(crate) mod openfda;

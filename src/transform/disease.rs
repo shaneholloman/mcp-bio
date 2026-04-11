@@ -721,6 +721,8 @@ pub fn from_mydisease_hit(hit: MyDiseaseHit) -> Disease {
         prevalence_note: None,
         survival: None,
         survival_note: None,
+        funding: None,
+        funding_note: None,
         civic: None,
         disgenet: None,
         xrefs,
@@ -1023,6 +1025,8 @@ mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: HashMap::new(),
         };
 

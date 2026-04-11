@@ -118,12 +118,12 @@ search all [slot filters]    → counts-first cross-entity orientation
 
 | Entity | Upstream providers used by BioMCP | Example |
 |--------|-----------------------------------|---------|
-| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen | `biomcp get gene BRAF pathways hpa` |
+| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen, NIH Reporter | `biomcp get gene ERBB2 funding` |
 | variant | MyVariant.info, ClinVar, gnomAD fields via MyVariant, CIViC, Cancer Genome Interpreter, OncoKB, cBioPortal, GWAS Catalog, AlphaGenome | `biomcp get variant "BRAF V600E" clinvar` |
 | article | PubMed, PubTator3, Europe PMC, PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` recommended) | `biomcp search article -g BRAF --limit 5` |
 | trial | ClinicalTrials.gov API v2, NCI CTS API | `biomcp search trial -c melanoma -s recruiting` |
 | drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
-| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer | `biomcp get disease "Hodgkin lymphoma" survival` |
+| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter | `biomcp get disease "chronic myeloid leukemia" funding` |
 | pathway | Reactome, KEGG, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |
 | protein | UniProt, InterPro, STRING, ComplexPortal, PDB, AlphaFold | `biomcp get protein P15056 complexes` |
 | adverse-event | OpenFDA FAERS, MAUDE, Recalls | `biomcp search adverse-event --drug pembrolizumab` |

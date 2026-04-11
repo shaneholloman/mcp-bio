@@ -1337,18 +1337,19 @@ See also: biomcp list adverse-event")]
 pub enum GetEntity {
     /// Get gene by symbol
     #[command(after_help = "\
-When to use: use this for the default card, then add protein, hpa, expression, or diseases when you need a deeper section.
+When to use: use this for the default card, then add protein, hpa, expression, diseases, or funding when you need deeper biology, localization, or NIH grant context.
 
 EXAMPLES:
   biomcp get gene BRAF
   biomcp get gene BRAF pathways
   biomcp get gene BRAF hpa
+  biomcp get gene ERBB2 funding
 
 See also: biomcp list gene")]
     Gene {
         /// Gene symbol (e.g., BRAF, TP53, EGFR)
         symbol: String,
-        /// Sections to include (pathways, ontology, diseases, protein, go, interactions, civic, expression, hpa, druggability, clingen, constraint, disgenet, all)
+        /// Sections to include (pathways, ontology, diseases, protein, go, interactions, civic, expression, hpa, druggability, clingen, constraint, disgenet, funding, all)
         #[arg(trailing_var_arg = true)]
         sections: Vec<String>,
     },
@@ -1369,18 +1370,19 @@ See also: biomcp list article")]
     },
     /// Get disease by name or ID (e.g., MONDO:0005105)
     #[command(after_help = "\
-When to use: use this for the normalized disease card, then pivot to search article -d when you need broader review literature.
+When to use: use this for the normalized disease card, then add funding or survival when you need NIH grant context or cancer outcomes before pivoting to search article -d for broader review literature.
 
 EXAMPLES:
   biomcp get disease melanoma
   biomcp get disease MONDO:0005105 genes
+  biomcp get disease \"chronic myeloid leukemia\" funding
   biomcp get disease \"chronic myeloid leukemia\" survival
 
 See also: biomcp list disease")]
     Disease {
         /// Disease name (e.g., melanoma) or ID (e.g., MONDO:0005105)
         name_or_id: String,
-        /// Sections to include (genes, pathways, phenotypes, variants, models, prevalence, survival, civic, disgenet, all)
+        /// Sections to include (genes, pathways, phenotypes, variants, models, prevalence, survival, civic, disgenet, funding, all)
         #[arg(trailing_var_arg = true)]
         sections: Vec<String>,
     },
@@ -7954,7 +7956,8 @@ mod tests {
 
         assert!(help.contains("When to use:"));
         assert!(help.contains("default card"));
-        assert!(help.contains("protein, hpa, expression, or diseases"));
+        assert!(help.contains("protein, hpa, expression, diseases, or funding"));
+        assert!(help.contains("ERBB2 funding"));
     }
 
     #[test]
@@ -7963,6 +7966,7 @@ mod tests {
 
         assert!(help.contains("When to use:"));
         assert!(help.contains("normalized disease card"));
+        assert!(help.contains("funding or survival"));
         assert!(help.contains("search article -d"));
     }
 
@@ -12153,6 +12157,8 @@ mod next_commands_json_property {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         assert_entity_json_next_commands(
@@ -12202,6 +12208,8 @@ mod next_commands_json_property {
             }),
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let next_commands = crate::render::markdown::related_gene(&gene);
@@ -12349,6 +12357,8 @@ mod next_commands_json_property {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -12395,6 +12405,8 @@ mod next_commands_json_property {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 

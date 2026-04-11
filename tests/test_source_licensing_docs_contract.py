@@ -39,6 +39,7 @@ DIRECT_SOURCE_MODULES = {
     "ncbi_efetch": "NCBI E-utilities",
     "ncbi_idconv": "NCBI ID Converter",
     "nci_cts": "NCI CTS",
+    "nih_reporter": "NIH Reporter",
     "ols4": "OLS4",
     "oncokb": "OncoKB",
     "openfda": "OpenFDA",

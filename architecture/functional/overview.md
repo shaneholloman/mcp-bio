@@ -34,12 +34,12 @@ BioMCP exposes 12 entity types. All support `search` and `get` commands.
 
 | Entity | Key Sources | Representative Command |
 |--------|-------------|----------------------|
-| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen, gnomAD, CIViC | `biomcp get gene BRAF pathways` |
+| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen, gnomAD, CIViC, NIH Reporter | `biomcp get gene ERBB2 funding` |
 | variant | MyVariant.info, ClinVar, gnomAD, CIViC, OncoKB, cBioPortal, GWAS Catalog, AlphaGenome | `biomcp get variant "BRAF V600E" clinvar` |
 | article | PubMed, PubTator3, Europe PMC, Semantic Scholar (optional) | `biomcp search article -g BRAF --limit 5` |
 | trial | ClinicalTrials.gov, NCI CTS API | `biomcp search trial -c melanoma -s recruiting` |
 | drug | MyChem.info, ChEMBL, OpenTargets, Drugs@FDA, CIViC | `biomcp get drug pembrolizumab targets` |
-| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer | `biomcp get disease "Hodgkin lymphoma" survival` |
+| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter | `biomcp get disease "chronic myeloid leukemia" funding` |
 | pathway | Reactome, KEGG, g:Profiler | `biomcp get pathway R-HSA-5673001 genes` |
 | protein | UniProt, InterPro, STRING, ComplexPortal, PDB, AlphaFold | `biomcp get protein P15056 domains` |
 | adverse-event | OpenFDA (FAERS, MAUDE, Recalls) | `biomcp search adverse-event -d pembrolizumab` |

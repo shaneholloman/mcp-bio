@@ -553,6 +553,23 @@
     "notes": "BioMCP treats NCI CTS as an alternate oncology-focused trial backend, not the default public trial source."
   },
   {
+    "id": "nih-reporter",
+    "name": "NIH Reporter",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": ["get disease <name_or_id> funding", "get gene <symbol> funding"],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "open public API",
+    "license_summary": "NIH-operated public funding-reporting service",
+    "redistribution_summary": "project and grant metadata are broadly reusable; preserve NIH Reporter attribution, fiscal-year context, and grant identifiers",
+    "terms_url": "https://www.nih.gov/web-policies-notices",
+    "key_url": null,
+    "reviewed_on": "2026-04-11",
+    "notes": "BioMCP uses the public NIH Reporter v2 projects search API for exact-phrase title/abstract funding lookups over the most recent 5 NIH fiscal years. Funding stays opt-in rather than being included in all."
+  },
+  {
     "id": "ols4",
     "name": "OLS4",
     "tier": 1,

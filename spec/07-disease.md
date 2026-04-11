@@ -7,6 +7,8 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 | Disease search | `search disease melanoma` | Confirms disease normalization output |
 | Disease detail | `get disease melanoma` | Confirms canonical disease card |
 | Disease survival | `get disease "chronic myeloid leukemia" survival` | Confirms SEER-backed disease survival rendering |
+| Disease funding | `get disease "chronic myeloid leukemia" funding` | Confirms NIH Reporter funding contract |
+| Non-cancer funding | `get disease "Marfan syndrome" funding` | Confirms funding coverage is not cancer-specific |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
 | Disease to trials | `disease trials melanoma` | Confirms trial helper path |
@@ -185,6 +187,45 @@ json="$("$bin" --json get disease "Hodgkin lymphoma" survival)"
 echo "$json" | jq -e '.id == "MONDO:0004952"' > /dev/null
 echo "$json" | jq -e '.survival.site_code == 83' > /dev/null
 echo "$json" | jq -e '.survival_note == null' > /dev/null
+```
+
+## Disease Funding
+
+The disease funding section should expose NIH Reporter grant rows with stable
+column structure, a truthful summary line, and JSON provenance.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "chronic myeloid leukemia" funding)"
+echo "$out" | mustmatch like "## Funding (NIH Reporter)"
+echo "$out" | mustmatch like "| Project | PI | Organization | FY | Amount |"
+echo "$out" | mustmatch like "matching NIH project-year records across FY"
+echo "$out" | mustmatch '/\| .* \| .* \| .* \| 20[0-9]{2} \| \$[0-9,]+ \|/'
+json="$("$bin" --json get disease "chronic myeloid leukemia" funding)"
+echo "$json" | jq -e '.funding.query == "chronic myeloid leukemia"' > /dev/null
+echo "$json" | jq -e '(.funding.fiscal_years | length) == 5' > /dev/null
+echo "$json" | jq -e '.funding.grants | length > 0' > /dev/null
+echo "$json" | jq -e '(.funding.grants[0].award_amount | type) == "number"' > /dev/null
+echo "$json" | jq -e '(.funding.grants[0].project_num | type) == "string"' > /dev/null
+echo "$json" | jq -e '.funding_note == null' > /dev/null
+echo "$json" | jq -e 'any(._meta.section_sources[]; .key == "funding" and (.sources | index("NIH Reporter")))' > /dev/null
+```
+
+## Disease Funding Beyond Cancer
+
+Funding coverage should not be limited to oncology. Marfan syndrome is the
+regression anchor because it exercises a non-cancer disease with live NIH
+Reporter funding.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "Marfan syndrome" funding)"
+echo "$out" | mustmatch like "## Funding (NIH Reporter)"
+echo "$out" | mustmatch like "| Project | PI | Organization | FY | Amount |"
+json="$("$bin" --json get disease "Marfan syndrome" funding)"
+echo "$json" | jq -e '.funding.query == "Marfan syndrome"' > /dev/null
+echo "$json" | jq -e '.funding.grants | length > 0' > /dev/null
+echo "$json" | jq -e '.funding_note == null' > /dev/null
 ```
 
 ## Disease Crosswalk Identifier Resolution

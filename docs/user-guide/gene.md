@@ -91,6 +91,14 @@ Druggability profile (DGIdb interactions plus OpenTargets tractability and safet
 biomcp get gene BRAF druggability
 ```
 
+Funding context (NIH Reporter grants mentioning the canonical symbol in the most recent 5 NIH fiscal years):
+
+```bash
+biomcp get gene ERBB2 funding
+```
+
+The funding section is opt-in and is not included in `biomcp get gene <symbol> all`.
+
 Gene-disease validity (ClinGen):
 
 ```bash
@@ -117,6 +125,12 @@ All supported sections:
 
 ```bash
 biomcp get gene BRAF all
+```
+
+To add funding, request it explicitly:
+
+```bash
+biomcp get gene BRAF funding
 ```
 
 ## Helper commands

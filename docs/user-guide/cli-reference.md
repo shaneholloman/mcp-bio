@@ -215,8 +215,11 @@ biomcp search adverse-event --type device --product-code PQP --limit 5
 biomcp get gene BRAF
 biomcp get gene BRAF pathways ontology diseases protein
 biomcp get gene BRAF go interactions civic expression hpa druggability clingen constraint
+biomcp get gene ERBB2 funding
 biomcp get gene BRAF all
 ```
+
+`funding` stays opt-in and is not included in `biomcp get gene <symbol> all`.
 
 ### Disease
 
@@ -225,9 +228,12 @@ biomcp get disease melanoma
 biomcp get disease MONDO:0005105 genes phenotypes
 biomcp get disease MONDO:0005105 variants models
 biomcp get disease MONDO:0005105 pathways prevalence civic survival
+biomcp get disease "chronic myeloid leukemia" funding
 biomcp get disease "chronic myeloid leukemia" survival
 biomcp get disease MONDO:0005105 all
 ```
+
+`funding` stays opt-in and is not included in `biomcp get disease <name_or_id> all`.
 
 ### PGx
 
