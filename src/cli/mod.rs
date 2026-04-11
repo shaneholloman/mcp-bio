@@ -8809,6 +8809,29 @@ mod tests {
     }
 
     #[test]
+    fn phenotype_search_json_contract_unchanged() {
+        let pagination = PaginationMeta::offset(0, 1, 1, Some(1));
+        let json = search_json(
+            vec![crate::entities::disease::PhenotypeSearchResult {
+                disease_id: "MONDO:0100135".to_string(),
+                disease_name: "Dravet syndrome".to_string(),
+                score: 15.036,
+            }],
+            pagination,
+        )
+        .expect("phenotype search json");
+
+        let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+        assert_eq!(value["count"], 1);
+        assert_eq!(value["results"][0]["disease_id"], "MONDO:0100135");
+        assert_eq!(value["results"][0]["disease_name"], "Dravet syndrome");
+        assert!(
+            value.get("_meta").is_none(),
+            "generic search json should not grow entity-style _meta"
+        );
+    }
+
+    #[test]
     fn drug_all_region_search_json_includes_who_bucket() {
         let json = drug_all_region_search_json(
             "trastuzumab",
@@ -11922,6 +11945,9 @@ mod next_commands_validity {
         assert_parses(
             r#"biomcp search article -g SCN1A -d "Dravet syndrome" -k "T1174S" --limit 5"#,
         );
+        assert_parses(r#"biomcp search article -g SCN1A -k "T1174S" --limit 5"#);
+        assert_parses(r#"biomcp search article -d "Dravet syndrome" -k "T1174S" --limit 5"#);
+        assert_parses(r#"biomcp search article -k "T1174S" --limit 5"#);
         assert_parses("biomcp search drug --target BRAF");
         assert_parses(r#"biomcp variant trials "rs113488022""#);
         assert_parses(r#"biomcp variant articles "rs113488022""#);

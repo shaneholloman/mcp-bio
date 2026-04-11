@@ -1176,8 +1176,8 @@ fn is_variant_literature_follow_up_command(command: &str) -> bool {
     command.starts_with("biomcp search article ")
         && command.contains(" -k ")
         && command.ends_with(" --limit 5")
-        && (command.contains(" -g ") || command.contains(" -d "))
         && !command.contains(" -q ")
+        && !command.contains(" --type ")
 }
 
 fn related_command_description(command: &str) -> Option<&'static str> {
@@ -7674,6 +7674,27 @@ pub(crate) mod tests {
             related_command_description(&related[1]),
             Some("literature follow-up for an uncertain-significance variant")
         );
+    }
+
+    #[test]
+    fn related_variant_vus_keyword_only_follow_up_keeps_description() {
+        let variant: Variant = serde_json::from_value(serde_json::json!({
+            "id": "chr2:g.166848047C>G",
+            "gene": "",
+            "hgvs_p": "p.T1174S",
+            "significance": "VUS"
+        }))
+        .expect("variant should deserialize");
+
+        let related = related_variant(&variant);
+        assert_eq!(related[0], "biomcp search article -k \"T1174S\" --limit 5");
+        assert_eq!(
+            related_command_description(&related[0]),
+            Some("literature follow-up for an uncertain-significance variant")
+        );
+
+        let rendered = format_related_block(related);
+        assert!(rendered.contains("literature follow-up for an uncertain-significance variant"));
     }
 
     #[test]
