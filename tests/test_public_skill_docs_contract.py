@@ -110,10 +110,21 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "## Routing rules" in skill_file
     assert "## Section reference" in skill_file
     assert "## Cross-entity pivot rules" in skill_file
+    assert "## How-to guide reference" in skill_file
+    assert "## Anti-patterns" in skill_file
     assert "## Output and evidence rules" in skill_file
     assert "## Answer commitment" in skill_file
     assert 'biomcp search drug --indication "<disease>"' in skill_file
     assert 'biomcp discover "<free text>"' in skill_file
+    assert "[Guide Workflows](../docs/how-to/guide-workflows.md)" in skill_file
+    assert "[Search All Workflow](../docs/how-to/search-all-workflow.md)" in skill_file
+    assert "[Cross-Entity Pivots](../docs/how-to/cross-entity-pivots.md)" in skill_file
+    assert "[Find Articles](../docs/how-to/find-articles.md)" in skill_file
+    assert "[Find Trials](../docs/how-to/find-trials.md)" in skill_file
+    assert "[Annotate Variants](../docs/how-to/annotate-variants.md)" in skill_file
+    assert "[Predict Effects](../docs/how-to/predict-effects.md)" in skill_file
+    assert "[Reproduce Papers](../docs/how-to/reproduce-papers.md)" in skill_file
+    assert "[Skill Validation](../docs/how-to/skill-validation.md)" in skill_file
     assert (
         "After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls."
         in skill_file
@@ -127,9 +138,13 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
         in skill_file
     )
     assert (
-        "Avoid `--type` when recall matters across sources. `--type` is Europe PMC only today because PubTator3 and Semantic Scholar search results do not expose publication-type filtering."
+        "`--type` reduces recall to Europe PMC publication-type filtering today because"
         in skill_file
     )
+    assert "Never do more than 3 article searches for one question." in skill_file
+    assert "ClinicalTrials.gov usually does not index nicknames" in skill_file
+    assert "add `--drug <name>` to `search article`" in skill_file
+    assert "`biomcp article batch <pmid1> <pmid2> ...` uses spaces between PMIDs." in skill_file
     assert "Only add more commands if a needed claim is still unsupported." in skill_file
     assert "If one command already answers the question, stop searching and answer." in skill_file
     assert "biomcp get drug nivolumab regulatory" in skill_file
