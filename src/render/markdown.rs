@@ -561,16 +561,22 @@ fn format_funding_amount(amount: u64) -> String {
     format!("${grouped}")
 }
 
-fn funding_years_summary(section: &NihReporterFundingSection) -> String {
-    if section.fiscal_years.is_empty() {
-        return "recent NIH fiscal years".to_string();
+fn funding_year_window(section: &NihReporterFundingSection) -> String {
+    match (section.fiscal_years.first(), section.fiscal_years.last()) {
+        (Some(start), Some(end)) if start == end => format!("FY{start}"),
+        (Some(start), Some(end)) => format!("FY{start}-FY{end}"),
+        _ => "recent NIH fiscal years".to_string(),
     }
-    let years = section
-        .fiscal_years
-        .iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>();
-    format!("FY {}", years.join(", "))
+}
+
+fn funding_summary_line(section: Option<&NihReporterFundingSection>) -> Option<String> {
+    let section = section.filter(|section| !section.grants.is_empty())?;
+    Some(format!(
+        "Showing top {} unique grants from {} matching NIH project-year records across {}.",
+        section.grants.len(),
+        section.matching_project_years,
+        funding_year_window(section)
+    ))
 }
 
 fn funding_project_cell(grant: &NihReporterGrant) -> String {
@@ -2263,20 +2269,10 @@ pub fn gene_markdown(gene: &Gene, requested_sections: &[String]) -> Result<Strin
         include_all || has_requested("druggability") || has_requested("drugs");
     let show_clingen_section = include_all || has_requested("clingen");
     let show_constraint_section = include_all || has_requested("constraint");
-    let show_disgenet_section = include_all || has_requested("disgenet");
-    let show_funding_section = include_all || has_requested("funding");
+    let show_disgenet_section = has_requested("disgenet");
+    let show_funding_section = has_requested("funding");
     let funding_rows = funding_rows(gene.funding.as_ref());
-    let funding_summary = gene
-        .funding
-        .as_ref()
-        .filter(|section| !section.grants.is_empty())
-        .map(|section| {
-            format!(
-                "{} matching NIH project-year records across {}.",
-                section.matching_project_years,
-                funding_years_summary(section)
-            )
-        });
+    let funding_summary = funding_summary_line(gene.funding.as_ref());
     let body = tmpl.render(context! {
         section_only => section_only,
         section_header => section_header(&gene.symbol, requested_sections),
@@ -2812,9 +2808,9 @@ pub fn disease_markdown(
     let show_models_section = include_all || has_requested("models");
     let show_prevalence_section = include_all || has_requested("prevalence");
     let show_survival_section = include_all || has_requested("survival");
-    let show_funding_section = include_all || has_requested("funding");
+    let show_funding_section = has_requested("funding");
     let show_civic_section = include_all || has_requested("civic");
-    let show_disgenet_section = include_all || has_requested("disgenet");
+    let show_disgenet_section = has_requested("disgenet");
     let disease_label = if disease.name.trim().is_empty() {
         disease.id.as_str()
     } else {
@@ -2830,17 +2826,7 @@ pub fn disease_markdown(
     let survival_summary_rows = disease_survival_summary_rows(disease);
     let survival_history_rows = disease_survival_history_rows(disease);
     let funding_rows = funding_rows(disease.funding.as_ref());
-    let funding_summary = disease
-        .funding
-        .as_ref()
-        .filter(|section| !section.grants.is_empty())
-        .map(|section| {
-            format!(
-                "{} matching NIH project-year records across {}.",
-                section.matching_project_years,
-                funding_years_summary(section)
-            )
-        });
+    let funding_summary = funding_summary_line(disease.funding.as_ref());
     let body = tmpl.render(context! {
         section_only => section_only,
         section_header => section_header(disease_label, requested_sections),
@@ -7599,14 +7585,61 @@ pub(crate) mod tests {
         };
 
         let markdown = gene_markdown(&gene, &["funding".to_string()]).expect("funding markdown");
+        let summary = "Showing top 1 unique grants from 176 matching NIH project-year records across FY2022-FY2026.";
+        let row = "| [Regulation Of Epidermal Differentiation](https://reporter.nih.gov/project-details/10697688) | MORASSO, MARIA | NATIONAL INSTITUTE OF ARTHRITIS AND MUSCULOSKELETAL AND SKIN DISEASES | 2022 | $2,219,287 |";
 
         assert!(markdown.contains("# ERBB2 - funding"));
         assert!(markdown.contains("## Funding (NIH Reporter)"));
-        assert!(markdown.contains("matching NIH project-year records across FY"));
+        assert!(markdown.contains(summary));
         assert!(markdown.contains("| Project | PI | Organization | FY | Amount |"));
         assert!(markdown.contains("[Regulation Of Epidermal Differentiation](https://reporter.nih.gov/project-details/10697688)"));
         assert!(markdown.contains("| MORASSO, MARIA |"));
         assert!(markdown.contains("| 2022 | $2,219,287 |"));
+        assert!(
+            markdown
+                .find(summary)
+                .expect("funding summary should render")
+                > markdown.find(row).expect("funding row should render")
+        );
+    }
+
+    #[test]
+    fn gene_markdown_all_keeps_opt_in_sections_hidden() {
+        let gene = Gene {
+            symbol: "ERBB2".to_string(),
+            name: "erb-b2 receptor tyrosine kinase 2".to_string(),
+            entrez_id: "2064".to_string(),
+            ensembl_id: None,
+            location: None,
+            genomic_coordinates: None,
+            omim_id: None,
+            uniprot_id: None,
+            summary: None,
+            gene_type: None,
+            aliases: Vec::new(),
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: None,
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: None,
+            druggability: None,
+            clingen: None,
+            constraint: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+        };
+
+        let markdown = gene_markdown(&gene, &["all".to_string()]).expect("all markdown");
+
+        assert!(!markdown.contains("## Funding (NIH Reporter)"));
+        assert!(!markdown.contains("## DisGeNET"));
     }
 
     #[test]
@@ -8869,6 +8902,43 @@ pub(crate) mod tests {
         assert!(unavailable.contains("## Funding (NIH Reporter)"));
         assert!(unavailable.contains("NIH Reporter funding data is temporarily unavailable."));
         assert!(!unavailable.contains("| Project | PI | Organization | FY | Amount |"));
+    }
+
+    #[test]
+    fn disease_markdown_all_keeps_opt_in_sections_hidden() {
+        let disease = Disease {
+            id: "MONDO:0007947".to_string(),
+            name: "Marfan syndrome".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let markdown = disease_markdown(&disease, &["all".to_string()]).expect("all markdown");
+
+        assert!(!markdown.contains("## Funding (NIH Reporter)"));
+        assert!(!markdown.contains("## DisGeNET"));
     }
 
     #[test]

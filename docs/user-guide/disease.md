@@ -92,7 +92,7 @@ The survival section is filtered to all ages and all races / ethnicities. When
 the normalized disease does not map cleanly to one SEER cancer site, BioMCP
 returns a stable `survival_note` instead of failing the disease card.
 
-Funding (NIH Reporter grants for the normalized disease name over the most recent 5 NIH fiscal years):
+Funding (NIH Reporter grants for the requested disease phrase, with canonical-name fallback for identifier lookups, over the most recent 5 NIH fiscal years):
 
 ```bash
 biomcp get disease "chronic myeloid leukemia" funding

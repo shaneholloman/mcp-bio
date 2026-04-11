@@ -29,6 +29,9 @@
   missing direct evidence paths.
 - Added SEER Explorer-backed disease survival sections so `get disease <name_or_id> survival`
   can show 5-year relative survival by sex for mapped cancers. (173)
+- Added NIH Reporter funding sections so `get gene <symbol> funding` and
+  `get disease <name_or_id> funding` can show top grants from the most
+  recent 5 NIH fiscal years. (174)
 
 ### Improvements
 

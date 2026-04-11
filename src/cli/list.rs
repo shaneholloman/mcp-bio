@@ -412,7 +412,7 @@ fn list_disease() -> String {
 - `get disease <name_or_id> survival` - SEER Explorer 5-year relative survival by sex for mapped cancers
 - `get disease <name_or_id> civic` - CIViC disease-context evidence
 - `get disease <name_or_id> disgenet` - DisGeNET scored disease-gene associations (requires `DISGENET_API_KEY`)
-- `get disease <name_or_id> funding` - NIH Reporter grants for the normalized disease name over the most recent 5 NIH fiscal years
+- `get disease <name_or_id> funding` - NIH Reporter grants for the requested disease phrase, or the resolved canonical name for identifier lookups, over the most recent 5 NIH fiscal years
 - `get disease <name_or_id> all` - include all standard disease sections (`funding` stays opt-in)
 - `search disease <query>` - positional search by name
 - `search disease -q <query>` - search by name

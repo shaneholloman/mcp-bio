@@ -94,7 +94,7 @@ and practical ceilings observed in command behavior.
 | Trial search | `--limit` defaults to 10, supports pagination | Use `--offset` to page and keep filters stable |
 | Article search | `--limit` defaults to 10 | Use `--since` and typed entity filters to constrain results; `sort=relevance` defaults to hybrid for keyword queries and lexical for entity-only queries |
 | KEGG pathway search/detail | Rate-limited to 1 request / 334ms | Matches KEGG's published 3 requests / second guidance |
-| NIH Reporter funding sections | Rate-limited to 1 request / second | Use explicit gene symbols or canonical disease names; BioMCP queries the most recent 5 NIH fiscal years and de-duplicates project-year rows before ranking grants |
+| NIH Reporter funding sections | Rate-limited to 1 request / second | Use explicit gene symbols or disease phrases/identifiers; BioMCP queries the most recent 5 NIH fiscal years, keeps free-text disease lookups as-entered, falls back to the resolved canonical disease name for identifier lookups, and de-duplicates project-year rows before ranking grants |
 | Semantic Scholar article helpers | 1 request / second with `S2_API_KEY`; 1 request / 2 seconds on the shared pool without it | Explicit helper commands fail fast on shared-pool `429` responses; set `S2_API_KEY` for dedicated quota and retry behavior |
 | DisGeNET `disgenet` sections | Server-enforced; trial accounts may return first-page-only results and `429` with `X-Rate-Limit-Retry-After-Seconds` | Keep requests explicit, avoid fan-out loops, and retry after the server-provided cooldown |
 

@@ -86,7 +86,7 @@ impl NihReporterClient {
 
     pub async fn funding(&self, query: &str) -> Result<NihReporterFundingSection, BioMcpError> {
         let query = normalize_query(query)?;
-        let request = build_search_request(&query, OffsetDateTime::now_utc().date());
+        let request = build_search_request(&query, current_funding_window_date());
         let fiscal_years = request.criteria.fiscal_years.clone();
         let response: NihReporterSearchResponse = self
             .post_json(self.client.post(self.endpoint(NIH_REPORTER_PATH)), &request)
@@ -105,6 +105,15 @@ impl NihReporterClient {
             ),
         })
     }
+}
+
+fn current_funding_window_date() -> Date {
+    // Prefer the operator's local date so the Oct 1 NIH fiscal-year rollover
+    // matches the CLI environment; fall back to UTC if the local offset is
+    // unavailable on the current platform.
+    OffsetDateTime::now_local()
+        .map(|now| now.date())
+        .unwrap_or_else(|_| OffsetDateTime::now_utc().date())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

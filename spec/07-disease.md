@@ -9,6 +9,7 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 | Disease survival | `get disease "chronic myeloid leukemia" survival` | Confirms SEER-backed disease survival rendering |
 | Disease funding | `get disease "chronic myeloid leukemia" funding` | Confirms NIH Reporter funding contract |
 | Non-cancer funding | `get disease "Marfan syndrome" funding` | Confirms funding coverage is not cancer-specific |
+| Funding stays opt-in | `get disease "chronic myeloid leukemia" all` | Confirms `all` still excludes NIH Reporter funding |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
 | Disease to trials | `disease trials melanoma` | Confirms trial helper path |
@@ -199,7 +200,7 @@ bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get disease "chronic myeloid leukemia" funding)"
 echo "$out" | mustmatch like "## Funding (NIH Reporter)"
 echo "$out" | mustmatch like "| Project | PI | Organization | FY | Amount |"
-echo "$out" | mustmatch like "matching NIH project-year records across FY"
+echo "$out" | mustmatch '/Showing top [0-9]+ unique grants from [0-9]+ matching NIH project-year records across FY20[0-9]{2}-FY20[0-9]{2}\./'
 echo "$out" | mustmatch '/\| .* \| .* \| .* \| 20[0-9]{2} \| \$[0-9,]+ \|/'
 json="$("$bin" --json get disease "chronic myeloid leukemia" funding)"
 echo "$json" | jq -e '.funding.query == "chronic myeloid leukemia"' > /dev/null
@@ -226,6 +227,19 @@ json="$("$bin" --json get disease "Marfan syndrome" funding)"
 echo "$json" | jq -e '.funding.query == "Marfan syndrome"' > /dev/null
 echo "$json" | jq -e '.funding.grants | length > 0' > /dev/null
 echo "$json" | jq -e '.funding_note == null' > /dev/null
+```
+
+## Disease Funding Stays Opt-In
+
+`funding` should stay explicit so `get disease <name_or_id> all` does not
+render an NIH Reporter section the user did not request.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "chronic myeloid leukemia" all)"
+echo "$out" | mustmatch not like "## Funding (NIH Reporter)"
+json="$("$bin" --json get disease "chronic myeloid leukemia" all)"
+echo "$json" | jq -e '.funding == null and .funding_note == null' > /dev/null
 ```
 
 ## Disease Crosswalk Identifier Resolution
