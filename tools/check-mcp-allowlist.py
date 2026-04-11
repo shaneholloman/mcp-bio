@@ -17,6 +17,7 @@ BLOCKED_FAMILIES = {
     "serve-sse",
     "uninstall",
     "update",
+    "who",
 }
 SPECIAL_FAMILIES = {"skill", "study"}
 EXPECTED_STUDY_SUBCOMMANDS = {
