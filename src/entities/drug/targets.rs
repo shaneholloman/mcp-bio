@@ -8,7 +8,8 @@ use crate::sources::chembl::{ChemblClient, ChemblTarget};
 use crate::sources::civic::CivicContext;
 use crate::sources::opentargets::{OpenTargetsClient, OpenTargetsTarget};
 
-use super::{Drug, merge_unique_casefold};
+use super::Drug;
+use super::metadata::merge_unique_casefold;
 
 pub(super) async fn enrich_targets(drug: &mut Drug, civic_context: Option<&CivicContext>) {
     let mut chembl_rows = Vec::new();
