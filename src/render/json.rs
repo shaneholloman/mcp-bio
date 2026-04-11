@@ -512,6 +512,7 @@ mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -556,6 +557,7 @@ mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 

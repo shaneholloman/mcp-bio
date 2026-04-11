@@ -2,73 +2,74 @@
 
 ## Critique
 
-- Read `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, `.march/ticket.md`, and `git diff main..HEAD`.
-- Re-ran the required local gates independently: `make check < /dev/null` and `make spec < /dev/null`.
+- Read `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, and `git diff main..HEAD`.
+- Re-ran the required gates independently before repairs: `make check < /dev/null` and `make spec < /dev/null`.
 - Design completeness audit:
-  - Mapped the final design's runtime, docs, health, and proof-matrix items to the SEER source, disease entity/render/provenance, health/help surfaces, and source-doc inventory files.
-  - Found two design-listed inventory surfaces with no matching code change: `docs/index.md` and `architecture/functional/overview.md`.
-  - Confirmed from `.march/code-log.md` that help/docs/spec surfaces were updated before runtime implementation, which matches the mandatory code-step order.
+  - Mapped every `Needs change`, acceptance criterion, and proof-matrix row in `.march/design-final.md` to runtime code, docs, tests, specs, and contract checks.
+  - Found stale contract docs: `docs/user-guide/drug.md` did not document the new stale EMA/WHO local-data statuses, and `architecture/technical/source-integration.md` still described EMA as the only local runtime source and omitted the WHO `--apis-only` exclusion and stale-state contract.
+  - Found missing WHO proof coverage: no unit coverage for the WHO health status matrix (`configured`, `available`, `configured (stale)`, `available (default path, stale)`, `not configured`, missing-file error), no WHO render/provenance/search-JSON proof, no explicit MCP-description assertion that `who sync` stays CLI-only, and no outside-in spec proof that `get drug ... safety|shortage --region who` rejects while `get drug ... all --region who` remains valid.
+  - Found runtime/contract drift: `src/sources/who_pq.rs` still advertised `WHO_PQ_SIZE_HINT = "~1 MB"` instead of the designed/live `~134 KB`.
+  - Found a lifecycle proof gap: `tests/who_pq_auto_sync.rs` did not cover missing-file re-download on the next WHO search.
+  - Confirmed from `.march/code-log.md` that docs/help/spec surfaces were updated before runtime edits, which matches the required execution order, but the surfaces above were still incomplete and therefore blocking.
 - Test-design traceability audit:
-  - Found no outside-in proof for the acceptance criterion that `biomcp get disease "Hodgkin lymphoma" survival` resolves to site `83`.
-  - Found no regression proof for the SEER-unavailable note path required by the truthful-unavailable contract.
-- Runtime/code review findings:
-  - `biomcp get disease "Hodgkin lymphoma" survival` could resolve a weak contains-only non-Hodgkin hit and degrade to `SEER survival data not available for this condition.` instead of returning site `83`.
-  - Canonical fallback misses during disease resolution could emit noisy warnings instead of degrading quietly to "no matching fallback row".
-  - `make spec` exposed a real follow-up defect in `spec/21-cross-entity-see-also.md::Oncology Study Local Match`: the study matcher only handled exact or contiguous labels, so resolved names like `breast carcinoma` missed `Breast Invasive Carcinoma` and incorrectly fell back to `biomcp study download --list`.
+  - Verified the existing WHO proof rows for plain-name search, structured search, sync lifecycle, parser normalization, source inventory/licensing, and source-guide nav.
+  - Missing traceability rows were the WHO health-state matrix, WHO render/provenance/search-JSON proof, MCP read-only description proof, and outside-in WHO-only section validation/all-section behavior.
 
 ## Fixes Applied
 
-- Updated the missing design-listed inventory/help surfaces:
-  - `docs/index.md`
-  - `architecture/functional/overview.md`
-  These now list `SEER Explorer` on the disease surface and use a survival example command.
-- Repaired disease survival resolution in `src/entities/disease.rs`:
-  - added Hodgkin alias query variants (`hodgkins lymphoma`, `hodgkin disease`)
-  - scored direct candidates across all resolver query variants
-  - rejected weak contains-only direct matches below a direct-match threshold so non-Hodgkin hits do not win a Hodgkin query
-  - treated canonical fallback `NotFound` as `Ok(None)` so CML fallback misses do not leak warnings
-  - added regression tests for alias expansion, weak-match rejection, unavailable-note degradation, and quiet canonical fallback misses
-- Added the missing outside-in proof in `spec/07-disease.md` for Hodgkin survival mapping to site `83`.
-- Repaired oncology study follow-up matching in `src/render/markdown.rs`:
-  - added token-subset label matching so non-contiguous clinical labels can still resolve local study hints
-  - added a regression test covering `breast carcinoma` against `Breast Invasive Carcinoma`
+- Repaired stale docs and contract tests:
+  - Updated `docs/user-guide/drug.md` to document stale EMA and WHO local-data statuses.
+  - Updated `architecture/technical/source-integration.md` to describe EMA and WHO as local runtime sources, document `BIOMCP_WHO_DIR`, and state that `biomcp health --apis-only` excludes both local rows.
+  - Updated `tests/test_upstream_planning_analysis_docs.py` so the planning/doc contract now enforces the new WHO local-runtime wording and stale-status help text.
+- Repaired WHO runtime and proof coverage:
+  - Corrected `src/sources/who_pq.rs` to use the designed/live `WHO_PQ_SIZE_HINT` value of `~134 KB`.
+  - Added WHO health tests in `src/cli/health.rs` for default-path available/stale, configured available/stale, not configured, and missing-file error outcomes.
+  - Added the missing WHO auto-sync recovery proof in `tests/who_pq_auto_sync.rs` for missing-file re-download on the next search.
+  - Refactored `src/entities/drug.rs` structured WHO paging through a helper so the stop-after-one-extra-row and exact-total-on-exhaustion behaviors are directly testable, and added validation tests for `safety|shortage --region who` rejection plus `all --region who` acceptance.
+  - Added WHO render, provenance, and search-JSON regression tests in `src/render/markdown.rs`, `src/render/provenance.rs`, and `src/cli/mod.rs`.
+  - Added an MCP contract assertion in `tests/test_mcp_contract.py` that `who sync` remains absent from the read-only MCP description.
+  - Added outside-in WHO specs in `spec/05-drug.md` for unsupported WHO safety/shortage sections and supported WHO `all` output.
+- Repaired post-fix gate defects:
+  - Fixed the new WHO spec block to use a non-trivial `mustmatch like` literal so `check-quality-ratchet` passes.
+  - Stabilized the NCI trial fallback tests in `src/entities/trial.rs` by extracting an injected-client helper, moving the affected tests off shared environment variables, and exposing test-only constructors in `src/sources/mydisease.rs` and `src/sources/nci_cts.rs`.
+  - Pinned `spec/22-cache.md` to `min_disk_free = "1B"` in the cache-warning fixture so it deterministically tests the `max_size` warning path instead of inheriting the host filesystem's ambient disk-floor state.
 
 ## Post-Fix Collateral Scan
 
-- After the disease resolver changes, rechecked for dead code, unused imports/variables, stale error handling, and shadowing via `cargo clippy`, targeted tests, and live probes. No collateral issues remained.
-- After the study-matcher change, rechecked the touched render path for stale fallback text, dead branches, and over-broad matching via targeted render tests and the failing spec slice. No new collateral issues remained.
+- After the WHO doc/runtime/test repairs, rechecked the touched files for dead code, unused imports, stale error messages, cleanup conflicts, and shadowing with `cargo fmt`, `cargo clippy`, focused tests, and the full gates. No dead code or stale error paths remained in the repaired WHO paths.
+- The first repaired `make check` rerun exposed two collateral issues:
+  - `spec/05-drug.md` introduced a too-short `mustmatch like` literal that failed `check-quality-ratchet`.
+  - The full suite exposed an env-coupled NCI trial fallback test that was stable in isolation but flaky under `make check`.
+- The first repaired `make spec` rerun exposed one additional environment-sensitive spec defect:
+  - `spec/22-cache.md::Cache Health Warning` relied on the default 10% disk floor, so on a host already below that threshold the warm-up search auto-cleaned the cache before the warning assertion ran.
+- All three collateral issues were fixed and re-verified before the final gate reruns.
 
 ## Verification
 
 - Focused proofs:
-  - `cargo test resolver_queries_adds_hodgkin_alias_variants -- --nocapture`
-  - `cargo test scored_best_candidate_for_queries_prefers_hodgkin_alias_over_non_hodgkin_contains_match -- --nocapture`
-  - `cargo test resolve_fallback_row_ignores_not_found_canonical_ids -- --nocapture`
-  - `cargo test add_survival_section_sets_unavailable_note_when_catalog_fails -- --nocapture`
-  - `cargo test related_disease_oncology -- --nocapture`
-  - `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest spec/21-cross-entity-see-also.md -k "Oncology and Study" --mustmatch-lang bash --mustmatch-timeout 120 -v'`
-- Live-path checks:
-  - `target/release/biomcp --json get disease "Hodgkin lymphoma" survival` returned site `83` with no `survival_note`
-  - `target/release/biomcp get disease "chronic myeloid leukemia" survival` no longer emitted the fallback-resolution warning
-- Docs/source-contract checks:
-  - `uv run pytest tests/test_source_pages_docs_contract.py tests/test_source_licensing_docs_contract.py tests/test_documentation_consistency_audit_contract.py tests/test_upstream_planning_analysis_docs.py -v`
-  - `uv run mkdocs build --strict`
+  - `cargo test who_ -- --nocapture`
+  - `uv run pytest tests/test_upstream_planning_analysis_docs.py tests/test_mcp_contract.py -q`
+  - `cargo test nci_search_page_ -- --nocapture`
+  - `cargo test nci_status_mapping_uses_documented_single_value_filters -- --nocapture`
 - Full gates:
-  - `make check < /dev/null` — passed
-  - `make spec < /dev/null` — passed (`331 passed, 6 skipped`)
+  - `make check < /dev/null` — passed after repairs (`1439` Rust tests green plus integration/doc tests)
+  - `make spec < /dev/null` — passed after repairs (`338 passed, 6 skipped`)
 
 ## Residual Concerns
 
 - No remaining blocking defects found in scope.
-- Verify should still expect normal live-provider drift risk from MyDisease and SEER Explorer because both integrations depend on external data/services; the repaired tests now cover the concrete failure modes seen during review.
+- No out-of-scope follow-up issues were filed from this review pass.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | stale-doc | no | Design-listed source inventory surfaces `docs/index.md` and `architecture/functional/overview.md` had no matching SEER update |
-| 2 | missing-test | yes | Design acceptance/proof required an outside-in Hodgkin survival mapping proof for site `83`, but no matching spec assertion existed |
-| 3 | missing-test | yes | The truthful-unavailable SEER note path had no regression test |
-| 4 | validation-gap | no | Direct disease resolution accepted weak contains-only non-Hodgkin matches for a Hodgkin query, producing a false no-data survival result |
-| 5 | error-classification | no | Canonical fallback `NotFound` surfaced as warning-producing failure instead of benign no-row degradation during disease fallback resolution |
-| 6 | validation-gap | no | Oncology study matching only handled exact/contiguous labels, so `breast carcinoma` missed `Breast Invasive Carcinoma` and violated the study follow-up contract |
+| 1 | stale-doc | no | `docs/user-guide/drug.md` and `architecture/technical/source-integration.md` did not reflect the shipped WHO/EMA stale local-data health contract |
+| 2 | missing-test | yes | The WHO health proof-matrix row required configured/default/stale/not-configured/error coverage, but that unit coverage was missing |
+| 3 | missing-test | yes | WHO render/provenance/search-JSON proof required by the design was not present in the test suite |
+| 4 | missing-test | yes | The WHO read-only contract lacked an explicit `who sync` MCP exclusion assertion, and the drug specs lacked outside-in WHO safety/shortage rejection and WHO `all` behavior coverage |
+| 5 | stale-doc | no | `WHO_PQ_SIZE_HINT` drifted from the designed/live upstream contract (`~1 MB` vs `~134 KB`) |
+| 6 | missing-test | yes | WHO auto-sync lifecycle coverage omitted the missing-file re-download scenario |
+| 7 | weak-assertion | yes | The new WHO spec used a too-short `mustmatch like` literal and failed the quality ratchet |
+| 8 | collateral-damage | no | Full-suite reruns exposed env-coupled NCI trial fallback tests that were flaky under `make check`; they were stabilized with injected test clients |
+| 9 | collateral-damage | no | `spec/22-cache.md::Cache Health Warning` depended on the host's ambient disk-floor state and could self-clean before asserting the intended `max_size` warning path |

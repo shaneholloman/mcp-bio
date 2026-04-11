@@ -39,6 +39,7 @@ biomcp cache stats
 biomcp cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]
 biomcp cache clear [--yes]
 biomcp ema sync
+biomcp who sync
 biomcp health [--apis-only]
 biomcp list [entity]
 biomcp study list
@@ -69,8 +70,9 @@ biomcp skill article-follow-up
 
 `biomcp health --apis-only` is the upstream inventory smoke test. Full
 `biomcp health` also reports local readiness rows such as EMA local data,
-cache dir status, and cache-limit warnings when the managed HTTP cache is
-over size or below the configured disk-free floor.
+WHO Prequalification local data, cache dir status, and cache-limit warnings
+when the managed HTTP cache is over size or below the configured disk-free
+floor.
 
 `biomcp cache path` is a local-CLI-only operator command. It prints the managed
 HTTP cache path as plain text and ignores the global `--json` flag.
@@ -179,6 +181,8 @@ biomcp search variant -g BRAF --hgvsp V600E --limit 5 --offset 0
 biomcp search drug -q "kinase inhibitor" --limit 5 --offset 0
 biomcp search drug Keytruda --limit 5
 biomcp search drug Keytruda --region eu --limit 5
+biomcp search drug trastuzumab --region who --limit 5
+biomcp search drug --indication malaria --region who --limit 5
 ```
 
 ### Pathway
@@ -267,17 +271,20 @@ biomcp get variant rs7903146 gwas
 
 ```bash
 biomcp get drug pembrolizumab
+biomcp get drug trastuzumab regulatory --region who
 biomcp get drug Keytruda regulatory --region eu
 biomcp get drug Ozempic safety --region eu
 biomcp get drug carboplatin shortage
 ```
 
-Omitting `--region` on a plain name/alias `search drug` checks both U.S. and EU
-data. If you omit `--region` while using structured filters such as `--target`
-or `--indication`, BioMCP stays on the U.S. MyChem path. Explicit `--region eu`
-or `--region all` with structured filters still errors. For `get drug`, use
-`--region` only with `regulatory`, `safety`, `shortage`, or `all`; `approvals`
-stays U.S.-only.
+Omitting `--region` on a plain name/alias `search drug` checks U.S., EU, and
+WHO data. If you omit `--region` while using structured filters such as
+`--target` or `--indication`, BioMCP stays on the U.S. MyChem path. Explicit
+`--region who` filters structured U.S. hits through WHO Prequalification.
+Explicit `--region eu` or `--region all` with structured filters still errors.
+For `get drug`, use `--region` only with `regulatory`, `safety`, `shortage`, or
+`all`; WHO currently supports `regulatory` and `all`, while `approvals` stays
+U.S.-only.
 
 ### Pathway
 

@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 HELPER_MODULES = {"cbioportal_download", "cbioportal_study", "rate_limit"}
-EXEMPT_MODULES = {"ema"}
+EXEMPT_MODULES = {"ema", "who_pq"}
 HEALTH_ALIASES = {
     "cbioportal": "cBioPortal",
     "clinicaltrials": "ClinicalTrials.gov",

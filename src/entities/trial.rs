@@ -665,15 +665,15 @@ fn normalized_facility_filter(filters: &TrialSearchFilters) -> Option<String> {
         .map(str::to_string)
 }
 
-async fn resolve_nci_disease_filter(
+async fn resolve_nci_disease_filter_with_client(
+    client: &MyDiseaseClient,
     condition: Option<&str>,
 ) -> Result<Option<NciDiseaseFilter>, BioMcpError> {
     let Some(condition) = condition.map(str::trim).filter(|value| !value.is_empty()) else {
         return Ok(None);
     };
 
-    let client = MyDiseaseClient::new()?;
-    match resolve_disease_hit_by_name(&client, condition).await {
+    match resolve_disease_hit_by_name(client, condition).await {
         Ok(hit) => {
             let mut disease = transform::disease::from_mydisease_hit(hit);
             if let Some(nci_id) = disease
@@ -699,6 +699,44 @@ async fn resolve_nci_disease_filter(
             Ok(Some(NciDiseaseFilter::Keyword(condition.to_string())))
         }
     }
+}
+
+async fn search_page_with_nci_clients(
+    client: &NciCtsClient,
+    mydisease_client: &MyDiseaseClient,
+    filters: &TrialSearchFilters,
+    normalized: &NormalizedTrialSearch,
+    limit: usize,
+    offset: usize,
+) -> Result<SearchPage<TrialSearchResult>, BioMcpError> {
+    let params = NciSearchParams {
+        disease: resolve_nci_disease_filter_with_client(
+            mydisease_client,
+            filters.condition.as_deref(),
+        )
+        .await?,
+        interventions: filters.intervention.clone(),
+        sites_org_name: normalized_facility_filter(filters),
+        status: nci_status_filter(normalized.normalized_status.as_deref())?,
+        phases: nci_phase_filters(normalized.normalized_phase.as_deref())?,
+        geo: nci_geo_filter(filters),
+        biomarkers: filters
+            .biomarker
+            .clone()
+            .or_else(|| filters.mutation.clone())
+            .or_else(|| filters.criteria.clone()),
+        size: limit,
+        from: offset,
+    };
+
+    let resp = client.search(&params).await?;
+    Ok(SearchPage::offset(
+        resp.hits()
+            .iter()
+            .map(transform::trial::from_nci_hit)
+            .collect(),
+        resp.total,
+    ))
 }
 
 fn nci_status_filter(value: Option<&str>) -> Result<Option<NciStatusFilter>, BioMcpError> {
@@ -1920,31 +1958,16 @@ pub async fn search_page(
                 ));
             }
             let client = NciCtsClient::new()?;
-
-            let params = NciSearchParams {
-                disease: resolve_nci_disease_filter(filters.condition.as_deref()).await?,
-                interventions: filters.intervention.clone(),
-                sites_org_name: normalized_facility_filter(filters),
-                status: nci_status_filter(normalized.normalized_status.as_deref())?,
-                phases: nci_phase_filters(normalized.normalized_phase.as_deref())?,
-                geo: nci_geo_filter(filters),
-                biomarkers: filters
-                    .biomarker
-                    .clone()
-                    .or_else(|| filters.mutation.clone())
-                    .or_else(|| filters.criteria.clone()),
-                size: limit,
-                from: offset,
-            };
-
-            let resp = client.search(&params).await?;
-            Ok(SearchPage::offset(
-                resp.hits()
-                    .iter()
-                    .map(transform::trial::from_nci_hit)
-                    .collect(),
-                resp.total,
-            ))
+            let mydisease_client = MyDiseaseClient::new()?;
+            search_page_with_nci_clients(
+                &client,
+                &mydisease_client,
+                filters,
+                &normalized,
+                limit,
+                offset,
+            )
+            .await
         }
     }
 }
@@ -2087,6 +2110,14 @@ mod tests {
             "total": 1,
             "hits": [hit]
         })
+    }
+
+    fn mydisease_client_for_test(server: &MockServer) -> MyDiseaseClient {
+        MyDiseaseClient::new_for_test(format!("{}/v1", server.uri())).expect("mydisease client")
+    }
+
+    fn nci_client_for_test(server: &MockServer) -> NciCtsClient {
+        NciCtsClient::new_for_test(server.uri(), "test-key".into()).expect("nci client")
     }
 
     async fn mount_keyword_nci_search(nci: &MockServer, keyword: &str, nct_id: &str) {
@@ -2748,13 +2779,8 @@ AREA[OfficialTitle](\"G12D\") OR AREA[BriefSummary](\"G12D\") OR AREA[Keyword](\
 
     #[tokio::test]
     async fn nci_search_page_prefers_grounded_disease_concept_id() {
-        let _lock = env_lock().await;
         let mydisease = MockServer::start().await;
         let nci = MockServer::start().await;
-        let mydisease_base = format!("{}/v1", mydisease.uri());
-        let _mydisease_base = set_env_var("BIOMCP_MYDISEASE_BASE", Some(&mydisease_base));
-        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
-        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
 
         Mock::given(method("GET"))
             .and(path("/v1/query"))
@@ -2790,23 +2816,26 @@ AREA[OfficialTitle](\"G12D\") OR AREA[BriefSummary](\"G12D\") OR AREA[Keyword](\
             condition: Some("melanoma".into()),
             ..Default::default()
         };
+        let normalized = validate_trial_search(&filters).expect("filters should validate");
 
-        let page = search_page(&filters, 1, 0, None)
-            .await
-            .expect("grounded NCI search should succeed");
+        let page = search_page_with_nci_clients(
+            &nci_client_for_test(&nci),
+            &mydisease_client_for_test(&mydisease),
+            &filters,
+            &normalized,
+            1,
+            0,
+        )
+        .await
+        .expect("grounded NCI search should succeed");
         assert_eq!(page.results.len(), 1);
         assert_eq!(page.results[0].nct_id, "NCT00000001");
     }
 
     #[tokio::test]
     async fn nci_search_page_falls_back_to_keyword_when_grounding_is_unavailable() {
-        let _lock = env_lock().await;
         let mydisease = MockServer::start().await;
         let nci = MockServer::start().await;
-        let mydisease_base = format!("{}/v1", mydisease.uri());
-        let _mydisease_base = set_env_var("BIOMCP_MYDISEASE_BASE", Some(&mydisease_base));
-        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
-        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
 
         Mock::given(method("GET"))
             .and(path("/v1/query"))
@@ -2821,23 +2850,26 @@ AREA[OfficialTitle](\"G12D\") OR AREA[BriefSummary](\"G12D\") OR AREA[Keyword](\
             condition: Some("melanoma".into()),
             ..Default::default()
         };
+        let normalized = validate_trial_search(&filters).expect("filters should validate");
 
-        let page = search_page(&filters, 1, 0, None)
-            .await
-            .expect("keyword fallback should keep NCI search available");
+        let page = search_page_with_nci_clients(
+            &nci_client_for_test(&nci),
+            &mydisease_client_for_test(&mydisease),
+            &filters,
+            &normalized,
+            1,
+            0,
+        )
+        .await
+        .expect("keyword fallback should keep NCI search available");
         assert_eq!(page.results.len(), 1);
         assert_eq!(page.results[0].nct_id, "NCT00000002");
     }
 
     #[tokio::test]
     async fn nci_search_page_falls_back_to_keyword_when_best_hit_lacks_nci_xref() {
-        let _lock = env_lock().await;
         let mydisease = MockServer::start().await;
         let nci = MockServer::start().await;
-        let mydisease_base = format!("{}/v1", mydisease.uri());
-        let _mydisease_base = set_env_var("BIOMCP_MYDISEASE_BASE", Some(&mydisease_base));
-        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
-        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
 
         Mock::given(method("GET"))
             .and(path("/v1/query"))
@@ -2859,23 +2891,26 @@ AREA[OfficialTitle](\"G12D\") OR AREA[BriefSummary](\"G12D\") OR AREA[Keyword](\
             condition: Some("melanoma".into()),
             ..Default::default()
         };
+        let normalized = validate_trial_search(&filters).expect("filters should validate");
 
-        let page = search_page(&filters, 1, 0, None)
-            .await
-            .expect("missing NCI xrefs should fall back to keyword search");
+        let page = search_page_with_nci_clients(
+            &nci_client_for_test(&nci),
+            &mydisease_client_for_test(&mydisease),
+            &filters,
+            &normalized,
+            1,
+            0,
+        )
+        .await
+        .expect("missing NCI xrefs should fall back to keyword search");
         assert_eq!(page.results.len(), 1);
         assert_eq!(page.results[0].nct_id, "NCT00000008");
     }
 
     #[tokio::test]
     async fn nci_search_page_falls_back_to_keyword_when_grounding_returns_no_hit() {
-        let _lock = env_lock().await;
         let mydisease = MockServer::start().await;
         let nci = MockServer::start().await;
-        let mydisease_base = format!("{}/v1", mydisease.uri());
-        let _mydisease_base = set_env_var("BIOMCP_MYDISEASE_BASE", Some(&mydisease_base));
-        let _nci_base = set_env_var("BIOMCP_NCI_CTS_BASE", Some(&nci.uri()));
-        let _nci_key = set_env_var("NCI_API_KEY", Some("test-key"));
 
         Mock::given(method("GET"))
             .and(path("/v1/query"))
@@ -2893,10 +2928,18 @@ AREA[OfficialTitle](\"G12D\") OR AREA[BriefSummary](\"G12D\") OR AREA[Keyword](\
             condition: Some("melanoma".into()),
             ..Default::default()
         };
+        let normalized = validate_trial_search(&filters).expect("filters should validate");
 
-        let page = search_page(&filters, 1, 0, None)
-            .await
-            .expect("missing MyDisease hits should fall back to keyword search");
+        let page = search_page_with_nci_clients(
+            &nci_client_for_test(&nci),
+            &mydisease_client_for_test(&mydisease),
+            &filters,
+            &normalized,
+            1,
+            0,
+        )
+        .await
+        .expect("missing MyDisease hits should fall back to keyword search");
         assert_eq!(page.results.len(), 1);
         assert_eq!(page.results[0].nct_id, "NCT00000009");
     }

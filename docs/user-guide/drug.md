@@ -1,6 +1,6 @@
 # Drug
 
-Use drug commands for medication lookup, target-oriented search, and U.S./EU regulatory context.
+Use drug commands for medication lookup, target-oriented search, and U.S./EU/WHO regulatory context.
 
 ## Search drugs
 
@@ -11,10 +11,11 @@ biomcp search drug -q "kinase inhibitor" --limit 5
 biomcp search drug Keytruda --limit 5
 ```
 
-EU or comparison search:
+Regional or comparison search:
 
 ```bash
 biomcp search drug Keytruda --region eu --limit 5
+biomcp search drug trastuzumab --region who --limit 5
 biomcp search drug Keytruda --region all --limit 5
 ```
 
@@ -28,14 +29,16 @@ Indication-oriented search:
 
 ```bash
 biomcp search drug --indication melanoma --limit 5
+biomcp search drug --indication malaria --region who --limit 5
 ```
 
 `search drug --interactions <drug>` is currently unavailable because the public data sources BioMCP uses do not expose partner-indexed interaction rows.
 
-Omitting `--region` on a plain name/alias search checks both U.S. and EU data.
+Omitting `--region` on a plain name/alias search checks U.S., EU, and WHO data.
 If you omit `--region` while using structured filters such as `--target` or
-`--indication`, BioMCP stays on the U.S. MyChem path. Explicit `--region eu`
-or `--region all` with structured filters still errors.
+`--indication`, BioMCP stays on the U.S. MyChem path. Explicit `--region who`
+filters structured U.S. hits through WHO Prequalification. Explicit `--region
+eu` or `--region all` with structured filters still errors.
 
 ## Get a drug record
 
@@ -71,7 +74,9 @@ biomcp get drug carboplatin shortage
 Regional regulatory and safety sections:
 
 ```bash
+biomcp get drug trastuzumab regulatory --region who
 biomcp get drug Keytruda regulatory --region eu
+biomcp get drug trastuzumab regulatory --region all
 biomcp get drug Keytruda regulatory --region all
 biomcp get drug Ozempic safety --region eu
 biomcp get drug Ozempic shortage --region eu
@@ -138,9 +143,46 @@ biomcp ema sync
 EMA row meanings:
 
 - `configured`: `BIOMCP_EMA_DIR` is set and complete
+- `configured (stale)`: `BIOMCP_EMA_DIR` is set and complete, but one or more EMA files are older than the 72-hour refresh window
 - `available (default path)`: the default platform data directory contains a complete EMA batch
+- `available (default path, stale)`: the default platform data directory contains a complete EMA batch, but one or more EMA files are older than the 72-hour refresh window
 - `not configured`: no EMA batch is installed at the default path yet
 - `error (missing: ...)`: the EMA directory exists but is missing one or more required files
+
+## WHO Prequalification local data setup
+
+WHO regional regulatory commands read the WHO Prequalification CSV from
+`BIOMCP_WHO_DIR` first, then the platform data directory
+(`~/.local/share/biomcp/who-pq` on typical Linux systems). On first use,
+BioMCP auto-downloads the finished-pharmaceutical-products CSV into that root
+and refreshes stale files after 72 hours. Use `biomcp who sync` to force a
+refresh at any time.
+
+Manual preseed still works. If you need an offline or pre-populated root,
+place this file in the target directory:
+
+- `who_pq.csv`
+
+Confirm local WHO readiness with full health output:
+
+```bash
+biomcp health
+```
+
+Force-refresh WHO local data manually:
+
+```bash
+biomcp who sync
+```
+
+WHO row meanings:
+
+- `configured`: `BIOMCP_WHO_DIR` is set and complete
+- `configured (stale)`: `BIOMCP_WHO_DIR` is set and complete, but `who_pq.csv` is older than the 72-hour refresh window
+- `available (default path)`: the default platform data directory contains a complete WHO CSV
+- `available (default path, stale)`: the default platform data directory contains a complete WHO CSV, but `who_pq.csv` is older than the 72-hour refresh window
+- `not configured`: no WHO CSV is installed at the default path yet
+- `error (missing: ...)`: the WHO directory exists but is missing the required file
 
 ## Helper commands
 
@@ -166,6 +208,7 @@ biomcp --json get drug pembrolizumab
 
 - Start with base `get` before requesting heavy sections.
 - Use target filters to narrow crowded drug classes.
+- Use `regulatory` with `--region who|all` when you need WHO Prequalification context.
 - Use `regulatory`, `safety`, or `shortage` with `--region eu|all` when you need EMA context.
 - Pair drug lookups with trial filters for protocol matching workflows.
 

@@ -392,6 +392,32 @@ SOURCE_PAGE_SPECS = {
             "biomcp ema sync",
         ],
     },
+    "who-prequalification.md": {
+        "title": "WHO Prequalification MCP Tool for Global Drug Access | BioMCP",
+        "description": "Use BioMCP to search WHO Prequalification-backed drug records in BioMCP and retrieve global regulatory context through the local WHO batch.",
+        "api_access": "No BioMCP API key required. BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.",
+        "official_url": "https://extranet.who.int/prequal/medicines/prequalified/finished-pharmaceutical-products/export?page&_format=csv",
+        "required_intro_phrases": [
+            "`BIOMCP_WHO_DIR`",
+            "finished-pharmaceutical-products CSV",
+            "`biomcp who sync`",
+            "`--region who|all`",
+            "structured U.S. hits through WHO prequalification",
+        ],
+        "exposes": [
+            "search drug <name> --region who",
+            "search drug <name> --region all",
+            "search drug --indication <disease> --region who",
+            "get drug <name> regulatory --region who|all",
+        ],
+        "example_commands": [
+            "biomcp search drug trastuzumab --region who --limit 5",
+            "biomcp search drug --indication malaria --region who --limit 5",
+            "biomcp get drug trastuzumab regulatory --region who",
+            "biomcp get drug imatinib regulatory --region who",
+            "biomcp who sync",
+        ],
+    },
     "kegg.md": {
         "title": "KEGG MCP Tool for Pathway Search | BioMCP",
         "description": "Use BioMCP to search KEGG pathways, fetch KEGG pathway summaries, and expand to pathway genes without learning KEGG's flat-file API.",
@@ -509,6 +535,7 @@ EXPECTED_NAV_BLOCK = """  - Sources:
       - OncoKB: sources/oncokb.md
       - cBioPortal: sources/cbioportal.md
       - EMA: sources/ema.md
+      - WHO Prequalification: sources/who-prequalification.md
       - KEGG: sources/kegg.md
       - PharmGKB / CPIC: sources/pharmgkb.md
       - Human Protein Atlas: sources/human-protein-atlas.md
@@ -600,7 +627,7 @@ def test_sources_overview_page_has_required_metadata_and_links() -> None:
     )
     assert (
         _front_matter_value(overview, "description")
-        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
     )
 
     assert "# Biomedical Data Sources for AI Agents" in overview

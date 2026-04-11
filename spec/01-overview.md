@@ -22,7 +22,7 @@ echo "$out" | mustmatch '/^biomcp [0-9]+\.[0-9]+\.[0-9]+/'
 
 ## Health Check
 
-The API-only health command reports one row per live upstream provider plus explicit excluded rows for key-gated sources. Full `biomcp health` adds local readiness rows such as EMA local data, cache dir, and cache-limit warnings. We assert on the API-only table header and the explicit status summary here because those are stable formatting markers for the upstream inventory contract.
+The API-only health command reports one row per live upstream provider plus explicit excluded rows for key-gated sources. Full `biomcp health` adds local readiness rows such as EMA local data, WHO Prequalification local data, cache dir, and cache-limit warnings. We assert on the API-only table header and the explicit status summary here because those are stable formatting markers for the upstream inventory contract.
 
 ```bash
 bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
@@ -31,6 +31,7 @@ echo "$out" | mustmatch like "| API | Status | Latency |"
 echo "$out" | mustmatch like "| LitSense2 |"
 echo "$out" | mustmatch like "| SEER Explorer |"
 echo "$out" | mustmatch not like "EMA local data ("
+echo "$out" | mustmatch not like "WHO Prequalification local data ("
 echo "$out" | mustmatch not like "Cache dir ("
 echo "$out" | mustmatch not like "(key:"
 echo "$out" | mustmatch '/Status: [0-9]+ ok, [0-9]+ error, [0-9]+ excluded/'
@@ -39,6 +40,7 @@ json_out="$(env -u NCI_API_KEY -u ONCOKB_TOKEN -u DISGENET_API_KEY -u ALPHAGENOM
 echo "$json_out" | jq -e 'all(.rows[]; (.status | type) == "string")' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; ((.status | contains("(key:")) | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("EMA local data (") | not))' > /dev/null
+echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("WHO Prequalification local data (") | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("Cache dir (") | not))' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "LitSense2")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "SEER Explorer")' > /dev/null
@@ -70,6 +72,7 @@ echo "$out" | mustmatch like '- `cache clean [--max-age <duration>] [--max-size 
 echo "$out" | mustmatch like '- `cache clear [--yes]` - destructively wipe `<resolved cache_root>/http`; never touches `downloads/`; supports `--json` on success and requires a TTY unless `--yes` is passed'
 echo "$out" | mustmatch like '- `discover <query>`'
 echo "$out" | mustmatch like '- `ema sync`'
+echo "$out" | mustmatch like '- `who sync`'
 echo "$out" | mustmatch like $'## Entities\n\n- gene\n- variant\n- article\n- trial'
 ```
 

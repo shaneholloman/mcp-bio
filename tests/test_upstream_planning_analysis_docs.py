@@ -474,12 +474,21 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "`docs/user-guide/cli-reference.md`" in source_integration
     assert "default `get` output stays concise" in source_integration
     assert "## Local Runtime Sources and File-Backed Assets" in source_integration
-    assert "EMA is the canonical local runtime source" in local_runtime_section
-    assert "`BIOMCP_EMA_DIR` first, then the platform data directory" in local_runtime_section
-    assert "`biomcp health` includes the EMA local-data readiness row" in local_runtime_section
-    assert "`biomcp health --apis-only` excludes that row" in local_runtime_section
     assert (
-        "`configured`, `available (default path)`, `not configured`, and `error (missing: ...)`"
+        "EMA and WHO Prequalification are the canonical local runtime drug sources"
+        in local_runtime_section
+    )
+    assert "`BIOMCP_EMA_DIR` first, then the platform data directory" in local_runtime_section
+    assert "`BIOMCP_WHO_DIR` first, then the platform data directory" in local_runtime_section
+    assert (
+        "`biomcp health` includes the EMA and WHO local-data readiness rows"
+        in local_runtime_section
+    )
+    assert "`biomcp health --apis-only` excludes those rows" in local_runtime_section
+    assert (
+        "`configured`, `configured (stale)`, `available (default path)`, "
+        "`available (default path, stale)`, `not configured`, and "
+        "`error (missing: ...)`"
         in local_runtime_section
     )
     assert "`docs/user-guide/drug.md`" in local_runtime_section
@@ -491,8 +500,11 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "`docs/reference/bioasq-benchmark.md`" in local_runtime_section
     assert "`benchmarks/bioasq/`" in local_runtime_section
     assert "## EMA local data setup" in drug_guide
+    assert "## WHO Prequalification local data setup" in drug_guide
     assert "`configured`:" in drug_guide
+    assert drug_guide.count("`configured (stale)`:") >= 2
     assert "`available (default path)`:" in drug_guide
+    assert drug_guide.count("`available (default path, stale)`:") >= 2
     assert "`not configured`:" in drug_guide
     assert "`error (missing: ...)`:" in drug_guide
     assert "pub(crate) fn resolve_ema_root() -> PathBuf {" in ema_source
@@ -508,7 +520,7 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "## Entity-Specific Command Modifiers" in source_integration
     assert "The base grammar remains `get <entity> <id> [section...]`." in modifier_section
     assert "Entity-specific modifiers are named options" in modifier_section
-    assert "The canonical example is `get drug <name> ... --region <us|eu|all>`." in modifier_section
+    assert "The canonical example is `get drug <name> ... --region <us|eu|who|all>`." in modifier_section
     assert "`src/cli/mod.rs`" in modifier_section
     assert "`src/cli/list.rs`" in modifier_section
     assert "`src/cli/list_reference.md`" in modifier_section
@@ -520,21 +532,26 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
         "`--region` only changes the data plane for `regulatory`, `safety`, `shortage`, or `all`"
         in modifier_section
     )
+    assert (
+        "`--region who` is valid for `regulatory` and `all`, but not for `safety` or"
+        in modifier_section
+    )
     assert "`approvals` remains U.S.-only" in modifier_section
     assert "invalid flag/section combinations fail fast before data fetches" in modifier_section
-    assert "biomcp get drug Keytruda regulatory --region eu" in cli_mod
+    assert "biomcp get drug trastuzumab regulatory --region who" in cli_mod
+    assert "biomcp get drug trastuzumab regulatory --region who" in cli_reference_guide
     assert "Data region for regional sections (regulatory, safety, shortage, or all)" in cli_mod
-    assert "get drug <name> regulatory [--region <us|eu|all>]" in cli_list
+    assert "get drug <name> regulatory [--region <us|eu|who|all>]" in cli_list
     assert "get drug <name> safety [--region <us|eu|all>]" in cli_list
     assert "get drug <name> shortage [--region <us|eu|all>]" in cli_list
     assert "get drug <name> approvals" in cli_list
-    assert "get drug <name> regulatory|safety|shortage [--region <us|eu|all>]" in cli_list_reference
-    assert "biomcp get drug Keytruda regulatory --region eu" in cli_reference_guide
+    assert "get drug <name> regulatory [--region <us|eu|who|all>]" in cli_list_reference
+    assert "get drug <name> safety|shortage [--region <us|eu|all>]" in cli_list_reference
     assert (
         "For `get drug`, use `--region` only with `regulatory`, `safety`, `shortage`, or `all`"
         in cli_reference_guide_ws
     )
-    assert "get drug <name> regulatory [--region <us|eu|all>]" in drug_spec
+    assert "get drug <name> regulatory [--region <us|eu|who|all>]" in drug_spec
     assert "--region is not supported with approvals." in drug_entity
     assert "--region can only be used with regulatory, safety, shortage, or all." in drug_entity
     assert "## Provenance and Rendering" in source_integration

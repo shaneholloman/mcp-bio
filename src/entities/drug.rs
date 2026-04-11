@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::future::Future;
 use std::sync::OnceLock;
 use std::time::Duration;
 
@@ -17,6 +18,7 @@ use crate::sources::mychem::{
 };
 use crate::sources::openfda::{DrugsFdaResult, OpenFdaClient, OpenFdaResponse};
 use crate::sources::opentargets::{OpenTargetsClient, OpenTargetsTarget};
+use crate::sources::who_pq::{WhoPqClient, WhoPqIdentity, WhoPqSyncMode};
 use crate::transform;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,6 +88,8 @@ pub struct Drug {
     pub ema_safety: Option<EmaSafetyInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ema_shortage: Option<Vec<EmaShortageEntry>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub who_prequalification: Option<Vec<WhoPrequalificationEntry>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub civic: Option<CivicContext>,
 }
@@ -190,12 +194,41 @@ pub struct DrugSearchResult {
     pub target: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WhoPrequalificationEntry {
+    pub who_reference_number: String,
+    pub inn: String,
+    pub presentation: String,
+    pub dosage_form: String,
+    pub product_type: String,
+    pub therapeutic_area: String,
+    pub applicant: String,
+    pub listing_basis: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alternative_listing_basis: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prequalification_date: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WhoPrequalificationSearchResult {
+    pub inn: String,
+    pub therapeutic_area: String,
+    pub dosage_form: String,
+    pub applicant: String,
+    pub who_reference_number: String,
+    pub listing_basis: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prequalification_date: Option<String>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum DrugRegion {
     #[default]
     Us,
     Eu,
+    Who,
     All,
 }
 
@@ -204,6 +237,7 @@ impl DrugRegion {
         match self {
             Self::Us => "us",
             Self::Eu => "eu",
+            Self::Who => "who",
             Self::All => "all",
         }
     }
@@ -214,6 +248,10 @@ impl DrugRegion {
 
     pub fn includes_eu(self) -> bool {
         matches!(self, Self::Eu | Self::All)
+    }
+
+    pub fn includes_who(self) -> bool {
+        matches!(self, Self::Who | Self::All)
     }
 }
 
@@ -319,9 +357,11 @@ pub struct EmaShortageEntry {
 pub enum DrugSearchPageWithRegion {
     Us(SearchPage<DrugSearchResult>),
     Eu(SearchPage<EmaDrugSearchResult>),
+    Who(SearchPage<WhoPrequalificationSearchResult>),
     All {
         us: SearchPage<DrugSearchResult>,
         eu: SearchPage<EmaDrugSearchResult>,
+        who: SearchPage<WhoPrequalificationSearchResult>,
     },
 }
 
@@ -878,6 +918,9 @@ struct DrugSections {
     include_interactions: bool,
     include_civic: bool,
     include_approvals: bool,
+    requested_all: bool,
+    requested_safety: bool,
+    requested_shortage: bool,
 }
 
 fn parse_sections(sections: &[String]) -> Result<DrugSections, BioMcpError> {
@@ -899,14 +942,23 @@ fn parse_sections(sections: &[String]) -> Result<DrugSections, BioMcpError> {
                 out.include_label = true;
             }
             DRUG_SECTION_REGULATORY => out.include_regulatory = true,
-            DRUG_SECTION_SAFETY => out.include_safety = true,
-            DRUG_SECTION_SHORTAGE => out.include_shortage = true,
+            DRUG_SECTION_SAFETY => {
+                out.include_safety = true;
+                out.requested_safety = true;
+            }
+            DRUG_SECTION_SHORTAGE => {
+                out.include_shortage = true;
+                out.requested_shortage = true;
+            }
             DRUG_SECTION_TARGETS => out.include_targets = true,
             DRUG_SECTION_INDICATIONS => out.include_indications = true,
             DRUG_SECTION_INTERACTIONS => out.include_interactions = true,
             DRUG_SECTION_CIVIC => out.include_civic = true,
             DRUG_SECTION_APPROVALS => out.include_approvals = true,
-            DRUG_SECTION_ALL => include_all = true,
+            DRUG_SECTION_ALL => {
+                include_all = true;
+                out.requested_all = true;
+            }
             _ => {
                 return Err(BioMcpError::InvalidArgument(format!(
                     "Unknown section \"{section}\" for drug. Available: {}",
@@ -2474,6 +2526,10 @@ fn build_ema_identity(requested_name: &str, drug: &Drug) -> EmaDrugIdentity {
     EmaDrugIdentity::with_aliases(requested_name, Some(&drug.name), &drug.brand_names)
 }
 
+fn build_who_identity(requested_name: &str, drug: &Drug) -> WhoPqIdentity {
+    WhoPqIdentity::with_aliases(requested_name, Some(&drug.name), &drug.brand_names)
+}
+
 async fn populate_ema_sections(
     drug: &mut Drug,
     requested_name: &str,
@@ -2512,8 +2568,25 @@ async fn populate_ema_sections(
     Ok(())
 }
 
+async fn populate_who_sections(
+    drug: &mut Drug,
+    requested_name: &str,
+    section_flags: &DrugSections,
+) -> Result<(), BioMcpError> {
+    if !section_flags.include_regulatory {
+        drug.who_prequalification = None;
+        return Ok(());
+    }
+
+    let client = WhoPqClient::ready(WhoPqSyncMode::Auto).await?;
+    let identity = build_who_identity(requested_name, drug);
+    drug.who_prequalification = Some(client.regulatory(&identity)?);
+    Ok(())
+}
+
 fn validate_region_usage(
     section_flags: &DrugSections,
+    region: DrugRegion,
     region_explicit: bool,
 ) -> Result<(), BioMcpError> {
     if !region_explicit {
@@ -2532,6 +2605,15 @@ fn validate_region_usage(
     {
         return Err(BioMcpError::InvalidArgument(
             "--region can only be used with regulatory, safety, shortage, or all.".into(),
+        ));
+    }
+
+    if matches!(region, DrugRegion::Who)
+        && (section_flags.requested_safety || section_flags.requested_shortage)
+        && !section_flags.requested_all
+    {
+        return Err(BioMcpError::InvalidArgument(
+            "WHO regional data currently supports regulatory only; use --region us|eu for safety or shortage, or use --region who with regulatory/all.".into(),
         ));
     }
 
@@ -2555,7 +2637,7 @@ pub async fn get_with_region(
     raw_label: bool,
 ) -> Result<Drug, BioMcpError> {
     let section_flags = parse_sections(sections)?;
-    validate_region_usage(&section_flags, region_explicit)?;
+    validate_region_usage(&section_flags, region, region_explicit)?;
     validate_raw_usage(&section_flags, raw_label)?;
 
     let section_only = is_section_only_requested(sections);
@@ -2602,6 +2684,12 @@ pub async fn get_with_region(
         resolved.drug.ema_shortage = None;
     }
 
+    if region.includes_who() {
+        populate_who_sections(&mut resolved.drug, name, &section_flags).await?;
+    } else {
+        resolved.drug.who_prequalification = None;
+    }
+
     Ok(resolved.drug)
 }
 
@@ -2630,13 +2718,23 @@ pub async fn search_name_query_with_region(
         ..Default::default()
     };
 
-    let eu_identity = match try_resolve_drug_identity(query).await {
-        Some(drug) => build_ema_identity(query, &drug),
+    let resolved_identity = try_resolve_drug_identity(query).await;
+    let eu_identity = match resolved_identity.as_ref() {
+        Some(drug) => build_ema_identity(query, drug),
         None => EmaDrugIdentity::new(query),
+    };
+    let who_identity = match resolved_identity.as_ref() {
+        Some(drug) => build_who_identity(query, drug),
+        None => WhoPqIdentity::new(query),
     };
 
     let eu_client = if region.includes_eu() {
         Some(EmaClient::ready(EmaSyncMode::Auto).await?)
+    } else {
+        None
+    };
+    let who_client = if region.includes_who() {
+        Some(WhoPqClient::ready(WhoPqSyncMode::Auto).await?)
     } else {
         None
     };
@@ -2651,14 +2749,133 @@ pub async fn search_name_query_with_region(
                 .expect("EU client should exist for EU region")
                 .search_medicines(&eu_identity, limit, offset)?,
         )),
+        DrugRegion::Who => Ok(DrugSearchPageWithRegion::Who(
+            who_client
+                .as_ref()
+                .expect("WHO client should exist for WHO region")
+                .search(&who_identity, limit, offset)?,
+        )),
         DrugRegion::All => Ok(DrugSearchPageWithRegion::All {
             us: search_page(&filters, limit, offset).await?,
             eu: eu_client
                 .as_ref()
                 .expect("EU client should exist for all region")
                 .search_medicines(&eu_identity, limit, offset)?,
+            who: who_client
+                .as_ref()
+                .expect("WHO client should exist for all region")
+                .search(&who_identity, limit, offset)?,
         }),
     }
+}
+
+async fn search_structured_who_page(
+    filters: &DrugSearchFilters,
+    limit: usize,
+    offset: usize,
+) -> Result<SearchPage<WhoPrequalificationSearchResult>, BioMcpError> {
+    let who_rows = WhoPqClient::ready(WhoPqSyncMode::Auto).await?.read_rows()?;
+    search_structured_who_page_with(
+        filters,
+        limit,
+        offset,
+        |filters, page_limit, page_offset| {
+            let filters = filters.clone();
+            async move { search_page(&filters, page_limit, page_offset).await }
+        },
+        |name| crate::sources::who_pq::filter_regulatory_rows(&who_rows, &WhoPqIdentity::new(name)),
+    )
+    .await
+}
+
+async fn search_structured_who_page_with<F, Fut, M>(
+    filters: &DrugSearchFilters,
+    limit: usize,
+    offset: usize,
+    mut fetch_page: F,
+    mut regulatory_rows: M,
+) -> Result<SearchPage<WhoPrequalificationSearchResult>, BioMcpError>
+where
+    F: FnMut(&DrugSearchFilters, usize, usize) -> Fut,
+    Fut: Future<Output = Result<SearchPage<DrugSearchResult>, BioMcpError>>,
+    M: FnMut(&str) -> Vec<WhoPrequalificationEntry>,
+{
+    const MAX_SEARCH_LIMIT: usize = 50;
+    if limit == 0 || limit > MAX_SEARCH_LIMIT {
+        return Err(BioMcpError::InvalidArgument(format!(
+            "--limit must be between 1 and {MAX_SEARCH_LIMIT}"
+        )));
+    }
+
+    let mut expanded = Vec::new();
+    let mut seen_refs = HashSet::new();
+    let mut mychem_offset = 0usize;
+    let page_size = MAX_SEARCH_LIMIT;
+
+    loop {
+        let page = fetch_page(filters, page_size, mychem_offset).await?;
+        for candidate in &page.results {
+            for row in regulatory_rows(&candidate.name) {
+                if seen_refs.insert(row.who_reference_number.clone()) {
+                    expanded.push(WhoPrequalificationSearchResult {
+                        inn: row.inn,
+                        therapeutic_area: row.therapeutic_area,
+                        dosage_form: row.dosage_form,
+                        applicant: row.applicant,
+                        who_reference_number: row.who_reference_number,
+                        listing_basis: row.listing_basis,
+                        prequalification_date: row.prequalification_date,
+                    });
+                }
+            }
+        }
+
+        let exhausted = page.results.is_empty()
+            || page
+                .total
+                .is_some_and(|total| mychem_offset + page_size >= total);
+        if exhausted {
+            let total = expanded.len();
+            let results = expanded.into_iter().skip(offset).take(limit).collect();
+            return Ok(SearchPage::offset(results, Some(total)));
+        }
+
+        if expanded.len() > offset + limit {
+            let results = expanded.into_iter().skip(offset).take(limit).collect();
+            return Ok(SearchPage::offset(results, None));
+        }
+
+        mychem_offset += page_size;
+    }
+}
+
+pub async fn search_page_with_region(
+    filters: &DrugSearchFilters,
+    limit: usize,
+    offset: usize,
+    region: DrugRegion,
+) -> Result<DrugSearchPageWithRegion, BioMcpError> {
+    if filters.has_structured_filters() {
+        return match region {
+            DrugRegion::Us => Ok(DrugSearchPageWithRegion::Us(
+                search_page(filters, limit, offset).await?,
+            )),
+            DrugRegion::Who => Ok(DrugSearchPageWithRegion::Who(
+                search_structured_who_page(filters, limit, offset).await?,
+            )),
+            DrugRegion::Eu | DrugRegion::All => Err(BioMcpError::InvalidArgument(
+                "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification.".into(),
+            )),
+        };
+    }
+
+    search_name_query_with_region(
+        filters.query.as_deref().unwrap_or_default(),
+        limit,
+        offset,
+        region,
+    )
+    .await
 }
 
 pub async fn get(name: &str, sections: &[String]) -> Result<Drug, BioMcpError> {
@@ -3128,7 +3345,7 @@ mod tests {
     #[test]
     fn validate_region_usage_rejects_approvals_with_explicit_region() {
         let flags = parse_sections(&["approvals".to_string()]).unwrap();
-        let err = validate_region_usage(&flags, true).unwrap_err();
+        let err = validate_region_usage(&flags, DrugRegion::Us, true).unwrap_err();
         assert!(matches!(err, BioMcpError::InvalidArgument(_)));
         assert!(err.to_string().contains("approvals"));
     }
@@ -3136,9 +3353,134 @@ mod tests {
     #[test]
     fn validate_region_usage_rejects_explicit_region_without_regional_sections() {
         let flags = parse_sections(&["targets".to_string()]).unwrap();
-        let err = validate_region_usage(&flags, true).unwrap_err();
+        let err = validate_region_usage(&flags, DrugRegion::Us, true).unwrap_err();
         assert!(matches!(err, BioMcpError::InvalidArgument(_)));
         assert!(err.to_string().contains("--region can only be used"));
+    }
+
+    #[test]
+    fn validate_region_usage_rejects_who_safety_only_requests() {
+        let flags = parse_sections(&["safety".to_string()]).unwrap();
+        let err = validate_region_usage(&flags, DrugRegion::Who, true).unwrap_err();
+        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
+        assert!(
+            err.to_string()
+                .contains("WHO regional data currently supports regulatory only")
+        );
+    }
+
+    #[test]
+    fn validate_region_usage_rejects_who_shortage_only_requests() {
+        let flags = parse_sections(&["shortage".to_string()]).unwrap();
+        let err = validate_region_usage(&flags, DrugRegion::Who, true).unwrap_err();
+        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
+        assert!(
+            err.to_string()
+                .contains("WHO regional data currently supports regulatory only")
+        );
+    }
+
+    #[test]
+    fn validate_region_usage_allows_who_all_requests() {
+        let flags = parse_sections(&["all".to_string()]).unwrap();
+        validate_region_usage(&flags, DrugRegion::Who, true).expect("who all should be valid");
+    }
+
+    fn mychem_row(name: &str) -> DrugSearchResult {
+        DrugSearchResult {
+            name: name.to_string(),
+            drugbank_id: None,
+            drug_type: None,
+            mechanism: None,
+            target: None,
+        }
+    }
+
+    fn who_row(reference: &str, inn: &str) -> WhoPrequalificationEntry {
+        WhoPrequalificationEntry {
+            who_reference_number: reference.to_string(),
+            inn: inn.to_string(),
+            presentation: format!("{inn} Tablet 100mg"),
+            dosage_form: "Tablet".to_string(),
+            product_type: "Finished Pharmaceutical Product".to_string(),
+            therapeutic_area: "Malaria".to_string(),
+            applicant: "Example Applicant".to_string(),
+            listing_basis: "Prequalification - Abridged".to_string(),
+            alternative_listing_basis: None,
+            prequalification_date: Some("2024-01-01".to_string()),
+        }
+    }
+
+    #[tokio::test]
+    async fn structured_who_search_stops_after_one_extra_match_and_reports_unknown_total() {
+        let filters = DrugSearchFilters {
+            indication: Some("malaria".into()),
+            ..Default::default()
+        };
+        let fetch_count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let fetch_count_for_closure = fetch_count.clone();
+
+        let page = search_structured_who_page_with(
+            &filters,
+            2,
+            0,
+            move |_, _, page_offset| {
+                let fetch_count = fetch_count_for_closure.clone();
+                async move {
+                    fetch_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                    match page_offset {
+                        0 => Ok(SearchPage::offset(
+                            vec![mychem_row("candidate-a"), mychem_row("candidate-b")],
+                            Some(100),
+                        )),
+                        _ => Ok(SearchPage::offset(Vec::new(), Some(100))),
+                    }
+                }
+            },
+            |name| match name {
+                "candidate-a" => vec![who_row("W1", "Artemether"), who_row("W2", "Lumefantrine")],
+                "candidate-b" => vec![who_row("W3", "Artesunate")],
+                _ => Vec::new(),
+            },
+        )
+        .await
+        .expect("structured WHO search");
+
+        assert_eq!(fetch_count.load(std::sync::atomic::Ordering::SeqCst), 1);
+        assert_eq!(page.total, None);
+        assert_eq!(page.results.len(), 2);
+        assert_eq!(page.results[0].who_reference_number, "W1");
+        assert_eq!(page.results[1].who_reference_number, "W2");
+    }
+
+    #[tokio::test]
+    async fn structured_who_search_reports_exact_total_when_mychem_is_exhausted() {
+        let filters = DrugSearchFilters {
+            indication: Some("malaria".into()),
+            ..Default::default()
+        };
+
+        let page = search_structured_who_page_with(
+            &filters,
+            5,
+            0,
+            |_, _, page_offset| async move {
+                match page_offset {
+                    0 => Ok(SearchPage::offset(vec![mychem_row("candidate-a")], Some(1))),
+                    _ => Ok(SearchPage::offset(Vec::new(), Some(1))),
+                }
+            },
+            |name| match name {
+                "candidate-a" => vec![who_row("W1", "Artemether/Lumefantrine")],
+                _ => Vec::new(),
+            },
+        )
+        .await
+        .expect("structured WHO search");
+
+        assert_eq!(page.total, Some(1));
+        assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].who_reference_number, "W1");
     }
 
     #[test]

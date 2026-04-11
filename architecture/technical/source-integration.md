@@ -53,20 +53,24 @@ Not every file-backed dependency participates in the same runtime lifecycle.
 
 ### Local runtime sources
 
-EMA is the canonical local runtime source.
+EMA and WHO Prequalification are the canonical local runtime drug sources.
 
 - Runtime resolution is owned by the source module, not hard-coded in docs.
 - EMA resolves `BIOMCP_EMA_DIR` first, then the platform data directory.
-- Full `biomcp health` includes the EMA local-data readiness row.
-- `biomcp health --apis-only` excludes that row because local EMA data is not
-  an upstream API.
-- The row status contract is `configured`, `available (default path)`,
+- WHO resolves `BIOMCP_WHO_DIR` first, then the platform data directory.
+- Full `biomcp health` includes the EMA and WHO local-data readiness rows.
+- `biomcp health --apis-only` excludes those rows because local EMA/WHO data
+  is not an upstream API.
+- The row status contract is `configured`, `configured (stale)`,
+  `available (default path)`, `available (default path, stale)`,
   `not configured`, and `error (missing: ...)`.
 - Operator-facing setup details live in `docs/user-guide/drug.md`, including
-  the `EMA local data setup` section and required batch files.
+  the `EMA local data setup` and `WHO Prequalification local data setup`
+  sections and required local files.
 
 This keeps local runtime readiness grounded in `src/cli/health.rs` and
-`src/sources/ema.rs` while leaving operator setup details in the user guide.
+`src/sources/ema.rs` / `src/sources/who_pq.rs` while leaving operator setup
+details in the user guide.
 
 ### File-backed non-runtime assets
 
@@ -115,7 +119,7 @@ contract is:
 - The base grammar remains `get <entity> <id> [section...]`.
 - Entity-specific modifiers are named options that sit beside the positional
   `sections` list; they are not new positional arguments.
-- The canonical example is `get drug <name> ... --region <us|eu|all>`.
+- The canonical example is `get drug <name> ... --region <us|eu|who|all>`.
 - This modifier pattern is distinct from unrelated search filters that happen
   to reuse the same flag name on other entities.
 
@@ -134,6 +138,8 @@ The current drug contract is the model:
 
 - `--region` only changes the data plane for `regulatory`, `safety`,
   `shortage`, or `all`
+- `--region who` is valid for `regulatory` and `all`, but not for `safety` or
+  `shortage`
 - `approvals` remains U.S.-only
 - invalid flag/section combinations fail fast before data fetches
 

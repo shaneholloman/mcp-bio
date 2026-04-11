@@ -52,7 +52,8 @@ subset. That sanitized description keeps the catalog-only
 `study download --list` form, but it must not advertise
 `study download <study_id>` or the combined CLI syntax
 `study download [--list] [<study_id>]`. CLI-only packaging or mutating
-commands such as `skill install`, `ema sync`, `update`, and `uninstall`
+commands such as `skill install`, `ema sync`, `who sync`, `update`, and
+`uninstall`
 must not appear in the MCP tool description. CLI-only cache commands such as
 `cache path`, `cache stats`, `cache clean`, and `cache clear` reveal workstation-local paths and filesystem context, so they also stay out of the MCP tool description.
 
@@ -68,6 +69,7 @@ assert "read-only biomedical MCP tool" in build
 assert "BLOCKED_MCP_DESCRIPTION_TERMS" in build
 assert "`skill install`" in build
 assert "`ema sync`" in build
+assert "`who sync`" in build
 assert "`update [--check]`" in build
 assert "`uninstall`" in build
 assert "study download --list" in build

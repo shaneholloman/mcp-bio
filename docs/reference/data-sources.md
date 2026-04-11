@@ -26,6 +26,7 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 | Article full-text resolution | PMC OA + NCBI ID Converter | `https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi`, `https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles` | No | Full-text and PMID/PMCID/DOI bridging |
 | Drug | MyChem.info | `https://mychem.info/v1` | No | Drug metadata, targets, synonyms, and default U.S. search/get normalization |
 | Drug EU regional context | EMA website JSON batch (local human-medicines download) | `https://www.ema.europa.eu/en/about-us/about-website/download-website-data-json-data-format` | No | Supports `search/get drug --region eu|all` for regulatory, safety, and shortage; auto-downloads into `BIOMCP_EMA_DIR` or the platform data directory on first use and `biomcp ema sync` force-refreshes the local files |
+| Drug WHO regional context | WHO finished-pharmaceutical-products CSV (local download) | `https://extranet.who.int/prequal/medicines/prequalified/finished-pharmaceutical-products/export?page&_format=csv` | No | Supports `search/get drug --region who|all` for regulatory plus WHO-filtered structured `search drug --region who`; auto-downloads into `BIOMCP_WHO_DIR` or the platform data directory on first use and `biomcp who sync` force-refreshes the local file |
 | Drug section enrichments | ChEMBL + OpenTargets + CIViC | `https://www.ebi.ac.uk/chembl/api/data`, `https://api.platform.opentargets.org/api/v4/graphql`, `https://civicdb.org/api` | No | Generic targets/mechanisms from ChEMBL, generic target/indication context from Open Targets, and additive CIViC variant-target annotations for drug target output |
 | Disease normalization | MyDisease.info | `https://mydisease.info/v1` | No | MONDO-oriented disease normalization |
 | Discover structured concepts | OLS4 | `https://www.ebi.ac.uk/ols4` | No | Free-text ontology search for `biomcp discover`; OLS4 is the required backbone |
@@ -142,7 +143,7 @@ Users should always be able to trace:
 When debugging source discrepancies:
 
 1. Run `biomcp health --apis-only` to inspect upstream/API connectivity plus any excluded key-gated sources
-2. Run `biomcp health` to inspect local readiness rows such as EMA local data and cache dir
+2. Run `biomcp health` to inspect local readiness rows such as EMA local data, WHO Prequalification local data, and cache dir
 3. Treat `biomcp health` as an inspection surface: it does not currently exit non-zero on partial upstream failures
 4. Run `./scripts/contract-smoke.sh --fast` for representative live probes, or `./scripts/contract-smoke.sh` for the fuller contract set
 5. Retry with `--no-cache`

@@ -25,7 +25,7 @@ const EMA_API: &str = "ema";
 const EMA_REPORT_BASE: &str = "https://www.ema.europa.eu/en/documents/report";
 const EMA_REPORT_BASE_ENV: &str = "BIOMCP_EMA_REPORT_BASE";
 const EMA_MAX_BODY_BYTES: usize = 32 * 1024 * 1024;
-const EMA_STALE_AFTER: Duration = Duration::from_secs(72 * 60 * 60);
+pub(crate) const EMA_STALE_AFTER: Duration = Duration::from_secs(72 * 60 * 60);
 const EMA_SIZE_HINT: &str = "~11 MB";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

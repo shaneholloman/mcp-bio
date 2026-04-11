@@ -1,0 +1,851 @@
+use std::collections::{HashMap, HashSet};
+use std::fs::File;
+use std::io::Write as _;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+use std::time::{Duration, SystemTime};
+
+use http_cache_reqwest::CacheMode;
+use regex::Regex;
+
+use crate::entities::SearchPage;
+use crate::entities::drug::{WhoPrequalificationEntry, WhoPrequalificationSearchResult};
+use crate::error::BioMcpError;
+
+const SOURCE_NAME: &str = "WHO Prequalification";
+const WHO_PQ_API: &str = "who-prequalification";
+pub(crate) const WHO_PQ_EXPORT_URL: &str = "https://extranet.who.int/prequal/medicines/prequalified/finished-pharmaceutical-products/export?page&_format=csv";
+pub(crate) const WHO_PQ_EXPORT_URL_ENV: &str = "BIOMCP_WHO_PQ_URL";
+pub(crate) const WHO_PQ_CSV_FILE: &str = "who_pq.csv";
+pub(crate) const WHO_PQ_REQUIRED_FILES: &[&str] = &[WHO_PQ_CSV_FILE];
+pub(crate) const WHO_PQ_STALE_AFTER: Duration = Duration::from_secs(72 * 60 * 60);
+pub(crate) const WHO_PQ_SIZE_HINT: &str = "~134 KB";
+const WHO_PQ_MAX_BODY_BYTES: usize = 4 * 1024 * 1024;
+
+const REQUIRED_HEADERS: &[&str] = &[
+    "WHO REFERENCE NUMBER",
+    "INN, DOSAGE FORM AND STRENGTH",
+    "PRODUCT TYPE",
+    "THERAPEUTIC AREA",
+    "APPLICANT",
+    "DOSAGE FORM",
+    "BASIS OF LISTING",
+    "BASIS OF ALTERNATIVE LISTING",
+    "DATE OF PREQUALIFICATION",
+];
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum WhoPqSyncMode {
+    Auto,
+    Force,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct WhoPqIdentity {
+    terms: Vec<String>,
+}
+
+impl WhoPqIdentity {
+    pub(crate) fn new(primary: &str) -> Self {
+        Self::from_terms(vec![primary.to_string()])
+    }
+
+    pub(crate) fn with_aliases(primary: &str, canonical: Option<&str>, aliases: &[String]) -> Self {
+        let mut terms = vec![primary.to_string()];
+        if let Some(canonical) = canonical {
+            terms.push(canonical.to_string());
+        }
+        terms.extend(aliases.iter().cloned());
+        Self::from_terms(terms)
+    }
+
+    fn from_terms(terms: Vec<String>) -> Self {
+        let mut out = Vec::new();
+        let mut seen = HashSet::new();
+        for term in terms {
+            let Some(term) = normalize_match_key(&term) else {
+                continue;
+            };
+            if seen.insert(term.clone()) {
+                out.push(term);
+            }
+        }
+        Self { terms: out }
+    }
+
+    fn term_set(&self) -> HashSet<String> {
+        self.terms.iter().cloned().collect()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct WhoPqClient {
+    root: PathBuf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SyncState {
+    Fresh,
+    Missing,
+    Stale,
+}
+
+#[derive(Debug, Default)]
+struct RawWhoPqRow {
+    who_reference_number: String,
+    presentation: String,
+    product_type: String,
+    therapeutic_area: String,
+    applicant: String,
+    dosage_form: String,
+    listing_basis: String,
+    alternative_listing_basis: String,
+    prequalification_date: String,
+}
+
+impl WhoPqClient {
+    #[allow(dead_code)]
+    pub(crate) fn new() -> Self {
+        Self {
+            root: resolve_who_pq_root(),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn from_root(root: impl Into<PathBuf>) -> Self {
+        Self { root: root.into() }
+    }
+
+    pub(crate) async fn ready(mode: WhoPqSyncMode) -> Result<Self, BioMcpError> {
+        let root = resolve_who_pq_root();
+        sync_who_pq_root(&root, mode).await?;
+        Ok(Self { root })
+    }
+
+    pub(crate) async fn sync(mode: WhoPqSyncMode) -> Result<(), BioMcpError> {
+        let root = resolve_who_pq_root();
+        sync_who_pq_root(&root, mode).await
+    }
+
+    pub(crate) fn regulatory(
+        &self,
+        identity: &WhoPqIdentity,
+    ) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError> {
+        let rows = self.read_rows()?;
+        Ok(filter_regulatory_rows(&rows, identity))
+    }
+
+    pub(crate) fn search(
+        &self,
+        identity: &WhoPqIdentity,
+        limit: usize,
+        offset: usize,
+    ) -> Result<SearchPage<WhoPrequalificationSearchResult>, BioMcpError> {
+        const MAX_SEARCH_LIMIT: usize = 50;
+        if limit == 0 || limit > MAX_SEARCH_LIMIT {
+            return Err(BioMcpError::InvalidArgument(format!(
+                "--limit must be between 1 and {MAX_SEARCH_LIMIT}"
+            )));
+        }
+
+        let rows = self.regulatory(identity)?;
+        let total = rows.len();
+        let results = rows
+            .into_iter()
+            .skip(offset)
+            .take(limit)
+            .map(|row| WhoPrequalificationSearchResult {
+                inn: row.inn,
+                therapeutic_area: row.therapeutic_area,
+                dosage_form: row.dosage_form,
+                applicant: row.applicant,
+                who_reference_number: row.who_reference_number,
+                listing_basis: row.listing_basis,
+                prequalification_date: row.prequalification_date,
+            })
+            .collect();
+        Ok(SearchPage::offset(results, Some(total)))
+    }
+
+    pub(crate) fn read_rows(&self) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError> {
+        let path = self.root.join(WHO_PQ_CSV_FILE);
+        let payload =
+            std::fs::read_to_string(&path).map_err(|err| BioMcpError::SourceUnavailable {
+                source_name: SOURCE_NAME.to_string(),
+                reason: format!(
+                    "Could not read WHO Prequalification CSV at {}: {err}",
+                    path.display()
+                ),
+                suggestion: format!(
+                    "Run `biomcp who sync`, place {} in {}, or set BIOMCP_WHO_DIR.",
+                    WHO_PQ_CSV_FILE,
+                    self.root.display()
+                ),
+            })?;
+        parse_who_pq_csv(&payload)
+    }
+}
+
+fn header_map(record: &csv::StringRecord) -> HashMap<String, usize> {
+    record
+        .iter()
+        .enumerate()
+        .map(|(idx, value)| (normalize_header(value), idx))
+        .collect()
+}
+
+fn normalize_header(value: &str) -> String {
+    value
+        .trim_matches('\u{feff}')
+        .trim()
+        .to_ascii_uppercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn clean_text(value: &str) -> Option<String> {
+    let normalized = value
+        .split_whitespace()
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
+    (!normalized.is_empty()).then_some(normalized)
+}
+
+fn clean_optional(value: &str) -> Option<String> {
+    clean_text(value)
+}
+
+fn clean_csv_field(
+    record: &csv::StringRecord,
+    headers: &HashMap<String, usize>,
+    header: &str,
+) -> String {
+    headers
+        .get(header)
+        .and_then(|idx| record.get(*idx))
+        .and_then(clean_text)
+        .unwrap_or_default()
+}
+
+fn parse_who_pq_csv(payload: &str) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError> {
+    let mut reader = csv::ReaderBuilder::new()
+        .flexible(true)
+        .from_reader(payload.as_bytes());
+    let headers = reader.headers().map_err(|err| BioMcpError::Api {
+        api: WHO_PQ_API.to_string(),
+        message: format!("Failed to read WHO Prequalification headers: {err}"),
+    })?;
+    let header_map = header_map(headers);
+    for required in REQUIRED_HEADERS {
+        if !header_map.contains_key(*required) {
+            return Err(BioMcpError::Api {
+                api: WHO_PQ_API.to_string(),
+                message: format!("WHO Prequalification CSV is missing required column: {required}"),
+            });
+        }
+    }
+
+    let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    for record in reader.records() {
+        let record = record.map_err(|err| BioMcpError::Api {
+            api: WHO_PQ_API.to_string(),
+            message: format!("Failed to parse WHO Prequalification CSV: {err}"),
+        })?;
+
+        let row = RawWhoPqRow {
+            who_reference_number: clean_csv_field(&record, &header_map, "WHO REFERENCE NUMBER"),
+            presentation: clean_csv_field(&record, &header_map, "INN, DOSAGE FORM AND STRENGTH"),
+            product_type: clean_csv_field(&record, &header_map, "PRODUCT TYPE"),
+            therapeutic_area: clean_csv_field(&record, &header_map, "THERAPEUTIC AREA"),
+            applicant: clean_csv_field(&record, &header_map, "APPLICANT"),
+            dosage_form: clean_csv_field(&record, &header_map, "DOSAGE FORM"),
+            listing_basis: clean_csv_field(&record, &header_map, "BASIS OF LISTING"),
+            alternative_listing_basis: clean_csv_field(
+                &record,
+                &header_map,
+                "BASIS OF ALTERNATIVE LISTING",
+            ),
+            prequalification_date: clean_csv_field(
+                &record,
+                &header_map,
+                "DATE OF PREQUALIFICATION",
+            ),
+        };
+
+        if row.who_reference_number.is_empty()
+            || row.presentation.is_empty()
+            || row.product_type.is_empty()
+            || row.therapeutic_area.is_empty()
+            || row.applicant.is_empty()
+            || row.dosage_form.is_empty()
+            || row.listing_basis.is_empty()
+        {
+            continue;
+        }
+        if !seen.insert(row.who_reference_number.clone()) {
+            continue;
+        }
+
+        let inn = derive_inn(&row.presentation, &row.dosage_form);
+        out.push(WhoPrequalificationEntry {
+            who_reference_number: row.who_reference_number,
+            inn,
+            presentation: row.presentation,
+            dosage_form: row.dosage_form,
+            product_type: row.product_type,
+            therapeutic_area: row.therapeutic_area,
+            applicant: row.applicant,
+            listing_basis: row.listing_basis,
+            alternative_listing_basis: clean_optional(&row.alternative_listing_basis),
+            prequalification_date: normalize_who_date(&row.prequalification_date),
+        });
+    }
+
+    Ok(out)
+}
+
+fn derive_inn(presentation: &str, dosage_form: &str) -> String {
+    let presentation = clean_text(presentation).unwrap_or_default();
+    let dosage_form = clean_text(dosage_form).unwrap_or_default();
+    if presentation.is_empty() {
+        return presentation;
+    }
+    if dosage_form.is_empty() {
+        return presentation;
+    }
+
+    let presentation_lower = presentation.to_ascii_lowercase();
+    let dosage_lower = dosage_form.to_ascii_lowercase();
+    if let Some(idx) = presentation_lower.find(&dosage_lower) {
+        let prefix = presentation[..idx]
+            .trim()
+            .trim_end_matches([',', '+', '/', ';', '-'])
+            .trim();
+        if !prefix.is_empty() {
+            return prefix.to_string();
+        }
+    }
+
+    presentation
+}
+
+fn normalize_who_date(value: &str) -> Option<String> {
+    let value = clean_text(value)?;
+    let parts = value
+        .replace(',', " ")
+        .split_whitespace()
+        .map(str::to_string)
+        .collect::<Vec<_>>();
+    if parts.len() != 3 {
+        return None;
+    }
+    let day = parts[0].parse::<u32>().ok()?;
+    let month = match parts[1].to_ascii_lowercase().as_str() {
+        "jan" => 1,
+        "feb" => 2,
+        "mar" => 3,
+        "apr" => 4,
+        "may" => 5,
+        "jun" => 6,
+        "jul" => 7,
+        "aug" => 8,
+        "sep" => 9,
+        "oct" => 10,
+        "nov" => 11,
+        "dec" => 12,
+        _ => return None,
+    };
+    let year = parts[2].parse::<u32>().ok()?;
+    Some(format!("{year:04}-{month:02}-{day:02}"))
+}
+
+fn normalize_match_key(value: &str) -> Option<String> {
+    let mut value = clean_text(value)?.to_ascii_lowercase();
+    value = parenthetical_salt_regex()
+        .replace_all(&value, " ")
+        .into_owned();
+    value = punctuation_regex().replace_all(&value, " ").into_owned();
+    value = slash_plus_regex().replace_all(&value, " + ").into_owned();
+    let normalized = value
+        .split(" + ")
+        .filter_map(normalize_match_segment)
+        .collect::<Vec<_>>();
+    (!normalized.is_empty()).then(|| normalized.join(" + "))
+}
+
+fn normalize_match_segment(value: &str) -> Option<String> {
+    let mut value = clean_text(value)?.to_ascii_lowercase();
+    for suffix in salt_suffixes() {
+        if value == *suffix {
+            return None;
+        }
+        if let Some(stripped) = value.strip_suffix(&format!(" {suffix}")) {
+            value = stripped.trim().to_string();
+        }
+    }
+    clean_text(&value)
+}
+
+fn salt_suffixes() -> &'static [&'static str] {
+    &[
+        "acetate",
+        "besylate",
+        "diphosphate",
+        "hydrochloride",
+        "maleate",
+        "mesylate",
+        "phosphate",
+        "sodium",
+        "sulfate",
+    ]
+}
+
+fn parenthetical_salt_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(r"\((acetate|besylate|diphosphate|hydrochloride|maleate|mesylate|phosphate|sodium|sulfate)\)")
+            .expect("regex should compile")
+    })
+}
+
+fn punctuation_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"[,;]").expect("regex should compile"))
+}
+
+fn slash_plus_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"\s*(/|\+| and )\s*").expect("regex should compile"))
+}
+
+fn contains_boundary_phrase(field: &str, term: &str) -> bool {
+    if field.is_empty() || term.is_empty() {
+        return false;
+    }
+
+    let field_bytes = field.as_bytes();
+    let mut search_from = 0usize;
+    while let Some(pos) = field[search_from..].find(term) {
+        let start = search_from + pos;
+        let end = start + term.len();
+        let before_ok = start == 0 || !field_bytes[start - 1].is_ascii_alphanumeric();
+        let after_ok = end == field_bytes.len() || !field_bytes[end].is_ascii_alphanumeric();
+        if before_ok && after_ok {
+            return true;
+        }
+        search_from = start + 1;
+    }
+    false
+}
+
+fn entry_match_keys(row: &WhoPrequalificationEntry) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    for value in [&row.inn, &row.presentation] {
+        if let Some(value) = normalize_match_key(value)
+            && seen.insert(value.clone())
+        {
+            out.push(value);
+        }
+    }
+    out
+}
+
+fn row_matches_identity(row: &WhoPrequalificationEntry, identity: &WhoPqIdentity) -> bool {
+    let terms = identity.term_set();
+    if terms.is_empty() {
+        return false;
+    }
+
+    let match_keys = entry_match_keys(row);
+    if match_keys.iter().any(|value| terms.contains(value)) {
+        return true;
+    }
+
+    match_keys.iter().any(|field| {
+        terms
+            .iter()
+            .any(|term| contains_boundary_phrase(field, term))
+    })
+}
+
+pub(crate) fn filter_regulatory_rows(
+    rows: &[WhoPrequalificationEntry],
+    identity: &WhoPqIdentity,
+) -> Vec<WhoPrequalificationEntry> {
+    rows.iter()
+        .filter(|row| row_matches_identity(row, identity))
+        .cloned()
+        .collect()
+}
+
+fn who_pq_export_url() -> String {
+    std::env::var(WHO_PQ_EXPORT_URL_ENV)
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| WHO_PQ_EXPORT_URL.to_string())
+}
+
+fn write_stderr_line(line: &str) -> Result<(), BioMcpError> {
+    let mut stderr = std::io::stderr().lock();
+    writeln!(stderr, "{line}")?;
+    Ok(())
+}
+
+fn has_readable_local_file(path: &Path) -> bool {
+    path.is_file() && File::open(path).is_ok()
+}
+
+fn touch_file(path: &Path) -> Result<(), BioMcpError> {
+    let file = std::fs::OpenOptions::new().write(true).open(path)?;
+    file.set_modified(SystemTime::now())?;
+    Ok(())
+}
+
+fn file_is_stale(path: &Path) -> bool {
+    let modified = path
+        .metadata()
+        .ok()
+        .and_then(|metadata| metadata.modified().ok());
+    modified
+        .and_then(|modified| SystemTime::now().duration_since(modified).ok())
+        .is_some_and(|age| age >= WHO_PQ_STALE_AFTER)
+}
+
+fn sync_state(root: &Path, mode: WhoPqSyncMode) -> SyncState {
+    if matches!(mode, WhoPqSyncMode::Force) {
+        return if has_readable_local_file(&root.join(WHO_PQ_CSV_FILE)) {
+            SyncState::Stale
+        } else {
+            SyncState::Missing
+        };
+    }
+    let path = root.join(WHO_PQ_CSV_FILE);
+    if !has_readable_local_file(&path) {
+        return SyncState::Missing;
+    }
+    if file_is_stale(&path) {
+        SyncState::Stale
+    } else {
+        SyncState::Fresh
+    }
+}
+
+fn sync_intro(state: SyncState, mode: WhoPqSyncMode) -> &'static str {
+    if matches!(mode, WhoPqSyncMode::Force) {
+        return "Refreshing";
+    }
+    match state {
+        SyncState::Fresh => "Checking",
+        SyncState::Missing => "Downloading",
+        SyncState::Stale => "Refreshing stale",
+    }
+}
+
+fn who_pq_sync_error(root: &Path, detail: impl Into<String>) -> BioMcpError {
+    BioMcpError::SourceUnavailable {
+        source_name: SOURCE_NAME.to_string(),
+        reason: format!(
+            "Could not prepare WHO Prequalification data under {}. {}",
+            root.display(),
+            detail.into()
+        ),
+        suggestion: format!(
+            "Retry with network access or run `biomcp who sync`. You can also preseed the WHO Prequalification CSV from {} into {} or set BIOMCP_WHO_DIR.",
+            who_pq_export_url(),
+            root.display()
+        ),
+    }
+}
+
+async fn sync_who_pq_root(root: &Path, mode: WhoPqSyncMode) -> Result<(), BioMcpError> {
+    let state = sync_state(root, mode);
+    if matches!(state, SyncState::Fresh) {
+        return Ok(());
+    }
+
+    tokio::fs::create_dir_all(root).await?;
+    write_stderr_line(&format!(
+        "{} WHO Prequalification data ({WHO_PQ_SIZE_HINT})...",
+        sync_intro(state, mode)
+    ))?;
+
+    let path = root.join(WHO_PQ_CSV_FILE);
+    if let Err(err) = sync_export(root, mode).await {
+        if has_readable_local_file(&path) {
+            write_stderr_line(&format!(
+                "Warning: WHO Prequalification refresh failed for {}: {err}. Using existing data.",
+                WHO_PQ_CSV_FILE
+            ))?;
+        } else {
+            return Err(who_pq_sync_error(root, err.to_string()));
+        }
+    }
+
+    let missing = who_pq_missing_files(root, WHO_PQ_REQUIRED_FILES);
+    if missing.is_empty() {
+        return Ok(());
+    }
+
+    Err(who_pq_sync_error(
+        root,
+        format!(
+            "Missing required WHO Prequalification file(s): {}",
+            missing.join(", ")
+        ),
+    ))
+}
+
+async fn sync_export(root: &Path, mode: WhoPqSyncMode) -> Result<(), BioMcpError> {
+    let client = crate::sources::shared_client()?;
+    let mut request = client
+        .get(who_pq_export_url())
+        .with_extension(CacheMode::NoStore);
+    if matches!(mode, WhoPqSyncMode::Force) {
+        request = request.header(reqwest::header::CACHE_CONTROL, "no-cache");
+    }
+    let response = request.send().await?;
+    let status = response.status();
+    let content_type = response
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .cloned();
+    let body =
+        crate::sources::read_limited_body_with_limit(response, WHO_PQ_API, WHO_PQ_MAX_BODY_BYTES)
+            .await?;
+
+    if !status.is_success() {
+        return Err(BioMcpError::Api {
+            api: WHO_PQ_API.to_string(),
+            message: format!(
+                "{}: HTTP {status}: {}",
+                WHO_PQ_CSV_FILE,
+                crate::sources::body_excerpt(&body)
+            ),
+        });
+    }
+
+    ensure_csv_content_type(content_type.as_ref(), &body)?;
+    let payload = std::str::from_utf8(&body).map_err(|source| BioMcpError::Api {
+        api: WHO_PQ_API.to_string(),
+        message: format!("WHO Prequalification CSV was not valid UTF-8: {source}"),
+    })?;
+    parse_who_pq_csv(payload)?;
+
+    let path = root.join(WHO_PQ_CSV_FILE);
+    if let Ok(existing) = tokio::fs::read(&path).await
+        && existing == body
+    {
+        touch_file(&path)?;
+        return Ok(());
+    }
+
+    crate::utils::download::write_atomic_bytes(&path, &body).await
+}
+
+fn ensure_csv_content_type(
+    header: Option<&reqwest::header::HeaderValue>,
+    body: &[u8],
+) -> Result<(), BioMcpError> {
+    let Some(header) = header else {
+        return Ok(());
+    };
+    let Ok(raw) = header.to_str() else {
+        return Ok(());
+    };
+    let media_type = raw
+        .split(';')
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .to_ascii_lowercase();
+    if matches!(media_type.as_str(), "text/html" | "application/xhtml+xml") {
+        return Err(BioMcpError::Api {
+            api: WHO_PQ_API.to_string(),
+            message: format!(
+                "Unexpected HTML response (content-type: {raw}): {}",
+                crate::sources::body_excerpt(body)
+            ),
+        });
+    }
+    Ok(())
+}
+
+pub(crate) fn who_pq_missing_files<'a>(root: &Path, files: &[&'a str]) -> Vec<&'a str> {
+    files
+        .iter()
+        .filter(|file| !root.join(file).is_file())
+        .copied()
+        .collect()
+}
+
+pub(crate) fn resolve_who_pq_root() -> PathBuf {
+    if let Some(path) = std::env::var("BIOMCP_WHO_DIR")
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+    {
+        return PathBuf::from(path);
+    }
+
+    match dirs::data_dir() {
+        Some(path) => path.join("biomcp").join("who-pq"),
+        None => std::env::temp_dir().join("biomcp").join("who-pq"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::{Path, PathBuf};
+    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+    use super::{
+        WHO_PQ_CSV_FILE, WHO_PQ_REQUIRED_FILES, WhoPqIdentity, derive_inn, file_is_stale,
+        normalize_who_date, parse_who_pq_csv, row_matches_identity, who_pq_missing_files,
+    };
+    use crate::entities::drug::WhoPrequalificationEntry;
+
+    struct TempDirGuard {
+        path: PathBuf,
+    }
+
+    impl TempDirGuard {
+        fn new(label: &str) -> Self {
+            let stamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock should be after unix epoch")
+                .as_nanos();
+            let path = std::env::temp_dir().join(format!(
+                "biomcp-who-pq-source-test-{label}-{}-{stamp}",
+                std::process::id()
+            ));
+            std::fs::create_dir_all(&path).expect("temp dir should exist");
+            Self { path }
+        }
+
+        fn path(&self) -> &Path {
+            &self.path
+        }
+    }
+
+    impl Drop for TempDirGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    fn fixture_csv() -> String {
+        std::fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("spec")
+                .join("fixtures")
+                .join("who-pq")
+                .join(WHO_PQ_CSV_FILE),
+        )
+        .expect("WHO fixture should be readable")
+    }
+
+    #[test]
+    fn parse_who_pq_csv_requires_expected_headers() {
+        let err = parse_who_pq_csv("wrong,header\n1,2\n").expect_err("parse should fail");
+        assert!(err.to_string().contains("missing required column"));
+    }
+
+    #[test]
+    fn normalize_who_date_converts_to_iso() {
+        assert_eq!(
+            normalize_who_date("18  Dec,  2019").as_deref(),
+            Some("2019-12-18")
+        );
+        assert_eq!(normalize_who_date(""), None);
+    }
+
+    #[test]
+    fn derive_inn_removes_dosage_form_suffix_when_present() {
+        assert_eq!(
+            derive_inn(
+                "Trastuzumab Powder for concentrate for solution for infusion 150 mg",
+                "Powder for concentrate for solution for infusion"
+            ),
+            "Trastuzumab"
+        );
+    }
+
+    #[test]
+    fn row_matching_strips_salt_suffixes_from_match_key() {
+        let row = WhoPrequalificationEntry {
+            who_reference_number: "ANDA 077844 USFDA".to_string(),
+            inn: "Abacavir (sulfate)".to_string(),
+            presentation: "Abacavir (sulfate) Tablet 300mg".to_string(),
+            dosage_form: "Tablet".to_string(),
+            product_type: "Finished Pharmaceutical Product".to_string(),
+            therapeutic_area: "HIV/AIDS".to_string(),
+            applicant: "Aurobindo Pharma Ltd".to_string(),
+            listing_basis: "Alternative Listing".to_string(),
+            alternative_listing_basis: Some("USFDA - PEPFAR".to_string()),
+            prequalification_date: None,
+        };
+
+        assert!(row_matches_identity(&row, &WhoPqIdentity::new("abacavir")));
+    }
+
+    #[test]
+    fn row_matching_falls_back_to_full_presentation_for_combo_rows() {
+        let rows = parse_who_pq_csv(&fixture_csv()).expect("fixture should parse");
+        let combo = rows
+            .into_iter()
+            .find(|row| row.who_reference_number == "BT-ON017")
+            .expect("combo row should exist");
+
+        assert!(row_matches_identity(
+            &combo,
+            &WhoPqIdentity::new("trastuzumab")
+        ));
+    }
+
+    #[test]
+    fn parse_who_pq_csv_deduplicates_by_reference_number() {
+        let payload = format!(
+            "{csv}\n\"BT-ON001\",\"Trastuzumab Powder for concentrate for solution for infusion 150 mg\",\"Biotherapeutic Product\",\"Oncology\",\"Samsung Bioepis NL B.V.\",\"Powder for concentrate for solution for infusion\",\"Prequalification - Abridged\",,\"18  Dec,  2019\"\n",
+            csv = fixture_csv().trim_end()
+        );
+        let rows = parse_who_pq_csv(&payload).expect("duplicate payload should parse");
+        let count = rows
+            .iter()
+            .filter(|row| row.who_reference_number == "BT-ON001")
+            .count();
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn who_pq_missing_files_tracks_required_file_contract() {
+        let root = TempDirGuard::new("missing-files");
+        let missing = who_pq_missing_files(root.path(), WHO_PQ_REQUIRED_FILES);
+        assert_eq!(missing, vec![WHO_PQ_CSV_FILE]);
+    }
+
+    #[test]
+    fn file_is_stale_tracks_age_threshold() {
+        let root = TempDirGuard::new("stale");
+        let path = root.path().join(WHO_PQ_CSV_FILE);
+        std::fs::write(&path, "header\n").expect("fixture should write");
+        assert!(!file_is_stale(&path));
+
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .open(&path)
+            .expect("file should open");
+        file.set_modified(
+            SystemTime::now()
+                .checked_sub(Duration::from_secs(73 * 60 * 60))
+                .expect("stale time should be valid"),
+        )
+        .expect("mtime should update");
+
+        assert!(file_is_stale(&path));
+    }
+}

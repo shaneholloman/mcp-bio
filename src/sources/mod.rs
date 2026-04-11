@@ -65,6 +65,7 @@ pub(crate) mod semantic_scholar;
 pub(crate) mod string;
 pub(crate) mod umls;
 pub(crate) mod uniprot;
+pub(crate) mod who_pq;
 pub(crate) mod wikipathways;
 
 const ERROR_BODY_MAX_BYTES: usize = 2048;

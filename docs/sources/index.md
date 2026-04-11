@@ -1,6 +1,6 @@
 ---
 title: "Biomedical Data Sources for AI Agents | BioMCP"
-description: "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+description: "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
 ---
 
 # Biomedical Data Sources for AI Agents
@@ -28,6 +28,7 @@ Use these pages when you already know the provider you trust, the keyword you ar
 | OncoKB | Oncology actionability tiers and treatment implications for actionable variants | [OncoKB](oncokb.md) |
 | cBioPortal | Cancer cohort frequencies and local study analytics workflows | [cBioPortal](cbioportal.md) |
 | EMA | EU regulatory, safety, and shortage context for medicines | [EMA](ema.md) |
+| WHO Prequalification | WHO-backed regulatory context and global medicine access checks | [WHO Prequalification](who-prequalification.md) |
 | KEGG | KEGG pathway IDs, summary cards, and pathway genes | [KEGG](kegg.md) |
 | PharmGKB / CPIC | Pharmacogenomic recommendations, frequencies, and clinical annotations | [PharmGKB / CPIC](pharmgkb.md) |
 | Human Protein Atlas | Tissue expression, localization, and cancer-expression context | [Human Protein Atlas](human-protein-atlas.md) |

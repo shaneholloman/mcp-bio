@@ -27,6 +27,20 @@ echo "$out" | mustmatch like "| EMA local data ($BIOMCP_EMA_DIR) | configured |"
 echo "$out" | mustmatch '/\| Cache dir \(.+\) \| ok \| [0-9]+ms \| - \|/'
 ```
 
+## WHO Health Readiness
+
+Full `biomcp health` should also expose WHO local readiness separately from the
+API-only inventory so operators can confirm WHO drug prerequisites before
+debugging query output.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp health)"
+echo "$out" | mustmatch like "WHO Prequalification local data ($BIOMCP_WHO_DIR)"
+echo "$out" | mustmatch like "| WHO Prequalification local data ($BIOMCP_WHO_DIR) | configured |"
+```
+
 ## Searching by Name
 
 Name-first search is the stable PR-gate coverage for generic U.S. lookup
@@ -70,8 +84,9 @@ echo "$out" | mustmatch like "When to use:"
 echo "$out" | mustmatch like "when you know the drug or brand name"
 echo "$out" | mustmatch like "--indication, --target, or --mechanism"
 echo "$out" | mustmatch '/\[default: all\]/'
-echo "$out" | mustmatch like "Omitting --region on a plain name/alias search checks both U.S. and EU data."
+echo "$out" | mustmatch like "Omitting --region on a plain name/alias search checks U.S., EU, and WHO data."
 echo "$out" | mustmatch like "If you omit --region while using structured filters such as --target or --indication, BioMCP stays on the U.S. MyChem path."
+echo "$out" | mustmatch like "Explicit --region who filters structured U.S. hits through WHO Prequalification."
 ```
 
 ## Structured Indication Misses Are Informative
@@ -199,7 +214,7 @@ echo "$out" | mustmatch like "--region <REGION>"
 echo "$out" | mustmatch '/Preserve raw FDA label subsections when used with .*label.*all/'
 echo "$out" | mustmatch like "biomcp get drug pembrolizumab approvals"
 echo "$out" | mustmatch like "biomcp get drug pembrolizumab label --raw"
-echo "$out" | mustmatch like "biomcp get drug Keytruda regulatory --region eu"
+echo "$out" | mustmatch like "biomcp get drug trastuzumab regulatory --region who"
 ```
 
 ## Drug List Documents Region Grammar
@@ -212,9 +227,10 @@ the same regional section grammar that `get drug --help` exposes.
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" list drug)"
 echo "$out" | mustmatch like "get drug <name> label [--raw]"
-echo "$out" | mustmatch like "get drug <name> regulatory [--region <us|eu|all>]"
+echo "$out" | mustmatch like "get drug <name> regulatory [--region <us|eu|who|all>]"
 echo "$out" | mustmatch like "get drug <name> safety [--region <us|eu|all>]"
 echo "$out" | mustmatch like "get drug <name> shortage [--region <us|eu|all>]"
+echo "$out" | mustmatch like "get drug <name> all [--region <us|eu|who|all>]"
 ```
 
 ## Compact Approval Fields
@@ -405,33 +421,72 @@ echo "$out" | mustmatch like "EMEA/H/C/003820"
 echo "$out" | mustmatch like "Authorised"
 ```
 
-## Default Drug Search Covers US and EU
+## WHO Search Region
 
-Omitting `--region` on a plain name query should render the same split U.S./EU
-layout as the explicit all-regions mode.
+The WHO fixture should support WHO-only search rows with the WHO reference
+number, listing basis, and normalized prequalification date.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp search drug trastuzumab --region who --limit 5)"
+echo "$out" | mustmatch like "# Drugs: trastuzumab"
+echo "$out" | mustmatch like "|INN|Therapeutic Area|Dosage Form|Applicant|WHO Ref|Listing Basis|Date|"
+echo "$out" | mustmatch like "Trastuzumab"
+echo "$out" | mustmatch like "Trastuzumab|Oncology"
+echo "$out" | mustmatch like "Samsung Bioepis NL B.V.|BT-ON001"
+echo "$out" | mustmatch like "Prequalification - Abridged"
+echo "$out" | mustmatch like "2019-12-18"
+```
+
+## WHO Structured Search Region
+
+Structured WHO search should keep the structured U.S. drug-search semantics and
+filter the candidate hits through the WHO prequalification batch.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp search drug --indication malaria --region who --limit 5)"
+echo "$out" | mustmatch like "|INN|Therapeutic Area|Dosage Form|Applicant|WHO Ref|Listing Basis|Date|"
+echo "$out" | mustmatch like "Artemether/Lumefantrine"
+echo "$out" | mustmatch like "Artemether/Lumefantrine|Malaria"
+echo "$out" | mustmatch like "Novartis Pharma AG|MA026"
+```
+
+## Default Drug Search Covers US, EU, and WHO
+
+Omitting `--region` on a plain name query should render the same split
+U.S./EU/WHO layout as the explicit all-regions mode.
 
 ```bash
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
 out="$(biomcp search drug Keytruda --limit 5)"
 echo "$out" | mustmatch like "# Drugs: Keytruda"
 echo "$out" | mustmatch like "## US (MyChem.info / OpenFDA)"
 echo "$out" | mustmatch like "## EU (EMA)"
+echo "$out" | mustmatch like "## WHO (WHO Prequalification)"
 echo "$out" | mustmatch like "EMEA/H/C/003820"
 ```
 
-## EMA Search All Regions
+## All-Region Search Covers WHO
 
-`--region all` should render separate labeled U.S. and EU result blocks instead
-of flattening them into one unlabeled table.
+`--region all` should render separate labeled U.S., EU, and WHO result blocks
+instead of flattening them into one unlabeled table.
 
 ```bash
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
 out="$(biomcp search drug Keytruda --region all --limit 5)"
 echo "$out" | mustmatch like "# Drugs: Keytruda"
 echo "$out" | mustmatch like "## US (MyChem.info / OpenFDA)"
 echo "$out" | mustmatch like "## EU (EMA)"
+echo "$out" | mustmatch like "## WHO (WHO Prequalification)"
 echo "$out" | mustmatch like "EMEA/H/C/003820"
 ```
 
@@ -448,6 +503,64 @@ echo "$out" | mustmatch like "## Regulatory (EU"
 echo "$out" | mustmatch like "EMEA/H/C/003820"
 echo "$out" | mustmatch like "Authorised"
 echo "$out" | mustmatch like "27/02/2026"
+```
+
+## WHO Regulatory Section
+
+The WHO regulatory section should anchor on WHO medicine rows and show the WHO
+reference, listing basis, and normalized prequalification date.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp get drug trastuzumab regulatory --region who)"
+echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
+echo "$out" | mustmatch like "| WHO Ref | Presentation |"
+echo "$out" | mustmatch like "Presentation"
+echo "$out" | mustmatch like "Prequalification Date"
+echo "$out" | mustmatch like "| BT-ON001 | Trastuzumab Powder"
+echo "$out" | mustmatch like "2019-12-18"
+```
+
+## WHO Regulatory Empty State
+
+When a drug is not WHO-prequalified, the WHO regulatory path should return the
+truthful empty-state copy instead of an error.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp get drug imatinib regulatory --region who)"
+echo "$out" | mustmatch like "Not WHO-prequalified"
+```
+
+## WHO Unsupported Sections Reject Fast
+
+WHO regional data is regulatory-only. Explicit `safety` and `shortage`
+requests with `--region who` should fail before any data fetch.
+
+```bash
+out="$(biomcp get drug trastuzumab safety --region who 2>&1 || true)"
+echo "$out" | mustmatch like "Error: Invalid argument: WHO regional data currently supports regulatory only"
+
+out="$(biomcp get drug trastuzumab shortage --region who 2>&1 || true)"
+echo "$out" | mustmatch like "Error: Invalid argument: WHO regional data currently supports regulatory only"
+```
+
+## WHO All Section Keeps Only Supported Regional Blocks
+
+`get drug <name> all --region who` should stay valid, keep the normal
+nonregional sections, render WHO regulatory data, and omit unsupported WHO
+safety/shortage regional blocks.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp get drug trastuzumab all --region who)"
+echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
+echo "$out" | mustmatch like "| BT-ON001 | Trastuzumab Powder"
+echo "$out" | mustmatch not like "## Safety ("
+echo "$out" | mustmatch not like "## Shortage ("
 ```
 
 ## EMA Safety Truthful Empty Sections
