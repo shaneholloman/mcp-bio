@@ -115,7 +115,7 @@ contract is:
 - The base grammar remains `get <entity> <id> [section...]`.
 - Entity-specific modifiers are named options that sit beside the positional
   `sections` list; they are not new positional arguments.
-- The canonical example is `get drug <name> ... --region <us|eu|all>`.
+- The canonical example is `get drug <name> ... --region <us|eu|who|all>`.
 - This modifier pattern is distinct from unrelated search filters that happen
   to reuse the same flag name on other entities.
 
@@ -134,6 +134,8 @@ The current drug contract is the model:
 
 - `--region` only changes the data plane for `regulatory`, `safety`,
   `shortage`, or `all`
+- `--region who` is valid for `regulatory` and `all`, but not for `safety` or
+  `shortage`
 - `approvals` remains U.S.-only
 - invalid flag/section combinations fail fast before data fetches
 

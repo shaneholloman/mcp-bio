@@ -138,10 +138,11 @@ fn parse_chart_scale(value: &str) -> Result<f32, String> {
 pub enum DrugRegionArg {
     Us,
     Eu,
+    Who,
     All,
 }
 
-const DRUG_SEARCH_EMA_STRUCTURED_FILTER_ERROR: &str = "EMA region search currently supports name/alias lookups only; use --region us for structured MyChem filters.";
+const DRUG_SEARCH_EMA_STRUCTURED_FILTER_ERROR: &str = "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification.";
 const RUNTIME_HELP_SUBCOMMANDS: [&str; 4] = ["mcp", "serve", "serve-http", "serve-sse"];
 
 fn hide_runtime_help_globals(
@@ -186,6 +187,7 @@ impl From<DrugRegionArg> for DrugRegion {
         match value {
             DrugRegionArg::Us => DrugRegion::Us,
             DrugRegionArg::Eu => DrugRegion::Eu,
+            DrugRegionArg::Who => DrugRegion::Who,
             DrugRegionArg::All => DrugRegion::All,
         }
     }
@@ -425,6 +427,14 @@ EXAMPLES:
         #[command(subcommand)]
         cmd: EmaCommand,
     },
+    /// WHO Prequalification local data management
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp who sync    # force refresh the WHO Prequalification CSV")]
+    Who {
+        #[command(subcommand)]
+        cmd: WhoCommand,
+    },
     /// Run MCP server over stdio
     Mcp,
     /// Alias for `mcp` (Claude Desktop friendly)
@@ -526,6 +536,12 @@ See also: biomcp list discover")]
 #[derive(Subcommand, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EmaCommand {
     /// Force refresh the EMA local data feeds
+    Sync,
+}
+
+#[derive(Subcommand, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WhoCommand {
+    /// Force refresh the WHO Prequalification local CSV
     Sync,
 }
 
@@ -1111,13 +1127,16 @@ When to use: use this when you know the drug or brand name, or switch to --indic
 
 EXAMPLES:
   biomcp search drug pembrolizumab
+  biomcp search drug trastuzumab --region who --limit 5
   biomcp search drug Keytruda --limit 5
   biomcp search drug Keytruda --region eu --limit 5
+  biomcp search drug --indication malaria --region who --limit 5
   biomcp search drug -q \"kinase inhibitor\" --target EGFR --atc L01 --pharm-class kinase --limit 5
 
 Note: --interactions is currently unavailable from the public data sources BioMCP uses.
-Omitting --region on a plain name/alias search checks both U.S. and EU data.
+Omitting --region on a plain name/alias search checks U.S., EU, and WHO data.
 If you omit --region while using structured filters such as --target or --indication, BioMCP stays on the U.S. MyChem path.
+Explicit --region who filters structured U.S. hits through WHO Prequalification.
 Explicit --region eu|all with structured filters still errors.
 
 See also: biomcp list drug")]
@@ -1419,6 +1438,7 @@ See also: biomcp list variant")]
 EXAMPLES:
   biomcp get drug pembrolizumab
   biomcp get drug pembrolizumab label --raw
+  biomcp get drug trastuzumab regulatory --region who
   biomcp get drug Keytruda regulatory --region eu
   biomcp get drug Ozempic safety --region eu
   biomcp get drug pembrolizumab targets
@@ -2478,6 +2498,7 @@ fn resolve_drug_search_region(
     match (region_arg, filters.has_structured_filters()) {
         (None, false) => Ok(DrugRegion::All),
         (None, true) | (Some(DrugRegionArg::Us), _) => Ok(DrugRegion::Us),
+        (Some(DrugRegionArg::Who), _) => Ok(DrugRegion::Who),
         (Some(DrugRegionArg::Eu), false) => Ok(DrugRegion::Eu),
         (Some(DrugRegionArg::All), false) => Ok(DrugRegion::All),
         (Some(DrugRegionArg::Eu | DrugRegionArg::All), true) => {
@@ -6209,129 +6230,126 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     if offset > 0 {
                         query_summary = format!("{query_summary}, offset={offset}");
                     }
-                    if region == DrugRegion::Us {
-                        let page =
-                            crate::entities::drug::search_page(&filters, limit, offset).await?;
-                        let results = page.results;
-                        let pagination =
-                            PaginationMeta::offset(offset, limit, results.len(), page.total);
-                        if cli.json {
-                            search_json(results, pagination)
-                        } else {
-                            let footer = pagination_footer_offset(&pagination);
-                            Ok(crate::render::markdown::drug_search_markdown_with_region(
-                                &query_summary,
-                                region,
-                                &results,
-                                pagination.total,
-                                &[],
-                                None,
-                                &footer,
-                            )?)
-                        }
-                    } else {
-                        let query_value = filters.query.as_deref().unwrap_or_default();
-                        match crate::entities::drug::search_name_query_with_region(
-                            query_value,
-                            limit,
-                            offset,
-                            region,
-                        )
+                    match crate::entities::drug::search_page_with_region(&filters, limit, offset, region)
                         .await?
-                        {
-                            crate::entities::drug::DrugSearchPageWithRegion::Us(page) => {
-                                let results = page.results;
-                                let pagination = PaginationMeta::offset(
-                                    offset,
-                                    limit,
-                                    results.len(),
-                                    page.total,
-                                );
-                                if cli.json {
-                                    search_json(results, pagination)
-                                } else {
-                                    let footer = pagination_footer_offset(&pagination);
-                                    Ok(crate::render::markdown::drug_search_markdown_with_region(
-                                        &query_summary,
-                                        region,
-                                        &results,
-                                        pagination.total,
-                                        &[],
-                                        None,
-                                        &footer,
-                                    )?)
-                                }
+                    {
+                        crate::entities::drug::DrugSearchPageWithRegion::Us(page) => {
+                            let results = page.results;
+                            let pagination =
+                                PaginationMeta::offset(offset, limit, results.len(), page.total);
+                            if cli.json {
+                                search_json(results, pagination)
+                            } else {
+                                let footer = pagination_footer_offset(&pagination);
+                                Ok(crate::render::markdown::drug_search_markdown_with_region(
+                                    &query_summary,
+                                    region,
+                                    &results,
+                                    pagination.total,
+                                    &[],
+                                    None,
+                                    &[],
+                                    None,
+                                    &footer,
+                                )?)
                             }
-                            crate::entities::drug::DrugSearchPageWithRegion::Eu(page) => {
-                                let results = page.results;
-                                let pagination = PaginationMeta::offset(
-                                    offset,
-                                    limit,
-                                    results.len(),
-                                    page.total,
-                                );
-                                if cli.json {
-                                    search_json(results, pagination)
-                                } else {
-                                    let footer = pagination_footer_offset(&pagination);
-                                    Ok(
-                                        crate::render::markdown::drug_search_markdown_with_region(
-                                            &query_summary,
-                                            region,
-                                            &[],
-                                            None,
-                                            &results,
-                                            pagination.total,
-                                            &footer,
-                                        )?,
-                                    )
-                                }
+                        }
+                        crate::entities::drug::DrugSearchPageWithRegion::Eu(page) => {
+                            let results = page.results;
+                            let pagination =
+                                PaginationMeta::offset(offset, limit, results.len(), page.total);
+                            if cli.json {
+                                search_json(results, pagination)
+                            } else {
+                                let footer = pagination_footer_offset(&pagination);
+                                Ok(crate::render::markdown::drug_search_markdown_with_region(
+                                    &query_summary,
+                                    region,
+                                    &[],
+                                    None,
+                                    &results,
+                                    pagination.total,
+                                    &[],
+                                    None,
+                                    &footer,
+                                )?)
                             }
-                            crate::entities::drug::DrugSearchPageWithRegion::All { us, eu } => {
-                                if cli.json {
-                                    #[derive(serde::Serialize)]
-                                    struct RegionResults<T: serde::Serialize> {
-                                        count: usize,
-                                        total: Option<usize>,
-                                        results: Vec<T>,
-                                    }
-
-                                    #[derive(serde::Serialize)]
-                                    struct SearchResponse<T: serde::Serialize, U: serde::Serialize> {
-                                        region: &'static str,
-                                        query: String,
-                                        us: RegionResults<T>,
-                                        eu: RegionResults<U>,
-                                    }
-
-                                    crate::render::json::to_pretty(&SearchResponse {
-                                        region: region.as_str(),
-                                        query: query_summary.clone(),
-                                        us: RegionResults {
-                                            count: us.results.len(),
-                                            total: us.total,
-                                            results: us.results,
-                                        },
-                                        eu: RegionResults {
-                                            count: eu.results.len(),
-                                            total: eu.total,
-                                            results: eu.results,
-                                        },
-                                    })
-                                    .map_err(Into::into)
-                                } else {
-                                    Ok(
-                                        crate::render::markdown::drug_search_markdown_with_region(
-                                            &query_summary,
-                                            region,
-                                            &us.results,
-                                            us.total,
-                                            &eu.results,
-                                            eu.total,
-                                            "",
-                                        )?,
-                                    )
+                        }
+                        crate::entities::drug::DrugSearchPageWithRegion::Who(page) => {
+                            let results = page.results;
+                            let pagination =
+                                PaginationMeta::offset(offset, limit, results.len(), page.total);
+                            if cli.json {
+                                search_json(results, pagination)
+                            } else {
+                                let footer = pagination_footer_offset(&pagination);
+                                Ok(crate::render::markdown::drug_search_markdown_with_region(
+                                    &query_summary,
+                                    region,
+                                    &[],
+                                    None,
+                                    &[],
+                                    None,
+                                    &results,
+                                    pagination.total,
+                                    &footer,
+                                )?)
+                            }
+                        }
+                        crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
+                            if cli.json {
+                                #[derive(serde::Serialize)]
+                                struct RegionResults<T: serde::Serialize> {
+                                    count: usize,
+                                    total: Option<usize>,
+                                    results: Vec<T>,
                                 }
+
+                                #[derive(serde::Serialize)]
+                                struct SearchResponse<
+                                    T: serde::Serialize,
+                                    U: serde::Serialize,
+                                    V: serde::Serialize,
+                                > {
+                                    region: &'static str,
+                                    query: String,
+                                    us: RegionResults<T>,
+                                    eu: RegionResults<U>,
+                                    who: RegionResults<V>,
+                                }
+
+                                crate::render::json::to_pretty(&SearchResponse {
+                                    region: region.as_str(),
+                                    query: query_summary.clone(),
+                                    us: RegionResults {
+                                        count: us.results.len(),
+                                        total: us.total,
+                                        results: us.results,
+                                    },
+                                    eu: RegionResults {
+                                        count: eu.results.len(),
+                                        total: eu.total,
+                                        results: eu.results,
+                                    },
+                                    who: RegionResults {
+                                        count: who.results.len(),
+                                        total: who.total,
+                                        results: who.results,
+                                    },
+                                })
+                                .map_err(Into::into)
+                            } else {
+                                Ok(crate::render::markdown::drug_search_markdown_with_region(
+                                    &query_summary,
+                                    region,
+                                    &us.results,
+                                    us.total,
+                                    &eu.results,
+                                    eu.total,
+                                    &who.results,
+                                    who.total,
+                                    "",
+                                )?)
                             }
                         }
                     }
@@ -6785,6 +6803,15 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     Ok("EMA data synchronized successfully.\n".to_string())
                 }
             },
+            Commands::Who { cmd } => match cmd {
+                WhoCommand::Sync => {
+                    crate::sources::who_pq::WhoPqClient::sync(
+                        crate::sources::who_pq::WhoPqSyncMode::Force,
+                    )
+                    .await?;
+                    Ok("WHO Prequalification data synchronized successfully.\n".to_string())
+                }
+            },
             Commands::Skill { command } => match command {
                 None => Ok(crate::cli::skill::show_overview()?),
                 Some(crate::cli::skill::SkillCommand::List) => Ok(crate::cli::skill::list_use_cases()?),
@@ -7143,8 +7170,8 @@ mod tests {
     use super::{
         ArticleCommand, ChartArgs, ChartType, Cli, Commands, DrugCommand, DrugRegionArg,
         EmaCommand, GeneCommand, GetEntity, McpChartPass, OutputStream, PaginationMeta,
-        ProteinCommand, StudyCommand, VariantCommand, VariantSearchPlan, article_search_json,
-        build_article_debug_plan, disease_search_json, execute, execute_mcp,
+        ProteinCommand, StudyCommand, VariantCommand, VariantSearchPlan, WhoCommand,
+        article_search_json, build_article_debug_plan, disease_search_json, execute, execute_mcp,
         extract_json_from_sections, paginate_trial_locations, parse_simple_gene_change,
         parse_trial_location_paging, resolve_drug_search_region, resolve_query_input,
         resolve_variant_query, rewrite_mcp_chart_args, run_outcome,
@@ -7383,10 +7410,10 @@ mod tests {
             "biomcp",
             "get",
             "drug",
-            "Keytruda",
+            "trastuzumab",
             "regulatory",
             "--region",
-            "eu",
+            "who",
         ])
         .expect("get drug should parse");
 
@@ -7408,9 +7435,9 @@ mod tests {
             panic!("expected get drug command");
         };
 
-        assert_eq!(name, "Keytruda");
+        assert_eq!(name, "trastuzumab");
         assert_eq!(sections, vec!["regulatory".to_string()]);
-        assert_eq!(region, Some(DrugRegionArg::Eu));
+        assert_eq!(region, Some(DrugRegionArg::Who));
         assert!(!raw);
         assert!(!json);
         assert!(!no_cache);
@@ -7454,10 +7481,10 @@ mod tests {
             "biomcp",
             "get",
             "drug",
-            "Keytruda",
+            "trastuzumab",
             "regulatory",
             "--region",
-            "eu",
+            "who",
             "--json",
         ])
         .expect("get drug should parse");
@@ -7480,9 +7507,9 @@ mod tests {
             panic!("expected get drug command");
         };
 
-        assert_eq!(name, "Keytruda");
+        assert_eq!(name, "trastuzumab");
         assert_eq!(sections, vec!["regulatory".to_string()]);
-        assert_eq!(region, Some(DrugRegionArg::Eu));
+        assert_eq!(region, Some(DrugRegionArg::Who));
         assert!(!raw);
         assert!(json);
         assert!(!no_cache);
@@ -7588,6 +7615,31 @@ mod tests {
         let help = String::from_utf8(help).expect("help should be utf-8");
 
         assert!(help.contains("biomcp ema sync"));
+    }
+
+    #[test]
+    fn who_sync_parses_subcommand() {
+        let cli = parse_built_cli(["biomcp", "who", "sync"]);
+        assert!(matches!(
+            cli.command,
+            Commands::Who {
+                cmd: WhoCommand::Sync
+            }
+        ));
+    }
+
+    #[test]
+    fn who_help_mentions_sync_example() {
+        let mut command = Cli::command();
+        let who = command
+            .find_subcommand_mut("who")
+            .expect("who subcommand should exist");
+        let mut help = Vec::new();
+        who.write_long_help(&mut help)
+            .expect("who help should render");
+        let help = String::from_utf8(help).expect("help should be utf-8");
+
+        assert!(help.contains("biomcp who sync"));
     }
 
     #[test]
@@ -8675,14 +8727,26 @@ mod tests {
         let err = resolve_drug_search_region(Some(super::DrugRegionArg::Eu), &filters)
             .expect_err("explicit eu should be rejected");
         assert!(format!("{err}").contains(
-            "EMA region search currently supports name/alias lookups only; use --region us for structured MyChem filters."
+            "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification."
         ));
 
         let err = resolve_drug_search_region(Some(super::DrugRegionArg::All), &filters)
             .expect_err("explicit all should be rejected");
         assert!(format!("{err}").contains(
-            "EMA region search currently supports name/alias lookups only; use --region us for structured MyChem filters."
+            "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification."
         ));
+    }
+
+    #[test]
+    fn search_drug_region_allows_explicit_who_for_structured_queries() {
+        let filters = DrugSearchFilters {
+            indication: Some("malaria".into()),
+            ..Default::default()
+        };
+
+        let region =
+            resolve_drug_search_region(Some(super::DrugRegionArg::Who), &filters).expect("who");
+        assert_eq!(region, DrugRegion::Who);
     }
 
     #[test]
@@ -8703,10 +8767,13 @@ mod tests {
         assert!(long_help.contains("--indication, --target, or --mechanism"));
         assert!(long_help.contains("[default: all]"));
         assert!(long_help.contains(
-            "Omitting --region on a plain name/alias search checks both U.S. and EU data."
+            "Omitting --region on a plain name/alias search checks U.S., EU, and WHO data."
         ));
         assert!(long_help.contains(
             "If you omit --region while using structured filters such as --target or --indication, BioMCP stays on the U.S. MyChem path."
+        ));
+        assert!(long_help.contains(
+            "Explicit --region who filters structured U.S. hits through WHO Prequalification."
         ));
     }
 
@@ -12227,6 +12294,7 @@ mod next_commands_json_property {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 

@@ -21,7 +21,7 @@ use crate::entities::disease::{
 };
 use crate::entities::drug::{
     Drug, DrugApproval, DrugRegion, DrugSearchResult, EmaDrugSearchResult, EmaRegulatoryRow,
-    EmaSafetyInfo, EmaShortageEntry,
+    EmaSafetyInfo, EmaShortageEntry, WhoPrequalificationEntry, WhoPrequalificationSearchResult,
 };
 use crate::entities::gene::{Gene, GeneSearchResult};
 use crate::entities::pathway::{Pathway, PathwaySearchResult};
@@ -3207,6 +3207,44 @@ fn render_eu_regulatory_block(heading: &str, rows: Option<&[EmaRegulatoryRow]>) 
     out
 }
 
+fn render_who_regulatory_block(heading: &str, rows: Option<&[WhoPrequalificationEntry]>) -> String {
+    let Some(rows) = rows else {
+        return String::new();
+    };
+
+    let mut out = String::new();
+    let _ = writeln!(out, "{heading}\n");
+    if rows.is_empty() {
+        out.push_str("Not WHO-prequalified\n");
+        return out;
+    }
+
+    out.push_str("| WHO Ref | Presentation | Dosage Form | Therapeutic Area | Applicant | Listing Basis | Alternative Basis | Prequalification Date |\n");
+    out.push_str("|---|---|---|---|---|---|---|---|\n");
+    for row in rows {
+        let _ = writeln!(
+            out,
+            "| {} | {} | {} | {} | {} | {} | {} | {} |",
+            markdown_cell(&row.who_reference_number),
+            markdown_cell(&row.presentation),
+            markdown_cell(&row.dosage_form),
+            markdown_cell(&row.therapeutic_area),
+            markdown_cell(&row.applicant),
+            markdown_cell(&row.listing_basis),
+            row.alternative_listing_basis
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            row.prequalification_date
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+        );
+    }
+
+    out
+}
+
 fn render_us_safety_block(drug: &Drug, heading: &str) -> String {
     let mut out = String::new();
     let _ = writeln!(out, "{heading}\n");
@@ -3438,6 +3476,10 @@ fn render_regulatory_block(drug: &Drug, region: DrugRegion) -> String {
         DrugRegion::Eu => {
             render_eu_regulatory_block("## Regulatory (EU - EMA)", drug.ema_regulatory.as_deref())
         }
+        DrugRegion::Who => render_who_regulatory_block(
+            "## Regulatory (WHO Prequalification)",
+            drug.who_prequalification.as_deref(),
+        ),
         DrugRegion::All => {
             let us = render_us_approvals_block(
                 "## Regulatory (US - Drugs@FDA)",
@@ -3447,7 +3489,11 @@ fn render_regulatory_block(drug: &Drug, region: DrugRegion) -> String {
                 "## Regulatory (EU - EMA)",
                 drug.ema_regulatory.as_deref(),
             );
-            [us, eu]
+            let who = render_who_regulatory_block(
+                "## Regulatory (WHO Prequalification)",
+                drug.who_prequalification.as_deref(),
+            );
+            [us, eu, who]
                 .into_iter()
                 .filter(|block| !block.trim().is_empty())
                 .collect::<Vec<_>>()
@@ -3460,6 +3506,7 @@ fn render_safety_block(drug: &Drug, region: DrugRegion) -> String {
     match region {
         DrugRegion::Us => render_us_safety_block(drug, "## Safety (US - OpenFDA)"),
         DrugRegion::Eu => render_eu_safety_block("## Safety (EU - EMA)", drug.ema_safety.as_ref()),
+        DrugRegion::Who => String::new(),
         DrugRegion::All => {
             let us = render_us_safety_block(drug, "## Safety (US - OpenFDA)");
             let eu = render_eu_safety_block("## Safety (EU - EMA)", drug.ema_safety.as_ref());
@@ -3481,6 +3528,7 @@ fn render_shortage_block(drug: &Drug, region: DrugRegion) -> String {
         DrugRegion::Eu => {
             render_eu_shortage_block("## Shortage (EU - EMA)", drug.ema_shortage.as_deref())
         }
+        DrugRegion::Who => String::new(),
         DrugRegion::All => {
             let us = render_us_shortage_block(
                 "## Shortage (US - OpenFDA Drug Shortages)",
@@ -3514,8 +3562,10 @@ pub fn drug_markdown_with_region(
     let show_interactions_section = include_all || has_requested("interactions");
     let show_civic_section = include_all || has_requested("civic");
     let show_regulatory_section = include_all || has_requested("regulatory");
-    let show_safety_section = include_all || has_requested("safety");
-    let show_shortage_section = !section_only || include_all || has_requested("shortage");
+    let show_safety_section =
+        !matches!(region, DrugRegion::Who) && (include_all || has_requested("safety"));
+    let show_shortage_section = !matches!(region, DrugRegion::Who)
+        && (!section_only || include_all || has_requested("shortage"));
     let show_approvals_section = has_requested("approvals");
     // Suppress US-only header facts when rendering a full card (not section_only) for EU region.
     let show_us_header = section_only || region.includes_us();
@@ -3601,6 +3651,7 @@ pub fn drug_search_markdown_with_footer(
     Ok(with_pagination_footer(body, pagination_footer))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn drug_search_markdown_with_region(
     query: &str,
     region: DrugRegion,
@@ -3608,6 +3659,8 @@ pub fn drug_search_markdown_with_region(
     us_total: Option<usize>,
     eu_results: &[EmaDrugSearchResult],
     eu_total: Option<usize>,
+    who_results: &[WhoPrequalificationSearchResult],
+    who_total: Option<usize>,
     pagination_footer: &str,
 ) -> Result<String, BioMcpError> {
     match region {
@@ -3658,6 +3711,55 @@ pub fn drug_search_markdown_with_region(
             }
             Ok(out)
         }
+        DrugRegion::Who => {
+            let count = who_total.unwrap_or(who_results.len());
+            if count == 0 && is_structured_indication_query(query) {
+                return Ok(empty_drug_indication_search_message(query, region));
+            }
+
+            let mut out = String::new();
+            let _ = writeln!(out, "# Drugs: {query}\n");
+            if count == 0 {
+                out.push_str("No WHO-prequalified drugs found\n");
+                let discover_hint =
+                    discover_try_line(query, "resolve drug trial codes and aliases");
+                if !discover_hint.is_empty() {
+                    let _ = writeln!(out, "\n{discover_hint}");
+                }
+                return Ok(out);
+            }
+
+            let _ = writeln!(
+                out,
+                "Found {count} drug{}\n",
+                if count == 1 { "" } else { "s" }
+            );
+            out.push_str(
+                "|INN|Therapeutic Area|Dosage Form|Applicant|WHO Ref|Listing Basis|Date|\n",
+            );
+            out.push_str("|---|---|---|---|---|---|---|\n");
+            for row in who_results {
+                let _ = writeln!(
+                    out,
+                    "|{}|{}|{}|{}|{}|{}|{}|",
+                    markdown_cell(&row.inn),
+                    markdown_cell(&row.therapeutic_area),
+                    markdown_cell(&row.dosage_form),
+                    markdown_cell(&row.applicant),
+                    markdown_cell(&row.who_reference_number),
+                    markdown_cell(&row.listing_basis),
+                    row.prequalification_date
+                        .as_deref()
+                        .map(markdown_cell)
+                        .unwrap_or_else(|| "-".to_string()),
+                );
+            }
+            out.push_str("\nUse `get drug <name>` for full details.\n");
+            if !pagination_footer.trim().is_empty() {
+                let _ = writeln!(out, "\n{pagination_footer}");
+            }
+            Ok(out)
+        }
         DrugRegion::All => {
             let mut out = String::new();
             let _ = writeln!(out, "# Drugs: {query}\n");
@@ -3665,6 +3767,7 @@ pub fn drug_search_markdown_with_region(
             out.push_str("## US (MyChem.info / OpenFDA)\n\n");
             let us_count = us_total.unwrap_or(us_results.len());
             let eu_count = eu_total.unwrap_or(eu_results.len());
+            let who_count = who_total.unwrap_or(who_results.len());
             if us_results.is_empty() {
                 if us_count == 0 && is_structured_indication_query(query) {
                     out.push_str(&empty_drug_indication_search_body(query, DrugRegion::All));
@@ -3723,7 +3826,42 @@ pub fn drug_search_markdown_with_region(
                 }
             }
 
-            if us_count == 0 && eu_count == 0 && !is_structured_indication_query(query) {
+            out.push_str("\n## WHO (WHO Prequalification)\n\n");
+            if who_results.is_empty() {
+                out.push_str("No WHO-prequalified drugs found\n");
+            } else {
+                let _ = writeln!(
+                    out,
+                    "Found {who_count} drug{}\n",
+                    if who_count == 1 { "" } else { "s" }
+                );
+                out.push_str(
+                    "|INN|Therapeutic Area|Dosage Form|Applicant|WHO Ref|Listing Basis|Date|\n",
+                );
+                out.push_str("|---|---|---|---|---|---|---|\n");
+                for row in who_results {
+                    let _ = writeln!(
+                        out,
+                        "|{}|{}|{}|{}|{}|{}|{}|",
+                        markdown_cell(&row.inn),
+                        markdown_cell(&row.therapeutic_area),
+                        markdown_cell(&row.dosage_form),
+                        markdown_cell(&row.applicant),
+                        markdown_cell(&row.who_reference_number),
+                        markdown_cell(&row.listing_basis),
+                        row.prequalification_date
+                            .as_deref()
+                            .map(markdown_cell)
+                            .unwrap_or_else(|| "-".to_string()),
+                    );
+                }
+            }
+
+            if us_count == 0
+                && eu_count == 0
+                && who_count == 0
+                && !is_structured_indication_query(query)
+            {
                 let discover_hint =
                     discover_try_line(query, "resolve drug trial codes and aliases");
                 if !discover_hint.is_empty() {
@@ -3766,6 +3904,9 @@ fn empty_drug_indication_search_body(query: &str, region: DrugRegion) -> String 
             "No drugs found in U.S. regulatory data for this indication.\nThis absence is informative for approved-drug questions and is specific to the structured regulatory portion of the combined search.\nTry `biomcp search article -k {review_query} --type review --limit 5` for broader treatment literature.\n{discover_hint}"
         ),
         DrugRegion::Eu => format!("No drugs found\n{discover_hint}"),
+        DrugRegion::Who => format!(
+            "No WHO-prequalified drugs found for this structured search.\nThis absence is informative for WHO-prequalified regulatory coverage, but it does not rule out U.S. approvals or broader investigational evidence.\nTry `biomcp search article -k {review_query} --type review --limit 5` for broader treatment literature.\n{discover_hint}"
+        ),
     }
 }
 
@@ -4872,6 +5013,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
         let drug_markdown = drug_markdown(&drug, &["all".to_string()]).expect("drug markdown");
@@ -6257,6 +6399,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -6714,6 +6857,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8212,6 +8356,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8264,6 +8409,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8314,6 +8460,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8357,6 +8504,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8403,6 +8551,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8445,6 +8594,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8488,6 +8638,7 @@ pub(crate) mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8572,6 +8723,7 @@ pub(crate) mod tests {
                 first_published_date: Some("10/01/2026".to_string()),
                 last_updated_date: Some("13/01/2026".to_string()),
             }]),
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8637,6 +8789,7 @@ pub(crate) mod tests {
                 psusas: Vec::new(),
             }),
             ema_shortage: Some(Vec::new()),
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8703,6 +8856,7 @@ pub(crate) mod tests {
                 psusas: Vec::new(),
             }),
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 
@@ -8724,6 +8878,8 @@ pub(crate) mod tests {
             DrugRegion::Us,
             &[],
             Some(0),
+            &[],
+            None,
             &[],
             None,
             "",
@@ -8808,6 +8964,8 @@ pub(crate) mod tests {
             None,
             &[],
             Some(0),
+            &[],
+            None,
             "",
         )
         .expect("markdown");
@@ -8820,6 +8978,8 @@ pub(crate) mod tests {
         let markdown = drug_search_markdown_with_region(
             "indication=Marfan syndrome",
             DrugRegion::All,
+            &[],
+            Some(0),
             &[],
             Some(0),
             &[],
@@ -8845,6 +9005,8 @@ pub(crate) mod tests {
             Some(0),
             &[],
             Some(0),
+            &[],
+            Some(0),
             "",
         )
         .expect("markdown");
@@ -8861,6 +9023,8 @@ pub(crate) mod tests {
                 drug_type: None,
             }],
             Some(1),
+            &[],
+            Some(0),
             &[],
             Some(0),
             "",
@@ -8880,6 +9044,8 @@ pub(crate) mod tests {
                 status: "Authorized".to_string(),
             }],
             Some(1),
+            &[],
+            Some(0),
             "",
         )
         .expect("markdown");
@@ -8895,6 +9061,8 @@ pub(crate) mod tests {
             None,
             &[],
             Some(0),
+            &[],
+            None,
             "",
         )
         .expect("markdown");

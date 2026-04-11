@@ -192,6 +192,27 @@
     "notes": "BioMCP auto-downloads the EMA human-medicines JSON batch into BIOMCP_EMA_DIR or the default data directory on first use, refreshes stale files, and supports explicit refresh via biomcp ema sync."
   },
   {
+    "id": "who-prequalification",
+    "name": "WHO Prequalification",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": [
+      "search drug --region who|all",
+      "search drug --indication <disease> --region who",
+      "get drug <name> regulatory --region who|all"
+    ],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "on-demand local download by BioMCP on first WHO use, or manual preseed via BIOMCP_WHO_DIR",
+    "license_summary": "WHO content generally requires attribution; commercial reuse may require permission and third-party materials can carry separate rights",
+    "redistribution_summary": "preserve WHO attribution, review commercial-use conditions, and check third-party material rights before republishing",
+    "terms_url": "https://www.who.int/about/policies/publishing/copyright",
+    "key_url": null,
+    "reviewed_on": "2026-04-10",
+    "notes": "BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV into BIOMCP_WHO_DIR or the default data directory on first use, refreshes stale files, and supports explicit refresh via biomcp who sync."
+  },
+  {
     "id": "enrichr",
     "name": "Enrichr",
     "tier": 1,

@@ -171,9 +171,10 @@ Capture one failing command with full stderr and include:
 ## 13) EU drug data not available
 
 EU drug regulatory, safety, and shortage sections depend on the local EMA
-human-medicines JSON batch. BioMCP auto-downloads that data on first use,
-but full `biomcp health` is still the right readiness view when you need to
-debug the local EMA state:
+human-medicines JSON batch. BioMCP auto-downloads that data on first use for
+`--region eu|all` drug workflows and for the default plain-name
+U.S.+EU+WHO drug search, but full `biomcp health` is still the right
+readiness view when you need to debug the local EMA state:
 
 ```bash
 biomcp health
@@ -182,7 +183,9 @@ biomcp health
 Interpret the EMA row like this:
 
 - `configured`: `BIOMCP_EMA_DIR` is set and all required EMA JSON files are present
+- `configured (stale)`: `BIOMCP_EMA_DIR` is set and the EMA batch is present, but older than the 72-hour refresh window
 - `available (default path)`: BioMCP found a complete EMA batch in the default platform data directory
+- `available (default path, stale)`: the default-path EMA batch is complete but older than the 72-hour refresh window
 - `not configured`: no EMA batch was found at the default path, so EU drug features are currently unavailable but the install is not considered broken
 - `error (missing: ...)`: BioMCP found a partial EMA batch; install the missing files or point `BIOMCP_EMA_DIR` at a complete batch
 
@@ -208,3 +211,41 @@ complete EMA root must contain:
 - `psusas.json`
 - `dhpcs.json`
 - `shortages.json`
+
+## 14) WHO drug data not available
+
+WHO regional regulatory search/get flows depend on the local WHO
+finished-pharmaceutical-products CSV. BioMCP auto-downloads that CSV on first
+use for `--region who|all` drug workflows and for the default plain-name
+U.S.+EU+WHO drug search:
+
+```bash
+biomcp health
+```
+
+Interpret the WHO row like this:
+
+- `configured`: `BIOMCP_WHO_DIR` is set and `who_pq.csv` is present
+- `configured (stale)`: `BIOMCP_WHO_DIR` is set and the WHO CSV is present, but older than the 72-hour refresh window
+- `available (default path)`: BioMCP found `who_pq.csv` in the default platform data directory
+- `available (default path, stale)`: the default-path WHO CSV is present but older than the 72-hour refresh window
+- `not configured`: no WHO CSV was found at the default path, so WHO regional drug features are currently unavailable but the install is not considered broken
+- `error (missing: ...)`: BioMCP found a partial WHO root or unreadable file; install the CSV or point `BIOMCP_WHO_DIR` at a complete root
+
+If a refresh fails, retry explicitly:
+
+```bash
+biomcp who sync
+```
+
+If you need to override the default path:
+
+```bash
+export BIOMCP_WHO_DIR="/path/to/who-pq"
+biomcp health
+```
+
+Manual preseed remains supported for offline or controlled environments. A
+complete WHO root must contain:
+
+- `who_pq.csv`

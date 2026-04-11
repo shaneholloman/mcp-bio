@@ -77,6 +77,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | STRING | 1 | direct_api | none | CC BY 4.0 | reuse is allowed with attribution to STRING and the original publication/resource | <https://string-db.org/cgi/access?footer_active_subpage=licensing> |
 | UMLS | 2 | direct_api | required_env | custom UMLS Metathesaurus license and terminology-specific appendices | do not assume unrestricted redistribution; some embedded vocabularies add their own restrictions or affiliate licenses | <https://www.nlm.nih.gov/databases/umls.html> |
 | UniProt | 1 | direct_api | none | CC BY 4.0 | reuse is allowed with attribution; linked cross-references can have their own terms | <https://www.uniprot.org/help/license> |
+| WHO Prequalification | 1 | direct_api | none | WHO content generally requires attribution; commercial reuse may require permission and third-party materials can carry separate rights | preserve WHO attribution, review commercial-use conditions, and check third-party material rights before republishing | <https://www.who.int/about/policies/publishing/copyright> |
 | WikiPathways | 1 | direct_api | none | CC0 | pathway content is dedicated to the public domain; attribution is still good scholarly practice | <https://classic.wikipathways.org/index.php/WikiPathways:License_Terms> |
 | AlphaFold DB | 1 | indirect_only | not_applicable | AlphaFold DB structural predictions are published for broad open use | reuse is generally open, but preserve model/source provenance and article citations | <https://alphafold.ebi.ac.uk/faq> |
 | Cancer Genome Interpreter | 3 | indirect_only | not_applicable | custom tool terms | do not assume commercial reuse rights; the official terms restrict some external and commercial use | <https://www.cancergenomeinterpreter.org/conditions> |
@@ -185,6 +186,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.ema.europa.eu/en/about-us/about-website/legal-notice>
 - Reviewed on: `2026-03-24`
 - Notes: BioMCP auto-downloads the EMA human-medicines JSON batch into `BIOMCP_EMA_DIR` or the default data directory on first use, refreshes stale files, and supports explicit refresh via `biomcp ema sync`. The download landing page is <https://www.ema.europa.eu/en/about-us/about-website/download-website-data-json-data-format>.
+
+### WHO Prequalification
+
+- BioMCP surfaces: `search drug --region who|all; search drug --indication <disease> --region who; get drug <name> regulatory --region who|all`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: on-demand local download by BioMCP on first WHO use, or manual preseed via `BIOMCP_WHO_DIR`
+- License / terms summary: WHO content generally requires attribution; commercial reuse may require permission and third-party materials can carry separate rights
+- Redistribution / reuse summary: preserve WHO attribution, review commercial-use conditions, and check third-party material rights before republishing
+- Official terms URL: <https://www.who.int/about/policies/publishing/copyright>
+- Reviewed on: `2026-04-10`
+- Notes: BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV into `BIOMCP_WHO_DIR` or the default data directory on first use, refreshes stale files, and supports explicit refresh via `biomcp who sync`.
 
 ### Enrichr
 

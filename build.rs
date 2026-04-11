@@ -8,6 +8,7 @@ search, detail retrieval, discovery, enrichment, and study analytics across \
 const BLOCKED_MCP_DESCRIPTION_TERMS: &[&str] = &[
     "`skill install`",
     "`ema sync`",
+    "`who sync`",
     "`update [--check]`",
     "`uninstall`",
 ];

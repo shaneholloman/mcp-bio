@@ -347,7 +347,7 @@ fn list_drug() -> String {
 
 - `get drug <name>` - get by name (MyChem.info aggregation)
 - `get drug <name> label [--raw]` - compact FDA approved-indications summary by default; add `--raw` for the truncated FDA label text
-- `get drug <name> regulatory [--region <us|eu|all>]` - regional regulatory summary (Drugs@FDA and/or EMA)
+- `get drug <name> regulatory [--region <us|eu|who|all>]` - regional regulatory summary (Drugs@FDA, EMA, and/or WHO Prequalification)
 - `get drug <name> safety [--region <us|eu|all>]` - regional safety context (OpenFDA and/or EMA)
 - `get drug <name> shortage [--region <us|eu|all>]` - query current shortage status
 - `get drug <name> targets` - generic targets from ChEMBL/OpenTargets plus additive CIViC variant-target annotations when available
@@ -355,13 +355,13 @@ fn list_drug() -> String {
 - `get drug <name> interactions` - OpenFDA label interaction text when available; otherwise a truthful public-data fallback
 - `get drug <name> civic` - CIViC therapy evidence/assertion summary
 - `get drug <name> approvals` - Drugs@FDA approval/application details (US-only legacy section)
-- `get drug <name> all` - include all sections
+- `get drug <name> all [--region <us|eu|who|all>]` - include all sections
 
 ## Search
 
 - `search drug <query>`
 - `search drug -q <query>`
-- `search drug <query> --region <us|eu|all>`
+- `search drug <query> --region <us|eu|who|all>`
 - `search drug --target <gene>`
 - `search drug --indication <disease>`
 - `search drug --mechanism <text>`
@@ -377,11 +377,13 @@ fn list_drug() -> String {
 
 ## Notes
 
-- Omitting `--region` searches both U.S. and EU data for plain name/alias lookups.
+- Omitting `--region` searches U.S., EU, and WHO data for plain name/alias lookups.
 - Structured filters remain U.S.-only when `--region` is omitted.
+- Explicit `--region who` filters structured U.S. hits through WHO prequalification.
 - Explicit `--region eu|all` is still invalid with structured filters.
 - EU regional commands auto-download the EMA human-medicines JSON feeds into `BIOMCP_EMA_DIR` or the default data directory on first use.
-- Run `biomcp ema sync` to force-refresh the EMA local data feeds.
+- WHO regulatory commands auto-download the WHO Prequalification CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.
+- Run `biomcp ema sync` or `biomcp who sync` to force-refresh the local regional data.
 "#
     .to_string()
 }
@@ -894,14 +896,19 @@ mod tests {
             "Use `--indication`, `--target`, or `--mechanism` when the question is structured."
         ));
         assert!(out.contains(
-            "Omitting `--region` searches both U.S. and EU data for plain name/alias lookups."
+            "Omitting `--region` searches U.S., EU, and WHO data for plain name/alias lookups."
         ));
         assert!(out.contains("Structured filters remain U.S.-only when `--region` is omitted."));
+        assert!(out.contains(
+            "Explicit `--region who` filters structured U.S. hits through WHO prequalification."
+        ));
         assert!(
             out.contains("Explicit `--region eu|all` is still invalid with structured filters.")
         );
         assert!(out.contains("auto-download the EMA human-medicines JSON feeds"));
+        assert!(out.contains("WHO Prequalification CSV"));
         assert!(out.contains("biomcp ema sync"));
+        assert!(out.contains("biomcp who sync"));
     }
 
     #[test]

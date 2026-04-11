@@ -250,7 +250,7 @@ version="${tag#v}"
 tmpdir="$(mktemp -d)" && BIOMCP_INSTALL_DIR="$tmpdir" BIOMCP_VERSION="$tag" bash install.sh >/tmp/biomcp-install.log && "$tmpdir/biomcp" version | head -n 1
 bioasq_page="$(mktemp)" && curl -fsSL -A 'Mozilla/5.0' https://biomcp.org/reference/bioasq-benchmark/ >"$bioasq_page" && rg -q 'hf-public-pre2026' "$bioasq_page" && rg -q 'Phase A\+' "$bioasq_page" && rg -q 'Phase B' "$bioasq_page"
 api_keys_page="$(mktemp)" && curl -fsSL -A 'Mozilla/5.0' https://biomcp.org/getting-started/api-keys/ >"$api_keys_page" && rg -q 'shared Semantic Scholar pool at 1 req/2sec' "$api_keys_page" && rg -q 'authenticated quota at 1 req/sec' "$api_keys_page"
-drug_page="$(mktemp)" && curl -fsSL -A 'Mozilla/5.0' https://biomcp.org/user-guide/drug/ >"$drug_page" && rg -q 'Keytruda regulatory --region eu' "$drug_page" && rg -q 'EMA local data setup' "$drug_page" && rg -q 'available \(default path\)' "$drug_page"
+drug_page="$(mktemp)" && curl -fsSL -A 'Mozilla/5.0' https://biomcp.org/user-guide/drug/ >"$drug_page" && rg -q 'trastuzumab regulatory --region who' "$drug_page" && rg -q 'WHO Prequalification local data setup' "$drug_page" && rg -q 'available \(default path\)' "$drug_page"
 ```
 
 Expected markers:
@@ -260,7 +260,7 @@ Expected markers:
 - BioASQ route returns all shipped benchmark page markers
 - live API Keys docs show both shared-pool and authenticated Semantic Scholar
   guidance
-- live Drug docs show the EMA `--region` workflow and local-data setup copy
+- live Drug docs show the WHO `--region` workflow and WHO local-data setup copy
   together with the local-data path marker
 
 Known issue: `uv sync --extra dev` may rewrite the editable root package

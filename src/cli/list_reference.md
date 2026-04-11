@@ -57,7 +57,9 @@ New to BioMCP? Try:
 - `search all [slot filters]` - curated multi-entity orientation (`--gene/--variant/--disease/--drug/--keyword`)
 - `search trial [filters]` - trial search is filter-only
 - `get <entity> <id> [section...]` - fetch by identifier with optional sections
-- `get drug <name> regulatory|safety|shortage [--region <us|eu|all>]` - region-aware U.S./EU drug context
+- `get drug <name> regulatory [--region <us|eu|who|all>]` - region-aware U.S./EU/WHO regulatory context
+- `get drug <name> safety|shortage [--region <us|eu|all>]` - region-aware U.S./EU drug safety and shortage context
+- `get drug <name> all [--region <us|eu|who|all>]` - include all sections plus region-aware regulatory context
 - `get trial <nct_id> locations --offset <N> --limit <N>` - page trial locations
 - `enrich <GENE1,GENE2,...>` - gene-set enrichment via g:Profiler
 - `batch <entity> <id1,id2,...>` - parallel get operations
@@ -72,7 +74,7 @@ New to BioMCP? Try:
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
 - `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N>`
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
-- `search drug ... --region <us|eu|all>` (omitting `--region` checks both U.S. and EU for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `eu|all` with structured filters errors)
+- `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification; explicit `eu|all` with structured filters errors)
 
 ## Helpers
 
@@ -124,8 +126,9 @@ Results depend on source document wording and may vary across sources.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
 - `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.
 - EU drug commands auto-download the EMA human-medicines JSON feeds on first use into the default data dir or `BIOMCP_EMA_DIR`, then refresh stale files after 72 hours.
-- Run `ema sync` to force-refresh the EMA local data feeds.
-- Use `biomcp health --apis-only` for upstream/API checks and full `biomcp health` for local EMA/cache readiness plus cache-limit warnings.
+- WHO regulatory commands auto-download the WHO Prequalification CSV on first use into the default data dir or `BIOMCP_WHO_DIR`, then refresh stale files after 72 hours.
+- Run `ema sync` or `who sync` to force-refresh the local regional data.
+- Use `biomcp health --apis-only` for upstream/API checks and full `biomcp health` for local EMA/WHO/cache readiness plus cache-limit warnings.
 - In multi-worker environments, run one shared `biomcp serve-http` process so workers share one Streamable HTTP `/mcp` endpoint and one limiter budget.
 
 ## Ops
@@ -135,6 +138,7 @@ Results depend on source document wording and may vary across sources.
 - `cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]` - remove orphan blobs and optionally age- or size-evict the HTTP cache; supports `--json` for machine-readable output
 - `cache clear [--yes]` - destructively wipe `<resolved cache_root>/http`; never touches `downloads/`; supports `--json` on success and requires a TTY unless `--yes` is passed
 - `ema sync`
+- `who sync`
 - `update [--check]`
 - `uninstall`
 - `health [--apis-only]`

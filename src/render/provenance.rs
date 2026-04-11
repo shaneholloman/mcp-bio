@@ -326,6 +326,9 @@ pub(crate) fn drug_section_sources(drug: &Drug) -> Vec<SectionSource> {
     if drug.ema_regulatory.is_some() {
         regulatory_sources.push("EMA".to_string());
     }
+    if drug.who_prequalification.is_some() {
+        regulatory_sources.push("WHO Prequalification".to_string());
+    }
     push_section(
         &mut out,
         !regulatory_sources.is_empty(),
@@ -1100,6 +1103,7 @@ mod tests {
             ema_regulatory: None,
             ema_safety: None,
             ema_shortage: None,
+            who_prequalification: None,
             civic: None,
         };
 

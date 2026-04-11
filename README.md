@@ -131,7 +131,7 @@ search all [slot filters]    → counts-first cross-entity orientation
 | variant | MyVariant.info, ClinVar, gnomAD fields via MyVariant, CIViC, Cancer Genome Interpreter, OncoKB, cBioPortal, GWAS Catalog, AlphaGenome | `biomcp get variant "BRAF V600E" clinvar` |
 | article | PubMed, PubTator3, Europe PMC, PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` recommended) | `biomcp search article -g BRAF --limit 5` |
 | trial | ClinicalTrials.gov API v2, NCI CTS API | `biomcp search trial -c melanoma -s recruiting` |
-| drug | MyChem.info, EMA local batch, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug Keytruda regulatory --region eu` |
+| drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
 | disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC | `biomcp get disease "Lynch syndrome" genes` |
 | pathway | Reactome, KEGG, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |
 | protein | UniProt, InterPro, STRING, ComplexPortal, PDB, AlphaFold | `biomcp get protein P15056 complexes` |
@@ -194,7 +194,7 @@ biomcp get gene BRAF all                # everything
 biomcp get variant "BRAF V600E" clinvar population conservation
 biomcp get article 22663011 tldr
 biomcp get drug pembrolizumab label targets civic approvals
-biomcp get drug Keytruda regulatory --region eu
+biomcp get drug trastuzumab regulatory --region who
 biomcp get disease "Lynch syndrome" genes phenotypes variants
 biomcp get trial NCT02576665 eligibility locations outcomes
 ```

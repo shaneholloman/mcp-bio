@@ -253,8 +253,8 @@ def test_release_overview_post_tag_public_proof_requires_all_markers() -> None:
     assert "rg -q 'shared Semantic Scholar pool at 1 req/2sec'" in post_tag_block
     assert "rg -q 'authenticated quota at 1 req/sec'" in post_tag_block
     assert 'drug_page="$(mktemp)"' in post_tag_block
-    assert "rg -q 'Keytruda regulatory --region eu'" in post_tag_block
-    assert "rg -q 'EMA local data setup'" in post_tag_block
+    assert "rg -q 'trastuzumab regulatory --region who'" in post_tag_block
+    assert "rg -q 'WHO Prequalification local data setup'" in post_tag_block
     assert "rg -q 'available \\(default path\\)'" in post_tag_block
     assert "| rg 'hf-public-pre2026|Phase A\\+|Phase B'" not in post_tag_block
     assert (
@@ -262,7 +262,7 @@ def test_release_overview_post_tag_public_proof_requires_all_markers() -> None:
         not in post_tag_block
     )
     assert (
-        "| rg -- 'Keytruda regulatory --region eu|EMA local data setup|available \\(default path\\)'"
+        "| rg -- 'trastuzumab regulatory --region who|WHO Prequalification local data setup|available \\(default path\\)'"
         not in post_tag_block
     )
 

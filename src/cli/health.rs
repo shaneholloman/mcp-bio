@@ -493,8 +493,8 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
     },
 ];
 
-const EMA_LOCAL_DATA_AFFECTS: &str =
-    "search/get drug --region eu|all and EU regulatory/safety/shortage sections";
+const EMA_LOCAL_DATA_AFFECTS: &str = "default plain-name drug search plus search/get drug --region eu|all and EU regulatory/safety/shortage sections";
+const WHO_LOCAL_DATA_AFFECTS: &str = "default plain-name drug search plus search/get drug --region who|all and WHO regulatory sections";
 
 fn health_sources() -> &'static [SourceDescriptor] {
     HEALTH_SOURCES
@@ -841,30 +841,65 @@ async fn check_alphagenome_connect(
     }
 }
 
-fn ema_local_data_outcome(root: &Path, env_configured: bool) -> ProbeOutcome {
-    let api = format!("EMA local data ({})", root.display());
-    let missing =
-        crate::sources::ema::ema_missing_files(root, crate::sources::ema::EMA_REQUIRED_FILES);
+fn local_data_is_stale(root: &Path, files: &[&str], stale_after: Duration) -> bool {
+    files.iter().any(|file| {
+        root.join(file)
+            .metadata()
+            .ok()
+            .and_then(|metadata| metadata.modified().ok())
+            .and_then(|modified| std::time::SystemTime::now().duration_since(modified).ok())
+            .is_some_and(|age| age >= stale_after)
+    })
+}
+
+fn local_data_outcome<F>(
+    label: &str,
+    root: &Path,
+    env_configured: bool,
+    required_files: &[&str],
+    stale_after: Duration,
+    affects: &'static str,
+    missing_files: F,
+) -> ProbeOutcome
+where
+    F: for<'a> Fn(&'a Path, &[&'a str]) -> Vec<&'a str>,
+{
+    let api = format!("{label} ({})", root.display());
+    let missing = missing_files(root, required_files);
 
     if missing.is_empty() {
-        let status = if env_configured {
-            "configured"
-        } else {
-            "available (default path)"
+        let stale = local_data_is_stale(root, required_files, stale_after);
+        let (status, class, row_affects) = match (env_configured, stale) {
+            (true, false) => ("configured".to_string(), ProbeClass::Healthy, None),
+            (true, true) => (
+                "configured (stale)".to_string(),
+                ProbeClass::Warning,
+                Some(affects),
+            ),
+            (false, false) => (
+                "available (default path)".to_string(),
+                ProbeClass::Healthy,
+                None,
+            ),
+            (false, true) => (
+                "available (default path, stale)".to_string(),
+                ProbeClass::Warning,
+                Some(affects),
+            ),
         };
         return outcome(
-            health_row(&api, status.to_string(), "n/a".into(), None, None),
-            ProbeClass::Healthy,
+            health_row(&api, status, "n/a".into(), row_affects, None),
+            class,
         );
     }
 
-    if !env_configured && missing.len() == crate::sources::ema::EMA_REQUIRED_FILES.len() {
+    if !env_configured && missing.len() == required_files.len() {
         return outcome(
             health_row(
                 &api,
                 "not configured".into(),
                 "n/a".into(),
-                Some(EMA_LOCAL_DATA_AFFECTS),
+                Some(affects),
                 None,
             ),
             ProbeClass::Excluded,
@@ -876,10 +911,22 @@ fn ema_local_data_outcome(root: &Path, env_configured: bool) -> ProbeOutcome {
             &api,
             format!("error (missing: {})", missing.join(", ")),
             "n/a".into(),
-            Some(EMA_LOCAL_DATA_AFFECTS),
+            Some(affects),
             None,
         ),
         ProbeClass::Error,
+    )
+}
+
+fn ema_local_data_outcome(root: &Path, env_configured: bool) -> ProbeOutcome {
+    local_data_outcome(
+        "EMA local data",
+        root,
+        env_configured,
+        crate::sources::ema::EMA_REQUIRED_FILES,
+        crate::sources::ema::EMA_STALE_AFTER,
+        EMA_LOCAL_DATA_AFFECTS,
+        crate::sources::ema::ema_missing_files,
     )
 }
 
@@ -887,6 +934,24 @@ fn check_ema_local_data() -> ProbeOutcome {
     let env_configured = configured_key("BIOMCP_EMA_DIR").is_some();
     let root = crate::sources::ema::resolve_ema_root();
     ema_local_data_outcome(&root, env_configured)
+}
+
+fn who_local_data_outcome(root: &Path, env_configured: bool) -> ProbeOutcome {
+    local_data_outcome(
+        "WHO Prequalification local data",
+        root,
+        env_configured,
+        crate::sources::who_pq::WHO_PQ_REQUIRED_FILES,
+        crate::sources::who_pq::WHO_PQ_STALE_AFTER,
+        WHO_LOCAL_DATA_AFFECTS,
+        crate::sources::who_pq::who_pq_missing_files,
+    )
+}
+
+fn check_who_local_data() -> ProbeOutcome {
+    let env_configured = configured_key("BIOMCP_WHO_DIR").is_some();
+    let root = crate::sources::who_pq::resolve_who_pq_root();
+    who_local_data_outcome(&root, env_configured)
 }
 
 async fn probe_source(client: reqwest::Client, source: &SourceDescriptor) -> ProbeOutcome {
@@ -1121,6 +1186,7 @@ pub async fn check(apis_only: bool) -> Result<HealthReport, BioMcpError> {
 
     if !apis_only {
         outcomes.push(check_ema_local_data());
+        outcomes.push(check_who_local_data());
         outcomes.push(check_cache_dir().await);
         outcomes.push(check_cache_limits().await);
     }
