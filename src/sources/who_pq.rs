@@ -19,7 +19,7 @@ pub(crate) const WHO_PQ_EXPORT_URL_ENV: &str = "BIOMCP_WHO_PQ_URL";
 pub(crate) const WHO_PQ_CSV_FILE: &str = "who_pq.csv";
 pub(crate) const WHO_PQ_REQUIRED_FILES: &[&str] = &[WHO_PQ_CSV_FILE];
 pub(crate) const WHO_PQ_STALE_AFTER: Duration = Duration::from_secs(72 * 60 * 60);
-pub(crate) const WHO_PQ_SIZE_HINT: &str = "~1 MB";
+pub(crate) const WHO_PQ_SIZE_HINT: &str = "~134 KB";
 const WHO_PQ_MAX_BODY_BYTES: usize = 4 * 1024 * 1024;
 
 const REQUIRED_HEADERS: &[&str] = &[
@@ -132,10 +132,7 @@ impl WhoPqClient {
         identity: &WhoPqIdentity,
     ) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError> {
         let rows = self.read_rows()?;
-        Ok(rows
-            .into_iter()
-            .filter(|row| row_matches_identity(row, identity))
-            .collect())
+        Ok(filter_regulatory_rows(&rows, identity))
     }
 
     pub(crate) fn search(
@@ -170,7 +167,7 @@ impl WhoPqClient {
         Ok(SearchPage::offset(results, Some(total)))
     }
 
-    fn read_rows(&self) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError> {
+    pub(crate) fn read_rows(&self) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError> {
         let path = self.root.join(WHO_PQ_CSV_FILE);
         let payload =
             std::fs::read_to_string(&path).map_err(|err| BioMcpError::SourceUnavailable {
@@ -473,6 +470,16 @@ fn row_matches_identity(row: &WhoPrequalificationEntry, identity: &WhoPqIdentity
             .iter()
             .any(|term| contains_boundary_phrase(field, term))
     })
+}
+
+pub(crate) fn filter_regulatory_rows(
+    rows: &[WhoPrequalificationEntry],
+    identity: &WhoPqIdentity,
+) -> Vec<WhoPrequalificationEntry> {
+    rows.iter()
+        .filter(|row| row_matches_identity(row, identity))
+        .cloned()
+        .collect()
 }
 
 fn who_pq_export_url() -> String {

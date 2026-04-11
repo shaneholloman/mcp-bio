@@ -1293,9 +1293,9 @@ mod tests {
 
     use super::{
         EMA_LOCAL_DATA_AFFECTS, HealthReport, HealthRow, ProbeClass, ProbeKind, ProbeOutcome,
-        SourceDescriptor, affects_for_api, check_cache_dir, check_cache_limits_with,
-        ema_local_data_outcome, health_sources, probe_cache_dir, probe_source,
-        report_from_outcomes,
+        SourceDescriptor, WHO_LOCAL_DATA_AFFECTS, affects_for_api, check_cache_dir,
+        check_cache_limits_with, ema_local_data_outcome, health_sources, probe_cache_dir,
+        probe_source, report_from_outcomes, who_local_data_outcome,
     };
     use crate::cache::{
         CacheBlob, CacheConfigOrigins, CacheEntry, CachePlannerError, CacheSnapshot, ConfigOrigin,
@@ -1383,6 +1383,27 @@ mod tests {
         for file in files {
             std::fs::write(root.join(file), b"{}").expect("write EMA fixture file");
         }
+    }
+
+    fn write_who_fixture(root: &Path) {
+        std::fs::write(
+            root.join(crate::sources::who_pq::WHO_PQ_CSV_FILE),
+            b"WHO Reference Number,INN, Dosage Form and Strength,Product Type,Therapeutic Area,Applicant,Dosage Form,Basis of Listing,Basis of alternative listing,Date of Prequalification\n",
+        )
+        .expect("write WHO fixture file");
+    }
+
+    fn set_stale_mtime(path: &Path) {
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .open(path)
+            .expect("fixture file should open");
+        file.set_modified(
+            std::time::SystemTime::now()
+                .checked_sub(std::time::Duration::from_secs(73 * 60 * 60))
+                .expect("stale time should be valid"),
+        )
+        .expect("mtime should update");
     }
 
     fn assert_cache_dir_affects(value: Option<&str>) {
@@ -1760,6 +1781,98 @@ mod tests {
         );
         assert_eq!(row["affects"], EMA_LOCAL_DATA_AFFECTS);
         assert!(row.get("key_configured").is_none());
+    }
+
+    #[test]
+    fn who_local_data_not_configured_when_default_root_is_empty() {
+        let root = TempDirGuard::new();
+
+        let outcome = who_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Excluded);
+        assert_eq!(
+            outcome.row.api,
+            format!(
+                "WHO Prequalification local data ({})",
+                root.path().display()
+            )
+        );
+        assert_eq!(outcome.row.status, "not configured");
+        assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn who_local_data_errors_when_env_root_is_missing_file() {
+        let root = TempDirGuard::new();
+
+        let outcome = who_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Error);
+        assert_eq!(
+            outcome.row.status,
+            format!(
+                "error (missing: {})",
+                crate::sources::who_pq::WHO_PQ_REQUIRED_FILES.join(", ")
+            )
+        );
+        assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn who_local_data_reports_available_when_default_root_is_complete() {
+        let root = TempDirGuard::new();
+        write_who_fixture(root.path());
+
+        let outcome = who_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Healthy);
+        assert_eq!(
+            outcome.row.api,
+            format!(
+                "WHO Prequalification local data ({})",
+                root.path().display()
+            )
+        );
+        assert_eq!(outcome.row.status, "available (default path)");
+        assert_eq!(outcome.row.affects, None);
+    }
+
+    #[test]
+    fn who_local_data_reports_configured_when_env_root_is_complete() {
+        let root = TempDirGuard::new();
+        write_who_fixture(root.path());
+
+        let outcome = who_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Healthy);
+        assert_eq!(outcome.row.status, "configured");
+        assert_eq!(outcome.row.affects, None);
+    }
+
+    #[test]
+    fn who_local_data_reports_configured_stale_when_env_root_is_complete_but_old() {
+        let root = TempDirGuard::new();
+        write_who_fixture(root.path());
+        set_stale_mtime(&root.path().join(crate::sources::who_pq::WHO_PQ_CSV_FILE));
+
+        let outcome = who_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Warning);
+        assert_eq!(outcome.row.status, "configured (stale)");
+        assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn who_local_data_reports_default_path_stale_when_complete_but_old() {
+        let root = TempDirGuard::new();
+        write_who_fixture(root.path());
+        set_stale_mtime(&root.path().join(crate::sources::who_pq::WHO_PQ_CSV_FILE));
+
+        let outcome = who_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Warning);
+        assert_eq!(outcome.row.status, "available (default path, stale)");
+        assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
     }
 
     #[test]

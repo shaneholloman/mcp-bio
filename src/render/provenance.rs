@@ -1116,6 +1116,62 @@ mod tests {
     }
 
     #[test]
+    fn drug_provenance_adds_who_to_regulatory_sources() {
+        let drug = Drug {
+            name: "trastuzumab".to_string(),
+            drugbank_id: None,
+            chembl_id: None,
+            unii: None,
+            drug_type: None,
+            mechanism: None,
+            mechanisms: Vec::new(),
+            approval_date: None,
+            approval_date_raw: None,
+            approval_date_display: None,
+            approval_summary: None,
+            brand_names: Vec::new(),
+            route: None,
+            targets: Vec::new(),
+            variant_targets: Vec::new(),
+            target_family: None,
+            target_family_name: None,
+            indications: Vec::new(),
+            interactions: Vec::new(),
+            interaction_text: None,
+            pharm_classes: Vec::new(),
+            top_adverse_events: Vec::new(),
+            faers_query: None,
+            label: None,
+            label_set_id: None,
+            shortage: None,
+            approvals: None,
+            us_safety_warnings: None,
+            ema_regulatory: None,
+            ema_safety: None,
+            ema_shortage: None,
+            who_prequalification: Some(vec![crate::entities::drug::WhoPrequalificationEntry {
+                who_reference_number: "BT-ON001".to_string(),
+                inn: "Trastuzumab".to_string(),
+                presentation: "Trastuzumab Powder for concentrate for solution for infusion 150 mg"
+                    .to_string(),
+                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                product_type: "Biotherapeutic Product".to_string(),
+                therapeutic_area: "Oncology".to_string(),
+                applicant: "Samsung Bioepis NL B.V.".to_string(),
+                listing_basis: "Prequalification - Abridged".to_string(),
+                alternative_listing_basis: None,
+                prequalification_date: Some("2019-12-18".to_string()),
+            }]),
+            civic: None,
+        };
+
+        let sources = drug_section_sources(&drug);
+        assert!(sources.iter().any(|source| {
+            source.key == "regulatory" && source.sources == vec!["WHO Prequalification".to_string()]
+        }));
+    }
+
+    #[test]
     fn disease_section_sources_include_survival_when_note_present() {
         let disease = Disease {
             id: "MONDO:0007947".to_string(),

@@ -8743,6 +8743,108 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn drug_markdown_with_region_who_renders_regulatory_block() {
+        let drug = Drug {
+            name: "trastuzumab".to_string(),
+            drugbank_id: Some("DB00072".to_string()),
+            chembl_id: None,
+            unii: None,
+            drug_type: None,
+            mechanism: None,
+            mechanisms: Vec::new(),
+            approval_date: None,
+            approval_date_raw: None,
+            approval_date_display: None,
+            approval_summary: None,
+            brand_names: vec!["Herceptin".to_string()],
+            route: None,
+            targets: Vec::new(),
+            variant_targets: Vec::new(),
+            target_family: None,
+            target_family_name: None,
+            indications: Vec::new(),
+            interactions: Vec::new(),
+            interaction_text: None,
+            pharm_classes: Vec::new(),
+            top_adverse_events: Vec::new(),
+            faers_query: None,
+            label: None,
+            label_set_id: None,
+            shortage: None,
+            approvals: None,
+            us_safety_warnings: None,
+            ema_regulatory: None,
+            ema_safety: None,
+            ema_shortage: None,
+            who_prequalification: Some(vec![WhoPrequalificationEntry {
+                who_reference_number: "BT-ON001".to_string(),
+                inn: "Trastuzumab".to_string(),
+                presentation: "Trastuzumab Powder for concentrate for solution for infusion 150 mg"
+                    .to_string(),
+                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                product_type: "Biotherapeutic Product".to_string(),
+                therapeutic_area: "Oncology".to_string(),
+                applicant: "Samsung Bioepis NL B.V.".to_string(),
+                listing_basis: "Prequalification - Abridged".to_string(),
+                alternative_listing_basis: None,
+                prequalification_date: Some("2019-12-18".to_string()),
+            }]),
+            civic: None,
+        };
+
+        let markdown =
+            drug_markdown_with_region(&drug, &["regulatory".to_string()], DrugRegion::Who, false)
+                .expect("markdown");
+
+        assert!(markdown.contains("## Regulatory (WHO Prequalification)"));
+        assert!(markdown.contains("| WHO Ref | Presentation | Dosage Form |"));
+        assert!(markdown.contains("BT-ON001"));
+        assert!(markdown.contains("Samsung Bioepis NL B.V."));
+        assert!(markdown.contains("2019-12-18"));
+    }
+
+    #[test]
+    fn drug_search_all_region_markdown_includes_who_block() {
+        let markdown = drug_search_markdown_with_region(
+            "trastuzumab",
+            DrugRegion::All,
+            &[crate::entities::drug::DrugSearchResult {
+                name: "trastuzumab".to_string(),
+                drugbank_id: None,
+                mechanism: None,
+                target: Some("ERBB2".to_string()),
+                drug_type: None,
+            }],
+            Some(1),
+            &[crate::entities::drug::EmaDrugSearchResult {
+                name: "Herzuma".to_string(),
+                active_substance: "trastuzumab".to_string(),
+                ema_product_number: "EMEA/H/C/004123".to_string(),
+                status: "Authorised".to_string(),
+            }],
+            Some(1),
+            &[crate::entities::drug::WhoPrequalificationSearchResult {
+                inn: "Trastuzumab".to_string(),
+                therapeutic_area: "Oncology".to_string(),
+                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                applicant: "Samsung Bioepis NL B.V.".to_string(),
+                who_reference_number: "BT-ON001".to_string(),
+                listing_basis: "Prequalification - Abridged".to_string(),
+                prequalification_date: Some("2019-12-18".to_string()),
+            }],
+            Some(1),
+            "",
+        )
+        .expect("markdown");
+
+        assert!(markdown.contains("## US (MyChem.info / OpenFDA)"));
+        assert!(markdown.contains("## EU (EMA)"));
+        assert!(markdown.contains("## WHO (WHO Prequalification)"));
+        assert!(markdown.contains("BT-ON001"));
+        assert!(markdown.contains("EMEA/H/C/004123"));
+    }
+
+    #[test]
     fn drug_markdown_with_region_eu_all_suppresses_us_header_facts() {
         // Criterion 9: `get drug <name> all --region eu` must not show US-specific
         // header lines (FDA Approved, Safety FAERS) even though the full card is rendered.

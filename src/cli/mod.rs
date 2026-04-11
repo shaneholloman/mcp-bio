@@ -3240,6 +3240,22 @@ struct SearchJsonResponse<T: serde::Serialize> {
 }
 
 #[derive(serde::Serialize)]
+struct RegionResults<T: serde::Serialize> {
+    count: usize,
+    total: Option<usize>,
+    results: Vec<T>,
+}
+
+#[derive(serde::Serialize)]
+struct DrugAllRegionSearchResponse<T: serde::Serialize, U: serde::Serialize, V: serde::Serialize> {
+    region: &'static str,
+    query: String,
+    us: RegionResults<T>,
+    eu: RegionResults<U>,
+    who: RegionResults<V>,
+}
+
+#[derive(serde::Serialize)]
 struct DiseaseSearchMeta {
     fallback_used: bool,
 }
@@ -3262,6 +3278,32 @@ fn search_json<T: serde::Serialize>(
         pagination,
         count,
         results,
+    })
+    .map_err(Into::into)
+}
+
+fn to_region_results<T: serde::Serialize>(
+    page: crate::entities::SearchPage<T>,
+) -> RegionResults<T> {
+    RegionResults {
+        count: page.results.len(),
+        total: page.total,
+        results: page.results,
+    }
+}
+
+fn drug_all_region_search_json(
+    query: &str,
+    us: crate::entities::SearchPage<crate::entities::drug::DrugSearchResult>,
+    eu: crate::entities::SearchPage<crate::entities::drug::EmaDrugSearchResult>,
+    who: crate::entities::SearchPage<crate::entities::drug::WhoPrequalificationSearchResult>,
+) -> anyhow::Result<String> {
+    crate::render::json::to_pretty(&DrugAllRegionSearchResponse {
+        region: crate::entities::drug::DrugRegion::All.as_str(),
+        query: query.to_string(),
+        us: to_region_results(us),
+        eu: to_region_results(eu),
+        who: to_region_results(who),
     })
     .map_err(Into::into)
 }
@@ -6298,46 +6340,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         }
                         crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
                             if cli.json {
-                                #[derive(serde::Serialize)]
-                                struct RegionResults<T: serde::Serialize> {
-                                    count: usize,
-                                    total: Option<usize>,
-                                    results: Vec<T>,
-                                }
-
-                                #[derive(serde::Serialize)]
-                                struct SearchResponse<
-                                    T: serde::Serialize,
-                                    U: serde::Serialize,
-                                    V: serde::Serialize,
-                                > {
-                                    region: &'static str,
-                                    query: String,
-                                    us: RegionResults<T>,
-                                    eu: RegionResults<U>,
-                                    who: RegionResults<V>,
-                                }
-
-                                crate::render::json::to_pretty(&SearchResponse {
-                                    region: region.as_str(),
-                                    query: query_summary.clone(),
-                                    us: RegionResults {
-                                        count: us.results.len(),
-                                        total: us.total,
-                                        results: us.results,
-                                    },
-                                    eu: RegionResults {
-                                        count: eu.results.len(),
-                                        total: eu.total,
-                                        results: eu.results,
-                                    },
-                                    who: RegionResults {
-                                        count: who.results.len(),
-                                        total: who.total,
-                                        results: who.results,
-                                    },
-                                })
-                                .map_err(Into::into)
+                                drug_all_region_search_json(&query_summary, us, eu, who)
                             } else {
                                 Ok(crate::render::markdown::drug_search_markdown_with_region(
                                     &query_summary,
@@ -7171,10 +7174,11 @@ mod tests {
         ArticleCommand, ChartArgs, ChartType, Cli, Commands, DrugCommand, DrugRegionArg,
         EmaCommand, GeneCommand, GetEntity, McpChartPass, OutputStream, PaginationMeta,
         ProteinCommand, StudyCommand, VariantCommand, VariantSearchPlan, WhoCommand,
-        article_search_json, build_article_debug_plan, disease_search_json, execute, execute_mcp,
-        extract_json_from_sections, paginate_trial_locations, parse_simple_gene_change,
-        parse_trial_location_paging, resolve_drug_search_region, resolve_query_input,
-        resolve_variant_query, rewrite_mcp_chart_args, run_outcome,
+        article_search_json, build_article_debug_plan, disease_search_json,
+        drug_all_region_search_json, execute, execute_mcp, extract_json_from_sections,
+        paginate_trial_locations, parse_simple_gene_change, parse_trial_location_paging,
+        resolve_drug_search_region, resolve_query_input, resolve_variant_query,
+        rewrite_mcp_chart_args, run_outcome, search_json,
         should_show_trial_zero_result_nickname_hint, should_try_pathway_trial_fallback,
         trial_locations_json, trial_search_query_summary, truncate_article_annotations,
     };
@@ -8775,6 +8779,85 @@ mod tests {
         assert!(long_help.contains(
             "Explicit --region who filters structured U.S. hits through WHO Prequalification."
         ));
+    }
+
+    #[test]
+    fn search_json_preserves_who_search_fields() {
+        let pagination = PaginationMeta::offset(0, 5, 1, Some(1));
+        let json = search_json(
+            vec![crate::entities::drug::WhoPrequalificationSearchResult {
+                inn: "Trastuzumab".to_string(),
+                therapeutic_area: "Oncology".to_string(),
+                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                applicant: "Samsung Bioepis NL B.V.".to_string(),
+                who_reference_number: "BT-ON001".to_string(),
+                listing_basis: "Prequalification - Abridged".to_string(),
+                prequalification_date: Some("2019-12-18".to_string()),
+            }],
+            pagination,
+        )
+        .expect("WHO search json");
+
+        let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+        assert_eq!(value["count"], 1);
+        assert_eq!(value["results"][0]["who_reference_number"], "BT-ON001");
+        assert_eq!(
+            value["results"][0]["listing_basis"],
+            "Prequalification - Abridged"
+        );
+        assert_eq!(value["results"][0]["prequalification_date"], "2019-12-18");
+    }
+
+    #[test]
+    fn drug_all_region_search_json_includes_who_bucket() {
+        let json = drug_all_region_search_json(
+            "trastuzumab",
+            crate::entities::SearchPage::offset(
+                vec![crate::entities::drug::DrugSearchResult {
+                    name: "trastuzumab".to_string(),
+                    drugbank_id: None,
+                    drug_type: None,
+                    mechanism: None,
+                    target: Some("ERBB2".to_string()),
+                }],
+                Some(1),
+            ),
+            crate::entities::SearchPage::offset(
+                vec![crate::entities::drug::EmaDrugSearchResult {
+                    name: "Herzuma".to_string(),
+                    active_substance: "trastuzumab".to_string(),
+                    ema_product_number: "EMEA/H/C/004123".to_string(),
+                    status: "Authorised".to_string(),
+                }],
+                Some(1),
+            ),
+            crate::entities::SearchPage::offset(
+                vec![crate::entities::drug::WhoPrequalificationSearchResult {
+                    inn: "Trastuzumab".to_string(),
+                    therapeutic_area: "Oncology".to_string(),
+                    dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                    applicant: "Samsung Bioepis NL B.V.".to_string(),
+                    who_reference_number: "BT-ON001".to_string(),
+                    listing_basis: "Prequalification - Abridged".to_string(),
+                    prequalification_date: Some("2019-12-18".to_string()),
+                }],
+                Some(1),
+            ),
+        )
+        .expect("all-region drug search json");
+
+        let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+        assert_eq!(value["region"], "all");
+        assert_eq!(value["who"]["count"], 1);
+        assert_eq!(value["who"]["total"], 1);
+        assert_eq!(
+            value["who"]["results"][0]["who_reference_number"],
+            "BT-ON001"
+        );
+        assert_eq!(
+            value["eu"]["results"][0]["ema_product_number"],
+            "EMEA/H/C/004123"
+        );
     }
 
     #[test]

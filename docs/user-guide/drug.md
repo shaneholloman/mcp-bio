@@ -143,7 +143,9 @@ biomcp ema sync
 EMA row meanings:
 
 - `configured`: `BIOMCP_EMA_DIR` is set and complete
+- `configured (stale)`: `BIOMCP_EMA_DIR` is set and complete, but one or more EMA files are older than the 72-hour refresh window
 - `available (default path)`: the default platform data directory contains a complete EMA batch
+- `available (default path, stale)`: the default platform data directory contains a complete EMA batch, but one or more EMA files are older than the 72-hour refresh window
 - `not configured`: no EMA batch is installed at the default path yet
 - `error (missing: ...)`: the EMA directory exists but is missing one or more required files
 
@@ -176,7 +178,9 @@ biomcp who sync
 WHO row meanings:
 
 - `configured`: `BIOMCP_WHO_DIR` is set and complete
+- `configured (stale)`: `BIOMCP_WHO_DIR` is set and complete, but `who_pq.csv` is older than the 72-hour refresh window
 - `available (default path)`: the default platform data directory contains a complete WHO CSV
+- `available (default path, stale)`: the default platform data directory contains a complete WHO CSV, but `who_pq.csv` is older than the 72-hour refresh window
 - `not configured`: no WHO CSV is installed at the default path yet
 - `error (missing: ...)`: the WHO directory exists but is missing the required file
 

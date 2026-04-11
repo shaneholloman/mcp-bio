@@ -534,6 +534,35 @@ out="$(biomcp get drug imatinib regulatory --region who)"
 echo "$out" | mustmatch like "Not WHO-prequalified"
 ```
 
+## WHO Unsupported Sections Reject Fast
+
+WHO regional data is regulatory-only. Explicit `safety` and `shortage`
+requests with `--region who` should fail before any data fetch.
+
+```bash
+out="$(biomcp get drug trastuzumab safety --region who 2>&1 || true)"
+echo "$out" | mustmatch like "Error: Invalid argument: WHO regional data currently supports regulatory only"
+
+out="$(biomcp get drug trastuzumab shortage --region who 2>&1 || true)"
+echo "$out" | mustmatch like "Error: Invalid argument: WHO regional data currently supports regulatory only"
+```
+
+## WHO All Section Keeps Only Supported Regional Blocks
+
+`get drug <name> all --region who` should stay valid, keep the normal
+nonregional sections, render WHO regulatory data, and omit unsupported WHO
+safety/shortage regional blocks.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp get drug trastuzumab all --region who)"
+echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
+echo "$out" | mustmatch like "| BT-ON001 | Trastuzumab Powder"
+echo "$out" | mustmatch not like "## Safety ("
+echo "$out" | mustmatch not like "## Shortage ("
+```
+
 ## EMA Safety Truthful Empty Sections
 
 The EU safety surface should render DHPC matches and keep referrals/PSUSAs

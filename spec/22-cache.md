@@ -120,6 +120,7 @@ mkdir -p "$tmp_root/cache-home" "$tmp_root/config-home/biomcp"
 cat >"$tmp_root/config-home/biomcp/cache.toml" <<'EOF'
 [cache]
 max_size = 10000000000
+min_disk_free = "1B"
 EOF
 
 env XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" \
@@ -128,6 +129,7 @@ env XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home
 cat >"$tmp_root/config-home/biomcp/cache.toml" <<'EOF'
 [cache]
 max_size = 1
+min_disk_free = "1B"
 EOF
 
 json_out="$(env XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" "$bin" --json health)"

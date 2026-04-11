@@ -53,20 +53,24 @@ Not every file-backed dependency participates in the same runtime lifecycle.
 
 ### Local runtime sources
 
-EMA is the canonical local runtime source.
+EMA and WHO Prequalification are the canonical local runtime drug sources.
 
 - Runtime resolution is owned by the source module, not hard-coded in docs.
 - EMA resolves `BIOMCP_EMA_DIR` first, then the platform data directory.
-- Full `biomcp health` includes the EMA local-data readiness row.
-- `biomcp health --apis-only` excludes that row because local EMA data is not
-  an upstream API.
-- The row status contract is `configured`, `available (default path)`,
+- WHO resolves `BIOMCP_WHO_DIR` first, then the platform data directory.
+- Full `biomcp health` includes the EMA and WHO local-data readiness rows.
+- `biomcp health --apis-only` excludes those rows because local EMA/WHO data
+  is not an upstream API.
+- The row status contract is `configured`, `configured (stale)`,
+  `available (default path)`, `available (default path, stale)`,
   `not configured`, and `error (missing: ...)`.
 - Operator-facing setup details live in `docs/user-guide/drug.md`, including
-  the `EMA local data setup` section and required batch files.
+  the `EMA local data setup` and `WHO Prequalification local data setup`
+  sections and required local files.
 
 This keeps local runtime readiness grounded in `src/cli/health.rs` and
-`src/sources/ema.rs` while leaving operator setup details in the user guide.
+`src/sources/ema.rs` / `src/sources/who_pq.rs` while leaving operator setup
+details in the user guide.
 
 ### File-backed non-runtime assets
 

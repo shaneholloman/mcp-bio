@@ -197,7 +197,7 @@ async fn clean_who_search_downloads_missing_csv() {
     assert!(
         result
             .stderr
-            .contains("Downloading WHO Prequalification data (~1 MB)...")
+            .contains("Downloading WHO Prequalification data (~134 KB)...")
     );
     assert!(
         default_who_root(data_home.path())
@@ -302,8 +302,58 @@ async fn stale_who_csv_refreshes_on_next_search() {
     assert!(
         second
             .stderr
-            .contains("Refreshing stale WHO Prequalification data (~1 MB)...")
+            .contains("Refreshing stale WHO Prequalification data (~134 KB)...")
     );
+    assert_eq!(request_count(&server).await, 2);
+}
+
+#[tokio::test]
+async fn missing_who_csv_redownloads_on_next_search() {
+    let server = mount_success_server().await;
+    let data_home = TempDirGuard::new("missing-data-home");
+    let cache_home = TempDirGuard::new("missing-cache-home");
+    let who_export_url = export_url(&server);
+
+    let first = run_biomcp(
+        &[
+            "search",
+            "drug",
+            "trastuzumab",
+            "--region",
+            "who",
+            "--limit",
+            "2",
+        ],
+        data_home.path(),
+        cache_home.path(),
+        &[("BIOMCP_WHO_PQ_URL", &who_export_url)],
+    );
+    assert_trastuzumab_search(&first);
+
+    let csv_path = default_who_root(data_home.path()).join(WHO_CSV_FILE);
+    fs::remove_file(&csv_path).expect("WHO CSV should be removable");
+
+    let second = run_biomcp(
+        &[
+            "search",
+            "drug",
+            "trastuzumab",
+            "--region",
+            "who",
+            "--limit",
+            "2",
+        ],
+        data_home.path(),
+        cache_home.path(),
+        &[("BIOMCP_WHO_PQ_URL", &who_export_url)],
+    );
+    assert_trastuzumab_search(&second);
+    assert!(
+        second
+            .stderr
+            .contains("Downloading WHO Prequalification data (~134 KB)...")
+    );
+    assert!(csv_path.is_file());
     assert_eq!(request_count(&server).await, 2);
 }
 
