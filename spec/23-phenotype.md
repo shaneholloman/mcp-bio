@@ -45,7 +45,7 @@ bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" search phenotype "HP:0002373 HP:0001250" --limit 3)"
 top_disease="$(printf '%s\n' "$out" | awk -F'|' '/^\|/ && $2 !~ /Disease ID/ && $2 !~ /---/ {gsub(/^ +| +$/, "", $3); print $3; exit}')"
 test -n "$top_disease"
-echo "$out" | mustmatch like "See also:"
+printf '%s\n' "$out" | grep -F 'See also:' >/dev/null
 echo "$out" | mustmatch like "biomcp get disease \"$top_disease\" genes phenotypes"
 ```
 
