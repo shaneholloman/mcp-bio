@@ -30,6 +30,10 @@ biomcp get disease MONDO:0005105
 The base disease card includes concise OpenTargets gene-score summaries when OpenTargets
 returns ranked associated targets. Prefer canonical `MONDO:<id>` values in automation:
 they are the stable form BioMCP uses for normalization and fallback repair.
+When ranked disease-gene context is present, the `See also:` block also promotes
+the strongest follow-up gene pivot before the generic disease-level searches,
+for example `biomcp get gene SCN1A clingen constraint` on a Dravet syndrome
+gene card.
 
 ## Disease sections
 

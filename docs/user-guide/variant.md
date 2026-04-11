@@ -84,6 +84,11 @@ biomcp get variant rs113488022 clinvar
 
 ClinVar JSON also exposes `top_disease` when condition aggregation is available,
 reusing the highest-ranked ClinVar condition row already shown in the section.
+The runtime `See also:` block is significance-aware: pathogenic or likely
+pathogenic variants keep the gene and drug-target pivots near the top, while
+VUS / uncertain-significance variants add a literature search anchored by the
+variant alias and any available disease context before the generic drug-target
+fallback.
 
 Population section:
 
