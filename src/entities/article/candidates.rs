@@ -313,3 +313,6 @@ pub(super) fn finalize_article_candidates(
     rows.truncate(limit);
     SearchPage::offset(rows, total)
 }
+
+#[cfg(test)]
+mod tests;

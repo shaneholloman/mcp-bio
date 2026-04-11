@@ -168,3 +168,6 @@ pub async fn get_batch_compact(ids: &[String]) -> Result<Vec<ArticleBatchItem>, 
     enrich_article_batch_with_semantic_scholar(&mut items).await?;
     Ok(items)
 }
+
+#[cfg(test)]
+mod tests;

@@ -223,3 +223,6 @@ pub(crate) fn summarize_debug_plan(
         matched_sources,
     })
 }
+
+#[cfg(test)]
+mod tests;

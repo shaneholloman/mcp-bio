@@ -469,3 +469,6 @@ pub async fn get(id: &str, sections: &[String]) -> Result<Article, BioMcpError> 
 
     Ok(article)
 }
+
+#[cfg(test)]
+mod tests;

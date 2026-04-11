@@ -1,0 +1,182 @@
+#[allow(unused_imports)]
+use super::super::test_support::*;
+use super::*;
+
+#[test]
+fn pubtator_sort_omits_param_for_relevance() {
+    assert_eq!(pubtator_sort(ArticleSort::Relevance), None);
+}
+
+#[test]
+fn pubtator_sort_sends_param_for_date() {
+    assert_eq!(pubtator_sort(ArticleSort::Date), Some("date desc"));
+}
+
+#[test]
+fn europepmc_keyword_does_not_quote_whitespace() {
+    let term = europepmc_keyword("large language model clinical trials");
+    assert_eq!(term, "large language model clinical trials");
+}
+
+#[test]
+fn build_search_query_keeps_phrase_quoting_for_entity_filters() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF V600E".into());
+    filters.author = Some("Jane Doe".into());
+
+    let query = build_search_query(&filters).expect("query should build");
+    assert!(query.contains("\"BRAF V600E\""));
+    assert!(query.contains("AUTH:\"Jane Doe\""));
+}
+
+#[test]
+fn build_search_query_uses_gene_anchor_field_when_requested() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+    filters.gene_anchored = true;
+    let query = build_search_query(&filters).expect("query should build");
+    assert!(query.contains("GENE_PROTEIN:BRAF"));
+}
+
+#[test]
+fn build_search_query_combines_keyword_and_since() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+    filters.keyword = Some("large language model".into());
+    filters.date_from = Some("2024-01-01".into());
+    filters.no_preprints = true;
+
+    let query = build_search_query(&filters).expect("query should build");
+    assert!(query.contains("BRAF"));
+    assert!(query.contains("large language model"));
+    assert!(query.contains("FIRST_PDATE:[2024-01-01 TO *]"));
+    assert!(query.contains("NOT SRC:PPR"));
+}
+
+#[test]
+fn build_search_query_excludes_retracted_when_requested() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+    filters.exclude_retracted = true;
+    let query = build_search_query(&filters).expect("query should build");
+    assert!(query.contains("NOT PUB_TYPE:\"retracted publication\""));
+}
+
+#[test]
+fn build_search_query_rejects_unknown_article_type() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+    filters.article_type = Some("invalid".into());
+
+    let err = build_search_query(&filters).expect_err("invalid article type should fail");
+    let msg = err.to_string();
+    assert!(msg.contains("Invalid argument"));
+    assert!(msg.contains("case-reports"));
+}
+
+#[test]
+fn build_free_text_article_query_preserves_mixed_semantic_anchors() {
+    let mut filters = empty_filters();
+    filters.gene = Some(" RET ".into());
+    filters.disease = Some(" Hirschsprung disease ".into());
+    filters.drug = Some(" selpercatinib ".into());
+    filters.keyword = Some(" ganglion cells ".into());
+    filters.author = Some(" Alice Smith ".into());
+
+    let query = build_free_text_article_query(&filters);
+
+    assert_eq!(
+        query,
+        "RET Hirschsprung disease selpercatinib ganglion cells Alice Smith"
+    );
+}
+
+#[test]
+fn build_pubmed_esearch_params_reuses_article_type_aliases() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+    filters.keyword = Some("melanoma".into());
+    filters.author = Some("Alice Smith".into());
+    filters.journal = Some("Nature".into());
+    filters.article_type = Some("research".into());
+    filters.date_from = Some("2020".into());
+    filters.date_to = Some("2024-12".into());
+    filters.exclude_retracted = true;
+
+    let params = build_pubmed_esearch_params(&filters, 5, 10).expect("pubmed params should build");
+
+    assert_eq!(
+        params.term,
+        "BRAF AND melanoma AND \"Alice Smith\"[author] AND \"Nature\"[journal] AND journal article[pt] NOT retracted publication[pt]"
+    );
+    assert_eq!(params.retstart, 10);
+    assert_eq!(params.retmax, 5);
+    assert_eq!(params.date_from.as_deref(), Some("2020-01-01"));
+    assert_eq!(params.date_to.as_deref(), Some("2024-12-01"));
+}
+
+#[test]
+fn build_pubmed_search_term_uses_standalone_not_for_retraction_filter() {
+    let mut filters = empty_filters();
+    filters.gene = Some("WDR5".into());
+    filters.exclude_retracted = true;
+
+    let term = build_pubmed_search_term(&filters).expect("pubmed term should build");
+
+    assert_eq!(term, "WDR5 NOT retracted publication[pt]");
+    assert!(
+        !term.contains("AND NOT"),
+        "term must not contain 'AND NOT': {term:?}"
+    );
+}
+
+#[test]
+fn build_pubmed_esearch_params_allows_federated_windows_above_user_limit() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+
+    let params = build_pubmed_esearch_params(&filters, 75, 0).expect("pubmed params should build");
+
+    assert_eq!(params.retmax, 75);
+    assert_eq!(params.retstart, 0);
+}
+
+#[test]
+fn build_pubmed_esearch_params_rejects_open_access() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+    filters.open_access = true;
+
+    let err = build_pubmed_esearch_params(&filters, 5, 0)
+        .expect_err("open-access should be rejected for PubMed builder");
+
+    assert!(err.to_string().contains("--open-access"));
+    assert!(err.to_string().contains("PubMed"));
+}
+
+#[test]
+fn build_pubmed_esearch_params_rejects_no_preprints() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+    filters.no_preprints = true;
+
+    let err = build_pubmed_esearch_params(&filters, 5, 0)
+        .expect_err("no-preprints should be rejected for PubMed builder");
+
+    assert!(err.to_string().contains("--no-preprints"));
+    assert!(err.to_string().contains("PubMed"));
+}
+
+#[test]
+fn build_pubmed_esearch_params_rejects_federated_window_overflow() {
+    let mut filters = empty_filters();
+    filters.gene = Some("BRAF".into());
+
+    let err = build_pubmed_esearch_params(&filters, 1, MAX_FEDERATED_FETCH_RESULTS)
+        .expect_err("offset + limit overflow should be rejected");
+
+    assert!(
+        err.to_string()
+            .contains("--offset + --limit must be <= 1250 for federated article search")
+    );
+}

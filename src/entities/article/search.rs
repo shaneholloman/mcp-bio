@@ -319,3 +319,6 @@ pub async fn search_page(
         BackendPlan::Both => search_federated_page(filters, limit, offset).await,
     }
 }
+
+#[cfg(test)]
+mod tests;

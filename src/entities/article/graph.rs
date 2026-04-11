@@ -251,3 +251,6 @@ pub async fn recommendations(
             .collect(),
     })
 }
+
+#[cfg(test)]
+mod tests;

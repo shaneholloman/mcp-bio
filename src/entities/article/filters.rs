@@ -179,3 +179,6 @@ pub(super) fn matches_result_filters(
     }
     true
 }
+
+#[cfg(test)]
+mod tests;

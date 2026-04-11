@@ -541,3 +541,6 @@ pub(super) fn sort_article_rows(
         }),
     }
 }
+
+#[cfg(test)]
+mod tests;

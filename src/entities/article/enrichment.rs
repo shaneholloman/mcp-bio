@@ -232,3 +232,6 @@ pub(super) async fn enrich_visible_article_search_page(
     enrich_visible_article_search_rows_with_article_base(&mut page.results).await;
     page
 }
+
+#[cfg(test)]
+mod tests;

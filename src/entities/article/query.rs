@@ -382,3 +382,6 @@ pub(super) fn build_free_text_article_query(filters: &ArticleSearchFilters) -> S
     .collect::<Vec<_>>()
     .join(" ")
 }
+
+#[cfg(test)]
+mod tests;

@@ -512,3 +512,6 @@ pub(super) async fn search_litsense2_candidates(
 
     Ok(rows)
 }
+
+#[cfg(test)]
+mod tests;
