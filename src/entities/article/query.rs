@@ -10,10 +10,8 @@ use super::filters::{
     normalize_article_type, normalized_date_bounds, validate_required_search_filters,
     validate_search_filter_values,
 };
-use super::{
-    ArticleSearchFilters, ArticleSort, MAX_FEDERATED_FETCH_RESULTS,
-    validate_article_ranking_options,
-};
+use super::ranking::validate_article_ranking_options;
+use super::{ArticleSearchFilters, ArticleSort, MAX_FEDERATED_FETCH_RESULTS};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum EntityBiotype {
