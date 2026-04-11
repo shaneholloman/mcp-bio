@@ -595,15 +595,31 @@ mod tests {
         assert!(overview.contains("## Routing rules"));
         assert!(overview.contains("## Section reference"));
         assert!(overview.contains("## Cross-entity pivot rules"));
+        assert!(overview.contains("## How-to guide reference"));
+        assert!(overview.contains("## Anti-patterns"));
         assert!(overview.contains("## Output and evidence rules"));
         assert!(overview.contains("## Answer commitment"));
         assert!(overview.contains("biomcp search drug --indication \"<disease>\""));
         assert!(overview.contains("biomcp discover \"<free text>\""));
+        assert!(overview.contains("[Find Articles](../docs/how-to/find-articles.md)"));
+        assert!(overview.contains("Never do more than 3 article searches for one question."));
+        assert!(overview.contains("ClinicalTrials.gov usually does not index nicknames"));
+        assert!(overview.contains("add `--drug <name>` to `search article`"));
+        assert!(
+            overview
+                .contains("`biomcp article batch <pmid1> <pmid2> ...` uses spaces between PMIDs.")
+        );
         assert!(
             overview.contains(
                 "If one command already answers the question, stop searching and answer."
             )
         );
+        assert!(
+            overview.find("## Cross-entity pivot rules")
+                < overview.find("## How-to guide reference")
+        );
+        assert!(overview.find("## How-to guide reference") < overview.find("## Anti-patterns"));
+        assert!(overview.find("## Anti-patterns") < overview.find("## Output and evidence rules"));
         assert!(
             overview.find("## Output and evidence rules") < overview.find("## Answer commitment")
         );

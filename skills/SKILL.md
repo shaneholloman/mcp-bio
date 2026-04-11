@@ -18,7 +18,6 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls. Batch up to 20 shortlisted papers in one call.
 - Use `biomcp batch gene <GENE1,GENE2,...>` when you need the same basic card fields, chromosome, or sectioned output for multiple genes.
 - For diseases with weak ontology-name coverage, run `biomcp discover "<disease>"` first, then pass a resolved `MESH:...`, `OMIM:...`, `ICD10CM:...`, `MONDO:...`, or `DOID:...` identifier to `biomcp get disease`.
-- Avoid `--type` when recall matters across sources. `--type` is Europe PMC only today because PubTator3 and Semantic Scholar search results do not expose publication-type filtering.
 - Multi-hop article follow-up: `biomcp article citations <id> --limit 5` and `biomcp article recommendations <id> --limit 5`
 
 ## Section reference
@@ -46,6 +45,58 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Use `article batch` as the default multi-article follow-up after `search article`; it replaces sequential `get article` calls and preserves Semantic Scholar enrichment when available.
 - Use `batch <entity> <id1,id2,...> --sections <s1,s2,...>` when you need the same card shape for several entities.
 - Use `enrich <GENE1,GENE2,...>` once you have a real gene set and want pathways or GO-style categories.
+
+## How-to guide reference
+
+For question patterns that need more than a one-line routing hint, open the
+matching how-to guide before you improvise the command sequence.
+
+| Question pattern | Start with this guide | Why |
+|---|---|---|
+| Specific variant pathogenicity or clinical-evidence question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Use the bounded variant-pathogenicity workflow instead of mixing ad hoc variant, trial, and article commands |
+| Specific drug safety or adverse-event question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Start with the drug-safety workflow before widening to literature |
+| Broad gene-in-disease orientation | [Guide Workflows](../docs/how-to/guide-workflows.md) | Follow the shipped counts-first workflow for gene, drug, trial, and article pivots |
+| You know the concept but not the first entity to inspect | [Search All Workflow](../docs/how-to/search-all-workflow.md) | Use `search all` to choose the next typed command intentionally |
+| You already know the anchor entity and want the built-in related view | [Cross-Entity Pivots](../docs/how-to/cross-entity-pivots.md) | Move from a known gene, disease, drug, or variant into trials, articles, drugs, or pathways without rebuilding the query |
+| You need literature for a known gene, disease, drug, method, or outcome | [Find Articles](../docs/how-to/find-articles.md) | Translate the question into typed flags plus a focused keyword clause |
+| You need recruiting or completed trials for a disease, drug, or biomarker | [Find Trials](../docs/how-to/find-trials.md) | Start with condition and intervention filters, then add biomarker or geography only when needed |
+| You need to resolve or annotate a variant identifier | [Annotate Variants](../docs/how-to/annotate-variants.md) | Normalize the variant first, then add significance or frequency filters |
+| You need a functional-effect prediction for a variant | [Predict Effects](../docs/how-to/predict-effects.md) | Use `predict` only after you have a resolvable variant identifier |
+| You need to reproduce a paper-style workflow | [Reproduce Papers](../docs/how-to/reproduce-papers.md) | Map the paper task to the closest BioMCP workflow area before copying commands |
+| You need to review whether a workflow run is complete and trustworthy | [Skill Validation](../docs/how-to/skill-validation.md) | Check command fidelity, evidence traceability, and reproducibility before signing off |
+
+## Anti-patterns
+
+### Don't keyword-reformulate
+
+Never do more than 3 article searches for one question. If two searches with
+different keywords return similar or empty results, change strategy entirely:
+switch entity, source, or start with `biomcp discover "<free text>"`.
+
+### Trial nicknames don't work in trial search
+
+ClinicalTrials.gov usually does not index nicknames like `CodeBreaK`, `COSMIC`,
+`BEACON`, or `KEYNOTE`. Search by drug plus condition instead, or use
+`biomcp search article -k "<trial nickname>"` to recover the NCT ID first.
+
+### Don't use `--type` for niche topics
+
+`--type` reduces recall to Europe PMC publication-type filtering today because
+PubTator3 and Semantic Scholar search results do not expose publication-type
+filtering. Use it for broad review questions with many results, not sparse or
+niche topics.
+
+### Use `--drug` on article search for drug-specific questions
+
+When the question is about a specific drug's trial results, efficacy, or
+mechanism, add `--drug <name>` to `search article`. Without the drug filter,
+the key results paper often ranks too low to appear on the first page.
+
+### Batch syntax is entity-specific
+
+`biomcp article batch <pmid1> <pmid2> ...` uses spaces between PMIDs. `biomcp
+batch gene <gene1,gene2,...>` and `biomcp batch drug <drug1,drug2,...>` use
+comma-separated IDs.
 
 ## Output and evidence rules
 
