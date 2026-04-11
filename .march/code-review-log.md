@@ -1,61 +1,116 @@
-# Code Review Log
+# Code Review Log — Ticket 174
 
 ## Critique
 
-- Read `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, and the full `git diff main..HEAD`.
-- Re-ran the relevant local gates independently during review: `make spec`, `make check`, `cargo build --release`, and `uv run mkdocs build --strict`.
-- Design completeness audit:
-  - Mapped the disease top-gene routing change to `src/render/markdown.rs`, `docs/user-guide/disease.md`, `spec/21-cross-entity-see-also.md`, and the disease JSON/unit tests in `src/cli/mod.rs` and `src/render/markdown.rs`.
-  - Mapped the gene ClinGen-trial routing change to `src/render/markdown.rs`, `docs/user-guide/gene.md`, `spec/21-cross-entity-see-also.md`, and the matching JSON/unit tests.
-  - Mapped the phenotype markdown follow-up change to `src/render/markdown.rs`, `templates/phenotype_search.md.j2`, `docs/user-guide/phenotype.md`, and `spec/23-phenotype.md`.
-  - Confirmed the intentional no-op boundary for `search phenotype --json`: the CLI still routes that path through generic `search_json(...)` rather than entity `_meta.next_commands`.
-  - Mapped the variant significance-aware routing and central description-table changes to `src/render/markdown.rs`, `docs/user-guide/variant.md`, `spec/21-cross-entity-see-also.md`, and the existing variant JSON/unit proofs.
-- Test-design traceability audit:
-  - Disease top-gene follow-up and JSON mirroring were covered.
-  - Gene ClinGen trial follow-up and JSON mirroring were covered.
-  - Phenotype markdown follow-up was covered outside-in, but the Rust-side `phenotype_search_json_contract_unchanged` proof required by the design was missing.
-  - Variant routing had pathogenic and VUS behavior tests, but `next_commands_validity` only exercised one VUS literature command shape even though the renderer can emit gene+disease, gene-only, disease-only, and keyword-only variants.
-  - Keyword-only VUS literature follow-ups were emitted without the central descriptive suffix because `related_command_description()` did not recognize that command shape.
+### Design Completeness Audit
 
-## Fixes Applied
+I checked the acceptance criteria, every proof-matrix row, and the file-level
+plan in `.march/design-final.md` against `git diff main..HEAD` and the repaired
+tree.
 
-- Updated `src/cli/mod.rs`:
-  - added `phenotype_search_json_contract_unchanged` to prove `search phenotype --json` keeps the generic search-response shape and does not grow `_meta`
-  - extended `variant_next_commands_parse` to validate all VUS literature command shapes the renderer can emit
-- Updated `src/render/markdown.rs`:
-  - broadened `is_variant_literature_follow_up_command()` so keyword-only VUS article searches still map through the central description table while excluding unrelated `-q` and `--type` article commands
-  - added `related_variant_vus_keyword_only_follow_up_keeps_description` as regression coverage for the previously bare keyword-only route
-- Corrected one new test fixture after the first focused rerun:
-  - the keyword-only VUS regression fixture needed an explicit empty `gene` field because `Variant` requires that field during deserialization
+- The core NIH Reporter source/entity/provenance/health/docs surfaces were all
+  present in the implementation.
+- Acceptance criterion 5 was not fully implemented in markdown: `funding`
+  remained opt-in in entity parsing, but the renderer still showed the funding
+  block for `get gene ... all` and `get disease ... all`.
+- The same markdown gate also leaked `disgenet` on `all`, violating the design
+  note that heavier opt-in sections stay out of `all`.
+- The funding summary copy and placement did not match the contract. The
+  design required `Showing top <N> unique grants from <matching_project_years>
+  matching NIH project-year records across FY<start>-FY<end>.` beneath the
+  table, but the implementation rendered different copy above the table.
+- The disease funding docs/help text drifted from the implemented contract.
+  Runtime behavior preserves the requested free-text disease phrase and only
+  falls back to the canonical disease name for identifier lookups, but the docs
+  said the funding query used the normalized/canonical disease name.
+- `CHANGELOG.md` was still missing the user-visible NIH Reporter entry required
+  by the design file-level plan.
+- The design required correct NIH fiscal-year handling around the October 1
+  rollover. The source helper used `now_utc().date()` directly, which can pick
+  the wrong fiscal window for local operators near the boundary.
 
-## Post-Fix Collateral Scan
+### Test-Design Traceability
 
-- After the description-matcher change, rechecked the surrounding article-command branches for overmatching. The matcher now excludes `-q` and `--type`, so it does not steal the existing trial-results or review-literature descriptions.
-- After adding the new tests, rechecked the touched modules for dead code, unused imports, stale error messages, cleanup conflicts, and shadowing. No new dead code or cleanup issues were introduced.
-- The only collateral issue encountered was the missing `gene` field in the new test fixture; it was fixed immediately and the focused rerun stayed green.
+- The proof-matrix rows for NIH Reporter request shape, fiscal-year logic,
+  de-duplication, PI fallback, provenance, health inventory, rate-limit
+  registration, docs inventory sync, and operator smoke all had matching code
+  or tests in the changed files.
+- The proof-matrix row `Funding markdown handles rows and notes` existed, but
+  its assertions were too weak to verify the contract text or placement of the
+  funding summary line. That let a copy/order regression pass.
+- No executable spec asserted the outside-in requirement that `funding` stays
+  out of `get gene ... all` or `get disease ... all`. This was a blocking gap,
+  because the live renderer bug shipped despite the baseline spec suite being
+  green.
 
-## Verification
+## Fix Plan
 
-- Focused Rust proofs:
-  - `cargo test next_commands_validity -- --nocapture`
-  - `cargo test phenotype_search_json_contract_unchanged -- --nocapture`
-  - `cargo test related_variant_vus -- --nocapture`
-- Full gates:
-  - `make check` — passed
-  - `cargo build --release` — passed
-  - `uv run mkdocs build --strict` — passed; only existing navigation / MkDocs compatibility warnings were emitted
-  - `make spec` — passed on rerun after one transient Semantic Scholar rate-limit failure in `spec/09-search-all.md::JSON Search All Preserves Article Metadata`; the isolated node passed immediately on retry and the subsequent full rerun passed cleanly
+- Tighten markdown section gating so `funding` and `disgenet` only render when
+  explicitly requested.
+- Replace the funding summary helper with contract-exact wording and render it
+  after the funding table.
+- Strengthen the gene and disease funding proofs so they assert the exact
+  summary contract and add outside-in coverage proving `all` excludes funding.
+- Update disease help/docs/reference text to reflect free-text disease phrases
+  plus canonical fallback for identifier lookups.
+- Add the missing `CHANGELOG.md` entry.
+- Correct NIH fiscal-year date selection to prefer local time with UTC fallback,
+  then keep the surrounding code free of dead branches and stale imports.
 
-## Residual Concerns
+## Repair
 
-- No blocking defects remain in the ticket scope.
-- One live-backed `search all` article-metadata spec node proved transiently rate-limit sensitive during verification, but the final full `make spec` rerun passed without code changes.
-- No out-of-scope issues were filed from this review pass.
+Applied the following fixes directly in the worktree:
+
+- Updated [src/render/markdown.rs](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/src/render/markdown.rs) so gene and disease funding/disgenet blocks render only on explicit section requests, and added a contract-exact funding summary helper.
+- Moved the funding summary below the table in
+  [templates/gene.md.j2](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/templates/gene.md.j2) and
+  [templates/disease.md.j2](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/templates/disease.md.j2).
+- Strengthened markdown tests in
+  [src/render/markdown.rs](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/src/render/markdown.rs)
+  to assert the exact funding summary string and to prove `all` hides opt-in
+  funding/disgenet sections.
+- Added outside-in executable specs in
+  [spec/02-gene.md](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/spec/02-gene.md) and
+  [spec/07-disease.md](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/spec/07-disease.md)
+  proving `funding` stays out of `all`, and tightened the funding summary
+  assertions from a loose FY substring to the full contract pattern.
+- Corrected disease funding wording in
+  [src/cli/list.rs](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/src/cli/list.rs),
+  [docs/user-guide/disease.md](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/docs/user-guide/disease.md),
+  and
+  [docs/reference/data-sources.md](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/docs/reference/data-sources.md).
+- Added the missing NIH Reporter changelog entry in
+  [CHANGELOG.md](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/CHANGELOG.md).
+- Updated
+  [src/sources/nih_reporter.rs](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/src/sources/nih_reporter.rs)
+  to prefer the local date for the fiscal-year window with a UTC fallback, and
+  enabled the required `time` crate feature in
+  [Cargo.toml](/home/ian/workspace/worktrees/174-add-nih-reporter-funding-data-integration/Cargo.toml).
+
+### Verification
+
+- `cargo test --quiet funding -- --nocapture` passed.
+- `cargo test --quiet list_disease -- --nocapture` passed.
+- `make check < /dev/null` passed.
+- `cargo build --release --bins` passed.
+- `make spec` completed with all repaired NIH Reporter funding specs passing on
+  the rebuilt release binary. The only remaining failure was the pre-existing
+  live GWAS positional spec outage in `spec/12-search-positionals.md`.
+
+### Residual Concerns
+
+- `make spec` is still vulnerable to unrelated live-source outages. I filed
+  [174-live-gwas-positional-spec-upstream-flake.md](/home/ian/workspace/planning/biomcp/issues/174-live-gwas-positional-spec-upstream-flake.md)
+  because the existing GWAS positional proof currently fails the full suite when
+  GWAS Catalog is unavailable.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | missing-test | yes | The design required a Rust-side proof that `search phenotype --json` keeps the generic search response shape, but only executable-spec coverage existed |
-| 2 | missing-test | yes | `next_commands_validity` covered only one VUS literature command shape even though the renderer can emit gene+disease, gene-only, disease-only, and keyword-only forms |
-| 3 | description-gap | no | Keyword-only VUS literature follow-ups rendered as bare commands because the central description matcher did not recognize the `search article -k ... --limit 5` shape |
+| 1 | validation-gap | no | Markdown rendering used `include_all` for opt-in funding/disgenet sections, so `get gene/disease ... all` leaked behavior the contract explicitly excluded. |
+| 2 | weak-assertion | no | Funding markdown proofs only matched a loose FY substring, so summary wording and placement regressed without failing tests. |
+| 3 | missing-test | no | Design required outside-in proof that `funding` stays out of `all`, but no executable spec covered that behavior. |
+| 4 | stale-doc | no | Disease funding help/reference docs described canonical-name querying instead of the implemented requested-phrase plus identifier-fallback behavior. |
+| 5 | stale-doc | no | `CHANGELOG.md` lacked the design-required NIH Reporter user-facing entry. |
+| 6 | error-classification | no | NIH fiscal-year window selection used a UTC calendar date directly, which can classify the active NIH fiscal year incorrectly around the local Sep/Oct boundary. |
