@@ -435,6 +435,8 @@ mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         }
     }
 
@@ -467,6 +469,8 @@ mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs,
         }
     }

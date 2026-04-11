@@ -21,6 +21,7 @@ This matrix tracks which upstream API endpoints are version-pinned and where unv
 | MyVariant.info | `https://myvariant.info/v1` | Versioned (`v1`) | Endpoint already pinned | 2026-02-15 |
 | NCBI ID Converter | `https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles` | Versioned (`v1`) | Endpoint already pinned | 2026-02-15 |
 | NCI CTS | `https://clinicaltrialsapi.cancer.gov/api/v2` | Versioned (`v2`) | Endpoint already pinned | 2026-02-15 |
+| NIH Reporter | `https://api.reporter.nih.gov/v2` | Versioned (`v2`) | Endpoint already pinned to the public NIH Reporter v2 project search API | 2026-04-11 |
 | OncoKB (prod/demo) | `https://www.oncokb.org/api/v1` / `https://demo.oncokb.org/api/v1` | Versioned (`v1`) | Endpoint already pinned | 2026-02-15 |
 | OpenFDA | `https://api.fda.gov` | Unversioned | Public OpenFDA API is path-stable without version segment | 2026-02-15 |
 | OpenTargets | `https://api.platform.opentargets.org/api/v4/graphql` | Versioned (`v4`) | Endpoint already pinned | 2026-02-15 |

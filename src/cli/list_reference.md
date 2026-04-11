@@ -19,6 +19,7 @@ New to BioMCP? Try:
 
 | You want to know... | Start with |
 |---|---|
+| How much NIH funded a disease or gene | `get disease <name_or_id> funding` or `get gene <symbol> funding` |
 | What drugs treat a disease | `search drug --indication "<disease>" --limit 5` |
 | What the 5-year survival outlook is for a cancer | `get disease <name_or_id> survival` |
 | Symptoms or phenotypes of a disease | `get disease <name_or_id> phenotypes` |

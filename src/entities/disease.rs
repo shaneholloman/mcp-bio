@@ -16,6 +16,7 @@ use crate::sources::monarch::{
     MonarchClient, MonarchGeneAssociation, MonarchModelAssociation, MonarchPhenotypeMatch,
 };
 use crate::sources::mydisease::{MyDiseaseClient, MyDiseaseHit};
+use crate::sources::nih_reporter::{NihReporterClient, NihReporterFundingSection};
 use crate::sources::ols4::OlsClient;
 use crate::sources::opentargets::OpenTargetsClient;
 use crate::sources::reactome::ReactomeClient;
@@ -64,6 +65,10 @@ pub struct Disease {
     pub survival: Option<DiseaseSurvival>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub survival_note: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub funding: Option<NihReporterFundingSection>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub funding_note: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub civic: Option<CivicContext>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -257,6 +262,7 @@ const DISEASE_SECTION_VARIANTS: &str = "variants";
 const DISEASE_SECTION_MODELS: &str = "models";
 const DISEASE_SECTION_PREVALENCE: &str = "prevalence";
 const DISEASE_SECTION_SURVIVAL: &str = "survival";
+const DISEASE_SECTION_FUNDING: &str = "funding";
 const DISEASE_SECTION_CIVIC: &str = "civic";
 const DISEASE_SECTION_DISGENET: &str = "disgenet";
 const DISEASE_SECTION_ALL: &str = "all";
@@ -269,6 +275,7 @@ pub const DISEASE_SECTION_NAMES: &[&str] = &[
     DISEASE_SECTION_MODELS,
     DISEASE_SECTION_PREVALENCE,
     DISEASE_SECTION_SURVIVAL,
+    DISEASE_SECTION_FUNDING,
     DISEASE_SECTION_CIVIC,
     DISEASE_SECTION_DISGENET,
     DISEASE_SECTION_ALL,
@@ -278,6 +285,8 @@ const OPTIONAL_ENRICHMENT_TIMEOUT: Duration = Duration::from_secs(8);
 const MIN_DIRECT_DISEASE_MATCH_SCORE: i32 = 120;
 const SURVIVAL_NO_DATA_NOTE: &str = "SEER survival data not available for this condition.";
 const SURVIVAL_UNAVAILABLE_NOTE: &str = "SEER survival data is temporarily unavailable.";
+const FUNDING_NO_DATA_NOTE: &str = "No NIH funding data found for this query.";
+const FUNDING_UNAVAILABLE_NOTE: &str = "NIH Reporter funding data is temporarily unavailable.";
 
 #[derive(Debug, Clone, Copy, Default)]
 struct DiseaseSections {
@@ -288,6 +297,7 @@ struct DiseaseSections {
     include_models: bool,
     include_prevalence: bool,
     include_survival: bool,
+    include_funding: bool,
     include_civic: bool,
     include_disgenet: bool,
 }
@@ -313,6 +323,7 @@ fn parse_sections(sections: &[String]) -> Result<DiseaseSections, BioMcpError> {
             DISEASE_SECTION_MODELS => out.include_models = true,
             DISEASE_SECTION_PREVALENCE => out.include_prevalence = true,
             DISEASE_SECTION_SURVIVAL => out.include_survival = true,
+            DISEASE_SECTION_FUNDING => out.include_funding = true,
             DISEASE_SECTION_CIVIC => out.include_civic = true,
             DISEASE_SECTION_DISGENET => out.include_disgenet = true,
             DISEASE_SECTION_ALL => include_all = true,
@@ -1931,6 +1942,32 @@ fn disease_query_value(disease: &Disease) -> Option<String> {
     }
 }
 
+fn disease_funding_query_value(
+    disease: &Disease,
+    requested_lookup: Option<&str>,
+) -> Option<String> {
+    if let Some(requested_lookup) = requested_lookup {
+        let requested_lookup = requested_lookup.trim();
+        if !requested_lookup.is_empty()
+            && matches!(
+                parse_disease_lookup_input(requested_lookup),
+                DiseaseLookupInput::FreeText
+            )
+        {
+            return Some(requested_lookup.to_string());
+        }
+    }
+
+    if !disease.name.trim().is_empty() {
+        return Some(disease.name.trim().to_string());
+    }
+
+    disease.synonyms.iter().find_map(|synonym| {
+        let synonym = synonym.trim();
+        (!synonym.is_empty()).then(|| synonym.to_string())
+    })
+}
+
 async fn add_treatment_landscape(disease: &mut Disease) -> Result<(), BioMcpError> {
     let Some(query) = disease_query_value(disease) else {
         return Ok(());
@@ -2146,6 +2183,54 @@ async fn add_civic_section(disease: &mut Disease) {
     }
 }
 
+fn empty_funding_section(query: String) -> NihReporterFundingSection {
+    NihReporterFundingSection {
+        query,
+        fiscal_years: Vec::new(),
+        matching_project_years: 0,
+        grants: Vec::new(),
+    }
+}
+
+async fn add_funding_section(disease: &mut Disease, requested_lookup: Option<&str>) {
+    let Some(query) = disease_funding_query_value(disease, requested_lookup) else {
+        disease.funding = Some(empty_funding_section(String::new()));
+        disease.funding_note = Some(FUNDING_NO_DATA_NOTE.into());
+        return;
+    };
+
+    let funding_fut = async {
+        let client = NihReporterClient::new()?;
+        client.funding(&query).await
+    };
+
+    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, funding_fut).await {
+        Ok(Ok(section)) => {
+            let no_hits = section.matching_project_years == 0 && section.grants.is_empty();
+            disease.funding = Some(section);
+            disease.funding_note = if no_hits {
+                Some(FUNDING_NO_DATA_NOTE.into())
+            } else {
+                None
+            };
+        }
+        Ok(Err(err)) => {
+            warn!(query = %query, "NIH Reporter unavailable for disease funding section: {err}");
+            disease.funding = None;
+            disease.funding_note = Some(FUNDING_UNAVAILABLE_NOTE.into());
+        }
+        Err(_) => {
+            warn!(
+                query = %query,
+                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                "NIH Reporter disease funding section timed out"
+            );
+            disease.funding = None;
+            disease.funding_note = Some(FUNDING_UNAVAILABLE_NOTE.into());
+        }
+    }
+}
+
 fn map_disgenet_disease_association(row: DisgenetAssociationRecord) -> DiseaseDisgenetAssociation {
     DiseaseDisgenetAssociation {
         symbol: row.gene_symbol,
@@ -2198,6 +2283,7 @@ async fn enrich_base_context(disease: &mut Disease) {
 async fn apply_requested_sections(
     disease: &mut Disease,
     sections: DiseaseSections,
+    requested_lookup: Option<&str>,
 ) -> Result<(), BioMcpError> {
     if sections.include_genes {
         if let Err(err) = add_monarch_gene_section(disease).await {
@@ -2244,6 +2330,9 @@ async fn apply_requested_sections(
     if sections.include_survival {
         add_survival_section(disease).await?;
     }
+    if sections.include_funding {
+        add_funding_section(disease, requested_lookup).await;
+    }
     if sections.include_civic {
         add_civic_section(disease).await;
     }
@@ -2272,6 +2361,10 @@ async fn apply_requested_sections(
     if !sections.include_survival {
         disease.survival = None;
         disease.survival_note = None;
+    }
+    if !sections.include_funding {
+        disease.funding = None;
+        disease.funding_note = None;
     }
     if !sections.include_civic {
         disease.civic = None;
@@ -2310,7 +2403,7 @@ pub async fn get(name_or_id: &str, sections: &[String]) -> Result<Disease, BioMc
             }
             disease.parents = resolve_parent_names(&client, &disease.parents).await;
             enrich_base_context(&mut disease).await;
-            apply_requested_sections(&mut disease, parsed_sections).await?;
+            apply_requested_sections(&mut disease, parsed_sections, Some(name_or_id)).await?;
             return Ok(disease);
         }
         DiseaseLookupInput::CrosswalkId(kind, value) => {
@@ -2329,7 +2422,7 @@ pub async fn get(name_or_id: &str, sections: &[String]) -> Result<Disease, BioMc
             }
             disease.parents = resolve_parent_names(&client, &disease.parents).await;
             enrich_base_context(&mut disease).await;
-            apply_requested_sections(&mut disease, parsed_sections).await?;
+            apply_requested_sections(&mut disease, parsed_sections, Some(name_or_id)).await?;
             return Ok(disease);
         }
         DiseaseLookupInput::FreeText => {}
@@ -2344,7 +2437,7 @@ pub async fn get(name_or_id: &str, sections: &[String]) -> Result<Disease, BioMc
     }
     disease.parents = resolve_parent_names(&client, &disease.parents).await;
     enrich_base_context(&mut disease).await;
-    apply_requested_sections(&mut disease, parsed_sections).await?;
+    apply_requested_sections(&mut disease, parsed_sections, Some(name_or_id)).await?;
     Ok(disease)
 }
 
@@ -2808,6 +2901,8 @@ pub(crate) mod tests {
             prevalence_note: None,
             survival: None,
             survival_note: None,
+            funding: None,
+            funding_note: None,
             civic: None,
             disgenet: None,
             xrefs: HashMap::new(),
@@ -2960,6 +3055,7 @@ pub(crate) mod tests {
             "models".to_string(),
             "prevalence".to_string(),
             "survival".to_string(),
+            "funding".to_string(),
             "disgenet".to_string(),
             "all".to_string(),
         ])
@@ -2971,6 +3067,7 @@ pub(crate) mod tests {
         assert!(flags.include_models);
         assert!(flags.include_prevalence);
         assert!(flags.include_survival);
+        assert!(flags.include_funding);
         assert!(flags.include_civic);
         assert!(flags.include_disgenet);
     }
@@ -2979,7 +3076,48 @@ pub(crate) mod tests {
     fn parse_sections_all_keeps_disgenet_opt_in() {
         let flags = parse_sections(&["all".to_string()]).expect("sections should parse");
         assert!(flags.include_survival);
+        assert!(!flags.include_funding);
         assert!(!flags.include_disgenet);
+    }
+
+    #[test]
+    fn funding_query_prefers_free_text_lookup() {
+        let disease = test_disease(
+            "MONDO:0011996",
+            "chronic myelogenous leukemia, BCR-ABL1 positive",
+        );
+
+        assert_eq!(
+            disease_funding_query_value(&disease, Some("chronic myeloid leukemia")),
+            Some("chronic myeloid leukemia".to_string())
+        );
+    }
+
+    #[test]
+    fn funding_query_uses_canonical_name_for_identifier_lookups() {
+        let disease = test_disease(
+            "MONDO:0011996",
+            "chronic myelogenous leukemia, BCR-ABL1 positive",
+        );
+
+        assert_eq!(
+            disease_funding_query_value(&disease, Some("MONDO:0011996")),
+            Some("chronic myelogenous leukemia, BCR-ABL1 positive".to_string())
+        );
+    }
+
+    #[tokio::test]
+    async fn apply_requested_sections_clears_funding_when_not_requested() {
+        let mut disease = test_disease("MONDO:0007947", "Marfan syndrome");
+        disease.funding = Some(empty_funding_section("Marfan syndrome".to_string()));
+        disease.funding_note = Some(FUNDING_NO_DATA_NOTE.to_string());
+
+        apply_requested_sections(&mut disease, DiseaseSections::default(), None)
+            .await
+            .expect("sections should apply");
+
+        assert!(disease.funding.is_none());
+        assert!(disease.funding_note.is_none());
     }
 
     #[test]

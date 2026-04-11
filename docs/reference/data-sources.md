@@ -39,6 +39,7 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 | Disease `genes` and `variants` augmentation | CIViC | `https://civicdb.org/api` | No | Somatic driver augmentation for genes and disease-associated molecular profiles |
 | Disease `models` section | Monarch Initiative API v3 | `https://api-v3.monarchinitiative.org` | No | Model-organism evidence with relationship and provenance |
 | Disease `disgenet` section | DisGeNET REST API | `https://api.disgenet.com/api/v1` | Yes (`DISGENET_API_KEY`) | Ranked scored disease-gene associations; disease lookup uses UMLS-backed DisGeNET identifiers |
+| Gene/Disease `funding` section | NIH Reporter v2 API | `https://api.reporter.nih.gov/v2` | No | Exact-phrase title/abstract funding lookup over the most recent 5 NIH fiscal years; returns top unique grants after de-duplicating project-year records |
 | Phenotype search (`search phenotype`) | Monarch Initiative API v3 | `https://api-v3.monarchinitiative.org` | No | HPO set similarity search to ranked diseases |
 | PGx core interactions/recommendations | CPIC API | `https://api.cpicpgx.org/v1` | No | Pair, recommendation, frequency, and guideline views |
 | PGx annotations section | PharmGKB API | `https://api.pharmgkb.org/v1` | No | Clinical/guideline/label annotation enrichment |
@@ -93,6 +94,7 @@ and practical ceilings observed in command behavior.
 | Trial search | `--limit` defaults to 10, supports pagination | Use `--offset` to page and keep filters stable |
 | Article search | `--limit` defaults to 10 | Use `--since` and typed entity filters to constrain results; `sort=relevance` defaults to hybrid for keyword queries and lexical for entity-only queries |
 | KEGG pathway search/detail | Rate-limited to 1 request / 334ms | Matches KEGG's published 3 requests / second guidance |
+| NIH Reporter funding sections | Rate-limited to 1 request / second | Use explicit gene symbols or disease phrases/identifiers; BioMCP queries the most recent 5 NIH fiscal years, keeps free-text disease lookups as-entered, falls back to the resolved canonical disease name for identifier lookups, and de-duplicates project-year rows before ranking grants |
 | Semantic Scholar article helpers | 1 request / second with `S2_API_KEY`; 1 request / 2 seconds on the shared pool without it | Explicit helper commands fail fast on shared-pool `429` responses; set `S2_API_KEY` for dedicated quota and retry behavior |
 | DisGeNET `disgenet` sections | Server-enforced; trial accounts may return first-page-only results and `429` with `X-Rate-Limit-Retry-After-Seconds` | Keep requests explicit, avoid fan-out loops, and retry after the server-provided cooldown |
 

@@ -159,6 +159,23 @@ Source: {{ survival_source_line }}
 No SEER survival data available.
 {% endif -%}
 {% endif -%}
+{% if show_funding_section -%}
+## Funding (NIH Reporter)
+
+{% if funding_rows -%}
+| Project | PI | Organization | FY | Amount |
+|---|---|---|---|---|
+{% for row in funding_rows -%}
+| {{ row.project_title }} | {{ row.pi_name }} | {{ row.organization }} | {{ row.fiscal_year }} | {{ row.award_amount }} |
+{% endfor -%}
+
+{{ funding_summary }}
+{% elif funding_note -%}
+{{ funding_note }}
+{% else -%}
+No NIH funding data found for this query.
+{% endif -%}
+{% endif -%}
 {% if show_civic_section -%}
 ## CIViC
 

@@ -87,6 +87,23 @@ Note: single-gene Enrichr p-values are exploratory and should be interpreted cau
 {{ row.partner }}: {% if row.score is not none %}{{ row.score | score }}{% else %}-{% endif %}
 {% endfor -%}
 {% endif -%}
+{% if show_funding_section -%}
+## Funding (NIH Reporter)
+
+{% if funding_rows -%}
+| Project | PI | Organization | FY | Amount |
+|---|---|---|---|---|
+{% for row in funding_rows -%}
+| {{ row.project_title }} | {{ row.pi_name }} | {{ row.organization }} | {{ row.fiscal_year }} | {{ row.award_amount }} |
+{% endfor -%}
+
+{{ funding_summary }}
+{% elif funding_note -%}
+{{ funding_note }}
+{% else -%}
+No NIH funding data found for this query.
+{% endif -%}
+{% endif -%}
 {% if show_civic_section -%}
 ## CIViC
 

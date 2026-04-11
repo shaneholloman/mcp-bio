@@ -181,6 +181,8 @@ pub fn from_mygene_get(resp: MyGeneGetResponse) -> Gene {
         clingen: None,
         constraint: None,
         disgenet: None,
+        funding: None,
+        funding_note: None,
     }
 }
 

@@ -70,7 +70,7 @@ fn list_gene() -> String {
 ## When to use this surface
 
 - Use `get gene <symbol>` for the default card when you need the canonical summary first.
-- Add `protein`, `hpa`, `expression`, or `diseases` when you need deeper function, localization, tissue, or disease context.
+- Add `protein`, `hpa`, `expression`, `diseases`, or `funding` when you need deeper function, localization, disease, or NIH grant context.
 - Use `gene articles <symbol>` or `search article -g <symbol>` when you need literature tied to one gene.
 
 ## Commands
@@ -89,7 +89,8 @@ fn list_gene() -> String {
 - `get gene <symbol> clingen` - ClinGen validity + dosage sensitivity
 - `get gene <symbol> constraint` - gnomAD gene constraint (pLI, LOEUF, mis_z, syn_z)
 - `get gene <symbol> disgenet` - DisGeNET scored gene-disease associations (requires `DISGENET_API_KEY`)
-- `get gene <symbol> all` - include every section
+- `get gene <symbol> funding` - NIH Reporter grants mentioning the gene in the most recent 5 NIH fiscal years
+- `get gene <symbol> all` - include every standard section (`funding` stays opt-in)
 - `gene definition <symbol>` - same card as `get gene <symbol>`
 - `gene get <symbol>` - alias for `gene definition <symbol>`
 
@@ -394,6 +395,7 @@ fn list_disease() -> String {
 ## When to use this surface
 
 - Use `get disease <name_or_id>` when you want the normalized disease card with genes, pathways, and phenotypes.
+- Use `get disease <name_or_id> funding` when the question is about NIH grant support for a disease.
 - Use `get disease <name_or_id> survival` when the question is specifically about cancer survival outcomes.
 - Use `get disease <name_or_id> phenotypes` for symptom-style questions.
 - Use `search article -d <disease>` when you need broader review literature or want to supplement sparse structured data.
@@ -410,7 +412,8 @@ fn list_disease() -> String {
 - `get disease <name_or_id> survival` - SEER Explorer 5-year relative survival by sex for mapped cancers
 - `get disease <name_or_id> civic` - CIViC disease-context evidence
 - `get disease <name_or_id> disgenet` - DisGeNET scored disease-gene associations (requires `DISGENET_API_KEY`)
-- `get disease <name_or_id> all` - include all disease sections
+- `get disease <name_or_id> funding` - NIH Reporter grants for the requested disease phrase, or the resolved canonical name for identifier lookups, over the most recent 5 NIH fiscal years
+- `get disease <name_or_id> all` - include all standard disease sections (`funding` stays opt-in)
 - `search disease <query>` - positional search by name
 - `search disease -q <query>` - search by name
 - `search phenotype "<HP terms or symptom phrases>"` - HPO IDs or resolved symptom text to ranked diseases
@@ -875,13 +878,15 @@ mod tests {
         let out = list_gene();
         assert!(out.contains("## When to use this surface"));
         assert!(out.contains("Use `get gene <symbol>` for the default card"));
-        assert!(out.contains("protein`, `hpa`, `expression`, or `diseases`"));
+        assert!(out.contains("`expression`, `diseases`, or `funding`"));
         assert!(out.contains("get gene <symbol> expression"));
         assert!(out.contains("get gene <symbol> hpa"));
         assert!(out.contains("get gene <symbol> druggability"));
         assert!(out.contains("get gene <symbol> clingen"));
         assert!(out.contains("get gene <symbol> constraint"));
         assert!(out.contains("get gene <symbol> disgenet"));
+        assert!(out.contains("get gene <symbol> funding"));
+        assert!(out.contains("`funding` stays opt-in"));
     }
 
     #[test]
@@ -927,9 +932,11 @@ mod tests {
                 "Use `get disease <name_or_id>` when you want the normalized disease card"
             )
         );
+        assert!(out.contains("get disease <name_or_id> funding"));
         assert!(out.contains("get disease <name_or_id> survival"));
         assert!(out.contains("Use `search article -d <disease>` when you need broader review"));
         assert!(out.contains("get disease <name_or_id> disgenet"));
+        assert!(out.contains("`funding` stays opt-in"));
     }
 
     #[test]

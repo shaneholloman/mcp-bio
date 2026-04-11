@@ -29,6 +29,7 @@ bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
 out="$(env -u NCI_API_KEY -u ONCOKB_TOKEN -u DISGENET_API_KEY -u ALPHAGENOME_API_KEY -u S2_API_KEY -u UMLS_API_KEY "$bin" health --apis-only)"
 echo "$out" | mustmatch like "| API | Status | Latency |"
 echo "$out" | mustmatch like "| LitSense2 |"
+echo "$out" | mustmatch like "| NIH Reporter |"
 echo "$out" | mustmatch like "| SEER Explorer |"
 echo "$out" | mustmatch not like "EMA local data ("
 echo "$out" | mustmatch not like "WHO Prequalification local data ("
@@ -43,6 +44,7 @@ echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("EMA local data (") | 
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("WHO Prequalification local data (") | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("Cache dir (") | not))' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "LitSense2")' > /dev/null
+echo "$json_out" | jq -e 'any(.rows[]; .api == "NIH Reporter")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "SEER Explorer")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "OncoKB" and .status == "excluded (set ONCOKB_TOKEN)" and .key_configured == false)' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "MyGene" and ((has("key_configured")) | not))' > /dev/null

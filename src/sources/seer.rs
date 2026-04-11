@@ -833,6 +833,8 @@ mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: HashMap::new(),
         };
         assert_eq!(

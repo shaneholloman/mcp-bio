@@ -280,6 +280,13 @@ pub(crate) fn gene_section_sources(gene: &Gene) -> Vec<SectionSource> {
         "DisGeNET",
         ["DisGeNET"],
     );
+    push_section(
+        &mut out,
+        gene.funding.is_some() || has_opt_text(&gene.funding_note),
+        "funding",
+        "Funding",
+        ["NIH Reporter"],
+    );
     out
 }
 
@@ -513,6 +520,13 @@ pub(crate) fn disease_section_sources(disease: &Disease) -> Vec<SectionSource> {
         "survival",
         "Survival",
         ["SEER Explorer"],
+    );
+    push_section(
+        &mut out,
+        disease.funding.is_some() || has_opt_text(&disease.funding_note),
+        "funding",
+        "Funding",
+        ["NIH Reporter"],
     );
     push_section(
         &mut out,
@@ -1197,6 +1211,8 @@ mod tests {
             survival_note: Some("SEER survival data not available for this condition.".into()),
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -1205,6 +1221,100 @@ mod tests {
             source.key == "survival"
                 && source.label == "Survival"
                 && source.sources == vec!["SEER Explorer".to_string()]
+        }));
+    }
+
+    #[test]
+    fn gene_section_sources_include_funding_when_present() {
+        let gene = Gene {
+            symbol: "ERBB2".to_string(),
+            name: "erb-b2 receptor tyrosine kinase 2".to_string(),
+            entrez_id: "2064".to_string(),
+            ensembl_id: None,
+            location: None,
+            genomic_coordinates: None,
+            omim_id: None,
+            uniprot_id: None,
+            summary: None,
+            gene_type: None,
+            aliases: Vec::new(),
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: None,
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: None,
+            druggability: None,
+            clingen: None,
+            constraint: None,
+            disgenet: None,
+            funding: Some(crate::sources::nih_reporter::NihReporterFundingSection {
+                query: "ERBB2".to_string(),
+                fiscal_years: vec![2022, 2023, 2024, 2025, 2026],
+                matching_project_years: 1,
+                grants: vec![crate::sources::nih_reporter::NihReporterGrant {
+                    project_title: "Example grant".to_string(),
+                    project_num: "P-1".to_string(),
+                    core_project_num: Some("CORE-1".to_string()),
+                    project_detail_url: None,
+                    pi_name: None,
+                    organization: None,
+                    fiscal_year: 2026,
+                    award_amount: 10,
+                }],
+            }),
+            funding_note: None,
+        };
+
+        let sources = gene_section_sources(&gene);
+        assert!(sources.iter().any(|source| {
+            source.key == "funding"
+                && source.label == "Funding"
+                && source.sources == vec!["NIH Reporter".to_string()]
+        }));
+    }
+
+    #[test]
+    fn disease_section_sources_include_funding_when_note_present() {
+        let disease = Disease {
+            id: "MONDO:0007947".to_string(),
+            name: "Marfan syndrome".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            funding: None,
+            funding_note: Some("No NIH funding data found for this query.".into()),
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let sources = disease_section_sources(&disease);
+        assert!(sources.iter().any(|source| {
+            source.key == "funding"
+                && source.label == "Funding"
+                && source.sources == vec!["NIH Reporter".to_string()]
         }));
     }
 }

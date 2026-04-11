@@ -62,6 +62,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | NCBI E-utilities | 1 | direct_api | optional_env | NLM public-domain utility service | utility responses are broadly reusable; article-level full text still follows the returned record's license context | <https://www.ncbi.nlm.nih.gov/books/NBK25501/> |
 | NCBI ID Converter | 1 | direct_api | optional_env | NLM public-domain utility service | utility results are broadly reusable; keep article-level identifiers and downstream article licenses distinct | <https://pmc.ncbi.nlm.nih.gov/tools/idconv/> |
 | NCI CTS | 2 | direct_api | required_env | custom provider API terms for the NCI Clinical Trials Search API | query output is usable for search and review, but downstream reuse should follow NCI API terms and record provenance | <https://clinicaltrialsapi.cancer.gov/> |
+| NIH Reporter | 1 | direct_api | none | NIH-operated public funding-reporting service | project and grant metadata are broadly reusable; preserve NIH Reporter attribution, fiscal-year context, and grant identifiers | <https://www.nih.gov/web-policies-notices> |
 | OLS4 | 1 | direct_api | none | EMBL-EBI ontology browser; each ontology keeps its own license | ontology metadata is queryable, but downstream reuse depends on the specific ontology surfaced | <https://www.ebi.ac.uk/ols4/> |
 | OncoKB | 2 | direct_api | required_env | custom provider terms; academic research access is no-fee but licensed, commercial/clinical use requires a paid license | do not assume open redistribution rights for OncoKB data or proprietary treatment descriptions | <https://faq.oncokb.org/licensing> |
 | OpenFDA | 1 | direct_api | optional_env | FDA-origin public data and API terms | data is broadly reusable, but avoid implying FDA endorsement and preserve source context | <https://open.fda.gov/apis/authentication/> |
@@ -380,6 +381,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - API key / account URL: <https://www.ncbi.nlm.nih.gov/account/settings/>
 - Reviewed on: `2026-04-10`
 - Notes: BioMCP uses PMC `efetch` as a full-text fallback when Europe PMC does not serve the article. `NCBI_API_KEY` raises the baseline NCBI E-utilities budget but is not required.
+
+### NIH Reporter
+
+- BioMCP surfaces: `get gene <symbol> funding; get disease <name_or_id> funding`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: open public API
+- License / terms summary: NIH-operated public funding-reporting service
+- Redistribution / reuse summary: project and grant metadata are broadly reusable; preserve NIH Reporter attribution, fiscal-year context, and grant identifiers
+- Official terms URL: <https://www.nih.gov/web-policies-notices>
+- Reviewed on: `2026-04-11`
+- Notes: BioMCP uses the public NIH Reporter v2 projects search API for exact-phrase title/abstract funding lookups. Funding remains opt-in on gene and disease cards rather than being folded into `all`.
 
 ### OLS4
 

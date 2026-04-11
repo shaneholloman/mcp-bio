@@ -43,6 +43,7 @@ use crate::entities::variant::{
     gnomad_variant_slug,
 };
 use crate::error::BioMcpError;
+use crate::sources::nih_reporter::{NihReporterFundingSection, NihReporterGrant};
 
 static ENV: OnceLock<Environment<'static>> = OnceLock::new();
 
@@ -131,6 +132,15 @@ struct DiseaseSurvivalHistoryRenderRow {
     relative_survival: String,
     ci_95: Option<String>,
     cases: Option<u32>,
+}
+
+#[derive(serde::Serialize)]
+struct FundingGrantRenderRow {
+    project_title: String,
+    pi_name: String,
+    organization: String,
+    fiscal_year: String,
+    award_amount: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -536,6 +546,77 @@ fn disease_survival_history_rows(disease: &Disease) -> Vec<DiseaseSurvivalHistor
     }
 
     rows
+}
+
+fn format_funding_amount(amount: u64) -> String {
+    let digits = amount.to_string();
+    let mut out = String::new();
+    for (index, ch) in digits.chars().rev().enumerate() {
+        if index > 0 && index % 3 == 0 {
+            out.push(',');
+        }
+        out.push(ch);
+    }
+    let grouped = out.chars().rev().collect::<String>();
+    format!("${grouped}")
+}
+
+fn funding_year_window(section: &NihReporterFundingSection) -> String {
+    match (section.fiscal_years.first(), section.fiscal_years.last()) {
+        (Some(start), Some(end)) if start == end => format!("FY{start}"),
+        (Some(start), Some(end)) => format!("FY{start}-FY{end}"),
+        _ => "recent NIH fiscal years".to_string(),
+    }
+}
+
+fn funding_summary_line(section: Option<&NihReporterFundingSection>) -> Option<String> {
+    let section = section.filter(|section| !section.grants.is_empty())?;
+    Some(format!(
+        "Showing top {} unique grants from {} matching NIH project-year records across {}.",
+        section.grants.len(),
+        section.matching_project_years,
+        funding_year_window(section)
+    ))
+}
+
+fn funding_project_cell(grant: &NihReporterGrant) -> String {
+    let title = markdown_cell(&grant.project_title);
+    if let Some(url) = grant
+        .project_detail_url
+        .as_deref()
+        .map(str::trim)
+        .filter(|url| !url.is_empty())
+    {
+        format!("[{title}]({url})")
+    } else {
+        title
+    }
+}
+
+fn funding_rows(section: Option<&NihReporterFundingSection>) -> Vec<FundingGrantRenderRow> {
+    let Some(section) = section else {
+        return Vec::new();
+    };
+
+    section
+        .grants
+        .iter()
+        .map(|grant| FundingGrantRenderRow {
+            project_title: funding_project_cell(grant),
+            pi_name: grant
+                .pi_name
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            organization: grant
+                .organization
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            fiscal_year: grant.fiscal_year.to_string(),
+            award_amount: format_funding_amount(grant.award_amount),
+        })
+        .collect()
 }
 
 fn source_matches(source: Option<&str>, needle: &str) -> bool {
@@ -1133,6 +1214,7 @@ fn section_description(entity: &str, section: &str) -> &'static str {
         ("gene", "clingen") => "ClinGen validity and dosage sensitivity",
         ("gene", "constraint") => "gnomAD gene constraint metrics",
         ("gene", "disgenet") => "DisGeNET scored disease links",
+        ("gene", "funding") => "NIH Reporter grant support",
         ("article", "annotations") => "PubTator normalized entity mentions",
         ("article", "fulltext") => "cached full text when available",
         ("article", "tldr") => "Semantic Scholar summary and influence",
@@ -1142,6 +1224,7 @@ fn section_description(entity: &str, section: &str) -> &'static str {
         ("disease", "variants") => "disease-associated variants",
         ("disease", "models") => "model-organism evidence",
         ("disease", "prevalence") => "prevalence and epidemiology context",
+        ("disease", "funding") => "NIH Reporter grant support",
         ("disease", "civic") => "CIViC disease-context evidence",
         ("disease", "disgenet") => "DisGeNET scored disease-gene links",
         ("drug", "label") => "approved-indication and FDA label detail beyond the base card",
@@ -2186,7 +2269,10 @@ pub fn gene_markdown(gene: &Gene, requested_sections: &[String]) -> Result<Strin
         include_all || has_requested("druggability") || has_requested("drugs");
     let show_clingen_section = include_all || has_requested("clingen");
     let show_constraint_section = include_all || has_requested("constraint");
-    let show_disgenet_section = include_all || has_requested("disgenet");
+    let show_disgenet_section = has_requested("disgenet");
+    let show_funding_section = has_requested("funding");
+    let funding_rows = funding_rows(gene.funding.as_ref());
+    let funding_summary = funding_summary_line(gene.funding.as_ref());
     let body = tmpl.render(context! {
         section_only => section_only,
         section_header => section_header(&gene.symbol, requested_sections),
@@ -2216,6 +2302,10 @@ pub fn gene_markdown(gene: &Gene, requested_sections: &[String]) -> Result<Strin
         clingen => &gene.clingen,
         constraint => &gene.constraint,
         disgenet => &gene.disgenet,
+        funding => &gene.funding,
+        funding_note => &gene.funding_note,
+        funding_rows => funding_rows,
+        funding_summary => funding_summary,
         show_civic_section => show_civic_section,
         show_expression_section => show_expression_section,
         show_hpa_section => show_hpa_section,
@@ -2223,6 +2313,7 @@ pub fn gene_markdown(gene: &Gene, requested_sections: &[String]) -> Result<Strin
         show_clingen_section => show_clingen_section,
         show_constraint_section => show_constraint_section,
         show_disgenet_section => show_disgenet_section,
+        show_funding_section => show_funding_section,
         sections_block => format_sections_block("gene", &gene.symbol, sections_gene(gene, requested_sections)),
         related_block => format_related_block(related_gene(gene)),
     })?;
@@ -2717,8 +2808,9 @@ pub fn disease_markdown(
     let show_models_section = include_all || has_requested("models");
     let show_prevalence_section = include_all || has_requested("prevalence");
     let show_survival_section = include_all || has_requested("survival");
+    let show_funding_section = has_requested("funding");
     let show_civic_section = include_all || has_requested("civic");
-    let show_disgenet_section = include_all || has_requested("disgenet");
+    let show_disgenet_section = has_requested("disgenet");
     let disease_label = if disease.name.trim().is_empty() {
         disease.id.as_str()
     } else {
@@ -2733,6 +2825,8 @@ pub fn disease_markdown(
     let survival_source_line = disease_survival_source_line(disease);
     let survival_summary_rows = disease_survival_summary_rows(disease);
     let survival_history_rows = disease_survival_history_rows(disease);
+    let funding_rows = funding_rows(disease.funding.as_ref());
+    let funding_summary = funding_summary_line(disease.funding.as_ref());
     let body = tmpl.render(context! {
         section_only => section_only,
         section_header => section_header(disease_label, requested_sections),
@@ -2761,6 +2855,10 @@ pub fn disease_markdown(
         prevalence_note => &disease.prevalence_note,
         survival => &disease.survival,
         survival_note => &disease.survival_note,
+        funding => &disease.funding,
+        funding_note => &disease.funding_note,
+        funding_rows => funding_rows,
+        funding_summary => funding_summary,
         survival_source_line => survival_source_line,
         survival_summary_rows => survival_summary_rows,
         survival_history_rows => survival_history_rows,
@@ -2773,6 +2871,7 @@ pub fn disease_markdown(
         show_models_section => show_models_section,
         show_prevalence_section => show_prevalence_section,
         show_survival_section => show_survival_section,
+        show_funding_section => show_funding_section,
         show_civic_section => show_civic_section,
         show_disgenet_section => show_disgenet_section,
         xrefs => xrefs,
@@ -5081,6 +5180,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &[]).expect("rendered markdown");
@@ -5147,6 +5248,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
         let gene_markdown = gene_markdown(&gene, &[]).expect("gene markdown");
         assert!(gene_markdown.contains("Source: NCBI Gene / MyGene.info"));
@@ -5237,6 +5340,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
         let disease_markdown =
@@ -5560,6 +5665,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(
@@ -5634,6 +5741,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown =
@@ -5694,6 +5803,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown =
@@ -5773,6 +5884,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -5856,6 +5969,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -5904,6 +6019,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -5958,6 +6075,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6005,6 +6124,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6053,6 +6174,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6107,6 +6230,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let summary = gene_markdown(&gene, &[]).expect("rendered markdown");
@@ -6305,6 +6430,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let related = related_gene(&gene);
@@ -6372,6 +6499,8 @@ pub(crate) mod tests {
             }),
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let related = related_gene(&gene);
@@ -6433,6 +6562,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -6478,6 +6609,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -6526,6 +6659,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -6571,6 +6706,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -6615,6 +6752,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -6714,6 +6853,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6762,6 +6903,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6800,6 +6943,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6844,6 +6989,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6880,6 +7027,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6913,6 +7062,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -6947,6 +7098,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: Some(crate::sources::civic::CivicContext::default()),
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -7032,6 +7185,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -7111,6 +7266,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -7255,6 +7412,8 @@ pub(crate) mod tests {
                 reference_genome: "GRCh38".to_string(),
             }),
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown =
@@ -7308,6 +7467,8 @@ pub(crate) mod tests {
                     evidence_level: Some("Definitive".to_string()),
                 }],
             }),
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &["disgenet".to_string()]).expect("rendered markdown");
@@ -7361,12 +7522,124 @@ pub(crate) mod tests {
                     evidence_level: None,
                 }],
             }),
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &["disgenet".to_string()]).expect("rendered markdown");
 
         assert!(markdown.contains("| Disease | UMLS CUI | Score | PMIDs | Trials | EL | EI |"));
         assert!(markdown.contains("| Sparse Disease | C1234567 | 0.230 | - | - | - | - |"));
+    }
+
+    #[test]
+    fn gene_markdown_funding_renders_linked_rows_and_currency() {
+        let gene = Gene {
+            symbol: "ERBB2".to_string(),
+            name: "erb-b2 receptor tyrosine kinase 2".to_string(),
+            entrez_id: "2064".to_string(),
+            ensembl_id: None,
+            location: None,
+            genomic_coordinates: None,
+            omim_id: None,
+            uniprot_id: None,
+            summary: None,
+            gene_type: None,
+            aliases: Vec::new(),
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: None,
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: None,
+            druggability: None,
+            clingen: None,
+            constraint: None,
+            disgenet: None,
+            funding: Some(crate::sources::nih_reporter::NihReporterFundingSection {
+                query: "ERBB2".to_string(),
+                fiscal_years: vec![2022, 2023, 2024, 2025, 2026],
+                matching_project_years: 176,
+                grants: vec![crate::sources::nih_reporter::NihReporterGrant {
+                    project_title: "Regulation Of Epidermal Differentiation".to_string(),
+                    project_num: "1ZIAAR041124-23".to_string(),
+                    core_project_num: Some("ZIAAR041124".to_string()),
+                    project_detail_url: Some(
+                        "https://reporter.nih.gov/project-details/10697688".to_string(),
+                    ),
+                    pi_name: Some("MORASSO, MARIA".to_string()),
+                    organization: Some(
+                        "NATIONAL INSTITUTE OF ARTHRITIS AND MUSCULOSKELETAL AND SKIN DISEASES"
+                            .to_string(),
+                    ),
+                    fiscal_year: 2022,
+                    award_amount: 2_219_287,
+                }],
+            }),
+            funding_note: None,
+        };
+
+        let markdown = gene_markdown(&gene, &["funding".to_string()]).expect("funding markdown");
+        let summary = "Showing top 1 unique grants from 176 matching NIH project-year records across FY2022-FY2026.";
+        let row = "| [Regulation Of Epidermal Differentiation](https://reporter.nih.gov/project-details/10697688) | MORASSO, MARIA | NATIONAL INSTITUTE OF ARTHRITIS AND MUSCULOSKELETAL AND SKIN DISEASES | 2022 | $2,219,287 |";
+
+        assert!(markdown.contains("# ERBB2 - funding"));
+        assert!(markdown.contains("## Funding (NIH Reporter)"));
+        assert!(markdown.contains(summary));
+        assert!(markdown.contains("| Project | PI | Organization | FY | Amount |"));
+        assert!(markdown.contains("[Regulation Of Epidermal Differentiation](https://reporter.nih.gov/project-details/10697688)"));
+        assert!(markdown.contains("| MORASSO, MARIA |"));
+        assert!(markdown.contains("| 2022 | $2,219,287 |"));
+        assert!(
+            markdown
+                .find(summary)
+                .expect("funding summary should render")
+                > markdown.find(row).expect("funding row should render")
+        );
+    }
+
+    #[test]
+    fn gene_markdown_all_keeps_opt_in_sections_hidden() {
+        let gene = Gene {
+            symbol: "ERBB2".to_string(),
+            name: "erb-b2 receptor tyrosine kinase 2".to_string(),
+            entrez_id: "2064".to_string(),
+            ensembl_id: None,
+            location: None,
+            genomic_coordinates: None,
+            omim_id: None,
+            uniprot_id: None,
+            summary: None,
+            gene_type: None,
+            aliases: Vec::new(),
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: None,
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: None,
+            druggability: None,
+            clingen: None,
+            constraint: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+        };
+
+        let markdown = gene_markdown(&gene, &["all".to_string()]).expect("all markdown");
+
+        assert!(!markdown.contains("## Funding (NIH Reporter)"));
+        assert!(!markdown.contains("## DisGeNET"));
     }
 
     #[test]
@@ -7409,6 +7682,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let markdown = gene_markdown(&gene, &[]).expect("rendered markdown");
@@ -7755,6 +8030,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -7895,6 +8172,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -8462,6 +8741,8 @@ pub(crate) mod tests {
             clingen: None,
             constraint: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
         };
 
         let urls = gene_evidence_urls(&gene);
@@ -8508,6 +8789,8 @@ pub(crate) mod tests {
                     evidence_level: Some("Definitive".to_string()),
                 }],
             }),
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -8556,6 +8839,8 @@ pub(crate) mod tests {
                     evidence_level: None,
                 }],
             }),
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -8564,6 +8849,96 @@ pub(crate) mod tests {
 
         assert!(markdown.contains("| Gene | Entrez ID | Score | PMIDs | Trials | EL | EI |"));
         assert!(markdown.contains("| KYNU | - | 0.230 | - | - | - | - |"));
+    }
+
+    #[test]
+    fn disease_markdown_funding_renders_truthful_notes_without_table() {
+        let mut disease = Disease {
+            id: "MONDO:0007947".to_string(),
+            name: "Marfan syndrome".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            funding: Some(crate::sources::nih_reporter::NihReporterFundingSection {
+                query: "Marfan syndrome".to_string(),
+                fiscal_years: vec![2022, 2023, 2024, 2025, 2026],
+                matching_project_years: 0,
+                grants: Vec::new(),
+            }),
+            funding_note: Some("No NIH funding data found for this query.".to_string()),
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let no_hit =
+            disease_markdown(&disease, &["funding".to_string()]).expect("no-hit funding markdown");
+        assert!(no_hit.contains("## Funding (NIH Reporter)"));
+        assert!(no_hit.contains("No NIH funding data found for this query."));
+        assert!(!no_hit.contains("| Project | PI | Organization | FY | Amount |"));
+
+        disease.funding = None;
+        disease.funding_note =
+            Some("NIH Reporter funding data is temporarily unavailable.".to_string());
+
+        let unavailable = disease_markdown(&disease, &["funding".to_string()])
+            .expect("unavailable funding markdown");
+        assert!(unavailable.contains("## Funding (NIH Reporter)"));
+        assert!(unavailable.contains("NIH Reporter funding data is temporarily unavailable."));
+        assert!(!unavailable.contains("| Project | PI | Organization | FY | Amount |"));
+    }
+
+    #[test]
+    fn disease_markdown_all_keeps_opt_in_sections_hidden() {
+        let disease = Disease {
+            id: "MONDO:0007947".to_string(),
+            name: "Marfan syndrome".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let markdown = disease_markdown(&disease, &["all".to_string()]).expect("all markdown");
+
+        assert!(!markdown.contains("## Funding (NIH Reporter)"));
+        assert!(!markdown.contains("## DisGeNET"));
     }
 
     #[test]
@@ -8672,6 +9047,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::from([
                 ("Orphanet".to_string(), "586".to_string()),
                 ("OMIM".to_string(), "219700".to_string()),
@@ -8738,6 +9115,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: None,
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::from([
                 ("Orphanet".to_string(), "586".to_string()),
                 ("OMIM".to_string(), "219700".to_string()),
@@ -9632,6 +10011,8 @@ pub(crate) mod tests {
             survival_note: None,
             civic: Some(crate::sources::civic::CivicContext::default()),
             disgenet: None,
+            funding: None,
+            funding_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 

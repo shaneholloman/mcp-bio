@@ -20,6 +20,7 @@ use crate::sources::gnomad::{
 use crate::sources::gtex::{GeneExpression, GtexClient};
 use crate::sources::hpa::{GeneHpa, HpaClient};
 use crate::sources::mygene::MyGeneClient;
+use crate::sources::nih_reporter::{NihReporterClient, NihReporterFundingSection};
 use crate::sources::opentargets::{OpenTargetsClient, OpenTargetsTargetDruggabilityContext};
 use crate::sources::quickgo::QuickGoClient;
 use crate::sources::reactome::ReactomeClient;
@@ -74,6 +75,10 @@ pub struct Gene {
     pub constraint: Option<GeneConstraint>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub disgenet: Option<GeneDisgenet>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub funding: Option<NihReporterFundingSection>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub funding_note: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -194,6 +199,7 @@ enum GeneIncludeType {
     ClinGen,
     Constraint,
     Disgenet,
+    Funding,
 }
 
 const GENE_SECTION_PATHWAYS: &str = "pathways";
@@ -209,6 +215,7 @@ const GENE_SECTION_DRUGGABILITY: &str = "druggability";
 const GENE_SECTION_CLINGEN: &str = "clingen";
 const GENE_SECTION_CONSTRAINT: &str = "constraint";
 const GENE_SECTION_DISGENET: &str = "disgenet";
+const GENE_SECTION_FUNDING: &str = "funding";
 const GENE_SECTION_ALL: &str = "all";
 
 pub const GENE_SECTION_NAMES: &[&str] = &[
@@ -225,6 +232,7 @@ pub const GENE_SECTION_NAMES: &[&str] = &[
     GENE_SECTION_CLINGEN,
     GENE_SECTION_CONSTRAINT,
     GENE_SECTION_DISGENET,
+    GENE_SECTION_FUNDING,
     GENE_SECTION_ALL,
 ];
 
@@ -244,6 +252,7 @@ impl GeneIncludeType {
             GENE_SECTION_CLINGEN => Some(Self::ClinGen),
             GENE_SECTION_CONSTRAINT => Some(Self::Constraint),
             GENE_SECTION_DISGENET => Some(Self::Disgenet),
+            GENE_SECTION_FUNDING => Some(Self::Funding),
             _ => None,
         }
     }
@@ -263,12 +272,15 @@ impl GeneIncludeType {
             | Self::Druggability
             | Self::ClinGen
             | Self::Constraint
-            | Self::Disgenet => &[],
+            | Self::Disgenet
+            | Self::Funding => &[],
         }
     }
 }
 
 const OPTIONAL_ENRICHMENT_TIMEOUT: Duration = Duration::from_secs(8);
+const FUNDING_NO_DATA_NOTE: &str = "No NIH funding data found for this query.";
+const FUNDING_UNAVAILABLE_NOTE: &str = "NIH Reporter funding data is temporarily unavailable.";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnrichmentResult {
@@ -470,7 +482,8 @@ async fn enrich_gene(
             | GeneIncludeType::Druggability
             | GeneIncludeType::ClinGen
             | GeneIncludeType::Constraint
-            | GeneIncludeType::Disgenet => {}
+            | GeneIncludeType::Disgenet
+            | GeneIncludeType::Funding => {}
             GeneIncludeType::Ontology => {
                 if let Some(v) = ontology.as_mut() {
                     v.push(result);
@@ -1141,6 +1154,51 @@ async fn add_disgenet_section(gene: &mut Gene) -> Result<(), BioMcpError> {
     Ok(())
 }
 
+async fn add_funding_section(gene: &mut Gene) {
+    let symbol = gene.symbol.trim();
+    if symbol.is_empty() {
+        gene.funding = Some(NihReporterFundingSection {
+            query: String::new(),
+            fiscal_years: Vec::new(),
+            matching_project_years: 0,
+            grants: Vec::new(),
+        });
+        gene.funding_note = Some(FUNDING_NO_DATA_NOTE.into());
+        return;
+    }
+
+    let funding_fut = async {
+        let client = NihReporterClient::new()?;
+        client.funding(symbol).await
+    };
+
+    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, funding_fut).await {
+        Ok(Ok(section)) => {
+            let no_hits = section.matching_project_years == 0 && section.grants.is_empty();
+            gene.funding = Some(section);
+            gene.funding_note = if no_hits {
+                Some(FUNDING_NO_DATA_NOTE.into())
+            } else {
+                None
+            };
+        }
+        Ok(Err(err)) => {
+            warn!(symbol = %gene.symbol, "NIH Reporter unavailable for gene funding section: {err}");
+            gene.funding = None;
+            gene.funding_note = Some(FUNDING_UNAVAILABLE_NOTE.into());
+        }
+        Err(_) => {
+            warn!(
+                symbol = %gene.symbol,
+                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                "NIH Reporter gene funding section timed out"
+            );
+            gene.funding = None;
+            gene.funding_note = Some(FUNDING_UNAVAILABLE_NOTE.into());
+        }
+    }
+}
+
 pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError> {
     if symbol.trim().is_empty() {
         return Err(BioMcpError::InvalidArgument(
@@ -1239,6 +1297,10 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
 
     if include.contains(&GeneIncludeType::Disgenet) {
         add_disgenet_section(&mut gene).await?;
+    }
+
+    if include.contains(&GeneIncludeType::Funding) {
+        add_funding_section(&mut gene).await;
     }
 
     Ok(gene)
@@ -1606,6 +1668,7 @@ mod tests {
         assert!(GENE_SECTION_NAMES.contains(&"clingen"));
         assert!(GENE_SECTION_NAMES.contains(&"constraint"));
         assert!(GENE_SECTION_NAMES.contains(&"disgenet"));
+        assert!(GENE_SECTION_NAMES.contains(&"funding"));
     }
 
     #[test]
@@ -1619,10 +1682,11 @@ mod tests {
                 "clingen".to_string(),
                 "constraint".to_string(),
                 "disgenet".to_string(),
+                "funding".to_string(),
             ],
         )
         .expect("new gene sections should parse");
-        assert_eq!(parsed.len(), 6);
+        assert_eq!(parsed.len(), 7);
     }
 
     #[test]
@@ -1630,6 +1694,7 @@ mod tests {
         let parsed = parse_sections("BRAF", &["all".to_string()]).expect("all should parse");
         assert_eq!(parsed.len(), 12);
         assert!(!parsed.contains(&GeneIncludeType::Disgenet));
+        assert!(!parsed.contains(&GeneIncludeType::Funding));
     }
 
     #[test]

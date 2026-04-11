@@ -331,6 +331,14 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
         },
     },
     SourceDescriptor {
+        api: "NIH Reporter",
+        affects: Some("gene and disease funding sections"),
+        probe: ProbeKind::PostJson {
+            url: "https://api.reporter.nih.gov/v2/projects/search",
+            payload: r#"{"criteria":{"advanced_text_search":{"operator":"and","search_field":"projecttitle,abstracttext","search_text":"\"ERBB2\""},"fiscal_years":[2022,2023,2024,2025,2026]},"include_fields":["ProjectNum"],"offset":0,"limit":1,"sort_field":"award_amount","sort_order":"desc"}"#,
+        },
+    },
+    SourceDescriptor {
         api: "CIViC",
         affects: Some("disease genes and variants sections"),
         probe: ProbeKind::PostJson {
@@ -1639,6 +1647,7 @@ mod tests {
                 "HPO",
                 "MyDisease",
                 "SEER Explorer",
+                "NIH Reporter",
                 "CIViC",
                 "GWAS Catalog",
                 "GTEx",
@@ -2480,6 +2489,10 @@ mod tests {
         );
         assert_eq!(affects_for_api("ClinGen"), Some("gene clingen section"));
         assert_eq!(affects_for_api("gnomAD"), Some("gene constraint section"));
+        assert_eq!(
+            affects_for_api("NIH Reporter"),
+            Some("gene and disease funding sections")
+        );
         assert_eq!(
             affects_for_api("KEGG"),
             Some("pathway search and detail sections")

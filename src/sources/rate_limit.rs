@@ -60,6 +60,12 @@ impl RateLimiter {
                 Duration::from_millis(334),
             ),
             policy(
+                "nih-reporter",
+                "BIOMCP_NIH_REPORTER_BASE",
+                "https://api.reporter.nih.gov/v2",
+                Duration::from_secs(1),
+            ),
+            policy(
                 "opentargets",
                 "BIOMCP_OPENTARGETS_BASE",
                 "https://api.platform.opentargets.org/api/v4",
@@ -419,6 +425,27 @@ mod tests {
             )
             .expect("pubmed E-utilities URL should parse");
         assert_eq!(key, "policy:pubmed-eutils");
+    }
+
+    #[test]
+    fn nih_reporter_policy_uses_one_second_interval() {
+        let limiter = RateLimiter::from_env();
+        let policy = limiter
+            .policies
+            .iter()
+            .find(|policy| policy.key == "nih-reporter")
+            .expect("nih-reporter policy should be registered");
+        assert_eq!(policy.min_interval, Duration::from_secs(1));
+        assert_eq!(policy.prefix.as_ref(), "https://api.reporter.nih.gov/v2");
+    }
+
+    #[test]
+    fn nih_reporter_urls_resolve_to_nih_reporter_policy() {
+        let limiter = RateLimiter::from_env();
+        let key = limiter
+            .resolve_key_for_str("https://api.reporter.nih.gov/v2/projects/search")
+            .expect("NIH Reporter URL should parse");
+        assert_eq!(key, "policy:nih-reporter");
     }
 
     #[test]

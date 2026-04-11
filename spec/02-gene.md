@@ -11,6 +11,8 @@ Genes are a primary anchor in BioMCP and frequently drive downstream trial, arti
 | Section expansion | `get gene BRAF pathways` | Confirms progressive disclosure |
 | HPA section | `get gene BRAF hpa` | Confirms protein tissue-expression contract |
 | Druggability section | `get gene EGFR druggability` | Confirms combined DGIdb/OpenTargets contract |
+| Funding section | `get gene ERBB2 funding` | Confirms NIH Reporter funding contract |
+| Funding stays opt-in | `get gene ERBB2 all` | Confirms `all` still excludes NIH Reporter funding |
 | Trial helper | `gene trials BRAF` | Confirms cross-entity trial pivot |
 | Article helper | `gene articles BRAF` | Confirms cross-entity literature pivot |
 
@@ -188,6 +190,41 @@ echo "$out" | mustmatch like "OpenTargets tractability"
 echo "$out" | mustmatch like "small molecule"
 echo "$out" | mustmatch like "| antibody | yes | Approved Drug"
 echo "$out" | mustmatch like "OpenTargets safety liabilities"
+```
+
+## Gene Funding
+
+NIH Reporter funding should remain opt-in and render grant rows with stable
+table structure while preserving numeric award amounts and provenance in JSON.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene ERBB2 funding)"
+echo "$out" | mustmatch like "## Funding (NIH Reporter)"
+echo "$out" | mustmatch like "| Project | PI | Organization | FY | Amount |"
+echo "$out" | mustmatch '/Showing top [0-9]+ unique grants from [0-9]+ matching NIH project-year records across FY20[0-9]{2}-FY20[0-9]{2}\./'
+echo "$out" | mustmatch '/\| .* \| .* \| .* \| 20[0-9]{2} \| \$[0-9,]+ \|/'
+json="$("$bin" --json get gene ERBB2 funding)"
+echo "$json" | jq -e '.funding.query == "ERBB2"' > /dev/null
+echo "$json" | jq -e '(.funding.fiscal_years | length) == 5' > /dev/null
+echo "$json" | jq -e '.funding.grants | length > 0' > /dev/null
+echo "$json" | jq -e '(.funding.grants[0].award_amount | type) == "number"' > /dev/null
+echo "$json" | jq -e '(.funding.grants[0].project_num | type) == "string"' > /dev/null
+echo "$json" | jq -e '.funding_note == null' > /dev/null
+echo "$json" | jq -e 'any(._meta.section_sources[]; .key == "funding" and (.sources | index("NIH Reporter")))' > /dev/null
+```
+
+## Gene Funding Stays Opt-In
+
+`funding` should remain an explicit section so `get gene <symbol> all` does not
+invent a fake NIH Reporter block when the user did not ask for one.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene ERBB2 all)"
+echo "$out" | mustmatch not like "## Funding (NIH Reporter)"
+json="$("$bin" --json get gene ERBB2 all)"
+echo "$json" | jq -e '.funding == null and .funding_note == null' > /dev/null
 ```
 
 ## Gene to Trials

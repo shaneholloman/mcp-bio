@@ -190,6 +190,14 @@ else
   probe_post_json "OpenTargets invalid argument key" '^400$' 'errors' "https://api.platform.opentargets.org/api/v4/graphql" '{"query":"query { drug(efoId: \"EFO_0000311\") { id name } }"}'
 fi
 
+# NIH Reporter
+if [[ $FAST -eq 1 ]]; then
+  probe_post_json "NIH Reporter fast" '^200$' '"meta"|\"results\"' "https://api.reporter.nih.gov/v2/projects/search" '{"criteria":{"advanced_text_search":{"operator":"and","search_field":"projecttitle,abstracttext","search_text":"\"ERBB2\""},"fiscal_years":[2022,2023,2024,2025,2026]},"include_fields":["ProjectNum"],"offset":0,"limit":1,"sort_field":"award_amount","sort_order":"desc"}'
+else
+  probe_post_json "NIH Reporter happy" '^200$' '"meta"|\"results\"' "https://api.reporter.nih.gov/v2/projects/search" '{"criteria":{"advanced_text_search":{"operator":"and","search_field":"projecttitle,abstracttext","search_text":"\"ERBB2\""},"fiscal_years":[2022,2023,2024,2025,2026]},"include_fields":["ProjectNum"],"offset":0,"limit":1,"sort_field":"award_amount","sort_order":"desc"}'
+  probe_post_json "NIH Reporter edge" '^200$' '"meta"|\"results\"' "https://api.reporter.nih.gov/v2/projects/search" '{"criteria":{"advanced_text_search":{"operator":"and","search_field":"projecttitle,abstracttext","search_text":"\"NO_SUCH_NIH_REPORTER_QUERY_091\""},"fiscal_years":[2022,2023,2024,2025,2026]},"include_fields":["ProjectNum"],"offset":0,"limit":1,"sort_field":"award_amount","sort_order":"desc"}'
+fi
+
 # Reactome
 if [[ $FAST -eq 1 ]]; then
   probe_get "Reactome fast" '^200$' 'results' "https://reactome.org/ContentService/search/query?query=MAPK&species=Homo%20sapiens&pageSize=1"
