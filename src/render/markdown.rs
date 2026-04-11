@@ -1172,6 +1172,14 @@ fn is_trial_results_search_command(command: &str) -> bool {
             && command.ends_with(" --limit 5"))
 }
 
+fn is_variant_literature_follow_up_command(command: &str) -> bool {
+    command.starts_with("biomcp search article ")
+        && command.contains(" -k ")
+        && command.ends_with(" --limit 5")
+        && !command.contains(" -q ")
+        && !command.contains(" --type ")
+}
+
 fn related_command_description(command: &str) -> Option<&'static str> {
     if command.starts_with("biomcp article entities ") {
         Some("standardized entity extraction from this article")
@@ -1185,14 +1193,23 @@ fn related_command_description(command: &str) -> Option<&'static str> {
         Some("related papers to broaden coverage; use only if the primary paper lacks your answer")
     } else if command.contains(" --type review --limit 5") {
         Some("supplement sparse structured data with review literature for indication context")
+    } else if command.starts_with("biomcp get gene ") && command.ends_with(" clingen constraint") {
+        Some("review ClinGen validity and constraint evidence for the top disease gene")
     } else if command.starts_with("biomcp get gene ") && command.ends_with(" protein") {
         Some("deepen into protein function and localization")
     } else if command.starts_with("biomcp get gene ") && command.ends_with(" hpa") {
         Some("deepen into tissue expression and localization")
+    } else if command.starts_with("biomcp search trial -c ") && command.ends_with(" -s recruiting")
+    {
+        Some("recruiting trials for the top ClinGen disease on this gene card")
     } else if command.starts_with("biomcp search pgx -d ")
         || command.starts_with("biomcp search pgx -g ")
     {
         Some("pharmacogenomics interactions")
+    } else if command.starts_with("biomcp get disease ") && command.ends_with(" genes phenotypes") {
+        Some("open the top phenotype-match disease with genes and phenotypes")
+    } else if is_variant_literature_follow_up_command(command) {
+        Some("literature follow-up for an uncertain-significance variant")
     } else if command.starts_with("biomcp search drug --indication ") {
         Some("treatment options for this condition")
     } else if command.starts_with("biomcp get pgx ") {
@@ -1281,6 +1298,121 @@ fn dedupe_markdown_commands(values: Vec<String>) -> Vec<String> {
         }
     }
     out
+}
+
+fn disease_top_gene_symbol(disease: &Disease) -> Option<String> {
+    disease
+        .top_gene_scores
+        .iter()
+        .map(|row| row.symbol.trim())
+        .chain(disease.top_genes.iter().map(String::as_str).map(str::trim))
+        .chain(
+            disease
+                .associated_genes
+                .iter()
+                .map(String::as_str)
+                .map(str::trim),
+        )
+        .find(|symbol| !symbol.is_empty())
+        .map(str::to_string)
+}
+
+fn gene_trial_disease_label(gene: &Gene) -> Option<String> {
+    gene.clingen
+        .as_ref()?
+        .validity
+        .iter()
+        .map(|row| row.disease.trim())
+        .find(|label| !label.is_empty())
+        .map(str::to_string)
+}
+
+fn variant_keyword_from_legacy_name(legacy_name: &str, gene: &str) -> String {
+    let legacy_name = legacy_name.trim();
+    let gene = gene.trim();
+    if legacy_name.is_empty() {
+        return String::new();
+    }
+    if gene.is_empty() {
+        return legacy_name.to_string();
+    }
+
+    let mut tokens = legacy_name.split_whitespace();
+    if tokens
+        .next()
+        .is_some_and(|token| token.eq_ignore_ascii_case(gene))
+    {
+        let remainder = tokens.collect::<Vec<_>>().join(" ");
+        if !remainder.is_empty() {
+            return remainder;
+        }
+    }
+
+    legacy_name.to_string()
+}
+
+fn variant_literature_keyword_seed(variant: &Variant) -> Option<String> {
+    if let Some(seed) = variant
+        .legacy_name
+        .as_deref()
+        .map(|legacy| variant_keyword_from_legacy_name(legacy, &variant.gene))
+        .filter(|value| !value.trim().is_empty())
+    {
+        return Some(seed.trim().to_string());
+    }
+
+    if let Some(seed) = variant
+        .hgvs_p
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        let seed = seed.strip_prefix("p.").unwrap_or(seed).trim();
+        if !seed.is_empty() {
+            return Some(seed.to_string());
+        }
+    }
+
+    let id = variant.id.trim();
+    if id.is_empty() {
+        None
+    } else {
+        Some(id.to_string())
+    }
+}
+
+fn variant_literature_follow_up(variant: &Variant) -> Option<String> {
+    let keyword = force_quote_arg(&variant_literature_keyword_seed(variant)?);
+    if keyword.is_empty() {
+        return None;
+    }
+
+    let gene = variant.gene.trim();
+    let disease = variant
+        .top_disease
+        .as_ref()
+        .map(|row| row.condition.trim())
+        .filter(|condition| !condition.is_empty())
+        .map(force_quote_arg);
+
+    if !gene.is_empty() {
+        if let Some(disease) = disease {
+            return Some(format!(
+                "biomcp search article -g {gene} -d {disease} -k {keyword} --limit 5"
+            ));
+        }
+        return Some(format!(
+            "biomcp search article -g {gene} -k {keyword} --limit 5"
+        ));
+    }
+
+    if let Some(disease) = disease {
+        return Some(format!(
+            "biomcp search article -d {disease} -k {keyword} --limit 5"
+        ));
+    }
+
+    Some(format!("biomcp search article -k {keyword} --limit 5"))
 }
 
 fn article_related_id(paper: &ArticleRelatedPaper) -> String {
@@ -1464,6 +1596,12 @@ pub(crate) fn related_gene(gene: &Gene) -> Vec<String> {
     {
         out.push(format!("biomcp get gene {symbol} hpa"));
     }
+    if let Some(disease) = gene_trial_disease_label(gene) {
+        out.push(format!(
+            "biomcp search trial -c {} -s recruiting",
+            force_quote_arg(&disease)
+        ));
+    }
     out.push(format!("biomcp search pgx -g {symbol}"));
     out.push(format!("biomcp search variant -g {symbol}"));
     out.push(format!("biomcp search article -g {symbol}"));
@@ -1474,11 +1612,30 @@ pub(crate) fn related_gene(gene: &Gene) -> Vec<String> {
 
 pub(crate) fn related_variant(variant: &Variant) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
-    if !variant.gene.trim().is_empty() {
-        let gene = variant.gene.trim();
+    let gene = variant.gene.trim();
+    let significance = variant
+        .significance
+        .as_deref()
+        .map(|value| value.trim().to_ascii_lowercase())
+        .unwrap_or_default();
+    let pathogenic_like = significance.contains("pathogenic");
+    let vus_like = significance.contains("uncertain significance") || significance.contains("vus");
+
+    if !gene.is_empty() {
         out.push(format!("biomcp get gene {gene}"));
+    }
+
+    if !pathogenic_like
+        && vus_like
+        && let Some(command) = variant_literature_follow_up(variant)
+    {
+        out.push(command);
+    }
+
+    if !gene.is_empty() {
         out.push(format!("biomcp search drug --target {gene}"));
     }
+
     if !variant.id.trim().is_empty() {
         let id = quote_arg(&variant.id);
         out.push(format!("biomcp variant trials {id}"));
@@ -1491,7 +1648,7 @@ pub(crate) fn related_variant(variant: &Variant) -> Vec<String> {
             out.push(format!("biomcp variant oncokb {id}"));
         }
     }
-    out
+    dedupe_markdown_commands(out)
 }
 
 pub(crate) fn related_variant_search_results(
@@ -1521,6 +1678,28 @@ pub(crate) fn related_variant_search_results(
     }
 
     dedupe_markdown_commands(out)
+}
+
+pub(crate) fn related_phenotype_search_results(results: &[PhenotypeSearchResult]) -> Vec<String> {
+    let Some(label) = results.first().and_then(|row| {
+        let name = row.disease_name.trim();
+        if !name.is_empty() {
+            return Some(name.to_string());
+        }
+        let id = row.disease_id.trim();
+        if id.is_empty() {
+            None
+        } else {
+            Some(id.to_string())
+        }
+    }) else {
+        return Vec::new();
+    };
+
+    dedupe_markdown_commands(vec![format!(
+        "biomcp get disease {} genes phenotypes",
+        force_quote_arg(&label)
+    )])
 }
 
 #[derive(Clone, Copy)]
@@ -1691,18 +1870,20 @@ pub(crate) fn related_trial(trial: &Trial) -> Vec<String> {
 
 pub(crate) fn related_disease(disease: &Disease) -> Vec<String> {
     let name = force_quote_arg(&disease_literature_query(disease));
-    if name.is_empty() {
-        return Vec::new();
-    }
     let mut out = Vec::new();
-    if !disease.phenotypes.is_empty() && disease.phenotypes.len() <= 3 {
+    if let Some(symbol) = disease_top_gene_symbol(disease) {
+        out.push(format!("biomcp get gene {symbol} clingen constraint"));
+    }
+    if !name.is_empty() && !disease.phenotypes.is_empty() && disease.phenotypes.len() <= 3 {
         out.push(format!(
             "biomcp search article -d {name} --type review --limit 5"
         ));
     }
-    out.push(format!("biomcp search trial -c {name}"));
-    out.push(format!("biomcp search article -d {name}"));
-    out.push(format!("biomcp search drug --indication {name}"));
+    if !name.is_empty() {
+        out.push(format!("biomcp search trial -c {name}"));
+        out.push(format!("biomcp search article -d {name}"));
+        out.push(format!("biomcp search drug --indication {name}"));
+    }
     if is_oncology_disease(disease) {
         if let Some(study_id) = best_local_oncology_study_id(disease) {
             out.push(format!("biomcp study top-mutated --study {study_id}"));
@@ -2952,6 +3133,7 @@ pub fn phenotype_search_markdown_with_footer(
         query => query,
         count => results.len(),
         results => results,
+        related_block => format_related_block(related_phenotype_search_results(results)),
         pagination_footer => pagination_footer,
     })?;
     Ok(with_pagination_footer(body, pagination_footer))
@@ -6133,6 +6315,80 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn related_gene_promotes_clingen_trial_search_before_generic_pivots() {
+        let gene = Gene {
+            symbol: "OPA1".to_string(),
+            name: "OPA1 mitochondrial dynamin like GTPase".to_string(),
+            entrez_id: "4976".to_string(),
+            ensembl_id: Some("ENSG00000198836".to_string()),
+            location: Some("3q29".to_string()),
+            genomic_coordinates: None,
+            omim_id: None,
+            uniprot_id: Some("O60313".to_string()),
+            summary: Some(
+                "Mitochondrial inner membrane fusion GTPase required for cristae organization."
+                    .to_string(),
+            ),
+            gene_type: Some("protein-coding".to_string()),
+            aliases: vec!["large GTPase 1".to_string()],
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: Some(crate::entities::gene::GeneProtein {
+                accession: "O60313".to_string(),
+                name: "Dynamin-like 120 kDa protein, mitochondrial".to_string(),
+                function: None,
+                length: None,
+                isoforms: Vec::new(),
+                alternative_names: Vec::new(),
+            }),
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: Some(crate::sources::hpa::GeneHpa {
+                tissues: vec![crate::sources::hpa::HpaTissueExpression {
+                    tissue: "Retina".to_string(),
+                    level: "High".to_string(),
+                }],
+                subcellular_main_location: vec!["Mitochondria".to_string()],
+                subcellular_additional_location: Vec::new(),
+                reliability: Some("Approved".to_string()),
+                protein_summary: None,
+                rna_summary: None,
+            }),
+            druggability: None,
+            clingen: Some(crate::sources::clingen::GeneClinGen {
+                validity: vec![crate::sources::clingen::ClinGenValidity {
+                    disease: "dominant optic atrophy".to_string(),
+                    classification: "Definitive".to_string(),
+                    review_date: Some("2024-01-01".to_string()),
+                    moi: Some("AD".to_string()),
+                }],
+                haploinsufficiency: None,
+                triplosensitivity: None,
+            }),
+            constraint: None,
+            disgenet: None,
+        };
+
+        let related = related_gene(&gene);
+        assert_eq!(related[0], "biomcp get gene OPA1 protein");
+        assert_eq!(related[1], "biomcp get gene OPA1 hpa");
+        assert_eq!(
+            related[2],
+            "biomcp search trial -c \"dominant optic atrophy\" -s recruiting"
+        );
+        assert_eq!(
+            related_command_description(&related[2]),
+            Some("recruiting trials for the top ClinGen disease on this gene card")
+        );
+        assert!(related.contains(&"biomcp search pgx -g OPA1".to_string()));
+    }
+
+    #[test]
     fn gene_markdown_renders_protein_isoforms_with_count_and_displayed_length() {
         let gene = Gene {
             symbol: "KRAS".to_string(),
@@ -6470,6 +6726,85 @@ pub(crate) mod tests {
         assert!(
             related.contains(&"biomcp search drug --indication \"Marfan syndrome\"".to_string())
         );
+    }
+
+    #[test]
+    fn related_disease_promotes_top_gene_context_before_generic_pivots() {
+        let disease = Disease {
+            id: "MONDO:0100135".to_string(),
+            name: "Dravet syndrome".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: vec!["SCN1A".to_string()],
+            gene_associations: Vec::new(),
+            top_genes: vec!["SCN1A".to_string()],
+            top_gene_scores: vec![crate::entities::disease::DiseaseTargetScore {
+                symbol: "SCN1A".to_string(),
+                summary: crate::entities::disease::DiseaseAssociationScoreSummary {
+                    overall_score: 0.872,
+                    gwas_score: None,
+                    rare_variant_score: Some(0.997),
+                    somatic_mutation_score: None,
+                },
+            }],
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let related = related_disease(&disease);
+        assert_eq!(related[0], "biomcp get gene SCN1A clingen constraint");
+        assert_eq!(related[1], "biomcp search trial -c \"Dravet syndrome\"");
+        assert_eq!(
+            related_command_description(&related[0]),
+            Some("review ClinGen validity and constraint evidence for the top disease gene")
+        );
+    }
+
+    #[test]
+    fn related_disease_falls_back_to_unscored_top_gene_context() {
+        let disease = Disease {
+            id: "MONDO:0100135".to_string(),
+            name: "Dravet syndrome".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: vec!["SCN1A".to_string()],
+            gene_associations: Vec::new(),
+            top_genes: vec!["SCN1A".to_string()],
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let related = related_disease(&disease);
+        assert_eq!(related[0], "biomcp get gene SCN1A clingen constraint");
     }
 
     #[test]
@@ -7284,6 +7619,104 @@ pub(crate) mod tests {
         assert!(markdown.contains("biomcp get variant rs199473688"));
         assert!(markdown.contains("biomcp get gene SCN5A"));
         assert!(markdown.contains("biomcp search disease --query Brugada"));
+    }
+
+    #[test]
+    fn phenotype_search_markdown_renders_top_disease_follow_up() {
+        let results = vec![
+            crate::entities::disease::PhenotypeSearchResult {
+                disease_id: "MONDO:0100135".to_string(),
+                disease_name: "Dravet syndrome".to_string(),
+                score: 15.036,
+            },
+            crate::entities::disease::PhenotypeSearchResult {
+                disease_id: "MONDO:0000032".to_string(),
+                disease_name: "febrile seizures, familial".to_string(),
+                score: 15.036,
+            },
+        ];
+
+        let markdown = phenotype_search_markdown_with_footer(
+            "HP:0002373 HP:0001250",
+            &results,
+            "Showing 1-2 of 2 results.",
+        )
+        .expect("rendered markdown");
+
+        assert!(markdown.contains("See also:"));
+        assert!(markdown.contains("biomcp get disease \"Dravet syndrome\" genes phenotypes"));
+        assert_eq!(
+            related_command_description("biomcp get disease \"Dravet syndrome\" genes phenotypes"),
+            Some("open the top phenotype-match disease with genes and phenotypes")
+        );
+    }
+
+    #[test]
+    fn related_variant_vus_promotes_literature_before_drug_target() {
+        let variant: Variant = serde_json::from_value(serde_json::json!({
+            "id": "chr2:g.166848047C>G",
+            "gene": "SCN1A",
+            "hgvs_p": "p.T1174S",
+            "legacy_name": "SCN1A T1174S",
+            "significance": "Uncertain significance",
+            "top_disease": {"condition": "Dravet syndrome", "reports": 7}
+        }))
+        .expect("variant should deserialize");
+
+        let related = related_variant(&variant);
+        assert_eq!(related[0], "biomcp get gene SCN1A");
+        assert_eq!(
+            related[1],
+            "biomcp search article -g SCN1A -d \"Dravet syndrome\" -k \"T1174S\" --limit 5"
+        );
+        assert_eq!(related[2], "biomcp search drug --target SCN1A");
+        assert_eq!(
+            related_command_description(&related[1]),
+            Some("literature follow-up for an uncertain-significance variant")
+        );
+    }
+
+    #[test]
+    fn related_variant_vus_keyword_only_follow_up_keeps_description() {
+        let variant: Variant = serde_json::from_value(serde_json::json!({
+            "id": "chr2:g.166848047C>G",
+            "gene": "",
+            "hgvs_p": "p.T1174S",
+            "significance": "VUS"
+        }))
+        .expect("variant should deserialize");
+
+        let related = related_variant(&variant);
+        assert_eq!(related[0], "biomcp search article -k \"T1174S\" --limit 5");
+        assert_eq!(
+            related_command_description(&related[0]),
+            Some("literature follow-up for an uncertain-significance variant")
+        );
+
+        let rendered = format_related_block(related);
+        assert!(rendered.contains("literature follow-up for an uncertain-significance variant"));
+    }
+
+    #[test]
+    fn related_variant_pathogenic_keeps_drug_target_without_vus_literature_pivot() {
+        let variant: Variant = serde_json::from_value(serde_json::json!({
+            "id": "chr7:g.140453136A>T",
+            "gene": "BRAF",
+            "hgvs_p": "p.V600E",
+            "legacy_name": "BRAF V600E",
+            "significance": "Likely pathogenic",
+            "top_disease": {"condition": "Melanoma", "reports": 5}
+        }))
+        .expect("variant should deserialize");
+
+        let related = related_variant(&variant);
+        assert_eq!(related[0], "biomcp get gene BRAF");
+        assert_eq!(related[1], "biomcp search drug --target BRAF");
+        assert!(
+            !related
+                .iter()
+                .any(|cmd| cmd.starts_with("biomcp search article -g BRAF"))
+        );
     }
 
     #[test]

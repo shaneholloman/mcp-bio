@@ -8809,6 +8809,29 @@ mod tests {
     }
 
     #[test]
+    fn phenotype_search_json_contract_unchanged() {
+        let pagination = PaginationMeta::offset(0, 1, 1, Some(1));
+        let json = search_json(
+            vec![crate::entities::disease::PhenotypeSearchResult {
+                disease_id: "MONDO:0100135".to_string(),
+                disease_name: "Dravet syndrome".to_string(),
+                score: 15.036,
+            }],
+            pagination,
+        )
+        .expect("phenotype search json");
+
+        let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+        assert_eq!(value["count"], 1);
+        assert_eq!(value["results"][0]["disease_id"], "MONDO:0100135");
+        assert_eq!(value["results"][0]["disease_name"], "Dravet syndrome");
+        assert!(
+            value.get("_meta").is_none(),
+            "generic search json should not grow entity-style _meta"
+        );
+    }
+
+    #[test]
     fn drug_all_region_search_json_includes_who_bucket() {
         let json = drug_all_region_search_json(
             "trastuzumab",
@@ -11908,6 +11931,7 @@ mod next_commands_validity {
 
     #[test]
     fn gene_next_commands_parse() {
+        assert_parses(r#"biomcp search trial -c "Dravet syndrome" -s recruiting"#);
         assert_parses("biomcp search pgx -g BRAF");
         assert_parses("biomcp search variant -g BRAF");
         assert_parses("biomcp search article -g BRAF");
@@ -11918,6 +11942,12 @@ mod next_commands_validity {
     #[test]
     fn variant_next_commands_parse() {
         assert_parses("biomcp get gene BRAF");
+        assert_parses(
+            r#"biomcp search article -g SCN1A -d "Dravet syndrome" -k "T1174S" --limit 5"#,
+        );
+        assert_parses(r#"biomcp search article -g SCN1A -k "T1174S" --limit 5"#);
+        assert_parses(r#"biomcp search article -d "Dravet syndrome" -k "T1174S" --limit 5"#);
+        assert_parses(r#"biomcp search article -k "T1174S" --limit 5"#);
         assert_parses("biomcp search drug --target BRAF");
         assert_parses(r#"biomcp variant trials "rs113488022""#);
         assert_parses(r#"biomcp variant articles "rs113488022""#);
@@ -11951,6 +11981,8 @@ mod next_commands_validity {
 
     #[test]
     fn disease_next_commands_parse() {
+        assert_parses("biomcp get gene SCN1A clingen constraint");
+        assert_parses(r#"biomcp get disease "Dravet syndrome" genes phenotypes"#);
         assert_parses("biomcp search trial -c melanoma");
         assert_parses("biomcp search article -d melanoma");
         assert_parses(r#"biomcp search drug --indication "melanoma""#);
@@ -12044,6 +12076,16 @@ mod next_commands_json_property {
     use crate::entities::trial::Trial;
     use crate::entities::variant::Variant;
 
+    fn collect_next_commands(json: &str) -> Vec<String> {
+        let value: serde_json::Value = serde_json::from_str(json).expect("valid json");
+        value["_meta"]["next_commands"]
+            .as_array()
+            .expect("next_commands array")
+            .iter()
+            .map(|cmd| cmd.as_str().expect("command string").to_string())
+            .collect()
+    }
+
     fn assert_json_next_commands_parse(label: &str, json: &str) {
         let value: serde_json::Value =
             serde_json::from_str(json).unwrap_or_else(|e| panic!("{label}: invalid json: {e}"));
@@ -12120,6 +12162,61 @@ mod next_commands_json_property {
             crate::render::markdown::related_gene(&gene),
             crate::render::provenance::gene_section_sources(&gene),
         );
+    }
+
+    #[test]
+    fn gene_json_next_commands_include_clingen_trial_search() {
+        let gene = Gene {
+            symbol: "SCN1A".to_string(),
+            name: "sodium voltage-gated channel alpha subunit 1".to_string(),
+            entrez_id: "6323".to_string(),
+            ensembl_id: Some("ENSG00000144285".to_string()),
+            location: Some("2q24.3".to_string()),
+            genomic_coordinates: None,
+            omim_id: Some("182389".to_string()),
+            uniprot_id: Some("P35498".to_string()),
+            summary: None,
+            gene_type: None,
+            aliases: Vec::new(),
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: None,
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: None,
+            druggability: None,
+            clingen: Some(crate::sources::clingen::GeneClinGen {
+                validity: vec![crate::sources::clingen::ClinGenValidity {
+                    disease: "genetic developmental and epileptic encephalopathy".to_string(),
+                    classification: "Definitive".to_string(),
+                    review_date: Some("2025-12-16".to_string()),
+                    moi: Some("AD".to_string()),
+                }],
+                haploinsufficiency: None,
+                triplosensitivity: None,
+            }),
+            constraint: None,
+            disgenet: None,
+        };
+
+        let next_commands = crate::render::markdown::related_gene(&gene);
+        let json = crate::render::json::to_entity_json(
+            &gene,
+            crate::render::markdown::gene_evidence_urls(&gene),
+            next_commands,
+            crate::render::provenance::gene_section_sources(&gene),
+        )
+        .expect("gene json");
+        assert_json_next_commands_parse("gene-clingen", &json);
+        assert!(collect_next_commands(&json).contains(
+            &"biomcp search trial -c \"genetic developmental and epileptic encephalopathy\" -s recruiting"
+                .to_string()
+        ));
     }
 
     #[test]
@@ -12265,6 +12362,58 @@ mod next_commands_json_property {
     }
 
     #[test]
+    fn disease_json_next_commands_include_top_gene_context() {
+        let disease = Disease {
+            id: "MONDO:0100135".to_string(),
+            name: "Dravet syndrome".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: vec!["SCN1A".to_string()],
+            gene_associations: Vec::new(),
+            top_genes: vec!["SCN1A".to_string()],
+            top_gene_scores: vec![crate::entities::disease::DiseaseTargetScore {
+                symbol: "SCN1A".to_string(),
+                summary: crate::entities::disease::DiseaseAssociationScoreSummary {
+                    overall_score: 0.872,
+                    gwas_score: None,
+                    rare_variant_score: Some(0.997),
+                    somatic_mutation_score: None,
+                },
+            }],
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let next_commands = crate::render::markdown::related_disease(&disease);
+        let json = crate::render::json::to_entity_json(
+            &disease,
+            crate::render::markdown::disease_evidence_urls(&disease),
+            next_commands,
+            crate::render::provenance::disease_section_sources(&disease),
+        )
+        .expect("disease json");
+        assert_json_next_commands_parse("disease-top-gene", &json);
+        assert!(
+            collect_next_commands(&json)
+                .contains(&"biomcp get gene SCN1A clingen constraint".to_string())
+        );
+    }
+
+    #[test]
     fn pgx_json_next_commands_parse() {
         let pgx = Pgx {
             query: "CYP2D6".to_string(),
@@ -12340,6 +12489,35 @@ mod next_commands_json_property {
             crate::render::markdown::variant_evidence_urls(&variant),
             crate::render::markdown::related_variant(&variant),
             crate::render::provenance::variant_section_sources(&variant),
+        );
+    }
+
+    #[test]
+    fn variant_json_next_commands_include_vus_literature_route() {
+        let variant: Variant = serde_json::from_value(serde_json::json!({
+            "id": "chr2:g.166848047C>G",
+            "gene": "SCN1A",
+            "hgvs_p": "p.T1174S",
+            "legacy_name": "SCN1A T1174S",
+            "significance": "Uncertain significance",
+            "top_disease": {"condition": "Dravet syndrome", "reports": 7}
+        }))
+        .expect("variant should deserialize");
+
+        let next_commands = crate::render::markdown::related_variant(&variant);
+        let json = crate::render::json::to_entity_json(
+            &variant,
+            crate::render::markdown::variant_evidence_urls(&variant),
+            next_commands,
+            crate::render::provenance::variant_section_sources(&variant),
+        )
+        .expect("variant json");
+        assert_json_next_commands_parse("variant-vus", &json);
+        assert!(
+            collect_next_commands(&json).contains(
+                &"biomcp search article -g SCN1A -d \"Dravet syndrome\" -k \"T1174S\" --limit 5"
+                    .to_string()
+            )
         );
     }
 

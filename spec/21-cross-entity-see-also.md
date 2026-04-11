@@ -9,8 +9,11 @@ empty-state must surface the structured path directly.
 |---|---|---|
 | Drug to PGx | `get drug warfarin` | Teaches the structured PGx surface from a drug card |
 | Gene to PGx | `get gene TP53` | Teaches the PGx search from a gene card |
+| Disease to Gene | `get disease "Dravet syndrome" genes` | Promotes the top ranked causal gene from the current disease response |
 | Disease to Drug | `get disease melanoma` | Teaches indication-oriented drug search from a disease card |
+| Gene to Recruiting Trials | `get gene SCN1A clingen` | Reuses the current top ClinGen disease label for a trial pivot |
 | Variant Search Follow-up | `search variant -g SCN5A --condition "Brugada"` | Restores HATEOAS follow-up commands on variant result pages |
+| Pathogenic Variant Keeps Drug Pivot | `get variant "BRAF V600E" clinvar` | Keeps target/drug follow-up near the top for pathogenic variants |
 | Gene More ordering | `get gene NANOG` | Keeps `ontology` at equal prominence in follow-up sections |
 | Oncology study local match | `get disease "breast cancer" genes` | Prefers executable `study top-mutated` when a local study exists |
 | Oncology study fallback | `get disease melanoma genes` | Falls back to `study download --list` when no local study can be chosen |
@@ -64,6 +67,30 @@ echo "$pgx_out" | mustmatch like "No PGx interactions found."
 echo "$pgx_out" | mustmatch like "# PGx Search: gene=TP53"
 ```
 
+## Disease to Gene
+
+Disease cards with ranked gene context should promote the current top gene into
+an executable `get gene ... clingen constraint` follow-up ahead of the generic
+disease-level pivots.
+
+```bash
+out="$(biomcp get disease "Dravet syndrome" genes)"
+top_gene="$(printf '%s\n' "$out" | awk -F'|' '/^\|/ && $2 !~ /Gene/ && $2 !~ /---/ {gsub(/^ +| +$/, "", $2); print $2; exit}')"
+test -n "$top_gene"
+echo "$out" | mustmatch like "biomcp get gene $top_gene clingen constraint"
+gene_line="$(printf '%s\n' "$out" | grep -nF "biomcp get gene $top_gene clingen constraint" | head -n1 | cut -d: -f1)"
+trial_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search trial -c "Dravet syndrome"' | head -n1 | cut -d: -f1)"
+test -n "$gene_line"
+test -n "$trial_line"
+test "$gene_line" -lt "$trial_line"
+```
+
+```bash
+out="$(biomcp --json get disease "Dravet syndrome" genes)"
+top_gene="$(printf '%s\n' "$(biomcp get disease "Dravet syndrome" genes)" | awk -F'|' '/^\|/ && $2 !~ /Gene/ && $2 !~ /---/ {gsub(/^ +| +$/, "", $2); print $2; exit}')"
+echo "$out" | jq -e --arg gene "$top_gene" '._meta.next_commands | index("biomcp get gene \($gene) clingen constraint") != null' > /dev/null
+```
+
 ## Disease to Drug
 
 Disease cards should point to typed indication search so the follow-up command
@@ -88,6 +115,29 @@ echo "$drug_out" | mustmatch like "# Drugs: indication=melanoma"
 echo "$drug_out" | mustmatch like "pembrolizumab"
 ```
 
+## Gene to Recruiting Trials
+
+Gene cards with ClinGen validity rows should reuse the first rendered disease
+label for a recruiting-trial search before the generic gene pivots.
+
+```bash
+out="$(biomcp get gene SCN1A clingen)"
+top_disease="$(printf '%s\n' "$out" | awk -F'|' '/^\|/ && $2 !~ /Disease/ && $2 !~ /---/ {gsub(/^ +| +$/, "", $2); print $2; exit}')"
+test -n "$top_disease"
+echo "$out" | mustmatch like "biomcp search trial -c \"$top_disease\" -s recruiting"
+trial_line="$(printf '%s\n' "$out" | grep -nF "biomcp search trial -c \"$top_disease\" -s recruiting" | head -n1 | cut -d: -f1)"
+pgx_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search pgx -g SCN1A' | head -n1 | cut -d: -f1)"
+test -n "$trial_line"
+test -n "$pgx_line"
+test "$trial_line" -lt "$pgx_line"
+```
+
+```bash
+out="$(biomcp --json get gene SCN1A clingen)"
+top_disease="$(printf '%s\n' "$(biomcp get gene SCN1A clingen)" | awk -F'|' '/^\|/ && $2 !~ /Disease/ && $2 !~ /---/ {gsub(/^ +| +$/, "", $2); print $2; exit}')"
+echo "$out" | jq -e --arg disease "$top_disease" '._meta.next_commands | index("biomcp search trial -c \"\($disease)\" -s recruiting") != null' > /dev/null
+```
+
 ## Variant Search Follow-up
 
 Variant search result pages should expose the next executable detail pivot plus
@@ -99,6 +149,53 @@ echo "$out" | mustmatch like $'See also:\n  biomcp get variant '
 echo "$out" | mustmatch like "biomcp get variant "
 echo "$out" | mustmatch like "biomcp get gene SCN5A"
 echo "$out" | mustmatch like "biomcp search disease --query Brugada"
+```
+
+## Pathogenic Variant Keeps Drug Pivot
+
+Pathogenic or likely pathogenic variants should keep the drug-target follow-up
+near the top of `See also:` rather than replacing it with a literature-first
+pivot.
+
+```bash
+out="$(biomcp get variant "BRAF V600E" clinvar)"
+echo "$out" | mustmatch like "biomcp search drug --target BRAF"
+drug_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search drug --target BRAF' | head -n1 | cut -d: -f1)"
+trials_line="$(printf '%s\n' "$out" | grep -n 'biomcp variant trials ' | head -n1 | cut -d: -f1)"
+test -n "$drug_line"
+test -n "$trials_line"
+test "$drug_line" -lt "$trials_line"
+if printf '%s\n' "$out" | grep -F 'biomcp search article' | grep -qF ' -k '; then
+  echo "unexpected VUS literature pivot in pathogenic variant output" >&2
+  exit 1
+fi
+```
+
+```bash
+out="$(biomcp --json get variant "BRAF V600E" clinvar)"
+echo "$out" | jq -e '._meta.next_commands | index("biomcp search drug --target BRAF") != null' > /dev/null
+echo "$out" | jq -e '[._meta.next_commands[] | select(startswith("biomcp search article") and contains("-k "))] | length == 0' > /dev/null
+```
+
+## VUS Variant Gets Literature Pivot
+
+Variants classified as uncertain significance or VUS should get a literature
+search follow-up ahead of the generic drug-target pivot, using the gene, disease,
+and variant keyword to narrow the search.
+
+```bash
+out="$(biomcp get variant "chr17:g.41228596T>G" clinvar)"
+echo "$out" | mustmatch like "literature follow-up for an uncertain-significance variant"
+article_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search article' | grep -F ' -k ' | head -n1 | cut -d: -f1)"
+drug_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search drug --target BRCA1' | head -n1 | cut -d: -f1)"
+test -n "$article_line"
+test -n "$drug_line"
+test "$article_line" -lt "$drug_line"
+```
+
+```bash
+out="$(biomcp --json get variant "chr17:g.41228596T>G" clinvar)"
+echo "$out" | jq -e '[._meta.next_commands[] | select(startswith("biomcp search article") and contains("-k ") and endswith("--limit 5"))] | length >= 1' > /dev/null
 ```
 
 ## Gene More Ordering

@@ -97,6 +97,10 @@ Gene-disease validity (ClinGen):
 biomcp get gene BRAF clingen
 ```
 
+When ClinGen validity rows are present, the gene card's `See also:` block
+promotes a recruiting-trial search keyed to the newest reviewed disease label
+already shown on the card, ahead of the generic gene pivots.
+
 Constraint metrics (gnomAD):
 
 ```bash

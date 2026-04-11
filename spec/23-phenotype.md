@@ -7,6 +7,7 @@ resolve to HPO IDs before Monarch similarity search.
 |---|---|---|
 | HPO IDs | `search phenotype "HP:0001250 HP:0001263" --limit 3` | Confirms canonical HPO identifiers remain a stable contract |
 | Symptom phrases | `search phenotype "seizure, developmental delay" --limit 3` | Confirms comma-separated symptom text resolves before ranking diseases |
+| Top disease follow-up | `search phenotype "HP:0002373 HP:0001250" --limit 3` | Reuses the top-ranked disease as the next structured command in markdown only |
 
 ## HPO IDs
 
@@ -32,4 +33,25 @@ out="$("$bin" search phenotype "seizure, developmental delay" --limit 3)"
 echo "$out" | mustmatch like "# Phenotype Search: seizure, developmental delay"
 echo "$out" | mustmatch like "| Disease ID | Disease Name | Similarity Score |"
 printf '%s\n' "$out" | grep -Eq '^\| MONDO:'
+```
+
+## Top disease follow-up
+
+Markdown phenotype search should turn the first ranked disease row into the next
+typed disease command, while JSON keeps the generic search-response shape.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" search phenotype "HP:0002373 HP:0001250" --limit 3)"
+top_disease="$(printf '%s\n' "$out" | awk -F'|' '/^\|/ && $2 !~ /Disease ID/ && $2 !~ /---/ {gsub(/^ +| +$/, "", $3); print $3; exit}')"
+test -n "$top_disease"
+printf '%s\n' "$out" | grep -F 'See also:' >/dev/null
+echo "$out" | mustmatch like "biomcp get disease \"$top_disease\" genes phenotypes"
+```
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" --json search phenotype "HP:0002373 HP:0001250" --limit 1)"
+echo "$out" | jq -e '.results | type == "array" and length == 1' > /dev/null
+echo "$out" | jq -e 'has("_meta") | not' > /dev/null
 ```

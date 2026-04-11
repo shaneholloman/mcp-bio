@@ -10,6 +10,10 @@ Found {{ count }} candidate disease{% if count != 1 %}s{% endif %}
 {% for row in results -%}
 | {{ row.disease_id }} | {{ row.disease_name }} | {{ row.score | score }} |
 {% endfor -%}
+{% if related_block %}
+
+{{ related_block }}
+{% endif %}
 {% if pagination_footer %}
 
 {{ pagination_footer }}
