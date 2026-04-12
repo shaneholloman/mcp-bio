@@ -1,5 +1,7 @@
 //! Shared disease test helpers used by sidecar test modules.
 
+use std::future::Future;
+
 #[allow(unused_imports)]
 pub(super) use std::collections::{HashMap, HashSet};
 
@@ -21,6 +23,13 @@ pub(super) use wiremock::{Mock, MockServer, ResponseTemplate};
 
 pub(super) async fn lock_env() -> tokio::sync::MutexGuard<'static, ()> {
     crate::test_support::env_lock().lock().await
+}
+
+pub(super) async fn with_no_http_cache<R, Fut>(future: Fut) -> R
+where
+    Fut: Future<Output = R>,
+{
+    crate::sources::with_no_cache(true, future).await
 }
 
 pub(super) struct EnvVarGuard {

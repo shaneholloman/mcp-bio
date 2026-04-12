@@ -80,30 +80,33 @@ fn resolver_queries_adds_hodgkin_alias_variants() {
 #[tokio::test]
 async fn resolve_disease_hit_by_name_direct_rejects_weak_contains_only_match() {
     let _guard = lock_env().await;
-    let server = MockServer::start().await;
-    let _env = set_env_var(
-        "BIOMCP_MYDISEASE_BASE",
-        Some(&format!("{}/v1", server.uri())),
-    );
+    with_no_http_cache(async {
+        let server = MockServer::start().await;
+        let _env = set_env_var(
+            "BIOMCP_MYDISEASE_BASE",
+            Some(&format!("{}/v1", server.uri())),
+        );
 
-    Mock::given(method("GET"))
-        .and(path("/v1/query"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "total": 1,
-            "hits": [{
-                "_id": "MONDO:0015760",
-                "mondo": {"name": "T-cell non-Hodgkin lymphoma"}
-            }]
-        })))
-        .mount(&server)
-        .await;
+        Mock::given(method("GET"))
+            .and(path("/v1/query"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "total": 1,
+                "hits": [{
+                    "_id": "MONDO:0015760",
+                    "mondo": {"name": "T-cell non-Hodgkin lymphoma"}
+                }]
+            })))
+            .mount(&server)
+            .await;
 
-    let client = MyDiseaseClient::new().expect("client");
-    let best = resolve_disease_hit_by_name_direct(&client, "Hodgkin lymphoma")
-        .await
-        .expect("weak direct match should not error");
+        let client = MyDiseaseClient::new().expect("client");
+        let best = resolve_disease_hit_by_name_direct(&client, "Hodgkin lymphoma")
+            .await
+            .expect("weak direct match should not error");
 
-    assert!(best.is_none());
+        assert!(best.is_none());
+    })
+    .await;
 }
 
 #[test]

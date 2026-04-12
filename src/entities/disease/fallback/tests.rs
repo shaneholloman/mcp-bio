@@ -209,27 +209,30 @@ async fn fallback_search_page_applies_offset_and_limit_after_dedupe() {
 #[tokio::test]
 async fn resolve_fallback_row_ignores_not_found_canonical_ids() {
     let _guard = lock_env().await;
-    let server = MockServer::start().await;
-    let _env = set_env_var(
-        "BIOMCP_MYDISEASE_BASE",
-        Some(&format!("{}/v1", server.uri())),
-    );
+    with_no_http_cache(async {
+        let server = MockServer::start().await;
+        let _env = set_env_var(
+            "BIOMCP_MYDISEASE_BASE",
+            Some(&format!("{}/v1", server.uri())),
+        );
 
-    Mock::given(method("GET"))
-        .and(path("/v1/disease/DOID:8552"))
-        .respond_with(ResponseTemplate::new(404))
-        .expect(1)
-        .mount(&server)
-        .await;
+        Mock::given(method("GET"))
+            .and(path("/v1/disease/DOID:8552"))
+            .respond_with(ResponseTemplate::new(404))
+            .expect(1)
+            .mount(&server)
+            .await;
 
-    let client = MyDiseaseClient::new().expect("client");
-    let row = resolve_fallback_row(
-        &client,
-        false,
-        &DiseaseFallbackId::CanonicalOntology("DOID:8552".into()),
-    )
-    .await
-    .expect("canonical not-found should degrade cleanly");
+        let client = MyDiseaseClient::new().expect("client");
+        let row = resolve_fallback_row(
+            &client,
+            false,
+            &DiseaseFallbackId::CanonicalOntology("DOID:8552".into()),
+        )
+        .await
+        .expect("canonical not-found should degrade cleanly");
 
-    assert!(row.is_none());
+        assert!(row.is_none());
+    })
+    .await;
 }
