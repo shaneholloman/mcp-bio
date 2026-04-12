@@ -1,29 +1,7 @@
+use super::super::test_support::article_filters_for_test;
 use super::*;
 use crate::cli::debug_plan::DebugPlan;
-use crate::entities::article::{
-    ArticleRankingOptions, ArticleSearchFilters, ArticleSearchResult, ArticleSort, ArticleSource,
-};
-
-fn article_filters_for_test(sort: ArticleSort) -> ArticleSearchFilters {
-    ArticleSearchFilters {
-        gene: None,
-        gene_anchored: false,
-        disease: None,
-        drug: None,
-        author: None,
-        keyword: None,
-        date_from: None,
-        date_to: None,
-        article_type: None,
-        journal: None,
-        open_access: false,
-        no_preprints: true,
-        exclude_retracted: true,
-        max_per_source: None,
-        sort,
-        ranking: ArticleRankingOptions::default(),
-    }
-}
+use crate::entities::article::{ArticleSearchResult, ArticleSort, ArticleSource};
 #[test]
 fn article_entities_markdown_uses_safe_gene_search_commands() {
     let annotations = ArticleAnnotations {

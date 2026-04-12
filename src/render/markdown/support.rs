@@ -2,7 +2,7 @@
 
 use super::*;
 
-pub(crate) fn quote_arg(value: &str) -> String {
+pub(super) fn quote_arg(value: &str) -> String {
     let v = value.trim();
     if v.is_empty() {
         return String::new();
@@ -21,7 +21,7 @@ pub(super) fn force_quote_arg(value: &str) -> String {
     format!("\"{}\"", v.replace('\"', "\\\""))
 }
 
-pub(crate) fn alias_fallback_suggestion(
+pub(super) fn alias_fallback_suggestion(
     decision: &crate::entities::discover::AliasFallbackDecision,
 ) -> String {
     match decision {
@@ -68,7 +68,7 @@ pub(crate) fn alias_fallback_suggestion(
     }
 }
 
-pub(crate) fn variant_guidance_suggestion(
+pub(super) fn variant_guidance_suggestion(
     guidance: &crate::entities::variant::VariantGuidance,
 ) -> String {
     match &guidance.kind {

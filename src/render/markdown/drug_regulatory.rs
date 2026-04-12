@@ -1,3 +1,5 @@
+//! Drug regulatory, safety, and shortage block renderers.
+
 use super::*;
 
 pub(super) fn render_us_approvals_block(

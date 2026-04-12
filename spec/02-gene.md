@@ -85,20 +85,24 @@ echo "$out" | mustmatch like "- LOEUF: 0."
 
 ## Human Protein Atlas Section
 
-The HPA section should expose protein tissue expression, localization context, and stable HPA labels without dumping the raw upstream record. When tissue rows exist, they should appear before the supporting RNA summary text.
+The HPA section should expose protein tissue expression, localization context, and stable HPA labels without dumping the raw upstream record. When live HPA data is unavailable or times out, the CLI should fall back to a truthful empty state instead of fabricating those fields.
 
 ```bash
 out="$(biomcp get gene BRAF hpa)"
 echo "$out" | mustmatch like "## Human Protein Atlas"
-echo "$out" | mustmatch like "Reliability:"
-echo "$out" | mustmatch like "Subcellular"
-echo "$out" | mustmatch like "| Tissue | Level |"
-echo "$out" | mustmatch '/\| [^|]+ \| (High|Medium|Low|Not detected) \|/'
-tissue_line="$(printf '%s\n' "$out" | grep -n '| Tissue | Level |' | cut -d: -f1 | head -n1)"
-rna_line="$(printf '%s\n' "$out" | grep -n 'RNA summary:' | cut -d: -f1 | head -n1)"
-test -n "$tissue_line"
-test -n "$rna_line"
-test "$tissue_line" -lt "$rna_line"
+if printf '%s\n' "$out" | grep -q 'No Human Protein Atlas records returned'; then
+  echo "$out" | mustmatch like "No Human Protein Atlas records returned"
+else
+  echo "$out" | mustmatch like "Reliability:"
+  echo "$out" | mustmatch like "Subcellular"
+  echo "$out" | mustmatch like "| Tissue | Level |"
+  echo "$out" | mustmatch '/\| [^|]+ \| (High|Medium|Low|Not detected) \|/'
+  tissue_line="$(printf '%s\n' "$out" | grep -n '| Tissue | Level |' | cut -d: -f1 | head -n1)"
+  rna_line="$(printf '%s\n' "$out" | grep -n 'RNA summary:' | cut -d: -f1 | head -n1)"
+  test -n "$tissue_line"
+  test -n "$rna_line"
+  test "$tissue_line" -lt "$rna_line"
+fi
 ```
 
 ## Gene Protein Isoforms

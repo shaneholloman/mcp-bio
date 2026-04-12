@@ -1,3 +1,5 @@
+//! Search-all and discover markdown renderers.
+
 use super::*;
 
 #[cfg(test)]

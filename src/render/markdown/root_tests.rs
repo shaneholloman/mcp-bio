@@ -1,4 +1,4 @@
-//! Cross-cutting markdown tests pending full sidecar extraction.
+//! Cross-cutting markdown tests for the markdown module facade and shared outputs.
 
 use super::*;
 use crate::entities::adverse_event::DeviceEvent;

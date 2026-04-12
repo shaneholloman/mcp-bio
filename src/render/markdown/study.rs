@@ -1,3 +1,5 @@
+//! Study markdown renderers.
+
 use super::*;
 
 #[cfg(test)]

@@ -1,3 +1,5 @@
+//! Drug markdown renderers and drug-specific empty-state helpers.
+
 use super::drug_regulatory::{
     render_regulatory_block, render_safety_block, render_shortage_block, render_us_approvals_block,
 };

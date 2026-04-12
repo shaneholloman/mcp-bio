@@ -1,5 +1,7 @@
 //! Cross-entity follow-up command generation and related-command descriptions.
 
+mod article_support;
+
 use super::*;
 
 pub(super) fn format_related_block(commands: Vec<String>) -> String {
@@ -197,39 +199,7 @@ pub(super) fn variant_literature_follow_up(variant: &Variant) -> Option<String> 
     Some(format!("biomcp search article -k {keyword} --limit 5"))
 }
 
-pub(super) fn article_related_id(paper: &ArticleRelatedPaper) -> String {
-    paper
-        .pmid
-        .as_deref()
-        .or(paper.doi.as_deref())
-        .or(paper.arxiv_id.as_deref())
-        .or(paper.paper_id.as_deref())
-        .map(markdown_cell)
-        .unwrap_or_else(|| "-".to_string())
-}
-
-pub(super) fn article_related_label(paper: &ArticleRelatedPaper) -> String {
-    paper
-        .pmid
-        .as_deref()
-        .map(|pmid| format!("PMID {pmid}"))
-        .or_else(|| paper.doi.as_deref().map(|doi| format!("DOI {doi}")))
-        .or_else(|| {
-            paper
-                .arxiv_id
-                .as_deref()
-                .map(|arxiv| format!("arXiv {arxiv}"))
-        })
-        .or_else(|| {
-            paper
-                .paper_id
-                .as_deref()
-                .map(|paper_id| format!("paper {paper_id}"))
-        })
-        .unwrap_or_else(|| markdown_cell(&paper.title))
-}
-
-pub(crate) fn related_gene(gene: &Gene) -> Vec<String> {
+pub(super) fn related_gene(gene: &Gene) -> Vec<String> {
     let symbol = gene.symbol.trim();
     if symbol.is_empty() {
         return Vec::new();
@@ -261,7 +231,7 @@ pub(crate) fn related_gene(gene: &Gene) -> Vec<String> {
     dedupe_markdown_commands(out)
 }
 
-pub(crate) fn related_variant(variant: &Variant) -> Vec<String> {
+pub(super) fn related_variant(variant: &Variant) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     let gene = variant.gene.trim();
     let significance = variant
@@ -302,7 +272,7 @@ pub(crate) fn related_variant(variant: &Variant) -> Vec<String> {
     dedupe_markdown_commands(out)
 }
 
-pub(crate) fn related_variant_search_results(
+pub(super) fn related_variant_search_results(
     results: &[VariantSearchResult],
     gene_filter: Option<&str>,
     condition_filter: Option<&str>,
@@ -331,7 +301,7 @@ pub(crate) fn related_variant_search_results(
     dedupe_markdown_commands(out)
 }
 
-pub(crate) fn related_phenotype_search_results(results: &[PhenotypeSearchResult]) -> Vec<String> {
+pub(super) fn related_phenotype_search_results(results: &[PhenotypeSearchResult]) -> Vec<String> {
     let Some(label) = results.first().and_then(|row| {
         let name = row.disease_name.trim();
         if !name.is_empty() {
@@ -365,135 +335,26 @@ pub(super) fn article_annotation_command(
     bucket: ArticleAnnotationBucket,
     text: &str,
 ) -> Option<String> {
-    let text = text.trim();
-    let quoted = quote_arg(text);
-    if quoted.is_empty() {
-        return None;
-    }
-
-    Some(match bucket {
-        ArticleAnnotationBucket::Gene => format!("biomcp search gene -q {quoted}"),
-        ArticleAnnotationBucket::Disease => format!("biomcp search disease --query {quoted}"),
-        ArticleAnnotationBucket::Chemical => format!("biomcp get drug {quoted}"),
-        ArticleAnnotationBucket::Mutation => format!("biomcp get variant {quoted}"),
-    })
-}
-
-pub(super) fn ranked_article_annotation_commands(
-    title: &str,
-    rows: &[AnnotationCount],
-    bucket: ArticleAnnotationBucket,
-    limit: usize,
-) -> Vec<String> {
-    if limit == 0 {
-        return Vec::new();
-    }
-
-    let normalized_title = normalize_match_text(title);
-    let mut ranked = rows
-        .iter()
-        .enumerate()
-        .filter_map(|(index, row)| {
-            let command = article_annotation_command(bucket, &row.text)?;
-            let normalized_text = normalize_match_text(&row.text);
-            let title_hit =
-                !normalized_text.is_empty() && normalized_title.contains(normalized_text.as_str());
-            Some((title_hit, row.count, index, command))
-        })
-        .collect::<Vec<_>>();
-
-    ranked.sort_by(|a, b| {
-        b.0.cmp(&a.0)
-            .then_with(|| b.1.cmp(&a.1))
-            .then_with(|| a.2.cmp(&b.2))
-    });
-
-    ranked
-        .into_iter()
-        .take(limit)
-        .map(|(_, _, _, command)| command)
-        .collect()
+    article_support::article_annotation_command(bucket, text)
 }
 
 pub(super) fn trial_results_search_command(trial: &Trial) -> Option<String> {
-    let nct_id = trial.nct_id.trim();
-    if nct_id.is_empty() {
-        return None;
-    }
-
-    let title_seed = trial
-        .title
-        .split_whitespace()
-        .take(6)
-        .collect::<Vec<_>>()
-        .join(" ");
-    let seed = if title_seed.is_empty() {
-        nct_id.to_string()
-    } else {
-        format!("{nct_id} {title_seed}")
-    };
-    let seed_q = format!("\"{}\"", seed.replace('\"', "\\\""));
-    if seed_q.is_empty() {
-        return None;
-    }
-
-    if let Some(intervention) = trial.interventions.first().map(String::as_str) {
-        let intervention_q = quote_arg(intervention);
-        if !intervention_q.is_empty() {
-            return Some(format!(
-                "biomcp search article --drug {intervention_q} -q {seed_q} --limit 5"
-            ));
-        }
-    }
-
-    Some(format!("biomcp search article -q {seed_q} --limit 5"))
+    article_support::trial_results_search_command(trial)
 }
 
-pub(crate) fn related_article(article: &Article) -> Vec<String> {
-    let mut out: Vec<String> = Vec::new();
-    if let Some(pmid) = article
-        .pmid
-        .as_deref()
-        .map(str::trim)
-        .filter(|v| !v.is_empty())
-        && article.annotations.is_some()
-    {
-        out.push(format!("biomcp article entities {pmid}"));
-    }
-    if let Some(ann) = article.annotations.as_ref() {
-        out.extend(ranked_article_annotation_commands(
-            &article.title,
-            &ann.genes,
-            ArticleAnnotationBucket::Gene,
-            2,
-        ));
-        out.extend(ranked_article_annotation_commands(
-            &article.title,
-            &ann.diseases,
-            ArticleAnnotationBucket::Disease,
-            2,
-        ));
-        out.extend(ranked_article_annotation_commands(
-            &article.title,
-            &ann.chemicals,
-            ArticleAnnotationBucket::Chemical,
-            2,
-        ));
-    }
-    if let Some(pmid) = article
-        .pmid
-        .as_deref()
-        .map(str::trim)
-        .filter(|v| !v.is_empty())
-    {
-        out.push(format!("biomcp article references {pmid} --limit 3"));
-        out.push(format!("biomcp article citations {pmid} --limit 3"));
-        out.push(format!("biomcp article recommendations {pmid} --limit 3"));
-    }
-    dedupe_markdown_commands(out)
+pub(super) fn article_related_id(paper: &ArticleRelatedPaper) -> String {
+    article_support::article_related_id(paper)
 }
 
-pub(crate) fn related_trial(trial: &Trial) -> Vec<String> {
+pub(super) fn article_related_label(paper: &ArticleRelatedPaper) -> String {
+    article_support::article_related_label(paper)
+}
+
+pub(super) fn related_article(article: &Article) -> Vec<String> {
+    article_support::related_article(article)
+}
+
+pub(super) fn related_trial(trial: &Trial) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
 
     if is_completed_or_terminated_trial_status(&trial.status)
@@ -522,7 +383,7 @@ pub(crate) fn related_trial(trial: &Trial) -> Vec<String> {
     dedupe_markdown_commands(out)
 }
 
-pub(crate) fn related_disease(disease: &Disease) -> Vec<String> {
+pub(super) fn related_disease(disease: &Disease) -> Vec<String> {
     let name = force_quote_arg(&disease_literature_query(disease));
     let mut out = Vec::new();
     if let Some(symbol) = disease_top_gene_symbol(disease) {
@@ -661,7 +522,7 @@ pub(super) fn disease_literature_query(disease: &Disease) -> String {
         .to_string()
 }
 
-pub(crate) fn related_pgx(pgx: &Pgx) -> Vec<String> {
+pub(super) fn related_pgx(pgx: &Pgx) -> Vec<String> {
     let mut out = Vec::new();
     if let Some(gene) = pgx.gene.as_deref().map(str::trim).filter(|v| !v.is_empty()) {
         out.push(format!("biomcp search pgx -g {gene}"));
@@ -672,7 +533,7 @@ pub(crate) fn related_pgx(pgx: &Pgx) -> Vec<String> {
     out
 }
 
-pub(crate) fn related_pathway(pathway: &Pathway) -> Vec<String> {
+pub(super) fn related_pathway(pathway: &Pathway) -> Vec<String> {
     let id = quote_arg(&pathway.id);
     if id.is_empty() {
         return Vec::new();
@@ -681,7 +542,7 @@ pub(crate) fn related_pathway(pathway: &Pathway) -> Vec<String> {
     vec![format!("biomcp pathway drugs {id}")]
 }
 
-pub(crate) fn related_protein(protein: &Protein, requested_sections: &[String]) -> Vec<String> {
+pub(super) fn related_protein(protein: &Protein, requested_sections: &[String]) -> Vec<String> {
     let accession = quote_arg(&protein.accession);
     let requested = requested_section_names(requested_sections);
     let requested_section = |name: &str| requested.iter().any(|value| value == name);
@@ -705,7 +566,7 @@ pub(crate) fn related_protein(protein: &Protein, requested_sections: &[String]) 
     out
 }
 
-pub(crate) fn related_drug(drug: &Drug) -> Vec<String> {
+pub(super) fn related_drug(drug: &Drug) -> Vec<String> {
     let name = quote_arg(&drug.name);
     if name.is_empty() {
         return Vec::new();
@@ -742,7 +603,7 @@ pub(crate) fn related_drug(drug: &Drug) -> Vec<String> {
     dedupe_markdown_commands(out)
 }
 
-pub(crate) fn related_adverse_event(event: &AdverseEvent) -> Vec<String> {
+pub(super) fn related_adverse_event(event: &AdverseEvent) -> Vec<String> {
     let drug = quote_arg(&event.drug);
     if drug.is_empty() {
         return Vec::new();
@@ -754,7 +615,7 @@ pub(crate) fn related_adverse_event(event: &AdverseEvent) -> Vec<String> {
     ]
 }
 
-pub(crate) fn related_device_event(event: &DeviceEvent) -> Vec<String> {
+pub(super) fn related_device_event(event: &DeviceEvent) -> Vec<String> {
     let device = quote_arg(&event.device);
     if device.is_empty() {
         return Vec::new();

@@ -1,3 +1,5 @@
+//! Trial markdown renderers.
+
 use super::*;
 
 #[cfg(test)]

@@ -51,12 +51,6 @@ pub use self::drug::{
     drug_markdown, drug_markdown_with_region, drug_search_markdown,
     drug_search_markdown_with_footer, drug_search_markdown_with_region,
 };
-pub(crate) use self::evidence::{
-    adverse_event_evidence_urls, article_evidence_urls, device_event_evidence_urls,
-    discover_evidence_urls, disease_evidence_urls, drug_evidence_urls, gene_evidence_urls,
-    pathway_evidence_urls, pgx_evidence_urls, protein_evidence_urls, trial_evidence_urls,
-    variant_evidence_urls,
-};
 #[allow(unused_imports)]
 pub use self::gene::{gene_markdown, gene_search_markdown, gene_search_markdown_with_footer};
 #[allow(unused_imports)]
@@ -69,11 +63,6 @@ pub use self::pgx::{pgx_markdown, pgx_search_markdown, pgx_search_markdown_with_
 pub use self::protein::{
     protein_markdown, protein_search_markdown, protein_search_markdown_with_footer,
 };
-pub(crate) use self::related::{
-    related_adverse_event, related_article, related_device_event, related_disease, related_drug,
-    related_gene, related_pathway, related_pgx, related_phenotype_search_results, related_protein,
-    related_trial, related_variant, related_variant_search_results,
-};
 #[allow(unused_imports)]
 pub use self::study::{
     study_co_occurrence_markdown, study_cohort_markdown, study_compare_expression_markdown,
@@ -81,7 +70,6 @@ pub use self::study::{
     study_filter_markdown, study_list_markdown, study_query_markdown, study_survival_markdown,
     study_top_mutated_markdown,
 };
-pub(crate) use self::support::{alias_fallback_suggestion, quote_arg, variant_guidance_suggestion};
 #[allow(unused_imports)]
 pub use self::trial::{trial_markdown, trial_search_markdown, trial_search_markdown_with_footer};
 #[allow(unused_imports)]
@@ -137,6 +125,126 @@ use crate::entities::variant::{
 };
 use crate::error::BioMcpError;
 use crate::sources::nih_reporter::{NihReporterFundingSection, NihReporterGrant};
+
+pub(crate) fn adverse_event_evidence_urls(event: &AdverseEvent) -> Vec<(&'static str, String)> {
+    evidence::adverse_event_evidence_urls(event)
+}
+
+pub(crate) fn alias_fallback_suggestion(
+    decision: &crate::entities::discover::AliasFallbackDecision,
+) -> String {
+    support::alias_fallback_suggestion(decision)
+}
+
+pub(crate) fn article_evidence_urls(article: &Article) -> Vec<(&'static str, String)> {
+    evidence::article_evidence_urls(article)
+}
+
+pub(crate) fn device_event_evidence_urls(event: &DeviceEvent) -> Vec<(&'static str, String)> {
+    evidence::device_event_evidence_urls(event)
+}
+
+pub(crate) fn discover_evidence_urls(result: &DiscoverResult) -> Vec<(&'static str, String)> {
+    evidence::discover_evidence_urls(result)
+}
+
+pub(crate) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, String)> {
+    evidence::disease_evidence_urls(disease)
+}
+
+pub(crate) fn drug_evidence_urls(drug: &Drug) -> Vec<(&'static str, String)> {
+    evidence::drug_evidence_urls(drug)
+}
+
+pub(crate) fn gene_evidence_urls(gene: &Gene) -> Vec<(&'static str, String)> {
+    evidence::gene_evidence_urls(gene)
+}
+
+pub(crate) fn pathway_evidence_urls(pathway: &Pathway) -> Vec<(&'static str, String)> {
+    evidence::pathway_evidence_urls(pathway)
+}
+
+pub(crate) fn pgx_evidence_urls(pgx: &Pgx) -> Vec<(&'static str, String)> {
+    evidence::pgx_evidence_urls(pgx)
+}
+
+pub(crate) fn protein_evidence_urls(protein: &Protein) -> Vec<(&'static str, String)> {
+    evidence::protein_evidence_urls(protein)
+}
+
+pub(crate) fn quote_arg(value: &str) -> String {
+    support::quote_arg(value)
+}
+
+pub(crate) fn related_adverse_event(event: &AdverseEvent) -> Vec<String> {
+    related::related_adverse_event(event)
+}
+
+pub(crate) fn related_article(article: &Article) -> Vec<String> {
+    related::related_article(article)
+}
+
+pub(crate) fn related_device_event(event: &DeviceEvent) -> Vec<String> {
+    related::related_device_event(event)
+}
+
+pub(crate) fn related_disease(disease: &Disease) -> Vec<String> {
+    related::related_disease(disease)
+}
+
+pub(crate) fn related_drug(drug: &Drug) -> Vec<String> {
+    related::related_drug(drug)
+}
+
+pub(crate) fn related_gene(gene: &Gene) -> Vec<String> {
+    related::related_gene(gene)
+}
+
+pub(crate) fn related_pathway(pathway: &Pathway) -> Vec<String> {
+    related::related_pathway(pathway)
+}
+
+pub(crate) fn related_pgx(pgx: &Pgx) -> Vec<String> {
+    related::related_pgx(pgx)
+}
+
+pub(crate) fn related_phenotype_search_results(results: &[PhenotypeSearchResult]) -> Vec<String> {
+    related::related_phenotype_search_results(results)
+}
+
+pub(crate) fn related_protein(protein: &Protein, requested_sections: &[String]) -> Vec<String> {
+    related::related_protein(protein, requested_sections)
+}
+
+pub(crate) fn related_trial(trial: &Trial) -> Vec<String> {
+    related::related_trial(trial)
+}
+
+pub(crate) fn related_variant(variant: &Variant) -> Vec<String> {
+    related::related_variant(variant)
+}
+
+pub(crate) fn related_variant_search_results(
+    results: &[VariantSearchResult],
+    gene_filter: Option<&str>,
+    condition_filter: Option<&str>,
+) -> Vec<String> {
+    related::related_variant_search_results(results, gene_filter, condition_filter)
+}
+
+pub(crate) fn trial_evidence_urls(trial: &Trial) -> Vec<(&'static str, String)> {
+    evidence::trial_evidence_urls(trial)
+}
+
+pub(crate) fn variant_evidence_urls(variant: &Variant) -> Vec<(&'static str, String)> {
+    evidence::variant_evidence_urls(variant)
+}
+
+pub(crate) fn variant_guidance_suggestion(
+    guidance: &crate::entities::variant::VariantGuidance,
+) -> String {
+    support::variant_guidance_suggestion(guidance)
+}
 
 static ENV: OnceLock<Environment<'static>> = OnceLock::new();
 

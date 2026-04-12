@@ -112,7 +112,7 @@ pub(super) fn append_evidence_urls(mut body: String, urls: Vec<(&str, String)>) 
     body
 }
 
-pub(crate) fn gene_evidence_urls(gene: &Gene) -> Vec<(&'static str, String)> {
+pub(super) fn gene_evidence_urls(gene: &Gene) -> Vec<(&'static str, String)> {
     let mut urls = Vec::new();
     if !gene.entrez_id.trim().is_empty() {
         urls.push((
@@ -156,7 +156,7 @@ pub(crate) fn gene_evidence_urls(gene: &Gene) -> Vec<(&'static str, String)> {
     urls
 }
 
-pub(crate) fn variant_evidence_urls(variant: &Variant) -> Vec<(&'static str, String)> {
+pub(super) fn variant_evidence_urls(variant: &Variant) -> Vec<(&'static str, String)> {
     let mut urls = Vec::new();
     if let Some(clinvar_id) = variant
         .clinvar_id
@@ -205,7 +205,7 @@ pub(crate) fn variant_evidence_urls(variant: &Variant) -> Vec<(&'static str, Str
     urls
 }
 
-pub(crate) fn discover_evidence_urls(result: &DiscoverResult) -> Vec<(&'static str, String)> {
+pub(super) fn discover_evidence_urls(result: &DiscoverResult) -> Vec<(&'static str, String)> {
     let mut urls = Vec::new();
     if let Ok(mut url) = reqwest::Url::parse("https://www.ebi.ac.uk/ols4/api/search") {
         url.query_pairs_mut()
@@ -220,7 +220,7 @@ pub(crate) fn discover_evidence_urls(result: &DiscoverResult) -> Vec<(&'static s
     urls
 }
 
-pub(crate) fn article_evidence_urls(article: &Article) -> Vec<(&'static str, String)> {
+pub(super) fn article_evidence_urls(article: &Article) -> Vec<(&'static str, String)> {
     let mut urls = Vec::new();
     if let Some(pmid) = article
         .pmid
@@ -244,7 +244,7 @@ pub(crate) fn article_evidence_urls(article: &Article) -> Vec<(&'static str, Str
     urls
 }
 
-pub(crate) fn trial_evidence_urls(trial: &Trial) -> Vec<(&'static str, String)> {
+pub(super) fn trial_evidence_urls(trial: &Trial) -> Vec<(&'static str, String)> {
     if trial.nct_id.trim().is_empty() {
         return Vec::new();
     }
@@ -254,7 +254,7 @@ pub(crate) fn trial_evidence_urls(trial: &Trial) -> Vec<(&'static str, String)> 
     )]
 }
 
-pub(crate) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, String)> {
+pub(super) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, String)> {
     let mut urls = Vec::new();
     if !disease.id.trim().is_empty() {
         urls.push((
@@ -294,7 +294,7 @@ pub(crate) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, Str
     urls
 }
 
-pub(crate) fn drug_evidence_urls(drug: &Drug) -> Vec<(&'static str, String)> {
+pub(super) fn drug_evidence_urls(drug: &Drug) -> Vec<(&'static str, String)> {
     let mut urls = Vec::new();
     if let Some(drugbank_id) = drug
         .drugbank_id
@@ -341,7 +341,7 @@ pub(crate) fn drug_evidence_urls(drug: &Drug) -> Vec<(&'static str, String)> {
     urls
 }
 
-pub(crate) fn pathway_evidence_urls(pathway: &Pathway) -> Vec<(&'static str, String)> {
+pub(super) fn pathway_evidence_urls(pathway: &Pathway) -> Vec<(&'static str, String)> {
     let id = pathway.id.trim();
     if id.is_empty() {
         return Vec::new();
@@ -361,7 +361,7 @@ pub(crate) fn pathway_evidence_urls(pathway: &Pathway) -> Vec<(&'static str, Str
     )]
 }
 
-pub(crate) fn protein_evidence_urls(protein: &Protein) -> Vec<(&'static str, String)> {
+pub(super) fn protein_evidence_urls(protein: &Protein) -> Vec<(&'static str, String)> {
     if protein.accession.trim().is_empty() {
         return Vec::new();
     }
@@ -374,7 +374,7 @@ pub(crate) fn protein_evidence_urls(protein: &Protein) -> Vec<(&'static str, Str
     )]
 }
 
-pub(crate) fn adverse_event_evidence_urls(event: &AdverseEvent) -> Vec<(&'static str, String)> {
+pub(super) fn adverse_event_evidence_urls(event: &AdverseEvent) -> Vec<(&'static str, String)> {
     if event.report_id.trim().is_empty() {
         return Vec::new();
     }
@@ -387,7 +387,7 @@ pub(crate) fn adverse_event_evidence_urls(event: &AdverseEvent) -> Vec<(&'static
     )]
 }
 
-pub(crate) fn device_event_evidence_urls(event: &DeviceEvent) -> Vec<(&'static str, String)> {
+pub(super) fn device_event_evidence_urls(event: &DeviceEvent) -> Vec<(&'static str, String)> {
     if event.report_id.trim().is_empty() {
         return Vec::new();
     }
@@ -400,7 +400,7 @@ pub(crate) fn device_event_evidence_urls(event: &DeviceEvent) -> Vec<(&'static s
     )]
 }
 
-pub(crate) fn pgx_evidence_urls(pgx: &Pgx) -> Vec<(&'static str, String)> {
+pub(super) fn pgx_evidence_urls(pgx: &Pgx) -> Vec<(&'static str, String)> {
     let mut urls = Vec::new();
     if let Some(gene) = pgx.gene.as_deref().map(str::trim).filter(|v| !v.is_empty()) {
         urls.push((

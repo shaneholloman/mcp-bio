@@ -1,3 +1,5 @@
+//! Adverse-event, device-event, and recall markdown renderers.
+
 use super::*;
 
 #[cfg(test)]

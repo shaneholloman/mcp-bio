@@ -1,3 +1,5 @@
+//! Protein markdown renderers and protein-specific view helpers.
+
 use super::*;
 
 #[cfg(test)]

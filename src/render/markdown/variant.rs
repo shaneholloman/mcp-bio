@@ -1,3 +1,5 @@
+//! Variant, phenotype, and GWAS markdown renderers.
+
 use super::*;
 
 #[cfg(test)]

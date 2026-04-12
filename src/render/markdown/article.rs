@@ -1,3 +1,5 @@
+//! Article markdown renderers and article-specific view helpers.
+
 use super::*;
 
 #[cfg(test)]

@@ -1,3 +1,5 @@
+//! Disease markdown renderers and disease-specific view helpers.
+
 use super::*;
 
 #[cfg(test)]
