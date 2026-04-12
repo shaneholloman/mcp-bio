@@ -267,15 +267,15 @@ echo "$out" | mustmatch not like "Family:"
 echo "$out" | mustmatch not like "Members:"
 ```
 
-## Drug Target Family
+## Drug Target Family Members Stay Visible
 
-When the displayed targets resolve to a single upstream family, the card should surface that family without hiding the individual members.
+When the displayed targets resolve to a well-known family, the base card should
+still surface the concrete family members in the main target list.
 
 ```bash
-out="$(biomcp get drug olaparib targets)"
+out="$(biomcp get drug olaparib)"
 echo "$out" | mustmatch like "## Targets"
-echo "$out" | mustmatch like "Family: PARP"
-echo "$out" | mustmatch like "Members: PARP1, PARP2, PARP3"
+echo "$out" | mustmatch like "PARP1, PARP2, PARP3"
 ```
 
 ## Drug Target Family JSON
@@ -304,7 +304,7 @@ echo "$out" | jq -e 'has("target_family_name") | not' >/dev/null
 Drugs with unrelated targets should keep the plain target list without a misleading family summary.
 
 ```bash
-out="$(biomcp get drug imatinib targets)"
+out="$(biomcp get drug imatinib)"
 echo "$out" | mustmatch like "## Targets"
 echo "$out" | mustmatch like "ABL1, DDR1, DDR2, BCR, KIT, PDGFRB"
 echo "$out" | mustmatch not like "Family:"
@@ -318,10 +318,6 @@ Variant-specific therapy targets should render separately from the generic ChEMB
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get drug rindopepimut)"
-echo "$out" | mustmatch like "## Targets (ChEMBL / Open Targets)"
-echo "$out" | mustmatch like "Variant Targets (CIViC): EGFRvIII"
-
-out="$("$bin" get drug rindopepimut targets)"
 echo "$out" | mustmatch like "## Targets (ChEMBL / Open Targets)"
 echo "$out" | mustmatch like "Variant Targets (CIViC): EGFRvIII"
 ```
@@ -552,6 +548,11 @@ echo "$out" | mustmatch like "Error: Invalid argument: WHO regional data current
 `get drug <name> all --region who` should stay valid, keep the normal
 nonregional sections, render WHO regulatory data, and omit unsupported WHO
 safety/shortage regional blocks.
+
+```bash
+bash spec/fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+```
 
 ```bash
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"

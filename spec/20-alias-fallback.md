@@ -55,12 +55,17 @@ echo "$out" | mustmatch like "biomcp discover V600E"
 echo "$out" | mustmatch like "biomcp search gene -q V600E"
 ```
 
-## Canonical Passthrough
+## Canonical Gene Passthrough
 
 ```bash
 out="$(biomcp get gene TP53)"
 echo "$out" | mustmatch like "# TP53 (tumor protein p53)"
 echo "$out" | mustmatch not like "Did you mean:"
+```
+
+## Canonical Drug Passthrough
+
+```bash
 
 out="$(biomcp get drug imatinib)"
 echo "$out" | mustmatch like "# imatinib"

@@ -78,10 +78,24 @@ def extract_braced_block(text: str, marker: str) -> str:
 
 def parse_cli_families(cli_text: str) -> list[str]:
     enum_body = extract_braced_block(cli_text, "pub enum Commands")
-    variants = re.findall(r"^\s*([A-Z][A-Za-z0-9]*)\s*(?:\{|,)", enum_body, flags=re.MULTILINE)
+    variants = re.findall(r"^\s*([A-Z][A-Za-z0-9]*)\s*(?:\{|,|\()", enum_body, flags=re.MULTILINE)
     if not variants:
         raise ValueError("failed to parse CLI command families from Commands enum")
     return sorted(camel_to_kebab(variant) for variant in variants)
+
+
+def parse_cli_families_with_fallback(cli_file: Path) -> list[str]:
+    cli_text = cli_file.read_text(encoding="utf-8")
+    try:
+        return parse_cli_families(cli_text)
+    except ValueError as exc:
+        sibling_commands = cli_file.with_name("commands.rs")
+        if cli_file.name != "mod.rs" or not sibling_commands.exists():
+            raise
+        try:
+            return parse_cli_families(sibling_commands.read_text(encoding="utf-8"))
+        except ValueError:
+            raise exc
 
 
 def parse_allowed_families(shell_text: str) -> list[str]:
@@ -131,11 +145,10 @@ def check_description_policy(build_text: str) -> bool:
 def make_payload(cli_file: Path, shell_file: Path, build_file: Path) -> dict[str, object]:
     errors: list[str] = []
     try:
-        cli_text = cli_file.read_text(encoding="utf-8")
         shell_text = shell_file.read_text(encoding="utf-8")
         build_text = build_file.read_text(encoding="utf-8")
 
-        cli_families = parse_cli_families(cli_text)
+        cli_families = parse_cli_families_with_fallback(cli_file)
         allowed_families = parse_allowed_families(shell_text)
         study_allowed, study_download_ok = parse_study_policy(shell_text)
         skill_blocked = parse_skill_policy(shell_text)
