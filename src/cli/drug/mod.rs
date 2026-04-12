@@ -1,0 +1,110 @@
+//! Drug CLI payloads and subcommands.
+
+use clap::{Args, Subcommand};
+
+use crate::cli::DrugRegionArg;
+
+#[derive(Args, Debug)]
+pub struct DrugSearchArgs {
+    /// Free text query (drug name, class, etc.)
+    #[arg(short, long)]
+    pub query: Option<String>,
+    /// Optional positional query alias for -q/--query
+    #[arg(value_name = "QUERY")]
+    pub positional_query: Option<String>,
+    /// Filter by target gene symbol
+    #[arg(long)]
+    pub target: Option<String>,
+    /// Filter by indication/disease name
+    #[arg(long)]
+    pub indication: Option<String>,
+    /// Filter by mechanism text
+    #[arg(long)]
+    pub mechanism: Option<String>,
+    /// Filter by drug type (e.g., biologic, small-molecule)
+    #[arg(long = "type")]
+    pub drug_type: Option<String>,
+    /// Filter by ATC code
+    #[arg(long)]
+    pub atc: Option<String>,
+    /// Filter by pharmacologic class
+    #[arg(long = "pharm-class")]
+    pub pharm_class: Option<String>,
+    /// Filter by interaction partner drug name (currently unavailable from public data sources)
+    #[arg(long)]
+    pub interactions: Option<String>,
+    /// Maximum results (default: 10)
+    #[arg(short, long, default_value = "10")]
+    pub limit: usize,
+    /// Skip the first N results
+    #[arg(long, default_value = "0")]
+    pub offset: usize,
+    /// Data region for drug regulatory context [default: all]
+    #[arg(long, value_enum)]
+    pub region: Option<DrugRegionArg>,
+}
+
+#[derive(Args, Debug)]
+pub struct DrugGetArgs {
+    /// Drug name (e.g., pembrolizumab, carboplatin)
+    pub name: String,
+    /// Sections to include (label, regulatory, safety, shortage, targets, indications, interactions, civic, approvals, all)
+    pub sections: Vec<String>,
+    /// Data region for regional sections (regulatory, safety, shortage, or all)
+    #[arg(long, value_enum)]
+    pub region: Option<DrugRegionArg>,
+    /// Preserve raw FDA label subsections when used with `label` or `all`
+    #[arg(long)]
+    pub raw: bool,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum DrugCommand {
+    /// Search trials using this drug (best-effort)
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp drug trials pembrolizumab --limit 5
+  biomcp drug trials osimertinib --source nci --limit 5
+
+Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
+See also: biomcp list drug")]
+    Trials {
+        /// Drug name (e.g., pembrolizumab)
+        name: String,
+        /// Maximum results (default: 10)
+        #[arg(short, long, default_value = "10")]
+        limit: usize,
+        /// Skip the first N results
+        #[arg(long, default_value = "0")]
+        offset: usize,
+        /// Trial data source (ctgov or nci)
+        #[arg(long, default_value = "ctgov")]
+        source: String,
+    },
+    /// Search FAERS adverse events for this drug (best-effort)
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp drug adverse-events pembrolizumab --limit 5
+  biomcp drug adverse-events carboplatin --serious --limit 5
+
+Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
+See also: biomcp list drug")]
+    AdverseEvents {
+        /// Drug name (e.g., pembrolizumab)
+        name: String,
+        /// Maximum results (default: 10)
+        #[arg(short, long, default_value = "10")]
+        limit: usize,
+        /// Skip the first N results
+        #[arg(long, default_value = "0")]
+        offset: usize,
+        /// Serious reports only
+        #[arg(long)]
+        serious: bool,
+    },
+    #[command(external_subcommand)]
+    External(Vec<String>),
+}
+
+#[cfg(test)]
+mod tests;
