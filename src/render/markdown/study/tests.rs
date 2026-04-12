@@ -1,4 +1,37 @@
 use super::*;
+use crate::entities::study::TopMutatedGeneRow as StudyTopMutatedGeneRow;
+
+#[test]
+fn study_top_mutated_markdown_renders_ranked_table() {
+    let markdown = study_top_mutated_markdown(&StudyTopMutatedGenesResult {
+        study_id: "msk_impact_2017".to_string(),
+        total_samples: 3,
+        rows: vec![
+            StudyTopMutatedGeneRow {
+                gene: "TP53".to_string(),
+                mutated_samples: 2,
+                mutation_events: 2,
+                mutation_rate: 2.0 / 3.0,
+            },
+            StudyTopMutatedGeneRow {
+                gene: "KRAS".to_string(),
+                mutated_samples: 2,
+                mutation_events: 2,
+                mutation_rate: 2.0 / 3.0,
+            },
+        ],
+    });
+
+    assert!(markdown.contains("# Study Top Mutated Genes: msk_impact_2017"));
+    assert!(
+        markdown.contains(
+            "| Gene | Mutated Samples | Mutation Events | Total Samples | Mutation Rate |"
+        )
+    );
+    assert!(markdown.contains("| TP53 | 2 | 2 | 3 |"));
+    assert!(markdown.contains("| KRAS | 2 | 2 | 3 |"));
+}
+
 use crate::entities::study::{
     CnaDistributionResult as StudyCnaDistributionResult, CoOccurrencePair as StudyCoOccurrencePair,
     CoOccurrenceResult as StudyCoOccurrenceResult, CohortResult as StudyCohortResult,
