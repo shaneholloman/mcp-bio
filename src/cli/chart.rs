@@ -71,7 +71,118 @@ pub fn show(command: Option<&ChartCommand>) -> Result<String, BioMcpError> {
 
 #[cfg(test)]
 mod tests {
+    use clap::{CommandFactory, Parser};
+
     use super::{ChartCommand, show};
+    use crate::cli::{Cli, Commands};
+
+    fn render_chart_long_help() -> String {
+        let mut command = Cli::command();
+        let chart = command
+            .find_subcommand_mut("chart")
+            .expect("chart subcommand should exist");
+        let mut help = Vec::new();
+        chart
+            .write_long_help(&mut help)
+            .expect("chart help should render");
+        String::from_utf8(help).expect("help should be utf-8")
+    }
+
+    #[test]
+    fn chart_help_lists_descriptions_for_all_chart_topics() {
+        let help = render_chart_long_help();
+
+        assert!(help.contains("bar          Categorical counts as vertical bars"));
+        assert!(help.contains("stacked-bar  Mutation-grouped sample counts split by outcome"));
+        assert!(help.contains("pie          Proportional distribution of categories"));
+        assert!(help.contains("waterfall    Ranked per-sample mutation burden"));
+        assert!(help.contains("heatmap      Pairwise co-occurrence matrix"));
+        assert!(help.contains("histogram    Binned distribution of a continuous value"));
+        assert!(help.contains("density      Smoothed distribution estimate"));
+        assert!(help.contains("box          Median, IQR, and whiskers for group comparison"));
+        assert!(help.contains("violin       Full distribution shape for group comparison"));
+        assert!(help.contains("ridgeline    Stacked density comparison across groups"));
+        assert!(help.contains("scatter      Paired expression values for two genes"));
+        assert!(help.contains("survival     Kaplan-Meier survival curves"));
+    }
+
+    #[test]
+    fn chart_subcommand_parses_violin_topic() {
+        let cli =
+            Cli::try_parse_from(["biomcp", "chart", "violin"]).expect("chart docs should parse");
+
+        assert!(matches!(
+            cli.command,
+            Commands::Chart {
+                command: Some(ChartCommand::Violin),
+            }
+        ));
+    }
+
+    #[test]
+    fn chart_subcommand_parses_heatmap_topic() {
+        let cli = Cli::try_parse_from(["biomcp", "chart", "heatmap"])
+            .expect("heatmap chart docs should parse");
+
+        assert!(matches!(
+            cli.command,
+            Commands::Chart {
+                command: Some(ChartCommand::Heatmap),
+            }
+        ));
+    }
+
+    #[test]
+    fn chart_subcommand_parses_waterfall_topic() {
+        let cli = Cli::try_parse_from(["biomcp", "chart", "waterfall"])
+            .expect("waterfall chart docs should parse");
+
+        assert!(matches!(
+            cli.command,
+            Commands::Chart {
+                command: Some(ChartCommand::Waterfall),
+            }
+        ));
+    }
+
+    #[test]
+    fn chart_subcommand_parses_scatter_topic() {
+        let cli = Cli::try_parse_from(["biomcp", "chart", "scatter"])
+            .expect("scatter chart docs should parse");
+
+        assert!(matches!(
+            cli.command,
+            Commands::Chart {
+                command: Some(ChartCommand::Scatter),
+            }
+        ));
+    }
+
+    #[test]
+    fn chart_subcommand_parses_stacked_bar_topic() {
+        let cli = Cli::try_parse_from(["biomcp", "chart", "stacked-bar"])
+            .expect("stacked-bar chart docs should parse");
+
+        assert!(matches!(
+            cli.command,
+            Commands::Chart {
+                command: Some(ChartCommand::StackedBar),
+            }
+        ));
+    }
+
+    #[test]
+    fn chart_subcommand_parses_survival_topic() {
+        let cli = Cli::try_parse_from(["biomcp", "chart", "survival"])
+            .expect("survival chart docs should parse");
+
+        assert!(matches!(
+            cli.command,
+            Commands::Chart {
+                command: Some(ChartCommand::Survival),
+            }
+        ));
+    }
 
     #[test]
     fn show_returns_heatmap_doc() {

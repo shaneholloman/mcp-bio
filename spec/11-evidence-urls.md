@@ -165,9 +165,9 @@ echo "$disease_models_json" | mustmatch like 'informatics.jax.org/accession/MGI:
 
 ```bash
 
-drug_all_json="$(biomcp get drug ivacaftor all --json)"
-echo "$drug_all_json" | mustmatch like '"label": "OpenFDA FAERS"'
-echo "$drug_all_json" | mustmatch like 'count=patient.reaction.reactionmeddrapt.exact'
+drug_safety_json="$(biomcp get drug ivacaftor safety --json)"
+echo "$drug_safety_json" | mustmatch like '"label": "OpenFDA FAERS"'
+echo "$drug_safety_json" | mustmatch like 'count=patient.reaction.reactionmeddrapt.exact'
 
 drug_label_json="$(biomcp get drug ivacaftor label --json)"
 echo "$drug_label_json" | mustmatch like '"label": "DailyMed"'

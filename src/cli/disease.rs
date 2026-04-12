@@ -102,3 +102,62 @@ See also: biomcp list disease")]
         offset: usize,
     },
 }
+
+#[cfg(test)]
+mod tests {
+    use clap::{CommandFactory, Parser};
+
+    use super::DiseaseCommand;
+    use crate::cli::{Cli, Commands};
+
+    fn render_disease_get_long_help() -> String {
+        let mut command = Cli::command();
+        let get = command
+            .find_subcommand_mut("get")
+            .expect("get subcommand should exist");
+        let disease = get
+            .find_subcommand_mut("disease")
+            .expect("disease get subcommand should exist");
+        let mut help = Vec::new();
+        disease
+            .write_long_help(&mut help)
+            .expect("disease help should render");
+        String::from_utf8(help).expect("help should be utf-8")
+    }
+
+    #[test]
+    fn get_disease_help_includes_when_to_use_guidance() {
+        let help = render_disease_get_long_help();
+
+        assert!(help.contains("When to use:"));
+        assert!(help.contains("normalized disease card"));
+        assert!(help.contains("funding or survival"));
+        assert!(help.contains("search article -d"));
+    }
+
+    #[test]
+    fn disease_trials_parses_source_and_limit() {
+        let cli = Cli::try_parse_from([
+            "biomcp", "disease", "trials", "melanoma", "--source", "nci", "--limit", "2",
+        ])
+        .expect("disease trials should parse");
+
+        match cli.command {
+            Commands::Disease {
+                cmd:
+                    DiseaseCommand::Trials {
+                        name,
+                        limit,
+                        offset,
+                        source,
+                    },
+            } => {
+                assert_eq!(name, "melanoma");
+                assert_eq!(limit, 2);
+                assert_eq!(offset, 0);
+                assert_eq!(source, "nci");
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+}

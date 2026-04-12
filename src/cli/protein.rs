@@ -62,3 +62,42 @@ See also: biomcp list protein")]
         offset: usize,
     },
 }
+
+#[cfg(test)]
+mod tests {
+    use clap::Parser;
+
+    use super::ProteinCommand;
+    use crate::cli::{Cli, Commands};
+
+    #[test]
+    fn protein_structures_parses_offset_flag() {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "protein",
+            "structures",
+            "P15056",
+            "--limit",
+            "5",
+            "--offset",
+            "5",
+        ])
+        .expect("protein structures pagination flags should parse");
+
+        match cli.command {
+            Commands::Protein {
+                cmd:
+                    ProteinCommand::Structures {
+                        accession,
+                        limit,
+                        offset,
+                    },
+            } => {
+                assert_eq!(accession, "P15056");
+                assert_eq!(limit, 5);
+                assert_eq!(offset, 5);
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+}

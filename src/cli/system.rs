@@ -182,6 +182,94 @@ mod tests {
     }
 
     #[test]
+    fn health_command_parses_apis_only() {
+        let cli =
+            Cli::try_parse_from(["biomcp", "health", "--apis-only"]).expect("health should parse");
+
+        assert!(matches!(
+            cli.command,
+            Commands::Health(crate::cli::system::HealthArgs { apis_only: true })
+        ));
+    }
+
+    #[test]
+    fn list_command_parses_entity_name() {
+        let cli = Cli::try_parse_from(["biomcp", "list", "drug"]).expect("list should parse");
+
+        let Cli {
+            command: Commands::List(crate::cli::system::ListArgs { entity }),
+            ..
+        } = cli
+        else {
+            panic!("expected list command");
+        };
+
+        assert_eq!(entity.as_deref(), Some("drug"));
+    }
+
+    #[test]
+    fn batch_command_parses_sections_and_source() {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "batch",
+            "trial",
+            "NCT02576665,NCT02693535",
+            "--sections",
+            "eligibility,locations",
+            "--source",
+            "nci",
+        ])
+        .expect("batch should parse");
+
+        let Cli {
+            command:
+                Commands::Batch(crate::cli::system::BatchArgs {
+                    entity,
+                    ids,
+                    sections,
+                    source,
+                }),
+            ..
+        } = cli
+        else {
+            panic!("expected batch command");
+        };
+
+        assert_eq!(entity, "trial");
+        assert_eq!(ids, "NCT02576665,NCT02693535");
+        assert_eq!(sections.as_deref(), Some("eligibility,locations"));
+        assert_eq!(source, "nci");
+    }
+
+    #[test]
+    fn enrich_command_parses_limit() {
+        let cli = Cli::try_parse_from(["biomcp", "enrich", "BRAF,KRAS", "--limit", "5"])
+            .expect("enrich should parse");
+
+        let Cli {
+            command: Commands::Enrich(crate::cli::system::EnrichArgs { genes, limit }),
+            ..
+        } = cli
+        else {
+            panic!("expected enrich command");
+        };
+
+        assert_eq!(genes, "BRAF,KRAS");
+        assert_eq!(limit, 5);
+    }
+
+    #[test]
+    fn version_command_parses_verbose_flag() {
+        let cli =
+            Cli::try_parse_from(["biomcp", "version", "--verbose"]).expect("version should parse");
+
+        assert!(matches!(
+            cli.command,
+            Commands::Version(crate::cli::system::VersionArgs { verbose: true })
+        ));
+    }
+
+    #[test]
     fn serve_http_help_describes_streamable_http() {
         let mut command = crate::cli::build_cli();
         let serve_http = command

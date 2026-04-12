@@ -22,12 +22,18 @@ echo "$gene_out" | mustmatch like "## Summary (NCBI Gene)"
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-drug_out="$("$bin" get drug ivacaftor targets)"
+drug_out="$("$bin" get drug tamoxifen targets)"
 echo "$drug_out" | mustmatch like "## Targets (ChEMBL / Open Targets)"
+```
 
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
 variant_drug_out="$("$bin" get drug rindopepimut targets)"
 echo "$variant_drug_out" | mustmatch like "Variant Targets (CIViC): EGFRvIII"
+```
 
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
 disease_out="$("$bin" get disease "cystic fibrosis")"
 echo "$disease_out" | mustmatch like "## Definition (MyDisease.info)"
 echo "$disease_out" | mustmatch like "Genes (Open Targets):"
@@ -63,12 +69,18 @@ echo "$gene_json" | mustmatch like '"label": "NCBI Gene"'
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-drug_json="$("$bin" get drug ivacaftor all --json)"
-echo "$drug_json" | mustmatch like '"section_sources": ['
-echo "$drug_json" | mustmatch like '"key": "safety"'
-echo "$drug_json" | mustmatch like '"key": "targets"'
-echo "$drug_json" | mustmatch like "OpenFDA FAERS"
-echo "$drug_json" | mustmatch like '"label": "ChEMBL"'
+drug_safety_json="$("$bin" get drug ivacaftor safety --json)"
+echo "$drug_safety_json" | mustmatch like '"section_sources": ['
+echo "$drug_safety_json" | mustmatch like '"key": "safety"'
+echo "$drug_safety_json" | mustmatch like "OpenFDA FAERS"
+```
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+drug_targets_json="$("$bin" get drug tamoxifen targets --json)"
+echo "$drug_targets_json" | mustmatch like '"section_sources": ['
+echo "$drug_targets_json" | mustmatch like '"key": "targets"'
+echo "$drug_targets_json" | mustmatch like '"label": "ChEMBL"'
 ```
 
 ```bash
