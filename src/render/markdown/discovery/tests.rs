@@ -1,0 +1,73 @@
+use super::*;
+
+#[test]
+fn search_all_markdown_renders_section_note() {
+    let results = crate::cli::search_all::SearchAllResults {
+        query: "gene=EGFR disease=non-small cell lung cancer".to_string(),
+        sections: vec![crate::cli::search_all::SearchAllSection {
+            entity: "variant".to_string(),
+            label: "Variants".to_string(),
+            count: 1,
+            total: Some(1),
+            error: None,
+            note: Some(
+                "No disease-filtered variants found; showing top gene variants.".to_string(),
+            ),
+            results: vec![serde_json::json!({
+                "id": "rs121434568",
+                "gene": "EGFR",
+                "hgvs_p": "L858R",
+                "significance": "Pathogenic",
+            })],
+            links: Vec::new(),
+        }],
+        searches_dispatched: 1,
+        searches_with_results: 1,
+        wall_time_ms: 42,
+        debug_plan: None,
+    };
+
+    let markdown = search_all_markdown(&results, false).expect("markdown should render");
+    assert!(markdown.contains("> No disease-filtered variants found; showing top gene variants."));
+}
+
+#[test]
+fn render_discover_renders_grouped_concepts_and_plain_language() {
+    let result = crate::entities::discover::DiscoverResult {
+        query: "BRCA1".to_string(),
+        normalized_query: "brca1".to_string(),
+        concepts: vec![crate::entities::discover::DiscoverConcept {
+            label: "BRCA1".to_string(),
+            primary_id: Some("HGNC:1100".to_string()),
+            primary_type: DiscoverType::Gene,
+            synonyms: vec!["RNF53".to_string()],
+            xrefs: vec![crate::entities::discover::ConceptXref {
+                source: "NCBI Gene".to_string(),
+                id: "672".to_string(),
+            }],
+            sources: vec![crate::entities::discover::ConceptSource {
+                source: "HGNC".to_string(),
+                id: "1100".to_string(),
+                label: "BRCA1".to_string(),
+                source_type: "canonical".to_string(),
+            }],
+            match_tier: crate::entities::discover::MatchTier::Exact,
+            confidence: crate::entities::discover::DiscoverConfidence::CanonicalId,
+        }],
+        plain_language: Some(crate::entities::discover::PlainLanguageTopic {
+            title: "BRCA1 mutation".to_string(),
+            url: "https://example.org/brca1".to_string(),
+            summary_excerpt: "Plain-language summary.".to_string(),
+        }),
+        next_commands: vec!["biomcp get gene BRCA1".to_string()],
+        notes: vec!["Resolved via canonical symbol.".to_string()],
+        ambiguous: false,
+        intent: crate::entities::discover::DiscoverIntent::GeneFunction,
+    };
+
+    let markdown = render_discover(&result).expect("discover markdown");
+    assert!(markdown.contains("# Discover: BRCA1") || markdown.contains("BRCA1"));
+    assert!(markdown.contains("Resolved via canonical symbol."));
+    assert!(markdown.contains("BRCA1 mutation"));
+    assert!(markdown.contains("biomcp get gene BRCA1"));
+}

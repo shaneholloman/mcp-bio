@@ -1,0 +1,215 @@
+use super::*;
+use crate::entities::variant::TreatmentImplication;
+
+#[test]
+fn markdown_render_variant_entity() {
+    let variant: Variant = serde_json::from_value(serde_json::json!({
+        "id": "chr7:g.55259515T>G",
+        "gene": "EGFR",
+        "hgvs_p": "p.L858R",
+        "legacy_name": "EGFR L858R",
+        "significance": "Pathogenic"
+    }))
+    .expect("variant should deserialize");
+
+    let markdown = variant_markdown(&variant, &[]).expect("rendered markdown");
+    assert!(markdown.contains("EGFR"));
+    assert!(markdown.contains("p.L858R"));
+    assert!(markdown.contains("Legacy Name: EGFR L858R"));
+}
+
+#[test]
+fn variant_markdown_renders_compact_clinvar_and_population_fields() {
+    let variant: Variant = serde_json::from_value(serde_json::json!({
+        "id": "chr7:g.140453136A>T",
+        "gene": "BRAF",
+        "gnomad_af": 0.0001,
+        "allele_frequency_percent": "0.0100%",
+        "top_disease": {"condition": "Melanoma", "reports": 2},
+        "clinvar_conditions": [{"condition": "Melanoma", "reports": 2}]
+    }))
+    .expect("variant should deserialize");
+
+    let markdown = variant_markdown(&variant, &["all".to_string()]).expect("rendered markdown");
+    assert!(markdown.contains("Top disease (ClinVar): Melanoma (2 reports)"));
+    assert!(markdown.contains("gnomAD AF:"));
+    assert!(markdown.contains("(0.0100%)"));
+}
+
+#[test]
+fn variant_markdown_renders_gwas_unavailable_message() {
+    let variant: Variant = serde_json::from_value(serde_json::json!({
+        "id": "rs7903146",
+        "gene": "TCF7L2",
+        "rsid": "rs7903146",
+        "gwas": [],
+        "gwas_unavailable_reason": "GWAS association data temporarily unavailable."
+    }))
+    .expect("variant should deserialize");
+
+    let markdown = variant_markdown(&variant, &["gwas".to_string()]).expect("rendered markdown");
+    assert!(markdown.contains("GWAS association data temporarily unavailable."));
+    assert!(!markdown.contains("No GWAS associations found for this variant."));
+}
+
+#[test]
+fn variant_search_markdown_renders_legacy_name_column_and_fallback() {
+    let results = vec![
+        VariantSearchResult {
+            id: "chr6:g.118880200T>G".to_string(),
+            gene: "PLN".to_string(),
+            hgvs_p: Some("p.L39X".to_string()),
+            legacy_name: Some("PLN L39stop".to_string()),
+            significance: Some("Pathogenic".to_string()),
+            clinvar_stars: Some(2),
+            gnomad_af: None,
+            revel: Some(0.935),
+            gerp: Some(5.12),
+        },
+        VariantSearchResult {
+            id: "chr6:g.118880100A>G".to_string(),
+            gene: "PLN".to_string(),
+            hgvs_p: Some("p.K3R".to_string()),
+            legacy_name: None,
+            significance: None,
+            clinvar_stars: None,
+            gnomad_af: None,
+            revel: None,
+            gerp: None,
+        },
+    ];
+
+    let markdown =
+        variant_search_markdown("gene=PLN, hgvsp=L39X", &results).expect("rendered markdown");
+    assert!(markdown.contains("| ID | Gene | Protein | Legacy Name | Significance |"));
+    assert!(markdown.contains("| chr6:g.118880200T>G | PLN | p.L39X | PLN L39stop |"));
+    assert!(markdown.contains("| chr6:g.118880100A>G | PLN | p.K3R | - |"));
+}
+
+#[test]
+fn variant_search_markdown_renders_related_commands_from_context() {
+    let results = vec![
+        VariantSearchResult {
+            id: "rs199473688".to_string(),
+            gene: "SCN5A".to_string(),
+            hgvs_p: Some("p.Arg282His".to_string()),
+            legacy_name: None,
+            significance: Some("Pathogenic".to_string()),
+            clinvar_stars: Some(2),
+            gnomad_af: None,
+            revel: Some(0.91),
+            gerp: Some(5.7),
+        },
+        VariantSearchResult {
+            id: "rs7626962".to_string(),
+            gene: "SCN5A".to_string(),
+            hgvs_p: Some("p.Gly514Cys".to_string()),
+            legacy_name: None,
+            significance: Some("Likely pathogenic".to_string()),
+            clinvar_stars: Some(1),
+            gnomad_af: None,
+            revel: Some(0.88),
+            gerp: Some(5.1),
+        },
+    ];
+
+    let markdown = variant_search_markdown_with_context(
+        "gene=SCN5A, condition=Brugada",
+        &results,
+        "",
+        Some("SCN5A"),
+        Some("Brugada"),
+    )
+    .expect("rendered markdown");
+
+    assert!(markdown.contains("See also:"));
+    assert!(markdown.contains("biomcp get variant rs199473688"));
+    assert!(markdown.contains("biomcp get gene SCN5A"));
+    assert!(markdown.contains("biomcp search disease --query Brugada"));
+}
+
+#[test]
+fn phenotype_search_markdown_renders_top_disease_follow_up() {
+    let results = vec![
+        crate::entities::disease::PhenotypeSearchResult {
+            disease_id: "MONDO:0100135".to_string(),
+            disease_name: "Dravet syndrome".to_string(),
+            score: 15.036,
+        },
+        crate::entities::disease::PhenotypeSearchResult {
+            disease_id: "MONDO:0000032".to_string(),
+            disease_name: "febrile seizures, familial".to_string(),
+            score: 15.036,
+        },
+    ];
+
+    let markdown = phenotype_search_markdown_with_footer(
+        "HP:0002373 HP:0001250",
+        &results,
+        "Showing 1-2 of 2 results.",
+    )
+    .expect("rendered markdown");
+
+    assert!(markdown.contains("See also:"));
+    assert!(markdown.contains("biomcp get disease \"Dravet syndrome\" genes phenotypes"));
+    assert_eq!(
+        related_command_description("biomcp get disease \"Dravet syndrome\" genes phenotypes"),
+        Some("open the top phenotype-match disease with genes and phenotypes")
+    );
+}
+
+#[test]
+fn variant_oncokb_markdown_shows_truncation_note() {
+    let result = VariantOncoKbResult {
+        gene: "EGFR".to_string(),
+        alteration: "L858R".to_string(),
+        oncogenic: Some("Oncogenic".to_string()),
+        level: Some("Level 1".to_string()),
+        effect: Some("Gain-of-function".to_string()),
+        therapies: vec![
+            TreatmentImplication {
+                level: "Level 1".to_string(),
+                drugs: vec!["osimertinib".to_string()],
+                cancer_type: Some("Lung adenocarcinoma".to_string()),
+                note: None,
+            },
+            TreatmentImplication {
+                level: "Level 2".to_string(),
+                drugs: vec!["afatinib".to_string()],
+                cancer_type: Some("Lung adenocarcinoma".to_string()),
+                note: Some("(and 2 more)".to_string()),
+            },
+        ],
+    };
+
+    let markdown = variant_oncokb_markdown(&result);
+    assert!(markdown.contains("| Drug | Level | Cancer Type | Note |"));
+    assert!(markdown.contains("(and 2 more)"));
+}
+
+#[test]
+fn gwas_search_markdown_renders_result_row() {
+    let markdown = gwas_search_markdown(
+        "EGFR",
+        &[crate::entities::variant::VariantGwasAssociation {
+            rsid: "rs121434568".to_string(),
+            trait_name: Some("Lung adenocarcinoma".to_string()),
+            p_value: Some(5.0e-8),
+            effect_size: Some(1.23),
+            effect_type: Some("OR".to_string()),
+            confidence_interval: None,
+            risk_allele_frequency: Some(0.12),
+            risk_allele: None,
+            mapped_genes: vec!["EGFR".to_string()],
+            study_accession: Some("GCST000001".to_string()),
+            pmid: Some("12345678".to_string()),
+            author: None,
+            sample_description: None,
+        }],
+    )
+    .expect("gwas markdown");
+
+    assert!(markdown.contains("# GWAS Search: EGFR"));
+    assert!(markdown.contains("| rs121434568 | Lung adenocarcinoma |"));
+    assert!(markdown.contains("| OR 1.230 |") || markdown.contains("OR 1.230"));
+}

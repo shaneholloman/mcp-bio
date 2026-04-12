@@ -9,7 +9,7 @@ examples against stable structural markers and suggestion contracts.
 | Gene Alias | `discover ERBB1` | Confirms alias resolution and gene suggestion |
 | Drug Brand Name | `discover Keytruda` | Confirms brand-name normalization to generic drug |
 | Symptom Query | `discover "chest pain"` | Confirms symptom-safe suggestions and MedlinePlus overlay |
-| HPO Symptom Bridge | `discover "developmental delay"` | Confirms HPO-backed symptom queries suggest phenotype search first |
+| HPO-backed Symptom Concepts | `discover diabetes` | Confirms normalized `HP:` symptom concepts surface in discover results when OLS4 returns them |
 | Treatment Query | `discover "what drugs treat myasthenia gravis"` | Confirms treatment intent leads with structured indication search |
 | Disease Symptoms | `discover "symptoms of Marfan syndrome"` | Confirms disease-linked symptom routing prefers phenotypes |
 | Gene + Disease | `discover "BRAF melanoma"` | Confirms combined orientation queries prefer `search all` |
@@ -52,17 +52,18 @@ echo "$out" | mustmatch like "biomcp search trial -c \"chest pain\" --limit 5"
 echo "$out" | mustmatch like "biomcp search article -k \"chest pain\" --limit 5"
 ```
 
-## HPO Symptom Bridge
+## HPO-backed Symptom Concepts
 
-When `discover` finds an HPO-backed symptom concept, it should surface the
-normalized `HP:` identifier and make phenotype ranking the first next step.
+When `discover` finds symptom concepts with normalized `HP:` identifiers, it
+should surface those IDs directly in the concept list even when disease concepts
+still rank above them.
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" discover "developmental delay")"
+out="$("$bin" discover diabetes)"
 echo "$out" | mustmatch like "### Symptom"
-echo "$out" | mustmatch like '**Global developmental delay** (`HP:0001263`)'
-echo "$out" | mustmatch like $'## Suggested Commands\n- `biomcp search phenotype "HP:0001263"`'
+echo "$out" | mustmatch like '**Diabetes insipidus** (`HP:0000873`)'
+echo "$out" | mustmatch like '**Diabetes mellitus** (`HP:0000819`)'
 ```
 
 ## Treatment Query
@@ -96,7 +97,7 @@ bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" discover diabetes)"
 echo "$out" | mustmatch like "## Concepts"
 echo "$out" | mustmatch like "### Disease"
-echo "$out" | mustmatch like $'## Suggested Commands\n- `biomcp search disease -q "diabetes" --limit 10`'
+echo "$out" | mustmatch like "biomcp search disease -q diabetes --limit 10"
 echo "$out" | mustmatch like "1. **diabetes mellitus**"
 echo "$out" | mustmatch '/\n2\. \*\*.+\*\*/'
 echo "$out" | mustmatch not like "## Plain Language"

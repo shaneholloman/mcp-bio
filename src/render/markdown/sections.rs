@@ -1,0 +1,241 @@
+//! Section-filter parsing and progressive-disclosure helpers for markdown renderers.
+
+use super::*;
+
+pub(super) fn has_all_section(requested: &[String]) -> bool {
+    requested
+        .iter()
+        .any(|s| s.trim().eq_ignore_ascii_case("all"))
+}
+
+pub(super) fn is_section_only_requested(requested: &[String]) -> bool {
+    !has_all_section(requested) && requested.iter().any(|s| !s.trim().is_empty())
+}
+
+pub(super) fn requested_section_names(requested: &[String]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for section in requested {
+        let section = section.trim();
+        if section.is_empty() || section.eq_ignore_ascii_case("all") {
+            continue;
+        }
+        let normalized = section.to_ascii_lowercase();
+        if out.iter().any(|v| v == &normalized) {
+            continue;
+        }
+        out.push(normalized);
+    }
+    out
+}
+
+pub(super) fn section_header(entity_label: &str, requested: &[String]) -> String {
+    let names = requested_section_names(requested);
+    if names.is_empty() {
+        entity_label.to_string()
+    } else {
+        format!("{entity_label} - {}", names.join(", "))
+    }
+}
+
+pub(super) fn format_sections_block(entity: &str, id: &str, sections: Vec<String>) -> String {
+    if sections.is_empty() {
+        return String::new();
+    }
+    let id_q = quote_arg(id);
+    if id_q.is_empty() {
+        return String::new();
+    }
+    let mut out = String::from("More:");
+    for section in sections.iter().take(3) {
+        let _ = write!(
+            out,
+            "\n  biomcp get {entity} {id_q} {section}   - {}",
+            section_description(entity, section)
+        );
+    }
+    let _ = write!(out, "\nAll:\n  biomcp get {entity} {id_q} all");
+    out
+}
+
+pub(super) fn section_description(entity: &str, section: &str) -> &'static str {
+    match (entity, section) {
+        ("gene", "pathways") => "Reactome/KEGG pathway context",
+        ("gene", "ontology") => "GO-style functional enrichment",
+        ("gene", "diseases") => "disease associations",
+        ("gene", "protein") => "UniProt function and localization detail",
+        ("gene", "expression") => "GTEx tissue expression",
+        ("gene", "hpa") => "Human Protein Atlas tissue expression and localization",
+        ("gene", "go") => "QuickGO term annotations",
+        ("gene", "interactions") => "STRING interaction partners",
+        ("gene", "civic") => "CIViC clinical evidence",
+        ("gene", "druggability") => "DGIdb interactions and tractability",
+        ("gene", "clingen") => "ClinGen validity and dosage sensitivity",
+        ("gene", "constraint") => "gnomAD gene constraint metrics",
+        ("gene", "disgenet") => "DisGeNET scored disease links",
+        ("gene", "funding") => "NIH Reporter grant support",
+        ("article", "annotations") => "PubTator normalized entity mentions",
+        ("article", "fulltext") => "cached full text when available",
+        ("article", "tldr") => "Semantic Scholar summary and influence",
+        ("disease", "genes") => "associated genes",
+        ("disease", "pathways") => "pathways from associated genes",
+        ("disease", "phenotypes") => "HPO phenotype annotations",
+        ("disease", "variants") => "disease-associated variants",
+        ("disease", "models") => "model-organism evidence",
+        ("disease", "prevalence") => "prevalence and epidemiology context",
+        ("disease", "funding") => "NIH Reporter grant support",
+        ("disease", "civic") => "CIViC disease-context evidence",
+        ("disease", "disgenet") => "DisGeNET scored disease-gene links",
+        ("drug", "label") => "approved-indication and FDA label detail beyond the base card",
+        ("drug", "regulatory") => {
+            "approval and supplement history; use only if the base card lacks approval context"
+        }
+        ("drug", "safety") => {
+            "regulatory safety detail; use `biomcp drug adverse-events <name>` first when you want post-marketing signal"
+        }
+        ("drug", "targets") => "ChEMBL and OpenTargets targets",
+        ("drug", "indications") => "OpenTargets indication evidence",
+        ("drug", "interactions") => "label interactions and public-data fallback",
+        ("drug", "civic") => "CIViC therapy evidence",
+        ("drug", "approvals") => "Drugs@FDA approval history",
+        ("trial", "eligibility") => "inclusion and exclusion criteria",
+        ("trial", "locations") => "site list and contact details",
+        ("trial", "outcomes") => "endpoint measures and time frames",
+        ("trial", "arms") => "study arms and assigned interventions",
+        ("trial", "references") => "linked publications and PMID citations",
+        _ => "additional detail",
+    }
+}
+
+pub(super) fn sections_for(requested: &[String], available: &[&str]) -> Vec<String> {
+    if has_all_section(requested) {
+        return Vec::new();
+    }
+
+    let requested_set: HashSet<String> = requested
+        .iter()
+        .map(|s| s.trim().to_ascii_lowercase())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    available
+        .iter()
+        .copied()
+        .filter(|s| *s != "all")
+        .filter(|s| !requested_set.contains(&s.to_ascii_lowercase()))
+        .map(|section| section.to_string())
+        .collect()
+}
+
+pub(super) fn sections_gene(gene: &Gene, requested: &[String]) -> Vec<String> {
+    let symbol = gene.symbol.trim();
+    if symbol.is_empty() {
+        return Vec::new();
+    }
+
+    sections_for(requested, crate::entities::gene::GENE_SECTION_NAMES)
+}
+
+pub(super) fn sections_variant(variant: &Variant, requested: &[String]) -> Vec<String> {
+    let id = quote_arg(&variant.id);
+    if id.is_empty() {
+        return Vec::new();
+    }
+    sections_for(requested, crate::entities::variant::VARIANT_SECTION_NAMES)
+}
+
+pub(super) fn sections_article(article: &Article, requested: &[String]) -> Vec<String> {
+    let key = article
+        .pmid
+        .as_deref()
+        .or(article.pmcid.as_deref())
+        .or(article.doi.as_deref())
+        .unwrap_or("");
+    let key = quote_arg(key);
+    if key.is_empty() {
+        return Vec::new();
+    }
+    sections_for(requested, crate::entities::article::ARTICLE_SECTION_NAMES)
+}
+
+const COMPLETED_TRIAL_SECTION_NAMES: &[&str] = &[
+    "outcomes",
+    "references",
+    "arms",
+    "eligibility",
+    "locations",
+    "all",
+];
+
+pub(super) fn is_completed_or_terminated_trial_status(status: &str) -> bool {
+    let status = status.trim();
+    status.eq_ignore_ascii_case("COMPLETED") || status.eq_ignore_ascii_case("TERMINATED")
+}
+
+pub(super) fn sections_trial(trial: &Trial, requested: &[String]) -> Vec<String> {
+    let nct_id = trial.nct_id.trim();
+    if nct_id.is_empty() {
+        return Vec::new();
+    }
+    let available = if is_completed_or_terminated_trial_status(&trial.status) {
+        COMPLETED_TRIAL_SECTION_NAMES
+    } else {
+        crate::entities::trial::TRIAL_SECTION_NAMES
+    };
+    sections_for(requested, available)
+}
+
+pub(super) fn sections_drug(drug: &Drug, requested: &[String]) -> Vec<String> {
+    let name = quote_arg(&drug.name);
+    if name.is_empty() {
+        return Vec::new();
+    }
+    sections_for(requested, crate::entities::drug::DRUG_SECTION_NAMES)
+}
+
+pub(super) fn sections_disease(disease: &Disease, requested: &[String]) -> Vec<String> {
+    let key = quote_arg(&disease.id);
+    if key.is_empty() {
+        return Vec::new();
+    }
+    sections_for(requested, crate::entities::disease::DISEASE_SECTION_NAMES)
+}
+
+pub(super) fn sections_pgx(pgx: &Pgx, requested: &[String]) -> Vec<String> {
+    if pgx.query.trim().is_empty() {
+        return Vec::new();
+    }
+    sections_for(requested, crate::entities::pgx::PGX_SECTION_NAMES)
+}
+
+pub(super) fn sections_pathway(pathway: &Pathway, requested: &[String]) -> Vec<String> {
+    let id = quote_arg(&pathway.id);
+    if id.is_empty() {
+        return Vec::new();
+    }
+    sections_for(
+        requested,
+        crate::entities::pathway::supported_pathway_sections_for_source(&pathway.source),
+    )
+}
+
+pub(super) fn sections_protein(protein: &Protein, requested: &[String]) -> Vec<String> {
+    let accession = quote_arg(&protein.accession);
+    if accession.is_empty() {
+        return Vec::new();
+    }
+    sections_for(requested, crate::entities::protein::PROTEIN_SECTION_NAMES)
+}
+
+pub(super) fn sections_adverse_event(event: &AdverseEvent, requested: &[String]) -> Vec<String> {
+    let report_id = quote_arg(&event.report_id);
+    if report_id.is_empty() {
+        return Vec::new();
+    }
+    sections_for(
+        requested,
+        crate::entities::adverse_event::ADVERSE_EVENT_SECTION_NAMES,
+    )
+}
+
+#[cfg(test)]
+mod tests;
