@@ -782,6 +782,63 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     )
 
 
+def test_spec_lane_timing_report_is_documented_and_aligned_with_makefile() -> None:
+    makefile = _read_repo("Makefile")
+    report = _read_repo("spec/README-timings.md")
+    runbook = _read_repo("RUN.md")
+    technical = _read_repo("architecture/technical/overview.md")
+
+    three_lane_section = _normalize_ws(_markdown_section(report, "Three-Lane Split"))
+    audit_method_section = _normalize_ws(_markdown_section(report, "Audit Method"))
+    timing_audit_section = _normalize_ws(_markdown_section(report, "spec-pr Timing Audit"))
+    smoke_only_section = _markdown_section(
+        report, "Smoke-Only Headings (SPEC_PR_DESELECT_ARGS)"
+    )
+    runbook_spec_section = _normalize_ws(_markdown_section(runbook, "Spec Suite"))
+    technical_spec_section = _normalize_ws(
+        _markdown_section(technical, "2. Spec Suite (`spec/`)", level=3)
+    )
+
+    for heading in (
+        "## Three-Lane Split",
+        "## Audit Method",
+        "## spec-pr Timing Audit",
+        "## Smoke-Only Headings (SPEC_PR_DESELECT_ARGS)",
+    ):
+        assert heading in report
+
+    for marker in ("`make spec-pr`", "`make spec`", "`make test-contracts`"):
+        assert marker in three_lane_section
+    assert "First-pass" in audit_method_section
+    assert "Warm-pass" in audit_method_section
+    assert (
+        "| File | Heading | First-pass Time | First-pass Result | Warm-pass Time | Warm-pass Result | Category | Disposition | Rationale |"
+        in report
+    )
+    for column in (
+        "File",
+        "Heading",
+        "First-pass Time",
+        "First-pass Result",
+        "Warm-pass Time",
+        "Warm-pass Result",
+        "Category",
+        "Disposition",
+        "Rationale",
+    ):
+        assert column in timing_audit_section
+    assert "Node ID" in smoke_only_section
+    assert "Reason" in smoke_only_section
+
+    deselected_node_ids = re.findall(r'--deselect "([^"]+)"', makefile)
+    assert deselected_node_ids
+    for node_id in deselected_node_ids:
+        assert node_id in smoke_only_section
+
+    assert "spec/README-timings.md" in runbook_spec_section
+    assert "spec/README-timings.md" in technical_spec_section
+
+
 def test_parallel_test_dependency_contract_is_declared() -> None:
     pyproject = tomllib.loads(_read_repo("pyproject.toml"))
     uv_lock = _read_repo("uv.lock")
