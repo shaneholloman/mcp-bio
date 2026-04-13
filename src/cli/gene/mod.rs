@@ -136,12 +136,18 @@ See also: biomcp list gene")]
     External(Vec<String>),
 }
 
+mod dispatch;
+pub(crate) use self::dispatch::{handle_command, handle_get, handle_search};
+
 #[cfg(test)]
 mod tests {
     use clap::{CommandFactory, Parser};
 
     use super::GeneCommand;
-    use crate::cli::{Cli, Commands};
+    use crate::cli::test_support::{
+        MockServer, lock_env, mount_gene_lookup_miss, mount_ols_alias, set_env_var,
+    };
+    use crate::cli::{Cli, Commands, GetEntity, OutputStream};
 
     fn render_gene_get_long_help() -> String {
         let mut command = Cli::command();
@@ -215,5 +221,45 @@ mod tests {
             }
             other => panic!("unexpected command: {other:?}"),
         }
+    }
+
+    #[tokio::test]
+    async fn handle_get_gene_alias_fallback_returns_markdown_suggestion() {
+        let _guard = lock_env().await;
+        let mygene = MockServer::start().await;
+        let ols = MockServer::start().await;
+        let _mygene_base = set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
+        let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
+        let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
+        let _umls_key = set_env_var("UMLS_API_KEY", None);
+
+        mount_gene_lookup_miss(&mygene, "ERBB1").await;
+        mount_ols_alias(&ols, "ERBB1", "hgnc", "HGNC:3236", "EGFR", &["ERBB1"], 1).await;
+
+        let cli = Cli::try_parse_from(["biomcp", "get", "gene", "ERBB1"]).expect("parse");
+
+        let Cli {
+            command: Commands::Get {
+                entity: GetEntity::Gene(args),
+            },
+            json,
+            ..
+        } = cli
+        else {
+            panic!("expected get gene command");
+        };
+
+        let outcome = super::handle_get(args, json, false)
+            .await
+            .expect("alias outcome");
+
+        assert_eq!(outcome.stream, OutputStream::Stderr);
+        assert_eq!(outcome.exit_code, 1);
+        assert!(outcome.text.contains("Error: gene 'ERBB1' not found."));
+        assert!(
+            outcome
+                .text
+                .contains("Did you mean: `biomcp get gene EGFR`")
+        );
     }
 }

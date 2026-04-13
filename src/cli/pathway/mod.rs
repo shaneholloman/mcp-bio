@@ -97,6 +97,9 @@ See also: biomcp list pathway")]
     },
 }
 
+mod dispatch;
+pub(super) use self::dispatch::{handle_command, handle_get, handle_search};
+
 #[cfg(test)]
 mod tests {
     use clap::{CommandFactory, Parser};
@@ -183,5 +186,32 @@ mod tests {
             }
             other => panic!("unexpected command: {other:?}"),
         }
+    }
+
+    #[tokio::test]
+    async fn handle_command_rejects_zero_limit_before_related_lookup() {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "pathway",
+            "drugs",
+            "R-HSA-5673001",
+            "--limit",
+            "0",
+        ])
+        .expect("pathway drugs should parse");
+
+        let Cli {
+            command: Commands::Pathway { cmd },
+            json,
+            ..
+        } = cli
+        else {
+            panic!("expected pathway command");
+        };
+
+        let err = super::handle_command(cmd, json)
+            .await
+            .expect_err("zero pathway drugs limit should fail fast");
+        assert!(err.to_string().contains("--limit must be between 1 and 50"));
     }
 }

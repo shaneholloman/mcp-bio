@@ -1,6 +1,6 @@
 use clap::{CommandFactory, Parser};
 
-use crate::cli::{Cli, Commands, DrugCommand, DrugRegionArg, GetEntity};
+use crate::cli::{Cli, Commands, DrugCommand, DrugRegionArg, GetEntity, SearchEntity};
 
 #[test]
 fn get_drug_help_lists_region_flag_and_examples() {
@@ -121,4 +121,31 @@ fn drug_bare_name_parses_as_external_subcommand() {
         } => assert_eq!(args, vec!["imatinib"]),
         other => panic!("unexpected command: {other:?}"),
     }
+}
+
+#[tokio::test]
+async fn handle_search_rejects_non_us_structured_region() {
+    let cli = Cli::try_parse_from([
+        "biomcp", "search", "drug", "--target", "EGFR", "--region", "eu",
+    ])
+    .expect("search drug should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Drug(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected search drug command");
+    };
+
+    let err = super::handle_search(args, json)
+        .await
+        .expect_err("explicit EU structured search should fail");
+    assert!(
+        err.to_string()
+            .contains("EMA and all-region search currently support name/alias lookups only")
+    );
 }

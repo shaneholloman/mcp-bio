@@ -80,6 +80,11 @@ pub struct VersionArgs {
     pub verbose: bool,
 }
 
+mod dispatch;
+pub(crate) use self::dispatch::{
+    handle_batch, handle_ema, handle_enrich, handle_uninstall, handle_version, handle_who,
+};
+
 #[cfg(test)]
 mod tests {
     use clap::{CommandFactory, FromArgMatches, Parser};
@@ -288,5 +293,24 @@ mod tests {
         assert!(!help.contains("SSE transport"));
         assert!(!help.contains("--json"));
         assert!(!help.contains("--no-cache"));
+    }
+
+    #[tokio::test]
+    async fn handle_enrich_rejects_zero_limit_before_api_call() {
+        let cli = Cli::try_parse_from(["biomcp", "enrich", "BRAF,KRAS", "--limit", "0"])
+            .expect("enrich should parse");
+
+        let Cli {
+            command: Commands::Enrich(args),
+            ..
+        } = cli
+        else {
+            panic!("expected enrich command");
+        };
+
+        let err = super::handle_enrich(args, false)
+            .await
+            .expect_err("zero enrich limit should fail fast");
+        assert!(err.to_string().contains("--limit must be between 1 and 50"));
     }
 }

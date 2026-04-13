@@ -39,6 +39,9 @@ pub struct PgxGetArgs {
     pub sections: Vec<String>,
 }
 
+mod dispatch;
+pub(super) use self::dispatch::{handle_get, handle_search};
+
 #[cfg(test)]
 mod tests {
     use clap::Parser;
@@ -79,5 +82,28 @@ mod tests {
         assert_eq!(evidence, None);
         assert_eq!(limit, 2);
         assert_eq!(offset, 0);
+    }
+
+    #[tokio::test]
+    async fn handle_search_rejects_zero_limit_before_backend_lookup() {
+        let cli = Cli::try_parse_from(["biomcp", "search", "pgx", "CYP2D6", "--limit", "0"])
+            .expect("search pgx should parse");
+
+        let Cli {
+            command:
+                Commands::Search {
+                    entity: SearchEntity::Pgx(args),
+                },
+            json,
+            ..
+        } = cli
+        else {
+            panic!("expected search pgx command");
+        };
+
+        let err = super::handle_search(args, json)
+            .await
+            .expect_err("zero pgx limit should fail fast");
+        assert!(err.to_string().contains("--limit must be between 1 and 50"));
     }
 }

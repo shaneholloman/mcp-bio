@@ -187,5 +187,8 @@ See also: biomcp list article")]
     },
 }
 
+mod dispatch;
+pub(super) use self::dispatch::{handle_command, handle_get, handle_search};
+
 #[cfg(test)]
 mod tests;

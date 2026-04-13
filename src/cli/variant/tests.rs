@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::cli::{Cli, Commands, SearchEntity, VariantCommand};
+use crate::cli::{Cli, Commands, GetEntity, OutputStream, SearchEntity, VariantCommand};
 
 #[test]
 fn search_variant_parses_single_token_positional_query() {
@@ -128,4 +128,37 @@ fn variant_trials_parses_source_flag() {
         }
         other => panic!("unexpected command: {other:?}"),
     }
+}
+
+#[tokio::test]
+async fn handle_get_returns_guidance_json_for_shorthand_variant() {
+    let cli = Cli::try_parse_from(["biomcp", "--json", "get", "variant", "R620W"]).expect("parse");
+
+    let Cli {
+        command: Commands::Get {
+            entity: GetEntity::Variant(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected get variant command");
+    };
+
+    let outcome = super::handle_get(args, json, false)
+        .await
+        .expect("guidance outcome");
+
+    assert_eq!(outcome.stream, OutputStream::Stdout);
+    assert_eq!(outcome.exit_code, 1);
+    let value: serde_json::Value =
+        serde_json::from_str(&outcome.text).expect("valid variant guidance json");
+    assert_eq!(
+        value["_meta"]["alias_resolution"]["kind"],
+        "protein_change_only"
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        "biomcp search variant --hgvsp R620W --limit 10"
+    );
 }

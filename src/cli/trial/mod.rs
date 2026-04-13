@@ -120,6 +120,9 @@ pub struct TrialGetArgs {
     pub source: String,
 }
 
+mod dispatch;
+pub(super) use self::dispatch::{handle_get, handle_search};
+
 #[cfg(test)]
 mod tests {
     use clap::{CommandFactory, Parser};
@@ -450,5 +453,40 @@ mod tests {
         assert_eq!(nct_id, "NCT02576665");
         assert_eq!(sections, vec!["eligibility".to_string()]);
         assert_eq!(source, "ctgov");
+    }
+
+    #[tokio::test]
+    async fn handle_search_rejects_next_page_with_offset() {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "search",
+            "trial",
+            "melanoma",
+            "--next-page",
+            "page-2",
+            "--offset",
+            "1",
+        ])
+        .expect("search trial should parse");
+
+        let Cli {
+            command:
+                Commands::Search {
+                    entity: SearchEntity::Trial(args),
+                },
+            json,
+            ..
+        } = cli
+        else {
+            panic!("expected trial search command");
+        };
+
+        let err = super::handle_search(args, json)
+            .await
+            .expect_err("next-page plus offset should fail fast");
+        assert!(
+            err.to_string()
+                .contains("--next-page cannot be used together with --offset")
+        );
     }
 }

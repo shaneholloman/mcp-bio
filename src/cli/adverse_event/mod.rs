@@ -75,6 +75,9 @@ pub struct AdverseEventGetArgs {
     pub sections: Vec<String>,
 }
 
+mod dispatch;
+pub(crate) use self::dispatch::{handle_get, handle_search};
+
 #[cfg(test)]
 mod tests {
     use clap::Parser;
@@ -143,5 +146,38 @@ mod tests {
 
         assert_eq!(report_id, "10222779");
         assert_eq!(sections, vec!["reactions".to_string()]);
+    }
+
+    #[tokio::test]
+    async fn handle_search_rejects_positional_drug_alias_for_device() {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "search",
+            "adverse-event",
+            "pembrolizumab",
+            "--type",
+            "device",
+        ])
+        .expect("adverse-event device search should parse");
+
+        let Cli {
+            command:
+                Commands::Search {
+                    entity: SearchEntity::AdverseEvent(args),
+                },
+            json,
+            ..
+        } = cli
+        else {
+            panic!("expected adverse-event search command");
+        };
+
+        let err = super::handle_search(args, json)
+            .await
+            .expect_err("device query should reject positional drug alias");
+        assert!(
+            err.to_string()
+                .contains("--drug cannot be used with --type device")
+        );
     }
 }
