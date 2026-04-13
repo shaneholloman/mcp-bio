@@ -1,56 +1,74 @@
-# Code Review Log — Ticket 186
+# Code Review Log — Ticket 187
 
 ## Critique
 
 ### Design completeness audit
 
-- `RUN.md` now documents the narrowed pre-commit contract in `## Pre-Merge Checks`, including the enforced commands, the explicit "does not run" list, the heavier manual proofs, and the `git commit --no-verify` escape hatch.
-- `architecture/technical/overview.md` now names `.march/validation-profiles.toml` as the source of record, lists all five reserved profiles, maps the current build-flow usage, and explains why `full-blocking` uses `make spec-pr` while `full-contracts` stays declared-but-unassigned.
-- `.march/validation-profiles.toml` exists, is git-tracked, declares exactly the five reserved profiles, and records `# observed ...` timing comments above each table.
-- `tests/test_validation_profile_contract.py` covers the tracked-file and TOML contract for the new profile file.
-- `tests/test_upstream_planning_analysis_docs.py` covers the runbook and architecture-doc contract for the new validation-tier and hook documentation.
-- The shared hook change has no hunk in `git diff main..HEAD` because the hook lives at the git-resolved shared path outside the tracked worktree: `/home/ian/workspace/repos/biomcp/.git/hooks/pre-commit`. I verified that file directly; this matches the design constraint and was intentional.
+- Read `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, and `git diff main..HEAD`.
+- Mapped every repaired design item and acceptance criterion to the current repo surface:
+  - `Makefile` now uses `cargo nextest run`, defines `SPEC_SERIAL_FILES`, defines `SPEC_XDIST_ARGS`, and splits `spec` / `spec-pr` into xdist bulk plus serial tail.
+  - `pyproject.toml` and `uv.lock` now carry `pytest-xdist`.
+  - `CONTRIBUTING.md`, `RUN.md`, and `architecture/technical/overview.md` now document the repo-local parallel test contract.
+  - `tests/test_upstream_planning_analysis_docs.py` now pins the Makefile/docs contract for the split runner strategy.
+- No design item was missing a corresponding code/doc change.
+- The code log records the required order: baseline timings first, then docs/tests red-state work, then runtime edits. I did not find evidence contradicting that sequence.
 
 ### Test-design traceability
 
-- Proof-matrix coverage is present for the repo-owned contract surface:
-  - runbook hook contract doc: `tests/test_upstream_planning_analysis_docs.py`
-  - architecture validation-tier doc: `tests/test_upstream_planning_analysis_docs.py`
-  - validation profile file tracking, shape, commands, and timing comments: `tests/test_validation_profile_contract.py`
-  - shared hook path/content/behavior: direct structural proofs against `git rev-parse --git-path hooks/pre-commit`
-- No `spec/*.md` change was required. The ticket changes repo tooling and docs, not CLI behavior, so the existing Python contract-test pattern is the correct outside-in proof surface for this change.
+- Verified matching proof coverage for the Makefile split contract, docs contract, serial-tail study proof, validation-profile contract, and xdist-backed spec proof.
+- Found one missing automated proof: the design required proof that `pytest-xdist` is present in the dev dependency contract, but no test pinned `pyproject.toml`/`uv.lock` or importability.
+- Found one weak assertion: the docs contract only checked timing-table row prefixes, so `TBD` placeholders or blank cells could slip through while the test still passed.
+- Found one stale docs contract: `RUN.md` still said the pre-commit hook skips `cargo test` in a repo-local pre-merge section, even though the local Rust test lane is now `cargo nextest run`.
 
-### Finding
+### Security / duplication / quality checks
 
-1. `tests/test_upstream_planning_analysis_docs.py` did not fully encode the design's current build-flow mapping. The new test only checked for selected step names and command substrings, so it would not fail if the `01-design` / `02-design-review` "no profile" text drifted or if a profile row paired the wrong command with the wrong current-use column.
+- Security: no new untrusted-input flow, shell interpolation, path injection, or secret exposure was introduced by the ticket surface I reviewed.
+- Duplication: searched for existing equivalents of the new Makefile variables and doc contract coverage; the implementation reused the existing contract-test file rather than inventing a parallel abstraction.
+- Quality: the implementation follows adjacent repo patterns and keeps the runner split explicit in the Makefile instead of hiding it in a helper script.
 
-## Fixes
+## Fix Plan
 
-- Strengthened `test_validation_profile_and_hook_contract_docs_are_pinned` to require:
-  - the explicit `01-design` / `02-design-review` no-profile language
-  - the exact five profile rows, including each command and current-use column
-- Post-fix collateral scan:
-  - no new dead code or unreachable branches
-  - no unused imports or variables
-  - no stale error messages or shadowed names introduced by the test change
+- Add an automated contract test for the `pytest-xdist` dev dependency and runtime importability.
+- Strengthen the timing-table assertions so the docs contract requires measured values instead of placeholders.
+- Update the runbook’s pre-commit wording to reference `cargo nextest run`, then pin that wording in the existing docs-contract test.
 
-## Verification
+## Repair
 
-- `uv run pytest tests/test_upstream_planning_analysis_docs.py tests/test_validation_profile_contract.py tests/test_directory_submission_contract.py::test_repo_cleanup_removes_local_artifacts_and_deleted_dirs_from_git tests/test_public_install_docs_contract.py::test_ticketed_blog_install_blocks_put_curl_before_uv_and_pip tests/test_documentation_consistency_audit_contract.py::test_blog_try_it_and_install_copy_are_consistent -q`
-- `hook_path="$(git rev-parse --git-path hooks/pre-commit)"; test -f "$hook_path"`
-- `hook_path="$(git rev-parse --git-path hooks/pre-commit)"; rg -n "cargo fmt --check|cargo clippy --lib --tests -- -D warnings" "$hook_path" && ! rg -n "cargo test" "$hook_path"`
-- `hook_path="$(git rev-parse --git-path hooks/pre-commit)"; bash "$hook_path"`
-- `sh -c 'cargo test --lib && cargo clippy --lib --tests -- -D warnings'`
+### Fixes applied
 
-The review intentionally did not rerun `make check && make spec-pr && make test-contracts`; the code-step save point already recorded that full runtime gate, and this review step was instructed to avoid rerunning it.
+- Added `test_parallel_test_dependency_contract_is_declared` in `tests/test_upstream_planning_analysis_docs.py` to assert:
+  - `pytest-xdist` is listed in `pyproject.toml` dev dependencies
+  - `uv.lock` contains the dev-extra dependency edge and package entry
+  - `xdist` is importable in the repo test environment
+- Strengthened `test_repo_local_parallel_test_contract_is_documented` so the timing table must contain concrete `NN.NNs` before/after values and no `TBD` placeholders.
+- Updated `RUN.md` so the pre-commit section says it does not run `cargo nextest run`, not `cargo test`.
+- Updated `test_validation_profile_and_hook_contract_docs_are_pinned` to pin the corrected runbook wording.
+
+### Post-fix collateral scan
+
+- After the test-file edits:
+  - no dead imports were introduced
+  - no shadowed variables were introduced
+  - no stale error text or cleanup paths were affected
+- After the runbook wording fix:
+  - the pinned docs-contract test was updated in the same change
+  - no additional stale `cargo test` reference remained in the repo-local pre-merge section
+
+## Validation
+
+- `uv run pytest tests/test_upstream_planning_analysis_docs.py::test_repo_local_parallel_test_contract_is_documented tests/test_upstream_planning_analysis_docs.py::test_parallel_test_dependency_contract_is_declared tests/test_upstream_planning_analysis_docs.py::test_validation_profile_and_hook_contract_docs_are_pinned tests/test_upstream_planning_analysis_docs.py::test_makefile_spec_split_contract_is_documented_and_executable tests/test_validation_profile_contract.py tests/test_directory_submission_contract.py::test_study_chart_dimensions_spec_runs_as_a_targeted_heading -v`
+- `uv run pytest spec/01-overview.md --mustmatch-lang bash --mustmatch-timeout 120 -n auto --dist loadfile -k Version -v`
+- `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
 
 ## Residual Concerns
 
-- The shared hook remains a local/shared-git artifact rather than a tracked repo file. Verify should re-check the resolved hook path if the shared workspace changed after this review.
-- No out-of-scope follow-up issues were filed from this review.
+- No additional scope-external issues were filed from this review.
+- Verify should still run the scheduled `full-blocking` gate (`make check && make spec-pr`) in step 05; I did not rerun the full runtime gate from this review step because the review fixes were limited to docs/tests.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | weak-assertion | no | The overview doc-contract test only checked loose substrings, so it would not catch drift in the explicit no-profile steps or the exact profile-to-command-to-usage mapping required by the design. |
+| 1 | missing-test | yes | Design proof item for `pytest-xdist` availability had no matching automated contract test for `pyproject.toml` / `uv.lock` or importability. |
+| 2 | weak-assertion | no | Timing-table test only checked row prefixes, so placeholders or empty before/after cells could pass despite the design requiring measured values. |
+| 3 | stale-doc | no | `RUN.md` pre-merge guidance still referenced `cargo test` instead of the shipped repo-local `cargo nextest run` lane. |
