@@ -148,6 +148,8 @@ make spec
 `-n auto --dist loadfile` for the parallel-safe bulk, then run
 `spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`
 serially because those files share repo-global local-data fixtures.
+Use `spec/README-timings.md` as the current per-heading audit and the source of
+truth for which headings stay smoke-only via `SPEC_PR_DESELECT_ARGS`.
 
 When running repo-local checks through `uv run`, make sure `target/release` is
 ahead of `.venv/bin` on `PATH` or refresh the editable install with

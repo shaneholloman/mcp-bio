@@ -43,6 +43,19 @@ def _markdown_section(text: str, heading: str, level: int = 2) -> str:
     return match.group(1)
 
 
+def _markdown_table_rows(text: str) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if all(re.fullmatch(r":?-+:?", cell) for cell in cells):
+            continue
+        rows.append(cells)
+    return rows
+
+
 def _workflow_job_block(workflow: str, job_name: str) -> str:
     match = re.search(
         rf"^  {re.escape(job_name)}:\n(.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)",
@@ -780,6 +793,80 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
         "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`"
         in technical_spec_section
     )
+
+
+def test_spec_lane_timing_report_is_documented_and_aligned_with_makefile() -> None:
+    makefile = _read_repo("Makefile")
+    report = _read_repo("spec/README-timings.md")
+    runbook = _read_repo("RUN.md")
+    technical = _read_repo("architecture/technical/overview.md")
+
+    three_lane_section = _normalize_ws(_markdown_section(report, "Three-Lane Split"))
+    audit_method_section = _normalize_ws(_markdown_section(report, "Audit Method"))
+    timing_audit_section = _markdown_section(report, "spec-pr Timing Audit")
+    smoke_only_section = _markdown_section(
+        report, "Smoke-Only Headings (SPEC_PR_DESELECT_ARGS)"
+    )
+    timing_audit_rows = _markdown_table_rows(timing_audit_section)
+    smoke_only_rows = _markdown_table_rows(smoke_only_section)
+    runbook_spec_section = _normalize_ws(_markdown_section(runbook, "Spec Suite"))
+    technical_spec_section = _normalize_ws(
+        _markdown_section(technical, "2. Spec Suite (`spec/`)", level=3)
+    )
+
+    for heading in (
+        "## Three-Lane Split",
+        "## Audit Method",
+        "## spec-pr Timing Audit",
+        "## Smoke-Only Headings (SPEC_PR_DESELECT_ARGS)",
+    ):
+        assert heading in report
+
+    for marker in ("`make spec-pr`", "`make spec`", "`make test-contracts`"):
+        assert marker in three_lane_section
+    assert "First-pass" in audit_method_section
+    assert "Warm-pass" in audit_method_section
+    assert (
+        "| File | Heading | First-pass Time | First-pass Result | Warm-pass Time | Warm-pass Result | Category | Disposition | Rationale |"
+        in report
+    )
+    assert timing_audit_rows[0] == [
+        "File",
+        "Heading",
+        "First-pass Time",
+        "First-pass Result",
+        "Warm-pass Time",
+        "Warm-pass Result",
+        "Category",
+        "Disposition",
+        "Rationale",
+    ]
+    assert smoke_only_rows[0] == ["Node ID", "Reason"]
+
+    deselected_node_ids = re.findall(r'--deselect "([^"]+)"', makefile)
+    assert deselected_node_ids
+    reported_node_ids = [row[0].strip("`") for row in smoke_only_rows[1:]]
+    assert reported_node_ids
+    assert len(reported_node_ids) == len(set(reported_node_ids))
+    assert set(reported_node_ids) == set(deselected_node_ids)
+
+    for row in timing_audit_rows[1:]:
+        first_pass_time = row[2].strip("`")
+        first_pass_result = row[3]
+        warm_pass_time = row[4].strip("`")
+        warm_pass_result = row[5]
+        category = row[6]
+
+        if first_pass_result == "passed":
+            assert re.fullmatch(r"\d+\.\d+s", first_pass_time)
+        if warm_pass_result == "passed":
+            assert re.fullmatch(r"\d+\.\d+s", warm_pass_time)
+        if category == "gated":
+            assert first_pass_result == "skipped"
+            assert warm_pass_result == "skipped"
+
+    assert "spec/README-timings.md" in runbook_spec_section
+    assert "spec/README-timings.md" in technical_spec_section
 
 
 def test_parallel_test_dependency_contract_is_declared() -> None:

@@ -15,6 +15,7 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/03-variant.md::Variant to Articles" \
 	--deselect "spec/06-article.md::Searching by Gene" \
 	--deselect "spec/06-article.md::Searching by Keyword" \
+	--deselect "spec/06-article.md::Keyword Search Can Force Lexical Ranking" \
 	--deselect "spec/06-article.md::Source-Specific PubTator Search Uses Default Retraction Filter" \
 	--deselect "spec/06-article.md::Source-Specific PubMed Search" \
 	--deselect "spec/06-article.md::Source-Specific LitSense2 Search" \

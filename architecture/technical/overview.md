@@ -325,6 +325,8 @@ Repo-local `make spec` and `make spec-pr` use `pytest-xdist` with
 `-n auto --dist loadfile` for the parallel-safe bulk, then run
 `spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`
 serially because those files share repo-global local-data fixtures.
+Use `spec/README-timings.md` as the current audit record for the PR lane and as
+the smoke-only inventory for `SPEC_PR_DESELECT_ARGS`.
 
 Important: `uv run` may execute a stale `.venv/bin/biomcp`. Either refresh
 with `uv pip install -e .` or ensure `target/release` is ahead of `.venv/bin`
