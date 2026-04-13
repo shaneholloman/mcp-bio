@@ -163,4 +163,25 @@ mod tests {
             other => panic!("unexpected command: {other:?}"),
         }
     }
+
+    #[tokio::test]
+    async fn handle_command_rejects_zero_limit_before_related_lookup() {
+        let cli =
+            Cli::try_parse_from(["biomcp", "disease", "articles", "melanoma", "--limit", "0"])
+                .expect("disease articles should parse");
+
+        let Cli {
+            command: Commands::Disease { cmd },
+            json,
+            ..
+        } = cli
+        else {
+            panic!("expected disease command");
+        };
+
+        let err = super::handle_command(cmd, json)
+            .await
+            .expect_err("zero disease articles limit should fail fast");
+        assert!(err.to_string().contains("--limit must be between 1 and 50"));
+    }
 }

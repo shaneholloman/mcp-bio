@@ -1,6 +1,6 @@
-use clap::CommandFactory;
+use clap::{CommandFactory, Parser};
 
-use crate::cli::Cli;
+use crate::cli::{Cli, Commands};
 
 fn render_article_search_long_help() -> String {
     let mut command = Cli::command();
@@ -76,4 +76,27 @@ fn article_date_help_advertises_shared_accepted_formats() {
     ));
     assert!(help.contains("`0` uses the default cap."));
     assert!(help.contains("Setting it equal to `--limit` disables capping."));
+}
+
+#[tokio::test]
+async fn handle_command_rejects_zero_limit_before_backend_lookup() {
+    let cli = Cli::try_parse_from(["biomcp", "article", "citations", "22663011", "--limit", "0"])
+        .expect("article citations should parse");
+
+    let Cli {
+        command: Commands::Article { cmd },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected article command");
+    };
+
+    let err = super::handle_command(cmd, json)
+        .await
+        .expect_err("zero article citations limit should fail fast");
+    assert!(
+        err.to_string()
+            .contains("--limit must be between 1 and 100")
+    );
 }
