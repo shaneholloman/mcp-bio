@@ -391,3 +391,43 @@ fn short_help_hides_chart_flags_but_long_help_shows_them() {
     assert!(long_help.contains("--theme <THEME>"));
     assert!(long_help.contains("--palette <PALETTE>"));
 }
+
+#[tokio::test]
+async fn handle_command_rejects_invalid_expression_chart() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "study",
+        "compare",
+        "--study",
+        "msk_impact_2017",
+        "--gene",
+        "TP53",
+        "--type",
+        "expression",
+        "--target",
+        "ERBB2",
+        "--chart",
+        "pie",
+        "--terminal",
+    ])
+    .expect("study compare should parse");
+
+    let Cli {
+        command: Commands::Study { cmd },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected study compare command");
+    };
+
+    let err = super::handle_command(cmd, json)
+        .await
+        .expect_err("expression compare should reject pie");
+    let msg = err.to_string();
+    assert!(msg.contains("study compare --type expression"));
+    assert!(msg.contains("box"));
+    assert!(msg.contains("violin"));
+    assert!(msg.contains("ridgeline"));
+    assert!(msg.contains("scatter"));
+}

@@ -120,6 +120,9 @@ pub struct TrialGetArgs {
     pub source: String,
 }
 
+mod dispatch;
+pub(super) use self::dispatch::{handle_get, handle_search};
+
 #[cfg(test)]
 mod tests {
     use clap::{CommandFactory, Parser};

@@ -14,6 +14,9 @@ pub struct PhenotypeSearchArgs {
     pub offset: usize,
 }
 
+mod dispatch;
+pub(super) use self::dispatch::handle_search;
+
 #[cfg(test)]
 mod tests {
     use clap::CommandFactory;

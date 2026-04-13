@@ -39,6 +39,9 @@ pub struct PgxGetArgs {
     pub sections: Vec<String>,
 }
 
+mod dispatch;
+pub(super) use self::dispatch::{handle_get, handle_search};
+
 #[cfg(test)]
 mod tests {
     use clap::Parser;

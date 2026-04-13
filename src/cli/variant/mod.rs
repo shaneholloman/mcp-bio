@@ -132,5 +132,8 @@ See also: biomcp list variant")]
     External(Vec<String>),
 }
 
+mod dispatch;
+pub(crate) use self::dispatch::{handle_command, handle_get, handle_search};
+
 #[cfg(test)]
 mod tests;

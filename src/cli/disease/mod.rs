@@ -103,6 +103,9 @@ See also: biomcp list disease")]
     },
 }
 
+mod dispatch;
+pub(super) use self::dispatch::{handle_command, handle_get, handle_search};
+
 #[cfg(test)]
 mod tests {
     use clap::{CommandFactory, Parser};

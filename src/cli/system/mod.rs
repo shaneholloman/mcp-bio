@@ -80,6 +80,11 @@ pub struct VersionArgs {
     pub verbose: bool,
 }
 
+mod dispatch;
+pub(crate) use self::dispatch::{
+    handle_batch, handle_ema, handle_enrich, handle_uninstall, handle_version, handle_who,
+};
+
 #[cfg(test)]
 mod tests {
     use clap::{CommandFactory, FromArgMatches, Parser};

@@ -138,5 +138,8 @@ See also: biomcp list study")]
     },
 }
 
+mod dispatch;
+pub(crate) use self::dispatch::handle_command;
+
 #[cfg(test)]
 mod tests;
