@@ -40,9 +40,9 @@ the shared `.cache` directory, then once with timing enabled.
 
 | Command | Before | After |
 |---|---|---|
-| `make test` | `54.48s` | TBD |
-| `make spec-pr` | `356.22s` | TBD |
-| `make check` | `55.15s` | TBD |
+| `make test` | `54.48s` | `12.32s` |
+| `make spec-pr` | `356.22s` | `135.55s` |
+| `make check` | `55.15s` | `19.66s` |
 
 The first serial `make spec-pr` warm pass hit two 60s timeouts in
 `spec/18-source-labels.md`; the baseline above records the subsequent warmed
