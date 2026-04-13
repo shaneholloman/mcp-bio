@@ -9,8 +9,15 @@ shared target, owned artifacts, and promotion contract, see
 ## Prerequisites
 
 - Rust toolchain with `cargo`
+- `cargo-nextest` for repo-local `make test` and `make check`
 - `uv` for repo-local pytest and spec flows
 - `curl` for `scripts/contract-smoke.sh`
+
+Install `cargo-nextest` with:
+
+```bash
+cargo install cargo-nextest --locked
+```
 
 ## Build The Shared Target
 
@@ -94,10 +101,14 @@ The installed pre-commit hook is the fast local gate. It enforces
 `cargo fmt --check` and `cargo clippy --lib --tests -- -D warnings`. It does
 not run `cargo test`, `make check`, `make spec-pr`, or `make test-contracts`.
 
-Use `make check` for the full Rust lint/test/quality-ratchet lane, `make spec-pr`
-for the stable PR-blocking spec lane, and `make test-contracts` for the
-Python/docs contract lane. Use `git commit --no-verify` to skip the hook for a
-one-off commit.
+Use `make check` for the full Rust lint/test/quality-ratchet lane; its `test`
+phase now shells out to `cargo nextest run`. Use `make spec-pr` for the stable
+PR-blocking spec lane; it runs `pytest-xdist` with `-n auto --dist loadfile`
+for the parallel-safe bulk, then runs `spec/05-drug.md`, `spec/13-study.md`,
+and `spec/21-cross-entity-see-also.md` serially because those files share
+repo-global local-data fixtures. Use `make test-contracts` for the Python/docs
+contract lane. Use `git commit --no-verify` to skip the hook for a one-off
+commit.
 
 `make test-contracts` runs `cargo build --release --locked`, `uv sync --extra dev`, `pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"`, and `mkdocs build --strict` - the same steps that PR CI `contracts` requires. Use this to catch docs-contract and Python regressions before pushing.
 
@@ -131,6 +142,11 @@ See `docs/reference/mcp-server.md` for the documented MCP surface.
 ```bash
 make spec
 ```
+
+`make spec` and `make spec-pr` both use `pytest-xdist` with
+`-n auto --dist loadfile` for the parallel-safe bulk, then run
+`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`
+serially because those files share repo-global local-data fixtures.
 
 When running repo-local checks through `uv run`, make sure `target/release` is
 ahead of `.venv/bin` on `PATH` or refresh the editable install with

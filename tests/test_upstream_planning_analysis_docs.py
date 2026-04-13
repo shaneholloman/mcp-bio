@@ -688,6 +688,12 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         'spec/07-disease.md::Disease to Articles',
     ):
         assert f'--deselect "{node_id}"' in makefile
+    assert (
+        "SPEC_SERIAL_FILES = spec/05-drug.md spec/13-study.md "
+        "spec/21-cross-entity-see-also.md"
+    ) in makefile
+    assert "SPEC_XDIST_ARGS = -n auto --dist loadfile" in makefile
+    assert re.search(r"^test:\n\tcargo nextest run$", makefile, flags=re.MULTILINE)
     assert re.search(
         r'^install:\n'
         r'\tmkdir -p "\$\(HOME\)/\.local/bin"\n'
@@ -697,7 +703,20 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         flags=re.MULTILINE,
     )
     assert re.search(
-        r"^spec-pr:\n\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v \$\(SPEC_PR_DESELECT_ARGS\)'$",
+        r"^spec:\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 120 -v \$\(SPEC_XDIST_ARGS\) --ignore spec/05-drug\.md --ignore spec/13-study\.md --ignore spec/21-cross-entity-see-also\.md'\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest \$\(SPEC_SERIAL_FILES\) --mustmatch-lang bash --mustmatch-timeout 120 -v'$",
+        makefile,
+        flags=re.MULTILINE,
+    )
+    assert re.search(
+        r"^spec-pr:\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v \$\(SPEC_XDIST_ARGS\) \$\(SPEC_PR_DESELECT_ARGS\) --ignore spec/05-drug\.md --ignore spec/13-study\.md --ignore spec/21-cross-entity-see-also\.md'\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest \$\(SPEC_SERIAL_FILES\) --mustmatch-lang bash --mustmatch-timeout 60 -v'$",
         makefile,
         flags=re.MULTILINE,
     )
@@ -709,6 +728,52 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         r"\tuv run mkdocs build --strict$",
         makefile,
         flags=re.MULTILINE,
+    )
+
+
+def test_repo_local_parallel_test_contract_is_documented() -> None:
+    contributing = _read_repo("CONTRIBUTING.md")
+    runbook = _read_repo("RUN.md")
+    technical = _read_repo("architecture/technical/overview.md")
+    contributing_ws = _normalize_ws(contributing)
+    runbook_ws = _normalize_ws(runbook)
+    technical_gate_section = _normalize_ws(
+        _markdown_section(technical, "1. CI and Repo Gates", level=3)
+    )
+    technical_spec_section = _normalize_ws(
+        _markdown_section(technical, "2. Spec Suite (`spec/`)", level=3)
+    )
+
+    assert "cargo install cargo-nextest --locked" in contributing
+    assert "`make test` uses `cargo nextest run`." in contributing_ws
+    assert "`make spec` and `make spec-pr` use `pytest-xdist`" in contributing_ws
+    assert "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md` stay serial" in contributing_ws
+    assert "beelink" in contributing
+    assert "2026-04-13" in contributing
+    assert "/usr/bin/time -p" in contributing
+    assert "warm-cache steady-state" in contributing_ws
+    assert "| Command | Before | After |" in contributing
+    for row in (
+        "| `make test` |",
+        "| `make spec-pr` |",
+        "| `make check` |",
+    ):
+        assert row in contributing
+
+    assert "cargo-nextest" in runbook
+    assert "`make test` and `make check`" in runbook_ws
+    assert "`cargo nextest run`" in runbook_ws
+    assert "`make spec-pr`" in runbook_ws
+    assert "`pytest-xdist`" in runbook_ws
+    assert "`-n auto --dist loadfile`" in runbook_ws
+    assert "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`" in runbook_ws
+
+    assert "`cargo nextest run`" in technical_gate_section
+    assert "`cargo test`" in technical_gate_section
+    assert "`pytest-xdist` with `-n auto --dist loadfile`" in technical_spec_section
+    assert (
+        "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`"
+        in technical_spec_section
     )
 
 

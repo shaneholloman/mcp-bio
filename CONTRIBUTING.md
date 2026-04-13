@@ -17,3 +17,33 @@ When you open an issue or discussion, include:
 - the command you ran
 - the relevant output or error text
 - any source or API context needed to reproduce the problem
+
+## Repo-Local Test Setup
+
+Install `cargo-nextest` before running repo-local Rust verification:
+
+```bash
+cargo install cargo-nextest --locked
+```
+
+`make test` uses `cargo nextest run`. `make spec` and `make spec-pr` use
+`pytest-xdist` for the parallel-safe bulk with `-n auto --dist loadfile`, while
+`spec/05-drug.md`, `spec/13-study.md`, and
+`spec/21-cross-entity-see-also.md` stay serial because they share repo-global
+local-data fixtures.
+
+### Timing Method
+
+Measured on beelink on 2026-04-13 with `/usr/bin/time -p` using warm-cache
+steady-state runs. Each command was run once untimed to warm build artifacts and
+the shared `.cache` directory, then once with timing enabled.
+
+| Command | Before | After |
+|---|---|---|
+| `make test` | `54.48s` | TBD |
+| `make spec-pr` | `356.22s` | TBD |
+| `make check` | `55.15s` | TBD |
+
+The first serial `make spec-pr` warm pass hit two 60s timeouts in
+`spec/18-source-labels.md`; the baseline above records the subsequent warmed
+steady-state rerun.
