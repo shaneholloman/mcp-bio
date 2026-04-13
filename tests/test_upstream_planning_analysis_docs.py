@@ -809,28 +809,15 @@ def test_validation_profile_and_hook_contract_docs_are_pinned() -> None:
     assert "git commit --no-verify" in runbook_premerge
 
     assert ".march/validation-profiles.toml" in ci_gate_section
-    for profile in (
-        "`preflight`",
-        "`baseline`",
-        "`focused`",
-        "`full-blocking`",
-        "`full-contracts`",
+    assert "`01-design` and `02-design-review` without a validation profile" in ci_gate_section
+    for row in (
+        "| `preflight` | `cargo check --all-targets` | `kickoff` |",
+        "| `baseline` | `cargo check --all-targets` | declared, not assigned |",
+        "| `focused` | `cargo test --lib && cargo clippy --lib --tests -- -D warnings` | `03-code`, `04-code-review` |",
+        "| `full-blocking` | `make check && make spec-pr` | `05-verify` |",
+        "| `full-contracts` | `make check && make spec-pr && make test-contracts` | declared, not assigned |",
     ):
-        assert profile in ci_gate_section
-    for command in (
-        "`cargo check --all-targets`",
-        "`cargo test --lib && cargo clippy --lib --tests -- -D warnings`",
-        "`make check && make spec-pr`",
-        "`make check && make spec-pr && make test-contracts`",
-    ):
-        assert command in ci_gate_section
-    for mapping in (
-        "`kickoff`",
-        "`03-code`",
-        "`04-code-review`",
-        "`05-verify`",
-    ):
-        assert mapping in ci_gate_section
+        assert row in ci_gate_section
     assert (
         "`full-blocking` deliberately uses `make check && make spec-pr`, not full `make spec`"
         in ci_gate_section
