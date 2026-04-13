@@ -1,0 +1,137 @@
+use crate::cli::Cli;
+use clap::Parser;
+
+fn parse_cmd(cmd: &str) -> Vec<String> {
+    shlex::split(cmd).unwrap_or_else(|| panic!("shlex failed on: {cmd}"))
+}
+
+fn assert_parses(cmd: &str) {
+    Cli::try_parse_from(parse_cmd(cmd)).unwrap_or_else(|e| panic!("failed to parse '{cmd}': {e}"));
+}
+
+#[test]
+fn gene_next_commands_parse() {
+    assert_parses(r#"biomcp search trial -c "Dravet syndrome" -s recruiting"#);
+    assert_parses("biomcp search pgx -g BRAF");
+    assert_parses("biomcp search variant -g BRAF");
+    assert_parses("biomcp search article -g BRAF");
+    assert_parses("biomcp search drug --target BRAF");
+    assert_parses("biomcp gene trials BRAF");
+}
+
+#[test]
+fn variant_next_commands_parse() {
+    assert_parses("biomcp get gene BRAF");
+    assert_parses(r#"biomcp search article -g SCN1A -d "Dravet syndrome" -k "T1174S" --limit 5"#);
+    assert_parses(r#"biomcp search article -g SCN1A -k "T1174S" --limit 5"#);
+    assert_parses(r#"biomcp search article -d "Dravet syndrome" -k "T1174S" --limit 5"#);
+    assert_parses(r#"biomcp search article -k "T1174S" --limit 5"#);
+    assert_parses("biomcp search drug --target BRAF");
+    assert_parses(r#"biomcp variant trials "rs113488022""#);
+    assert_parses(r#"biomcp variant articles "rs113488022""#);
+    assert_parses(r#"biomcp variant oncokb "rs113488022""#);
+}
+
+#[test]
+fn article_next_commands_parse() {
+    assert_parses("biomcp search gene -q EGFR");
+    assert_parses(r#"biomcp search gene -q "serine-threonine protein kinase""#);
+    assert_parses("biomcp search disease --query melanoma");
+    assert_parses("biomcp get drug osimertinib");
+    assert_parses("biomcp article entities 12345");
+    assert_parses("biomcp article citations 12345 --limit 3");
+    assert_parses("biomcp article references 12345 --limit 3");
+    assert_parses("biomcp article recommendations 12345 67890 --negative 11111 --limit 3");
+}
+
+#[test]
+fn trial_next_commands_parse() {
+    assert_parses(
+        r#"biomcp search article --drug dabrafenib -q "NCT01234567 Example trial" --limit 5"#,
+    );
+    assert_parses(r#"biomcp search article -q "NCT01234567 Example trial" --limit 5"#);
+    assert_parses("biomcp search disease --query melanoma");
+    assert_parses("biomcp search article -d melanoma");
+    assert_parses("biomcp search trial -c melanoma");
+    assert_parses("biomcp get drug dabrafenib");
+    assert_parses("biomcp drug trials dabrafenib");
+}
+
+#[test]
+fn disease_next_commands_parse() {
+    assert_parses("biomcp get gene SCN1A clingen constraint");
+    assert_parses(r#"biomcp get disease "Dravet syndrome" genes phenotypes"#);
+    assert_parses("biomcp search trial -c melanoma");
+    assert_parses("biomcp search article -d melanoma");
+    assert_parses(r#"biomcp search drug --indication "melanoma""#);
+}
+
+#[test]
+fn pgx_next_commands_parse() {
+    assert_parses("biomcp search pgx -g CYP2D6");
+    assert_parses("biomcp search pgx -d warfarin");
+}
+
+#[test]
+fn drug_next_commands_parse() {
+    assert_parses("biomcp drug trials osimertinib");
+    assert_parses("biomcp drug adverse-events osimertinib");
+    assert_parses("biomcp get gene EGFR");
+}
+
+#[test]
+fn pathway_next_commands_parse() {
+    assert_parses("biomcp pathway drugs R-HSA-5673001");
+}
+
+#[test]
+fn protein_next_commands_parse() {
+    assert_parses("biomcp get protein P00533 structures");
+    assert_parses("biomcp get protein P00533 complexes");
+    assert_parses("biomcp get gene EGFR");
+}
+
+#[test]
+fn adverse_event_next_commands_parse() {
+    assert_parses("biomcp get drug osimertinib");
+    assert_parses("biomcp drug adverse-events osimertinib");
+    assert_parses("biomcp drug trials osimertinib");
+}
+
+#[test]
+fn device_event_next_commands_parse() {
+    assert_parses("biomcp search adverse-event --type device --device HeartValve");
+    assert_parses(r#"biomcp search adverse-event --type recall --classification "Class I""#);
+}
+
+#[test]
+fn discover_next_commands_parse() {
+    // gene — unambiguous and ambiguous
+    assert_parses("biomcp get gene EGFR");
+    assert_parses(r#"biomcp search gene -q "ERBB1" --limit 10"#);
+    // drug
+    assert_parses(r#"biomcp get drug "pembrolizumab""#);
+    assert_parses(r#"biomcp drug adverse-events pembrolizumab"#);
+    assert_parses(r#"biomcp get drug pembrolizumab safety"#);
+    assert_parses(r#"biomcp search drug --indication "Myasthenia gravis" --limit 5"#);
+    // disease — unambiguous helpers and ambiguous fallback
+    assert_parses(r#"biomcp get disease "cystic fibrosis""#);
+    assert_parses(r#"biomcp disease trials "cystic fibrosis""#);
+    assert_parses(r#"biomcp search article -k "cystic fibrosis" --limit 5"#);
+    assert_parses(r#"biomcp search disease -q "diabetes" --limit 10"#);
+    assert_parses(r#"biomcp get disease MONDO:0007947 phenotypes"#);
+    // symptom
+    assert_parses(r#"biomcp search disease -q "chest pain" --limit 10"#);
+    assert_parses(r#"biomcp search trial -c "chest pain" --limit 5"#);
+    assert_parses(r#"biomcp search article -k "chest pain" --limit 5"#);
+    // pathway
+    assert_parses(r#"biomcp search pathway -q "MAPK signaling" --limit 5"#);
+    // gene+disease orientation
+    assert_parses(r#"biomcp search all --gene BRAF --disease "melanoma""#);
+    // variant with and without gene inference
+    assert_parses(r#"biomcp get variant "BRAF V600E""#);
+    assert_parses(r#"biomcp search article -k "V600E" --limit 5"#);
+    // trial intent
+    assert_parses(r#"biomcp search trial -c "Breast Cancer" --limit 5"#);
+    assert_parses(r#"biomcp search article -k "Breast Cancer" --limit 5"#);
+}
