@@ -154,7 +154,9 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     article_keyword_reference = _read_repo("docs/reference/article-keyword-search.md")
     data_sources = _read_repo("docs/reference/data-sources.md")
     cli_list_reference = _read_repo("src/cli/list_reference.md")
-    article_impl = _read_repo("src/entities/article.rs")
+    article_mod = _read_repo("src/entities/article/mod.rs")
+    article_planner = _read_repo("src/entities/article/planner.rs")
+    article_graph = _read_repo("src/entities/article/graph.rs")
     article_usage = _read_repo("tests/article_usage_stderr.rs")
     release_workflow = _read_repo(".github/workflows/release.yml")
     install_script = _read_repo("install.sh")
@@ -277,15 +279,18 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "keyword-bearing queries and an optional Semantic Scholar leg"
         in data_sources_ws
     )
-    assert "fn has_strict_europepmc_filters(filters: &ArticleSearchFilters) -> bool {" in article_impl
-    assert "fn plan_backends(" in article_impl
-    assert "pub fn semantic_scholar_search_enabled(" in article_impl
-    assert "--source pubtator does not support --type." in article_impl
-    assert "--source pubtator does not support --open-access." in article_impl
-    assert "Unsupported identifier format for Semantic Scholar article helpers:" in article_impl
+    assert (
+        "fn has_strict_europepmc_filters(filters: &ArticleSearchFilters) -> bool {"
+        in article_planner
+    )
+    assert "fn plan_backends(" in article_planner
+    assert "pub(crate) fn semantic_scholar_search_enabled(" in article_planner
+    assert "--source pubtator does not support --type." in article_planner
+    assert "--source pubtator does not support --open-access." in article_planner
+    assert "Unsupported identifier format for Semantic Scholar article helpers:" in article_graph
     assert (
         "Unsupported identifier format. BioMCP resolves PMID (digits only"
-        in article_impl
+        in article_mod
     )
     assert "invalid_article_type_is_clean_usage_error_before_pubtator_route" in article_usage
     assert "missing_article_filters_is_clean_usage_error" in article_usage
@@ -444,7 +449,7 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     cli_list = _read_repo("src/cli/list.rs")
     cli_list_reference = _read_repo("src/cli/list_reference.md")
     cli_reference_guide = _read_repo("docs/user-guide/cli-reference.md")
-    drug_entity = _read_repo("src/entities/drug.rs")
+    drug_get = _read_repo("src/entities/drug/get.rs")
     ema_source = _read_repo("src/sources/ema.rs")
     health = _read_repo("src/cli/health.rs")
     drug_spec = _read_repo("spec/05-drug.md")
@@ -552,8 +557,8 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
         in cli_reference_guide_ws
     )
     assert "get drug <name> regulatory [--region <us|eu|who|all>]" in drug_spec
-    assert "--region is not supported with approvals." in drug_entity
-    assert "--region can only be used with regulatory, safety, shortage, or all." in drug_entity
+    assert "--region is not supported with approvals." in drug_get
+    assert "--region can only be used with regulatory, safety, shortage, or all." in drug_get
     assert "## Provenance and Rendering" in source_integration
     assert "`source_label`" in source_integration
     assert "source-specific notes" in source_integration
@@ -785,3 +790,52 @@ def test_runtime_contract_docs_and_scripts_align_on_release_target() -> None:
         assert "$ROOT/target/release/biomcp" in demo_script
         assert "target/debug/biomcp" not in demo_script
         assert 'command -v biomcp >/dev/null 2>&1' in demo_script
+
+
+def test_validation_profile_and_hook_contract_docs_are_pinned() -> None:
+    runbook = _read_repo("RUN.md")
+    technical = _read_repo("architecture/technical/overview.md")
+    runbook_premerge = _normalize_ws(_markdown_section(runbook, "Pre-Merge Checks"))
+    ci_gate_section = _normalize_ws(_markdown_section(technical, "1. CI and Repo Gates", level=3))
+
+    assert "pre-commit hook" in runbook_premerge
+    assert "`cargo fmt --check`" in runbook_premerge
+    assert "`cargo clippy --lib --tests -- -D warnings`" in runbook_premerge
+    assert "does not run" in runbook_premerge
+    assert "`cargo test`" in runbook_premerge
+    assert "`make check`" in runbook_premerge
+    assert "`make spec-pr`" in runbook_premerge
+    assert "`make test-contracts`" in runbook_premerge
+    assert "git commit --no-verify" in runbook_premerge
+
+    assert ".march/validation-profiles.toml" in ci_gate_section
+    for profile in (
+        "`preflight`",
+        "`baseline`",
+        "`focused`",
+        "`full-blocking`",
+        "`full-contracts`",
+    ):
+        assert profile in ci_gate_section
+    for command in (
+        "`cargo check --all-targets`",
+        "`cargo test --lib && cargo clippy --lib --tests -- -D warnings`",
+        "`make check && make spec-pr`",
+        "`make check && make spec-pr && make test-contracts`",
+    ):
+        assert command in ci_gate_section
+    for mapping in (
+        "`kickoff`",
+        "`03-code`",
+        "`04-code-review`",
+        "`05-verify`",
+    ):
+        assert mapping in ci_gate_section
+    assert (
+        "`full-blocking` deliberately uses `make check && make spec-pr`, not full `make spec`"
+        in ci_gate_section
+    )
+    assert (
+        "`full-contracts` is declared for tickets that need the contracts lane, but the shared build flow does not assign it today"
+        in ci_gate_section
+    )
