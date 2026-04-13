@@ -1,74 +1,88 @@
-# Code Review Log — Ticket 187
+# Code Review Log — Ticket 188
 
 ## Critique
 
 ### Design completeness audit
 
-- Read `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, and `git diff main..HEAD`.
-- Mapped every repaired design item and acceptance criterion to the current repo surface:
-  - `Makefile` now uses `cargo nextest run`, defines `SPEC_SERIAL_FILES`, defines `SPEC_XDIST_ARGS`, and splits `spec` / `spec-pr` into xdist bulk plus serial tail.
-  - `pyproject.toml` and `uv.lock` now carry `pytest-xdist`.
-  - `CONTRIBUTING.md`, `RUN.md`, and `architecture/technical/overview.md` now document the repo-local parallel test contract.
-  - `tests/test_upstream_planning_analysis_docs.py` now pins the Makefile/docs contract for the split runner strategy.
-- No design item was missing a corresponding code/doc change.
-- The code log records the required order: baseline timings first, then docs/tests red-state work, then runtime edits. I did not find evidence contradicting that sequence.
+- Read `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, and `git diff main..HEAD`.
+- Mapped the design-required contract changes to the diff:
+  - `spec/README-timings.md` supplies the required three-lane split, audit method, per-heading timing table, and smoke-only inventory.
+  - `RUN.md` and `architecture/technical/overview.md` now point readers to `spec/README-timings.md`.
+  - `tests/test_upstream_planning_analysis_docs.py` derives the smoke-only inventory from the actual `Makefile` deselect list instead of hardcoding guessed headings.
+  - `Makefile` moves `spec/06-article.md::Keyword Search Can Force Lexical Ranking` into `SPEC_PR_DESELECT_ARGS`.
+- Acceptance-criteria coverage is present in the changed surface. The remaining proof obligations stay in existing spec headings or gate commands:
+  - `spec/18-source-labels.md`, `spec/02-gene.md`, `spec/07-disease.md`, and `spec/11-evidence-urls.md` still carry the outside-in coverage that the design chose to keep in `spec-pr`.
+  - `spec/06-article.md::Keyword Search Can Force Lexical Ranking` still exists as the smoke-lane proof after the Makefile move.
+- The execution order in `.march/code-log.md` updates docs/tests before the runtime Makefile edit, which matches the design’s sequencing requirement.
 
 ### Test-design traceability
 
-- Verified matching proof coverage for the Makefile split contract, docs contract, serial-tail study proof, validation-profile contract, and xdist-backed spec proof.
-- Found one missing automated proof: the design required proof that `pytest-xdist` is present in the dev dependency contract, but no test pinned `pyproject.toml`/`uv.lock` or importability.
-- Found one weak assertion: the docs contract only checked timing-table row prefixes, so `TBD` placeholders or blank cells could slip through while the test still passed.
-- Found one stale docs contract: `RUN.md` still said the pre-commit hook skips `cargo test` in a repo-local pre-merge section, even though the local Rust test lane is now `cargo nextest run`.
+- Proof-matrix item “Timing report exists and has the required schema” maps to `tests/test_upstream_planning_analysis_docs.py::test_spec_lane_timing_report_is_documented_and_aligned_with_makefile`.
+- Proof-matrix item “Smoke-only inventory matches the actual Makefile deselect list” mapped to the same test, but the original assertion was too weak: it only checked that each Makefile node ID appeared somewhere in the report.
+- Proof-matrix item “Runbook and technical overview point to the current audit” also maps to that docs-contract test and was already covered.
+- The spec-level proof items still map to existing outside-in spec headings:
+  - `spec/18-source-labels.md` for retained source-label coverage
+  - `spec/06-article.md::Keyword Search Can Force Lexical Ranking` for the newly moved smoke-only heading
+- Findings:
+  1. [spec/README-timings.md:230] The report row for `spec/03-variant.md` used the node-id-like text `Searching by c::HGVS`, recorded `n/a` for both timing cells, and still labeled the row `passed`/`fast`. That violated the design’s per-heading timing requirement.
+  2. [tests/test_upstream_planning_analysis_docs.py:846-851] The smoke-only inventory assertion only enforced one-way inclusion, so stale extra rows in `spec/README-timings.md` could drift from `SPEC_PR_DESELECT_ARGS` without failing CI.
+  3. [tests/test_upstream_planning_analysis_docs.py:853-865] The timing-report test did not require numeric timing cells for passed rows, so the broken `c.HGVS` entry could ship undetected.
 
-### Security / duplication / quality checks
+### Security / duplication / implementation quality
 
-- Security: no new untrusted-input flow, shell interpolation, path injection, or secret exposure was introduced by the ticket surface I reviewed.
-- Duplication: searched for existing equivalents of the new Makefile variables and doc contract coverage; the implementation reused the existing contract-test file rather than inventing a parallel abstraction.
-- Quality: the implementation follows adjacent repo patterns and keeps the runner split explicit in the Makefile instead of hiding it in a helper script.
+- Security: the changed surface is docs/tests/Makefile only; I found no new injection, secret exposure, path traversal, or auth-bypass risk.
+- Duplication: searched the test file for an existing markdown-table helper before adding one and found none, so the new helper is not duplicating an existing utility.
+- Implementation quality: the original change followed adjacent docs-contract patterns, but the report/test pair was not strict enough to keep the audit data trustworthy over time.
 
 ## Fix Plan
 
-- Add an automated contract test for the `pytest-xdist` dev dependency and runtime importability.
-- Strengthen the timing-table assertions so the docs contract requires measured values instead of placeholders.
-- Update the runbook’s pre-commit wording to reference `cargo nextest run`, then pin that wording in the existing docs-contract test.
+- Re-measure `spec/03-variant.md::Searching by c.HGVS` with cold and warm targeted runs and repair the bad audit row.
+- Strengthen the docs-contract test to parse markdown tables, require exact equality between the report’s smoke-only inventory and the Makefile deselect set, and reject any passed timing row that lacks numeric timing data.
 
 ## Repair
 
 ### Fixes applied
 
-- Added `test_parallel_test_dependency_contract_is_declared` in `tests/test_upstream_planning_analysis_docs.py` to assert:
-  - `pytest-xdist` is listed in `pyproject.toml` dev dependencies
-  - `uv.lock` contains the dev-extra dependency edge and package entry
-  - `xdist` is importable in the repo test environment
-- Strengthened `test_repo_local_parallel_test_contract_is_documented` so the timing table must contain concrete `NN.NNs` before/after values and no `TBD` placeholders.
-- Updated `RUN.md` so the pre-commit section says it does not run `cargo nextest run`, not `cargo test`.
-- Updated `test_validation_profile_and_hook_contract_docs_are_pinned` to pin the corrected runbook wording.
+- Ran supplemental targeted measurements for the broken report row and saved the evidence under:
+  - `.march/review-c-hgvs-cold.log`
+  - `.march/review-c-hgvs-warm.log`
+- Updated `spec/README-timings.md` to:
+  - explain why `Searching by c.HGVS` needed a supplemental rerun
+  - correct the human-readable heading text
+  - replace the unsupported `n/a` timing cells with the measured `0.49s` cold/warm timings
+- Added `_markdown_table_rows()` in `tests/test_upstream_planning_analysis_docs.py` and strengthened `test_spec_lane_timing_report_is_documented_and_aligned_with_makefile` to:
+  - assert the timing and smoke-only table headers structurally
+  - compare the smoke-only report node IDs to the Makefile deselect list as an exact set match
+  - reject duplicate smoke-only rows
+  - require numeric timing cells for passed rows
+  - require `gated` rows to remain `skipped`
 
 ### Post-fix collateral scan
 
-- After the test-file edits:
-  - no dead imports were introduced
-  - no shadowed variables were introduced
-  - no stale error text or cleanup paths were affected
-- After the runbook wording fix:
-  - the pinned docs-contract test was updated in the same change
-  - no additional stale `cargo test` reference remained in the repo-local pre-merge section
+- After the report fix:
+  - verified the only remaining `n/a` rows are the four key-gated `skipped` entries
+  - verified the stale `Searching by c::HGVS` text is gone
+  - verified the “four gated headings” note still matches the table
+- After the test fix:
+  - confirmed the new helper is used and no unused imports or dead locals were introduced
+  - caught a follow-on issue where I had briefly normalized the timing-audit section before table parsing; fixed that immediately so table parsing operates on the raw markdown section
 
 ## Validation
 
-- `uv run pytest tests/test_upstream_planning_analysis_docs.py::test_repo_local_parallel_test_contract_is_documented tests/test_upstream_planning_analysis_docs.py::test_parallel_test_dependency_contract_is_declared tests/test_upstream_planning_analysis_docs.py::test_validation_profile_and_hook_contract_docs_are_pinned tests/test_upstream_planning_analysis_docs.py::test_makefile_spec_split_contract_is_documented_and_executable tests/test_validation_profile_contract.py tests/test_directory_submission_contract.py::test_study_chart_dimensions_spec_runs_as_a_targeted_heading -v`
-- `uv run pytest spec/01-overview.md --mustmatch-lang bash --mustmatch-timeout 120 -n auto --dist loadfile -k Version -v`
+- `uv run pytest tests/test_upstream_planning_analysis_docs.py::test_makefile_spec_split_contract_is_documented_and_executable tests/test_upstream_planning_analysis_docs.py::test_repo_local_parallel_test_contract_is_documented tests/test_upstream_planning_analysis_docs.py::test_spec_lane_timing_report_is_documented_and_aligned_with_makefile -v`
 - `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
+
+I did not rerun `make spec-pr` or `make check` from the review step. `.march/code-log.md` already records green full-blocking proof for the implementation, and the review repairs were limited to docs/tests.
 
 ## Residual Concerns
 
-- No additional scope-external issues were filed from this review.
-- Verify should still run the scheduled `full-blocking` gate (`make check && make spec-pr`) in step 05; I did not rerun the full runtime gate from this review step because the review fixes were limited to docs/tests.
+- No additional out-of-scope issues were filed from this review.
+- No remaining blocking concerns on the touched surface.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | missing-test | yes | Design proof item for `pytest-xdist` availability had no matching automated contract test for `pyproject.toml` / `uv.lock` or importability. |
-| 2 | weak-assertion | no | Timing-table test only checked row prefixes, so placeholders or empty before/after cells could pass despite the design requiring measured values. |
-| 3 | stale-doc | no | `RUN.md` pre-merge guidance still referenced `cargo test` instead of the shipped repo-local `cargo nextest run` lane. |
+| 1 | stale-doc | yes | `spec/README-timings.md` recorded `spec/03-variant.md::Searching by c.HGVS` as passed/fast while leaving both timing cells as `n/a`, so the per-heading audit was incomplete. |
+| 2 | weak-assertion | no | The smoke-only inventory test only checked that Makefile deselect IDs appeared in the report, not that the report matched the Makefile exactly. |
+| 3 | weak-assertion | yes | The timing-report test allowed `passed` rows with non-numeric timing cells, so incomplete audit data could pass CI. |

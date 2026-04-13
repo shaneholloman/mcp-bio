@@ -16,6 +16,7 @@
 - Derived the exact commands from `make -n spec-pr`, then added `--durations=0` and saved them in `.march/spec-pr-profile.commands.sh`.
 - Removed `.cache/` before the first pass to capture cold-start behavior, then reran the same commands warm without clearing caches.
 - Categories: `fast` <10s, `medium` 10-60s, `slow` >60s, `flaky` = passed during the audit but failed the final end-to-end lane due provider rate limiting, `gated` = skipped because an optional-key proof did not execute in this environment.
+- `spec/03-variant.md::Searching by c.HGVS` needed a supplemental cold/warm rerun because the saved xdist `--durations=0` tables did not emit a numeric row for that heading even though both lane passes executed it; those targeted measurements are saved in `.march/review-c-hgvs-{cold,warm}.log`.
 - The four gated headings in this audit stayed listed in the PR lane, but this environment did not have the provider credentials needed to execute them, so their time cells are `n/a`.
 
 | Phase | Result | Wall Time |
@@ -227,7 +228,7 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/17-guide-workflows.md` | `Discoverability Surfaces` | `0.06s` | passed | `0.07s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Article Batch Limit Enforcement` | `0.06s` | passed | `0.06s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Federated Deep Offset Guard` | `0.06s` | passed | `0.06s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/03-variant.md` | `Searching by c::HGVS` | `n/a` | passed | `n/a` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/03-variant.md` | `Searching by c.HGVS` | `0.49s` | passed | `0.49s` | passed | fast | keep in spec-pr | The targeted cold and warm reruns both stayed under a second, so the heading remains a cheap PR-lane proof. |
 | `spec/11-evidence-urls.md` | `JSON Metadata Contract` | `n/a` | skipped | `n/a` | skipped | gated | keep in spec-pr (key-gated) | Optional-key proof skipped without the provider credential; keep the heading in the PR lane when keys are available. |
 | `spec/11-evidence-urls.md` | `Markdown Evidence Links` | `n/a` | skipped | `n/a` | skipped | gated | keep in spec-pr (key-gated) | Optional-key proof skipped without the provider credential; keep the heading in the PR lane when keys are available. |
 | `spec/12-search-positionals.md` | `Adverse-event Positional Query` | `n/a` | skipped | `n/a` | skipped | gated | keep in spec-pr (key-gated) | Optional-key proof skipped without the provider credential; keep the heading in the PR lane when keys are available. |
