@@ -282,6 +282,27 @@ BioMCP has six distinct verification and operator-inspection surfaces.
 - The grounding implementation surfaces for this split are `Makefile`,
   `.github/workflows/ci.yml`, and `.github/workflows/contracts.yml`.
 
+#### March Validation Profiles
+
+`.march/validation-profiles.toml` is the source of record for BioMCP's March
+validation tiers. The shared build flow currently maps `kickoff` to
+`preflight`, leaves `01-design` and `02-design-review` without a validation
+profile, runs `focused` for `03-code` and `04-code-review`, and runs
+`full-blocking` for `05-verify`.
+
+| Profile | Command | Current build-flow use |
+|---|---|---|
+| `preflight` | `cargo check --all-targets` | `kickoff` |
+| `baseline` | `cargo check --all-targets` | declared, not assigned |
+| `focused` | `cargo test --lib && cargo clippy --lib --tests -- -D warnings` | `03-code`, `04-code-review` |
+| `full-blocking` | `make check && make spec-pr` | `05-verify` |
+| `full-contracts` | `make check && make spec-pr && make test-contracts` | declared, not assigned |
+
+`full-blocking` deliberately uses `make check && make spec-pr`, not full
+`make spec`, because `SPEC_PR_DESELECT_ARGS` is the stable PR-blocking spec
+set. `full-contracts` is declared for tickets that need the contracts lane, but
+the shared build flow does not assign it today.
+
 ### 2. Spec Suite (`spec/`)
 
 BDD executable documentation written as `mustmatch` spec files. The suite

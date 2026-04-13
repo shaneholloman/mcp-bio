@@ -135,7 +135,7 @@ def test_ticketed_blog_install_blocks_put_curl_before_uv_and_pip() -> None:
         ("docs/blog/biomcp-charts.md", "## Try it"),
         ("docs/blog/biomcp-pubmed-articles.md", "## Try it"),
         ("docs/blog/skillbench-biomcp-skills.md", "## Try it"),
-        ("docs/blog/kras-g12c-treatment-landscape.md", "## Try It"),
+        ("docs/blog/kras-g12c-treatment-landscape.md", "## Try it"),
         (
             "docs/blog/we-deleted-35-tools.md",
             "install and first query in under 60 seconds:",

@@ -320,8 +320,8 @@ def test_blog_try_it_and_install_copy_are_consistent() -> None:
     assert "We went from 36 MCP tools to one CLI command" in blog
     assert "uv tool install biomcp-cli" in blog
     assert "curl -fsSL https://biomcp.org/install.sh | bash" in blog
-    assert blog.index("uv tool install biomcp-cli") < blog.index(
-        "curl -fsSL https://biomcp.org/install.sh | bash"
+    assert blog.index("curl -fsSL https://biomcp.org/install.sh | bash") < blog.index(
+        "uv tool install biomcp-cli"
     )
     assert "skills/SKILL.md" in blog
     assert "../getting-started/skills.md" in blog

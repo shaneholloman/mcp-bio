@@ -1,69 +1,56 @@
-# Code Review Log — Ticket 179
+# Code Review Log — Ticket 186
 
 ## Critique
 
-### Design completeness
+### Design completeness audit
 
-- `src/entities/disease.rs` was replaced by `src/entities/disease/`, and the required files from the final design are present: `mod.rs`, `resolution.rs`, `fallback.rs`, `associations.rs`, `enrichment.rs`, `search.rs`, `get.rs`, `test_support.rs`, and `tests.rs`.
-- The stable surface is preserved:
-  - runtime re-exports remain in [src/entities/disease/mod.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/mod.rs:297)
-  - crate-visible helper paths still exist for `resolve_disease_hit_by_name` and `fallback_search_page`
-  - `crate::entities::disease::tests::proof_*` is preserved by [src/entities/disease/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/tests.rs:1)
-- Runtime files remain under the 700-line cap and every runtime file has a module-level `//!` doc comment.
-- No contract, help, or schema text changes were required because the ticket is structural-only. Existing disease and phenotype specs remain the outside-in contract.
-- `src/entities/mod.rs` remains unchanged as `pub(crate) mod disease;`.
+- `RUN.md` now documents the narrowed pre-commit contract in `## Pre-Merge Checks`, including the enforced commands, the explicit "does not run" list, the heavier manual proofs, and the `git commit --no-verify` escape hatch.
+- `architecture/technical/overview.md` now names `.march/validation-profiles.toml` as the source of record, lists all five reserved profiles, maps the current build-flow usage, and explains why `full-blocking` uses `make spec-pr` while `full-contracts` stays declared-but-unassigned.
+- `.march/validation-profiles.toml` exists, is git-tracked, declares exactly the five reserved profiles, and records `# observed ...` timing comments above each table.
+- `tests/test_validation_profile_contract.py` covers the tracked-file and TOML contract for the new profile file.
+- `tests/test_upstream_planning_analysis_docs.py` covers the runbook and architecture-doc contract for the new validation-tier and hook documentation.
+- The shared hook change has no hunk in `git diff main..HEAD` because the hook lives at the git-resolved shared path outside the tracked worktree: `/home/ian/workspace/repos/biomcp/.git/hooks/pre-commit`. I verified that file directly; this matches the design constraint and was intentional.
 
 ### Test-design traceability
 
-- Every proof-matrix entry has a matching verification target:
-  - disease unit surface: `cargo test entities::disease:: --lib`
-  - disease-focused regression surface and proof hooks: `cargo test disease --lib`
-  - disease CLI/search/detail outside-in behavior: `spec/07-disease.md`
-  - phenotype outside-in behavior: `spec/23-phenotype.md`
-  - structural cap/doc checks: file-count/doc-comment checks
-  - full repo baseline: `make check`
-- All proof-hook functions named in the design still exist and resolve through `crate::entities::disease::tests::*`.
-- `spec/07-disease.md` and `spec/23-phenotype.md` still cover outside-in behavior for the unchanged public contract.
+- Proof-matrix coverage is present for the repo-owned contract surface:
+  - runbook hook contract doc: `tests/test_upstream_planning_analysis_docs.py`
+  - architecture validation-tier doc: `tests/test_upstream_planning_analysis_docs.py`
+  - validation profile file tracking, shape, commands, and timing comments: `tests/test_validation_profile_contract.py`
+  - shared hook path/content/behavior: direct structural proofs against `git rev-parse --git-path hooks/pre-commit`
+- No `spec/*.md` change was required. The ticket changes repo tooling and docs, not CLI behavior, so the existing Python contract-test pattern is the correct outside-in proof surface for this change.
 
 ### Finding
 
-1. Disease runtime tests that hit mock services were not isolated from the shared HTTP cache. The failure reproduced in the full disease unit suite, where [src/entities/disease/enrichment/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/enrichment/tests.rs:67) expected the SEER catalog failure path but received a cached success-path response instead. The same risk applied to the other mock-backed runtime tests in [resolution/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/resolution/tests.rs:81), [fallback/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/fallback/tests.rs:210), and [get/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/get/tests.rs:38).
+1. `tests/test_upstream_planning_analysis_docs.py` did not fully encode the design's current build-flow mapping. The new test only checked for selected step names and command substrings, so it would not fail if the `01-design` / `02-design-review` "no profile" text drifted or if a profile row paired the wrong command with the wrong current-use column.
 
 ## Fixes
 
-- Added [with_no_http_cache](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/test_support.rs:28) to force mock-backed disease tests through the existing no-cache runtime path.
-- Wrapped every disease test or proof helper that exercises real source clients against mock servers:
-  - [src/entities/disease/resolution/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/resolution/tests.rs:81)
-  - [src/entities/disease/fallback/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/fallback/tests.rs:210)
-  - [src/entities/disease/enrichment/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/enrichment/tests.rs:45)
-  - [src/entities/disease/get/tests.rs](/home/ian/workspace/worktrees/179-decompose-disease-rs-into-disease-submodule/src/entities/disease/get/tests.rs:38)
+- Strengthened `test_validation_profile_and_hook_contract_docs_are_pinned` to require:
+  - the explicit `01-design` / `02-design-review` no-profile language
+  - the exact five profile rows, including each command and current-use column
 - Post-fix collateral scan:
-  - `git diff --check` passed
-  - no new unused imports or dead code remained after the helper extraction
-  - no cleanup/ownership conflicts or stale error messages were introduced
+  - no new dead code or unreachable branches
+  - no unused imports or variables
+  - no stale error messages or shadowed names introduced by the test change
 
 ## Verification
 
-- `cargo test entities::disease:: --lib` passed after the fix.
-- `cargo test disease --lib` passed after the fix.
-- `make check` passed.
-- `make spec` did not pass end-to-end because of live-service/spec drift outside this refactor:
-  - `spec/02-gene.md::Gene Funding`
-  - `spec/07-disease.md::Disease Funding`
-  - `spec/07-disease.md::Disease Funding Beyond Cancer`
-  - `spec/19-discover.md::HPO Symptom Bridge`
-  - `spec/19-discover.md::Ambiguous Query`
-- Ticket-relevant outside-in status:
-  - `spec/07-disease.md`: all non-funding disease scenarios passed, including discover fallback, search offset/miss/no-fallback, detail retrieval, survival, crosswalk resolution, genes, variants, and ranking.
-  - `spec/23-phenotype.md`: all phenotype scenarios passed.
+- `uv run pytest tests/test_upstream_planning_analysis_docs.py tests/test_validation_profile_contract.py tests/test_directory_submission_contract.py::test_repo_cleanup_removes_local_artifacts_and_deleted_dirs_from_git tests/test_public_install_docs_contract.py::test_ticketed_blog_install_blocks_put_curl_before_uv_and_pip tests/test_documentation_consistency_audit_contract.py::test_blog_try_it_and_install_copy_are_consistent -q`
+- `hook_path="$(git rev-parse --git-path hooks/pre-commit)"; test -f "$hook_path"`
+- `hook_path="$(git rev-parse --git-path hooks/pre-commit)"; rg -n "cargo fmt --check|cargo clippy --lib --tests -- -D warnings" "$hook_path" && ! rg -n "cargo test" "$hook_path"`
+- `hook_path="$(git rev-parse --git-path hooks/pre-commit)"; bash "$hook_path"`
+- `sh -c 'cargo test --lib && cargo clippy --lib --tests -- -D warnings'`
+
+The review intentionally did not rerun `make check && make spec-pr && make test-contracts`; the code-step save point already recorded that full runtime gate, and this review step was instructed to avoid rerunning it.
 
 ## Residual Concerns
 
-- NIH Reporter is currently returning a service-unavailable HTML page behind `404 Not Found`, so the funding specs are not a reliable signal for this structural ticket right now.
-- Discover output for symptom/ambiguous queries has drifted from the current `spec/19-discover.md` expectations; this is separate from the disease module refactor and needs follow-up.
+- The shared hook remains a local/shared-git artifact rather than a tracked repo file. Verify should re-check the resolved hook path if the shared workspace changed after this review.
+- No out-of-scope follow-up issues were filed from this review.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | collateral-damage | no | Disease mock-server tests reused the shared HTTP cache, so the full disease suite could fail even when the same tests passed in isolation. |
+| 1 | weak-assertion | no | The overview doc-contract test only checked loose substrings, so it would not catch drift in the explicit no-profile steps or the exact profile-to-command-to-usage mapping required by the design. |

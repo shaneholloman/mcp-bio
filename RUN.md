@@ -82,18 +82,22 @@ Owned routes:
 
 ## Pre-Merge Checks
 
-Run the Rust gate locally:
+Run the heavier local ticket proofs explicitly:
 
 ```bash
 make check
-make test
-```
-
-Run the Python/docs contract gate (same as PR CI `contracts` job):
-
-```bash
+make spec-pr
 make test-contracts
 ```
+
+The installed pre-commit hook is the fast local gate. It enforces
+`cargo fmt --check` and `cargo clippy --lib --tests -- -D warnings`. It does
+not run `cargo test`, `make check`, `make spec-pr`, or `make test-contracts`.
+
+Use `make check` for the full Rust lint/test/quality-ratchet lane, `make spec-pr`
+for the stable PR-blocking spec lane, and `make test-contracts` for the
+Python/docs contract lane. Use `git commit --no-verify` to skip the hook for a
+one-off commit.
 
 `make test-contracts` runs `cargo build --release --locked`, `uv sync --extra dev`, `pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"`, and `mkdocs build --strict` - the same steps that PR CI `contracts` requires. Use this to catch docs-contract and Python regressions before pushing.
 
