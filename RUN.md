@@ -99,7 +99,8 @@ make test-contracts
 
 The installed pre-commit hook is the fast local gate. It enforces
 `cargo fmt --check` and `cargo clippy --lib --tests -- -D warnings`. It does
-not run `cargo test`, `make check`, `make spec-pr`, or `make test-contracts`.
+not run `cargo nextest run`, `make check`, `make spec-pr`, or
+`make test-contracts`.
 
 Use `make check` for the full Rust lint/test/quality-ratchet lane; its `test`
 phase now shells out to `cargo nextest run`. Use `make spec-pr` for the stable

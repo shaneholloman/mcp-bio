@@ -753,12 +753,17 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     assert "/usr/bin/time -p" in contributing
     assert "warm-cache steady-state" in contributing_ws
     assert "| Command | Before | After |" in contributing
-    for row in (
-        "| `make test` |",
-        "| `make spec-pr` |",
-        "| `make check` |",
+    assert "TBD" not in contributing
+    for command in (
+        "make test",
+        "make spec-pr",
+        "make check",
     ):
-        assert row in contributing
+        assert re.search(
+            rf"^\| `{re.escape(command)}` \| `\d+\.\d+s` \| `\d+\.\d+s` \|$",
+            contributing,
+            flags=re.MULTILINE,
+        )
 
     assert "cargo-nextest" in runbook
     assert "`make test` and `make check`" in runbook_ws
@@ -775,6 +780,20 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
         "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`"
         in technical_spec_section
     )
+
+
+def test_parallel_test_dependency_contract_is_declared() -> None:
+    pyproject = tomllib.loads(_read_repo("pyproject.toml"))
+    uv_lock = _read_repo("uv.lock")
+
+    import xdist
+
+    dev_dependencies = pyproject["project"]["optional-dependencies"]["dev"]
+
+    assert "pytest-xdist" in dev_dependencies
+    assert '{ name = "pytest-xdist", marker = "extra == \'dev\'" }' in uv_lock
+    assert 'name = "pytest-xdist"' in uv_lock
+    assert xdist.__file__ is not None
 
 
 def test_runtime_contract_docs_and_scripts_align_on_release_target() -> None:
@@ -867,7 +886,7 @@ def test_validation_profile_and_hook_contract_docs_are_pinned() -> None:
     assert "`cargo fmt --check`" in runbook_premerge
     assert "`cargo clippy --lib --tests -- -D warnings`" in runbook_premerge
     assert "does not run" in runbook_premerge
-    assert "`cargo test`" in runbook_premerge
+    assert "`cargo nextest run`" in runbook_premerge
     assert "`make check`" in runbook_premerge
     assert "`make spec-pr`" in runbook_premerge
     assert "`make test-contracts`" in runbook_premerge
