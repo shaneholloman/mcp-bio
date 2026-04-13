@@ -317,14 +317,14 @@ Variant-specific therapy targets should render separately from the generic ChEMB
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" get drug rindopepimut)"
+out="$("$bin" get drug rindopepimut targets)"
 echo "$out" | mustmatch like "## Targets (ChEMBL / Open Targets)"
 echo "$out" | mustmatch like "Variant Targets (CIViC): EGFRvIII"
 ```
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" --json get drug rindopepimut)"
+out="$("$bin" --json get drug rindopepimut targets)"
 echo "$out" | jq -e '
   (.variant_targets | index("EGFRvIII"))
   and any(._meta.section_sources[]; .key == "variant_targets" and (.sources | index("CIViC")))

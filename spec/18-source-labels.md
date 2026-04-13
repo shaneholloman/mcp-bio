@@ -85,7 +85,7 @@ echo "$drug_targets_json" | mustmatch like '"label": "ChEMBL"'
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-variant_drug_json="$("$bin" get drug rindopepimut --json)"
+variant_drug_json="$("$bin" get drug rindopepimut targets --json)"
 echo "$variant_drug_json" | mustmatch like '"key": "variant_targets"'
 echo "$variant_drug_json" | mustmatch like '"label": "Variant Targets"'
 echo "$variant_drug_json" | mustmatch like '"sources": ['
