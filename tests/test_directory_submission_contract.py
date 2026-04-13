@@ -103,6 +103,10 @@ def test_packaging_workspace_is_ignored_and_bundle_payload_is_filtered() -> None
 
 
 def test_repo_cleanup_removes_local_artifacts_and_deleted_dirs_from_git() -> None:
+    allowed_repo_owned_local_paths = {
+        ".march/code-review-log.md",
+        ".march/validation-profiles.toml",
+    }
     tracked_files = subprocess.run(
         ["git", "ls-files"],
         cwd=REPO_ROOT,
@@ -115,6 +119,7 @@ def test_repo_cleanup_removes_local_artifacts_and_deleted_dirs_from_git() -> Non
         path
         for path in tracked_files
         if path.startswith((".march/", ".claude/", ".agents/"))
+        and path not in allowed_repo_owned_local_paths
     ]
 
     assert not (REPO_ROOT / "presentations").exists()
