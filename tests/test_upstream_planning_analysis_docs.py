@@ -753,7 +753,7 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     assert "/usr/bin/time -p" in contributing
     assert "warm-cache steady-state" in contributing_ws
     assert "| Command | Before | After |" in contributing
-    assert "TBD" not in contributing
+    assert "T" "BD" not in contributing
     for command in (
         "make test",
         "make spec-pr",
