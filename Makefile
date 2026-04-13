@@ -37,11 +37,14 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/19-discover.md" \
 	--deselect "spec/20-alias-fallback.md"
 
+SPEC_SERIAL_FILES = spec/05-drug.md spec/13-study.md spec/21-cross-entity-see-also.md
+SPEC_XDIST_ARGS = -n auto --dist loadfile
+
 build:
 	cargo build --release
 
 test:
-	cargo test
+	cargo nextest run
 
 test-contracts:
 	cargo build --release --locked
@@ -70,11 +73,15 @@ install:
 
 spec:
 	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" \
-		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 120 -v'
+		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 120 -v $(SPEC_XDIST_ARGS) --ignore spec/05-drug.md --ignore spec/13-study.md --ignore spec/21-cross-entity-see-also.md'
+	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" \
+		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest $(SPEC_SERIAL_FILES) --mustmatch-lang bash --mustmatch-timeout 120 -v'
 
 spec-pr:
 	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" \
-		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v $(SPEC_PR_DESELECT_ARGS)'
+		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v $(SPEC_XDIST_ARGS) $(SPEC_PR_DESELECT_ARGS) --ignore spec/05-drug.md --ignore spec/13-study.md --ignore spec/21-cross-entity-see-also.md'
+	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" \
+		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest $(SPEC_SERIAL_FILES) --mustmatch-lang bash --mustmatch-timeout 60 -v'
 
 validate-skills:
 	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" \

@@ -275,6 +275,8 @@ BioMCP has six distinct verification and operator-inspection surfaces.
 
 - `make check` is the required local ticket gate. In the current `Makefile`,
   that means `lint`, `test`, and `check-quality-ratchet`.
+- Repo-local `test` now maps to `cargo nextest run`; the CI `check` job still
+  uses `cargo test` directly.
 - CI in `.github/workflows/ci.yml` runs the broader repo baseline in parallel:
   `check`, `version-sync`, `climb-hygiene`, `contracts`, and `spec-stable`.
 - Docs-site validation and Python contract tests do not run under `make check`;
@@ -318,6 +320,11 @@ headings run in the separate `Spec smoke (volatile live-network)` workflow
 instead.
 
 Run locally with `make spec`.
+
+Repo-local `make spec` and `make spec-pr` use `pytest-xdist` with
+`-n auto --dist loadfile` for the parallel-safe bulk, then run
+`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`
+serially because those files share repo-global local-data fixtures.
 
 Important: `uv run` may execute a stale `.venv/bin/biomcp`. Either refresh
 with `uv pip install -e .` or ensure `target/release` is ahead of `.venv/bin`
