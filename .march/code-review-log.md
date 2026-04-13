@@ -1,135 +1,92 @@
-# Code Review Log — Ticket 183
+## Review Scope
+
+- Reviewed `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, `.march/ticket.md`
+- Rebased onto `main` (`GIT_EDITOR=true git rebase main`)
+- Inspected the full branch diff with `git diff main..HEAD`
+- Re-ran the changed-surface gates:
+  - `cargo test cli --lib`
+  - `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
 
 ## Critique
 
-### Design completeness
+### Design Completeness Audit
 
-I reviewed `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`,
-and `git diff main..HEAD` against the ticket scope.
+- `design-final` acceptance criteria 1-10 were implemented in the branch diff. The runtime seam moved into `src/cli/outcome.rs`, `src/cli/mod.rs` re-exported the public seam, runtime ownership moved into the family modules, and the documented help/spec contract remained unchanged.
+- The proof-matrix owners in `.march/design-final.md:331-342` all had matching code and proof coverage in the branch diff and existing test/spec surface.
+- One design item was incomplete in the implementation that was handed to review:
+  - `.march/design-final.md:279-280` and `.march/design-final.md:290-294` require targeted smoke tests in each owning family test home before and during runtime extraction. Those direct parse-and-dispatch proofs were missing for the extracted `article`, `disease`, `pathway`, `protein`, `pgx`, `gwas`, `phenotype`, `trial`, and `system` owners.
+- Documentation and contract audit:
+  - No design item added or changed a shipped help/spec/doc contract.
+  - `.march/code-log.md:1-6` records the required execution order: tests/spec surface first, runtime extraction second, targeted proofs after each batch. That matched the intended contract-first flow.
 
-Design items that were already implemented in the diff:
+### Test-Design Traceability
 
-- `src/cli/commands.rs` exists and rebuilds `Commands`, `SearchEntity`, and `GetEntity`.
-- The extracted owner modules exist, keep module-level docs, and preserve the
-  stable `crate::cli::*` re-export surface from `src/cli/mod.rs`.
-- `src/cli/mod.rs` still declares the family modules and re-exports the shared
-  command enums.
+- The proof-matrix cases in `.march/design-final.md:333-342` all had matching tests/specs in the repo and in `.march/code-log.md:30-32,77-82`.
+- The missing coverage was not in the proof matrix rows themselves; it was in the implementation-plan requirement for owner-local smoke tests after the runtime split. Without those tests, several extracted dispatch entrypoints had no direct regression proof in their own modules.
+- Review finding:
+  - Missing owner-local smoke proofs for extracted runtime families were blocking because the design explicitly required them as the outside-in guardrail for the refactor.
 
-Blocking design gaps I found:
+### Quality Review
 
-1. The design item `Family parse/help tests live next to their family modules`
-   was only partially addressed. The extracted payload code landed, but the
-   proof-matrix coverage was still missing or incomplete in
-   `src/cli/gene.rs`, `src/cli/disease.rs`, `src/cli/pathway.rs`,
-   `src/cli/protein.rs`, `src/cli/adverse_event.rs`, `src/cli/chart.rs`, and
-   `src/cli/system.rs`.
-2. The same design item left stale duplicates behind. Equivalent parse/help
-   proofs still existed in `src/cli/mod.rs` after owner-local coverage had been
-   added elsewhere, so the move was not actually complete at the test-surface
-   level.
-3. The ticket is structural-only, so no user-facing contract docs needed new
-   semantics. Existing specs remained the outside-in contract, but parts of the
-   verification surface had become brittle against live dependencies:
-   `spec/05-drug.md`, `spec/11-evidence-urls.md`, and
-   `spec/18-source-labels.md` were too expensive for reliable full-suite
-   verification under the configured timeout budget, and
-   `spec/21-cross-entity-see-also.md` assumed the SCN1A ClinGen section always
-   returned rows instead of allowing the documented truthful fallback.
+- Implementation quality: the extraction follows adjacent Rust module conventions and keeps runtime ownership local to each family. No duplicate helper abstraction was introduced.
+- Security: no new untrusted-input path, shell, query-construction, or file-write risk was introduced by the refactor or by the review fixes.
+- Performance: the review fixes only add tests; no runtime-path cost changed.
 
-### Test-design traceability
-
-I mapped each proof-matrix area to code and tests:
-
-- Owner-local help/parse proofs for the extracted families now live in their
-  owner files: `gene`, `disease`, `pathway`, `protein`, `adverse_event`,
-  `article`, `drug`, `variant`, `study`, `chart`, and `system`.
-- Stable CLI parsing/help behavior is covered by `cargo test --lib cli::`.
-- Outside-in contract checks for the touched verification surface are covered by
-  `spec/11-evidence-urls.md` and `spec/18-source-labels.md`.
-- Full-repo verification remains `make spec` and `make check`.
-
-Blocking traceability defects before repair:
-
-- Design requires owner-local tests for `gene`, `disease`, `pathway`,
-  `protein`, `adverse_event`, `chart`, and `system` — not found in those files
-  before the fix.
-- Design requires the moved proof surface to live beside owners; duplicate
-  parse/help tests in `src/cli/mod.rs` showed the move was incomplete.
+Mark phase complete in checkpoint state:
+- `Critique — documented all issues, checked spec coverage for outside-in behavior`
 
 ## Fix Plan
 
-- Add the missing owner-local parse/help tests directly to the extracted
-  modules.
-- Extend `src/cli/chart.rs` and `src/cli/system.rs` with the proof-matrix
-  coverage that never moved.
-- Remove duplicated parse/help proofs and now-unused imports from
-  `src/cli/mod.rs`.
-- Split or narrow the long live-network proof blocks in `spec/05-drug.md`,
-  `spec/11-evidence-urls.md`, and `spec/18-source-labels.md` without weakening
-  the contract.
-- Repair the SCN1A recruiting-trials proof in
-  `spec/21-cross-entity-see-also.md` so it accepts either the ClinGen-derived
-  disease pivot or the truthful generic gene-trials fallback when ClinGen
-  times out.
+- Add bounded smoke tests in each missing family test home that:
+  - parse the extracted command via `Cli::try_parse_from(...)`
+  - call the family-owned runtime entrypoint directly
+  - assert the documented fail-fast validation or pagination guardrail before any backend work
+- Keep the fixes local to the owning modules and avoid widening visibility or changing the shipped CLI contract.
+
+Mark phase complete in checkpoint state:
+- `Fix plan — all issues have fixes`
 
 ## Repair
 
-- Added owner-local parse/help coverage in `src/cli/gene.rs`,
-  `src/cli/disease.rs`, `src/cli/pathway.rs`, `src/cli/protein.rs`,
-  `src/cli/adverse_event.rs`, `src/cli/chart.rs`, and `src/cli/system.rs`.
-- Expanded nearby owner tests in `src/cli/article/tests.rs`,
-  `src/cli/drug/tests.rs`, `src/cli/variant/tests.rs`, and
-  `src/cli/study/tests.rs` so the extracted surfaces are proven where they are
-  owned.
-- Removed the duplicated moved tests from `src/cli/mod.rs` and cleaned the
-  now-unused imports.
-- Narrowed the slow variant-target proof in `spec/05-drug.md` from the full
-  `get drug rindopepimut` card to `get drug rindopepimut targets`, preserving
-  the same `Variant Targets (CIViC): EGFRvIII` contract while removing the
-  unrelated section work that was breaching the suite timeout.
-- Split the slow proof blocks in `spec/11-evidence-urls.md` and
-  `spec/18-source-labels.md`, and switched the source-label target example from
-  `ivacaftor targets` to faster `tamoxifen targets` while preserving the same
-  `ChEMBL / Open Targets` contract.
-- Updated `spec/21-cross-entity-see-also.md` so the SCN1A ClinGen proof accepts
-  both valid outside-in outcomes: the disease-derived recruiting-trial command
-  when ClinGen rows render, or the existing generic `biomcp gene trials SCN1A`
-  fallback when the live ClinGen section times out.
+### Fixes Applied
 
-### Post-fix collateral scan
+- Added direct owner-local smoke coverage for the extracted runtime entrypoints:
+  - `src/cli/article/tests.rs:81`
+  - `src/cli/disease/mod.rs:167`
+  - `src/cli/pathway/mod.rs:191`
+  - `src/cli/protein/mod.rs:107`
+  - `src/cli/pgx/mod.rs:87`
+  - `src/cli/gwas/mod.rs:73`
+  - `src/cli/phenotype/mod.rs:49`
+  - `src/cli/trial/mod.rs:458`
+  - `src/cli/system/mod.rs:298`
+- Collateral repair during validation:
+  - Corrected the expected limit-range assertions in the new `pgx`, `gwas`, and `phenotype` tests to `1..=50`, which is the actual runtime contract enforced by those entities.
 
-- No unreachable branches or cleanup conflicts were introduced by the review
-  edits.
-- `src/cli/mod.rs` no longer carries duplicate owner-local parse/help proofs or
-  their orphaned imports.
-- Error text stayed aligned with the touched assertions.
-- `git diff --check` passed after the repairs.
+### Post-Fix Collateral Damage Scan
 
-## Verification
+- Dead code: none introduced; all new tests exercise live entrypoints.
+- Unused imports/variables: fixed import sets where the new parser-based tests required `Parser`, `Commands`, or `SearchEntity`.
+- Resource cleanup conflicts: none; no cleanup logic changed.
+- Stale error messages: corrected the three limit-range assertions to match the actual error text.
+- Shadowing: none introduced.
 
-- `cargo fmt`
-- `cargo test --lib cli::`
-- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest spec/11-evidence-urls.md spec/18-source-labels.md --mustmatch-lang bash --mustmatch-timeout 120 -v'`
-- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest "spec/05-drug.md::Drug Variant Targets (line 318) [bash]" --mustmatch-lang bash --mustmatch-timeout 120 -vv'`
-- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest "spec/07-disease.md::Disease Search Discover Fallback (line 45) [bash]" --mustmatch-lang bash --mustmatch-timeout 120 -vv'`
-- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest spec/18-source-labels.md --mustmatch-lang bash --mustmatch-timeout 120 -v'`
-- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest spec/21-cross-entity-see-also.md --mustmatch-lang bash --mustmatch-timeout 120 -v'`
-- `make spec`
-- `make check`
+### Validation
 
-## Residual Concerns
+- `cargo test cli --lib` passed.
+- `cargo test --lib && cargo clippy --lib --tests -- -D warnings` passed.
+- `cargo fmt` applied after the test additions.
 
-- One full `make spec` attempt hit a transient nonzero exit in
-  `spec/07-disease.md::Disease Search Discover Fallback`, but the same
-  scenario passed immediately in isolation and on rerun. I filed
-  `~/workspace/planning/biomcp/issues/183-disease-discover-fallback-spec-flake.md`
-  so verify can watch that live-service path separately from this ticket.
+### Residual Concerns
+
+- None. No out-of-scope issues were identified that warranted a separate issue file.
+
+Mark phase complete in checkpoint state:
+- `Repair — fixes applied, wrote code-review-log.md`
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | missing-test | yes | Design proof-matrix item `Family parse/help tests live next to their family modules` was incomplete for `gene`, `disease`, `pathway`, `protein`, `adverse_event`, `chart`, and `system`. |
-| 2 | dead-code | yes | Copied owner-local parse/help proofs remained duplicated in `src/cli/mod.rs` after the extraction, leaving redundant tests and unused imports behind. |
-| 3 | collateral-damage | no | The live-network proof surfaces in `spec/05-drug.md`, `spec/11-evidence-urls.md`, and `spec/18-source-labels.md` made full-suite verification unreliable until they were split or narrowed to faster equivalent examples. |
-| 4 | collateral-damage | no | `spec/21-cross-entity-see-also.md` assumed the live SCN1A ClinGen section always returned rows, even though the CLI truthfully falls back to generic gene-trials guidance when ClinGen times out. |
+| 1 | missing-test | no | `.march/design-final.md` required targeted owner-local smoke tests for the extracted family runtimes, but direct dispatch proofs were missing for `article`, `disease`, `pathway`, `protein`, `pgx`, `gwas`, `phenotype`, `trial`, and `system`. |
+| 2 | collateral-damage | yes | The first review-added `pgx`, `gwas`, and `phenotype` smoke tests asserted the wrong limit range (`1..=100`); validation exposed the mismatch and the assertions were corrected to the shipped `1..=50` contract. |
