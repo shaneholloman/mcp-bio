@@ -18,17 +18,29 @@ bin="${BIOMCP_BIN:-biomcp}"
 gene_out="$("$bin" get gene CFTR all)"
 echo "$gene_out" | mustmatch like "Source: NCBI Gene / MyGene.info"
 echo "$gene_out" | mustmatch like "## Summary (NCBI Gene)"
+```
 
-drug_out="$("$bin" get drug ivacaftor targets)"
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+drug_out="$("$bin" get drug tamoxifen targets)"
 echo "$drug_out" | mustmatch like "## Targets (ChEMBL / Open Targets)"
+```
 
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
 variant_drug_out="$("$bin" get drug rindopepimut targets)"
 echo "$variant_drug_out" | mustmatch like "Variant Targets (CIViC): EGFRvIII"
+```
 
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
 disease_out="$("$bin" get disease "cystic fibrosis")"
 echo "$disease_out" | mustmatch like "## Definition (MyDisease.info)"
 echo "$disease_out" | mustmatch like "Genes (Open Targets):"
+```
 
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
 trial_out="$("$bin" get trial NCT06668103)"
 echo "$trial_out" | mustmatch like "Source: ClinicalTrials.gov"
 
@@ -53,19 +65,34 @@ echo "$gene_json" | mustmatch like '"section_sources": ['
 echo "$gene_json" | mustmatch like '"key": "summary"'
 echo "$gene_json" | mustmatch like '"key": "identity"'
 echo "$gene_json" | mustmatch like '"label": "NCBI Gene"'
+```
 
-drug_json="$("$bin" get drug ivacaftor all --json)"
-echo "$drug_json" | mustmatch like '"section_sources": ['
-echo "$drug_json" | mustmatch like '"key": "safety"'
-echo "$drug_json" | mustmatch like '"key": "targets"'
-echo "$drug_json" | mustmatch like "OpenFDA FAERS"
-echo "$drug_json" | mustmatch like '"label": "ChEMBL"'
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+drug_safety_json="$("$bin" get drug ivacaftor safety --json)"
+echo "$drug_safety_json" | mustmatch like '"section_sources": ['
+echo "$drug_safety_json" | mustmatch like '"key": "safety"'
+echo "$drug_safety_json" | mustmatch like "OpenFDA FAERS"
+```
 
-variant_drug_json="$("$bin" get drug rindopepimut --json)"
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+drug_targets_json="$("$bin" get drug tamoxifen targets --json)"
+echo "$drug_targets_json" | mustmatch like '"section_sources": ['
+echo "$drug_targets_json" | mustmatch like '"key": "targets"'
+echo "$drug_targets_json" | mustmatch like '"label": "ChEMBL"'
+```
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+variant_drug_json="$("$bin" get drug rindopepimut targets --json)"
 echo "$variant_drug_json" | mustmatch like '"key": "variant_targets"'
 echo "$variant_drug_json" | mustmatch like '"label": "Variant Targets"'
 echo "$variant_drug_json" | mustmatch like '"sources": ['
+```
 
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
 disease_json="$("$bin" get disease "cystic fibrosis" --json)"
 echo "$disease_json" | mustmatch like '"section_sources": ['
 echo "$disease_json" | mustmatch like '"key": "definition"'
@@ -82,11 +109,17 @@ variant_json="$(biomcp get variant rs334 --json)"
 echo "$variant_json" | mustmatch like '"section_sources": ['
 echo "$variant_json" | mustmatch like '"key": "identity"'
 echo "$variant_json" | mustmatch like "MyVariant.info"
+```
+
+```bash
 
 trial_json="$(biomcp get trial NCT06668103 --json)"
 echo "$trial_json" | mustmatch like '"section_sources": ['
 echo "$trial_json" | mustmatch like '"key": "overview"'
 echo "$trial_json" | mustmatch like "ClinicalTrials.gov"
+```
+
+```bash
 
 article_json="$(biomcp get article 22663011 --json)"
 echo "$article_json" | mustmatch like '"section_sources": ['

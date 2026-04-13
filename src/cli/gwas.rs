@@ -1,0 +1,69 @@
+//! GWAS CLI payloads.
+
+use clap::Args;
+
+#[derive(Args, Debug)]
+pub struct GwasSearchArgs {
+    /// Filter by gene symbol
+    #[arg(short = 'g', long)]
+    pub gene: Option<String>,
+    /// Optional positional query alias for -g/--gene
+    #[arg(value_name = "QUERY")]
+    pub positional_query: Option<String>,
+    /// Filter by disease trait text
+    #[arg(long = "trait")]
+    pub trait_query: Option<String>,
+    /// Filter by genomic region (chr:start-end)
+    #[arg(long)]
+    pub region: Option<String>,
+    /// Filter by p-value threshold
+    #[arg(long = "p-value")]
+    pub p_value: Option<f64>,
+    /// Maximum results (default: 10)
+    #[arg(short, long, default_value = "10")]
+    pub limit: usize,
+    /// Skip the first N results
+    #[arg(long, default_value = "0")]
+    pub offset: usize,
+}
+
+#[cfg(test)]
+mod tests {
+    use clap::Parser;
+
+    use crate::cli::{Cli, Commands, SearchEntity};
+
+    #[test]
+    fn search_gwas_parses_positional_query() {
+        let cli = Cli::try_parse_from(["biomcp", "search", "gwas", "BRAF", "--limit", "2"])
+            .expect("search gwas should parse");
+
+        let Cli {
+            command:
+                Commands::Search {
+                    entity:
+                        SearchEntity::Gwas(crate::cli::gwas::GwasSearchArgs {
+                            gene,
+                            positional_query,
+                            trait_query,
+                            region,
+                            p_value,
+                            limit,
+                            offset,
+                        }),
+                },
+            ..
+        } = cli
+        else {
+            panic!("expected search gwas command");
+        };
+
+        assert_eq!(gene, None);
+        assert_eq!(positional_query.as_deref(), Some("BRAF"));
+        assert_eq!(trait_query, None);
+        assert_eq!(region, None);
+        assert_eq!(p_value, None);
+        assert_eq!(limit, 2);
+        assert_eq!(offset, 0);
+    }
+}

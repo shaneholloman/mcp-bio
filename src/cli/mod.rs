@@ -4,29 +4,56 @@ use std::collections::HashSet;
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
-use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
+use clap::{CommandFactory, FromArgMatches, Parser};
 use futures::{StreamExt, future::try_join_all};
 use tracing::{debug, warn};
 
 use crate::cli::debug_plan::{DebugPlan, DebugPlanLeg};
 use crate::entities::drug::DrugRegion;
 
+mod adverse_event;
+mod article;
 pub mod cache;
 pub mod chart;
+mod commands;
 pub mod debug_plan;
 pub mod discover;
+mod disease;
+mod drug;
+mod gene;
+mod gwas;
 pub mod health;
 pub mod list;
+mod outcome;
+mod pathway;
+mod pgx;
+mod phenotype;
+mod protein;
 pub mod search_all;
+mod search_all_command;
 pub mod skill;
+mod study;
+mod system;
 #[cfg(test)]
 mod test_support;
+mod trial;
 mod types;
 pub mod update;
+mod variant;
 
+pub use self::article::ArticleCommand;
+pub use self::commands::{Commands, GetEntity, SearchEntity};
+pub use self::disease::DiseaseCommand;
+pub use self::drug::DrugCommand;
+pub use self::gene::GeneCommand;
+pub use self::pathway::PathwayCommand;
+pub use self::protein::ProteinCommand;
+pub use self::study::StudyCommand;
+pub use self::system::{EmaCommand, WhoCommand};
 pub use self::types::{
     ChartArgs, ChartType, Cli, CliOutput, CommandOutcome, DrugRegionArg, OutputStream,
 };
+pub use self::variant::VariantCommand;
 
 const DRUG_SEARCH_EMA_STRUCTURED_FILTER_ERROR: &str = "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification.";
 const RUNTIME_HELP_SUBCOMMANDS: [&str; 4] = ["mcp", "serve", "serve-http", "serve-sse"];
@@ -66,1759 +93,6 @@ pub fn build_cli() -> clap::Command {
 pub fn parse_cli_from_env() -> Cli {
     let matches = build_cli().get_matches();
     Cli::from_arg_matches(&matches).unwrap_or_else(|err| err.exit())
-}
-
-#[derive(Subcommand, Debug)]
-#[allow(clippy::large_enum_variant)]
-pub enum Commands {
-    /// Search for entities
-    Search {
-        #[command(subcommand)]
-        entity: SearchEntity,
-    },
-    /// Get entity by ID
-    Get {
-        #[command(subcommand)]
-        entity: GetEntity,
-    },
-    /// Variant cross-entity helpers
-    Variant {
-        #[command(subcommand)]
-        cmd: VariantCommand,
-    },
-    /// Drug cross-entity helpers
-    Drug {
-        #[command(subcommand)]
-        cmd: DrugCommand,
-    },
-    /// Disease cross-entity helpers
-    Disease {
-        #[command(subcommand)]
-        cmd: DiseaseCommand,
-    },
-    /// Article cross-entity helpers
-    Article {
-        #[command(subcommand)]
-        cmd: ArticleCommand,
-    },
-    /// Gene cross-entity helpers
-    Gene {
-        #[command(subcommand)]
-        cmd: GeneCommand,
-    },
-    /// Pathway cross-entity helpers
-    Pathway {
-        #[command(subcommand)]
-        cmd: PathwayCommand,
-    },
-    /// Protein cross-entity helpers
-    Protein {
-        #[command(subcommand)]
-        cmd: ProteinCommand,
-    },
-    /// Local cBioPortal study analytics
-    Study {
-        #[command(subcommand)]
-        cmd: StudyCommand,
-    },
-    /// Check external API connectivity
-    Health {
-        /// Check external APIs only
-        #[arg(long)]
-        apis_only: bool,
-    },
-    /// Inspect the managed HTTP cache (CLI-only; cache commands reveal workstation-local filesystem paths)
-    Cache {
-        #[command(subcommand)]
-        cmd: cache::CacheCommand,
-    },
-    /// EMA (European Medicines Agency) local data management
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp ema sync    # force refresh the EMA local data feeds")]
-    Ema {
-        #[command(subcommand)]
-        cmd: EmaCommand,
-    },
-    /// WHO Prequalification local data management
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp who sync    # force refresh the WHO Prequalification CSV")]
-    Who {
-        #[command(subcommand)]
-        cmd: WhoCommand,
-    },
-    /// Run MCP server over stdio
-    Mcp,
-    /// Alias for `mcp` (Claude Desktop friendly)
-    Serve,
-    #[command(
-        about = "Run the MCP Streamable HTTP server at /mcp",
-        long_about = "Run the MCP Streamable HTTP server at /mcp.\n\nThis is the canonical remote/server deployment mode.\nHealth routes: GET /health, GET /readyz, GET /."
-    )]
-    ServeHttp {
-        /// Host address to bind
-        #[arg(long, default_value = "127.0.0.1")]
-        host: String,
-        /// Port to listen on
-        #[arg(long, default_value = "8080")]
-        port: u16,
-    },
-    #[command(
-        hide = true,
-        about = "removed legacy SSE compatibility command; use `serve-http`",
-        long_about = "removed legacy SSE compatibility command.\n\ndeprecated users should run `biomcp serve-http` and connect remote clients to `/mcp` instead."
-    )]
-    ServeSse,
-    /// BioMCP skill overview and installer for agents
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp skill            # show skill overview
-  biomcp skill install    # install skill to your agent config")]
-    Skill {
-        #[command(subcommand)]
-        command: Option<skill::SkillCommand>,
-    },
-    /// Chart type documentation for study visualizations
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp chart
-  biomcp chart bar
-  biomcp chart violin")]
-    Chart {
-        #[command(subcommand)]
-        command: Option<chart::ChartCommand>,
-    },
-    /// Update the biomcp binary from GitHub releases
-    Update {
-        /// Check for updates, but do not install
-        #[arg(long)]
-        check: bool,
-    },
-    /// Uninstall biomcp from the current location
-    Uninstall,
-    /// Command reference for entities and flags
-    List {
-        /// Optional entity name (gene, variant, article, trial, drug, disease, pgx, gwas, pathway, protein, study, adverse-event, search-all)
-        entity: Option<String>,
-    },
-    /// Parallel get operations (comma-separated IDs, max 10)
-    Batch {
-        /// Entity type (gene, variant, article, trial, drug, disease, pgx, pathway, protein, adverse-event)
-        entity: String,
-        /// Comma-separated IDs (max 10)
-        ids: String,
-        /// Optional comma-separated sections to request on each get call
-        #[arg(long)]
-        sections: Option<String>,
-        /// Trial source when entity=trial (ctgov or nci)
-        #[arg(long, default_value = "ctgov")]
-        source: String,
-    },
-    /// Gene set enrichment against g:Profiler
-    Enrich {
-        /// Comma-separated HGNC symbols (e.g., BRAF,KRAS,NRAS)
-        genes: String,
-        /// Maximum enrichment terms (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-    },
-    /// Resolve free-text biomedical text into typed concepts and suggested commands
-    #[command(after_help = "\
-When to use: use discover when you only have free text and need BioMCP to pick the next typed command.
-
-EXAMPLES:
-  biomcp discover ERBB1
-  biomcp discover Keytruda
-  biomcp discover \"chest pain\"
-  biomcp --json discover diabetes
-
-See also: biomcp list discover")]
-    Discover {
-        /// Free-text biomedical query
-        query: String,
-    },
-    /// Show version
-    Version {
-        /// Include executable provenance and PATH diagnostics
-        #[arg(long)]
-        verbose: bool,
-    },
-}
-
-#[derive(Subcommand, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EmaCommand {
-    /// Force refresh the EMA local data feeds
-    Sync,
-}
-
-#[derive(Subcommand, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum WhoCommand {
-    /// Force refresh the WHO Prequalification local CSV
-    Sync,
-}
-
-#[allow(clippy::large_enum_variant)]
-#[derive(Subcommand, Debug)]
-pub enum SearchEntity {
-    /// Cross-entity counts-first search card
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search all --gene BRAF --disease melanoma
-  biomcp search all --keyword resistance
-  biomcp search all --gene BRAF --counts-only
-  biomcp search all --gene BRAF --debug-plan
-
-See also: biomcp list search-all")]
-    All {
-        /// Gene slot (e.g., BRAF)
-        #[arg(short = 'g', long)]
-        gene: Option<String>,
-        /// Variant slot (e.g., \"BRAF V600E\")
-        #[arg(short = 'v', long)]
-        variant: Option<String>,
-        /// Disease slot (e.g., melanoma)
-        #[arg(short = 'd', long)]
-        disease: Option<String>,
-        /// Drug slot (e.g., dabrafenib)
-        #[arg(long)]
-        drug: Option<String>,
-        /// Keyword slot
-        #[arg(short = 'k', long)]
-        keyword: Option<String>,
-        /// Optional positional query alias for -k/--keyword
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-        /// Date lower bound for date-capable sections (YYYY, YYYY-MM, or YYYY-MM-DD)
-        #[arg(long)]
-        since: Option<String>,
-        /// Maximum rows per section (default: 3)
-        #[arg(short, long, default_value = "3")]
-        limit: usize,
-        /// Render counts per section only (skip section rows)
-        #[arg(long = "counts-only")]
-        counts_only: bool,
-        /// Include the executed multi-leg routing plan in markdown or JSON output
-        #[arg(long = "debug-plan")]
-        debug_plan: bool,
-    },
-    /// Search genes by symbol, name, type, or chromosome (MyGene.info)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search gene BRAF
-  biomcp search gene -q kinase --type protein-coding --region chr7:140424943-140624564 --limit 5
-
-See also: biomcp list gene")]
-    Gene {
-        /// Free text query (gene name, symbol, or keyword)
-        #[arg(short, long)]
-        query: Option<String>,
-        /// Optional positional query alias for -q/--query
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-        /// Filter by gene type (e.g., protein-coding, ncRNA, pseudo)
-        #[arg(long = "type")]
-        gene_type: Option<String>,
-        /// Filter by chromosome (e.g., 7, X)
-        #[arg(long)]
-        chromosome: Option<String>,
-        /// Filter by genomic region (chr:start-end)
-        #[arg(long)]
-        region: Option<String>,
-        /// Filter by pathway ID/name (e.g., R-HSA-5673001)
-        #[arg(long)]
-        pathway: Option<String>,
-        /// Filter by GO term ID/text (e.g., GO:0004672)
-        #[arg(long = "go")]
-        go_term: Option<String>,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search diseases by name or ontology (Monarch/MONDO)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search disease \"lung cancer\"
-  biomcp search disease -q melanoma --inheritance \"autosomal dominant\" --phenotype HP:0001250 --onset adult --limit 5
-
-See also: biomcp list disease")]
-    Disease {
-        /// Free text query (disease name or keyword)
-        #[arg(short, long)]
-        query: Option<String>,
-        /// Optional positional query alias for -q/--query
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-        /// Restrict results by ontology source (mondo, doid, mesh)
-        #[arg(long)]
-        source: Option<String>,
-        /// Filter by inheritance pattern
-        #[arg(long)]
-        inheritance: Option<String>,
-        /// Filter by phenotype term (e.g., HP:0001250)
-        #[arg(long)]
-        phenotype: Option<String>,
-        /// Filter by clinical onset period
-        #[arg(long)]
-        onset: Option<String>,
-        /// Disable automatic discover fallback when zero direct disease rows are found
-        #[arg(long)]
-        no_fallback: bool,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search pharmacogenomic interactions
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search pgx -g CYP2D6
-  biomcp search pgx -d warfarin --cpic-level A
-
-See also: biomcp list pgx")]
-    Pgx {
-        /// Filter by gene symbol
-        #[arg(short = 'g', long)]
-        gene: Option<String>,
-        /// Optional positional query alias for -g/--gene
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-        /// Filter by drug name
-        #[arg(short = 'd', long)]
-        drug: Option<String>,
-        /// Filter by CPIC level (A/B/C/D)
-        #[arg(long = "cpic-level")]
-        cpic_level: Option<String>,
-        /// Filter by PGx testing recommendation
-        #[arg(long = "pgx-testing")]
-        pgx_testing: Option<String>,
-        /// Filter by evidence level (best-effort)
-        #[arg(long)]
-        evidence: Option<String>,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search disease matches from HPO IDs or symptom phrases (Monarch semsim)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search phenotype \"HP:0001250 HP:0001263\"
-  biomcp search phenotype \"HP:0001250,HP:0001263\" --limit 5
-  biomcp search phenotype \"seizure, developmental delay\" --limit 5
-
-See also: biomcp list phenotype")]
-    Phenotype {
-        /// HPO IDs (space- or comma-separated) or one symptom phrase / comma-separated symptom phrases
-        terms: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search GWAS associations by gene or trait
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search gwas -g TCF7L2
-  biomcp search gwas --trait EFO_0000305 --region 7:140000000-141000000 --p-value 5e-8
-
-See also: biomcp list gwas")]
-    Gwas {
-        /// Filter by gene symbol
-        #[arg(short = 'g', long)]
-        gene: Option<String>,
-        /// Optional positional query alias for -g/--gene
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-        /// Filter by disease trait text
-        #[arg(long = "trait")]
-        trait_query: Option<String>,
-        /// Filter by genomic region (chr:start-end)
-        #[arg(long)]
-        region: Option<String>,
-        /// Filter by p-value threshold
-        #[arg(long = "p-value")]
-        p_value: Option<f64>,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search articles by gene, disease, drug, keyword, or author (PubTator3 + Europe PMC + PubMed + keyword-gated LitSense2, optional Semantic Scholar)
-    #[command(after_help = "\
-When to use: use keyword search to scan a topic before you know the entities. Add -g/--gene when you already know the molecular anchor. Prefer --type review for synthesis questions.
-
-EXAMPLES:
-  biomcp search article \"BRAF resistance\"
-  biomcp search article -q \"immunotherapy resistance\" --limit 5
-  biomcp search article -g BRAF --date-from 2024-01-01
-  biomcp search article -d melanoma --type review --journal Nature --limit 5
-  biomcp search article -k \"Kartagener syndrome ciliopathy\" --limit 50 --max-per-source 10
-  biomcp search article -g BRAF --source pubtator --limit 20
-  biomcp search article -k \"Hirschsprung disease ganglion cells\" --source litsense2 --limit 5
-  biomcp search article -k \"Hirschsprung disease ganglion cells\" --ranking-mode hybrid --weight-semantic 0.5 --weight-lexical 0.2 --limit 5
-  biomcp search article -g BRAF --source pubmed --limit 5
-  biomcp search article -g BRAF --debug-plan --limit 5
-
-RANKING:
-  - `--sort relevance` accepts `--ranking-mode lexical|semantic|hybrid`.
-  - Omit `--ranking-mode` to use `hybrid` when `--keyword` is present and `lexical` otherwise.
-  - `semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties.
-  - Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default, using the same LitSense2-derived semantic signal and `semantic=0` when LitSense2 did not match.
-  - Use `--weight-semantic`, `--weight-lexical`, `--weight-citations`, and `--weight-position` to retune hybrid ranking.
-
-CAPPING:
-  - Cap each federated source's contribution after deduplication and before ranking.
-  - Default: 40% of `--limit` on federated pools with at least three surviving primary sources.
-  - `0` uses the default cap.
-  - Setting it equal to `--limit` disables capping.
-  - Rows count against their primary source after deduplication.
-
-QUERY FORMULATION:
-  - Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`.
-  - Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts.
-  - Unknown-entity questions should stay keyword-first or start with `discover`.
-  - Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance.
-  - Prefer `--type review` for synthesis or list-style questions; it can narrow the compatible default backend set.
-  - Avoid: `biomcp search article \"TP53 apoptosis gene regulation\"`
-    Prefer: `biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5`
-  - Avoid: `biomcp search article -d neurofibromatosis -k \"cafe-au-lait spots neurofibromas\"`
-    Prefer: `biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5`
-
-See also: biomcp list article")]
-    Article {
-        /// Filter by gene symbol
-        #[arg(short, long)]
-        gene: Option<String>,
-
-        /// Filter by disease name
-        #[arg(short, long, num_args = 1..)]
-        disease: Vec<String>,
-
-        /// Filter by drug/chemical name
-        #[arg(long, num_args = 1..)]
-        drug: Vec<String>,
-
-        /// Filter by author name
-        #[arg(short = 'a', long, num_args = 1..)]
-        author: Vec<String>,
-
-        /// Free text keyword search (alias: -q, --query)
-        #[arg(
-            short = 'k',
-            long = "keyword",
-            visible_short_alias = 'q',
-            visible_alias = "query",
-            num_args = 1..
-        )]
-        keyword: Vec<String>,
-        /// Optional positional query alias for -k/--keyword/--query
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-
-        /// Published after date (YYYY, YYYY-MM, or YYYY-MM-DD)
-        #[arg(long = "date-from", visible_alias = "since")]
-        date_from: Option<String>,
-        /// Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)
-        #[arg(long = "date-to", visible_alias = "until")]
-        date_to: Option<String>,
-
-        // `long = "type"` is used instead of deriving from the field name because
-        // `type` is a Rust reserved keyword. Internally we use `article_type`.
-        /// Filter by publication type [values: research-article, review, case-reports, meta-analysis]
-        #[arg(long = "type")]
-        article_type: Option<String>,
-        /// Filter by journal title
-        #[arg(long, num_args = 1..)]
-        journal: Vec<String>,
-
-        /// Restrict to open-access articles (default: off, includes all access models)
-        #[arg(long = "open-access")]
-        open_access: bool,
-
-        /// Exclude preprints (best-effort; default: off, includes preprints)
-        #[arg(long)]
-        no_preprints: bool,
-
-        /// Exclude retracted publications from search results
-        #[arg(long)]
-        exclude_retracted: bool,
-        /// Include retracted publications in search results (default excludes them)
-        #[arg(long, conflicts_with = "exclude_retracted")]
-        include_retracted: bool,
-
-        /// Sort order [values: date, citations, relevance] (default: relevance)
-        #[arg(long, default_value = "relevance", value_parser = ["date", "citations", "relevance"])]
-        sort: String,
-
-        /// Relevance ranking mode [values: lexical, semantic, hybrid] (default: hybrid with keyword, lexical otherwise)
-        #[arg(long = "ranking-mode", value_parser = ["lexical", "semantic", "hybrid"])]
-        ranking_mode: Option<String>,
-
-        /// Hybrid semantic weight (default: 0.4; requires --sort relevance)
-        #[arg(long = "weight-semantic")]
-        weight_semantic: Option<f64>,
-
-        /// Hybrid lexical weight (default: 0.3; requires --sort relevance)
-        #[arg(long = "weight-lexical")]
-        weight_lexical: Option<f64>,
-
-        /// Hybrid citation weight (default: 0.2; requires --sort relevance)
-        #[arg(long = "weight-citations")]
-        weight_citations: Option<f64>,
-
-        /// Hybrid source-position weight (default: 0.1; requires --sort relevance)
-        #[arg(long = "weight-position")]
-        weight_position: Option<f64>,
-
-        /// Article source [values: all, pubtator, europepmc, pubmed, litsense2] (default: all)
-        #[arg(
-            long,
-            default_value = "all",
-            value_parser = ["all", "pubtator", "europepmc", "pubmed", "litsense2"]
-        )]
-        source: String,
-
-        /// Cap each federated source's contribution after deduplication and before ranking (default: 40% of --limit on federated pools with at least three surviving primary sources; 0 uses the default cap; equal to --limit disables capping)
-        #[arg(long = "max-per-source", value_name = "N")]
-        max_per_source: Option<usize>,
-
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Include the executed search planner output in markdown or JSON output
-        #[arg(long = "debug-plan")]
-        debug_plan: bool,
-    },
-    /// Search trials by condition, intervention, mutation, or location (CTGov by default; NCI with --source nci)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search trial -c melanoma -s recruiting
-  biomcp search trial -p 3 -i pembrolizumab
-  biomcp search trial -c melanoma --facility \"MD Anderson\" --age 67 --limit 5
-  biomcp search trial --age 0.5 --count-only          # infants eligible (6 months)
-  biomcp search trial --mutation \"BRAF V600E\" --status recruiting --study-type interventional --has-results --limit 5
-  biomcp search trial -c \"endometrial cancer\" --criteria \"mismatch repair deficient\" -s recruiting
-  biomcp search trial -c melanoma --source nci --status recruiting --limit 5
-
-Trial search is filter-based (no free-text query).
-
-Source-specific notes:
-  - CTGov: `--phase 1/2` keeps the combined Phase 1/Phase 2 label semantics, not Phase 1 OR Phase 2.
-  - NCI: `--condition` grounds to an NCI disease ID when available and otherwise falls back to CTS `keyword`.
-  - NCI: `--status` accepts one mapped status at a time; comma-separated status lists are rejected.
-  - NCI: `--phase 1/2` maps to CTS `I_II`; `early_phase1` is not supported on `--source nci`.
-  - NCI: `--lat`/`--lon`/`--distance` use direct `sites.org_coordinates_*` CTS filters.
-  - NCI: there is no separate NCI keyword flag in this ticket.
-See also: biomcp list trial")]
-    Trial {
-        /// Filter by condition/disease
-        #[arg(short = 'c', long, num_args = 1..)]
-        condition: Vec<String>,
-        /// Optional positional query alias for -c/--condition
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-
-        /// Filter by intervention/drug
-        #[arg(short = 'i', long, num_args = 1..)]
-        intervention: Vec<String>,
-
-        /// Filter by institution/facility name (text-search mode by default).
-        ///
-        /// Without `--lat`/`--lon`/`--distance`, this uses cheap CTGov
-        /// `query.locn` text-search mode. With all three geo flags, it enters
-        /// geo-verify mode and performs extra per-study location fetches to
-        /// confirm the facility match within the requested distance. Geo-verify
-        /// mode is materially more expensive, especially with `--count-only`.
-        #[arg(long, num_args = 1..)]
-        facility: Vec<String>,
-
-        /// Filter by phase. Canonical CLI forms: NA, 1, 1/2, 2, 3, 4.
-        /// Accepted aliases: EARLY_PHASE1, PHASE1, PHASE2, PHASE3, PHASE4.
-        ///
-        /// `1/2` matches the ClinicalTrials.gov combined Phase 1/Phase 2 label
-        /// (studies tagged as both phases), not Phase 1 OR Phase 2.
-        #[arg(short = 'p', long)]
-        phase: Option<String>,
-        /// Study type (e.g., interventional, observational)
-        #[arg(long = "study-type")]
-        study_type: Option<String>,
-
-        /// Patient age in years for eligibility matching (decimals accepted, e.g. 0.5 for 6 months).
-        ///
-        /// With `--count-only`, age-only CTGov searches report an approximate
-        /// upstream total because BioMCP applies the age filter during full
-        /// search, not the fast count path.
-        #[arg(long)]
-        age: Option<f32>,
-
-        /// Eligible sex filter [values: female, male, all].
-        ///
-        /// `all` (also `any`/`both`) resolves to no sex restriction, so no sex
-        /// filter is sent to ClinicalTrials.gov. Use `female` or `male` to
-        /// apply an actual restriction.
-        #[arg(long)]
-        sex: Option<String>,
-
-        /// Filter by trial status [values: recruiting, not_yet_recruiting, enrolling_by_invitation, active_not_recruiting, completed, suspended, terminated, withdrawn]
-        #[arg(short = 's', long)]
-        status: Option<String>,
-
-        /// Search mutation-related ClinicalTrials.gov text fields (best-effort)
-        #[arg(long, num_args = 1..)]
-        mutation: Vec<String>,
-
-        /// Search eligibility criteria with free-text terms (best-effort)
-        #[arg(long, num_args = 1..)]
-        criteria: Vec<String>,
-
-        /// Biomarker filter (NCI CTS; best-effort for ctgov)
-        #[arg(long, num_args = 1..)]
-        biomarker: Vec<String>,
-
-        /// Prior therapy mentioned in eligibility
-        #[arg(long, num_args = 1..)]
-        prior_therapies: Vec<String>,
-
-        /// Drug/therapy patient progressed on
-        #[arg(long, num_args = 1..)]
-        progression_on: Vec<String>,
-
-        /// Line of therapy: 1L, 2L, 3L+
-        #[arg(long)]
-        line_of_therapy: Option<String>,
-
-        /// Filter by sponsor (best-effort)
-        #[arg(long, num_args = 1..)]
-        sponsor: Vec<String>,
-
-        /// Sponsor/funder category [values: nih, industry, fed, other]
-        #[arg(long = "sponsor-type")]
-        sponsor_type: Option<String>,
-
-        /// Trials updated after date (YYYY-MM-DD)
-        #[arg(long = "date-from", alias = "since")]
-        date_from: Option<String>,
-        /// Trials updated before date (YYYY-MM-DD)
-        #[arg(long = "date-to", alias = "until")]
-        date_to: Option<String>,
-
-        /// Latitude for geographic search
-        #[arg(long, allow_hyphen_values = true)]
-        lat: Option<f64>,
-
-        /// Longitude for geographic search
-        #[arg(long, allow_hyphen_values = true)]
-        lon: Option<f64>,
-
-        /// Distance (miles) for geographic search
-        #[arg(long)]
-        distance: Option<u32>,
-
-        /// Only return trials with posted results (default: off, include trials with/without posted results)
-        #[arg(long = "has-results", visible_alias = "results-available")]
-        results_available: bool,
-
-        /// Return only total count (no result table)
-        #[arg(long = "count-only")]
-        count_only: bool,
-
-        /// Trial data source (ctgov or nci)
-        #[arg(long, default_value = "ctgov")]
-        source: String,
-
-        /// Skip the first N results (pagination)
-        #[arg(long, default_value = "0")]
-        offset: usize,
-
-        /// Cursor token from a previous response
-        #[arg(long = "next-page")]
-        next_page: Option<String>,
-
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-    },
-    /// Search variants by gene, shorthand alias, significance, frequency, or consequence (ClinVar/gnomAD)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search variant BRAF --limit 5
-  biomcp search variant \"PTPN22 620W\" --limit 5
-  biomcp search variant -g PTPN22 R620W --limit 5
-  biomcp search variant BRAF p.Val600Glu --limit 5
-  biomcp search variant -g BRAF --significance pathogenic
-  biomcp search variant -g BRCA1 --review-status 2 --revel-min 0.7 --consequence missense_variant --limit 5
-  biomcp search variant --hgvsp p.Val600Glu -g BRAF --limit 5
-
-For variant mentions in trials: biomcp variant trials \"BRAF V600E\"
-See also: biomcp list variant")]
-    Variant {
-        /// Filter by gene symbol
-        #[arg(short = 'g', long)]
-        gene: Option<String>,
-        /// Optional positional query tokens
-        #[arg(value_name = "QUERY", num_args = 0..)]
-        positional_query: Vec<String>,
-
-        /// Filter by protein change (e.g., V600E, p.V600E, or p.Val600Glu)
-        #[arg(long)]
-        hgvsp: Option<String>,
-
-        /// ClinVar significance (e.g., pathogenic, benign, uncertain)
-        #[arg(long)]
-        significance: Option<String>,
-
-        /// Max gnomAD allele frequency (0-1)
-        #[arg(long)]
-        max_frequency: Option<f64>,
-
-        /// Min CADD score (>=0)
-        #[arg(long)]
-        min_cadd: Option<f64>,
-
-        /// Functional consequence filter (e.g., missense_variant)
-        #[arg(long)]
-        consequence: Option<String>,
-        /// ClinVar review status filter (e.g., 2, expert_panel)
-        #[arg(long = "review-status")]
-        review_status: Option<String>,
-        /// Population AF scope (afr, amr, eas, fin, nfe, sas)
-        #[arg(long)]
-        population: Option<String>,
-        /// Minimum REVEL score
-        #[arg(long = "revel-min")]
-        revel_min: Option<f64>,
-        /// Minimum GERP score
-        #[arg(long = "gerp-min")]
-        gerp_min: Option<f64>,
-        /// Filter by COSMIC tumor site
-        #[arg(long = "tumor-site")]
-        tumor_site: Option<String>,
-        /// Filter by ClinVar condition
-        #[arg(long)]
-        condition: Option<String>,
-        /// Filter by SnpEff impact (HIGH/MODERATE/LOW/MODIFIER)
-        #[arg(long)]
-        impact: Option<String>,
-        /// Restrict to loss-of-function variants
-        #[arg(long)]
-        lof: bool,
-        /// Require presence of a field
-        #[arg(long)]
-        has: Option<String>,
-        /// Require missing field
-        #[arg(long)]
-        missing: Option<String>,
-        /// Filter CIViC therapy name
-        #[arg(long)]
-        therapy: Option<String>,
-
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search drugs by name, target, indication, or mechanism (MyChem.info)
-    #[command(after_help = "\
-When to use: use this when you know the drug or brand name, or switch to --indication, --target, or --mechanism for structured drug discovery.
-
-EXAMPLES:
-  biomcp search drug pembrolizumab
-  biomcp search drug trastuzumab --region who --limit 5
-  biomcp search drug Keytruda --limit 5
-  biomcp search drug Keytruda --region eu --limit 5
-  biomcp search drug --indication malaria --region who --limit 5
-  biomcp search drug -q \"kinase inhibitor\" --target EGFR --atc L01 --pharm-class kinase --limit 5
-
-Note: --interactions is currently unavailable from the public data sources BioMCP uses.
-Omitting --region on a plain name/alias search checks U.S., EU, and WHO data.
-If you omit --region while using structured filters such as --target or --indication, BioMCP stays on the U.S. MyChem path.
-Explicit --region who filters structured U.S. hits through WHO Prequalification.
-Explicit --region eu|all with structured filters still errors.
-
-See also: biomcp list drug")]
-    Drug {
-        /// Free text query (drug name, class, etc.)
-        #[arg(short, long)]
-        query: Option<String>,
-        /// Optional positional query alias for -q/--query
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-
-        /// Filter by target gene symbol
-        #[arg(long)]
-        target: Option<String>,
-
-        /// Filter by indication/disease name
-        #[arg(long)]
-        indication: Option<String>,
-
-        /// Filter by mechanism text
-        #[arg(long)]
-        mechanism: Option<String>,
-
-        /// Filter by drug type (e.g., biologic, small-molecule)
-        #[arg(long = "type")]
-        drug_type: Option<String>,
-        /// Filter by ATC code
-        #[arg(long)]
-        atc: Option<String>,
-        /// Filter by pharmacologic class
-        #[arg(long = "pharm-class")]
-        pharm_class: Option<String>,
-        /// Filter by interaction partner drug name (currently unavailable from public data sources)
-        #[arg(long)]
-        interactions: Option<String>,
-
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Data region for drug regulatory context [default: all]
-        #[arg(long, value_enum)]
-        region: Option<DrugRegionArg>,
-    },
-    /// Search pathways by name or keyword
-    #[command(
-        override_usage = "biomcp search pathway [OPTIONS] <QUERY>\n       biomcp search pathway [OPTIONS] --top-level [QUERY]",
-        after_help = "\
-EXAMPLES:
-  biomcp search pathway \"MAPK signaling\"
-  biomcp search pathway \"Pathways in cancer\" --limit 5
-  biomcp search pathway -q \"DNA repair\" --limit 5
-  biomcp search pathway --top-level --limit 5
-
-See also: biomcp list pathway"
-    )]
-    Pathway {
-        /// Free text query (pathway name, process, keyword)
-        #[arg(short, long)]
-        query: Option<String>,
-        /// Positional alias for -q/--query; required unless --top-level is present, and multi-word queries must be quoted
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-        /// Entity type filter (e.g., pathway)
-        #[arg(long = "type")]
-        pathway_type: Option<String>,
-        /// Include top-level pathways
-        #[arg(long = "top-level")]
-        top_level: bool,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search proteins by name or accession (UniProt)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search protein kinase
-  biomcp search protein -q \"BRAF\" --reviewed --disease melanoma --existence 1 --limit 5
-
-See also: biomcp list protein")]
-    Protein {
-        /// Free text query (protein name, accession, keyword)
-        #[arg(short, long)]
-        query: Option<String>,
-        /// Optional positional query alias for -q/--query
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-        /// Include all species (default: off, human-only)
-        #[arg(long)]
-        all_species: bool,
-        /// Restrict to reviewed entries
-        #[arg(long)]
-        reviewed: bool,
-        /// Filter by disease text
-        #[arg(long)]
-        disease: Option<String>,
-        /// Filter by protein existence level (1-5)
-        #[arg(long)]
-        existence: Option<u8>,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Cursor token from a previous response
-        #[arg(long = "next-page")]
-        next_page: Option<String>,
-    },
-    /// Search adverse event reports (OpenFDA FAERS)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp search adverse-event -d pembrolizumab --reaction rash
-  biomcp search adverse-event -d carboplatin --serious death --date-from 2020 --date-to 2024 --count patient.reaction.reactionmeddrapt
-  biomcp search adverse-event --type recall -d nivolumab
-
-See also: biomcp list adverse-event")]
-    AdverseEvent {
-        /// Drug name (required for FAERS queries)
-        #[arg(short = 'd', long)]
-        drug: Option<String>,
-        /// Optional positional query alias for -d/--drug
-        #[arg(value_name = "QUERY")]
-        positional_query: Option<String>,
-
-        /// Device name (required for --type device)
-        #[arg(long)]
-        device: Option<String>,
-
-        /// Device manufacturer name (for --type device)
-        #[arg(long)]
-        manufacturer: Option<String>,
-
-        /// Device product code (for --type device)
-        #[arg(long = "product-code")]
-        product_code: Option<String>,
-
-        /// Filter by reaction term (MedDRA)
-        #[arg(long)]
-        reaction: Option<String>,
-
-        /// Filter by reaction outcome [values: death, hospitalization, disability]
-        #[arg(long)]
-        outcome: Option<String>,
-
-        /// Seriousness filter (optionally specify type: death, hospitalization, lifethreatening, disability, congenital, other)
-        #[arg(long, num_args = 0..=1, default_missing_value = "any")]
-        serious: Option<String>,
-
-        /// Received after year/date (YYYY or YYYY-MM-DD)
-        #[arg(long = "date-from", alias = "since")]
-        date_from: Option<String>,
-        /// Received before year/date (YYYY or YYYY-MM-DD)
-        #[arg(long = "date-to", alias = "until")]
-        date_to: Option<String>,
-        /// Restrict to suspect drugs only
-        #[arg(long = "suspect-only")]
-        suspect_only: bool,
-        /// Patient sex filter (m|f)
-        #[arg(long)]
-        sex: Option<String>,
-        /// Minimum patient age
-        #[arg(long = "age-min")]
-        age_min: Option<u32>,
-        /// Maximum patient age
-        #[arg(long = "age-max")]
-        age_max: Option<u32>,
-        /// Reporter qualification filter
-        #[arg(long)]
-        reporter: Option<String>,
-        /// Server-side count aggregation field
-        #[arg(long)]
-        count: Option<String>,
-
-        /// Query type: faers (default), recall, or device
-        #[arg(long, default_value = "faers")]
-        r#type: String,
-
-        /// Filter by recall classification (Class I, Class II, Class III)
-        #[arg(long)]
-        classification: Option<String>,
-
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum GetEntity {
-    /// Get gene by symbol
-    #[command(after_help = "\
-When to use: use this for the default card, then add protein, hpa, expression, diseases, or funding when you need deeper biology, localization, or NIH grant context.
-
-EXAMPLES:
-  biomcp get gene BRAF
-  biomcp get gene BRAF pathways
-  biomcp get gene BRAF hpa
-  biomcp get gene ERBB2 funding
-
-See also: biomcp list gene")]
-    Gene {
-        /// Gene symbol (e.g., BRAF, TP53, EGFR)
-        symbol: String,
-        /// Sections to include (pathways, ontology, diseases, protein, go, interactions, civic, expression, hpa, druggability, clingen, constraint, disgenet, funding, all)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-    },
-    /// Get article by PMID, PMCID, or DOI
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp get article 22663011
-  biomcp get article 22663011 annotations
-  biomcp get article 22663011 tldr
-
-See also: biomcp list article")]
-    Article {
-        /// PMID (e.g., 22663011), PMCID (e.g., PMC9984800), or DOI (e.g., 10.1056/NEJMoa1203421)
-        id: String,
-        /// Sections to include (annotations, fulltext, tldr, all)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-    },
-    /// Get disease by name or ID (e.g., MONDO:0005105)
-    #[command(after_help = "\
-When to use: use this for the normalized disease card, then add funding or survival when you need NIH grant context or cancer outcomes before pivoting to search article -d for broader review literature.
-
-EXAMPLES:
-  biomcp get disease melanoma
-  biomcp get disease MONDO:0005105 genes
-  biomcp get disease \"chronic myeloid leukemia\" funding
-  biomcp get disease \"chronic myeloid leukemia\" survival
-
-See also: biomcp list disease")]
-    Disease {
-        /// Disease name (e.g., melanoma) or ID (e.g., MONDO:0005105)
-        name_or_id: String,
-        /// Sections to include (genes, pathways, phenotypes, variants, models, prevalence, survival, civic, disgenet, funding, all)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-    },
-    /// Get pharmacogenomics card by gene or drug (e.g., CYP2D6, warfarin)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp get pgx CYP2D6
-  biomcp get pgx warfarin recommendations
-
-See also: biomcp list pgx")]
-    Pgx {
-        /// Gene symbol or drug name (e.g., CYP2D6, codeine)
-        query: String,
-        /// Sections to include (recommendations, frequencies, guidelines, annotations, all)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-    },
-    /// Get trial by NCT ID (e.g., NCT02576665)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp get trial NCT02576665
-  biomcp get trial NCT02576665 eligibility --source ctgov
-  biomcp get trial NCT02576665 locations --offset 20 --limit 20
-
-See also: biomcp list trial")]
-    Trial {
-        /// ClinicalTrials.gov identifier (e.g., NCT02693535)
-        nct_id: String,
-        /// Sections to include (eligibility, locations, outcomes, arms, references, all)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-        /// Trial data source (ctgov or nci)
-        #[arg(long, default_value = "ctgov")]
-        source: String,
-    },
-    /// Get variant by exact rsID, HGVS, or "GENE CHANGE" (e.g., "BRAF V600E" or "BRAF p.Val600Glu")
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp get variant rs113488022
-  biomcp get variant \"BRAF V600E\" clinvar
-  biomcp get variant \"BRAF p.Val600Glu\"
-
-Shorthand like \"PTPN22 620W\" or \"R620W\" should go through `biomcp search variant`.
-
-See also: biomcp list variant")]
-    Variant {
-        /// Exact rsID, HGVS, or "GENE CHANGE" (e.g., rs113488022, "BRAF V600E", "BRAF p.Val600Glu")
-        id: String,
-        /// Sections to include (predict, predictions, clinvar, population, conservation, cosmic, cgi, civic, cbioportal, gwas, all)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-    },
-    /// Get drug by name
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp get drug pembrolizumab
-  biomcp get drug pembrolizumab label --raw
-  biomcp get drug trastuzumab regulatory --region who
-  biomcp get drug Keytruda regulatory --region eu
-  biomcp get drug Ozempic safety --region eu
-  biomcp get drug pembrolizumab targets
-  biomcp get drug pembrolizumab approvals
-
-See also: biomcp list drug")]
-    Drug {
-        /// Drug name (e.g., pembrolizumab, carboplatin)
-        name: String,
-        // Keep this as clap's default variadic positional so named flags like
-        // --region still parse as first-class options and appear in help.
-        /// Sections to include (label, regulatory, safety, shortage, targets, indications, interactions, civic, approvals, all)
-        sections: Vec<String>,
-        /// Data region for regional sections (regulatory, safety, shortage, or all)
-        #[arg(long, value_enum)]
-        region: Option<DrugRegionArg>,
-        /// Preserve raw FDA label subsections when used with `label` or `all`
-        #[arg(long)]
-        raw: bool,
-    },
-    /// Get pathway by ID
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp get pathway R-HSA-5673001
-  biomcp get pathway hsa05200
-  biomcp get pathway R-HSA-5673001 genes
-  biomcp get pathway R-HSA-5673001 events
-
-See also: biomcp list pathway")]
-    Pathway {
-        /// Pathway ID (e.g., R-HSA-5673001, hsa05200)
-        id: String,
-        /// Sections to include (genes, events (Reactome only), enrichment (Reactome only), all = all sections available for the resolved source)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-    },
-    /// Get protein by UniProt accession or gene symbol
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp get protein P15056
-  biomcp get protein P15056 complexes
-  biomcp get protein P15056 structures
-
-See also: biomcp list protein")]
-    Protein {
-        /// UniProt accession or HGNC symbol (e.g., P15056 or BRAF)
-        accession: String,
-        /// Sections to include (domains, interactions, complexes, structures, all)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-    },
-    /// Get adverse event report by FAERS safetyreportid or MAUDE mdr_report_key
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp get adverse-event 10222779
-  biomcp get adverse-event 10222779 reactions
-
-See also: biomcp list adverse-event")]
-    AdverseEvent {
-        /// FAERS safetyreportid or MAUDE mdr_report_key
-        report_id: String,
-        /// Sections to include (reactions, outcomes, concomitant, guidance, all)
-        #[arg(trailing_var_arg = true)]
-        sections: Vec<String>,
-    },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum VariantCommand {
-    /// Search trials mentioning the variant in mutation-related text fields (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp variant trials \"BRAF V600E\" --limit 5
-  biomcp variant trials \"BRAF V600E\" --source nci --limit 5
-  biomcp variant trials rs113488022 --limit 5
-
-Note: Searches ClinicalTrials.gov mutation-related free-text fields, including eligibility, title, summary, and keywords. Results depend on source document wording.
-See also: biomcp list variant")]
-    Trials {
-        /// Variant identifier (rsID, HGVS, or "GENE CHANGE")
-        id: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Trial data source (ctgov or nci)
-        #[arg(long, default_value = "ctgov")]
-        source: String,
-    },
-    /// Search articles mentioning the variant (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp variant articles \"BRAF V600E\" --limit 5
-  biomcp variant articles rs113488022 --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list variant")]
-    Articles {
-        /// Variant identifier (rsID, HGVS, or "GENE CHANGE")
-        id: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Explicit OncoKB lookup for a variant (requires ONCOKB_TOKEN)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp variant oncokb \"BRAF V600E\"
-  biomcp variant oncokb rs121913529
-
-See also: biomcp list variant")]
-    Oncokb {
-        /// Variant identifier (rsID, HGVS, or "GENE CHANGE")
-        id: String,
-    },
-    #[command(external_subcommand)]
-    External(Vec<String>),
-}
-
-#[derive(Subcommand, Debug)]
-pub enum DrugCommand {
-    /// Search trials using this drug (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp drug trials pembrolizumab --limit 5
-  biomcp drug trials osimertinib --source nci --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list drug")]
-    Trials {
-        /// Drug name (e.g., pembrolizumab)
-        name: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Trial data source (ctgov or nci)
-        #[arg(long, default_value = "ctgov")]
-        source: String,
-    },
-    /// Search FAERS adverse events for this drug (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp drug adverse-events pembrolizumab --limit 5
-  biomcp drug adverse-events carboplatin --serious --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list drug")]
-    AdverseEvents {
-        /// Drug name (e.g., pembrolizumab)
-        name: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Serious reports only
-        #[arg(long)]
-        serious: bool,
-    },
-    #[command(external_subcommand)]
-    External(Vec<String>),
-}
-
-#[derive(Subcommand, Debug)]
-pub enum DiseaseCommand {
-    /// Search trials for this disease (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp disease trials melanoma --limit 5
-  biomcp disease trials \"lung cancer\" --source nci --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list disease")]
-    Trials {
-        /// Disease name (e.g., melanoma)
-        name: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Trial data source (ctgov or nci)
-        #[arg(long, default_value = "ctgov")]
-        source: String,
-    },
-    /// Search articles for this disease (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp disease articles melanoma --limit 5
-  biomcp disease articles \"glioblastoma\" --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list disease")]
-    Articles {
-        /// Disease name (e.g., melanoma)
-        name: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search drugs with this disease as an indication (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp disease drugs melanoma --limit 5
-  biomcp disease drugs \"breast cancer\" --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list disease")]
-    Drugs {
-        /// Disease name (e.g., melanoma)
-        name: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum ArticleCommand {
-    /// Surface annotated entities from PubTator as discoverable commands
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp article entities 22663011
-  biomcp article entities 22663011 --limit 5
-  biomcp article entities 24200969
-
-See also: biomcp list article")]
-    Entities {
-        /// PMID (e.g., 22663011)
-        pmid: String,
-        /// Maximum entities per category (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-    },
-    /// Fetch compact summary cards for multiple known article IDs
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp article batch 22663011 24200969
-  biomcp article batch 22663011 10.1056/NEJMoa1203421 --json
-
-Returns compact multi-article summary cards for anchor selection.
-Semantic Scholar enrichment is optional. With S2_API_KEY, BioMCP uses
-authenticated requests at 1 req/sec; without it, BioMCP uses the shared pool at
-1 req/2sec.
-See also: biomcp list article")]
-    Batch {
-        /// PMIDs, PMCIDs, or DOIs
-        #[arg(required = true, num_args = 1..)]
-        ids: Vec<String>,
-    },
-    /// Traverse citing papers with Semantic Scholar contexts and intents
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp article citations 22663011 --limit 5
-  biomcp article citations PMC9984800 --limit 5
-
-Works without S2_API_KEY; authenticated requests are more reliable when the key
-is set.
-See also: biomcp list article")]
-    Citations {
-        /// PMID, PMCID, DOI, arXiv ID, or Semantic Scholar paper ID
-        id: String,
-        /// Maximum rows (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-    },
-    /// Traverse referenced papers with Semantic Scholar contexts and intents
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp article references 22663011 --limit 5
-  biomcp article references 10.1056/NEJMoa1203421 --limit 5
-
-Works without S2_API_KEY; authenticated requests are more reliable when the key
-is set.
-See also: biomcp list article")]
-    References {
-        /// PMID, PMCID, DOI, arXiv ID, or Semantic Scholar paper ID
-        id: String,
-        /// Maximum rows (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-    },
-    /// Find related papers from one or more positive seeds
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp article recommendations 22663011 --limit 5
-  biomcp article recommendations 22663011 24200969 --negative 39073865 --limit 5
-
-Works without S2_API_KEY; authenticated requests are more reliable when the key
-is set.
-See also: biomcp list article")]
-    Recommendations {
-        /// One or more positive seeds (PMID, PMCID, DOI, arXiv ID, or Semantic Scholar paper ID)
-        #[arg(required = true, num_args = 1..)]
-        ids: Vec<String>,
-        /// One or more negative seeds
-        #[arg(long = "negative")]
-        negative: Vec<String>,
-        /// Maximum rows (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-    },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum GeneCommand {
-    /// Show canonical gene definition card (same output as `get gene`)
-    #[command(
-        alias = "get",
-        after_help = "\
-EXAMPLES:
-  biomcp gene definition BRAF
-  biomcp gene get BRAF
-  biomcp get gene BRAF
-
-See also: biomcp list gene"
-    )]
-    Definition {
-        /// HGNC gene symbol (e.g., BRAF)
-        symbol: String,
-    },
-    /// Search trials linked to this gene symbol (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp gene trials BRAF --limit 5
-  biomcp gene trials EGFR --source nci --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list gene")]
-    Trials {
-        /// HGNC gene symbol (e.g., BRAF)
-        symbol: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Trial data source (ctgov or nci)
-        #[arg(long, default_value = "ctgov")]
-        source: String,
-    },
-    /// Search drugs targeting this gene symbol
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp gene drugs EGFR --limit 5
-  biomcp gene drugs BRAF --limit 5
-
-See also: biomcp list gene")]
-    Drugs {
-        /// HGNC gene symbol (e.g., BRAF)
-        symbol: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search articles mentioning this gene
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp gene articles BRAF --limit 5
-  biomcp gene articles TP53 --limit 5
-
-See also: biomcp list gene")]
-    Articles {
-        /// HGNC gene symbol (e.g., BRAF)
-        symbol: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Show pathways section for this gene symbol
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp gene pathways BRAF
-  biomcp gene pathways BRAF --limit 5 --offset 0
-  biomcp gene pathways BRCA1
-
-See also: biomcp list gene")]
-    Pathways {
-        /// HGNC gene symbol (e.g., BRAF)
-        symbol: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    #[command(external_subcommand)]
-    External(Vec<String>),
-}
-
-#[derive(Subcommand, Debug)]
-pub enum PathwayCommand {
-    /// Search drugs linked to genes in this pathway (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp pathway drugs R-HSA-5673001 --limit 5
-  biomcp pathway drugs hsa05200 --limit 5
-  biomcp pathway drugs R-HSA-6802957 --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list pathway")]
-    Drugs {
-        /// Pathway ID (e.g., R-HSA-5673001, hsa05200)
-        id: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search articles linked to this pathway (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp pathway articles R-HSA-5673001 --limit 5
-  biomcp pathway articles hsa05200 --limit 5
-  biomcp pathway articles R-HSA-6802957 --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list pathway")]
-    Articles {
-        /// Pathway ID (e.g., R-HSA-5673001, hsa05200)
-        id: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-    /// Search trials linked to this pathway (best-effort)
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp pathway trials R-HSA-5673001 --limit 5
-  biomcp pathway trials hsa05200 --limit 5
-  biomcp pathway trials R-HSA-5673001 --source nci --limit 5
-
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
-See also: biomcp list pathway")]
-    Trials {
-        /// Pathway ID (e.g., R-HSA-5673001, hsa05200)
-        id: String,
-        /// Maximum results (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-        /// Trial data source (ctgov or nci)
-        #[arg(long, default_value = "ctgov")]
-        source: String,
-    },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum ProteinCommand {
-    /// Show protein structural identifiers
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp protein structures P15056
-  biomcp protein structures P15056 --limit 25 --offset 5
-
-See also: biomcp list protein")]
-    Structures {
-        /// UniProt accession or HGNC symbol (e.g., P15056 or BRAF)
-        accession: String,
-        /// Maximum structures to show (default: 10)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-        /// Skip the first N results
-        #[arg(long, default_value = "0")]
-        offset: usize,
-    },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum StudyCommand {
-    /// List locally available cBioPortal studies
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study list
-
-See also: biomcp list study")]
-    List,
-    /// Download a cBioPortal study into the local study directory
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study download --list
-  biomcp study download msk_impact_2017
-  biomcp study download brca_tcga_pan_can_atlas_2018
-
-See also: biomcp list study")]
-    Download {
-        /// List downloadable remote study IDs
-        #[arg(long, conflicts_with = "study_id")]
-        list: bool,
-        /// Study identifier (e.g., msk_impact_2017)
-        #[arg(value_name = "STUDY_ID", required_unless_present = "list")]
-        study_id: Option<String>,
-    },
-    /// Run a study-scoped query for one gene
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study query --study msk_impact_2017 --gene TP53 --type mutations
-  biomcp study query --study brca_tcga_pan_can_atlas_2018 --gene ERBB2 --type cna
-  biomcp study query --study paad_qcmg_uq_2016 --gene KRAS --type expression
-
-See also: biomcp list study")]
-    Query {
-        /// Study identifier (e.g., msk_impact_2017)
-        #[arg(short, long)]
-        study: String,
-        /// HGNC gene symbol (e.g., TP53)
-        #[arg(short, long)]
-        gene: String,
-        /// Query type (mutations, cna, expression)
-        #[arg(short = 't', long = "type")]
-        query_type: String,
-        #[command(flatten)]
-        chart: ChartArgs,
-    },
-    /// Rank the most frequently mutated genes across a study
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study top-mutated --study msk_impact_2017
-  biomcp study top-mutated --study cll_broad_2022 --limit 10
-
-See also: biomcp list study")]
-    TopMutated {
-        /// Study identifier (e.g., msk_impact_2017)
-        #[arg(short, long)]
-        study: String,
-        /// Maximum rows to return (default: 10, clamped to 1..=50)
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
-    },
-    /// Filter samples across mutation, CNA, expression, and clinical criteria
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study filter --study msk_impact_2017 --mutated TP53
-  biomcp study filter --study brca_tcga_pan_can_atlas_2018 --mutated TP53 --amplified ERBB2
-  biomcp study filter --study brca_tcga_pan_can_atlas_2018 --mutated TP53 --expression-above ERBB2:1.5 --cancer-type \"Breast Cancer\"
-
-See also: biomcp list study")]
-    Filter {
-        /// Study identifier (e.g., brca_tcga_pan_can_atlas_2018)
-        #[arg(short, long)]
-        study: String,
-        /// Gene with at least one mutation (repeatable)
-        #[arg(long)]
-        mutated: Vec<String>,
-        /// Gene with CNA amplification, value == 2 (repeatable)
-        #[arg(long)]
-        amplified: Vec<String>,
-        /// Gene with CNA deep deletion, value == -2 (repeatable)
-        #[arg(long)]
-        deleted: Vec<String>,
-        /// Gene with expression above threshold, GENE:THRESHOLD (repeatable)
-        #[arg(long = "expression-above")]
-        expression_above: Vec<String>,
-        /// Gene with expression below threshold, GENE:THRESHOLD (repeatable)
-        #[arg(long = "expression-below")]
-        expression_below: Vec<String>,
-        /// Cancer type filter, case-insensitive exact match (repeatable)
-        #[arg(long = "cancer-type")]
-        cancer_type: Vec<String>,
-    },
-    /// Define a cohort split by mutation status
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study cohort --study brca_tcga_pan_can_atlas_2018 --gene TP53
-
-See also: biomcp list study")]
-    Cohort {
-        /// Study identifier (e.g., brca_tcga_pan_can_atlas_2018)
-        #[arg(short, long)]
-        study: String,
-        /// HGNC gene symbol (e.g., TP53)
-        #[arg(short, long)]
-        gene: String,
-    },
-    /// Compare mutation-stratified groups on survival outcomes
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study survival --study brca_tcga_pan_can_atlas_2018 --gene TP53
-  biomcp study survival --study brca_tcga_pan_can_atlas_2018 --gene TP53 --endpoint DFS
-
-See also: biomcp list study")]
-    Survival {
-        /// Study identifier (e.g., brca_tcga_pan_can_atlas_2018)
-        #[arg(short, long)]
-        study: String,
-        /// HGNC gene symbol (e.g., TP53)
-        #[arg(short, long)]
-        gene: String,
-        /// Survival endpoint (os, dfs, pfs, dss). Default: os
-        #[arg(short, long, default_value = "os")]
-        endpoint: String,
-        #[command(flatten)]
-        chart: ChartArgs,
-    },
-    /// Compare mutation-stratified groups on expression or mutation rates
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study compare --study brca_tcga_pan_can_atlas_2018 --gene TP53 --type expression --target ERBB2
-  biomcp study compare --study brca_tcga_pan_can_atlas_2018 --gene TP53 --type mutations --target PIK3CA
-
-See also: biomcp list study")]
-    Compare {
-        /// Study identifier (e.g., brca_tcga_pan_can_atlas_2018)
-        #[arg(short, long)]
-        study: String,
-        /// Gene for cohort stratification (e.g., TP53)
-        #[arg(short, long)]
-        gene: String,
-        /// Comparison type (expression or mutations)
-        #[arg(short = 't', long = "type")]
-        compare_type: String,
-        /// Target gene to compare across groups
-        #[arg(long)]
-        target: String,
-        #[command(flatten)]
-        chart: ChartArgs,
-    },
-    /// Compute pairwise mutation co-occurrence across genes
-    #[command(after_help = "\
-EXAMPLES:
-  biomcp study co-occurrence --study msk_impact_2017 --genes TP53,KRAS
-  biomcp study co-occurrence --study brca_tcga_pan_can_atlas_2018 --genes TP53,PIK3CA,GATA3
-
-See also: biomcp list study")]
-    CoOccurrence {
-        /// Study identifier (e.g., msk_impact_2017)
-        #[arg(short, long)]
-        study: String,
-        /// Comma-separated gene symbols (2..=10)
-        #[arg(short, long)]
-        genes: String,
-        #[command(flatten)]
-        chart: ChartArgs,
-    },
 }
 
 fn empty_sections() -> &'static [String] {
@@ -3594,14 +1868,14 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
     crate::sources::with_no_cache(no_cache, async move {
         match cli.command {
             Commands::Get {
-                entity: GetEntity::Gene { symbol, sections },
+                entity: GetEntity::Gene(gene::GeneGetArgs { symbol, sections }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let json_output = cli.json || json_override;
                 render_gene_card(&symbol, &sections, json_output).await
             }
             Commands::Get {
-                entity: GetEntity::Article { id, sections },
+                entity: GetEntity::Article(article::ArticleGetArgs { id, sections }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let json_output = cli.json || json_override;
@@ -3618,11 +1892,10 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             }
             Commands::Get {
-                entity:
-                    GetEntity::Disease {
-                        name_or_id,
-                        sections,
-                    },
+                entity: GetEntity::Disease(disease::DiseaseGetArgs {
+                    name_or_id,
+                    sections,
+                }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let json_output = cli.json || json_override;
@@ -3639,7 +1912,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             }
             Commands::Get {
-                entity: GetEntity::Pgx { query, sections },
+                entity: GetEntity::Pgx(pgx::PgxGetArgs { query, sections }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let json_output = cli.json || json_override;
@@ -3656,12 +1929,11 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             }
             Commands::Get {
-                entity:
-                    GetEntity::Trial {
-                        nct_id,
-                        sections,
-                        source,
-                    },
+                entity: GetEntity::Trial(trial::TrialGetArgs {
+                    nct_id,
+                    sections,
+                    source,
+                }),
             } => {
                 let (sections, location_offset, location_limit) =
                     parse_trial_location_paging(&sections)?;
@@ -3719,7 +1991,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             }
             Commands::Get {
-                entity: GetEntity::Variant { id, sections },
+                entity: GetEntity::Variant(variant::VariantGetArgs { id, sections }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let json_output = cli.json || json_override;
@@ -3736,12 +2008,12 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             }
             Commands::Get {
-                entity: GetEntity::Drug {
+                entity: GetEntity::Drug(drug::DrugGetArgs {
                     name,
                     sections,
                     region,
                     raw,
-                },
+                }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let region = region.map(DrugRegion::from);
@@ -3772,7 +2044,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             }
             Commands::Get {
-                entity: GetEntity::Pathway { id, sections },
+                entity: GetEntity::Pathway(pathway::PathwayGetArgs { id, sections }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let json_output = cli.json || json_override;
@@ -3789,10 +2061,10 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             }
             Commands::Get {
-                entity: GetEntity::Protein {
+                entity: GetEntity::Protein(protein::ProteinGetArgs {
                     accession,
                     sections,
-                },
+                }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let json_output = cli.json || json_override;
@@ -3809,11 +2081,10 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             }
             Commands::Get {
-                entity:
-                    GetEntity::AdverseEvent {
-                        report_id,
-                        sections,
-                    },
+                entity: GetEntity::AdverseEvent(adverse_event::AdverseEventGetArgs {
+                    report_id,
+                    sections,
+                }),
             } => {
                 let (sections, json_override) = extract_json_from_sections(&sections);
                 let json_output = cli.json || json_override;
@@ -5012,12 +3283,12 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     }
                 }
             },
-            Commands::Batch {
+            Commands::Batch(system::BatchArgs {
                 entity,
                 ids,
                 sections,
                 source,
-            } => {
+            }) => {
                 let entity = entity.trim().to_ascii_lowercase();
                 let parsed_ids = ids
                     .split(',')
@@ -5368,7 +3639,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
             }
             Commands::Search { entity } => {
                 match entity {
-                SearchEntity::All {
+                SearchEntity::All(search_all_command::SearchAllArgs {
                     gene,
                     variant,
                     disease,
@@ -5379,7 +3650,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     limit,
                     counts_only,
                     debug_plan,
-                } => {
+                }) => {
                     let keyword = resolve_query_input(keyword, positional_query, "--keyword")?;
                     let input = crate::cli::search_all::SearchAllInput {
                         gene,
@@ -5402,7 +3673,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Gene {
+                SearchEntity::Gene(gene::GeneSearchArgs {
                     query,
                     positional_query,
                     gene_type,
@@ -5412,7 +3683,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     go_term,
                     limit,
                     offset,
-                } => {
+                }) => {
                     let query = resolve_query_input(query, positional_query, "--query")?;
                     let filters = crate::entities::gene::GeneSearchFilters {
                         query,
@@ -5441,7 +3712,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Disease {
+                SearchEntity::Disease(disease::DiseaseSearchArgs {
                     query,
                     positional_query,
                     source,
@@ -5451,7 +3722,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     no_fallback,
                     limit,
                     offset,
-                } => {
+                }) => {
                     let query = resolve_query_input(query, positional_query, "--query")?;
                     let filters = crate::entities::disease::DiseaseSearchFilters {
                         query,
@@ -5490,7 +3761,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Pgx {
+                SearchEntity::Pgx(pgx::PgxSearchArgs {
                     gene,
                     positional_query,
                     drug,
@@ -5499,7 +3770,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     evidence,
                     limit,
                     offset,
-                } => {
+                }) => {
                     let gene = resolve_query_input(gene, positional_query, "--gene")?;
                     let filters = crate::entities::pgx::PgxSearchFilters {
                         gene,
@@ -5527,11 +3798,11 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Phenotype {
+                SearchEntity::Phenotype(phenotype::PhenotypeSearchArgs {
                     terms,
                     limit,
                     offset,
-                } => {
+                }) => {
                     let mut query_summary = terms.trim().to_string();
                     if offset > 0 {
                         query_summary = format!("{query_summary}, offset={offset}");
@@ -5553,7 +3824,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Gwas {
+                SearchEntity::Gwas(gwas::GwasSearchArgs {
                     gene,
                     positional_query,
                     trait_query,
@@ -5561,7 +3832,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     p_value,
                     limit,
                     offset,
-                } => {
+                }) => {
                     let gene = resolve_query_input(gene, positional_query, "--gene")?;
                     let filters = crate::entities::variant::GwasSearchFilters {
                         gene,
@@ -5590,7 +3861,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Article {
+                SearchEntity::Article(article::ArticleSearchArgs {
                     gene,
                     disease,
                     drug,
@@ -5616,7 +3887,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     limit,
                     offset,
                     debug_plan,
-                } => {
+                }) => {
                     let disease = normalize_cli_tokens(disease);
                     let drug = normalize_cli_tokens(drug);
                     let author = normalize_cli_tokens(author);
@@ -5737,7 +4008,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Trial {
+                SearchEntity::Trial(trial::TrialSearchArgs {
                     condition,
                     positional_query,
                     intervention,
@@ -5766,7 +4037,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     offset,
                     next_page,
                     limit,
-                } => {
+                }) => {
                     let positional_trial_query = positional_query
                         .as_deref()
                         .map(str::trim)
@@ -5902,7 +4173,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Variant {
+                SearchEntity::Variant(variant::VariantSearchArgs {
                     gene,
                     positional_query,
                     hgvsp,
@@ -5923,7 +4194,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     therapy,
                     limit,
                     offset,
-                } => {
+                }) => {
                     let outcome = render_variant_search_outcome(
                         cli.json,
                         false,
@@ -5957,7 +4228,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         anyhow::bail!("{}", outcome.text)
                     }
                 }
-                SearchEntity::Drug {
+                SearchEntity::Drug(drug::DrugSearchArgs {
                     query,
                     positional_query,
                     target,
@@ -5970,7 +4241,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     limit,
                     offset,
                     region,
-                } => {
+                }) => {
                     let query = resolve_query_input(query, positional_query, "--query")?;
                     let filters = crate::entities::drug::DrugSearchFilters {
                         query,
@@ -6072,14 +4343,14 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         }
                     }
                 }
-                SearchEntity::Pathway {
+                SearchEntity::Pathway(pathway::PathwaySearchArgs {
                     query,
                     positional_query,
                     pathway_type,
                     top_level,
                     limit,
                     offset,
-                } => {
+                }) => {
                     let query = resolve_query_input(query, positional_query, "--query")?;
                     let filters = crate::entities::pathway::PathwaySearchFilters {
                         query,
@@ -6114,7 +4385,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::Protein {
+                SearchEntity::Protein(protein::ProteinSearchArgs {
                     query,
                     positional_query,
                     all_species,
@@ -6124,7 +4395,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     limit,
                     offset,
                     next_page,
-                } => {
+                }) => {
                     let query =
                         resolve_query_input(query, positional_query, "--query")?.unwrap_or_default();
                     if next_page
@@ -6182,7 +4453,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                         )?)
                     }
                 }
-                SearchEntity::AdverseEvent {
+                SearchEntity::AdverseEvent(adverse_event::AdverseEventSearchArgs {
                     drug,
                     positional_query,
                     device,
@@ -6203,7 +4474,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     classification,
                     limit,
                     offset,
-                } => {
+                }) => {
                     let drug = resolve_query_input(drug, positional_query, "--drug")?;
                     let query_type =
                         crate::entities::adverse_event::AdverseEventQueryType::from_flag(&r#type)?;
@@ -6477,7 +4748,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
                 }
             }
-            Commands::Health { apis_only } => {
+            Commands::Health(system::HealthArgs { apis_only }) => {
                 let report = crate::cli::health::check(apis_only).await?;
                 if cli.json {
                     Ok(crate::render::json::to_pretty(&report)?)
@@ -6548,9 +4819,11 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 }
             },
             Commands::Chart { command } => Ok(crate::cli::chart::show(command.as_ref())?),
-            Commands::Update { check } => Ok(crate::cli::update::run(check).await?),
+            Commands::Update(system::UpdateArgs { check }) => {
+                Ok(crate::cli::update::run(check).await?)
+            }
             Commands::Uninstall => Ok(uninstall_self()?),
-            Commands::Enrich { genes, limit } => {
+            Commands::Enrich(system::EnrichArgs { genes, limit }) => {
                 const MAX_ENRICH_LIMIT: usize = 50;
                 if limit == 0 || limit > MAX_ENRICH_LIMIT {
                     return Err(crate::error::BioMcpError::InvalidArgument(format!(
@@ -6589,20 +4862,20 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     Ok(enrich_markdown(&genes, &terms))
                 }
             }
-            Commands::Discover { query } => {
+            Commands::Discover(system::DiscoverArgs { query }) => {
                 crate::cli::discover::run(crate::cli::discover::DiscoverArgs { query }, cli.json)
                     .await
             }
-            Commands::List { entity } => {
+            Commands::List(system::ListArgs { entity }) => {
                 crate::cli::list::render(entity.as_deref()).map_err(Into::into)
             }
             Commands::Mcp
             | Commands::Serve
-            | Commands::ServeHttp { .. }
+            | Commands::ServeHttp(_)
             | Commands::ServeSse => {
                 anyhow::bail!("MCP/serve commands should not go through CLI run()")
             }
-            Commands::Version { verbose } => Ok(version_output(verbose)),
+            Commands::Version(system::VersionArgs { verbose }) => Ok(version_output(verbose)),
         }
     })
     .await
@@ -6644,7 +4917,7 @@ async fn run_outcome_inner(
             Ok(CommandOutcome::stdout(text))
         }
         Commands::Get {
-            entity: GetEntity::Gene { symbol, sections },
+            entity: GetEntity::Gene(gene::GeneGetArgs { symbol, sections }),
         } => {
             let json = cli.json;
             let no_cache = cli.no_cache;
@@ -6658,12 +4931,12 @@ async fn run_outcome_inner(
         }
         Commands::Get {
             entity:
-                GetEntity::Drug {
+                GetEntity::Drug(drug::DrugGetArgs {
                     name,
                     sections,
                     region,
                     raw,
-                },
+                }),
         } => {
             let json = cli.json;
             let no_cache = cli.no_cache;
@@ -6684,7 +4957,7 @@ async fn run_outcome_inner(
             .await
         }
         Commands::Get {
-            entity: GetEntity::Variant { id, sections },
+            entity: GetEntity::Variant(variant::VariantGetArgs { id, sections }),
         } => {
             let json = cli.json;
             let no_cache = cli.no_cache;
@@ -6698,7 +4971,7 @@ async fn run_outcome_inner(
         }
         Commands::Search {
             entity:
-                SearchEntity::Variant {
+                SearchEntity::Variant(variant::VariantSearchArgs {
                     gene,
                     positional_query,
                     hgvsp,
@@ -6719,7 +4992,7 @@ async fn run_outcome_inner(
                     therapy,
                     limit,
                     offset,
-                },
+                }),
         } => {
             let json = cli.json;
             let no_cache = cli.no_cache;
@@ -6889,10 +5162,8 @@ mod tests {
         set_env_var,
     };
     use super::{
-        ArticleCommand, ChartArgs, ChartType, Cli, Commands, DrugCommand, DrugRegionArg,
-        EmaCommand, GeneCommand, GetEntity, McpChartPass, OutputStream, PaginationMeta,
-        ProteinCommand, StudyCommand, VariantCommand, VariantSearchPlan, WhoCommand,
-        article_search_json, build_article_debug_plan, disease_search_json,
+        ChartArgs, Cli, Commands, McpChartPass, OutputStream, PaginationMeta, StudyCommand,
+        VariantSearchPlan, article_search_json, build_article_debug_plan, disease_search_json,
         drug_all_region_search_json, execute, execute_mcp, extract_json_from_sections,
         paginate_trial_locations, parse_simple_gene_change, parse_trial_location_paging,
         resolve_drug_search_region, resolve_query_input, resolve_variant_query,
@@ -6927,181 +5198,6 @@ mod tests {
         assert!(!json_override);
     }
 
-    #[test]
-    fn get_drug_help_lists_region_flag_and_examples() {
-        let mut command = Cli::command();
-        let get = command
-            .find_subcommand_mut("get")
-            .expect("get subcommand should exist");
-        let drug = get
-            .find_subcommand_mut("drug")
-            .expect("drug subcommand should exist");
-        let mut help = Vec::new();
-        drug.write_long_help(&mut help)
-            .expect("drug help should render");
-        let help = String::from_utf8(help).expect("help should be utf-8");
-
-        assert!(help.contains("--region <REGION>"));
-        assert!(help.contains("biomcp get drug Keytruda regulatory --region eu"));
-        assert!(help.contains("biomcp get drug Ozempic safety --region eu"));
-    }
-
-    #[test]
-    fn get_drug_help_mentions_raw_label_mode() {
-        let mut command = Cli::command();
-        let get = command
-            .find_subcommand_mut("get")
-            .expect("get subcommand should exist");
-        let drug = get
-            .find_subcommand_mut("drug")
-            .expect("drug subcommand should exist");
-        let mut help = Vec::new();
-        drug.write_long_help(&mut help)
-            .expect("drug help should render");
-        let help = String::from_utf8(help).expect("help should be utf-8");
-
-        assert!(help.contains("--raw"));
-        assert!(help.contains("biomcp get drug pembrolizumab label --raw"));
-    }
-
-    #[test]
-    fn get_drug_parses_region_split_form() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "get",
-            "drug",
-            "trastuzumab",
-            "regulatory",
-            "--region",
-            "who",
-        ])
-        .expect("get drug should parse");
-
-        let Cli {
-            command:
-                Commands::Get {
-                    entity:
-                        GetEntity::Drug {
-                            name,
-                            sections,
-                            region,
-                            raw,
-                        },
-                },
-            json,
-            no_cache,
-        } = cli
-        else {
-            panic!("expected get drug command");
-        };
-
-        assert_eq!(name, "trastuzumab");
-        assert_eq!(sections, vec!["regulatory".to_string()]);
-        assert_eq!(region, Some(DrugRegionArg::Who));
-        assert!(!raw);
-        assert!(!json);
-        assert!(!no_cache);
-    }
-
-    #[test]
-    fn get_drug_parses_region_equals_form() {
-        let cli =
-            Cli::try_parse_from(["biomcp", "get", "drug", "Ozempic", "safety", "--region=all"])
-                .expect("get drug should parse");
-
-        let Cli {
-            command:
-                Commands::Get {
-                    entity:
-                        GetEntity::Drug {
-                            name,
-                            sections,
-                            region,
-                            raw,
-                        },
-                },
-            json,
-            no_cache,
-        } = cli
-        else {
-            panic!("expected get drug command");
-        };
-
-        assert_eq!(name, "Ozempic");
-        assert_eq!(sections, vec!["safety".to_string()]);
-        assert_eq!(region, Some(DrugRegionArg::All));
-        assert!(!raw);
-        assert!(!json);
-        assert!(!no_cache);
-    }
-
-    #[test]
-    fn get_drug_parses_global_json_after_sections() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "get",
-            "drug",
-            "trastuzumab",
-            "regulatory",
-            "--region",
-            "who",
-            "--json",
-        ])
-        .expect("get drug should parse");
-
-        let Cli {
-            command:
-                Commands::Get {
-                    entity:
-                        GetEntity::Drug {
-                            name,
-                            sections,
-                            region,
-                            raw,
-                        },
-                },
-            json,
-            no_cache,
-        } = cli
-        else {
-            panic!("expected get drug command");
-        };
-
-        assert_eq!(name, "trastuzumab");
-        assert_eq!(sections, vec!["regulatory".to_string()]);
-        assert_eq!(region, Some(DrugRegionArg::Who));
-        assert!(!raw);
-        assert!(json);
-        assert!(!no_cache);
-    }
-
-    #[test]
-    fn get_drug_parses_raw_flag_with_label_section() {
-        let cli = Cli::try_parse_from(["biomcp", "get", "drug", "pembrolizumab", "label", "--raw"])
-            .expect("get drug label --raw should parse");
-
-        let Cli {
-            command:
-                Commands::Get {
-                    entity:
-                        GetEntity::Drug {
-                            name,
-                            sections,
-                            raw,
-                            ..
-                        },
-                },
-            ..
-        } = cli
-        else {
-            panic!("expected get drug command");
-        };
-
-        assert_eq!(name, "pembrolizumab");
-        assert_eq!(sections, vec!["label".to_string()]);
-        assert!(raw);
-    }
-
     #[tokio::test]
     async fn get_drug_raw_rejects_non_label_sections() {
         let cli =
@@ -7115,22 +5211,6 @@ mod tests {
             err.to_string()
                 .contains("--raw can only be used with label or all")
         );
-    }
-
-    #[test]
-    fn get_drug_region_parse_error_mentions_region() {
-        let err = Cli::try_parse_from([
-            "biomcp",
-            "get",
-            "drug",
-            "Keytruda",
-            "regulatory",
-            "--region",
-        ])
-        .expect_err("missing region value should fail");
-        let rendered = err.to_string();
-
-        assert!(rendered.contains("--region"));
     }
 
     #[test]
@@ -7150,56 +5230,6 @@ mod tests {
         assert!(help.contains("Commands:\n  list"));
         assert!(!help.contains("biomcp skill 03"));
         assert!(!help.contains("variant-to-treatment"));
-    }
-
-    #[test]
-    fn ema_sync_parses_subcommand() {
-        let cli = parse_built_cli(["biomcp", "ema", "sync"]);
-        assert!(matches!(
-            cli.command,
-            Commands::Ema {
-                cmd: EmaCommand::Sync
-            }
-        ));
-    }
-
-    #[test]
-    fn ema_help_mentions_sync_example() {
-        let mut command = Cli::command();
-        let ema = command
-            .find_subcommand_mut("ema")
-            .expect("ema subcommand should exist");
-        let mut help = Vec::new();
-        ema.write_long_help(&mut help)
-            .expect("ema help should render");
-        let help = String::from_utf8(help).expect("help should be utf-8");
-
-        assert!(help.contains("biomcp ema sync"));
-    }
-
-    #[test]
-    fn who_sync_parses_subcommand() {
-        let cli = parse_built_cli(["biomcp", "who", "sync"]);
-        assert!(matches!(
-            cli.command,
-            Commands::Who {
-                cmd: WhoCommand::Sync
-            }
-        ));
-    }
-
-    #[test]
-    fn who_help_mentions_sync_example() {
-        let mut command = Cli::command();
-        let who = command
-            .find_subcommand_mut("who")
-            .expect("who subcommand should exist");
-        let mut help = Vec::new();
-        who.write_long_help(&mut help)
-            .expect("who help should render");
-        let help = String::from_utf8(help).expect("help should be utf-8");
-
-        assert!(help.contains("biomcp who sync"));
     }
 
     #[test]
@@ -7242,7 +5272,8 @@ mod tests {
         assert!(cli.no_cache);
         assert!(matches!(
             cli.command,
-            Commands::ServeHttp { host, port } if host == "127.0.0.1" && port == 8080
+            Commands::ServeHttp(super::system::ServeHttpArgs { host, port })
+                if host == "127.0.0.1" && port == 8080
         ));
 
         for args in [
@@ -7254,27 +5285,6 @@ mod tests {
             assert!(cli.json);
             assert!(cli.no_cache);
         }
-    }
-
-    #[test]
-    fn serve_http_help_describes_streamable_http() {
-        let mut command = super::build_cli();
-        let serve_http = command
-            .find_subcommand_mut("serve-http")
-            .expect("serve-http subcommand should exist");
-        let mut help = Vec::new();
-        serve_http
-            .write_long_help(&mut help)
-            .expect("serve-http help should render");
-        let help = String::from_utf8(help).expect("help should be utf-8");
-
-        assert!(help.contains("Streamable HTTP"));
-        assert!(help.contains("/mcp"));
-        assert!(help.contains("--host <HOST>"));
-        assert!(help.contains("--port <PORT>"));
-        assert!(!help.contains("SSE transport"));
-        assert!(!help.contains("--json"));
-        assert!(!help.contains("--no-cache"));
     }
 
     #[test]
@@ -7462,131 +5472,6 @@ mod tests {
         ));
     }
 
-    #[test]
-    fn search_article_help_includes_when_to_use_guidance() {
-        let help = render_article_search_long_help();
-
-        assert!(help.contains("When to use:"));
-        assert!(help.contains("keyword search to scan a topic"));
-        assert!(help.contains("Prefer --type review"));
-    }
-
-    #[test]
-    fn search_article_help_includes_query_formulation_guidance() {
-        let help = render_article_search_long_help();
-
-        assert!(help.contains("QUERY FORMULATION:"));
-        assert!(help.contains(
-            "Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`."
-        ));
-        assert!(help.contains(
-            "Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts."
-        ));
-        assert!(help.contains(
-            "Unknown-entity questions should stay keyword-first or start with `discover`."
-        ));
-        assert!(help.contains(
-            "Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance."
-        ));
-        assert!(help.contains(
-            "`semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties."
-        ));
-        assert!(help.contains(
-            "Hybrid score = `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position` by default, using the same LitSense2-derived semantic signal and `semantic=0` when LitSense2 did not match."
-        ));
-        assert!(
-            help.contains(
-                "biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5"
-            )
-        );
-        assert!(help.contains(
-            "biomcp search article -k '\"cafe-au-lait spots\" neurofibromas disease' --type review --limit 5"
-        ));
-    }
-
-    #[test]
-    fn get_gene_help_includes_when_to_use_guidance() {
-        let help = render_gene_get_long_help();
-
-        assert!(help.contains("When to use:"));
-        assert!(help.contains("default card"));
-        assert!(help.contains("protein, hpa, expression, diseases, or funding"));
-        assert!(help.contains("ERBB2 funding"));
-    }
-
-    #[test]
-    fn get_disease_help_includes_when_to_use_guidance() {
-        let help = render_disease_get_long_help();
-
-        assert!(help.contains("When to use:"));
-        assert!(help.contains("normalized disease card"));
-        assert!(help.contains("funding or survival"));
-        assert!(help.contains("search article -d"));
-    }
-
-    #[test]
-    fn discover_help_includes_when_to_use_guidance() {
-        let help = render_discover_long_help();
-
-        assert!(help.contains("When to use:"));
-        assert!(help.contains("only have free text"));
-        assert!(help.contains("pick the next typed command"));
-    }
-
-    #[test]
-    fn search_phenotype_help_mentions_hpo_ids_and_symptom_phrases() {
-        let help = render_phenotype_search_long_help();
-
-        assert!(help.contains("HPO IDs"));
-        assert!(help.contains("space- or comma-separated"));
-        assert!(help.contains("one symptom phrase"));
-        assert!(help.contains("comma-separated symptom phrases"));
-        assert!(help.contains("seizure, developmental delay"));
-        assert!(help.contains("biomcp list phenotype"));
-    }
-
-    fn render_trial_search_long_help() -> String {
-        let mut command = Cli::command();
-        let search = command
-            .find_subcommand_mut("search")
-            .expect("search subcommand should exist");
-        let trial = search
-            .find_subcommand_mut("trial")
-            .expect("trial subcommand should exist");
-        let mut help = Vec::new();
-        trial
-            .write_long_help(&mut help)
-            .expect("trial help should render");
-        String::from_utf8(help).expect("help should be utf-8")
-    }
-
-    fn render_discover_long_help() -> String {
-        let mut command = Cli::command();
-        let discover = command
-            .find_subcommand_mut("discover")
-            .expect("discover subcommand should exist");
-        let mut help = Vec::new();
-        discover
-            .write_long_help(&mut help)
-            .expect("discover help should render");
-        String::from_utf8(help).expect("help should be utf-8")
-    }
-
-    fn render_phenotype_search_long_help() -> String {
-        let mut command = Cli::command();
-        let search = command
-            .find_subcommand_mut("search")
-            .expect("search subcommand should exist");
-        let phenotype = search
-            .find_subcommand_mut("phenotype")
-            .expect("phenotype subcommand should exist");
-        let mut help = Vec::new();
-        phenotype
-            .write_long_help(&mut help)
-            .expect("phenotype help should render");
-        String::from_utf8(help).expect("help should be utf-8")
-    }
-
     fn render_cache_path_long_help() -> String {
         let mut command = Cli::command();
         let cache = command
@@ -7667,201 +5552,6 @@ mod tests {
             .try_get_matches_from(args)
             .expect("args should parse with canonical CLI");
         Cli::from_arg_matches(&matches).expect("matches should decode into Cli")
-    }
-
-    fn render_pathway_search_long_help() -> String {
-        let mut command = Cli::command();
-        let search = command
-            .find_subcommand_mut("search")
-            .expect("search subcommand should exist");
-        let pathway = search
-            .find_subcommand_mut("pathway")
-            .expect("pathway subcommand should exist");
-        let mut help = Vec::new();
-        pathway
-            .write_long_help(&mut help)
-            .expect("pathway help should render");
-        String::from_utf8(help).expect("help should be utf-8")
-    }
-
-    fn render_article_search_long_help() -> String {
-        let mut command = Cli::command();
-        let search = command
-            .find_subcommand_mut("search")
-            .expect("search subcommand should exist");
-        let article = search
-            .find_subcommand_mut("article")
-            .expect("article subcommand should exist");
-        let mut help = Vec::new();
-        article
-            .write_long_help(&mut help)
-            .expect("article help should render");
-        String::from_utf8(help).expect("help should be utf-8")
-    }
-
-    fn render_gene_get_long_help() -> String {
-        let mut command = Cli::command();
-        let get = command
-            .find_subcommand_mut("get")
-            .expect("get subcommand should exist");
-        let gene = get
-            .find_subcommand_mut("gene")
-            .expect("gene get subcommand should exist");
-        let mut help = Vec::new();
-        gene.write_long_help(&mut help)
-            .expect("gene help should render");
-        String::from_utf8(help).expect("help should be utf-8")
-    }
-
-    fn render_disease_get_long_help() -> String {
-        let mut command = Cli::command();
-        let get = command
-            .find_subcommand_mut("get")
-            .expect("get subcommand should exist");
-        let disease = get
-            .find_subcommand_mut("disease")
-            .expect("disease get subcommand should exist");
-        let mut help = Vec::new();
-        disease
-            .write_long_help(&mut help)
-            .expect("disease help should render");
-        String::from_utf8(help).expect("help should be utf-8")
-    }
-
-    fn render_chart_long_help() -> String {
-        let mut command = Cli::command();
-        let chart = command
-            .find_subcommand_mut("chart")
-            .expect("chart subcommand should exist");
-        let mut help = Vec::new();
-        chart
-            .write_long_help(&mut help)
-            .expect("chart help should render");
-        String::from_utf8(help).expect("help should be utf-8")
-    }
-
-    #[test]
-    fn trial_facility_help_names_text_search_and_geo_verify_modes() {
-        let help = render_trial_search_long_help();
-
-        assert!(help.contains("text-search mode"));
-        assert!(help.contains("geo-verify mode"));
-        assert!(help.contains("materially more expensive"));
-    }
-
-    #[test]
-    fn trial_phase_help_explains_combined_phase_label() {
-        let help = render_trial_search_long_help();
-
-        assert!(help.contains("1/2"));
-        assert!(help.contains("combined Phase 1/Phase 2 label"));
-        assert!(help.contains("not Phase 1 OR Phase 2"));
-    }
-
-    #[test]
-    fn trial_sex_help_explains_all_means_no_restriction() {
-        let help = render_trial_search_long_help();
-
-        assert!(help.contains("all"));
-        assert!(help.contains("no sex restriction"));
-    }
-
-    #[test]
-    fn article_date_help_advertises_shared_accepted_formats() {
-        let help = render_article_search_long_help();
-
-        assert!(help.contains("Published after date (YYYY, YYYY-MM, or YYYY-MM-DD)"));
-        assert!(help.contains("Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)"));
-        assert!(help.contains("[aliases: --since]"));
-        assert!(help.contains("[aliases: --until]"));
-        assert!(help.contains("--max-per-source <N>"));
-        assert!(help.contains(
-            "Cap each federated source's contribution after deduplication and before ranking."
-        ));
-        assert!(help.contains(
-            "Default: 40% of `--limit` on federated pools with at least three surviving primary sources."
-        ));
-        assert!(help.contains("`0` uses the default cap."));
-        assert!(help.contains("Setting it equal to `--limit` disables capping."));
-    }
-
-    #[test]
-    fn trial_phase_help_explains_canonical_numeric_forms_and_aliases() {
-        let help = render_trial_search_long_help();
-
-        assert!(help.contains("Canonical CLI forms: NA, 1, 1/2, 2, 3, 4."));
-        assert!(help.contains("Accepted aliases: EARLY_PHASE1, PHASE1, PHASE2, PHASE3, PHASE4."));
-    }
-
-    #[test]
-    fn trial_help_documents_nci_source_specific_notes() {
-        let help = render_trial_search_long_help();
-
-        assert!(help.contains("Source-specific notes"));
-        assert!(help.contains("grounds to an NCI disease ID when available"));
-        assert!(help.contains("one mapped status at a time"));
-        assert!(help.contains("I_II"));
-        assert!(help.contains("early_phase1"));
-        assert!(help.contains("sites.org_coordinates"));
-        assert!(help.contains("no separate NCI keyword flag"));
-    }
-
-    #[test]
-    fn chart_help_lists_descriptions_for_all_chart_topics() {
-        let help = render_chart_long_help();
-
-        assert!(help.contains("bar          Categorical counts as vertical bars"));
-        assert!(help.contains("stacked-bar  Mutation-grouped sample counts split by outcome"));
-        assert!(help.contains("pie          Proportional distribution of categories"));
-        assert!(help.contains("waterfall    Ranked per-sample mutation burden"));
-        assert!(help.contains("heatmap      Pairwise co-occurrence matrix"));
-        assert!(help.contains("histogram    Binned distribution of a continuous value"));
-        assert!(help.contains("density      Smoothed distribution estimate"));
-        assert!(help.contains("box          Median, IQR, and whiskers for group comparison"));
-        assert!(help.contains("violin       Full distribution shape for group comparison"));
-        assert!(help.contains("ridgeline    Stacked density comparison across groups"));
-        assert!(help.contains("scatter      Paired expression values for two genes"));
-        assert!(help.contains("survival     Kaplan-Meier survival curves"));
-    }
-
-    #[test]
-    fn trial_age_help_explains_age_only_count_is_approximate() {
-        let help = render_trial_search_long_help();
-
-        assert!(help.contains("age-only CTGov searches report an approximate upstream total"));
-    }
-
-    #[test]
-    fn search_pathway_help_describes_conditional_query_contract() {
-        let help = render_pathway_search_long_help();
-
-        assert!(help.contains("biomcp search pathway [OPTIONS] <QUERY>"));
-        assert!(help.contains("biomcp search pathway [OPTIONS] --top-level [QUERY]"));
-        assert!(help.contains("required unless --top-level is present"));
-        assert!(help.contains("multi-word queries must be quoted"));
-        assert!(help.contains("biomcp search pathway --top-level --limit 5"));
-    }
-
-    #[test]
-    fn pathway_help_describes_source_aware_section_contract() {
-        let mut command = Cli::command();
-        let get = command
-            .find_subcommand_mut("get")
-            .expect("get subcommand should exist");
-        let pathway = get
-            .find_subcommand_mut("pathway")
-            .expect("pathway subcommand should exist");
-        let mut help = Vec::new();
-        pathway
-            .write_long_help(&mut help)
-            .expect("pathway help should render");
-        let help = String::from_utf8(help).expect("help should be utf-8");
-
-        assert!(help.contains("events (Reactome only)"));
-        assert!(help.contains("enrichment (Reactome only)"));
-        assert!(help.contains("all = all sections available for the resolved source"));
-        assert!(help.contains("biomcp get pathway R-HSA-5673001 events"));
-        assert!(!help.contains("biomcp get pathway hsa05200 enrichment"));
     }
 
     #[test]
@@ -8312,34 +6002,6 @@ mod tests {
     }
 
     #[test]
-    fn search_drug_help_mentions_default_all_and_structured_filter_note() {
-        let mut cmd = Cli::command();
-        let search = cmd.find_subcommand_mut("search").expect("search command");
-        let drug = search
-            .find_subcommand_mut("drug")
-            .expect("search drug command");
-
-        let mut long_help = Vec::new();
-        drug.write_long_help(&mut long_help)
-            .expect("search drug help should render");
-        let long_help = String::from_utf8(long_help).expect("utf8 help");
-
-        assert!(long_help.contains("When to use:"));
-        assert!(long_help.contains("when you know the drug or brand name"));
-        assert!(long_help.contains("--indication, --target, or --mechanism"));
-        assert!(long_help.contains("[default: all]"));
-        assert!(long_help.contains(
-            "Omitting --region on a plain name/alias search checks U.S., EU, and WHO data."
-        ));
-        assert!(long_help.contains(
-            "If you omit --region while using structured filters such as --target or --indication, BioMCP stays on the U.S. MyChem path."
-        ));
-        assert!(long_help.contains(
-            "Explicit --region who filters structured U.S. hits through WHO Prequalification."
-        ));
-    }
-
-    #[test]
     fn search_json_preserves_who_search_fields() {
         let pagination = PaginationMeta::offset(0, 5, 1, Some(1));
         let json = search_json(
@@ -8753,361 +6415,6 @@ mod tests {
     }
 
     #[test]
-    fn gene_get_alias_parses_as_definition_subcommand() {
-        let cli = Cli::try_parse_from(["biomcp", "gene", "get", "BRAF"])
-            .expect("gene get alias should parse");
-        match cli.command {
-            Commands::Gene {
-                cmd: GeneCommand::Definition { symbol },
-            } => assert_eq!(symbol, "BRAF"),
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn gene_bare_symbol_parses_as_external_subcommand() {
-        let cli =
-            Cli::try_parse_from(["biomcp", "gene", "BRAF"]).expect("bare gene symbol should parse");
-        match cli.command {
-            Commands::Gene {
-                cmd: GeneCommand::External(args),
-            } => assert_eq!(args, vec!["BRAF"]),
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn drug_bare_name_parses_as_external_subcommand() {
-        let cli = Cli::try_parse_from(["biomcp", "drug", "imatinib"])
-            .expect("bare drug name should parse");
-        match cli.command {
-            Commands::Drug {
-                cmd: DrugCommand::External(args),
-            } => assert_eq!(args, vec!["imatinib"]),
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn variant_bare_id_parses_as_external_subcommand() {
-        let cli = Cli::try_parse_from(["biomcp", "variant", "BRAF V600E"])
-            .expect("bare variant id should parse");
-        match cli.command {
-            Commands::Variant {
-                cmd: VariantCommand::External(args),
-            } => assert_eq!(args, vec!["BRAF V600E"]),
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn discover_top_level_command_parses_query() {
-        let cli =
-            Cli::try_parse_from(["biomcp", "discover", "ERBB1"]).expect("discover should parse");
-        match cli.command {
-            Commands::Discover { query } => assert_eq!(query, "ERBB1"),
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn variant_trials_parses_source_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "variant",
-            "trials",
-            "BRAF V600E",
-            "--source",
-            "nci",
-            "--limit",
-            "3",
-        ])
-        .expect("variant trials with --source should parse");
-        match cli.command {
-            Commands::Variant {
-                cmd:
-                    VariantCommand::Trials {
-                        source,
-                        limit,
-                        offset,
-                        ..
-                    },
-            } => {
-                assert_eq!(source, "nci");
-                assert_eq!(limit, 3);
-                assert_eq!(offset, 0);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_article_parses_source_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "article",
-            "-g",
-            "BRAF",
-            "--source",
-            "pubtator",
-            "--debug-plan",
-            "--limit",
-            "5",
-        ])
-        .expect("search article with --source should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Article {
-                        gene,
-                        source,
-                        debug_plan,
-                        limit,
-                        offset,
-                        ..
-                    },
-            } => {
-                assert_eq!(gene.as_deref(), Some("BRAF"));
-                assert_eq!(source, "pubtator");
-                assert!(debug_plan);
-                assert_eq!(limit, 5);
-                assert_eq!(offset, 0);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_article_parses_pubmed_source_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp", "search", "article", "-g", "BRAF", "--source", "pubmed", "--limit", "5",
-        ])
-        .expect("search article with --source pubmed should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Article {
-                        gene,
-                        source,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(gene.as_deref(), Some("BRAF"));
-                assert_eq!(source, "pubmed");
-                assert_eq!(limit, 5);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_article_parses_litsense2_source_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "article",
-            "-k",
-            "Hirschsprung disease",
-            "--source",
-            "litsense2",
-            "--limit",
-            "5",
-        ])
-        .expect("search article with --source litsense2 should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Article {
-                        keyword,
-                        source,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(keyword, vec!["Hirschsprung disease".to_string()]);
-                assert_eq!(source, "litsense2");
-                assert_eq!(limit, 5);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_article_parses_max_per_source_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "article",
-            "-g",
-            "BRAF",
-            "--max-per-source",
-            "10",
-            "--limit",
-            "25",
-        ])
-        .expect("search article with --max-per-source should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Article {
-                        gene,
-                        max_per_source,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(gene.as_deref(), Some("BRAF"));
-                assert_eq!(max_per_source, Some(10));
-                assert_eq!(limit, 25);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_article_defaults_to_relevance_sort() {
-        let cli = Cli::try_parse_from(["biomcp", "search", "article", "-k", "melanoma"])
-            .expect("search article without --sort should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity: super::SearchEntity::Article { sort, .. },
-            } => assert_eq!(sort, "relevance"),
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_article_parses_ranking_mode_and_weight_flags() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "article",
-            "-k",
-            "melanoma",
-            "--ranking-mode",
-            "hybrid",
-            "--weight-semantic",
-            "0.5",
-            "--weight-lexical",
-            "0.2",
-            "--weight-citations",
-            "0.2",
-            "--weight-position",
-            "0.1",
-        ])
-        .expect("search article with ranking flags should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Article {
-                        ranking_mode,
-                        weight_semantic,
-                        weight_lexical,
-                        weight_citations,
-                        weight_position,
-                        ..
-                    },
-            } => {
-                assert_eq!(ranking_mode.as_deref(), Some("hybrid"));
-                assert_eq!(weight_semantic, Some(0.5));
-                assert_eq!(weight_lexical, Some(0.2));
-                assert_eq!(weight_citations, Some(0.2));
-                assert_eq!(weight_position, Some(0.1));
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_article_parses_multi_token_keyword_and_until_alias() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "article",
-            "-k",
-            "vemurafenib",
-            "resistance",
-            "melanoma",
-            "--sort",
-            "date",
-            "--since",
-            "2010-01-01",
-            "--until",
-            "2015-12-31",
-            "--limit",
-            "10",
-        ])
-        .expect("search article multi-token keyword with --until should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Article {
-                        keyword,
-                        date_from,
-                        date_to,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(
-                    keyword,
-                    vec![
-                        "vemurafenib".to_string(),
-                        "resistance".to_string(),
-                        "melanoma".to_string()
-                    ]
-                );
-                assert_eq!(date_from.as_deref(), Some("2010-01-01"));
-                assert_eq!(date_to.as_deref(), Some("2015-12-31"));
-                assert_eq!(limit, 10);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_article_parses_keyword_with_extra_free_text() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "article",
-            "-k",
-            "EGFR resistance mechanism",
-            "non-small cell lung cancer",
-            "--sort",
-            "citations",
-            "--limit",
-            "5",
-        ])
-        .expect("search article keyword plus extra free text should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity: super::SearchEntity::Article { keyword, limit, .. },
-            } => {
-                assert_eq!(
-                    keyword,
-                    vec![
-                        "EGFR resistance mechanism".to_string(),
-                        "non-small cell lung cancer".to_string()
-                    ]
-                );
-                assert_eq!(limit, 5);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
     fn related_article_filters_default_to_relevance_and_safety_flags() {
         let filters = super::related_article_filters();
 
@@ -9207,705 +6514,6 @@ mod tests {
                 .iter()
                 .any(|entry| entry == "max_per_source=disabled")
         );
-    }
-
-    #[test]
-    fn search_trial_parses_new_filter_flags() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "trial",
-            "-c",
-            "melanoma",
-            "--facility",
-            "MD Anderson",
-            "--age",
-            "0.5",
-            "--sex",
-            "female",
-            "--criteria",
-            "mismatch repair deficient",
-            "--sponsor-type",
-            "nih",
-            "--count-only",
-            "--limit",
-            "3",
-        ])
-        .expect("search trial new flags should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Trial {
-                        facility,
-                        age,
-                        sex,
-                        criteria,
-                        sponsor_type,
-                        count_only,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(facility, vec!["MD Anderson".to_string()]);
-                assert_eq!(age, Some(0.5));
-                assert_eq!(sex.as_deref(), Some("female"));
-                assert_eq!(criteria, vec!["mismatch repair deficient".to_string()]);
-                assert_eq!(sponsor_type.as_deref(), Some("nih"));
-                assert!(count_only);
-                assert_eq!(limit, 3);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_trial_rejects_non_numeric_age() {
-        let err =
-            Cli::try_parse_from(["biomcp", "search", "trial", "--age", "abc", "--count-only"])
-                .expect_err("non-numeric age should fail to parse");
-        let rendered = err.to_string();
-
-        assert!(rendered.contains("invalid value 'abc' for '--age <AGE>'"));
-        assert!(rendered.contains("invalid float literal"));
-    }
-
-    #[test]
-    fn search_trial_parses_unquoted_multi_token_mutation() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "trial",
-            "-c",
-            "melanoma",
-            "--mutation",
-            "BRAF",
-            "V600E",
-            "--intervention",
-            "vemurafenib",
-            "--status",
-            "recruiting",
-            "--limit",
-            "3",
-        ])
-        .expect("search trial unquoted multi-token mutation should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Trial {
-                        condition,
-                        mutation,
-                        intervention,
-                        status,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(condition, vec!["melanoma".to_string()]);
-                assert_eq!(mutation, vec!["BRAF".to_string(), "V600E".to_string()]);
-                assert_eq!(intervention, vec!["vemurafenib".to_string()]);
-                assert_eq!(status.as_deref(), Some("recruiting"));
-                assert_eq!(limit, 3);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn article_entities_parses_limit_flag() {
-        let cli =
-            Cli::try_parse_from(["biomcp", "article", "entities", "22663011", "--limit", "2"])
-                .expect("article entities with --limit should parse");
-        match cli.command {
-            Commands::Article {
-                cmd: ArticleCommand::Entities { pmid, limit },
-            } => {
-                assert_eq!(pmid, "22663011");
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn get_article_parses_tldr_section() {
-        let cli = Cli::try_parse_from(["biomcp", "get", "article", "22663011", "tldr"])
-            .expect("get article tldr should parse");
-
-        match cli.command {
-            Commands::Get {
-                entity: GetEntity::Article { id, sections },
-            } => {
-                assert_eq!(id, "22663011");
-                assert_eq!(sections, vec!["tldr".to_string()]);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn article_citations_parses_limit_flag() {
-        let cli =
-            Cli::try_parse_from(["biomcp", "article", "citations", "22663011", "--limit", "3"])
-                .expect("article citations with --limit should parse");
-
-        match cli.command {
-            Commands::Article {
-                cmd: ArticleCommand::Citations { id, limit },
-            } => {
-                assert_eq!(id, "22663011");
-                assert_eq!(limit, 3);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn article_batch_parses_multiple_ids() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "article",
-            "batch",
-            "22663011",
-            "10.1056/NEJMoa1203421",
-        ])
-        .expect("article batch should parse");
-
-        match cli.command {
-            Commands::Article {
-                cmd: ArticleCommand::Batch { ids },
-            } => {
-                assert_eq!(
-                    ids,
-                    vec!["22663011".to_string(), "10.1056/NEJMoa1203421".to_string()]
-                );
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn article_recommendations_parse_positive_and_negative_ids() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "article",
-            "recommendations",
-            "22663011",
-            "24200969",
-            "--negative",
-            "39073865",
-            "--negative",
-            "31452104",
-            "--limit",
-            "4",
-        ])
-        .expect("article recommendations should parse");
-
-        match cli.command {
-            Commands::Article {
-                cmd:
-                    ArticleCommand::Recommendations {
-                        ids,
-                        negative,
-                        limit,
-                    },
-            } => {
-                assert_eq!(ids, vec!["22663011".to_string(), "24200969".to_string()]);
-                assert_eq!(
-                    negative,
-                    vec!["39073865".to_string(), "31452104".to_string()]
-                );
-                assert_eq!(limit, 4);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn gene_pathways_parses_limit_and_offset() {
-        let cli = Cli::try_parse_from([
-            "biomcp", "gene", "pathways", "BRAF", "--limit", "5", "--offset", "1",
-        ])
-        .expect("gene pathways pagination flags should parse");
-        match cli.command {
-            Commands::Gene {
-                cmd:
-                    GeneCommand::Pathways {
-                        symbol,
-                        limit,
-                        offset,
-                    },
-            } => {
-                assert_eq!(symbol, "BRAF");
-                assert_eq!(limit, 5);
-                assert_eq!(offset, 1);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn protein_structures_parses_offset_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "protein",
-            "structures",
-            "P15056",
-            "--limit",
-            "5",
-            "--offset",
-            "5",
-        ])
-        .expect("protein structures pagination flags should parse");
-        match cli.command {
-            Commands::Protein {
-                cmd:
-                    ProteinCommand::Structures {
-                        accession,
-                        limit,
-                        offset,
-                    },
-            } => {
-                assert_eq!(accession, "P15056");
-                assert_eq!(limit, 5);
-                assert_eq!(offset, 5);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_list_parses_subcommand() {
-        let cli =
-            Cli::try_parse_from(["biomcp", "study", "list"]).expect("study list should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::List,
-            } => {}
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_download_parses_positional_study_id() {
-        let cli = Cli::try_parse_from(["biomcp", "study", "download", "msk_impact_2017"])
-            .expect("study download should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::Download { list, study_id },
-            } => {
-                assert!(!list);
-                assert_eq!(study_id.as_deref(), Some("msk_impact_2017"));
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_download_parses_list_flag() {
-        let cli = Cli::try_parse_from(["biomcp", "study", "download", "--list"])
-            .expect("study download list should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::Download { list, study_id },
-            } => {
-                assert!(list);
-                assert_eq!(study_id, None);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_cohort_parses_required_flags() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "cohort",
-            "--study",
-            "brca_tcga_pan_can_atlas_2018",
-            "--gene",
-            "TP53",
-        ])
-        .expect("study cohort should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::Cohort { study, gene },
-            } => {
-                assert_eq!(study, "brca_tcga_pan_can_atlas_2018");
-                assert_eq!(gene, "TP53");
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_query_parses_required_flags() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "query",
-            "--study",
-            "msk_impact_2017",
-            "--gene",
-            "TP53",
-            "--type",
-            "mutations",
-        ])
-        .expect("study query should parse");
-        match cli.command {
-            Commands::Study {
-                cmd:
-                    StudyCommand::Query {
-                        study,
-                        gene,
-                        query_type,
-                        ..
-                    },
-            } => {
-                assert_eq!(study, "msk_impact_2017");
-                assert_eq!(gene, "TP53");
-                assert_eq!(query_type, "mutations");
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_top_mutated_parses_limit_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "top-mutated",
-            "--study",
-            "msk_impact_2017",
-            "--limit",
-            "10",
-        ])
-        .expect("study top-mutated should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::TopMutated { study, limit },
-            } => {
-                assert_eq!(study, "msk_impact_2017");
-                assert_eq!(limit, 10);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_query_parses_chart_flags() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "query",
-            "--study",
-            "msk_impact_2017",
-            "--gene",
-            "TP53",
-            "--type",
-            "mutations",
-            "--chart",
-            "bar",
-            "--terminal",
-            "--cols",
-            "80",
-            "--rows",
-            "24",
-            "--title",
-            "TP53 mutations",
-            "--theme",
-            "dark",
-            "--palette",
-            "wong",
-        ])
-        .expect("study query chart flags should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::Query { chart, .. },
-            } => {
-                assert_eq!(chart.chart, Some(ChartType::Bar));
-                assert!(chart.terminal);
-                assert_eq!(chart.cols, Some(80));
-                assert_eq!(chart.rows, Some(24));
-                assert_eq!(chart.title.as_deref(), Some("TP53 mutations"));
-                assert_eq!(chart.theme.as_deref(), Some("dark"));
-                assert_eq!(chart.palette.as_deref(), Some("wong"));
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_query_parses_waterfall_chart_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "query",
-            "--study",
-            "msk_impact_2017",
-            "--gene",
-            "TP53",
-            "--type",
-            "mutations",
-            "--chart",
-            "waterfall",
-            "--terminal",
-        ])
-        .expect("study query waterfall chart should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::Query { chart, .. },
-            } => {
-                assert_eq!(chart.chart, Some(ChartType::Waterfall));
-                assert!(chart.terminal);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_chart_subcommand_parses_specific_topic() {
-        let cli =
-            Cli::try_parse_from(["biomcp", "chart", "violin"]).expect("chart docs should parse");
-        match cli.command {
-            Commands::Chart { command } => {
-                assert_eq!(format!("{command:?}"), "Some(Violin)");
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_co_occurrence_parses_heatmap_chart_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "co-occurrence",
-            "--study",
-            "brca_tcga_pan_can_atlas_2018",
-            "--genes",
-            "TP53,PIK3CA,GATA3",
-            "--chart",
-            "heatmap",
-            "--terminal",
-        ])
-        .expect("study co-occurrence heatmap chart should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::CoOccurrence { chart, .. },
-            } => {
-                assert_eq!(chart.chart, Some(ChartType::Heatmap));
-                assert!(chart.terminal);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_compare_mutations_parses_stacked_bar_chart_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "compare",
-            "--study",
-            "brca_tcga_pan_can_atlas_2018",
-            "--gene",
-            "TP53",
-            "--type",
-            "mutations",
-            "--target",
-            "PIK3CA",
-            "--chart",
-            "stacked-bar",
-            "--terminal",
-        ])
-        .expect("study compare stacked-bar chart should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::Compare { chart, .. },
-            } => {
-                assert_eq!(chart.chart, Some(ChartType::StackedBar));
-                assert!(chart.terminal);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_compare_expression_parses_scatter_chart_with_file_dimensions() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "compare",
-            "--study",
-            "brca_tcga_pan_can_atlas_2018",
-            "--gene",
-            "TP53",
-            "--type",
-            "expression",
-            "--target",
-            "ERBB2",
-            "--chart",
-            "scatter",
-            "--width",
-            "1200",
-            "--height",
-            "600",
-            "-o",
-            "scatter.svg",
-        ])
-        .expect("study compare scatter chart should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::Compare { chart, .. },
-            } => {
-                assert_eq!(chart.chart, Some(ChartType::Scatter));
-                assert_eq!(chart.width, Some(1200));
-                assert_eq!(chart.height, Some(600));
-                assert_eq!(
-                    chart.output.as_deref(),
-                    Some(std::path::Path::new("scatter.svg"))
-                );
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_chart_subcommand_parses_heatmap_topic() {
-        let cli = Cli::try_parse_from(["biomcp", "chart", "heatmap"])
-            .expect("heatmap chart docs should parse");
-        match cli.command {
-            Commands::Chart { command } => {
-                assert_eq!(command, Some(crate::cli::chart::ChartCommand::Heatmap));
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_chart_subcommand_parses_waterfall_topic() {
-        let cli = Cli::try_parse_from(["biomcp", "chart", "waterfall"])
-            .expect("waterfall chart docs should parse");
-        match cli.command {
-            Commands::Chart { command } => {
-                assert_eq!(command, Some(crate::cli::chart::ChartCommand::Waterfall));
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_chart_subcommand_parses_scatter_topic() {
-        let cli = Cli::try_parse_from(["biomcp", "chart", "scatter"])
-            .expect("scatter chart docs should parse");
-        match cli.command {
-            Commands::Chart { command } => {
-                assert_eq!(command, Some(crate::cli::chart::ChartCommand::Scatter));
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_chart_subcommand_parses_stacked_bar_topic() {
-        let cli = Cli::try_parse_from(["biomcp", "chart", "stacked-bar"])
-            .expect("stacked-bar chart docs should parse");
-        match cli.command {
-            Commands::Chart { command } => {
-                assert_eq!(command, Some(crate::cli::chart::ChartCommand::StackedBar));
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_survival_parses_survival_chart_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "survival",
-            "--study",
-            "brca_tcga_pan_can_atlas_2018",
-            "--gene",
-            "TP53",
-            "--chart",
-            "survival",
-            "--terminal",
-        ])
-        .expect("study survival chart flags should parse");
-        match cli.command {
-            Commands::Study {
-                cmd: StudyCommand::Survival { chart, .. },
-            } => {
-                assert_eq!(chart.chart, Some(ChartType::Survival));
-                assert!(chart.terminal);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn study_chart_subcommand_parses_survival_topic() {
-        let cli = Cli::try_parse_from(["biomcp", "chart", "survival"])
-            .expect("survival chart docs should parse");
-        match cli.command {
-            Commands::Chart { command } => {
-                assert_eq!(format!("{command:?}"), "Some(Survival)");
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn chart_auxiliary_flags_require_chart() {
-        let err = Cli::try_parse_from([
-            "biomcp",
-            "study",
-            "query",
-            "--study",
-            "msk_impact_2017",
-            "--gene",
-            "TP53",
-            "--type",
-            "mutations",
-            "--terminal",
-        ])
-        .expect_err("--terminal without --chart should fail");
-        let msg = err.to_string();
-        assert!(msg.contains("--chart"));
-    }
-
-    #[test]
-    fn short_help_hides_chart_flags_but_long_help_shows_them() {
-        let mut cmd = Cli::command();
-        let study = cmd.find_subcommand_mut("study").expect("study command");
-        let query = study
-            .find_subcommand_mut("query")
-            .expect("study query command");
-
-        let mut short_help = Vec::new();
-        query
-            .write_help(&mut short_help)
-            .expect("short help should render");
-        let short_help = String::from_utf8(short_help).expect("utf8 short help");
-        assert!(!short_help.contains("--chart"));
-
-        let mut long_help = Vec::new();
-        query
-            .write_long_help(&mut long_help)
-            .expect("long help should render");
-        let long_help = String::from_utf8(long_help).expect("utf8 long help");
-        assert!(long_help.contains("--chart"));
-        assert!(long_help.contains("Chart Output"));
-        assert!(long_help.contains("--cols"));
-        assert!(long_help.contains("--rows"));
-        assert!(long_help.contains("--width"));
-        assert!(long_help.contains("--height"));
-        assert!(long_help.contains("--scale"));
     }
 
     #[test]
@@ -10225,385 +6833,6 @@ mod tests {
             } => {
                 assert_eq!(study, "brca_tcga_pan_can_atlas_2018");
                 assert_eq!(genes, "TP53,PIK3CA,GATA3");
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_variant_parses_single_token_positional_query() {
-        let cli = Cli::try_parse_from(["biomcp", "search", "variant", "BRAF", "--limit", "2"])
-            .expect("search variant positional query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Variant {
-                        gene,
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert!(gene.is_none());
-                assert_eq!(positional_query, vec!["BRAF".to_string()]);
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_variant_parses_multi_token_positional_query_and_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp", "search", "variant", "BRAF", "V600E", "--limit", "5",
-        ])
-        .expect("search variant positional+flag should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Variant {
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(
-                    positional_query,
-                    vec!["BRAF".to_string(), "V600E".to_string()]
-                );
-                assert_eq!(limit, 5);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_variant_parses_quoted_gene_change_positional_query() {
-        let cli =
-            Cli::try_parse_from(["biomcp", "search", "variant", "BRAF V600E", "--limit", "5"])
-                .expect("search variant quoted positional should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Variant {
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(positional_query, vec!["BRAF V600E".to_string()]);
-                assert_eq!(limit, 5);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_trial_parses_positional_query() {
-        let cli = Cli::try_parse_from(["biomcp", "search", "trial", "melanoma", "--limit", "2"])
-            .expect("search trial positional query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Trial {
-                        condition,
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert!(condition.is_empty());
-                assert_eq!(positional_query.as_deref(), Some("melanoma"));
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_trial_parses_multi_word_positional_query() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "trial",
-            "non-small cell lung cancer",
-            "--limit",
-            "2",
-        ])
-        .expect("search trial multi-word positional query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Trial {
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(
-                    positional_query.as_deref(),
-                    Some("non-small cell lung cancer")
-                );
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_disease_parses_no_fallback_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "disease",
-            "Arnold Chiari syndrome",
-            "--no-fallback",
-            "--limit",
-            "2",
-        ])
-        .expect("search disease should parse --no-fallback");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Disease {
-                        positional_query,
-                        no_fallback,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(positional_query.as_deref(), Some("Arnold Chiari syndrome"));
-                assert!(no_fallback);
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_trial_parses_positional_query_with_status_flag() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "trial",
-            "melanoma",
-            "--status",
-            "recruiting",
-        ])
-        .expect("search trial positional query with status should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Trial {
-                        positional_query,
-                        status,
-                        ..
-                    },
-            } => {
-                assert_eq!(positional_query.as_deref(), Some("melanoma"));
-                assert_eq!(status.as_deref(), Some("recruiting"));
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_pgx_parses_positional_query() {
-        let cli = Cli::try_parse_from(["biomcp", "search", "pgx", "CYP2D6", "--limit", "2"])
-            .expect("search pgx positional query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Pgx {
-                        gene,
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert!(gene.is_none());
-                assert_eq!(positional_query.as_deref(), Some("CYP2D6"));
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_gwas_parses_positional_query() {
-        let cli = Cli::try_parse_from(["biomcp", "search", "gwas", "BRAF", "--limit", "2"])
-            .expect("search gwas positional query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Gwas {
-                        gene,
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert!(gene.is_none());
-                assert_eq!(positional_query.as_deref(), Some("BRAF"));
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_pathway_parses_multi_word_positional_query() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "pathway",
-            "MAPK signaling",
-            "--limit",
-            "2",
-        ])
-        .expect("search pathway positional query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Pathway {
-                        query,
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert!(query.is_none());
-                assert_eq!(positional_query.as_deref(), Some("MAPK signaling"));
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_pathway_parses_quoted_flag_query() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "pathway",
-            "-q",
-            "DNA repair",
-            "--limit",
-            "2",
-        ])
-        .expect("search pathway -q query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::Pathway {
-                        query,
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(query.as_deref(), Some("DNA repair"));
-                assert!(positional_query.is_none());
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_adverse_event_parses_positional_query() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "adverse-event",
-            "pembrolizumab",
-            "--limit",
-            "2",
-        ])
-        .expect("search adverse-event positional query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::AdverseEvent {
-                        drug,
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert!(drug.is_none());
-                assert_eq!(positional_query.as_deref(), Some("pembrolizumab"));
-                assert_eq!(limit, 2);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_all_parses_slot_flags() {
-        let cli = Cli::try_parse_from([
-            "biomcp",
-            "search",
-            "all",
-            "--gene",
-            "BRAF",
-            "--disease",
-            "melanoma",
-            "--keyword",
-            "resistance",
-            "--since",
-            "2024-01-01",
-            "--counts-only",
-            "--debug-plan",
-            "--limit",
-            "4",
-        ])
-        .expect("search all flags should parse");
-
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::All {
-                        gene,
-                        disease,
-                        keyword,
-                        since,
-                        counts_only,
-                        debug_plan,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert_eq!(gene.as_deref(), Some("BRAF"));
-                assert_eq!(disease.as_deref(), Some("melanoma"));
-                assert_eq!(keyword.as_deref(), Some("resistance"));
-                assert_eq!(since.as_deref(), Some("2024-01-01"));
-                assert!(counts_only);
-                assert!(debug_plan);
-                assert_eq!(limit, 4);
-            }
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn search_all_parses_positional_keyword() {
-        let cli = Cli::try_parse_from(["biomcp", "search", "all", "BRAF", "--limit", "2"])
-            .expect("search all positional query should parse");
-        match cli.command {
-            Commands::Search {
-                entity:
-                    super::SearchEntity::All {
-                        keyword,
-                        positional_query,
-                        limit,
-                        ..
-                    },
-            } => {
-                assert!(keyword.is_none());
-                assert_eq!(positional_query.as_deref(), Some("BRAF"));
-                assert_eq!(limit, 2);
             }
             other => panic!("unexpected command: {other:?}"),
         }

@@ -1,88 +1,135 @@
-# Code Review Log — Ticket 188
+# Code Review Log — Ticket 183
 
 ## Critique
 
-### Design completeness audit
+### Design completeness
 
-- Read `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, and `git diff main..HEAD`.
-- Mapped the design-required contract changes to the diff:
-  - `spec/README-timings.md` supplies the required three-lane split, audit method, per-heading timing table, and smoke-only inventory.
-  - `RUN.md` and `architecture/technical/overview.md` now point readers to `spec/README-timings.md`.
-  - `tests/test_upstream_planning_analysis_docs.py` derives the smoke-only inventory from the actual `Makefile` deselect list instead of hardcoding guessed headings.
-  - `Makefile` moves `spec/06-article.md::Keyword Search Can Force Lexical Ranking` into `SPEC_PR_DESELECT_ARGS`.
-- Acceptance-criteria coverage is present in the changed surface. The remaining proof obligations stay in existing spec headings or gate commands:
-  - `spec/18-source-labels.md`, `spec/02-gene.md`, `spec/07-disease.md`, and `spec/11-evidence-urls.md` still carry the outside-in coverage that the design chose to keep in `spec-pr`.
-  - `spec/06-article.md::Keyword Search Can Force Lexical Ranking` still exists as the smoke-lane proof after the Makefile move.
-- The execution order in `.march/code-log.md` updates docs/tests before the runtime Makefile edit, which matches the design’s sequencing requirement.
+I reviewed `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`,
+and `git diff main..HEAD` against the ticket scope.
+
+Design items that were already implemented in the diff:
+
+- `src/cli/commands.rs` exists and rebuilds `Commands`, `SearchEntity`, and `GetEntity`.
+- The extracted owner modules exist, keep module-level docs, and preserve the
+  stable `crate::cli::*` re-export surface from `src/cli/mod.rs`.
+- `src/cli/mod.rs` still declares the family modules and re-exports the shared
+  command enums.
+
+Blocking design gaps I found:
+
+1. The design item `Family parse/help tests live next to their family modules`
+   was only partially addressed. The extracted payload code landed, but the
+   proof-matrix coverage was still missing or incomplete in
+   `src/cli/gene.rs`, `src/cli/disease.rs`, `src/cli/pathway.rs`,
+   `src/cli/protein.rs`, `src/cli/adverse_event.rs`, `src/cli/chart.rs`, and
+   `src/cli/system.rs`.
+2. The same design item left stale duplicates behind. Equivalent parse/help
+   proofs still existed in `src/cli/mod.rs` after owner-local coverage had been
+   added elsewhere, so the move was not actually complete at the test-surface
+   level.
+3. The ticket is structural-only, so no user-facing contract docs needed new
+   semantics. Existing specs remained the outside-in contract, but parts of the
+   verification surface had become brittle against live dependencies:
+   `spec/05-drug.md`, `spec/11-evidence-urls.md`, and
+   `spec/18-source-labels.md` were too expensive for reliable full-suite
+   verification under the configured timeout budget, and
+   `spec/21-cross-entity-see-also.md` assumed the SCN1A ClinGen section always
+   returned rows instead of allowing the documented truthful fallback.
 
 ### Test-design traceability
 
-- Proof-matrix item “Timing report exists and has the required schema” maps to `tests/test_upstream_planning_analysis_docs.py::test_spec_lane_timing_report_is_documented_and_aligned_with_makefile`.
-- Proof-matrix item “Smoke-only inventory matches the actual Makefile deselect list” mapped to the same test, but the original assertion was too weak: it only checked that each Makefile node ID appeared somewhere in the report.
-- Proof-matrix item “Runbook and technical overview point to the current audit” also maps to that docs-contract test and was already covered.
-- The spec-level proof items still map to existing outside-in spec headings:
-  - `spec/18-source-labels.md` for retained source-label coverage
-  - `spec/06-article.md::Keyword Search Can Force Lexical Ranking` for the newly moved smoke-only heading
-- Findings:
-  1. [spec/README-timings.md:230] The report row for `spec/03-variant.md` used the node-id-like text `Searching by c::HGVS`, recorded `n/a` for both timing cells, and still labeled the row `passed`/`fast`. That violated the design’s per-heading timing requirement.
-  2. [tests/test_upstream_planning_analysis_docs.py:846-851] The smoke-only inventory assertion only enforced one-way inclusion, so stale extra rows in `spec/README-timings.md` could drift from `SPEC_PR_DESELECT_ARGS` without failing CI.
-  3. [tests/test_upstream_planning_analysis_docs.py:853-865] The timing-report test did not require numeric timing cells for passed rows, so the broken `c.HGVS` entry could ship undetected.
+I mapped each proof-matrix area to code and tests:
 
-### Security / duplication / implementation quality
+- Owner-local help/parse proofs for the extracted families now live in their
+  owner files: `gene`, `disease`, `pathway`, `protein`, `adverse_event`,
+  `article`, `drug`, `variant`, `study`, `chart`, and `system`.
+- Stable CLI parsing/help behavior is covered by `cargo test --lib cli::`.
+- Outside-in contract checks for the touched verification surface are covered by
+  `spec/11-evidence-urls.md` and `spec/18-source-labels.md`.
+- Full-repo verification remains `make spec` and `make check`.
 
-- Security: the changed surface is docs/tests/Makefile only; I found no new injection, secret exposure, path traversal, or auth-bypass risk.
-- Duplication: searched the test file for an existing markdown-table helper before adding one and found none, so the new helper is not duplicating an existing utility.
-- Implementation quality: the original change followed adjacent docs-contract patterns, but the report/test pair was not strict enough to keep the audit data trustworthy over time.
+Blocking traceability defects before repair:
+
+- Design requires owner-local tests for `gene`, `disease`, `pathway`,
+  `protein`, `adverse_event`, `chart`, and `system` — not found in those files
+  before the fix.
+- Design requires the moved proof surface to live beside owners; duplicate
+  parse/help tests in `src/cli/mod.rs` showed the move was incomplete.
 
 ## Fix Plan
 
-- Re-measure `spec/03-variant.md::Searching by c.HGVS` with cold and warm targeted runs and repair the bad audit row.
-- Strengthen the docs-contract test to parse markdown tables, require exact equality between the report’s smoke-only inventory and the Makefile deselect set, and reject any passed timing row that lacks numeric timing data.
+- Add the missing owner-local parse/help tests directly to the extracted
+  modules.
+- Extend `src/cli/chart.rs` and `src/cli/system.rs` with the proof-matrix
+  coverage that never moved.
+- Remove duplicated parse/help proofs and now-unused imports from
+  `src/cli/mod.rs`.
+- Split or narrow the long live-network proof blocks in `spec/05-drug.md`,
+  `spec/11-evidence-urls.md`, and `spec/18-source-labels.md` without weakening
+  the contract.
+- Repair the SCN1A recruiting-trials proof in
+  `spec/21-cross-entity-see-also.md` so it accepts either the ClinGen-derived
+  disease pivot or the truthful generic gene-trials fallback when ClinGen
+  times out.
 
 ## Repair
 
-### Fixes applied
-
-- Ran supplemental targeted measurements for the broken report row and saved the evidence under:
-  - `.march/review-c-hgvs-cold.log`
-  - `.march/review-c-hgvs-warm.log`
-- Updated `spec/README-timings.md` to:
-  - explain why `Searching by c.HGVS` needed a supplemental rerun
-  - correct the human-readable heading text
-  - replace the unsupported `n/a` timing cells with the measured `0.49s` cold/warm timings
-- Added `_markdown_table_rows()` in `tests/test_upstream_planning_analysis_docs.py` and strengthened `test_spec_lane_timing_report_is_documented_and_aligned_with_makefile` to:
-  - assert the timing and smoke-only table headers structurally
-  - compare the smoke-only report node IDs to the Makefile deselect list as an exact set match
-  - reject duplicate smoke-only rows
-  - require numeric timing cells for passed rows
-  - require `gated` rows to remain `skipped`
+- Added owner-local parse/help coverage in `src/cli/gene.rs`,
+  `src/cli/disease.rs`, `src/cli/pathway.rs`, `src/cli/protein.rs`,
+  `src/cli/adverse_event.rs`, `src/cli/chart.rs`, and `src/cli/system.rs`.
+- Expanded nearby owner tests in `src/cli/article/tests.rs`,
+  `src/cli/drug/tests.rs`, `src/cli/variant/tests.rs`, and
+  `src/cli/study/tests.rs` so the extracted surfaces are proven where they are
+  owned.
+- Removed the duplicated moved tests from `src/cli/mod.rs` and cleaned the
+  now-unused imports.
+- Narrowed the slow variant-target proof in `spec/05-drug.md` from the full
+  `get drug rindopepimut` card to `get drug rindopepimut targets`, preserving
+  the same `Variant Targets (CIViC): EGFRvIII` contract while removing the
+  unrelated section work that was breaching the suite timeout.
+- Split the slow proof blocks in `spec/11-evidence-urls.md` and
+  `spec/18-source-labels.md`, and switched the source-label target example from
+  `ivacaftor targets` to faster `tamoxifen targets` while preserving the same
+  `ChEMBL / Open Targets` contract.
+- Updated `spec/21-cross-entity-see-also.md` so the SCN1A ClinGen proof accepts
+  both valid outside-in outcomes: the disease-derived recruiting-trial command
+  when ClinGen rows render, or the existing generic `biomcp gene trials SCN1A`
+  fallback when the live ClinGen section times out.
 
 ### Post-fix collateral scan
 
-- After the report fix:
-  - verified the only remaining `n/a` rows are the four key-gated `skipped` entries
-  - verified the stale `Searching by c::HGVS` text is gone
-  - verified the “four gated headings” note still matches the table
-- After the test fix:
-  - confirmed the new helper is used and no unused imports or dead locals were introduced
-  - caught a follow-on issue where I had briefly normalized the timing-audit section before table parsing; fixed that immediately so table parsing operates on the raw markdown section
+- No unreachable branches or cleanup conflicts were introduced by the review
+  edits.
+- `src/cli/mod.rs` no longer carries duplicate owner-local parse/help proofs or
+  their orphaned imports.
+- Error text stayed aligned with the touched assertions.
+- `git diff --check` passed after the repairs.
 
-## Validation
+## Verification
 
-- `uv run pytest tests/test_upstream_planning_analysis_docs.py::test_makefile_spec_split_contract_is_documented_and_executable tests/test_upstream_planning_analysis_docs.py::test_repo_local_parallel_test_contract_is_documented tests/test_upstream_planning_analysis_docs.py::test_spec_lane_timing_report_is_documented_and_aligned_with_makefile -v`
-- `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
-
-I did not rerun `make spec-pr` or `make check` from the review step. `.march/code-log.md` already records green full-blocking proof for the implementation, and the review repairs were limited to docs/tests.
+- `cargo fmt`
+- `cargo test --lib cli::`
+- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest spec/11-evidence-urls.md spec/18-source-labels.md --mustmatch-lang bash --mustmatch-timeout 120 -v'`
+- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest "spec/05-drug.md::Drug Variant Targets (line 318) [bash]" --mustmatch-lang bash --mustmatch-timeout 120 -vv'`
+- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest "spec/07-disease.md::Disease Search Discover Fallback (line 45) [bash]" --mustmatch-lang bash --mustmatch-timeout 120 -vv'`
+- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest spec/18-source-labels.md --mustmatch-lang bash --mustmatch-timeout 120 -v'`
+- `uv run --extra dev sh -c 'PATH="$(pwd)/target/release:$PATH" pytest spec/21-cross-entity-see-also.md --mustmatch-lang bash --mustmatch-timeout 120 -v'`
+- `make spec`
+- `make check`
 
 ## Residual Concerns
 
-- No additional out-of-scope issues were filed from this review.
-- No remaining blocking concerns on the touched surface.
+- One full `make spec` attempt hit a transient nonzero exit in
+  `spec/07-disease.md::Disease Search Discover Fallback`, but the same
+  scenario passed immediately in isolation and on rerun. I filed
+  `~/workspace/planning/biomcp/issues/183-disease-discover-fallback-spec-flake.md`
+  so verify can watch that live-service path separately from this ticket.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | stale-doc | yes | `spec/README-timings.md` recorded `spec/03-variant.md::Searching by c.HGVS` as passed/fast while leaving both timing cells as `n/a`, so the per-heading audit was incomplete. |
-| 2 | weak-assertion | no | The smoke-only inventory test only checked that Makefile deselect IDs appeared in the report, not that the report matched the Makefile exactly. |
-| 3 | weak-assertion | yes | The timing-report test allowed `passed` rows with non-numeric timing cells, so incomplete audit data could pass CI. |
+| 1 | missing-test | yes | Design proof-matrix item `Family parse/help tests live next to their family modules` was incomplete for `gene`, `disease`, `pathway`, `protein`, `adverse_event`, `chart`, and `system`. |
+| 2 | dead-code | yes | Copied owner-local parse/help proofs remained duplicated in `src/cli/mod.rs` after the extraction, leaving redundant tests and unused imports behind. |
+| 3 | collateral-damage | no | The live-network proof surfaces in `spec/05-drug.md`, `spec/11-evidence-urls.md`, and `spec/18-source-labels.md` made full-suite verification unreliable until they were split or narrowed to faster equivalent examples. |
+| 4 | collateral-damage | no | `spec/21-cross-entity-see-also.md` assumed the live SCN1A ClinGen section always returned rows, even though the CLI truthfully falls back to generic gene-trials guidance when ClinGen times out. |

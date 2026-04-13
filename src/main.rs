@@ -24,7 +24,9 @@ async fn main() -> std::process::ExitCode {
                 }
             }
         }
-        biomcp_cli::cli::Commands::ServeHttp { host, port } => {
+        biomcp_cli::cli::Commands::ServeHttp(args) => {
+            let host = args.host;
+            let port = args.port;
             match biomcp_cli::mcp::run_http(&host, port).await {
                 Ok(()) => std::process::ExitCode::SUCCESS,
                 Err(err) => {

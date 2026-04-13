@@ -1,0 +1,219 @@
+//! Gene CLI payloads and subcommands.
+
+use clap::{Args, Subcommand};
+
+#[derive(Args, Debug)]
+pub struct GeneSearchArgs {
+    /// Free text query (gene name, symbol, or keyword)
+    #[arg(short, long)]
+    pub query: Option<String>,
+    /// Optional positional query alias for -q/--query
+    #[arg(value_name = "QUERY")]
+    pub positional_query: Option<String>,
+    /// Filter by gene type (e.g., protein-coding, ncRNA, pseudo)
+    #[arg(long = "type")]
+    pub gene_type: Option<String>,
+    /// Filter by chromosome (e.g., 7, X)
+    #[arg(long)]
+    pub chromosome: Option<String>,
+    /// Filter by genomic region (chr:start-end)
+    #[arg(long)]
+    pub region: Option<String>,
+    /// Filter by pathway ID/name (e.g., R-HSA-5673001)
+    #[arg(long)]
+    pub pathway: Option<String>,
+    /// Filter by GO term ID/text (e.g., GO:0004672)
+    #[arg(long = "go")]
+    pub go_term: Option<String>,
+    /// Maximum results (default: 10)
+    #[arg(short, long, default_value = "10")]
+    pub limit: usize,
+    /// Skip the first N results
+    #[arg(long, default_value = "0")]
+    pub offset: usize,
+}
+
+#[derive(Args, Debug)]
+pub struct GeneGetArgs {
+    /// Gene symbol (e.g., BRAF, TP53, EGFR)
+    pub symbol: String,
+    /// Sections to include (pathways, ontology, diseases, protein, go, interactions, civic, expression, hpa, druggability, clingen, constraint, disgenet, funding, all)
+    #[arg(trailing_var_arg = true)]
+    pub sections: Vec<String>,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum GeneCommand {
+    /// Show canonical gene definition card (same output as `get gene`)
+    #[command(
+        alias = "get",
+        after_help = "\
+EXAMPLES:
+  biomcp gene definition BRAF
+  biomcp gene get BRAF
+  biomcp get gene BRAF
+
+See also: biomcp list gene"
+    )]
+    Definition {
+        /// HGNC gene symbol (e.g., BRAF)
+        symbol: String,
+    },
+    /// Search trials linked to this gene symbol (best-effort)
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp gene trials BRAF --limit 5
+  biomcp gene trials EGFR --source nci --limit 5
+
+Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
+See also: biomcp list gene")]
+    Trials {
+        /// HGNC gene symbol (e.g., BRAF)
+        symbol: String,
+        /// Maximum results (default: 10)
+        #[arg(short, long, default_value = "10")]
+        limit: usize,
+        /// Skip the first N results
+        #[arg(long, default_value = "0")]
+        offset: usize,
+        /// Trial data source (ctgov or nci)
+        #[arg(long, default_value = "ctgov")]
+        source: String,
+    },
+    /// Search drugs targeting this gene symbol
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp gene drugs EGFR --limit 5
+  biomcp gene drugs BRAF --limit 5
+
+See also: biomcp list gene")]
+    Drugs {
+        /// HGNC gene symbol (e.g., BRAF)
+        symbol: String,
+        /// Maximum results (default: 10)
+        #[arg(short, long, default_value = "10")]
+        limit: usize,
+        /// Skip the first N results
+        #[arg(long, default_value = "0")]
+        offset: usize,
+    },
+    /// Search articles mentioning this gene
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp gene articles BRAF --limit 5
+  biomcp gene articles TP53 --limit 5
+
+See also: biomcp list gene")]
+    Articles {
+        /// HGNC gene symbol (e.g., BRAF)
+        symbol: String,
+        /// Maximum results (default: 10)
+        #[arg(short, long, default_value = "10")]
+        limit: usize,
+        /// Skip the first N results
+        #[arg(long, default_value = "0")]
+        offset: usize,
+    },
+    /// Show pathways section for this gene symbol
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp gene pathways BRAF
+  biomcp gene pathways BRAF --limit 5 --offset 0
+  biomcp gene pathways BRCA1
+
+See also: biomcp list gene")]
+    Pathways {
+        /// HGNC gene symbol (e.g., BRAF)
+        symbol: String,
+        /// Maximum results (default: 10)
+        #[arg(short, long, default_value = "10")]
+        limit: usize,
+        /// Skip the first N results
+        #[arg(long, default_value = "0")]
+        offset: usize,
+    },
+    #[command(external_subcommand)]
+    External(Vec<String>),
+}
+
+#[cfg(test)]
+mod tests {
+    use clap::{CommandFactory, Parser};
+
+    use super::GeneCommand;
+    use crate::cli::{Cli, Commands};
+
+    fn render_gene_get_long_help() -> String {
+        let mut command = Cli::command();
+        let get = command
+            .find_subcommand_mut("get")
+            .expect("get subcommand should exist");
+        let gene = get
+            .find_subcommand_mut("gene")
+            .expect("gene get subcommand should exist");
+        let mut help = Vec::new();
+        gene.write_long_help(&mut help)
+            .expect("gene help should render");
+        String::from_utf8(help).expect("help should be utf-8")
+    }
+
+    #[test]
+    fn get_gene_help_includes_when_to_use_guidance() {
+        let help = render_gene_get_long_help();
+
+        assert!(help.contains("When to use:"));
+        assert!(help.contains("default card"));
+        assert!(help.contains("protein, hpa, expression, diseases, or funding"));
+        assert!(help.contains("ERBB2 funding"));
+    }
+
+    #[test]
+    fn gene_get_alias_parses_as_definition_subcommand() {
+        let cli = Cli::try_parse_from(["biomcp", "gene", "get", "BRAF"])
+            .expect("gene get alias should parse");
+
+        match cli.command {
+            Commands::Gene {
+                cmd: GeneCommand::Definition { symbol },
+            } => assert_eq!(symbol, "BRAF"),
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn gene_bare_symbol_parses_as_external_subcommand() {
+        let cli =
+            Cli::try_parse_from(["biomcp", "gene", "BRAF"]).expect("bare gene symbol should parse");
+
+        match cli.command {
+            Commands::Gene {
+                cmd: GeneCommand::External(args),
+            } => assert_eq!(args, vec!["BRAF"]),
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn gene_pathways_parses_limit_and_offset() {
+        let cli = Cli::try_parse_from([
+            "biomcp", "gene", "pathways", "BRAF", "--limit", "5", "--offset", "1",
+        ])
+        .expect("gene pathways pagination flags should parse");
+
+        match cli.command {
+            Commands::Gene {
+                cmd:
+                    GeneCommand::Pathways {
+                        symbol,
+                        limit,
+                        offset,
+                    },
+            } => {
+                assert_eq!(symbol, "BRAF");
+                assert_eq!(limit, 5);
+                assert_eq!(offset, 1);
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+}

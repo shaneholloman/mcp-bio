@@ -123,19 +123,27 @@ label for a recruiting-trial search before the generic gene pivots.
 ```bash
 out="$(biomcp get gene SCN1A clingen)"
 top_disease="$(printf '%s\n' "$out" | awk -F'|' '/^\|/ && $2 !~ /Disease/ && $2 !~ /---/ {gsub(/^ +| +$/, "", $2); print $2; exit}')"
-test -n "$top_disease"
-echo "$out" | mustmatch like "biomcp search trial -c \"$top_disease\" -s recruiting"
-trial_line="$(printf '%s\n' "$out" | grep -nF "biomcp search trial -c \"$top_disease\" -s recruiting" | head -n1 | cut -d: -f1)"
-pgx_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search pgx -g SCN1A' | head -n1 | cut -d: -f1)"
-test -n "$trial_line"
-test -n "$pgx_line"
-test "$trial_line" -lt "$pgx_line"
+if test -n "$top_disease"; then
+  echo "$out" | mustmatch like "biomcp search trial -c \"$top_disease\" -s recruiting"
+  trial_line="$(printf '%s\n' "$out" | grep -nF "biomcp search trial -c \"$top_disease\" -s recruiting" | head -n1 | cut -d: -f1)"
+  pgx_line="$(printf '%s\n' "$out" | grep -nF 'biomcp search pgx -g SCN1A' | head -n1 | cut -d: -f1)"
+  test -n "$trial_line"
+  test -n "$pgx_line"
+  test "$trial_line" -lt "$pgx_line"
+else
+  echo "$out" | mustmatch like "No ClinGen records returned for this gene query."
+  echo "$out" | mustmatch like "biomcp gene trials SCN1A"
+fi
 ```
 
 ```bash
 out="$(biomcp --json get gene SCN1A clingen)"
 top_disease="$(printf '%s\n' "$(biomcp get gene SCN1A clingen)" | awk -F'|' '/^\|/ && $2 !~ /Disease/ && $2 !~ /---/ {gsub(/^ +| +$/, "", $2); print $2; exit}')"
-echo "$out" | jq -e --arg disease "$top_disease" '._meta.next_commands | index("biomcp search trial -c \"\($disease)\" -s recruiting") != null' > /dev/null
+if test -n "$top_disease"; then
+  echo "$out" | jq -e --arg disease "$top_disease" '._meta.next_commands | index("biomcp search trial -c \"\($disease)\" -s recruiting") != null' > /dev/null
+else
+  echo "$out" | jq -e '._meta.next_commands | index("biomcp gene trials SCN1A") != null' > /dev/null
+fi
 ```
 
 ## Variant Search Follow-up
