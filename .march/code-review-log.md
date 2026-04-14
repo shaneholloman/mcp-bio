@@ -2,104 +2,119 @@
 
 - Read `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, and `.march/code-log.md`
 - Rebased onto `main` with `GIT_EDITOR=true git rebase main`
-- Reviewed `git diff main..HEAD` and the branch commit `deb976d`
-- Inspected every changed file under `src/entities/trial/`
-- Re-ran targeted and focused proof:
-  - `cargo test trial --lib -- --list 2>/dev/null | rg ': test$' -c` => `128`
-  - `cargo test trial --lib`
-  - `cargo test --lib`
+- Reviewed `git diff main..HEAD`, `git log --oneline main..HEAD`, and `git show --name-only --format=medium --no-renames HEAD`
+- Inspected every changed file under `src/entities/variant/` plus the deleted legacy `src/entities/variant.rs`
+- Re-ran the relevant proof surface:
+  - `cargo test variant --lib`
   - `cargo clippy --lib --tests -- -D warnings`
-  - Trial-tree doc-comment check
-  - Trial-tree line-cap check
+  - `make check`
+  - `make spec-pr`
 
 ## Critique
 
 ### Design Completeness Audit
 
-- Acceptance criterion 1 matched: `src/entities/trial.rs` is deleted and replaced by `src/entities/trial/`
-- Acceptance criterion 2 matched: every new Rust file under `src/entities/trial/` starts with `//!`
-- Acceptance criterion 3 matched: [src/entities/trial/mod.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/mod.rs:1) keeps the public facade types, `TRIAL_SECTION_NAMES`, and `pub use` re-exports for `get`, `search`, `search_page`, and `count_all`
-- Acceptance criterion 4 matched: shared validation lives in [src/entities/trial/search/mod.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/mod.rs:143), not `search/ctgov.rs`
-- Acceptance criterion 5 matched: shared helpers live in [src/entities/trial/test_support.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/test_support.rs:1), and `rg -n 'mod tests \\{' src/entities/trial -g '*.rs'` found no inline test blocks
-- Acceptance criterion 6 matched: the trial-tree line-cap check found no file over 700 lines
-- Acceptance criterion 7 matched: the trial test inventory still reports `128`
-- Acceptance criteria 8-9 matched: `cargo test trial --lib` and `cargo clippy --lib --tests -- -D warnings` passed
-- Unchanged docs/help/spec contract mostly matched: `git diff --name-only main..HEAD` touched only `src/entities/trial/*`, so the decomposition stayed inside the intended runtime surface
-
-Finding:
-
-- `spec/04-trial.md` still said the traversal-cap regression was covered in `src/entities/trial.rs` unit tests. That path was deleted by this ticket, so the executable spec note was stale after the refactor.
+- `design-final.md` contains no items marked `Needs change`; the audit therefore covered the stable surface, module layout, implementation order, acceptance criteria, and proof matrix.
+- Acceptance criteria 1-8 matched the code:
+  - `src/entities/variant/` exists with `mod.rs`, `resolution.rs`, `search/mod.rs`, `gwas.rs`, `get.rs`, `test_support.rs`, and sidecar tests under `resolution/`, `search/`, `gwas/`, and `get/`
+  - `src/entities/variant.rs` is removed
+  - every new file begins with a `//!` module doc comment
+  - every file under `src/entities/variant/` stays under the 700-line cap
+  - no caller outside `src/entities/variant/` required an import-path edit; `git diff --name-only main..HEAD -- . ':(exclude)src/entities/variant/**' ':(exclude)src/entities/variant.rs'` returned nothing
+  - the stable facade in `src/entities/variant/mod.rs` preserves the public and `pub(crate)` re-exports consumed by CLI, render, transform, discover, and source callers
+- Acceptance criteria 9-10 matched the rerun gates:
+  - `make check` passed
+  - `make spec-pr` passed
+- Implementation-order deviation found:
+  - `.march/design-final.md` step 8 required deleting `src/entities/variant.rs` only after the replacement tree was wired and compiling
+  - `.march/code-log.md` recorded an earlier delete to force a red state, but still claimed `Deviations from Design: None`
+  - that made `.march/code-log.md` internally inconsistent and inaccurate
 
 ### Test-Design Traceability
 
-- Proof-matrix unit tests all exist in the relocated sidecars:
-  - `normalize_nct_id_uppercases_prefix` and `get_rejects_non_nct_id_with_format_hint` in [src/entities/trial/get/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/get/tests.rs:1)
-  - `essie_escape_boolean_expression_preserves_or_operators` and `line_of_therapy_patterns_accepts_supported_values` in [src/entities/trial/search/essie/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/essie/tests.rs:1)
-  - `parse_age_years_handles_standard_formats` in [src/entities/trial/search/eligibility/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/eligibility/tests.rs:132)
-  - `ctgov_query_term_broadens_mutation_across_discovery_fields`, `build_ctgov_search_params_maps_all_shared_fields`, `age_filter_uses_native_total_semantics_across_limits`, `age_filter_total_returns_native_total_when_exhausted`, `count_all_returns_approximate_for_age_only_filters`, `count_all_returns_exact_for_no_post_filters`, and `count_all_returns_unknown_when_expensive_post_filter_hits_page_cap` in [src/entities/trial/search/ctgov/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/ctgov/tests.rs:1)
-  - `nci_search_page_prefers_grounded_disease_concept_id` in [src/entities/trial/search/nci/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/nci/tests.rs:51)
-- Proof-matrix spec scenarios all still exist as outside-in assertions in [spec/04-trial.md](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/spec/04-trial.md:1), including:
-  - `Searching by Condition`
-  - `Filtering by Status`
-  - `Filtering by Phase`
-  - `Combined Phase 1 and 2 Search`
-  - `Mutation Search`
-  - `Intervention Code Punctuation Normalization`
-  - `Zero-Result Positional Hint`
-  - `Getting Trial Details`
-  - `Eligibility Section`
-  - `Locations Section`
-  - `Age Filter Count Stability`
-  - `Age-Only Count Approximation Signal`
-  - `Fractional Age Filter`
-  - `Expensive Count Traversal Cap`
-  - `NCI Source Search`
-  - `NCI Terminated Status Search`
-  - `Trial Help Documents NCI Source Semantics`
-  - `Trial List Documents NCI Filters`
+- The design draft's named resolution tests all exist in `src/entities/variant/resolution/tests.rs`:
+  - `parse_variant_id_examples`
+  - `parse_variant_id_egfr_l858r`
+  - `parse_variant_id_kras_g12c`
+  - `parse_variant_id_normalizes_uppercase_rsid_prefix`
+  - `parse_variant_id_accepts_long_form_gene_protein_change`
+  - `parse_variant_id_accepts_prefixed_short_gene_protein_change`
+  - `classify_variant_input_detects_search_only_shorthand`
+  - `classify_variant_input_normalizes_long_form_single_token_protein_change`
+  - `parse_variant_id_points_search_only_shorthand_to_search_variant`
+  - `parse_variant_id_points_long_form_single_token_to_search_variant`
+  - `parse_variant_id_suggests_search_for_complex_alteration_text`
+- The design draft's named search tests all exist in `src/entities/variant/search/tests.rs`:
+  - `search_query_summary_includes_hgvsc_and_rsid`
+  - `search_query_summary_includes_residue_alias_marker`
+  - `exon_deletion_fallback_preserves_non_exon_filters`
+  - `quality_score_prioritizes_significance_and_frequency`
+- The GWAS helper coverage required by the design exists in `src/entities/variant/gwas/tests.rs`:
+  - `collect_supporting_pmids_dedupes_case_insensitively`
+- The design draft's get/enrichment tests exist in `src/entities/variant/get/tests.rs` or, where the draft explicitly said to move them, in `src/entities/variant/gwas/tests.rs`:
+  - `variant_json_omits_legacy_name_when_absent`
+  - `parse_sections_supports_new_variant_sections`
+  - `gwas_only_request_detection_matches_section_flags`
+  - `gwas_only_variant_stub_keeps_requested_rsid`
+  - `civic_molecular_profile_name_prefers_gene_and_hgvs_p`
+  - `gwas_only_request_returns_variant_when_gwas_is_unavailable`
+  - `therapies_from_oncokb_truncation_shows_count`
+  - `collect_supporting_pmids_dedupes_case_insensitively` in `gwas/tests.rs`, matching the draft's relocation note
+- The proof matrix's outside-in spec surface is still present and green:
+  - `spec/03-variant.md` still contains `Searching by Gene`, `Finding a Specific Variant`, `Getting Variant Details`, `GWAS Supporting PMIDs`, and `Variant to Trials`
+  - `make spec-pr` passed on the blocking spec surface
+- The proof matrix's two smoke-only headings still exist:
+  - `spec/12-search-positionals.md::GWAS Positional Query`
+  - `spec/03-variant.md::Variant to Articles`
 - I did not find a design-required test missing from the relocated surface.
 
 ### Quality Review
 
-- Implementation quality: the split follows the existing entity-submodule pattern used elsewhere in the repo
-- Duplication: the new `trial/test_support.rs` matches the established article/disease test-support pattern rather than inventing a new abstraction
-- Security: the refactor does not introduce new path, shell, or auth flows; moved logic still validates user inputs before backend calls
-- Performance: this is structural movement only; I did not find a new algorithmic or I/O regression in the touched surface
+- Implementation quality: the refactor follows the established entity-facade pattern used by `trial` and adjacent modules, keeps scoped visibility for internal helpers, and preserves the stable import surface without caller edits.
+- Duplication: `src/entities/variant/test_support.rs` mirrors the existing entity test-support pattern rather than inventing a new abstraction.
+- Security: the refactor did not introduce new path, shell, auth, or data-exposure flows; moved validation still happens before backend calls.
+- Performance: this is structural movement only; I did not find a new algorithmic or I/O regression in the touched runtime surface.
 
 ## Fix Plan
 
-- Update the stale spec note in `spec/04-trial.md` to point at the relocated CTGov trial unit tests
-- Re-scan for any remaining `src/entities/trial.rs` references after the edit
+- Repair `.march/code-log.md` so its execution-order summary and deviations section match the approved design and the recorded history.
+- Replace the stale `.march/code-review-log.md` carry-over with the actual ticket 190 review log.
 
 ## Repair
 
-- Updated [spec/04-trial.md](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/spec/04-trial.md:75) so the traversal-cap contract note now points at `src/entities/trial/search/ctgov/tests.rs`
-- Re-scanned the repo with `rg -n 'src/entities/trial\\.rs' . -g '*.md' -g '*.rs'` and found no remaining stale references
-- No out-of-scope issue file was needed
+- Updated `.march/code-log.md`:
+  - the execution-order summary now matches the recorded red-state sequence
+  - the deviations section now records the one implementation-order deviation instead of claiming none
+- Rewrote `.march/code-review-log.md` for ticket 190.
+- No Rust source files needed changes.
+- No out-of-scope issue file was needed.
 
 ### Post-Fix Collateral Damage Scan
 
-- Dead code: not introduced; the fix was doc-only
-- Unused imports/variables: not introduced; the fix did not touch Rust code
-- Resource cleanup conflicts: not applicable; the fix did not touch cleanup paths
-- Stale error messages: not introduced; the fix updated stale documentation text only
-- Shadowed variables: not introduced; the fix did not touch code scopes
+- Dead code: not introduced; the repairs were `.march`-only and did not touch runtime Rust modules
+- Unused imports/variables: not introduced
+- Resource cleanup conflicts: not applicable
+- Stale error messages: not introduced
+- Shadowed variables: not introduced
 
 ### Validation
 
-- `cargo test trial --lib -- --list 2>/dev/null | rg ': test$' -c` => `128`
-- `cargo test trial --lib` passed
-- `cargo test --lib` passed
+- `cargo test variant --lib` passed: 117 tests passed
 - `cargo clippy --lib --tests -- -D warnings` passed
-- Trial-tree doc-comment and line-cap checks passed
-- I did not rerun the full blocking lane (`make check`, `make spec-pr`) during review; `.march/code-log.md` shows that the save-point commit already carried those proofs, and the review reran targeted plus focused validation only
+- `make check` passed: 1513 tests passed, 1 skipped
+- `make spec-pr` passed:
+  - first lane: 221 passed, 4 skipped
+  - second lane: 99 passed, 2 skipped
+- The review repair changed only `.march` artifacts, so no post-repair focused Rust rerun was required.
 
 ### Residual Concerns
 
-- None beyond the normal verify pass. The only defect found was the stale spec path, and that is repaired.
+- No blocking concerns remain.
+- Optional verify smoke: the non-blocking live-backed headings `spec/12-search-positionals.md::GWAS Positional Query` and `spec/03-variant.md::Variant to Articles` were not rerun here because the design marks them smoke-only and `make spec-pr` explicitly deselects them.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | stale-doc | yes | `spec/04-trial.md` claimed the traversal-cap regression was covered in deleted `src/entities/trial.rs` unit tests after the refactor moved that coverage to `src/entities/trial/search/ctgov/tests.rs`. |
+| 1 | stale-doc | no | `.march/code-log.md` was internally inconsistent and falsely claimed no deviations from design even though it recorded deleting `src/entities/variant.rs` before the replacement tree was fully wired and compiling. |
+| 2 | stale-doc | no | Existing `.march/code-review-log.md` was a stale carry-over from ticket 189 and did not document ticket 190. |
