@@ -1,120 +1,97 @@
 ## Review Scope
 
 - Read `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, and `.march/code-log.md`
-- Rebased onto `main` with `GIT_EDITOR=true git rebase main`
-- Reviewed `git diff main..HEAD`, `git log --oneline main..HEAD`, and `git show --name-only --format=medium --no-renames HEAD`
-- Inspected every changed file under `src/entities/variant/` plus the deleted legacy `src/entities/variant.rs`
-- Re-ran the relevant proof surface:
-  - `cargo test variant --lib`
+- Rebased onto `main` with `GIT_EDITOR=true git rebase main` and confirmed the branch was already up to date
+- Reviewed `git diff main..HEAD`, `git log --oneline main..HEAD`, and `git show --stat --summary --format=fuller HEAD`
+- Inspected every changed file under `src/transform/article/` plus the facade `src/transform/article.rs` and `tests/article_transform_structure.rs`
+- Re-ran the relevant proof surface during critique:
+  - `cargo test transform::article --lib`
+  - `cargo test transform::article::jats --lib`
+  - `cargo test article --lib`
   - `cargo clippy --lib --tests -- -D warnings`
-  - `make check`
-  - `make spec-pr`
+  - `cargo test --test article_transform_structure`
 
 ## Critique
 
 ### Design Completeness Audit
 
-- `design-final.md` contains no items marked `Needs change`; the audit therefore covered the stable surface, module layout, implementation order, acceptance criteria, and proof matrix.
-- Acceptance criteria 1-8 matched the code:
-  - `src/entities/variant/` exists with `mod.rs`, `resolution.rs`, `search/mod.rs`, `gwas.rs`, `get.rs`, `test_support.rs`, and sidecar tests under `resolution/`, `search/`, `gwas/`, and `get/`
-  - `src/entities/variant.rs` is removed
-  - every new file begins with a `//!` module doc comment
-  - every file under `src/entities/variant/` stays under the 700-line cap
-  - no caller outside `src/entities/variant/` required an import-path edit; `git diff --name-only main..HEAD -- . ':(exclude)src/entities/variant/**' ':(exclude)src/entities/variant.rs'` returned nothing
-  - the stable facade in `src/entities/variant/mod.rs` preserves the public and `pub(crate)` re-exports consumed by CLI, render, transform, discover, and source callers
-- Acceptance criteria 9-10 matched the rerun gates:
-  - `make check` passed
-  - `make spec-pr` passed
-- Implementation-order deviation found:
-  - `.march/design-final.md` step 8 required deleting `src/entities/variant.rs` only after the replacement tree was wired and compiling
-  - `.march/code-log.md` recorded an earlier delete to force a red state, but still claimed `Deviations from Design: None`
-  - that made `.march/code-log.md` internally inconsistent and inaccurate
+- `design-final.md` contains no `Needs change` markers, so the audit covered the verified scope, acceptance criteria, proof matrix, and execution-order notes.
+- The implementation matched the structural design:
+  - `src/transform/article.rs` is a small facade with the expected private modules and re-exports.
+  - `src/transform/article/` contains the focused `anchors`, `annotations`, `federation`, and `jats` modules plus their sidecar tests and `jats/refs.rs`.
+  - no file under `src/transform/article/` exceeds 700 lines.
+  - every new Rust file in the split starts with a `//!` module header.
+  - no empty `ranking`, `calibration`, or `types` module was introduced.
+  - no new dependency files were touched (`git diff --name-only main..HEAD -- Cargo.toml Cargo.lock` was empty).
+- The preserved caller surface also matched the design:
+  - verified caller paths still use `crate::transform::article::*` from `backends.rs`, `detail.rs`, `enrichment.rs`, `ranking.rs`, and `ranking/tests/calibration.rs`.
+  - `cargo test article --lib` passed, so those caller paths still compile and behave on the article surface.
+- Docs/help/spec review:
+  - this ticket does not change shipped behavior, so no user-facing docs/help/spec text was expected to change.
+  - the required contract-adjacent documentation for this refactor is the new module-level `//!` headers, and those landed with the new files.
+  - `.march/code-log.md` records the structural proof being added before the runtime split, so there is no docs/spec ordering defect to fix.
 
 ### Test-Design Traceability
 
-- The design draft's named resolution tests all exist in `src/entities/variant/resolution/tests.rs`:
-  - `parse_variant_id_examples`
-  - `parse_variant_id_egfr_l858r`
-  - `parse_variant_id_kras_g12c`
-  - `parse_variant_id_normalizes_uppercase_rsid_prefix`
-  - `parse_variant_id_accepts_long_form_gene_protein_change`
-  - `parse_variant_id_accepts_prefixed_short_gene_protein_change`
-  - `classify_variant_input_detects_search_only_shorthand`
-  - `classify_variant_input_normalizes_long_form_single_token_protein_change`
-  - `parse_variant_id_points_search_only_shorthand_to_search_variant`
-  - `parse_variant_id_points_long_form_single_token_to_search_variant`
-  - `parse_variant_id_suggests_search_for_complex_alteration_text`
-- The design draft's named search tests all exist in `src/entities/variant/search/tests.rs`:
-  - `search_query_summary_includes_hgvsc_and_rsid`
-  - `search_query_summary_includes_residue_alias_marker`
-  - `exon_deletion_fallback_preserves_non_exon_filters`
-  - `quality_score_prioritizes_significance_and_frequency`
-- The GWAS helper coverage required by the design exists in `src/entities/variant/gwas/tests.rs`:
-  - `collect_supporting_pmids_dedupes_case_insensitively`
-- The design draft's get/enrichment tests exist in `src/entities/variant/get/tests.rs` or, where the draft explicitly said to move them, in `src/entities/variant/gwas/tests.rs`:
-  - `variant_json_omits_legacy_name_when_absent`
-  - `parse_sections_supports_new_variant_sections`
-  - `gwas_only_request_detection_matches_section_flags`
-  - `gwas_only_variant_stub_keeps_requested_rsid`
-  - `civic_molecular_profile_name_prefers_gene_and_hgvs_p`
-  - `gwas_only_request_returns_variant_when_gwas_is_unavailable`
-  - `therapies_from_oncokb_truncation_shows_count`
-  - `collect_supporting_pmids_dedupes_case_insensitively` in `gwas/tests.rs`, matching the draft's relocation note
-- The proof matrix's outside-in spec surface is still present and green:
-  - `spec/03-variant.md` still contains `Searching by Gene`, `Finding a Specific Variant`, `Getting Variant Details`, `GWAS Supporting PMIDs`, and `Variant to Trials`
-  - `make spec-pr` passed on the blocking spec surface
-- The proof matrix's two smoke-only headings still exist:
-  - `spec/12-search-positionals.md::GWAS Positional Query`
-  - `spec/03-variant.md::Variant to Articles`
-- I did not find a design-required test missing from the relocated surface.
+- All 25 moved unit tests required by the design are present at the expected destinations:
+  - `anchors/tests.rs`: 5 tests
+  - `annotations/tests.rs`: 2 tests
+  - `federation/tests.rs`: 11 tests
+  - `jats/tests.rs`: 7 tests
+- The JATS-specific proof matrix row is satisfied by the dedicated `transform::article::jats` test subset, and those 7 tests passed.
+- The structure proof exists as `tests/article_transform_structure.rs`, which is stronger than the draft's ad hoc script because it is committed regression coverage.
+- Outside-in spec coverage remains unchanged, which is correct for this ticket because the refactor is organizational only.
+
+### Findings
+
+1. The design promises the stable `crate::transform::article::*` facade, but there was no direct smoke test for the full root re-export surface. Current callers exercised most exports indirectly, but `truncate_abstract` and `truncate_authors` had no direct root-path proof.
+2. `tests/article_transform_structure.rs` checked that the expected files existed and stayed under the 700-line limit, but it did not fail if forbidden placeholder modules or unexpected extra Rust files appeared under `src/transform/article/`.
 
 ### Quality Review
 
-- Implementation quality: the refactor follows the established entity-facade pattern used by `trial` and adjacent modules, keeps scoped visibility for internal helpers, and preserves the stable import surface without caller edits.
-- Duplication: `src/entities/variant/test_support.rs` mirrors the existing entity test-support pattern rather than inventing a new abstraction.
-- Security: the refactor did not introduce new path, shell, auth, or data-exposure flows; moved validation still happens before backend calls.
-- Performance: this is structural movement only; I did not find a new algorithmic or I/O regression in the touched runtime surface.
+- Security: no new shell, filesystem, auth, query-construction, or data-exposure surfaces were introduced. The moved code still only parses upstream data and renders text.
+- Duplication: the helpers that exist elsewhere in the repo (`truncate_utf8`, `decode_html_entities`, `collapse_whitespace`) were not newly invented here; they were moved from the original `article.rs` body and remain scoped to the article transform tree.
+- Performance: no algorithmic changes were introduced in the runtime path. The review fixes are proof-only and do not affect ranking, federation, or JATS logic.
 
 ## Fix Plan
 
-- Repair `.march/code-log.md` so its execution-order summary and deviations section match the approved design and the recorded history.
-- Replace the stale `.march/code-review-log.md` carry-over with the actual ticket 190 review log.
+- Add a crate-internal smoke test that typechecks the full stable `crate::transform::article::*` surface, including the two currently unused root re-exports.
+- Tighten `tests/article_transform_structure.rs` so it asserts the exact Rust file layout under `src/transform/article/` and explicitly rejects the stale placeholder module names the design forbids.
 
 ## Repair
 
-- Updated `.march/code-log.md`:
-  - the execution-order summary now matches the recorded red-state sequence
-  - the deviations section now records the one implementation-order deviation instead of claiming none
-- Rewrote `.march/code-review-log.md` for ticket 190.
-- No Rust source files needed changes.
-- No out-of-scope issue file was needed.
+- Added `transform::article::tests::root_module_reexports_stable_article_transform_api` in [src/transform/article.rs](/home/ian/workspace/worktrees/191-decompose-transform-article-rs-into-ranking-submodule/src/transform/article.rs:39) to compile-check all 15 stable root exports.
+- Strengthened [tests/article_transform_structure.rs](/home/ian/workspace/worktrees/191-decompose-transform-article-rs-into-ranking-submodule/tests/article_transform_structure.rs:23) to:
+  - compare the actual recursive Rust file set under `src/transform/article/` to the expected layout
+  - reject forbidden placeholder paths for `ranking`, `calibration`, and `types`
+  - reuse the actual recursive file list for the 700-line limit check
 
 ### Post-Fix Collateral Damage Scan
 
-- Dead code: not introduced; the repairs were `.march`-only and did not touch runtime Rust modules
-- Unused imports/variables: not introduced
-- Resource cleanup conflicts: not applicable
-- Stale error messages: not introduced
-- Shadowed variables: not introduced
+- After adding the root smoke test:
+  - no dead imports or shadowed bindings were introduced
+  - the targeted unit test compiled and passed
+- After tightening the structure regression:
+  - the first attempt exposed an ordering mismatch between expected and recursive path collection
+  - I fixed that by sorting the expected path list to match the recursive collector
+  - the final structure test passed with no leftover dead code or stale assertions
 
 ### Validation
 
-- `cargo test variant --lib` passed: 117 tests passed
-- `cargo clippy --lib --tests -- -D warnings` passed
-- `make check` passed: 1513 tests passed, 1 skipped
-- `make spec-pr` passed:
-  - first lane: 221 passed, 4 skipped
-  - second lane: 99 passed, 2 skipped
-- The review repair changed only `.march` artifacts, so no post-repair focused Rust rerun was required.
+- `cargo fmt`
+- `cargo fmt --check`
+- `cargo test --lib && cargo clippy --lib --tests -- -D warnings` (`focused` profile)
+- `cargo test --test article_transform_structure`
 
 ### Residual Concerns
 
 - No blocking concerns remain.
-- Optional verify smoke: the non-blocking live-backed headings `spec/12-search-positionals.md::GWAS Positional Query` and `spec/03-variant.md::Variant to Articles` were not rerun here because the design marks them smoke-only and `make spec-pr` explicitly deselects them.
+- Verify should keep running `cargo test --test article_transform_structure` when the article module layout changes; the repo's `focused` profile is `--lib`-only and does not include that integration test automatically.
+- No out-of-scope follow-up issue file was needed.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | stale-doc | no | `.march/code-log.md` was internally inconsistent and falsely claimed no deviations from design even though it recorded deleting `src/entities/variant.rs` before the replacement tree was fully wired and compiling. |
-| 2 | stale-doc | no | Existing `.march/code-review-log.md` was a stale carry-over from ticket 189 and did not document ticket 190. |
+| 1 | missing-test | no | The design promised an exact stable `crate::transform::article::*` facade, but there was no direct smoke test for the full root re-export surface, leaving `truncate_abstract` and `truncate_authors` unproven at the facade path. |
+| 2 | weak-assertion | no | `tests/article_transform_structure.rs` proved required files existed and stayed small, but it did not reject forbidden placeholder modules or unexpected extra Rust files under `src/transform/article/`. |
