@@ -1,5 +1,6 @@
 use super::{PathwayCommand, PathwayGetArgs, PathwaySearchArgs};
 use crate::cli::CommandOutcome;
+use futures::StreamExt;
 use tracing::{debug, warn};
 
 pub(in crate::cli) async fn handle_get(
@@ -69,7 +70,7 @@ pub(in crate::cli) async fn handle_command(
     let text = match cmd {
         PathwayCommand::Drugs { id, limit, offset } => {
             let fetch_limit = super::super::paged_fetch_limit(limit, offset, 50)?;
-            let rows = super::super::pathway_drug_results(&id, fetch_limit).await?;
+            let rows = pathway_drug_results(&id, fetch_limit).await?;
             let (results, total) = super::super::paginate_results(rows, offset, limit);
             super::super::log_pagination_truncation(total, offset, results.len());
             if json {
@@ -172,7 +173,7 @@ pub(in crate::cli) async fn handle_command(
                 format!("condition={condition}")
             };
 
-            if super::super::should_try_pathway_trial_fallback(results.len(), offset, total) {
+            if should_try_pathway_trial_fallback(results.len(), offset, total) {
                 let pathway_with_genes =
                     crate::entities::pathway::get(&id, &["genes".to_string()]).await?;
                 let fallback_limit = limit.saturating_add(offset).clamp(1, 50);
@@ -243,4 +244,72 @@ pub(in crate::cli) async fn handle_command(
     };
 
     Ok(CommandOutcome::stdout(text))
+}
+
+pub(super) fn should_try_pathway_trial_fallback(
+    results_len: usize,
+    offset: usize,
+    total: Option<u32>,
+) -> bool {
+    if results_len != 0 || offset > 0 {
+        return false;
+    }
+    total.is_none_or(|value| value == 0)
+}
+
+pub(super) async fn pathway_drug_results(
+    id: &str,
+    fetch_limit: usize,
+) -> Result<Vec<crate::entities::drug::DrugSearchResult>, crate::error::BioMcpError> {
+    let sections = vec!["genes".to_string()];
+    let pathway = crate::entities::pathway::get(id, &sections).await?;
+
+    let search_limit = fetch_limit.clamp(1, 10);
+    let mut stream = futures::stream::iter(pathway.genes.into_iter().map(|gene| async move {
+        let filters = crate::entities::drug::DrugSearchFilters {
+            target: Some(gene.clone()),
+            ..Default::default()
+        };
+        let result = crate::entities::drug::search(&filters, search_limit).await;
+        (gene, result)
+    }))
+    .buffer_unordered(5);
+
+    let mut results: Vec<Vec<crate::entities::drug::DrugSearchResult>> = Vec::new();
+    let mut attempted: usize = 0;
+    let mut failures: usize = 0;
+    while let Some((gene, next)) = stream.next().await {
+        attempted += 1;
+        match next {
+            Ok(rows) => results.push(rows),
+            Err(err) => {
+                failures += 1;
+                warn!(gene = %gene, "pathway drug lookup failed: {err}");
+            }
+        }
+    }
+
+    if attempted > 0 && failures.saturating_mul(2) > attempted {
+        return Err(crate::error::BioMcpError::Api {
+            api: "pathway-drugs".into(),
+            message: format!(
+                "Failed to resolve {failures} of {attempted} pathway gene target lookups while collecting drugs"
+            ),
+        });
+    }
+
+    let mut out: Vec<crate::entities::drug::DrugSearchResult> = Vec::new();
+    for rows in results {
+        for row in rows {
+            if out.iter().any(|v| v.name.eq_ignore_ascii_case(&row.name)) {
+                continue;
+            }
+            out.push(row);
+            if out.len() >= fetch_limit {
+                return Ok(out);
+            }
+        }
+    }
+
+    Ok(out)
 }

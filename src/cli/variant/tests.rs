@@ -1,6 +1,10 @@
 use clap::Parser;
 
-use crate::cli::{Cli, Commands, GetEntity, OutputStream, SearchEntity, VariantCommand};
+use super::dispatch::{VariantSearchPlan, parse_simple_gene_change, resolve_variant_query};
+
+use crate::cli::{
+    Cli, Commands, GetEntity, OutputStream, SearchEntity, VariantCommand, run_outcome,
+};
 
 #[test]
 fn search_variant_parses_single_token_positional_query() {
@@ -161,4 +165,364 @@ async fn handle_get_returns_guidance_json_for_shorthand_variant() {
         value["_meta"]["next_commands"][0],
         "biomcp search variant --hgvsp R620W --limit 10"
     );
+}
+
+#[test]
+fn parse_simple_gene_change_detects_supported_forms() {
+    assert_eq!(
+        parse_simple_gene_change("BRAF V600E"),
+        Some(("BRAF".into(), "V600E".into()))
+    );
+    assert_eq!(
+        parse_simple_gene_change("EGFR T790M"),
+        Some(("EGFR".into(), "T790M".into()))
+    );
+    assert_eq!(
+        parse_simple_gene_change("BRAF p.V600E"),
+        Some(("BRAF".into(), "V600E".into()))
+    );
+    assert_eq!(
+        parse_simple_gene_change("BRAF p.Val600Glu"),
+        Some(("BRAF".into(), "V600E".into()))
+    );
+}
+
+#[test]
+fn parse_simple_gene_change_rejects_non_simple_forms() {
+    assert_eq!(parse_simple_gene_change("BRAF"), None);
+    assert_eq!(parse_simple_gene_change("EGFR Exon 19 Deletion"), None);
+    assert_eq!(parse_simple_gene_change("EGFR Exon19"), None);
+    assert_eq!(parse_simple_gene_change("braf V600E"), None);
+}
+
+#[test]
+fn resolve_variant_query_maps_single_token_to_gene() {
+    let resolved = resolve_variant_query(None, None, None, None, vec!["BRAF".into()]).unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("BRAF"));
+    assert!(resolved.hgvsp.is_none());
+    assert!(resolved.hgvsc.is_none());
+    assert!(resolved.rsid.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_maps_simple_gene_change_to_gene_and_hgvsp() {
+    let resolved =
+        resolve_variant_query(None, None, None, None, vec!["BRAF".into(), "V600E".into()]).unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("BRAF"));
+    assert_eq!(resolved.hgvsp.as_deref(), Some("V600E"));
+    assert!(resolved.hgvsc.is_none());
+    assert!(resolved.rsid.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_maps_long_form_positional_gene_change_to_gene_and_hgvsp() {
+    let resolved = resolve_variant_query(
+        None,
+        None,
+        None,
+        None,
+        vec!["BRAF".into(), "p.Val600Glu".into()],
+    )
+    .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("BRAF"));
+    assert_eq!(resolved.hgvsp.as_deref(), Some("V600E"));
+    assert!(resolved.hgvsc.is_none());
+    assert!(resolved.rsid.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_maps_rsid_to_rsid_filter() {
+    let resolved =
+        resolve_variant_query(None, None, None, None, vec!["rs113488022".into()]).unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.rsid.as_deref(), Some("rs113488022"));
+    assert!(resolved.gene.is_none());
+    assert!(resolved.hgvsp.is_none());
+    assert!(resolved.hgvsc.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_maps_gene_hgvsc_text_to_gene_and_hgvsc() {
+    let resolved = resolve_variant_query(
+        None,
+        None,
+        None,
+        None,
+        vec!["BRAF".into(), "c.1799T>A".into()],
+    )
+    .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("BRAF"));
+    assert_eq!(resolved.hgvsc.as_deref(), Some("c.1799T>A"));
+    assert!(resolved.hgvsp.is_none());
+    assert!(resolved.rsid.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_maps_exon_deletion_phrase_to_gene_and_consequence() {
+    let resolved = resolve_variant_query(
+        None,
+        None,
+        None,
+        None,
+        vec!["EGFR".into(), "Exon".into(), "19".into(), "Deletion".into()],
+    )
+    .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("EGFR"));
+    assert_eq!(resolved.consequence.as_deref(), Some("inframe_deletion"));
+    assert!(resolved.hgvsp.is_none());
+    assert!(resolved.hgvsc.is_none());
+    assert!(resolved.rsid.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_maps_gene_residue_alias_to_residue_alias_search() {
+    let resolved =
+        resolve_variant_query(None, None, None, None, vec!["PTPN22".into(), "620W".into()])
+            .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("PTPN22"));
+    assert_eq!(
+        resolved.protein_alias,
+        Some(crate::entities::variant::VariantProteinAlias {
+            position: 620,
+            residue: 'W',
+        })
+    );
+    assert!(resolved.hgvsp.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_maps_gene_flag_residue_alias_to_residue_alias_search() {
+    let resolved =
+        resolve_variant_query(Some("PTPN22".into()), None, None, None, vec!["620W".into()])
+            .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("PTPN22"));
+    assert_eq!(
+        resolved.protein_alias,
+        Some(crate::entities::variant::VariantProteinAlias {
+            position: 620,
+            residue: 'W',
+        })
+    );
+    assert!(resolved.hgvsp.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_uses_gene_context_for_standalone_protein_change() {
+    let resolved = resolve_variant_query(
+        Some("PTPN22".into()),
+        None,
+        None,
+        None,
+        vec!["R620W".into()],
+    )
+    .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("PTPN22"));
+    assert_eq!(resolved.hgvsp.as_deref(), Some("R620W"));
+    assert!(resolved.protein_alias.is_none());
+}
+
+#[test]
+fn resolve_variant_query_uses_gene_context_for_long_form_single_token_change() {
+    let resolved = resolve_variant_query(
+        Some("BRAF".into()),
+        None,
+        None,
+        None,
+        vec!["p.Val600Glu".into()],
+    )
+    .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("BRAF"));
+    assert_eq!(resolved.hgvsp.as_deref(), Some("V600E"));
+    assert!(resolved.protein_alias.is_none());
+}
+
+#[test]
+fn resolve_variant_query_returns_guidance_for_standalone_protein_change() {
+    let resolved = resolve_variant_query(None, None, None, None, vec!["R620W".into()]).unwrap();
+    let VariantSearchPlan::Guidance(guidance) = resolved else {
+        panic!("expected guidance plan");
+    };
+    assert_eq!(guidance.query, "R620W");
+    assert!(matches!(
+        guidance.kind,
+        crate::entities::variant::VariantGuidanceKind::ProteinChangeOnly { .. }
+    ));
+}
+
+#[test]
+fn resolve_variant_query_returns_guidance_for_long_form_single_token_change() {
+    let resolved =
+        resolve_variant_query(None, None, None, None, vec!["p.Val600Glu".into()]).unwrap();
+    let VariantSearchPlan::Guidance(guidance) = resolved else {
+        panic!("expected guidance plan");
+    };
+    assert_eq!(guidance.query, "p.Val600Glu");
+    assert!(matches!(
+        guidance.kind,
+        crate::entities::variant::VariantGuidanceKind::ProteinChangeOnly { .. }
+    ));
+    assert_eq!(
+        guidance.next_commands.first().map(String::as_str),
+        Some("biomcp search variant --hgvsp V600E --limit 10")
+    );
+}
+
+#[test]
+fn resolve_variant_query_normalizes_long_form_hgvsp_flag() {
+    let resolved = resolve_variant_query(
+        Some("BRAF".into()),
+        Some("p.Val600Glu".into()),
+        None,
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("BRAF"));
+    assert_eq!(resolved.hgvsp.as_deref(), Some("V600E"));
+    assert!(resolved.hgvsc.is_none());
+    assert!(resolved.rsid.is_none());
+    assert!(resolved.condition.is_none());
+}
+
+#[test]
+fn resolve_variant_query_preserves_stop_x_for_hgvsp_flag() {
+    let resolved = resolve_variant_query(
+        Some("PLN".into()),
+        Some("L39X".into()),
+        None,
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let VariantSearchPlan::Standard(resolved) = resolved else {
+        panic!("expected standard search plan");
+    };
+    assert_eq!(resolved.gene.as_deref(), Some("PLN"));
+    assert_eq!(resolved.hgvsp.as_deref(), Some("L39X"));
+}
+
+#[test]
+fn resolve_variant_query_rejects_conflicts_with_positional_mapping() {
+    let gene_conflict = resolve_variant_query(
+        Some("TP53".into()),
+        None,
+        None,
+        None,
+        vec!["BRAF".into(), "V600E".into()],
+    )
+    .unwrap_err();
+    assert!(format!("{gene_conflict}").contains("conflicts with --gene"));
+
+    let hgvsp_conflict = resolve_variant_query(
+        None,
+        Some("G12D".into()),
+        None,
+        None,
+        vec!["KRAS".into(), "G12C".into()],
+    )
+    .unwrap_err();
+    assert!(format!("{hgvsp_conflict}").contains("conflicts with --hgvsp"));
+
+    let consequence_conflict = resolve_variant_query(
+        None,
+        None,
+        Some("missense_variant".into()),
+        None,
+        vec!["EGFR".into(), "Exon".into(), "19".into(), "Deletion".into()],
+    )
+    .unwrap_err();
+    assert!(
+        format!("{consequence_conflict}")
+            .contains("Positional exon-deletion query conflicts with --consequence")
+    );
+}
+
+#[tokio::test]
+async fn variant_get_shorthand_json_returns_variant_guidance_metadata() {
+    let cli = Cli::try_parse_from(["biomcp", "--json", "get", "variant", "R620W"]).expect("parse");
+    let outcome = run_outcome(cli).await.expect("variant guidance outcome");
+
+    assert_eq!(outcome.stream, OutputStream::Stdout);
+    assert_eq!(outcome.exit_code, 1);
+
+    let value: serde_json::Value =
+        serde_json::from_str(&outcome.text).expect("valid variant guidance json");
+    assert_eq!(
+        value["_meta"]["alias_resolution"]["requested_entity"],
+        "variant"
+    );
+    assert_eq!(
+        value["_meta"]["alias_resolution"]["kind"],
+        "protein_change_only"
+    );
+    assert_eq!(value["_meta"]["alias_resolution"]["query"], "R620W");
+    assert_eq!(value["_meta"]["alias_resolution"]["change"], "R620W");
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        "biomcp search variant --hgvsp R620W --limit 10"
+    );
+}
+
+#[tokio::test]
+async fn variant_search_shorthand_json_returns_variant_guidance_metadata() {
+    let cli =
+        Cli::try_parse_from(["biomcp", "--json", "search", "variant", "R620W"]).expect("parse");
+    let outcome = run_outcome(cli)
+        .await
+        .expect("variant search guidance outcome");
+
+    assert_eq!(outcome.stream, OutputStream::Stdout);
+    assert_eq!(outcome.exit_code, 1);
+
+    let value: serde_json::Value =
+        serde_json::from_str(&outcome.text).expect("valid variant guidance json");
+    assert_eq!(
+        value["_meta"]["alias_resolution"]["requested_entity"],
+        "variant"
+    );
+    assert_eq!(
+        value["_meta"]["alias_resolution"]["kind"],
+        "protein_change_only"
+    );
+    assert_eq!(value["_meta"]["next_commands"][1], "biomcp discover R620W");
 }

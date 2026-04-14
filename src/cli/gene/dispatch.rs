@@ -8,7 +8,7 @@ pub(crate) async fn handle_get(
 ) -> anyhow::Result<CommandOutcome> {
     let (sections, json_override) = super::super::extract_json_from_sections(&args.sections);
     let json_output = json || json_override;
-    super::super::render_gene_card_outcome(
+    render_gene_card_outcome(
         &args.symbol,
         &sections,
         json_output,
@@ -58,7 +58,7 @@ pub(crate) async fn handle_command(
 ) -> anyhow::Result<CommandOutcome> {
     match cmd {
         GeneCommand::Definition { symbol } => {
-            super::super::render_gene_card_outcome(
+            render_gene_card_outcome(
                 &symbol,
                 super::super::empty_sections(),
                 json,
@@ -68,7 +68,7 @@ pub(crate) async fn handle_command(
         }
         GeneCommand::External(args) => {
             let symbol = args.join(" ");
-            super::super::render_gene_card_outcome(
+            render_gene_card_outcome(
                 &symbol,
                 super::super::empty_sections(),
                 json,
@@ -234,5 +234,42 @@ pub(crate) async fn handle_command(
 
             Ok(CommandOutcome::stdout(text))
         }
+    }
+}
+
+pub(super) async fn render_gene_card_outcome(
+    symbol: &str,
+    sections: &[String],
+    json_output: bool,
+    alias_suggestions_as_json: bool,
+) -> anyhow::Result<CommandOutcome> {
+    match crate::entities::gene::get(symbol, sections).await {
+        Ok(gene) => {
+            let text = if json_output {
+                crate::render::json::to_entity_json(
+                    &gene,
+                    crate::render::markdown::gene_evidence_urls(&gene),
+                    crate::render::markdown::related_gene(&gene),
+                    crate::render::provenance::gene_section_sources(&gene),
+                )?
+            } else {
+                crate::render::markdown::gene_markdown(&gene, sections)?
+            };
+            Ok(CommandOutcome::stdout(text))
+        }
+        Err(err @ crate::error::BioMcpError::NotFound { .. }) => {
+            if let Some(outcome) = super::super::try_alias_fallback_outcome(
+                symbol,
+                crate::entities::discover::DiscoverType::Gene,
+                json_output || alias_suggestions_as_json,
+            )
+            .await?
+            {
+                Ok(outcome)
+            } else {
+                Err(err.into())
+            }
+        }
+        Err(err) => Err(err.into()),
     }
 }

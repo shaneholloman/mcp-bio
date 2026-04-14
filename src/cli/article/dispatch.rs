@@ -72,7 +72,7 @@ pub(in crate::cli) async fn handle_search(
         ranking,
     };
 
-    let query = super::super::article_query_summary(
+    let query = article_query_summary(
         &filters,
         source_filter,
         args.include_retracted,
@@ -89,7 +89,7 @@ pub(in crate::cli) async fn handle_search(
     let semantic_scholar_enabled =
         crate::entities::article::semantic_scholar_search_enabled(&filters, source_filter);
     let debug_plan = if args.debug_plan {
-        Some(super::super::build_article_debug_plan(
+        Some(build_article_debug_plan(
             &query,
             &filters,
             source_filter,
@@ -102,7 +102,7 @@ pub(in crate::cli) async fn handle_search(
     };
 
     let text = if json {
-        super::super::article_search_json(
+        article_search_json(
             &query,
             &filters,
             semantic_scholar_enabled,
@@ -140,7 +140,7 @@ pub(in crate::cli) async fn handle_command(
             let annotations = article
                 .annotations
                 .clone()
-                .map(|value| super::super::truncate_article_annotations(value, limit));
+                .map(|value| truncate_article_annotations(value, limit));
             if json {
                 #[derive(serde::Serialize)]
                 struct ArticleEntitiesResponse {
@@ -200,4 +200,179 @@ pub(in crate::cli) async fn handle_command(
     };
 
     Ok(CommandOutcome::stdout(text))
+}
+
+pub(super) fn article_query_summary(
+    filters: &crate::entities::article::ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
+    include_retracted: bool,
+    limit: usize,
+    offset: usize,
+) -> String {
+    let mut query = vec![
+        filters.gene.as_deref().map(|v| format!("gene={v}")),
+        filters.disease.as_deref().map(|v| format!("disease={v}")),
+        filters.drug.as_deref().map(|v| format!("drug={v}")),
+        filters.author.as_deref().map(|v| format!("author={v}")),
+        filters.keyword.as_deref().map(|v| format!("keyword={v}")),
+        filters.article_type.as_deref().map(|v| format!("type={v}")),
+        filters
+            .date_from
+            .as_deref()
+            .map(|v| format!("date_from={v}")),
+        filters.date_to.as_deref().map(|v| format!("date_to={v}")),
+        filters.journal.as_deref().map(|v| format!("journal={v}")),
+        filters.open_access.then(|| "open_access=true".to_string()),
+        filters
+            .no_preprints
+            .then(|| "no_preprints=true".to_string()),
+        if include_retracted {
+            Some("include_retracted=true".to_string())
+        } else {
+            filters
+                .exclude_retracted
+                .then(|| "exclude_retracted=true".to_string())
+        },
+        Some(format!("sort={}", filters.sort.as_str())),
+        (source_filter != crate::entities::article::ArticleSourceFilter::All)
+            .then(|| format!("source={}", source_filter.as_str())),
+        article_max_per_source_summary(filters.max_per_source, limit),
+        (offset > 0).then(|| format!("offset={offset}")),
+    ];
+    if let Some(mode) = crate::entities::article::article_effective_ranking_mode(filters) {
+        query.push(Some(format!("ranking_mode={}", mode.as_str())));
+        query.push(
+            crate::entities::article::article_relevance_ranking_policy(filters)
+                .map(|policy| format!("ranking_policy={policy}")),
+        );
+    }
+    query.into_iter().flatten().collect::<Vec<_>>().join(", ")
+}
+
+pub(super) fn article_max_per_source_summary(
+    max_per_source: Option<usize>,
+    limit: usize,
+) -> Option<String> {
+    match max_per_source {
+        None => None,
+        Some(0) => Some("max_per_source=default".to_string()),
+        Some(value) if value == limit => Some("max_per_source=disabled".to_string()),
+        Some(value) => Some(format!("max_per_source={value}")),
+    }
+}
+
+pub(super) fn article_debug_filters(
+    filters: &crate::entities::article::ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
+    limit: usize,
+) -> Vec<String> {
+    let mut values = vec![
+        filters.gene.as_deref().map(|v| format!("gene={v}")),
+        filters.disease.as_deref().map(|v| format!("disease={v}")),
+        filters.drug.as_deref().map(|v| format!("drug={v}")),
+        filters.author.as_deref().map(|v| format!("author={v}")),
+        filters.keyword.as_deref().map(|v| format!("keyword={v}")),
+        filters
+            .date_from
+            .as_deref()
+            .map(|v| format!("date_from={v}")),
+        filters.date_to.as_deref().map(|v| format!("date_to={v}")),
+        filters.article_type.as_deref().map(|v| format!("type={v}")),
+        filters.journal.as_deref().map(|v| format!("journal={v}")),
+        filters.open_access.then(|| "open_access=true".to_string()),
+        filters
+            .no_preprints
+            .then(|| "no_preprints=true".to_string()),
+        Some(format!("exclude_retracted={}", filters.exclude_retracted)),
+        Some(format!("sort={}", filters.sort.as_str())),
+        Some(format!("source={}", source_filter.as_str())),
+        article_max_per_source_summary(filters.max_per_source, limit),
+    ];
+    if let Some(mode) = crate::entities::article::article_effective_ranking_mode(filters) {
+        values.push(Some(format!("ranking_mode={}", mode.as_str())));
+        values.push(
+            crate::entities::article::article_relevance_ranking_policy(filters)
+                .map(|policy| format!("ranking_policy={policy}")),
+        );
+    }
+    values.into_iter().flatten().collect()
+}
+
+pub(super) fn build_article_debug_plan(
+    query: &str,
+    filters: &crate::entities::article::ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
+    limit: usize,
+    results: &[crate::entities::article::ArticleSearchResult],
+    pagination: &crate::cli::PaginationMeta,
+) -> Result<crate::cli::debug_plan::DebugPlan, crate::error::BioMcpError> {
+    let summary = crate::entities::article::summarize_debug_plan(filters, source_filter, results)?;
+    Ok(crate::cli::debug_plan::DebugPlan {
+        surface: "search_article",
+        query: query.to_string(),
+        anchor: None,
+        legs: vec![crate::cli::debug_plan::DebugPlanLeg {
+            leg: "article".to_string(),
+            entity: "article".to_string(),
+            filters: article_debug_filters(filters, source_filter, limit),
+            routing: summary.routing,
+            sources: summary.sources,
+            matched_sources: summary.matched_sources,
+            count: results.len(),
+            total: pagination.total,
+            note: crate::entities::article::article_type_limitation_note(filters, source_filter),
+            error: None,
+        }],
+    })
+}
+
+pub(super) fn article_search_json(
+    query: &str,
+    filters: &crate::entities::article::ArticleSearchFilters,
+    semantic_scholar_enabled: bool,
+    note: Option<String>,
+    debug_plan: Option<crate::cli::debug_plan::DebugPlan>,
+    results: Vec<crate::entities::article::ArticleSearchResult>,
+    pagination: crate::cli::PaginationMeta,
+) -> anyhow::Result<String> {
+    #[derive(serde::Serialize)]
+    struct ArticleSearchResponse {
+        query: String,
+        sort: String,
+        semantic_scholar_enabled: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        ranking_policy: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        note: Option<String>,
+        pagination: crate::cli::PaginationMeta,
+        count: usize,
+        results: Vec<crate::entities::article::ArticleSearchResult>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        debug_plan: Option<crate::cli::debug_plan::DebugPlan>,
+    }
+
+    let count = results.len();
+    crate::render::json::to_pretty(&ArticleSearchResponse {
+        query: query.to_string(),
+        sort: filters.sort.as_str().to_string(),
+        semantic_scholar_enabled,
+        ranking_policy: crate::entities::article::article_relevance_ranking_policy(filters),
+        note,
+        pagination,
+        count,
+        results,
+        debug_plan,
+    })
+    .map_err(Into::into)
+}
+
+pub(super) fn truncate_article_annotations(
+    mut annotations: crate::entities::article::ArticleAnnotations,
+    limit: usize,
+) -> crate::entities::article::ArticleAnnotations {
+    annotations.genes.truncate(limit);
+    annotations.diseases.truncate(limit);
+    annotations.chemicals.truncate(limit);
+    annotations.mutations.truncate(limit);
+    annotations
 }

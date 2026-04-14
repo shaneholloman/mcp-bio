@@ -1,0 +1,328 @@
+use clap::{CommandFactory, FromArgMatches};
+use tracing::{debug, warn};
+
+use super::types::{Cli, CommandOutcome};
+
+pub(super) const RUNTIME_HELP_SUBCOMMANDS: [&str; 4] = ["mcp", "serve", "serve-http", "serve-sse"];
+
+fn hide_runtime_help_globals(
+    command: clap::Command,
+    subcommand_name: &'static str,
+    json_arg: &clap::Arg,
+    no_cache_arg: &clap::Arg,
+) -> clap::Command {
+    command.mut_subcommand(subcommand_name, |runtime| {
+        runtime.arg(json_arg.clone()).arg(no_cache_arg.clone())
+    })
+}
+
+pub fn build_cli() -> clap::Command {
+    let mut command = Cli::command();
+    let json_arg = command
+        .get_arguments()
+        .find(|arg| arg.get_id() == "json")
+        .cloned()
+        .expect("json arg should exist")
+        .hide(true);
+    let no_cache_arg = command
+        .get_arguments()
+        .find(|arg| arg.get_id() == "no_cache")
+        .cloned()
+        .expect("no_cache arg should exist")
+        .hide(true);
+
+    for subcommand_name in RUNTIME_HELP_SUBCOMMANDS {
+        command = hide_runtime_help_globals(command, subcommand_name, &json_arg, &no_cache_arg);
+    }
+    command
+}
+
+pub fn parse_cli_from_env() -> Cli {
+    let matches = build_cli().get_matches();
+    Cli::from_arg_matches(&matches).unwrap_or_else(|err| err.exit())
+}
+
+pub(super) fn empty_sections() -> &'static [String] {
+    &[]
+}
+
+pub(super) fn related_article_filters() -> crate::entities::article::ArticleSearchFilters {
+    crate::entities::article::ArticleSearchFilters {
+        gene: None,
+        gene_anchored: false,
+        disease: None,
+        drug: None,
+        author: None,
+        keyword: None,
+        date_from: None,
+        date_to: None,
+        article_type: None,
+        journal: None,
+        open_access: false,
+        no_preprints: true,
+        exclude_retracted: true,
+        max_per_source: None,
+        sort: crate::entities::article::ArticleSort::Relevance,
+        ranking: crate::entities::article::ArticleRankingOptions::default(),
+    }
+}
+
+pub(super) fn extract_json_from_sections(sections: &[String]) -> (Vec<String>, bool) {
+    let mut json_override = false;
+    let cleaned = sections
+        .iter()
+        .filter_map(|raw| {
+            let trimmed = raw.trim();
+            let normalized = trimmed.to_ascii_lowercase();
+            if normalized == "--json" || normalized == "-j" {
+                json_override = true;
+                return None;
+            }
+            if trimmed.is_empty() {
+                return None;
+            }
+            Some(trimmed.to_string())
+        })
+        .collect();
+    (cleaned, json_override)
+}
+
+pub(super) fn normalize_cli_query(value: Option<String>) -> Option<String> {
+    value.and_then(|raw| {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_string())
+        }
+    })
+}
+
+pub(super) fn normalize_cli_tokens(values: Vec<String>) -> Option<String> {
+    let joined = values
+        .into_iter()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
+    normalize_cli_query(Some(joined))
+}
+
+pub(super) fn resolve_query_input(
+    flag_query: Option<String>,
+    positional_query: Option<String>,
+    flag_names: &str,
+) -> Result<Option<String>, crate::error::BioMcpError> {
+    let flag_query = normalize_cli_query(flag_query);
+    let positional_query = normalize_cli_query(positional_query);
+    match (flag_query, positional_query) {
+        (Some(_), Some(_)) => Err(crate::error::BioMcpError::InvalidArgument(format!(
+            "Use either positional QUERY or {flag_names}, not both"
+        ))),
+        (Some(value), None) | (None, Some(value)) => Ok(Some(value)),
+        (None, None) => Ok(None),
+    }
+}
+
+fn alias_suggestion_markdown(
+    query: &str,
+    requested_entity: crate::entities::discover::DiscoverType,
+    decision: &crate::entities::discover::AliasFallbackDecision,
+) -> String {
+    let err = crate::error::BioMcpError::NotFound {
+        entity: requested_entity.cli_name().to_string(),
+        id: query.trim().to_string(),
+        suggestion: crate::render::markdown::alias_fallback_suggestion(decision),
+    };
+    format!("Error: {err}")
+}
+
+fn alias_suggestion_outcome(
+    query: &str,
+    requested_entity: crate::entities::discover::DiscoverType,
+    decision: &crate::entities::discover::AliasFallbackDecision,
+    json_output: bool,
+) -> anyhow::Result<CommandOutcome> {
+    if json_output {
+        return Ok(CommandOutcome::stdout_with_exit(
+            crate::render::json::to_alias_suggestion_json(decision)?,
+            1,
+        ));
+    }
+    Ok(CommandOutcome::stderr_with_exit(
+        alias_suggestion_markdown(query, requested_entity, decision),
+        1,
+    ))
+}
+
+pub(super) async fn try_alias_fallback_outcome(
+    query: &str,
+    requested_entity: crate::entities::discover::DiscoverType,
+    json_output: bool,
+) -> anyhow::Result<Option<CommandOutcome>> {
+    match crate::entities::discover::resolve_query(
+        query,
+        crate::entities::discover::DiscoverMode::AliasFallback,
+    )
+    .await
+    {
+        Ok(result) => {
+            let decision =
+                crate::entities::discover::classify_alias_fallback(&result, requested_entity);
+            match decision {
+                crate::entities::discover::AliasFallbackDecision::None => Ok(None),
+                other => Ok(Some(alias_suggestion_outcome(
+                    query,
+                    requested_entity,
+                    &other,
+                    json_output,
+                )?)),
+            }
+        }
+        Err(err) => {
+            warn!(
+                query = query.trim(),
+                entity = requested_entity.cli_name(),
+                "alias fallback discovery unavailable: {err}"
+            );
+            Ok(None)
+        }
+    }
+}
+
+pub(super) fn render_batch_json<T, F>(
+    results: &[T],
+    wrap: F,
+) -> Result<String, crate::error::BioMcpError>
+where
+    F: Fn(&T) -> Result<serde_json::Value, crate::error::BioMcpError>,
+{
+    let items = results.iter().map(wrap).collect::<Result<Vec<_>, _>>()?;
+    crate::render::json::to_pretty(&items)
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub(super) struct PaginationMeta {
+    pub offset: usize,
+    pub limit: usize,
+    pub returned: usize,
+    pub total: Option<usize>,
+    pub has_more: bool,
+    pub next_page_token: Option<String>,
+}
+
+impl PaginationMeta {
+    pub(super) fn offset(
+        offset: usize,
+        limit: usize,
+        returned: usize,
+        total: Option<usize>,
+    ) -> Self {
+        let has_more = total
+            .map(|value| offset.saturating_add(returned) < value)
+            .unwrap_or(returned == limit);
+        Self {
+            offset,
+            limit,
+            returned,
+            total,
+            has_more,
+            next_page_token: None,
+        }
+    }
+
+    pub(super) fn cursor(
+        offset: usize,
+        limit: usize,
+        returned: usize,
+        total: Option<usize>,
+        next_page_token: Option<String>,
+    ) -> Self {
+        let has_token = next_page_token
+            .as_deref()
+            .map(str::trim)
+            .is_some_and(|value| !value.is_empty());
+        let has_more = match total {
+            Some(value) => offset.saturating_add(returned) < value || has_token,
+            None => has_token,
+        };
+        Self {
+            offset,
+            limit,
+            returned,
+            total,
+            has_more,
+            next_page_token,
+        }
+    }
+}
+
+#[derive(serde::Serialize)]
+struct SearchJsonResponse<T: serde::Serialize> {
+    pagination: PaginationMeta,
+    count: usize,
+    results: Vec<T>,
+}
+
+pub(super) fn search_json<T: serde::Serialize>(
+    results: Vec<T>,
+    pagination: PaginationMeta,
+) -> anyhow::Result<String> {
+    let count = results.len();
+    crate::render::json::to_pretty(&SearchJsonResponse {
+        pagination,
+        count,
+        results,
+    })
+    .map_err(Into::into)
+}
+
+pub(super) fn pagination_footer_offset(meta: &PaginationMeta) -> String {
+    crate::render::markdown::pagination_footer(
+        crate::render::markdown::PaginationFooterMode::Offset,
+        meta.offset,
+        meta.limit,
+        meta.returned,
+        meta.total,
+        None,
+    )
+}
+
+pub(super) fn pagination_footer_cursor(meta: &PaginationMeta) -> String {
+    crate::render::markdown::pagination_footer(
+        crate::render::markdown::PaginationFooterMode::Cursor,
+        meta.offset,
+        meta.limit,
+        meta.returned,
+        meta.total,
+        meta.next_page_token.as_deref(),
+    )
+}
+
+pub(super) fn paged_fetch_limit(
+    limit: usize,
+    offset: usize,
+    max_limit: usize,
+) -> Result<usize, crate::error::BioMcpError> {
+    if limit == 0 || limit > max_limit {
+        return Err(crate::error::BioMcpError::InvalidArgument(format!(
+            "--limit must be between 1 and {max_limit}"
+        )));
+    }
+    Ok(limit.saturating_add(offset).min(max_limit))
+}
+
+pub(super) fn paginate_results<T>(rows: Vec<T>, offset: usize, limit: usize) -> (Vec<T>, usize) {
+    let total = rows.len();
+    let paged = rows.into_iter().skip(offset).take(limit).collect();
+    (paged, total)
+}
+
+pub(super) fn log_pagination_truncation(observed_total: usize, offset: usize, returned: usize) {
+    if offset.saturating_add(returned) < observed_total {
+        debug!(
+            total = observed_total,
+            offset, returned, "Results truncated by --limit"
+        );
+    }
+}
