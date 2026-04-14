@@ -301,8 +301,10 @@ Every cell in the "returns" column comes from a real command run on April 14, 20
 ## Try it yourself
 
 ```bash
-# Install BioMCP if you haven't already
-pip install biomcp-python
+# Install BioMCP if you haven't already:
+curl -fsSL https://biomcp.org/install.sh | bash
+# or: uv tool install biomcp-cli
+# or: pip install biomcp-cli
 
 # Then run the six commands:
 biomcp get drug daraxonrasib
