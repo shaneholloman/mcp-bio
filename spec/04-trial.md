@@ -74,9 +74,10 @@ instead of a misleading lower bound.
 Contract note:
 Text output is `Total: unknown (traversal limit reached)` and JSON output is
 `{"total": null}` when the traversal cap is hit. This is regression-covered in
-`src/entities/trial.rs` unit tests because a real live-spec query broad enough
-to exhaust the cap would require large-scale per-study detail fetches and is
-not stable enough for the executable spec suite.
+the CTGov trial unit tests (`src/entities/trial/search/ctgov/tests.rs`) because
+a real live-spec query broad enough to exhaust the cap would require
+large-scale per-study detail fetches and is not stable enough for the
+executable spec suite.
 
 ## Fractional Age Filter
 
