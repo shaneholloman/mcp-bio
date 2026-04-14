@@ -36,3 +36,37 @@ fn collapse_whitespace(value: &str) -> String {
 
     out.trim().to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::entities::article::{Article, ArticleAnnotations, ArticleSearchResult};
+    use crate::sources::europepmc::EuropePmcResult;
+    use crate::sources::pubmed::ESummaryEntry;
+    use crate::sources::pubtator::{PubTatorDocument, PubTatorSearchResult};
+
+    #[test]
+    fn root_module_reexports_stable_article_transform_api() {
+        let _ = crate::transform::article::clean_title as fn(&str) -> String;
+        let _ = crate::transform::article::clean_abstract as fn(&str) -> String;
+        let _ = crate::transform::article::normalize_article_search_text as fn(&str) -> String;
+        let _ = crate::transform::article::article_search_fallback_title as fn(&str) -> String;
+        let _ = crate::transform::article::truncate_abstract as fn(&str) -> String;
+        let _ = crate::transform::article::article_search_abstract_snippet
+            as fn(&str) -> Option<String>;
+        let _ = crate::transform::article::truncate_authors as fn(&[String]) -> Vec<String>;
+        let _ =
+            crate::transform::article::from_pubtator_document as fn(&PubTatorDocument) -> Article;
+        let _ = crate::transform::article::from_europepmc_result as fn(&EuropePmcResult) -> Article;
+        let _ = crate::transform::article::merge_europepmc_metadata
+            as fn(&mut Article, &EuropePmcResult);
+        let _ = crate::transform::article::from_europepmc_search_result
+            as fn(&EuropePmcResult) -> Option<ArticleSearchResult>;
+        let _ = crate::transform::article::from_pubtator_search_result
+            as fn(&PubTatorSearchResult) -> Option<ArticleSearchResult>;
+        let _ = crate::transform::article::from_pubmed_esummary_entry
+            as fn(&ESummaryEntry) -> Option<ArticleSearchResult>;
+        let _ = crate::transform::article::extract_annotations
+            as fn(&PubTatorDocument) -> Option<ArticleAnnotations>;
+        let _ = crate::transform::article::extract_text_from_xml as fn(&str) -> String;
+    }
+}
