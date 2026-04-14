@@ -2,122 +2,104 @@
 
 - Read `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, and `.march/code-log.md`
 - Rebased onto `main` with `GIT_EDITOR=true git rebase main`
-- Reviewed the full branch diff with `git diff main..HEAD` and the branch commits `c2c2aa7`, `93ac89f`, `aa3c236`, `45c8b4c`, and `dc04e7c`
-- Re-ran the proof surface used by this ticket:
-  - `cargo test cli::variant --lib`
-  - `cargo test cli::trial --lib`
-  - `cargo test cli::system --lib`
-  - `cargo test cli::tests::facade --lib`
-  - `cargo test cli::tests::next_commands --lib`
-  - `cargo test cli::tests::outcome --lib`
-  - `cargo test cli --lib`
-  - `cargo fmt --check`
+- Reviewed `git diff main..HEAD` and the branch commit `deb976d`
+- Inspected every changed file under `src/entities/trial/`
+- Re-ran targeted and focused proof:
+  - `cargo test trial --lib -- --list 2>/dev/null | rg ': test$' -c` => `128`
+  - `cargo test trial --lib`
+  - `cargo test --lib`
   - `cargo clippy --lib --tests -- -D warnings`
-  - `make check < /dev/null`
-  - `cargo build --release --locked`
-  - `make spec`
+  - Trial-tree doc-comment check
+  - Trial-tree line-cap check
 
 ## Critique
 
 ### Design Completeness Audit
 
-- `src/cli/mod.rs` is a thin facade. `rg -n '^(const|fn|async fn|struct|enum|type) ' src/cli/mod.rs` returns no matches, and `wc -l src/cli/mod.rs` reports `62`.
-- `src/cli/shared.rs` exists and owns the shared helpers called out in the design: CLI construction, query normalization, alias fallback, pagination helpers, and shared JSON rendering.
-- The family-local helper moves all landed in the owning dispatch modules:
-  - `src/cli/article/dispatch.rs`
-  - `src/cli/disease/dispatch.rs`
-  - `src/cli/drug/dispatch.rs`
-  - `src/cli/gene/dispatch.rs`
-  - `src/cli/pathway/dispatch.rs`
-  - `src/cli/study/dispatch.rs`
-  - `src/cli/system/dispatch.rs`
-  - `src/cli/trial/dispatch.rs`
-  - `src/cli/variant/dispatch.rs`
-- Every family listed in the design now declares `#[cfg(test)] mod tests;`, and the expected sidecar test files exist under `src/cli/*/tests.rs`.
-- `src/cli/tests/` owns the remaining cross-family CLI tests via `facade`, `outcome`, `next_commands_validity`, and `next_commands_json_property`.
-- `src/cli/test_support.rs` remains the shared CLI unit-test helper module.
-- No shipped help/spec/doc contract changed in this ticket. That matches the design intent for a structural-only move, and the fresh locked release build plus `make spec` confirmed the user-visible contract still holds.
+- Acceptance criterion 1 matched: `src/entities/trial.rs` is deleted and replaced by `src/entities/trial/`
+- Acceptance criterion 2 matched: every new Rust file under `src/entities/trial/` starts with `//!`
+- Acceptance criterion 3 matched: [src/entities/trial/mod.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/mod.rs:1) keeps the public facade types, `TRIAL_SECTION_NAMES`, and `pub use` re-exports for `get`, `search`, `search_page`, and `count_all`
+- Acceptance criterion 4 matched: shared validation lives in [src/entities/trial/search/mod.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/mod.rs:143), not `search/ctgov.rs`
+- Acceptance criterion 5 matched: shared helpers live in [src/entities/trial/test_support.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/test_support.rs:1), and `rg -n 'mod tests \\{' src/entities/trial -g '*.rs'` found no inline test blocks
+- Acceptance criterion 6 matched: the trial-tree line-cap check found no file over 700 lines
+- Acceptance criterion 7 matched: the trial test inventory still reports `128`
+- Acceptance criteria 8-9 matched: `cargo test trial --lib` and `cargo clippy --lib --tests -- -D warnings` passed
+- Unchanged docs/help/spec contract mostly matched: `git diff --name-only main..HEAD` touched only `src/entities/trial/*`, so the decomposition stayed inside the intended runtime surface
 
 Finding:
 
-- Design item "no CLI file exceeds the cap" has no ticket-scoped matching change and is not true for this repository even on `main`. The proof command in `.march/design-final.md` uses `rg --files src/cli -g '*.rs' | xargs wc -l`, but that still reports unrelated pre-existing files over 700 lines, including:
-  - `src/cli/search_all.rs` at `2829`
-  - `src/cli/health.rs` at `2513`
-  - `src/cli/benchmark/run.rs` at `1352`
-  - `src/cli/list.rs` at `1074`
-  - `src/cli/skill.rs` at `840`
-  - `src/cli/benchmark/score.rs` at `837`
-  - `src/cli/cache.rs` at `817`
-- The moved ticket surface does satisfy the cap, including `src/cli/mod.rs` (`62`), `src/cli/shared.rs` (`328`), `src/cli/variant/dispatch.rs` (`678`), `src/cli/trial/tests.rs` (`550`), and the split cross-family sidecars.
+- `spec/04-trial.md` still said the traversal-cap regression was covered in `src/entities/trial.rs` unit tests. That path was deleted by this ticket, so the executable spec note was stale after the refactor.
 
 ### Test-Design Traceability
 
-- The proof-matrix test homes all exist and match the intended ownership:
-  - Variant relocation: `src/cli/variant/tests.rs`
-  - Trial relocation: `src/cli/trial/tests.rs`
-  - System/runtime/cache relocation: `src/cli/system/tests.rs` and `src/cli/tests/facade/*.rs`
-  - Cross-family next-command and output contracts: `src/cli/tests/next_commands_validity.rs`, `src/cli/tests/next_commands_json_property/*`, and `src/cli/tests/outcome.rs`
-- The targeted proof commands all passed on this branch.
-- The tests are asserting behavior rather than only compilation. Examples:
-  - `src/cli/tests/facade/help.rs` checks hidden runtime globals and top-level help text directly.
-  - `src/cli/tests/facade/cache.rs` checks plain-text vs JSON cache behavior and CLI-only wording.
-  - `src/cli/article/tests.rs`, `src/cli/drug/tests.rs`, `src/cli/disease/tests.rs`, `src/cli/trial/tests.rs`, and `src/cli/variant/tests.rs` assert concrete JSON fields, error text, and parser/runtime guardrails for the moved helpers.
-- The existing spec files named in the proof matrix all remain the outside-in contract, and the full `make spec` run passed against a freshly built release binary.
-
-Finding:
-
-- No missing design-required test or weak moved-surface assertion was found. The traceability audit passed.
+- Proof-matrix unit tests all exist in the relocated sidecars:
+  - `normalize_nct_id_uppercases_prefix` and `get_rejects_non_nct_id_with_format_hint` in [src/entities/trial/get/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/get/tests.rs:1)
+  - `essie_escape_boolean_expression_preserves_or_operators` and `line_of_therapy_patterns_accepts_supported_values` in [src/entities/trial/search/essie/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/essie/tests.rs:1)
+  - `parse_age_years_handles_standard_formats` in [src/entities/trial/search/eligibility/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/eligibility/tests.rs:132)
+  - `ctgov_query_term_broadens_mutation_across_discovery_fields`, `build_ctgov_search_params_maps_all_shared_fields`, `age_filter_uses_native_total_semantics_across_limits`, `age_filter_total_returns_native_total_when_exhausted`, `count_all_returns_approximate_for_age_only_filters`, `count_all_returns_exact_for_no_post_filters`, and `count_all_returns_unknown_when_expensive_post_filter_hits_page_cap` in [src/entities/trial/search/ctgov/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/ctgov/tests.rs:1)
+  - `nci_search_page_prefers_grounded_disease_concept_id` in [src/entities/trial/search/nci/tests.rs](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/src/entities/trial/search/nci/tests.rs:51)
+- Proof-matrix spec scenarios all still exist as outside-in assertions in [spec/04-trial.md](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/spec/04-trial.md:1), including:
+  - `Searching by Condition`
+  - `Filtering by Status`
+  - `Filtering by Phase`
+  - `Combined Phase 1 and 2 Search`
+  - `Mutation Search`
+  - `Intervention Code Punctuation Normalization`
+  - `Zero-Result Positional Hint`
+  - `Getting Trial Details`
+  - `Eligibility Section`
+  - `Locations Section`
+  - `Age Filter Count Stability`
+  - `Age-Only Count Approximation Signal`
+  - `Fractional Age Filter`
+  - `Expensive Count Traversal Cap`
+  - `NCI Source Search`
+  - `NCI Terminated Status Search`
+  - `Trial Help Documents NCI Source Semantics`
+  - `Trial List Documents NCI Filters`
+- I did not find a design-required test missing from the relocated surface.
 
 ### Quality Review
 
-- Implementation quality: the move follows adjacent Rust module patterns, keeps helper ownership local, and does not widen visibility beyond what the sidecar tests need.
-- Duplication: no new abstraction duplicates an existing repo helper. `shared.rs` consolidates previously root-local helpers instead of creating a second implementation.
-- Security: no new untrusted input flow into file paths, shell commands, or queries was introduced. The cache/MCP local-boundary behavior remained green in both Rust tests and `spec/15-mcp-runtime.md` plus `spec/22-cache.md`.
-- Performance: this is structural movement only. I did not find a new runtime-path regression or avoidable algorithmic cost in the touched code.
-
-Mark phase complete in checkpoint state:
-
-- `Critique — documented all issues, checked spec coverage for outside-in behavior`
+- Implementation quality: the split follows the existing entity-submodule pattern used elsewhere in the repo
+- Duplication: the new `trial/test_support.rs` matches the established article/disease test-support pattern rather than inventing a new abstraction
+- Security: the refactor does not introduce new path, shell, or auth flows; moved logic still validates user inputs before backend calls
+- Performance: this is structural movement only; I did not find a new algorithmic or I/O regression in the touched surface
 
 ## Fix Plan
 
-- No implementation repair is needed in the moved CLI code. The code move, tests, and runtime/spec gates are green.
-- The only defect from this review is the stale/overbroad design proof item for the global 700-line check. That is outside ticket 185's touched surface, so the repair for this step is:
-  - document it here
-  - file a follow-up issue under `~/workspace/planning/biomcp/issues/`
-
-Mark phase complete in checkpoint state:
-
-- `Fix plan — all issues have fixes`
+- Update the stale spec note in `spec/04-trial.md` to point at the relocated CTGov trial unit tests
+- Re-scan for any remaining `src/entities/trial.rs` references after the edit
 
 ## Repair
 
-- No `src/` code changes were required during review.
-- Wrote this review log.
-- Filed `/home/ian/workspace/planning/biomcp/issues/185-cli-line-cap-proof-command-too-broad.md` for the out-of-scope proof/design mismatch.
+- Updated [spec/04-trial.md](/home/ian/workspace/worktrees/189-decompose-trial-rs-into-trial-submodule/spec/04-trial.md:75) so the traversal-cap contract note now points at `src/entities/trial/search/ctgov/tests.rs`
+- Re-scanned the repo with `rg -n 'src/entities/trial\\.rs' . -g '*.md' -g '*.rs'` and found no remaining stale references
+- No out-of-scope issue file was needed
 
 ### Post-Fix Collateral Damage Scan
 
-- No code fix was applied in this review, so there was no new branch, import, cleanup path, error message, or variable shadowing risk introduced by the review itself.
+- Dead code: not introduced; the fix was doc-only
+- Unused imports/variables: not introduced; the fix did not touch Rust code
+- Resource cleanup conflicts: not applicable; the fix did not touch cleanup paths
+- Stale error messages: not introduced; the fix updated stale documentation text only
+- Shadowed variables: not introduced; the fix did not touch code scopes
 
 ### Validation
 
-- All targeted Rust proof commands passed.
-- `cargo test cli --lib`, `cargo fmt --check`, and `cargo clippy --lib --tests -- -D warnings` passed.
-- `make check < /dev/null` passed.
-- `cargo build --release --locked` passed.
-- `make spec` passed against the freshly built release binary.
+- `cargo test trial --lib -- --list 2>/dev/null | rg ': test$' -c` => `128`
+- `cargo test trial --lib` passed
+- `cargo test --lib` passed
+- `cargo clippy --lib --tests -- -D warnings` passed
+- Trial-tree doc-comment and line-cap checks passed
+- I did not rerun the full blocking lane (`make check`, `make spec-pr`) during review; `.march/code-log.md` shows that the save-point commit already carried those proofs, and the review reran targeted plus focused validation only
 
 ### Residual Concerns
 
-- Verify should treat the global 700-line proof mismatch as a design artifact issue, not as a regression in the ticket 185 implementation.
-
-Mark phase complete in checkpoint state:
-
-- `Repair — fixes applied, wrote code-review-log.md`
+- None beyond the normal verify pass. The only defect found was the stale spec path, and that is repaired.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | stale-doc | yes | `.march/design-final.md` proves "no CLI file exceeds the cap" with `rg --files src/cli -g '*.rs' | xargs wc -l`, but that command still fails on unrelated pre-existing files on `main`; ticket 185 only repaired the moved facade/sidecar surface. |
+| 1 | stale-doc | yes | `spec/04-trial.md` claimed the traversal-cap regression was covered in deleted `src/entities/trial.rs` unit tests after the refactor moved that coverage to `src/entities/trial/search/ctgov/tests.rs`. |
