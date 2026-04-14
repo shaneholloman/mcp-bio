@@ -1,92 +1,123 @@
 ## Review Scope
 
-- Reviewed `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, `.march/ticket.md`
-- Rebased onto `main` (`GIT_EDITOR=true git rebase main`)
-- Inspected the full branch diff with `git diff main..HEAD`
-- Re-ran the changed-surface gates:
+- Read `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, and `.march/code-log.md`
+- Rebased onto `main` with `GIT_EDITOR=true git rebase main`
+- Reviewed the full branch diff with `git diff main..HEAD` and the branch commits `c2c2aa7`, `93ac89f`, `aa3c236`, `45c8b4c`, and `dc04e7c`
+- Re-ran the proof surface used by this ticket:
+  - `cargo test cli::variant --lib`
+  - `cargo test cli::trial --lib`
+  - `cargo test cli::system --lib`
+  - `cargo test cli::tests::facade --lib`
+  - `cargo test cli::tests::next_commands --lib`
+  - `cargo test cli::tests::outcome --lib`
   - `cargo test cli --lib`
-  - `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
+  - `cargo fmt --check`
+  - `cargo clippy --lib --tests -- -D warnings`
+  - `make check < /dev/null`
+  - `cargo build --release --locked`
+  - `make spec`
 
 ## Critique
 
 ### Design Completeness Audit
 
-- `design-final` acceptance criteria 1-10 were implemented in the branch diff. The runtime seam moved into `src/cli/outcome.rs`, `src/cli/mod.rs` re-exported the public seam, runtime ownership moved into the family modules, and the documented help/spec contract remained unchanged.
-- The proof-matrix owners in `.march/design-final.md:331-342` all had matching code and proof coverage in the branch diff and existing test/spec surface.
-- One design item was incomplete in the implementation that was handed to review:
-  - `.march/design-final.md:279-280` and `.march/design-final.md:290-294` require targeted smoke tests in each owning family test home before and during runtime extraction. Those direct parse-and-dispatch proofs were missing for the extracted `article`, `disease`, `pathway`, `protein`, `pgx`, `gwas`, `phenotype`, `trial`, and `system` owners.
-- Documentation and contract audit:
-  - No design item added or changed a shipped help/spec/doc contract.
-  - `.march/code-log.md:1-6` records the required execution order: tests/spec surface first, runtime extraction second, targeted proofs after each batch. That matched the intended contract-first flow.
+- `src/cli/mod.rs` is a thin facade. `rg -n '^(const|fn|async fn|struct|enum|type) ' src/cli/mod.rs` returns no matches, and `wc -l src/cli/mod.rs` reports `62`.
+- `src/cli/shared.rs` exists and owns the shared helpers called out in the design: CLI construction, query normalization, alias fallback, pagination helpers, and shared JSON rendering.
+- The family-local helper moves all landed in the owning dispatch modules:
+  - `src/cli/article/dispatch.rs`
+  - `src/cli/disease/dispatch.rs`
+  - `src/cli/drug/dispatch.rs`
+  - `src/cli/gene/dispatch.rs`
+  - `src/cli/pathway/dispatch.rs`
+  - `src/cli/study/dispatch.rs`
+  - `src/cli/system/dispatch.rs`
+  - `src/cli/trial/dispatch.rs`
+  - `src/cli/variant/dispatch.rs`
+- Every family listed in the design now declares `#[cfg(test)] mod tests;`, and the expected sidecar test files exist under `src/cli/*/tests.rs`.
+- `src/cli/tests/` owns the remaining cross-family CLI tests via `facade`, `outcome`, `next_commands_validity`, and `next_commands_json_property`.
+- `src/cli/test_support.rs` remains the shared CLI unit-test helper module.
+- No shipped help/spec/doc contract changed in this ticket. That matches the design intent for a structural-only move, and the fresh locked release build plus `make spec` confirmed the user-visible contract still holds.
+
+Finding:
+
+- Design item "no CLI file exceeds the cap" has no ticket-scoped matching change and is not true for this repository even on `main`. The proof command in `.march/design-final.md` uses `rg --files src/cli -g '*.rs' | xargs wc -l`, but that still reports unrelated pre-existing files over 700 lines, including:
+  - `src/cli/search_all.rs` at `2829`
+  - `src/cli/health.rs` at `2513`
+  - `src/cli/benchmark/run.rs` at `1352`
+  - `src/cli/list.rs` at `1074`
+  - `src/cli/skill.rs` at `840`
+  - `src/cli/benchmark/score.rs` at `837`
+  - `src/cli/cache.rs` at `817`
+- The moved ticket surface does satisfy the cap, including `src/cli/mod.rs` (`62`), `src/cli/shared.rs` (`328`), `src/cli/variant/dispatch.rs` (`678`), `src/cli/trial/tests.rs` (`550`), and the split cross-family sidecars.
 
 ### Test-Design Traceability
 
-- The proof-matrix cases in `.march/design-final.md:333-342` all had matching tests/specs in the repo and in `.march/code-log.md:30-32,77-82`.
-- The missing coverage was not in the proof matrix rows themselves; it was in the implementation-plan requirement for owner-local smoke tests after the runtime split. Without those tests, several extracted dispatch entrypoints had no direct regression proof in their own modules.
-- Review finding:
-  - Missing owner-local smoke proofs for extracted runtime families were blocking because the design explicitly required them as the outside-in guardrail for the refactor.
+- The proof-matrix test homes all exist and match the intended ownership:
+  - Variant relocation: `src/cli/variant/tests.rs`
+  - Trial relocation: `src/cli/trial/tests.rs`
+  - System/runtime/cache relocation: `src/cli/system/tests.rs` and `src/cli/tests/facade/*.rs`
+  - Cross-family next-command and output contracts: `src/cli/tests/next_commands_validity.rs`, `src/cli/tests/next_commands_json_property/*`, and `src/cli/tests/outcome.rs`
+- The targeted proof commands all passed on this branch.
+- The tests are asserting behavior rather than only compilation. Examples:
+  - `src/cli/tests/facade/help.rs` checks hidden runtime globals and top-level help text directly.
+  - `src/cli/tests/facade/cache.rs` checks plain-text vs JSON cache behavior and CLI-only wording.
+  - `src/cli/article/tests.rs`, `src/cli/drug/tests.rs`, `src/cli/disease/tests.rs`, `src/cli/trial/tests.rs`, and `src/cli/variant/tests.rs` assert concrete JSON fields, error text, and parser/runtime guardrails for the moved helpers.
+- The existing spec files named in the proof matrix all remain the outside-in contract, and the full `make spec` run passed against a freshly built release binary.
+
+Finding:
+
+- No missing design-required test or weak moved-surface assertion was found. The traceability audit passed.
 
 ### Quality Review
 
-- Implementation quality: the extraction follows adjacent Rust module conventions and keeps runtime ownership local to each family. No duplicate helper abstraction was introduced.
-- Security: no new untrusted-input path, shell, query-construction, or file-write risk was introduced by the refactor or by the review fixes.
-- Performance: the review fixes only add tests; no runtime-path cost changed.
+- Implementation quality: the move follows adjacent Rust module patterns, keeps helper ownership local, and does not widen visibility beyond what the sidecar tests need.
+- Duplication: no new abstraction duplicates an existing repo helper. `shared.rs` consolidates previously root-local helpers instead of creating a second implementation.
+- Security: no new untrusted input flow into file paths, shell commands, or queries was introduced. The cache/MCP local-boundary behavior remained green in both Rust tests and `spec/15-mcp-runtime.md` plus `spec/22-cache.md`.
+- Performance: this is structural movement only. I did not find a new runtime-path regression or avoidable algorithmic cost in the touched code.
 
 Mark phase complete in checkpoint state:
+
 - `Critique — documented all issues, checked spec coverage for outside-in behavior`
 
 ## Fix Plan
 
-- Add bounded smoke tests in each missing family test home that:
-  - parse the extracted command via `Cli::try_parse_from(...)`
-  - call the family-owned runtime entrypoint directly
-  - assert the documented fail-fast validation or pagination guardrail before any backend work
-- Keep the fixes local to the owning modules and avoid widening visibility or changing the shipped CLI contract.
+- No implementation repair is needed in the moved CLI code. The code move, tests, and runtime/spec gates are green.
+- The only defect from this review is the stale/overbroad design proof item for the global 700-line check. That is outside ticket 185's touched surface, so the repair for this step is:
+  - document it here
+  - file a follow-up issue under `~/workspace/planning/biomcp/issues/`
 
 Mark phase complete in checkpoint state:
+
 - `Fix plan — all issues have fixes`
 
 ## Repair
 
-### Fixes Applied
-
-- Added direct owner-local smoke coverage for the extracted runtime entrypoints:
-  - `src/cli/article/tests.rs:81`
-  - `src/cli/disease/mod.rs:167`
-  - `src/cli/pathway/mod.rs:191`
-  - `src/cli/protein/mod.rs:107`
-  - `src/cli/pgx/mod.rs:87`
-  - `src/cli/gwas/mod.rs:73`
-  - `src/cli/phenotype/mod.rs:49`
-  - `src/cli/trial/mod.rs:458`
-  - `src/cli/system/mod.rs:298`
-- Collateral repair during validation:
-  - Corrected the expected limit-range assertions in the new `pgx`, `gwas`, and `phenotype` tests to `1..=50`, which is the actual runtime contract enforced by those entities.
+- No `src/` code changes were required during review.
+- Wrote this review log.
+- Filed `/home/ian/workspace/planning/biomcp/issues/185-cli-line-cap-proof-command-too-broad.md` for the out-of-scope proof/design mismatch.
 
 ### Post-Fix Collateral Damage Scan
 
-- Dead code: none introduced; all new tests exercise live entrypoints.
-- Unused imports/variables: fixed import sets where the new parser-based tests required `Parser`, `Commands`, or `SearchEntity`.
-- Resource cleanup conflicts: none; no cleanup logic changed.
-- Stale error messages: corrected the three limit-range assertions to match the actual error text.
-- Shadowing: none introduced.
+- No code fix was applied in this review, so there was no new branch, import, cleanup path, error message, or variable shadowing risk introduced by the review itself.
 
 ### Validation
 
-- `cargo test cli --lib` passed.
-- `cargo test --lib && cargo clippy --lib --tests -- -D warnings` passed.
-- `cargo fmt` applied after the test additions.
+- All targeted Rust proof commands passed.
+- `cargo test cli --lib`, `cargo fmt --check`, and `cargo clippy --lib --tests -- -D warnings` passed.
+- `make check < /dev/null` passed.
+- `cargo build --release --locked` passed.
+- `make spec` passed against the freshly built release binary.
 
 ### Residual Concerns
 
-- None. No out-of-scope issues were identified that warranted a separate issue file.
+- Verify should treat the global 700-line proof mismatch as a design artifact issue, not as a regression in the ticket 185 implementation.
 
 Mark phase complete in checkpoint state:
+
 - `Repair — fixes applied, wrote code-review-log.md`
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | missing-test | no | `.march/design-final.md` required targeted owner-local smoke tests for the extracted family runtimes, but direct dispatch proofs were missing for `article`, `disease`, `pathway`, `protein`, `pgx`, `gwas`, `phenotype`, `trial`, and `system`. |
-| 2 | collateral-damage | yes | The first review-added `pgx`, `gwas`, and `phenotype` smoke tests asserted the wrong limit range (`1..=100`); validation exposed the mismatch and the assertions were corrected to the shipped `1..=50` contract. |
+| 1 | stale-doc | yes | `.march/design-final.md` proves "no CLI file exceeds the cap" with `rg --files src/cli -g '*.rs' | xargs wc -l`, but that command still fails on unrelated pre-existing files on `main`; ticket 185 only repaired the moved facade/sidecar surface. |
