@@ -10,7 +10,7 @@ pub(crate) async fn handle_get(
     let (sections, json_override) = super::super::extract_json_from_sections(&args.sections);
     let region = args.region.map(DrugRegion::from);
     let json_output = json || json_override;
-    super::super::render_drug_card_outcome(
+    render_drug_card_outcome(
         &args.name,
         &sections,
         region,
@@ -36,7 +36,7 @@ pub(crate) async fn handle_search(
         pharm_class: args.pharm_class,
         interactions: args.interactions,
     };
-    let region = super::super::resolve_drug_search_region(args.region, &filters)?;
+    let region = resolve_drug_search_region(args.region, &filters)?;
     let mut query_summary = crate::entities::drug::search_query_summary(&filters);
     if args.offset > 0 {
         query_summary = format!("{query_summary}, offset={}", args.offset);
@@ -123,7 +123,7 @@ pub(crate) async fn handle_search(
         }
         crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
             if json {
-                return super::super::drug_all_region_search_json(&query_summary, us, eu, who)
+                return drug_all_region_search_json(&query_summary, us, eu, who)
                     .map(CommandOutcome::stdout);
             }
             crate::render::markdown::drug_search_markdown_with_region(
@@ -151,7 +151,7 @@ pub(crate) async fn handle_command(
     match cmd {
         DrugCommand::External(args) => {
             let name = args.join(" ");
-            super::super::render_drug_card_outcome(
+            render_drug_card_outcome(
                 &name,
                 super::super::empty_sections(),
                 None,
@@ -262,4 +262,123 @@ pub(crate) async fn handle_command(
             Ok(CommandOutcome::stdout(text))
         }
     }
+}
+
+pub(super) const DRUG_SEARCH_EMA_STRUCTURED_FILTER_ERROR: &str = "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification.";
+
+pub(super) fn resolve_drug_search_region(
+    region_arg: Option<crate::cli::DrugRegionArg>,
+    filters: &crate::entities::drug::DrugSearchFilters,
+) -> Result<DrugRegion, crate::error::BioMcpError> {
+    match (region_arg, filters.has_structured_filters()) {
+        (None, false) => Ok(DrugRegion::All),
+        (None, true) | (Some(crate::cli::DrugRegionArg::Us), _) => Ok(DrugRegion::Us),
+        (Some(crate::cli::DrugRegionArg::Who), _) => Ok(DrugRegion::Who),
+        (Some(crate::cli::DrugRegionArg::Eu), false) => Ok(DrugRegion::Eu),
+        (Some(crate::cli::DrugRegionArg::All), false) => Ok(DrugRegion::All),
+        (Some(crate::cli::DrugRegionArg::Eu | crate::cli::DrugRegionArg::All), true) => {
+            Err(crate::error::BioMcpError::InvalidArgument(
+                DRUG_SEARCH_EMA_STRUCTURED_FILTER_ERROR.into(),
+            ))
+        }
+    }
+}
+
+pub(super) async fn render_drug_card_outcome(
+    name: &str,
+    sections: &[String],
+    region: Option<DrugRegion>,
+    raw_label: bool,
+    json_output: bool,
+    alias_suggestions_as_json: bool,
+) -> anyhow::Result<CommandOutcome> {
+    let effective_region = region.unwrap_or(DrugRegion::Us);
+    match crate::entities::drug::get_with_region(
+        name,
+        sections,
+        effective_region,
+        region.is_some(),
+        raw_label,
+    )
+    .await
+    {
+        Ok(drug) => {
+            let text = if json_output {
+                crate::render::json::to_entity_json(
+                    &drug,
+                    crate::render::markdown::drug_evidence_urls(&drug),
+                    crate::render::markdown::related_drug(&drug),
+                    crate::render::provenance::drug_section_sources(&drug),
+                )?
+            } else {
+                crate::render::markdown::drug_markdown_with_region(
+                    &drug,
+                    sections,
+                    effective_region,
+                    raw_label,
+                )?
+            };
+            Ok(CommandOutcome::stdout(text))
+        }
+        Err(err @ crate::error::BioMcpError::NotFound { .. }) => {
+            if let Some(outcome) = super::super::try_alias_fallback_outcome(
+                name,
+                crate::entities::discover::DiscoverType::Drug,
+                json_output || alias_suggestions_as_json,
+            )
+            .await?
+            {
+                Ok(outcome)
+            } else {
+                Err(err.into())
+            }
+        }
+        Err(err) => Err(err.into()),
+    }
+}
+
+#[derive(serde::Serialize)]
+pub(super) struct RegionResults<T: serde::Serialize> {
+    count: usize,
+    total: Option<usize>,
+    results: Vec<T>,
+}
+
+#[derive(serde::Serialize)]
+pub(super) struct DrugAllRegionSearchResponse<
+    T: serde::Serialize,
+    U: serde::Serialize,
+    V: serde::Serialize,
+> {
+    region: &'static str,
+    query: String,
+    us: RegionResults<T>,
+    eu: RegionResults<U>,
+    who: RegionResults<V>,
+}
+
+pub(super) fn to_region_results<T: serde::Serialize>(
+    page: crate::entities::SearchPage<T>,
+) -> RegionResults<T> {
+    RegionResults {
+        count: page.results.len(),
+        total: page.total,
+        results: page.results,
+    }
+}
+
+pub(super) fn drug_all_region_search_json(
+    query: &str,
+    us: crate::entities::SearchPage<crate::entities::drug::DrugSearchResult>,
+    eu: crate::entities::SearchPage<crate::entities::drug::EmaDrugSearchResult>,
+    who: crate::entities::SearchPage<crate::entities::drug::WhoPrequalificationSearchResult>,
+) -> anyhow::Result<String> {
+    crate::render::json::to_pretty(&DrugAllRegionSearchResponse {
+        region: crate::entities::drug::DrugRegion::All.as_str(),
+        query: query.to_string(),
+        us: to_region_results(us),
+        eu: to_region_results(eu),
+        who: to_region_results(who),
+    })
+    .map_err(Into::into)
 }

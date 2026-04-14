@@ -1,6 +1,8 @@
 use clap::{CommandFactory, Parser};
 
+use super::dispatch::{drug_all_region_search_json, resolve_drug_search_region};
 use crate::cli::{Cli, Commands, DrugCommand, DrugRegionArg, GetEntity, SearchEntity};
+use crate::entities::drug::{DrugRegion, DrugSearchFilters};
 
 #[test]
 fn get_drug_help_lists_region_flag_and_examples() {
@@ -147,5 +149,152 @@ async fn handle_search_rejects_non_us_structured_region() {
     assert!(
         err.to_string()
             .contains("EMA and all-region search currently support name/alias lookups only")
+    );
+}
+
+#[tokio::test]
+async fn get_drug_raw_rejects_non_label_sections() {
+    let cli = Cli::try_parse_from(["biomcp", "get", "drug", "pembrolizumab", "targets", "--raw"])
+        .expect("get drug --raw should parse");
+
+    let err = crate::cli::run_outcome(cli)
+        .await
+        .expect_err("targets --raw should be rejected");
+    assert!(
+        err.to_string()
+            .contains("--raw can only be used with label or all")
+    );
+}
+
+#[test]
+fn search_drug_region_defaults_to_all_for_name_only_queries() {
+    let filters = DrugSearchFilters {
+        query: Some("Keytruda".into()),
+        ..Default::default()
+    };
+
+    let region = resolve_drug_search_region(None, &filters).expect("name-only default");
+    assert_eq!(region, DrugRegion::All);
+}
+
+#[test]
+fn search_drug_region_defaults_to_us_for_structured_queries() {
+    let filters = DrugSearchFilters {
+        target: Some("EGFR".into()),
+        ..Default::default()
+    };
+
+    let region = resolve_drug_search_region(None, &filters).expect("structured default");
+    assert_eq!(region, DrugRegion::Us);
+}
+
+#[test]
+fn search_drug_region_rejects_explicit_non_us_for_structured_queries() {
+    let filters = DrugSearchFilters {
+        target: Some("EGFR".into()),
+        ..Default::default()
+    };
+
+    let err = resolve_drug_search_region(Some(crate::cli::DrugRegionArg::Eu), &filters)
+        .expect_err("explicit eu should be rejected");
+    assert!(format!("{err}").contains(
+        "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification."
+    ));
+
+    let err = resolve_drug_search_region(Some(crate::cli::DrugRegionArg::All), &filters)
+        .expect_err("explicit all should be rejected");
+    assert!(format!("{err}").contains(
+        "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification."
+    ));
+}
+
+#[test]
+fn search_drug_region_allows_explicit_who_for_structured_queries() {
+    let filters = DrugSearchFilters {
+        indication: Some("malaria".into()),
+        ..Default::default()
+    };
+
+    let region =
+        resolve_drug_search_region(Some(crate::cli::DrugRegionArg::Who), &filters).expect("who");
+    assert_eq!(region, DrugRegion::Who);
+}
+
+#[test]
+fn search_json_preserves_who_search_fields() {
+    let pagination = crate::cli::PaginationMeta::offset(0, 5, 1, Some(1));
+    let json = crate::cli::search_json(
+        vec![crate::entities::drug::WhoPrequalificationSearchResult {
+            inn: "Trastuzumab".to_string(),
+            therapeutic_area: "Oncology".to_string(),
+            dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+            applicant: "Samsung Bioepis NL B.V.".to_string(),
+            who_reference_number: "BT-ON001".to_string(),
+            listing_basis: "Prequalification - Abridged".to_string(),
+            prequalification_date: Some("2019-12-18".to_string()),
+        }],
+        pagination,
+    )
+    .expect("WHO search json");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert_eq!(value["count"], 1);
+    assert_eq!(value["results"][0]["who_reference_number"], "BT-ON001");
+    assert_eq!(
+        value["results"][0]["listing_basis"],
+        "Prequalification - Abridged"
+    );
+    assert_eq!(value["results"][0]["prequalification_date"], "2019-12-18");
+}
+
+#[test]
+fn drug_all_region_search_json_includes_who_bucket() {
+    let json = drug_all_region_search_json(
+        "trastuzumab",
+        crate::entities::SearchPage::offset(
+            vec![crate::entities::drug::DrugSearchResult {
+                name: "trastuzumab".to_string(),
+                drugbank_id: None,
+                drug_type: None,
+                mechanism: None,
+                target: Some("ERBB2".to_string()),
+            }],
+            Some(1),
+        ),
+        crate::entities::SearchPage::offset(
+            vec![crate::entities::drug::EmaDrugSearchResult {
+                name: "Herzuma".to_string(),
+                active_substance: "trastuzumab".to_string(),
+                ema_product_number: "EMEA/H/C/004123".to_string(),
+                status: "Authorised".to_string(),
+            }],
+            Some(1),
+        ),
+        crate::entities::SearchPage::offset(
+            vec![crate::entities::drug::WhoPrequalificationSearchResult {
+                inn: "Trastuzumab".to_string(),
+                therapeutic_area: "Oncology".to_string(),
+                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                applicant: "Samsung Bioepis NL B.V.".to_string(),
+                who_reference_number: "BT-ON001".to_string(),
+                listing_basis: "Prequalification - Abridged".to_string(),
+                prequalification_date: Some("2019-12-18".to_string()),
+            }],
+            Some(1),
+        ),
+    )
+    .expect("all-region drug search json");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert_eq!(value["region"], "all");
+    assert_eq!(value["who"]["count"], 1);
+    assert_eq!(value["who"]["total"], 1);
+    assert_eq!(
+        value["who"]["results"][0]["who_reference_number"],
+        "BT-ON001"
+    );
+    assert_eq!(
+        value["eu"]["results"][0]["ema_product_number"],
+        "EMEA/H/C/004123"
     );
 }

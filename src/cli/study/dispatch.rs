@@ -1,5 +1,5 @@
 use super::StudyCommand;
-use crate::cli::{ChartType, CommandOutcome};
+use crate::cli::{ChartArgs, ChartType, CommandOutcome};
 
 pub(crate) async fn handle_command(
     cmd: StudyCommand,
@@ -39,7 +39,7 @@ pub(crate) async fn handle_command(
             chart,
         } => {
             let query_type = crate::entities::study::StudyQueryType::from_flag(&query_type)?;
-            super::super::chart_json_conflict(&chart, json)?;
+            chart_json_conflict(&chart, json)?;
             if let Some(chart_type) = chart.chart {
                 crate::render::chart::validate_query_chart_type(query_type, chart_type)?;
                 let options = crate::render::chart::ChartRenderOptions::from(&chart);
@@ -146,14 +146,14 @@ pub(crate) async fn handle_command(
                 criteria.push(crate::entities::study::FilterCriterion::Deleted(gene));
             }
             for value in expression_above {
-                criteria.push(super::super::parse_expression_filter(
+                criteria.push(parse_expression_filter(
                     &value,
                     "--expression-above",
                     crate::entities::study::FilterCriterion::ExpressionAbove,
                 )?);
             }
             for value in expression_below {
-                criteria.push(super::super::parse_expression_filter(
+                criteria.push(parse_expression_filter(
                     &value,
                     "--expression-below",
                     crate::entities::study::FilterCriterion::ExpressionBelow,
@@ -190,7 +190,7 @@ pub(crate) async fn handle_command(
             chart,
         } => {
             let endpoint = crate::entities::study::SurvivalEndpoint::from_flag(&endpoint)?;
-            super::super::chart_json_conflict(&chart, json)?;
+            chart_json_conflict(&chart, json)?;
             if let Some(chart_type) = chart.chart {
                 crate::render::chart::validate_standalone_chart_type(
                     "study survival",
@@ -216,7 +216,7 @@ pub(crate) async fn handle_command(
             target,
             chart,
         } => {
-            super::super::chart_json_conflict(&chart, json)?;
+            chart_json_conflict(&chart, json)?;
             match compare_type.trim().to_ascii_lowercase().as_str() {
                 "expression" | "expr" => {
                     if let Some(chart_type) = chart.chart {
@@ -296,7 +296,7 @@ pub(crate) async fn handle_command(
             genes,
             chart,
         } => {
-            super::super::chart_json_conflict(&chart, json)?;
+            chart_json_conflict(&chart, json)?;
             let genes = genes
                 .split(',')
                 .map(str::trim)
@@ -330,4 +330,38 @@ pub(crate) async fn handle_command(
     };
 
     Ok(CommandOutcome::stdout(text))
+}
+
+pub(super) fn parse_expression_filter(
+    value: &str,
+    flag: &str,
+    make_criterion: impl FnOnce(String, f64) -> crate::entities::study::FilterCriterion,
+) -> Result<crate::entities::study::FilterCriterion, crate::error::BioMcpError> {
+    let trimmed = value.trim();
+    let invalid = || {
+        crate::error::BioMcpError::InvalidArgument(format!(
+            "Invalid value '{trimmed}' for {flag}. Expected GENE:THRESHOLD."
+        ))
+    };
+
+    let (gene, threshold) = trimmed.split_once(':').ok_or_else(invalid)?;
+    let gene = gene.trim();
+    let threshold = threshold.trim();
+    if gene.is_empty() || threshold.is_empty() {
+        return Err(invalid());
+    }
+    let threshold = threshold.parse::<f64>().map_err(|_| invalid())?;
+    Ok(make_criterion(gene.to_string(), threshold))
+}
+
+pub(super) fn chart_json_conflict(
+    chart: &ChartArgs,
+    json_output: bool,
+) -> Result<(), crate::error::BioMcpError> {
+    if json_output && chart.chart.is_some() {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "--json cannot be combined with --chart. Use standard study output for JSON, or remove --json for chart rendering.".into(),
+        ));
+    }
+    Ok(())
 }

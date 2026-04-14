@@ -52,7 +52,7 @@ pub(in crate::cli) async fn handle_search(
     let pagination =
         super::super::PaginationMeta::offset(args.offset, args.limit, results.len(), page.total);
     let text = if json {
-        super::super::disease_search_json(results, pagination, fallback_used)?
+        disease_search_json(results, pagination, fallback_used)?
     } else {
         let footer = super::super::pagination_footer_offset(&pagination);
         crate::render::markdown::disease_search_markdown_with_footer(
@@ -192,4 +192,33 @@ pub(in crate::cli) async fn handle_command(
     };
 
     Ok(CommandOutcome::stdout(text))
+}
+
+#[derive(serde::Serialize)]
+pub(super) struct DiseaseSearchMeta {
+    fallback_used: bool,
+}
+
+#[derive(serde::Serialize)]
+pub(super) struct DiseaseSearchJsonResponse<T: serde::Serialize> {
+    pagination: crate::cli::PaginationMeta,
+    count: usize,
+    results: Vec<T>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    _meta: Option<DiseaseSearchMeta>,
+}
+
+pub(super) fn disease_search_json(
+    results: Vec<crate::entities::disease::DiseaseSearchResult>,
+    pagination: crate::cli::PaginationMeta,
+    fallback_used: bool,
+) -> anyhow::Result<String> {
+    let count = results.len();
+    crate::render::json::to_pretty(&DiseaseSearchJsonResponse {
+        pagination,
+        count,
+        results,
+        _meta: fallback_used.then_some(DiseaseSearchMeta { fallback_used }),
+    })
+    .map_err(Into::into)
 }

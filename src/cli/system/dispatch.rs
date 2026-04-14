@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
+
 use super::{BatchArgs, EmaCommand, EnrichArgs, VersionArgs, WhoCommand};
 use crate::cli::CommandOutcome;
 use futures::future::try_join_all;
@@ -10,7 +13,7 @@ pub(crate) async fn handle_batch(args: BatchArgs, json: bool) -> anyhow::Result<
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .collect::<Vec<_>>();
-    let batch_sections = super::super::parse_batch_sections(args.sections.as_deref());
+    let batch_sections = parse_batch_sections(args.sections.as_deref());
 
     if parsed_ids.is_empty() {
         return Err(crate::error::BioMcpError::InvalidArgument(
@@ -410,17 +413,147 @@ pub(crate) async fn handle_enrich(args: EnrichArgs, json: bool) -> anyhow::Resul
             results: terms,
         })?
     } else {
-        super::super::enrich_markdown(&genes, &terms)
+        enrich_markdown(&genes, &terms)
     };
     Ok(CommandOutcome::stdout(text))
 }
 
 pub(crate) async fn handle_uninstall() -> anyhow::Result<CommandOutcome> {
-    Ok(CommandOutcome::stdout(super::super::uninstall_self()?))
+    Ok(CommandOutcome::stdout(uninstall_self()?))
 }
 
 pub(crate) async fn handle_version(args: VersionArgs) -> anyhow::Result<CommandOutcome> {
-    Ok(CommandOutcome::stdout(super::super::version_output(
-        args.verbose,
-    )))
+    Ok(CommandOutcome::stdout(version_output(args.verbose)))
+}
+
+pub(super) fn parse_batch_sections(value: Option<&str>) -> Vec<String> {
+    value
+        .unwrap_or_default()
+        .split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect()
+}
+
+pub(super) fn version_output(verbose: bool) -> String {
+    let cargo_version = env!("CARGO_PKG_VERSION");
+    let git_tag = option_env!("BIOMCP_BUILD_GIT_TAG");
+    let git = option_env!("BIOMCP_BUILD_GIT_SHA").unwrap_or("unknown");
+    let build = option_env!("BIOMCP_BUILD_DATE").unwrap_or("unknown");
+    let version = git_tag
+        .filter(|t| t.starts_with('v') && !t.contains('-'))
+        .map(|t| &t[1..])
+        .unwrap_or(cargo_version);
+    let base = format!("biomcp {version} (git {git}, build {build})");
+    if !verbose {
+        return base;
+    }
+
+    let executable = std::env::current_exe()
+        .map(|p| p.display().to_string())
+        .unwrap_or_else(|_| "unknown".to_string());
+    let path_hits = find_biomcp_on_path();
+    let active = std::env::current_exe()
+        .ok()
+        .as_deref()
+        .and_then(canonical_for_compare);
+    let mut out = Vec::new();
+    out.push(base);
+    out.push(format!("Executable: {executable}"));
+    out.push(format!("Build: version={version}, git={git}, date={build}"));
+    out.push("PATH:".to_string());
+    if path_hits.is_empty() {
+        out.push("- (no biomcp binaries found on PATH)".to_string());
+    } else {
+        for hit in &path_hits {
+            let canonical = canonical_for_compare(hit);
+            let marker = if active.is_some() && active == canonical {
+                " (active)"
+            } else {
+                ""
+            };
+            out.push(format!("- {}{}", hit.display(), marker));
+        }
+    }
+    if executable.contains("/.venv/") || executable.contains("\\.venv\\") {
+        out.push("Warning: active executable appears to come from a virtualenv path.".to_string());
+    }
+    if path_hits.len() > 1 {
+        out.push(format!(
+            "Warning: multiple biomcp binaries found on PATH ({}).",
+            path_hits.len()
+        ));
+    }
+    out.join("\n")
+}
+
+pub(super) fn find_biomcp_on_path() -> Vec<PathBuf> {
+    #[cfg(windows)]
+    let binary_name = "biomcp.exe";
+    #[cfg(not(windows))]
+    let binary_name = "biomcp";
+
+    let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    let Some(path_var) = std::env::var_os("PATH") else {
+        return out;
+    };
+    for dir in std::env::split_paths(&path_var) {
+        let candidate = dir.join(binary_name);
+        if !candidate.is_file() {
+            continue;
+        }
+        let canonical = canonical_for_compare(&candidate);
+        let key = canonical
+            .as_deref()
+            .unwrap_or(candidate.as_path())
+            .display()
+            .to_string();
+        if seen.insert(key) {
+            out.push(candidate);
+        }
+    }
+    out
+}
+
+pub(super) fn canonical_for_compare(path: &Path) -> Option<PathBuf> {
+    std::fs::canonicalize(path).ok()
+}
+
+pub(super) fn uninstall_self() -> Result<String, crate::error::BioMcpError> {
+    let current = std::env::current_exe()?;
+    match std::fs::remove_file(&current) {
+        Ok(()) => Ok(format!("Uninstalled biomcp from {}", current.display())),
+        Err(err) => Ok(format!(
+            "Unable to remove running binary automatically ({err}).\nRemove manually:\n  rm {}",
+            current.display()
+        )),
+    }
+}
+
+pub(super) fn enrich_markdown(
+    genes: &[String],
+    terms: &[crate::sources::gprofiler::GProfilerTerm],
+) -> String {
+    let mut out = String::new();
+    out.push_str(&format!("# Enrichment: {}\n\n", genes.join(", ")));
+    if terms.is_empty() {
+        out.push_str("No enriched terms found.\n");
+        return out;
+    }
+
+    out.push_str("| Source | ID | Name | p-value |\n");
+    out.push_str("|--------|----|------|---------|\n");
+    for row in terms {
+        let source = row.source.as_deref().unwrap_or("-");
+        let id = row.native.as_deref().unwrap_or("-");
+        let name = row.name.as_deref().unwrap_or("-");
+        let p = row
+            .p_value
+            .map(|v| format!("{v:.3e}"))
+            .unwrap_or_else(|| "-".to_string());
+        out.push_str(&format!("| {source} | {id} | {name} | {p} |\n"));
+    }
+    out
 }

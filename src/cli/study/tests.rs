@@ -1,7 +1,7 @@
 use clap::{CommandFactory, Parser};
 
 use crate::cli::study::StudyCommand;
-use crate::cli::{ChartType, Cli, Commands};
+use crate::cli::{ChartType, Cli, Commands, execute};
 
 #[test]
 fn study_list_parses_subcommand() {
@@ -430,4 +430,310 @@ async fn handle_command_rejects_invalid_expression_chart() {
     assert!(msg.contains("violin"));
     assert!(msg.contains("ridgeline"));
     assert!(msg.contains("scatter"));
+}
+
+#[test]
+fn study_survival_parses_endpoint_flag() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "study",
+        "survival",
+        "--study",
+        "brca_tcga_pan_can_atlas_2018",
+        "--gene",
+        "TP53",
+        "--endpoint",
+        "dfs",
+    ])
+    .expect("study survival should parse");
+    match cli.command {
+        Commands::Study {
+            cmd:
+                StudyCommand::Survival {
+                    study,
+                    gene,
+                    endpoint,
+                    ..
+                },
+        } => {
+            assert_eq!(study, "brca_tcga_pan_can_atlas_2018");
+            assert_eq!(gene, "TP53");
+            assert_eq!(endpoint, "dfs");
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+}
+
+#[test]
+fn study_compare_parses_type_and_target() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "study",
+        "compare",
+        "--study",
+        "brca_tcga_pan_can_atlas_2018",
+        "--gene",
+        "TP53",
+        "--type",
+        "expression",
+        "--target",
+        "ERBB2",
+    ])
+    .expect("study compare should parse");
+    match cli.command {
+        Commands::Study {
+            cmd:
+                StudyCommand::Compare {
+                    study,
+                    gene,
+                    compare_type,
+                    target,
+                    ..
+                },
+        } => {
+            assert_eq!(study, "brca_tcga_pan_can_atlas_2018");
+            assert_eq!(gene, "TP53");
+            assert_eq!(compare_type, "expression");
+            assert_eq!(target, "ERBB2");
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+}
+
+#[test]
+fn study_filter_parses_all_flags_and_repeated_values() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "study",
+        "filter",
+        "--study",
+        "brca_tcga_pan_can_atlas_2018",
+        "--mutated",
+        "TP53",
+        "--mutated",
+        "PIK3CA",
+        "--amplified",
+        "ERBB2",
+        "--deleted",
+        "PTEN",
+        "--expression-above",
+        "MYC:1.5",
+        "--expression-above",
+        "ERBB2:-0.5",
+        "--expression-below",
+        "ESR1:0.5",
+        "--cancer-type",
+        "Breast Cancer",
+        "--cancer-type",
+        "Lung Cancer",
+    ])
+    .expect("study filter should parse");
+    match cli.command {
+        Commands::Study {
+            cmd:
+                StudyCommand::Filter {
+                    study,
+                    mutated,
+                    amplified,
+                    deleted,
+                    expression_above,
+                    expression_below,
+                    cancer_type,
+                },
+        } => {
+            assert_eq!(study, "brca_tcga_pan_can_atlas_2018");
+            assert_eq!(mutated, vec!["TP53", "PIK3CA"]);
+            assert_eq!(amplified, vec!["ERBB2"]);
+            assert_eq!(deleted, vec!["PTEN"]);
+            assert_eq!(expression_above, vec!["MYC:1.5", "ERBB2:-0.5"]);
+            assert_eq!(expression_below, vec!["ESR1:0.5"]);
+            assert_eq!(cancer_type, vec!["Breast Cancer", "Lung Cancer"]);
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+}
+
+#[test]
+fn study_co_occurrence_parses_gene_list() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "study",
+        "co-occurrence",
+        "--study",
+        "brca_tcga_pan_can_atlas_2018",
+        "--genes",
+        "TP53,PIK3CA,GATA3",
+    ])
+    .expect("study co-occurrence should parse");
+    match cli.command {
+        Commands::Study {
+            cmd: StudyCommand::CoOccurrence { study, genes, .. },
+        } => {
+            assert_eq!(study, "brca_tcga_pan_can_atlas_2018");
+            assert_eq!(genes, "TP53,PIK3CA,GATA3");
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn study_co_occurrence_requires_2_to_10_genes() {
+    let err = execute(vec![
+        "biomcp".to_string(),
+        "study".to_string(),
+        "co-occurrence".to_string(),
+        "--study".to_string(),
+        "msk_impact_2017".to_string(),
+        "--genes".to_string(),
+        "TP53".to_string(),
+    ])
+    .await
+    .expect_err("study co-occurrence should validate gene count");
+    assert!(err.to_string().contains("--genes must contain 2 to 10"));
+}
+
+#[tokio::test]
+async fn study_filter_requires_at_least_one_criterion() {
+    let err = execute(vec![
+        "biomcp".to_string(),
+        "study".to_string(),
+        "filter".to_string(),
+        "--study".to_string(),
+        "brca_tcga_pan_can_atlas_2018".to_string(),
+    ])
+    .await
+    .expect_err("study filter should require criteria");
+    assert!(
+        err.to_string()
+            .contains("At least one filter criterion is required")
+    );
+}
+
+#[tokio::test]
+async fn study_filter_rejects_malformed_expression_threshold() {
+    let err = execute(vec![
+        "biomcp".to_string(),
+        "study".to_string(),
+        "filter".to_string(),
+        "--study".to_string(),
+        "brca_tcga_pan_can_atlas_2018".to_string(),
+        "--expression-above".to_string(),
+        "MYC:not-a-number".to_string(),
+    ])
+    .await
+    .expect_err("study filter should validate threshold format");
+    assert!(err.to_string().contains("--expression-above"));
+    assert!(err.to_string().contains("GENE:THRESHOLD"));
+}
+
+#[tokio::test]
+async fn study_survival_rejects_unknown_endpoint() {
+    let err = execute(vec![
+        "biomcp".to_string(),
+        "study".to_string(),
+        "survival".to_string(),
+        "--study".to_string(),
+        "msk_impact_2017".to_string(),
+        "--gene".to_string(),
+        "TP53".to_string(),
+        "--endpoint".to_string(),
+        "foo".to_string(),
+    ])
+    .await
+    .expect_err("study survival should validate endpoint");
+    assert!(err.to_string().contains("Unknown survival endpoint"));
+}
+
+#[tokio::test]
+async fn study_compare_rejects_unknown_type() {
+    let err = execute(vec![
+        "biomcp".to_string(),
+        "study".to_string(),
+        "compare".to_string(),
+        "--study".to_string(),
+        "msk_impact_2017".to_string(),
+        "--gene".to_string(),
+        "TP53".to_string(),
+        "--type".to_string(),
+        "foo".to_string(),
+        "--target".to_string(),
+        "ERBB2".to_string(),
+    ])
+    .await
+    .expect_err("study compare should validate type");
+    assert!(err.to_string().contains("Unknown comparison type"));
+}
+
+#[tokio::test]
+async fn study_co_occurrence_invalid_chart_lists_heatmap() {
+    let err = execute(vec![
+        "biomcp".to_string(),
+        "study".to_string(),
+        "co-occurrence".to_string(),
+        "--study".to_string(),
+        "msk_impact_2017".to_string(),
+        "--genes".to_string(),
+        "TP53,KRAS".to_string(),
+        "--chart".to_string(),
+        "violin".to_string(),
+        "--terminal".to_string(),
+    ])
+    .await
+    .expect_err("study co-occurrence should reject violin");
+    let msg = err.to_string();
+    assert!(msg.contains("study co-occurrence"));
+    assert!(msg.contains("bar"));
+    assert!(msg.contains("pie"));
+    assert!(msg.contains("heatmap"));
+}
+
+#[tokio::test]
+async fn study_query_mutations_invalid_chart_lists_waterfall() {
+    let err = execute(vec![
+        "biomcp".to_string(),
+        "study".to_string(),
+        "query".to_string(),
+        "--study".to_string(),
+        "msk_impact_2017".to_string(),
+        "--gene".to_string(),
+        "TP53".to_string(),
+        "--type".to_string(),
+        "mutations".to_string(),
+        "--chart".to_string(),
+        "violin".to_string(),
+        "--terminal".to_string(),
+    ])
+    .await
+    .expect_err("study query mutations should reject violin");
+    let msg = err.to_string();
+    assert!(msg.contains("study query --type mutations"));
+    assert!(msg.contains("bar"));
+    assert!(msg.contains("pie"));
+    assert!(msg.contains("waterfall"));
+}
+
+#[tokio::test]
+async fn study_compare_mutations_invalid_chart_lists_stacked_bar() {
+    let err = execute(vec![
+        "biomcp".to_string(),
+        "study".to_string(),
+        "compare".to_string(),
+        "--study".to_string(),
+        "msk_impact_2017".to_string(),
+        "--gene".to_string(),
+        "TP53".to_string(),
+        "--type".to_string(),
+        "mutations".to_string(),
+        "--target".to_string(),
+        "KRAS".to_string(),
+        "--chart".to_string(),
+        "violin".to_string(),
+        "--terminal".to_string(),
+    ])
+    .await
+    .expect_err("mutation compare should reject violin");
+    let msg = err.to_string();
+    assert!(msg.contains("study compare --type mutations"));
+    assert!(msg.contains("bar"));
+    assert!(msg.contains("stacked-bar"));
 }
