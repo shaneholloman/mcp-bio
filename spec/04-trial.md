@@ -47,6 +47,7 @@ t50="$("$(git rev-parse --show-toplevel)/target/release/biomcp" search trial -c 
 test -n "$t10"
 test "$t10" = "$t20"
 test "$t20" = "$t50"
+echo "Total: $t10" | mustmatch '/^Total: [0-9]+$/'
 ```
 
 ## Age-Only Count Approximation Signal
