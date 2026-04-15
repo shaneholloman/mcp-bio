@@ -199,12 +199,23 @@ pub(crate) fn related_device_event(event: &DeviceEvent) -> Vec<String> {
     related::related_device_event(event)
 }
 
+pub(crate) fn disease_next_commands(
+    disease: &Disease,
+    requested_sections: &[String],
+) -> Vec<String> {
+    sections::disease_next_commands(disease, requested_sections)
+}
+
 pub(crate) fn related_disease(disease: &Disease) -> Vec<String> {
     related::related_disease(disease)
 }
 
 pub(crate) fn related_drug(drug: &Drug) -> Vec<String> {
     related::related_drug(drug)
+}
+
+pub(crate) fn gene_next_commands(gene: &Gene, requested_sections: &[String]) -> Vec<String> {
+    sections::gene_next_commands(gene, requested_sections)
 }
 
 pub(crate) fn related_gene(gene: &Gene) -> Vec<String> {

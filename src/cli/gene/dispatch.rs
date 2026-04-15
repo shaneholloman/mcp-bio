@@ -251,7 +251,7 @@ pub(super) async fn render_gene_card_outcome(
                 crate::render::json::to_entity_json(
                     &gene,
                     crate::render::markdown::gene_evidence_urls(&gene),
-                    crate::render::markdown::related_gene(&gene),
+                    crate::render::markdown::gene_next_commands(&gene, sections),
                     crate::render::provenance::gene_section_sources(&gene),
                 )?
             } else {

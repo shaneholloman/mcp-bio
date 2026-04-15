@@ -12,7 +12,7 @@ pub(in crate::cli) async fn handle_get(
         crate::render::json::to_entity_json(
             &disease,
             crate::render::markdown::disease_evidence_urls(&disease),
-            crate::render::markdown::related_disease(&disease),
+            crate::render::markdown::disease_next_commands(&disease, &sections),
             crate::render::provenance::disease_section_sources(&disease),
         )?
     } else {

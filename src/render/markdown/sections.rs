@@ -2,6 +2,38 @@
 
 use super::*;
 
+const DISEASE_DISCOVERY_SECTION_NAMES: &[&str] = &[
+    "genes",
+    "pathways",
+    "phenotypes",
+    "survival",
+    "funding",
+    "variants",
+    "models",
+    "prevalence",
+    "civic",
+    "disgenet",
+    "all",
+];
+
+const GENE_DISCOVERY_SECTION_NAMES: &[&str] = &[
+    "pathways",
+    "ontology",
+    "diseases",
+    "funding",
+    "protein",
+    "go",
+    "interactions",
+    "civic",
+    "expression",
+    "hpa",
+    "druggability",
+    "clingen",
+    "constraint",
+    "disgenet",
+    "all",
+];
+
 pub(super) fn has_all_section(requested: &[String]) -> bool {
     requested
         .iter()
@@ -38,21 +70,20 @@ pub(super) fn section_header(entity_label: &str, requested: &[String]) -> String
 }
 
 pub(super) fn format_sections_block(entity: &str, id: &str, sections: Vec<String>) -> String {
-    if sections.is_empty() {
-        return String::new();
-    }
-    let id_q = quote_arg(id);
-    if id_q.is_empty() {
+    let commands = visible_section_commands(entity, id, &sections);
+    if commands.is_empty() {
         return String::new();
     }
     let mut out = String::from("More:");
-    for section in sections.iter().take(3) {
+    for command in commands {
+        let section = command.rsplit(' ').next().unwrap_or_default();
         let _ = write!(
             out,
-            "\n  biomcp get {entity} {id_q} {section}   - {}",
+            "\n  {command}   - {}",
             section_description(entity, section)
         );
     }
+    let id_q = quote_arg(id);
     let _ = write!(out, "\nAll:\n  biomcp get {entity} {id_q} all");
     out
 }
@@ -82,6 +113,7 @@ pub(super) fn section_description(entity: &str, section: &str) -> &'static str {
         ("disease", "variants") => "disease-associated variants",
         ("disease", "models") => "model-organism evidence",
         ("disease", "prevalence") => "prevalence and epidemiology context",
+        ("disease", "survival") => "SEER Explorer cancer survival rates",
         ("disease", "funding") => "NIH Reporter grant support",
         ("disease", "civic") => "CIViC disease-context evidence",
         ("disease", "disgenet") => "DisGeNET scored disease-gene links",
@@ -126,13 +158,57 @@ pub(super) fn sections_for(requested: &[String], available: &[&str]) -> Vec<Stri
         .collect()
 }
 
+fn visible_section_limit(entity: &str) -> usize {
+    match entity {
+        "disease" => 5,
+        "gene" => 4,
+        _ => 3,
+    }
+}
+
+fn visible_section_commands(entity: &str, id: &str, sections: &[String]) -> Vec<String> {
+    let id_q = quote_arg(id);
+    if id_q.is_empty() {
+        return Vec::new();
+    }
+
+    sections
+        .iter()
+        .take(visible_section_limit(entity))
+        .map(|section| format!("biomcp get {entity} {id_q} {section}"))
+        .collect()
+}
+
+pub(crate) fn disease_next_commands(
+    disease: &Disease,
+    requested_sections: &[String],
+) -> Vec<String> {
+    let mut out = visible_section_commands(
+        "disease",
+        &disease.id,
+        &sections_disease(disease, requested_sections),
+    );
+    out.extend(related_disease(disease));
+    dedupe_markdown_commands(out)
+}
+
+pub(crate) fn gene_next_commands(gene: &Gene, requested_sections: &[String]) -> Vec<String> {
+    let mut out = visible_section_commands(
+        "gene",
+        &gene.symbol,
+        &sections_gene(gene, requested_sections),
+    );
+    out.extend(related_gene(gene));
+    dedupe_markdown_commands(out)
+}
+
 pub(super) fn sections_gene(gene: &Gene, requested: &[String]) -> Vec<String> {
     let symbol = gene.symbol.trim();
     if symbol.is_empty() {
         return Vec::new();
     }
 
-    sections_for(requested, crate::entities::gene::GENE_SECTION_NAMES)
+    sections_for(requested, GENE_DISCOVERY_SECTION_NAMES)
 }
 
 pub(super) fn sections_variant(variant: &Variant, requested: &[String]) -> Vec<String> {
@@ -197,7 +273,7 @@ pub(super) fn sections_disease(disease: &Disease, requested: &[String]) -> Vec<S
     if key.is_empty() {
         return Vec::new();
     }
-    sections_for(requested, crate::entities::disease::DISEASE_SECTION_NAMES)
+    sections_for(requested, DISEASE_DISCOVERY_SECTION_NAMES)
 }
 
 pub(super) fn sections_pgx(pgx: &Pgx, requested: &[String]) -> Vec<String> {
