@@ -44,8 +44,8 @@ omitted.
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" --json search all -g BRAF --counts-only --limit 1)"
-echo "$out" | mustmatch like '"entity":'
-echo "$out" | mustmatch like '"count":'
+echo "$out" | mustmatch like '"entity": "'
+echo "$out" | mustmatch like '"searches_dispatched":'
 echo "$out" | jq -e '.sections | length > 0 and all(.[]; (.entity | type == "string") and (.label | type == "string") and (.count | type == "number") and (has("results") | not) and (has("links") | not) and (has("total") | not))' > /dev/null
 ```
 
