@@ -28,10 +28,10 @@ New to BioMCP? Try:
 | Tissue expression or localization of a gene product | `get gene <symbol> hpa` or `get gene <symbol> protein` |
 | Drug safety or adverse events | `drug adverse-events <name>` or `get drug <name> safety` |
 | Review literature that synthesizes a topic | `search article -k "<query>" --type review --limit 5` |
-| Turn a literature question into article filters | `biomcp list article` (known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`) |
+| Turn a literature question into article filters | `biomcp list article` (known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`; recognizable entity tokens can trigger typed follow-up suggestions on result pages) |
 | Follow one article into related evidence | `article citations <id> --limit 5` or `article recommendations <id> --limit 5` |
 | I know the entities but not the next pivot | `search all --gene BRAF --disease melanoma` |
-| I only have free text and need routing | `discover "<free text>"` |
+| I only have free text and need routing | `discover "<free text>"` (unambiguous gene-plus-topic queries can also surface `search article -g <symbol> -k <topic> --limit 5`) |
 | The same sections for several entities | `batch <entity> <id1,id2,...> --sections <s1,s2,...>` |
 | Enriched pathways or functions for a gene set | `enrich <GENE1,GENE2,...>` |
 
@@ -75,6 +75,7 @@ New to BioMCP? Try:
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
 - `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N>`
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
+- Article result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>` follow-ups when keyword text contains a recognizable entity token
 - `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification; explicit `eu|all` with structured filters errors)
 
 ## Helpers

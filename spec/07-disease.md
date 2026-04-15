@@ -12,6 +12,7 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 | Funding stays opt-in | `get disease "chronic myeloid leukemia" all` | Confirms `all` still excludes NIH Reporter funding |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
+| Disease phenotypes keep gene pivot | `get disease "Duchenne muscular dystrophy" phenotypes` | Confirms phenotype-only output still keeps the existing disease-to-genes pivot |
 | Disease to trials | `disease trials melanoma` | Confirms trial helper path |
 | Disease to articles | `disease articles melanoma` | Confirms literature helper path |
 | Disease to drugs | `disease drugs melanoma` | Confirms treatment helper path |
@@ -445,6 +446,20 @@ bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json get disease MONDO:0008222 phenotypes)"
 echo "$out" | jq -e '.key_features | length >= 3' > /dev/null
 echo "$out" | jq -e '.key_features | any(test("periodic muscle paralysis"; "i"))' > /dev/null
+```
+
+## Disease Phenotypes Keep Gene Pivot
+
+Phenotype-only disease output should keep the existing `More:` block that
+starts with the disease-to-genes pivot instead of adding a duplicate phenotype-
+specific tip.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "Duchenne muscular dystrophy" phenotypes)"
+printf '%s\n' "$out" | grep -q '^More:$'
+echo "$out" | mustmatch '/biomcp get disease .+ genes/'
+echo "$out" | mustmatch not like "Tip: For genotype-phenotype correlations:"
 ```
 
 ## Exact Disease Ranking
