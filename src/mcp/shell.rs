@@ -155,8 +155,9 @@ impl ServerHandler for BioMcpServer {
         )
         .with_server_info(Implementation::new("biomcp", env!("CARGO_PKG_VERSION")))
         .with_instructions(
-            "BioMCP provides biomedical data from 15 sources (PubMed, ClinicalTrials.gov, \
-             ClinVar, gnomAD, OncoKB, Reactome, UniProt, PharmGKB, OpenFDA, and more). \
+            "BioMCP provides biomedical data from leading public biomedical data sources \
+             (PubMed, ClinicalTrials.gov, ClinVar, gnomAD, OncoKB, Reactome, UniProt, \
+             PharmGKB, OpenFDA, and more). \
              Use the `biomcp` tool to run BioMCP CLI commands. \
              Start with `biomcp list` for a command reference, \
              or `biomcp skill` for guided investigation workflows."

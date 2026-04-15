@@ -4,7 +4,7 @@ use std::process::Command;
 
 const MCP_SHELL_INTRO: &str = "BioMCP is a read-only biomedical MCP tool for \
 search, detail retrieval, discovery, enrichment, and study analytics across \
-15 biomedical sources.\n\n";
+leading public biomedical data sources.\n\n";
 const BLOCKED_MCP_DESCRIPTION_TERMS: &[&str] = &[
     "`skill install`",
     "`ema sync`",

@@ -1,93 +1,121 @@
-# Code Review Log — Ticket 210
+# Code Review Log — Ticket 211
 
 Date: 2026-04-15
-Ticket: `210-add-study-cli-help-descriptions-and-regression-test`
+Ticket: `211-fix-documentation-drift-readme-sources-changelog-who-root-help-count`
 
 ## Phase 1 — Critique
 
 ### Design Completeness Audit
 
-I traced the `design-final.md` help-contract items to the actual change set:
+I read `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`,
+`.march/ticket.md`, and the full `git diff main..HEAD`, then traced every
+design-final contract surface to the actual change set.
 
-| Design area | Matching code/spec change | Result |
-|---|---|---|
-| All nine `study` subcommands get one-line help text | `src/cli/study/mod.rs` variant doc comments; `src/cli/study/tests/help.rs::study_help_lists_descriptions_for_all_subcommands`; `spec/13-study.md::Study Help` | Implemented |
-| Key flag help for `query`, `filter`, `compare`, `co-occurrence`, `survival`, `download`, `top-mutated`, and `cohort` | `src/cli/study/mod.rs` field doc comments; targeted assertions in `src/cli/study/tests/help.rs`; executable assertions in `spec/13-study.md` | Implemented |
-| Canonical values and accepted aliases for `query --type`, `compare --type`, and `survival --endpoint` | `src/cli/study/mod.rs`; `src/cli/study/tests/help.rs`; `spec/13-study.md::Study Help` | Implemented |
-| New Rust regression module and module wire-up | `src/cli/study/tests/help.rs`; `src/cli/study/tests.rs` | Implemented |
-| Executable spec coverage for the changed help contract | `spec/13-study.md` intro row + `## Study Help` section | Implemented |
-| Contract-first execution order | `.march/code-log.md` step order: spec, then Rust tests, then runtime help strings | Implemented |
+| Design / acceptance item | Matching code change | Matching proof surface | Result |
+|---|---|---|---|
+| Landing-page source tables updated in both `README.md` and `docs/index.md` | `README.md`, `docs/index.md` | `tests/test_public_search_all_docs_contract.py` | Implemented |
+| 0.8.20 changelog backfills WHO Prequalification + `who sync` | `CHANGELOG.md` | `tests/test_docs_changelog_refresh.py` | Implemented |
+| Skill routing guidance mentions `biomcp ema sync` / `biomcp who sync` | `skills/SKILL.md` | `src/cli/skill.rs`, `tests/test_public_skill_docs_contract.py` | Implemented |
+| Root CLI help removes the stale source count | `src/cli/types.rs` | `src/cli/tests/facade/help.rs`, `spec/15-mcp-runtime.md` | Implemented |
+| MCP description / initialize instructions remove the stale source count | `build.rs`, `src/mcp/shell.rs` | `tests/test_mcp_contract.py`, `tests/test_mcp_http_transport.py` | Implemented |
+| Contract-first execution order | `.march/code-log.md` step order and proof notes | N/A | Confirmed |
 
-External docs already matched the intended wording closely enough that no extra doc edits were required:
+No design-final item was missing a corresponding code change.
 
-- `docs/reference/quick-reference.md`
-- `docs/user-guide/cli-reference.md`
-
-I also verified `.march/code-log.md` updated spec/tests before the runtime clap help strings.
+One design-draft detail differed from design-final: the draft placed the
+`ema sync` / `who sync` note under `## Output and evidence rules`, while the
+final design moved it to `## Routing rules`. I treated `design-final.md` as
+the controlling contract and verified the implementation against that version.
 
 ### Test-Design Traceability
 
-The original implementation had the runtime help text, but several proofs were weaker than the acceptance contract:
+Every proof-matrix entry had a corresponding test/spec owner:
 
-1. `study_survival_help_describes_endpoint_values_and_aliases` and the study spec did not assert the `--study` help text required by acceptance criterion 4.
-2. `study_compare_help_describes_type_and_target` and the study spec did not fully pin the `--study` / `--gene` help contract required by acceptance criterion 5.
-3. `study_co_occurrence_help_describes_gene_list_contract` and the study spec did not assert the `--study` help text required by acceptance criterion 6.
-4. `study_download_help_describes_list_and_study_id` and the study spec only checked generic wording, not the positional `study_id` contract / `required unless --list` requirement from acceptance criterion 7.
+| Proof-matrix contract | Test / spec found | Result |
+|---|---|---|
+| Landing-page source tables reflect the expansion batch | `tests/test_public_search_all_docs_contract.py::test_entities_and_sources_tables_list_current_source_expansion_rows` | Present |
+| 0.8.20 changelog mentions WHO Prequalification and `who sync` | `tests/test_docs_changelog_refresh.py::test_changelog_has_backfilled_releases_and_release_header` | Present but too weak |
+| Embedded skill routing mentions `ema sync` / `who sync` | `src/cli/skill.rs::embedded_skill_overview_is_routing_first_and_points_to_worked_examples`, `tests/test_public_skill_docs_contract.py::test_public_skill_docs_match_current_cli_contract` | Present |
+| Root CLI help is count-free | `src/cli/tests/facade/help.rs::top_level_help_uses_count_free_source_phrase`, `spec/15-mcp-runtime.md::Top-Level Discovery` | Present |
+| MCP initialize instructions and tool description are count-free | `tests/test_mcp_contract.py`, `tests/test_mcp_http_transport.py` | Present but initialize assertion was too weak |
+| Full Rust library gate stays green | `cargo test --lib` | Present |
+
+Blocking proof-quality defects found during traceability:
+
+1. The changelog test only asserted within the full `0.8.20` release block, so
+   the WHO backfill could have been moved out of `### New features` and still
+   passed.
+2. The MCP initialize tests only banned `"15 sources"`, so a regression to
+   `"15 biomedical sources"` would not have been caught.
 
 ### Other Quality Checks
 
-- Security: no untrusted-input flow changes, shell execution changes, path handling changes, or data exposure regressions were introduced by this ticket.
-- Duplication: no unnecessary helper or abstraction was introduced; the new help tests follow the existing `Cli::command()` / `write_long_help()` pattern used elsewhere in the repo.
-- Implementation quality: the runtime help text in `src/cli/study/mod.rs` matched the design copy and left parsing/dispatch behavior unchanged, which was correct for the ticket scope.
+- Security: no untrusted-input flow, shell execution path, auth boundary, or
+  data-exposure behavior changed. The ticket remained doc/help/test-only.
+- Duplication: no new production abstraction was introduced. I also checked for
+  an existing subsection helper before adding one to the changelog test; none
+  existed in this file.
+- Implementation quality: the production changes follow adjacent conventions and
+  stay within the documented ticket scope. I found no runtime logic defect, no
+  stale production docs, and no missing contract owner beyond the weak proofs
+  above.
 
 ## Phase 2 — Fix Plan
 
-1. Tighten the Rust help regression tests so the changed acceptance criteria are explicitly asserted on stable help phrases.
-2. Tighten `spec/13-study.md` so the executable outside-in spec covers the same missing study/help/positional requirement details.
-3. Re-run targeted study proofs and the repo's focused validation profile.
+1. Tighten the changelog contract test so the WHO backfill is required inside
+   `## 0.8.20` -> `### New features`, not merely somewhere in the release block.
+2. Tighten both MCP initialize proof surfaces so they reject both stale count
+   phrasings.
+3. Re-run the targeted docs/MCP proofs and the repo's `focused` validation
+   profile after the review edits.
 
 ## Phase 3 — Repair
 
 ### Fixes Applied
 
-- Updated `src/cli/study/tests/help.rs` to assert:
-  - `cBioPortal study ID` in `survival`, `compare`, and `co-occurrence` help
-  - `[STUDY_ID]` plus `required unless --list` in `download` help
-- Updated `spec/13-study.md` to assert:
-  - `--study <STUDY>` and `cBioPortal study ID` for `survival`
-  - `--study <STUDY>`, `--gene <GENE>`, `cBioPortal study ID`, and the gene description for `compare`
-  - `--study <STUDY>` and `cBioPortal study ID` for `co-occurrence`
-  - `required unless --list` for `download`
+- Updated `tests/test_docs_changelog_refresh.py`:
+  - added `_markdown_subsection_block(...)`
+  - scoped the WHO assertions to the `### New features` subsection
+  - required `WHO Prequalification`, `--region who`, and `who sync` there
+- Updated `tests/test_mcp_contract.py`:
+  - initialize instructions must not contain `"15 biomedical sources"`
+- Updated `tests/test_mcp_http_transport.py`:
+  - Streamable HTTP initialize instructions must not contain
+    `"15 biomedical sources"`
 
 ### Post-Fix Collateral Damage Scan
 
-After each edit I checked the touched surface for:
+After each edit I checked the touched files for:
 
-- dead code or orphaned imports: none introduced
-- resource cleanup conflicts: not applicable; no cleanup logic changed
-- stale error/help text: none introduced; assertions were aligned to the actual stable clap rendering
+- dead code or orphaned helpers/imports: none introduced
 - shadowed variables: none introduced
+- stale assertion text: none introduced; the new wording matches the intended
+  contracts
+- resource-cleanup conflicts: not applicable; no resource-management code was
+  touched
 
 ### Validation
 
 Passed:
 
-- `cargo test --lib cli::study::tests::help -- --nocapture`
-- `cargo test --lib short_help_hides_chart_flags_but_long_help_shows_them`
-- `XDG_CACHE_HOME="$PWD/.cache" uv run --extra dev sh -c 'PATH="$PWD/target/release:$PATH" RUST_LOG=error pytest spec/13-study.md --mustmatch-lang bash --mustmatch-timeout 60 -v'`
-- `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
+- `cargo test --lib`
+- `cargo build --release --locked`
+- `uv run --no-project --with pytest --with pytest-asyncio --with mcp pytest tests/test_public_search_all_docs_contract.py tests/test_docs_changelog_refresh.py tests/test_public_skill_docs_contract.py tests/test_mcp_contract.py tests/test_mcp_http_transport.py -q --mcp-cmd "./target/release/biomcp serve"`
+- `PATH="$(pwd)/target/release:$PATH" uv run --no-project --with pytest --with mustmatch pytest spec/15-mcp-runtime.md --mustmatch-lang bash --mustmatch-timeout 60 -k "Top and Level and Discovery" -v`
+- focused profile equivalent from `.march/validation-profiles.toml`:
+  - `cargo test --lib`
+  - `cargo clippy --lib --tests -- -D warnings`
 
 No out-of-scope follow-up issue was filed.
 
 ## Residual Concerns
 
-None. The remaining help assertions now rely on stable phrases/tokens rather than clap spacing, so the proof surface is materially stronger without being brittle.
+None in the reviewed ticket scope. The only issues found were proof weaknesses,
+and those are now repaired.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | weak-assertion | no | Survival help proofs omitted the `--study` help contract required by the design acceptance criteria |
-| 2 | weak-assertion | no | Compare help proofs omitted part of the `--study` / `--gene` help contract required by the design acceptance criteria |
-| 3 | weak-assertion | no | Co-occurrence help proofs omitted the `--study` help contract required by the design acceptance criteria |
-| 4 | weak-assertion | no | Download help proofs omitted the positional `study_id` requirement text (`required unless --list`) required by the design acceptance criteria |
+| 1 | weak-assertion | no | `tests/test_docs_changelog_refresh.py` only checked the full `0.8.20` block, so the WHO backfill could move out of `### New features` without failing proof |
+| 2 | weak-assertion | no | The MCP initialize tests only rejected `"15 sources"`, so a regression to `"15 biomedical sources"` would have escaped detection |

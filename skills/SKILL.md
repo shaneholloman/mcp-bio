@@ -14,6 +14,7 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Symptom or phenotype questions: `biomcp get disease <name_or_id> phenotypes`
 - Gene-function questions: `biomcp get gene <symbol>`
 - Drug-safety questions: `biomcp drug adverse-events <name>` and `biomcp get drug <name> safety`
+- EMA and WHO regional drug data are local runtime files that auto-download on first use; run `biomcp ema sync` or `biomcp who sync` to force-refresh before freshness-sensitive regional drug lookups.
 - Review-literature questions: `biomcp search article -k "<query>" --type review --limit 5`
 - After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls. Batch up to 20 shortlisted papers in one call.
 - Use `biomcp batch gene <GENE1,GENE2,...>` when you need the same basic card fields, chromosome, or sectioned output for multiple genes.

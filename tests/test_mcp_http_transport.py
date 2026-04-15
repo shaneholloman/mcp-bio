@@ -136,6 +136,9 @@ async def test_streamable_http_supports_initialize_list_tools_and_tool_call(
             initialize_result = await session.initialize()
             assert initialize_result.capabilities.tools is not None
             assert initialize_result.instructions is not None
+            assert "leading public biomedical data sources" in initialize_result.instructions
+            assert "15 sources" not in initialize_result.instructions
+            assert "15 biomedical sources" not in initialize_result.instructions
             assert "biomcp skill list" not in initialize_result.instructions
             assert "biomcp skill" in initialize_result.instructions
 

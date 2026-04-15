@@ -32,6 +32,10 @@
 - Added NIH Reporter funding sections so `get gene <symbol> funding` and
   `get disease <name_or_id> funding` can show top grants from the most
   recent 5 NIH fiscal years. (174)
+- Added WHO Prequalification as the shipped local-data drug source for
+  `get drug <name> regulatory --region who` and `search drug --region who`;
+  run `who sync` to force-refresh the local CSV before freshness-sensitive
+  regional drug lookups.
 
 ### Improvements
 
