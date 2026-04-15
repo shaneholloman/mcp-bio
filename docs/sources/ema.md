@@ -14,7 +14,7 @@ In BioMCP, EMA is a local-runtime source for drug name/alias lookups and region-
 | Command | What BioMCP gets from this source | Integration note |
 |---|---|---|
 | `search drug <name> --region eu` | EU drug matches by name or alias | Uses the local EMA batch for region-aware name/alias lookups; `ema` is accepted as an input alias for `eu` |
-| `search drug <name> --region all` | Combined U.S. and EU name/alias search | Merges EMA local results with U.S. data |
+| `search drug <name> --region all` | Combined U.S., EU, and WHO name/alias search | Merges EMA local results with U.S. and WHO data |
 | `get drug <name> regulatory --region eu|all` | EU or combined regulatory context | EMA-backed regional section; omitting `--region` on this direct regulatory path checks U.S. and EU data |
 | `get drug <name> safety --region eu|all` | EU or combined safety context | EMA-backed regional section |
 | `get drug <name> shortage --region eu|all` | EU or combined shortage context | EMA-backed regional section |
