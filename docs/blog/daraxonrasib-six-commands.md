@@ -44,7 +44,7 @@ See also:
 
 The drug card has three essentials: a **DrugBank ID** (DB22308), one **brand-name alias** (RMC-6236), and a **FAERS status** (unavailable — more on that in Q5). Everything else is secondary, but the `See also` block matters more than it looks: it's BioMCP's way of saying *"here are the four logical next calls,"* and those four suggestions happen to line up exactly with the remaining cards in this walkthrough. An agent can chain straight from `get drug` through the rest of the investigation without any additional routing logic.
 
-The alias matters immediately. Revolution Medicines publishes daraxonrasib under its generic name, but sponsors filing combination trials typically file under the code name **RMC-6236**. That naming drift means a single intervention-name query isn't enough to retrieve every trial the drug is part of — a gotcha that surfaces hard in Q3.
+The alias matters immediately. Revolution Medicines publishes daraxonrasib under its generic name, but sponsors filing combination trials typically file under the code name **RMC-6236**. That naming drift used to force a manual two-query workflow. BioMCP now auto-expands the alias during ClinicalTrials.gov intervention search and exposes which label matched each returned trial, which is exactly what Q3 relies on.
 
 ---
 
@@ -116,15 +116,15 @@ Query: intervention=RMC-6236
 
 **11 trials. 4 sponsors. 3 cross-sponsor combinations.** That's a remarkably deep pipeline for a drug whose discovery paper was published last year. The pivotal NCT06625320 — RASolute 302, the trial that made yesterday's headlines — is on the list and correctly flagged `ACTIVE_NOT_RECRUITING`, which makes sense because the topline data was just read out.
 
-A naming gotcha surfaces here, and it connects back to the press release. Revolution's press release states that daraxonrasib "is currently being evaluated in **four** global Phase 3 registrational trials, including three in PDAC and one in NSCLC." But only **three** Phase 3 programs appear in the output above (NCT06625320 RASolute 302 in 2L PDAC, NCT07252232 in resected PDAC, and NCT06881784 RASolve 301 in NSCLC). Where's the fourth?
-
-Run the other query:
+Today the one-command version is even better:
 
 ```bash
 $ biomcp search trial -i daraxonrasib
 ```
 
-...and you get **8 trials** — a different set, with the missing fourth Phase 3 front and center: **NCT07491445**, a Phase 3 evaluating daraxonrasib in first-line metastatic PDAC. The reason it appears under the generic-name query but not the code-name query is that Revolution filed this trial's intervention as "daraxonrasib" alone, without the "RMC-6236" alias. Sponsors other than Revolution (Tango, Amgen, BMS) go the opposite way — they file combinations under the code name. The union of both queries yields **14 unique trials** after dedup and all four Phase 3 programs the press release calls out: RASolute 302 (2L PDAC pivotal), NCT07491445 (1L PDAC), NCT07252232 (resected PDAC), and RASolve 301 (NSCLC). BioMCP already knows the alias (Q1 returned it as a DrugBank brand name) but doesn't yet auto-expand during trial search — a product gap I filed as a ticket while writing this article.
+BioMCP now expands `daraxonrasib` to `RMC-6236` on the ClinicalTrials.gov path, unions the results, and shows the winning sponsor label in a `Matched Intervention` column. That means the same command now surfaces the combination trials filed under the code name and the Revolution-led trials filed under the generic name. If you want the historical literal-only behavior for comparison, `--no-alias-expand` recreates it.
+
+That distinction matters because Revolution's press release states that daraxonrasib "is currently being evaluated in **four** global Phase 3 registrational trials, including three in PDAC and one in NSCLC." The generic-name-only and code-name-only views each miss part of that picture. The alias-unioned search closes the gap and makes the sponsor-labeling drift explicit instead of silently dropping the alternate-label evidence.
 
 The three non-Revolution sponsors are the most interesting part of the list:
 

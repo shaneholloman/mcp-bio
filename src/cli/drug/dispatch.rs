@@ -193,10 +193,12 @@ pub(crate) async fn handle_command(
                     limit,
                     offset,
                     source,
+                    no_alias_expand,
                 } => {
                     let trial_source = crate::entities::trial::TrialSource::from_flag(&source)?;
                     let filters = crate::entities::trial::TrialSearchFilters {
                         intervention: Some(name.clone()),
+                        no_alias_expand,
                         source: trial_source,
                         ..Default::default()
                     };
@@ -223,11 +225,14 @@ pub(crate) async fn handle_command(
                             results,
                         })?
                     } else {
-                        let query = if offset > 0 {
-                            format!("intervention={name}, offset={offset}")
-                        } else {
-                            format!("intervention={name}")
-                        };
+                        let mut query_parts = vec![format!("intervention={name}")];
+                        if no_alias_expand {
+                            query_parts.push("alias_expand=off".to_string());
+                        }
+                        if offset > 0 {
+                            query_parts.push(format!("offset={offset}"));
+                        }
+                        let query = query_parts.join(", ");
                         crate::render::markdown::trial_search_markdown(&query, &results, total)?
                     }
                 }

@@ -9,6 +9,7 @@ mod targets;
 #[cfg(test)]
 mod test_support;
 
+pub(crate) use self::get::resolve_trial_aliases;
 pub use self::get::{get, get_with_region};
 pub use self::query::search_query_summary;
 #[allow(unused_imports)]

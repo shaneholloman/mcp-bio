@@ -27,6 +27,47 @@ fn trial_search_markdown_with_footer_omits_zero_result_nickname_hint_without_fla
 }
 
 #[test]
+fn trial_search_markdown_shows_matched_intervention_column_when_present() {
+    let markdown = trial_search_markdown(
+        "intervention=daraxonrasib",
+        &[crate::entities::trial::TrialSearchResult {
+            nct_id: "NCT00000001".to_string(),
+            title: "Example daraxonrasib trial".to_string(),
+            status: "Recruiting".to_string(),
+            phase: Some("Phase 1".to_string()),
+            conditions: vec!["pancreatic cancer".to_string()],
+            sponsor: Some("Example Sponsor".to_string()),
+            matched_intervention_label: Some("RMC-6236".to_string()),
+        }],
+        Some(1),
+    )
+    .expect("markdown");
+
+    assert!(markdown.contains("Matched Intervention"));
+    assert!(markdown.contains("RMC-6236"));
+}
+
+#[test]
+fn trial_search_markdown_omits_matched_intervention_column_without_labels() {
+    let markdown = trial_search_markdown(
+        "intervention=daraxonrasib",
+        &[crate::entities::trial::TrialSearchResult {
+            nct_id: "NCT00000001".to_string(),
+            title: "Example daraxonrasib trial".to_string(),
+            status: "Recruiting".to_string(),
+            phase: Some("Phase 1".to_string()),
+            conditions: vec!["pancreatic cancer".to_string()],
+            sponsor: Some("Example Sponsor".to_string()),
+            matched_intervention_label: None,
+        }],
+        Some(1),
+    )
+    .expect("markdown");
+
+    assert!(!markdown.contains("Matched Intervention"));
+}
+
+#[test]
 fn trial_markdown_includes_source_labeled_sections() {
     let trial = crate::entities::trial::Trial {
         nct_id: "NCT06668103".to_string(),

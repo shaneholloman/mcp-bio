@@ -70,6 +70,17 @@ fn trial_help_documents_nci_source_specific_notes() {
 }
 
 #[test]
+fn trial_help_documents_alias_expansion_controls() {
+    let help = render_trial_search_long_help();
+
+    assert!(help.contains("auto-expands known aliases"));
+    assert!(help.contains("--no-alias-expand"));
+    assert!(help.contains("matched_intervention_label"));
+    assert!(help.contains("Matched Intervention"));
+    assert!(help.contains("use `--offset` or `--no-alias-expand`"));
+}
+
+#[test]
 fn trial_age_help_explains_age_only_count_is_approximate() {
     let help = render_trial_search_long_help();
 
@@ -89,6 +100,7 @@ fn search_trial_parses_positional_query() {
                         condition,
                         positional_query,
                         intervention,
+                        no_alias_expand,
                         facility,
                         phase,
                         study_type,
@@ -125,6 +137,7 @@ fn search_trial_parses_positional_query() {
     assert!(condition.is_empty());
     assert_eq!(positional_query.as_deref(), Some("melanoma"));
     assert!(intervention.is_empty());
+    assert!(!no_alias_expand);
     assert!(facility.is_empty());
     assert_eq!(phase, None);
     assert_eq!(study_type, None);
@@ -150,6 +163,38 @@ fn search_trial_parses_positional_query() {
     assert_eq!(offset, 0);
     assert_eq!(next_page, None);
     assert_eq!(limit, 2);
+}
+
+#[test]
+fn search_trial_parses_no_alias_expand() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "trial",
+        "--intervention",
+        "daraxonrasib",
+        "--no-alias-expand",
+    ])
+    .expect("search trial should parse");
+
+    let Cli {
+        command:
+            Commands::Search {
+                entity:
+                    SearchEntity::Trial(crate::cli::trial::TrialSearchArgs {
+                        intervention,
+                        no_alias_expand,
+                        ..
+                    }),
+            },
+        ..
+    } = cli
+    else {
+        panic!("expected search trial command");
+    };
+
+    assert_eq!(intervention, vec!["daraxonrasib".to_string()]);
+    assert!(no_alias_expand);
 }
 
 #[test]
@@ -521,6 +566,22 @@ fn trial_search_query_summary_includes_nci_source_marker() {
 
     assert!(summary.contains("condition=melanoma"));
     assert!(summary.contains("source=nci"));
+}
+
+#[test]
+fn trial_search_query_summary_includes_alias_opt_out_marker() {
+    let summary = trial_search_query_summary(
+        &crate::entities::trial::TrialSearchFilters {
+            intervention: Some("daraxonrasib".into()),
+            no_alias_expand: true,
+            ..Default::default()
+        },
+        0,
+        None,
+    );
+
+    assert!(summary.contains("intervention=daraxonrasib"));
+    assert!(summary.contains("alias_expand=off"));
 }
 
 #[test]

@@ -1,5 +1,9 @@
 //! Drug retrieval workflows, section parsing, and region validation.
 
+use std::collections::{HashMap, HashSet};
+use std::sync::{Mutex, OnceLock};
+
+use regex::Regex;
 use tracing::warn;
 
 use crate::error::BioMcpError;
@@ -185,6 +189,113 @@ async fn add_approvals_section(drug: &mut Drug) {
 struct ResolvedDrugBase {
     drug: Drug,
     label_response: Option<serde_json::Value>,
+}
+
+static TRIAL_ALIAS_CACHE: OnceLock<Mutex<HashMap<String, Vec<String>>>> = OnceLock::new();
+
+fn trial_alias_cache() -> &'static Mutex<HashMap<String, Vec<String>>> {
+    TRIAL_ALIAS_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn trial_alias_cache_key(name: &str) -> String {
+    name.trim().to_ascii_lowercase()
+}
+
+fn looks_like_trial_formulation_variant(alias: &str) -> bool {
+    static STRENGTH_RE: OnceLock<Regex> = OnceLock::new();
+    static FORMULATION_RE: OnceLock<Regex> = OnceLock::new();
+
+    let strength_re = STRENGTH_RE.get_or_init(|| {
+        Regex::new(r"(?i)\b\d+(?:\.\d+)?\s*(?:mg|g|mcg|μg|ug|ml)(?:\s*/\s*(?:ml|l))?\b")
+            .expect("valid strength regex")
+    });
+    if strength_re.is_match(alias) {
+        return true;
+    }
+
+    FORMULATION_RE
+        .get_or_init(|| {
+            Regex::new(r"(?i)\b(tablet|capsule|injection|solution|suspension)\b")
+                .expect("valid formulation regex")
+        })
+        .is_match(alias)
+}
+
+fn push_trial_alias(
+    aliases: &mut Vec<String>,
+    seen: &mut HashSet<String>,
+    alias: &str,
+    filter_formulation_variant: bool,
+) {
+    let alias = alias.trim();
+    if alias.is_empty() {
+        return;
+    }
+    if filter_formulation_variant && looks_like_trial_formulation_variant(alias) {
+        return;
+    }
+
+    let key = alias.to_ascii_lowercase();
+    if seen.insert(key) {
+        aliases.push(alias.to_string());
+    }
+}
+
+fn build_trial_aliases(
+    requested_name: &str,
+    canonical_name: Option<&str>,
+    brand_names: &[String],
+) -> Vec<String> {
+    let mut aliases = Vec::new();
+    let mut seen = HashSet::new();
+
+    push_trial_alias(&mut aliases, &mut seen, requested_name, false);
+    if let Some(canonical_name) = canonical_name {
+        push_trial_alias(&mut aliases, &mut seen, canonical_name, false);
+    }
+    for brand_name in brand_names {
+        push_trial_alias(&mut aliases, &mut seen, brand_name, true);
+    }
+
+    aliases
+}
+
+pub(crate) async fn resolve_trial_aliases(name: &str) -> Result<Vec<String>, BioMcpError> {
+    let requested_name = name.trim();
+    if requested_name.is_empty() {
+        return Err(BioMcpError::InvalidArgument(
+            "Trial intervention alias expansion requires a non-empty drug name".into(),
+        ));
+    }
+
+    let cache_key = trial_alias_cache_key(requested_name);
+    if let Ok(cache) = trial_alias_cache().lock()
+        && let Some(cached) = cache.get(&cache_key)
+    {
+        return Ok(cached.clone());
+    }
+
+    let aliases = match resolve_drug_base(requested_name, false, false).await {
+        Ok(resolved) => build_trial_aliases(
+            requested_name,
+            Some(&resolved.drug.name),
+            &resolved.drug.brand_names,
+        ),
+        Err(BioMcpError::NotFound { .. }) => vec![requested_name.to_string()],
+        Err(err) => {
+            warn!(
+                drug = %requested_name,
+                "Drug alias lookup unavailable for trial search: {err}"
+            );
+            vec![requested_name.to_string()]
+        }
+    };
+
+    if let Ok(mut cache) = trial_alias_cache().lock() {
+        cache.insert(cache_key, aliases.clone());
+    }
+
+    Ok(aliases)
 }
 
 async fn resolve_drug_base(

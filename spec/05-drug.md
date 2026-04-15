@@ -367,12 +367,32 @@ echo "$out" | mustmatch not like "No known drug-drug interactions found."
 
 ## Drug to Trials
 
-Intervention-based helper search should return the shared trial table layout. We also assert query echo to confirm the pivot preserved the drug token.
+Drug trial helper on the default CTGov path should inherit intervention alias
+expansion, surface the matched alias, and keep the strict-literal opt-out
+visible in the query echo.
+
+```bash timeout=180
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" drug trials daraxonrasib --limit 10)"
+strict="$("$bin" drug trials daraxonrasib --no-alias-expand --limit 10)"
+echo "$out" | mustmatch like "intervention=daraxonrasib"
+echo "$out" | mustmatch like "Matched Intervention"
+echo "$out" | mustmatch like "RMC-6236"
+echo "$strict" | mustmatch like "alias_expand=off"
+```
+
+## Drug Trials Help Documents Alias Expansion
+
+The helper help text should document that the CTGov path inherits trial alias
+expansion and exposes the strict-literal opt-out flag.
 
 ```bash
-out="$(biomcp drug trials pembrolizumab --limit 3)"
-echo "$out" | mustmatch like "|NCT ID|Title|Status|Phase|Conditions|"
-echo "$out" | mustmatch like "intervention=pembrolizumab"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" drug trials --help)"
+echo "$out" | mustmatch like "--no-alias-expand"
+echo "$out" | mustmatch like "inherits intervention alias expansion"
+echo "$out" | mustmatch like "Matched Intervention"
+echo "$out" | mustmatch like "matched_intervention_label"
 ```
 
 ## Drug to Adverse Events

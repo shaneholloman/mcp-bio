@@ -22,6 +22,20 @@ Add intervention and phase filters:
 biomcp search trial -c melanoma -i pembrolizumab --phase 3 --limit 5
 ```
 
+On the default CTGov path, `--intervention` auto-expands known drug aliases
+from the shared drug identity surface, unions the matching trials, and shows
+which alias matched each returned row.
+
+```bash
+biomcp search trial -i daraxonrasib --limit 20
+biomcp search trial -i daraxonrasib --no-alias-expand --limit 20
+```
+
+When an alternate alias wins, markdown adds a `Matched Intervention` column and
+JSON adds `matched_intervention_label`. `--no-alias-expand` forces strict
+literal matching. If alias expansion fans out to multiple CTGov queries,
+`--next-page` is unavailable; use `--offset` or `--no-alias-expand`.
+
 Add biomarker filters:
 
 ```bash
@@ -151,6 +165,7 @@ This keeps repeated lookups responsive.
 
 ```bash
 biomcp --json get trial NCT02576665
+biomcp --json search trial -i daraxonrasib --limit 20
 ```
 
 ## Practical tips

@@ -10,9 +10,17 @@ pub struct TrialSearchArgs {
     /// Optional positional query alias for -c/--condition
     #[arg(value_name = "QUERY")]
     pub positional_query: Option<String>,
-    /// Filter by intervention/drug
+    /// Filter by intervention/drug.
+    ///
+    /// On `--source ctgov`, BioMCP auto-expands known aliases from the shared
+    /// drug identity surface, unions the matching trials, and records which
+    /// alias matched each returned row. Use `--no-alias-expand` to force
+    /// literal matching.
     #[arg(short = 'i', long, num_args = 1..)]
     pub intervention: Vec<String>,
+    /// Disable ClinicalTrials.gov intervention alias expansion and force literal matching.
+    #[arg(long = "no-alias-expand")]
+    pub no_alias_expand: bool,
     /// Filter by institution/facility name (text-search mode by default).
     ///
     /// Without `--lat`/`--lon`/`--distance`, this uses cheap CTGov
@@ -91,7 +99,10 @@ pub struct TrialSearchArgs {
     /// Only return trials with posted results (default: off, include trials with/without posted results)
     #[arg(long = "has-results", visible_alias = "results-available")]
     pub results_available: bool,
-    /// Return only total count (no result table)
+    /// Return only total count (no result table).
+    ///
+    /// Alias-expanded `--intervention` counts may take longer and can return
+    /// `unknown` when the merged traversal cap is reached.
     #[arg(long = "count-only")]
     pub count_only: bool,
     /// Trial data source (ctgov or nci)
@@ -100,7 +111,10 @@ pub struct TrialSearchArgs {
     /// Skip the first N results (pagination)
     #[arg(long, default_value = "0")]
     pub offset: usize,
-    /// Cursor token from a previous response
+    /// Cursor token from a previous response.
+    ///
+    /// When CTGov intervention alias expansion fans out to multiple queries,
+    /// `--next-page` is unavailable; use `--offset` or `--no-alias-expand`.
     #[arg(long = "next-page")]
     pub next_page: Option<String>,
     /// Maximum results (default: 10)

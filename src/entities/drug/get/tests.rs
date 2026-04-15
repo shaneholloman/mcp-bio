@@ -88,3 +88,38 @@ fn validate_raw_usage_allows_raw_with_label_section() {
     let flags = parse_sections(&["label".to_string()]).unwrap();
     validate_raw_usage(&flags, true).expect("raw label should be valid");
 }
+
+#[test]
+fn trial_alias_filter_rejects_formulation_strength_variants() {
+    assert!(looks_like_trial_formulation_variant("Keytruda 25 mg/mL"));
+    assert!(looks_like_trial_formulation_variant(
+        "Pembrolizumab injection"
+    ));
+}
+
+#[test]
+fn trial_alias_filter_keeps_sponsor_codes() {
+    assert!(!looks_like_trial_formulation_variant("RMC-6236"));
+}
+
+#[test]
+fn build_trial_aliases_preserves_requested_canonical_and_brand_order() {
+    let aliases = build_trial_aliases(
+        "RMC-6236",
+        Some("daraxonrasib"),
+        &[
+            "RMC-6236".to_string(),
+            "Keytruda 25 mg/mL".to_string(),
+            "RMC-6236".to_string(),
+            "daraxonrasib".to_string(),
+            "RMC-9805".to_string(),
+        ],
+    );
+
+    assert_eq!(aliases, vec!["RMC-6236", "daraxonrasib", "RMC-9805"]);
+}
+
+#[test]
+fn trial_alias_cache_key_normalizes_requested_name() {
+    assert_eq!(trial_alias_cache_key(" Daraxonrasib "), "daraxonrasib");
+}
