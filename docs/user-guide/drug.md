@@ -15,6 +15,7 @@ Regional or comparison search:
 
 ```bash
 biomcp search drug Keytruda --region eu --limit 5
+biomcp search drug "influenza vaccine" --region ema --limit 5
 biomcp search drug trastuzumab --region who --limit 5
 biomcp search drug Keytruda --region all --limit 5
 ```
@@ -39,6 +40,7 @@ If you omit `--region` while using structured filters such as `--target` or
 `--indication`, BioMCP stays on the U.S. MyChem path. Explicit `--region who`
 filters structured U.S. hits through WHO Prequalification. Explicit `--region
 eu` or `--region all` with structured filters still errors.
+`ema` is accepted as an input alias for the canonical `eu` region value.
 
 ## Get a drug record
 
@@ -76,11 +78,16 @@ Regional regulatory and safety sections:
 ```bash
 biomcp get drug trastuzumab regulatory --region who
 biomcp get drug Keytruda regulatory --region eu
+biomcp get drug Dupixent regulatory --region ema
 biomcp get drug trastuzumab regulatory --region all
 biomcp get drug Keytruda regulatory --region all
 biomcp get drug Ozempic safety --region eu
 biomcp get drug Ozempic shortage --region eu
 ```
+
+If you omit `--region` on `get drug <name> regulatory`, BioMCP checks U.S. and
+EU regulatory data. Other no-flag `get drug` shapes keep the default U.S. path
+unless you pass `--region` explicitly.
 
 Targets and indications sections:
 
@@ -116,7 +123,8 @@ EU regional commands read EMA local data from `BIOMCP_EMA_DIR` first, then the
 platform data directory (`~/.local/share/biomcp/ema` on typical Linux systems).
 On first use, BioMCP auto-downloads the six EMA human-medicines JSON feeds
 into that root and refreshes stale files after 72 hours. Use `biomcp ema sync`
-to force a refresh at any time.
+to force a refresh at any time. `--region ema` is accepted anywhere BioMCP
+documents the canonical `eu` region value.
 
 Manual preseed still works. If you need an offline or pre-populated root, place
 these files in the target directory:
@@ -216,7 +224,8 @@ biomcp --json get drug pembrolizumab
 - Start with base `get` before requesting heavy sections.
 - Use target filters to narrow crowded drug classes.
 - Use `regulatory` with `--region who|all` when you need WHO Prequalification context.
-- Use `regulatory`, `safety`, or `shortage` with `--region eu|all` when you need EMA context.
+- Use `regulatory`, `safety`, or `shortage` with `--region eu|all` when you need EMA context; `ema` is accepted as an input alias for `eu`.
+- Omit `--region` on `get drug <name> regulatory` when you want the default combined U.S. and EU regulatory view.
 - Pair drug lookups with trial filters for protocol matching workflows.
 
 ## Related guides

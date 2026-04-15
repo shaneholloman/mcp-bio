@@ -274,6 +274,11 @@ fn drug_markdown_with_region_all_keeps_us_and_eu_blocks_separate() {
             ema_product_number: "EMEA/H/C/003820".to_string(),
             status: "Authorised".to_string(),
             holder: Some("Merck Sharp & Dohme B.V.".to_string()),
+            marketing_authorisation_date: Some("17/07/2015".to_string()),
+            therapeutic_indication: Some(
+                "Keytruda as monotherapy is indicated for the treatment of adults and adolescents aged 12 years and older with advanced (unresectable or metastatic) melanoma."
+                    .to_string(),
+            ),
             recent_activity: vec![crate::entities::drug::EmaRegulatoryActivity {
                 first_published_date: "27/02/2026".to_string(),
                 last_updated_date: None,
@@ -311,6 +316,13 @@ fn drug_markdown_with_region_all_keeps_us_and_eu_blocks_separate() {
     assert!(markdown.contains("## Shortage (EU - EMA)"));
     assert!(markdown.contains("BLA125514"));
     assert!(markdown.contains("EMEA/H/C/003820"));
+    assert!(
+        markdown
+            .contains("| Medicine | Active Substance | EMA Number | Status | Auth Date | Holder |")
+    );
+    assert!(markdown.contains("17/07/2015"));
+    assert!(markdown.contains("### Authorized indications"));
+    assert!(markdown.contains("advanced (unresectable or metastatic) melanoma"));
     assert!(markdown.contains("Immune-mediated adverse reactions."));
     assert!(markdown.contains("Resolved"));
 }
@@ -456,6 +468,8 @@ fn drug_markdown_with_region_eu_all_suppresses_us_header_facts() {
             ema_product_number: "EMEA/H/C/003820".to_string(),
             status: "Authorised".to_string(),
             holder: None,
+            marketing_authorisation_date: None,
+            therapeutic_indication: None,
             recent_activity: Vec::new(),
         }]),
         ema_safety: Some(EmaSafetyInfo {

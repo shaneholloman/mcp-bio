@@ -61,6 +61,8 @@ New to BioMCP? Try:
 - `get drug <name> regulatory [--region <us|eu|who|all>]` - region-aware U.S./EU/WHO regulatory context
 - `get drug <name> safety|shortage [--region <us|eu|all>]` - region-aware U.S./EU drug safety and shortage context
 - `get drug <name> all [--region <us|eu|who|all>]` - include all sections plus region-aware regulatory context
+- `ema` is accepted as an input alias for the canonical `eu` drug region value
+- Omitting `--region` on `get drug <name> regulatory` is the one implicit combined-region get path; other no-flag `get drug` shapes stay on the default U.S. path
 - `get trial <nct_id> locations --offset <N> --limit <N>` - page trial locations
 - `enrich <GENE1,GENE2,...>` - gene-set enrichment via g:Profiler
 - `batch <entity> <id1,id2,...>` - parallel get operations
@@ -76,7 +78,7 @@ New to BioMCP? Try:
 - `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N>`
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
 - Article result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>` follow-ups when keyword text contains a recognizable entity token
-- `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification; explicit `eu|all` with structured filters errors)
+- `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification; explicit `eu|all` with structured filters errors; `ema` is accepted as an alias for `eu`)
 
 ## Helpers
 

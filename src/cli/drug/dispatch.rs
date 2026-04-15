@@ -319,6 +319,21 @@ pub(super) fn resolve_drug_search_region(
     }
 }
 
+pub(super) fn resolve_drug_get_region(
+    sections: &[String],
+    region: Option<DrugRegion>,
+) -> DrugRegion {
+    if let Some(region) = region {
+        return region;
+    }
+
+    if matches!(sections, [section] if section.eq_ignore_ascii_case("regulatory")) {
+        DrugRegion::All
+    } else {
+        DrugRegion::Us
+    }
+}
+
 pub(super) async fn render_drug_card_outcome(
     name: &str,
     sections: &[String],
@@ -327,7 +342,7 @@ pub(super) async fn render_drug_card_outcome(
     json_output: bool,
     alias_suggestions_as_json: bool,
 ) -> anyhow::Result<CommandOutcome> {
-    let effective_region = region.unwrap_or(DrugRegion::Us);
+    let effective_region = resolve_drug_get_region(sections, region);
     match crate::entities::drug::get_with_region(
         name,
         sections,

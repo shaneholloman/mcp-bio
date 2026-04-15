@@ -189,7 +189,7 @@
     "terms_url": "https://www.ema.europa.eu/en/about-us/about-website/legal-notice",
     "key_url": null,
     "reviewed_on": "2026-03-24",
-    "notes": "BioMCP auto-downloads the EMA human-medicines JSON batch into BIOMCP_EMA_DIR or the default data directory on first use, refreshes stale files, and supports explicit refresh via biomcp ema sync."
+    "notes": "BioMCP auto-downloads the EMA human-medicines JSON batch into BIOMCP_EMA_DIR or the default data directory on first use, refreshes stale files, supports explicit refresh via biomcp ema sync, accepts `ema` as an input alias for the canonical `eu` region value, and treats omitted `--region` on `get drug <name> regulatory` as the combined U.S.+EU direct-regulatory path."
   },
   {
     "id": "who-prequalification",

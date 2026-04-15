@@ -406,9 +406,13 @@ EXAMPLES:
   biomcp get drug pembrolizumab label --raw
   biomcp get drug trastuzumab regulatory --region who
   biomcp get drug Keytruda regulatory --region eu
+  biomcp get drug Dupixent regulatory --region ema
   biomcp get drug Ozempic safety --region eu
   biomcp get drug pembrolizumab targets
   biomcp get drug pembrolizumab approvals
+
+Note: `--region ema` is accepted as an alias for the canonical `eu` region value.
+If you omit `--region` on `biomcp get drug <name> regulatory`, BioMCP checks U.S. and EU regulatory data.
 
 See also: biomcp list drug")]
     Drug(drug::DrugGetArgs),

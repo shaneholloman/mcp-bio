@@ -181,6 +181,7 @@ biomcp search variant -g BRAF --hgvsp V600E --limit 5 --offset 0
 biomcp search drug -q "kinase inhibitor" --limit 5 --offset 0
 biomcp search drug Keytruda --limit 5
 biomcp search drug Keytruda --region eu --limit 5
+biomcp search drug "influenza vaccine" --region ema --limit 5
 biomcp search drug trastuzumab --region who --limit 5
 biomcp search drug --indication malaria --region who --limit 5
 ```
@@ -279,6 +280,7 @@ biomcp get variant rs7903146 gwas
 biomcp get drug pembrolizumab
 biomcp get drug trastuzumab regulatory --region who
 biomcp get drug Keytruda regulatory --region eu
+biomcp get drug Dupixent regulatory --region ema
 biomcp get drug Ozempic safety --region eu
 biomcp get drug carboplatin shortage
 ```
@@ -288,9 +290,13 @@ WHO data. If you omit `--region` while using structured filters such as
 `--target` or `--indication`, BioMCP stays on the U.S. MyChem path. Explicit
 `--region who` filters structured U.S. hits through WHO Prequalification.
 Explicit `--region eu` or `--region all` with structured filters still errors.
+`ema` is accepted as an input alias for the canonical `eu` region value.
 For `get drug`, use `--region` only with `regulatory`, `safety`, `shortage`, or
 `all`; WHO currently supports `regulatory` and `all`, while `approvals` stays
 U.S.-only.
+If you omit `--region` on `get drug <name> regulatory`, BioMCP checks U.S. and
+EU regulatory data. Other no-flag `get drug` shapes stay on the default U.S.
+path unless you pass `--region`.
 
 ### Pathway
 
