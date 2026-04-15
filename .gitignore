@@ -11,6 +11,7 @@ site/
 .climb/
 .climb-test-vault/
 .march/
+!.march/validation-profiles.toml
 .claude/
 .agents/
 paper/generated/
