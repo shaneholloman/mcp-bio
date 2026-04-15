@@ -97,7 +97,9 @@ BioMCP prefers entity-section integration over ad hoc command sprawl.
   contract, where default `get` output stays concise and optional sections
   expand on demand.
 - Keep the user-facing command grammar aligned with code changes by updating
-  `src/cli/mod.rs`, `src/cli/list.rs`, and
+  `src/cli/commands.rs` for top-level command families and `after_help`
+  examples, the owning entity CLI module such as `src/cli/drug/mod.rs` for
+  entity-specific clap/help text, `src/cli/list.rs`, and
   `docs/user-guide/cli-reference.md` when the public CLI surface changes.
 - The progressive-disclosure behavior described in
   `architecture/functional/overview.md` and `docs/concepts/progressive-disclosure.md`
@@ -125,7 +127,10 @@ contract is:
 
 Implementers must keep every alignment surface in sync:
 
-- clap definitions and `after_help` examples in `src/cli/mod.rs`
+- top-level command families and `after_help` examples in
+  `src/cli/commands.rs`
+- entity-specific clap argument/help text in the owning CLI module, such as
+  `src/cli/drug/mod.rs`
 - concise list/help output in `src/cli/list.rs` and `src/cli/list_reference.md`
 - user-facing docs in `docs/user-guide/cli-reference.md` and the owning entity
   guide such as `docs/user-guide/drug.md`
@@ -174,7 +179,9 @@ This contract defines three user-visible states:
 
 Downstream surfaces must stay in lockstep with the capability model:
 
-- `src/cli/mod.rs` help text must describe source-specific limits accurately
+- top-level command/help examples in `src/cli/commands.rs` and entity-specific
+  option/help text in the owning CLI module, such as `src/cli/drug/mod.rs`,
+  must describe source-specific limits accurately
 - `src/cli/list.rs` must not advertise unsupported sections as universally
   valid
 - renderer follow-on commands and section suggestions must derive from the
@@ -367,7 +374,9 @@ surfaces when applicable:
 - `src/sources/mod.rs`
 - the owning entity module(s) in `src/entities/`
 - rendering surfaces in `src/render/`
-- `src/cli/mod.rs`
+- the owning CLI modules in `src/cli/`, including `src/cli/commands.rs` for
+  top-level grammar/help and entity modules such as `src/cli/drug/mod.rs` for
+  modifier-specific text
 - `src/cli/list.rs`
 - `docs/user-guide/cli-reference.md` when the public command surface changes
 - `docs/reference/data-sources.md`
