@@ -226,7 +226,12 @@ pub(crate) async fn handle_command(
                         })?
                     } else {
                         let mut query_parts = vec![format!("intervention={name}")];
-                        if no_alias_expand {
+                        if no_alias_expand
+                            && matches!(
+                                trial_source,
+                                crate::entities::trial::TrialSource::ClinicalTrialsGov
+                            )
+                        {
                             query_parts.push("alias_expand=off".to_string());
                         }
                         if offset > 0 {

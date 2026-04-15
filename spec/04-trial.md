@@ -165,17 +165,23 @@ evidence via `matched_intervention_label`.
 
 ```bash timeout=180
 bin="${BIOMCP_BIN:-biomcp}"
-expanded_json="$("$bin" --json search trial --intervention daraxonrasib --limit 10)"
-literal_json="$("$bin" --json search trial --intervention daraxonrasib --no-alias-expand --limit 10)"
-echo "$expanded_json" | jq -e '.results | any(.matched_intervention_label == "RMC-6236")' > /dev/null
-expanded_ids="$(printf '%s\n' "$expanded_json" | jq -r '.results[].nct_id' | sort -u)"
-literal_ids="$(printf '%s\n' "$literal_json" | jq -r '.results[].nct_id' | sort -u)"
+expanded_total="$("$bin" --json search trial --count-only --intervention daraxonrasib | jq -er '.total')"
+literal_total="$("$bin" --json search trial --count-only --intervention daraxonrasib --no-alias-expand | jq -er '.total')"
+test "$expanded_total" -ge "$literal_total"
+expanded_rows="$(mktemp)"
+literal_rows="$(mktemp)"
+offset=0; while [ "$offset" -lt "$expanded_total" ]; do "$bin" --json search trial --intervention daraxonrasib --limit 50 --offset "$offset" | jq -c '.results[]' >> "$expanded_rows"; offset=$((offset + 50)); done
+offset=0; while [ "$offset" -lt "$literal_total" ]; do "$bin" --json search trial --intervention daraxonrasib --no-alias-expand --limit 50 --offset "$offset" | jq -c '.results[]' >> "$literal_rows"; offset=$((offset + 50)); done
+jq -s -e 'any(.[]; .matched_intervention_label == "RMC-6236")' "$expanded_rows" > /dev/null
+expanded_ids="$(jq -r '.nct_id' "$expanded_rows" | sort -u)"
+literal_ids="$(jq -r '.nct_id' "$literal_rows" | sort -u)"
 while IFS= read -r id; do
   test -z "$id" && continue
   printf '%s\n' "$expanded_ids" | grep -qx "$id"
 done <<EOF
 $literal_ids
 EOF
+rm -f "$expanded_rows" "$literal_rows"
 ```
 
 ## Drug Alias Symmetry

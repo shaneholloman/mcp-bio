@@ -178,6 +178,37 @@ fn drug_trials_parse_no_alias_expand() {
 }
 
 #[tokio::test]
+async fn drug_trials_reject_no_alias_expand_for_nci_source() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "drug",
+        "trials",
+        "daraxonrasib",
+        "--source",
+        "nci",
+        "--no-alias-expand",
+    ])
+    .expect("drug trials should parse");
+
+    let Cli {
+        command: Commands::Drug { cmd },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected drug command");
+    };
+
+    let err = super::handle_command(cmd, json, false)
+        .await
+        .expect_err("nci no-alias-expand should fail");
+    assert!(
+        err.to_string()
+            .contains("--no-alias-expand is only supported for CTGov intervention searches")
+    );
+}
+
+#[tokio::test]
 async fn handle_search_rejects_non_us_structured_region() {
     let cli = Cli::try_parse_from([
         "biomcp", "search", "drug", "--target", "EGFR", "--region", "eu",

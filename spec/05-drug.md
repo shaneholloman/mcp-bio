@@ -389,10 +389,13 @@ expansion and exposes the strict-literal opt-out flag.
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" drug trials --help)"
+list_out="$("$bin" list drug)"
 echo "$out" | mustmatch like "--no-alias-expand"
 echo "$out" | mustmatch like "inherits intervention alias expansion"
 echo "$out" | mustmatch like "Matched Intervention"
 echo "$out" | mustmatch like "matched_intervention_label"
+echo "$list_out" | mustmatch like "drug trials <name> [--no-alias-expand]"
+echo "$list_out" | mustmatch like "inherits CTGov intervention alias expansion"
 ```
 
 ## Drug to Adverse Events

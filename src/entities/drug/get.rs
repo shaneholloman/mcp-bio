@@ -275,23 +275,26 @@ pub(crate) async fn resolve_trial_aliases(name: &str) -> Result<Vec<String>, Bio
         return Ok(cached.clone());
     }
 
-    let aliases = match resolve_drug_base(requested_name, false, false).await {
-        Ok(resolved) => build_trial_aliases(
-            requested_name,
-            Some(&resolved.drug.name),
-            &resolved.drug.brand_names,
+    let (aliases, cacheable) = match resolve_drug_base(requested_name, false, false).await {
+        Ok(resolved) => (
+            build_trial_aliases(
+                requested_name,
+                Some(&resolved.drug.name),
+                &resolved.drug.brand_names,
+            ),
+            true,
         ),
-        Err(BioMcpError::NotFound { .. }) => vec![requested_name.to_string()],
+        Err(BioMcpError::NotFound { .. }) => (vec![requested_name.to_string()], true),
         Err(err) => {
             warn!(
                 drug = %requested_name,
                 "Drug alias lookup unavailable for trial search: {err}"
             );
-            vec![requested_name.to_string()]
+            (vec![requested_name.to_string()], false)
         }
     };
 
-    if let Ok(mut cache) = trial_alias_cache().lock() {
+    if cacheable && let Ok(mut cache) = trial_alias_cache().lock() {
         cache.insert(cache_key, aliases.clone());
     }
 
