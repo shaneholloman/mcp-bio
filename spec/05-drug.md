@@ -60,6 +60,18 @@ cat "$err" | mustmatch not like "Downloading EMA data"
 test ! -d "$tmp_data/biomcp/ema"
 ```
 
+## Drug Search JSON Next Commands
+
+Non-empty drug search JSON should expose machine-readable follow-up commands
+for the preferred top hit and the full drug command surface.
+
+```bash
+json_out="$(biomcp --json search drug pembrolizumab --region us --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
+echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get drug .+$")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list drug")' > /dev/null
+```
+
 ## Brand Name Get Fallback
 
 Brand-only names should transparently reuse the plain drug-search fallback when
@@ -381,6 +393,18 @@ Direct adverse-event search is useful for safety reconnaissance independent of d
 out="$(biomcp search adverse-event -d ibuprofen --limit 3)"
 echo "$out" | mustmatch like "# Adverse Events: drug=ibuprofen"
 echo "$out" | mustmatch like "Total reports (OpenFDA)"
+```
+
+## FAERS JSON Next Commands
+
+Non-empty adverse-event search JSON should expose machine-readable follow-up
+commands for the top report and the command-family reference.
+
+```bash
+json_out="$(biomcp --json search adverse-event -d ibuprofen --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
+echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get adverse-event .+$")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list adverse-event")' > /dev/null
 ```
 
 ## Brand Name Search Uses Exact Match Ranking

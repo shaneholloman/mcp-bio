@@ -78,45 +78,57 @@ async fn handle_command_rejects_zero_limit_before_related_lookup() {
 #[test]
 fn disease_search_json_includes_fallback_meta_and_provenance() {
     let pagination = PaginationMeta::offset(0, 10, 1, Some(1));
-    let json = disease_search_json(
-        vec![crate::entities::disease::DiseaseSearchResult {
-            id: "MONDO:0000115".into(),
-            name: "Arnold-Chiari malformation".into(),
-            synonyms_preview: Some("Chiari malformation".into()),
-            resolved_via: Some("MESH crosswalk".into()),
-            source_id: Some("MESH:D001139".into()),
-        }],
-        pagination,
-        true,
-    )
-    .expect("disease search json should render");
+    let results = vec![crate::entities::disease::DiseaseSearchResult {
+        id: "MONDO:0000115".into(),
+        name: "Arnold-Chiari malformation".into(),
+        synonyms_preview: Some("Chiari malformation".into()),
+        resolved_via: Some("MESH crosswalk".into()),
+        source_id: Some("MESH:D001139".into()),
+    }];
+    let next_commands = crate::render::markdown::search_next_commands_disease(&results);
+    let json = disease_search_json(results, pagination, true, next_commands)
+        .expect("disease search json should render");
 
     let value: serde_json::Value =
         serde_json::from_str(&json).expect("json should parse successfully");
     assert_eq!(value["results"][0]["resolved_via"], "MESH crosswalk");
     assert_eq!(value["results"][0]["source_id"], "MESH:D001139");
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get disease MONDO:0000115".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp list disease".into())
+    );
     assert_eq!(value["_meta"]["fallback_used"], true);
 }
 
 #[test]
-fn disease_search_json_omits_meta_for_direct_hits() {
+fn disease_search_json_includes_next_commands_for_direct_hits() {
     let pagination = PaginationMeta::offset(0, 10, 1, Some(1));
-    let json = disease_search_json(
-        vec![crate::entities::disease::DiseaseSearchResult {
-            id: "MONDO:0005105".into(),
-            name: "melanoma".into(),
-            synonyms_preview: Some("malignant melanoma".into()),
-            resolved_via: None,
-            source_id: None,
-        }],
-        pagination,
-        false,
-    )
-    .expect("disease search json should render");
+    let results = vec![crate::entities::disease::DiseaseSearchResult {
+        id: "MONDO:0005105".into(),
+        name: "melanoma".into(),
+        synonyms_preview: Some("malignant melanoma".into()),
+        resolved_via: None,
+        source_id: None,
+    }];
+    let next_commands = crate::render::markdown::search_next_commands_disease(&results);
+    let json = disease_search_json(results, pagination, false, next_commands)
+        .expect("disease search json should render");
 
     let value: serde_json::Value =
         serde_json::from_str(&json).expect("json should parse successfully");
-    assert!(value.get("_meta").is_none());
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get disease MONDO:0005105".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp list disease".into())
+    );
+    assert!(value["_meta"].get("fallback_used").is_none());
     assert!(value["results"][0].get("resolved_via").is_none());
     assert!(value["results"][0].get("source_id").is_none());
 }

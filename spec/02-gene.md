@@ -36,6 +36,18 @@ echo "$out" | mustmatch like "| Symbol | Name | Entrez ID |"
 echo "$out" | mustmatch like 'Use `get gene <symbol>` for details.'
 ```
 
+## Search JSON Next Commands
+
+Non-empty gene search JSON should include machine-readable follow-up commands so
+agents can pivot from the top hit without parsing markdown helper text.
+
+```bash
+json_out="$(biomcp --json search gene BRAF --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
+echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get gene .+$")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list gene")' > /dev/null
+```
+
 ## Getting Gene Details
 
 `get gene` should return a concise identity card with persistent identifiers. Entrez ID is a durable anchor for this entity.

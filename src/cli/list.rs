@@ -109,6 +109,12 @@ fn list_gene() -> String {
 
 - Includes Coordinates, UniProt, and OMIM in default result rows.
 
+## JSON Output
+
+- Non-empty `search gene --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top result with `biomcp get gene <symbol>`.
+- `biomcp list gene` is always included so agents can inspect the full filter surface.
+
 ## Helpers
 
 - `gene trials <symbol>`
@@ -165,6 +171,12 @@ fn list_variant() -> String {
 ## Search output
 
 - Includes ClinVar Stars, REVEL, and GERP in default result rows.
+
+## JSON Output
+
+- Non-empty `search variant --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top result with `biomcp get variant <id>`.
+- `biomcp list variant` is always included so agents can inspect the full filter surface.
 
 ## IDs
 
@@ -267,6 +279,12 @@ Worked examples:
 - Known-drug question: `biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5` keeps the drug typed and the adverse-effect mechanism in free text.
 - Method/dataset question: `biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5` stays keyword-only because the question is about a dataset, not a typed biomedical entity.
 
+## JSON Output
+
+- Non-empty `search article --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top result with `biomcp get article <pmid>`.
+- `biomcp list article` is always included so agents can inspect the full filter surface.
+
 ## Notes
 
 - Set `NCBI_API_KEY` to increase throughput for NCBI-backed article enrichment.
@@ -331,6 +349,12 @@ fn list_trial() -> String {
 - `--source nci --status <status>` accepts one normalized status at a time and maps it to CTS recruitment or lifecycle filters.
 - `--source nci --phase 1/2` maps to CTS `I_II`; `--phase early_phase1` is not supported.
 - `--source nci --lat/--lon/--distance` uses direct `sites.org_coordinates_*` CTS filters and serializes distance with the required `mi` suffix.
+
+## JSON Output
+
+- Non-empty `search trial --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top result with `biomcp get trial <nct_id>`.
+- `biomcp list trial` is always included so agents can inspect the full filter surface.
 "#
     .to_string()
 }
@@ -375,6 +399,12 @@ fn list_drug() -> String {
 
 - `drug trials <name>`
 - `drug adverse-events <name>`
+
+## JSON Output
+
+- Non-empty `search drug --json` responses include `_meta.next_commands`.
+- The top follow-up uses `biomcp get drug <name>` for the preferred top result or requested all-region name lookup.
+- `biomcp list drug` is always included so agents can inspect the full filter surface.
 
 ## Notes
 
@@ -429,6 +459,12 @@ fn list_disease() -> String {
 - `disease trials <name>`
 - `disease articles <name>`
 - `disease drugs <name>`
+
+## JSON Output
+
+- Non-empty `search disease --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top result with `biomcp get disease <id>`.
+- `biomcp list disease` is always included so agents can inspect the full filter surface.
 "#
     .to_string()
 }
@@ -490,6 +526,12 @@ fn list_pgx() -> String {
 - `get pgx codeine recommendations`
 - `search pgx -g CYP2D6 --limit 5`
 - `search gwas --trait "type 2 diabetes" --limit 5`
+
+## JSON Output
+
+- Non-empty `search pgx --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top result with `biomcp get pgx <gene_or_drug>`.
+- `biomcp list pgx` is always included so agents can inspect the full filter surface.
 "#
     .to_string()
 }
@@ -523,6 +565,12 @@ fn list_gwas() -> String {
 - `search trial --mutation <text>`
 - `search trial --criteria <text>`
 - `search article -g <gene>`
+
+## JSON Output
+
+- Non-empty `search gwas --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top hit with `biomcp get variant <rsid>`.
+- `biomcp list gwas` is always included so agents can inspect the full filter surface.
 "#
     .to_string()
 }
@@ -658,6 +706,12 @@ fn list_pathway() -> String {
 - To inspect pathway composition, run `biomcp get pathway <id> genes`.
 - For Reactome pathways, events are also available: `biomcp get pathway R-HSA-5673001 events`.
 - To pivot to clinical context, run `biomcp pathway trials <id>` and `biomcp pathway articles <id>`.
+
+## JSON Output
+
+- Non-empty `search pathway --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top result with `biomcp get pathway <id>`.
+- `biomcp list pathway` is always included so agents can inspect the full filter surface.
 "#
     .to_string()
 }
@@ -769,6 +823,13 @@ fn list_adverse_event() -> String {
 - `search adverse-event --type device --device <name>` - MAUDE device events
 - `search adverse-event --type device --manufacturer <name>` - MAUDE by manufacturer
 - `search adverse-event --type device --product-code <code>` - MAUDE by product code
+
+## JSON Output
+
+- Non-empty `search adverse-event --json` responses include `_meta.next_commands`.
+- FAERS and device searches drill the top result with `biomcp get adverse-event <report_id>`.
+- Recall searches currently return `biomcp list adverse-event` without a recall-specific `get` command.
+- `biomcp list adverse-event` is always included so agents can inspect the full filter surface.
 "#
     .to_string()
 }
@@ -960,6 +1021,9 @@ mod tests {
         let trial = render(Some("trial")).expect("list trial should render");
         assert!(trial.contains("--biomarker <text>"));
         assert!(trial.contains("## NCI source notes"));
+        assert!(trial.contains("## JSON Output"));
+        assert!(trial.contains("`_meta.next_commands`"));
+        assert!(trial.contains("biomcp list trial"));
         assert!(trial.contains("NCI disease ID"));
         assert!(trial.contains("one normalized status at a time"));
         assert!(trial.contains("I_II"));
@@ -1008,6 +1072,9 @@ mod tests {
         assert!(article.contains("Rows count against their primary source after deduplication."));
         assert!(article.contains("article batch <id> [<id>...]"));
         assert!(article.contains("## Query formulation"));
+        assert!(article.contains("## JSON Output"));
+        assert!(article.contains("`_meta.next_commands`"));
+        assert!(article.contains("biomcp list article"));
         assert!(article.contains("Known gene/disease/drug already identified"));
         assert!(article.contains("Keyword-only topic, dataset, or method question"));
         assert!(
@@ -1056,8 +1123,38 @@ mod tests {
         assert!(phenotype.contains("2-5 high-confidence HPO terms"));
 
         let gwas = render(Some("gwas")).expect("list gwas should render");
+        assert!(gwas.contains("## JSON Output"));
+        assert!(gwas.contains("`_meta.next_commands`"));
+        assert!(gwas.contains("biomcp list gwas"));
         assert!(gwas.contains("## Workflow tips"));
         assert!(gwas.contains("--p-value"));
+    }
+
+    #[test]
+    fn list_search_pages_document_search_json_next_commands() {
+        for (entity, expected_list_command) in [
+            ("gene", "biomcp list gene"),
+            ("variant", "biomcp list variant"),
+            ("drug", "biomcp list drug"),
+            ("disease", "biomcp list disease"),
+            ("pgx", "biomcp list pgx"),
+            ("pathway", "biomcp list pathway"),
+            ("adverse-event", "biomcp list adverse-event"),
+        ] {
+            let out = render(Some(entity)).expect("list page should render");
+            assert!(
+                out.contains("## JSON Output"),
+                "{entity}: missing JSON Output section"
+            );
+            assert!(
+                out.contains("`_meta.next_commands`"),
+                "{entity}: missing _meta.next_commands docs"
+            );
+            assert!(
+                out.contains(expected_list_command),
+                "{entity}: missing list follow-up doc"
+            );
+        }
     }
 
     #[test]

@@ -176,6 +176,17 @@ pub(crate) fn quote_arg(value: &str) -> String {
     support::quote_arg(value)
 }
 
+pub(crate) fn preferred_drug_name<'a>(
+    names: impl IntoIterator<Item = &'a str>,
+    preferred: Option<&str>,
+) -> Option<String> {
+    related::preferred_drug_name(names, preferred)
+}
+
+pub(crate) fn drug_parent_match_rank(name: &str, preferred_lower: &str) -> Option<u8> {
+    related::drug_parent_match_rank(name, preferred_lower)
+}
+
 pub(crate) fn related_adverse_event(event: &AdverseEvent) -> Vec<String> {
     related::related_adverse_event(event)
 }
@@ -230,6 +241,85 @@ pub(crate) fn related_variant_search_results(
     condition_filter: Option<&str>,
 ) -> Vec<String> {
     related::related_variant_search_results(results, gene_filter, condition_filter)
+}
+
+pub(crate) fn search_next_commands_article(results: &[ArticleSearchResult]) -> Vec<String> {
+    related::search_next_commands_article(results)
+}
+
+pub(crate) fn search_next_commands_trial(results: &[TrialSearchResult]) -> Vec<String> {
+    related::search_next_commands_trial(results)
+}
+
+pub(crate) fn search_next_commands_variant(
+    results: &[VariantSearchResult],
+    gene_filter: Option<&str>,
+    condition_filter: Option<&str>,
+) -> Vec<String> {
+    related::search_next_commands_variant(results, gene_filter, condition_filter)
+}
+
+pub(crate) fn search_next_commands_gene(results: &[GeneSearchResult]) -> Vec<String> {
+    related::search_next_commands_gene(results)
+}
+
+pub(crate) fn search_next_commands_disease(results: &[DiseaseSearchResult]) -> Vec<String> {
+    related::search_next_commands_disease(results)
+}
+
+pub(crate) fn search_next_commands_drug(
+    results: &[DrugSearchResult],
+    requested_name: Option<&str>,
+) -> Vec<String> {
+    related::search_next_commands_drug(results, requested_name)
+}
+
+pub(crate) fn search_next_commands_drug_eu(
+    results: &[EmaDrugSearchResult],
+    requested_name: Option<&str>,
+) -> Vec<String> {
+    related::search_next_commands_drug_eu(results, requested_name)
+}
+
+pub(crate) fn search_next_commands_drug_who(
+    results: &[WhoPrequalificationSearchResult],
+    requested_name: Option<&str>,
+) -> Vec<String> {
+    related::search_next_commands_drug_who(results, requested_name)
+}
+
+pub(crate) fn search_next_commands_drug_all(requested_name: &str) -> Vec<String> {
+    related::search_next_commands_drug_all(requested_name)
+}
+
+pub(crate) fn search_next_commands_pgx(
+    results: &[PgxSearchResult],
+    gene_filter: Option<&str>,
+    drug_filter: Option<&str>,
+) -> Vec<String> {
+    related::search_next_commands_pgx(results, gene_filter, drug_filter)
+}
+
+pub(crate) fn search_next_commands_pathway(results: &[PathwaySearchResult]) -> Vec<String> {
+    related::search_next_commands_pathway(results)
+}
+
+pub(crate) fn search_next_commands_faers(results: &[AdverseEventSearchResult]) -> Vec<String> {
+    related::search_next_commands_faers(results)
+}
+
+pub(crate) fn search_next_commands_device_events(
+    results: &[DeviceEventSearchResult],
+) -> Vec<String> {
+    related::search_next_commands_device_events(results)
+}
+
+pub(crate) fn search_next_commands_recalls(results: &[RecallSearchResult]) -> Vec<String> {
+    related::search_next_commands_recalls(results)
+}
+
+pub(crate) fn search_next_commands_gwas(results: &[VariantGwasAssociation]) -> Vec<String> {
+    related::search_next_commands_gwas(results)
 }
 
 pub(crate) fn trial_evidence_urls(trial: &Trial) -> Vec<(&'static str, String)> {

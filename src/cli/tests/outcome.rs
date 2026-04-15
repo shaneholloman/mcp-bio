@@ -11,7 +11,7 @@ use super::super::test_support::{
 };
 use super::super::{
     Cli, OutputStream, PaginationMeta, execute, execute_mcp, extract_json_from_sections,
-    resolve_query_input, run_outcome, search_json,
+    resolve_query_input, run_outcome, search_json, search_json_with_meta, search_meta,
 };
 
 #[test]
@@ -78,6 +78,80 @@ fn phenotype_search_json_contract_unchanged() {
         value.get("_meta").is_none(),
         "generic search json should not grow entity-style _meta"
     );
+}
+
+#[test]
+fn search_meta_trims_empty_commands() {
+    let meta = search_meta(vec![
+        " biomcp get gene BRAF ".to_string(),
+        String::new(),
+        "   ".to_string(),
+        "biomcp list gene".to_string(),
+    ])
+    .expect("search meta should be present");
+
+    let value = serde_json::to_value(meta).expect("meta json");
+    assert_eq!(
+        value["next_commands"][0],
+        serde_json::Value::String("biomcp get gene BRAF".into())
+    );
+    assert_eq!(
+        value["next_commands"][1],
+        serde_json::Value::String("biomcp list gene".into())
+    );
+}
+
+#[test]
+fn search_json_with_meta_includes_next_commands() {
+    let pagination = PaginationMeta::offset(0, 1, 1, Some(1));
+    let json = search_json_with_meta(
+        vec![crate::entities::gene::GeneSearchResult {
+            symbol: "BRAF".to_string(),
+            name: "B-Raf proto-oncogene".to_string(),
+            entrez_id: "673".to_string(),
+            genomic_coordinates: None,
+            uniprot_id: None,
+            omim_id: None,
+        }],
+        pagination,
+        vec![
+            "biomcp get gene BRAF".to_string(),
+            "biomcp list gene".to_string(),
+        ],
+    )
+    .expect("search json with meta");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert_eq!(value["count"], 1);
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get gene BRAF".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp list gene".into())
+    );
+}
+
+#[test]
+fn search_json_with_meta_omits_meta_when_empty() {
+    let pagination = PaginationMeta::offset(0, 1, 1, Some(1));
+    let json = search_json_with_meta(
+        vec![crate::entities::gene::GeneSearchResult {
+            symbol: "BRAF".to_string(),
+            name: "B-Raf proto-oncogene".to_string(),
+            entrez_id: "673".to_string(),
+            genomic_coordinates: None,
+            uniprot_id: None,
+            omim_id: None,
+        }],
+        pagination,
+        vec![String::new(), "   ".to_string()],
+    )
+    .expect("search json with empty meta");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert!(value.get("_meta").is_none());
 }
 
 #[tokio::test]

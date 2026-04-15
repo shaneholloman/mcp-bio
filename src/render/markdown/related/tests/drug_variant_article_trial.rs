@@ -46,6 +46,53 @@ fn related_drug_suggests_review_when_label_and_indications_are_sparse() {
 }
 
 #[test]
+fn search_next_commands_drug_eu_prefers_active_substance_match() {
+    let related = search_next_commands_drug_eu(
+        &[crate::entities::drug::EmaDrugSearchResult {
+            name: "Herzuma".to_string(),
+            active_substance: "trastuzumab".to_string(),
+            ema_product_number: "EMEA/H/C/004123".to_string(),
+            status: "Authorised".to_string(),
+        }],
+        Some("trastuzumab"),
+    );
+
+    assert_eq!(related[0], "biomcp get drug trastuzumab");
+    assert_eq!(related[1], "biomcp list drug");
+}
+
+#[test]
+fn search_next_commands_recalls_are_list_only() {
+    let related = search_next_commands_recalls(&[crate::entities::adverse_event::RecallSearchResult {
+        recall_number: "F-0001-2026".to_string(),
+        classification: "Class I".to_string(),
+        product_description: "Infusion pump".to_string(),
+        reason_for_recall: "Sterility".to_string(),
+        status: "Ongoing".to_string(),
+        distribution_pattern: None,
+        recall_initiation_date: None,
+    }]);
+
+    assert_eq!(related, vec!["biomcp list adverse-event".to_string()]);
+}
+
+#[test]
+fn search_next_commands_device_events_use_report_follow_up() {
+    let related = search_next_commands_device_events(&[
+        crate::entities::adverse_event::DeviceEventSearchResult {
+            report_id: "MDR-123".to_string(),
+            device: "HeartValve".to_string(),
+            event_type: Some("Malfunction".to_string()),
+            date: None,
+            description: None,
+        },
+    ]);
+
+    assert_eq!(related[0], "biomcp get adverse-event MDR-123");
+    assert_eq!(related[1], "biomcp list adverse-event");
+}
+
+#[test]
 fn related_variant_vus_promotes_literature_before_drug_target() {
     let variant: Variant = serde_json::from_value(serde_json::json!({
         "id": "chr2:g.166848047C>G",
@@ -377,4 +424,3 @@ fn related_trial_results_search_without_intervention_keeps_seed_quoted() {
         Some("find publications or conference reports from this completed/terminated trial")
     );
 }
-

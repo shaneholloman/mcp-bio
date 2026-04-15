@@ -28,6 +28,18 @@ echo "$out" | mustmatch like "at least one anchor hit"
 echo "$out" | mustmatch like "| PMID | Title |"
 ```
 
+## Search JSON Next Commands
+
+Non-empty article search JSON should expose the top article follow-up directly
+so agents can move from search to detail without scraping markdown helpers.
+
+```bash
+json_out="$(biomcp --json search article -g BRAF --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
+echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get article .+$")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list article")' > /dev/null
+```
+
 ## Searching by Keyword
 
 Keyword search supports broad discovery before narrowing to specific entities. The output should echo keyword context and include PMID-centric table output.

@@ -221,21 +221,21 @@ fn search_drug_region_allows_explicit_who_for_structured_queries() {
 }
 
 #[test]
-fn search_json_preserves_who_search_fields() {
+fn search_json_with_meta_preserves_who_search_fields() {
     let pagination = crate::cli::PaginationMeta::offset(0, 5, 1, Some(1));
-    let json = crate::cli::search_json(
-        vec![crate::entities::drug::WhoPrequalificationSearchResult {
-            inn: "Trastuzumab".to_string(),
-            therapeutic_area: "Oncology".to_string(),
-            dosage_form: "Powder for concentrate for solution for infusion".to_string(),
-            applicant: "Samsung Bioepis NL B.V.".to_string(),
-            who_reference_number: "BT-ON001".to_string(),
-            listing_basis: "Prequalification - Abridged".to_string(),
-            prequalification_date: Some("2019-12-18".to_string()),
-        }],
-        pagination,
-    )
-    .expect("WHO search json");
+    let results = vec![crate::entities::drug::WhoPrequalificationSearchResult {
+        inn: "Trastuzumab".to_string(),
+        therapeutic_area: "Oncology".to_string(),
+        dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+        applicant: "Samsung Bioepis NL B.V.".to_string(),
+        who_reference_number: "BT-ON001".to_string(),
+        listing_basis: "Prequalification - Abridged".to_string(),
+        prequalification_date: Some("2019-12-18".to_string()),
+    }];
+    let next_commands =
+        crate::render::markdown::search_next_commands_drug_who(&results, Some("trastuzumab"));
+    let json = crate::cli::search_json_with_meta(results, pagination, next_commands)
+        .expect("WHO search json");
 
     let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
     assert_eq!(value["count"], 1);
@@ -245,10 +245,19 @@ fn search_json_preserves_who_search_fields() {
         "Prequalification - Abridged"
     );
     assert_eq!(value["results"][0]["prequalification_date"], "2019-12-18");
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get drug Trastuzumab".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp list drug".into())
+    );
 }
 
 #[test]
 fn drug_all_region_search_json_includes_who_bucket() {
+    let next_commands = crate::render::markdown::search_next_commands_drug_all("trastuzumab");
     let json = drug_all_region_search_json(
         "trastuzumab",
         crate::entities::SearchPage::offset(
@@ -282,6 +291,7 @@ fn drug_all_region_search_json_includes_who_bucket() {
             }],
             Some(1),
         ),
+        next_commands,
     )
     .expect("all-region drug search json");
 
@@ -296,5 +306,13 @@ fn drug_all_region_search_json_includes_who_bucket() {
     assert_eq!(
         value["eu"]["results"][0]["ema_product_number"],
         "EMEA/H/C/004123"
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get drug trastuzumab".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp list drug".into())
     );
 }

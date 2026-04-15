@@ -100,6 +100,7 @@ pub(in crate::cli) async fn handle_search(
     } else {
         None
     };
+    let next_commands = crate::render::markdown::search_next_commands_article(&results);
 
     let text = if json {
         article_search_json(
@@ -108,8 +109,11 @@ pub(in crate::cli) async fn handle_search(
             semantic_scholar_enabled,
             crate::entities::article::article_type_limitation_note(&filters, source_filter),
             debug_plan,
-            results,
-            pagination,
+            ArticleSearchJsonPage {
+                results,
+                pagination,
+                next_commands,
+            },
         )?
     } else {
         let footer = super::super::pagination_footer_offset(&pagination);
@@ -326,14 +330,19 @@ pub(super) fn build_article_debug_plan(
     })
 }
 
+pub(super) struct ArticleSearchJsonPage {
+    pub results: Vec<crate::entities::article::ArticleSearchResult>,
+    pub pagination: crate::cli::PaginationMeta,
+    pub next_commands: Vec<String>,
+}
+
 pub(super) fn article_search_json(
     query: &str,
     filters: &crate::entities::article::ArticleSearchFilters,
     semantic_scholar_enabled: bool,
     note: Option<String>,
     debug_plan: Option<crate::cli::debug_plan::DebugPlan>,
-    results: Vec<crate::entities::article::ArticleSearchResult>,
-    pagination: crate::cli::PaginationMeta,
+    page: ArticleSearchJsonPage,
 ) -> anyhow::Result<String> {
     #[derive(serde::Serialize)]
     struct ArticleSearchResponse {
@@ -349,19 +358,22 @@ pub(super) fn article_search_json(
         results: Vec<crate::entities::article::ArticleSearchResult>,
         #[serde(skip_serializing_if = "Option::is_none")]
         debug_plan: Option<crate::cli::debug_plan::DebugPlan>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        _meta: Option<crate::cli::SearchJsonMeta>,
     }
 
-    let count = results.len();
+    let count = page.results.len();
     crate::render::json::to_pretty(&ArticleSearchResponse {
         query: query.to_string(),
         sort: filters.sort.as_str().to_string(),
         semantic_scholar_enabled,
         ranking_policy: crate::entities::article::article_relevance_ranking_policy(filters),
         note,
-        pagination,
+        pagination: page.pagination,
         count,
-        results,
+        results: page.results,
         debug_plan,
+        _meta: crate::cli::search_meta(page.next_commands),
     })
     .map_err(Into::into)
 }

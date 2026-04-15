@@ -28,7 +28,9 @@ echo "$out" | mustmatch like "MONDO:0005105"
 json="$("$bin" --json search disease melanoma --limit 1)"
 echo "$json" | jq -e '.count == 1' > /dev/null
 echo "$json" | jq -e '.results[0].id == "MONDO:0005105"' > /dev/null
-echo "$json" | jq -e '._meta == null or (._meta | has("fallback_used") | not)' > /dev/null
+echo "$json" | jq -e '._meta.next_commands[0] | test("^biomcp get disease .+$")' > /dev/null
+echo "$json" | jq -e '._meta.next_commands | any(. == "biomcp list disease")' > /dev/null
+echo "$json" | jq -e '._meta | has("fallback_used") | not' > /dev/null
 echo "$json" | jq -e '.results[0] | has("resolved_via") | not' > /dev/null
 echo "$json" | jq -e '.results[0] | has("source_id") | not' > /dev/null
 ```
@@ -58,12 +60,15 @@ if printf '%s\n' "$out" | grep -q 'Resolved via discover + crosswalk'; then
   echo "$json" | jq -e '.results[0].id == "MONDO:0000115"' > /dev/null
   echo "$json" | jq -e '.results[0].resolved_via == "MESH crosswalk"' > /dev/null
   echo "$json" | jq -e '.results[0].source_id == "MESH:D001139"' > /dev/null
+  echo "$json" | jq -e '._meta.next_commands[0] | test("^biomcp get disease .+$")' > /dev/null
+  echo "$json" | jq -e '._meta.next_commands | any(. == "biomcp list disease")' > /dev/null
   echo "$json" | jq -e '._meta.fallback_used == true' > /dev/null
 else
   echo "$out" | mustmatch like "No diseases found matching 'Arnold Chiari syndrome'"
   echo "$out" | mustmatch like 'Try: biomcp discover "Arnold Chiari syndrome"'
   echo "$json" | jq -e '.count == 0' > /dev/null
   echo "$json" | jq -e '.results == []' > /dev/null
+  echo "$json" | jq -e 'has("_meta") | not' > /dev/null
 fi
 ```
 

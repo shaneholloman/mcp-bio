@@ -1516,7 +1516,16 @@ fn top_get_command(kind: SectionKind, input: &PreparedInput, results: &[Value]) 
             .map(str::trim)
             .filter(|id| !id.is_empty())
             .map(str::to_string)
-            .or_else(|| preferred_drug_name(results, input.drug.as_deref()))
+            .or_else(|| {
+                crate::render::markdown::preferred_drug_name(
+                    results
+                        .iter()
+                        .filter_map(|row| row.as_object())
+                        .filter_map(|obj| obj.get("name"))
+                        .filter_map(Value::as_str),
+                    input.drug.as_deref(),
+                )
+            })
             .or_else(|| first_string(results, &["name"]).map(str::to_string))
             .map(|id| format!("biomcp get drug {}", quote_arg(&id))),
         SectionKind::Pathway => {
@@ -1813,53 +1822,6 @@ fn first_gettable_variant_id(results: &[Value]) -> Option<String> {
         .map(str::to_string)
 }
 
-fn preferred_drug_name(results: &[Value], preferred: Option<&str>) -> Option<String> {
-    let preferred = preferred.map(str::trim).filter(|v| !v.is_empty())?;
-    let preferred = preferred.to_ascii_lowercase();
-    results
-        .iter()
-        .filter_map(|row| row.as_object())
-        .filter_map(|obj| obj.get("name"))
-        .filter_map(Value::as_str)
-        .map(str::trim)
-        .filter_map(|name| {
-            drug_parent_match_rank(name, &preferred).map(|rank| (rank, name.to_string()))
-        })
-        .min_by_key(|(rank, _)| *rank)
-        .map(|(_, name)| name)
-}
-
-fn drug_parent_match_rank(name: &str, preferred_lower: &str) -> Option<u8> {
-    let normalized = name.trim().to_ascii_lowercase();
-    if normalized.is_empty() {
-        return None;
-    }
-    if normalized == preferred_lower {
-        return Some(0);
-    }
-    if normalized.starts_with(&format!("{preferred_lower} ")) {
-        return Some(1);
-    }
-    if normalized.contains(preferred_lower) {
-        if looks_like_metabolite_name(&normalized) {
-            return Some(3);
-        }
-        return Some(2);
-    }
-    None
-}
-
-fn looks_like_metabolite_name(value: &str) -> bool {
-    value.contains("metabolite")
-        || value.starts_with("desmethyl ")
-        || value.starts_with("n-desmethyl ")
-        || value.starts_with("hydroxy ")
-        || value.starts_with("dealkyl ")
-        || value.starts_with("oxo ")
-        || value.starts_with("nor ")
-        || value.starts_with("nor-")
-}
-
 fn refine_drug_results(
     mut rows: Vec<crate::entities::drug::DrugSearchResult>,
     preferred: Option<&str>,
@@ -1874,11 +1836,14 @@ fn refine_drug_results(
         return rows;
     };
 
-    rows.sort_by_key(|row| drug_parent_match_rank(&row.name, &preferred_lower).unwrap_or(u8::MAX));
+    rows.sort_by_key(|row| {
+        crate::render::markdown::drug_parent_match_rank(&row.name, &preferred_lower)
+            .unwrap_or(u8::MAX)
+    });
 
     let has_parent_like = rows.iter().any(|row| {
-        let normalized = row.name.trim().to_ascii_lowercase();
-        normalized.contains(&preferred_lower) && !looks_like_metabolite_name(&normalized)
+        crate::render::markdown::drug_parent_match_rank(&row.name, &preferred_lower)
+            .is_some_and(|rank| rank < 3)
     });
 
     if has_parent_like {
@@ -1887,7 +1852,8 @@ fn refine_drug_results(
             if !normalized.contains(&preferred_lower) {
                 return true;
             }
-            !looks_like_metabolite_name(&normalized)
+            crate::render::markdown::drug_parent_match_rank(&row.name, &preferred_lower)
+                .is_some_and(|rank| rank < 3)
         });
     }
 

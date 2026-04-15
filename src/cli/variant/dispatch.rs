@@ -1,7 +1,8 @@
 use super::{VariantCommand, VariantGetArgs, VariantSearchArgs};
 use crate::cli::CommandOutcome;
 use crate::cli::{
-    PaginationMeta, empty_sections, normalize_cli_query, pagination_footer_offset, search_json,
+    PaginationMeta, empty_sections, normalize_cli_query, pagination_footer_offset,
+    search_json_with_meta,
 };
 
 pub(crate) async fn handle_get(
@@ -612,7 +613,16 @@ async fn render_variant_search_outcome(
     let results = page.results;
     let pagination = PaginationMeta::offset(offset, limit, results.len(), page.total);
     if json_output {
-        return Ok(CommandOutcome::stdout(search_json(results, pagination)?));
+        let next_commands = crate::render::markdown::search_next_commands_variant(
+            &results,
+            filters.gene.as_deref(),
+            filters.condition.as_deref(),
+        );
+        return Ok(CommandOutcome::stdout(search_json_with_meta(
+            results,
+            pagination,
+            next_commands,
+        )?));
     }
 
     let footer = pagination_footer_offset(&pagination);

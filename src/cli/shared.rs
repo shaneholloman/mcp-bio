@@ -264,6 +264,20 @@ struct SearchJsonResponse<T: serde::Serialize> {
     results: Vec<T>,
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+pub(super) struct SearchJsonMeta {
+    pub(super) next_commands: Vec<String>,
+}
+
+#[derive(serde::Serialize)]
+struct SearchJsonResponseWithMeta<T: serde::Serialize> {
+    pagination: PaginationMeta,
+    count: usize,
+    results: Vec<T>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    _meta: Option<SearchJsonMeta>,
+}
+
 pub(super) fn search_json<T: serde::Serialize>(
     results: Vec<T>,
     pagination: PaginationMeta,
@@ -273,6 +287,34 @@ pub(super) fn search_json<T: serde::Serialize>(
         pagination,
         count,
         results,
+    })
+    .map_err(Into::into)
+}
+
+pub(super) fn normalize_next_commands(next_commands: Vec<String>) -> Vec<String> {
+    next_commands
+        .into_iter()
+        .map(|command| command.trim().to_string())
+        .filter(|command| !command.is_empty())
+        .collect()
+}
+
+pub(super) fn search_meta(next_commands: Vec<String>) -> Option<SearchJsonMeta> {
+    let next_commands = normalize_next_commands(next_commands);
+    (!next_commands.is_empty()).then_some(SearchJsonMeta { next_commands })
+}
+
+pub(super) fn search_json_with_meta<T: serde::Serialize>(
+    results: Vec<T>,
+    pagination: PaginationMeta,
+    next_commands: Vec<String>,
+) -> anyhow::Result<String> {
+    let count = results.len();
+    crate::render::json::to_pretty(&SearchJsonResponseWithMeta {
+        pagination,
+        count,
+        results,
+        _meta: search_meta(next_commands),
     })
     .map_err(Into::into)
 }
