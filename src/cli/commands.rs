@@ -245,6 +245,8 @@ See also: biomcp list article")]
 EXAMPLES:
   biomcp search trial -c melanoma -s recruiting
   biomcp search trial -p 3 -i pembrolizumab
+  biomcp search trial -i daraxonrasib --limit 20
+  biomcp search trial -i daraxonrasib --no-alias-expand --limit 20
   biomcp search trial -c melanoma --facility \"MD Anderson\" --age 67 --limit 5
   biomcp search trial --age 0.5 --count-only          # infants eligible (6 months)
   biomcp search trial --mutation \"BRAF V600E\" --status recruiting --study-type interventional --has-results --limit 5
@@ -254,6 +256,9 @@ EXAMPLES:
 Trial search is filter-based (no free-text query).
 
 Source-specific notes:
+  - CTGov: `--intervention` auto-expands known aliases from the shared drug identity surface, unions results, and exposes `matched_intervention_label` / `Matched Intervention` when an alternate alias matched first.
+  - CTGov: `--no-alias-expand` forces literal intervention matching.
+  - CTGov: `--next-page` is not supported once intervention alias expansion fans out to multiple queries; use `--offset` or `--no-alias-expand`.
   - CTGov: `--phase 1/2` keeps the combined Phase 1/Phase 2 label semantics, not Phase 1 OR Phase 2.
   - NCI: `--condition` grounds to an NCI disease ID when available and otherwise falls back to CTS `keyword`.
   - NCI: `--status` accepts one mapped status at a time; comma-separated status lists are rejected.

@@ -190,7 +190,14 @@ Trial pivot:
 
 ```bash
 biomcp drug trials pembrolizumab --limit 5
+biomcp drug trials daraxonrasib --limit 20
+biomcp drug trials daraxonrasib --no-alias-expand --limit 20
 ```
+
+On `--source ctgov`, `drug trials <name>` inherits the shared trial
+intervention alias expansion. Expanded results surface `Matched Intervention`
+in markdown and `matched_intervention_label` in JSON when an alternate alias
+matched first. Use `--no-alias-expand` to force literal matching.
 
 Safety pivot:
 

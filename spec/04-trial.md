@@ -144,6 +144,67 @@ echo "$out" | mustmatch like "intervention=HRS 4642"
 echo "$out" | mustmatch like "|NCT ID|Title|Status|Phase|Conditions|"
 ```
 
+## Drug Alias Expansion
+
+Default CTGov intervention search should auto-expand known drug aliases, union
+the matching trials, and show which alias matched each returned row when an
+alternate sponsor label found the study.
+
+```bash timeout=180
+bin="${BIOMCP_BIN:-biomcp}"
+expanded="$("$bin" search trial --intervention daraxonrasib --limit 10)"
+echo "$expanded" | mustmatch like "intervention=daraxonrasib"
+echo "$expanded" | mustmatch like "Matched Intervention"
+echo "$expanded" | mustmatch like "|RMC-6236|"
+```
+
+## Drug Alias Expansion JSON
+
+JSON trial search adds `matched_intervention_label` to each row when an
+alternate alias matched first. The expanded result set must be a strict
+superset of the literal-only results — the count is larger and the first page
+contains at least one row labeled with the alternate alias.
+
+```bash timeout=180
+bin="${BIOMCP_BIN:-biomcp}"
+expanded_total="$("$bin" --json search trial --count-only --intervention daraxonrasib | jq -er '.total')"
+literal_total="$("$bin" --json search trial --count-only --intervention daraxonrasib --no-alias-expand | jq -er '.total')"
+test "$expanded_total" -ge "$literal_total"
+echo "expanded=$expanded_total literal=$literal_total" | mustmatch '/expanded=[0-9]+/'
+first_page="$("$bin" --json search trial --intervention daraxonrasib --limit 20)"
+echo "$first_page" | jq '[.results[].matched_intervention_label]' | mustmatch like '"RMC-6236"'
+```
+
+## Drug Alias Symmetry
+
+Alias-expanded generic-name search should cover all trials indexed under the
+sponsor code. Because CTGov indexes trials by their registered intervention
+label, searching by the generic name with expansion unions results from all
+known aliases. Expanded generic-name search therefore returns at least as many
+results as strict code-name literal search.
+
+```bash timeout=180
+bin="${BIOMCP_BIN:-biomcp}"
+expanded_darax="$("$bin" --json search trial --count-only --intervention daraxonrasib | jq -er '.total')"
+rmc_literal="$("$bin" --json search trial --count-only --intervention RMC-6236 --no-alias-expand | jq -er '.total')"
+test "$expanded_darax" -ge "$rmc_literal"
+echo "daraxonrasib_expanded=$expanded_darax rmc6236_literal=$rmc_literal" | mustmatch '/daraxonrasib_expanded=[0-9]+/'
+```
+
+## Drug Alias Expansion Opt-Out
+
+`--no-alias-expand` should keep the strict literal behavior visible in both the
+query echo and the returned rows.
+
+```bash timeout=180
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" search trial --intervention daraxonrasib --no-alias-expand --limit 10)"
+json_out="$("$bin" --json search trial --intervention daraxonrasib --no-alias-expand --limit 10)"
+echo "$out" | mustmatch like "alias_expand=off"
+echo "$out" | mustmatch not like "Matched Intervention"
+echo "$json_out" | jq -e 'all(.results[]?; (.matched_intervention_label // "") != "RMC-6236")' > /dev/null
+```
+
 ## Zero-Result Positional Hint
 
 Free-text trial nicknames on the positional ClinicalTrials.gov path should
@@ -218,6 +279,11 @@ echo "$out" | mustmatch like "combined Phase 1/Phase 2 label"
 echo "$out" | mustmatch like "not Phase 1 OR Phase 2"
 echo "$out" | mustmatch like "no sex restriction"
 echo "$out" | tr '\n' ' ' | mustmatch like "age-only CTGov searches report an approximate upstream total"
+echo "$out" | mustmatch like "auto-expands known aliases"
+echo "$out" | mustmatch like "--no-alias-expand"
+echo "$out" | mustmatch like "matched_intervention_label"
+echo "$out" | mustmatch like "Matched Intervention"
+echo "$out" | mustmatch like "use \`--offset\` or \`--no-alias-expand\`"
 ```
 
 ## NCI Source Search
@@ -282,6 +348,12 @@ new flags.
 ```bash
 out="$(biomcp list trial)"
 echo "$out" | mustmatch like "## NCI source notes"
+echo "$out" | mustmatch like "## CTGov alias expansion"
+echo "$out" | mustmatch like "auto-expands known aliases"
+echo "$out" | mustmatch like "--no-alias-expand"
+echo "$out" | mustmatch like "matched_intervention_label"
+echo "$out" | mustmatch like "Matched Intervention"
+echo "$out" | mustmatch like "use \`--offset\` or \`--no-alias-expand\`"
 echo "$out" | mustmatch like "NCI disease ID"
 echo "$out" | mustmatch like "one normalized status at a time"
 echo "$out" | mustmatch like "\`--source nci --phase 1/2\` maps to CTS \`I_II\`"

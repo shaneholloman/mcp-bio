@@ -4,6 +4,21 @@ use super::dispatch::{drug_all_region_search_json, resolve_drug_search_region};
 use crate::cli::{Cli, Commands, DrugCommand, DrugRegionArg, GetEntity, SearchEntity};
 use crate::entities::drug::{DrugRegion, DrugSearchFilters};
 
+fn render_drug_trials_help() -> String {
+    let mut command = Cli::command();
+    let drug = command
+        .find_subcommand_mut("drug")
+        .expect("drug subcommand should exist");
+    let trials = drug
+        .find_subcommand_mut("trials")
+        .expect("drug trials subcommand should exist");
+    let mut help = Vec::new();
+    trials
+        .write_long_help(&mut help)
+        .expect("drug trials help should render");
+    String::from_utf8(help).expect("help should be utf-8")
+}
+
 #[test]
 fn get_drug_help_lists_region_flag_and_examples() {
     let mut command = Cli::command();
@@ -123,6 +138,74 @@ fn drug_bare_name_parses_as_external_subcommand() {
         } => assert_eq!(args, vec!["imatinib"]),
         other => panic!("unexpected command: {other:?}"),
     }
+}
+
+#[test]
+fn drug_trials_help_mentions_alias_expansion_and_opt_out() {
+    let help = render_drug_trials_help();
+
+    assert!(help.contains("inherits intervention alias expansion"));
+    assert!(help.contains("Matched Intervention"));
+    assert!(help.contains("matched_intervention_label"));
+    assert!(help.contains("--no-alias-expand"));
+}
+
+#[test]
+fn drug_trials_parse_no_alias_expand() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "drug",
+        "trials",
+        "daraxonrasib",
+        "--no-alias-expand",
+    ])
+    .expect("drug trials should parse");
+
+    match cli.command {
+        Commands::Drug {
+            cmd:
+                DrugCommand::Trials {
+                    name,
+                    no_alias_expand,
+                    ..
+                },
+        } => {
+            assert_eq!(name, "daraxonrasib");
+            assert!(no_alias_expand);
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn drug_trials_reject_no_alias_expand_for_nci_source() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "drug",
+        "trials",
+        "daraxonrasib",
+        "--source",
+        "nci",
+        "--no-alias-expand",
+    ])
+    .expect("drug trials should parse");
+
+    let Cli {
+        command: Commands::Drug { cmd },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected drug command");
+    };
+
+    let err = super::handle_command(cmd, json, false)
+        .await
+        .expect_err("nci no-alias-expand should fail");
+    assert!(
+        err.to_string()
+            .contains("--no-alias-expand is only supported for CTGov intervention searches")
+    );
 }
 
 #[tokio::test]

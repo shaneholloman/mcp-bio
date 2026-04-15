@@ -323,6 +323,7 @@ fn list_trial() -> String {
 
 - `--condition <name>` (or `-c`)
 - `--intervention <name>` (or `-i`)
+- `--no-alias-expand`
 - `--status <status>` (or `-s`)
 - `--phase <NA|1|1/2|2|3|4>` (or `-p`)
 - `--facility <name>`
@@ -343,6 +344,13 @@ fn list_trial() -> String {
 - `--count-only`
 - `--limit <N> --offset <N>`
 
+## CTGov alias expansion
+
+- `--intervention` auto-expands known aliases from the shared drug identity surface on the default CTGov path.
+- Expanded rows add `Matched Intervention` in markdown and `matched_intervention_label` in JSON when an alternate alias matched first.
+- `--no-alias-expand` forces literal matching.
+- `--next-page` is not supported once alias expansion fans out to multiple queries; use `--offset` or `--no-alias-expand`.
+
 ## NCI source notes
 
 - `--source nci --condition <name>` first tries to ground the name to an NCI disease ID and falls back to CTS `keyword`; there is no separate NCI keyword flag.
@@ -353,6 +361,7 @@ fn list_trial() -> String {
 ## JSON Output
 
 - Non-empty `search trial --json` responses include `_meta.next_commands`.
+- Alias-expanded trial rows may include `matched_intervention_label`.
 - The first follow-up drills the top result with `biomcp get trial <nct_id>`.
 - `biomcp list trial` is always included so agents can inspect the full filter surface.
 "#
@@ -397,7 +406,7 @@ fn list_drug() -> String {
 
 ## Helpers
 
-- `drug trials <name>`
+- `drug trials <name> [--no-alias-expand]`
 - `drug adverse-events <name>`
 
 ## JSON Output
@@ -412,6 +421,7 @@ fn list_drug() -> String {
 - Structured filters remain U.S.-only when `--region` is omitted.
 - Explicit `--region who` filters structured U.S. hits through WHO prequalification.
 - Explicit `--region eu|all` is still invalid with structured filters.
+- `drug trials <name>` inherits CTGov intervention alias expansion, adds `Matched Intervention` / `matched_intervention_label` when an alternate alias matched first, and accepts `--no-alias-expand` for literal matching.
 - EU regional commands auto-download the EMA human-medicines JSON feeds into `BIOMCP_EMA_DIR` or the default data directory on first use.
 - WHO regulatory commands auto-download the WHO Prequalification CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.
 - Run `biomcp ema sync` or `biomcp who sync` to force-refresh the local regional data.
@@ -980,6 +990,10 @@ mod tests {
         assert!(
             out.contains("Explicit `--region eu|all` is still invalid with structured filters.")
         );
+        assert!(out.contains("drug trials <name> [--no-alias-expand]"));
+        assert!(out.contains("inherits CTGov intervention alias expansion"));
+        assert!(out.contains("Matched Intervention"));
+        assert!(out.contains("matched_intervention_label"));
         assert!(out.contains("auto-download the EMA human-medicines JSON feeds"));
         assert!(out.contains("WHO Prequalification CSV"));
         assert!(out.contains("biomcp ema sync"));
@@ -1020,6 +1034,12 @@ mod tests {
     fn list_trial_and_article_include_missing_flags() {
         let trial = render(Some("trial")).expect("list trial should render");
         assert!(trial.contains("--biomarker <text>"));
+        assert!(trial.contains("--no-alias-expand"));
+        assert!(trial.contains("## CTGov alias expansion"));
+        assert!(trial.contains("auto-expands known aliases"));
+        assert!(trial.contains("Matched Intervention"));
+        assert!(trial.contains("matched_intervention_label"));
+        assert!(trial.contains("use `--offset` or `--no-alias-expand`"));
         assert!(trial.contains("## NCI source notes"));
         assert!(trial.contains("## JSON Output"));
         assert!(trial.contains("`_meta.next_commands`"));

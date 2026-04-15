@@ -114,12 +114,15 @@ pub struct TrialSearchResult {
     pub conditions: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sponsor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub matched_intervention_label: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct TrialSearchFilters {
     pub condition: Option<String>,
     pub intervention: Option<String>,
+    pub no_alias_expand: bool,
     pub facility: Option<String>,
     pub status: Option<String>,
     pub phase: Option<String>,

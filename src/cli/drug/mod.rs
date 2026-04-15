@@ -64,9 +64,13 @@ pub enum DrugCommand {
     #[command(after_help = "\
 EXAMPLES:
   biomcp drug trials pembrolizumab --limit 5
+  biomcp drug trials daraxonrasib --limit 20
+  biomcp drug trials daraxonrasib --no-alias-expand --limit 20
   biomcp drug trials osimertinib --source nci --limit 5
 
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
+Note: On `--source ctgov`, this helper inherits intervention alias expansion from `search trial`,
+adds `Matched Intervention` / `matched_intervention_label` when an alternate alias matched first,
+and supports `--no-alias-expand` for literal matching.
 See also: biomcp list drug")]
     Trials {
         /// Drug name (e.g., pembrolizumab)
@@ -80,6 +84,9 @@ See also: biomcp list drug")]
         /// Trial data source (ctgov or nci)
         #[arg(long, default_value = "ctgov")]
         source: String,
+        /// Disable ClinicalTrials.gov intervention alias expansion and force literal matching.
+        #[arg(long = "no-alias-expand")]
+        no_alias_expand: bool,
     },
     /// Search FAERS adverse events for this drug (best-effort)
     #[command(after_help = "\

@@ -171,6 +171,18 @@ pub(super) fn validate_trial_search(
             "At least one filter is required. Example: biomcp search trial -c melanoma".into(),
         ));
     }
+    let has_intervention = filters
+        .intervention
+        .as_deref()
+        .map(str::trim)
+        .is_some_and(|v| !v.is_empty());
+    if filters.no_alias_expand
+        && (!has_intervention || !matches!(filters.source, TrialSource::ClinicalTrialsGov))
+    {
+        return Err(BioMcpError::InvalidArgument(
+            "--no-alias-expand is only supported for CTGov intervention searches".into(),
+        ));
+    }
 
     let normalized_status = normalized_status_filter(filters)?;
     let normalized_phase = normalized_phase_filter(filters)?;

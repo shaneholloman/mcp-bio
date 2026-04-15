@@ -387,6 +387,7 @@ pub fn from_ctgov_hit(study: &CtGovStudy) -> TrialSearchResult {
         phase,
         conditions,
         sponsor,
+        matched_intervention_label: None,
     }
 }
 
@@ -459,6 +460,7 @@ pub fn from_nci_hit(hit: &serde_json::Value) -> TrialSearchResult {
         phase,
         conditions,
         sponsor,
+        matched_intervention_label: None,
     }
 }
 

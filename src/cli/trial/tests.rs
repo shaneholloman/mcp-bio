@@ -4,8 +4,42 @@ use super::dispatch::{
     LocationPaginationMeta, paginate_trial_locations, parse_trial_location_paging,
     should_show_trial_zero_result_nickname_hint, trial_locations_json, trial_search_query_summary,
 };
-
+use crate::cli::test_support::{
+    Mock, MockServer, ResponseTemplate, lock_env, method, path, query_param, set_env_var,
+};
 use crate::cli::{Cli, Commands, GetEntity, SearchEntity};
+
+async fn mount_trial_alias_lookup(
+    server: &MockServer,
+    requested: &str,
+    canonical: &str,
+    aliases: &[&str],
+) {
+    Mock::given(method("GET"))
+        .and(path("/v1/query"))
+        .and(query_param("q", requested))
+        .and(query_param("size", "25"))
+        .and(query_param("from", "0"))
+        .and(query_param(
+            "fields",
+            crate::sources::mychem::MYCHEM_FIELDS_GET,
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "total": 1,
+            "hits": [{
+                "_id": "drug-test-id",
+                "_score": 42.0,
+                "drugbank": {
+                    "id": "DBTEST",
+                    "name": canonical,
+                    "synonyms": aliases,
+                }
+            }]
+        })))
+        .expect(1)
+        .mount(server)
+        .await;
+}
 
 fn render_trial_search_long_help() -> String {
     let mut command = Cli::command();
@@ -70,6 +104,17 @@ fn trial_help_documents_nci_source_specific_notes() {
 }
 
 #[test]
+fn trial_help_documents_alias_expansion_controls() {
+    let help = render_trial_search_long_help();
+
+    assert!(help.contains("auto-expands known aliases"));
+    assert!(help.contains("--no-alias-expand"));
+    assert!(help.contains("matched_intervention_label"));
+    assert!(help.contains("Matched Intervention"));
+    assert!(help.contains("use `--offset` or `--no-alias-expand`"));
+}
+
+#[test]
 fn trial_age_help_explains_age_only_count_is_approximate() {
     let help = render_trial_search_long_help();
 
@@ -89,6 +134,7 @@ fn search_trial_parses_positional_query() {
                         condition,
                         positional_query,
                         intervention,
+                        no_alias_expand,
                         facility,
                         phase,
                         study_type,
@@ -125,6 +171,7 @@ fn search_trial_parses_positional_query() {
     assert!(condition.is_empty());
     assert_eq!(positional_query.as_deref(), Some("melanoma"));
     assert!(intervention.is_empty());
+    assert!(!no_alias_expand);
     assert!(facility.is_empty());
     assert_eq!(phase, None);
     assert_eq!(study_type, None);
@@ -150,6 +197,38 @@ fn search_trial_parses_positional_query() {
     assert_eq!(offset, 0);
     assert_eq!(next_page, None);
     assert_eq!(limit, 2);
+}
+
+#[test]
+fn search_trial_parses_no_alias_expand() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "trial",
+        "--intervention",
+        "daraxonrasib",
+        "--no-alias-expand",
+    ])
+    .expect("search trial should parse");
+
+    let Cli {
+        command:
+            Commands::Search {
+                entity:
+                    SearchEntity::Trial(crate::cli::trial::TrialSearchArgs {
+                        intervention,
+                        no_alias_expand,
+                        ..
+                    }),
+            },
+        ..
+    } = cli
+    else {
+        panic!("expected search trial command");
+    };
+
+    assert_eq!(intervention, vec!["daraxonrasib".to_string()]);
+    assert!(no_alias_expand);
 }
 
 #[test]
@@ -366,6 +445,111 @@ async fn handle_search_rejects_next_page_with_offset() {
     );
 }
 
+#[tokio::test]
+async fn handle_search_rejects_next_page_when_alias_expansion_uses_multiple_queries() {
+    let _env_lock = lock_env().await;
+    let requested = "review-cli-next-page";
+
+    let mychem = MockServer::start().await;
+    mount_trial_alias_lookup(&mychem, requested, requested, &["review-cli-alt"]).await;
+    let mychem_base = format!("{}/v1", mychem.uri());
+    let _mychem_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&mychem_base));
+
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "trial",
+        "--intervention",
+        requested,
+        "--next-page",
+        "page-2",
+    ])
+    .expect("search trial should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Trial(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected trial search command");
+    };
+
+    let err = super::handle_search(args, json)
+        .await
+        .expect_err("multi-alias search should reject next-page");
+    assert!(err.to_string().contains("--next-page is not supported"));
+    assert!(err.to_string().contains("--no-alias-expand"));
+}
+
+#[tokio::test]
+async fn handle_search_rejects_no_alias_expand_without_intervention() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "trial",
+        "--condition",
+        "melanoma",
+        "--no-alias-expand",
+    ])
+    .expect("search trial should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Trial(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected trial search command");
+    };
+
+    let err = super::handle_search(args, json)
+        .await
+        .expect_err("no-alias-expand without intervention should fail");
+    assert!(
+        err.to_string()
+            .contains("--no-alias-expand is only supported for CTGov intervention searches")
+    );
+}
+
+#[tokio::test]
+async fn handle_search_rejects_no_alias_expand_for_nci_source() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "trial",
+        "--intervention",
+        "daraxonrasib",
+        "--source",
+        "nci",
+        "--no-alias-expand",
+    ])
+    .expect("search trial should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Trial(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected trial search command");
+    };
+
+    let err = super::handle_search(args, json)
+        .await
+        .expect_err("nci no-alias-expand should fail");
+    assert!(
+        err.to_string()
+            .contains("--no-alias-expand is only supported for CTGov intervention searches")
+    );
+}
+
 #[test]
 fn parse_trial_location_paging_extracts_offset_limit_flags() {
     let sections = vec![
@@ -521,6 +705,48 @@ fn trial_search_query_summary_includes_nci_source_marker() {
 
     assert!(summary.contains("condition=melanoma"));
     assert!(summary.contains("source=nci"));
+}
+
+#[test]
+fn trial_search_query_summary_includes_alias_opt_out_marker() {
+    let summary = trial_search_query_summary(
+        &crate::entities::trial::TrialSearchFilters {
+            intervention: Some("daraxonrasib".into()),
+            no_alias_expand: true,
+            ..Default::default()
+        },
+        0,
+        None,
+    );
+
+    assert!(summary.contains("intervention=daraxonrasib"));
+    assert!(summary.contains("alias_expand=off"));
+}
+
+#[test]
+fn trial_search_query_summary_omits_alias_opt_out_marker_when_not_applicable() {
+    let no_intervention = trial_search_query_summary(
+        &crate::entities::trial::TrialSearchFilters {
+            condition: Some("melanoma".into()),
+            no_alias_expand: true,
+            ..Default::default()
+        },
+        0,
+        None,
+    );
+    let nci = trial_search_query_summary(
+        &crate::entities::trial::TrialSearchFilters {
+            intervention: Some("daraxonrasib".into()),
+            no_alias_expand: true,
+            source: crate::entities::trial::TrialSource::NciCts,
+            ..Default::default()
+        },
+        0,
+        None,
+    );
+
+    assert!(!no_intervention.contains("alias_expand=off"));
+    assert!(!nci.contains("alias_expand=off"));
 }
 
 #[test]

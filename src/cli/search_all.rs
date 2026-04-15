@@ -2739,6 +2739,7 @@ mod tests {
             phase: None,
             conditions: Vec::new(),
             sponsor: None,
+            matched_intervention_label: None,
         }
     }
 

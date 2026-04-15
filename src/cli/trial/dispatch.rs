@@ -87,6 +87,7 @@ pub(in crate::cli) async fn handle_search(
     let filters = crate::entities::trial::TrialSearchFilters {
         condition,
         intervention,
+        no_alias_expand: args.no_alias_expand,
         facility,
         status: args.status,
         phase: args.phase,
@@ -317,6 +318,17 @@ pub(super) fn trial_search_query_summary(
     offset: usize,
     next_page: Option<&str>,
 ) -> String {
+    let shows_alias_opt_out = filters.no_alias_expand
+        && matches!(
+            filters.source,
+            crate::entities::trial::TrialSource::ClinicalTrialsGov
+        )
+        && filters
+            .intervention
+            .as_deref()
+            .map(str::trim)
+            .is_some_and(|value| !value.is_empty());
+
     vec![
         filters
             .condition
@@ -326,6 +338,7 @@ pub(super) fn trial_search_query_summary(
             .intervention
             .as_deref()
             .map(|v| format!("intervention={v}")),
+        shows_alias_opt_out.then(|| "alias_expand=off".to_string()),
         filters.facility.as_deref().map(|v| format!("facility={v}")),
         filters.age.map(|v| format!("age={v}")),
         filters.sex.as_deref().map(|v| format!("sex={v}")),
