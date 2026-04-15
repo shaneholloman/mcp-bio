@@ -68,6 +68,7 @@ else
   echo "$out" | mustmatch like 'Try: biomcp discover "Arnold Chiari syndrome"'
   echo "$json" | jq -e '.count == 0' > /dev/null
   echo "$json" | jq -e '.results == []' > /dev/null
+  echo "$json" | jq -e 'has("_meta") | not' > /dev/null
 fi
 ```
 

@@ -419,13 +419,17 @@ pub(super) fn search_next_commands_drug_eu(
 
     let mut out = Vec::new();
     if let Some(name) = preferred_drug_name(
-        results.iter().map(|result| result.name.as_str()),
+        results
+            .iter()
+            .flat_map(|result| [result.name.as_str(), result.active_substance.as_str()]),
         requested_name,
     )
     .or_else(|| {
         results
             .first()
-            .map(|result| result.name.trim())
+            .map(|result| result.active_substance.trim())
+            .filter(|name| !name.is_empty())
+            .or_else(|| results.first().map(|result| result.name.trim()))
             .filter(|name| !name.is_empty())
             .map(str::to_string)
     }) {

@@ -1,112 +1,137 @@
-# Code Review Log - Ticket 207
+# Code Review Log - Ticket 195
 
 ## Critique
 
-Reviewed the ticket and implementation inputs:
+Reviewed `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, commit history, and the full `git diff main..HEAD`.
 
-- Read `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, and the full `git diff main..HEAD`.
-- Reviewed commit history for the code step (`eab1009c`, `e68aafe1`).
-- Re-ran the relevant local gates:
-  - `cargo audit -q`
-  - `cargo test --lib`
-  - `cargo build --release --locked`
-  - `make spec-pr`
-- Re-checked the current semver-lane heads with dry runs:
-  - `cargo update -p tar --dry-run`
-  - `cargo update -p rustls-webpki --dry-run`
-  - `cargo update -p rand@0.9.4 --dry-run`
-  - `cargo update -p rand@0.10.1 --dry-run`
-  - `cargo update -p rand@0.8.5 --dry-run`
+Re-ran the relevant local gates during review:
+
+- `cargo test --lib`
+- `cargo clippy --lib --tests -- -D warnings`
+- `cargo build --release --locked --bin biomcp`
+- `XDG_CACHE_HOME="$PWD/.cache" PATH="$PWD/target/release:$PATH" RUST_LOG=error uv run --extra dev pytest spec/07-disease.md --mustmatch-lang bash --mustmatch-timeout 120 -v`
 
 ### Design Completeness Audit
 
-Design items traced to the implementation and proof surface:
+All design-final implementation items have corresponding code changes after repair:
 
-- Targeted lockfile updates only:
-  - matched by `Cargo.lock` updates for `tar 0.4.45`, `rustls-webpki 0.103.12`, `rand 0.9.4`, and `rand 0.10.1`
-  - confirmed no `Cargo.toml` edit was needed
-- Warning reduction where patch updates exist:
-  - matched by the `rand` lane updates in `Cargo.lock`
-  - confirmed `cargo audit -q` now leaves only `bincode`, `instant`, `rustls-pemfile`, and `rand 0.8.5`
-- Self-update proof gap closure:
-  - matched by new tests in `src/cli/update.rs`
-  - traced to `extract_binary_from_targz_returns_matching_binary_bytes`
-  - traced to `extract_binary_from_targz_rejects_empty_binary`
-  - traced to `extract_binary_from_targz_reports_missing_binary_as_not_found`
-- Existing PMC OA proof:
-  - matched by existing tests in `src/sources/pmc_oa.rs`
-- Existing cBioPortal proof:
-  - implementation already had direct archive-install tests in `src/sources/cbioportal_download.rs`
-  - this surfaced one documentation defect: the design artifact pointed at `spec/13-study.md` for archive extraction proof, but that spec uses fixture-backed installed-study data and does not exercise download/extraction
-- Execution order:
-  - confirmed from `.march/code-log.md` and commit order that the unit-test addition landed before the lockfile update
-  - no user-facing docs/help/spec change was required because the public contract did not change
+- Shared search JSON/meta support is present in `src/cli/shared.rs`.
+- Search next-command builders are present in `src/render/markdown/related.rs` and exported from `src/render/markdown/mod.rs`.
+- All in-scope search dispatchers are wired to the new helpers or custom `_meta` serializers:
+  - article, trial, variant, gene, disease, drug, pgx, pathway, adverse-event, gwas
+- Out-of-scope generic search surfaces stayed unchanged:
+  - `src/cli/phenotype/dispatch.rs`
+  - `src/cli/protein/dispatch.rs`
+  - no diff on `spec/23-phenotype.md` or `spec/16-protein.md`
+- `list <entity>` docs were updated for article, trial, variant, gene, disease, drug, pgx, pathway, adverse-event, and gwas in `src/cli/list.rs`.
+- Entity specs were updated on the intended search JSON contract surfaces:
+  - `spec/02-gene.md`
+  - `spec/03-variant.md`
+  - `spec/04-trial.md`
+  - `spec/05-drug.md`
+  - `spec/06-article.md`
+  - `spec/07-disease.md`
+  - `spec/08-pgx.md`
+  - `spec/14-pathway.md`
+- `spec/11-evidence-urls.md` and `spec/18-source-labels.md` remain scoped to `get ... --json`; that design choice is consistent with their contents.
+- `.march/code-log.md` records docs/spec work before runtime edits; nothing in the review contradicted that ordering.
+
+No unmatched `Needs change` items were present in `design-final.md`.
 
 ### Test-Design Traceability
 
-Proof matrix coverage after review:
+Proof-matrix coverage after repair:
 
-- `cargo audit -q` proves the `tar` advisories are cleared.
-- `cargo audit -q` proves the `rustls-webpki` advisory is cleared.
-- `cargo audit -q` proves warning reduction and the exact residual warning set.
-- `src/cli/update.rs` unit tests prove the self-update tar.gz extraction helper still works.
-- `src/sources/pmc_oa.rs` tests prove PMC OA tar extraction still works.
-- `src/sources/cbioportal_download.rs` tests prove cBioPortal archive download/install still works:
-  - `download_study_installs_archive_into_root`
-  - `download_study_rejects_entries_outside_expected_top_level_directory`
-- `make spec-pr` proves the PR-blocking user-visible study/spec lanes still stay green, including `spec/13-study.md` for the installed-study CLI surface.
+- Helper proofs:
+  - `src/cli/tests/outcome.rs` covers `search_json_with_meta(...)` include/omit behavior and preserves the generic phenotype search JSON contract.
+  - `src/cli/article/tests.rs` covers article search JSON context fields plus `_meta.next_commands`.
+  - `src/cli/disease/tests.rs` covers direct-hit and fallback-hit disease JSON shapes.
+  - `src/cli/drug/tests.rs` now exercises the WHO search JSON path with `search_json_with_meta(...)` and `_meta.next_commands`.
+  - `src/cli/tests/next_commands_validity.rs` covers parser validity for the new search follow-up command shapes.
+  - `src/cli/list.rs` tests cover the new doc/help contract.
+- Spec proofs:
+  - all design-matrix entity/spec assertions are present after the disease fallback-miss repair.
+
+Issues found during critique:
+
+1. `spec/07-disease.md` did not assert the proof-matrix requirement that empty discover-fallback misses keep `_meta` absent in JSON.
+2. `src/cli/drug/tests.rs::search_json_preserves_who_search_fields` still exercised `search_json()` instead of the real `search_json_with_meta()` path used by WHO search results, so it would not catch `_meta.next_commands` regressions.
+3. `search_next_commands_drug_eu()` only matched against EMA `name`, ignoring `active_substance`; plain parent-drug queries could therefore degrade to brand-name `biomcp get drug ...` suggestions instead of the intended parent-name follow-up.
+4. The recall-specific exception from the acceptance criteria had no deterministic regression proof: non-empty recall searches should emit only `biomcp list adverse-event`.
 
 ### Implementation Quality Review
 
-- No shipped-code defects were found in the `Cargo.lock` or `src/cli/update.rs` diff after reviewing behavior, assertions, and error classification.
-- The new update tests assert behavior, not just reachability:
-  - happy path checks exact extracted bytes
-  - failure paths check the exact error variant and message/suggestion contract
-- Security review found no new injection, traversal, auth, or secret-handling risks in the changed surface.
-- Duplication review found adjacent local tar/gzip helpers in other archive tests, but no existing shared helper that the new `src/cli/update.rs` tests should obviously reuse.
+- Security review: no new shell injection, path traversal, auth bypass, data exposure, or secret-handling issues found. Follow-up commands continue to use `quote_arg()` before serialization.
+- Duplication review: the implementation correctly reused and centralized the drug parent-name heuristic instead of reintroducing another chooser.
+- Conventions and edge cases:
+  - disease custom `_meta` migration is coherent after the repair
+  - out-of-scope generic search JSON stayed stable
+  - the repaired EU drug chooser now handles the parent-name case the design called out
 
 ## Fix Plan
 
-Fix the stale internal proof mapping so the design artifact matches the actual executable proof surface:
+Repair the four concrete defects directly:
 
-1. Update `.march/design-final.md` to cite `src/sources/cbioportal_download.rs` lib tests as the cBioPortal archive proof.
-2. Clarify that `spec/13-study.md` remains the installed-study CLI proof, not archive download/extraction proof.
+1. Add the missing empty-miss `_meta` absence assertion to `spec/07-disease.md`.
+2. Move the WHO drug JSON regression test onto `search_json_with_meta(...)` and assert `_meta.next_commands`.
+3. Fix EMA follow-up generation to consider `active_substance` when applying the parent-name preference heuristic.
+4. Add deterministic helper tests for the recall list-only exception and the device-event follow-up branch.
 
 ## Repair
 
-Applied the fix:
+Applied the fixes:
 
-- Updated `.march/design-final.md` to replace the incorrect `spec/13-study.md` archive-proof mapping with the existing `src/sources/cbioportal_download.rs` lib tests.
-- Clarified the spec-coverage notes so the study spec and archive-install tests are described accurately.
+- `src/render/markdown/related.rs`
+  - updated `search_next_commands_drug_eu()` to consider both EMA `name` and `active_substance`, and to fall back to `active_substance` before the brand name.
+- `src/render/markdown/related/tests/drug_variant_article_trial.rs`
+  - added regression coverage for:
+    - EMA parent-drug follow-up selection
+    - recall list-only next-command behavior
+    - device-event report follow-up behavior
+- `src/cli/drug/tests.rs`
+  - replaced the stale WHO JSON helper test with a real `search_json_with_meta(...)` regression that preserves WHO fields and asserts `_meta.next_commands`
+- `spec/07-disease.md`
+  - added the missing empty-fallback-miss assertion that top-level `_meta` stays absent
 
 ### Post-Fix Collateral Scan
 
-The fix was documentation-only. Re-read the edited section for:
+After each repair batch, checked the touched code for:
 
-- stale references: fixed
-- dead code / unused symbols: not applicable
-- resource cleanup conflicts: not applicable
-- stale error messages: not applicable
-- shadowed variables: not applicable
+- dead code or orphaned imports: none introduced
+- unused variables: none introduced
+- cleanup conflicts: none introduced
+- stale error text: unchanged
+- shadowed variables: none introduced
 
-No collateral issues were introduced.
+Added one bounded improvement while touching the related-command tests:
+
+- covered the device-event branch explicitly so the adverse-event family now has deterministic proof for both its special recall behavior and its device-report follow-up shape
 
 ## Verification
 
-- `cargo audit -q`: exit `0`; residual warnings are `bincode`, `instant`, `rustls-pemfile`, and `rand 0.8.5`
-- `cargo test --lib`: passed (`1491 passed`)
-- `cargo build --release --locked`: passed
-- `make spec-pr`: passed (`222 passed, 4 skipped`; `99 passed, 2 skipped`)
-- `cargo update --dry-run` checks: all targeted crates reported `Locking 0 packages to latest Rust 1.93.1 compatible versions`
+- Targeted regression checks:
+  - `cargo test --lib search_json_with_meta_preserves_who_search_fields`
+  - `cargo test --lib search_next_commands_drug_eu_prefers_active_substance_match`
+  - `cargo test --lib search_next_commands_recalls_are_list_only`
+  - `cargo test --lib search_next_commands_device_events_use_report_follow_up`
+- Focused profile:
+  - `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
+  - result: passed
+- Changed executable spec:
+  - `spec/07-disease.md`
+  - result: `31 passed`
 
 ## Residual Concerns
 
-- `rand 0.8.5` still warns in `cargo audit -q`; the current lockfile lane has no newer patch release.
-- Verify should continue treating cBioPortal archive extraction proof as the lib tests in `src/sources/cbioportal_download.rs`, not as `spec/13-study.md`.
-- No out-of-scope follow-up issue was filed from this review.
+- The shipped contract is repaired and the changed disease spec is green.
+- Recall/device search JSON behavior now has deterministic unit proof, but not separate live-data spec sections. Verify should keep an eye on that family if future tickets widen the adverse-event executable spec surface.
+- No out-of-scope issue was substantial enough to file under `~/workspace/planning/biomcp/issues/`.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | stale-doc | no | `.march/design-final.md` incorrectly cited `spec/13-study.md` as proof of the cBioPortal archive extraction path; the real executable proof is the existing lib tests in `src/sources/cbioportal_download.rs`. |
+| 1 | missing-test | no | `spec/07-disease.md` was missing the design proof that empty fallback misses keep top-level `_meta` absent. |
+| 2 | weak-assertion | no | `src/cli/drug/tests.rs` still exercised `search_json()` instead of the WHO search JSON path that now uses `search_json_with_meta()`, so `_meta.next_commands` regressions would have escaped. |
+| 3 | contract-bug | no | `search_next_commands_drug_eu()` ignored EMA `active_substance`, which could select a brand-name `get drug` follow-up instead of the requested parent drug. |
+| 4 | missing-test | no | The recall-search acceptance-criteria exception had no deterministic regression coverage for the list-only `_meta.next_commands` behavior. |
