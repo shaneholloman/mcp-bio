@@ -50,7 +50,12 @@ def _load_json(stdout: str) -> dict[str, object]:
 
 def _copy_mcp_fixture(tmp_path: Path) -> Path:
     fixture_root = tmp_path / "mcp-fixture"
-    for relative_path in ("src/cli/mod.rs", "src/mcp/shell.rs", "build.rs"):
+    for relative_path in (
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/mcp/shell.rs",
+        "build.rs",
+    ):
         source = REPO_ROOT / relative_path
         target = fixture_root / relative_path
         target.parent.mkdir(parents=True, exist_ok=True)
