@@ -377,7 +377,7 @@ out="$("$bin" drug trials daraxonrasib --limit 10)"
 strict="$("$bin" drug trials daraxonrasib --no-alias-expand --limit 10)"
 echo "$out" | mustmatch like "intervention=daraxonrasib"
 echo "$out" | mustmatch like "Matched Intervention"
-echo "$out" | mustmatch like "RMC-6236"
+echo "$out" | mustmatch like "|RMC-6236|"
 echo "$strict" | mustmatch like "alias_expand=off"
 ```
 

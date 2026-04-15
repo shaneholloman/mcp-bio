@@ -155,7 +155,7 @@ bin="${BIOMCP_BIN:-biomcp}"
 expanded="$("$bin" search trial --intervention daraxonrasib --limit 10)"
 echo "$expanded" | mustmatch like "intervention=daraxonrasib"
 echo "$expanded" | mustmatch like "Matched Intervention"
-echo "$expanded" | mustmatch like "RMC-6236"
+echo "$expanded" | mustmatch like "|RMC-6236|"
 ```
 
 ## Drug Alias Expansion JSON
