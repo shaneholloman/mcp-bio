@@ -887,6 +887,14 @@ mod tests {
     }
 
     #[test]
+    fn list_discover_page_mentions_gene_topic_article_followup() {
+        let out = render(Some("discover")).expect("list discover should render");
+        assert!(out.contains(
+            "Unambiguous gene-plus-topic queries can also surface `biomcp search article -g <symbol> -k <topic> --limit 5` when the remaining topic is meaningful."
+        ));
+    }
+
+    #[test]
     fn list_search_all_page_mentions_counts_only_json_contract() {
         let out = render(Some("search-all")).expect("list search-all should render");
         assert!(out.contains("markdown keeps section counts and follow-up links"));
@@ -1130,6 +1138,17 @@ mod tests {
         ));
         assert!(article.contains(
             "typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed"
+        ));
+        assert!(article.contains(
+            "Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>`"
+        ));
+    }
+
+    #[test]
+    fn list_article_page_mentions_entity_aware_followups() {
+        let article = render(Some("article")).expect("list article should render");
+        assert!(article.contains(
+            "Keyword-bearing result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>`"
         ));
         assert!(article.contains(
             "Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>`"

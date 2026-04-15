@@ -76,11 +76,23 @@ fn article_search_related_results_skip_redundant_typed_hints() {
         &article_filters(Some("SRY Sox9 miRNA"), Some("BRAF"), None),
     );
     assert!(!with_gene_filter.contains(&"biomcp get gene SRY".to_string()));
-    assert!(!with_gene_filter.contains(&"biomcp search article -g SRY -k \"Sox9 miRNA\"".to_string()));
+    assert!(
+        !with_gene_filter.contains(&"biomcp search article -g SRY -k \"Sox9 miRNA\"".to_string())
+    );
 
     let with_drug_filter = related_article_search_results(
         &[article_search_result("22663011")],
         &article_filters(Some("psoralen photobinding DNA"), None, Some("psoralen")),
     );
     assert!(!with_drug_filter.contains(&"biomcp get drug psoralen".to_string()));
+}
+
+#[test]
+fn article_search_related_results_skip_non_entity_keyword_hints() {
+    let related = related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("cell cycle checkpoint"), None, None),
+    );
+
+    assert_eq!(related, vec!["biomcp get article 22663011".to_string()]);
 }
