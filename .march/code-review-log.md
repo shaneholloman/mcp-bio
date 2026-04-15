@@ -1,195 +1,93 @@
-# Code Review Log - Ticket 209
+# Code Review Log — Ticket 210
 
-## Critique
+Date: 2026-04-15
+Ticket: `210-add-study-cli-help-descriptions-and-regression-test`
 
-Reviewed `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`,
-`.march/code-log.md`, the full `git diff main..HEAD`, and the two ticket
-commits:
-
-- `d7d13696` `Define disease/gene discovery contract`
-- `091521f5` `Surface disease and gene section follow-ups`
-
-Re-ran the relevant local gates during review:
-
-- `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
-- `BIOMCP_BIN="$PWD/target/debug/biomcp" XDG_CACHE_HOME="$PWD/.cache" PATH="$PWD/target/debug:$PATH" RUST_LOG=error .venv/bin/pytest spec/02-gene.md spec/07-disease.md spec/11-evidence-urls.md spec/21-cross-entity-see-also.md --mustmatch-lang bash --mustmatch-timeout 60 -v`
+## Phase 1 — Critique
 
 ### Design Completeness Audit
 
-All in-scope design items have matching implementation or proof after repair:
+I traced the `design-final.md` help-contract items to the actual change set:
 
-- Shared source of truth for disease/gene next commands:
-  - `src/render/markdown/sections.rs` adds `visible_section_commands(...)`,
-    `disease_next_commands(...)`, and `gene_next_commands(...)`.
-  - `src/render/markdown/mod.rs` exports the new helpers.
-  - `src/cli/disease/dispatch.rs` and `src/cli/gene/dispatch.rs` now feed JSON
-    `_meta.next_commands` from the shared helpers instead of `related_*()` only.
-- Discovery order and visible limits:
-  - `src/render/markdown/sections.rs` adds
-    `DISEASE_DISCOVERY_SECTION_NAMES`, `GENE_DISCOVERY_SECTION_NAMES`, and
-    entity-specific limits of 5 for disease and 4 for gene.
-- Requested-section filtering and no-self-loop behavior:
-  - the shared helper path still relies on `sections_for(...)` rather than
-    dispatch-local filtering.
-  - regression proof exists in
-    `src/cli/tests/next_commands_json_property/disease_trial.rs` and
-    `src/cli/tests/next_commands_json_property/gene_article.rs`.
-- Missing survival description:
-  - `src/render/markdown/sections.rs` now maps
-    `("disease", "survival")` to `SEER Explorer cancer survival rates`.
-- Docs and contract surfaces:
-  - `docs/user-guide/disease.md`
-  - `docs/user-guide/gene.md`
-  - `docs/reference/data-sources.md`
-  - `spec/07-disease.md`
-  - `spec/02-gene.md`
-  - `spec/11-evidence-urls.md`
-- Execution order:
-  - docs/spec/tests landed in `d7d13696`
-  - runtime wiring landed afterward in `091521f5`
-  - this matches both `.march/code-log.md` and the actual commit history.
+| Design area | Matching code/spec change | Result |
+|---|---|---|
+| All nine `study` subcommands get one-line help text | `src/cli/study/mod.rs` variant doc comments; `src/cli/study/tests/help.rs::study_help_lists_descriptions_for_all_subcommands`; `spec/13-study.md::Study Help` | Implemented |
+| Key flag help for `query`, `filter`, `compare`, `co-occurrence`, `survival`, `download`, `top-mutated`, and `cohort` | `src/cli/study/mod.rs` field doc comments; targeted assertions in `src/cli/study/tests/help.rs`; executable assertions in `spec/13-study.md` | Implemented |
+| Canonical values and accepted aliases for `query --type`, `compare --type`, and `survival --endpoint` | `src/cli/study/mod.rs`; `src/cli/study/tests/help.rs`; `spec/13-study.md::Study Help` | Implemented |
+| New Rust regression module and module wire-up | `src/cli/study/tests/help.rs`; `src/cli/study/tests.rs` | Implemented |
+| Executable spec coverage for the changed help contract | `spec/13-study.md` intro row + `## Study Help` section | Implemented |
+| Contract-first execution order | `.march/code-log.md` step order: spec, then Rust tests, then runtime help strings | Implemented |
 
-Acceptance criteria 7 and 8 intentionally rely on unchanged runtime behavior:
+External docs already matched the intended wording closely enough that no extra doc edits were required:
 
-- disease `survival` staying in `all` is still implemented by
-  `src/entities/disease/get.rs`
-- disease/gene `funding` staying opt-in is still enforced by
-  `src/entities/disease/get.rs` and `src/entities/gene.rs`
+- `docs/reference/quick-reference.md`
+- `docs/user-guide/cli-reference.md`
 
-The diff correctly adds proof for those invariants rather than rewriting the
-runtime.
-
-No unmatched `Needs change` markers were present in `design-final.md`.
+I also verified `.march/code-log.md` updated spec/tests before the runtime clap help strings.
 
 ### Test-Design Traceability
 
-Proof-matrix coverage after repair:
+The original implementation had the runtime help text, but several proofs were weaker than the acceptance contract:
 
-- Disease base-card `More:` order and survival description:
-  - `spec/07-disease.md::Getting Disease Details`
-  - `src/render/markdown/sections/tests.rs::sections_disease_base_card_surfaces_survival_and_funding_before_all`
-- Gene base-card `More:` order and preserved trio:
-  - `spec/02-gene.md::Getting Gene Details`
-  - `spec/21-cross-entity-see-also.md::Gene More Ordering`
-  - `src/render/markdown/sections/tests.rs::sections_gene_base_card_surfaces_funding_as_fourth_command`
-- Disease/gene JSON `_meta.next_commands` ordering:
-  - `spec/07-disease.md::Getting Disease Details`
-  - `spec/02-gene.md::Getting Gene Details`
-  - property coverage in
-    `src/cli/tests/next_commands_json_property/disease_trial.rs` and
-    `src/cli/tests/next_commands_json_property/gene_article.rs`
-- Shared JSON contract surface for the new disease/gene follow-ups:
-  - `spec/11-evidence-urls.md::JSON Metadata for Repaired Gaps`
-- Requested section omission:
-  - `disease_json_next_commands_omit_requested_section_follow_up`
-  - `gene_json_next_commands_omit_requested_section_follow_up`
-- Parser validity:
-  - `src/cli/tests/next_commands_validity.rs`
-- Disease `survival` remains in `all`:
-  - `spec/07-disease.md::Disease Funding Stays Opt-In`
-- Disease/gene `funding` stay opt-in:
-  - `spec/07-disease.md::Disease Funding Stays Opt-In`
-  - `spec/02-gene.md::Gene Funding Stays Opt-In`
-  - unchanged parser proof in `src/entities/gene.rs::parse_sections_all_keeps_disgenet_opt_in`
-- Cross-entity follow-ups remain available:
-  - `spec/21-cross-entity-see-also.md`
+1. `study_survival_help_describes_endpoint_values_and_aliases` and the study spec did not assert the `--study` help text required by acceptance criterion 4.
+2. `study_compare_help_describes_type_and_target` and the study spec did not fully pin the `--study` / `--gene` help contract required by acceptance criterion 5.
+3. `study_co_occurrence_help_describes_gene_list_contract` and the study spec did not assert the `--study` help text required by acceptance criterion 6.
+4. `study_download_help_describes_list_and_study_id` and the study spec only checked generic wording, not the positional `study_id` contract / `required unless --list` requirement from acceptance criterion 7.
 
-The exact function names proposed in `design-final.md` were not used verbatim,
-but every required scenario now has matching proof by name or scenario
-description.
+### Other Quality Checks
 
-Issues found during critique:
+- Security: no untrusted-input flow changes, shell execution changes, path handling changes, or data exposure regressions were introduced by this ticket.
+- Duplication: no unnecessary helper or abstraction was introduced; the new help tests follow the existing `Cli::command()` / `write_long_help()` pattern used elsewhere in the repo.
+- Implementation quality: the runtime help text in `src/cli/study/mod.rs` matched the design copy and left parsing/dispatch behavior unchanged, which was correct for the ticket scope.
 
-1. `spec/11-evidence-urls.md` placed the new disease/gene shared JSON-contract
-   assertions inside the OpenFDA-gated `JSON Metadata Contract` heading, so the
-   proof-matrix item existed in the diff but was skipped in the default local
-   spec lane.
-2. `spec/02-gene.md::Gene Funding Stays Opt-In` bundled both markdown and JSON
-   `get gene ERBB2 all` calls into one 60-second bash item. The contract was
-   correct, but the proof was unstable and timed out locally.
+## Phase 2 — Fix Plan
 
-### Implementation Quality Review
+1. Tighten the Rust help regression tests so the changed acceptance criteria are explicitly asserted on stable help phrases.
+2. Tighten `spec/13-study.md` so the executable outside-in spec covers the same missing study/help/positional requirement details.
+3. Re-run targeted study proofs and the repo's focused validation profile.
 
-- Security:
-  - no new shell-injection, path-traversal, auth, or secret-handling defects
-    found
-  - the new next-command builders still rely on `quote_arg(...)` before
-    serializing executable follow-ups
-- Duplication:
-  - no equivalent disease/gene shared next-command helper already existed in the
-    repo; the new render-layer helper is the right place to centralize this
-    logic
-- Runtime quality:
-  - no runtime logic defects were found in the disease/gene implementation
-  - the renderer and JSON paths now share the same section-command source as
-    designed
+## Phase 3 — Repair
 
-## Fix Plan
+### Fixes Applied
 
-Repair the two proof-surface defects directly:
+- Updated `src/cli/study/tests/help.rs` to assert:
+  - `cBioPortal study ID` in `survival`, `compare`, and `co-occurrence` help
+  - `[STUDY_ID]` plus `required unless --list` in `download` help
+- Updated `spec/13-study.md` to assert:
+  - `--study <STUDY>` and `cBioPortal study ID` for `survival`
+  - `--study <STUDY>`, `--gene <GENE>`, `cBioPortal study ID`, and the gene description for `compare`
+  - `--study <STUDY>` and `cBioPortal study ID` for `co-occurrence`
+  - `required unless --list` for `download`
 
-1. Move the disease/gene shared JSON-contract proof onto an ungated, collected
-   `spec/11` heading so the design-matrix assertion executes without
-   `OPENFDA_API_KEY`.
-2. Make the gene opt-in proof stable under the 60-second spec budget by keeping
-   the markdown assertion in `spec/02-gene.md` and moving the JSON opt-in check
-   to the collected `spec/11` repaired-gaps heading.
+### Post-Fix Collateral Damage Scan
 
-## Repair
+After each edit I checked the touched surface for:
 
-Applied the fixes:
+- dead code or orphaned imports: none introduced
+- resource cleanup conflicts: not applicable; no cleanup logic changed
+- stale error/help text: none introduced; assertions were aligned to the actual stable clap rendering
+- shadowed variables: none introduced
 
-- `spec/11-evidence-urls.md`
-  - added disease/gene `_meta.next_commands` order assertions to the collected,
-    ungated `JSON Metadata for Repaired Gaps` heading
-  - added the JSON proof that `biomcp --json get gene ERBB2 all` keeps
-    `funding` absent there as well
-- `spec/02-gene.md`
-  - reduced `Gene Funding Stays Opt-In` to the markdown proof only, removing
-    the deterministic timeout source from the single 60-second bash item
-- filed an adjacent performance issue:
-  - `/home/ian/workspace/planning/biomcp/issues/209-gene-all-runtime-budget.md`
+### Validation
 
-### Post-Fix Collateral Scan
+Passed:
 
-After each spec repair, checked the surrounding surface for:
+- `cargo test --lib cli::study::tests::help -- --nocapture`
+- `cargo test --lib short_help_hides_chart_flags_but_long_help_shows_them`
+- `XDG_CACHE_HOME="$PWD/.cache" uv run --extra dev sh -c 'PATH="$PWD/target/release:$PATH" RUST_LOG=error pytest spec/13-study.md --mustmatch-lang bash --mustmatch-timeout 60 -v'`
+- `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
 
-- dead or uncollected proof: the new disease/gene assertions were moved onto a
-  collected `spec/11` heading
-- stale wording: the repaired-gaps prose still matches what the blocks now
-  assert
-- orphaned checks: the gene JSON opt-in assertion was preserved in `spec/11`
-  after it was removed from `spec/02`
-
-No collateral issues were introduced.
-
-## Verification
-
-- Focused Rust profile before repair:
-  - `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
-  - result: passed
-- Targeted repaired proofs:
-  - `pytest spec/02-gene.md -k 'Gene and Funding and Stays and Opt and In' ...`
-  - result: `1 passed`
-  - `pytest spec/11-evidence-urls.md -k 'JSON and Metadata and Repaired' ...`
-  - result: `3 passed`
-- Full changed spec surface after repair:
-  - `pytest spec/02-gene.md spec/07-disease.md spec/11-evidence-urls.md spec/21-cross-entity-see-also.md ...`
-  - result: `76 passed, 2 skipped`
+No out-of-scope follow-up issue was filed.
 
 ## Residual Concerns
 
-- The ticket implementation itself is sound after review.
-- `spec/11-evidence-urls.md::JSON Metadata Contract` still stays key-gated
-  because it exercises OpenFDA-backed output; the disease/gene assertions now
-  run separately in an ungated heading.
-- The underlying `get gene <symbol> all` runtime is still slow enough to be a
-  future live-spec risk; that was filed separately under the biomcp issues
-  directory.
+None. The remaining help assertions now rely on stable phrases/tokens rather than clap spacing, so the proof surface is materially stronger without being brittle.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | weak-assertion | no | The design proof for shared disease/gene JSON follow-up commands lived in `spec/11-evidence-urls.md::JSON Metadata Contract`, which is skipped without `OPENFDA_API_KEY`, so the proof did not execute in the default local lane. |
-| 2 | weak-assertion | no | `spec/02-gene.md::Gene Funding Stays Opt-In` combined two slow `get gene ERBB2 all` probes into one 60-second bash item and timed out during the review gate rerun. |
+| 1 | weak-assertion | no | Survival help proofs omitted the `--study` help contract required by the design acceptance criteria |
+| 2 | weak-assertion | no | Compare help proofs omitted part of the `--study` / `--gene` help contract required by the design acceptance criteria |
+| 3 | weak-assertion | no | Co-occurrence help proofs omitted the `--study` help contract required by the design acceptance criteria |
+| 4 | weak-assertion | no | Download help proofs omitted the positional `study_id` requirement text (`required unless --list`) required by the design acceptance criteria |

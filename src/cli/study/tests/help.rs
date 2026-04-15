@@ -89,6 +89,7 @@ fn study_cohort_help_describes_gene_split() {
 fn study_survival_help_describes_endpoint_values_and_aliases() {
     let help = render_study_subcommand_long_help("survival");
 
+    assert!(help.contains("cBioPortal study ID"));
     assert!(help.contains("HGNC gene symbol used to define mutant vs wildtype groups"));
     assert!(help.contains("Canonical values: os, dfs, pfs, dss."));
     assert!(help.contains("Accepted aliases: overall, overall_survival,"));
@@ -99,6 +100,7 @@ fn study_survival_help_describes_endpoint_values_and_aliases() {
 fn study_compare_help_describes_type_and_target() {
     let help = render_study_subcommand_long_help("compare");
 
+    assert!(help.contains("cBioPortal study ID"));
     assert!(help.contains("HGNC gene symbol used to define mutant vs wildtype groups"));
     assert!(help.contains("Canonical values: expression, mutations."));
     assert!(help.contains("Accepted aliases: expr, mutation"));
@@ -109,6 +111,7 @@ fn study_compare_help_describes_type_and_target() {
 fn study_co_occurrence_help_describes_gene_list_contract() {
     let help = render_study_subcommand_long_help("co-occurrence");
 
+    assert!(help.contains("cBioPortal study ID"));
     assert!(help.contains("Comma-separated HGNC gene symbols"));
     assert!(help.contains("2-10 genes"));
 }
@@ -117,6 +120,7 @@ fn study_co_occurrence_help_describes_gene_list_contract() {
 fn study_download_help_describes_list_and_study_id() {
     let help = render_study_subcommand_long_help("download");
 
+    assert!(help.contains("[STUDY_ID]"));
     assert!(help.contains("List available remote study IDs"));
-    assert!(help.contains("Study ID to download"));
+    assert!(help.contains("Study ID to download (required unless --list;"));
 }

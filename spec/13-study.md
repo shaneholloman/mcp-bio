@@ -66,7 +66,9 @@ echo "$out" | mustmatch like "Keep samples matching this cancer type label"
 
 ```bash
 out="$(biomcp study survival --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
 echo "$out" | mustmatch like "--endpoint <ENDPOINT>"
+echo "$out" | mustmatch like "cBioPortal study ID"
 echo "$out" | mustmatch like "HGNC gene symbol used to define mutant vs wildtype groups"
 echo "$out" | mustmatch '/Canonical values:\s+os,\s+dfs,\s+pfs,\s+dss\./'
 echo "$out" | mustmatch '/Accepted aliases:\s+overall,\s+overall_survival,\s+disease_free,\s+progression_free,\s+disease_specific/'
@@ -74,7 +76,11 @@ echo "$out" | mustmatch '/Accepted aliases:\s+overall,\s+overall_survival,\s+dis
 
 ```bash
 out="$(biomcp study compare --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
+echo "$out" | mustmatch like "--gene <GENE>"
 echo "$out" | mustmatch like "--target <TARGET>"
+echo "$out" | mustmatch like "cBioPortal study ID"
+echo "$out" | mustmatch like "HGNC gene symbol used to define mutant vs wildtype groups"
 echo "$out" | mustmatch like "Target gene symbol to compare across mutation groups"
 echo "$out" | mustmatch '/Canonical values:\s+expression,\s+mutations\./'
 echo "$out" | mustmatch '/Accepted aliases:\s+expr,\s+mutation/'
@@ -82,7 +88,9 @@ echo "$out" | mustmatch '/Accepted aliases:\s+expr,\s+mutation/'
 
 ```bash
 out="$(biomcp study co-occurrence --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
 echo "$out" | mustmatch like "--genes <GENES>"
+echo "$out" | mustmatch like "cBioPortal study ID"
 echo "$out" | mustmatch like "Comma-separated HGNC gene symbols"
 echo "$out" | mustmatch like "2-10 genes"
 ```
@@ -92,7 +100,7 @@ out="$(biomcp study download --help)"
 echo "$out" | mustmatch like "--list"
 echo "$out" | mustmatch '/\[STUDY_ID\]/'
 echo "$out" | mustmatch like "List available remote study IDs instead of downloading a study"
-echo "$out" | mustmatch like "Study ID to download"
+echo "$out" | mustmatch like "required unless --list"
 ```
 
 ```bash
