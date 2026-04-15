@@ -26,7 +26,11 @@ pub fn search_all_markdown(
         .sections
         .iter()
         .map(|section| {
-            let rows = section.markdown_rows();
+            let rows = if counts_only {
+                Vec::new()
+            } else {
+                section.markdown_rows()
+            };
             let heading_count = if counts_only {
                 section.total.unwrap_or(section.count)
             } else {

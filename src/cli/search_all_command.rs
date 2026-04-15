@@ -28,7 +28,7 @@ pub struct SearchAllArgs {
     /// Maximum rows per section (default: 3)
     #[arg(short, long, default_value = "3")]
     pub limit: usize,
-    /// Render counts per section only (skip section rows)
+    /// Render counts per section only; markdown keeps follow-up links while JSON omits per-section results and links
     #[arg(long = "counts-only")]
     pub counts_only: bool,
     /// Include the executed multi-leg routing plan in markdown or JSON output

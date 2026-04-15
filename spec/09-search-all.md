@@ -22,14 +22,31 @@ echo "$out" | mustmatch like "## Variants"
 
 ## Counts-only Mode
 
-Counts-only output is useful for low-noise planning before fetching rows. The stable marker is the explicit row-omission line plus presence of repeated entity sections.
+Counts-only output is useful for low-noise planning before fetching rows. In
+markdown, the stable markers are the explicit row-omission line, repeated
+entity sections, and preserved follow-up commands.
 
 ```bash
 out="$(biomcp search all -g BRAF --counts-only)"
 echo "$out" | mustmatch like "Rows omitted ("
 echo "$out" | mustmatch like "--counts-only"
+echo "$out" | mustmatch like "biomcp search trial --biomarker BRAF"
 echo "$out" | mustmatch '/## Variants \([0-9]+\)/'
 echo "$out" | mustmatch '/## Trials \([0-9]+\)/'
+```
+
+## Counts-only JSON Contract
+
+In `--json --counts-only` mode each section should carry only section metadata
+and orientation counts. Per-section `results`, `links`, and `total` are
+omitted.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" --json search all -g BRAF --counts-only --limit 1)"
+echo "$out" | mustmatch like '"entity": "'
+echo "$out" | mustmatch like '"searches_dispatched":'
+echo "$out" | jq -e '.sections | length > 0 and all(.[]; (.entity | type == "string") and (.label | type == "string") and (.count | type == "number") and (has("results") | not) and (has("links") | not) and (has("total") | not))' > /dev/null
 ```
 
 ## Single Gene Search

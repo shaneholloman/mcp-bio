@@ -294,7 +294,13 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                     };
                     let results = crate::cli::search_all::dispatch(&input).await?;
                     if json {
-                        Ok(crate::render::json::to_pretty(&results)?)
+                        if input.counts_only {
+                            Ok(crate::render::json::to_pretty(
+                                &crate::cli::search_all::counts_only_json(&results),
+                            )?)
+                        } else {
+                            Ok(crate::render::json::to_pretty(&results)?)
+                        }
                     } else {
                         Ok(crate::render::markdown::search_all_markdown(
                             &results,
