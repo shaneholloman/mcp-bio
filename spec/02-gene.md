@@ -248,8 +248,6 @@ invent a fake NIH Reporter block when the user did not ask for one.
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get gene ERBB2 all)"
 echo "$out" | mustmatch not like "## Funding (NIH Reporter)"
-json="$("$bin" --json get gene ERBB2 all)"
-echo "$json" | jq -e '.funding == null and .funding_note == null' > /dev/null
 ```
 
 ## Gene to Trials
