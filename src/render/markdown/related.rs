@@ -301,6 +301,294 @@ pub(super) fn related_variant_search_results(
     dedupe_markdown_commands(out)
 }
 
+pub(super) fn search_next_commands_article(results: &[ArticleSearchResult]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(pmid) = results
+        .first()
+        .map(|result| quote_arg(&result.pmid))
+        .filter(|pmid| !pmid.is_empty())
+    {
+        out.push(format!("biomcp get article {pmid}"));
+    }
+    out.push("biomcp list article".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_trial(results: &[TrialSearchResult]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(nct_id) = results
+        .first()
+        .map(|result| quote_arg(&result.nct_id))
+        .filter(|nct_id| !nct_id.is_empty())
+    {
+        out.push(format!("biomcp get trial {nct_id}"));
+    }
+    out.push("biomcp list trial".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_variant(
+    results: &[VariantSearchResult],
+    gene_filter: Option<&str>,
+    condition_filter: Option<&str>,
+) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = related_variant_search_results(results, gene_filter, condition_filter);
+    out.push("biomcp list variant".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_gene(results: &[GeneSearchResult]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(symbol) = results
+        .first()
+        .map(|result| quote_arg(&result.symbol))
+        .filter(|symbol| !symbol.is_empty())
+    {
+        out.push(format!("biomcp get gene {symbol}"));
+    }
+    out.push("biomcp list gene".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_disease(results: &[DiseaseSearchResult]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(id) = results
+        .first()
+        .map(|result| quote_arg(&result.id))
+        .filter(|id| !id.is_empty())
+    {
+        out.push(format!("biomcp get disease {id}"));
+    }
+    out.push("biomcp list disease".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_drug(
+    results: &[DrugSearchResult],
+    requested_name: Option<&str>,
+) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(name) = preferred_drug_name(
+        results.iter().map(|result| result.name.as_str()),
+        requested_name,
+    )
+    .or_else(|| {
+        results
+            .first()
+            .map(|result| result.name.trim())
+            .filter(|name| !name.is_empty())
+            .map(str::to_string)
+    }) {
+        out.push(format!("biomcp get drug {}", quote_arg(&name)));
+    }
+    out.push("biomcp list drug".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_drug_eu(
+    results: &[EmaDrugSearchResult],
+    requested_name: Option<&str>,
+) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(name) = preferred_drug_name(
+        results.iter().map(|result| result.name.as_str()),
+        requested_name,
+    )
+    .or_else(|| {
+        results
+            .first()
+            .map(|result| result.name.trim())
+            .filter(|name| !name.is_empty())
+            .map(str::to_string)
+    }) {
+        out.push(format!("biomcp get drug {}", quote_arg(&name)));
+    }
+    out.push("biomcp list drug".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_drug_who(
+    results: &[WhoPrequalificationSearchResult],
+    requested_name: Option<&str>,
+) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(name) = preferred_drug_name(
+        results.iter().map(|result| result.inn.as_str()),
+        requested_name,
+    )
+    .or_else(|| {
+        results
+            .first()
+            .map(|result| result.inn.trim())
+            .filter(|name| !name.is_empty())
+            .map(str::to_string)
+    }) {
+        out.push(format!("biomcp get drug {}", quote_arg(&name)));
+    }
+    out.push("biomcp list drug".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_drug_all(requested_name: &str) -> Vec<String> {
+    let requested_name = requested_name.trim();
+    if requested_name.is_empty() {
+        return Vec::new();
+    }
+
+    dedupe_markdown_commands(vec![
+        format!("biomcp get drug {}", quote_arg(requested_name)),
+        "biomcp list drug".to_string(),
+    ])
+}
+
+pub(super) fn search_next_commands_pgx(
+    results: &[PgxSearchResult],
+    gene_filter: Option<&str>,
+    drug_filter: Option<&str>,
+) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let top_query = gene_filter
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
+        .or_else(|| {
+            drug_filter
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(str::to_string)
+        })
+        .or_else(|| {
+            results.first().and_then(|result| {
+                let gene = result.genesymbol.trim();
+                if !gene.is_empty() {
+                    return Some(gene.to_string());
+                }
+                let drug = result.drugname.trim();
+                (!drug.is_empty()).then(|| drug.to_string())
+            })
+        });
+
+    let mut out = Vec::new();
+    if let Some(query) = top_query {
+        out.push(format!("biomcp get pgx {}", quote_arg(&query)));
+    }
+    out.push("biomcp list pgx".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_pathway(results: &[PathwaySearchResult]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(id) = results
+        .first()
+        .map(|result| quote_arg(&result.id))
+        .filter(|id| !id.is_empty())
+    {
+        out.push(format!("biomcp get pathway {id}"));
+    }
+    out.push("biomcp list pathway".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_faers(results: &[AdverseEventSearchResult]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(report_id) = results
+        .first()
+        .map(|result| quote_arg(&result.report_id))
+        .filter(|report_id| !report_id.is_empty())
+    {
+        out.push(format!("biomcp get adverse-event {report_id}"));
+    }
+    out.push("biomcp list adverse-event".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_device_events(
+    results: &[DeviceEventSearchResult],
+) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(report_id) = results
+        .first()
+        .map(|result| quote_arg(&result.report_id))
+        .filter(|report_id| !report_id.is_empty())
+    {
+        out.push(format!("biomcp get adverse-event {report_id}"));
+    }
+    out.push("biomcp list adverse-event".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_recalls(results: &[RecallSearchResult]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    vec!["biomcp list adverse-event".to_string()]
+}
+
+pub(super) fn search_next_commands_gwas(results: &[VariantGwasAssociation]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(rsid) = results
+        .first()
+        .map(|result| quote_arg(&result.rsid))
+        .filter(|rsid| !rsid.is_empty())
+    {
+        out.push(format!("biomcp get variant {rsid}"));
+    }
+    out.push("biomcp list gwas".to_string());
+    dedupe_markdown_commands(out)
+}
+
 pub(super) fn related_phenotype_search_results(results: &[PhenotypeSearchResult]) -> Vec<String> {
     let Some(label) = results.first().and_then(|row| {
         let name = row.disease_name.trim();
@@ -433,6 +721,53 @@ pub(super) fn normalize_match_text(value: &str) -> String {
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+pub(super) fn preferred_drug_name<'a>(
+    names: impl IntoIterator<Item = &'a str>,
+    preferred: Option<&str>,
+) -> Option<String> {
+    let preferred = preferred.map(str::trim).filter(|value| !value.is_empty())?;
+    let preferred = preferred.to_ascii_lowercase();
+    names
+        .into_iter()
+        .map(str::trim)
+        .filter_map(|name| {
+            drug_parent_match_rank(name, &preferred).map(|rank| (rank, name.to_string()))
+        })
+        .min_by_key(|(rank, _)| *rank)
+        .map(|(_, name)| name)
+}
+
+pub(super) fn drug_parent_match_rank(name: &str, preferred_lower: &str) -> Option<u8> {
+    let normalized = name.trim().to_ascii_lowercase();
+    if normalized.is_empty() {
+        return None;
+    }
+    if normalized == preferred_lower {
+        return Some(0);
+    }
+    if normalized.starts_with(&format!("{preferred_lower} ")) {
+        return Some(1);
+    }
+    if normalized.contains(preferred_lower) {
+        if looks_like_metabolite_name(&normalized) {
+            return Some(3);
+        }
+        return Some(2);
+    }
+    None
+}
+
+pub(super) fn looks_like_metabolite_name(value: &str) -> bool {
+    value.contains("metabolite")
+        || value.starts_with("desmethyl ")
+        || value.starts_with("n-desmethyl ")
+        || value.starts_with("hydroxy ")
+        || value.starts_with("dealkyl ")
+        || value.starts_with("oxo ")
+        || value.starts_with("nor ")
+        || value.starts_with("nor-")
 }
 
 pub(super) fn token_subset_match(left: &str, right: &str) -> bool {

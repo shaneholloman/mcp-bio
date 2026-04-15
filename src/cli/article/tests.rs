@@ -1,8 +1,8 @@
 use clap::{CommandFactory, Parser};
 
 use super::dispatch::{
-    article_debug_filters, article_query_summary, article_search_json, build_article_debug_plan,
-    truncate_article_annotations,
+    ArticleSearchJsonPage, article_debug_filters, article_query_summary, article_search_json,
+    build_article_debug_plan, truncate_article_annotations,
 };
 use crate::cli::{Cli, Commands, PaginationMeta};
 
@@ -117,6 +117,49 @@ fn article_search_json_includes_query_and_ranking_context() {
         3,
         0,
     );
+    let results = vec![crate::entities::article::ArticleSearchResult {
+        pmid: "22663011".into(),
+        pmcid: Some("PMC9984800".into()),
+        doi: Some("10.1056/NEJMoa1203421".into()),
+        title: "BRAF melanoma review".into(),
+        journal: Some("Journal".into()),
+        date: Some("2025-01-01".into()),
+        citation_count: Some(12),
+        influential_citation_count: Some(4),
+        source: crate::entities::article::ArticleSource::EuropePmc,
+        matched_sources: vec![
+            crate::entities::article::ArticleSource::EuropePmc,
+            crate::entities::article::ArticleSource::SemanticScholar,
+        ],
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: Some("Abstract".into()),
+        ranking: Some(crate::entities::article::ArticleRankingMetadata {
+            directness_tier: 3,
+            anchor_count: 2,
+            title_anchor_hits: 2,
+            abstract_anchor_hits: 0,
+            combined_anchor_hits: 2,
+            all_anchors_in_title: true,
+            all_anchors_in_text: true,
+            study_or_review_cue: true,
+            pubmed_rescue: false,
+            pubmed_rescue_kind: None,
+            pubmed_source_position: None,
+            mode: Some(crate::entities::article::ArticleRankingMode::Lexical),
+            semantic_score: None,
+            lexical_score: None,
+            citation_score: None,
+            position_score: None,
+            composite_score: None,
+            avg_source_rank: None,
+        }),
+        normalized_title: "braf melanoma review".into(),
+        normalized_abstract: "abstract".into(),
+        publication_type: Some("Review".into()),
+        source_local_position: 0,
+    }];
+    let next_commands = crate::render::markdown::search_next_commands_article(&results);
     let json = article_search_json(
         &query,
         &filters,
@@ -125,49 +168,11 @@ fn article_search_json_includes_query_and_ranking_context() {
             "Note: --type restricts article search to Europe PMC and PubMed. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering.".into(),
         ),
         None,
-        vec![crate::entities::article::ArticleSearchResult {
-            pmid: "22663011".into(),
-            pmcid: Some("PMC9984800".into()),
-            doi: Some("10.1056/NEJMoa1203421".into()),
-            title: "BRAF melanoma review".into(),
-            journal: Some("Journal".into()),
-            date: Some("2025-01-01".into()),
-            citation_count: Some(12),
-            influential_citation_count: Some(4),
-            source: crate::entities::article::ArticleSource::EuropePmc,
-            matched_sources: vec![
-                crate::entities::article::ArticleSource::EuropePmc,
-                crate::entities::article::ArticleSource::SemanticScholar,
-            ],
-            score: None,
-            is_retracted: Some(false),
-            abstract_snippet: Some("Abstract".into()),
-            ranking: Some(crate::entities::article::ArticleRankingMetadata {
-                directness_tier: 3,
-                anchor_count: 2,
-                title_anchor_hits: 2,
-                abstract_anchor_hits: 0,
-                combined_anchor_hits: 2,
-                all_anchors_in_title: true,
-                all_anchors_in_text: true,
-                study_or_review_cue: true,
-                pubmed_rescue: false,
-                pubmed_rescue_kind: None,
-                pubmed_source_position: None,
-                mode: Some(crate::entities::article::ArticleRankingMode::Lexical),
-                semantic_score: None,
-                lexical_score: None,
-                citation_score: None,
-                position_score: None,
-                composite_score: None,
-                avg_source_rank: None,
-            }),
-            normalized_title: "braf melanoma review".into(),
-            normalized_abstract: "abstract".into(),
-            publication_type: Some("Review".into()),
-            source_local_position: 0,
-        }],
-        pagination,
+        ArticleSearchJsonPage {
+            results,
+            pagination,
+            next_commands,
+        },
     )
     .expect("article search json should render");
 
@@ -191,6 +196,14 @@ fn article_search_json_includes_query_and_ranking_context() {
     assert_eq!(
         value["results"][0]["matched_sources"][1],
         serde_json::Value::String("semanticscholar".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get article 22663011".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp list article".into())
     );
 }
 

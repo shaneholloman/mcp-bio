@@ -58,7 +58,12 @@ pub(crate) async fn handle_search(
                 page.total,
             );
             if json {
-                return super::super::search_json(results, pagination).map(CommandOutcome::stdout);
+                let next_commands = crate::render::markdown::search_next_commands_drug(
+                    &results,
+                    filters.query.as_deref(),
+                );
+                return super::super::search_json_with_meta(results, pagination, next_commands)
+                    .map(CommandOutcome::stdout);
             }
             let footer = super::super::pagination_footer_offset(&pagination);
             crate::render::markdown::drug_search_markdown_with_region(
@@ -82,7 +87,12 @@ pub(crate) async fn handle_search(
                 page.total,
             );
             if json {
-                return super::super::search_json(results, pagination).map(CommandOutcome::stdout);
+                let next_commands = crate::render::markdown::search_next_commands_drug_eu(
+                    &results,
+                    filters.query.as_deref(),
+                );
+                return super::super::search_json_with_meta(results, pagination, next_commands)
+                    .map(CommandOutcome::stdout);
             }
             let footer = super::super::pagination_footer_offset(&pagination);
             crate::render::markdown::drug_search_markdown_with_region(
@@ -106,7 +116,12 @@ pub(crate) async fn handle_search(
                 page.total,
             );
             if json {
-                return super::super::search_json(results, pagination).map(CommandOutcome::stdout);
+                let next_commands = crate::render::markdown::search_next_commands_drug_who(
+                    &results,
+                    filters.query.as_deref(),
+                );
+                return super::super::search_json_with_meta(results, pagination, next_commands)
+                    .map(CommandOutcome::stdout);
             }
             let footer = super::super::pagination_footer_offset(&pagination);
             crate::render::markdown::drug_search_markdown_with_region(
@@ -123,7 +138,17 @@ pub(crate) async fn handle_search(
         }
         crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
             if json {
-                return drug_all_region_search_json(&query_summary, us, eu, who)
+                let next_commands =
+                    if us.results.is_empty() && eu.results.is_empty() && who.results.is_empty() {
+                        Vec::new()
+                    } else {
+                        filters
+                            .query
+                            .as_deref()
+                            .map(crate::render::markdown::search_next_commands_drug_all)
+                            .unwrap_or_default()
+                    };
+                return drug_all_region_search_json(&query_summary, us, eu, who, next_commands)
                     .map(CommandOutcome::stdout);
             }
             crate::render::markdown::drug_search_markdown_with_region(
@@ -355,6 +380,8 @@ pub(super) struct DrugAllRegionSearchResponse<
     us: RegionResults<T>,
     eu: RegionResults<U>,
     who: RegionResults<V>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    _meta: Option<crate::cli::SearchJsonMeta>,
 }
 
 pub(super) fn to_region_results<T: serde::Serialize>(
@@ -372,6 +399,7 @@ pub(super) fn drug_all_region_search_json(
     us: crate::entities::SearchPage<crate::entities::drug::DrugSearchResult>,
     eu: crate::entities::SearchPage<crate::entities::drug::EmaDrugSearchResult>,
     who: crate::entities::SearchPage<crate::entities::drug::WhoPrequalificationSearchResult>,
+    next_commands: Vec<String>,
 ) -> anyhow::Result<String> {
     crate::render::json::to_pretty(&DrugAllRegionSearchResponse {
         region: crate::entities::drug::DrugRegion::All.as_str(),
@@ -379,6 +407,7 @@ pub(super) fn drug_all_region_search_json(
         us: to_region_results(us),
         eu: to_region_results(eu),
         who: to_region_results(who),
+        _meta: crate::cli::search_meta(next_commands),
     })
     .map_err(Into::into)
 }

@@ -150,13 +150,18 @@ pub(crate) async fn handle_search(
                         count: usize,
                         summary: crate::entities::adverse_event::AdverseEventSearchSummary,
                         results: Vec<crate::entities::adverse_event::AdverseEventSearchResult>,
+                        #[serde(skip_serializing_if = "Option::is_none")]
+                        _meta: Option<crate::cli::SearchJsonMeta>,
                     }
 
+                    let next_commands =
+                        crate::render::markdown::search_next_commands_faers(&results);
                     crate::render::json::to_pretty(&SearchResponse {
                         pagination,
                         count: results.len(),
                         summary,
                         results,
+                        _meta: crate::cli::search_meta(next_commands),
                     })?
                 } else {
                     let footer = super::super::pagination_footer_offset(&pagination);
@@ -230,7 +235,9 @@ pub(crate) async fn handle_search(
                 page.total,
             );
             if json {
-                return super::super::search_json(results, pagination).map(CommandOutcome::stdout);
+                let next_commands = crate::render::markdown::search_next_commands_recalls(&results);
+                return super::super::search_json_with_meta(results, pagination, next_commands)
+                    .map(CommandOutcome::stdout);
             }
             let footer = super::super::pagination_footer_offset(&pagination);
             crate::render::markdown::recall_search_markdown_with_footer(
@@ -303,7 +310,10 @@ pub(crate) async fn handle_search(
                 page.total,
             );
             if json {
-                return super::super::search_json(results, pagination).map(CommandOutcome::stdout);
+                let next_commands =
+                    crate::render::markdown::search_next_commands_device_events(&results);
+                return super::super::search_json_with_meta(results, pagination, next_commands)
+                    .map(CommandOutcome::stdout);
             }
             let footer = super::super::pagination_footer_offset(&pagination);
             crate::render::markdown::device_event_search_markdown_with_footer(

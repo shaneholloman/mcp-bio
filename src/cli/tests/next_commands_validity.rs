@@ -20,6 +20,12 @@ fn gene_next_commands_parse() {
 }
 
 #[test]
+fn gene_search_json_next_commands_parse() {
+    assert_parses("biomcp get gene BRAF");
+    assert_parses("biomcp list gene");
+}
+
+#[test]
 fn variant_next_commands_parse() {
     assert_parses("biomcp get gene BRAF");
     assert_parses(r#"biomcp search article -g SCN1A -d "Dravet syndrome" -k "T1174S" --limit 5"#);
@@ -33,6 +39,12 @@ fn variant_next_commands_parse() {
 }
 
 #[test]
+fn variant_search_json_next_commands_parse() {
+    assert_parses("biomcp get variant rs113488022");
+    assert_parses("biomcp list variant");
+}
+
+#[test]
 fn article_next_commands_parse() {
     assert_parses("biomcp search gene -q EGFR");
     assert_parses(r#"biomcp search gene -q "serine-threonine protein kinase""#);
@@ -42,6 +54,12 @@ fn article_next_commands_parse() {
     assert_parses("biomcp article citations 12345 --limit 3");
     assert_parses("biomcp article references 12345 --limit 3");
     assert_parses("biomcp article recommendations 12345 67890 --negative 11111 --limit 3");
+}
+
+#[test]
+fn article_search_json_next_commands_parse() {
+    assert_parses("biomcp get article 12345");
+    assert_parses("biomcp list article");
 }
 
 #[test]
@@ -58,6 +76,12 @@ fn trial_next_commands_parse() {
 }
 
 #[test]
+fn trial_search_json_next_commands_parse() {
+    assert_parses("biomcp get trial NCT01234567");
+    assert_parses("biomcp list trial");
+}
+
+#[test]
 fn disease_next_commands_parse() {
     assert_parses("biomcp get gene SCN1A clingen constraint");
     assert_parses(r#"biomcp get disease "Dravet syndrome" genes phenotypes"#);
@@ -67,9 +91,21 @@ fn disease_next_commands_parse() {
 }
 
 #[test]
+fn disease_search_json_next_commands_parse() {
+    assert_parses("biomcp get disease MONDO:0005105");
+    assert_parses("biomcp list disease");
+}
+
+#[test]
 fn pgx_next_commands_parse() {
     assert_parses("biomcp search pgx -g CYP2D6");
     assert_parses("biomcp search pgx -d warfarin");
+}
+
+#[test]
+fn pgx_search_json_next_commands_parse() {
+    assert_parses("biomcp get pgx CYP2D6");
+    assert_parses("biomcp list pgx");
 }
 
 #[test]
@@ -80,8 +116,20 @@ fn drug_next_commands_parse() {
 }
 
 #[test]
+fn drug_search_json_next_commands_parse() {
+    assert_parses("biomcp get drug pembrolizumab");
+    assert_parses("biomcp list drug");
+}
+
+#[test]
 fn pathway_next_commands_parse() {
     assert_parses("biomcp pathway drugs R-HSA-5673001");
+}
+
+#[test]
+fn pathway_search_json_next_commands_parse() {
+    assert_parses("biomcp get pathway R-HSA-5673001");
+    assert_parses("biomcp list pathway");
 }
 
 #[test]
@@ -89,6 +137,12 @@ fn protein_next_commands_parse() {
     assert_parses("biomcp get protein P00533 structures");
     assert_parses("biomcp get protein P00533 complexes");
     assert_parses("biomcp get gene EGFR");
+}
+
+#[test]
+fn adverse_event_search_json_next_commands_parse() {
+    assert_parses("biomcp get adverse-event 12345");
+    assert_parses("biomcp list adverse-event");
 }
 
 #[test]
@@ -102,6 +156,12 @@ fn adverse_event_next_commands_parse() {
 fn device_event_next_commands_parse() {
     assert_parses("biomcp search adverse-event --type device --device HeartValve");
     assert_parses(r#"biomcp search adverse-event --type recall --classification "Class I""#);
+}
+
+#[test]
+fn gwas_search_json_next_commands_parse() {
+    assert_parses("biomcp get variant rs7903146");
+    assert_parses("biomcp list gwas");
 }
 
 #[test]

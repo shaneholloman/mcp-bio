@@ -22,6 +22,17 @@ echo "$out" | mustmatch like "| ID | Gene | Protein | Legacy Name |"
 echo "$out" | mustmatch like "Query: gene=BRAF"
 ```
 
+## Search JSON Next Commands
+
+Non-empty variant search JSON should expose executable follow-up commands for
+the top hit and the broader variant command surface.
+
+```bash
+json_out="$(biomcp --json search variant -g BRAF --limit 3)"
+echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get variant .+$")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list variant")' > /dev/null
+```
+
 ## Finding a Specific Variant
 
 Adding `--hgvsp` should constrain the result set to a precise protein change. We check for the query marker and V600E appearance in rows.
@@ -244,6 +255,17 @@ echo "$out" | mustmatch like '"kind": "protein_change_only"'
 echo "$out" | mustmatch like '"requested_entity": "variant"'
 echo "$out" | mustmatch like '"next_commands": ['
 echo "$out" | mustmatch like '"biomcp discover R620W"'
+```
+
+## GWAS Search JSON Next Commands
+
+GWAS search JSON should expose the top-variant follow-up directly so agents can
+pivot from association search into the canonical variant card.
+
+```bash
+json_out="$(biomcp --json search gwas -g TCF7L2 --limit 5)"
+echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get variant .+$")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list gwas")' > /dev/null
 ```
 
 ## Variant to Trials

@@ -31,6 +31,17 @@ echo "$out" | mustmatch like "# PGx Search: drug=warfarin"
 echo "$out" | mustmatch '/warfarin/i'
 ```
 
+## Search JSON Next Commands
+
+Non-empty PGx search JSON should expose the best detail pivot and the full PGx
+command-family reference in `_meta.next_commands`.
+
+```bash
+json_out="$(biomcp --json search pgx -g CYP2D6 --limit 3)"
+echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get pgx .+$")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list pgx")' > /dev/null
+```
+
 ## Getting PGx Details
 
 `get pgx` aggregates affected drugs and recommendation context for the query anchor. The assertions verify card heading and affected-drug summary marker.

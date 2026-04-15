@@ -166,7 +166,9 @@ pub(in crate::cli) async fn handle_search(
             page.next_page_token,
         );
         if json {
-            return super::super::search_json(results, pagination).map(CommandOutcome::stdout);
+            let next_commands = crate::render::markdown::search_next_commands_trial(&results);
+            return super::super::search_json_with_meta(results, pagination, next_commands)
+                .map(CommandOutcome::stdout);
         }
 
         let footer = if matches!(

@@ -249,6 +249,7 @@ fn search_json_preserves_who_search_fields() {
 
 #[test]
 fn drug_all_region_search_json_includes_who_bucket() {
+    let next_commands = crate::render::markdown::search_next_commands_drug_all("trastuzumab");
     let json = drug_all_region_search_json(
         "trastuzumab",
         crate::entities::SearchPage::offset(
@@ -282,6 +283,7 @@ fn drug_all_region_search_json_includes_who_bucket() {
             }],
             Some(1),
         ),
+        next_commands,
     )
     .expect("all-region drug search json");
 
@@ -296,5 +298,13 @@ fn drug_all_region_search_json_includes_who_bucket() {
     assert_eq!(
         value["eu"]["results"][0]["ema_product_number"],
         "EMEA/H/C/004123"
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get drug trastuzumab".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp list drug".into())
     );
 }
