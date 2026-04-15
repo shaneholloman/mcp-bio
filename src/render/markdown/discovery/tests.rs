@@ -32,6 +32,41 @@ fn search_all_markdown_renders_section_note() {
 }
 
 #[test]
+fn search_all_markdown_counts_only_keeps_links_without_row_headers() {
+    let results = crate::cli::search_all::SearchAllResults {
+        query: "gene=BRAF".to_string(),
+        sections: vec![crate::cli::search_all::SearchAllSection {
+            entity: "trial".to_string(),
+            label: "Trials".to_string(),
+            count: 1,
+            total: Some(12),
+            error: None,
+            note: None,
+            results: vec![serde_json::json!({
+                "nct_id": "NCT00000001",
+                "title": "BRAF trial",
+                "status": "RECRUITING",
+            })],
+            links: vec![crate::cli::search_all::SearchAllLink {
+                rel: "cross.trials".to_string(),
+                title: "Search trials".to_string(),
+                command: "biomcp search trial --biomarker BRAF --limit 3".to_string(),
+            }],
+        }],
+        searches_dispatched: 1,
+        searches_with_results: 1,
+        wall_time_ms: 42,
+        debug_plan: None,
+    };
+
+    let markdown = search_all_markdown(&results, true).expect("counts-only markdown should render");
+    assert!(markdown.contains("## Trials (12)"));
+    assert!(markdown.contains("Rows omitted"));
+    assert!(markdown.contains("biomcp search trial --biomarker BRAF --limit 3"));
+    assert!(!markdown.contains("| NCT | Title | Status |"));
+}
+
+#[test]
 fn render_discover_renders_grouped_concepts_and_plain_language() {
     let result = crate::entities::discover::DiscoverResult {
         query: "BRCA1".to_string(),

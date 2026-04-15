@@ -152,6 +152,49 @@ pub struct SearchAllResults {
     pub(crate) debug_plan: Option<DebugPlan>,
 }
 
+#[derive(Debug, Serialize)]
+pub(crate) struct SearchAllCountsOnlyJson<'a> {
+    pub query: &'a str,
+    pub sections: Vec<SearchAllCountsOnlySection<'a>>,
+    pub searches_dispatched: usize,
+    pub searches_with_results: usize,
+    pub wall_time_ms: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub debug_plan: Option<&'a DebugPlan>,
+}
+
+#[derive(Debug, Serialize)]
+pub(crate) struct SearchAllCountsOnlySection<'a> {
+    pub entity: &'a str,
+    pub label: &'a str,
+    pub count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub note: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<&'a str>,
+}
+
+pub(crate) fn counts_only_json(results: &SearchAllResults) -> SearchAllCountsOnlyJson<'_> {
+    SearchAllCountsOnlyJson {
+        query: &results.query,
+        sections: results
+            .sections
+            .iter()
+            .map(|section| SearchAllCountsOnlySection {
+                entity: &section.entity,
+                label: &section.label,
+                count: section.total.unwrap_or(section.count),
+                note: section.note.as_deref(),
+                error: section.error.as_deref(),
+            })
+            .collect(),
+        searches_dispatched: results.searches_dispatched,
+        searches_with_results: results.searches_with_results,
+        wall_time_ms: results.wall_time_ms,
+        debug_plan: results.debug_plan.as_ref(),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DispatchSpec {
     pub entity: &'static str,
@@ -318,6 +361,8 @@ struct PreparedInput {
     keyword: Option<String>,
     since: Option<String>,
     limit: usize,
+    counts_only: bool,
+    debug_plan: bool,
     anchor: Anchor,
     variant_context: Option<VariantContext>,
 }
@@ -348,7 +393,7 @@ pub async fn dispatch(input: &SearchAllInput) -> Result<SearchAllResults, BioMcp
 
     Ok(SearchAllResults {
         query: prepared.query_summary(),
-        debug_plan: input
+        debug_plan: prepared
             .debug_plan
             .then(|| build_result_plan(&prepared, &sections)),
         sections,
@@ -716,6 +761,8 @@ impl PreparedInput {
             keyword,
             since,
             limit: input.limit,
+            counts_only: input.counts_only,
+            debug_plan: input.debug_plan,
             anchor,
             variant_context,
         })
@@ -881,7 +928,9 @@ fn build_dispatch_plan_prepared(input: &PreparedInput) -> Vec<DispatchSpec> {
 async fn dispatch_section(kind: SectionKind, input: &PreparedInput) -> SearchAllSection {
     let search_self = canonical_search_command(kind, input, input.limit);
     let timeout = section_timeout(kind);
-    let section_result = tokio::time::timeout(timeout, run_section(kind, input)).await;
+    let effective_limit = section_fetch_limit(kind, input);
+    let section_result =
+        tokio::time::timeout(timeout, run_section(kind, input, effective_limit)).await;
 
     match section_result {
         Ok(Ok(section_result)) => {
@@ -935,6 +984,7 @@ async fn dispatch_section(kind: SectionKind, input: &PreparedInput) -> SearchAll
 async fn run_section(
     kind: SectionKind,
     input: &PreparedInput,
+    limit: usize,
 ) -> Result<SectionResult, BioMcpError> {
     match kind {
         SectionKind::Gene => {
@@ -945,7 +995,7 @@ async fn run_section(
                 query: Some(query.to_string()),
                 ..Default::default()
             };
-            let page = crate::entities::gene::search_page(&filters, input.limit, 0).await?;
+            let page = crate::entities::gene::search_page(&filters, limit, 0).await?;
             Ok(SectionResult::new(to_json_array(page.results)?, page.total))
         }
         SectionKind::Variant => {
@@ -989,7 +1039,7 @@ async fn run_section(
                     "No filters available for variant search.".into(),
                 ));
             }
-            let page = crate::entities::variant::search_page(&filters, input.limit, 0).await?;
+            let page = crate::entities::variant::search_page(&filters, limit, 0).await?;
             let mut rows = page.results;
             let mut total = page.total;
             let mut note = None;
@@ -1002,8 +1052,7 @@ async fn run_section(
                     ..Default::default()
                 };
                 let fallback_page =
-                    crate::entities::variant::search_page(&fallback_filters, input.limit, 0)
-                        .await?;
+                    crate::entities::variant::search_page(&fallback_filters, limit, 0).await?;
                 rows = fallback_page.results;
                 total = fallback_page.total;
                 if !rows.is_empty() {
@@ -1036,7 +1085,7 @@ async fn run_section(
                 query: Some(query.to_string()),
                 ..Default::default()
             };
-            let page = crate::entities::disease::search_page(&filters, input.limit, 0).await?;
+            let page = crate::entities::disease::search_page(&filters, limit, 0).await?;
             Ok(SectionResult::new(to_json_array(page.results)?, page.total))
         }
         SectionKind::Drug => {
@@ -1063,8 +1112,8 @@ async fn run_section(
                     "No filters available for drug search.".into(),
                 ));
             }
-            let page = crate::entities::drug::search_page(&filters, input.limit, 0).await?;
-            let rows = refine_drug_results(page.results, input.drug.as_deref(), input.limit);
+            let page = crate::entities::drug::search_page(&filters, limit, 0).await?;
+            let rows = refine_drug_results(page.results, input.drug.as_deref(), limit);
             let total = if input.drug.is_some() {
                 Some(rows.len())
             } else {
@@ -1094,9 +1143,7 @@ async fn run_section(
             let mut total = None;
             let mut preferred_error: Option<BioMcpError> = None;
 
-            match crate::entities::trial::search_page(&preferred_filters, input.limit, 0, None)
-                .await
-            {
+            match crate::entities::trial::search_page(&preferred_filters, limit, 0, None).await {
                 Ok(page) => {
                     total = page.total;
                     rows = page.results;
@@ -1106,14 +1153,18 @@ async fn run_section(
                 }
             }
 
-            if rows.len() < input.limit {
-                let backfill_fetch = input.limit.saturating_mul(3).min(MAX_SEARCH_ALL_LIMIT);
+            if rows.len() < limit {
+                let backfill_fetch = if input.counts_only {
+                    limit
+                } else {
+                    input.limit.saturating_mul(3).min(MAX_SEARCH_ALL_LIMIT)
+                };
                 match crate::entities::trial::search_page(&base_filters, backfill_fetch, 0, None)
                     .await
                 {
                     Ok(page) => {
                         total = total.or(page.total);
-                        rows = merge_trial_backfill_rows(rows, page.results, input.limit);
+                        rows = merge_trial_backfill_rows(rows, page.results, limit);
                     }
                     Err(err) if rows.is_empty() => {
                         return Err(preferred_error.unwrap_or(err));
@@ -1128,14 +1179,14 @@ async fn run_section(
                 return Err(err);
             }
 
-            rows.truncate(input.limit);
+            rows.truncate(limit);
             Ok(SectionResult::new(to_json_array(rows)?, total))
         }
         SectionKind::Article => {
             let filters = article_filters(input);
             let page = crate::entities::article::search_page(
                 &filters,
-                input.limit,
+                limit,
                 0,
                 crate::entities::article::ArticleSourceFilter::All,
             )
@@ -1150,7 +1201,7 @@ async fn run_section(
                 query: Some(query.to_string()),
                 ..Default::default()
             };
-            let pathway_limit = input.limit.min(25);
+            let pathway_limit = limit.min(25);
             let (results, total) =
                 crate::entities::pathway::search_with_filters(&filters, pathway_limit).await?;
             Ok(SectionResult::new(to_json_array(results)?, total))
@@ -1161,7 +1212,7 @@ async fn run_section(
                 drug: input.drug.clone(),
                 ..Default::default()
             };
-            let page = crate::entities::pgx::search_page(&filters, input.limit, 0).await?;
+            let page = crate::entities::pgx::search_page(&filters, limit, 0).await?;
             Ok(SectionResult::new(to_json_array(page.results)?, page.total))
         }
         SectionKind::Gwas => {
@@ -1174,13 +1225,13 @@ async fn run_section(
                 region: None,
                 p_value: None,
             };
-            let page = crate::entities::variant::search_gwas_page(&filters, input.limit, 0).await?;
+            let page = crate::entities::variant::search_gwas_page(&filters, limit, 0).await?;
             let mut rows = page.results;
             if let Some(disease) = input.disease.as_deref() {
                 rows.retain(|row| trait_matches_disease_query(row, disease));
             }
             let mut rows = dedupe_gwas_rows(rows);
-            rows.truncate(input.limit);
+            rows.truncate(limit);
             let total = rows.len();
             Ok(SectionResult::new(to_json_array(rows)?, Some(total)))
         }
@@ -1198,7 +1249,7 @@ async fn run_section(
             let grouped = crate::entities::adverse_event::search_count(
                 &filters,
                 "patient.reaction.reactionmeddrapt",
-                input.limit,
+                limit,
             )
             .await?;
             let total = grouped.buckets.len();
@@ -1214,6 +1265,26 @@ async fn run_section(
                 .collect::<Vec<_>>();
             Ok(SectionResult::new(rows, Some(total)))
         }
+    }
+}
+
+fn section_fetch_limit(kind: SectionKind, input: &PreparedInput) -> usize {
+    if !input.counts_only {
+        return input.limit;
+    }
+
+    // Counts-only does not skip backend fetches entirely because some sections derive
+    // counts locally and markdown still needs stable follow-up commands, but it can
+    // safely collapse sections backed by stable totals to a single fetched row.
+    match kind {
+        SectionKind::Gene | SectionKind::Disease | SectionKind::Trial | SectionKind::Pgx => 1,
+        SectionKind::Article if !input.debug_plan => 1,
+        SectionKind::Variant
+        | SectionKind::Drug
+        | SectionKind::Pathway
+        | SectionKind::Gwas
+        | SectionKind::AdverseEvent
+        | SectionKind::Article => input.limit,
     }
 }
 
@@ -2247,6 +2318,146 @@ mod tests {
         assert_eq!(rows[0]["ranking"]["pubmed_rescue"], false);
         assert!(rows[0]["ranking"]["pubmed_rescue_kind"].is_null());
         assert!(rows[0]["ranking"]["pubmed_source_position"].is_null());
+    }
+
+    #[test]
+    fn counts_only_json_projection_omits_results_links_and_total() {
+        let results = SearchAllResults {
+            query: "gene=BRAF".to_string(),
+            sections: vec![SearchAllSection {
+                entity: "gene".to_string(),
+                label: "Genes".to_string(),
+                count: 1,
+                total: Some(12),
+                error: None,
+                note: Some("Counts-only projection".to_string()),
+                results: vec![json!({"symbol":"BRAF"})],
+                links: vec![SearchAllLink {
+                    rel: "get.top".to_string(),
+                    title: "Inspect BRAF".to_string(),
+                    command: "biomcp get gene BRAF".to_string(),
+                }],
+            }],
+            searches_dispatched: 1,
+            searches_with_results: 1,
+            wall_time_ms: 42,
+            debug_plan: None,
+        };
+
+        let value = serde_json::to_value(counts_only_json(&results)).expect("counts-only json");
+        let section = &value["sections"][0];
+
+        assert_eq!(section["entity"], "gene");
+        assert_eq!(section["label"], "Genes");
+        assert_eq!(section["count"], 12);
+        assert_eq!(section["note"], "Counts-only projection");
+        assert!(section.get("results").is_none());
+        assert!(section.get("links").is_none());
+        assert!(section.get("total").is_none());
+    }
+
+    #[test]
+    fn counts_only_json_projection_preserves_debug_plan() {
+        let results = SearchAllResults {
+            query: "gene=BRAF".to_string(),
+            sections: vec![SearchAllSection {
+                entity: "article".to_string(),
+                label: "Articles".to_string(),
+                count: 1,
+                total: Some(5),
+                error: None,
+                note: None,
+                results: vec![json!({"pmid":"22663011"})],
+                links: Vec::new(),
+            }],
+            searches_dispatched: 1,
+            searches_with_results: 1,
+            wall_time_ms: 42,
+            debug_plan: Some(DebugPlan {
+                surface: "search_all",
+                query: "gene=BRAF".to_string(),
+                anchor: Some("gene"),
+                legs: vec![DebugPlanLeg {
+                    leg: "article".to_string(),
+                    entity: "article".to_string(),
+                    filters: vec!["gene=BRAF".to_string()],
+                    routing: vec!["anchor=gene".to_string()],
+                    sources: vec!["PubMed".to_string()],
+                    matched_sources: vec!["PubMed".to_string()],
+                    count: 1,
+                    total: Some(5),
+                    note: None,
+                    error: None,
+                }],
+            }),
+        };
+
+        let value = serde_json::to_value(counts_only_json(&results)).expect("counts-only json");
+        assert!(value.get("debug_plan").is_some());
+        assert_eq!(value["debug_plan"]["anchor"], "gene");
+        assert_eq!(value["debug_plan"]["legs"][0]["leg"], "article");
+    }
+
+    #[test]
+    fn section_fetch_limit_reduces_only_safe_counts_only_sections() {
+        let counts_only = PreparedInput::new(&SearchAllInput {
+            gene: Some("BRAF".to_string()),
+            variant: None,
+            disease: Some("melanoma".to_string()),
+            drug: None,
+            keyword: None,
+            since: None,
+            limit: 7,
+            counts_only: true,
+            debug_plan: false,
+        })
+        .expect("valid prepared input");
+        let debug_plan = PreparedInput::new(&SearchAllInput {
+            gene: Some("BRAF".to_string()),
+            variant: None,
+            disease: Some("melanoma".to_string()),
+            drug: None,
+            keyword: None,
+            since: None,
+            limit: 7,
+            counts_only: true,
+            debug_plan: true,
+        })
+        .expect("valid prepared input");
+        let full_fetch = PreparedInput::new(&SearchAllInput {
+            gene: Some("BRAF".to_string()),
+            variant: None,
+            disease: Some("melanoma".to_string()),
+            drug: None,
+            keyword: None,
+            since: None,
+            limit: 7,
+            counts_only: false,
+            debug_plan: false,
+        })
+        .expect("valid prepared input");
+
+        for kind in [
+            SectionKind::Gene,
+            SectionKind::Disease,
+            SectionKind::Trial,
+            SectionKind::Pgx,
+        ] {
+            assert_eq!(section_fetch_limit(kind, &counts_only), 1, "{kind:?}");
+        }
+        assert_eq!(section_fetch_limit(SectionKind::Article, &counts_only), 1);
+        assert_eq!(section_fetch_limit(SectionKind::Article, &debug_plan), 7);
+
+        for kind in [
+            SectionKind::Variant,
+            SectionKind::Drug,
+            SectionKind::Pathway,
+            SectionKind::Gwas,
+            SectionKind::AdverseEvent,
+        ] {
+            assert_eq!(section_fetch_limit(kind, &counts_only), 7, "{kind:?}");
+            assert_eq!(section_fetch_limit(kind, &full_fetch), 7, "{kind:?}");
+        }
     }
 
     #[test]
