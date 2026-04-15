@@ -92,6 +92,135 @@ fn format_sections_block_keeps_gene_ontology_in_top_more_entries() {
 }
 
 #[test]
+fn sections_disease_base_card_surfaces_survival_and_funding_before_all() {
+    let disease = Disease {
+        id: "MONDO:0005105".to_string(),
+        name: "melanoma".to_string(),
+        definition: None,
+        synonyms: Vec::new(),
+        parents: Vec::new(),
+        associated_genes: Vec::new(),
+        gene_associations: Vec::new(),
+        top_genes: Vec::new(),
+        top_gene_scores: Vec::new(),
+        treatment_landscape: Vec::new(),
+        recruiting_trial_count: None,
+        pathways: Vec::new(),
+        phenotypes: Vec::new(),
+        key_features: Vec::new(),
+        variants: Vec::new(),
+        top_variant: None,
+        models: Vec::new(),
+        prevalence: Vec::new(),
+        prevalence_note: None,
+        survival: None,
+        survival_note: None,
+        civic: None,
+        disgenet: None,
+        funding: None,
+        funding_note: None,
+        xrefs: std::collections::HashMap::new(),
+    };
+
+    let sections = sections_disease(&disease, &[]);
+    assert_eq!(
+        sections
+            .iter()
+            .take(5)
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        vec!["genes", "pathways", "phenotypes", "survival", "funding"]
+    );
+
+    let block = format_sections_block("disease", &disease.id, sections);
+    let genes = block
+        .find("biomcp get disease MONDO:0005105 genes")
+        .expect("genes command");
+    let pathways = block
+        .find("biomcp get disease MONDO:0005105 pathways")
+        .expect("pathways command");
+    let phenotypes = block
+        .find("biomcp get disease MONDO:0005105 phenotypes")
+        .expect("phenotypes command");
+    let survival = block
+        .find("biomcp get disease MONDO:0005105 survival")
+        .expect("survival command");
+    let funding = block
+        .find("biomcp get disease MONDO:0005105 funding")
+        .expect("funding command");
+    assert!(genes < pathways);
+    assert!(pathways < phenotypes);
+    assert!(phenotypes < survival);
+    assert!(survival < funding);
+    assert!(block.contains("SEER Explorer cancer survival rates"));
+    assert!(block.contains("NIH Reporter grant support"));
+    assert!(!block.contains("biomcp get disease MONDO:0005105 variants"));
+}
+
+#[test]
+fn sections_gene_base_card_surfaces_funding_as_fourth_command() {
+    let gene = Gene {
+        symbol: "BRAF".to_string(),
+        name: "B-Raf proto-oncogene".to_string(),
+        entrez_id: "673".to_string(),
+        ensembl_id: Some("ENSG00000157764".to_string()),
+        location: Some("7q34".to_string()),
+        genomic_coordinates: None,
+        omim_id: Some("164757".to_string()),
+        uniprot_id: Some("P15056".to_string()),
+        summary: None,
+        gene_type: None,
+        aliases: Vec::new(),
+        clinical_diseases: Vec::new(),
+        clinical_drugs: Vec::new(),
+        pathways: None,
+        ontology: None,
+        diseases: None,
+        protein: None,
+        go: None,
+        interactions: None,
+        civic: None,
+        expression: None,
+        hpa: None,
+        druggability: None,
+        clingen: None,
+        constraint: None,
+        disgenet: None,
+        funding: None,
+        funding_note: None,
+    };
+
+    let sections = sections_gene(&gene, &[]);
+    assert_eq!(
+        sections
+            .iter()
+            .take(5)
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        vec!["pathways", "ontology", "diseases", "funding", "protein"]
+    );
+
+    let block = format_sections_block("gene", &gene.symbol, sections);
+    let pathways = block
+        .find("biomcp get gene BRAF pathways")
+        .expect("pathways command");
+    let ontology = block
+        .find("biomcp get gene BRAF ontology")
+        .expect("ontology command");
+    let diseases = block
+        .find("biomcp get gene BRAF diseases")
+        .expect("diseases command");
+    let funding = block
+        .find("biomcp get gene BRAF funding")
+        .expect("funding command");
+    assert!(pathways < ontology);
+    assert!(ontology < diseases);
+    assert!(diseases < funding);
+    assert!(block.contains("NIH Reporter grant support"));
+    assert!(!block.contains("biomcp get gene BRAF protein"));
+}
+
+#[test]
 fn format_sections_block_describes_guardrailed_drug_and_trial_sections() {
     let drug_block = format_sections_block(
         "drug",

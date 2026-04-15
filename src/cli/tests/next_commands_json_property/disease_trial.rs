@@ -6,7 +6,7 @@ use crate::entities::trial::Trial;
 #[test]
 fn disease_json_next_commands_parse() {
     let disease = Disease {
-        id: "MONDO:0004992".to_string(),
+        id: "MONDO:0005105".to_string(),
         name: "melanoma".to_string(),
         definition: None,
         synonyms: Vec::new(),
@@ -34,13 +34,86 @@ fn disease_json_next_commands_parse() {
         xrefs: std::collections::HashMap::new(),
     };
 
+    let next_commands = crate::render::markdown::disease_next_commands(&disease, &[]);
+    assert_eq!(
+        next_commands
+            .iter()
+            .take(5)
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        vec![
+            "biomcp get disease MONDO:0005105 genes",
+            "biomcp get disease MONDO:0005105 pathways",
+            "biomcp get disease MONDO:0005105 phenotypes",
+            "biomcp get disease MONDO:0005105 survival",
+            "biomcp get disease MONDO:0005105 funding",
+        ]
+    );
+    assert!(
+        next_commands.contains(&"biomcp search trial -c \"melanoma\"".to_string()),
+        "expected disease cross-entity helper after section follow-ups: {next_commands:?}"
+    );
+
     assert_entity_json_next_commands(
         "disease",
         &disease,
         crate::render::markdown::disease_evidence_urls(&disease),
-        crate::render::markdown::related_disease(&disease),
+        next_commands,
         crate::render::provenance::disease_section_sources(&disease),
     );
+}
+
+#[test]
+fn disease_json_next_commands_omit_requested_section_follow_up() {
+    let disease = Disease {
+        id: "MONDO:0005105".to_string(),
+        name: "melanoma".to_string(),
+        definition: None,
+        synonyms: Vec::new(),
+        parents: Vec::new(),
+        associated_genes: Vec::new(),
+        gene_associations: Vec::new(),
+        top_genes: Vec::new(),
+        top_gene_scores: Vec::new(),
+        treatment_landscape: Vec::new(),
+        recruiting_trial_count: None,
+        pathways: Vec::new(),
+        phenotypes: Vec::new(),
+        key_features: Vec::new(),
+        variants: Vec::new(),
+        top_variant: None,
+        models: Vec::new(),
+        prevalence: Vec::new(),
+        prevalence_note: None,
+        survival: None,
+        survival_note: None,
+        civic: None,
+        disgenet: None,
+        funding: None,
+        funding_note: None,
+        xrefs: std::collections::HashMap::new(),
+    };
+
+    for requested_section in ["survival", "funding"] {
+        let requested_sections = [requested_section.to_string()];
+        let next_commands =
+            crate::render::markdown::disease_next_commands(&disease, &requested_sections);
+        let json = crate::render::json::to_entity_json(
+            &disease,
+            crate::render::markdown::disease_evidence_urls(&disease),
+            next_commands,
+            crate::render::provenance::disease_section_sources(&disease),
+        )
+        .expect("disease json");
+        let commands = collect_next_commands(&json);
+
+        assert!(
+            !commands.contains(&format!(
+                "biomcp get disease MONDO:0005105 {requested_section}"
+            )),
+            "requested section should not be suggested again: {commands:?}"
+        );
+    }
 }
 
 #[test]
@@ -82,7 +155,7 @@ fn disease_json_next_commands_include_top_gene_context() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let next_commands = crate::render::markdown::related_disease(&disease);
+    let next_commands = crate::render::markdown::disease_next_commands(&disease, &[]);
     let json = crate::render::json::to_entity_json(
         &disease,
         crate::render::markdown::disease_evidence_urls(&disease),

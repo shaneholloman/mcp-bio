@@ -35,12 +35,81 @@ fn gene_json_next_commands_parse() {
         funding_note: None,
     };
 
+    let next_commands = crate::render::markdown::gene_next_commands(&gene, &[]);
+    assert_eq!(
+        next_commands
+            .iter()
+            .take(4)
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        vec![
+            "biomcp get gene BRAF pathways",
+            "biomcp get gene BRAF ontology",
+            "biomcp get gene BRAF diseases",
+            "biomcp get gene BRAF funding",
+        ]
+    );
+    assert!(
+        next_commands.contains(&"biomcp search pgx -g BRAF".to_string()),
+        "expected gene cross-entity helper after section follow-ups: {next_commands:?}"
+    );
+
     assert_entity_json_next_commands(
         "gene",
         &gene,
         crate::render::markdown::gene_evidence_urls(&gene),
-        crate::render::markdown::related_gene(&gene),
+        next_commands,
         crate::render::provenance::gene_section_sources(&gene),
+    );
+}
+
+#[test]
+fn gene_json_next_commands_omit_requested_section_follow_up() {
+    let gene = Gene {
+        symbol: "BRAF".to_string(),
+        name: "B-Raf proto-oncogene".to_string(),
+        entrez_id: "673".to_string(),
+        ensembl_id: Some("ENSG00000157764".to_string()),
+        location: Some("7q34".to_string()),
+        genomic_coordinates: None,
+        omim_id: Some("164757".to_string()),
+        uniprot_id: Some("P15056".to_string()),
+        summary: None,
+        gene_type: None,
+        aliases: Vec::new(),
+        clinical_diseases: Vec::new(),
+        clinical_drugs: Vec::new(),
+        pathways: None,
+        ontology: None,
+        diseases: None,
+        protein: None,
+        go: None,
+        interactions: None,
+        civic: None,
+        expression: None,
+        hpa: None,
+        druggability: None,
+        clingen: None,
+        constraint: None,
+        disgenet: None,
+        funding: None,
+        funding_note: None,
+    };
+
+    let requested_sections = ["funding".to_string()];
+    let next_commands = crate::render::markdown::gene_next_commands(&gene, &requested_sections);
+    let json = crate::render::json::to_entity_json(
+        &gene,
+        crate::render::markdown::gene_evidence_urls(&gene),
+        next_commands,
+        crate::render::provenance::gene_section_sources(&gene),
+    )
+    .expect("gene json");
+    let commands = collect_next_commands(&json);
+
+    assert!(
+        !commands.contains(&"biomcp get gene BRAF funding".to_string()),
+        "requested section should not be suggested again: {commands:?}"
     );
 }
 
@@ -86,7 +155,7 @@ fn gene_json_next_commands_include_clingen_trial_search() {
         funding_note: None,
     };
 
-    let next_commands = crate::render::markdown::related_gene(&gene);
+    let next_commands = crate::render::markdown::gene_next_commands(&gene, &[]);
     let json = crate::render::json::to_entity_json(
         &gene,
         crate::render::markdown::gene_evidence_urls(&gene),

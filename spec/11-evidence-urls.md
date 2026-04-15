@@ -96,6 +96,22 @@ echo "$gene_json" | mustmatch like '"_meta": {'
 echo "$gene_json" | mustmatch like '"evidence_urls": ['
 echo "$gene_json" | mustmatch like '"next_commands": ['
 echo "$gene_json" | mustmatch like '"section_sources": ['
+echo "$gene_json" | jq -e '._meta.next_commands[:4] == [
+  "biomcp get gene BRAF pathways",
+  "biomcp get gene BRAF ontology",
+  "biomcp get gene BRAF diseases",
+  "biomcp get gene BRAF funding"
+]' > /dev/null
+
+disease_json="$("$bin" get disease melanoma --json)"
+echo "$disease_json" | mustmatch like '"next_commands": ['
+echo "$disease_json" | jq -e '._meta.next_commands[:5] == [
+  "biomcp get disease MONDO:0005105 genes",
+  "biomcp get disease MONDO:0005105 pathways",
+  "biomcp get disease MONDO:0005105 phenotypes",
+  "biomcp get disease MONDO:0005105 survival",
+  "biomcp get disease MONDO:0005105 funding"
+]' > /dev/null
 
 variant_json="$("$bin" get variant "BRAF V600E" --json)"
 echo "$variant_json" | mustmatch like '"label": "dbSNP"'
@@ -144,9 +160,33 @@ without widening the top-level entity schema. These assertions target stable
 labels and URL fragments only.
 
 ```bash
+bin="${BIOMCP_BIN:-biomcp}"
+
+gene_json="$("$bin" get gene BRAF --json)"
+echo "$gene_json" | jq -e '._meta.next_commands[:4] == [
+  "biomcp get gene BRAF pathways",
+  "biomcp get gene BRAF ontology",
+  "biomcp get gene BRAF diseases",
+  "biomcp get gene BRAF funding"
+]' > /dev/null
+
+disease_json="$("$bin" get disease melanoma --json)"
+echo "$disease_json" | jq -e '._meta.next_commands[:5] == [
+  "biomcp get disease MONDO:0005105 genes",
+  "biomcp get disease MONDO:0005105 pathways",
+  "biomcp get disease MONDO:0005105 phenotypes",
+  "biomcp get disease MONDO:0005105 survival",
+  "biomcp get disease MONDO:0005105 funding"
+]' > /dev/null
+```
+
+```bash
 variant_population_json="$(biomcp get variant rs334 population --json)"
 echo "$variant_population_json" | mustmatch like '"label": "gnomAD"'
 echo "$variant_population_json" | mustmatch like 'gnomad.broadinstitute.org/variant/rs334'
+
+gene_all_json="$(biomcp --json get gene ERBB2 all)"
+echo "$gene_all_json" | jq -e '.funding == null and .funding_note == null' > /dev/null
 ```
 
 ```bash

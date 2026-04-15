@@ -34,6 +34,9 @@ When ranked disease-gene context is present, the `See also:` block also promotes
 the strongest follow-up gene pivot before the generic disease-level searches,
 for example `biomcp get gene SCN1A clingen constraint` on a Dravet syndrome
 gene card.
+The default disease card's `More:` block keeps `genes`, `pathways`, and
+`phenotypes` visible while also surfacing `survival` and `funding` so those
+opt-in sections stay discoverable from the base card.
 
 ## Disease sections
 
