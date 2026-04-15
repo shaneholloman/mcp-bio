@@ -1,137 +1,195 @@
-# Code Review Log - Ticket 195
+# Code Review Log - Ticket 209
 
 ## Critique
 
-Reviewed `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, commit history, and the full `git diff main..HEAD`.
+Reviewed `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`,
+`.march/code-log.md`, the full `git diff main..HEAD`, and the two ticket
+commits:
+
+- `d7d13696` `Define disease/gene discovery contract`
+- `091521f5` `Surface disease and gene section follow-ups`
 
 Re-ran the relevant local gates during review:
 
-- `cargo test --lib`
-- `cargo clippy --lib --tests -- -D warnings`
-- `cargo build --release --locked --bin biomcp`
-- `XDG_CACHE_HOME="$PWD/.cache" PATH="$PWD/target/release:$PATH" RUST_LOG=error uv run --extra dev pytest spec/07-disease.md --mustmatch-lang bash --mustmatch-timeout 120 -v`
+- `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
+- `BIOMCP_BIN="$PWD/target/debug/biomcp" XDG_CACHE_HOME="$PWD/.cache" PATH="$PWD/target/debug:$PATH" RUST_LOG=error .venv/bin/pytest spec/02-gene.md spec/07-disease.md spec/11-evidence-urls.md spec/21-cross-entity-see-also.md --mustmatch-lang bash --mustmatch-timeout 60 -v`
 
 ### Design Completeness Audit
 
-All design-final implementation items have corresponding code changes after repair:
+All in-scope design items have matching implementation or proof after repair:
 
-- Shared search JSON/meta support is present in `src/cli/shared.rs`.
-- Search next-command builders are present in `src/render/markdown/related.rs` and exported from `src/render/markdown/mod.rs`.
-- All in-scope search dispatchers are wired to the new helpers or custom `_meta` serializers:
-  - article, trial, variant, gene, disease, drug, pgx, pathway, adverse-event, gwas
-- Out-of-scope generic search surfaces stayed unchanged:
-  - `src/cli/phenotype/dispatch.rs`
-  - `src/cli/protein/dispatch.rs`
-  - no diff on `spec/23-phenotype.md` or `spec/16-protein.md`
-- `list <entity>` docs were updated for article, trial, variant, gene, disease, drug, pgx, pathway, adverse-event, and gwas in `src/cli/list.rs`.
-- Entity specs were updated on the intended search JSON contract surfaces:
-  - `spec/02-gene.md`
-  - `spec/03-variant.md`
-  - `spec/04-trial.md`
-  - `spec/05-drug.md`
-  - `spec/06-article.md`
+- Shared source of truth for disease/gene next commands:
+  - `src/render/markdown/sections.rs` adds `visible_section_commands(...)`,
+    `disease_next_commands(...)`, and `gene_next_commands(...)`.
+  - `src/render/markdown/mod.rs` exports the new helpers.
+  - `src/cli/disease/dispatch.rs` and `src/cli/gene/dispatch.rs` now feed JSON
+    `_meta.next_commands` from the shared helpers instead of `related_*()` only.
+- Discovery order and visible limits:
+  - `src/render/markdown/sections.rs` adds
+    `DISEASE_DISCOVERY_SECTION_NAMES`, `GENE_DISCOVERY_SECTION_NAMES`, and
+    entity-specific limits of 5 for disease and 4 for gene.
+- Requested-section filtering and no-self-loop behavior:
+  - the shared helper path still relies on `sections_for(...)` rather than
+    dispatch-local filtering.
+  - regression proof exists in
+    `src/cli/tests/next_commands_json_property/disease_trial.rs` and
+    `src/cli/tests/next_commands_json_property/gene_article.rs`.
+- Missing survival description:
+  - `src/render/markdown/sections.rs` now maps
+    `("disease", "survival")` to `SEER Explorer cancer survival rates`.
+- Docs and contract surfaces:
+  - `docs/user-guide/disease.md`
+  - `docs/user-guide/gene.md`
+  - `docs/reference/data-sources.md`
   - `spec/07-disease.md`
-  - `spec/08-pgx.md`
-  - `spec/14-pathway.md`
-- `spec/11-evidence-urls.md` and `spec/18-source-labels.md` remain scoped to `get ... --json`; that design choice is consistent with their contents.
-- `.march/code-log.md` records docs/spec work before runtime edits; nothing in the review contradicted that ordering.
+  - `spec/02-gene.md`
+  - `spec/11-evidence-urls.md`
+- Execution order:
+  - docs/spec/tests landed in `d7d13696`
+  - runtime wiring landed afterward in `091521f5`
+  - this matches both `.march/code-log.md` and the actual commit history.
 
-No unmatched `Needs change` items were present in `design-final.md`.
+Acceptance criteria 7 and 8 intentionally rely on unchanged runtime behavior:
+
+- disease `survival` staying in `all` is still implemented by
+  `src/entities/disease/get.rs`
+- disease/gene `funding` staying opt-in is still enforced by
+  `src/entities/disease/get.rs` and `src/entities/gene.rs`
+
+The diff correctly adds proof for those invariants rather than rewriting the
+runtime.
+
+No unmatched `Needs change` markers were present in `design-final.md`.
 
 ### Test-Design Traceability
 
 Proof-matrix coverage after repair:
 
-- Helper proofs:
-  - `src/cli/tests/outcome.rs` covers `search_json_with_meta(...)` include/omit behavior and preserves the generic phenotype search JSON contract.
-  - `src/cli/article/tests.rs` covers article search JSON context fields plus `_meta.next_commands`.
-  - `src/cli/disease/tests.rs` covers direct-hit and fallback-hit disease JSON shapes.
-  - `src/cli/drug/tests.rs` now exercises the WHO search JSON path with `search_json_with_meta(...)` and `_meta.next_commands`.
-  - `src/cli/tests/next_commands_validity.rs` covers parser validity for the new search follow-up command shapes.
-  - `src/cli/list.rs` tests cover the new doc/help contract.
-- Spec proofs:
-  - all design-matrix entity/spec assertions are present after the disease fallback-miss repair.
+- Disease base-card `More:` order and survival description:
+  - `spec/07-disease.md::Getting Disease Details`
+  - `src/render/markdown/sections/tests.rs::sections_disease_base_card_surfaces_survival_and_funding_before_all`
+- Gene base-card `More:` order and preserved trio:
+  - `spec/02-gene.md::Getting Gene Details`
+  - `spec/21-cross-entity-see-also.md::Gene More Ordering`
+  - `src/render/markdown/sections/tests.rs::sections_gene_base_card_surfaces_funding_as_fourth_command`
+- Disease/gene JSON `_meta.next_commands` ordering:
+  - `spec/07-disease.md::Getting Disease Details`
+  - `spec/02-gene.md::Getting Gene Details`
+  - property coverage in
+    `src/cli/tests/next_commands_json_property/disease_trial.rs` and
+    `src/cli/tests/next_commands_json_property/gene_article.rs`
+- Shared JSON contract surface for the new disease/gene follow-ups:
+  - `spec/11-evidence-urls.md::JSON Metadata for Repaired Gaps`
+- Requested section omission:
+  - `disease_json_next_commands_omit_requested_section_follow_up`
+  - `gene_json_next_commands_omit_requested_section_follow_up`
+- Parser validity:
+  - `src/cli/tests/next_commands_validity.rs`
+- Disease `survival` remains in `all`:
+  - `spec/07-disease.md::Disease Funding Stays Opt-In`
+- Disease/gene `funding` stay opt-in:
+  - `spec/07-disease.md::Disease Funding Stays Opt-In`
+  - `spec/02-gene.md::Gene Funding Stays Opt-In`
+  - unchanged parser proof in `src/entities/gene.rs::parse_sections_all_keeps_disgenet_opt_in`
+- Cross-entity follow-ups remain available:
+  - `spec/21-cross-entity-see-also.md`
+
+The exact function names proposed in `design-final.md` were not used verbatim,
+but every required scenario now has matching proof by name or scenario
+description.
 
 Issues found during critique:
 
-1. `spec/07-disease.md` did not assert the proof-matrix requirement that empty discover-fallback misses keep `_meta` absent in JSON.
-2. `src/cli/drug/tests.rs::search_json_preserves_who_search_fields` still exercised `search_json()` instead of the real `search_json_with_meta()` path used by WHO search results, so it would not catch `_meta.next_commands` regressions.
-3. `search_next_commands_drug_eu()` only matched against EMA `name`, ignoring `active_substance`; plain parent-drug queries could therefore degrade to brand-name `biomcp get drug ...` suggestions instead of the intended parent-name follow-up.
-4. The recall-specific exception from the acceptance criteria had no deterministic regression proof: non-empty recall searches should emit only `biomcp list adverse-event`.
+1. `spec/11-evidence-urls.md` placed the new disease/gene shared JSON-contract
+   assertions inside the OpenFDA-gated `JSON Metadata Contract` heading, so the
+   proof-matrix item existed in the diff but was skipped in the default local
+   spec lane.
+2. `spec/02-gene.md::Gene Funding Stays Opt-In` bundled both markdown and JSON
+   `get gene ERBB2 all` calls into one 60-second bash item. The contract was
+   correct, but the proof was unstable and timed out locally.
 
 ### Implementation Quality Review
 
-- Security review: no new shell injection, path traversal, auth bypass, data exposure, or secret-handling issues found. Follow-up commands continue to use `quote_arg()` before serialization.
-- Duplication review: the implementation correctly reused and centralized the drug parent-name heuristic instead of reintroducing another chooser.
-- Conventions and edge cases:
-  - disease custom `_meta` migration is coherent after the repair
-  - out-of-scope generic search JSON stayed stable
-  - the repaired EU drug chooser now handles the parent-name case the design called out
+- Security:
+  - no new shell-injection, path-traversal, auth, or secret-handling defects
+    found
+  - the new next-command builders still rely on `quote_arg(...)` before
+    serializing executable follow-ups
+- Duplication:
+  - no equivalent disease/gene shared next-command helper already existed in the
+    repo; the new render-layer helper is the right place to centralize this
+    logic
+- Runtime quality:
+  - no runtime logic defects were found in the disease/gene implementation
+  - the renderer and JSON paths now share the same section-command source as
+    designed
 
 ## Fix Plan
 
-Repair the four concrete defects directly:
+Repair the two proof-surface defects directly:
 
-1. Add the missing empty-miss `_meta` absence assertion to `spec/07-disease.md`.
-2. Move the WHO drug JSON regression test onto `search_json_with_meta(...)` and assert `_meta.next_commands`.
-3. Fix EMA follow-up generation to consider `active_substance` when applying the parent-name preference heuristic.
-4. Add deterministic helper tests for the recall list-only exception and the device-event follow-up branch.
+1. Move the disease/gene shared JSON-contract proof onto an ungated, collected
+   `spec/11` heading so the design-matrix assertion executes without
+   `OPENFDA_API_KEY`.
+2. Make the gene opt-in proof stable under the 60-second spec budget by keeping
+   the markdown assertion in `spec/02-gene.md` and moving the JSON opt-in check
+   to the collected `spec/11` repaired-gaps heading.
 
 ## Repair
 
 Applied the fixes:
 
-- `src/render/markdown/related.rs`
-  - updated `search_next_commands_drug_eu()` to consider both EMA `name` and `active_substance`, and to fall back to `active_substance` before the brand name.
-- `src/render/markdown/related/tests/drug_variant_article_trial.rs`
-  - added regression coverage for:
-    - EMA parent-drug follow-up selection
-    - recall list-only next-command behavior
-    - device-event report follow-up behavior
-- `src/cli/drug/tests.rs`
-  - replaced the stale WHO JSON helper test with a real `search_json_with_meta(...)` regression that preserves WHO fields and asserts `_meta.next_commands`
-- `spec/07-disease.md`
-  - added the missing empty-fallback-miss assertion that top-level `_meta` stays absent
+- `spec/11-evidence-urls.md`
+  - added disease/gene `_meta.next_commands` order assertions to the collected,
+    ungated `JSON Metadata for Repaired Gaps` heading
+  - added the JSON proof that `biomcp --json get gene ERBB2 all` keeps
+    `funding` absent there as well
+- `spec/02-gene.md`
+  - reduced `Gene Funding Stays Opt-In` to the markdown proof only, removing
+    the deterministic timeout source from the single 60-second bash item
+- filed an adjacent performance issue:
+  - `/home/ian/workspace/planning/biomcp/issues/209-gene-all-runtime-budget.md`
 
 ### Post-Fix Collateral Scan
 
-After each repair batch, checked the touched code for:
+After each spec repair, checked the surrounding surface for:
 
-- dead code or orphaned imports: none introduced
-- unused variables: none introduced
-- cleanup conflicts: none introduced
-- stale error text: unchanged
-- shadowed variables: none introduced
+- dead or uncollected proof: the new disease/gene assertions were moved onto a
+  collected `spec/11` heading
+- stale wording: the repaired-gaps prose still matches what the blocks now
+  assert
+- orphaned checks: the gene JSON opt-in assertion was preserved in `spec/11`
+  after it was removed from `spec/02`
 
-Added one bounded improvement while touching the related-command tests:
-
-- covered the device-event branch explicitly so the adverse-event family now has deterministic proof for both its special recall behavior and its device-report follow-up shape
+No collateral issues were introduced.
 
 ## Verification
 
-- Targeted regression checks:
-  - `cargo test --lib search_json_with_meta_preserves_who_search_fields`
-  - `cargo test --lib search_next_commands_drug_eu_prefers_active_substance_match`
-  - `cargo test --lib search_next_commands_recalls_are_list_only`
-  - `cargo test --lib search_next_commands_device_events_use_report_follow_up`
-- Focused profile:
+- Focused Rust profile before repair:
   - `cargo test --lib && cargo clippy --lib --tests -- -D warnings`
   - result: passed
-- Changed executable spec:
-  - `spec/07-disease.md`
-  - result: `31 passed`
+- Targeted repaired proofs:
+  - `pytest spec/02-gene.md -k 'Gene and Funding and Stays and Opt and In' ...`
+  - result: `1 passed`
+  - `pytest spec/11-evidence-urls.md -k 'JSON and Metadata and Repaired' ...`
+  - result: `3 passed`
+- Full changed spec surface after repair:
+  - `pytest spec/02-gene.md spec/07-disease.md spec/11-evidence-urls.md spec/21-cross-entity-see-also.md ...`
+  - result: `76 passed, 2 skipped`
 
 ## Residual Concerns
 
-- The shipped contract is repaired and the changed disease spec is green.
-- Recall/device search JSON behavior now has deterministic unit proof, but not separate live-data spec sections. Verify should keep an eye on that family if future tickets widen the adverse-event executable spec surface.
-- No out-of-scope issue was substantial enough to file under `~/workspace/planning/biomcp/issues/`.
+- The ticket implementation itself is sound after review.
+- `spec/11-evidence-urls.md::JSON Metadata Contract` still stays key-gated
+  because it exercises OpenFDA-backed output; the disease/gene assertions now
+  run separately in an ungated heading.
+- The underlying `get gene <symbol> all` runtime is still slow enough to be a
+  future live-spec risk; that was filed separately under the biomcp issues
+  directory.
 
 ## Defect Register
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | missing-test | no | `spec/07-disease.md` was missing the design proof that empty fallback misses keep top-level `_meta` absent. |
-| 2 | weak-assertion | no | `src/cli/drug/tests.rs` still exercised `search_json()` instead of the WHO search JSON path that now uses `search_json_with_meta()`, so `_meta.next_commands` regressions would have escaped. |
-| 3 | contract-bug | no | `search_next_commands_drug_eu()` ignored EMA `active_substance`, which could select a brand-name `get drug` follow-up instead of the requested parent drug. |
-| 4 | missing-test | no | The recall-search acceptance-criteria exception had no deterministic regression coverage for the list-only `_meta.next_commands` behavior. |
+| 1 | weak-assertion | no | The design proof for shared disease/gene JSON follow-up commands lived in `spec/11-evidence-urls.md::JSON Metadata Contract`, which is skipped without `OPENFDA_API_KEY`, so the proof did not execute in the default local lane. |
+| 2 | weak-assertion | no | `spec/02-gene.md::Gene Funding Stays Opt-In` combined two slow `get gene ERBB2 all` probes into one 60-second bash item and timed out during the review gate rerun. |
