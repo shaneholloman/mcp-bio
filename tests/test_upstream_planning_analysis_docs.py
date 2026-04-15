@@ -458,7 +458,8 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     source_integration = _read_repo("architecture/technical/source-integration.md")
     drug_guide = _read_repo("docs/user-guide/drug.md")
     bioasq_reference = _read_repo("docs/reference/bioasq-benchmark.md")
-    cli_mod = _read_repo("src/cli/mod.rs")
+    cli_commands = _read_repo("src/cli/commands.rs")
+    cli_drug_mod = _read_repo("src/cli/drug/mod.rs")
     cli_list = _read_repo("src/cli/list.rs")
     cli_list_reference = _read_repo("src/cli/list_reference.md")
     cli_reference_guide = _read_repo("docs/user-guide/cli-reference.md")
@@ -487,7 +488,8 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "`body_excerpt()`" in source_integration
     assert "`retry_send()`" in source_integration
     assert "## Section-First Entity Integration" in source_integration
-    assert "`src/cli/mod.rs`" in source_integration
+    assert "`src/cli/commands.rs`" in source_integration
+    assert "`src/cli/drug/mod.rs`" in source_integration
     assert "`src/cli/list.rs`" in source_integration
     assert "`docs/user-guide/cli-reference.md`" in source_integration
     assert "default `get` output stays concise" in source_integration
@@ -539,7 +541,8 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "The base grammar remains `get <entity> <id> [section...]`." in modifier_section
     assert "Entity-specific modifiers are named options" in modifier_section
     assert "The canonical example is `get drug <name> ... --region <us|eu|who|all>`." in modifier_section
-    assert "`src/cli/mod.rs`" in modifier_section
+    assert "`src/cli/commands.rs`" in modifier_section
+    assert "`src/cli/drug/mod.rs`" in modifier_section
     assert "`src/cli/list.rs`" in modifier_section
     assert "`src/cli/list_reference.md`" in modifier_section
     assert "`docs/user-guide/cli-reference.md`" in modifier_section
@@ -556,9 +559,9 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     )
     assert "`approvals` remains U.S.-only" in modifier_section
     assert "invalid flag/section combinations fail fast before data fetches" in modifier_section
-    assert "biomcp get drug trastuzumab regulatory --region who" in cli_mod
+    assert "biomcp get drug trastuzumab regulatory --region who" in cli_commands
     assert "biomcp get drug trastuzumab regulatory --region who" in cli_reference_guide
-    assert "Data region for regional sections (regulatory, safety, shortage, or all)" in cli_mod
+    assert "Data region for regional sections (regulatory, safety, shortage, or all)" in cli_drug_mod
     assert "get drug <name> regulatory [--region <us|eu|who|all>]" in cli_list
     assert "get drug <name> safety [--region <us|eu|all>]" in cli_list
     assert "get drug <name> shortage [--region <us|eu|all>]" in cli_list
@@ -717,18 +720,18 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     )
     assert re.search(
         r"^spec:\n"
-        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" RUST_LOG=error \\\n"
         r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 120 -v \$\(SPEC_XDIST_ARGS\) --ignore spec/05-drug\.md --ignore spec/13-study\.md --ignore spec/21-cross-entity-see-also\.md'\n"
-        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" RUST_LOG=error \\\n"
         r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest \$\(SPEC_SERIAL_FILES\) --mustmatch-lang bash --mustmatch-timeout 120 -v'$",
         makefile,
         flags=re.MULTILINE,
     )
     assert re.search(
         r"^spec-pr:\n"
-        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" RUST_LOG=error \\\n"
         r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v \$\(SPEC_XDIST_ARGS\) \$\(SPEC_PR_DESELECT_ARGS\) --ignore spec/05-drug\.md --ignore spec/13-study\.md --ignore spec/21-cross-entity-see-also\.md'\n"
-        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" \\\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" RUST_LOG=error \\\n"
         r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest \$\(SPEC_SERIAL_FILES\) --mustmatch-lang bash --mustmatch-timeout 60 -v'$",
         makefile,
         flags=re.MULTILINE,
