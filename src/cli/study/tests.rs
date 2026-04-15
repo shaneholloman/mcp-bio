@@ -5,5 +5,6 @@ use crate::cli::study::StudyCommand;
 use crate::cli::{ChartType, Cli, Commands, execute};
 
 mod charts;
+mod help;
 mod parsing;
 mod validation;

@@ -4,6 +4,7 @@ This spec validates the local cBioPortal study command family. Assertions stay a
 
 | Section | Command focus | Why it matters |
 |---|---|---|
+| Study help | `study --help` and subcommand help | Confirms study commands are self-describing in CLI help |
 | Environment setup | `BIOMCP_STUDY_DIR` | Makes the local dataset dependency explicit |
 | Study listing | `study list` | Confirms study discovery and list table schema |
 | Top mutated genes | `study top-mutated` | Confirms ranked gene-frequency table for a study |
@@ -19,6 +20,102 @@ This spec validates the local cBioPortal study command family. Assertions stay a
 | Multi-omics filter | `study filter` | Confirms cross-table intersection output and validation |
 | Missing data handling | missing expression or survival inputs | Confirms actionable source-unavailable messages |
 | Unknown study handling | invalid `--study` | Confirms actionable not-found message |
+
+## Study Help
+
+Study help should describe every study subcommand directly in CLI help, plus the key flags, canonical values, and accepted aliases for the study workflows operators use most often.
+
+```bash
+out="$(biomcp study --help)"
+echo "$out" | mustmatch like "List locally available cBioPortal studies"
+echo "$out" | mustmatch like "List downloadable study IDs or install a study locally"
+echo "$out" | mustmatch like "Run per-study gene query"
+echo "$out" | mustmatch like "Rank the most frequently mutated genes in a study"
+echo "$out" | mustmatch like "Intersect sample filters across mutation, CNA, expression, and clinical data"
+echo "$out" | mustmatch like "Split a cohort into mutant vs wildtype groups"
+echo "$out" | mustmatch like "Summarize KM survival and log-rank statistics by mutation group"
+echo "$out" | mustmatch like "Compare expression or mutation rate across mutation groups"
+echo "$out" | mustmatch like "Compute pairwise mutation co-occurrence across genes"
+```
+
+```bash
+out="$(biomcp study query --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
+echo "$out" | mustmatch like "--gene <GENE>"
+echo "$out" | mustmatch like "--type <QUERY_TYPE>"
+echo "$out" | mustmatch like "cBioPortal study ID"
+echo "$out" | mustmatch like "HGNC gene symbol to summarize"
+echo "$out" | mustmatch '/Canonical values:\s+mutations,\s+cna,\s+expression\./'
+echo "$out" | mustmatch '/Accepted aliases:\s+mutation,\s+copy_number,\s+copy-number,\s+expr/'
+```
+
+```bash
+out="$(biomcp study filter --help)"
+echo "$out" | mustmatch like "--mutated <MUTATED>"
+echo "$out" | mustmatch like "--amplified <AMPLIFIED>"
+echo "$out" | mustmatch like "--deleted <DELETED>"
+echo "$out" | mustmatch like "--expression-above <EXPRESSION_ABOVE>"
+echo "$out" | mustmatch like "--expression-below <EXPRESSION_BELOW>"
+echo "$out" | mustmatch like "--cancer-type <CANCER_TYPE>"
+echo "$out" | mustmatch like "Keep samples with a mutation in GENE"
+echo "$out" | mustmatch like "Keep samples with high-level copy-number amplification in GENE"
+echo "$out" | mustmatch like "Keep samples with a deep copy-number deletion in GENE"
+echo "$out" | mustmatch '/format:\s+GENE:THRESHOLD;\s+repeatable/'
+echo "$out" | mustmatch like "Keep samples matching this cancer type label"
+```
+
+```bash
+out="$(biomcp study survival --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
+echo "$out" | mustmatch like "--endpoint <ENDPOINT>"
+echo "$out" | mustmatch like "cBioPortal study ID"
+echo "$out" | mustmatch like "HGNC gene symbol used to define mutant vs wildtype groups"
+echo "$out" | mustmatch '/Canonical values:\s+os,\s+dfs,\s+pfs,\s+dss\./'
+echo "$out" | mustmatch '/Accepted aliases:\s+overall,\s+overall_survival,\s+disease_free,\s+progression_free,\s+disease_specific/'
+```
+
+```bash
+out="$(biomcp study compare --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
+echo "$out" | mustmatch like "--gene <GENE>"
+echo "$out" | mustmatch like "--target <TARGET>"
+echo "$out" | mustmatch like "cBioPortal study ID"
+echo "$out" | mustmatch like "HGNC gene symbol used to define mutant vs wildtype groups"
+echo "$out" | mustmatch like "Target gene symbol to compare across mutation groups"
+echo "$out" | mustmatch '/Canonical values:\s+expression,\s+mutations\./'
+echo "$out" | mustmatch '/Accepted aliases:\s+expr,\s+mutation/'
+```
+
+```bash
+out="$(biomcp study co-occurrence --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
+echo "$out" | mustmatch like "--genes <GENES>"
+echo "$out" | mustmatch like "cBioPortal study ID"
+echo "$out" | mustmatch like "Comma-separated HGNC gene symbols"
+echo "$out" | mustmatch like "2-10 genes"
+```
+
+```bash
+out="$(biomcp study download --help)"
+echo "$out" | mustmatch '/--list\s+List available remote/'
+echo "$out" | mustmatch '/\[STUDY_ID\]/'
+echo "$out" | mustmatch like "List available remote study IDs instead of downloading a study"
+echo "$out" | mustmatch like "required unless --list"
+```
+
+```bash
+out="$(biomcp study top-mutated --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
+echo "$out" | mustmatch like "--limit <LIMIT>"
+echo "$out" | mustmatch like "Maximum number of genes to display"
+```
+
+```bash
+out="$(biomcp study cohort --help)"
+echo "$out" | mustmatch like "--study <STUDY>"
+echo "$out" | mustmatch like "--gene <GENE>"
+echo "$out" | mustmatch like "mutant vs wildtype groups"
+```
 
 ## Environment Setup
 
