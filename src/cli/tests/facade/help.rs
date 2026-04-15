@@ -153,3 +153,22 @@ fn top_level_help_describes_cache_family_not_path_only() {
             .contains("Print the managed HTTP cache path (CLI-only; plain text; ignores `--json`)")
     );
 }
+
+#[test]
+fn search_all_help_mentions_counts_only_json_contract() {
+    let mut command = crate::cli::build_cli();
+    let search = command
+        .find_subcommand_mut("search")
+        .expect("search subcommand should exist");
+    let search_all = search
+        .find_subcommand_mut("all")
+        .expect("search all subcommand should exist");
+    let mut help = Vec::new();
+    search_all
+        .write_long_help(&mut help)
+        .expect("search all help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("markdown keeps follow-up links"));
+    assert!(help.contains("JSON omits per-section results and links"));
+}

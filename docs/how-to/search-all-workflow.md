@@ -32,13 +32,18 @@ biomcp search all -k "checkpoint inhibitor"
 
 ## Use `--counts-only` for a low-noise orientation pass
 
-`--counts-only` keeps the section totals and next-step links while suppressing
-row tables. That makes it easier to decide which entity to inspect next.
+`--counts-only` is the low-noise orientation pass.
+
+In markdown output, it keeps the section totals and follow-up links while
+suppressing row tables. In `--json --counts-only`, each section shrinks to
+metadata plus orientation counts only, so per-section `results` and `links`
+are omitted.
 
 ```bash
 biomcp search all --gene BRAF --counts-only
 biomcp search all --gene BRAF --disease melanoma --counts-only
 biomcp search all --drug pembrolizumab --counts-only
+biomcp --json search all --gene BRAF --counts-only
 ```
 
 In markdown output, each section keeps its heading and shows the stable marker

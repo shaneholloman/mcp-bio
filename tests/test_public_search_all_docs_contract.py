@@ -116,6 +116,22 @@ def test_search_all_workflow_guide_teaches_typed_slots_before_compatibility() ->
     )
 
 
+def test_search_all_workflow_guide_distinguishes_markdown_and_json_counts_only() -> None:
+    guide = _read("docs/how-to/search-all-workflow.md")
+    counts_only = _markdown_section_block(
+        guide,
+        "## Use `--counts-only` for a low-noise orientation pass",
+        "\n## Use `--debug-plan` to see the executed leg routing",
+    )
+
+    assert "In markdown output" in counts_only
+    assert "follow-up links" in counts_only
+    assert "`--json --counts-only`" in counts_only
+    assert "per-section `results` and `links`" in counts_only
+    assert "are omitted" in counts_only
+    assert "biomcp --json search all --gene BRAF --counts-only" in counts_only
+
+
 def test_cli_reference_links_search_all_workflow_guide_from_cross_entity_block() -> None:
     cli_reference = _read("docs/user-guide/cli-reference.md")
     all_block = _markdown_section_block(

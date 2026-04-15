@@ -599,9 +599,9 @@ fn list_search_all() -> String {
 
 - `--since <YYYY|YYYY-MM|YYYY-MM-DD>` - applies to date-capable sections
 - `--limit <N>` - rows per section (default: 3)
-- `--counts-only` - section counts without row tables
+- `--counts-only` - markdown keeps section counts and follow-up links without row tables; `--json` omits per-section results and links
 - `--debug-plan` - include executed leg/routing metadata in markdown or JSON
-- `--json` - machine-readable sections + links contract
+- `--json` - machine-readable sections; in `--counts-only` mode sections carry metadata and counts only
 
 ## Notes
 
@@ -616,6 +616,7 @@ fn list_search_all() -> String {
 - `cross.*` links pivot to a related entity search.
 - `filter.hint` links show useful next filters for narrowing.
 - `search.retry` links appear when a section errors or times out.
+- In `--json --counts-only`, per-section follow-up links are omitted; markdown counts-only keeps them.
 - Typical workflow: `search all` -> `search <entity>` -> `get <entity> <id>` -> helper commands.
 "#
     .to_string()
@@ -804,6 +805,14 @@ mod tests {
         assert!(out.contains("# discover"));
         assert!(out.contains("discover <query>"));
         assert!(out.contains("--json discover <query>"));
+    }
+
+    #[test]
+    fn list_search_all_page_mentions_counts_only_json_contract() {
+        let out = render(Some("search-all")).expect("list search-all should render");
+        assert!(out.contains("markdown keeps section counts and follow-up links"));
+        assert!(out.contains("`--json` omits per-section results and links"));
+        assert!(out.contains("metadata and counts only"));
     }
 
     #[test]
