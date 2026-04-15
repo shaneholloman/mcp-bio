@@ -469,11 +469,20 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     drug_spec = _read_repo("spec/05-drug.md")
     bioasq_reference_ws = _normalize_ws(bioasq_reference)
     cli_reference_guide_ws = _normalize_ws(cli_reference_guide)
+    section_first_section = _normalize_ws(
+        _markdown_section(source_integration, "Section-First Entity Integration")
+    )
     local_runtime_section = _normalize_ws(
         _markdown_section(source_integration, "Local Runtime Sources and File-Backed Assets")
     )
     modifier_section = _normalize_ws(
         _markdown_section(source_integration, "Entity-Specific Command Modifiers")
+    )
+    source_aware_section = _normalize_ws(
+        _markdown_section(source_integration, "Source-Aware Section Capability Contract")
+    )
+    source_addition_section = _normalize_ws(
+        _markdown_section(source_integration, "Source Addition Checklist")
     )
 
     assert "source-integration.md" in technical
@@ -488,11 +497,12 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "`body_excerpt()`" in source_integration
     assert "`retry_send()`" in source_integration
     assert "## Section-First Entity Integration" in source_integration
-    assert "`src/cli/commands.rs`" in source_integration
-    assert "`src/cli/drug/mod.rs`" in source_integration
-    assert "`src/cli/list.rs`" in source_integration
-    assert "`docs/user-guide/cli-reference.md`" in source_integration
-    assert "default `get` output stays concise" in source_integration
+    assert "`src/cli/commands.rs`" in section_first_section
+    assert "`src/cli/drug/mod.rs`" in section_first_section
+    assert "`src/cli/mod.rs`" not in section_first_section
+    assert "`src/cli/list.rs`" in section_first_section
+    assert "`docs/user-guide/cli-reference.md`" in section_first_section
+    assert "default `get` output stays concise" in section_first_section
     assert "## Local Runtime Sources and File-Backed Assets" in source_integration
     assert (
         "EMA and WHO Prequalification are the canonical local runtime drug sources"
@@ -543,6 +553,7 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "The canonical example is `get drug <name> ... --region <us|eu|who|all>`." in modifier_section
     assert "`src/cli/commands.rs`" in modifier_section
     assert "`src/cli/drug/mod.rs`" in modifier_section
+    assert "`src/cli/mod.rs`" not in modifier_section
     assert "`src/cli/list.rs`" in modifier_section
     assert "`src/cli/list_reference.md`" in modifier_section
     assert "`docs/user-guide/cli-reference.md`" in modifier_section
@@ -591,11 +602,17 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "`biomcp serve-http`" in source_integration
     assert "process-local" in source_integration
     assert "## Source Addition Checklist" in source_integration
-    assert "`docs/reference/source-versioning.md`" in source_integration
-    assert "`src/cli/health.rs`" in source_integration
-    assert "`scripts/contract-smoke.sh`" in source_integration
-    assert "`spec/`" in source_integration
-    assert "`CHANGELOG.md`" in source_integration
+    assert "`src/cli/commands.rs`" in source_aware_section
+    assert "`src/cli/drug/mod.rs`" in source_aware_section
+    assert "`src/cli/mod.rs`" not in source_aware_section
+    assert "`src/cli/commands.rs`" in source_addition_section
+    assert "`src/cli/drug/mod.rs`" in source_addition_section
+    assert "`src/cli/mod.rs`" not in source_addition_section
+    assert "`docs/reference/source-versioning.md`" in source_addition_section
+    assert "`src/cli/health.rs`" in source_addition_section
+    assert "`scripts/contract-smoke.sh`" in source_addition_section
+    assert "`spec/`" in source_addition_section
+    assert "`CHANGELOG.md`" in source_addition_section
 
 
 def test_pull_request_contract_gate_matches_release_validation() -> None:
