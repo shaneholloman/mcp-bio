@@ -20,3 +20,7 @@ command = "make check && make spec-pr"
 # observed 8m30s on beelink (2026-04-13)
 [profile.full-contracts]
 command = "make check && make spec-pr && make test-contracts"
+
+# observed 0m7.1s on beelink (2026-04-15)
+[profile.docs-only]
+command = "./bin/lint && uv run --extra dev mkdocs build --strict"
