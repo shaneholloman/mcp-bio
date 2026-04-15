@@ -30,7 +30,9 @@ from first-run discovery.
 bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
 out="$("$bin" --help)"
 echo "$out" | mustmatch like "serve-http"
+echo "$out" | mustmatch like "leading public biomedical data sources"
 echo "$out" | mustmatch like "cache       Inspect the managed HTTP cache"
+echo "$out" | mustmatch not like "15 biomedical sources"
 echo "$out" | mustmatch not like "serve-sse"
 ```
 

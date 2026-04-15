@@ -9,7 +9,7 @@ use crate::entities::drug::DrugRegion;
 #[derive(Parser, Debug)]
 #[command(
     name = "biomcp",
-    about = "Query genes, variants, trials, articles, drugs, diseases, and more from 15 biomedical sources",
+    about = "Query genes, variants, trials, articles, drugs, diseases, and more from leading public biomedical data sources",
     version,
     after_help = "Note: flags marked (best-effort) are applied client-side or via imprecise API matching; results may include false positives."
 )]

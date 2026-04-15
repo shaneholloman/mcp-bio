@@ -44,6 +44,8 @@ async def test_initialize_advertises_tools_and_resources(
         assert capabilities.tools is not None
         assert capabilities.resources is not None
         assert initialize_result.instructions is not None
+        assert "leading public biomedical data sources" in initialize_result.instructions
+        assert "15 sources" not in initialize_result.instructions
         assert "biomcp skill list" not in initialize_result.instructions
         assert "biomcp skill" in initialize_result.instructions
 
@@ -107,6 +109,8 @@ async def test_biomcp_description_matches_list_contract(
             assert marker in description
         for detail in article_details:
             assert detail not in description
+        assert "leading public biomedical data sources" in description
+        assert "15 biomedical sources" not in description
         assert "SEARCH FILTERS:" in description
         assert "AGENT GUIDANCE:" in description
         assert "biomcp list" in description

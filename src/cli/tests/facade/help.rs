@@ -155,6 +155,19 @@ fn top_level_help_describes_cache_family_not_path_only() {
 }
 
 #[test]
+fn top_level_help_uses_count_free_source_phrase() {
+    let mut command = crate::cli::build_cli();
+    let mut help = Vec::new();
+    command
+        .write_long_help(&mut help)
+        .expect("top-level help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("leading public biomedical data sources"));
+    assert!(!help.contains("15 biomedical sources"));
+}
+
+#[test]
 fn search_all_help_mentions_counts_only_json_contract() {
     let mut command = crate::cli::build_cli();
     let search = command

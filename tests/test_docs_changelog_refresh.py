@@ -43,6 +43,8 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
     assert "disease definitions" in latest_release_block
     assert "Documentation consistency audit" in latest_release_block
     assert "Repo cleanup" in latest_release_block
+    assert "WHO Prequalification" in latest_release_block
+    assert "who sync" in latest_release_block
     assert "pending separate merge" not in latest_release_block
     assert "0.8.21" not in latest_release_block
 

@@ -114,6 +114,12 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "## Anti-patterns" in skill_file
     assert "## Output and evidence rules" in skill_file
     assert "## Answer commitment" in skill_file
+    routing_rules = skill_file[
+        skill_file.index("## Routing rules") : skill_file.index("## Section reference")
+    ]
+    assert "auto-download on first use" in routing_rules
+    assert "biomcp ema sync" in routing_rules
+    assert "biomcp who sync" in routing_rules
     assert 'biomcp search drug --indication "<disease>"' in skill_file
     assert 'biomcp discover "<free text>"' in skill_file
     assert "[Guide Workflows](../docs/how-to/guide-workflows.md)" in skill_file

@@ -78,6 +78,32 @@ def test_docs_index_teaches_search_all_as_unified_entry_point() -> None:
     )
 
 
+def test_entities_and_sources_tables_list_current_source_expansion_rows() -> None:
+    expectations = {
+        "README.md": [
+            "| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen, NIH Reporter, DisGeNET | `biomcp get gene BRAF pathways hpa` |",
+            '| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter, DisGeNET | `biomcp get disease "Lynch syndrome" genes` |',
+            "| pathway | Reactome, KEGG, WikiPathways, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |",
+            "| drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |",
+        ],
+        "docs/index.md": [
+            "| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen, NIH Reporter, DisGeNET | `biomcp get gene ERBB2 funding` |",
+            '| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter, DisGeNET | `biomcp get disease "chronic myeloid leukemia" funding` |',
+            "| pathway | Reactome, KEGG, WikiPathways, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |",
+            "| drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |",
+        ],
+    }
+
+    for path, rows in expectations.items():
+        entities = _markdown_section_block(
+            _read(path),
+            "## Entities and sources",
+            "\n## Cross-entity helpers",
+        )
+        for row in rows:
+            assert row in entities
+
+
 def test_search_all_workflow_guide_has_required_sections_and_examples() -> None:
     guide = _read("docs/how-to/search-all-workflow.md")
     lower = guide.lower()
