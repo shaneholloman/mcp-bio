@@ -47,6 +47,9 @@ fn search_article_help_includes_query_formulation_guidance() {
         )
     );
     assert!(help.contains(
+        "Result pages can suggest typed `get gene`, `get drug`, or `search article -g ... -k ...` follow-ups when `-k/--keyword` contains a recognizable entity token."
+    ));
+    assert!(help.contains(
         "Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance."
     ));
     assert!(help.contains(
@@ -159,7 +162,7 @@ fn article_search_json_includes_query_and_ranking_context() {
         publication_type: Some("Review".into()),
         source_local_position: 0,
     }];
-    let next_commands = crate::render::markdown::search_next_commands_article(&results);
+    let next_commands = crate::render::markdown::search_next_commands_article(&results, &filters);
     let json = article_search_json(
         &query,
         &filters,
@@ -203,6 +206,73 @@ fn article_search_json_includes_query_and_ranking_context() {
     );
     assert_eq!(
         value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp list article".into())
+    );
+}
+
+#[test]
+fn article_search_json_next_commands_include_entity_hints() {
+    let pagination = PaginationMeta::offset(0, 1, 1, Some(1));
+    let mut filters = super::super::related_article_filters();
+    filters.keyword = Some("SRY Sox9 miRNA".into());
+    let query = article_query_summary(
+        &filters,
+        crate::entities::article::ArticleSourceFilter::All,
+        false,
+        1,
+        0,
+    );
+    let results = vec![crate::entities::article::ArticleSearchResult {
+        pmid: "22663011".into(),
+        pmcid: Some("PMC9984800".into()),
+        doi: Some("10.1056/NEJMoa1203421".into()),
+        title: "SRY article".into(),
+        journal: Some("Journal".into()),
+        date: Some("2025-01-01".into()),
+        citation_count: Some(12),
+        influential_citation_count: Some(4),
+        source: crate::entities::article::ArticleSource::EuropePmc,
+        matched_sources: vec![crate::entities::article::ArticleSource::EuropePmc],
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: Some("Abstract".into()),
+        ranking: None,
+        normalized_title: "sry article".into(),
+        normalized_abstract: "abstract".into(),
+        publication_type: None,
+        source_local_position: 0,
+    }];
+    let next_commands = crate::render::markdown::search_next_commands_article(&results, &filters);
+    let json = article_search_json(
+        &query,
+        &filters,
+        true,
+        None,
+        None,
+        ArticleSearchJsonPage {
+            results,
+            pagination,
+            next_commands,
+        },
+    )
+    .expect("article search json should render");
+
+    let value: serde_json::Value =
+        serde_json::from_str(&json).expect("json should parse successfully");
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get article 22663011".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][1],
+        serde_json::Value::String("biomcp get gene SRY".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][2],
+        serde_json::Value::String("biomcp search article -g SRY -k \"Sox9 miRNA\"".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][3],
         serde_json::Value::String("biomcp list article".into())
     );
 }

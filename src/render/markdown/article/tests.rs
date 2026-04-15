@@ -515,3 +515,50 @@ fn article_search_markdown_prepends_debug_plan_block() {
     assert!(markdown.contains("\"surface\": \"search_article\""));
     assert!(markdown.contains("# Articles: gene=BRAF"));
 }
+
+#[test]
+fn article_search_markdown_renders_related_block_before_pagination() {
+    let rows = vec![ArticleSearchResult {
+        pmid: "22663011".into(),
+        title: "Entity-aware article".into(),
+        pmcid: None,
+        doi: None,
+        journal: Some("Journal".into()),
+        date: Some("2025-01-01".into()),
+        citation_count: Some(12),
+        influential_citation_count: Some(4),
+        source: ArticleSource::EuropePmc,
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: Some("Abstract".into()),
+        ranking: None,
+        matched_sources: vec![ArticleSource::EuropePmc],
+        normalized_title: "entity-aware article".into(),
+        normalized_abstract: "abstract".into(),
+        publication_type: None,
+        source_local_position: 0,
+    }];
+    let mut filters = article_filters_for_test(crate::entities::article::ArticleSort::Relevance);
+    filters.keyword = Some("SRY Sox9 miRNA".into());
+
+    let markdown = article_search_markdown_with_footer_and_context(
+        "keyword=SRY Sox9 miRNA",
+        &rows,
+        "Showing 1-1 of 3 results. Use --offset 1 for more.",
+        &filters,
+        true,
+        None,
+        None,
+    )
+    .expect("markdown should render");
+
+    let filters_line = markdown.find("Filters:").expect("filters line");
+    let related_line = markdown.find("See also:").expect("related block");
+    let pagination_line = markdown
+        .find("Showing 1-1 of 3 results. Use --offset 1 for more.")
+        .expect("pagination footer");
+
+    assert!(filters_line < related_line);
+    assert!(related_line < pagination_line);
+    assert!(markdown.contains("biomcp get gene SRY"));
+}

@@ -6,6 +6,8 @@ Article commands provide literature retrieval and annotation-focused enrichment 
 |---|---|---|
 | Gene search | `search article -g BRAF` | Confirms gene-linked literature lookup |
 | Keyword search | `search article -q "alternative microexon splicing metastasis" --source litsense2` | Confirms source-scoped free-text discovery |
+| Gene keyword pivot | `search article -k "SRY Sox9 miRNA"` | Confirms article search can suggest typed gene pivots from recognizable keyword tokens |
+| Drug keyword pivot | `search article -k "psoralen photobinding DNA"` | Confirms article search can suggest typed drug pivots without false-positive gene hints |
 | PubTator source search | `search article --source pubtator` | Confirms default filtering still allows source-specific PubTator results |
 | Federated source preservation | `--json search article -q ...` | Confirms default filtering still preserves non-EuropePMC matches |
 | Article detail | `get article 22663011` | Confirms canonical article card output |
@@ -38,6 +40,52 @@ json_out="$(biomcp --json search article -g BRAF --limit 3)"
 echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get article .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list article")' > /dev/null
+```
+
+## Article Search Gene Keyword Pivot
+
+When keyword search contains a recognizable gene token, BioMCP should suggest a
+typed gene card and a gene-filtered article pivot without disturbing the
+existing article-detail follow-up order.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search article -k "SRY Sox9 miRNA" --limit 1)"
+echo "$out" | mustmatch like "Filters: [query], -k/-q <keyword>"
+printf '%s\n' "$out" | grep -q '^See also:$'
+echo "$out" | mustmatch '/biomcp get article [0-9]+/'
+echo "$out" | mustmatch like "biomcp get gene SRY"
+echo "$out" | mustmatch like 'biomcp search article -g SRY -k "Sox9 miRNA"'
+
+filters_line="$(printf '%s\n' "$out" | grep -n '^Filters:' | cut -d: -f1 | head -n1)"
+see_line="$(printf '%s\n' "$out" | grep -n '^See also:' | cut -d: -f1 | head -n1)"
+test -n "$filters_line"
+test -n "$see_line"
+test "$see_line" -gt "$filters_line"
+
+json_out="$("$bin" --json search article -k "SRY Sox9 miRNA" --limit 1)"
+echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get article [0-9]+$")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list article")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get gene SRY")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp search article -g SRY -k \"Sox9 miRNA\"")' > /dev/null
+```
+
+## Article Search Drug Keyword Pivot
+
+When keyword search contains a recognizable drug token, BioMCP should suggest a
+typed drug card without misclassifying common biomedical acronyms like `DNA` as
+gene pivots.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search article -k "psoralen photobinding DNA" --limit 1)"
+printf '%s\n' "$out" | grep -q '^See also:$'
+echo "$out" | mustmatch like "biomcp get drug psoralen"
+echo "$out" | mustmatch not like "biomcp get gene DNA"
+
+json_out="$("$bin" --json search article -k "psoralen photobinding DNA" --limit 1)"
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get drug psoralen")' > /dev/null
+echo "$json_out" | jq -e '[._meta.next_commands[] | select(. == "biomcp get gene DNA")] | length == 0' > /dev/null
 ```
 
 ## Searching by Keyword

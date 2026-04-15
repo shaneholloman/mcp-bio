@@ -301,7 +301,10 @@ pub(super) fn related_variant_search_results(
     dedupe_markdown_commands(out)
 }
 
-pub(super) fn search_next_commands_article(results: &[ArticleSearchResult]) -> Vec<String> {
+pub(super) fn related_article_search_results(
+    results: &[ArticleSearchResult],
+    filters: &ArticleSearchFilters,
+) -> Vec<String> {
     if results.is_empty() {
         return Vec::new();
     }
@@ -313,6 +316,18 @@ pub(super) fn search_next_commands_article(results: &[ArticleSearchResult]) -> V
         .filter(|pmid| !pmid.is_empty())
     {
         out.push(format!("biomcp get article {pmid}"));
+    }
+    out.extend(article_support::article_keyword_entity_hints(filters));
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_article(
+    results: &[ArticleSearchResult],
+    filters: &ArticleSearchFilters,
+) -> Vec<String> {
+    let mut out = related_article_search_results(results, filters);
+    if out.is_empty() {
+        return out;
     }
     out.push("biomcp list article".to_string());
     dedupe_markdown_commands(out)

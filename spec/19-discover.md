@@ -13,6 +13,7 @@ examples against stable structural markers and suggestion contracts.
 | Treatment Query | `discover "what drugs treat myasthenia gravis"` | Confirms treatment intent leads with structured indication search |
 | Disease Symptoms | `discover "symptoms of Marfan syndrome"` | Confirms disease-linked symptom routing prefers phenotypes |
 | Gene + Disease | `discover "BRAF melanoma"` | Confirms combined orientation queries prefer `search all` |
+| Gene Topic To Article Search | `discover "CTCF cohesin"` | Confirms gene-plus-topic queries can pivot into gene-filtered article search |
 | Ambiguous Query | `discover diabetes` | Confirms ambiguity guidance is explicit |
 | Pathway Query | `discover "MAPK signaling"` | Confirms pathway-oriented suggestion generation |
 | Underspecified Variant | `discover V600E` | Confirms the command avoids false gene certainty |
@@ -88,6 +89,31 @@ echo "$out" | jq -e '._meta.next_commands[0] == "biomcp get disease MONDO:000794
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json discover "BRAF melanoma")"
 echo "$out" | jq -e '._meta.next_commands[0] == "biomcp search all --gene BRAF --disease \"melanoma\""' > /dev/null
+```
+
+## Gene Topic To Article Search
+
+When `discover` resolves an unambiguous gene and there is still a meaningful
+topic after removing the gene token, the command should suggest a gene-filtered
+article search. Gene-function wording should preserve the topic when present
+and fall back to the gene-only article search when no topic remains.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+
+out="$("$bin" discover "CTCF cohesin")"
+echo "$out" | mustmatch like "biomcp get gene CTCF"
+echo "$out" | mustmatch like 'biomcp search article -g CTCF -k cohesin --limit 5'
+
+json_out="$("$bin" --json discover "CTCF cohesin")"
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp search article -g CTCF -k cohesin --limit 5")' > /dev/null
+
+function_out="$("$bin" discover "CTCF function cohesin")"
+echo "$function_out" | mustmatch like 'biomcp search article -g CTCF -k cohesin --limit 5'
+
+fallback_out="$("$bin" discover "what does CTCF do")"
+echo "$fallback_out" | mustmatch like 'biomcp search article -g CTCF --limit 5'
+echo "$fallback_out" | mustmatch not like 'biomcp search article -g CTCF -k "" --limit 5'
 ```
 
 ## Ambiguous Query

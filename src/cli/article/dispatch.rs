@@ -100,7 +100,7 @@ pub(in crate::cli) async fn handle_search(
     } else {
         None
     };
-    let next_commands = crate::render::markdown::search_next_commands_article(&results);
+    let next_commands = crate::render::markdown::search_next_commands_article(&results, &filters);
 
     let text = if json {
         article_search_json(
