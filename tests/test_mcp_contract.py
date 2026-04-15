@@ -46,6 +46,7 @@ async def test_initialize_advertises_tools_and_resources(
         assert initialize_result.instructions is not None
         assert "leading public biomedical data sources" in initialize_result.instructions
         assert "15 sources" not in initialize_result.instructions
+        assert "15 biomedical sources" not in initialize_result.instructions
         assert "biomcp skill list" not in initialize_result.instructions
         assert "biomcp skill" in initialize_result.instructions
 
