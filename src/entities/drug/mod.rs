@@ -278,6 +278,10 @@ pub struct EmaRegulatoryRow {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub holder: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub marketing_authorisation_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub therapeutic_indication: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub recent_activity: Vec<EmaRegulatoryActivity>,
 }

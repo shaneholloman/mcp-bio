@@ -464,6 +464,21 @@ echo "$out" | mustmatch like "EMEA/H/C/003820"
 echo "$out" | mustmatch like "Authorised"
 ```
 
+## EMA Influenza Vaccine Search
+
+EMA search should also match cleaned therapeutic-indication text so natural
+queries such as "influenza vaccine" surface the seeded influenza products even
+when the phrase does not appear in the medicine name.
+
+```bash
+bash fixtures/setup-ema-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-ema-env"
+out="$(biomcp search drug --region ema -q 'influenza vaccine' --limit 5)"
+echo "$out" | mustmatch like "# Drugs: influenza vaccine"
+echo "$out" | mustmatch like "|Flucelvax Tetra|"
+echo "$out" | mustmatch like "|Fluad Tetra|"
+```
+
 ## WHO Search Region
 
 The WHO fixture should support WHO-only search rows with the WHO reference
@@ -546,6 +561,40 @@ echo "$out" | mustmatch like "## Regulatory (EU"
 echo "$out" | mustmatch like "EMEA/H/C/003820"
 echo "$out" | mustmatch like "Authorised"
 echo "$out" | mustmatch like "27/02/2026"
+```
+
+## EMA Alias Regulatory Section
+
+`--region ema` should be accepted as an alias for the canonical `eu` region and
+render the repaired EMA regulatory data, including the marketing-authorisation
+date and authorized indication text.
+
+```bash
+bash fixtures/setup-ema-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-ema-env"
+out="$(biomcp get drug Dupixent regulatory --region ema)"
+echo "$out" | mustmatch like "## Regulatory (EU"
+echo "$out" | mustmatch like "EMEA/H/C/004390"
+echo "$out" | mustmatch like "26/09/2017"
+echo "$out" | mustmatch like "### Authorized indications"
+echo "$out" | mustmatch like "atopic dermatitis"
+```
+
+## Default Drug Regulatory Covers US And EU
+
+Omitting `--region` on the direct regulatory path should surface the combined
+U.S. and EU regulatory blocks while keeping the regular no-flag `get drug ...
+all` behavior unchanged.
+
+```bash
+bash fixtures/setup-ema-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-ema-env"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp get drug nivolumab regulatory)"
+echo "$out" | mustmatch like "## Regulatory (US - Drugs@FDA)"
+echo "$out" | mustmatch like "## Regulatory (EU - EMA)"
+echo "$out" | mustmatch like "EMEA/H/C/003985"
 ```
 
 ## WHO Regulatory Section

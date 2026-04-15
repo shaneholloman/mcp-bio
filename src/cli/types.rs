@@ -122,6 +122,7 @@ fn parse_chart_scale(value: &str) -> Result<f32, String> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum DrugRegionArg {
     Us,
+    #[value(alias = "ema")]
     Eu,
     Who,
     All,

@@ -427,6 +427,8 @@ fn list_drug() -> String {
 - Structured filters remain U.S.-only when `--region` is omitted.
 - Explicit `--region who` filters structured U.S. hits through WHO prequalification.
 - Explicit `--region eu|all` is still invalid with structured filters.
+- `ema` is accepted as an input alias for the canonical `eu` drug region value.
+- Omitting `--region` on `get drug <name> regulatory` is the one implicit combined-region get path; other no-flag `get drug` shapes stay on the default U.S. path.
 - `drug trials <name>` inherits CTGov intervention alias expansion, adds `Matched Intervention` / `matched_intervention_label` when an alternate alias matched first, and accepts `--no-alias-expand` for literal matching.
 - EU regional commands auto-download the EMA human-medicines JSON feeds into `BIOMCP_EMA_DIR` or the default data directory on first use.
 - WHO regulatory commands auto-download the WHO Prequalification CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.
@@ -1006,6 +1008,12 @@ mod tests {
         assert!(
             out.contains("Explicit `--region eu|all` is still invalid with structured filters.")
         );
+        assert!(out.contains(
+            "`ema` is accepted as an input alias for the canonical `eu` drug region value."
+        ));
+        assert!(out.contains(
+            "Omitting `--region` on `get drug <name> regulatory` is the one implicit combined-region get path; other no-flag `get drug` shapes stay on the default U.S. path."
+        ));
         assert!(out.contains("drug trials <name> [--no-alias-expand]"));
         assert!(out.contains("inherits CTGov intervention alias expansion"));
         assert!(out.contains("Matched Intervention"));

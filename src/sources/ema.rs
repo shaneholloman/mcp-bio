@@ -3,9 +3,11 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 use std::time::{Duration, SystemTime};
 
 use http_cache_reqwest::CacheMode;
+use regex::Regex;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -133,6 +135,19 @@ impl EmaDrugIdentity {
     fn term_set(&self) -> HashSet<String> {
         self.terms.iter().cloned().collect()
     }
+
+    fn search_tokens(&self) -> HashSet<String> {
+        let mut out = HashSet::new();
+        for term in &self.terms {
+            for token in term
+                .split(|ch: char| !ch.is_ascii_alphanumeric())
+                .filter(|token| token.len() >= 3)
+            {
+                out.insert(token.to_string());
+            }
+        }
+        out
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -153,6 +168,8 @@ struct AnchorMedicine {
     ema_product_number: String,
     status: String,
     holder: Option<String>,
+    marketing_authorisation_date: Option<String>,
+    therapeutic_indication: Option<String>,
     match_rank: u8,
 }
 
@@ -173,8 +190,12 @@ struct EmaMedicineRow {
     medicine_status: StringOrVec,
     #[serde(default)]
     category: StringOrVec,
+    #[serde(default, alias = "marketing_authorisation_holder_company_name")]
+    marketing_authorisation_developer_applicant_holder: StringOrVec,
     #[serde(default)]
-    marketing_authorisation_holder_company_name: StringOrVec,
+    marketing_authorisation_date: StringOrVec,
+    #[serde(default, alias = "condition_indication")]
+    therapeutic_indication: StringOrVec,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -317,7 +338,9 @@ impl EmaClient {
                 active_substance,
                 ema_product_number,
                 status: scalar_value(&row.medicine_status).unwrap_or_else(|| "Unknown".to_string()),
-                holder: scalar_value(&row.marketing_authorisation_holder_company_name),
+                holder: scalar_value(&row.marketing_authorisation_developer_applicant_holder),
+                marketing_authorisation_date: scalar_value(&row.marketing_authorisation_date),
+                therapeutic_indication: scalar_ema_text(&row.therapeutic_indication),
                 match_rank: if matches_name { 0 } else { 1 },
             });
         }
@@ -351,10 +374,73 @@ impl EmaClient {
         limit: usize,
         offset: usize,
     ) -> Result<SearchPage<EmaDrugSearchResult>, BioMcpError> {
-        let anchor = self.resolve_anchor(identity)?;
-        let total = anchor.medicines.len();
-        let results = anchor
-            .medicines
+        let medicines = self.read_feed::<EmaMedicineRow>(MEDICINES_FILE)?;
+        let phrase_terms = identity.term_set();
+        let token_terms = identity.search_tokens();
+        let mut out = Vec::new();
+        let mut seen_products = HashSet::new();
+
+        for row in medicines {
+            if !is_human_category(&row.category) {
+                continue;
+            }
+
+            let Some(medicine_name) = scalar_value(&row.name_of_medicine) else {
+                continue;
+            };
+            let Some(active_substance) = scalar_value(&row.active_substance) else {
+                continue;
+            };
+            let Some(ema_product_number) = scalar_value(&row.ema_product_number) else {
+                continue;
+            };
+            let therapeutic_indication = scalar_ema_text(&row.therapeutic_indication);
+
+            let match_rank = if field_matches_terms(&medicine_name, &phrase_terms) {
+                0
+            } else if field_matches_terms(&active_substance, &phrase_terms) {
+                1
+            } else if therapeutic_indication
+                .as_deref()
+                .is_some_and(|value| field_matches_terms(value, &phrase_terms))
+            {
+                2
+            } else if !token_terms.is_empty()
+                && therapeutic_indication
+                    .as_deref()
+                    .is_some_and(|value| field_matches_terms(value, &token_terms))
+            {
+                3
+            } else {
+                continue;
+            };
+
+            let product_key = ema_product_number.to_ascii_lowercase();
+            if !seen_products.insert(product_key) {
+                continue;
+            }
+
+            out.push(AnchorMedicine {
+                medicine_name,
+                active_substance,
+                ema_product_number,
+                status: scalar_value(&row.medicine_status).unwrap_or_else(|| "Unknown".to_string()),
+                holder: scalar_value(&row.marketing_authorisation_developer_applicant_holder),
+                marketing_authorisation_date: scalar_value(&row.marketing_authorisation_date),
+                therapeutic_indication,
+                match_rank,
+            });
+        }
+
+        out.sort_by(|a, b| {
+            a.match_rank
+                .cmp(&b.match_rank)
+                .then_with(|| a.medicine_name.cmp(&b.medicine_name))
+                .then_with(|| a.ema_product_number.cmp(&b.ema_product_number))
+        });
+
+        let total = out.len();
+        let results = out
             .into_iter()
             .skip(offset)
             .take(limit)
@@ -410,6 +496,8 @@ impl EmaClient {
                 ema_product_number: medicine.ema_product_number.clone(),
                 status: medicine.status.clone(),
                 holder: medicine.holder.clone(),
+                marketing_authorisation_date: medicine.marketing_authorisation_date.clone(),
+                therapeutic_indication: medicine.therapeutic_indication.clone(),
                 recent_activity,
             });
         }
@@ -851,6 +939,23 @@ fn normalize_term(value: &str) -> Option<String> {
     clean_text(value).map(|value| value.to_ascii_lowercase())
 }
 
+fn decode_html_entities(value: &str) -> String {
+    value
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&apos;", "'")
+        .replace("&nbsp;", " ")
+}
+
+fn strip_inline_html_tags(value: &str) -> String {
+    static HTML_TAG_RE: OnceLock<Regex> = OnceLock::new();
+    let re = HTML_TAG_RE.get_or_init(|| Regex::new(r"(?is)<[^>]+>").expect("valid regex"));
+    re.replace_all(value, "").to_string()
+}
+
 fn clean_text(value: &str) -> Option<String> {
     let normalized = value
         .split_whitespace()
@@ -860,8 +965,16 @@ fn clean_text(value: &str) -> Option<String> {
     (!normalized.is_empty()).then_some(normalized)
 }
 
+fn clean_ema_text(value: &str) -> Option<String> {
+    clean_text(&strip_inline_html_tags(&decode_html_entities(value)))
+}
+
 fn scalar_value(value: &StringOrVec) -> Option<String> {
     value.first().and_then(clean_text)
+}
+
+fn scalar_ema_text(value: &StringOrVec) -> Option<String> {
+    value.first().and_then(clean_ema_text)
 }
 
 fn is_human_category(value: &StringOrVec) -> bool {
@@ -980,6 +1093,45 @@ mod tests {
         assert_eq!(anchor.medicines.len(), 1);
         assert_eq!(anchor.medicines[0].medicine_name, "Keytruda");
         assert_eq!(anchor.medicines[0].ema_product_number, "EMEA/H/C/003820");
+    }
+
+    #[test]
+    fn regulatory_reads_live_schema_holder_key_and_cleaned_indication() {
+        let client = fixture_client();
+        let anchor = client
+            .resolve_anchor(&EmaDrugIdentity::new("Dupixent"))
+            .expect("anchor");
+        let regulatory = client.regulatory(&anchor).expect("regulatory");
+        let row = regulatory.first().expect("dupixent row");
+
+        assert_eq!(row.holder.as_deref(), Some("Sanofi Winthrop Industrie"));
+        assert_eq!(
+            row.marketing_authorisation_date.as_deref(),
+            Some("26/09/2017")
+        );
+        let indication = row
+            .therapeutic_indication
+            .as_deref()
+            .expect("therapeutic indication");
+        assert!(indication.contains("atopic dermatitis"));
+        assert!(!indication.contains("&nbsp;"));
+        assert!(!indication.contains('<'));
+    }
+
+    #[test]
+    fn search_medicines_matches_therapeutic_indication_queries() {
+        let client = fixture_client();
+        let page = client
+            .search_medicines(&EmaDrugIdentity::new("influenza vaccine"), 10, 0)
+            .expect("search page");
+        let names = page
+            .results
+            .iter()
+            .map(|row| row.name.as_str())
+            .collect::<Vec<_>>();
+
+        assert!(names.contains(&"Flucelvax Tetra"));
+        assert!(names.contains(&"Fluad Tetra"));
     }
 
     #[test]

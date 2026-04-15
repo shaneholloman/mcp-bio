@@ -118,21 +118,47 @@ fn render_eu_regulatory_block(heading: &str, rows: Option<&[EmaRegulatoryRow]>) 
         return out;
     }
 
-    out.push_str("| Medicine | Active Substance | EMA Number | Status | Holder |\n");
-    out.push_str("|---|---|---|---|---|\n");
+    out.push_str("| Medicine | Active Substance | EMA Number | Status | Auth Date | Holder |\n");
+    out.push_str("|---|---|---|---|---|---|\n");
     for row in rows {
         let _ = writeln!(
             out,
-            "| {} | {} | {} | {} | {} |",
+            "| {} | {} | {} | {} | {} | {} |",
             markdown_cell(&row.medicine_name),
             markdown_cell(&row.active_substance),
             markdown_cell(&row.ema_product_number),
             markdown_cell(&row.status),
+            row.marketing_authorisation_date
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
             row.holder
                 .as_deref()
                 .map(markdown_cell)
                 .unwrap_or_else(|| "-".to_string()),
         );
+    }
+
+    out.push_str("\n### Authorized indications\n");
+    let indication_rows = rows
+        .iter()
+        .filter_map(|row| {
+            row.therapeutic_indication
+                .as_deref()
+                .map(|indication| (row.medicine_name.as_str(), indication))
+        })
+        .collect::<Vec<_>>();
+    if indication_rows.is_empty() {
+        out.push_str("No authorized indications found.\n");
+    } else {
+        for (medicine_name, indication) in indication_rows {
+            let _ = writeln!(
+                out,
+                "- **{}:** {}",
+                markdown_cell(medicine_name),
+                markdown_cell(indication),
+            );
+        }
     }
 
     out.push_str("\n### Recent post-authorisation activity\n");

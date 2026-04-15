@@ -387,8 +387,8 @@ SOURCE_PAGE_SPECS = {
         "example_commands": [
             "biomcp search drug Keytruda --region eu --limit 3",
             "biomcp get drug Keytruda regulatory --region eu",
+            "biomcp get drug Dupixent regulatory --region ema",
             "biomcp get drug Ozempic safety --region eu",
-            "biomcp get drug carboplatin shortage --region eu",
             "biomcp ema sync",
         ],
     },

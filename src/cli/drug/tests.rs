@@ -1,6 +1,8 @@
 use clap::{CommandFactory, Parser};
 
-use super::dispatch::{drug_all_region_search_json, resolve_drug_search_region};
+use super::dispatch::{
+    drug_all_region_search_json, resolve_drug_get_region, resolve_drug_search_region,
+};
 use crate::cli::{Cli, Commands, DrugCommand, DrugRegionArg, GetEntity, SearchEntity};
 use crate::entities::drug::{DrugRegion, DrugSearchFilters};
 
@@ -35,7 +37,16 @@ fn get_drug_help_lists_region_flag_and_examples() {
 
     assert!(help.contains("--region <REGION>"));
     assert!(help.contains("biomcp get drug Keytruda regulatory --region eu"));
+    assert!(help.contains("biomcp get drug Dupixent regulatory --region ema"));
     assert!(help.contains("biomcp get drug Ozempic safety --region eu"));
+    assert!(
+        help.contains(
+            "`--region ema` is accepted as an alias for the canonical `eu` region value."
+        )
+    );
+    assert!(help.contains(
+        "If you omit `--region` on `biomcp get drug <name> regulatory`, BioMCP checks U.S. and EU regulatory data."
+    ));
 }
 
 #[test]
@@ -125,6 +136,37 @@ fn get_drug_parses_region_split_form() {
     assert!(!raw);
     assert!(!json);
     assert!(!no_cache);
+}
+
+#[test]
+fn get_drug_parses_ema_region_alias_as_eu() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "get",
+        "drug",
+        "Dupixent",
+        "regulatory",
+        "--region",
+        "ema",
+    ])
+    .expect("get drug ema alias should parse");
+
+    let Cli {
+        command:
+            Commands::Get {
+                entity:
+                    GetEntity::Drug(crate::cli::drug::DrugGetArgs {
+                        region, sections, ..
+                    }),
+            },
+        ..
+    } = cli
+    else {
+        panic!("expected get drug command");
+    };
+
+    assert_eq!(sections, vec!["regulatory".to_string()]);
+    assert_eq!(region, Some(DrugRegionArg::Eu));
 }
 
 #[test]
@@ -300,6 +342,30 @@ fn search_drug_region_allows_explicit_who_for_structured_queries() {
 
     let region =
         resolve_drug_search_region(Some(crate::cli::DrugRegionArg::Who), &filters).expect("who");
+    assert_eq!(region, DrugRegion::Who);
+}
+
+#[test]
+fn get_drug_region_defaults_to_all_for_regulatory_only_queries() {
+    let region = resolve_drug_get_region(&["regulatory".to_string()], None);
+    assert_eq!(region, DrugRegion::All);
+}
+
+#[test]
+fn get_drug_region_keeps_non_regulatory_no_flag_shapes_on_us_default() {
+    assert_eq!(
+        resolve_drug_get_region(&["all".to_string()], None),
+        DrugRegion::Us
+    );
+    assert_eq!(
+        resolve_drug_get_region(&["regulatory".to_string(), "safety".to_string()], None),
+        DrugRegion::Us
+    );
+}
+
+#[test]
+fn get_drug_region_respects_explicit_region() {
+    let region = resolve_drug_get_region(&["regulatory".to_string()], Some(DrugRegion::Who));
     assert_eq!(region, DrugRegion::Who);
 }
 

@@ -6,7 +6,9 @@
       "ema_product_number": ["EMEA/H/C/003820"],
       "medicine_status": ["Authorised"],
       "category": ["Human"],
-      "marketing_authorisation_holder_company_name": ["Merck Sharp & Dohme B.V."]
+      "marketing_authorisation_developer_applicant_holder": ["Merck Sharp & Dohme B.V."],
+      "marketing_authorisation_date": ["17/07/2015"],
+      "therapeutic_indication": ["Keytruda as monotherapy is indicated for the treatment of adults and adolescents aged 12 years and older with advanced (unresectable or metastatic) melanoma."]
     },
     {
       "name_of_medicine": ["Ozempic"],
@@ -14,7 +16,49 @@
       "ema_product_number": ["EMEA/H/C/004174"],
       "medicine_status": ["Authorised"],
       "category": ["Human"],
-      "marketing_authorisation_holder_company_name": ["Novo Nordisk A/S"]
+      "marketing_authorisation_developer_applicant_holder": ["Novo Nordisk A/S"],
+      "marketing_authorisation_date": ["08/02/2018"],
+      "therapeutic_indication": ["Treatment of adults with insufficiently controlled type 2 diabetes mellitus as an adjunct to diet and exercise."]
+    },
+    {
+      "name_of_medicine": ["Dupixent"],
+      "active_substance": ["dupilumab"],
+      "ema_product_number": ["EMEA/H/C/004390"],
+      "medicine_status": ["Authorised"],
+      "category": ["Human"],
+      "marketing_authorisation_developer_applicant_holder": ["Sanofi Winthrop Industrie"],
+      "marketing_authorisation_date": ["26/09/2017"],
+      "therapeutic_indication": ["<p>Dupixent is indicated for the treatment of moderate-to-severe atopic&nbsp;dermatitis in adults and adolescents 12 years and older who are candidates for systemic therapy.</p>"]
+    },
+    {
+      "name_of_medicine": ["Opdivo"],
+      "active_substance": ["nivolumab"],
+      "ema_product_number": ["EMEA/H/C/003985"],
+      "medicine_status": ["Authorised"],
+      "category": ["Human"],
+      "marketing_authorisation_developer_applicant_holder": ["Bristol-Myers Squibb Pharma EEIG"],
+      "marketing_authorisation_date": ["19/06/2015"],
+      "therapeutic_indication": ["Opdivo as monotherapy or in combination with ipilimumab is indicated for the treatment of advanced (unresectable or metastatic) melanoma in adults and adolescents 12 years of age and older."]
+    },
+    {
+      "name_of_medicine": ["Flucelvax Tetra"],
+      "active_substance": ["A/Wisconsin/67/2022 (H1N1)pdm09-like strain"],
+      "ema_product_number": ["EMEA/H/C/004814"],
+      "medicine_status": ["Authorised"],
+      "category": ["Human"],
+      "marketing_authorisation_developer_applicant_holder": ["Seqirus Netherlands B.V."],
+      "marketing_authorisation_date": ["12/12/2018"],
+      "therapeutic_indication": ["Prophylaxis of influenza in adults and children from 2 years of age."]
+    },
+    {
+      "name_of_medicine": ["Fluad Tetra"],
+      "active_substance": ["A/Victoria/4897/2022 (H1N1)pdm09-like strain"],
+      "ema_product_number": ["EMEA/H/C/004993"],
+      "medicine_status": ["Authorised"],
+      "category": ["Human"],
+      "marketing_authorisation_developer_applicant_holder": ["Seqirus Netherlands B.V."],
+      "marketing_authorisation_date": ["20/05/2020"],
+      "therapeutic_indication": ["Prophylaxis of influenza in adults 50 years of age and older."]
     },
     {
       "name_of_medicine": ["Keytrudavet"],
@@ -22,7 +66,7 @@
       "ema_product_number": ["EMEA/V/C/000999"],
       "medicine_status": ["Authorised"],
       "category": ["Veterinary"],
-      "marketing_authorisation_holder_company_name": ["Example Vet Pharma"]
+      "marketing_authorisation_developer_applicant_holder": ["Example Vet Pharma"]
     },
     {
       "name_of_medicine": ["CalmHerb"],
@@ -30,7 +74,7 @@
       "ema_product_number": ["EMEA/HM/C/001234"],
       "medicine_status": ["Authorised"],
       "category": ["Herbal"],
-      "marketing_authorisation_holder_company_name": ["Example Herbal Co."]
+      "marketing_authorisation_developer_applicant_holder": ["Example Herbal Co."]
     }
   ]
 }
