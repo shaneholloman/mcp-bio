@@ -402,3 +402,81 @@ pub async fn run(check_only: bool) -> Result<String, BioMcpError> {
     output.push_str(&format!("Updated BioMCP to {latest_tag}\n"));
     Ok(output)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use flate2::Compression;
+    use flate2::write::GzEncoder;
+    use std::io::Write;
+    use tar::{Builder, Header};
+
+    fn build_targz(entries: &[(&str, &[u8])]) -> Vec<u8> {
+        let mut tar_buf = Vec::new();
+        {
+            let mut builder = Builder::new(&mut tar_buf);
+            for (path, contents) in entries {
+                let mut header = Header::new_gnu();
+                header.set_size(contents.len() as u64);
+                header.set_mode(0o755);
+                header.set_cksum();
+                builder
+                    .append_data(&mut header, *path, *contents)
+                    .expect("test archive entry should append");
+            }
+            builder.finish().expect("test archive should finish");
+        }
+
+        let mut gz = GzEncoder::new(Vec::new(), Compression::default());
+        gz.write_all(&tar_buf)
+            .expect("test archive should gzip successfully");
+        gz.finish().expect("test archive should finalize")
+    }
+
+    #[test]
+    fn extract_binary_from_targz_returns_matching_binary_bytes() {
+        let expected = b"#!/bin/sh\necho biomcp\n";
+        let archive = build_targz(&[
+            ("release/README.txt", b"notes"),
+            ("release/bin/biomcp", expected.as_slice()),
+        ]);
+
+        let extracted =
+            extract_binary_from_targz(&archive, "biomcp").expect("binary should extract");
+
+        assert_eq!(extracted, expected);
+    }
+
+    #[test]
+    fn extract_binary_from_targz_rejects_empty_binary() {
+        let archive = build_targz(&[("release/bin/biomcp", b"")]);
+
+        let err = extract_binary_from_targz(&archive, "biomcp")
+            .expect_err("empty binary entry should be rejected");
+
+        assert!(matches!(
+            err,
+            BioMcpError::Api { api, message }
+                if api == "update" && message == "Downloaded archive contained an empty binary"
+        ));
+    }
+
+    #[test]
+    fn extract_binary_from_targz_reports_missing_binary_as_not_found() {
+        let archive = build_targz(&[("release/bin/other-binary", b"echo other\n")]);
+
+        let err = extract_binary_from_targz(&archive, "biomcp")
+            .expect_err("missing binary should be reported as not found");
+
+        assert!(matches!(
+            err,
+            BioMcpError::NotFound {
+                entity,
+                id,
+                suggestion,
+            } if entity == "release asset"
+                && id == "biomcp"
+                && suggestion == "Release archive did not contain expected biomcp binary"
+        ));
+    }
+}
