@@ -145,6 +145,15 @@ out="$(biomcp get disease melanoma)"
 echo "$out" | mustmatch like "# melanoma"
 echo "$out" | mustmatch like "ID: MONDO:0005105"
 echo "$out" | mustmatch like "Genes (Open Targets): CDKN2A (OT"
+echo "$out" | mustmatch like $'More:\n  biomcp get disease MONDO:0005105 genes   - associated genes\n  biomcp get disease MONDO:0005105 pathways   - pathways from associated genes\n  biomcp get disease MONDO:0005105 phenotypes   - HPO phenotype annotations\n  biomcp get disease MONDO:0005105 survival   - SEER Explorer cancer survival rates\n  biomcp get disease MONDO:0005105 funding   - NIH Reporter grant support'
+json="$(biomcp --json get disease melanoma)"
+echo "$json" | jq -e '._meta.next_commands[:5] == [
+  "biomcp get disease MONDO:0005105 genes",
+  "biomcp get disease MONDO:0005105 pathways",
+  "biomcp get disease MONDO:0005105 phenotypes",
+  "biomcp get disease MONDO:0005105 survival",
+  "biomcp get disease MONDO:0005105 funding"
+]' > /dev/null
 ```
 
 ## Disease Survival
@@ -251,8 +260,10 @@ render an NIH Reporter section the user did not request.
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get disease "chronic myeloid leukemia" all)"
+echo "$out" | mustmatch like "## Survival (SEER Explorer)"
 echo "$out" | mustmatch not like "## Funding (NIH Reporter)"
 json="$("$bin" --json get disease "chronic myeloid leukemia" all)"
+echo "$json" | jq -e '.survival != null or .survival_note != null' > /dev/null
 echo "$json" | jq -e '.funding == null and .funding_note == null' > /dev/null
 ```
 

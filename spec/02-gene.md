@@ -56,6 +56,14 @@ echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list gene")' >
 out="$(biomcp get gene BRAF)"
 echo "$out" | mustmatch like "# BRAF (B-Raf proto-oncogene"
 echo "$out" | mustmatch like "Entrez ID: 673"
+echo "$out" | mustmatch like $'More:\n  biomcp get gene BRAF pathways   - Reactome/KEGG pathway context\n  biomcp get gene BRAF ontology   - GO-style functional enrichment\n  biomcp get gene BRAF diseases   - disease associations\n  biomcp get gene BRAF funding   - NIH Reporter grant support'
+json="$(biomcp --json get gene BRAF)"
+echo "$json" | jq -e '._meta.next_commands[:4] == [
+  "biomcp get gene BRAF pathways",
+  "biomcp get gene BRAF ontology",
+  "biomcp get gene BRAF diseases",
+  "biomcp get gene BRAF funding"
+]' > /dev/null
 ```
 
 ## Gene Card Guidance
@@ -68,6 +76,7 @@ echo "$out" | mustmatch like "Aliases are alternate names used in literature and
 echo "$out" | mustmatch like "biomcp get gene OPA1 protein"
 echo "$out" | mustmatch like "biomcp get gene OPA1 hpa"
 echo "$out" | mustmatch like "localization"
+echo "$out" | mustmatch like "biomcp get gene OPA1 funding"
 ```
 
 ## Progressive Disclosure

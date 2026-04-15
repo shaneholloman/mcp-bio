@@ -11,6 +11,7 @@ fn assert_parses(cmd: &str) {
 
 #[test]
 fn gene_next_commands_parse() {
+    assert_parses("biomcp get gene BRAF funding");
     assert_parses(r#"biomcp search trial -c "Dravet syndrome" -s recruiting"#);
     assert_parses("biomcp search pgx -g BRAF");
     assert_parses("biomcp search variant -g BRAF");
@@ -83,6 +84,8 @@ fn trial_search_json_next_commands_parse() {
 
 #[test]
 fn disease_next_commands_parse() {
+    assert_parses("biomcp get disease MONDO:0005105 survival");
+    assert_parses("biomcp get disease MONDO:0005105 funding");
     assert_parses("biomcp get gene SCN1A clingen constraint");
     assert_parses(r#"biomcp get disease "Dravet syndrome" genes phenotypes"#);
     assert_parses("biomcp search trial -c melanoma");

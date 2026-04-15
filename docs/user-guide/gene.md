@@ -26,6 +26,8 @@ biomcp get gene BRAF
 ```
 
 The default gene view is concise and intended for orientation.
+Its `More:` block keeps `pathways`, `ontology`, and `diseases` visible and now
+also surfaces `funding` as a direct follow-up from the base card.
 
 ## Request deeper sections
 
