@@ -97,7 +97,7 @@ echo "$out" | mustmatch like "2-10 genes"
 
 ```bash
 out="$(biomcp study download --help)"
-echo "$out" | mustmatch like "--list"
+echo "$out" | mustmatch '/--list\s+List available remote/'
 echo "$out" | mustmatch '/\[STUDY_ID\]/'
 echo "$out" | mustmatch like "List available remote study IDs instead of downloading a study"
 echo "$out" | mustmatch like "required unless --list"
