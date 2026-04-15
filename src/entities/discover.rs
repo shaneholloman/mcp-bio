@@ -1133,7 +1133,15 @@ fn generate_commands(
         DiscoverIntent::GeneFunction => {
             if let Some(gene) = top_concept_of_type(concepts, DiscoverType::Gene) {
                 commands.push(format!("biomcp get gene {}", gene.label));
-                commands.push(format!("biomcp search article -g {} --limit 5", gene.label));
+                if let Some(topic) = gene_article_topic(query, &gene.label, intent) {
+                    commands.push(format!(
+                        "biomcp search article -g {} -k {} --limit 5",
+                        gene.label,
+                        crate::render::markdown::shell_quote_arg(&topic)
+                    ));
+                } else {
+                    commands.push(format!("biomcp search article -g {} --limit 5", gene.label));
+                }
                 return dedupe_strings(commands);
             }
         }
@@ -1141,7 +1149,16 @@ fn generate_commands(
     }
 
     match top.primary_type {
-        DiscoverType::Gene if !ambiguous => commands.push(format!("biomcp get gene {}", top.label)),
+        DiscoverType::Gene if !ambiguous => {
+            commands.push(format!("biomcp get gene {}", top.label));
+            if let Some(topic) = gene_article_topic(query, &top.label, intent) {
+                commands.push(format!(
+                    "biomcp search article -g {} -k {} --limit 5",
+                    top.label,
+                    crate::render::markdown::shell_quote_arg(&topic)
+                ));
+            }
+        }
         DiscoverType::Gene => commands.push(format!(
             "biomcp search gene -q \"{}\" --limit 10",
             query.trim()
@@ -1333,21 +1350,80 @@ fn gene_disease_focus(query: &str, concepts: &[DiscoverConcept]) -> Option<(Stri
         return Some((gene.label.clone(), disease.label.clone()));
     }
 
-    let trimmed = query.trim();
-    let mut parts = trimmed.splitn(2, char::is_whitespace);
-    let gene = parts.next()?.trim();
-    let disease = parts.next()?.trim();
-    if disease.is_empty() {
-        return None;
-    }
-    if looks_like_gene_symbol_token(gene) {
-        Some((gene.to_string(), disease.to_string()))
-    } else {
-        None
-    }
+    None
 }
 
-fn looks_like_gene_symbol_token(token: &str) -> bool {
+fn gene_article_topic(query: &str, gene_label: &str, intent: DiscoverIntent) -> Option<String> {
+    let mut tokens = query
+        .split_whitespace()
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+        .collect::<Vec<_>>();
+
+    let remove_index = tokens.iter().position(|token| {
+        token
+            .trim_matches(|ch: char| !(ch.is_ascii_alphanumeric() || ch == '_' || ch == '-'))
+            .eq_ignore_ascii_case(gene_label)
+    })?;
+    tokens.remove(remove_index);
+
+    let mut topic = tokens.join(" ");
+    if topic.is_empty() {
+        return None;
+    }
+
+    if intent == DiscoverIntent::GeneFunction {
+        topic = strip_gene_function_scaffolding(&topic);
+    }
+
+    (!topic.is_empty()).then_some(topic)
+}
+
+fn strip_gene_function_scaffolding(topic: &str) -> String {
+    const PHRASES: &[&[&str]] = &[&["what", "is"], &["what", "does"]];
+    const FILLER: &[&str] = &[
+        "function", "role", "activity", "do", "does", "is", "gene", "protein", "of", "in",
+    ];
+
+    let mut tokens = topic
+        .split_whitespace()
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+        .collect::<Vec<_>>();
+
+    loop {
+        let mut removed_phrase = false;
+        for phrase in PHRASES {
+            if tokens.len() >= phrase.len()
+                && tokens
+                    .iter()
+                    .take(phrase.len())
+                    .map(|token| token.to_ascii_lowercase())
+                    .eq(phrase.iter().map(|token| (*token).to_string()))
+            {
+                tokens.drain(..phrase.len());
+                removed_phrase = true;
+                break;
+            }
+        }
+        if !removed_phrase {
+            break;
+        }
+    }
+
+    while let Some(first) = tokens.first() {
+        let lowered = first.to_ascii_lowercase();
+        if FILLER.contains(&lowered.as_str()) {
+            tokens.remove(0);
+        } else {
+            break;
+        }
+    }
+
+    tokens.join(" ")
+}
+
+pub(crate) fn looks_like_gene_symbol_token(token: &str) -> bool {
     let token = token.trim();
     !token.is_empty()
         && token.len() <= 10
@@ -1851,6 +1927,66 @@ mod tests {
 
         assert_eq!(result.intent, DiscoverIntent::GeneFunction);
         assert_eq!(result.next_commands[0], "biomcp get gene OPA1");
+    }
+
+    #[test]
+    fn discover_general_gene_topic_adds_filtered_article_search() {
+        let result = build_result(
+            "CTCF cohesin",
+            &[hgnc_doc("CTCF", "HGNC:13723", &[])],
+            &[],
+            &[],
+            Vec::new(),
+        );
+
+        assert_eq!(result.intent, DiscoverIntent::General);
+        assert_eq!(result.next_commands[0], "biomcp get gene CTCF");
+        assert_eq!(
+            result.next_commands[1],
+            "biomcp search article -g CTCF -k cohesin --limit 5"
+        );
+    }
+
+    #[test]
+    fn discover_gene_function_with_topic_preserves_meaningful_keyword() {
+        let result = build_result(
+            "CTCF function cohesin",
+            &[hgnc_doc("CTCF", "HGNC:13723", &[])],
+            &[],
+            &[],
+            Vec::new(),
+        );
+
+        assert_eq!(result.intent, DiscoverIntent::GeneFunction);
+        assert_eq!(result.next_commands[0], "biomcp get gene CTCF");
+        assert_eq!(
+            result.next_commands[1],
+            "biomcp search article -g CTCF -k cohesin --limit 5"
+        );
+    }
+
+    #[test]
+    fn discover_gene_function_without_topic_keeps_gene_only_article_search() {
+        let result = build_result(
+            "what does CTCF do",
+            &[hgnc_doc("CTCF", "HGNC:13723", &[])],
+            &[],
+            &[],
+            Vec::new(),
+        );
+
+        assert_eq!(result.intent, DiscoverIntent::GeneFunction);
+        assert_eq!(result.next_commands[0], "biomcp get gene CTCF");
+        assert_eq!(
+            result.next_commands[1],
+            "biomcp search article -g CTCF --limit 5"
+        );
+        assert!(
+            !result
+                .next_commands
+                .iter()
+                .any(|command| command.contains(" -k "))
+        );
     }
 
     #[test]

@@ -429,6 +429,9 @@ pub fn article_search_markdown_with_footer_and_context(
             is_retracted: row.is_retracted,
         })
         .collect::<Vec<_>>();
+    let related_block = format_related_block(
+        crate::render::markdown::related_article_search_results(results, filters),
+    );
 
     let tmpl = env()?.get_template("article_search.md.j2")?;
     let body = tmpl.render(context! {
@@ -439,6 +442,7 @@ pub fn article_search_markdown_with_footer_and_context(
         note => note,
         sort => filters.sort.as_str(),
         ranking_policy => crate::entities::article::article_relevance_ranking_policy(filters),
+        related_block => related_block,
         pagination_footer => pagination_footer,
     })?;
     let body = with_pagination_footer(body, pagination_footer);

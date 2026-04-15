@@ -130,11 +130,13 @@ EXAMPLES:
     /// Resolve free-text biomedical text into typed concepts and suggested commands
     #[command(after_help = "\
 When to use: use discover when you only have free text and need BioMCP to pick the next typed command.
+Unambiguous gene-plus-topic queries can also surface a gene-filtered article search when there is still a meaningful topic after the gene name.
 
 EXAMPLES:
   biomcp discover ERBB1
   biomcp discover Keytruda
   biomcp discover \"chest pain\"
+  biomcp discover \"CTCF cohesin\"
   biomcp --json discover diabetes
 
 See also: biomcp list discover")]
@@ -231,6 +233,7 @@ QUERY FORMULATION:
   - Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`.
   - Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts.
   - Unknown-entity questions should stay keyword-first or start with `discover`.
+  - Result pages can suggest typed `get gene`, `get drug`, or `search article -g ... -k ...` follow-ups when `-k/--keyword` contains a recognizable entity token.
   - Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance.
   - Prefer `--type review` for synthesis or list-style questions; it can narrow the compatible default backend set.
   - Avoid: `biomcp search article \"TP53 apoptosis gene regulation\"`

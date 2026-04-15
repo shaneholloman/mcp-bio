@@ -64,6 +64,14 @@ fn article_search_json_next_commands_parse() {
 }
 
 #[test]
+fn article_and_discover_next_commands_parse() {
+    assert_parses("biomcp get gene SRY");
+    assert_parses(r#"biomcp search article -g SRY -k "Sox9 miRNA""#);
+    assert_parses("biomcp get drug psoralen");
+    assert_parses(r#"biomcp search article -g CTCF -k cohesin --limit 5"#);
+}
+
+#[test]
 fn trial_next_commands_parse() {
     assert_parses(
         r#"biomcp search article --drug dabrafenib -q "NCT01234567 Example trial" --limit 5"#,

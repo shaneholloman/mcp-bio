@@ -60,6 +60,7 @@ fn list_discover() -> String {
 
 - Use `discover` when you only have free text and need BioMCP to pick the next typed command.
 - Prefer the first suggested command when the query clearly implies treatment, symptoms, safety, trials, or gene+disease orientation.
+- Unambiguous gene-plus-topic queries can also surface `biomcp search article -g <symbol> -k <topic> --limit 5` when the remaining topic is meaningful.
 "#
     .to_string()
 }
@@ -258,6 +259,10 @@ fn list_article() -> String {
 | Keyword-only topic, dataset, or method question | Use `-k/--keyword`; add `--type review` for synthesis or survey questions |
 | Unknown gene/disease/drug; identify it from symptoms, mechanisms, or evidence first | Do not invent `-g/-d/--drug`; stay keyword-first or start with `discover` |
 
+Result-page follow-ups:
+
+- Keyword-bearing result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>` follow-ups when `-k/--keyword` contains a recognizable entity token.
+
 Entity-only quick start:
 
 - `biomcp search article -g BRAF --limit 5`
@@ -284,6 +289,7 @@ Worked examples:
 - Non-empty `search article --json` responses include `_meta.next_commands`.
 - The first follow-up drills the top result with `biomcp get article <pmid>`.
 - `biomcp list article` is always included so agents can inspect the full filter surface.
+- Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>` when the keyword contains a recognizable entity token.
 
 ## Notes
 
@@ -876,6 +882,8 @@ mod tests {
         assert!(out.contains("# discover"));
         assert!(out.contains("discover <query>"));
         assert!(out.contains("--json discover <query>"));
+        assert!(out.contains("gene-plus-topic queries"));
+        assert!(out.contains("biomcp search article -g <symbol> -k <topic> --limit 5"));
     }
 
     #[test]
@@ -1109,6 +1117,9 @@ mod tests {
             )
         );
         assert!(article.contains(
+            "Keyword-bearing result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>`"
+        ));
+        assert!(article.contains(
             "biomcp search article --drug amiodarone -k \"photosensitivity mechanism\" --limit 5"
         ));
         assert!(article.contains(
@@ -1119,6 +1130,9 @@ mod tests {
         ));
         assert!(article.contains(
             "typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed"
+        ));
+        assert!(article.contains(
+            "Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>`"
         ));
     }
 

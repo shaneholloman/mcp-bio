@@ -176,6 +176,10 @@ pub(crate) fn quote_arg(value: &str) -> String {
     support::quote_arg(value)
 }
 
+pub(crate) fn shell_quote_arg(value: &str) -> String {
+    support::shell_quote_arg(value)
+}
+
 pub(crate) fn preferred_drug_name<'a>(
     names: impl IntoIterator<Item = &'a str>,
     preferred: Option<&str>,
@@ -254,8 +258,18 @@ pub(crate) fn related_variant_search_results(
     related::related_variant_search_results(results, gene_filter, condition_filter)
 }
 
-pub(crate) fn search_next_commands_article(results: &[ArticleSearchResult]) -> Vec<String> {
-    related::search_next_commands_article(results)
+pub(crate) fn related_article_search_results(
+    results: &[ArticleSearchResult],
+    filters: &ArticleSearchFilters,
+) -> Vec<String> {
+    related::related_article_search_results(results, filters)
+}
+
+pub(crate) fn search_next_commands_article(
+    results: &[ArticleSearchResult],
+    filters: &ArticleSearchFilters,
+) -> Vec<String> {
+    related::search_next_commands_article(results, filters)
 }
 
 pub(crate) fn search_next_commands_trial(results: &[TrialSearchResult]) -> Vec<String> {
