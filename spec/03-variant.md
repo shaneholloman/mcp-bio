@@ -29,6 +29,7 @@ the top hit and the broader variant command surface.
 
 ```bash
 json_out="$(biomcp --json search variant -g BRAF --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get variant .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list variant")' > /dev/null
 ```
@@ -264,6 +265,7 @@ pivot from association search into the canonical variant card.
 
 ```bash
 json_out="$(biomcp --json search gwas -g TCF7L2 --limit 5)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get variant .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list gwas")' > /dev/null
 ```

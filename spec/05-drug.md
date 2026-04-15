@@ -67,6 +67,7 @@ for the preferred top hit and the full drug command surface.
 
 ```bash
 json_out="$(biomcp --json search drug pembrolizumab --region us --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get drug .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list drug")' > /dev/null
 ```
@@ -394,13 +395,14 @@ echo "$out" | mustmatch like "# Adverse Events: drug=ibuprofen"
 echo "$out" | mustmatch like "Total reports (OpenFDA)"
 ```
 
-## Adverse Event Search JSON Next Commands
+## FAERS JSON Next Commands
 
 Non-empty adverse-event search JSON should expose machine-readable follow-up
 commands for the top report and the command-family reference.
 
 ```bash
 json_out="$(biomcp --json search adverse-event -d ibuprofen --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get adverse-event .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list adverse-event")' > /dev/null
 ```

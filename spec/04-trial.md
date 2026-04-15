@@ -41,6 +41,7 @@ the command-family reference without relying on markdown hints.
 
 ```bash
 json_out="$(biomcp --json search trial -c melanoma --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get trial .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list trial")' > /dev/null
 ```

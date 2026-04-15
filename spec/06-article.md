@@ -35,6 +35,7 @@ so agents can move from search to detail without scraping markdown helpers.
 
 ```bash
 json_out="$(biomcp --json search article -g BRAF --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get article .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list article")' > /dev/null
 ```

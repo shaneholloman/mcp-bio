@@ -43,6 +43,7 @@ agents can pivot from the top hit without parsing markdown helper text.
 
 ```bash
 json_out="$(biomcp --json search gene BRAF --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get gene .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list gene")' > /dev/null
 ```

@@ -38,6 +38,7 @@ command-family reference in `_meta.next_commands`.
 
 ```bash
 json_out="$(biomcp --json search pgx -g CYP2D6 --limit 3)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get pgx .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list pgx")' > /dev/null
 ```

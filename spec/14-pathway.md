@@ -31,6 +31,7 @@ so agents can pivot into the pathway card without scraping markdown helpers.
 
 ```bash
 json_out="$(biomcp --json search pathway "mitogen activated protein kinase" --limit 5)"
+echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get pathway .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list pathway")' > /dev/null
 ```
