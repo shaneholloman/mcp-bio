@@ -202,6 +202,9 @@ fn discover_next_commands_parse() {
     // variant with and without gene inference
     assert_parses(r#"biomcp get variant "BRAF V600E""#);
     assert_parses(r#"biomcp search article -k "V600E" --limit 5"#);
+    // empty and low-confidence fallbacks
+    assert_parses(r#"biomcp search article -k qzvxxptl --type review --limit 5"#);
+    assert_parses(r#"biomcp search article -k FAKE1"#);
     // trial intent
     assert_parses(r#"biomcp search trial -c "Breast Cancer" --limit 5"#);
     assert_parses(r#"biomcp search article -k "Breast Cancer" --limit 5"#);

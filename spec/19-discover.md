@@ -10,13 +10,14 @@ examples against stable structural markers and suggestion contracts.
 | Drug Brand Name | `discover Keytruda` | Confirms brand-name normalization to generic drug |
 | Symptom Query | `discover "chest pain"` | Confirms symptom-safe suggestions and MedlinePlus overlay |
 | HPO-backed Symptom Concepts | `discover diabetes` | Confirms normalized `HP:` symptom concepts surface in discover results when OLS4 returns them |
+| No Entity Resolved | `discover qzvxxptl` | Confirms zero-result discover output now suggests review-style article search in markdown and JSON |
 | Treatment Query | `discover "what drugs treat myasthenia gravis"` | Confirms treatment intent leads with structured indication search |
 | Disease Symptoms | `discover "symptoms of Marfan syndrome"` | Confirms disease-linked symptom routing prefers phenotypes |
 | Gene + Disease | `discover "BRAF melanoma"` | Confirms combined orientation queries prefer `search all` |
 | Gene Topic To Article Search | `discover "CTCF cohesin"` | Confirms gene-plus-topic queries can pivot into gene-filtered article search |
 | Ambiguous Query | `discover diabetes` | Confirms ambiguity guidance is explicit |
 | Pathway Query | `discover "MAPK signaling"` | Confirms pathway-oriented suggestion generation |
-| Underspecified Variant | `discover V600E` | Confirms the command avoids false gene certainty |
+| Underspecified Variant | `discover R620W` | Confirms low-confidence variant routing keeps article guidance without false gene certainty |
 | OLS4-only Mode | `env -u UMLS_API_KEY discover BRCA1` | Confirms truthful degradation without UMLS |
 | JSON Metadata | `--json discover ERBB1` | Confirms discover-specific `_meta` contract |
 | UMLS Crosswalks | `--json discover "cystic fibrosis"` | Confirms optional clinical crosswalk enrichment |
