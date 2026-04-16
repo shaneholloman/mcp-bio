@@ -143,9 +143,10 @@ def test_functional_overview_preserves_readme_surface_and_study_family() -> None
     assert "## Study Command Family" in functional
     assert "`study` is a separate local analytics surface" in functional
     assert (
-        "`biomcp study list|download|filter|query|co-occurrence|cohort|survival|compare`"
+        "`biomcp study list|download|top-mutated|filter|query|co-occurrence|cohort|survival|compare`"
         in functional
     )
+    assert "`gwas` and `phenotype` are search-only" in functional
     assert "BioMCP ships an embedded agent guide plus worked examples" in functional
     assert "`biomcp skill` shows the BioMCP agent guide" in functional
     assert "`biomcp skill install <dir>` installs that guide" in functional
@@ -372,6 +373,15 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "through the remote" in technical
     assert "`biomcp` tool" in technical
     assert "remote `shell`" not in technical
+    assert "mirror the CLI command surface" not in technical
+    assert "read-only allowlist rather than mirroring the full CLI" in technical_ws
+    assert "read-only `skill` lookups/listing" in technical_ws
+    assert (
+        "Operator-local or mutating commands such as `cache`, `update`, `serve`, "
+        "`serve-http`, and `skill install` / `skill uninstall` stay blocked over "
+        "MCP."
+        in technical_ws
+    )
 
     assert "`search all` Contract" in ux
     assert "biomcp discover <query>" in ux
@@ -415,6 +425,11 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "runtime security boundary."
         in ux_ws
     )
+    assert "`src/render/markdown/related.rs`" in ux
+    assert "`src/render/markdown.rs`" not in ux
+    assert "`src/cli/tests/`" in ux
+    assert "`next_commands_validity` tests in `src/cli/mod.rs`" not in ux
+    assert "Opt-in sections such as `disgenet` and `funding` still require explicit naming." in ux_ws
 
 
 def test_chart_rendering_architecture_doc_matches_repo_contract() -> None:
@@ -428,7 +443,7 @@ def test_chart_rendering_architecture_doc_matches_repo_contract() -> None:
     assert "`RustEmbed`" in chart_section
     assert "`biomcp chart` documents the chart surface, but does not render charts" in chart_section
     assert "`ChartArgs`" in chart_section
-    assert "`src/cli/mod.rs`" in chart_section
+    assert "`src/cli/types.rs`" in chart_section
     assert "`src/render/chart.rs`" in chart_section
     assert "`study query`" in chart_section
     assert "`study co-occurrence`" in chart_section
@@ -589,6 +604,10 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "## Provenance and Rendering" in source_integration
     assert "`source_label`" in source_integration
     assert "source-specific notes" in source_integration
+    assert "`src/entities/article/mod.rs`" in source_integration
+    assert "`src/entities/article.rs`" not in source_integration
+    assert "`src/render/markdown/`" in source_integration
+    assert "`src/render/markdown.rs`" not in source_integration
     assert "## Auth, Cache, and Secrets" in source_integration
     assert "`BioMcpError::ApiKeyRequired`" in source_integration
     assert "`apply_cache_mode_with_auth(..., true)`" in source_integration

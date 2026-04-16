@@ -225,7 +225,7 @@ For federated article search, the article contract is more specific than the
 generic multi-source rule above:
 
 1. Build ranking concepts from the typed article filters in
-   `src/entities/article.rs`. Structured filters remain one concept each, while
+   `src/entities/article/mod.rs`. Structured filters remain one concept each, while
    `--keyword` is decomposed into independently matchable concepts instead of
    one exact phrase blob.
 2. Apply one shared normalization strategy in `src/transform/article.rs` to
@@ -291,8 +291,9 @@ Source identity must remain visible in output.
   `source_label`, stable source identifiers, or source-specific notes.
 - Do not merge facts from different upstreams into one unlabeled result when
   the user needs to understand where the data came from.
-- Rendering work may require changes in `src/render/markdown.rs`,
-  `src/render/json.rs`, or both.
+- Rendering work may require changes in `src/render/markdown/`,
+  `src/render/json.rs`, or shared provenance helpers such as
+  `src/render/provenance.rs`.
 
 The exact representation is not universal across the repo. Some sections label
 individual rows, some label source groups, and some preserve provenance through

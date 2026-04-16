@@ -30,7 +30,8 @@ queries, no knowledge of upstream API idiosyncrasies required.
 
 ## Entity Surface
 
-BioMCP exposes 12 entity types. All support `search` and `get` commands.
+BioMCP exposes 12 entity types. Most support both `search` and `get`
+commands; `gwas` and `phenotype` are search-only and do not expose `get`.
 
 | Entity | Key Sources | Representative Command |
 |--------|-------------|----------------------|
@@ -61,7 +62,7 @@ expanding the public README entity table.
 
 Primary command family:
 
-`biomcp study list|download|filter|query|co-occurrence|cohort|survival|compare`
+`biomcp study list|download|top-mutated|filter|query|co-occurrence|cohort|survival|compare`
 
 What it adds:
 - Local dataset discovery and download (`study list`, `study download`)
