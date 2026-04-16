@@ -52,7 +52,9 @@ biomcp get trial NCT02576665 eligibility locations outcomes
 ```
 
 The pattern is consistent across all 12 entity types: no-section gives a
-summary, named sections are additive, `all` gives the full record.
+summary, named sections are additive, and `all` gives the standard default
+surface rather than every opt-in section. Opt-in sections such as `disgenet`
+and `funding` still require explicit naming.
 
 ## Cross-Entity Pivot Pattern
 
@@ -234,9 +236,9 @@ filesystem paths over MCP would cross the runtime security boundary.
 BioMCP uses result-local guidance to teach the next executable step directly
 from the current output.
 
-- Entity-card markdown uses `related_*()` helpers in `src/render/markdown.rs`
-  plus `format_related_block()` to render `See also:` follow-up commands at
-  the bottom of `get` cards.
+- Entity-card markdown uses `related_*()` helpers in
+  `src/render/markdown/related.rs` plus `format_related_block()` to render
+  `See also:` follow-up commands at the bottom of `get` cards.
 - Structured output carries the same follow-up contract in
   `_meta.next_commands` from `src/render/json.rs` for agent and script
   consumers.
@@ -249,7 +251,7 @@ from the current output.
   the supporting data or capability exists for the current record and runtime.
 - Proof lives in `spec/11-evidence-urls.md`,
   `spec/21-cross-entity-see-also.md`, and the parser-level
-  `next_commands_validity` tests in `src/cli/mod.rs`.
+  `next_commands_validity` tests in `src/cli/tests/`.
 
 ## Skills Quick Reference
 

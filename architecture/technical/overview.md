@@ -7,8 +7,17 @@ BioMCP is a single Rust binary (`biomcp`) with two operating modes:
 - **CLI mode:** Standard command-line invocation. Each command is a blocking
   async call that prints markdown to stdout and exits.
 - **MCP server mode:** `biomcp serve` starts a JSON-RPC MCP server over stdio.
-  Agents connect through the MCP protocol and call tools that mirror the CLI
-  command surface.
+  The advertised MCP tool is `biomcp`, and `src/mcp/shell.rs` enforces a
+  read-only allowlist rather than mirroring the full CLI: `search`, `get`,
+  helper families (`gene`, `variant`, `drug`, `disease`, `article`,
+  `pathway`, `protein`), `list`, `version`, `health`, `batch`, `enrich`,
+  `discover`, read-only `skill` lookups/listing, and MCP-safe `study`
+  subcommands (`list`, `download --list`, `top-mutated`, `query`, `filter`,
+  `cohort`, `survival`, `compare`, `co-occurrence`) are allowed.
+  Operator-local or mutating commands such as `cache`, `update`, `serve`,
+  `serve-http`, and `skill install` / `skill uninstall` stay blocked over MCP.
+  See `src/mcp/shell.rs` and `spec/15-mcp-runtime.md` for the canonical
+  boundary.
 - **HTTP mode:** `biomcp serve-http --host 0.0.0.0 --port 8080` starts the
   Streamable HTTP server. Remote MCP traffic uses `/mcp`, and lightweight
   probes live at `/health`, `/readyz`, and `/`. This is the canonical scaling
@@ -142,7 +151,7 @@ the same chart vocabulary but serve different purposes.
   `src/cli/chart.rs`, `docs/charts/`, and `RustEmbed`.
 - `biomcp chart` documents the chart surface, but does not render charts.
 - `biomcp study ... --chart` is the rendering path, with `ChartArgs` defined
-  in `src/cli/mod.rs` and output generation implemented in
+  in `src/cli/types.rs` and output generation implemented in
   `src/render/chart.rs`.
 
 The rendering entrypoints are `study query`, `study co-occurrence`,

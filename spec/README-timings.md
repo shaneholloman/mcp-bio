@@ -228,6 +228,8 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/17-guide-workflows.md` | `Discoverability Surfaces` | `0.06s` | passed | `0.07s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Article Batch Limit Enforcement` | `0.06s` | passed | `0.06s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Federated Deep Offset Guard` | `0.06s` | passed | `0.06s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/06-article.md` | `Article Search Gene Keyword Pivot` | `n/a` | smoke-only | `n/a` | smoke-only | smoke | smoke-only | Live article keyword-pivot test stays in the nightly smoke lane. |
+| `spec/06-article.md` | `Article Search Drug Keyword Pivot` | `n/a` | smoke-only | `n/a` | smoke-only | smoke | smoke-only | Live article keyword-pivot test stays in the nightly smoke lane. |
 | `spec/03-variant.md` | `Searching by c.HGVS` | `0.49s` | passed | `0.49s` | passed | fast | keep in spec-pr | The targeted cold and warm reruns both stayed under a second, so the heading remains a cheap PR-lane proof. |
 | `spec/11-evidence-urls.md` | `JSON Metadata Contract` | `n/a` | skipped | `n/a` | skipped | gated | keep in spec-pr (key-gated) | Optional-key proof skipped without the provider credential; keep the heading in the PR lane when keys are available. |
 | `spec/11-evidence-urls.md` | `Markdown Evidence Links` | `n/a` | skipped | `n/a` | skipped | gated | keep in spec-pr (key-gated) | Optional-key proof skipped without the provider credential; keep the heading in the PR lane when keys are available. |
@@ -252,6 +254,8 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/06-article.md::Large Article Full Text Saved Markdown` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Optional-Key Get Article Path` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Article Search JSON Without Semantic Scholar Key` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
+| `spec/06-article.md::Article Search Gene Keyword Pivot` | Live article keyword-pivot test stays in the nightly smoke lane. |
+| `spec/06-article.md::Article Search Drug Keyword Pivot` | Live article keyword-pivot test stays in the nightly smoke lane. |
 | `spec/06-article.md::Article Debug Plan` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Semantic Scholar Citations` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Semantic Scholar References` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
