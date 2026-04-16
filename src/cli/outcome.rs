@@ -2,8 +2,6 @@
 
 use std::io::IsTerminal;
 
-use clap::Parser;
-
 use super::{Cli, CliOutput, CommandOutcome, Commands, GetEntity, SearchEntity, StudyCommand};
 
 fn outcome_to_string(outcome: CommandOutcome) -> anyhow::Result<String> {
@@ -586,7 +584,7 @@ pub async fn execute(mut args: Vec<String>) -> anyhow::Result<String> {
     if args.is_empty() {
         args.push("biomcp".to_string());
     }
-    let cli = Cli::try_parse_from(args)?;
+    let cli = crate::cli::try_parse_cli(args)?;
     let outcome = run_outcome_with_worker_stack(cli).await?;
     outcome_to_string(outcome)
 }
@@ -596,7 +594,7 @@ pub async fn execute_mcp(mut args: Vec<String>) -> anyhow::Result<CliOutput> {
         args.push("biomcp".to_string());
     }
 
-    let cli = Cli::try_parse_from(args.clone())?;
+    let cli = crate::cli::try_parse_cli(args.clone())?;
     if !is_charted_mcp_study_command(&cli)? {
         let outcome = Box::pin(run_outcome_inner(cli, true)).await?;
         return Ok(CliOutput {

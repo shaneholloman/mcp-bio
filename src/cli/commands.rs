@@ -124,6 +124,18 @@ EXAMPLES:
     /// Command reference for entities and flags
     List(system::ListArgs),
     /// Parallel get operations (comma-separated IDs, max 10)
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp batch article 22663011,24200969
+  biomcp batch gene BRAF,TP53 --sections pathways,interactions
+  biomcp batch trial NCT02576665,NCT03715933 --source nci
+  biomcp batch variant \"BRAF V600E\",\"KRAS G12D\" --json
+
+NOTES:
+  - Batch accepts up to 10 IDs per call.
+  - Each call must use a single entity type.
+
+See also: biomcp list batch")]
     Batch(system::BatchArgs),
     /// Gene set enrichment against g:Profiler
     Enrich(system::EnrichArgs),

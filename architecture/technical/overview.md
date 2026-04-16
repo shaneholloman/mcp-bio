@@ -15,7 +15,7 @@ BioMCP is a single Rust binary (`biomcp`) with two operating modes:
   subcommands (`list`, `download --list`, `top-mutated`, `query`, `filter`,
   `cohort`, `survival`, `compare`, `co-occurrence`) are allowed.
   Operator-local or mutating commands such as `cache`, `update`, `serve`,
-  `serve-http`, and `skill install` / `skill uninstall` stay blocked over MCP.
+  `serve-http`, and `skill install` stay blocked over MCP.
   See `src/mcp/shell.rs` and `spec/15-mcp-runtime.md` for the canonical
   boundary.
 - **HTTP mode:** `biomcp serve-http --host 0.0.0.0 --port 8080` starts the

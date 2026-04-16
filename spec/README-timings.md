@@ -84,7 +84,7 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/06-article.md` | `Article Date Flag Help Advertises Accepted Formats` | `3.36s` | passed | `2.95s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/07-disease.md` | `Sparse Phenotype Coverage Notes` | `3.31s` | passed | `3.26s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/17-cross-entity-pivots.md` | `Variant pivots` | `3.08s` | passed | `1.78s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/07-disease.md` | `Disease Search Discover Fallback` | `3.04s` | passed | `2.26s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/07-disease.md` | `Disease Search Discover Fallback` | `3.04s` | passed | `2.26s` | passed | fast | move to smoke-only | OLS4-backed discover fallback stayed fast in the audit, but provider latency is reliable enough only for the smoke lane and not for the PR-blocking lane under parallel load. |
 | `spec/09-search-all.md` | `Shared Disease And Keyword Token` | `2.83s` | passed | `3.03s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Article to Entities` | `2.92s` | passed | `1.91s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/07-disease.md` | `Full Disease Definitions` | `2.68s` | passed | `1.92s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -109,7 +109,7 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/06-article.md` | `Getting Article Details` | `1.72s` | passed | `0.85s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/16-protein.md` | `Protein Complexes Section` | `1.68s` | passed | `1.68s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/07-disease.md` | `Disease Genes` | `1.62s` | passed | `1.55s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/07-disease.md` | `Disease Search Discover Fallback Synonym` | `1.62s` | passed | `0.94s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/07-disease.md` | `Disease Search Discover Fallback Synonym` | `1.62s` | passed | `0.94s` | passed | fast | move to smoke-only | OLS4-backed discover fallback stayed fast in the audit, but provider latency is reliable enough only for the smoke lane and not for the PR-blocking lane under parallel load. |
 | `spec/04-trial.md` | `NCI Source Search` | `1.31s` | passed | `1.58s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/02-gene.md` | `Constraint Section` | `1.50s` | passed | `1.24s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/14-pathway.md` | `Long-Form MAPK Alias` | `1.24s` | passed | `1.47s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -119,7 +119,7 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/07-disease.md` | `Disease Top Variant Summary` | `1.36s` | passed | `1.36s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/02-gene.md` | `Gene Protein Function Full Text` | `1.32s` | passed | `1.32s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/01-overview.md` | `Command Reference` | `1.25s` | passed | `1.12s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/07-disease.md` | `Disease Search Discover Fallback for T-PLL` | `1.24s` | passed | `0.93s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/07-disease.md` | `Disease Search Discover Fallback for T-PLL` | `1.24s` | passed | `0.93s` | passed | fast | move to smoke-only | OLS4-backed discover fallback stayed fast in the audit, but provider latency is reliable enough only for the smoke lane and not for the PR-blocking lane under parallel load. |
 | `spec/02-gene.md` | `Gene Protein Isoforms` | `1.22s` | passed | `1.22s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/15-mcp-runtime.md` | `Cache Family Stays CLI-only` | `1.18s` | passed | `1.20s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/01-overview.md` | `Article Routing Help` | `1.09s` | passed | `1.19s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -266,6 +266,7 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/06-article.md::Source-Specific PubTator Search Uses Default Retraction Filter` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Source-Specific PubMed Search` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Source-Specific LitSense2 Search` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
+| `spec/06-article.md::Live Article Year Range Search` | Live article-search year-range coverage stays smoke-only so the deselect inventory matches the PR lane contract. |
 | `spec/06-article.md::Federated Search Preserves Non-EuropePMC Matches Under Default Retraction Filter` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Keyword Anchors Tokenize In JSON Ranking Metadata` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Article Full Text Saved Markdown` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
@@ -281,6 +282,9 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/06-article.md::Semantic Scholar Recommendations (Multi Seed)` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Sort Behavior` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/07-disease.md::Disease to Articles` | Entity-to-article live literature pivot stays in the nightly smoke lane. |
+| `spec/07-disease.md::Disease Search Discover Fallback` | OLS4-backed discover fallback stays in the smoke lane because provider latency is acceptable there but not reliable enough for the PR-blocking lane under parallel load. |
+| `spec/07-disease.md::Disease Search Discover Fallback Synonym` | OLS4-backed discover fallback stays in the smoke lane because provider latency is acceptable there but not reliable enough for the PR-blocking lane under parallel load. |
+| `spec/07-disease.md::Disease Search Discover Fallback for T-PLL` | OLS4-backed discover fallback stays in the smoke lane because provider latency is acceptable there but not reliable enough for the PR-blocking lane under parallel load. |
 | `spec/12-search-positionals.md::GWAS Positional Query` | GWAS positional search remains a smoke-only live-network proof. |
 | `spec/02-gene.md::Gene DisGeNET Associations` | Optional live DisGeNET association coverage remains smoke-only. |
 | `spec/07-disease.md::Disease DisGeNET Associations` | Optional live DisGeNET association coverage remains smoke-only. |

@@ -41,7 +41,7 @@ use self::outcome::{McpChartPass, rewrite_mcp_chart_args};
 pub use self::outcome::{execute, execute_mcp, run, run_outcome};
 pub use self::pathway::PathwayCommand;
 pub use self::protein::ProteinCommand;
-pub use self::shared::{build_cli, parse_cli_from_env};
+pub use self::shared::{build_cli, parse_cli_from_env, try_parse_cli};
 pub use self::study::StudyCommand;
 pub use self::system::{EmaCommand, WhoCommand};
 pub use self::types::{

@@ -378,8 +378,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "read-only `skill` lookups/listing" in technical_ws
     assert (
         "Operator-local or mutating commands such as `cache`, `update`, `serve`, "
-        "`serve-http`, and `skill install` / `skill uninstall` stay blocked over "
-        "MCP."
+        "`serve-http`, and `skill install` stay blocked over MCP."
         in technical_ws
     )
 
