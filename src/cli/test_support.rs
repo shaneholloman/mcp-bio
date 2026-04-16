@@ -1,71 +1,12 @@
 //! Shared CLI test helpers used by sidecar CLI test modules.
 
-use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
-
+#[allow(unused_imports)]
+pub(crate) use crate::test_support::{EnvVarGuard, TempDirGuard, set_env_var};
 pub(crate) use wiremock::matchers::{method, path, query_param};
 pub(crate) use wiremock::{Mock, MockServer, ResponseTemplate};
 
 pub(crate) async fn lock_env() -> tokio::sync::MutexGuard<'static, ()> {
     crate::test_support::env_lock().lock().await
-}
-
-pub(crate) struct EnvVarGuard {
-    name: &'static str,
-    previous: Option<String>,
-}
-
-impl Drop for EnvVarGuard {
-    fn drop(&mut self) {
-        // Safety: tests serialize environment mutation with `lock_env()`.
-        unsafe {
-            match &self.previous {
-                Some(value) => std::env::set_var(self.name, value),
-                None => std::env::remove_var(self.name),
-            }
-        }
-    }
-}
-
-pub(crate) fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-    let previous = std::env::var(name).ok();
-    // Safety: tests serialize environment mutation with `lock_env()`.
-    unsafe {
-        match value {
-            Some(value) => std::env::set_var(name, value),
-            None => std::env::remove_var(name),
-        }
-    }
-    EnvVarGuard { name, previous }
-}
-
-pub(crate) struct TempDirGuard {
-    path: PathBuf,
-}
-
-impl TempDirGuard {
-    pub(crate) fn new(label: &str) -> Self {
-        let suffix = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "biomcp-cli-test-{label}-{}-{suffix}",
-            std::process::id()
-        ));
-        std::fs::create_dir_all(&path).expect("create temp dir");
-        Self { path }
-    }
-
-    pub(crate) fn path(&self) -> &Path {
-        &self.path
-    }
-}
-
-impl Drop for TempDirGuard {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.path);
-    }
 }
 
 pub(crate) async fn mount_gene_lookup_miss(server: &MockServer, symbol: &str) {

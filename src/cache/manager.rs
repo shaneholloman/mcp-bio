@@ -341,10 +341,10 @@ where
 mod tests {
     use std::collections::HashMap;
     use std::fs;
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
     use std::sync::Arc;
     use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+    use std::time::Duration;
 
     use http::Request;
     use http::Response;
@@ -357,40 +357,8 @@ mod tests {
     use crate::cache::{
         CacheConfigOrigins, ConfigOrigin, DiskFreeThreshold, ResolvedCacheConfig, snapshot_cache,
     };
+    use crate::test_support::TempDirGuard;
     use http_cache::CacheManager;
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-cache-manager-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn http_dir(&self) -> PathBuf {
-            self.path.join("http")
-        }
-
-        fn cache_root(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.path);
-        }
-    }
 
     fn write_entry(cache_path: &Path, key: &str, bytes: &[u8], time_ms: u128) {
         let mut writer = cacache::WriteOpts::new()
@@ -454,7 +422,7 @@ mod tests {
     fn estimate_cache_bytes_fast_returns_zero_for_missing_tree() {
         let root = TempDirGuard::new("estimate-empty");
         assert_eq!(
-            estimate_cache_bytes_fast(&root.http_dir()).expect("estimate"),
+            estimate_cache_bytes_fast(&root.path().join("http")).expect("estimate"),
             0
         );
     }
@@ -463,7 +431,8 @@ mod tests {
     fn estimate_cache_bytes_fast_sums_content_tree_file_sizes() {
         let root = TempDirGuard::new("estimate-sum");
         let content_root = root
-            .http_dir()
+            .path()
+            .join("http")
             .join("content-v2")
             .join("sha256")
             .join("aa")
@@ -473,7 +442,7 @@ mod tests {
         fs::write(content_root.join("blob-b"), b"defgh").expect("blob b");
 
         assert_eq!(
-            estimate_cache_bytes_fast(&root.http_dir()).expect("estimate"),
+            estimate_cache_bytes_fast(&root.path().join("http")).expect("estimate"),
             8
         );
     }
@@ -481,10 +450,10 @@ mod tests {
     #[test]
     fn run_eviction_cycle_false_positive_resyncs_without_cleaning() {
         let root = TempDirGuard::new("false-positive");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         write_entry(&cache_path, "retained", b"live-bytes", 100);
         let snapshot = snapshot_cache(&cache_path).expect("snapshot");
-        let config = test_config(root.cache_root(), 100, DiskFreeThreshold::Percent(10));
+        let config = test_config(root.path(), 100, DiskFreeThreshold::Percent(10));
         let approx_bytes = AtomicU64::new(999);
         let cleaner_calls = AtomicUsize::new(0);
 
@@ -518,14 +487,14 @@ mod tests {
     fn run_eviction_cycle_uses_exact_snapshot_state_for_size_eviction() {
         let before_root = TempDirGuard::new("oversize-before");
         let after_root = TempDirGuard::new("oversize-after");
-        let before_cache = before_root.http_dir();
-        let after_cache = after_root.http_dir();
+        let before_cache = before_root.path().join("http");
+        let after_cache = after_root.path().join("http");
         write_entry(&before_cache, "old", b"abcde", 100);
         write_entry(&before_cache, "new", b"fghij", 200);
         write_entry(&after_cache, "new", b"fghij", 200);
         let before_snapshot = snapshot_cache(&before_cache).expect("before snapshot");
         let after_snapshot = snapshot_cache(&after_cache).expect("after snapshot");
-        let config = test_config(before_root.cache_root(), 5, DiskFreeThreshold::Percent(10));
+        let config = test_config(before_root.path(), 5, DiskFreeThreshold::Percent(10));
         let approx_bytes = AtomicU64::new(0);
         let snapshot_calls = AtomicUsize::new(0);
         let seen_max_size = Arc::new(AtomicU64::new(u64::MAX));
@@ -573,18 +542,14 @@ mod tests {
     fn run_eviction_cycle_uses_effective_max_size_for_disk_pressure() {
         let before_root = TempDirGuard::new("disk-pressure-before");
         let after_root = TempDirGuard::new("disk-pressure-after");
-        let before_cache = before_root.http_dir();
-        let after_cache = after_root.http_dir();
+        let before_cache = before_root.path().join("http");
+        let after_cache = after_root.path().join("http");
         write_entry(&before_cache, "retained", b"live-bytes", 100);
         make_orphan(&before_cache, "orphan", b"orph", 101);
         write_entry(&after_cache, "retained", b"live-byt", 100);
         let before_snapshot = snapshot_cache(&before_cache).expect("before snapshot");
         let after_snapshot = snapshot_cache(&after_cache).expect("after snapshot");
-        let config = test_config(
-            before_root.cache_root(),
-            100,
-            DiskFreeThreshold::Percent(20),
-        );
+        let config = test_config(before_root.path(), 100, DiskFreeThreshold::Percent(20));
         let approx_bytes = AtomicU64::new(0);
         let snapshot_calls = AtomicUsize::new(0);
         let inspect_calls = AtomicUsize::new(0);
@@ -640,8 +605,8 @@ mod tests {
     #[test]
     fn run_eviction_cycle_propagates_snapshot_error() {
         let root = TempDirGuard::new("eviction-error");
-        let cache_path = root.http_dir();
-        let config = test_config(root.cache_root(), 100, DiskFreeThreshold::Percent(10));
+        let cache_path = root.path().join("http");
+        let config = test_config(root.path(), 100, DiskFreeThreshold::Percent(10));
         let approx_bytes = AtomicU64::new(999);
 
         let result = run_eviction_cycle_with(
@@ -673,7 +638,8 @@ mod tests {
     async fn new_manager_seeds_approximate_bytes_from_fast_estimate() {
         let root = TempDirGuard::new("seed-estimate");
         let content_root = root
-            .http_dir()
+            .path()
+            .join("http")
             .join("content-v2")
             .join("sha256")
             .join("aa")
@@ -682,8 +648,8 @@ mod tests {
         fs::write(content_root.join("blob-a"), b"abc").expect("blob a");
         fs::write(content_root.join("blob-b"), b"defgh").expect("blob b");
         let manager = SizeAwareCacheManager::new(
-            root.http_dir(),
-            test_config(root.cache_root(), 100, DiskFreeThreshold::Percent(10)),
+            root.path().join("http"),
+            test_config(root.path(), 100, DiskFreeThreshold::Percent(10)),
         );
 
         assert_eq!(manager.approx_bytes.load(Ordering::Relaxed), 8);
@@ -694,8 +660,8 @@ mod tests {
         let root = TempDirGuard::new("schedule-oversized");
         let scheduled = Arc::new(AtomicUsize::new(0));
         let manager = SizeAwareCacheManager::new_with_services(
-            root.http_dir(),
-            test_config(root.cache_root(), 1, DiskFreeThreshold::Percent(10)),
+            root.path().join("http"),
+            test_config(root.path(), 1, DiskFreeThreshold::Percent(10)),
             |_| Ok(2),
             |_| {
                 Ok(FilesystemSpace {
@@ -724,12 +690,8 @@ mod tests {
         let root = TempDirGuard::new("schedule-disk-floor");
         let scheduled = Arc::new(AtomicUsize::new(0));
         let manager = SizeAwareCacheManager::new_with_services(
-            root.http_dir(),
-            test_config(
-                root.cache_root(),
-                u64::MAX / 2,
-                DiskFreeThreshold::Percent(20),
-            ),
+            root.path().join("http"),
+            test_config(root.path(), u64::MAX / 2, DiskFreeThreshold::Percent(20)),
             |_| Ok(0),
             |_| {
                 Ok(FilesystemSpace {
@@ -758,8 +720,8 @@ mod tests {
         let root = TempDirGuard::new("schedule-debounce");
         let scheduled = Arc::new(AtomicUsize::new(0));
         let manager = SizeAwareCacheManager::new_with_services(
-            root.http_dir(),
-            test_config(root.cache_root(), 1, DiskFreeThreshold::Percent(10)),
+            root.path().join("http"),
+            test_config(root.path(), 1, DiskFreeThreshold::Percent(10)),
             |_| Ok(2),
             |_| {
                 Ok(FilesystemSpace {

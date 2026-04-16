@@ -17,6 +17,8 @@ pub(super) use crate::error::BioMcpError;
 #[allow(unused_imports)]
 pub(super) use crate::sources::mydisease::MyDiseaseHit;
 #[allow(unused_imports)]
+pub(super) use crate::test_support::{EnvVarGuard, set_env_var};
+#[allow(unused_imports)]
 pub(super) use wiremock::matchers::{body_string_contains, method, path, query_param};
 #[allow(unused_imports)]
 pub(super) use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -30,35 +32,6 @@ where
     Fut: Future<Output = R>,
 {
     crate::sources::with_no_cache(true, future).await
-}
-
-pub(super) struct EnvVarGuard {
-    name: &'static str,
-    previous: Option<String>,
-}
-
-impl Drop for EnvVarGuard {
-    fn drop(&mut self) {
-        // Safety: tests serialize environment mutation with `lock_env()`.
-        unsafe {
-            match &self.previous {
-                Some(value) => std::env::set_var(self.name, value),
-                None => std::env::remove_var(self.name),
-            }
-        }
-    }
-}
-
-pub(super) fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-    let previous = std::env::var(name).ok();
-    // Safety: tests serialize environment mutation with `lock_env()`.
-    unsafe {
-        match value {
-            Some(value) => std::env::set_var(name, value),
-            None => std::env::remove_var(name),
-        }
-    }
-    EnvVarGuard { name, previous }
 }
 
 pub(super) fn test_disease(id: &str, name: &str) -> Disease {

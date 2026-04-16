@@ -1279,35 +1279,9 @@ pub fn recall_query_summary(filters: &RecallSearchFilters) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::set_env_var;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    struct EnvVarGuard {
-        name: &'static str,
-        previous: Option<String>,
-    }
-
-    impl Drop for EnvVarGuard {
-        fn drop(&mut self) {
-            unsafe {
-                match &self.previous {
-                    Some(value) => std::env::set_var(self.name, value),
-                    None => std::env::remove_var(self.name),
-                }
-            }
-        }
-    }
-
-    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-        let previous = std::env::var(name).ok();
-        unsafe {
-            match value {
-                Some(value) => std::env::set_var(name, value),
-                None => std::env::remove_var(name),
-            }
-        }
-        EnvVarGuard { name, previous }
-    }
 
     #[test]
     fn build_openfda_query_requires_drug_name() {

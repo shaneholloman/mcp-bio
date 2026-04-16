@@ -356,69 +356,14 @@ mod tests {
         resolve_cache_config_from_parts,
     };
     use crate::error::BioMcpError;
-    use std::path::{Path, PathBuf};
+    use crate::test_support::{TempDirGuard, set_env_var};
+    use std::path::PathBuf;
     use std::str::FromStr;
-    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+    use std::time::Duration;
     use tokio::sync::MutexGuard;
 
     fn env_lock() -> MutexGuard<'static, ()> {
         crate::test_support::env_lock().blocking_lock()
-    }
-
-    struct EnvVarGuard {
-        name: &'static str,
-        previous: Option<String>,
-    }
-
-    impl Drop for EnvVarGuard {
-        fn drop(&mut self) {
-            unsafe {
-                match &self.previous {
-                    Some(value) => std::env::set_var(self.name, value),
-                    None => std::env::remove_var(self.name),
-                }
-            }
-        }
-    }
-
-    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-        let previous = std::env::var(name).ok();
-        unsafe {
-            match value {
-                Some(value) => std::env::set_var(name, value),
-                None => std::env::remove_var(name),
-            }
-        }
-        EnvVarGuard { name, previous }
-    }
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-cache-config-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            std::fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.path);
-        }
     }
 
     fn default_config_with_root(root: impl Into<PathBuf>) -> CacheConfig {

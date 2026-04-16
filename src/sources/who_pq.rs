@@ -700,43 +700,15 @@ pub(crate) fn resolve_who_pq_root() -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use std::path::{Path, PathBuf};
-    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+    use std::path::Path;
+    use std::time::{Duration, SystemTime};
 
     use super::{
         WHO_PQ_CSV_FILE, WHO_PQ_REQUIRED_FILES, WhoPqIdentity, derive_inn, file_is_stale,
         normalize_who_date, parse_who_pq_csv, row_matches_identity, who_pq_missing_files,
     };
     use crate::entities::drug::WhoPrequalificationEntry;
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let stamp = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("system clock should be after unix epoch")
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-who-pq-source-test-{label}-{}-{stamp}",
-                std::process::id()
-            ));
-            std::fs::create_dir_all(&path).expect("temp dir should exist");
-            Self { path }
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.path);
-        }
-    }
+    use crate::test_support::TempDirGuard;
 
     fn fixture_csv() -> String {
         std::fs::read_to_string(

@@ -125,11 +125,10 @@ pub async fn save_atomic(id: &str, content: &str) -> Result<PathBuf, BioMcpError
 #[cfg(test)]
 mod tests {
     use std::future::Future;
-    use std::path::{Path, PathBuf};
-    use std::time::{SystemTime, UNIX_EPOCH};
     use tokio::sync::MutexGuard;
 
     use super::{cache_key, download_path, save_atomic, write_atomic_bytes};
+    use crate::test_support::{TempDirGuard, set_env_var};
 
     fn block_on<F: Future>(future: F) -> F::Output {
         tokio::runtime::Builder::new_current_thread()
@@ -141,62 +140,6 @@ mod tests {
 
     fn env_lock() -> MutexGuard<'static, ()> {
         crate::test_support::env_lock().blocking_lock()
-    }
-
-    struct EnvVarGuard {
-        name: &'static str,
-        previous: Option<String>,
-    }
-
-    impl Drop for EnvVarGuard {
-        fn drop(&mut self) {
-            unsafe {
-                match &self.previous {
-                    Some(value) => std::env::set_var(self.name, value),
-                    None => std::env::remove_var(self.name),
-                }
-            }
-        }
-    }
-
-    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-        let previous = std::env::var(name).ok();
-        unsafe {
-            match value {
-                Some(value) => std::env::set_var(name, value),
-                None => std::env::remove_var(name),
-            }
-        }
-        EnvVarGuard { name, previous }
-    }
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let stamp = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-download-test-{label}-{}-{stamp}",
-                std::process::id()
-            ));
-            std::fs::create_dir_all(&path).expect("temp dir should be created");
-            Self { path }
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.path);
-        }
     }
 
     #[tokio::test]

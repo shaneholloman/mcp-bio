@@ -479,38 +479,9 @@ mod tests {
     use std::io::Write;
     use std::path::{Path, PathBuf};
     use std::time::Duration;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
+    use crate::test_support::TempDirGuard;
     use ssri::Integrity;
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-cache-planner-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.path);
-        }
-    }
 
     fn write_entry(cache_path: &Path, key: &str, bytes: &[u8], time_ms: Option<u128>) -> Integrity {
         match time_ms {

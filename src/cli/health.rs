@@ -1309,6 +1309,7 @@ mod tests {
         CacheBlob, CacheConfigOrigins, CacheEntry, CachePlannerError, CacheSnapshot, ConfigOrigin,
         DiskFreeThreshold, FilesystemSpace, ResolvedCacheConfig,
     };
+    use crate::test_support::{TempDirGuard, set_env_var};
 
     fn block_on<F: Future>(future: F) -> F::Output {
         tokio::runtime::Builder::new_current_thread()
@@ -1320,64 +1321,6 @@ mod tests {
 
     fn env_lock() -> MutexGuard<'static, ()> {
         crate::test_support::env_lock().blocking_lock()
-    }
-
-    struct EnvVarGuard {
-        name: &'static str,
-        previous: Option<String>,
-    }
-
-    impl Drop for EnvVarGuard {
-        fn drop(&mut self) {
-            // Safety: tests serialize environment mutation with `env_lock()`.
-            unsafe {
-                match &self.previous {
-                    Some(value) => std::env::set_var(self.name, value),
-                    None => std::env::remove_var(self.name),
-                }
-            }
-        }
-    }
-
-    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-        let previous = std::env::var(name).ok();
-        // Safety: tests serialize environment mutation with `env_lock()`.
-        unsafe {
-            match value {
-                Some(value) => std::env::set_var(name, value),
-                None => std::env::remove_var(name),
-            }
-        }
-        EnvVarGuard { name, previous }
-    }
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new() -> Self {
-            let suffix = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-health-test-{}-{suffix}",
-                std::process::id()
-            ));
-            std::fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.path);
-        }
     }
 
     fn fixture_ema_root() -> PathBuf {
@@ -1676,7 +1619,7 @@ mod tests {
 
     #[test]
     fn ema_local_data_not_configured_when_default_root_is_empty() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
 
         let outcome = ema_local_data_outcome(root.path(), false);
 
@@ -1692,7 +1635,7 @@ mod tests {
 
     #[test]
     fn ema_local_data_errors_when_default_root_is_partial() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         write_ema_files(root.path(), &[crate::sources::ema::EMA_REQUIRED_FILES[0]]);
 
         let outcome = ema_local_data_outcome(root.path(), false);
@@ -1710,7 +1653,7 @@ mod tests {
 
     #[test]
     fn ema_local_data_errors_when_env_root_is_missing_files() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
 
         let outcome = ema_local_data_outcome(root.path(), true);
 
@@ -1773,7 +1716,7 @@ mod tests {
 
     #[test]
     fn ema_local_data_json_reports_error_row_with_affects() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         write_ema_files(root.path(), &[crate::sources::ema::EMA_REQUIRED_FILES[0]]);
         let report = report_from_outcomes(vec![ema_local_data_outcome(root.path(), false)]);
 
@@ -1794,7 +1737,7 @@ mod tests {
 
     #[test]
     fn who_local_data_not_configured_when_default_root_is_empty() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
 
         let outcome = who_local_data_outcome(root.path(), false);
 
@@ -1812,7 +1755,7 @@ mod tests {
 
     #[test]
     fn who_local_data_errors_when_env_root_is_missing_file() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
 
         let outcome = who_local_data_outcome(root.path(), true);
 
@@ -1829,7 +1772,7 @@ mod tests {
 
     #[test]
     fn who_local_data_reports_available_when_default_root_is_complete() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         write_who_fixture(root.path());
 
         let outcome = who_local_data_outcome(root.path(), false);
@@ -1848,7 +1791,7 @@ mod tests {
 
     #[test]
     fn who_local_data_reports_configured_when_env_root_is_complete() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         write_who_fixture(root.path());
 
         let outcome = who_local_data_outcome(root.path(), true);
@@ -1860,7 +1803,7 @@ mod tests {
 
     #[test]
     fn who_local_data_reports_configured_stale_when_env_root_is_complete_but_old() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         write_who_fixture(root.path());
         set_stale_mtime(&root.path().join(crate::sources::who_pq::WHO_PQ_CSV_FILE));
 
@@ -1873,7 +1816,7 @@ mod tests {
 
     #[test]
     fn who_local_data_reports_default_path_stale_when_complete_but_old() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         write_who_fixture(root.path());
         set_stale_mtime(&root.path().join(crate::sources::who_pq::WHO_PQ_CSV_FILE));
 
@@ -2404,7 +2347,7 @@ mod tests {
     #[test]
     fn check_cache_dir_success_row_uses_resolved_path_and_ok_contract() {
         let _lock = env_lock();
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         let cache_home = root.path().join("cache-home");
         let config_home = root.path().join("config-home");
         let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
@@ -2426,7 +2369,7 @@ mod tests {
 
     #[test]
     fn probe_cache_dir_failure_preserves_error_contract() {
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         let blocking_path = root.path().join("not-a-dir");
         std::fs::write(&blocking_path, b"occupied").expect("blocking file should exist");
 
@@ -2452,7 +2395,7 @@ mod tests {
     #[test]
     fn check_cache_dir_config_error_matches_pinned_contract() {
         let _lock = env_lock();
-        let root = TempDirGuard::new();
+        let root = TempDirGuard::new("health");
         let cache_home = root.path().join("cache-home");
         let config_home = root.path().join("config-home");
         let config_dir = config_home.join("biomcp");

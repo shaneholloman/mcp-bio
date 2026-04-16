@@ -55,39 +55,9 @@ pub(crate) fn migrate_http_cache(cache_root: &Path) -> Result<MigrationOutcome, 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::TempDirGuard;
     #[cfg(unix)]
     use std::os::unix::fs::symlink;
-    use std::path::PathBuf;
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-cache-migration-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            std::fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.path);
-        }
-    }
 
     fn assert_invalid_input_contains(
         result: Result<MigrationOutcome, io::Error>,

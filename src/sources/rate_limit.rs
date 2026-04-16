@@ -240,39 +240,11 @@ pub(crate) async fn wait_for_url_str(raw: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::set_env_var;
     use tokio::sync::MutexGuard;
 
     fn env_lock() -> MutexGuard<'static, ()> {
         crate::test_support::env_lock().blocking_lock()
-    }
-
-    struct EnvVarGuard {
-        name: &'static str,
-        previous: Option<String>,
-    }
-
-    impl Drop for EnvVarGuard {
-        fn drop(&mut self) {
-            // Safety: tests serialize environment mutation with `env_lock()`.
-            unsafe {
-                match &self.previous {
-                    Some(value) => std::env::set_var(self.name, value),
-                    None => std::env::remove_var(self.name),
-                }
-            }
-        }
-    }
-
-    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-        let previous = std::env::var(name).ok();
-        // Safety: tests serialize environment mutation with `env_lock()`.
-        unsafe {
-            match value {
-                Some(value) => std::env::set_var(name, value),
-                None => std::env::remove_var(name),
-            }
-        }
-        EnvVarGuard { name, previous }
     }
 
     fn test_policy(key: &'static str, prefix: &str, ms: u64) -> RateLimitPolicy {
