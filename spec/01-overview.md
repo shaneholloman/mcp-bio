@@ -34,6 +34,7 @@ echo "$out" | mustmatch like "| SEER Explorer |"
 echo "$out" | mustmatch not like "EMA local data ("
 echo "$out" | mustmatch not like "WHO Prequalification local data ("
 echo "$out" | mustmatch not like "Cache dir ("
+echo "$out" | mustmatch not like "Cache limits"
 echo "$out" | mustmatch not like "(key:"
 echo "$out" | mustmatch '/Status: [0-9]+ ok, [0-9]+ error, [0-9]+ excluded/'
 
@@ -43,6 +44,7 @@ echo "$json_out" | jq -e 'all(.rows[]; ((.status | contains("(key:")) | not))' >
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("EMA local data (") | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("WHO Prequalification local data (") | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("Cache dir (") | not))' > /dev/null
+echo "$json_out" | jq -e 'all(.rows[]; .api != "Cache limits")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "LitSense2")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "NIH Reporter")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "SEER Explorer")' > /dev/null
