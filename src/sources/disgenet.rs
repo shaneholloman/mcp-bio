@@ -74,6 +74,13 @@ impl DisgenetClient {
         let retry_after = parse_retry_after_seconds(resp.headers());
         let content_type = resp.headers().get(CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, DISGENET_API).await?;
+        if status == reqwest::StatusCode::FORBIDDEN {
+            return Err(BioMcpError::ApiKeyRequired {
+                api: DISGENET_API.to_string(),
+                env_var: DISGENET_API_KEY_ENV.to_string(),
+                docs_url: DISGENET_DOCS_URL.to_string(),
+            });
+        }
         crate::sources::ensure_json_content_type(DISGENET_API, content_type.as_ref(), &bytes)?;
 
         if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
@@ -665,6 +672,43 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(err, BioMcpError::ApiKeyRequired { .. }));
+    }
+
+    #[tokio::test]
+    async fn fetch_gene_associations_403_returns_api_key_required_for_html_error_body() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/api/v1/gda/summary"))
+            .and(query_param("gene_ncbi_id", "7157"))
+            .and(query_param("page_number", "0"))
+            .and(header("Authorization", "test-key"))
+            .respond_with(
+                ResponseTemplate::new(403)
+                    .insert_header("Content-Type", "text/html; charset=utf-8")
+                    .set_body_string("<html><body>Unauthorized</body></html>"),
+            )
+            .mount(&server)
+            .await;
+
+        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
+        let err = client
+            .fetch_gene_associations(&test_gene("7157"), 10)
+            .await
+            .expect_err("403 should require an API key");
+
+        assert!(
+            matches!(
+                err,
+                BioMcpError::ApiKeyRequired { ref env_var, .. } if env_var == "DISGENET_API_KEY"
+            ),
+            "expected ApiKeyRequired, got {err:?}"
+        );
+        let message = err.to_string();
+        assert!(message.contains("DISGENET_API_KEY"));
+        assert!(message.contains("export DISGENET_API_KEY"));
+        assert!(!message.contains("Unauthorized"));
+        assert!(!message.contains("403 Forbidden"));
     }
 
     #[tokio::test]

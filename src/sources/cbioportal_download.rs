@@ -70,13 +70,30 @@ impl CBioPortalDownloadClient {
         })
     }
 
-    async fn download_to_path(
+    async fn download_study_archive_to_path(
         &self,
-        req: reqwest_middleware::RequestBuilder,
+        study_id: &str,
         dest: &Path,
     ) -> Result<(), BioMcpError> {
-        let mut resp = crate::sources::apply_cache_mode(req).send().await?;
+        let mut resp = crate::sources::apply_cache_mode(
+            self.client
+                .get(self.endpoint(&format!("{study_id}.tar.gz"))),
+        )
+        .send()
+        .await?;
         let status = resp.status();
+        if matches!(
+            status,
+            reqwest::StatusCode::FORBIDDEN | reqwest::StatusCode::NOT_FOUND
+        ) {
+            let _ = crate::sources::read_limited_body(resp, DATAHUB_API).await?;
+            return Err(BioMcpError::NotFound {
+                entity: "Study".to_string(),
+                id: study_id.to_string(),
+                suggestion: "Run `biomcp study download --list` to see available study IDs."
+                    .to_string(),
+            });
+        }
         if !status.is_success() {
             let body = crate::sources::read_limited_body(resp, DATAHUB_API).await?;
             return Err(BioMcpError::Api {
@@ -126,11 +143,7 @@ impl CBioPortalDownloadClient {
 
         let archive_path = unique_temp_path(root, &format!(".{study_id}.download"))?;
         let download_result = self
-            .download_to_path(
-                self.client
-                    .get(self.endpoint(&format!("{study_id}.tar.gz"))),
-                &archive_path,
-            )
+            .download_study_archive_to_path(study_id, &archive_path)
             .await;
         if let Err(err) = download_result {
             let _ = fs::remove_file(&archive_path);
@@ -549,6 +562,78 @@ mod tests {
             crate::sources::cbioportal_study::list_studies(&root.path).expect("local study list");
         assert_eq!(studies.len(), 1);
         assert_eq!(studies[0].study_id, "demo_study");
+    }
+
+    #[tokio::test]
+    async fn download_study_returns_not_found_for_missing_remote_archive_403() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/missing_study.tar.gz"))
+            .respond_with(ResponseTemplate::new(403).set_body_string(
+                r#"<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code></Error>"#,
+            ))
+            .mount(&server)
+            .await;
+
+        let root = TempRoot::new("missing-403");
+        let client = CBioPortalDownloadClient::new_for_test(server.uri()).expect("client");
+        let err = client
+            .download_study("missing_study", &root.path)
+            .await
+            .expect_err("403 should return not found");
+
+        assert!(
+            matches!(
+                err,
+                BioMcpError::NotFound {
+                    ref entity,
+                    ref id,
+                    ..
+                } if entity == "Study" && id == "missing_study"
+            ),
+            "expected NotFound, got {err:?}"
+        );
+        let message = err.to_string();
+        assert!(message.contains("Study 'missing_study' not found."));
+        assert!(message.contains("biomcp study download --list"));
+        assert!(!message.contains("AccessDenied"));
+        assert!(!message.contains("API error from cbioportal-datahub"));
+    }
+
+    #[tokio::test]
+    async fn download_study_returns_not_found_for_missing_remote_archive_404() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/missing_study.tar.gz"))
+            .respond_with(ResponseTemplate::new(404).set_body_string(
+                r#"<?xml version="1.0" encoding="UTF-8"?><Error><Code>NoSuchKey</Code></Error>"#,
+            ))
+            .mount(&server)
+            .await;
+
+        let root = TempRoot::new("missing-404");
+        let client = CBioPortalDownloadClient::new_for_test(server.uri()).expect("client");
+        let err = client
+            .download_study("missing_study", &root.path)
+            .await
+            .expect_err("404 should return not found");
+
+        assert!(
+            matches!(
+                err,
+                BioMcpError::NotFound {
+                    ref entity,
+                    ref id,
+                    ..
+                } if entity == "Study" && id == "missing_study"
+            ),
+            "expected NotFound, got {err:?}"
+        );
+        let message = err.to_string();
+        assert!(message.contains("Study 'missing_study' not found."));
+        assert!(message.contains("biomcp study download --list"));
+        assert!(!message.contains("NoSuchKey"));
+        assert!(!message.contains("API error from cbioportal-datahub"));
     }
 
     #[tokio::test]
