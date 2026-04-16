@@ -67,6 +67,23 @@ echo "$out" | mustmatch like '**Diabetes insipidus** (`HP:0000873`)'
 echo "$out" | mustmatch like '**Diabetes mellitus** (`HP:0000819`)'
 ```
 
+## No Entity Resolved
+
+When `discover` finds no biomedical concepts, it should not dead-end. Instead,
+it should point the user toward review-style article search in both markdown and
+JSON output. `qzvxxptl` is a stable zero-result probe in the current live data.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" discover qzvxxptl)"
+echo "$out" | mustmatch like 'No biomedical entities resolved. Try: biomcp search article -k qzvxxptl --type review --limit 5'
+echo "$out" | mustmatch like 'biomcp search article -k qzvxxptl --type review --limit 5'
+
+json_out="$("$bin" --json discover qzvxxptl)"
+echo "$json_out" | jq -e '.notes | any(. == "No biomedical entities resolved. Try: biomcp search article -k qzvxxptl --type review --limit 5")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands[0] == "biomcp search article -k qzvxxptl --type review --limit 5"' > /dev/null
+```
+
 ## Treatment Query
 
 ```bash
@@ -140,12 +157,18 @@ echo "$out" | mustmatch like "biomcp search pathway -q \"MAPK signaling\" --limi
 
 ## Underspecified Variant
 
+Low-confidence fallback concepts should keep their existing routing while still
+surfacing a broader-results article-search hint. `R620W` currently resolves to
+a label-only variant without a canonical ID, which keeps this live proof stable.
+
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" discover V600E)"
+out="$("$bin" discover R620W)"
 echo "$out" | mustmatch like "### Variant"
 echo "$out" | mustmatch not like "biomcp get gene "
 echo "$out" | mustmatch not like "## Plain Language"
+echo "$out" | mustmatch like "For broader results: biomcp search article -k R620W"
+echo "$out" | mustmatch like 'biomcp search article -k "R620W" --limit 5'
 ```
 
 ## OLS4-only Mode

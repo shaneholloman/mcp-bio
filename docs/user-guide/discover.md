@@ -27,11 +27,13 @@ biomcp --json discover diabetes
 - Adds MedlinePlus plain-language context for disease and symptom queries.
 - Suggests `biomcp search phenotype "HP:..."` first when symptom concepts
   resolve to HPO-backed IDs.
+- If no entities resolve, suggests `biomcp search article -k "<query>" --type review --limit 5`.
+- If only low-confidence concepts resolve, adds a broader-results article-search hint.
 - Returns suggested BioMCP follow-up commands without auto-executing them.
 
 ## Output
 
-Markdown groups concepts by type and shows suggested commands.
+Markdown groups concepts by type, shows notes, and lists suggested commands.
 
 For symptom-first queries such as `biomcp discover "developmental delay"`,
 discover can surface `HP:` identifiers directly in the concept list and suggest
@@ -39,12 +41,15 @@ discover can surface `HP:` identifiers directly in the concept list and suggest
 queries like `biomcp discover "symptoms of Marfan syndrome"` still route to
 `biomcp get disease ... phenotypes`.
 
-JSON preserves the same concepts and adds:
+JSON preserves the same concepts, keeps the same guidance in `notes`, and adds:
 
 - `_meta.next_commands`
 - `_meta.section_sources`
 - `_meta.discovery_sources`
 - `_meta.evidence_urls`
+
+`notes` is the user-visible guidance channel in both markdown and JSON.
+`_meta.next_commands` remains the machine-actionable command list.
 
 ## Notes
 

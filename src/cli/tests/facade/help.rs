@@ -185,3 +185,20 @@ fn search_all_help_mentions_counts_only_json_contract() {
     assert!(help.contains("markdown keeps follow-up links"));
     assert!(help.contains("JSON omits per-section results and links"));
 }
+
+#[test]
+fn discover_help_mentions_article_search_fallback_for_non_canonical_queries() {
+    let mut command = Cli::command();
+    let discover = command
+        .find_subcommand_mut("discover")
+        .expect("discover subcommand should exist");
+    let mut help = Vec::new();
+    discover
+        .write_long_help(&mut help)
+        .expect("discover help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains(
+        "When discover cannot resolve a canonical biomedical concept, it suggests article search instead of leaving an empty dead end."
+    ));
+}

@@ -131,6 +131,7 @@ EXAMPLES:
     #[command(after_help = "\
 When to use: use discover when you only have free text and need BioMCP to pick the next typed command.
 Unambiguous gene-plus-topic queries can also surface a gene-filtered article search when there is still a meaningful topic after the gene name.
+When discover cannot resolve a canonical biomedical concept, it suggests article search instead of leaving an empty dead end.
 
 EXAMPLES:
   biomcp discover ERBB1

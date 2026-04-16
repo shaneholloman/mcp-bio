@@ -61,6 +61,8 @@ fn list_discover() -> String {
 - Use `discover` when you only have free text and need BioMCP to pick the next typed command.
 - Prefer the first suggested command when the query clearly implies treatment, symptoms, safety, trials, or gene+disease orientation.
 - Unambiguous gene-plus-topic queries can also surface `biomcp search article -g <symbol> -k <topic> --limit 5` when the remaining topic is meaningful.
+- If no biomedical entities resolve, discover suggests `biomcp search article -k <query> --type review --limit 5`.
+- If only low-confidence concepts resolve, discover adds a broader-results article-search hint.
 "#
     .to_string()
 }
@@ -888,6 +890,7 @@ mod tests {
         assert!(out.contains("--json discover <query>"));
         assert!(out.contains("gene-plus-topic queries"));
         assert!(out.contains("biomcp search article -g <symbol> -k <topic> --limit 5"));
+        assert!(out.contains("biomcp search article -k <query> --type review --limit 5"));
     }
 
     #[test]
@@ -895,6 +898,17 @@ mod tests {
         let out = render(Some("discover")).expect("list discover should render");
         assert!(out.contains(
             "Unambiguous gene-plus-topic queries can also surface `biomcp search article -g <symbol> -k <topic> --limit 5` when the remaining topic is meaningful."
+        ));
+    }
+
+    #[test]
+    fn list_discover_page_mentions_empty_and_low_confidence_article_fallbacks() {
+        let out = render(Some("discover")).expect("list discover should render");
+        assert!(out.contains(
+            "If no biomedical entities resolve, discover suggests `biomcp search article -k <query> --type review --limit 5`."
+        ));
+        assert!(out.contains(
+            "If only low-confidence concepts resolve, discover adds a broader-results article-search hint."
         ));
     }
 
