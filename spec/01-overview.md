@@ -91,6 +91,22 @@ echo "$out" | mustmatch like "## When to use this surface"
 echo "$out" | mustmatch like 'Use `get gene <symbol>` for the default card'
 ```
 
+## Batch Help
+
+`biomcp batch --help` should include concrete examples for article, gene, and
+trial workflows together with the cross-reference back to the batch command
+reference.
+
+```bash
+bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
+out="$("$bin" batch --help)"
+echo "$out" | mustmatch '/EXAMPLES/'
+echo "$out" | mustmatch like "biomcp batch article"
+echo "$out" | mustmatch like "biomcp batch gene"
+echo "$out" | mustmatch like "biomcp batch trial"
+echo "$out" | mustmatch like "See also: biomcp list batch"
+```
+
 ## Article Routing Help
 
 `biomcp list article` should explain how to turn a literature question into

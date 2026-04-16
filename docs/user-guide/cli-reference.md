@@ -332,9 +332,10 @@ biomcp enrich BRAF,KRAS,NRAS --limit 10 --json
 
 ## Batch mode
 
-Batch is limited to 10 IDs per command.
+Batch is limited to 10 IDs per command and one entity type per call.
 
 ```bash
+biomcp batch article 22663011,24200969
 biomcp batch gene BRAF,TP53
 biomcp batch gene BRAF,TP53 --sections pathways,interactions
 biomcp batch trial NCT02576665,NCT03715933 --source nci

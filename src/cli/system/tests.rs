@@ -205,6 +205,27 @@ fn serve_http_help_describes_streamable_http() {
     assert!(!help.contains("--no-cache"));
 }
 
+#[test]
+fn batch_help_includes_examples_and_limits() {
+    let mut command = crate::cli::build_cli();
+    let batch = command
+        .find_subcommand_mut("batch")
+        .expect("batch subcommand should exist");
+    let mut help = Vec::new();
+    batch
+        .write_long_help(&mut help)
+        .expect("batch help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("EXAMPLES"));
+    assert!(help.contains("biomcp batch article 22663011,24200969"));
+    assert!(help.contains("biomcp batch gene BRAF,TP53 --sections pathways,interactions"));
+    assert!(help.contains("biomcp batch trial NCT02576665,NCT03715933 --source nci"));
+    assert!(help.contains("Batch accepts up to 10 IDs per call."));
+    assert!(help.contains("Each call must use a single entity type."));
+    assert!(help.contains("See also: biomcp list batch"));
+}
+
 #[tokio::test]
 async fn handle_enrich_rejects_zero_limit_before_api_call() {
     let cli = Cli::try_parse_from(["biomcp", "enrich", "BRAF,KRAS", "--limit", "0"])
