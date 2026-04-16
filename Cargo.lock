@@ -296,7 +296,7 @@ dependencies = [
 
 [[package]]
 name = "biomcp-cli"
-version = "0.8.20"
+version = "0.8.21"
 dependencies = [
  "anyhow",
  "async-trait",

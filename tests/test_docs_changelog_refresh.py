@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 import tomllib
 
@@ -33,35 +34,47 @@ def _markdown_subsection_block(text: str, heading: str) -> str:
     return remainder[:next_heading]
 
 
+def _ticket_references(text: str) -> set[int]:
+    references: set[int] = set()
+    for group in re.findall(r"\(([^)]+)\)", text):
+        for token in group.split(","):
+            token = token.strip()
+            if token.isdigit():
+                references.add(int(token))
+    return references
+
+
 def test_changelog_has_backfilled_releases_and_release_header() -> None:
     changelog = _read("CHANGELOG.md")
-    latest_release_block = _markdown_section_block(changelog, "## 0.8.20 — 2026-03-30")
+    latest_release_block = _markdown_section_block(changelog, "## 0.8.21 — 2026-04-16")
     latest_new_features_block = _markdown_subsection_block(
         latest_release_block, "### New features"
     )
 
     assert "## [Unreleased]" not in changelog
+    assert "## 0.8.21 — 2026-04-16" in changelog
     assert "## 0.8.20 — 2026-03-30" in changelog
     assert "## 0.8.19 — 2026-03-26" in changelog
     assert "## 0.8.18 — 2026-03-25" in changelog
     assert "## 0.9.0" not in changelog
-    assert "remove partial API key from health output" in latest_release_block
-    assert "cross-entity See-also links" in latest_release_block
-    assert "quality ratchet" in latest_release_block
+    assert "article date-range filtering" in latest_release_block
+    assert "Expanded trial search with drug alias union" in latest_release_block
+    assert "counts-only contract" in latest_release_block
+    assert "ClinicalTrials.gov fallback" in latest_release_block
+    assert "Refreshed architecture docs" in latest_release_block
+    assert "daraxonrasib six-commands workflow" in latest_release_block
     assert "mustmatch" in latest_release_block
-    assert "drug target family" in latest_release_block
-    assert "protein isoforms" in latest_release_block
-    assert "variant legacy" in latest_release_block
-    assert "disease definitions" in latest_release_block
-    assert "Documentation consistency audit" in latest_release_block
-    assert "Repo cleanup" in latest_release_block
-    assert "WHO Prequalification" in latest_new_features_block
-    assert "--region who" in latest_new_features_block
-    assert "who sync" in latest_new_features_block
+    assert "test_support" in latest_release_block
+    assert "docs-only validation profile" in latest_release_block
+    assert "EMA regulatory region" in latest_new_features_block
+    assert "--region eu" in latest_new_features_block
+    assert "biomcp ema sync" in latest_new_features_block
+    assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221}
     assert "pending separate merge" not in latest_release_block
-    assert "0.8.21" not in latest_release_block
+    assert "0.8.22" not in latest_release_block
 
     expected_releases = [
+        ("0.8.20", "2026-03-30"),
         ("0.8.18", "2026-03-25"),
         ("0.8.17", "2026-03-23"),
         ("0.8.16", "2026-03-17"),

@@ -6,8 +6,8 @@ abstract: >-
   BioMCP is a single-binary CLI and MCP server for querying biomedical
   databases with one command grammar, compact markdown output, and local study
   analytics.
-version: 0.8.20
-date-released: 2026-03-30
+version: 0.8.21
+date-released: 2026-04-16
 license: MIT
 repository-code: https://github.com/genomoncology/biomcp
 url: https://biomcp.org
