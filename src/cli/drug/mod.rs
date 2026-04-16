@@ -88,13 +88,15 @@ See also: biomcp list drug")]
         #[arg(long = "no-alias-expand")]
         no_alias_expand: bool,
     },
-    /// Search FAERS adverse events for this drug (best-effort)
+    /// Search drug adverse events with FAERS-first lookup and CTGov fallback on FAERS 404
     #[command(after_help = "\
 EXAMPLES:
   biomcp drug adverse-events pembrolizumab --limit 5
   biomcp drug adverse-events carboplatin --serious --limit 5
 
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
+Note: FAERS 404 and FAERS 200-with-empty-results are reported differently. On FAERS 404,
+this helper falls back to ClinicalTrials.gov trial-reported adverse events; JSON adds
+faers_not_found and, when present, trial_adverse_events.
 See also: biomcp list drug")]
     AdverseEvents {
         /// Drug name (e.g., pembrolizumab)

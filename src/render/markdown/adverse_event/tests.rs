@@ -51,6 +51,58 @@ fn adverse_event_search_markdown_renders_summary_and_filters() {
 }
 
 #[test]
+fn adverse_event_search_markdown_renders_contextual_empty_state() {
+    let markdown = adverse_event_search_markdown_with_context(
+        "drug=daraxonrasib",
+        &[],
+        &AdverseEventSearchSummary {
+            total_reports: 0,
+            returned_report_count: 0,
+            top_reactions: Vec::new(),
+        },
+        "",
+        Some("Drug not found in FAERS. FAERS is a post-marketing database."),
+        &[],
+        None,
+    )
+    .expect("empty state");
+
+    assert!(markdown.contains("Drug not found in FAERS. FAERS is a post-marketing database."));
+    assert!(!markdown.contains("## Summary"));
+}
+
+#[test]
+fn adverse_event_search_markdown_renders_trial_fallback_section() {
+    let markdown = adverse_event_search_markdown_with_context(
+        "drug=daraxonrasib",
+        &[],
+        &AdverseEventSearchSummary {
+            total_reports: 0,
+            returned_report_count: 0,
+            top_reactions: Vec::new(),
+        },
+        "",
+        Some("Drug not found in FAERS. FAERS is a post-marketing database."),
+        &[
+            crate::entities::adverse_event::TrialAdverseEventTerm {
+                term: "Rash".to_string(),
+                trial_count: 2,
+            },
+            crate::entities::adverse_event::TrialAdverseEventTerm {
+                term: "Fatigue".to_string(),
+                trial_count: 1,
+            },
+        ],
+        Some("daraxonrasib"),
+    )
+    .expect("trial fallback");
+
+    assert!(markdown.contains("## Trial-Reported Adverse Events (ClinicalTrials.gov)"));
+    assert!(markdown.contains("| Rash | 2 |"));
+    assert!(markdown.contains("Source: ClinicalTrials.gov trial results"));
+}
+
+#[test]
 fn adverse_event_count_markdown_renders_bucket_rows() {
     let markdown = adverse_event_count_markdown(
         "drug=ivacaftor",

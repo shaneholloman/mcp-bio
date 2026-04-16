@@ -128,7 +128,7 @@ pub(crate) async fn handle_search(
                         &response.buckets,
                     )?
                 }
-            } else {
+            } else if json {
                 let response = crate::entities::adverse_event::search_with_summary(
                     &filters,
                     args.limit,
@@ -143,35 +143,66 @@ pub(crate) async fn handle_search(
                     results.len(),
                     Some(summary.total_reports),
                 );
-                if json {
-                    #[derive(serde::Serialize)]
-                    struct SearchResponse {
-                        pagination: super::super::PaginationMeta,
-                        count: usize,
-                        summary: crate::entities::adverse_event::AdverseEventSearchSummary,
-                        results: Vec<crate::entities::adverse_event::AdverseEventSearchResult>,
-                        #[serde(skip_serializing_if = "Option::is_none")]
-                        _meta: Option<crate::cli::SearchJsonMeta>,
-                    }
-
-                    let next_commands =
-                        crate::render::markdown::search_next_commands_faers(&results);
-                    crate::render::json::to_pretty(&SearchResponse {
-                        pagination,
-                        count: results.len(),
-                        summary,
-                        results,
-                        _meta: crate::cli::search_meta(next_commands),
-                    })?
-                } else {
-                    let footer = super::super::pagination_footer_offset(&pagination);
-                    crate::render::markdown::adverse_event_search_markdown_with_footer(
-                        &query_summary,
-                        &results,
-                        &summary,
-                        &footer,
-                    )?
+                #[derive(serde::Serialize)]
+                struct SearchResponse {
+                    pagination: super::super::PaginationMeta,
+                    count: usize,
+                    summary: crate::entities::adverse_event::AdverseEventSearchSummary,
+                    results: Vec<crate::entities::adverse_event::AdverseEventSearchResult>,
+                    #[serde(skip_serializing_if = "Option::is_none")]
+                    _meta: Option<crate::cli::SearchJsonMeta>,
                 }
+
+                let next_commands = crate::render::markdown::search_next_commands_faers(&results);
+                crate::render::json::to_pretty(&SearchResponse {
+                    pagination,
+                    count: results.len(),
+                    summary,
+                    results,
+                    _meta: crate::cli::search_meta(next_commands),
+                })?
+            } else {
+                let status = crate::entities::adverse_event::search_with_status(
+                    &filters,
+                    args.limit,
+                    args.offset,
+                )
+                .await?;
+                let (results, summary, empty_state_message) = match status {
+                    crate::entities::adverse_event::FaersSearchStatus::NotFound => (
+                        Vec::new(),
+                        crate::entities::adverse_event::AdverseEventSearchSummary {
+                            total_reports: 0,
+                            returned_report_count: 0,
+                            top_reactions: Vec::new(),
+                        },
+                        Some(
+                            "Drug not found in FAERS. FAERS is a post-marketing database; expect no records for investigational, newly approved, or name-variant drugs.",
+                        ),
+                    ),
+                    crate::entities::adverse_event::FaersSearchStatus::Results(response) => {
+                        let message = response.results.is_empty().then_some(
+                            "Drug found in FAERS, but no events matched your filters. Try broadening the search.",
+                        );
+                        (response.results, response.summary, message)
+                    }
+                };
+                let pagination = super::super::PaginationMeta::offset(
+                    args.offset,
+                    args.limit,
+                    results.len(),
+                    Some(summary.total_reports),
+                );
+                let footer = super::super::pagination_footer_offset(&pagination);
+                crate::render::markdown::adverse_event_search_markdown_with_context(
+                    &query_summary,
+                    &results,
+                    &summary,
+                    &footer,
+                    empty_state_message,
+                    &[],
+                    None,
+                )?
             }
         }
         crate::entities::adverse_event::AdverseEventQueryType::Recall => {

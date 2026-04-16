@@ -51,6 +51,7 @@ pub fn adverse_event_markdown(
     ))
 }
 
+#[allow(dead_code)]
 pub fn adverse_event_search_markdown(
     query: &str,
     results: &[AdverseEventSearchResult],
@@ -59,11 +60,32 @@ pub fn adverse_event_search_markdown(
     adverse_event_search_markdown_with_footer(query, results, summary, "")
 }
 
+#[allow(dead_code)]
 pub fn adverse_event_search_markdown_with_footer(
     query: &str,
     results: &[AdverseEventSearchResult],
     summary: &AdverseEventSearchSummary,
     pagination_footer: &str,
+) -> Result<String, BioMcpError> {
+    adverse_event_search_markdown_with_context(
+        query,
+        results,
+        summary,
+        pagination_footer,
+        None,
+        &[],
+        None,
+    )
+}
+
+pub fn adverse_event_search_markdown_with_context(
+    query: &str,
+    results: &[AdverseEventSearchResult],
+    summary: &AdverseEventSearchSummary,
+    pagination_footer: &str,
+    empty_state_message: Option<&str>,
+    trial_adverse_events: &[crate::entities::adverse_event::TrialAdverseEventTerm],
+    trial_adverse_event_drug: Option<&str>,
 ) -> Result<String, BioMcpError> {
     let tmpl = env()?.get_template("adverse_event_search.md.j2")?;
     let body = tmpl.render(context! {
@@ -71,6 +93,9 @@ pub fn adverse_event_search_markdown_with_footer(
         count => results.len(),
         summary => summary,
         results => results,
+        empty_state_message => empty_state_message,
+        trial_adverse_events => trial_adverse_events,
+        trial_adverse_event_drug => trial_adverse_event_drug,
         pagination_footer => pagination_footer,
     })?;
     Ok(with_pagination_footer(body, pagination_footer))
