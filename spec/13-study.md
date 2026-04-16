@@ -346,6 +346,22 @@ echo "$out" | mustmatch like "study 'missing_study' not found"
 echo "$out" | mustmatch like "biomcp study list"
 ```
 
+## Missing Remote Study Download
+
+Remote study downloads should translate cBioPortal datahub access-denied responses into a study-focused not-found message. The fixture keeps the proof offline by serving a localhost 403 XML denial while still asserting the CLI guidance points operators to `--list`.
+
+```bash
+bash fixtures/setup-study-download-error-fixture.sh "$PWD"
+. "$PWD/.cache/spec-study-download-error-env"
+trap 'bash fixtures/cleanup-study-download-error-fixture.sh "$PWD"' EXIT
+out="$(biomcp study download missing_study 2>&1 || true)"
+echo "$out" | mustmatch like "missing_study"
+echo "$out" | mustmatch like "not found"
+echo "$out" | mustmatch like "biomcp study download --list"
+echo "$out" | mustmatch not like "AccessDenied"
+echo "$out" | mustmatch not like "API error from cbioportal-datahub"
+```
+
 ## Chart Flag: Mutation Bar Chart
 
 `--chart bar --terminal` on a mutation query should produce terminal chart output instead of the standard markdown heading. The output should be non-empty and not contain the standard markdown heading.

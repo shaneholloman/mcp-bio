@@ -484,7 +484,10 @@ if [ "$status" -eq 0 ] && ! printf '%s\n' "$out" | grep -qi '403 Forbidden'; the
   echo "$out" | mustmatch like "## DisGeNET"
   echo "$out" | mustmatch like "| Gene | Entrez ID | Score | PMIDs | Trials | EL | EI |"
 else
-  echo "$out" | mustmatch '/(403 Forbidden|forbidden|DISGENET_API_KEY|Unauthorized)/'
+  echo "$out" | mustmatch like "DISGENET_API_KEY"
+  echo "$out" | mustmatch like "export DISGENET_API_KEY"
+  echo "$out" | mustmatch not like "Unauthorized"
+  echo "$out" | mustmatch not like "403 Forbidden"
 fi
 ```
 
@@ -494,6 +497,9 @@ out="$(biomcp get disease melanoma disgenet --json 2>&1)" || status=$?
 if [ "$status" -eq 0 ] && ! printf '%s\n' "$out" | grep -qi '403 Forbidden'; then
   echo "$out" | jq -e '.disgenet.associations | length > 0' > /dev/null
 else
-  echo "$out" | mustmatch '/(403 Forbidden|forbidden|DISGENET_API_KEY|Unauthorized)/'
+  echo "$out" | mustmatch like "DISGENET_API_KEY"
+  echo "$out" | mustmatch like "export DISGENET_API_KEY"
+  echo "$out" | mustmatch not like "Unauthorized"
+  echo "$out" | mustmatch not like "403 Forbidden"
 fi
 ```
