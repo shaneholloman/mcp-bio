@@ -1,5 +1,63 @@
 # Changelog
 
+## 0.8.21 — 2026-04-16
+
+### New features
+
+- Added article date-range filtering (`--date-from`/`--date-to` and
+  `--year-min`/`--year-max` aliases) to `search article`. (182)
+- Added EMA regulatory region (`--region eu`) to `search drug` and `get drug`,
+  backed by local EMA human-medicine feeds; data auto-downloads on first use via
+  `biomcp ema sync`. (203)
+- Added entity-aware HATEOAS suggestions (`_meta.next_commands`) to article
+  search JSON output; gene-anchored and keyword searches return contextually
+  appropriate follow-up commands. (195, 202)
+- Added article search fallback suggestions when `discover` resolves no entities,
+  so dead-end queries get recovery paths. (204)
+- Surfaced EuropePMC and PubMed `first_index_date` per article in
+  `search article --json`; `null` for sources that do not expose index dates. (196)
+- Expanded trial search with drug alias union so searches match trials registered
+  under any approved drug name variant. (198)
+- Surfaced opt-in section hints (`More:` block) in gene and disease base card
+  responses; `get gene <symbol>` and `get disease <name>` now show `funding`
+  and `survival` opt-in hints. (209)
+
+### Fixes
+
+- Fixed `search all --counts-only --json` so sections correctly omit `results`,
+  `links`, and `total` fields per the counts-only contract. (206)
+- Disambiguated FAERS 404 (drug not in post-marketing database) from "found but
+  no matching events"; added ClinicalTrials.gov fallback for adverse-event
+  lookups when FAERS returns 404. (197)
+- Improved error messages for `study download` 403/404 (actionable, with
+  `--list` recovery hint) and DisGeNET 403 (env var name and docs URL). (212)
+- Added study subcommand help descriptions and a regression test so help
+  completeness is enforced going forward. (210)
+
+### Docs
+
+- Refreshed architecture docs to the post-decomposition state: source map,
+  modes prose, and MCP allowlist contract. (213)
+- Fixed documentation drift: README source count, CHANGELOG WHO entry, and
+  root help command count. (211)
+- Published two blog posts on biomcp.org: daraxonrasib six-commands workflow
+  article and a follow-up that removes biomcp-python references. (200, 201)
+
+### Internal
+
+- Added `mustmatch lint` for spec bash blocks so spec sections that silently
+  skip due to a missing pipe are now caught. (221)
+- Untracked `.march` build artifacts from git so worktree state stays clean. (193)
+- Added Compact Approval Fields spec block for EMA and EU regulatory data
+  contract assertions. (194)
+- Consolidated `EnvVarGuard` and `TempDirGuard` into a central `test_support`
+  module shared across all test crates. (199)
+- Added docs-only validation profile so `make docs` can run without triggering
+  the full build gate. (205)
+- Updated `tar` and `rustls-webpki` for active RustSec advisories. (207)
+- Fixed 7 `make test-contracts` failures from assertion drift after the
+  decomposition batch. (208)
+
 ## 0.8.20 — 2026-03-30
 
 ### Security
