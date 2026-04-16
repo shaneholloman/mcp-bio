@@ -143,55 +143,17 @@ fn describe_file_type(file_type: &fs::FileType) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-    use std::path::{Path, PathBuf};
-    use std::time::{SystemTime, UNIX_EPOCH};
-
     use super::{ClearReport, execute_cache_clear};
     use crate::error::BioMcpError;
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("system clock should be after unix epoch")
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-cache-clear-unit-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn http_dir(&self) -> PathBuf {
-            self.path.join("http")
-        }
-
-        fn downloads_dir(&self) -> PathBuf {
-            self.path.join("downloads")
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.path);
-        }
-    }
+    use crate::test_support::TempDirGuard;
+    use std::fs;
 
     #[test]
     fn clear_missing_path_returns_zero_report() {
         let root = TempDirGuard::new("missing");
 
-        let report = execute_cache_clear(&root.http_dir()).expect("missing path should succeed");
+        let report =
+            execute_cache_clear(&root.path().join("http")).expect("missing path should succeed");
 
         assert_eq!(
             report,
@@ -212,9 +174,9 @@ mod tests {
         let target_file = target_dir.join("outside.txt");
         fs::create_dir_all(&target_dir).expect("create target dir");
         fs::write(&target_file, b"outside").expect("seed target file");
-        symlink(&target_dir, root.http_dir()).expect("create root symlink");
+        symlink(&target_dir, root.path().join("http")).expect("create root symlink");
 
-        let report = execute_cache_clear(&root.http_dir()).expect("clear should succeed");
+        let report = execute_cache_clear(&root.path().join("http")).expect("clear should succeed");
 
         assert_eq!(
             report,
@@ -223,7 +185,10 @@ mod tests {
                 entries_removed: 1,
             }
         );
-        assert!(!root.http_dir().exists(), "root symlink should be removed");
+        assert!(
+            !root.path().join("http").exists(),
+            "root symlink should be removed"
+        );
         assert!(target_file.is_file(), "target file should remain untouched");
     }
 
@@ -233,7 +198,7 @@ mod tests {
         use std::os::unix::fs::symlink;
 
         let root = TempDirGuard::new("nested-symlink");
-        let http_dir = root.http_dir();
+        let http_dir = root.path().join("http");
         let target_dir = root.path().join("target");
         let target_file = target_dir.join("outside.txt");
         fs::create_dir_all(http_dir.join("nested")).expect("create http dir");
@@ -258,7 +223,7 @@ mod tests {
     #[test]
     fn clear_removes_directory_tree_and_root_http_dir() {
         let root = TempDirGuard::new("remove-tree");
-        let http_dir = root.http_dir();
+        let http_dir = root.path().join("http");
         fs::create_dir_all(http_dir.join("nested")).expect("create http dir");
         fs::write(http_dir.join("nested").join("entry.bin"), b"abc").expect("seed file");
 
@@ -277,8 +242,8 @@ mod tests {
     #[test]
     fn clear_preserves_sibling_downloads_directory() {
         let root = TempDirGuard::new("preserve-downloads");
-        let http_dir = root.http_dir();
-        let downloads_dir = root.downloads_dir();
+        let http_dir = root.path().join("http");
+        let downloads_dir = root.path().join("downloads");
         fs::create_dir_all(http_dir.join("nested")).expect("create http dir");
         fs::create_dir_all(&downloads_dir).expect("create downloads dir");
         fs::write(http_dir.join("nested").join("entry.bin"), b"abc").expect("seed file");
@@ -298,7 +263,7 @@ mod tests {
     #[test]
     fn clear_rejects_root_regular_file_before_mutation() {
         let root = TempDirGuard::new("root-file");
-        let http_path = root.http_dir();
+        let http_path = root.path().join("http");
         fs::write(&http_path, b"not-a-dir").expect("seed file");
 
         let err = execute_cache_clear(&http_path).expect_err("root file should be rejected");
@@ -313,7 +278,7 @@ mod tests {
         use std::os::unix::net::UnixListener;
 
         let root = TempDirGuard::new("special-file");
-        let http_dir = root.http_dir();
+        let http_dir = root.path().join("http");
         let socket_path = http_dir.join("special.sock");
         let regular_file = http_dir.join("entry.bin");
         fs::create_dir_all(&http_dir).expect("create http dir");

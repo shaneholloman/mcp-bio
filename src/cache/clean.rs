@@ -161,11 +161,10 @@ fn resolve_effective_limit<T: Copy>(
 #[cfg(test)]
 mod tests {
     use std::cell::Cell;
-    use std::fs;
     use std::io;
     use std::io::Write;
     use std::path::{Path, PathBuf};
-    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+    use std::time::Duration;
 
     use ssri::Integrity;
 
@@ -175,39 +174,7 @@ mod tests {
         ResolvedCacheConfig, snapshot_cache,
     };
     use crate::error::BioMcpError;
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-cache-clean-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn http_dir(&self) -> PathBuf {
-            self.path.join("http")
-        }
-
-        fn cache_root(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.path);
-        }
-    }
+    use crate::test_support::TempDirGuard;
 
     fn write_entry(cache_path: &Path, key: &str, bytes: &[u8], time_ms: u128) -> Integrity {
         let mut writer = cacache::WriteOpts::new()
@@ -273,10 +240,10 @@ mod tests {
     #[test]
     fn cache_clean_dry_run_reports_orphan_plan_without_deleting() {
         let root = TempDirGuard::new("dry-run");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         let orphan = make_orphan(&cache_path, "orphan", b"orphan-bytes", 100);
         let config = test_config(
-            root.cache_root(),
+            root.path(),
             10_000_000_000,
             Duration::from_secs(86_400),
             ConfigOrigin::Default,
@@ -317,10 +284,10 @@ mod tests {
     #[test]
     fn cache_clean_destructive_removes_orphan_blobs() {
         let root = TempDirGuard::new("orphan");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         let orphan = make_orphan(&cache_path, "orphan", b"orphan-bytes", 100);
         let config = test_config(
-            root.cache_root(),
+            root.path(),
             10_000_000_000,
             Duration::from_secs(86_400),
             ConfigOrigin::Default,
@@ -349,11 +316,11 @@ mod tests {
     #[test]
     fn cache_clean_age_cleanup_removes_only_old_entries() {
         let root = TempDirGuard::new("age");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         let old = write_entry(&cache_path, "old", b"old", 100);
         let _ = write_entry(&cache_path, "new", b"new", 900);
         let config = test_config(
-            root.cache_root(),
+            root.path(),
             10_000_000_000,
             Duration::from_secs(86_400),
             ConfigOrigin::Default,
@@ -381,11 +348,11 @@ mod tests {
     #[test]
     fn cache_clean_size_cleanup_uses_explicit_config_without_flag() {
         let root = TempDirGuard::new("size-origin");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         let old = write_entry(&cache_path, "old", b"old1", 100);
         let _ = write_entry(&cache_path, "new", b"new2", 200);
         let config = test_config(
-            root.cache_root(),
+            root.path(),
             4,
             Duration::from_secs(86_400),
             ConfigOrigin::File,
@@ -413,10 +380,10 @@ mod tests {
     #[test]
     fn cache_clean_default_origins_skip_limits_without_flags() {
         let root = TempDirGuard::new("default-origin");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         let _ = write_entry(&cache_path, "old", b"old", 100);
         let config = test_config(
-            root.cache_root(),
+            root.path(),
             0,
             Duration::ZERO,
             ConfigOrigin::Default,
@@ -443,11 +410,11 @@ mod tests {
     #[test]
     fn cache_clean_shared_integrity_blob_waits_for_all_keys() {
         let root = TempDirGuard::new("shared-integrity");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         let integrity = write_entry(&cache_path, "a", b"shared-bytes", 100);
         let _ = write_entry(&cache_path, "b", b"shared-bytes", 101);
         let config = test_config(
-            root.cache_root(),
+            root.path(),
             10_000_000_000,
             Duration::from_secs(86_400),
             ConfigOrigin::Default,
@@ -503,10 +470,10 @@ mod tests {
     #[test]
     fn cache_clean_blob_not_found_is_benign_drift() {
         let root = TempDirGuard::new("blob-not-found");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         let _ = write_entry(&cache_path, "old", b"old", 100);
         let config = test_config(
-            root.cache_root(),
+            root.path(),
             10_000_000_000,
             Duration::from_secs(86_400),
             ConfigOrigin::Default,
@@ -542,19 +509,19 @@ mod tests {
     fn cache_clean_dry_run_matches_destructive_on_equivalent_seed() {
         let dry_root = TempDirGuard::new("parity-dry");
         let destructive_root = TempDirGuard::new("parity-destructive");
-        let dry_cache = dry_root.http_dir();
-        let destructive_cache = destructive_root.http_dir();
+        let dry_cache = dry_root.path().join("http");
+        let destructive_cache = destructive_root.path().join("http");
         seed_parity_fixture(&dry_cache);
         seed_parity_fixture(&destructive_cache);
         let dry_config = test_config(
-            dry_root.cache_root(),
+            dry_root.path(),
             10_000_000_000,
             Duration::from_secs(86_400),
             ConfigOrigin::Default,
             ConfigOrigin::Default,
         );
         let destructive_config = test_config(
-            destructive_root.cache_root(),
+            destructive_root.path(),
             10_000_000_000,
             Duration::from_secs(86_400),
             ConfigOrigin::Default,
@@ -600,9 +567,9 @@ mod tests {
     #[test]
     fn cache_clean_snapshot_failure_returns_io_error() {
         let root = TempDirGuard::new("snapshot-failure");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         let config = test_config(
-            root.cache_root(),
+            root.path(),
             10_000_000_000,
             Duration::from_secs(86_400),
             ConfigOrigin::Default,

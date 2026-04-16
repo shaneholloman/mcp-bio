@@ -627,76 +627,18 @@ pub(crate) async fn read_limited_body(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::{Path, PathBuf};
+    use crate::test_support::{TempDirGuard, set_env_var};
+    use std::path::Path;
     use std::sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
     };
-    use std::time::{SystemTime, UNIX_EPOCH};
     use tokio::sync::MutexGuard;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     fn env_lock() -> MutexGuard<'static, ()> {
         crate::test_support::env_lock().blocking_lock()
-    }
-
-    struct EnvVarGuard {
-        name: &'static str,
-        previous: Option<String>,
-    }
-
-    impl Drop for EnvVarGuard {
-        fn drop(&mut self) {
-            // Safety: tests serialize environment mutation with `env_lock()`.
-            unsafe {
-                match &self.previous {
-                    Some(value) => std::env::set_var(self.name, value),
-                    None => std::env::remove_var(self.name),
-                }
-            }
-        }
-    }
-
-    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-        let previous = std::env::var(name).ok();
-        // Safety: tests serialize environment mutation with `env_lock()`.
-        unsafe {
-            match value {
-                Some(value) => std::env::set_var(name, value),
-                None => std::env::remove_var(name),
-            }
-        }
-        EnvVarGuard { name, previous }
-    }
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-sources-test-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            std::fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.path);
-        }
     }
 
     #[test]

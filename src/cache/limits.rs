@@ -104,48 +104,15 @@ pub(crate) fn evaluate_cache_limits(
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
     use std::io::Write;
-    use std::path::{Path, PathBuf};
-    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+    use std::path::Path;
+    use std::time::Duration;
 
     use super::{FilesystemSpace, evaluate_cache_limits, summarize_cache_usage};
     use crate::cache::{
         CacheConfigOrigins, ConfigOrigin, DiskFreeThreshold, ResolvedCacheConfig, snapshot_cache,
     };
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-cache-limits-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn http_dir(&self) -> PathBuf {
-            self.path.join("http")
-        }
-
-        fn cache_root(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.path);
-        }
-    }
+    use crate::test_support::TempDirGuard;
 
     fn write_entry(cache_path: &Path, key: &str, bytes: &[u8], time_ms: u128) {
         let mut writer = cacache::WriteOpts::new()
@@ -184,7 +151,7 @@ mod tests {
     #[test]
     fn summarize_cache_usage_distinguishes_referenced_and_orphan_blob_bytes() {
         let root = TempDirGuard::new("usage");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         write_entry(&cache_path, "shared-a", b"shared-bytes", 100);
         write_entry(&cache_path, "shared-b", b"shared-bytes", 101);
         make_orphan(&cache_path, "orphan", b"orphan-bytes", 102);
@@ -203,11 +170,11 @@ mod tests {
     #[test]
     fn evaluate_cache_limits_converts_disk_deficit_into_effective_max_size() {
         let root = TempDirGuard::new("disk-floor");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         write_entry(&cache_path, "retained", b"live-bytes", 100);
         make_orphan(&cache_path, "orphan", b"orph", 101);
         let snapshot = snapshot_cache(&cache_path).expect("snapshot");
-        let config = test_config(root.cache_root(), 12, DiskFreeThreshold::Percent(20));
+        let config = test_config(root.path(), 12, DiskFreeThreshold::Percent(20));
 
         let evaluation = evaluate_cache_limits(
             &snapshot,
@@ -230,11 +197,11 @@ mod tests {
     #[test]
     fn evaluate_cache_limits_can_drive_effective_max_size_to_zero() {
         let root = TempDirGuard::new("disk-floor-zero");
-        let cache_path = root.http_dir();
+        let cache_path = root.path().join("http");
         write_entry(&cache_path, "retained", b"live-bytes", 100);
         make_orphan(&cache_path, "orphan", b"orph", 101);
         let snapshot = snapshot_cache(&cache_path).expect("snapshot");
-        let config = test_config(root.cache_root(), 12, DiskFreeThreshold::Bytes(30));
+        let config = test_config(root.path(), 12, DiskFreeThreshold::Bytes(30));
 
         let evaluation = evaluate_cache_limits(
             &snapshot,

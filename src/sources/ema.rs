@@ -1038,42 +1038,12 @@ fn parse_ema_date(value: Option<&str>) -> Option<(u32, u32, u32)> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::{Path, PathBuf};
-
     use super::{
         EMA_FEEDS, EMA_REQUIRED_FILES, EmaClient, EmaDrugIdentity, EmaSyncMode, FeedSyncState,
         MEDICINES_FILE, ema_missing_files, sync_plan, validate_feed_payload,
     };
+    use crate::test_support::TempDirGuard;
     use http_cache_reqwest::CacheMode;
-
-    struct TempDirGuard {
-        path: PathBuf,
-    }
-
-    impl TempDirGuard {
-        fn new(label: &str) -> Self {
-            let suffix = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-ema-test-{label}-{}-{suffix}",
-                std::process::id()
-            ));
-            std::fs::create_dir_all(&path).expect("create temp dir");
-            Self { path }
-        }
-
-        fn path(&self) -> &Path {
-            &self.path
-        }
-    }
-
-    impl Drop for TempDirGuard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.path);
-        }
-    }
 
     fn fixture_client() -> EmaClient {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

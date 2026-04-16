@@ -1,37 +1,9 @@
 //! Get-module tests split from the legacy drug facade.
 
 use super::*;
+use crate::test_support::set_env_var;
 use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
-
-struct EnvVarGuard {
-    name: &'static str,
-    previous: Option<String>,
-}
-
-impl Drop for EnvVarGuard {
-    fn drop(&mut self) {
-        // Safety: this test module serializes environment mutation with `env_lock()`.
-        unsafe {
-            match &self.previous {
-                Some(value) => std::env::set_var(self.name, value),
-                None => std::env::remove_var(self.name),
-            }
-        }
-    }
-}
-
-fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-    let previous = std::env::var(name).ok();
-    // Safety: this test module serializes environment mutation with `env_lock()`.
-    unsafe {
-        match value {
-            Some(value) => std::env::set_var(name, value),
-            None => std::env::remove_var(name),
-        }
-    }
-    EnvVarGuard { name, previous }
-}
 
 async fn mount_trial_alias_lookup(
     server: &MockServer,

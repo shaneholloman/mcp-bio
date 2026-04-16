@@ -1954,6 +1954,7 @@ mod tests {
     use crate::entities::drug::DrugSearchResult;
     use crate::entities::trial::TrialSearchResult;
     use crate::entities::variant::VariantGwasAssociation;
+    use crate::test_support::set_env_var;
     use serde_json::json;
     use tokio::sync::MutexGuard;
     use wiremock::matchers::{method, path, query_param};
@@ -1961,35 +1962,6 @@ mod tests {
 
     async fn env_lock_async() -> MutexGuard<'static, ()> {
         crate::test_support::env_lock().lock().await
-    }
-
-    struct EnvVarGuard {
-        name: &'static str,
-        previous: Option<String>,
-    }
-
-    impl Drop for EnvVarGuard {
-        fn drop(&mut self) {
-            // Safety: tests serialize environment mutation with `env_lock_async()`.
-            unsafe {
-                match &self.previous {
-                    Some(value) => std::env::set_var(self.name, value),
-                    None => std::env::remove_var(self.name),
-                }
-            }
-        }
-    }
-
-    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
-        let previous = std::env::var(name).ok();
-        // Safety: tests serialize environment mutation with `env_lock_async()`.
-        unsafe {
-            match value {
-                Some(value) => std::env::set_var(name, value),
-                None => std::env::remove_var(name),
-            }
-        }
-        EnvVarGuard { name, previous }
     }
 
     fn input_with_gene() -> SearchAllInput {

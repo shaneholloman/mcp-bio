@@ -335,7 +335,7 @@ async fn collect_report(
     let suite_hash = compute_suite_hash(&suite);
 
     let cache_root = create_temp_cache_root()?;
-    let _cache_guard = TempDirGuard::new(cache_root.clone());
+    let _cache_guard = TempDirCleanup::new(cache_root.clone());
 
     let exe = std::env::current_exe().context("failed to resolve biomcp executable path")?;
 
@@ -1123,17 +1123,17 @@ fn format_float(value: f64) -> String {
     format!("{value:.2}")
 }
 
-struct TempDirGuard {
+struct TempDirCleanup {
     path: PathBuf,
 }
 
-impl TempDirGuard {
+impl TempDirCleanup {
     fn new(path: PathBuf) -> Self {
         Self { path }
     }
 }
 
-impl Drop for TempDirGuard {
+impl Drop for TempDirCleanup {
     fn drop(&mut self) {
         let _ = fs::remove_dir_all(&self.path);
     }
