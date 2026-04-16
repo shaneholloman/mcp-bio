@@ -418,9 +418,10 @@ investigational or newly approved drugs, then append a clearly labeled
 ClinicalTrials.gov trial-results section.
 
 ```bash
+bin="${BIOMCP_BIN:-biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
-out="$(biomcp drug adverse-events daraxonrasib --limit 5)"
+out="$("$bin" drug adverse-events daraxonrasib --limit 5)"
 echo "$out" | mustmatch like "Drug not found in FAERS. FAERS is a post-marketing database"
 echo "$out" | mustmatch like "## Trial-Reported Adverse Events (ClinicalTrials.gov)"
 echo "$out" | mustmatch like "| Rash | 2 |"
@@ -432,9 +433,10 @@ The JSON contract keeps the FAERS-shaped top-level fields but marks the 404 bran
 explicitly and emits aggregated trial adverse-event terms with source-aware naming.
 
 ```bash
+bin="${BIOMCP_BIN:-biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
-json_out="$(biomcp --json drug adverse-events daraxonrasib --limit 5)"
+json_out="$("$bin" --json drug adverse-events daraxonrasib --limit 5)"
 echo "$json_out" | mustmatch like '"faers_not_found": true'
 echo "$json_out" | mustmatch like '"trial_adverse_events":'
 echo "$json_out" | jq -e '.faers_not_found == true' > /dev/null
@@ -449,9 +451,10 @@ should stay truthful about both sources and omit the fallback table instead of
 inventing empty rows.
 
 ```bash
+bin="${BIOMCP_BIN:-biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
-out="$(biomcp drug adverse-events ctgov-empty --limit 5)"
+out="$("$bin" drug adverse-events ctgov-empty --limit 5)"
 echo "$out" | mustmatch like "Drug not found in FAERS. FAERS is a post-marketing database"
 echo "$out" | mustmatch like "ClinicalTrials.gov did not return posted trial adverse events"
 echo "$out" | mustmatch not like "## Trial-Reported Adverse Events (ClinicalTrials.gov)"
@@ -464,9 +467,10 @@ branch should explain that the drug matched FAERS indexing but no events matched
 and it must not query or render ClinicalTrials.gov fallback content.
 
 ```bash
+bin="${BIOMCP_BIN:-biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
-out="$(biomcp drug adverse-events faers-empty --limit 5)"
+out="$("$bin" drug adverse-events faers-empty --limit 5)"
 echo "$out" | mustmatch like "Drug found in FAERS, but no events matched your filters"
 echo "$out" | mustmatch not like "Trial-Reported Adverse Events (ClinicalTrials.gov)"
 echo "$out" | mustmatch not like "| Rash | 2 |"
@@ -500,7 +504,8 @@ The list surface should document the repaired empty-state wording and the JSON f
 that identify when ClinicalTrials.gov contributed fallback data.
 
 ```bash
-list_out="$(biomcp list drug)"
+bin="${BIOMCP_BIN:-biomcp}"
+list_out="$("$bin" list drug)"
 echo "$list_out" | mustmatch like '`drug adverse-events <name>` - checks FAERS first'
 echo "$list_out" | mustmatch like "falls back to ClinicalTrials.gov trial-reported adverse events only on FAERS 404"
 echo "$list_out" | mustmatch like "faers_not_found"

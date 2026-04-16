@@ -85,7 +85,7 @@ New to BioMCP? Try:
 - `variant trials <id> --source <ctgov|nci> --limit <N> --offset <N>`
 - `variant articles <id>`
 - `drug trials <name>`
-- `drug adverse-events <name>` - FAERS-first; FAERS 404 falls back to ClinicalTrials.gov trial-reported adverse events, while FAERS 200+empty stays on FAERS
+- `drug adverse-events <name>` - FAERS-first; FAERS 404 falls back to ClinicalTrials.gov trial-reported adverse events and `--json` adds `faers_not_found` plus optional `trial_adverse_events`, while FAERS 200+empty stays on FAERS
 - `disease trials <name>`
 - `disease articles <name>`
 - `disease drugs <name>`

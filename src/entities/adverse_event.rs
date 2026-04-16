@@ -615,14 +615,6 @@ fn study_nct_id(study: &CtGovStudy) -> Option<&str> {
         .filter(|value| !value.is_empty())
 }
 
-fn study_has_trial_adverse_events(study: &CtGovStudy) -> bool {
-    study
-        .results_section
-        .as_ref()
-        .and_then(|section| section.adverse_events_module.as_ref())
-        .is_some_and(|module| !module.serious_events.is_empty() || !module.other_events.is_empty())
-}
-
 fn ctgov_event_counts_for_study(event: &CtGovAdverseEvent) -> bool {
     if event.stats.is_empty() {
         return true;
@@ -631,6 +623,36 @@ fn ctgov_event_counts_for_study(event: &CtGovAdverseEvent) -> bool {
         .stats
         .iter()
         .any(|stat| stat.num_affected.unwrap_or(0) > 0)
+}
+
+fn study_trial_adverse_event_term_count(study: &CtGovStudy) -> usize {
+    let Some(module) = study
+        .results_section
+        .as_ref()
+        .and_then(|section| section.adverse_events_module.as_ref())
+    else {
+        return 0;
+    };
+
+    let mut seen_terms = HashSet::new();
+    for event in module
+        .serious_events
+        .iter()
+        .chain(module.other_events.iter())
+    {
+        let Some(term) = event
+            .term
+            .as_deref()
+            .map(str::trim)
+            .filter(|term| !term.is_empty())
+        else {
+            continue;
+        };
+        if ctgov_event_counts_for_study(event) {
+            seen_terms.insert(term.to_ascii_lowercase());
+        }
+    }
+    seen_terms.len()
 }
 
 fn add_trial_terms(
@@ -745,11 +767,10 @@ async fn trial_adverse_events_with_aliases(
             let Some(nct_id) = study_nct_id(&study).map(str::to_string) else {
                 continue;
             };
+            let new_term_count = study_trial_adverse_event_term_count(&study);
             match studies_by_nct.entry(nct_id) {
                 std::collections::hash_map::Entry::Occupied(mut entry) => {
-                    if !study_has_trial_adverse_events(entry.get())
-                        && study_has_trial_adverse_events(&study)
-                    {
+                    if new_term_count > study_trial_adverse_event_term_count(entry.get()) {
                         entry.insert(study);
                     }
                 }
@@ -1600,6 +1621,90 @@ mod tests {
             TrialAdverseEventOutcome::Found(rows) => {
                 assert_eq!(rows[0].term, "Rash");
                 assert_eq!(rows[0].trial_count, 2);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn trial_adverse_events_prefers_alias_copy_with_counted_terms() {
+        let server = MockServer::start().await;
+        let client =
+            ClinicalTrialsClient::new_for_test(format!("{}/api/v2", server.uri())).unwrap();
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/studies"))
+            .and(query_param("query.intr", "daraxonrasib"))
+            .and(query_param("aggFilters", "results:with"))
+            .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "studies": [{
+                    "protocolSection": {
+                        "identificationModule": {
+                            "nctId": "NCT05379985",
+                            "briefTitle": "Daraxonrasib first-in-human study"
+                        }
+                    },
+                    "hasResults": true,
+                    "resultsSection": {
+                        "adverseEventsModule": {
+                            "seriousEvents": [{
+                                "term": "Rash",
+                                "stats": [{"groupId": "g1", "numAffected": 0, "numAtRisk": 10}]
+                            }],
+                            "otherEvents": []
+                        }
+                    }
+                }],
+                "nextPageToken": null
+            })))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/studies"))
+            .and(query_param("query.intr", "RMC-6236"))
+            .and(query_param("aggFilters", "results:with"))
+            .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "studies": [{
+                    "protocolSection": {
+                        "identificationModule": {
+                            "nctId": "NCT05379985",
+                            "briefTitle": "Daraxonrasib first-in-human study"
+                        }
+                    },
+                    "hasResults": true,
+                    "resultsSection": {
+                        "adverseEventsModule": {
+                            "seriousEvents": [{
+                                "term": "Rash",
+                                "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
+                            }],
+                            "otherEvents": [{
+                                "term": "Fatigue",
+                                "stats": [{"groupId": "g1", "numAffected": 1, "numAtRisk": 10}]
+                            }]
+                        }
+                    }
+                }],
+                "nextPageToken": null
+            })))
+            .mount(&server)
+            .await;
+
+        let outcome =
+            trial_adverse_events_with_aliases(&client, &["daraxonrasib".into(), "RMC-6236".into()])
+                .await
+                .unwrap();
+
+        match outcome {
+            TrialAdverseEventOutcome::Empty => panic!("expected trial adverse events"),
+            TrialAdverseEventOutcome::Found(rows) => {
+                assert_eq!(rows.len(), 2);
+                assert_eq!(rows[0].term, "Fatigue");
+                assert_eq!(rows[0].trial_count, 1);
+                assert_eq!(rows[1].term, "Rash");
+                assert_eq!(rows[1].trial_count, 1);
             }
         }
     }
