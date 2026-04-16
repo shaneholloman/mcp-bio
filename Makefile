@@ -36,6 +36,9 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/06-article.md::Semantic Scholar Recommendations (Multi Seed)" \
 	--deselect "spec/06-article.md::Sort Behavior" \
 	--deselect "spec/07-disease.md::Disease to Articles" \
+	--deselect "spec/07-disease.md::Disease Search Discover Fallback" \
+	--deselect "spec/07-disease.md::Disease Search Discover Fallback Synonym" \
+	--deselect "spec/07-disease.md::Disease Search Discover Fallback for T-PLL" \
 	--deselect "spec/12-search-positionals.md::GWAS Positional Query" \
 	--deselect "spec/02-gene.md::Gene DisGeNET Associations" \
 	--deselect "spec/07-disease.md::Disease DisGeNET Associations" \
