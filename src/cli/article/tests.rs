@@ -162,6 +162,27 @@ fn article_year_flags_conflict_with_explicit_dates() {
     ));
 }
 
+#[test]
+fn article_year_max_conflicts_with_date_to() {
+    let err = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "article",
+        "-g",
+        "BRAF",
+        "--year-max",
+        "2013",
+        "--date-to",
+        "2013-12-31",
+    ])
+    .expect_err("year-max and date-to should conflict");
+
+    assert!(
+        err.to_string()
+            .contains("the argument '--year-max <YYYY>' cannot be used with '--date-to <DATE_TO>'")
+    );
+}
+
 #[tokio::test]
 async fn handle_command_rejects_zero_limit_before_backend_lookup() {
     let cli = Cli::try_parse_from(["biomcp", "article", "citations", "22663011", "--limit", "0"])

@@ -266,6 +266,11 @@ test "${status:-0}" -ne 0
 echo "$out" | mustmatch like "the argument '--year-min <YYYY>' cannot be used with '--date-from <DATE_FROM>'"
 
 unset status
+out="$("$bin" search article -g BRAF --year-max 2013 --date-to 2013-12-31 --limit 1 2>&1)" || status=$?
+test "${status:-0}" -ne 0
+echo "$out" | mustmatch like "the argument '--year-max <YYYY>' cannot be used with '--date-to <DATE_TO>'"
+
+unset status
 out="$("$bin" search article -g BRAF --year-min 2013 --year-max 2000 --limit 1 2>&1)" || status=$?
 test "${status:-0}" -eq 1
 echo "$out" | mustmatch like "Error: Invalid argument: --date-from must be <= --date-to"
