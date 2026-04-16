@@ -145,6 +145,7 @@ metadata contract as single-entity `get --json`.
 
 ```bash
 batch_json="$(biomcp --json batch gene BRAF,TP53)"
+echo "$batch_json" | mustmatch like '"_meta": {'
 echo "$batch_json" | jq -e 'type == "array" and length == 2' > /dev/null
 echo "$batch_json" | jq -e '.[0].symbol == "BRAF"' > /dev/null
 echo "$batch_json" | jq -e '.[1].symbol == "TP53"' > /dev/null

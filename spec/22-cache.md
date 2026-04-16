@@ -152,6 +152,7 @@ tmp_root="$(mktemp -d)"
 trap 'rm -rf "$tmp_root"' EXIT
 mkdir -p "$tmp_root/cache-home" "$tmp_root/config-home"
 out="$(env XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" "$bin" --json cache clean)"
+echo "$out" | mustmatch like '"dry_run": false'
 echo "$out" | jq -e --argjson dry_run false '
   . == {
     dry_run: $dry_run,
@@ -189,10 +190,13 @@ tmp_root="$(mktemp -d)"
 trap 'rm -rf "$tmp_root"' EXIT
 mkdir -p "$tmp_root/cache-home" "$tmp_root/config-home"
 out="$(env XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" "$bin" --json cache clean --dry-run)"
+echo "$out" | mustmatch like '"dry_run": true'
 echo "$out" | jq -e '.dry_run == true and .orphans_removed == 0 and .entries_removed == 0 and .bytes_freed == 0 and (.errors | length) == 0' > /dev/null
 ```
 
 ## Cache Clean Flags
+
+<!-- mustmatch-lint: skip -->
 
 The operator cleanup flags should parse together on an empty cache so scripts can
 preview targeted cleanup without a seeded fixture.

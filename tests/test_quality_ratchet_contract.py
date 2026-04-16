@@ -133,6 +133,13 @@ def _write_invalid_shell_spec(spec_dir: Path) -> Path:
     return spec_path
 
 
+def _write_h2_bash_spec(spec_dir: Path, name: str, body: str) -> Path:
+    spec_dir.mkdir(parents=True, exist_ok=True)
+    spec_path = spec_dir / f"{name}.md"
+    spec_path.write_text(body, encoding="utf-8")
+    return spec_path
+
+
 def _remove_allowlisted_discover(shell_file: Path) -> None:
     content = shell_file.read_text(encoding="utf-8")
     updated = content.replace(' | "discover"', "")
@@ -447,3 +454,175 @@ def test_wrapper_reports_invalid_shell_syntax(tmp_path: Path) -> None:
     summary = json.loads((output_dir / "quality-ratchet-summary.json").read_text())
     findings = summary["lint"]["results"][0]["findings"]
     assert findings[0]["rule"] == "invalid-shell-syntax"
+
+
+def test_wrapper_reports_missing_bash_mustmatch(tmp_path: Path) -> None:
+    spec_path = _write_h2_bash_spec(
+        tmp_path / "spec",
+        "missing-bash-mustmatch",
+        "# Quality Ratchet Missing Mustmatch Fixture\n\n"
+        "## Missing Collection Anchor\n\n"
+        "```bash\n"
+        "out='{\"status\":\"ok\"}'\n"
+        "echo \"$out\" | jq -e '.status == \"ok\"' >/dev/null\n"
+        "```\n",
+    )
+    output_dir = tmp_path / "out"
+
+    result = _run_wrapper(
+        {
+            "QUALITY_RATCHET_OUTPUT_DIR": str(output_dir),
+            "QUALITY_RATCHET_SPEC_GLOB": str(spec_path),
+        }
+    )
+
+    assert result.returncode == 1
+    summary = json.loads((output_dir / "quality-ratchet-summary.json").read_text())
+    assert summary["status"] == "fail"
+    assert summary["lint"]["status"] == "fail"
+    findings = summary["lint"]["results"][0]["findings"]
+    assert findings[0]["rule"] == "missing-bash-mustmatch"
+    assert findings[0]["line"] == 3
+    assert findings[0]["section"] == "Missing Collection Anchor"
+    assert findings[0]["message"] == (
+        "section has non-skipped bash blocks but no `| mustmatch` assertion and no "
+        "`<!-- mustmatch-lint: skip -->` opt-out"
+    )
+    assert findings[0]["text"] == "## Missing Collection Anchor"
+
+
+def test_wrapper_allows_h2_section_with_bash_mustmatch(tmp_path: Path) -> None:
+    spec_path = _write_h2_bash_spec(
+        tmp_path / "spec",
+        "section-with-bash-mustmatch",
+        "# Quality Ratchet Mustmatch Fixture\n\n"
+        "## Collected Section\n\n"
+        "```bash\n"
+        "out='{\"status\":\"ok\"}'\n"
+        "echo \"$out\" | mustmatch like '\"status\":\"ok\"'\n"
+        "echo \"$out\" | jq -e '.status == \"ok\"' >/dev/null\n"
+        "```\n",
+    )
+    output_dir = tmp_path / "out"
+
+    result = _run_wrapper(
+        {
+            "QUALITY_RATCHET_OUTPUT_DIR": str(output_dir),
+            "QUALITY_RATCHET_SPEC_GLOB": str(spec_path),
+        }
+    )
+
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((output_dir / "quality-ratchet-summary.json").read_text())
+    assert summary["status"] == "pass"
+    assert summary["lint"]["status"] == "pass"
+    assert summary["lint"]["finding_count"] == 0
+
+
+def test_wrapper_allows_h2_section_with_mustmatch_opt_out(tmp_path: Path) -> None:
+    spec_path = _write_h2_bash_spec(
+        tmp_path / "spec",
+        "section-with-opt-out",
+        "# Quality Ratchet Opt-out Fixture\n\n"
+        "## Exit Code Only Section\n"
+        "<!-- mustmatch-lint: skip -->\n\n"
+        "```bash\n"
+        "test -n 'still-runs'\n"
+        "```\n",
+    )
+    output_dir = tmp_path / "out"
+
+    result = _run_wrapper(
+        {
+            "QUALITY_RATCHET_OUTPUT_DIR": str(output_dir),
+            "QUALITY_RATCHET_SPEC_GLOB": str(spec_path),
+        }
+    )
+
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((output_dir / "quality-ratchet-summary.json").read_text())
+    assert summary["status"] == "pass"
+    assert summary["lint"]["status"] == "pass"
+    assert summary["lint"]["finding_count"] == 0
+
+
+def test_wrapper_ignores_skipped_bash_only_section(tmp_path: Path) -> None:
+    spec_path = _write_h2_bash_spec(
+        tmp_path / "spec",
+        "section-with-skipped-bash",
+        "# Quality Ratchet Skipped Bash Fixture\n\n"
+        "## Skipped Section\n\n"
+        "```bash skip\n"
+        "echo 'not collected by design'\n"
+        "```\n",
+    )
+    output_dir = tmp_path / "out"
+
+    result = _run_wrapper(
+        {
+            "QUALITY_RATCHET_OUTPUT_DIR": str(output_dir),
+            "QUALITY_RATCHET_SPEC_GLOB": str(spec_path),
+        }
+    )
+
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((output_dir / "quality-ratchet-summary.json").read_text())
+    assert summary["status"] == "pass"
+    assert summary["lint"]["status"] == "pass"
+    assert summary["lint"]["finding_count"] == 0
+
+
+def test_wrapper_accepts_section_when_one_of_multiple_bash_blocks_has_mustmatch(tmp_path: Path) -> None:
+    spec_path = _write_h2_bash_spec(
+        tmp_path / "spec",
+        "section-with-multiple-bash-blocks",
+        "# Quality Ratchet Multi-block Fixture\n\n"
+        "## Multi Block Section\n\n"
+        "```bash\n"
+        "echo '{\"phase\":\"setup\"}' | jq -e '.phase == \"setup\"' >/dev/null\n"
+        "```\n\n"
+        "```bash\n"
+        "echo '{\"phase\":\"proof\"}' | mustmatch like '\"phase\":\"proof\"'\n"
+        "```\n",
+    )
+    output_dir = tmp_path / "out"
+
+    result = _run_wrapper(
+        {
+            "QUALITY_RATCHET_OUTPUT_DIR": str(output_dir),
+            "QUALITY_RATCHET_SPEC_GLOB": str(spec_path),
+        }
+    )
+
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((output_dir / "quality-ratchet-summary.json").read_text())
+    assert summary["status"] == "pass"
+    assert summary["lint"]["status"] == "pass"
+    assert summary["lint"]["finding_count"] == 0
+
+
+def test_wrapper_allows_mustmatch_opt_out_later_in_section(tmp_path: Path) -> None:
+    spec_path = _write_h2_bash_spec(
+        tmp_path / "spec",
+        "section-with-late-opt-out",
+        "# Quality Ratchet Late Opt-out Fixture\n\n"
+        "## Exit Code Only Section\n\n"
+        "```bash\n"
+        "test -n 'still-runs'\n"
+        "```\n\n"
+        "<!-- mustmatch-lint: skip -->\n",
+    )
+    output_dir = tmp_path / "out"
+
+    result = _run_wrapper(
+        {
+            "QUALITY_RATCHET_OUTPUT_DIR": str(output_dir),
+            "QUALITY_RATCHET_SPEC_GLOB": str(spec_path),
+        }
+    )
+
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((output_dir / "quality-ratchet-summary.json").read_text())
+    assert summary["status"] == "pass"
+    assert summary["lint"]["status"] == "pass"
+    assert summary["lint"]["finding_count"] == 0
