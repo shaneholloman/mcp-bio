@@ -251,6 +251,7 @@ Drug JSON should expose additive approval aliases and a compact summary so appro
 
 ```bash
 out="$(biomcp --json get drug pembrolizumab)"
+echo "$out" | mustmatch like '"approval_date"'
 echo "$out" | jq -e '.approval_date | type == "string"' > /dev/null
 echo "$out" | jq -e '.approval_date_raw | type == "string"' > /dev/null
 echo "$out" | jq -e '.approval_date == .approval_date_raw' > /dev/null
