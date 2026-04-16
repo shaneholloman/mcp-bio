@@ -10,6 +10,23 @@
 
 `spec-pr` is the fast blocking lane, `spec` is the full nightly smoke lane, and `test-contracts` covers the Python/docs contract surface. Use this file as the current audit and smoke-only inventory for `SPEC_PR_DESELECT_ARGS`.
 
+## Bash Mustmatch Lint Rule
+
+Every `##` spec section with at least one non-skipped `bash` block must include
+at least one `| mustmatch` line unless the section explicitly opts out with
+`<!-- mustmatch-lint: skip -->`.
+
+This rule exists because the mustmatch pytest plugin silently does not collect
+bash blocks that never pipe to `mustmatch`. A section that only uses `jq -e` or
+other exit-code checks can disappear from pytest output instead of passing,
+failing, or skipping.
+
+Prefer adding a meaningful `mustmatch` assertion on user-visible output or a
+stable JSON anchor even when the section also uses `jq -e` for structured
+validation. Reserve the opt-out for genuinely exit-code-only checks or cases
+without a stable, meaningful output anchor. For readability, place the opt-out
+comment immediately after the `##` heading.
+
 ## Audit Method
 
 - Measured on 2026-04-13 in this worktree after `cargo build --release --locked`.

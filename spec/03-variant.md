@@ -175,6 +175,7 @@ ClinVar output should expose the top ranked disease aggregate directly so agents
 
 ```bash
 out="$(biomcp --json get variant "BRAF V600E" clinvar)"
+echo "$out" | mustmatch like '"top_disease": {'
 echo "$out" | jq -e '.top_disease.condition | type == "string"' > /dev/null
 echo "$out" | jq -e '.top_disease.reports | type == "number"' > /dev/null
 ```
@@ -186,6 +187,7 @@ upstream ClinVar title.
 
 ```bash
 out="$(biomcp --json get variant 'chr6:g.118880200T>G')"
+echo "$out" | mustmatch like '"legacy_name": "PLN L39stop"'
 echo "$out" | jq -e '.legacy_name == "PLN L39stop"' > /dev/null
 ```
 
@@ -205,6 +207,7 @@ Population JSON should expose both a stable raw field and a compact percentage s
 
 ```bash
 out="$(biomcp --json get variant "BRAF V600E" population)"
+echo "$out" | mustmatch like '"allele_frequency_raw":'
 echo "$out" | jq -e '.allele_frequency_raw | type == "number"' > /dev/null
 echo "$out" | jq -e '.allele_frequency_percent | type == "string"' > /dev/null
 ```
@@ -224,6 +227,7 @@ GWAS JSON should expose ordered supporting PMIDs as a dedicated array without re
 
 ```bash
 out="$(biomcp --json get variant rs7903146 gwas)"
+echo "$out" | mustmatch '/"(supporting_pmids|gwas_unavailable_reason)":/'
 echo "$out" | jq -e '(.supporting_pmids | type == "array") or (.gwas_unavailable_reason | type == "string")' > /dev/null
 ```
 

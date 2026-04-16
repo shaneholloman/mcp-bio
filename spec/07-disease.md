@@ -444,6 +444,7 @@ Structured disease output should expose the same compact summary as `key_feature
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json get disease MONDO:0008222 phenotypes)"
+echo "$out" | mustmatch like '"key_features": ['
 echo "$out" | jq -e '.key_features | length >= 3' > /dev/null
 echo "$out" | jq -e '.key_features | any(test("periodic muscle paralysis"; "i"))' > /dev/null
 ```

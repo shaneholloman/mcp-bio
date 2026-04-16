@@ -11,6 +11,8 @@ from pathlib import Path
 
 MUSTMATCH_JSON_RE = re.compile(r"(?:^|\|\s*)mustmatch\s+json\b")
 SHORT_LIKE_RE = re.compile(r'(?:^|\|\s*)mustmatch\s+like\s+("([^"]*)"|\'([^\']*)\')')
+MUSTMATCH_PIPE_RE = re.compile(r"\|\s*mustmatch\b")
+MUSTMATCH_LINT_SKIP = "<!-- mustmatch-lint: skip -->"
 
 
 def parse_args() -> argparse.Namespace:
@@ -93,6 +95,78 @@ def make_repo_compatibility_findings(spec_path: Path, *, min_like_len: int = 10)
     return findings
 
 
+def make_missing_bash_mustmatch_findings(spec_path: Path) -> list[dict[str, object]]:
+    findings: list[dict[str, object]] = []
+    text = spec_path.read_text(encoding="utf-8")
+
+    current_section: dict[str, object] | None = None
+    inside_fence = False
+    inside_bash = False
+    skipped_bash = False
+
+    def flush_section() -> None:
+        nonlocal current_section
+        if current_section is None:
+            return
+        if (
+            current_section["has_non_skipped_bash"]
+            and not current_section["has_mustmatch"]
+            and not current_section["opted_out"]
+        ):
+            findings.append(
+                {
+                    "line": current_section["line"],
+                    "rule": "missing-bash-mustmatch",
+                    "section": current_section["section"],
+                    "message": (
+                        "section has non-skipped bash blocks but no `| mustmatch` assertion "
+                        "and no `<!-- mustmatch-lint: skip -->` opt-out"
+                    ),
+                    "text": current_section["text"],
+                }
+            )
+        current_section = None
+
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        if inside_fence:
+            if line.startswith("```"):
+                inside_fence = False
+                inside_bash = False
+                skipped_bash = False
+                continue
+            if current_section is not None and inside_bash and not skipped_bash and MUSTMATCH_PIPE_RE.search(line):
+                current_section["has_mustmatch"] = True
+            continue
+
+        if line.startswith("## "):
+            flush_section()
+            current_section = {
+                "line": lineno,
+                "rule": "missing-bash-mustmatch",
+                "section": line[3:].strip(),
+                "text": line.strip(),
+                "has_non_skipped_bash": False,
+                "has_mustmatch": False,
+                "opted_out": False,
+            }
+            continue
+
+        if line.startswith("```"):
+            inside_fence = True
+            fence_tokens = line[3:].strip().split()
+            inside_bash = bool(fence_tokens) and fence_tokens[0] == "bash"
+            skipped_bash = inside_bash and "skip" in fence_tokens[1:]
+            if current_section is not None and inside_bash and not skipped_bash:
+                current_section["has_non_skipped_bash"] = True
+            continue
+
+        if current_section is not None and MUSTMATCH_LINT_SKIP in line:
+            current_section["opted_out"] = True
+
+    flush_section()
+    return findings
+
+
 def lint_spec_file(spec_path: Path) -> dict[str, object]:
     payload = run_json_command(
         [
@@ -124,6 +198,11 @@ def lint_spec_file(spec_path: Path) -> dict[str, object]:
         if isinstance(finding, dict)
     }
     for finding in make_repo_compatibility_findings(spec_path):
+        key = (finding["line"], finding["rule"], finding["text"])
+        if key not in seen:
+            findings.append(finding)
+            seen.add(key)
+    for finding in make_missing_bash_mustmatch_findings(spec_path):
         key = (finding["line"], finding["rule"], finding["text"])
         if key not in seen:
             findings.append(finding)

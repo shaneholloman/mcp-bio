@@ -297,6 +297,7 @@ The additive JSON contract should preserve the existing targets list while expos
 
 ```bash
 out="$(biomcp --json get drug olaparib)"
+echo "$out" | mustmatch like '"target_family": "PARP"'
 echo "$out" | jq -e '.target_family == "PARP"' >/dev/null
 echo "$out" | jq -e '(.targets | index("PARP1")) and (.targets | index("PARP2")) and (.targets | index("PARP3"))' >/dev/null
 echo "$out" | jq -e 'if has("target_family_name") then (.target_family_name | type) == "string" else true end' >/dev/null
@@ -308,6 +309,7 @@ Single-target drugs should keep the existing JSON shape and omit the additive fa
 
 ```bash
 out="$(biomcp --json get drug pembrolizumab)"
+echo "$out" | mustmatch like '"targets": ['
 echo "$out" | jq -e 'has("target_family") | not' >/dev/null
 echo "$out" | jq -e 'has("target_family_name") | not' >/dev/null
 ```

@@ -90,6 +90,7 @@ echo "$json_out" | jq -e '._meta.next_commands[0] == "biomcp search article -k q
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json discover "what drugs treat myasthenia gravis")"
+echo "$out" | mustmatch like 'biomcp search drug --indication \"myasthenia gravis\" --limit 5'
 echo "$out" | jq -e '._meta.next_commands[0] | ascii_downcase == "biomcp search drug --indication \"myasthenia gravis\" --limit 5"' > /dev/null
 ```
 
@@ -98,6 +99,7 @@ echo "$out" | jq -e '._meta.next_commands[0] | ascii_downcase == "biomcp search 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json discover "symptoms of Marfan syndrome")"
+echo "$out" | mustmatch like '"biomcp get disease MONDO:0007947 phenotypes"'
 echo "$out" | jq -e '._meta.next_commands[0] == "biomcp get disease MONDO:0007947 phenotypes"' > /dev/null
 ```
 
@@ -106,6 +108,7 @@ echo "$out" | jq -e '._meta.next_commands[0] == "biomcp get disease MONDO:000794
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json discover "BRAF melanoma")"
+echo "$out" | mustmatch like 'biomcp search all --gene BRAF --disease \"melanoma\"'
 echo "$out" | jq -e '._meta.next_commands[0] == "biomcp search all --gene BRAF --disease \"melanoma\""' > /dev/null
 ```
 
@@ -199,5 +202,5 @@ echo "$out" | mustmatch like '"evidence_urls": ['
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json discover "cystic fibrosis")"
-echo "$out" | grep -Eq '"(ICD10CM|SNOMEDCT|RXNORM)"'
+echo "$out" | mustmatch '/"(ICD10CM|SNOMEDCT|RXNORM)"/'
 ```
