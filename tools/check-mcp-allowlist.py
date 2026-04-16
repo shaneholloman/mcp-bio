@@ -30,7 +30,7 @@ EXPECTED_STUDY_SUBCOMMANDS = {
     "survival",
     "top-mutated",
 }
-EXPECTED_SKILL_BLOCKED_SUBCOMMANDS = {"install", "uninstall"}
+EXPECTED_SKILL_BLOCKED_SUBCOMMANDS = {"install"}
 EXPECTED_DESCRIPTION_BLOCKED_TERMS = {
     "`ema sync`",
     "`skill install`",

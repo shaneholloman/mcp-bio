@@ -81,7 +81,7 @@ fn is_allowed_mcp_command(args: &[String]) -> bool {
                 .get(2)
                 .map(|s| s.trim().to_ascii_lowercase())
                 .unwrap_or_else(|| "list".to_string());
-            !matches!(sub.as_str(), "install" | "uninstall")
+            !matches!(sub.as_str(), "install")
         }
         _ => false,
     }
@@ -470,11 +470,6 @@ mod tests {
             "biomcp".into(),
             "skill".into(),
             "install".into()
-        ]));
-        assert!(!is_allowed_mcp_command(&[
-            "biomcp".into(),
-            "skill".into(),
-            "uninstall".into()
         ]));
         assert!(!is_allowed_mcp_command(&[
             "biomcp".into(),

@@ -201,6 +201,11 @@ pub fn show_use_case(name: &str) -> Result<String, BioMcpError> {
     if key.is_empty() {
         return show_overview();
     }
+    if key == "uninstall" {
+        return Err(BioMcpError::InvalidArgument(
+            "unrecognized subcommand 'uninstall'. Use `biomcp uninstall`.".into(),
+        ));
+    }
 
     let cases = use_case_index()?;
     let found = cases.into_iter().find(|c| c.number == key || c.slug == key);
@@ -725,6 +730,15 @@ mod tests {
 
         assert!(msg.contains("skill '99' not found"));
         assert!(msg.contains("Try: biomcp skill list"));
+    }
+
+    #[test]
+    fn uninstall_is_reserved_for_the_top_level_command() {
+        let err = show_use_case("uninstall").expect_err("reserved name should error");
+        let msg = err.to_string();
+
+        assert!(msg.contains("unrecognized subcommand 'uninstall'"));
+        assert!(msg.contains("biomcp uninstall"));
     }
 
     #[test]
