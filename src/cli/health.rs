@@ -1357,6 +1357,12 @@ mod tests {
         .expect("mtime should update");
     }
 
+    fn set_stale_ema_mtimes(root: &Path) {
+        for file_name in crate::sources::ema::EMA_REQUIRED_FILES {
+            set_stale_mtime(&root.join(file_name));
+        }
+    }
+
     fn set_fresh_ema_mtimes(root: &Path) {
         for file_name in crate::sources::ema::EMA_REQUIRED_FILES {
             let file = std::fs::OpenOptions::new()
@@ -1682,6 +1688,7 @@ mod tests {
     #[test]
     fn ema_local_data_reports_available_when_default_root_is_complete() {
         let fixture_root = fixture_ema_root();
+        set_stale_ema_mtimes(&fixture_root);
         set_fresh_ema_mtimes(&fixture_root);
 
         let outcome = ema_local_data_outcome(&fixture_root, false);
@@ -1699,6 +1706,7 @@ mod tests {
     #[test]
     fn ema_local_data_reports_configured_when_env_root_is_complete() {
         let fixture_root = fixture_ema_root();
+        set_stale_ema_mtimes(&fixture_root);
         set_fresh_ema_mtimes(&fixture_root);
 
         let outcome = ema_local_data_outcome(&fixture_root, true);
@@ -1711,6 +1719,7 @@ mod tests {
     #[test]
     fn ema_local_data_json_reports_healthy_row_without_affects() {
         let fixture_root = fixture_ema_root();
+        set_stale_ema_mtimes(&fixture_root);
         set_fresh_ema_mtimes(&fixture_root);
         let report = report_from_outcomes(vec![ema_local_data_outcome(&fixture_root, false)]);
 

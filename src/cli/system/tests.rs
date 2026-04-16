@@ -1,4 +1,4 @@
-use clap::{CommandFactory, FromArgMatches, Parser};
+use clap::{CommandFactory, Parser};
 
 use super::{EmaCommand, WhoCommand};
 use crate::cli::{Cli, Commands, execute};
@@ -8,10 +8,7 @@ where
     I: IntoIterator<Item = T>,
     T: Into<std::ffi::OsString> + Clone,
 {
-    let matches = crate::cli::build_cli()
-        .try_get_matches_from(args)
-        .expect("args should parse with canonical CLI");
-    Cli::from_arg_matches(&matches).expect("matches should decode into Cli")
+    crate::cli::try_parse_cli(args).expect("args should parse with canonical CLI")
 }
 
 #[test]
@@ -221,9 +218,21 @@ fn batch_help_includes_examples_and_limits() {
     assert!(help.contains("biomcp batch article 22663011,24200969"));
     assert!(help.contains("biomcp batch gene BRAF,TP53 --sections pathways,interactions"));
     assert!(help.contains("biomcp batch trial NCT02576665,NCT03715933 --source nci"));
+    assert!(help.contains("biomcp batch variant \"BRAF V600E\",\"KRAS G12D\" --json"));
     assert!(help.contains("Batch accepts up to 10 IDs per call."));
     assert!(help.contains("Each call must use a single entity type."));
     assert!(help.contains("See also: biomcp list batch"));
+}
+
+#[test]
+fn skill_uninstall_is_rejected_before_skill_lookup() {
+    let err =
+        crate::cli::try_parse_cli(["biomcp", "skill", "uninstall"]).expect_err("should reject");
+
+    assert_eq!(err.kind(), clap::error::ErrorKind::InvalidSubcommand);
+    let rendered = err.to_string();
+    assert!(rendered.contains("unrecognized subcommand 'uninstall'"));
+    assert!(rendered.contains("biomcp uninstall"));
 }
 
 #[tokio::test]

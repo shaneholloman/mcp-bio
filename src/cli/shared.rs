@@ -1,9 +1,12 @@
-use clap::{CommandFactory, FromArgMatches};
+use std::ffi::OsString;
+
+use clap::{CommandFactory, FromArgMatches, error::ErrorKind};
 use tracing::{debug, warn};
 
 use super::types::{Cli, CommandOutcome};
 
 pub(super) const RUNTIME_HELP_SUBCOMMANDS: [&str; 4] = ["mcp", "serve", "serve-http", "serve-sse"];
+const HIDDEN_GLOBAL_FLAGS: [&str; 3] = ["--json", "-j", "--no-cache"];
 
 fn hide_runtime_help_globals(
     command: clap::Command,
@@ -37,9 +40,42 @@ pub fn build_cli() -> clap::Command {
     command
 }
 
+fn reject_reserved_skill_subcommand(args: &[OsString]) -> Result<(), clap::Error> {
+    let mut tokens = args.iter().skip(1).filter_map(|arg| {
+        let value = arg.to_string_lossy();
+        let trimmed = value.trim();
+        if trimmed.is_empty() || HIDDEN_GLOBAL_FLAGS.contains(&trimmed) {
+            None
+        } else {
+            Some(trimmed.to_string())
+        }
+    });
+
+    if matches!(tokens.next().as_deref(), Some("skill"))
+        && matches!(tokens.next().as_deref(), Some("uninstall"))
+    {
+        return Err(build_cli().error(
+            ErrorKind::InvalidSubcommand,
+            "unrecognized subcommand 'uninstall'. Use `biomcp uninstall`.",
+        ));
+    }
+
+    Ok(())
+}
+
+pub fn try_parse_cli<I, T>(args: I) -> Result<Cli, clap::Error>
+where
+    I: IntoIterator<Item = T>,
+    T: Into<OsString> + Clone,
+{
+    let args: Vec<OsString> = args.into_iter().map(Into::into).collect();
+    reject_reserved_skill_subcommand(&args)?;
+    let matches = build_cli().try_get_matches_from(args)?;
+    Cli::from_arg_matches(&matches)
+}
+
 pub fn parse_cli_from_env() -> Cli {
-    let matches = build_cli().get_matches();
-    Cli::from_arg_matches(&matches).unwrap_or_else(|err| err.exit())
+    try_parse_cli(std::env::args_os()).unwrap_or_else(|err| err.exit())
 }
 
 pub(super) fn empty_sections() -> &'static [String] {

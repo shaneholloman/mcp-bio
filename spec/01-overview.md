@@ -93,9 +93,9 @@ echo "$out" | mustmatch like 'Use `get gene <symbol>` for the default card'
 
 ## Batch Help
 
-`biomcp batch --help` should include concrete examples for article, gene, and
-trial workflows together with the cross-reference back to the batch command
-reference.
+`biomcp batch --help` should include concrete examples for article, gene,
+trial, and variant workflows together with the batch limits and the
+cross-reference back to the batch command reference.
 
 ```bash
 bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
@@ -104,6 +104,9 @@ echo "$out" | mustmatch '/EXAMPLES/'
 echo "$out" | mustmatch like "biomcp batch article"
 echo "$out" | mustmatch like "biomcp batch gene"
 echo "$out" | mustmatch like "biomcp batch trial"
+echo "$out" | mustmatch like "biomcp batch variant"
+echo "$out" | mustmatch like "Batch accepts up to 10 IDs per call."
+echo "$out" | mustmatch like "Each call must use a single entity type."
 echo "$out" | mustmatch like "See also: biomcp list batch"
 ```
 
