@@ -87,6 +87,9 @@ echo "$json_out" | jq -e '._meta.next_commands[0] == "biomcp search article -k q
 
 ## Treatment Query
 
+Treatment-oriented natural-language queries should surface the direct drug-search
+follow-up in JSON mode so agents can pivot into a concrete therapy search.
+
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json discover "what drugs treat myasthenia gravis")"
@@ -96,6 +99,9 @@ echo "$out" | jq -e '._meta.next_commands[0] | ascii_downcase == "biomcp search 
 
 ## Disease Symptoms
 
+Symptom-style prompts should route to the phenotype slice of the resolved disease
+card instead of falling back to a generic search.
+
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" --json discover "symptoms of Marfan syndrome")"
@@ -104,6 +110,9 @@ echo "$out" | jq -e '._meta.next_commands[0] == "biomcp get disease MONDO:000794
 ```
 
 ## Gene + Disease
+
+Mixed gene-and-disease queries should keep both concepts in the suggested
+follow-up rather than collapsing to a single-entity lookup.
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"

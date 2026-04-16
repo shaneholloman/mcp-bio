@@ -484,6 +484,11 @@ def test_wrapper_reports_missing_bash_mustmatch(tmp_path: Path) -> None:
     assert findings[0]["rule"] == "missing-bash-mustmatch"
     assert findings[0]["line"] == 3
     assert findings[0]["section"] == "Missing Collection Anchor"
+    assert findings[0]["message"] == (
+        "section has non-skipped bash blocks but no `| mustmatch` assertion and no "
+        "`<!-- mustmatch-lint: skip -->` opt-out"
+    )
+    assert findings[0]["text"] == "## Missing Collection Anchor"
 
 
 def test_wrapper_allows_h2_section_with_bash_mustmatch(tmp_path: Path) -> None:
@@ -579,6 +584,33 @@ def test_wrapper_accepts_section_when_one_of_multiple_bash_blocks_has_mustmatch(
         "```bash\n"
         "echo '{\"phase\":\"proof\"}' | mustmatch like '\"phase\":\"proof\"'\n"
         "```\n",
+    )
+    output_dir = tmp_path / "out"
+
+    result = _run_wrapper(
+        {
+            "QUALITY_RATCHET_OUTPUT_DIR": str(output_dir),
+            "QUALITY_RATCHET_SPEC_GLOB": str(spec_path),
+        }
+    )
+
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((output_dir / "quality-ratchet-summary.json").read_text())
+    assert summary["status"] == "pass"
+    assert summary["lint"]["status"] == "pass"
+    assert summary["lint"]["finding_count"] == 0
+
+
+def test_wrapper_allows_mustmatch_opt_out_later_in_section(tmp_path: Path) -> None:
+    spec_path = _write_h2_bash_spec(
+        tmp_path / "spec",
+        "section-with-late-opt-out",
+        "# Quality Ratchet Late Opt-out Fixture\n\n"
+        "## Exit Code Only Section\n\n"
+        "```bash\n"
+        "test -n 'still-runs'\n"
+        "```\n\n"
+        "<!-- mustmatch-lint: skip -->\n",
     )
     output_dir = tmp_path / "out"
 

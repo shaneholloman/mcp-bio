@@ -129,7 +129,7 @@ def make_missing_bash_mustmatch_findings(spec_path: Path) -> list[dict[str, obje
 
     for lineno, line in enumerate(text.splitlines(), start=1):
         if inside_fence:
-            if line.startswith("```"):
+            if line.strip() == "```":
                 inside_fence = False
                 inside_bash = False
                 skipped_bash = False
