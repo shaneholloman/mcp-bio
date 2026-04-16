@@ -356,7 +356,7 @@ bash fixtures/setup-study-download-error-fixture.sh "$PWD"
 trap 'bash fixtures/cleanup-study-download-error-fixture.sh "$PWD"' EXIT
 out="$(biomcp study download missing_study 2>&1 || true)"
 echo "$out" | mustmatch like "missing_study"
-echo "$out" | mustmatch like "not found"
+echo "$out" | mustmatch like "Study 'missing_study' not found."
 echo "$out" | mustmatch like "biomcp study download --list"
 echo "$out" | mustmatch not like "AccessDenied"
 echo "$out" | mustmatch not like "API error from cbioportal-datahub"
