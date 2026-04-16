@@ -476,6 +476,23 @@ echo "$out" | mustmatch not like "Trial-Reported Adverse Events (ClinicalTrials.
 echo "$out" | mustmatch not like "| Rash | 2 |"
 ```
 
+## Search Adverse Event Disambiguation (fixture)
+
+`search adverse-event` text should distinguish FAERS 404 from FAERS 200+empty without
+ever triggering or rendering ClinicalTrials.gov fallback content.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-drug-ae-fallback-env"
+out_404="$("$bin" search adverse-event -d daraxonrasib --limit 5)"
+out_empty="$("$bin" search adverse-event -d faers-empty --limit 5)"
+echo "$out_404" | mustmatch like "Drug not found in FAERS. FAERS is a post-marketing database"
+echo "$out_404" | mustmatch not like "Trial-Reported Adverse Events (ClinicalTrials.gov)"
+echo "$out_empty" | mustmatch like "Drug found in FAERS, but no events matched your filters"
+echo "$out_empty" | mustmatch not like "Trial-Reported Adverse Events (ClinicalTrials.gov)"
+```
+
 ## Adverse Event Search
 
 Direct adverse-event search is useful for safety reconnaissance independent of drug metadata. We verify the heading and stable summary marker.
