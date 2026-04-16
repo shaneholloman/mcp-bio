@@ -244,6 +244,7 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/03-variant.md::Variant to Articles` | Entity-to-article live literature pivot stays in the nightly smoke lane. |
 | `spec/06-article.md::Searching by Gene` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Searching by Keyword` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
+| `spec/06-article.md::First Index Date in Article Search` | Live article-search index-date coverage fans out across Europe PMC and PubMed, so it stays in the nightly smoke lane. |
 | `spec/06-article.md::Keyword Search Can Force Lexical Ranking` | Moved in ticket 188 after the final `make spec-pr` verification hit a PubMed `429 Too Many Requests`; the article-search proof remains covered in the smoke lane. |
 | `spec/06-article.md::Source-Specific PubTator Search Uses Default Retraction Filter` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Source-Specific PubMed Search` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |

@@ -255,6 +255,8 @@ pub struct EuropePmcResult {
     pub journal_title: Option<String>,
     #[serde(rename = "firstPublicationDate")]
     pub first_publication_date: Option<String>,
+    #[serde(rename = "firstIndexDate")]
+    pub first_index_date: Option<String>,
     #[serde(rename = "authorString")]
     pub author_string: Option<String>,
     #[serde(rename = "pubYear")]
@@ -329,6 +331,19 @@ mod tests {
         let client = EuropePmcClient::new_for_test(server.uri()).unwrap();
         let resp = client.search_by_pmid("22663011").await.unwrap();
         assert_eq!(resp.hit_count, Some(1));
+    }
+
+    #[test]
+    fn europepmc_result_deserializes_first_index_date() {
+        let result: EuropePmcResult = serde_json::from_value(serde_json::json!({
+            "id": "22663011",
+            "pmid": "22663011",
+            "firstPublicationDate": "2025-01-14",
+            "firstIndexDate": "2025-01-15"
+        }))
+        .expect("europepmc result should deserialize");
+
+        assert_eq!(result.first_index_date.as_deref(), Some("2025-01-15"));
     }
 
     #[tokio::test]

@@ -230,6 +230,8 @@ echo "$list_out" | mustmatch like 'Default: 40% of `--limit` on federated pools 
 echo "$list_out" | mustmatch like '`0` uses the default cap; setting it equal to `--limit` disables capping.'
 echo "$list_out" | mustmatch like "Rows count against their primary source after deduplication."
 echo "$list_out" | mustmatch like "search article --source litsense2"
+echo "$list_out" | mustmatch like "first_index_date"
+echo "$list_out" | mustmatch like "Newest indexed: YYYY-MM-DD (N days ago)"
 ```
 
 ## Article Query Echo Surfaces Explicit Max-Per-Source Overrides
@@ -274,6 +276,33 @@ printf '%s\n' "$out" | grep -F -- '--source <all|pubtator|europepmc|pubmed|litse
 
 json_out="$(env -u S2_API_KEY "$bin" --json search article -k 'GDNF RET Hirschsprung 1996' --source pubmed --limit 5)"
 echo "$json_out" | jq -e 'any(.results[]; .pmid == "8896569" and .source == "pubmed" and .matched_sources == ["pubmed"] and (.citation_count // 0) > 0 and ((.abstract_snippet // "") | length > 0))' >/dev/null
+```
+
+## First Index Date in Article Search
+
+Europe PMC and PubMed search rows expose the upstream first-indexed date when
+the provider returns it. JSON carries `first_index_date` per row; markdown adds
+`Newest indexed: YYYY-MM-DD (N days ago)` immediately after the result table.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+json_out="$("$bin" --json search article -g BRAF --source europepmc --limit 3)"
+echo "$json_out" | jq -e 'any(.results[]; (.first_index_date // "") | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))' >/dev/null
+
+md_out="$("$bin" search article -g BRAF --source europepmc --limit 3)"
+echo "$md_out" | mustmatch '/Newest indexed: [0-9]{4}-[0-9]{2}-[0-9]{2} \([0-9]+ days ago\)/'
+```
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+json_out="$("$bin" --json search article -g BRAF --source pubmed --limit 3)"
+echo "$json_out" | jq -e 'any(.results[]; .source == "pubmed" and ((.first_index_date // "") | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")))' >/dev/null
+```
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+md_out="$("$bin" search article -q "alternative microexon splicing metastasis" --source pubtator --limit 3)"
+echo "$md_out" | mustmatch not '/Newest indexed:/'
 ```
 
 ## Source-Specific LitSense2 Search

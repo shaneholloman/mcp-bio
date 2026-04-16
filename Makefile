@@ -17,6 +17,7 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/06-article.md::Searching by Keyword" \
 	--deselect "spec/06-article.md::Article Search Gene Keyword Pivot" \
 	--deselect "spec/06-article.md::Article Search Drug Keyword Pivot" \
+	--deselect "spec/06-article.md::First Index Date in Article Search" \
 	--deselect "spec/06-article.md::Keyword Search Can Force Lexical Ranking" \
 	--deselect "spec/06-article.md::Source-Specific PubTator Search Uses Default Retraction Filter" \
 	--deselect "spec/06-article.md::Source-Specific PubMed Search" \

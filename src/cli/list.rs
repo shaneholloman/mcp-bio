@@ -292,6 +292,7 @@ Worked examples:
 - The first follow-up drills the top result with `biomcp get article <pmid>`.
 - `biomcp list article` is always included so agents can inspect the full filter surface.
 - Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>` when the keyword contains a recognizable entity token.
+- Each result may include `first_index_date` as `YYYY-MM-DD` when the upstream record exposes when it was first indexed. Europe PMC and PubMed provide it today; PubTator3, LitSense2, and Semantic Scholar do not.
 
 ## Notes
 
@@ -308,6 +309,7 @@ Worked examples:
 - Default hybrid scoring is `0.4*semantic + 0.3*lexical + 0.2*citations + 0.1*position`; `--weight-*` flags retune those components.
 - Hybrid ranking uses the same LitSense2-derived semantic signal, and rows without LitSense2 provenance contribute `semantic=0`.
 - Weight flags are part of the hybrid contract and pair with `--sort relevance`.
+- Markdown search output adds `Newest indexed: YYYY-MM-DD (N days ago)` immediately after the result table when any returned row has `first_index_date`.
 "#
     .to_string()
 }
@@ -1135,6 +1137,8 @@ mod tests {
         assert!(article.contains("## JSON Output"));
         assert!(article.contains("`_meta.next_commands`"));
         assert!(article.contains("biomcp list article"));
+        assert!(article.contains("first_index_date"));
+        assert!(article.contains("Newest indexed: YYYY-MM-DD (N days ago)"));
         assert!(article.contains("Known gene/disease/drug already identified"));
         assert!(article.contains("Keyword-only topic, dataset, or method question"));
         assert!(

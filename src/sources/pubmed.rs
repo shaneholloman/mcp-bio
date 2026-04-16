@@ -40,6 +40,8 @@ pub(crate) struct ESummaryEntry {
     pub title: String,
     pub sortpubdate: Option<String>,
     pub pubdate: Option<String>,
+    pub edat: Option<String>,
+    pub lr: Option<String>,
     pub fulljournalname: Option<String>,
     pub source: Option<String>,
 }
@@ -67,6 +69,8 @@ struct ESummaryEntryRaw {
     title: Option<String>,
     sortpubdate: Option<String>,
     pubdate: Option<String>,
+    edat: Option<String>,
+    lr: Option<String>,
     fulljournalname: Option<String>,
     source: Option<String>,
 }
@@ -324,6 +328,8 @@ impl PubMedClient {
                 title: raw.title.unwrap_or_default(),
                 sortpubdate: raw.sortpubdate,
                 pubdate: raw.pubdate,
+                edat: raw.edat,
+                lr: raw.lr,
                 fulljournalname: raw.fulljournalname,
                 source: raw.source,
             });
@@ -596,6 +602,8 @@ mod tests {
                         "title": "First title",
                         "sortpubdate": "2024/01/15 00:00",
                         "pubdate": "2024 Jan 15",
+                        "edat": "2024/01/16 00:00:00",
+                        "lr": "2024/01/17 00:00:00",
                         "fulljournalname": "Journal One",
                         "source": "J1"
                     },
@@ -625,6 +633,8 @@ mod tests {
         assert_eq!(response[0].fulljournalname.as_deref(), Some("Journal Two"));
         assert_eq!(response[1].uid, "1");
         assert_eq!(response[1].title, "First title");
+        assert_eq!(response[1].edat.as_deref(), Some("2024/01/16 00:00:00"));
+        assert_eq!(response[1].lr.as_deref(), Some("2024/01/17 00:00:00"));
         assert_eq!(response[1].source.as_deref(), Some("J1"));
     }
 

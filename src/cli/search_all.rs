@@ -2238,6 +2238,7 @@ mod tests {
             title: "BRAF melanoma review".into(),
             journal: Some("Journal".into()),
             date: Some("2025-01-01".into()),
+            first_index_date: None,
             citation_count: Some(12),
             influential_citation_count: Some(4),
             source: ArticleSource::EuropePmc,

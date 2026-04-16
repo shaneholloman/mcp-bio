@@ -99,6 +99,7 @@ pub(super) fn row_with(
         title: format!("title-{pmid}"),
         journal: Some("Journal".into()),
         date: date.map(str::to_string),
+        first_index_date: None,
         citation_count,
         influential_citation_count: None,
         source,

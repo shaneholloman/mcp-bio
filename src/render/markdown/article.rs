@@ -1,5 +1,7 @@
 //! Article markdown renderers and article-specific view helpers.
 
+use chrono::{NaiveDate, Utc};
+
 use super::*;
 
 #[cfg(test)]
@@ -432,6 +434,7 @@ pub fn article_search_markdown_with_footer_and_context(
     let related_block = format_related_block(
         crate::render::markdown::related_article_search_results(results, filters),
     );
+    let index_date_footer = newest_indexed_footer(results);
 
     let tmpl = env()?.get_template("article_search.md.j2")?;
     let body = tmpl.render(context! {
@@ -444,6 +447,7 @@ pub fn article_search_markdown_with_footer_and_context(
         ranking_policy => crate::entities::article::article_relevance_ranking_policy(filters),
         related_block => related_block,
         pagination_footer => pagination_footer,
+        index_date_footer => index_date_footer,
     })?;
     let body = with_pagination_footer(body, pagination_footer);
     if let Some(debug_plan) = debug_plan {
@@ -451,4 +455,24 @@ pub fn article_search_markdown_with_footer_and_context(
     } else {
         Ok(body)
     }
+}
+
+fn max_first_index_date(results: &[ArticleSearchResult]) -> Option<NaiveDate> {
+    results.iter().filter_map(|row| row.first_index_date).max()
+}
+
+fn format_newest_indexed_footer(indexed: NaiveDate, today: NaiveDate) -> String {
+    let days_ago = (today - indexed).num_days();
+    format!(
+        "Newest indexed: {} ({} days ago)",
+        indexed.format("%Y-%m-%d"),
+        days_ago
+    )
+}
+
+fn newest_indexed_footer(results: &[ArticleSearchResult]) -> Option<String> {
+    Some(format_newest_indexed_footer(
+        max_first_index_date(results)?,
+        Utc::now().date_naive(),
+    ))
 }
