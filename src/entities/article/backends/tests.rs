@@ -390,6 +390,72 @@ async fn semantic_scholar_candidates_keep_unknown_retraction_rows() {
     assert_eq!(rows[0].is_retracted, None);
 }
 
+#[test]
+fn semantic_scholar_year_filter_uses_normalized_date_bounds() {
+    assert_eq!(
+        semantic_scholar_year_filter(Some("2000-01-01"), Some("2013-12-31")).as_deref(),
+        Some("2000-2013")
+    );
+    assert_eq!(
+        semantic_scholar_year_filter(Some("2000-01-01"), None).as_deref(),
+        Some("2000-")
+    );
+    assert_eq!(
+        semantic_scholar_year_filter(None, Some("2013-12-31")).as_deref(),
+        Some("-2013")
+    );
+    assert_eq!(semantic_scholar_year_filter(None, None), None);
+}
+
+#[tokio::test]
+async fn semantic_scholar_candidates_send_effective_year_filter() {
+    let _guard = lock_env().await;
+    let server = MockServer::start().await;
+    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&server.uri()));
+    let _s2_key = set_env_var("S2_API_KEY", Some("dummy-key"));
+
+    Mock::given(method("GET"))
+        .and(path("/graph/v1/paper/search"))
+        .and(query_param("query", "braf melanoma"))
+        .and(query_param("limit", "3"))
+        .and(query_param("year", "2000-2013"))
+        .and(header("x-api-key", "dummy-key"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "total": 1,
+            "data": [{
+                "paperId": "paper-1",
+                "externalIds": {
+                    "PubMed": "22663011",
+                    "DOI": "10.1000/example"
+                },
+                "title": "BRAF melanoma historical cohort",
+                "venue": "Cancer Cell",
+                "year": 2005,
+                "citationCount": 12,
+                "influentialCitationCount": 4,
+                "abstract": "Historical cohort."
+            }]
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let rows = search_semantic_scholar_candidates(
+        &ArticleSearchFilters {
+            keyword: Some("braf melanoma".into()),
+            date_from: Some("2000-01-01".into()),
+            date_to: Some("2013-12-31".into()),
+            exclude_retracted: true,
+            ..empty_filters()
+        },
+        3,
+    )
+    .await
+    .expect("semantic scholar search should include the effective year filter");
+
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].date.as_deref(), Some("2005"));
+}
 #[tokio::test]
 async fn litsense2_candidates_deduplicate_and_hydrate_pubmed_metadata() {
     let _guard = lock_env().await;

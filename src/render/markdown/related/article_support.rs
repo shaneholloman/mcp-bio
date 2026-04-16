@@ -218,6 +218,71 @@ pub(super) fn article_keyword_entity_hints(filters: &ArticleSearchFilters) -> Ve
     dedupe_markdown_commands(out)
 }
 
+fn article_result_year(result: &ArticleSearchResult) -> Option<u16> {
+    let year = result.date.as_deref()?.get(..4)?;
+    year.chars()
+        .all(|ch| ch.is_ascii_digit())
+        .then(|| year.parse().ok())?
+}
+
+fn push_article_filter_arg(args: &mut Vec<String>, flag: &str, value: Option<&str>) {
+    if let Some(value) = value.map(str::trim).filter(|value| !value.is_empty()) {
+        args.push(format!("{flag} {}", quote_arg(value)));
+    }
+}
+
+fn article_year_refinement_command(
+    filters: &ArticleSearchFilters,
+    min_year: u16,
+    max_year: u16,
+) -> Option<String> {
+    let mut args = vec!["biomcp search article".to_string()];
+    push_article_filter_arg(&mut args, "-g", filters.gene.as_deref());
+    push_article_filter_arg(&mut args, "-d", filters.disease.as_deref());
+    push_article_filter_arg(&mut args, "--drug", filters.drug.as_deref());
+    push_article_filter_arg(&mut args, "-a", filters.author.as_deref());
+    if let Some(keyword) = filters
+        .keyword
+        .as_deref()
+        .map(str::trim)
+        .filter(|keyword| !keyword.is_empty())
+    {
+        args.push(format!("-k {}", shell_quote_arg(keyword)));
+    }
+    push_article_filter_arg(&mut args, "--journal", filters.journal.as_deref());
+    push_article_filter_arg(&mut args, "--type", filters.article_type.as_deref());
+    if filters.open_access {
+        args.push("--open-access".to_string());
+    }
+    if !filters.exclude_retracted {
+        args.push("--include-retracted".to_string());
+    }
+    args.push(format!("--year-min {min_year:04}"));
+    args.push(format!("--year-max {max_year:04}"));
+    args.push("--limit 5".to_string());
+    (args.len() > 3).then(|| args.join(" "))
+}
+
+pub(super) fn article_date_refinement_hint(
+    results: &[ArticleSearchResult],
+    filters: &ArticleSearchFilters,
+) -> Vec<String> {
+    if results.is_empty() || filters.date_from.is_some() || filters.date_to.is_some() {
+        return Vec::new();
+    }
+    let mut years = results.iter().filter_map(article_result_year);
+    let Some(first_year) = years.next() else {
+        return Vec::new();
+    };
+    let (min_year, max_year) = years
+        .fold((first_year, first_year), |(min_year, max_year), year| {
+            (min_year.min(year), max_year.max(year))
+        });
+    article_year_refinement_command(filters, min_year, max_year)
+        .into_iter()
+        .collect()
+}
+
 pub(super) fn related_article(article: &Article) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     if let Some(pmid) = article

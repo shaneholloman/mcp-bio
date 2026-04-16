@@ -24,6 +24,25 @@ use super::{
     WARN_PAGE_THRESHOLD,
 };
 
+fn normalized_bound_year(value: &str) -> Option<&str> {
+    let year = value.get(..4)?;
+    year.chars().all(|ch| ch.is_ascii_digit()).then_some(year)
+}
+
+pub(super) fn semantic_scholar_year_filter(
+    date_from: Option<&str>,
+    date_to: Option<&str>,
+) -> Option<String> {
+    let from_year = date_from.and_then(normalized_bound_year);
+    let to_year = date_to.and_then(normalized_bound_year);
+    match (from_year, to_year) {
+        (Some(from), Some(to)) => Some(format!("{from}-{to}")),
+        (Some(from), None) => Some(format!("{from}-")),
+        (None, Some(to)) => Some(format!("-{to}")),
+        (None, None) => None,
+    }
+}
+
 pub(super) async fn search_pubmed_page(
     filters: &ArticleSearchFilters,
     limit: usize,
@@ -315,8 +334,15 @@ pub(super) async fn search_semantic_scholar_candidates(
         return Ok(Vec::new());
     }
     let (normalized_date_from, normalized_date_to) = normalized_date_bounds(filters)?;
+    let year_filter = semantic_scholar_year_filter(
+        normalized_date_from.as_deref(),
+        normalized_date_to.as_deref(),
+    );
 
-    let response = match client.paper_search(&query, limit).await {
+    let response = match client
+        .paper_search(&query, limit, year_filter.as_deref())
+        .await
+    {
         Ok(response) => response,
         Err(err) => {
             warn!(?err, query, "Semantic Scholar article search leg failed");

@@ -95,5 +95,57 @@ fn article_search_related_results_skip_non_entity_keyword_hints() {
         &article_filters(Some("cell cycle checkpoint"), None, None),
     );
 
-    assert_eq!(related, vec!["biomcp get article 22663011".to_string()]);
+    assert_eq!(related[0], "biomcp get article 22663011");
+    assert_eq!(
+        related[1],
+        "biomcp search article -k \"cell cycle checkpoint\" --year-min 2025 --year-max 2025 --limit 5"
+    );
+}
+
+#[test]
+fn article_search_related_results_include_year_refinement_hint_when_unbounded() {
+    let related = related_article_search_results(
+        &[
+            article_search_result("22663011"),
+            ArticleSearchResult {
+                pmid: "24200969".to_string(),
+                date: Some("2013-05-12".to_string()),
+                ..article_search_result("24200969")
+            },
+        ],
+        &article_filters(Some("BRAF melanoma"), None, None),
+    );
+
+    assert!(related.contains(
+        &"biomcp search article -k \"BRAF melanoma\" --year-min 2013 --year-max 2025 --limit 5"
+            .to_string()
+    ));
+    assert_eq!(
+        related_command_description(
+            "biomcp search article -k \"BRAF melanoma\" --year-min 2013 --year-max 2025 --limit 5"
+        ),
+        Some("refine this search to the visible publication-year range")
+    );
+}
+
+#[test]
+fn article_search_related_results_skip_year_refinement_when_already_bounded() {
+    let mut filters = article_filters(Some("BRAF melanoma"), None, None);
+    filters.date_from = Some("2000-01-01".to_string());
+    let related = related_article_search_results(&[article_search_result("22663011")], &filters);
+
+    assert!(!related.iter().any(|command| command.contains("--year-min")));
+}
+
+#[test]
+fn article_search_related_results_skip_year_refinement_without_visible_years() {
+    let related = related_article_search_results(
+        &[ArticleSearchResult {
+            date: None,
+            ..article_search_result("22663011")
+        }],
+        &article_filters(Some("BRAF melanoma"), None, None),
+    );
+
+    assert!(!related.iter().any(|command| command.contains("--year-min")));
 }
