@@ -310,6 +310,7 @@ pub(super) fn related_variant_search_results(
 pub(super) fn related_article_search_results(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
 ) -> Vec<String> {
     if results.is_empty() {
         return Vec::new();
@@ -325,7 +326,9 @@ pub(super) fn related_article_search_results(
     }
     out.extend(article_support::article_keyword_entity_hints(filters));
     out.extend(article_support::article_date_refinement_hint(
-        results, filters,
+        results,
+        filters,
+        source_filter,
     ));
     dedupe_markdown_commands(out)
 }
@@ -333,8 +336,9 @@ pub(super) fn related_article_search_results(
 pub(super) fn search_next_commands_article(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
 ) -> Vec<String> {
-    let mut out = related_article_search_results(results, filters);
+    let mut out = related_article_search_results(results, filters, source_filter);
     if out.is_empty() {
         return out;
     }

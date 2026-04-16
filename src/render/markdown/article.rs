@@ -18,6 +18,13 @@ struct ArticleSearchRenderRow {
     is_retracted: Option<bool>,
 }
 
+pub struct ArticleSearchRenderContext<'a> {
+    pub source_filter: crate::entities::article::ArticleSourceFilter,
+    pub semantic_scholar_enabled: bool,
+    pub note: Option<&'a str>,
+    pub debug_plan: Option<&'a DebugPlan>,
+}
+
 pub fn article_markdown(
     article: &Article,
     requested_sections: &[String],
@@ -415,9 +422,7 @@ pub fn article_search_markdown_with_footer_and_context(
     results: &[ArticleSearchResult],
     pagination_footer: &str,
     filters: &ArticleSearchFilters,
-    semantic_scholar_enabled: bool,
-    note: Option<&str>,
-    debug_plan: Option<&DebugPlan>,
+    context: ArticleSearchRenderContext<'_>,
 ) -> Result<String, BioMcpError> {
     let rows = results
         .iter()
@@ -431,9 +436,12 @@ pub fn article_search_markdown_with_footer_and_context(
             is_retracted: row.is_retracted,
         })
         .collect::<Vec<_>>();
-    let related_block = format_related_block(
-        crate::render::markdown::related_article_search_results(results, filters),
-    );
+    let related_block =
+        format_related_block(crate::render::markdown::related_article_search_results(
+            results,
+            filters,
+            context.source_filter,
+        ));
     let index_date_footer = newest_indexed_footer(results);
 
     let tmpl = env()?.get_template("article_search.md.j2")?;
@@ -441,8 +449,8 @@ pub fn article_search_markdown_with_footer_and_context(
         query => query,
         count => results.len(),
         rows => rows,
-        semantic_scholar_enabled => semantic_scholar_enabled,
-        note => note,
+        semantic_scholar_enabled => context.semantic_scholar_enabled,
+        note => context.note,
         sort => filters.sort.as_str(),
         ranking_policy => crate::entities::article::article_relevance_ranking_policy(filters),
         related_block => related_block,
@@ -450,7 +458,7 @@ pub fn article_search_markdown_with_footer_and_context(
         index_date_footer => index_date_footer,
     })?;
     let body = with_pagination_footer(body, pagination_footer);
-    if let Some(debug_plan) = debug_plan {
+    if let Some(debug_plan) = context.debug_plan {
         Ok(format!("{}{}", render_debug_plan_block(debug_plan)?, body))
     } else {
         Ok(body)

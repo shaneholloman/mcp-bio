@@ -251,17 +251,20 @@ fn article_search_markdown_preserves_rank_order_and_shows_rationale() {
     ];
 
     let markdown = article_search_markdown_with_footer_and_context(
-            "gene=BRAF",
-            &rows,
-            "",
-            &article_filters_for_test(crate::entities::article::ArticleSort::Relevance),
-            true,
-            Some(
+        "gene=BRAF",
+        &rows,
+        "",
+        &article_filters_for_test(crate::entities::article::ArticleSort::Relevance),
+        ArticleSearchRenderContext {
+            source_filter: crate::entities::article::ArticleSourceFilter::All,
+            semantic_scholar_enabled: true,
+            note: Some(
                 "Note: --type restricts article search to Europe PMC and PubMed. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering.",
             ),
-            None,
-        )
-        .expect("markdown should render");
+            debug_plan: None,
+        },
+    )
+    .expect("markdown should render");
     assert!(markdown.contains(
             "> Note: --type restricts article search to Europe PMC and PubMed. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering."
         ));
@@ -513,9 +516,12 @@ fn article_search_markdown_prepends_debug_plan_block() {
         &rows,
         "",
         &article_filters_for_test(crate::entities::article::ArticleSort::Relevance),
-        true,
-        None,
-        Some(&debug_plan),
+        ArticleSearchRenderContext {
+            source_filter: crate::entities::article::ArticleSourceFilter::All,
+            semantic_scholar_enabled: true,
+            note: None,
+            debug_plan: Some(&debug_plan),
+        },
     )
     .expect("markdown should render");
 
@@ -555,9 +561,12 @@ fn article_search_markdown_renders_related_block_before_pagination() {
         &rows,
         "Showing 1-1 of 3 results. Use --offset 1 for more.",
         &filters,
-        true,
-        None,
-        None,
+        ArticleSearchRenderContext {
+            source_filter: crate::entities::article::ArticleSourceFilter::All,
+            semantic_scholar_enabled: true,
+            note: None,
+            debug_plan: None,
+        },
     )
     .expect("markdown should render");
 
@@ -625,9 +634,12 @@ fn article_search_markdown_omits_index_footer_when_no_rows_have_it() {
         &rows,
         "",
         &article_filters_for_test(crate::entities::article::ArticleSort::Relevance),
-        true,
-        None,
-        None,
+        ArticleSearchRenderContext {
+            source_filter: crate::entities::article::ArticleSourceFilter::All,
+            semantic_scholar_enabled: true,
+            note: None,
+            debug_plan: None,
+        },
     )
     .expect("markdown should render");
 

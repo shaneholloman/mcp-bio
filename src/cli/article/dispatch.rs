@@ -115,7 +115,8 @@ pub(in crate::cli) async fn handle_search(
     } else {
         None
     };
-    let next_commands = crate::render::markdown::search_next_commands_article(&results, &filters);
+    let next_commands =
+        crate::render::markdown::search_next_commands_article(&results, &filters, source_filter);
 
     let text = if json {
         article_search_json(
@@ -137,10 +138,16 @@ pub(in crate::cli) async fn handle_search(
             &results,
             &footer,
             &filters,
-            semantic_scholar_enabled,
-            crate::entities::article::article_type_limitation_note(&filters, source_filter)
+            crate::render::markdown::ArticleSearchRenderContext {
+                source_filter,
+                semantic_scholar_enabled,
+                note: crate::entities::article::article_type_limitation_note(
+                    &filters,
+                    source_filter,
+                )
                 .as_deref(),
-            debug_plan.as_ref(),
+                debug_plan: debug_plan.as_ref(),
+            },
         )?
     };
 

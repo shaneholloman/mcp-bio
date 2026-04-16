@@ -233,6 +233,7 @@ fn push_article_filter_arg(args: &mut Vec<String>, flag: &str, value: Option<&st
 
 fn article_year_refinement_command(
     filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
     min_year: u16,
     max_year: u16,
 ) -> Option<String> {
@@ -251,6 +252,9 @@ fn article_year_refinement_command(
     }
     push_article_filter_arg(&mut args, "--journal", filters.journal.as_deref());
     push_article_filter_arg(&mut args, "--type", filters.article_type.as_deref());
+    if source_filter != crate::entities::article::ArticleSourceFilter::All {
+        args.push(format!("--source {}", source_filter.as_str()));
+    }
     if filters.open_access {
         args.push("--open-access".to_string());
     }
@@ -266,6 +270,7 @@ fn article_year_refinement_command(
 pub(super) fn article_date_refinement_hint(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
 ) -> Vec<String> {
     if results.is_empty() || filters.date_from.is_some() || filters.date_to.is_some() {
         return Vec::new();
@@ -278,7 +283,7 @@ pub(super) fn article_date_refinement_hint(
         .fold((first_year, first_year), |(min_year, max_year), year| {
             (min_year.min(year), max_year.max(year))
         });
-    article_year_refinement_command(filters, min_year, max_year)
+    article_year_refinement_command(filters, source_filter, min_year, max_year)
         .into_iter()
         .collect()
 }

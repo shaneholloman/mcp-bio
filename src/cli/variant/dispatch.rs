@@ -150,12 +150,16 @@ pub(crate) async fn handle_command(
                     &results,
                     "",
                     &filters,
-                    crate::entities::article::semantic_scholar_search_enabled(
-                        &filters,
-                        crate::entities::article::ArticleSourceFilter::All,
-                    ),
-                    None,
-                    None,
+                    crate::render::markdown::ArticleSearchRenderContext {
+                        source_filter: crate::entities::article::ArticleSourceFilter::All,
+                        semantic_scholar_enabled:
+                            crate::entities::article::semantic_scholar_search_enabled(
+                                &filters,
+                                crate::entities::article::ArticleSourceFilter::All,
+                            ),
+                        note: None,
+                        debug_plan: None,
+                    },
                 )?
             }
         }

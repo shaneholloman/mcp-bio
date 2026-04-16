@@ -240,7 +240,11 @@ fn article_search_json_includes_query_and_ranking_context() {
         publication_type: Some("Review".into()),
         source_local_position: 0,
     }];
-    let next_commands = crate::render::markdown::search_next_commands_article(&results, &filters);
+    let next_commands = crate::render::markdown::search_next_commands_article(
+        &results,
+        &filters,
+        crate::entities::article::ArticleSourceFilter::All,
+    );
     let json = article_search_json(
         &query,
         &filters,
@@ -331,7 +335,11 @@ fn article_search_json_next_commands_include_entity_hints() {
         publication_type: None,
         source_local_position: 0,
     }];
-    let next_commands = crate::render::markdown::search_next_commands_article(&results, &filters);
+    let next_commands = crate::render::markdown::search_next_commands_article(
+        &results,
+        &filters,
+        crate::entities::article::ArticleSourceFilter::All,
+    );
     let json = article_search_json(
         &query,
         &filters,
@@ -364,18 +372,79 @@ fn article_search_json_next_commands_include_entity_hints() {
     assert!(
         value["_meta"]["next_commands"]
             .as_array()
-            .is_some_and(|commands| {
-                commands.contains(&serde_json::Value::String(
-            "biomcp search article -k \"SRY Sox9 miRNA\" --year-min 2025 --year-max 2025 --limit 5"
-                .into()
-        ))
-            })
+            .is_some_and(|commands| commands.contains(&serde_json::Value::String(
+                "biomcp search article -k \"SRY Sox9 miRNA\" --year-min 2025 --year-max 2025 --limit 5"
+                    .into()
+            )))
     );
     assert!(
         value["_meta"]["next_commands"]
             .as_array()
             .is_some_and(|commands| commands
                 .contains(&serde_json::Value::String("biomcp list article".into())))
+    );
+}
+
+#[test]
+fn article_search_json_next_commands_preserve_source_filter() {
+    let pagination = PaginationMeta::offset(0, 1, 1, Some(1));
+    let mut filters = super::super::related_article_filters();
+    filters.keyword = Some("BRAF melanoma".into());
+    let query = article_query_summary(
+        &filters,
+        crate::entities::article::ArticleSourceFilter::PubMed,
+        false,
+        1,
+        0,
+    );
+    let results = vec![crate::entities::article::ArticleSearchResult {
+        pmid: "22663011".into(),
+        pmcid: None,
+        doi: None,
+        title: "BRAF melanoma review".into(),
+        journal: Some("Journal".into()),
+        date: Some("2013-05-12".into()),
+        first_index_date: None,
+        citation_count: Some(12),
+        influential_citation_count: Some(4),
+        source: crate::entities::article::ArticleSource::PubMed,
+        matched_sources: vec![crate::entities::article::ArticleSource::PubMed],
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: Some("Abstract".into()),
+        ranking: None,
+        normalized_title: "braf melanoma review".into(),
+        normalized_abstract: "abstract".into(),
+        publication_type: None,
+        source_local_position: 0,
+    }];
+    let next_commands = crate::render::markdown::search_next_commands_article(
+        &results,
+        &filters,
+        crate::entities::article::ArticleSourceFilter::PubMed,
+    );
+    let json = article_search_json(
+        &query,
+        &filters,
+        true,
+        None,
+        None,
+        ArticleSearchJsonPage {
+            results,
+            pagination,
+            next_commands,
+        },
+    )
+    .expect("article search json should render");
+
+    let value: serde_json::Value =
+        serde_json::from_str(&json).expect("json should parse successfully");
+    assert!(
+        value["_meta"]["next_commands"]
+            .as_array()
+            .is_some_and(|commands| commands.contains(&serde_json::Value::String(
+                "biomcp search article -k \"BRAF melanoma\" --source pubmed --year-min 2013 --year-max 2013 --limit 5".into()
+            )))
     );
 }
 
