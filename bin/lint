@@ -131,6 +131,39 @@ check_pycache() {
   [ "$found" -eq 0 ]
 }
 
+DEPRECATED_PUBLIC_DOC_TOKENS=(
+  "biomcp-python"
+)
+
+check_deprecated_public_doc_tokens() {
+  local found=0
+  local pattern
+  local -a paths=()
+
+  if git ls-files --error-unmatch README.md >/dev/null 2>&1; then
+    paths+=("README.md")
+  fi
+  if git ls-files -- docs/ | grep -q .; then
+    paths+=("docs/")
+  fi
+
+  [ "${#paths[@]}" -gt 0 ] || return 0
+
+  for pattern in "${DEPRECATED_PUBLIC_DOC_TOKENS[@]}"; do
+    local output
+    output="$(git grep -nIF "$pattern" -- "${paths[@]}" 2>/dev/null || true)"
+    if [ -n "$output" ]; then
+      if [ "$found" -eq 0 ]; then
+        printf 'Deprecated public-doc install strings found:\n'
+      fi
+      printf '%s\n' "$output"
+      found=1
+    fi
+  done
+
+  [ "$found" -eq 0 ]
+}
+
 has_tracked_files() {
   git ls-files -- "$1" | grep -q .
 }
@@ -138,6 +171,7 @@ has_tracked_files() {
 check_credentials && pass 'credential scan' || fail 'credential scan'
 check_tbd && pass 'TBD scan' || fail 'TBD scan'
 check_pycache && pass 'stale __pycache__ scan' || fail 'stale __pycache__ scan'
+check_deprecated_public_doc_tokens && pass 'deprecated public-doc install string scan' || fail 'deprecated public-doc install string scan'
 
 if has_tracked_files '*.py'; then
   if command -v ruff >/dev/null 2>&1; then
