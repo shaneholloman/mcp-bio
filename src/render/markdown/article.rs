@@ -462,7 +462,7 @@ fn max_first_index_date(results: &[ArticleSearchResult]) -> Option<NaiveDate> {
 }
 
 fn format_newest_indexed_footer(indexed: NaiveDate, today: NaiveDate) -> String {
-    let days_ago = (today - indexed).num_days();
+    let days_ago = (today - indexed).num_days().max(0);
     format!(
         "Newest indexed: {} ({} days ago)",
         indexed.format("%Y-%m-%d"),

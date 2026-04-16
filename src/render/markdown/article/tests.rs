@@ -586,6 +586,17 @@ fn format_newest_indexed_footer_is_deterministic() {
 }
 
 #[test]
+fn format_newest_indexed_footer_clamps_future_dates_to_zero_days() {
+    let indexed = NaiveDate::from_ymd_opt(2025, 1, 15).expect("valid date");
+    let today = NaiveDate::from_ymd_opt(2025, 1, 14).expect("valid date");
+
+    assert_eq!(
+        format_newest_indexed_footer(indexed, today),
+        "Newest indexed: 2025-01-15 (0 days ago)"
+    );
+}
+
+#[test]
 fn article_search_markdown_omits_index_footer_when_no_rows_have_it() {
     let rows = vec![ArticleSearchResult {
         pmid: "22663011".into(),
