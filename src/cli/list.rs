@@ -237,6 +237,7 @@ fn list_article() -> String {
 - `search article --type <review|research|case-reports|meta-analysis>`
 - `search article --date-from <YYYY|YYYY-MM|YYYY-MM-DD> --date-to <YYYY|YYYY-MM|YYYY-MM-DD>`
 - `search article --since <YYYY|YYYY-MM|YYYY-MM-DD>` - alias for `--date-from`
+- `search article --year-min <YYYY> --year-max <YYYY>` - exact year aliases for article date bounds
 - `search article --journal <name>`
 - `search article --open-access`
 - `search article --exclude-retracted`
@@ -264,6 +265,7 @@ fn list_article() -> String {
 Result-page follow-ups:
 
 - Keyword-bearing result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>` follow-ups when `-k/--keyword` contains a recognizable entity token.
+- Visible dated result pages with no existing date bounds can also suggest year-refinement next commands such as `biomcp search article ... --year-min <YYYY> --year-max <YYYY> --limit 5`.
 
 Entity-only quick start:
 
@@ -285,6 +287,7 @@ Worked examples:
 - Known-gene question: `biomcp search article -g TP53 -k "apoptosis gene regulation" --limit 5` keeps TP53 typed and the regulatory process in free text.
 - Known-drug question: `biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5` keeps the drug typed and the adverse-effect mechanism in free text.
 - Method/dataset question: `biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5` stays keyword-only because the question is about a dataset, not a typed biomedical entity.
+- Historical literature slice: `biomcp search article -k "BRAF melanoma" --year-min 2000 --year-max 2013 --limit 5` narrows the shared article date filter to a publication-year window.
 
 ## JSON Output
 
@@ -292,6 +295,7 @@ Worked examples:
 - The first follow-up drills the top result with `biomcp get article <pmid>`.
 - `biomcp list article` is always included so agents can inspect the full filter surface.
 - Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>` when the keyword contains a recognizable entity token.
+- When no explicit article date bounds are present, visible dated rows can also add a year-refinement next command that rebuilds the current search with `--year-min <YYYY> --year-max <YYYY> --limit 5`.
 - Each result may include `first_index_date` as `YYYY-MM-DD` when the upstream record exposes when it was first indexed. Europe PMC and PubMed provide it today; PubTator3, LitSense2, and Semantic Scholar do not.
 
 ## Notes
@@ -1105,6 +1109,8 @@ mod tests {
         assert!(article.contains("--date-from <YYYY|YYYY-MM|YYYY-MM-DD>"));
         assert!(article.contains("--date-to <YYYY|YYYY-MM|YYYY-MM-DD>"));
         assert!(article.contains("--since <YYYY|YYYY-MM|YYYY-MM-DD>"));
+        assert!(article.contains("--year-min <YYYY>"));
+        assert!(article.contains("--year-max <YYYY>"));
         assert!(article.contains("--ranking-mode <lexical|semantic|hybrid>"));
         assert!(article.contains("--weight-semantic <float>"));
         assert!(article.contains("--weight-lexical <float>"));
@@ -1156,6 +1162,9 @@ mod tests {
             "Keyword-bearing result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>`"
         ));
         assert!(article.contains(
+            "Visible dated result pages with no existing date bounds can also suggest year-refinement next commands"
+        ));
+        assert!(article.contains(
             "biomcp search article --drug amiodarone -k \"photosensitivity mechanism\" --limit 5"
         ));
         assert!(article.contains(
@@ -1165,11 +1174,15 @@ mod tests {
             "biomcp search article -k \"TCGA mutation analysis dataset\" --type review --limit 5"
         ));
         assert!(article.contains(
+            "biomcp search article -k \"BRAF melanoma\" --year-min 2000 --year-max 2013 --limit 5"
+        ));
+        assert!(article.contains(
             "typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed"
         ));
         assert!(article.contains(
             "Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>`"
         ));
+        assert!(article.contains("visible dated rows can also add a year-refinement next command"));
     }
 
     #[test]

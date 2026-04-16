@@ -37,8 +37,9 @@ pub use self::adverse_event::{
 };
 #[allow(unused_imports)]
 pub use self::article::{
-    article_batch_markdown, article_entities_markdown, article_graph_markdown, article_markdown,
-    article_recommendations_markdown, article_search_markdown_with_footer_and_context,
+    ArticleSearchRenderContext, article_batch_markdown, article_entities_markdown,
+    article_graph_markdown, article_markdown, article_recommendations_markdown,
+    article_search_markdown_with_footer_and_context,
 };
 #[allow(unused_imports)]
 pub use self::discovery::{render_discover, search_all_markdown};
@@ -261,15 +262,17 @@ pub(crate) fn related_variant_search_results(
 pub(crate) fn related_article_search_results(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
 ) -> Vec<String> {
-    related::related_article_search_results(results, filters)
+    related::related_article_search_results(results, filters, source_filter)
 }
 
 pub(crate) fn search_next_commands_article(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
 ) -> Vec<String> {
-    related::search_next_commands_article(results, filters)
+    related::search_next_commands_article(results, filters, source_filter)
 }
 
 pub(crate) fn search_next_commands_trial(results: &[TrialSearchResult]) -> Vec<String> {

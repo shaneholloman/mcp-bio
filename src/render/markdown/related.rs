@@ -50,6 +50,12 @@ pub(super) fn related_command_description(command: &str) -> Option<&'static str>
         Some("background evidence this paper builds on; use if the primary paper lacks context")
     } else if command.starts_with("biomcp article recommendations ") {
         Some("related papers to broaden coverage; use only if the primary paper lacks your answer")
+    } else if command.starts_with("biomcp search article ")
+        && command.contains(" --year-min ")
+        && command.contains(" --year-max ")
+        && command.ends_with(" --limit 5")
+    {
+        Some("refine this search to the visible publication-year range")
     } else if command.contains(" --type review --limit 5") {
         Some("supplement sparse structured data with review literature for indication context")
     } else if command.starts_with("biomcp get gene ") && command.ends_with(" clingen constraint") {
@@ -304,6 +310,7 @@ pub(super) fn related_variant_search_results(
 pub(super) fn related_article_search_results(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
 ) -> Vec<String> {
     if results.is_empty() {
         return Vec::new();
@@ -318,14 +325,20 @@ pub(super) fn related_article_search_results(
         out.push(format!("biomcp get article {pmid}"));
     }
     out.extend(article_support::article_keyword_entity_hints(filters));
+    out.extend(article_support::article_date_refinement_hint(
+        results,
+        filters,
+        source_filter,
+    ));
     dedupe_markdown_commands(out)
 }
 
 pub(super) fn search_next_commands_article(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
 ) -> Vec<String> {
-    let mut out = related_article_search_results(results, filters);
+    let mut out = related_article_search_results(results, filters, source_filter);
     if out.is_empty() {
         return out;
     }

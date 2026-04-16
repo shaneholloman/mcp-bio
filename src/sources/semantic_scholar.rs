@@ -203,6 +203,7 @@ impl SemanticScholarClient {
         &self,
         query: &str,
         limit: usize,
+        year_filter: Option<&str>,
     ) -> Result<SemanticScholarSearchResponse, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
@@ -217,6 +218,11 @@ impl SemanticScholarClient {
             ("fields", SEARCH_PAPER_FIELDS),
             ("limit", &limit.to_string()),
         ]));
+        let req = if let Some(year_filter) = year_filter {
+            req.query(&[("year", year_filter)])
+        } else {
+            req
+        };
         self.send_json(req).await
     }
 
@@ -734,7 +740,7 @@ mod tests {
             let client =
                 SemanticScholarClient::new_for_test(server.uri(), Some("test-key".to_string()))
                     .unwrap();
-            let response = client.paper_search("braf melanoma", 3).await.unwrap();
+            let response = client.paper_search("braf melanoma", 3, None).await.unwrap();
             assert_eq!(response.total, Some(1));
             assert_eq!(response.data.len(), 1);
             let paper = &response.data[0];
@@ -744,6 +750,35 @@ mod tests {
                 paper.abstract_text.as_deref(),
                 Some("Direct answer abstract.")
             );
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    async fn paper_search_sends_year_filter_when_requested() {
+        run_no_cache_test(async {
+            let server = MockServer::start().await;
+            Mock::given(method("GET"))
+                .and(path("/graph/v1/paper/search"))
+                .and(query_param("query", "braf melanoma"))
+                .and(query_param("fields", SEARCH_PAPER_FIELDS))
+                .and(query_param("limit", "3"))
+                .and(query_param("year", "2000-2013"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "total": 0,
+                    "data": []
+                })))
+                .expect(1)
+                .mount(&server)
+                .await;
+
+            let client = SemanticScholarClient::new_for_test(server.uri(), None).unwrap();
+            let response = client
+                .paper_search("braf melanoma", 3, Some("2000-2013"))
+                .await
+                .unwrap();
+            assert_eq!(response.total, Some(0));
+            assert!(response.data.is_empty());
         })
         .await;
     }

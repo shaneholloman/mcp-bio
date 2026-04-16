@@ -35,6 +35,12 @@ By date:
 biomcp search article -g BRAF --since 2024-01-01 --limit 5
 ```
 
+By year range:
+
+```bash
+biomcp search article -k "BRAF melanoma" --year-min 2000 --year-max 2013 --limit 5
+```
+
 Exclude preprints when supported by source metadata:
 
 ```bash

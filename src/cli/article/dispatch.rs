@@ -21,10 +21,25 @@ pub(in crate::cli) async fn handle_get(
     Ok(CommandOutcome::stdout(text))
 }
 
+pub(super) fn resolved_article_date_bounds(
+    args: &ArticleSearchArgs,
+) -> (Option<String>, Option<String>) {
+    let date_from = args
+        .date_from
+        .clone()
+        .or_else(|| args.year_min.map(|year| format!("{year:04}-01-01")));
+    let date_to = args
+        .date_to
+        .clone()
+        .or_else(|| args.year_max.map(|year| format!("{year:04}-12-31")));
+    (date_from, date_to)
+}
+
 pub(in crate::cli) async fn handle_search(
     args: ArticleSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
+    let (date_from, date_to) = resolved_article_date_bounds(&args);
     let disease = super::super::normalize_cli_tokens(args.disease);
     let drug = super::super::normalize_cli_tokens(args.drug);
     let author = super::super::normalize_cli_tokens(args.author);
@@ -60,8 +75,8 @@ pub(in crate::cli) async fn handle_search(
         drug,
         author,
         keyword,
-        date_from: args.date_from,
-        date_to: args.date_to,
+        date_from,
+        date_to,
         article_type: args.article_type,
         journal,
         open_access: args.open_access,
@@ -100,7 +115,8 @@ pub(in crate::cli) async fn handle_search(
     } else {
         None
     };
-    let next_commands = crate::render::markdown::search_next_commands_article(&results, &filters);
+    let next_commands =
+        crate::render::markdown::search_next_commands_article(&results, &filters, source_filter);
 
     let text = if json {
         article_search_json(
@@ -122,10 +138,16 @@ pub(in crate::cli) async fn handle_search(
             &results,
             &footer,
             &filters,
-            semantic_scholar_enabled,
-            crate::entities::article::article_type_limitation_note(&filters, source_filter)
+            crate::render::markdown::ArticleSearchRenderContext {
+                source_filter,
+                semantic_scholar_enabled,
+                note: crate::entities::article::article_type_limitation_note(
+                    &filters,
+                    source_filter,
+                )
                 .as_deref(),
-            debug_plan.as_ref(),
+                debug_plan: debug_plan.as_ref(),
+            },
         )?
     };
 

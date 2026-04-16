@@ -2,6 +2,13 @@
 
 use clap::{Args, Subcommand};
 
+fn parse_article_year(value: &str) -> Result<u16, String> {
+    if value.len() != 4 || !value.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err("expected YYYY".to_string());
+    }
+    value.parse().map_err(|_| "expected YYYY".to_string())
+}
+
 #[derive(Args, Debug)]
 pub struct ArticleSearchArgs {
     /// Filter by gene symbol
@@ -34,6 +41,22 @@ pub struct ArticleSearchArgs {
     /// Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)
     #[arg(long = "date-to", visible_alias = "until")]
     pub date_to: Option<String>,
+    /// Published from year (YYYY)
+    #[arg(
+        long = "year-min",
+        value_name = "YYYY",
+        value_parser = parse_article_year,
+        conflicts_with = "date_from"
+    )]
+    pub year_min: Option<u16>,
+    /// Published through year (YYYY)
+    #[arg(
+        long = "year-max",
+        value_name = "YYYY",
+        value_parser = parse_article_year,
+        conflicts_with = "date_to"
+    )]
+    pub year_max: Option<u16>,
     /// Filter by publication type [values: research-article, review, case-reports, meta-analysis]
     #[arg(long = "type")]
     pub article_type: Option<String>,

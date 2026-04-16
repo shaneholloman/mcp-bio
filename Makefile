@@ -22,6 +22,7 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/06-article.md::Source-Specific PubTator Search Uses Default Retraction Filter" \
 	--deselect "spec/06-article.md::Source-Specific PubMed Search" \
 	--deselect "spec/06-article.md::Source-Specific LitSense2 Search" \
+	--deselect "spec/06-article.md::Live Article Year Range Search" \
 	--deselect "spec/06-article.md::Federated Search Preserves Non-EuropePMC Matches Under Default Retraction Filter" \
 	--deselect "spec/06-article.md::Keyword Anchors Tokenize In JSON Ranking Metadata" \
 	--deselect "spec/06-article.md::Article Full Text Saved Markdown" \
