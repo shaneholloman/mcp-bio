@@ -2,7 +2,7 @@
 
 ## System Shape
 
-BioMCP is a single Rust binary (`biomcp`) with two operating modes:
+BioMCP is a single Rust binary (`biomcp`) with three operating modes:
 
 - **CLI mode:** Standard command-line invocation. Each command is a blocking
   async call that prints markdown to stdout and exits.
@@ -283,7 +283,8 @@ BioMCP has six distinct verification and operator-inspection surfaces.
 ### 1. CI and Repo Gates
 
 - `make check` is the required local ticket gate. In the current `Makefile`,
-  that means `lint`, `test`, and `check-quality-ratchet`.
+  that means `lint`, `test`, and `check-quality-ratchet`, and the `lint`
+  stage rejects deprecated install strings in `README.md` and `docs/`.
 - Repo-local `test` now maps to `cargo nextest run`; the CI `check` job still
   uses `cargo test` directly.
 - CI in `.github/workflows/ci.yml` runs the broader repo baseline in parallel:
@@ -350,8 +351,9 @@ inventory ledger.
 - It shows per-source connectivity for readiness-significant sources.
 - Key-gated sources appear as `excluded` rows when the required environment
   variable is absent.
-- `--apis-only` omits the cache-writability row and the EMA local-data row
-  because neither is an upstream API.
+- `--apis-only` omits the EMA local-data row, the WHO local-data row, the
+  cache-writability row, and the cache-limits row because none of these are
+  upstream API checks.
 - Partial upstream failures remain visible in the rendered report.
 - Current CLI behavior is report-first: the command exits `0` when the report
   renders, even if some upstream rows are failing.

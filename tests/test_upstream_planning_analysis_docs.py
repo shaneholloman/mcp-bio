@@ -160,6 +160,28 @@ def test_functional_overview_preserves_readme_surface_and_study_family() -> None
     assert "biomcp search all BRAF" in functional
 
 
+def test_functional_overview_repaired_source_rows_match_current_contract() -> None:
+    functional = _read_repo("architecture/functional/overview.md")
+
+    assert (
+        "| article | PubMed, PubTator3, Europe PMC, LitSense2 (keyword-gated), "
+        "PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` "
+        "recommended) | `biomcp search article -g BRAF --limit 5` |"
+        in functional
+    )
+    assert (
+        "| drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, "
+        "ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug "
+        "trastuzumab regulatory --region who` |"
+        in functional
+    )
+    assert (
+        "| pathway | Reactome, KEGG, WikiPathways, g:Profiler, Enrichr-backed "
+        "enrichment sections | `biomcp get pathway hsa05200 genes` |"
+        in functional
+    )
+
+
 def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> None:
     technical = _read_repo("architecture/technical/overview.md")
     ux = _read_repo("architecture/ux/cli-reference.md")
@@ -429,6 +451,25 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "`src/cli/tests/`" in ux
     assert "`next_commands_validity` tests in `src/cli/mod.rs`" not in ux
     assert "Opt-in sections such as `disgenet` and `funding` still require explicit naming." in ux_ws
+
+
+def test_technical_overview_repaired_gate_and_health_copy_match_contract() -> None:
+    technical = _read_repo("architecture/technical/overview.md")
+    technical_ws = _normalize_ws(technical)
+
+    assert "BioMCP is a single Rust binary (`biomcp`) with three operating modes:" in technical
+    assert (
+        "`make check` is the required local ticket gate. In the current `Makefile`, "
+        "that means `lint`, `test`, and `check-quality-ratchet`, and the `lint` "
+        "stage rejects deprecated install strings in `README.md` and `docs/`."
+        in technical_ws
+    )
+    assert (
+        "`--apis-only` omits the EMA local-data row, the WHO local-data row, "
+        "the cache-writability row, and the cache-limits row because none of "
+        "these are upstream API checks."
+        in technical_ws
+    )
 
 
 def test_chart_rendering_architecture_doc_matches_repo_contract() -> None:
