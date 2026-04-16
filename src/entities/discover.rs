@@ -356,7 +356,7 @@ pub(crate) fn build_result(
     ols_docs: &[OlsDoc],
     umls_concepts: &[UmlsConcept],
     medline_topics: &[MedlinePlusTopic],
-    notes: Vec<String>,
+    mut notes: Vec<String>,
 ) -> DiscoverResult {
     let normalized_query = normalize_query(query);
 
@@ -390,6 +390,15 @@ pub(crate) fn build_result(
     let intent = detect_intent(query, &normalized_query, &concepts);
     let plain_language = select_plain_language(&concepts, medline_topics, intent);
     let next_commands = generate_commands(query, &concepts, ambiguous, intent);
+    let has_high_confidence = concepts
+        .iter()
+        .any(|concept| concept.confidence == DiscoverConfidence::CanonicalId);
+
+    if concepts.is_empty() {
+        notes.push(empty_results_article_fallback_note(query));
+    } else if !has_high_confidence {
+        notes.push(broad_results_article_fallback_note(query));
+    }
 
     DiscoverResult {
         query: query.trim().to_string(),
@@ -1040,7 +1049,11 @@ fn generate_commands(
     intent: DiscoverIntent,
 ) -> Vec<String> {
     let mut commands = Vec::new();
+    let has_high_confidence = concepts
+        .iter()
+        .any(|concept| concept.confidence == DiscoverConfidence::CanonicalId);
     let Some(top) = concepts.first() else {
+        commands.push(review_article_fallback_command(query));
         return commands;
     };
 
@@ -1216,6 +1229,14 @@ fn generate_commands(
                 quote_query_term(query.trim())
             ));
         }
+    }
+
+    if !has_high_confidence
+        && !commands
+            .iter()
+            .any(|command| command.starts_with("biomcp search article"))
+    {
+        commands.push(broad_article_fallback_command(query));
     }
 
     dedupe_strings(commands)
@@ -1435,10 +1456,11 @@ fn strip_ascii_prefixes<'a>(query: &'a str, prefixes: &[&str]) -> Option<&'a str
     let trimmed = query.trim();
     let lowered = trimmed.to_ascii_lowercase();
     prefixes.iter().find_map(|prefix| {
-        lowered
-            .starts_with(prefix)
-            .then_some(trimmed[prefix.len()..].trim())
-            .filter(|rest| !rest.is_empty())
+        if lowered.starts_with(prefix) {
+            Some(trimmed[prefix.len()..].trim()).filter(|rest| !rest.is_empty())
+        } else {
+            None
+        }
     })
 }
 
@@ -1461,6 +1483,34 @@ fn disease_command_ref(concept: &DiscoverConcept) -> Option<String> {
 
 fn quote_query_term(value: &str) -> String {
     quote_arg(value).if_empty_then(format!("\"{}\"", value.trim()))
+}
+
+fn review_article_fallback_command(query: &str) -> String {
+    format!(
+        "biomcp search article -k {} --type review --limit 5",
+        quote_query_term(query.trim())
+    )
+}
+
+fn broad_article_fallback_command(query: &str) -> String {
+    format!(
+        "biomcp search article -k {}",
+        quote_query_term(query.trim())
+    )
+}
+
+fn empty_results_article_fallback_note(query: &str) -> String {
+    format!(
+        "No biomedical entities resolved. Try: {}",
+        review_article_fallback_command(query)
+    )
+}
+
+fn broad_results_article_fallback_note(query: &str) -> String {
+    format!(
+        "For broader results: {}",
+        broad_article_fallback_command(query)
+    )
 }
 
 trait StringExt {
@@ -1661,6 +1711,23 @@ mod tests {
             }],
             match_tier: MatchTier::Exact,
             confidence: DiscoverConfidence::CanonicalId,
+        }
+    }
+
+    fn test_concept(
+        label: &str,
+        primary_type: DiscoverType,
+        confidence: DiscoverConfidence,
+    ) -> DiscoverConcept {
+        DiscoverConcept {
+            label: label.to_string(),
+            primary_id: None,
+            primary_type,
+            synonyms: Vec::new(),
+            xrefs: Vec::new(),
+            sources: Vec::new(),
+            match_tier: MatchTier::Exact,
+            confidence,
         }
     }
 
@@ -1944,6 +2011,62 @@ mod tests {
         assert_eq!(
             result.next_commands[1],
             "biomcp search article -g CTCF -k cohesin --limit 5"
+        );
+    }
+
+    #[test]
+    fn empty_results_add_review_article_fallback_note_and_command() {
+        let result = build_result("SCENAR therapy", &[], &[], &[], Vec::new());
+
+        assert!(result.concepts.is_empty());
+        assert_eq!(
+            result.notes,
+            vec![
+                "No biomedical entities resolved. Try: biomcp search article -k \"SCENAR therapy\" --type review --limit 5"
+                    .to_string()
+            ]
+        );
+        assert_eq!(
+            result.next_commands,
+            vec!["biomcp search article -k \"SCENAR therapy\" --type review --limit 5".to_string()]
+        );
+    }
+
+    #[test]
+    fn low_confidence_variant_adds_note_without_duplicate_article_fallback() {
+        let result = build_result("V600E", &[], &[], &[], Vec::new());
+
+        assert_eq!(result.concepts[0].primary_type, DiscoverType::Variant);
+        assert_eq!(result.concepts[0].confidence, DiscoverConfidence::LabelOnly);
+        assert_eq!(
+            result.notes,
+            vec!["For broader results: biomcp search article -k V600E".to_string()]
+        );
+        assert_eq!(
+            result.next_commands,
+            vec!["biomcp search article -k \"V600E\" --limit 5".to_string()]
+        );
+    }
+
+    #[test]
+    fn low_confidence_noncanonical_paths_append_article_search_once_when_missing() {
+        let commands = generate_commands(
+            "FAKE1",
+            &[test_concept(
+                "FAKE1",
+                DiscoverType::Gene,
+                DiscoverConfidence::LabelOnly,
+            )],
+            true,
+            DiscoverIntent::General,
+        );
+
+        assert_eq!(
+            commands,
+            vec![
+                "biomcp search gene -q \"FAKE1\" --limit 10".to_string(),
+                "biomcp search article -k FAKE1".to_string(),
+            ]
         );
     }
 

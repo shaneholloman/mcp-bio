@@ -10,13 +10,14 @@ examples against stable structural markers and suggestion contracts.
 | Drug Brand Name | `discover Keytruda` | Confirms brand-name normalization to generic drug |
 | Symptom Query | `discover "chest pain"` | Confirms symptom-safe suggestions and MedlinePlus overlay |
 | HPO-backed Symptom Concepts | `discover diabetes` | Confirms normalized `HP:` symptom concepts surface in discover results when OLS4 returns them |
+| No Entity Resolved | `discover qzvxxptl` | Confirms zero-result discover output now suggests review-style article search in markdown and JSON |
 | Treatment Query | `discover "what drugs treat myasthenia gravis"` | Confirms treatment intent leads with structured indication search |
 | Disease Symptoms | `discover "symptoms of Marfan syndrome"` | Confirms disease-linked symptom routing prefers phenotypes |
 | Gene + Disease | `discover "BRAF melanoma"` | Confirms combined orientation queries prefer `search all` |
 | Gene Topic To Article Search | `discover "CTCF cohesin"` | Confirms gene-plus-topic queries can pivot into gene-filtered article search |
 | Ambiguous Query | `discover diabetes` | Confirms ambiguity guidance is explicit |
 | Pathway Query | `discover "MAPK signaling"` | Confirms pathway-oriented suggestion generation |
-| Underspecified Variant | `discover V600E` | Confirms the command avoids false gene certainty |
+| Underspecified Variant | `discover R620W` | Confirms low-confidence variant routing keeps article guidance without false gene certainty |
 | OLS4-only Mode | `env -u UMLS_API_KEY discover BRCA1` | Confirms truthful degradation without UMLS |
 | JSON Metadata | `--json discover ERBB1` | Confirms discover-specific `_meta` contract |
 | UMLS Crosswalks | `--json discover "cystic fibrosis"` | Confirms optional clinical crosswalk enrichment |
@@ -65,6 +66,23 @@ out="$("$bin" discover diabetes)"
 echo "$out" | mustmatch like "### Symptom"
 echo "$out" | mustmatch like '**Diabetes insipidus** (`HP:0000873`)'
 echo "$out" | mustmatch like '**Diabetes mellitus** (`HP:0000819`)'
+```
+
+## No Entity Resolved
+
+When `discover` finds no biomedical concepts, it should not dead-end. Instead,
+it should point the user toward review-style article search in both markdown and
+JSON output. `qzvxxptl` is a stable zero-result probe in the current live data.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" discover qzvxxptl)"
+echo "$out" | mustmatch like 'No biomedical entities resolved. Try: biomcp search article -k qzvxxptl --type review --limit 5'
+echo "$out" | mustmatch like 'biomcp search article -k qzvxxptl --type review --limit 5'
+
+json_out="$("$bin" --json discover qzvxxptl)"
+echo "$json_out" | jq -e '.notes | any(. == "No biomedical entities resolved. Try: biomcp search article -k qzvxxptl --type review --limit 5")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands[0] == "biomcp search article -k qzvxxptl --type review --limit 5"' > /dev/null
 ```
 
 ## Treatment Query
@@ -140,12 +158,18 @@ echo "$out" | mustmatch like "biomcp search pathway -q \"MAPK signaling\" --limi
 
 ## Underspecified Variant
 
+Low-confidence fallback concepts should keep their existing routing while still
+surfacing a broader-results article-search hint. `R620W` currently resolves to
+a label-only variant without a canonical ID, which keeps this live proof stable.
+
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
-out="$("$bin" discover V600E)"
+out="$("$bin" discover R620W)"
 echo "$out" | mustmatch like "### Variant"
 echo "$out" | mustmatch not like "biomcp get gene "
 echo "$out" | mustmatch not like "## Plain Language"
+echo "$out" | mustmatch like "For broader results: biomcp search article -k R620W"
+echo "$out" | mustmatch like 'biomcp search article -k "R620W" --limit 5'
 ```
 
 ## OLS4-only Mode
