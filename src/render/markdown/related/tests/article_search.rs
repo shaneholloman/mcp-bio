@@ -6,6 +6,7 @@ fn article_search_result(pmid: &str) -> ArticleSearchResult {
         title: "Entity-aware article".to_string(),
         journal: Some("Journal".to_string()),
         date: Some("2025-01-01".to_string()),
+        first_index_date: None,
         citation_count: Some(12),
         influential_citation_count: Some(4),
         source: ArticleSource::EuropePmc,

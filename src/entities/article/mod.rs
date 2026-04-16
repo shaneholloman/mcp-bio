@@ -28,6 +28,7 @@ pub use self::search::{search, search_page};
 
 use std::path::PathBuf;
 
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
@@ -161,6 +162,8 @@ pub struct ArticleSearchResult {
     pub journal: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub first_index_date: Option<NaiveDate>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub citation_count: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -192,6 +192,7 @@ fn summarize_debug_plan_reports_federated_sources_and_matches() {
         title: "BRAF melanoma".into(),
         journal: None,
         date: None,
+        first_index_date: None,
         citation_count: None,
         influential_citation_count: None,
         source: ArticleSource::PubMed,

@@ -358,6 +358,7 @@ pub(super) async fn search_semantic_scholar_candidates(
                 .map(|value| value.trim().to_string())
                 .filter(|value| !value.is_empty()),
             date: paper.year.map(|year| year.to_string()),
+            first_index_date: None,
             citation_count: paper.citation_count,
             influential_citation_count: paper.influential_citation_count,
             source: ArticleSource::SemanticScholar,
@@ -461,6 +462,7 @@ pub(super) async fn search_litsense2_candidates(
                 title: fallback_title.clone(),
                 journal: None,
                 date: None,
+                first_index_date: None,
                 citation_count: None,
                 influential_citation_count: None,
                 source: ArticleSource::LitSense2,

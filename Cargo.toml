@@ -89,6 +89,7 @@ dirs = "5"
 
 # Time (metadata footer timestamps)
 time = { version = "0.3", features = ["formatting", "local-offset"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 # Error handling
 thiserror = "2"

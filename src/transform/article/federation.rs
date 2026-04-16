@@ -1,5 +1,7 @@
 //! Source-specific article mapping helpers for federated search and detail hydration.
 
+use chrono::NaiveDate;
+
 use crate::entities::article::{Article, ArticleSearchResult, ArticleSource};
 use crate::sources::europepmc::EuropePmcResult;
 use crate::sources::pubmed::ESummaryEntry;
@@ -292,6 +294,10 @@ pub fn from_europepmc_search_result(hit: &EuropePmcResult) -> Option<ArticleSear
             .as_ref()
             .or(hit.pub_year.as_ref())
             .map(|s| s.get(0..10).unwrap_or(s).to_string()),
+        first_index_date: hit
+            .first_index_date
+            .as_deref()
+            .and_then(parse_europepmc_index_date),
         citation_count: parse_citation_count(hit.cited_by_count.as_ref()),
         influential_citation_count: None,
         source: ArticleSource::EuropePmc,
@@ -336,6 +342,7 @@ pub fn from_pubtator_search_result(hit: &PubTatorSearchResult) -> Option<Article
             .map(str::trim)
             .filter(|v| !v.is_empty())
             .map(|v| v.get(0..10).unwrap_or(v).to_string()),
+        first_index_date: None,
         citation_count: None,
         influential_citation_count: None,
         source: ArticleSource::PubTator,
@@ -363,6 +370,16 @@ fn parse_sortpubdate(value: &str) -> Option<String> {
         return None;
     }
     Some(prefix.replace('/', "-"))
+}
+
+fn parse_europepmc_index_date(value: &str) -> Option<NaiveDate> {
+    let prefix = value.trim().get(0..10)?;
+    NaiveDate::parse_from_str(prefix, "%Y-%m-%d").ok()
+}
+
+fn parse_pubmed_summary_date(value: &str) -> Option<NaiveDate> {
+    let prefix = value.trim().get(0..10)?;
+    NaiveDate::parse_from_str(prefix, "%Y/%m/%d").ok()
 }
 
 fn pubmed_month_number(value: &str) -> Option<&'static str> {
@@ -436,6 +453,11 @@ pub fn from_pubmed_esummary_entry(entry: &ESummaryEntry) -> Option<ArticleSearch
         .as_deref()
         .and_then(parse_sortpubdate)
         .or_else(|| entry.pubdate.as_deref().and_then(parse_pubdate));
+    let first_index_date = entry
+        .edat
+        .as_deref()
+        .and_then(parse_pubmed_summary_date)
+        .or_else(|| entry.lr.as_deref().and_then(parse_pubmed_summary_date));
 
     Some(ArticleSearchResult {
         pmid: entry.uid.clone(),
@@ -444,6 +466,7 @@ pub fn from_pubmed_esummary_entry(entry: &ESummaryEntry) -> Option<ArticleSearch
         title: title.clone(),
         journal,
         date,
+        first_index_date,
         citation_count: None,
         influential_citation_count: None,
         source: ArticleSource::PubMed,

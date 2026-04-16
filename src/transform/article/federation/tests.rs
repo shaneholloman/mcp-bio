@@ -5,6 +5,7 @@ use crate::entities::article::ArticleSource;
 use crate::sources::europepmc::EuropePmcResult;
 use crate::sources::pubmed::ESummaryEntry;
 use crate::sources::pubtator::{PubTatorDocument, PubTatorSearchResult};
+use chrono::NaiveDate;
 
 #[test]
 fn article_sections_maps_egfr_review() {
@@ -76,6 +77,37 @@ fn publication_type_detection_reads_pub_type_list_for_retractions() {
 }
 
 #[test]
+fn from_europepmc_search_result_carries_first_index_date() {
+    let hit: EuropePmcResult = serde_json::from_value(serde_json::json!({
+        "id": "1",
+        "pmid": "1",
+        "title": "Indexed row",
+        "firstIndexDate": "2025-01-15"
+    }))
+    .expect("valid Europe PMC hit");
+
+    let row = from_europepmc_search_result(&hit).expect("search row should map");
+    assert_eq!(
+        row.first_index_date,
+        Some(NaiveDate::from_ymd_opt(2025, 1, 15).expect("valid date"))
+    );
+}
+
+#[test]
+fn from_europepmc_search_result_invalid_first_index_date_is_none() {
+    let hit: EuropePmcResult = serde_json::from_value(serde_json::json!({
+        "id": "1",
+        "pmid": "1",
+        "title": "Indexed row",
+        "firstIndexDate": "2025-99-15"
+    }))
+    .expect("valid Europe PMC hit");
+
+    let row = from_europepmc_search_result(&hit).expect("search row should map");
+    assert_eq!(row.first_index_date, None);
+}
+
+#[test]
 fn from_pubtator_search_result_maps_source_and_score() {
     let hit: PubTatorSearchResult = serde_json::from_value(serde_json::json!({
         "_id": "22663011",
@@ -125,6 +157,8 @@ fn from_pubmed_esummary_entry_hydrates_all_fields() {
         title: "BRAF &lt;i&gt;targeted&lt;/i&gt; therapy".into(),
         sortpubdate: Some("2023/01/15 00:00".into()),
         pubdate: Some("2023 Jan 15".into()),
+        edat: None,
+        lr: None,
         fulljournalname: Some("Nature Medicine".into()),
         source: Some("Nat Med".into()),
     })
@@ -148,6 +182,8 @@ fn from_pubmed_esummary_entry_falls_back_to_source_journal() {
         title: "PubMed fallback title".into(),
         sortpubdate: None,
         pubdate: Some("2023 Jan".into()),
+        edat: None,
+        lr: None,
         fulljournalname: Some("   ".into()),
         source: Some("Nat Med".into()),
     })
@@ -164,9 +200,71 @@ fn from_pubmed_esummary_entry_returns_none_for_blank_title() {
         title: "   ".into(),
         sortpubdate: Some("2023/01/15 00:00".into()),
         pubdate: Some("2023 Jan 15".into()),
+        edat: None,
+        lr: None,
         fulljournalname: Some("Nature Medicine".into()),
         source: Some("Nat Med".into()),
     });
 
     assert!(row.is_none());
+}
+
+#[test]
+fn from_pubmed_esummary_entry_uses_edat_for_first_index_date() {
+    let row = from_pubmed_esummary_entry(&ESummaryEntry {
+        uid: "12345".into(),
+        title: "PubMed date".into(),
+        sortpubdate: Some("2023/01/15 00:00".into()),
+        pubdate: Some("2023 Jan 15".into()),
+        edat: Some("2023/01/16 00:00:00".into()),
+        lr: Some("2023/01/17 00:00:00".into()),
+        fulljournalname: Some("Nature Medicine".into()),
+        source: Some("Nat Med".into()),
+    })
+    .expect("pubmed row should map");
+
+    assert_eq!(
+        row.first_index_date,
+        Some(NaiveDate::from_ymd_opt(2023, 1, 16).expect("valid date"))
+    );
+}
+
+#[test]
+fn from_pubmed_esummary_entry_falls_back_to_lr_for_first_index_date() {
+    let row = from_pubmed_esummary_entry(&ESummaryEntry {
+        uid: "12345".into(),
+        title: "PubMed date".into(),
+        sortpubdate: Some("2023/01/15 00:00".into()),
+        pubdate: Some("2023 Jan 15".into()),
+        edat: None,
+        lr: Some("2023/01/17 00:00:00".into()),
+        fulljournalname: Some("Nature Medicine".into()),
+        source: Some("Nat Med".into()),
+    })
+    .expect("pubmed row should map");
+
+    assert_eq!(
+        row.first_index_date,
+        Some(NaiveDate::from_ymd_opt(2023, 1, 17).expect("valid date"))
+    );
+}
+
+#[test]
+fn from_pubmed_esummary_entry_prefers_edat_over_lr() {
+    let row = from_pubmed_esummary_entry(&ESummaryEntry {
+        uid: "12345".into(),
+        title: "PubMed date".into(),
+        sortpubdate: Some("2023/01/15 00:00".into()),
+        pubdate: Some("2023 Jan 15".into()),
+        edat: Some("2023/01/16 00:00:00".into()),
+        lr: Some("2023/01/17 00:00:00".into()),
+        fulljournalname: Some("Nature Medicine".into()),
+        source: Some("Nat Med".into()),
+    })
+    .expect("pubmed row should map");
+
+    assert_eq!(
+        row.first_index_date,
+        Some(NaiveDate::from_ymd_opt(2023, 1, 16).expect("valid date"))
+    );
 }

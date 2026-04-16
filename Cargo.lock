@@ -304,6 +304,7 @@ dependencies = [
  "base64 0.22.1",
  "bytesize",
  "cacache",
+ "chrono",
  "clap",
  "csv",
  "dirs",

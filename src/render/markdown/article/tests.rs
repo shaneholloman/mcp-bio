@@ -2,6 +2,7 @@ use super::super::test_support::article_filters_for_test;
 use super::*;
 use crate::cli::debug_plan::DebugPlan;
 use crate::entities::article::{ArticleSearchResult, ArticleSort, ArticleSource};
+use chrono::NaiveDate;
 #[test]
 fn article_entities_markdown_uses_safe_gene_search_commands() {
     let annotations = ArticleAnnotations {
@@ -174,6 +175,7 @@ fn article_search_markdown_preserves_rank_order_and_shows_rationale() {
             doi: Some("10.1000/one".into()),
             journal: Some("Journal A".into()),
             date: Some("2025-01-01".into()),
+            first_index_date: None,
             citation_count: Some(10),
             influential_citation_count: Some(4),
             source: ArticleSource::PubTator,
@@ -213,6 +215,7 @@ fn article_search_markdown_preserves_rank_order_and_shows_rationale() {
             doi: None,
             journal: Some("Journal B".into()),
             date: Some("2025-01-02".into()),
+            first_index_date: None,
             citation_count: Some(12),
             influential_citation_count: Some(1),
             source: ArticleSource::EuropePmc,
@@ -286,6 +289,7 @@ fn article_ranking_why_tier1_mixed_shows_title_plus_abstract() {
         doi: None,
         journal: None,
         date: None,
+        first_index_date: None,
         citation_count: None,
         influential_citation_count: None,
         source: ArticleSource::EuropePmc,
@@ -331,6 +335,7 @@ fn article_ranking_why_rescue_composes_with_lexical_reason() {
         doi: None,
         journal: None,
         date: None,
+        first_index_date: None,
         citation_count: None,
         influential_citation_count: None,
         source: ArticleSource::PubMed,
@@ -377,6 +382,7 @@ fn article_ranking_why_semantic_includes_score_and_lexical_context() {
         doi: None,
         journal: None,
         date: None,
+        first_index_date: None,
         citation_count: None,
         influential_citation_count: None,
         source: ArticleSource::EuropePmc,
@@ -423,6 +429,7 @@ fn article_ranking_why_hybrid_includes_score_and_lexical_context() {
         doi: None,
         journal: None,
         date: None,
+        first_index_date: None,
         citation_count: None,
         influential_citation_count: None,
         source: ArticleSource::EuropePmc,
@@ -486,6 +493,7 @@ fn article_search_markdown_prepends_debug_plan_block() {
         doi: None,
         journal: Some("Journal A".into()),
         date: Some("2025-01-01".into()),
+        first_index_date: None,
         citation_count: Some(10),
         influential_citation_count: Some(4),
         source: ArticleSource::PubTator,
@@ -525,6 +533,7 @@ fn article_search_markdown_renders_related_block_before_pagination() {
         doi: None,
         journal: Some("Journal".into()),
         date: Some("2025-01-01".into()),
+        first_index_date: Some(NaiveDate::from_ymd_opt(2025, 1, 15).expect("valid date")),
         citation_count: Some(12),
         influential_citation_count: Some(4),
         source: ArticleSource::EuropePmc,
@@ -552,13 +561,75 @@ fn article_search_markdown_renders_related_block_before_pagination() {
     )
     .expect("markdown should render");
 
+    let footer_line = markdown.find("Newest indexed:").expect("index footer");
     let filters_line = markdown.find("Filters:").expect("filters line");
     let related_line = markdown.find("See also:").expect("related block");
     let pagination_line = markdown
         .find("Showing 1-1 of 3 results. Use --offset 1 for more.")
         .expect("pagination footer");
 
+    assert!(footer_line < filters_line);
     assert!(filters_line < related_line);
     assert!(related_line < pagination_line);
     assert!(markdown.contains("biomcp get gene SRY"));
+}
+
+#[test]
+fn format_newest_indexed_footer_is_deterministic() {
+    let indexed = NaiveDate::from_ymd_opt(2025, 1, 15).expect("valid date");
+    let today = NaiveDate::from_ymd_opt(2025, 1, 20).expect("valid date");
+
+    assert_eq!(
+        format_newest_indexed_footer(indexed, today),
+        "Newest indexed: 2025-01-15 (5 days ago)"
+    );
+}
+
+#[test]
+fn format_newest_indexed_footer_clamps_future_dates_to_zero_days() {
+    let indexed = NaiveDate::from_ymd_opt(2025, 1, 15).expect("valid date");
+    let today = NaiveDate::from_ymd_opt(2025, 1, 14).expect("valid date");
+
+    assert_eq!(
+        format_newest_indexed_footer(indexed, today),
+        "Newest indexed: 2025-01-15 (0 days ago)"
+    );
+}
+
+#[test]
+fn article_search_markdown_omits_index_footer_when_no_rows_have_it() {
+    let rows = vec![ArticleSearchResult {
+        pmid: "22663011".into(),
+        title: "Entity-aware article".into(),
+        pmcid: None,
+        doi: None,
+        journal: Some("Journal".into()),
+        date: Some("2025-01-01".into()),
+        first_index_date: None,
+        citation_count: Some(12),
+        influential_citation_count: Some(4),
+        source: ArticleSource::EuropePmc,
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: Some("Abstract".into()),
+        ranking: None,
+        matched_sources: vec![ArticleSource::EuropePmc],
+        normalized_title: "entity-aware article".into(),
+        normalized_abstract: "abstract".into(),
+        publication_type: None,
+        source_local_position: 0,
+    }];
+
+    let markdown = article_search_markdown_with_footer_and_context(
+        "gene=BRAF",
+        &rows,
+        "",
+        &article_filters_for_test(crate::entities::article::ArticleSort::Relevance),
+        true,
+        None,
+        None,
+    )
+    .expect("markdown should render");
+
+    assert!(!markdown.contains("Newest indexed:"));
 }

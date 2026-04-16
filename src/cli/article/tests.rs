@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use clap::{CommandFactory, Parser};
 
 use super::dispatch::{
@@ -127,6 +128,7 @@ fn article_search_json_includes_query_and_ranking_context() {
         title: "BRAF melanoma review".into(),
         journal: Some("Journal".into()),
         date: Some("2025-01-01".into()),
+        first_index_date: Some(NaiveDate::from_ymd_opt(2025, 1, 15).expect("valid date")),
         citation_count: Some(12),
         influential_citation_count: Some(4),
         source: crate::entities::article::ArticleSource::EuropePmc,
@@ -200,6 +202,7 @@ fn article_search_json_includes_query_and_ranking_context() {
         value["results"][0]["matched_sources"][1],
         serde_json::Value::String("semanticscholar".into())
     );
+    assert_eq!(value["results"][0]["first_index_date"], "2025-01-15");
     assert_eq!(
         value["_meta"]["next_commands"][0],
         serde_json::Value::String("biomcp get article 22663011".into())
@@ -229,6 +232,7 @@ fn article_search_json_next_commands_include_entity_hints() {
         title: "SRY article".into(),
         journal: Some("Journal".into()),
         date: Some("2025-01-01".into()),
+        first_index_date: None,
         citation_count: Some(12),
         influential_citation_count: Some(4),
         source: crate::entities::article::ArticleSource::EuropePmc,
@@ -259,6 +263,7 @@ fn article_search_json_next_commands_include_entity_hints() {
 
     let value: serde_json::Value =
         serde_json::from_str(&json).expect("json should parse successfully");
+    assert!(value["results"][0].get("first_index_date").is_none());
     assert_eq!(
         value["_meta"]["next_commands"][0],
         serde_json::Value::String("biomcp get article 22663011".into())
