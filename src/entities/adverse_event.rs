@@ -3,7 +3,12 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::SearchPage;
+use crate::entities::drug::resolve_trial_aliases;
 use crate::error::BioMcpError;
+use crate::sources::clinicaltrials::{
+    CTGOV_ADVERSE_EVENT_SEARCH_FIELDS, ClinicalTrialsClient, CtGovAdverseEvent, CtGovSearchParams,
+    CtGovStudy,
+};
 use crate::sources::openfda::OpenFdaClient;
 use crate::transform;
 use crate::utils::date::validate_since;
@@ -60,6 +65,24 @@ pub struct AdverseEventSearchResponse {
     pub summary: AdverseEventSearchSummary,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub results: Vec<AdverseEventSearchResult>,
+}
+
+#[derive(Debug, Clone)]
+pub enum FaersSearchStatus {
+    NotFound,
+    Results(AdverseEventSearchResponse),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrialAdverseEventTerm {
+    pub term: String,
+    pub trial_count: usize,
+}
+
+#[derive(Debug, Clone)]
+pub enum TrialAdverseEventOutcome {
+    Found(Vec<TrialAdverseEventTerm>),
+    Empty,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,6 +153,10 @@ pub const ADVERSE_EVENT_SECTION_NAMES: &[&str] = &[
     ADVERSE_EVENT_SECTION_GUIDANCE,
     ADVERSE_EVENT_SECTION_ALL,
 ];
+
+const TRIAL_ADVERSE_EVENT_LIMIT: usize = 20;
+const CTGOV_ADVERSE_EVENT_PAGE_SIZE: usize = 100;
+const CTGOV_ADVERSE_EVENT_PAGE_CAP: usize = 20;
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct AdverseEventSections {
@@ -488,11 +515,27 @@ pub fn summarize_search_results(
     }
 }
 
-pub async fn search_with_summary(
+fn empty_search_summary() -> AdverseEventSearchSummary {
+    AdverseEventSearchSummary {
+        total_reports: 0,
+        returned_report_count: 0,
+        top_reactions: Vec::new(),
+    }
+}
+
+fn empty_search_response() -> AdverseEventSearchResponse {
+    AdverseEventSearchResponse {
+        summary: empty_search_summary(),
+        results: Vec::new(),
+    }
+}
+
+async fn search_with_status_client(
+    client: &OpenFdaClient,
     filters: &AdverseEventSearchFilters,
     limit: usize,
     offset: usize,
-) -> Result<AdverseEventSearchResponse, BioMcpError> {
+) -> Result<FaersSearchStatus, BioMcpError> {
     const MAX_SEARCH_LIMIT: usize = 50;
     if limit == 0 || limit > MAX_SEARCH_LIMIT {
         return Err(BioMcpError::InvalidArgument(format!(
@@ -513,18 +556,9 @@ pub async fn search_with_summary(
         })?;
 
     let q = build_openfda_query(filters)?;
-
-    let client = OpenFdaClient::new()?;
     let resp = client.faers_search(&q, limit, offset).await?;
     let Some(resp) = resp else {
-        return Ok(AdverseEventSearchResponse {
-            summary: AdverseEventSearchSummary {
-                total_reports: 0,
-                returned_report_count: 0,
-                top_reactions: Vec::new(),
-            },
-            results: Vec::new(),
-        });
+        return Ok(FaersSearchStatus::NotFound);
     };
 
     let total_reports = resp.meta.results.total;
@@ -543,10 +577,210 @@ pub async fn search_with_summary(
         })
         .collect::<Vec<_>>();
 
-    Ok(AdverseEventSearchResponse {
+    Ok(FaersSearchStatus::Results(AdverseEventSearchResponse {
         summary: summarize_search_results(total_reports, &results),
         results,
-    })
+    }))
+}
+
+pub async fn search_with_status(
+    filters: &AdverseEventSearchFilters,
+    limit: usize,
+    offset: usize,
+) -> Result<FaersSearchStatus, BioMcpError> {
+    let client = OpenFdaClient::new()?;
+    search_with_status_client(&client, filters, limit, offset).await
+}
+
+pub async fn search_with_summary(
+    filters: &AdverseEventSearchFilters,
+    limit: usize,
+    offset: usize,
+) -> Result<AdverseEventSearchResponse, BioMcpError> {
+    match search_with_status(filters, limit, offset).await? {
+        FaersSearchStatus::NotFound => Ok(empty_search_response()),
+        FaersSearchStatus::Results(response) => Ok(response),
+    }
+}
+
+fn study_nct_id(study: &CtGovStudy) -> Option<&str> {
+    study
+        .protocol_section
+        .as_ref()?
+        .identification_module
+        .as_ref()?
+        .nct_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+}
+
+fn study_has_trial_adverse_events(study: &CtGovStudy) -> bool {
+    study
+        .results_section
+        .as_ref()
+        .and_then(|section| section.adverse_events_module.as_ref())
+        .is_some_and(|module| !module.serious_events.is_empty() || !module.other_events.is_empty())
+}
+
+fn ctgov_event_counts_for_study(event: &CtGovAdverseEvent) -> bool {
+    if event.stats.is_empty() {
+        return true;
+    }
+    event
+        .stats
+        .iter()
+        .any(|stat| stat.num_affected.unwrap_or(0) > 0)
+}
+
+fn add_trial_terms(
+    counts: &mut HashMap<String, (String, usize)>,
+    seen_in_study: &mut HashSet<String>,
+    events: &[CtGovAdverseEvent],
+) {
+    for event in events {
+        let Some(term) = event
+            .term
+            .as_deref()
+            .map(str::trim)
+            .filter(|term| !term.is_empty())
+        else {
+            continue;
+        };
+        if !ctgov_event_counts_for_study(event) {
+            continue;
+        }
+        let key = term.to_ascii_lowercase();
+        if !seen_in_study.insert(key.clone()) {
+            continue;
+        }
+        let entry = counts
+            .entry(key)
+            .or_insert_with(|| (term.to_string(), 0usize));
+        entry.1 += 1;
+    }
+}
+
+fn aggregate_trial_adverse_event_terms(
+    studies: impl Iterator<Item = CtGovStudy>,
+) -> Vec<TrialAdverseEventTerm> {
+    let mut counts: HashMap<String, (String, usize)> = HashMap::new();
+
+    for study in studies {
+        let Some(module) = study
+            .results_section
+            .as_ref()
+            .and_then(|section| section.adverse_events_module.as_ref())
+        else {
+            continue;
+        };
+
+        let mut seen_in_study = HashSet::new();
+        add_trial_terms(&mut counts, &mut seen_in_study, &module.serious_events);
+        add_trial_terms(&mut counts, &mut seen_in_study, &module.other_events);
+    }
+
+    let mut rows = counts
+        .into_values()
+        .map(|(term, trial_count)| TrialAdverseEventTerm { term, trial_count })
+        .collect::<Vec<_>>();
+    rows.sort_by(|a, b| {
+        b.trial_count
+            .cmp(&a.trial_count)
+            .then_with(|| a.term.cmp(&b.term))
+    });
+    rows.truncate(TRIAL_ADVERSE_EVENT_LIMIT);
+    rows
+}
+
+async fn fetch_ctgov_studies_for_alias(
+    client: &ClinicalTrialsClient,
+    alias: &str,
+) -> Result<Vec<CtGovStudy>, BioMcpError> {
+    let mut studies = Vec::new();
+    let mut page_token = None;
+
+    for _ in 0..CTGOV_ADVERSE_EVENT_PAGE_CAP {
+        let response = client
+            .search(&CtGovSearchParams {
+                condition: None,
+                intervention: Some(alias.to_string()),
+                facility: None,
+                status: None,
+                agg_filters: Some("results:with".into()),
+                query_term: None,
+                fields_override: Some(CTGOV_ADVERSE_EVENT_SEARCH_FIELDS.into()),
+                count_total: false,
+                page_token: page_token.clone(),
+                page_size: CTGOV_ADVERSE_EVENT_PAGE_SIZE,
+                lat: None,
+                lon: None,
+                distance_miles: None,
+            })
+            .await?;
+
+        studies.extend(response.studies);
+        page_token = response.next_page_token;
+        if page_token.is_none() {
+            break;
+        }
+    }
+
+    Ok(studies)
+}
+
+async fn trial_adverse_events_with_aliases(
+    client: &ClinicalTrialsClient,
+    aliases: &[String],
+) -> Result<TrialAdverseEventOutcome, BioMcpError> {
+    let mut studies_by_nct: HashMap<String, CtGovStudy> = HashMap::new();
+
+    for alias in aliases
+        .iter()
+        .map(String::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        for study in fetch_ctgov_studies_for_alias(client, alias).await? {
+            let Some(nct_id) = study_nct_id(&study).map(str::to_string) else {
+                continue;
+            };
+            match studies_by_nct.entry(nct_id) {
+                std::collections::hash_map::Entry::Occupied(mut entry) => {
+                    if !study_has_trial_adverse_events(entry.get())
+                        && study_has_trial_adverse_events(&study)
+                    {
+                        entry.insert(study);
+                    }
+                }
+                std::collections::hash_map::Entry::Vacant(entry) => {
+                    entry.insert(study);
+                }
+            }
+        }
+    }
+
+    let rows = aggregate_trial_adverse_event_terms(studies_by_nct.into_values());
+    if rows.is_empty() {
+        Ok(TrialAdverseEventOutcome::Empty)
+    } else {
+        Ok(TrialAdverseEventOutcome::Found(rows))
+    }
+}
+
+pub async fn trial_adverse_events(
+    drug_name: &str,
+) -> Result<TrialAdverseEventOutcome, BioMcpError> {
+    let requested_name = drug_name.trim();
+    if requested_name.is_empty() {
+        return Err(BioMcpError::InvalidArgument(
+            "Drug name is required. Example: biomcp drug adverse-events pembrolizumab".into(),
+        ));
+    }
+
+    let aliases = resolve_trial_aliases(requested_name).await?;
+    let client = ClinicalTrialsClient::new()?;
+    trial_adverse_events_with_aliases(&client, &aliases).await
 }
 
 pub async fn search_count(
@@ -1024,6 +1258,35 @@ pub fn recall_query_summary(filters: &RecallSearchFilters) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    struct EnvVarGuard {
+        name: &'static str,
+        previous: Option<String>,
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            unsafe {
+                match &self.previous {
+                    Some(value) => std::env::set_var(self.name, value),
+                    None => std::env::remove_var(self.name),
+                }
+            }
+        }
+    }
+
+    fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuard {
+        let previous = std::env::var(name).ok();
+        unsafe {
+            match value {
+                Some(value) => std::env::set_var(name, value),
+                None => std::env::remove_var(name),
+            }
+        }
+        EnvVarGuard { name, previous }
+    }
 
     #[test]
     fn build_openfda_query_requires_drug_name() {
@@ -1152,5 +1415,192 @@ mod tests {
             normalize_count_field_for_openfda("patient.drug.medicinalproduct"),
             "patient.drug.medicinalproduct"
         );
+    }
+
+    #[tokio::test]
+    async fn search_with_status_preserves_openfda_not_found() {
+        let _env_lock = crate::test_support::env_lock().lock().await;
+        let server = MockServer::start().await;
+        let filters = AdverseEventSearchFilters {
+            drug: Some("daraxonrasib".into()),
+            ..Default::default()
+        };
+        let query = build_openfda_query(&filters).unwrap();
+        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/drug/event.json"))
+            .and(query_param("search", query.as_str()))
+            .and(query_param("limit", "5"))
+            .and(query_param("skip", "0"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "error": {"code": "NOT_FOUND", "message": "No matches found!"}
+            })))
+            .mount(&server)
+            .await;
+
+        let status = search_with_status(&filters, 5, 0).await.unwrap();
+        assert!(matches!(status, FaersSearchStatus::NotFound));
+    }
+
+    #[tokio::test]
+    async fn search_with_status_preserves_openfda_empty_results() {
+        let _env_lock = crate::test_support::env_lock().lock().await;
+        let server = MockServer::start().await;
+        let filters = AdverseEventSearchFilters {
+            drug: Some("faers-empty".into()),
+            ..Default::default()
+        };
+        let query = build_openfda_query(&filters).unwrap();
+        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/drug/event.json"))
+            .and(query_param("search", query.as_str()))
+            .and(query_param("limit", "5"))
+            .and(query_param("skip", "0"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 5, "total": 0}},
+                "results": []
+            })))
+            .mount(&server)
+            .await;
+
+        let status = search_with_status(&filters, 5, 0).await.unwrap();
+        match status {
+            FaersSearchStatus::NotFound => panic!("expected empty results, got not-found"),
+            FaersSearchStatus::Results(response) => {
+                assert_eq!(response.summary.total_reports, 0);
+                assert!(response.results.is_empty());
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn trial_adverse_events_dedupe_studies_across_aliases() {
+        let server = MockServer::start().await;
+        let client =
+            ClinicalTrialsClient::new_for_test(format!("{}/api/v2", server.uri())).unwrap();
+
+        for alias in ["daraxonrasib", "RMC-6236"] {
+            Mock::given(method("GET"))
+                .and(path("/api/v2/studies"))
+                .and(query_param("query.intr", alias))
+                .and(query_param("aggFilters", "results:with"))
+                .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
+                .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "studies": [{
+                        "protocolSection": {
+                            "identificationModule": {
+                                "nctId": "NCT05379985",
+                                "briefTitle": "Daraxonrasib first-in-human study"
+                            }
+                        },
+                        "hasResults": true,
+                        "resultsSection": {
+                            "adverseEventsModule": {
+                                "seriousEvents": [{
+                                    "term": "Rash",
+                                    "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
+                                }],
+                                "otherEvents": [{
+                                    "term": "Fatigue",
+                                    "stats": [{"groupId": "g1", "numAffected": 1, "numAtRisk": 10}]
+                                }]
+                            }
+                        }
+                    }],
+                    "nextPageToken": null
+                })))
+                .mount(&server)
+                .await;
+        }
+
+        let outcome =
+            trial_adverse_events_with_aliases(&client, &["daraxonrasib".into(), "RMC-6236".into()])
+                .await
+                .unwrap();
+
+        match outcome {
+            TrialAdverseEventOutcome::Empty => panic!("expected trial adverse events"),
+            TrialAdverseEventOutcome::Found(rows) => {
+                assert_eq!(rows.len(), 2);
+                assert_eq!(rows[0].term, "Fatigue");
+                assert_eq!(rows[0].trial_count, 1);
+                assert_eq!(rows[1].term, "Rash");
+                assert_eq!(rows[1].trial_count, 1);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn trial_adverse_events_count_each_term_once_per_study() {
+        let server = MockServer::start().await;
+        let client =
+            ClinicalTrialsClient::new_for_test(format!("{}/api/v2", server.uri())).unwrap();
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/studies"))
+            .and(query_param("query.intr", "daraxonrasib"))
+            .and(query_param("aggFilters", "results:with"))
+            .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "studies": [
+                    {
+                        "protocolSection": {
+                            "identificationModule": {
+                                "nctId": "NCT05379985",
+                                "briefTitle": "Daraxonrasib first-in-human study"
+                            }
+                        },
+                        "hasResults": true,
+                        "resultsSection": {
+                            "adverseEventsModule": {
+                                "seriousEvents": [{
+                                    "term": "Rash",
+                                    "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
+                                }],
+                                "otherEvents": [{
+                                    "term": "Rash",
+                                    "stats": [{"groupId": "g2", "numAffected": 4, "numAtRisk": 10}]
+                                }]
+                            }
+                        }
+                    },
+                    {
+                        "protocolSection": {
+                            "identificationModule": {
+                                "nctId": "NCT00000002",
+                                "briefTitle": "Daraxonrasib expansion cohort"
+                            }
+                        },
+                        "hasResults": true,
+                        "resultsSection": {
+                            "adverseEventsModule": {
+                                "seriousEvents": [],
+                                "otherEvents": [{
+                                    "term": "Rash",
+                                    "stats": [{"groupId": "g3", "numAffected": 1, "numAtRisk": 12}]
+                                }]
+                            }
+                        }
+                    }
+                ],
+                "nextPageToken": null
+            })))
+            .mount(&server)
+            .await;
+
+        let outcome = trial_adverse_events_with_aliases(&client, &["daraxonrasib".into()])
+            .await
+            .unwrap();
+
+        match outcome {
+            TrialAdverseEventOutcome::Empty => panic!("expected trial adverse events"),
+            TrialAdverseEventOutcome::Found(rows) => {
+                assert_eq!(rows[0].term, "Rash");
+                assert_eq!(rows[0].trial_count, 2);
+            }
+        }
     }
 }

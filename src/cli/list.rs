@@ -413,13 +413,14 @@ fn list_drug() -> String {
 ## Helpers
 
 - `drug trials <name> [--no-alias-expand]`
-- `drug adverse-events <name>`
+- `drug adverse-events <name>` - checks FAERS first, distinguishes FAERS 404 from FAERS 200+empty results, and falls back to ClinicalTrials.gov trial-reported adverse events only on FAERS 404
 
 ## JSON Output
 
 - Non-empty `search drug --json` responses include `_meta.next_commands`.
 - The top follow-up uses `biomcp get drug <name>` for the preferred top result or requested all-region name lookup.
 - `biomcp list drug` is always included so agents can inspect the full filter surface.
+- `biomcp --json drug adverse-events <name>` keeps the FAERS `summary` / `results` / `count` fields, adds `faers_not_found`, and includes `trial_adverse_events` only when the ClinicalTrials.gov fallback returns posted trial adverse-event terms.
 
 ## Notes
 
@@ -430,6 +431,7 @@ fn list_drug() -> String {
 - `ema` is accepted as an input alias for the canonical `eu` drug region value.
 - Omitting `--region` on `get drug <name> regulatory` is the one implicit combined-region get path; other no-flag `get drug` shapes stay on the default U.S. path.
 - `drug trials <name>` inherits CTGov intervention alias expansion, adds `Matched Intervention` / `matched_intervention_label` when an alternate alias matched first, and accepts `--no-alias-expand` for literal matching.
+- `drug adverse-events <name>` explains when a drug is absent from FAERS versus present with no matching FAERS events; only the FAERS-404 branch queries ClinicalTrials.gov.
 - EU regional commands auto-download the EMA human-medicines JSON feeds into `BIOMCP_EMA_DIR` or the default data directory on first use.
 - WHO regulatory commands auto-download the WHO Prequalification CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.
 - Run `biomcp ema sync` or `biomcp who sync` to force-refresh the local regional data.

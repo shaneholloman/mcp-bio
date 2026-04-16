@@ -10,6 +10,7 @@ const CTGOV_API: &str = "clinicaltrials.gov";
 const CTGOV_BASE_ENV: &str = "BIOMCP_CTGOV_BASE";
 
 const CTGOV_SEARCH_FIELDS: &str = "NCTId,BriefTitle,OverallStatus,Phase,StudyType,Condition,InterventionName,LeadSponsorName,EnrollmentCount,BriefSummary,StartDate,CompletionDate,MinimumAge,MaximumAge";
+pub const CTGOV_ADVERSE_EVENT_SEARCH_FIELDS: &str = "protocolSection.identificationModule.nctId,protocolSection.identificationModule.briefTitle,hasResults,resultsSection.adverseEventsModule";
 
 const CTGOV_GET_FIELDS_BASE: &[&str] = &[
     "NCTId",
@@ -84,6 +85,7 @@ pub struct CtGovSearchParams {
     pub agg_filters: Option<String>,
     /// ClinicalTrials.gov advanced query syntax. Multiple terms should be joined by ` AND `.
     pub query_term: Option<String>,
+    pub fields_override: Option<String>,
     pub count_total: bool,
     pub page_token: Option<String>,
     pub page_size: usize,
@@ -239,10 +241,13 @@ impl ClinicalTrialsClient {
         }
 
         let page_size = params.page_size.to_string();
-        req = req.query(&[
-            ("pageSize", page_size.as_str()),
-            ("fields", CTGOV_SEARCH_FIELDS),
-        ]);
+        let fields = params
+            .fields_override
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .unwrap_or(CTGOV_SEARCH_FIELDS);
+        req = req.query(&[("pageSize", page_size.as_str()), ("fields", fields)]);
 
         self.get_json(req).await
     }
@@ -292,6 +297,8 @@ pub struct CtGovSearchResponse {
 #[serde(rename_all = "camelCase")]
 pub struct CtGovStudy {
     pub protocol_section: Option<CtGovProtocolSection>,
+    pub has_results: Option<bool>,
+    pub results_section: Option<CtGovResultsSection>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -308,6 +315,37 @@ pub struct CtGovProtocolSection {
     pub contacts_locations_module: Option<CtGovContactsLocationsModule>,
     pub outcomes_module: Option<CtGovOutcomesModule>,
     pub references_module: Option<CtGovReferencesModule>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CtGovResultsSection {
+    pub adverse_events_module: Option<CtGovAdverseEventsModule>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CtGovAdverseEventsModule {
+    #[serde(default)]
+    pub serious_events: Vec<CtGovAdverseEvent>,
+    #[serde(default)]
+    pub other_events: Vec<CtGovAdverseEvent>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CtGovAdverseEvent {
+    pub term: Option<String>,
+    #[serde(default)]
+    pub stats: Vec<CtGovAdverseEventStats>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CtGovAdverseEventStats {
+    pub group_id: Option<String>,
+    pub num_affected: Option<u32>,
+    pub num_at_risk: Option<u32>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -510,6 +548,7 @@ mod tests {
                 status: Some("RECRUITING".into()),
                 agg_filters: None,
                 query_term: Some("AREA[Phase]PHASE2".into()),
+                fields_override: None,
                 count_total: true,
                 page_token: None,
                 page_size: 3,
@@ -545,6 +584,7 @@ mod tests {
                 status: None,
                 agg_filters: None,
                 query_term: None,
+                fields_override: None,
                 count_total: false,
                 page_token: None,
                 page_size: 10,
@@ -581,9 +621,47 @@ mod tests {
                 status: None,
                 agg_filters: Some("sex:f,funderType:nih".into()),
                 query_term: None,
+                fields_override: None,
                 count_total: false,
                 page_token: None,
                 page_size: 5,
+                lat: None,
+                lon: None,
+                distance_miles: None,
+            })
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn search_uses_fields_override_when_requested() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/studies"))
+            .and(query_param("query.intr", "daraxonrasib"))
+            .and(query_param("aggFilters", "results:with"))
+            .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "studies": [],
+                "nextPageToken": null
+            })))
+            .mount(&server)
+            .await;
+
+        let client = ClinicalTrialsClient::new_for_test(server.uri()).unwrap();
+        let _ = client
+            .search(&CtGovSearchParams {
+                condition: None,
+                intervention: Some("daraxonrasib".into()),
+                facility: None,
+                status: None,
+                agg_filters: Some("results:with".into()),
+                query_term: None,
+                fields_override: Some(CTGOV_ADVERSE_EVENT_SEARCH_FIELDS.into()),
+                count_total: false,
+                page_token: None,
+                page_size: 20,
                 lat: None,
                 lon: None,
                 distance_miles: None,

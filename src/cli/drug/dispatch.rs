@@ -247,6 +247,18 @@ pub(crate) async fn handle_command(
                     offset,
                     serious,
                 } => {
+                    #[derive(serde::Serialize)]
+                    struct SearchResponse {
+                        total: Option<usize>,
+                        count: usize,
+                        summary: crate::entities::adverse_event::AdverseEventSearchSummary,
+                        results: Vec<crate::entities::adverse_event::AdverseEventSearchResult>,
+                        faers_not_found: bool,
+                        #[serde(skip_serializing_if = "Option::is_none")]
+                        trial_adverse_events:
+                            Option<Vec<crate::entities::adverse_event::TrialAdverseEventTerm>>,
+                    }
+
                     let filters = crate::entities::adverse_event::AdverseEventSearchFilters {
                         drug: Some(name.clone()),
                         serious: serious.then_some("any".to_string()),
@@ -255,40 +267,100 @@ pub(crate) async fn handle_command(
                     let query_summary =
                         crate::entities::adverse_event::search_query_summary(&filters);
                     let fetch_limit = super::super::paged_fetch_limit(limit, offset, 50)?;
-                    let response = crate::entities::adverse_event::search_with_summary(
+                    let status = crate::entities::adverse_event::search_with_status(
                         &filters,
                         fetch_limit,
                         0,
                     )
                     .await?;
-                    let (results, observed_total) =
-                        super::super::paginate_results(response.results, offset, limit);
-                    super::super::log_pagination_truncation(observed_total, offset, results.len());
-                    let summary = crate::entities::adverse_event::summarize_search_results(
-                        response.summary.total_reports,
-                        &results,
-                    );
-                    if json {
-                        #[derive(serde::Serialize)]
-                        struct SearchResponse {
-                            total: Option<usize>,
-                            count: usize,
-                            summary: crate::entities::adverse_event::AdverseEventSearchSummary,
-                            results: Vec<crate::entities::adverse_event::AdverseEventSearchResult>,
+                    match status {
+                        crate::entities::adverse_event::FaersSearchStatus::Results(response) => {
+                            let (results, observed_total) =
+                                super::super::paginate_results(response.results, offset, limit);
+                            super::super::log_pagination_truncation(
+                                observed_total,
+                                offset,
+                                results.len(),
+                            );
+                            let summary = crate::entities::adverse_event::summarize_search_results(
+                                response.summary.total_reports,
+                                &results,
+                            );
+                            if json {
+                                crate::render::json::to_pretty(&SearchResponse {
+                                    total: Some(summary.total_reports),
+                                    count: results.len(),
+                                    summary,
+                                    results,
+                                    faers_not_found: false,
+                                    trial_adverse_events: None,
+                                })?
+                            } else {
+                                let empty_state_message = results.is_empty().then_some(
+                                    "Drug found in FAERS, but no events matched your filters. Try broadening the search.",
+                                );
+                                crate::render::markdown::adverse_event_search_markdown_with_context(
+                                    &query_summary,
+                                    &results,
+                                    &summary,
+                                    "",
+                                    empty_state_message,
+                                    &[],
+                                    None,
+                                )?
+                            }
                         }
-
-                        crate::render::json::to_pretty(&SearchResponse {
-                            total: Some(summary.total_reports),
-                            count: results.len(),
-                            summary,
-                            results,
-                        })?
-                    } else {
-                        crate::render::markdown::adverse_event_search_markdown(
-                            &query_summary,
-                            &results,
-                            &summary,
-                        )?
+                        crate::entities::adverse_event::FaersSearchStatus::NotFound => {
+                            let trial_adverse_events =
+                                match crate::entities::adverse_event::trial_adverse_events(&name)
+                                    .await
+                                {
+                                    Ok(crate::entities::adverse_event::TrialAdverseEventOutcome::Found(
+                                        rows,
+                                    )) => Some(rows),
+                                    Ok(crate::entities::adverse_event::TrialAdverseEventOutcome::Empty) => {
+                                        None
+                                    }
+                                    Err(err) => {
+                                        return Err(anyhow::anyhow!(
+                                            "drug not found in FAERS and ClinicalTrials.gov fallback failed: {err}"
+                                        ));
+                                    }
+                                };
+                            let summary =
+                                crate::entities::adverse_event::AdverseEventSearchSummary {
+                                    total_reports: 0,
+                                    returned_report_count: 0,
+                                    top_reactions: Vec::new(),
+                                };
+                            let results = Vec::new();
+                            if json {
+                                crate::render::json::to_pretty(&SearchResponse {
+                                    total: Some(0),
+                                    count: 0,
+                                    summary,
+                                    results,
+                                    faers_not_found: true,
+                                    trial_adverse_events,
+                                })?
+                            } else {
+                                let empty_state_message = if trial_adverse_events.is_some() {
+                                    "Drug not found in FAERS. FAERS is a post-marketing database; expect no records for investigational, newly approved, or name-variant drugs. Falling back to ClinicalTrials.gov trial-reported adverse events."
+                                } else {
+                                    "Drug not found in FAERS. FAERS is a post-marketing database; expect no records for investigational, newly approved, or name-variant drugs. Falling back to ClinicalTrials.gov trial-reported adverse events. ClinicalTrials.gov did not return posted trial adverse events for this drug."
+                                };
+                                let trial_rows = trial_adverse_events.unwrap_or_default();
+                                crate::render::markdown::adverse_event_search_markdown_with_context(
+                                    &query_summary,
+                                    &results,
+                                    &summary,
+                                    "",
+                                    Some(empty_state_message),
+                                    &trial_rows,
+                                    Some(&name),
+                                )?
+                            }
+                        }
                     }
                 }
                 DrugCommand::External(_) => unreachable!("handled above"),

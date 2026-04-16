@@ -210,6 +210,7 @@ fn build_ctgov_search_params(
         status: context.normalized_status.clone(),
         agg_filters: context.agg_filters.clone(),
         query_term: context.query_term.clone(),
+        fields_override: None,
         count_total: true,
         page_token,
         page_size,

@@ -1,6 +1,6 @@
 # Adverse Events: {{ query }}
 {% if count == 0 -%}
-No adverse events found
+{{ empty_state_message or "No adverse events found" }}
 {% else -%}
 Found {{ count }} report{% if count != 1 %}s{% endif %}
 
@@ -27,4 +27,17 @@ Filters: --drug <name>, --reaction <term>, --outcome <death|hospitalization|disa
 
 {{ pagination_footer }}
 {% endif %}
+{% endif -%}
+{% if trial_adverse_events %}
+
+## Trial-Reported Adverse Events (ClinicalTrials.gov)
+ClinicalTrials.gov trial results reported the following adverse-event terms{% if trial_adverse_event_drug %} for {{ trial_adverse_event_drug }}{% endif %}.
+
+| Term | Trial Count |
+|---|---|
+{% for row in trial_adverse_events -%}
+| {{ row.term }} | {{ row.trial_count }} |
+{% endfor %}
+
+Source: ClinicalTrials.gov trial results
 {% endif -%}

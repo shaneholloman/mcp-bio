@@ -11,7 +11,7 @@ Drug commands connect mechanism and target context with trial and adverse-event 
 | Sparse drug guidance | `get drug orteronel` | Confirms article-search follow-up for investigational cards |
 | Targets section | `get drug ... targets` | Confirms progressive disclosure |
 | Trial helper | `drug trials pembrolizumab` | Confirms intervention-based trial pivot |
-| Adverse-event helper | `drug adverse-events pembrolizumab` | Confirms safety signal pivot |
+| Adverse-event helper | `drug adverse-events pembrolizumab` | Confirms FAERS-backed safety signal pivot without CTGov fallback noise |
 | Adverse-event search | `search adverse-event -d ibuprofen` | Confirms direct safety search |
 
 ## EMA Health Readiness
@@ -400,12 +400,76 @@ echo "$list_out" | mustmatch like "inherits CTGov intervention alias expansion"
 
 ## Drug to Adverse Events
 
-This helper links a therapy directly to adverse-event reporting data. Assertions target the adverse-event heading and report table columns.
+This helper links a therapy directly to adverse-event reporting data. For drugs with
+FAERS coverage, the existing report table remains the primary contract and should not
+grow a ClinicalTrials.gov fallback section.
 
 ```bash
 out="$(biomcp drug adverse-events pembrolizumab --limit 3)"
 echo "$out" | mustmatch like "# Adverse Events: drug=pembrolizumab"
 echo "$out" | mustmatch like "|Report ID|Drug|Reactions|Serious|"
+echo "$out" | mustmatch not like "Trial-Reported Adverse Events (ClinicalTrials.gov)"
+```
+
+## Drug Adverse Events CTGov Fallback (fixture)
+
+When FAERS returns 404, the helper should say why FAERS is empty for
+investigational or newly approved drugs, then append a clearly labeled
+ClinicalTrials.gov trial-results section.
+
+```bash
+bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-drug-ae-fallback-env"
+out="$(biomcp drug adverse-events daraxonrasib --limit 5)"
+echo "$out" | mustmatch like "Drug not found in FAERS. FAERS is a post-marketing database"
+echo "$out" | mustmatch like "## Trial-Reported Adverse Events (ClinicalTrials.gov)"
+echo "$out" | mustmatch like "| Rash | 2 |"
+```
+
+## Drug Adverse Events CTGov Fallback JSON (fixture)
+
+The JSON contract keeps the FAERS-shaped top-level fields but marks the 404 branch
+explicitly and emits aggregated trial adverse-event terms with source-aware naming.
+
+```bash
+bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-drug-ae-fallback-env"
+json_out="$(biomcp --json drug adverse-events daraxonrasib --limit 5)"
+echo "$json_out" | mustmatch like '"faers_not_found": true'
+echo "$json_out" | mustmatch like '"trial_adverse_events":'
+echo "$json_out" | jq -e '.faers_not_found == true' > /dev/null
+echo "$json_out" | jq -e '.trial_adverse_events | length >= 3' > /dev/null
+echo "$json_out" | jq -e '.trial_adverse_events[0].term == "Rash"' > /dev/null
+```
+
+## Drug Adverse Events CTGov Fallback Empty (fixture)
+
+If FAERS is 404 and ClinicalTrials.gov has no posted adverse-event terms, the helper
+should stay truthful about both sources and omit the fallback table instead of
+inventing empty rows.
+
+```bash
+bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-drug-ae-fallback-env"
+out="$(biomcp drug adverse-events ctgov-empty --limit 5)"
+echo "$out" | mustmatch like "Drug not found in FAERS. FAERS is a post-marketing database"
+echo "$out" | mustmatch like "ClinicalTrials.gov did not return posted trial adverse events"
+echo "$out" | mustmatch not like "## Trial-Reported Adverse Events (ClinicalTrials.gov)"
+```
+
+## Drug Adverse Events FAERS Empty Does Not Fallback (fixture)
+
+A FAERS 200 response with an empty result set is different from a FAERS 404. This
+branch should explain that the drug matched FAERS indexing but no events matched,
+and it must not query or render ClinicalTrials.gov fallback content.
+
+```bash
+bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-drug-ae-fallback-env"
+out="$(biomcp drug adverse-events faers-empty --limit 5)"
+echo "$out" | mustmatch like "Drug found in FAERS, but no events matched your filters"
+echo "$out" | mustmatch not like "Trial-Reported Adverse Events (ClinicalTrials.gov)"
+echo "$out" | mustmatch not like "| Rash | 2 |"
 ```
 
 ## Adverse Event Search
@@ -428,6 +492,19 @@ json_out="$(biomcp --json search adverse-event -d ibuprofen --limit 3)"
 echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get adverse-event .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list adverse-event")' > /dev/null
+```
+
+## Drug List Documents Adverse Event Fallback
+
+The list surface should document the repaired empty-state wording and the JSON fields
+that identify when ClinicalTrials.gov contributed fallback data.
+
+```bash
+list_out="$(biomcp list drug)"
+echo "$list_out" | mustmatch like '`drug adverse-events <name>` - checks FAERS first'
+echo "$list_out" | mustmatch like "falls back to ClinicalTrials.gov trial-reported adverse events only on FAERS 404"
+echo "$list_out" | mustmatch like "faers_not_found"
+echo "$list_out" | mustmatch like "trial_adverse_events"
 ```
 
 ## Brand Name Search Uses Exact Match Ranking
