@@ -234,6 +234,53 @@ echo "$list_out" | mustmatch like "first_index_date"
 echo "$list_out" | mustmatch like "Newest indexed: YYYY-MM-DD (N days ago)"
 ```
 
+## Article Year Help and Validation
+
+The year aliases should stay strict at the CLI boundary, document themselves on
+the help/list surfaces, and reuse the existing date-range validation once
+expanded.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+
+help_out="$("$bin" search article --help)"
+echo "$help_out" | mustmatch like "--year-min <YYYY>"
+echo "$help_out" | mustmatch like "--year-max <YYYY>"
+echo "$help_out" | mustmatch like "Published from year (YYYY)"
+echo "$help_out" | mustmatch like "Published through year (YYYY)"
+
+list_out="$("$bin" list article)"
+echo "$list_out" | mustmatch like "--year-min <YYYY>"
+echo "$list_out" | mustmatch like "--year-max <YYYY>"
+echo "$list_out" | mustmatch like "year-refinement next commands"
+
+unset status
+out="$("$bin" search article -g BRAF --year-min 200 --limit 1 2>&1)" || status=$?
+test "${status:-0}" -ne 0
+echo "$out" | mustmatch like "invalid value '200' for '--year-min <YYYY>'"
+echo "$out" | mustmatch like "expected YYYY"
+
+unset status
+out="$("$bin" search article -g BRAF --year-min 2000 --date-from 2000-01-01 --limit 1 2>&1)" || status=$?
+test "${status:-0}" -ne 0
+echo "$out" | mustmatch like "the argument '--year-min <YYYY>' cannot be used with '--date-from <DATE_FROM>'"
+
+unset status
+out="$("$bin" search article -g BRAF --year-min 2013 --year-max 2000 --limit 1 2>&1)" || status=$?
+test "${status:-0}" -eq 1
+echo "$out" | mustmatch like "Error: Invalid argument: --date-from must be <= --date-to"
+```
+
+## Live Article Year Range Search
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+json_out="$("$bin" --json search article -g BRAF --source pubmed --year-min 2000 --year-max 2013 --limit 5)"
+echo "$json_out" | mustmatch like '"results":'
+echo "$json_out" | jq -e '.results | length > 0' > /dev/null
+echo "$json_out" | jq -e 'all(.results[]; (.date == null) or (.date == "") or (((.date[0:4] | tonumber) >= 2000) and ((.date[0:4] | tonumber) <= 2013)))' > /dev/null
+```
+
 ## Article Query Echo Surfaces Explicit Max-Per-Source Overrides
 
 Explicit `--max-per-source` overrides should surface in article query context

@@ -21,10 +21,25 @@ pub(in crate::cli) async fn handle_get(
     Ok(CommandOutcome::stdout(text))
 }
 
+pub(super) fn resolved_article_date_bounds(
+    args: &ArticleSearchArgs,
+) -> (Option<String>, Option<String>) {
+    let date_from = args
+        .date_from
+        .clone()
+        .or_else(|| args.year_min.map(|year| format!("{year:04}-01-01")));
+    let date_to = args
+        .date_to
+        .clone()
+        .or_else(|| args.year_max.map(|year| format!("{year:04}-12-31")));
+    (date_from, date_to)
+}
+
 pub(in crate::cli) async fn handle_search(
     args: ArticleSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
+    let (date_from, date_to) = resolved_article_date_bounds(&args);
     let disease = super::super::normalize_cli_tokens(args.disease);
     let drug = super::super::normalize_cli_tokens(args.drug);
     let author = super::super::normalize_cli_tokens(args.author);
@@ -60,8 +75,8 @@ pub(in crate::cli) async fn handle_search(
         drug,
         author,
         keyword,
-        date_from: args.date_from,
-        date_to: args.date_to,
+        date_from,
+        date_to,
         article_type: args.article_type,
         journal,
         open_access: args.open_access,

@@ -3,9 +3,9 @@ use clap::{CommandFactory, Parser};
 
 use super::dispatch::{
     ArticleSearchJsonPage, article_debug_filters, article_query_summary, article_search_json,
-    build_article_debug_plan, truncate_article_annotations,
+    build_article_debug_plan, resolved_article_date_bounds, truncate_article_annotations,
 };
-use crate::cli::{Cli, Commands, PaginationMeta};
+use crate::cli::{Cli, Commands, PaginationMeta, SearchEntity};
 
 fn render_article_search_long_help() -> String {
     let mut command = Cli::command();
@@ -73,6 +73,10 @@ fn article_date_help_advertises_shared_accepted_formats() {
 
     assert!(help.contains("Published after date (YYYY, YYYY-MM, or YYYY-MM-DD)"));
     assert!(help.contains("Published before date (YYYY, YYYY-MM, or YYYY-MM-DD)"));
+    assert!(help.contains("--year-min <YYYY>"));
+    assert!(help.contains("--year-max <YYYY>"));
+    assert!(help.contains("Published from year (YYYY)"));
+    assert!(help.contains("Published through year (YYYY)"));
     assert!(help.contains("[aliases: --since]"));
     assert!(help.contains("[aliases: --until]"));
     assert!(help.contains("--max-per-source <N>"));
@@ -84,6 +88,78 @@ fn article_date_help_advertises_shared_accepted_formats() {
     ));
     assert!(help.contains("`0` uses the default cap."));
     assert!(help.contains("Setting it equal to `--limit` disables capping."));
+}
+
+#[test]
+fn article_year_flags_parse_and_expand_to_date_bounds() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "article",
+        "-g",
+        "BRAF",
+        "--year-min",
+        "2000",
+        "--year-max",
+        "2013",
+        "--limit",
+        "1",
+    ])
+    .expect("article year flags should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Article(args),
+        },
+        ..
+    } = cli
+    else {
+        panic!("expected article search command");
+    };
+
+    assert_eq!(args.year_min, Some(2000));
+    assert_eq!(args.year_max, Some(2013));
+    let (date_from, date_to) = resolved_article_date_bounds(&args);
+    assert_eq!(date_from.as_deref(), Some("2000-01-01"));
+    assert_eq!(date_to.as_deref(), Some("2013-12-31"));
+}
+
+#[test]
+fn article_year_flags_reject_non_yyyy_values() {
+    let err = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "article",
+        "-g",
+        "BRAF",
+        "--year-min",
+        "200",
+    ])
+    .expect_err("non-YYYY year should fail to parse");
+
+    let message = err.to_string();
+    assert!(message.contains("invalid value '200' for '--year-min <YYYY>'"));
+    assert!(message.contains("expected YYYY"));
+}
+
+#[test]
+fn article_year_flags_conflict_with_explicit_dates() {
+    let err = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "article",
+        "-g",
+        "BRAF",
+        "--year-min",
+        "2000",
+        "--date-from",
+        "2000-01-01",
+    ])
+    .expect_err("year-min and date-from should conflict");
+
+    assert!(err.to_string().contains(
+        "the argument '--year-min <YYYY>' cannot be used with '--date-from <DATE_FROM>'"
+    ));
 }
 
 #[tokio::test]
@@ -207,9 +283,18 @@ fn article_search_json_includes_query_and_ranking_context() {
         value["_meta"]["next_commands"][0],
         serde_json::Value::String("biomcp get article 22663011".into())
     );
-    assert_eq!(
-        value["_meta"]["next_commands"][1],
-        serde_json::Value::String("biomcp list article".into())
+    assert!(
+        value["_meta"]["next_commands"]
+            .as_array()
+            .is_some_and(|commands| commands.contains(&serde_json::Value::String(
+                "biomcp search article -g BRAF --year-min 2025 --year-max 2025 --limit 5".into()
+            )))
+    );
+    assert!(
+        value["_meta"]["next_commands"]
+            .as_array()
+            .is_some_and(|commands| commands
+                .contains(&serde_json::Value::String("biomcp list article".into())))
     );
 }
 
@@ -276,9 +361,21 @@ fn article_search_json_next_commands_include_entity_hints() {
         value["_meta"]["next_commands"][2],
         serde_json::Value::String("biomcp search article -g SRY -k \"Sox9 miRNA\"".into())
     );
-    assert_eq!(
-        value["_meta"]["next_commands"][3],
-        serde_json::Value::String("biomcp list article".into())
+    assert!(
+        value["_meta"]["next_commands"]
+            .as_array()
+            .is_some_and(|commands| {
+                commands.contains(&serde_json::Value::String(
+            "biomcp search article -k \"SRY Sox9 miRNA\" --year-min 2025 --year-max 2025 --limit 5"
+                .into()
+        ))
+            })
+    );
+    assert!(
+        value["_meta"]["next_commands"]
+            .as_array()
+            .is_some_and(|commands| commands
+                .contains(&serde_json::Value::String("biomcp list article".into())))
     );
 }
 

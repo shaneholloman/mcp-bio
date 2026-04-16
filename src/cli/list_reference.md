@@ -75,9 +75,10 @@ New to BioMCP? Try:
 - `search gene ... --region --pathway --go` (use GO IDs like `GO:0004672`; search output includes Coordinates/UniProt/OMIM)
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
-- `search article ... --date-from --date-to --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N>`
+- `search article ... --date-from --date-to --year-min --year-max --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N>`
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
 - Article result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>` follow-ups when keyword text contains a recognizable entity token
+- Article result pages can also suggest year-refinement follow-ups when visible rows expose publication years and the current search has no explicit date bounds
 - `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification; explicit `eu|all` with structured filters errors; `ema` is accepted as an alias for `eu`)
 
 ## Helpers
