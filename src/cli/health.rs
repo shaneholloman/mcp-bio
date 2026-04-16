@@ -1323,11 +1323,10 @@ mod tests {
         crate::test_support::env_lock().blocking_lock()
     }
 
-    fn fixture_ema_root() -> PathBuf {
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("spec")
-            .join("fixtures")
-            .join("ema-human")
+    fn fixture_ema_root() -> TempDirGuard {
+        let root = TempDirGuard::new("health-ema");
+        write_ema_files(root.path(), crate::sources::ema::EMA_REQUIRED_FILES);
+        root
     }
 
     fn write_ema_files(root: &Path, files: &[&str]) {
@@ -1688,15 +1687,15 @@ mod tests {
     #[test]
     fn ema_local_data_reports_available_when_default_root_is_complete() {
         let fixture_root = fixture_ema_root();
-        set_stale_ema_mtimes(&fixture_root);
-        set_fresh_ema_mtimes(&fixture_root);
+        set_stale_ema_mtimes(fixture_root.path());
+        set_fresh_ema_mtimes(fixture_root.path());
 
-        let outcome = ema_local_data_outcome(&fixture_root, false);
+        let outcome = ema_local_data_outcome(fixture_root.path(), false);
 
         assert_eq!(outcome.class, ProbeClass::Healthy);
         assert_eq!(
             outcome.row.api,
-            format!("EMA local data ({})", fixture_root.display())
+            format!("EMA local data ({})", fixture_root.path().display())
         );
         assert_eq!(outcome.row.status, "available (default path)");
         assert_eq!(outcome.row.latency, "n/a");
@@ -1706,10 +1705,10 @@ mod tests {
     #[test]
     fn ema_local_data_reports_configured_when_env_root_is_complete() {
         let fixture_root = fixture_ema_root();
-        set_stale_ema_mtimes(&fixture_root);
-        set_fresh_ema_mtimes(&fixture_root);
+        set_stale_ema_mtimes(fixture_root.path());
+        set_fresh_ema_mtimes(fixture_root.path());
 
-        let outcome = ema_local_data_outcome(&fixture_root, true);
+        let outcome = ema_local_data_outcome(fixture_root.path(), true);
 
         assert_eq!(outcome.class, ProbeClass::Healthy);
         assert_eq!(outcome.row.status, "configured");
@@ -1719,9 +1718,9 @@ mod tests {
     #[test]
     fn ema_local_data_json_reports_healthy_row_without_affects() {
         let fixture_root = fixture_ema_root();
-        set_stale_ema_mtimes(&fixture_root);
-        set_fresh_ema_mtimes(&fixture_root);
-        let report = report_from_outcomes(vec![ema_local_data_outcome(&fixture_root, false)]);
+        set_stale_ema_mtimes(fixture_root.path());
+        set_fresh_ema_mtimes(fixture_root.path());
+        let report = report_from_outcomes(vec![ema_local_data_outcome(fixture_root.path(), false)]);
 
         let value = serde_json::to_value(&report).expect("serialize health report");
         let rows = value["rows"].as_array().expect("rows array");
@@ -1729,7 +1728,7 @@ mod tests {
 
         assert_eq!(
             row["api"],
-            format!("EMA local data ({})", fixture_root.display())
+            format!("EMA local data ({})", fixture_root.path().display())
         );
         assert_eq!(row["status"], "available (default path)");
         assert_eq!(row["latency"], "n/a");
