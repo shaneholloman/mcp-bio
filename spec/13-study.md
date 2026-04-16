@@ -353,7 +353,7 @@ Remote study downloads should translate cBioPortal datahub access-denied respons
 ```bash
 bash fixtures/setup-study-download-error-fixture.sh "$PWD"
 . "$PWD/.cache/spec-study-download-error-env"
-trap 'kill "$BIOMCP_STUDY_DOWNLOAD_ERROR_PID"; rm -rf "$BIOMCP_STUDY_DOWNLOAD_ERROR_ROOT"' EXIT
+trap 'bash fixtures/cleanup-study-download-error-fixture.sh "$PWD"' EXIT
 out="$(biomcp study download missing_study 2>&1 || true)"
 echo "$out" | mustmatch like "missing_study"
 echo "$out" | mustmatch like "not found"

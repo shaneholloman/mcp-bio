@@ -4,20 +4,13 @@ set -euo pipefail
 workspace_root="${1:-$PWD}"
 cache_dir="$workspace_root/.cache"
 env_file="$cache_dir/spec-study-download-error-env"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cleanup_script="$script_dir/cleanup-study-download-error-fixture.sh"
 
 mkdir -p "$cache_dir"
 
-if [ -f "$env_file" ]; then
-  set +u
-  . "$env_file"
-  set -u
-  if [ -n "${BIOMCP_STUDY_DOWNLOAD_ERROR_PID:-}" ] && kill -0 "$BIOMCP_STUDY_DOWNLOAD_ERROR_PID" 2>/dev/null; then
-    kill "$BIOMCP_STUDY_DOWNLOAD_ERROR_PID" 2>/dev/null || true
-    wait "$BIOMCP_STUDY_DOWNLOAD_ERROR_PID" 2>/dev/null || true
-  fi
-  if [ -n "${BIOMCP_STUDY_DOWNLOAD_ERROR_ROOT:-}" ]; then
-    rm -rf "$BIOMCP_STUDY_DOWNLOAD_ERROR_ROOT"
-  fi
+if [ -x "$cleanup_script" ]; then
+  bash "$cleanup_script" "$workspace_root"
 fi
 
 fixture_root="$(mktemp -d "$cache_dir/spec-study-download-error.XXXXXX")"
@@ -83,5 +76,6 @@ printf 'export BIOMCP_CBIOPORTAL_DATAHUB_BASE=%q\n' "$base_url" >"$env_file"
 printf 'export BIOMCP_STUDY_DIR=%q\n' "$study_root" >>"$env_file"
 printf 'export BIOMCP_STUDY_DOWNLOAD_ERROR_PID=%q\n' "$server_pid" >>"$env_file"
 printf 'export BIOMCP_STUDY_DOWNLOAD_ERROR_ROOT=%q\n' "$fixture_root" >>"$env_file"
+printf 'export BIOMCP_STUDY_DOWNLOAD_ERROR_READY_FILE=%q\n' "$ready_file" >>"$env_file"
 
 printf '%s\n' "$fixture_root"
