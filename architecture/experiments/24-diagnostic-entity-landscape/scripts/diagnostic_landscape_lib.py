@@ -87,6 +87,13 @@ def extract_gene_hits(text: str, gene_universe: set[str]) -> list[str]:
     return sorted(token for token in tokens if token in gene_universe)
 
 
+def extract_case_sensitive_gene_hits(text: str, gene_universe: set[str]) -> list[str]:
+    if not text:
+        return []
+    tokens = {token for token in GENE_TOKEN_RE.findall(text)}
+    return sorted(token for token in tokens if token in gene_universe)
+
+
 def select_sample(records: list[dict[str, Any]], limit: int = 100) -> list[dict[str, Any]]:
     return records[:limit]
 
@@ -212,7 +219,10 @@ def load_clinvar_variant_sanity(refresh: bool = False) -> dict[str, Any]:
     }
 
 
-def load_gtr_backbone(refresh: bool = False) -> dict[str, Any]:
+def load_gtr_backbone(
+    gene_universe: set[str] | None = None,
+    refresh: bool = False,
+) -> dict[str, Any]:
     started = time.perf_counter()
     test_version_path = download_file(
         GTR_TEST_VERSION_URL,
@@ -237,7 +247,26 @@ def load_gtr_backbone(refresh: bool = False) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
 
     for accession, test_info in current_tests.items():
-        genes = sorted(set(genes_by_test.get(accession, set())) | set(test_info["gene_field"]))
+        title_gene_hits: set[str] = set()
+        if gene_universe is not None:
+            title_gene_hits = set(
+                extract_case_sensitive_gene_hits(
+                    " ".join(
+                        part
+                        for part in [
+                            test_info["name"],
+                            test_info["manufacturer_test_name"],
+                        ]
+                        if part
+                    ),
+                    gene_universe,
+                )
+            )
+        genes = sorted(
+            set(genes_by_test.get(accession, set()))
+            | set(test_info["gene_field"])
+            | title_gene_hits
+        )
         conditions = sorted(
             set(diseases_by_test.get(accession, set())) | set(test_info["condition_field"])
         )

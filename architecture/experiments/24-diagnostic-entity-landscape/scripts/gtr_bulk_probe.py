@@ -58,6 +58,7 @@ def load_current_tests(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str,
             current_tests[accession] = {
                 "accession": accession,
                 "name": (row.get("lab_test_name") or "").strip(),
+                "manufacturer_test_name": (row.get("manufacturer_test_name") or "").strip(),
                 "test_type": test_type,
                 "laboratory": laboratory,
                 "institution": (row.get("name_of_institution") or "").strip(),

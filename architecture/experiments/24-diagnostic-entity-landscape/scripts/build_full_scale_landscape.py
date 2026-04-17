@@ -148,7 +148,7 @@ def main() -> None:
     clinvar_variant_sanity = load_clinvar_variant_sanity()
     gene_universe = {row["symbol"] for row in clinvar["genes"]}
 
-    gtr = load_gtr_backbone()
+    gtr = load_gtr_backbone(gene_universe=gene_universe)
     who = load_who_overlay(gene_universe)
     fda = load_fda_molecular_slice(gene_universe)
 
