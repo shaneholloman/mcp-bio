@@ -1335,12 +1335,19 @@ mod tests {
         }
     }
 
-    fn write_who_fixture(root: &Path) {
-        std::fs::write(
-            root.join(crate::sources::who_pq::WHO_PQ_CSV_FILE),
-            b"WHO Reference Number,INN, Dosage Form and Strength,Product Type,Therapeutic Area,Applicant,Dosage Form,Basis of Listing,Basis of alternative listing,Date of Prequalification\n",
-        )
-        .expect("write WHO fixture file");
+    fn write_who_files(root: &Path, files: &[&str]) {
+        for file in files {
+            let bytes: &[u8] = match *file {
+                crate::sources::who_pq::WHO_PQ_CSV_FILE => {
+                    b"WHO Reference Number,INN, Dosage Form and Strength,Product Type,Therapeutic Area,Applicant,Dosage Form,Basis of Listing,Basis of alternative listing,Date of Prequalification\n"
+                }
+                crate::sources::who_pq::WHO_PQ_API_CSV_FILE => {
+                    b"WHO Product ID,INN,Grade,Therapeutic area,Applicant organization,Date of prequalification,Confirmation of Prequalification Document Date\n"
+                }
+                other => panic!("unexpected WHO fixture file: {other}"),
+            };
+            std::fs::write(root.join(file), bytes).expect("write WHO fixture file");
+        }
     }
 
     fn set_stale_mtime(path: &Path) {
@@ -1795,7 +1802,7 @@ mod tests {
     #[test]
     fn who_local_data_reports_available_when_default_root_is_complete() {
         let root = TempDirGuard::new("health");
-        write_who_fixture(root.path());
+        write_who_files(root.path(), crate::sources::who_pq::WHO_PQ_REQUIRED_FILES);
 
         let outcome = who_local_data_outcome(root.path(), false);
 
@@ -1814,7 +1821,7 @@ mod tests {
     #[test]
     fn who_local_data_reports_configured_when_env_root_is_complete() {
         let root = TempDirGuard::new("health");
-        write_who_fixture(root.path());
+        write_who_files(root.path(), crate::sources::who_pq::WHO_PQ_REQUIRED_FILES);
 
         let outcome = who_local_data_outcome(root.path(), true);
 
@@ -1826,8 +1833,12 @@ mod tests {
     #[test]
     fn who_local_data_reports_configured_stale_when_env_root_is_complete_but_old() {
         let root = TempDirGuard::new("health");
-        write_who_fixture(root.path());
-        set_stale_mtime(&root.path().join(crate::sources::who_pq::WHO_PQ_CSV_FILE));
+        write_who_files(root.path(), crate::sources::who_pq::WHO_PQ_REQUIRED_FILES);
+        set_stale_mtime(
+            &root
+                .path()
+                .join(crate::sources::who_pq::WHO_PQ_API_CSV_FILE),
+        );
 
         let outcome = who_local_data_outcome(root.path(), true);
 
@@ -1839,13 +1850,29 @@ mod tests {
     #[test]
     fn who_local_data_reports_default_path_stale_when_complete_but_old() {
         let root = TempDirGuard::new("health");
-        write_who_fixture(root.path());
-        set_stale_mtime(&root.path().join(crate::sources::who_pq::WHO_PQ_CSV_FILE));
+        write_who_files(root.path(), crate::sources::who_pq::WHO_PQ_REQUIRED_FILES);
+        set_stale_mtime(
+            &root
+                .path()
+                .join(crate::sources::who_pq::WHO_PQ_API_CSV_FILE),
+        );
 
         let outcome = who_local_data_outcome(root.path(), false);
 
         assert_eq!(outcome.class, ProbeClass::Warning);
         assert_eq!(outcome.row.status, "available (default path, stale)");
+        assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn who_local_data_errors_when_only_api_file_is_missing() {
+        let root = TempDirGuard::new("health");
+        write_who_files(root.path(), &[crate::sources::who_pq::WHO_PQ_CSV_FILE]);
+
+        let outcome = who_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Error);
+        assert_eq!(outcome.row.status, "error (missing: who_api.csv)");
         assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
     }
 

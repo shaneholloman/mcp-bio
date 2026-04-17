@@ -1164,17 +1164,22 @@ mod tests {
             ema_safety: None,
             ema_shortage: None,
             who_prequalification: Some(vec![crate::entities::drug::WhoPrequalificationEntry {
-                who_reference_number: "BT-ON001".to_string(),
+                who_reference_number: Some("BT-ON001".to_string()),
                 inn: "Trastuzumab".to_string(),
-                presentation: "Trastuzumab Powder for concentrate for solution for infusion 150 mg"
-                    .to_string(),
-                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                presentation: Some(
+                    "Trastuzumab Powder for concentrate for solution for infusion 150 mg"
+                        .to_string(),
+                ),
+                dosage_form: Some("Powder for concentrate for solution for infusion".to_string()),
                 product_type: "Biotherapeutic Product".to_string(),
                 therapeutic_area: "Oncology".to_string(),
                 applicant: "Samsung Bioepis NL B.V.".to_string(),
-                listing_basis: "Prequalification - Abridged".to_string(),
+                listing_basis: Some("Prequalification - Abridged".to_string()),
                 alternative_listing_basis: None,
                 prequalification_date: Some("2019-12-18".to_string()),
+                who_product_id: None,
+                grade: None,
+                confirmation_document_date: None,
             }]),
             civic: None,
         };

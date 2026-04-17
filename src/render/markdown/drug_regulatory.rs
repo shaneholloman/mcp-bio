@@ -207,23 +207,41 @@ fn render_who_regulatory_block(heading: &str, rows: Option<&[WhoPrequalification
         return out;
     }
 
-    out.push_str("| WHO Ref | Presentation | Dosage Form | Therapeutic Area | Applicant | Listing Basis | Alternative Basis | Prequalification Date |\n");
-    out.push_str("|---|---|---|---|---|---|---|---|\n");
+    out.push_str("| WHO ID | Type | Presentation / INN | Dosage Form | Therapeutic Area | Applicant | Listing Basis | Grade | Alternative Basis | Prequalification Date | Confirmation Doc Date |\n");
+    out.push_str("|---|---|---|---|---|---|---|---|---|---|---|\n");
     for row in rows {
         let _ = writeln!(
             out,
-            "| {} | {} | {} | {} | {} | {} | {} | {} |",
-            markdown_cell(&row.who_reference_number),
-            markdown_cell(&row.presentation),
-            markdown_cell(&row.dosage_form),
+            "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |",
+            markdown_cell(row.display_identifier()),
+            markdown_cell(&row.product_type),
+            row.presentation
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| markdown_cell(&row.inn)),
+            row.dosage_form
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
             markdown_cell(&row.therapeutic_area),
             markdown_cell(&row.applicant),
-            markdown_cell(&row.listing_basis),
+            row.listing_basis
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            row.grade
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
             row.alternative_listing_basis
                 .as_deref()
                 .map(markdown_cell)
                 .unwrap_or_else(|| "-".to_string()),
             row.prequalification_date
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            row.confirmation_document_date
                 .as_deref()
                 .map(markdown_cell)
                 .unwrap_or_else(|| "-".to_string()),

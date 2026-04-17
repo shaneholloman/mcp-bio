@@ -410,8 +410,10 @@ fn list_drug() -> String {
 - `search drug <query>`
 - `search drug -q <query>`
 - `search drug <query> --region <us|eu|who|all>`
+- `search drug <query> --region who --product-type <finished_pharma|api>`
 - `search drug --target <gene>`
 - `search drug --indication <disease>`
+- `search drug --indication <disease> --region who --product-type <finished_pharma|api>`
 - `search drug --mechanism <text>`
 - `search drug --atc <code>`
 - `search drug --pharm-class <class>`
@@ -439,13 +441,14 @@ fn list_drug() -> String {
 - Omitting `--region` searches U.S., EU, and WHO data for plain name/alias lookups.
 - Structured filters remain U.S.-only when `--region` is omitted.
 - Explicit `--region who` filters structured U.S. hits through WHO prequalification.
+- `--product-type <finished_pharma|api>` is WHO-only and requires explicit `--region who`.
 - Explicit `--region eu|all` is still invalid with structured filters.
 - `ema` is accepted as an input alias for the canonical `eu` drug region value.
 - Omitting `--region` on `get drug <name> regulatory` is the one implicit combined-region get path; other no-flag `get drug` shapes stay on the default U.S. path.
 - `drug trials <name>` inherits CTGov intervention alias expansion, adds `Matched Intervention` / `matched_intervention_label` when an alternate alias matched first, and accepts `--no-alias-expand` for literal matching.
 - `drug adverse-events <name>` explains when a drug is absent from FAERS versus present with no matching FAERS events; only the FAERS-404 branch queries ClinicalTrials.gov.
 - EU regional commands auto-download the EMA human-medicines JSON feeds into `BIOMCP_EMA_DIR` or the default data directory on first use.
-- WHO regulatory commands auto-download the WHO Prequalification CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.
+- WHO regional commands auto-download the WHO finished-pharma and API CSV exports into `BIOMCP_WHO_DIR` or the default data directory on first use (`who_pq.csv` and `who_api.csv`).
 - Run `biomcp ema sync` or `biomcp who sync` to force-refresh the local regional data.
 "#
     .to_string()
@@ -1032,6 +1035,9 @@ mod tests {
             "Explicit `--region who` filters structured U.S. hits through WHO prequalification."
         ));
         assert!(
+            out.contains("`--product-type <finished_pharma|api>` is WHO-only and requires explicit `--region who`.")
+        );
+        assert!(
             out.contains("Explicit `--region eu|all` is still invalid with structured filters.")
         );
         assert!(out.contains(
@@ -1055,7 +1061,11 @@ mod tests {
         assert!(out.contains("Matched Intervention"));
         assert!(out.contains("matched_intervention_label"));
         assert!(out.contains("auto-download the EMA human-medicines JSON feeds"));
-        assert!(out.contains("WHO Prequalification CSV"));
+        assert!(
+            out.contains("search drug <query> --region who --product-type <finished_pharma|api>")
+        );
+        assert!(out.contains("who_pq.csv"));
+        assert!(out.contains("who_api.csv"));
         assert!(out.contains("biomcp ema sync"));
         assert!(out.contains("biomcp who sync"));
     }

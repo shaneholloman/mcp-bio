@@ -94,7 +94,48 @@ fn search_drug_help_mentions_default_all_and_structured_filter_note() {
     assert!(help.contains(
         "Explicit --region who filters structured U.S. hits through WHO Prequalification."
     ));
+    assert!(help.contains("--product-type <PRODUCT_TYPE>"));
+    assert!(help.contains("requires explicit --region who"));
     assert!(help.contains("Explicit --region eu|all with structured filters still errors."));
+}
+
+#[test]
+fn search_drug_parses_who_product_type_filter() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "drug",
+        "artesunate",
+        "--region",
+        "who",
+        "--product-type",
+        "api",
+    ])
+    .expect("search drug should parse");
+
+    let Cli {
+        command:
+            Commands::Search {
+                entity:
+                    SearchEntity::Drug(crate::cli::drug::DrugSearchArgs {
+                        positional_query,
+                        region,
+                        who_product_type,
+                        ..
+                    }),
+            },
+        ..
+    } = cli
+    else {
+        panic!("expected search drug command");
+    };
+
+    assert_eq!(positional_query.as_deref(), Some("artesunate"));
+    assert_eq!(region, Some(DrugRegionArg::Who));
+    assert_eq!(
+        who_product_type,
+        Some(crate::cli::drug::WhoProductTypeArg::Api)
+    );
 }
 
 #[test]
@@ -276,6 +317,35 @@ async fn handle_search_rejects_non_us_structured_region() {
 }
 
 #[tokio::test]
+async fn handle_search_rejects_product_type_without_explicit_who_region() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "drug",
+        "artesunate",
+        "--product-type",
+        "api",
+    ])
+    .expect("search drug should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Drug(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected search drug command");
+    };
+
+    let err = super::handle_search(args, json)
+        .await
+        .expect_err("product-type without explicit who region should fail");
+    assert!(err.to_string().contains("requires explicit --region who"));
+}
+
+#[tokio::test]
 async fn get_drug_raw_rejects_non_label_sections() {
     let cli = Cli::try_parse_from(["biomcp", "get", "drug", "pembrolizumab", "targets", "--raw"])
         .expect("get drug --raw should parse");
@@ -373,11 +443,13 @@ fn drug_search_json_single_region_keeps_selected_bucket_and_who_fields() {
         crate::entities::drug::DrugSearchPageWithRegion::Who(crate::entities::SearchPage::offset(
             vec![crate::entities::drug::WhoPrequalificationSearchResult {
                 inn: "Trastuzumab".to_string(),
+                product_type: "Biotherapeutic Product".to_string(),
                 therapeutic_area: "Oncology".to_string(),
-                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                dosage_form: Some("Powder for concentrate for solution for infusion".to_string()),
                 applicant: "Samsung Bioepis NL B.V.".to_string(),
-                who_reference_number: "BT-ON001".to_string(),
-                listing_basis: "Prequalification - Abridged".to_string(),
+                who_reference_number: Some("BT-ON001".to_string()),
+                who_product_id: None,
+                listing_basis: Some("Prequalification - Abridged".to_string()),
                 prequalification_date: Some("2019-12-18".to_string()),
             }],
             Some(1),
@@ -403,6 +475,10 @@ fn drug_search_json_single_region_keeps_selected_bucket_and_who_fields() {
     assert_eq!(
         value["regions"]["who"]["results"][0]["who_reference_number"],
         "BT-ON001"
+    );
+    assert_eq!(
+        value["regions"]["who"]["results"][0]["product_type"],
+        "Biotherapeutic Product"
     );
     assert_eq!(
         value["regions"]["who"]["results"][0]["listing_basis"],
@@ -479,11 +555,13 @@ fn drug_search_json_all_region_uses_unified_regions_envelope() {
             who: crate::entities::SearchPage::offset(
                 vec![crate::entities::drug::WhoPrequalificationSearchResult {
                     inn: "Pembrolizumab".to_string(),
+                    product_type: "Biotherapeutic Product".to_string(),
                     therapeutic_area: "Oncology".to_string(),
-                    dosage_form: "Concentrate".to_string(),
+                    dosage_form: Some("Concentrate".to_string()),
                     applicant: "Merck Sharp & Dohme".to_string(),
-                    who_reference_number: "BT-ON002".to_string(),
-                    listing_basis: "Prequalification".to_string(),
+                    who_reference_number: Some("BT-ON002".to_string()),
+                    who_product_id: None,
+                    listing_basis: Some("Prequalification".to_string()),
                     prequalification_date: Some("2020-01-01".to_string()),
                 }],
                 Some(1),

@@ -362,17 +362,21 @@ fn drug_markdown_with_region_who_renders_regulatory_block() {
         ema_safety: None,
         ema_shortage: None,
         who_prequalification: Some(vec![WhoPrequalificationEntry {
-            who_reference_number: "BT-ON001".to_string(),
+            who_reference_number: Some("BT-ON001".to_string()),
             inn: "Trastuzumab".to_string(),
-            presentation: "Trastuzumab Powder for concentrate for solution for infusion 150 mg"
-                .to_string(),
-            dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+            presentation: Some(
+                "Trastuzumab Powder for concentrate for solution for infusion 150 mg".to_string(),
+            ),
+            dosage_form: Some("Powder for concentrate for solution for infusion".to_string()),
             product_type: "Biotherapeutic Product".to_string(),
             therapeutic_area: "Oncology".to_string(),
             applicant: "Samsung Bioepis NL B.V.".to_string(),
-            listing_basis: "Prequalification - Abridged".to_string(),
+            listing_basis: Some("Prequalification - Abridged".to_string()),
             alternative_listing_basis: None,
             prequalification_date: Some("2019-12-18".to_string()),
+            who_product_id: None,
+            grade: None,
+            confirmation_document_date: None,
         }]),
         civic: None,
     };
@@ -382,7 +386,7 @@ fn drug_markdown_with_region_who_renders_regulatory_block() {
             .expect("markdown");
 
     assert!(markdown.contains("## Regulatory (WHO Prequalification)"));
-    assert!(markdown.contains("| WHO Ref | Presentation | Dosage Form |"));
+    assert!(markdown.contains("| WHO ID | Type | Presentation / INN |"));
     assert!(markdown.contains("BT-ON001"));
     assert!(markdown.contains("Samsung Bioepis NL B.V."));
     assert!(markdown.contains("2019-12-18"));
@@ -410,11 +414,13 @@ fn drug_search_all_region_markdown_includes_who_block() {
         Some(1),
         &[crate::entities::drug::WhoPrequalificationSearchResult {
             inn: "Trastuzumab".to_string(),
+            product_type: "Biotherapeutic Product".to_string(),
             therapeutic_area: "Oncology".to_string(),
-            dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+            dosage_form: Some("Powder for concentrate for solution for infusion".to_string()),
             applicant: "Samsung Bioepis NL B.V.".to_string(),
-            who_reference_number: "BT-ON001".to_string(),
-            listing_basis: "Prequalification - Abridged".to_string(),
+            who_reference_number: Some("BT-ON001".to_string()),
+            who_product_id: None,
+            listing_basis: Some("Prequalification - Abridged".to_string()),
             prequalification_date: Some("2019-12-18".to_string()),
         }],
         Some(1),

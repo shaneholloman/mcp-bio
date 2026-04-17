@@ -198,19 +198,26 @@ pub fn drug_search_markdown_with_region(
                 if count == 1 { "" } else { "s" }
             );
             out.push_str(
-                "|INN|Therapeutic Area|Dosage Form|Applicant|WHO Ref|Listing Basis|Date|\n",
+                "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|\n",
             );
-            out.push_str("|---|---|---|---|---|---|---|\n");
+            out.push_str("|---|---|---|---|---|---|---|---|\n");
             for row in who_results {
                 let _ = writeln!(
                     out,
-                    "|{}|{}|{}|{}|{}|{}|{}|",
+                    "|{}|{}|{}|{}|{}|{}|{}|{}|",
                     markdown_cell(&row.inn),
+                    markdown_cell(&row.product_type),
                     markdown_cell(&row.therapeutic_area),
-                    markdown_cell(&row.dosage_form),
+                    row.dosage_form
+                        .as_deref()
+                        .map(markdown_cell)
+                        .unwrap_or_else(|| "-".to_string()),
                     markdown_cell(&row.applicant),
-                    markdown_cell(&row.who_reference_number),
-                    markdown_cell(&row.listing_basis),
+                    markdown_cell(row.display_identifier()),
+                    row.listing_basis
+                        .as_deref()
+                        .map(markdown_cell)
+                        .unwrap_or_else(|| "-".to_string()),
                     row.prequalification_date
                         .as_deref()
                         .map(markdown_cell)
@@ -299,19 +306,26 @@ pub fn drug_search_markdown_with_region(
                     if who_count == 1 { "" } else { "s" }
                 );
                 out.push_str(
-                    "|INN|Therapeutic Area|Dosage Form|Applicant|WHO Ref|Listing Basis|Date|\n",
+                    "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|\n",
                 );
-                out.push_str("|---|---|---|---|---|---|---|\n");
+                out.push_str("|---|---|---|---|---|---|---|---|\n");
                 for row in who_results {
                     let _ = writeln!(
                         out,
-                        "|{}|{}|{}|{}|{}|{}|{}|",
+                        "|{}|{}|{}|{}|{}|{}|{}|{}|",
                         markdown_cell(&row.inn),
+                        markdown_cell(&row.product_type),
                         markdown_cell(&row.therapeutic_area),
-                        markdown_cell(&row.dosage_form),
+                        row.dosage_form
+                            .as_deref()
+                            .map(markdown_cell)
+                            .unwrap_or_else(|| "-".to_string()),
                         markdown_cell(&row.applicant),
-                        markdown_cell(&row.who_reference_number),
-                        markdown_cell(&row.listing_basis),
+                        markdown_cell(row.display_identifier()),
+                        row.listing_basis
+                            .as_deref()
+                            .map(markdown_cell)
+                            .unwrap_or_else(|| "-".to_string()),
                         row.prequalification_date
                             .as_deref()
                             .map(markdown_cell)

@@ -200,6 +200,7 @@
     "bioMcp_surfaces": [
       "search drug --region who|all",
       "search drug --indication <disease> --region who",
+      "search drug <name> --region who --product-type <finished_pharma|api>",
       "get drug <name> regulatory --region who|all"
     ],
     "bioMcp_auth": "none",
@@ -210,7 +211,7 @@
     "terms_url": "https://www.who.int/about/policies/publishing/copyright",
     "key_url": null,
     "reviewed_on": "2026-04-10",
-    "notes": "BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV into BIOMCP_WHO_DIR or the default data directory on first use, refreshes stale files, and supports explicit refresh via biomcp who sync."
+    "notes": "BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV and active-pharmaceutical-ingredients CSV into BIOMCP_WHO_DIR or the default data directory on first use, refreshes stale files, supports WHO-only `--product-type <finished_pharma|api>` filtering on explicit `--region who` searches, and supports explicit refresh via biomcp who sync."
   },
   {
     "id": "enrichr",

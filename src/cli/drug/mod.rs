@@ -1,8 +1,16 @@
 //! Drug CLI payloads and subcommands.
 
-use clap::{Args, Subcommand};
+use clap::{Args, Subcommand, ValueEnum};
 
 use crate::cli::DrugRegionArg;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum WhoProductTypeArg {
+    #[value(name = "finished_pharma")]
+    FinishedPharma,
+    #[value(name = "api")]
+    Api,
+}
 
 #[derive(Args, Debug)]
 pub struct DrugSearchArgs {
@@ -42,6 +50,9 @@ pub struct DrugSearchArgs {
     /// Data region for drug regulatory context [default: all]
     #[arg(long, value_enum)]
     pub region: Option<DrugRegionArg>,
+    /// WHO-only product type filter; requires explicit --region who
+    #[arg(long = "product-type", value_enum, value_name = "PRODUCT_TYPE")]
+    pub who_product_type: Option<WhoProductTypeArg>,
 }
 
 #[derive(Args, Debug)]
