@@ -29,7 +29,7 @@
       "pathogenic_gene_count": 11085,
       "source": "clinvar_gene_specific_summary",
       "timing": {
-        "elapsed_seconds": 0.16
+        "elapsed_seconds": 0.41
       }
     },
     "variant_summary_sanity_check": {
@@ -38,7 +38,7 @@
       "germline_pathogenic_gene_count": 10739,
       "source": "clinvar_variant_summary",
       "timing": {
-        "elapsed_seconds": 53.36
+        "elapsed_seconds": 55.08
       }
     }
   },
@@ -50,12 +50,12 @@
   },
   "gene_source_coverage": {
     "clinvar_pathogenic_gene_count": 11085,
-    "genes_with_any_source_hit": 8386,
-    "genes_with_any_source_hit_pct": 75.65,
-    "genes_with_fda_hit": 14,
-    "genes_with_fda_hit_pct": 0.13,
-    "genes_with_gtr_hit": 8386,
-    "genes_with_gtr_hit_pct": 75.65,
+    "genes_with_any_source_hit": 8389,
+    "genes_with_any_source_hit_pct": 75.68,
+    "genes_with_fda_hit": 22,
+    "genes_with_fda_hit_pct": 0.2,
+    "genes_with_gtr_hit": 8389,
+    "genes_with_gtr_hit_pct": 75.68,
     "genes_with_who_hit": 4,
     "genes_with_who_hit_pct": 0.04,
     "loc_or_antisense_like_subset": {
@@ -408,33 +408,33 @@
   ],
   "sources": {
     "fda_device": {
-      "clinvar_genes_with_any_record": 14,
-      "clinvar_genes_with_any_record_pct": 0.13,
+      "clinvar_genes_with_any_record": 22,
+      "clinvar_genes_with_any_record_pct": 0.2,
       "query_summary": {
         "k510": [
           {
-            "mean_page_latency_ms": 395.5,
+            "mean_page_latency_ms": 442.3,
             "page_count": 1,
             "query": "device_name:genetic",
             "reported_total": 19,
             "slug": "device_name_genetic"
           },
           {
-            "mean_page_latency_ms": 368.5,
+            "mean_page_latency_ms": 387.0,
             "page_count": 1,
             "query": "device_name:gene",
             "reported_total": 14,
             "slug": "device_name_gene"
           },
           {
-            "mean_page_latency_ms": 333.5,
+            "mean_page_latency_ms": 338.6,
             "page_count": 1,
             "query": "device_name:sequencing",
             "reported_total": 2,
             "slug": "device_name_sequencing"
           },
           {
-            "mean_page_latency_ms": 557.0,
+            "mean_page_latency_ms": 430.0,
             "page_count": 1,
             "query": "device_name:pcr",
             "reported_total": 46,
@@ -443,35 +443,35 @@
         ],
         "pma": [
           {
-            "mean_page_latency_ms": 436.8,
+            "mean_page_latency_ms": 492.65,
             "page_count": 2,
             "query": "trade_name:cdx",
             "reported_total": 194,
             "slug": "trade_name_cdx"
           },
           {
-            "mean_page_latency_ms": 408.18,
+            "mean_page_latency_ms": 412.17,
             "page_count": 4,
             "query": "generic_name:gene",
             "reported_total": 362,
             "slug": "generic_name_gene"
           },
           {
-            "mean_page_latency_ms": 427.4,
+            "mean_page_latency_ms": 406.53,
             "page_count": 3,
             "query": "generic_name:mutation",
             "reported_total": 263,
             "slug": "generic_name_mutation"
           },
           {
-            "mean_page_latency_ms": 1261.73,
+            "mean_page_latency_ms": 388.27,
             "page_count": 3,
             "query": "generic_name:sequencing",
             "reported_total": 209,
             "slug": "generic_name_sequencing"
           },
           {
-            "mean_page_latency_ms": 780.0,
+            "mean_page_latency_ms": 333.3,
             "page_count": 1,
             "query": "generic_name:pcr",
             "reported_total": 4,
@@ -489,13 +489,13 @@
         "advisory_committee_pct": 100.0,
         "applicant_pct": 100.0,
         "decision_date_pct": 100.0,
-        "gene_linked_records_pct": 38.28,
+        "gene_linked_records_pct": 42.19,
         "name_pct": 100.0,
         "product_code_pct": 99.22
       },
-      "source_gene_count": 14,
+      "source_gene_count": 22,
       "timing": {
-        "elapsed_seconds": 10.04
+        "elapsed_seconds": 7.14
       },
       "top_advisory_committees": [
         {
@@ -549,20 +549,28 @@
           "gene": "SET"
         },
         {
-          "count": 4,
+          "count": 5,
           "gene": "EGFR"
         },
         {
-          "count": 3,
+          "count": 4,
           "gene": "BRAF"
         },
         {
-          "count": 3,
+          "count": 4,
           "gene": "KRAS"
         },
         {
           "count": 2,
           "gene": "ALK"
+        },
+        {
+          "count": 2,
+          "gene": "BRCA1"
+        },
+        {
+          "count": 2,
+          "gene": "BRCA2"
         },
         {
           "count": 2,
@@ -574,7 +582,15 @@
         },
         {
           "count": 1,
+          "gene": "ACVR2A"
+        },
+        {
+          "count": 1,
           "gene": "APP"
+        },
+        {
+          "count": 1,
+          "gene": "DIDO1"
         },
         {
           "count": 1,
@@ -594,7 +610,23 @@
         },
         {
           "count": 1,
+          "gene": "MRE11"
+        },
+        {
+          "count": 1,
+          "gene": "NRAS"
+        },
+        {
+          "count": 1,
           "gene": "PDGFRA"
+        },
+        {
+          "count": 1,
+          "gene": "RYR3"
+        },
+        {
+          "count": 1,
+          "gene": "SEC31A"
         }
       ],
       "top_product_codes": [
@@ -641,11 +673,11 @@
       ]
     },
     "gtr": {
-      "clinvar_genes_with_any_test": 8386,
-      "clinvar_genes_with_any_test_pct": 75.65,
+      "clinvar_genes_with_any_test": 8389,
+      "clinvar_genes_with_any_test_pct": 75.68,
       "link_density": {
         "mean_diseases_per_test": 4.07,
-        "mean_genes_per_test": 4.83
+        "mean_genes_per_test": 4.85
       },
       "record_counts": {
         "current_tests": 64374
@@ -655,16 +687,16 @@
         "any_regulatory_metadata_pct": 55.76,
         "clia_number_pct": 55.51,
         "disease_links_pct": 100.0,
-        "gene_links_pct": 96.17,
+        "gene_links_pct": 96.52,
         "manufacturer_or_lab_name_pct": 100.0,
         "state_licenses_pct": 45.27
       },
-      "source_gene_count": 19406,
+      "source_gene_count": 19409,
       "test_type_counts": {
         "Unknown": 64374
       },
       "timing": {
-        "elapsed_seconds": 4.17
+        "elapsed_seconds": 4.42
       },
       "top_countries": [
         {
@@ -710,11 +742,11 @@
       ],
       "top_genes_by_test_count": [
         {
-          "count": 599,
+          "count": 600,
           "gene": "TP53"
         },
         {
-          "count": 590,
+          "count": 591,
           "gene": "PTEN"
         },
         {
@@ -726,15 +758,15 @@
           "gene": "ATM"
         },
         {
-          "count": 492,
+          "count": 494,
           "gene": "BRCA2"
         },
         {
-          "count": 468,
+          "count": 471,
           "gene": "MLH1"
         },
         {
-          "count": 456,
+          "count": 457,
           "gene": "KRAS"
         },
         {
@@ -742,19 +774,19 @@
           "gene": "LMNA"
         },
         {
-          "count": 439,
-          "gene": "MSH2"
-        },
-        {
-          "count": 438,
+          "count": 445,
           "gene": "BRAF"
         },
         {
-          "count": 438,
+          "count": 441,
+          "gene": "MSH2"
+        },
+        {
+          "count": 439,
           "gene": "BRCA1"
         },
         {
-          "count": 435,
+          "count": 436,
           "gene": "MSH6"
         },
         {
@@ -762,7 +794,7 @@
           "gene": "SMAD4"
         },
         {
-          "count": 407,
+          "count": 408,
           "gene": "PMS2"
         },
         {
@@ -770,19 +802,19 @@
           "gene": "HRAS"
         },
         {
-          "count": 383,
-          "gene": "NRAS"
+          "count": 388,
+          "gene": "FGFR3"
         },
         {
-          "count": 382,
-          "gene": "FGFR3"
+          "count": 386,
+          "gene": "NRAS"
         },
         {
           "count": 373,
           "gene": "PTPN11"
         },
         {
-          "count": 369,
+          "count": 370,
           "gene": "PALB2"
         },
         {
@@ -806,7 +838,7 @@
           "gene": "TSC1"
         },
         {
-          "count": 351,
+          "count": 353,
           "gene": "TSC2"
         }
       ],
@@ -978,7 +1010,7 @@
   },
   "spike_slug": "24-diagnostic-entity-landscape",
   "timing": {
-    "elapsed_seconds": 68.1
+    "elapsed_seconds": 67.44
   },
   "validation_artifact": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/diagnostic_validation.json"
 }

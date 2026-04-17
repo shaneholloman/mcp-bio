@@ -2280,7 +2280,10 @@
       "decision_date": "2018-04-06",
       "device_name": "",
       "generic_name": "Next generation sequencing oncology panel, somatic or germline variant detection system",
-      "genes": [],
+      "genes": [
+        "BRCA1",
+        "BRCA2"
+      ],
       "manufacturer_or_lab": "Foundation Medicine, Inc.",
       "matched_queries": [
         "generic_name_sequencing",

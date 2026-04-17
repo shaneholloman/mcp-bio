@@ -23,13 +23,13 @@
       "current_projection_checksum": "dbb388a2219cda8443a5169e5873993a5ca14716b50a63d2de0725cad266945d",
       "metric_mismatches": [],
       "mismatch_count": 0,
-      "pass": false,
+      "pass": true,
       "performance_findings": [
         {
           "allowed_max": 616.249,
           "baseline": 598.3,
-          "current": 736.8,
-          "pass": false,
+          "current": 568.2,
+          "pass": true,
           "path": "api_availability.sample_latency_ms"
         }
       ],
@@ -46,28 +46,28 @@
         {
           "allowed_max": 124.733,
           "baseline": 121.1,
-          "current": 275.32,
+          "current": 126.9,
           "pass": false,
           "path": "latency_summary_ms.mean_gene_search_latency_ms"
         },
         {
           "allowed_max": 393.4806,
           "baseline": 382.02,
-          "current": 413.36,
-          "pass": false,
+          "current": 364.68,
+          "pass": true,
           "path": "latency_summary_ms.mean_gene_summary_latency_ms"
         },
         {
           "allowed_max": 130.2641,
           "baseline": 126.47,
-          "current": 136.83,
+          "current": 136.43,
           "pass": false,
           "path": "latency_summary_ms.mean_disease_search_latency_ms"
         },
         {
           "allowed_max": 623.0779,
           "baseline": 604.93,
-          "current": 630.7,
+          "current": 624.03,
           "pass": false,
           "path": "latency_summary_ms.mean_disease_summary_latency_ms"
         }
@@ -85,7 +85,7 @@
         {
           "allowed_max": 7.2924,
           "baseline": 7.08,
-          "current": 3.66,
+          "current": 3.7,
           "pass": true,
           "path": "timing.elapsed_seconds"
         }

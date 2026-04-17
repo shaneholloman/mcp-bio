@@ -1445,7 +1445,8 @@
       ],
       "country": "Canada",
       "genes": [
-        "AFF2"
+        "AFF2",
+        "FRAXE"
       ],
       "institution": "The Hospital for Sick Children",
       "manufacturer_or_lab": "Genome Diagnostics Laboratory",

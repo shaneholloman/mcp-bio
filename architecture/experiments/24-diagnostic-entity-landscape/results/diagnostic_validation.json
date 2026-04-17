@@ -7,7 +7,9 @@
         "decision_date": "2025-01-16",
         "device_name": "",
         "generic_name": "Next generation sequencing oncology panel, somatic or germline variant detection system",
-        "genes": [],
+        "genes": [
+          "BRAF"
+        ],
         "manufacturer_or_lab": "Foundation Medicine, Inc.",
         "matched_queries": [
           "generic_name_sequencing",
@@ -101,7 +103,10 @@
         "decision_date": "2026-03-10",
         "device_name": "",
         "generic_name": "Cancer-related germline gene mutation detection system",
-        "genes": [],
+        "genes": [
+          "BRCA1",
+          "BRCA2"
+        ],
         "manufacturer_or_lab": "Myriad Genetic Laboratories, Inc.",
         "matched_queries": [
           "generic_name_gene",
