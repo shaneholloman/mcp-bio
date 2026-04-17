@@ -4,7 +4,7 @@
     "reason": "Device catalog is a category-keyed product catalog with zero required-header overlap against the WHO drug contract.",
     "source_url": "https://extranet.who.int/prequal/sites/default/files/immunization_devices/json/catalogs/immunization_devices_catalogue.json"
   },
-  "generated_at": "2026-04-17T19:16:13Z",
+  "generated_at": "2026-04-17T19:55:30Z",
   "product_type_filter_design": {
     "default_values": [
       "finished_pharma",
@@ -117,7 +117,7 @@
     "evidence": [
       "API normalized-INN MyChem phrase/exact resolution: 91.1%",
       "API component overlap with finished pharma: 93.72%",
-      "Best vaccine phrase/exact identity strategy: 30.28%",
+      "Best vaccine phrase/exact identity strategy: 57.39%",
       "Vaccine immunization-schedule completeness: 0.0%",
       "Vaccine cold-chain completeness: 0.0%"
     ],

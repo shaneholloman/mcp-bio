@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from who_vaccines_apis_exploit import build_full_scale_results
+from who_vaccines_apis import build_full_scale_results
 
 
 def main() -> None:
-    payload = build_full_scale_results()
+    artifacts = build_full_scale_results()
     for key in [
         "probe_summary",
         "validation",
@@ -13,7 +13,7 @@ def main() -> None:
         "loader_design",
         "full_scale_results",
     ]:
-        print(payload["artifact_paths"][key])
+        print(artifacts.artifact_paths[key])
 
 
 if __name__ == "__main__":

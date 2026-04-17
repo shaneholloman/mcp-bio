@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from who_vaccines_apis_exploit import VALIDATION_PATH, build_validation_payload
-from who_vaccines_apis_lib import write_json
+from who_vaccines_apis import VALIDATION_PATH, write_validation_result
 
 
 def main() -> None:
-    payload = build_validation_payload()
-    write_json(VALIDATION_PATH, payload)
+    write_validation_result()
     print(VALIDATION_PATH.resolve())
 
 

@@ -26,14 +26,14 @@
       "raw_inn_phrase_or_exact_rate": 90.05
     },
     "build_timings_seconds": {
-      "api_linkage_seconds": 0.068,
+      "api_linkage_seconds": 0.055,
       "design_payload_seconds": 0.0,
-      "metadata_and_devices_seconds": 0.0037,
-      "sample_records_seconds": 0.0033,
-      "schema_comparison_seconds": 0.0363,
-      "total_seconds": 0.1808,
-      "vaccine_identity_seconds": 0.0615,
-      "validation_seconds": 0.0022
+      "metadata_and_devices_seconds": 0.0029,
+      "sample_records_seconds": 0.0024,
+      "schema_comparison_seconds": 0.0185,
+      "total_seconds": 0.198,
+      "vaccine_identity_seconds": 0.1118,
+      "validation_seconds": 0.0016
     },
     "record_counts": {
       "apis": 191,
@@ -50,9 +50,9 @@
       "yellow fever": 10
     },
     "vaccine_identity": {
-      "exact_rate": 17.25,
-      "phrase_or_exact_rate": 30.28,
-      "winning_strategy": "component_vaccine_coverage"
+      "exact_rate": 18.31,
+      "phrase_or_exact_rate": 57.39,
+      "winning_strategy": "component_with_commercial_fallback"
     },
     "vaccine_metadata": {
       "cold_chain_percent": 0.0,
@@ -61,13 +61,13 @@
     }
   },
   "full_scale_definition": "All three WHO lists plus the immunization-device catalog loaded, cross-referenced, validated, and summarized with persistent artifacts.",
-  "generated_at": "2026-04-17T19:16:13Z",
+  "generated_at": "2026-04-17T19:55:30Z",
   "recommendation": {
     "device_catalog_in_scope": false,
     "evidence": [
       "API normalized-INN MyChem phrase/exact resolution: 91.1%",
       "API component overlap with finished pharma: 93.72%",
-      "Best vaccine phrase/exact identity strategy: 30.28%",
+      "Best vaccine phrase/exact identity strategy: 57.39%",
       "Vaccine immunization-schedule completeness: 0.0%",
       "Vaccine cold-chain completeness: 0.0%"
     ],
