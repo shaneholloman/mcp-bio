@@ -52,6 +52,7 @@ FDA_510K_QUERY_TERMS = [
 ]
 
 GENE_TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9'/-]*")
+FDA_APPROVAL_ORDER_SHORT_GENE_WHITELIST = {"ATM", "MET", "RET"}
 
 
 def write_result(filename: str, payload: dict[str, Any]) -> Path:
@@ -92,6 +93,31 @@ def extract_case_sensitive_gene_hits(text: str, gene_universe: set[str]) -> list
         return []
     tokens = {token for token in GENE_TOKEN_RE.findall(text)}
     return sorted(token for token in tokens if token in gene_universe)
+
+
+def extract_case_sensitive_fda_gene_hits(text: str, gene_universe: set[str]) -> list[str]:
+    if not text:
+        return []
+
+    hits: set[str] = set()
+    for token in GENE_TOKEN_RE.findall(text):
+        if token not in gene_universe:
+            continue
+        if (
+            len(token) >= 4
+            or any(character.isdigit() for character in token)
+            or token in FDA_APPROVAL_ORDER_SHORT_GENE_WHITELIST
+        ):
+            hits.add(token)
+    return sorted(hits)
+
+
+def listify_text(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str) and value.strip():
+        return [value.strip()]
+    return []
 
 
 def select_sample(records: list[dict[str, Any]], limit: int = 100) -> list[dict[str, Any]]:
@@ -517,7 +543,11 @@ def collapse_fda_records(
     for source_id, bundle in grouped.items():
         row = bundle["row"]
         text = combined_fda_text(row)
-        genes = extract_gene_hits(text, gene_universe)
+        approval_order_text = " ".join(listify_text(row.get("ao_statement")))
+        genes = sorted(
+            set(extract_gene_hits(text, gene_universe))
+            | set(extract_case_sensitive_fda_gene_hits(approval_order_text, gene_universe))
+        )
         normalized.append(
             {
                 "source": "fda_device",
