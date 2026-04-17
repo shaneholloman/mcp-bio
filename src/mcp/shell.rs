@@ -297,16 +297,16 @@ pub async fn run_http(host: &str, port: u16) -> anyhow::Result<()> {
     let bind = std::net::SocketAddr::new(ip, port);
     let shutdown = CancellationToken::new();
 
+    #[allow(clippy::field_reassign_with_default)]
+    let http_config = {
+        let mut http_config = StreamableHttpServerConfig::default();
+        http_config.stateful_mode = true;
+        http_config.cancellation_token = shutdown.child_token();
+        http_config
+    };
+
     let service: StreamableHttpService<BioMcpServer, LocalSessionManager> =
-        StreamableHttpService::new(
-            || Ok(BioMcpServer::new()),
-            Default::default(),
-            StreamableHttpServerConfig {
-                stateful_mode: true,
-                cancellation_token: shutdown.child_token(),
-                ..Default::default()
-            },
-        );
+        StreamableHttpService::new(|| Ok(BioMcpServer::new()), Default::default(), http_config);
 
     let router = Router::new()
         .nest_service("/mcp", service)
