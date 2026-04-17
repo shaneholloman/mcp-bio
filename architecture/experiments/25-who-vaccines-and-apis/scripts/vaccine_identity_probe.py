@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
+
 from who_vaccines_apis_lib import (
     MyChemResolver,
     RESULTS_DIR,
@@ -14,6 +16,15 @@ from who_vaccines_apis_lib import (
 )
 
 RESULT_PATH = RESULTS_DIR / "vaccine_identity_probe.json"
+VACCINE_COMPONENT_TYPE_RE = re.compile(
+    r"\btypes?\s+[0-9]+(?:\s+and\s+[0-9]+)*\b", re.IGNORECASE
+)
+VACCINE_COMPONENT_NOISE_RE = re.compile(
+    r"\b(?:seasonal|pandemic|trivalent|quadrivalent|bivalent|monovalent|oral|inactivated|"
+    r"live|attenuated|paediatric|conjugate|reduced antigen content|whole cell|acellular|"
+    r"recombinant|novel|sabin)\b",
+    re.IGNORECASE,
+)
 
 
 def match_score(report: dict) -> tuple[int, int]:
@@ -29,6 +40,17 @@ def resolve_query(resolver: MyChemResolver, query: str) -> dict:
     report = classify_hits(query, response["hits"])
     report["mychem_total"] = response["total"]
     return report
+
+
+def component_query_options(component: str) -> list[str]:
+    cleaned = VACCINE_COMPONENT_TYPE_RE.sub(" ", component)
+    cleaned = clean_text(VACCINE_COMPONENT_NOISE_RE.sub(" ", cleaned).replace(" - ", " "))
+    if not cleaned or cleaned.isdigit():
+        return []
+    candidates = [cleaned]
+    if "vaccine" not in cleaned.lower():
+        candidates.insert(0, f"{cleaned} vaccine")
+    return list(dict.fromkeys(candidates))
 
 
 def summarize_single_query_strategy(
@@ -98,12 +120,17 @@ def summarize_component_strategy(rows: list[dict], resolver: MyChemResolver) -> 
             continue
         component_reports = []
         for component in components:
-            query_options = [f"{component} vaccine", component]
+            query_options = component_query_options(component)
+            if not query_options:
+                continue
             reports = [resolve_query(resolver, query) for query in query_options]
             best = max(reports, key=match_score)
             best["component"] = component
             component_reports.append(best)
 
+        if not component_reports:
+            no_component_rows += 1
+            continue
         matched_components = sum(1 for report in component_reports if report["phrase_match"])
         any_components = sum(1 for report in component_reports if report["total_hits"] > 0)
         coverage = matched_components / len(component_reports)
