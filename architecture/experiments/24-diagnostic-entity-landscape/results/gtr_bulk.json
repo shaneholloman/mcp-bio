@@ -1,0 +1,838 @@
+{
+  "approach": "GTR bulk download parse",
+  "files": {
+    "test_condition_gene": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/work/gtr_test_condition_gene.txt",
+    "test_version": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/work/gtr_test_version.gz"
+  },
+  "link_density": {
+    "mean_diseases_per_test": 4.07,
+    "mean_genes_per_test": 4.83,
+    "tests_per_sample_disease": {
+      "breast cancer": 92,
+      "lung cancer": 58,
+      "melanoma": 283
+    },
+    "tests_per_sample_gene": {
+      "BRAF": 437,
+      "BRCA1": 438,
+      "EGFR": 181,
+      "KRAS": 455,
+      "TP53": 598
+    }
+  },
+  "record_counts": {
+    "current_tests": 64374
+  },
+  "sample_disease_matches": {
+    "breast cancer": {
+      "count": 92,
+      "examples": [
+        {
+          "accession": "GTR000021468.11",
+          "laboratory": "Molecular Genetics Laboratory",
+          "matched_condition": "Breast cancer, familial male",
+          "name": "BRCA2",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000210160.6",
+          "laboratory": "Molecular Genetics Laboratory",
+          "matched_condition": "Breast cancer, familial male",
+          "name": "Li Fraumeni Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325401.4",
+          "laboratory": "Laboratory of Human Genetics",
+          "matched_condition": "Breast cancer, familial male",
+          "name": "Hereditary breast/ovarian cancer - analysis the BRCA2 gene mutations in accordance with EMQN recommendations",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325409.4",
+          "laboratory": "Laboratory of Human Genetics",
+          "matched_condition": "Breast cancer, susceptibility to",
+          "name": "Hereditary breast/ovarian cancer - analysis the BRCA1 gene mutations in accordance with EMQN recommendations",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000330054.5",
+          "laboratory": "Institute of Human Genetics",
+          "matched_condition": "Breast cancer, familial male",
+          "name": "Hereditary Breast and Ovarian Cancer",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000504105.12",
+          "laboratory": "Fulgent Genetics",
+          "matched_condition": "Breast cancer, early-onset",
+          "name": "TP53 Single Gene",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000509980.4",
+          "laboratory": "Michigan Medical Genetics Laboratories",
+          "matched_condition": "Breast cancer, familial male",
+          "name": "BRCA1 and BRCA2 Sequencing and Del/Dup",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000509982.4",
+          "laboratory": "Michigan Medical Genetics Laboratories",
+          "matched_condition": "Breast cancer, familial male",
+          "name": "BRCA1 deletion/duplication testing",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000509983.4",
+          "laboratory": "Michigan Medical Genetics Laboratories",
+          "matched_condition": "Breast cancer, familial male",
+          "name": "BRCA1 gene sequencing",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000509984.4",
+          "laboratory": "Michigan Medical Genetics Laboratories",
+          "matched_condition": "Breast cancer, familial male",
+          "name": "BRCA2 deletion/duplication testing",
+          "test_type": "Unknown"
+        }
+      ]
+    },
+    "lung cancer": {
+      "count": 58,
+      "examples": [
+        {
+          "accession": "GTR000323039.2",
+          "laboratory": "Laboratory for Molecular Diagnostics",
+          "matched_condition": "EGFR-related lung cancer",
+          "name": "Lung Cancer, EGFR-Related",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000500500.2",
+          "laboratory": "CIBIC S.A.",
+          "matched_condition": "EGFR-related lung cancer",
+          "name": "EGFR targeted variants",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000521936.1",
+          "laboratory": "Molecular Diagnostics Laboratory",
+          "matched_condition": "GSTM1-related lung cancer",
+          "name": "GST genotyping",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000522730.2",
+          "laboratory": "Molecular Genetics Diagnostic Laboratory",
+          "matched_condition": "EGFR-related lung cancer",
+          "name": "EGFR Mutation Analysis",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000528909.5",
+          "laboratory": "Invitae",
+          "matched_condition": "EGFR-related lung cancer",
+          "name": "Invitae Multi-Cancer Panel",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000551735.5",
+          "laboratory": "Invitae",
+          "matched_condition": "Lung cancer",
+          "name": "Invitae Microphthalmia, Anophthalmia, Coloboma (MAC) and Anterior Segment Dysgenesis Panel",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000551779.5",
+          "laboratory": "Invitae",
+          "matched_condition": "Lung cancer",
+          "name": "Invitae Ectodermal Dysplasia and Related Disorders Panel",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000553680.15",
+          "laboratory": "PreventionGenetics, part of Exact Sciences",
+          "matched_condition": "Lung cancer",
+          "name": "Comprehensive Arrhythmia and Cardiomyopathy Panel",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000553738.3",
+          "laboratory": "Invitae",
+          "matched_condition": "Lung cancer",
+          "name": "Invitae Primary Immunodeficiency Panel",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000553798.3",
+          "laboratory": "Invitae",
+          "matched_condition": "Lung cancer",
+          "name": "Invitae Autoinflammatory and Autoimmunity Syndromes Panel",
+          "test_type": "Unknown"
+        }
+      ]
+    },
+    "melanoma": {
+      "count": 283,
+      "examples": [
+        {
+          "accession": "GTR000322762.1",
+          "laboratory": "Center for Human Genetics, Inc",
+          "matched_condition": "Melanoma, cutaneous malignant, susceptibility to, 2",
+          "name": "Familial Malignant Melanoma",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000329842.1",
+          "laboratory": "MVZ Dortmund",
+          "matched_condition": "Melanoma, cutaneous malignant, susceptibility to, 2",
+          "name": "CDKN2A-Related Cutaneous Malignant Melanoma",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000329846.1",
+          "laboratory": "MVZ Dortmund",
+          "matched_condition": "Melanoma, cutaneous malignant, susceptibility to, 3",
+          "name": "CDK4-Related Cutaneous Malignant Melanoma",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000330873.2",
+          "laboratory": "Laboratory of Human Genetics",
+          "matched_condition": "Melanoma, cutaneous malignant, susceptibility to, 2",
+          "name": "Melanoma",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000332510.5",
+          "laboratory": "OU Health Genetics Laboratory",
+          "matched_condition": "Melanoma, cutaneous malignant, susceptibility to, 2",
+          "name": "CDKN2A Malignant Melanoma",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000333054.6",
+          "laboratory": "Center for Human Genetics",
+          "matched_condition": "Melanoma",
+          "name": "Hereditary onco-endocrino tumors (50 genes)",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000501114.12",
+          "laboratory": "Cincinnati Children's Hospital Medical Center Genetics and Genomics Diagnostic Laboratory",
+          "matched_condition": "Familial melanoma",
+          "name": "Bone Marrow Failure Syndromes Panel by next-generation sequencing (NGS)",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000501116.9",
+          "laboratory": "Cincinnati Children's Hospital Medical Center Laboratory of Genetics and Genomics",
+          "matched_condition": "Familial melanoma",
+          "name": "Dyskeratosis Congenita panel by next-generation sequencing (NGS)",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000505103.1",
+          "laboratory": "Praxis fuer Humangenetik Wien",
+          "matched_condition": "Melanoma, cutaneous malignant, susceptibility to, 1",
+          "name": "Cutaneous Malignant Melanoma",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000505659.11",
+          "laboratory": "Fulgent Genetics",
+          "matched_condition": "Melanoma, cutaneous malignant, susceptibility to, 5",
+          "name": "Albinism NGS Panel",
+          "test_type": "Unknown"
+        }
+      ]
+    }
+  },
+  "sample_gene_matches": {
+    "BRAF": {
+      "count": 437,
+      "examples": [
+        {
+          "accession": "GTR000273063.3",
+          "country": "United States",
+          "laboratory": "Molecular Diagnostics Lab",
+          "name": "BRAF-Related Cardiofaciocutaneous Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000305704.1",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Cardiofaciocutaneous Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000305706.2",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Cardio-facio-cutaneous syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000305751.1",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Costello Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000321416.5",
+          "country": "United States",
+          "laboratory": "OU Health Genetics Laboratory",
+          "name": "Noonan spectrum",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325112.4",
+          "country": "United States",
+          "laboratory": "Molecular Diagnostics Lab",
+          "name": "BRAF-Related LEOPARD Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325116.2",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Leopard Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325429.4",
+          "country": "Poland",
+          "laboratory": "Laboratory of Human Genetics",
+          "name": "Noonan Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000332507.6",
+          "country": "United States",
+          "laboratory": "OU Health Genetics Laboratory",
+          "name": "Cardiofaciocutaneous syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000500931.5",
+          "country": "United States",
+          "laboratory": "Cincinnati Children's Hospital Medical Center Laboratory of Genetics and Genomics",
+          "name": "Hypertrophic Cardiomyopathy Panel",
+          "test_type": "Unknown"
+        }
+      ]
+    },
+    "BRCA1": {
+      "count": 438,
+      "examples": [
+        {
+          "accession": "GTR000006692.3",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Breast-ovarian cancer, familial 1 (BRCA1)",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000021517.11",
+          "country": "Canada",
+          "laboratory": "Molecular Genetics Laboratory",
+          "name": "BRCA1",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000063047.5",
+          "country": "United States",
+          "laboratory": "King Laboratory",
+          "name": "King Laboratory",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000293199.3",
+          "country": "Canada",
+          "laboratory": "Molecular Diagnostic Laboratory",
+          "name": "Hereditary Cancer Panel",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000319849.1",
+          "country": "Germany",
+          "laboratory": "Medical Genetics Laboratory",
+          "name": "Hereditary Breast and Ovarian Cancer 1",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000323972.2",
+          "country": "Israel",
+          "laboratory": "GGA - Galil Genetic Analysis",
+          "name": "BRCA1 Hereditary Breast and Ovarian Cancer",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325409.4",
+          "country": "Poland",
+          "laboratory": "Laboratory of Human Genetics",
+          "name": "Hereditary breast/ovarian cancer - analysis the BRCA1 gene mutations in accordance with EMQN recommendations",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000330054.5",
+          "country": "Germany",
+          "laboratory": "Institute of Human Genetics",
+          "name": "Hereditary Breast and Ovarian Cancer",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000332520.4",
+          "country": "United States",
+          "laboratory": "OU Health Genetics Laboratory",
+          "name": "Pancreatic Cancer",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000332529.4",
+          "country": "United States",
+          "laboratory": "OU Health Genetics Laboratory",
+          "name": "Hereditary Breast and Ovarian Cancer",
+          "test_type": "Unknown"
+        }
+      ]
+    },
+    "EGFR": {
+      "count": 181,
+      "examples": [
+        {
+          "accession": "GTR000323039.2",
+          "country": "Germany",
+          "laboratory": "Laboratory for Molecular Diagnostics",
+          "name": "Lung Cancer, EGFR-Related",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000500500.2",
+          "country": "Argentina",
+          "laboratory": "CIBIC S.A.",
+          "name": "EGFR targeted variants",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000511179.13",
+          "country": "United States",
+          "laboratory": "Fulgent Genetics",
+          "name": "Clinical Exome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000514884.4",
+          "country": "United States",
+          "laboratory": "Fulgent Genetics",
+          "name": "EGFR Single Gene",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000522559.9",
+          "country": "United States",
+          "laboratory": "ARUP Laboratories, Molecular Genetics and Genomics",
+          "name": "Hereditary Cancer Panel, Sequencing and Deletion/Duplication",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000522730.2",
+          "country": "United States",
+          "laboratory": "Molecular Genetics Diagnostic Laboratory",
+          "name": "EGFR Mutation Analysis",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000525996.1",
+          "country": "Spain",
+          "laboratory": "Bioarray",
+          "name": "EGFR, full sequencing",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000527380.1",
+          "country": "Spain",
+          "laboratory": "Bioarray",
+          "name": "Lung cancer",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000527948.7",
+          "country": "United States",
+          "laboratory": "Guardant Health",
+          "name": "Guardant360",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000527977.1",
+          "country": "United States",
+          "laboratory": "Foundation Medicine, Inc.",
+          "name": "FoundationOne\u00ae Heme",
+          "test_type": "Unknown"
+        }
+      ]
+    },
+    "KRAS": {
+      "count": 455,
+      "examples": [
+        {
+          "accession": "GTR000305704.1",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Cardiofaciocutaneous Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000305706.2",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Cardio-facio-cutaneous syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000305737.1",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Noonan syndrome 3 (KRAS)",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000305751.1",
+          "country": "United States",
+          "laboratory": "Center for Human Genetics, Inc",
+          "name": "Costello Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000316125.3",
+          "country": "United States",
+          "laboratory": "Molecular Diagnostics Lab",
+          "name": "KRAS-Related Noonan Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000321416.5",
+          "country": "United States",
+          "laboratory": "OU Health Genetics Laboratory",
+          "name": "Noonan spectrum",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000323020.3",
+          "country": "Poland",
+          "laboratory": "Laboratory of Human Genetics",
+          "name": "Noonan Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325426.2",
+          "country": "Poland",
+          "laboratory": "Laboratory of Human Genetics",
+          "name": "Noonan Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325429.4",
+          "country": "Poland",
+          "laboratory": "Laboratory of Human Genetics",
+          "name": "Noonan Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000332139.5",
+          "country": "Belgium",
+          "laboratory": "Center for Human Genetics",
+          "name": "Primary lymphedema and Hydrops fetalis (27 genes)",
+          "test_type": "Unknown"
+        }
+      ]
+    },
+    "TP53": {
+      "count": 598,
+      "examples": [
+        {
+          "accession": "GTR000210160.6",
+          "country": "Canada",
+          "laboratory": "Molecular Genetics Laboratory",
+          "name": "Li Fraumeni Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000226637.5",
+          "country": "United States",
+          "laboratory": "OU Health Genetics Laboratory",
+          "name": "Hereditary Endocrine Cancer",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000281011.2",
+          "country": "Canada",
+          "laboratory": "Genome Diagnostics Laboratory",
+          "name": "Test for Li-Fraumeni Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000324931.1",
+          "country": "Israel",
+          "laboratory": "GGA - Galil Genetic Analysis",
+          "name": "Li fraumeni, TP53",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000325399.2",
+          "country": "Poland",
+          "laboratory": "Laboratory of Human Genetics",
+          "name": "Li-Fraumeni Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000330054.5",
+          "country": "Germany",
+          "laboratory": "Institute of Human Genetics",
+          "name": "Hereditary Breast and Ovarian Cancer",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000332539.5",
+          "country": "United States",
+          "laboratory": "OU Health Genetics Laboratory",
+          "name": "Li-Fraumeni Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000501114.12",
+          "country": "United States",
+          "laboratory": "Cincinnati Children's Hospital Medical Center Genetics and Genomics Diagnostic Laboratory",
+          "name": "Bone Marrow Failure Syndromes Panel by next-generation sequencing (NGS)",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000502302.3",
+          "country": "Germany",
+          "laboratory": "MGZ Medical Genetics Center",
+          "name": "Li-Fraumeni Syndrome",
+          "test_type": "Unknown"
+        },
+        {
+          "accession": "GTR000502934.5",
+          "country": "United States",
+          "laboratory": "Center for Genetics at Saint Francis",
+          "name": "Li-Fraumeni Syndrome (P53)",
+          "test_type": "Unknown"
+        }
+      ]
+    }
+  },
+  "sample_name_index": [
+    "albinism ngs panel",
+    "bone marrow failure syndromes panel by next-generation sequencing (ngs)",
+    "braf-related cardiofaciocutaneous syndrome",
+    "braf-related leopard syndrome",
+    "brca1",
+    "brca1 and brca2 sequencing and del/dup",
+    "brca1 deletion/duplication testing",
+    "brca1 gene sequencing",
+    "brca1 hereditary breast and ovarian cancer",
+    "brca2",
+    "brca2 deletion/duplication testing",
+    "breast-ovarian cancer, familial 1 (brca1)",
+    "cardio-facio-cutaneous syndrome",
+    "cardiofaciocutaneous syndrome",
+    "cdk4-related cutaneous malignant melanoma",
+    "cdkn2a malignant melanoma",
+    "cdkn2a-related cutaneous malignant melanoma",
+    "clinical exome",
+    "comprehensive arrhythmia and cardiomyopathy panel",
+    "costello syndrome",
+    "cutaneous malignant melanoma",
+    "dyskeratosis congenita panel by next-generation sequencing (ngs)",
+    "egfr mutation analysis",
+    "egfr single gene",
+    "egfr targeted variants",
+    "egfr, full sequencing",
+    "familial malignant melanoma",
+    "foundationone\u00ae heme",
+    "gst genotyping",
+    "guardant360",
+    "hereditary breast and ovarian cancer",
+    "hereditary breast and ovarian cancer 1",
+    "hereditary breast/ovarian cancer - analysis the brca1 gene mutations in accordance with emqn recommendations",
+    "hereditary breast/ovarian cancer - analysis the brca2 gene mutations in accordance with emqn recommendations",
+    "hereditary cancer panel",
+    "hereditary cancer panel, sequencing and deletion/duplication",
+    "hereditary endocrine cancer",
+    "hereditary onco-endocrino tumors (50 genes)",
+    "hypertrophic cardiomyopathy panel",
+    "invitae autoinflammatory and autoimmunity syndromes panel",
+    "invitae ectodermal dysplasia and related disorders panel",
+    "invitae microphthalmia, anophthalmia, coloboma (mac) and anterior segment dysgenesis panel",
+    "invitae multi-cancer panel",
+    "invitae primary immunodeficiency panel",
+    "king laboratory",
+    "kras-related noonan syndrome",
+    "leopard syndrome",
+    "li fraumeni syndrome",
+    "li fraumeni, tp53",
+    "li-fraumeni syndrome",
+    "li-fraumeni syndrome (p53)",
+    "lung cancer",
+    "lung cancer, egfr-related",
+    "melanoma",
+    "noonan spectrum",
+    "noonan syndrome",
+    "noonan syndrome 3 (kras)",
+    "pancreatic cancer",
+    "primary lymphedema and hydrops fetalis (27 genes)",
+    "test for li-fraumeni syndrome",
+    "tp53 single gene"
+  ],
+  "schema_completeness": {
+    "any_regulatory_metadata_pct": 55.76,
+    "clia_number_pct": 55.51,
+    "disease_links_pct": 100.0,
+    "gene_links_pct": 96.17,
+    "manufacturer_or_lab_name_pct": 100.0,
+    "state_licenses_pct": 45.27
+  },
+  "source": "gtr",
+  "success_signals": {
+    "all_sample_genes_have_hits": true,
+    "over_100_tests_with_gene_links": true
+  },
+  "test_type_counts": {
+    "Unknown": 64374
+  },
+  "timing": {
+    "elapsed_seconds": 7.08
+  },
+  "top_countries": [
+    {
+      "count": 31619,
+      "value": "United States"
+    },
+    {
+      "count": 11273,
+      "value": "Turkey"
+    },
+    {
+      "count": 5252,
+      "value": "Spain"
+    },
+    {
+      "count": 4013,
+      "value": "India"
+    },
+    {
+      "count": 3400,
+      "value": "Portugal"
+    },
+    {
+      "count": 3055,
+      "value": "Germany"
+    },
+    {
+      "count": 2006,
+      "value": "Canada"
+    },
+    {
+      "count": 1280,
+      "value": "Netherlands"
+    },
+    {
+      "count": 1017,
+      "value": "Austria"
+    },
+    {
+      "count": 228,
+      "value": "Finland"
+    }
+  ],
+  "top_method_categories": [
+    {
+      "count": 47447,
+      "value": "Sequence analysis of the entire coding region"
+    },
+    {
+      "count": 28973,
+      "value": "Deletion/duplication analysis"
+    },
+    {
+      "count": 5081,
+      "value": "Sequence analysis of select exons"
+    },
+    {
+      "count": 4354,
+      "value": "Targeted variant analysis"
+    },
+    {
+      "count": 4061,
+      "value": "Mutation scanning of the entire coding region"
+    },
+    {
+      "count": 421,
+      "value": "Analyte"
+    },
+    {
+      "count": 206,
+      "value": "FISH-interphase"
+    },
+    {
+      "count": 192,
+      "value": "Methylation analysis"
+    },
+    {
+      "count": 189,
+      "value": "Enzyme assay"
+    },
+    {
+      "count": 166,
+      "value": "FISH-metaphase"
+    }
+  ],
+  "top_methods": [
+    {
+      "count": 45724,
+      "value": "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+    },
+    {
+      "count": 10255,
+      "value": "Bi-directional Sanger Sequence Analysis"
+    },
+    {
+      "count": 4132,
+      "value": "Multiplex Ligation-dependent Probe Amplification (MLPA)"
+    },
+    {
+      "count": 2412,
+      "value": "Oligonucleotide hybridization-based DNA sequencing"
+    },
+    {
+      "count": 1260,
+      "value": "Comparative Genomic Hybridization"
+    },
+    {
+      "count": 883,
+      "value": "Uni-directional Sanger sequencing"
+    },
+    {
+      "count": 744,
+      "value": "PCR"
+    },
+    {
+      "count": 460,
+      "value": "Microarray"
+    },
+    {
+      "count": 408,
+      "value": "Trinucleotide repeat by PCR or Southern Blot"
+    },
+    {
+      "count": 381,
+      "value": "Fluorescence in situ hybridization (FISH)"
+    }
+  ]
+}

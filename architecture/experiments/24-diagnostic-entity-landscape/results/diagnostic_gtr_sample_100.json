@@ -1,0 +1,2828 @@
+{
+  "record_count": 64374,
+  "records": [
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Fragile X syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Methylation analysis",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Methylation-specific PCR",
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Fragile X syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004006.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "42D0689473",
+      "conditions": [
+        "Fragile X syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "Greenwood Genetic Center",
+      "manufacturer_or_lab": "Greenwood Genetic Center Diagnostic Laboratories",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Methylation-specific PCR"
+      ],
+      "name": "Fragile X syndrome: FMR1 Trinucleotide Repeat Analysis",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "42D0689473",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004034.12",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Fragile X syndrome",
+        "Fragile X-associated tremor/ataxia syndrome",
+        "Premature ovarian failure 1"
+      ],
+      "country": "Canada",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "Diagnostic Services, Shared Health Manitoba",
+      "manufacturer_or_lab": "Genomics Services",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Fragile X syndrome",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004036.6",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Fragile X syndrome"
+      ],
+      "country": "Canada",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Test for FMR1-Related Disorders",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004040.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Cystic fibrosis"
+      ],
+      "country": "United States",
+      "genes": [
+        "CFTR"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis",
+        "PCR/primer oligonucleotide base extension (PROBE)/mass spectrometry"
+      ],
+      "name": "Cystic Fibrosis",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004162.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Congenital bilateral aplasia of vas deferens from CFTR mutation",
+        "Cystic fibrosis",
+        "Disseminated bronchiectasis",
+        "Recurrent acute pancreatitis",
+        "chronic recurrent pancreatitis"
+      ],
+      "country": "Canada",
+      "genes": [
+        "CFTR"
+      ],
+      "institution": "Diagnostic Services, Shared Health Manitoba",
+      "manufacturer_or_lab": "Genomics Services",
+      "method_categories": [
+        "Linkage analysis",
+        "Sequence analysis of select exons",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "SNP Detection",
+        "Bi-directional Sanger Sequence Analysis",
+        "Elucigene CF-EU2v1"
+      ],
+      "name": "CFTR-related disorders",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004176.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Cystic fibrosis"
+      ],
+      "country": "Canada",
+      "genes": [
+        "CFTR"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis",
+        "Allele-specific primer extension (ASPE)"
+      ],
+      "name": "Test for CFTR-Related Disorders",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004180.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "50D2093534",
+      "conditions": [
+        "Ehlers-Danlos syndrome, type 4"
+      ],
+      "country": "United States",
+      "genes": [
+        "COL3A1"
+      ],
+      "institution": "University of Washington",
+      "manufacturer_or_lab": "Collagen Diagnostic Laboratory",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Microarray",
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+      ],
+      "name": "Vascular Ehlers-Danlos Syndrome, EDS type IV (COL3A1)",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "50D2093534",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004236.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "42D0689473",
+      "conditions": [
+        "Duchenne muscular dystrophy"
+      ],
+      "country": "United States",
+      "genes": [
+        "DMD"
+      ],
+      "institution": "Greenwood Genetic Center",
+      "manufacturer_or_lab": "Greenwood Genetic Center Diagnostic Laboratories",
+      "method_categories": [
+        "Deletion/duplication analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)"
+      ],
+      "name": "Duchenne/Becker Muscular Dystrophy: DMD Deletion/Duplication MLPA",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "42D0689473",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004412.11",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Dystrophinopathies",
+        "Neuromuscular disease caused by qualitative or quantitative defects of dystrophin"
+      ],
+      "country": "Canada",
+      "genes": [
+        "DMD"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Test for Dystrophinopathies",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004416.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "42D0689473",
+      "conditions": [
+        "Steinert myotonic dystrophy syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "DMPK"
+      ],
+      "institution": "Greenwood Genetic Center",
+      "manufacturer_or_lab": "Greenwood Genetic Center Diagnostic Laboratories",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Myotonic dystrophy: DMPK Trinucleotide Repeat Analysis",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "42D0689473",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004468.11",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Neurofibromatosis, type 1"
+      ],
+      "country": "United States",
+      "genes": [
+        "NF1"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Neurofibromatosis Syndrome Type 1",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004496.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Phenylketonuria"
+      ],
+      "country": "United States",
+      "genes": [
+        "PAH"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Phenylketonuria",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004516.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Familial adenomatous polyposis 1"
+      ],
+      "country": "United States",
+      "genes": [
+        "APC",
+        "MUTYH"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Adenomatous Polyposis of Colon",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004528.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "42D0689473",
+      "conditions": [
+        "Angelman syndrome"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Greenwood Genetic Center",
+      "manufacturer_or_lab": "Greenwood Genetic Center Diagnostic Laboratories",
+      "method_categories": [
+        "Methylation analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)"
+      ],
+      "name": "Angelman Syndrome Methylation-Specific MLPA",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "42D0689473",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004542.11",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Spinal muscular atrophy"
+      ],
+      "country": "Canada",
+      "genes": [
+        "SMN1"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Deletion/duplication analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)"
+      ],
+      "name": "Test for Spinal Muscular Atrophy (SMN1)",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004564.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Waardenburg syndrome type 1"
+      ],
+      "country": "United States",
+      "genes": [
+        "PAX3"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Waardenburg Syndrome Type 1/Type 3",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004594.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Wilson disease",
+        "Wilson's disease"
+      ],
+      "country": "United States",
+      "genes": [
+        "ATP7B"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Wilson's disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004598.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Huntington disease"
+      ],
+      "country": "Canada",
+      "genes": [
+        "HTT"
+      ],
+      "institution": "Diagnostic Services, Shared Health Manitoba",
+      "manufacturer_or_lab": "Genomics Services",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Huntington disease",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004834.4",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Kennedy disease"
+      ],
+      "country": "Canada",
+      "genes": [
+        "AR"
+      ],
+      "institution": "Diagnostic Services, Shared Health Manitoba",
+      "manufacturer_or_lab": "Genomics Services",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Kennedy disease",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004838.4",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "50D2039193",
+      "conditions": [
+        "Hereditary factor IX deficiency disease"
+      ],
+      "country": "United States",
+      "genes": [
+        "F9"
+      ],
+      "institution": "BloodworksNW",
+      "manufacturer_or_lab": "Bloodworks Genomics - Bleeding Disorders",
+      "method_categories": [
+        "Mutation scanning of the entire coding region"
+      ],
+      "methods": [
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "DNA Hemophilia B Mutation Evaluation",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "50D2039193",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004868.4",
+      "state_licenses": "NY - New York State Department of Health NYSDOHCA - California Department of Public Health CDPH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "Premature ovarian failure"
+      ],
+      "country": "United States",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "FMR1-Related Primary Ovarian Insufficiency (POI)",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004898.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "Fragile X syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Methylation analysis",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot",
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Fragile X Syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004902.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "Steinert myotonic dystrophy syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "DMPK"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Myotonic Dystrophy 1",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004906.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "FOXG1 disorder",
+        "MECP2 duplication syndrome",
+        "Rett syndrome, congenital variant",
+        "Syndromic X-linked intellectual disability Lubs type"
+      ],
+      "country": "United States",
+      "genes": [
+        "MECP2"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Deletion/duplication analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)"
+      ],
+      "name": "Rett Syndrome, MECP2, Deletion/Duplication",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000004996.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "Thrombophilia due to activated protein C resistance"
+      ],
+      "country": "United States",
+      "genes": [
+        "F5"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR with allele specific hybridization"
+      ],
+      "name": "Factor V (Leiden)",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005128.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "23D0717194",
+      "conditions": [
+        "Fragile X syndrome",
+        "Fragile X tremor/ataxia syndrome",
+        "Fragile X-associated tremor/ataxia syndrome",
+        "Premature ovarian failure 1"
+      ],
+      "country": "United States",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "Detroit Medical Center University Laboratories",
+      "manufacturer_or_lab": "Molecular Genetics Diagnostic Laboratory",
+      "method_categories": [
+        "Methylation analysis",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Methylation-specific PCR",
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "FMR1-related disorders",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "23D0717194",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005250.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "36D0859317",
+      "conditions": [
+        "Fragile X syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "Dayton Children's Hospital",
+      "manufacturer_or_lab": "Genetics Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR"
+      ],
+      "name": "FRAGILE X (FMR1)",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "36D0859317",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005424.7",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Dentatorubral pallidoluysian atrophy",
+        "Dentatorubral-pallidoluysian atrophy"
+      ],
+      "country": "United States",
+      "genes": [
+        "ATN1"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Dentatorubral pallidoluysian atrophy",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005466.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Y chromosome-related disorders"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "FISH-interphase",
+        "FISH-metaphase"
+      ],
+      "methods": [
+        "Fluorescence in situ Hybridization (FISH)",
+        "Fluorescence in situ Hybridization (FISH)"
+      ],
+      "name": "Y Chromosome Detection",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005470.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "21D0649789",
+      "conditions": [
+        "Spongy degeneration of central nervous system"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Kennedy Krieger Institute",
+      "manufacturer_or_lab": "Biochemical Genetics Laboratory",
+      "method_categories": [
+        "Analyte"
+      ],
+      "methods": [
+        "Gas chromatography\u00e2\u20ac\u201cmass spectrometry (GC-MS)"
+      ],
+      "name": "N-Acetylaspartic Acid",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "21D0649789",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005526.4",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Steinert myotonic dystrophy syndrome"
+      ],
+      "country": "Canada",
+      "genes": [
+        "DMPK"
+      ],
+      "institution": "Diagnostic Services, Shared Health Manitoba",
+      "manufacturer_or_lab": "Genomics Services",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "MTD1 AmplideX DMPK PCR Kit"
+      ],
+      "name": "myotonic dystrophy type 1",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005672.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Disorder of cardiovascular system"
+      ],
+      "country": "Canada",
+      "genes": [],
+      "institution": "Diagnostic Services, Shared Health Manitoba",
+      "manufacturer_or_lab": "Genomics Services",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR-RFLP-gel electrophoresis"
+      ],
+      "name": "Apolipoprotein E",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005674.4",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "14D0696069",
+      "conditions": [
+        "Angelman syndrome"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Rush University Medical Center",
+      "manufacturer_or_lab": "Genetics Laboratory - Department of Pathology",
+      "method_categories": [
+        "FISH-metaphase",
+        "Methylation analysis",
+        "Uniparental disomy study (UPD)"
+      ],
+      "methods": [
+        "G-banding",
+        "Methylation-specific PCR",
+        "Methylation-specific PCR"
+      ],
+      "name": "Angelman Syndrome Methylation Analysis",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "14D0696069",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005692.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "36D0859317",
+      "conditions": [
+        "Prader-Willi syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "SNRPN"
+      ],
+      "institution": "Dayton Children's Hospital",
+      "manufacturer_or_lab": "Genetics Laboratory",
+      "method_categories": [
+        "Methylation analysis"
+      ],
+      "methods": [
+        "Methylation-specific PCR"
+      ],
+      "name": "Prader-Willi Syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "36D0859317",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005898.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "36D0859317",
+      "conditions": [
+        "Angelman syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "SNRPN"
+      ],
+      "institution": "Dayton Children's Hospital",
+      "manufacturer_or_lab": "Genetics Laboratory",
+      "method_categories": [
+        "Methylation analysis"
+      ],
+      "methods": [
+        "Methylation-specific PCR"
+      ],
+      "name": "Angelman Syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "36D0859317",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005900.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Tay-Sachs disease"
+      ],
+      "country": "United States",
+      "genes": [
+        "HEXA"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR with RFLP"
+      ],
+      "name": "Tay-Sachs disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005910.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Huntington disease",
+        "Huntington's chorea"
+      ],
+      "country": "United States",
+      "genes": [
+        "HTT"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Huntington's Disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005912.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0930276",
+      "conditions": [
+        "Anemia, nonspherocytic hemolytic, associated with abnormality of red cell membrane",
+        "HNSHA due to aldolase A deficiency",
+        "Hemolytic anemia lethal congenital nonspherocytic with genital and other abnormalities",
+        "Lethal hemolytic anemia-genital anomalies syndrome"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Boston University",
+      "manufacturer_or_lab": "HFI Laboratory at Boston University",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "Aldolase A deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0930276",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005914.3",
+      "state_licenses": "MA - Executive Office of Health and Human Services EOHHS",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Hereditary liability to pressure palsies"
+      ],
+      "country": "Canada",
+      "genes": [
+        "PMP22"
+      ],
+      "institution": "Diagnostic Services, Shared Health Manitoba",
+      "manufacturer_or_lab": "Genomics Services",
+      "method_categories": [
+        "Deletion/duplication analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)"
+      ],
+      "name": "Hereditary Neuropathy with Tendency to Pressure Palsies",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000005918.4",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "14D0696069",
+      "conditions": [
+        "Spinal muscular atrophy"
+      ],
+      "country": "United States",
+      "genes": [
+        "SMN2"
+      ],
+      "institution": "Rush University Medical Center",
+      "manufacturer_or_lab": "Genetics Laboratory - Department of Pathology",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "RFLP"
+      ],
+      "name": "DNA Analysis for Spinal Muscular Atrophy",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "14D0696069",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000006026.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "Angelman syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "SNRPN"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Methylation analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)"
+      ],
+      "name": "Angelman Syndrome Methylation and Deletion/Duplication",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000006536.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "Huntington disease",
+        "Huntington's chorea"
+      ],
+      "country": "United States",
+      "genes": [
+        "HTT"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Huntington Disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000006556.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "Prader-Willi syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "SNRPN"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Methylation analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "MS-MLPA analysis of undigested and digested genomic DNA"
+      ],
+      "name": "Prader-Willi Syndrome Methylation and Deletion/Duplication",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000006562.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Gaucher disease"
+      ],
+      "country": "United States",
+      "genes": [
+        "GBA",
+        "GBA1"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR/primer oligonucleotide base extension (PROBE)/mass spectrometry"
+      ],
+      "name": "Gaucher disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000006688.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Breast-ovarian cancer, familial 1",
+        "Breast-ovarian cancer, familial, susceptibility to, 1"
+      ],
+      "country": "United States",
+      "genes": [
+        "BRCA1"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis",
+        "PCR with allele specific hybridization"
+      ],
+      "name": "Breast-ovarian cancer, familial 1 (BRCA1)",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000006692.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "36D0656333",
+      "conditions": [
+        "Fragile X syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "FMR1"
+      ],
+      "institution": "Cincinnati Children's Hospital Medical Center",
+      "manufacturer_or_lab": "Molecular Genetics Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "FMR1 CGG trinucleotide repeat testing",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "36D0656333",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000006804.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "14D0917593",
+      "conditions": [
+        "Angelman syndrome",
+        "Prader-Willi syndrome"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "University of Chicago",
+      "manufacturer_or_lab": "Genetic Services Laboratory",
+      "method_categories": [
+        "Methylation analysis"
+      ],
+      "methods": [
+        "Methylation-specific PCR"
+      ],
+      "name": "MS-MLPA for Angelman/Prader Willi syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "14D0917593",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000006812.4",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOHRI - State of Rhode Island Department of Health RIDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Thrombophilia due to activated protein C resistance"
+      ],
+      "country": "United States",
+      "genes": [
+        "F5"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR with RFLP"
+      ],
+      "name": "Factor V Leiden",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007286.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Angelman syndrome"
+      ],
+      "country": "Canada",
+      "genes": [
+        "SNRPN"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Methylation analysis",
+        "Uniparental disomy study (UPD)"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Other"
+      ],
+      "name": "Test for Angelman Syndrome",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007388.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Acrocephalosyndactyly type I"
+      ],
+      "country": "Canada",
+      "genes": [
+        "FGFR2"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Sequence analysis of select exons"
+      ],
+      "methods": [
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Test for FGFR2-Related Craniosynostosis",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007390.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "FRAXE"
+      ],
+      "country": "Canada",
+      "genes": [
+        "AFF2",
+        "FRAXE"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Test for X-Linked Mental Retardation Associated with Fragile Site FRAXE",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007404.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Hypochondroplasia"
+      ],
+      "country": "Canada",
+      "genes": [
+        "FGFR3"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Sequence analysis of select exons"
+      ],
+      "methods": [
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Test for Hypochondroplasia",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007406.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Bulbo-spinal atrophy X-linked",
+        "Kennedy disease"
+      ],
+      "country": "Canada",
+      "genes": [
+        "AR"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Test for Spinal and Bulbar Muscular Atrophy",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007410.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Pfeiffer syndrome"
+      ],
+      "country": "Canada",
+      "genes": [
+        "FGFR1",
+        "FGFR2"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Sequence analysis of select exons"
+      ],
+      "methods": [
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Test for Pfeiffer syndrome",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007418.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "99D1014032",
+      "conditions": [
+        "Prader-Willi syndrome"
+      ],
+      "country": "Canada",
+      "genes": [
+        "SNRPN"
+      ],
+      "institution": "The Hospital for Sick Children",
+      "manufacturer_or_lab": "Genome Diagnostics Laboratory",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Methylation analysis",
+        "Uniparental disomy study (UPD)"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Other"
+      ],
+      "name": "Test for Prader-Willi Syndrome",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "99D1014032",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007420.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "38D0881787",
+      "conditions": [
+        "Thrombophilia",
+        "Thrombophilia due to thrombin defect"
+      ],
+      "country": "United States",
+      "genes": [
+        "F2"
+      ],
+      "institution": "Oregon Health and Science University",
+      "manufacturer_or_lab": "Knight Diagnostic Laboratories - Molecular Diagnostic Center",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Real-Time PCR using FRET probes followed by melt-curve analysis"
+      ],
+      "name": "Prothrombin Gene Mutation",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "38D0881787",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007472.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Bulbo-spinal atrophy X-linked",
+        "Kennedy disease"
+      ],
+      "country": "United States",
+      "genes": [
+        "AR"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Kennedy disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007654.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Breast-ovarian cancer, familial 2",
+        "Breast-ovarian cancer, familial, susceptibility to, 2"
+      ],
+      "country": "United States",
+      "genes": [
+        "BRCA2"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis",
+        "PCR with allele specific hybridization"
+      ],
+      "name": "Breast-ovarian cancer, familial 2 (BRCA2)",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007656.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Hemochromatosis type 1"
+      ],
+      "country": "United States",
+      "genes": [
+        "HFE"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR with RFLP"
+      ],
+      "name": "Hereditary hemochromatosis",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007664.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Hemochromatosis type 1"
+      ],
+      "country": "Canada",
+      "genes": [],
+      "institution": "Diagnostic Services, Shared Health Manitoba",
+      "manufacturer_or_lab": "Genomics Services",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "multiplex dual-labeled hydrolysis probe"
+      ],
+      "name": "HFE-related hereditary hemochromatosis",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007768.6",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "23D0717194",
+      "conditions": [
+        "Huntington disease",
+        "Huntington's chorea",
+        "Juvenile Huntington disease",
+        "Juvenile onset Huntington's disease"
+      ],
+      "country": "United States",
+      "genes": [
+        "HTT"
+      ],
+      "institution": "Detroit Medical Center University Laboratories",
+      "manufacturer_or_lab": "Molecular Genetics Diagnostic Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Trinucleotide repeat by PCR or Southern Blot"
+      ],
+      "name": "Huntington Disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "23D0717194",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000007864.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Spongy degeneration of central nervous system"
+      ],
+      "country": "United States",
+      "genes": [
+        "ASPA"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR/primer oligonucleotide base extension (PROBE)/mass spectrometry"
+      ],
+      "name": "Canavan Disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000011416.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Von Hippel-Lindau syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "VHL"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Von Hippel-Lindau syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000011418.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Aganglionic megacolon",
+        "Congenital central hypoventilation",
+        "Down syndrome",
+        "Goldberg-Shprintzen syndrome",
+        "Hirschsprung disease with heart defects, laryngeal anomalies, and preaxial polydactyly",
+        "Hirschsprung disease with ulnar polydactyly, polysyndactyly of big toes, and ventricular septal defect",
+        "Hirschsprung disease, cardiac defects, and autonomic dysfunction",
+        "Hirschsprung disease, susceptibility to, 1",
+        "Hirschsprung disease, susceptibility to, 2",
+        "Hirschsprung disease, susceptibility to, 3",
+        "Hirschsprung disease, susceptibility to, 4",
+        "Hirschsprung disease, susceptibility to, 5",
+        "Hirschsprung disease, susceptibility to, 6",
+        "Hirschsprung disease, susceptibility to, 7",
+        "Hirschsprung disease, susceptibility to, 8",
+        "Hirschsprung disease, susceptibility to, 9",
+        "Hirschsprung disease-ganglioneuroblastoma syndrome",
+        "Hirschsprung disease-hearing loss-polydactyly syndrome",
+        "Hirschsprung disease-nail hypoplasia-dysmorphism syndrome",
+        "Hirschsprung disease-type D brachydactyly syndrome",
+        "Mowat-Wilson syndrome",
+        "PCWH syndrome",
+        "Waardenburg syndrome type 4A",
+        "Waardenburg syndrome type 4B",
+        "Waardenburg syndrome type 4C"
+      ],
+      "country": "United States",
+      "genes": [
+        "ECE1",
+        "EDN3",
+        "EDNRB",
+        "GDNF",
+        "KIFBP",
+        "PHOX2B",
+        "RET",
+        "SOX10",
+        "ZEB2"
+      ],
+      "institution": "New York University School of Medicine",
+      "manufacturer_or_lab": "Aravinda Chakravarti Research Laboratory",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of select exons",
+        "Sequence analysis of the entire coding region",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Microarray",
+        "Bi-directional Sanger Sequence Analysis",
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)",
+        "SNP Detection"
+      ],
+      "name": "Hirschsprung disease research testing",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000011470.9",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "15D0647198",
+      "conditions": [
+        "5p partial monosomy syndrome"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Indiana University School of Medicine",
+      "manufacturer_or_lab": "IU Genetic Testing Laboratories",
+      "method_categories": [
+        "FISH-metaphase",
+        "Detection of homozygosity"
+      ],
+      "methods": [
+        "Fluorescence in situ hybridization (FISH)",
+        "Microarray"
+      ],
+      "name": "FISH, Cri-du-chat syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "15D0647198",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000013530.6",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "15D0647198",
+      "conditions": [
+        "Williams syndrome"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Indiana University School of Medicine",
+      "manufacturer_or_lab": "IU Genetic Testing Laboratories",
+      "method_categories": [
+        "FISH-metaphase",
+        "Detection of homozygosity"
+      ],
+      "methods": [
+        "Fluorescence in situ hybridization (FISH)",
+        "Microarray"
+      ],
+      "name": "FISH, Williams syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "15D0647198",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000013532.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "15D0647198",
+      "conditions": [
+        "Chromosome 22q11.2 deletion syndrome, distal",
+        "DiGeorge syndrome",
+        "Velocardiofacial syndrome"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Indiana University School of Medicine",
+      "manufacturer_or_lab": "IU Genetic Testing Laboratories",
+      "method_categories": [
+        "FISH-metaphase",
+        "Detection of homozygosity"
+      ],
+      "methods": [
+        "Fluorescence in situ hybridization (FISH)",
+        "Microarray"
+      ],
+      "name": "FISH, 22q11.2 Deletion Syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "15D0647198",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000013538.8",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Hb SS disease"
+      ],
+      "country": "United States",
+      "genes": [
+        "HBB"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR with RFLP"
+      ],
+      "name": "Sickle cell anemia",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000016289.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Sickle cell-hemoglobin C disease"
+      ],
+      "country": "United States",
+      "genes": [
+        "HBB"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR with RFLP"
+      ],
+      "name": "Sickle cell disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000016363.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Severe X-linked myotubular myopathy"
+      ],
+      "country": "United States",
+      "genes": [
+        "MTM1"
+      ],
+      "institution": "Boston Children's Hospital",
+      "manufacturer_or_lab": "Beggs Laboratory - Congenital Myopathy Research Program",
+      "method_categories": [
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Bi-directional Sanger Sequence Analysis",
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)",
+        "RT-PCR with gel analysis"
+      ],
+      "name": "X-Linked Myotubular Myopathy",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000016530.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Autosomal dominant centronuclear myopathy",
+        "Centronuclear myopathy",
+        "Congenital myopathy with internal nuclei and atypical cores",
+        "Myopathy, centronuclear, 2",
+        "Severe X-linked myotubular myopathy"
+      ],
+      "country": "United States",
+      "genes": [
+        "BIN1",
+        "CCDC78",
+        "DNM2",
+        "MTM1",
+        "MYF6",
+        "TTN"
+      ],
+      "institution": "Boston Children's Hospital",
+      "manufacturer_or_lab": "Beggs Laboratory - Congenital Myopathy Research Program",
+      "method_categories": [
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Bi-directional Sanger Sequence Analysis",
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)",
+        "RT-PCR with gel analysis"
+      ],
+      "name": "Centronuclear Myopathy, all",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000016534.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Multiminicore myopathy"
+      ],
+      "country": "United States",
+      "genes": [
+        "RYR1",
+        "SELENON"
+      ],
+      "institution": "Boston Children's Hospital",
+      "manufacturer_or_lab": "Beggs Laboratory - Congenital Myopathy Research Program",
+      "method_categories": [
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Bi-directional Sanger Sequence Analysis",
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)",
+        "RT-PCR with gel analysis"
+      ],
+      "name": "Multiminicore Disease",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000016542.3",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Familial Mediterranean fever"
+      ],
+      "country": "United States",
+      "genes": [
+        "MEFV"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region",
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis",
+        "PCR with RFLP"
+      ],
+      "name": "Familial Mediterranean Fever",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000017047.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "14D0917593",
+      "conditions": [
+        "Gilbert syndrome",
+        "Gilbert's syndrome"
+      ],
+      "country": "United States",
+      "genes": [
+        "UGT1A1"
+      ],
+      "institution": "University of Chicago",
+      "manufacturer_or_lab": "Genetic Services Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR electrophoresis, capillary gel"
+      ],
+      "name": "UGT1A1 genotyping for Gilbert Syndrome",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "14D0917593",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018449.3",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOHRI - State of Rhode Island Department of Health RIDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Lymphoproliferative syndrome 1, X-linked",
+        "X-linked lymphoproliferative disease due to SH2D1A deficiency"
+      ],
+      "country": "United States",
+      "genes": [
+        "SH2D1A"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "X-linked lymphoproliferative syndrome 1",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018520.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "23D0717194",
+      "conditions": [
+        "Hypercoagulability",
+        "Thrombophilia"
+      ],
+      "country": "United States",
+      "genes": [
+        "F2"
+      ],
+      "institution": "Detroit Medical Center University Laboratories",
+      "manufacturer_or_lab": "Molecular Genetics Diagnostic Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR"
+      ],
+      "name": "Prothrombin related thrombophillia",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "23D0717194",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018642.4",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "23D0717194",
+      "conditions": [
+        "Thrombophilia due to activated protein C resistance",
+        "Thrombophilia due to factor V Leiden"
+      ],
+      "country": "United States",
+      "genes": [
+        "F5"
+      ],
+      "institution": "Detroit Medical Center University Laboratories",
+      "manufacturer_or_lab": "Molecular Genetics Diagnostic Laboratory",
+      "method_categories": [
+        "Targeted variant analysis"
+      ],
+      "methods": [
+        "PCR"
+      ],
+      "name": "Factor V Leiden related thrombophilia",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "23D0717194",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018644.6",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Ptosis, hereditary congenital, 1"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Boston Children's Hospital",
+      "manufacturer_or_lab": "Engle Laboratory",
+      "method_categories": [
+        "Linkage analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+      ],
+      "name": "Isolated congenital ptosis",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018650.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Familial congenital palsy of trochlear nerve"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Boston Children's Hospital",
+      "manufacturer_or_lab": "Engle Laboratory",
+      "method_categories": [
+        "Linkage analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+      ],
+      "name": "Fourth cranial nerve palsy, familial",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018661.5",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Cerebral cavernous malformation"
+      ],
+      "country": "Belgium",
+      "genes": [
+        "KRIT1"
+      ],
+      "institution": "de Duve Institute - Universite catholique de Louvain",
+      "manufacturer_or_lab": "Laboratory of Human Molecular Genetics",
+      "method_categories": [
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+      ],
+      "name": "Familial Cerebral Cavernous Malformation",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018734.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Blue rubber bleb nevus"
+      ],
+      "country": "Belgium",
+      "genes": [
+        "GLMN"
+      ],
+      "institution": "de Duve Institute - Universite catholique de Louvain",
+      "manufacturer_or_lab": "Laboratory of Human Molecular Genetics",
+      "method_categories": [
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+      ],
+      "name": "Blue Rubber Bleb Nevus Syndrome",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018736.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Multiple Cutaneous and Mucosal Venous Malformations",
+        "Multiple cutaneous and mucosal venous malformations"
+      ],
+      "country": "Belgium",
+      "genes": [
+        "TEK"
+      ],
+      "institution": "de Duve Institute - Universite catholique de Louvain",
+      "manufacturer_or_lab": "Laboratory of Human Molecular Genetics",
+      "method_categories": [
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+      ],
+      "name": "Mucocutaneous Venous Malformation",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000018741.2",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "22D0650242",
+      "conditions": [
+        "Paragangliomas 1",
+        "Pheochromocytoma/paraganglioma syndrome 1"
+      ],
+      "country": "United States",
+      "genes": [
+        "SDHD"
+      ],
+      "institution": "",
+      "manufacturer_or_lab": "Center for Human Genetics, Inc",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Sequence analysis of the entire coding region"
+      ],
+      "methods": [
+        "Multiplex Ligation-dependent Probe Amplification (MLPA)",
+        "Bi-directional Sanger Sequence Analysis"
+      ],
+      "name": "Paragangliomas 1",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "22D0650242",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000019679.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "",
+      "conditions": [
+        "Enchondromatosis"
+      ],
+      "country": "Belgium",
+      "genes": [
+        "IDH1"
+      ],
+      "institution": "de Duve Institute - Universite catholique de Louvain",
+      "manufacturer_or_lab": "Laboratory of Human Molecular Genetics",
+      "method_categories": [
+        "Mutation scanning of the entire coding region"
+      ],
+      "methods": [
+        "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+      ],
+      "name": "osteochondromatosis",
+      "public_status": "3",
+      "region": "international",
+      "regulatory_identifier": "",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000019751.1",
+      "state_licenses": "",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "21D0649789",
+      "conditions": [
+        "3-methylglutaconic aciduria type 1"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Kennedy Krieger Institute",
+      "manufacturer_or_lab": "Biochemical Genetics Laboratory",
+      "method_categories": [
+        "Analyte"
+      ],
+      "methods": [
+        "Metabolite levels"
+      ],
+      "name": "3-Methylglutaconic Acid",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "21D0649789",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000020073.4",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "34D1008914",
+      "conditions": [
+        "Autism",
+        "Global developmental delay",
+        "Multiple congenital anomalies"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Laboratory Corporation of America",
+      "manufacturer_or_lab": "Labcorp Clinical Cytogenetics Laboratory",
+      "method_categories": [
+        "Deletion/duplication analysis",
+        "Detection of homozygosity"
+      ],
+      "methods": [
+        "SNP Detection"
+      ],
+      "name": "SNP microarray (Reveal)",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "34D1008914",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000020305.8",
+      "state_licenses": "MD - Maryland Department of Health and Mental Hygiene DHMHNY - New York State Department of Health NYSDOHCA - California Department of Public Health CDPHPA - Pennsylvania Department of Health PADOHRI - State of Rhode Island Department of Health RIDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Mucopolysaccharidosis, MPS-IV-B"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "beta-galactosidase deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021102.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Salla disease"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Analyte"
+      ],
+      "methods": [
+        "Metabolite levels"
+      ],
+      "name": "excess free sialic acid",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021104.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Mucopolysaccharidosis type 7"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "beta-glucuronidase deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021106.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Mucolipidosis type II",
+        "Pseudo-Hurler polydystrophy"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "Mucolipidosis II/III",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021108.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Mucopolysaccharidosis type 1"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "alpha-L-iduronidase deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021116.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Mucopolysaccharidosis, MPS-III-B"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "alpha-N-acetyl-glucosamindase",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021118.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Mucopolysaccharidosis type 6"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "Arylsulfatase B deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021120.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Sialidosis"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Analyte",
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Metabolite levels",
+        "Enzyme activity"
+      ],
+      "name": "sialidase deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021122.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Beta-D-mannosidosis"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "beta-mannosidase deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021124.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Deficiency of alpha-mannosidase"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "alpha-mannosidosis",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021126.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Wolman disease"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "acid lipase deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021128.5",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Gaucher disease"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "Glucocerebrosidase deficiency",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021130.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    },
+    {
+      "clia_number": "39D0948425",
+      "conditions": [
+        "Fucosidosis"
+      ],
+      "country": "United States",
+      "genes": [],
+      "institution": "Thomas Jefferson University",
+      "manufacturer_or_lab": "Lysosomal Diseases Testing Laboratory",
+      "method_categories": [
+        "Enzyme assay"
+      ],
+      "methods": [
+        "Enzyme activity"
+      ],
+      "name": "alpha-L-fucosidase",
+      "public_status": "3",
+      "region": "us",
+      "regulatory_identifier": "39D0948425",
+      "regulatory_status": "1",
+      "source": "gtr",
+      "source_id": "GTR000021132.3",
+      "state_licenses": "PA - Pennsylvania Department of Health PADOHCA - California Department of Public Health CDPHNY - New York State Department of Health NYSDOH",
+      "test_category": "Unknown"
+    }
+  ],
+  "sample_size": 100,
+  "source": "gtr"
+}

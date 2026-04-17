@@ -1,0 +1,2306 @@
+{
+  "record_count": 128,
+  "records": [
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2006-02-03",
+      "device_name": "INFLUENZA A/H5 (ASIAN LINEAGE) VIRUS REAL-TIME RT-PCR PRIMER AND PROBE SET",
+      "generic_name": "",
+      "genes": [
+        "SET"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "INFLUENZA A/H5 (ASIAN LINEAGE) VIRUS REAL-TIME RT-PCR PRIMER AND PROBE SET",
+      "openfda_device_name": "Nucleic Acid Amplification, Novel Influenza A Virus, A/H5 (Asian Lineage) Rna",
+      "product_code": "NXD",
+      "region": "us",
+      "regulatory_identifier": "DEN060008",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "DEN060008",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2018-09-21",
+      "device_name": "NON-VARIOLA ORTHOPOXVIRUS REAL-TIME PCR PRIMER AND PROBE SET",
+      "generic_name": "",
+      "genes": [
+        "SET"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "NON-VARIOLA ORTHOPOXVIRUS REAL-TIME PCR PRIMER AND PROBE SET",
+      "openfda_device_name": "Non-Variola Orthopoxvirus Real-Time Pcr Primer And Probe Set",
+      "product_code": "PBK",
+      "region": "us",
+      "regulatory_identifier": "DEN070001",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "DEN070001",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2017-02-06",
+      "device_name": "Variola virus Real-Time PCR Assay",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers For Disease Control and Prevention (CDC)",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Variola virus Real-Time PCR Assay",
+      "openfda_device_name": "Variola Virus Nucleic Acid-Based Detection Assay",
+      "product_code": "PRA",
+      "region": "us",
+      "regulatory_identifier": "DEN160016",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "DEN160016",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2017-04-06",
+      "device_name": "23andMe Personal Genome Service (PGS) Genetic Health Risk Test for Hereditary Thrombophilia",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "23AndMe, Inc.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "23andMe Personal Genome Service (PGS) Genetic Health Risk Test for Hereditary Thrombophilia",
+      "openfda_device_name": "Genetic Variant Detection And Health Risk Assessment System",
+      "product_code": "PTA",
+      "region": "us",
+      "regulatory_identifier": "DEN160026",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "DEN160026",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Medical Genetics",
+      "conditions": [],
+      "decision_date": "2017-03-27",
+      "device_name": "ipsogen JAK2 RGQ PCR Kit",
+      "generic_name": "",
+      "genes": [
+        "JAK2",
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Qiagen, Inc.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "ipsogen JAK2 RGQ PCR Kit",
+      "openfda_device_name": "Jak2 Gene Mutation Detection Test",
+      "product_code": "PSU",
+      "region": "us",
+      "regulatory_identifier": "DEN160028",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "DEN160028",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Medical Genetics",
+      "conditions": [],
+      "decision_date": "2018-03-06",
+      "device_name": "23andMe PGS Genetic Health Risk Report for BRCA1/BRCA2 (Selected Variants)",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "23AndMe, Inc.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "23andMe PGS Genetic Health Risk Report for BRCA1/BRCA2 (Selected Variants)",
+      "openfda_device_name": "Cancer Predisposition Risk Assessment System",
+      "product_code": "QAZ",
+      "region": "us",
+      "regulatory_identifier": "DEN170046",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "DEN170046",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2017-11-15",
+      "device_name": "MSK-IMPACT (Integrated Mutation Profiling of Actionable Cancer Targets):a Hybridization-Capture Based Next Generation Sequencing Assay",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Memorial Sloan-Kettering Cancer Center",
+      "matched_queries": [
+        "device_name_sequencing"
+      ],
+      "name": "MSK-IMPACT (Integrated Mutation Profiling of Actionable Cancer Targets):a Hybridization-Capture Based Next Generation Sequencing Assay",
+      "openfda_device_name": "Next Generation Sequencing Based Tumor Profiling Test",
+      "product_code": "PZM",
+      "region": "us",
+      "regulatory_identifier": "DEN170058",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "DEN170058",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Obstetrics/Gynecology",
+      "conditions": [],
+      "decision_date": "2002-02-08",
+      "device_name": "PGD-PRE-IMPLANTATION GENETIC DIAGNOSTIC PIPETTES (BIOPSY PIPETTES)",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Cook Urological, Inc.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "PGD-PRE-IMPLANTATION GENETIC DIAGNOSTIC PIPETTES (BIOPSY PIPETTES)",
+      "openfda_device_name": "Accessory, Assisted Reproduction",
+      "product_code": "MQG",
+      "region": "us",
+      "regulatory_identifier": "K014160",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K014160",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Cardiovascular",
+      "conditions": [],
+      "decision_date": "2002-06-14",
+      "device_name": "OSCOR PACE 203/PACE 203H DUAL-CHAMBER TEMPORARY PACEMAKER, ST. JUDE MEDICAL, MODEL 3085 DUAL-CHAMBER EXTERNAL PULSE GENE",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Osypka Medical, Inc.",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "OSCOR PACE 203/PACE 203H DUAL-CHAMBER TEMPORARY PACEMAKER, ST. JUDE MEDICAL, MODEL 3085 DUAL-CHAMBER EXTERNAL PULSE GENE",
+      "openfda_device_name": "Pulse-Generator, Pacemaker, External",
+      "product_code": "DTE",
+      "region": "us",
+      "regulatory_identifier": "K020896",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K020896",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Obstetrics/Gynecology",
+      "conditions": [],
+      "decision_date": "2004-01-16",
+      "device_name": "PRE-IMPLANTATION GENETIC DIAGNOSIS PIPETTES (BIOPSY PIPETTES)",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Cook Urological, Inc.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "PRE-IMPLANTATION GENETIC DIAGNOSIS PIPETTES (BIOPSY PIPETTES)",
+      "openfda_device_name": "Microtools, Assisted Reproduction (Pipettes)",
+      "product_code": "MQH",
+      "region": "us",
+      "regulatory_identifier": "K033904",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K033904",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2008-09-30",
+      "device_name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT- PCR DETECTION AND CHARACTERIZATION PANEL",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT- PCR DETECTION AND CHARACTERIZATION PANEL",
+      "openfda_device_name": "Nucleic Acid Amplification, Novel Influenza A Virus, A/H5 (Asian Lineage) Rna",
+      "product_code": "NXD",
+      "region": "us",
+      "regulatory_identifier": "K080570",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K080570",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Clinical Chemistry",
+      "conditions": [],
+      "decision_date": "2009-01-15",
+      "device_name": "REAL-TIME PCR INTERNAL CONTROL 2B SET",
+      "generic_name": "",
+      "genes": [
+        "SET"
+      ],
+      "manufacturer_or_lab": "Nanogen, Inc.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "REAL-TIME PCR INTERNAL CONTROL 2B SET",
+      "openfda_device_name": "Internal  Polymerase Chain Reaction  Control, Not Assay Specific",
+      "product_code": "OLD",
+      "region": "us",
+      "regulatory_identifier": "K083430",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K083430",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Radiology",
+      "conditions": [],
+      "decision_date": "2010-01-08",
+      "device_name": "PCR ELEVA 1.2",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Philips Medical Systems, Inc.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "PCR ELEVA 1.2",
+      "openfda_device_name": "System, Image Processing, Radiological",
+      "product_code": "LLZ",
+      "region": "us",
+      "regulatory_identifier": "K093355",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K093355",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2010-06-22",
+      "device_name": "CDC INFLUENZA 2009 A(H1N1)PDM REAL-TIME RT-PCR PANEL",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC INFLUENZA 2009 A(H1N1)PDM REAL-TIME RT-PCR PANEL",
+      "openfda_device_name": "2009 H1n1 Influenza Virus (Swine Origin), Nucleic Acid Or Antigen, Detection And Identification",
+      "product_code": "OQW",
+      "region": "us",
+      "regulatory_identifier": "K101564",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K101564",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Clinical Chemistry",
+      "conditions": [],
+      "decision_date": "2011-05-04",
+      "device_name": "AFFYMETRIX GENE PROFILING REAGENTS",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Affymetrix, Inc.",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "AFFYMETRIX GENE PROFILING REAGENTS",
+      "openfda_device_name": "Complete Gene Expression Profiling Accessory Reagents",
+      "product_code": "OVA",
+      "region": "us",
+      "regulatory_identifier": "K103112",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K103112",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2011-08-23",
+      "device_name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "openfda_device_name": "2009 H1n1 Influenza Virus (Swine Origin), Nucleic Acid Or Antigen, Detection And Identification",
+      "product_code": "OQW",
+      "region": "us",
+      "regulatory_identifier": "K111507",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K111507",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Clinical Chemistry",
+      "conditions": [],
+      "decision_date": "2012-02-06",
+      "device_name": "ROTOR-GENE Q MDX",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "QIAGEN GmbH",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "ROTOR-GENE Q MDX",
+      "openfda_device_name": "Real Time Nucleic Acid Amplification System",
+      "product_code": "OOI",
+      "region": "us",
+      "regulatory_identifier": "K113319",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K113319",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2012-02-06",
+      "device_name": "ARTUS INFL A/B RG RT-PCR KIT",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "QIAGEN GmbH",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "ARTUS INFL A/B RG RT-PCR KIT",
+      "openfda_device_name": "Respiratory Virus Panel Nucleic Acid Assay System",
+      "product_code": "OCC",
+      "region": "us",
+      "regulatory_identifier": "K113323",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K113323",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2013-02-08",
+      "device_name": "ADENOVIRUS R-GENE US",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Argene SA",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "ADENOVIRUS R-GENE US",
+      "openfda_device_name": "Respiratory Virus Panel Nucleic Acid Assay System",
+      "product_code": "OCC",
+      "region": "us",
+      "regulatory_identifier": "K121942",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K121942",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2013-01-14",
+      "device_name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "openfda_device_name": "2009 H1n1 Influenza Virus (Swine Origin), Nucleic Acid Or Antigen, Detection And Identification",
+      "product_code": "OQW",
+      "region": "us",
+      "regulatory_identifier": "K123905",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K123905",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Clinical Chemistry",
+      "conditions": [],
+      "decision_date": "2013-03-08",
+      "device_name": "QUANTSTUDIO DX REAL-TIME PCR INSTRUMENT",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Life Technologies Corporation",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "QUANTSTUDIO DX REAL-TIME PCR INSTRUMENT",
+      "openfda_device_name": "Real Time Nucleic Acid Amplification System",
+      "product_code": "OOI",
+      "region": "us",
+      "regulatory_identifier": "K123955",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K123955",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2013-09-06",
+      "device_name": "PROSIGNA(TM) BREAST CANCER PROGNOSTIC GENE SIGNATURE ASSAY",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Nanostring Technologies",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "PROSIGNA(TM) BREAST CANCER PROGNOSTIC GENE SIGNATURE ASSAY",
+      "openfda_device_name": "Classifier, Prognostic, Recurrence Risk Assessment, Rna Gene Expression, Breast Cancer",
+      "product_code": "NYI",
+      "region": "us",
+      "regulatory_identifier": "K130010",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K130010",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2013-05-22",
+      "device_name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "openfda_device_name": "2009 H1n1 Influenza Virus (Swine Origin), Nucleic Acid Or Antigen, Detection And Identification",
+      "product_code": "OQW",
+      "region": "us",
+      "regulatory_identifier": "K130551",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K130551",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2013-06-20",
+      "device_name": "XPERT MRSA/SA BLOOD CULTURE ASSAY; GENEXPERT DX SYSTEMS (GX-I, GX-II, GX-IV, GX-XVI); GENEXPERT INFINITY-48 SYSTEM; GENE",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Cepheid",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "XPERT MRSA/SA BLOOD CULTURE ASSAY; GENEXPERT DX SYSTEMS (GX-I, GX-II, GX-IV, GX-XVI); GENEXPERT INFINITY-48 SYSTEM; GENE",
+      "openfda_device_name": "System, Nucleic Acid Amplification Test, Dna, Methicillin Resistant Staphylococcus Aureus, Direct Specimen",
+      "product_code": "NQX",
+      "region": "us",
+      "regulatory_identifier": "K130894",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K130894",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2013-09-23",
+      "device_name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K132508",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K132508",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2013-11-19",
+      "device_name": "ILLUMINA MISEQDX CYSTIC FIBROSIS CLINICAL SEQUENCING ASSAY",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Illumina, Inc.",
+      "matched_queries": [
+        "device_name_sequencing"
+      ],
+      "name": "ILLUMINA MISEQDX CYSTIC FIBROSIS CLINICAL SEQUENCING ASSAY",
+      "openfda_device_name": "System, Cystic Fibrosis Transmembrane Conductance Regulator Gene, Variant Gene Sequence Detection",
+      "product_code": "PFS",
+      "region": "us",
+      "regulatory_identifier": "K132750",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K132750",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2014-01-17",
+      "device_name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL, INFLUENZA A/B TYPING KIT",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Center For Disease Control and Prevention (Cdc)",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL, INFLUENZA A/B TYPING KIT",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K133869",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K133869",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2014-05-22",
+      "device_name": "ANTHRACIS REAL-TIME PCR ASSAY",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers For Disease Control and Prevention (CDC)",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "ANTHRACIS REAL-TIME PCR ASSAY",
+      "openfda_device_name": "Assay, Nucleic Acid Amplification, Bacillus Anthracis",
+      "product_code": "NHT",
+      "region": "us",
+      "regulatory_identifier": "K140426",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K140426",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2014-04-25",
+      "device_name": "INFLUENZA A SUBTYPING KIT, CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "INFLUENZA A SUBTYPING KIT, CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "openfda_device_name": "Influenza A Virus Subtype Differentiation Nucleic Acid Assay",
+      "product_code": "OEP",
+      "region": "us",
+      "regulatory_identifier": "K140851",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K140851",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2014-04-25",
+      "device_name": "INFLUENZA B LINEAGE GENOTYPING KIT, CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "INFLUENZA B LINEAGE GENOTYPING KIT, CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K140857",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K140857",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Clinical Chemistry",
+      "conditions": [],
+      "decision_date": "2014-05-22",
+      "device_name": "APPLIED BIOSYSTEMS 7500 FAST DX REAL-TIME PCR INSTRUMENT WITH SDS SOFTWARE",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Thermo Fisher Scientific (Life Technologies Holdin",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "APPLIED BIOSYSTEMS 7500 FAST DX REAL-TIME PCR INSTRUMENT WITH SDS SOFTWARE",
+      "openfda_device_name": "Instrumentation For Clinical Multiplex Test Systems",
+      "product_code": "NSU",
+      "region": "us",
+      "regulatory_identifier": "K141220",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K141220",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2014-11-07",
+      "device_name": "PROSIGNA BREAST CANCER PROGNOSTIC GENE SIGNATURE ASSAY",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Nanostring Technologies, Inc.",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "PROSIGNA BREAST CANCER PROGNOSTIC GENE SIGNATURE ASSAY",
+      "openfda_device_name": "Classifier, Prognostic, Recurrence Risk Assessment, Rna Gene Expression, Breast Cancer",
+      "product_code": "NYI",
+      "region": "us",
+      "regulatory_identifier": "K141771",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K141771",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2014-08-01",
+      "device_name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL, INFLUENZA A/H5 SUBTYPING",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC HUMAN INFLUENZA VIRUS REAL-TIME RT-PCR DIAGNOSTIC PANEL, INFLUENZA A/H5 SUBTYPING",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K141859",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K141859",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2015-12-01",
+      "device_name": "CDC Human Influenza Virus Real- time RT-PCR Diagnostic Panel, Influenza A/H5 Subtyping",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers For Disease Control and Prevention (CDC)",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real- time RT-PCR Diagnostic Panel, Influenza A/H5 Subtyping",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K153148",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K153148",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2016-06-30",
+      "device_name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers For Disease Control and Prevention (CDC)",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K161556",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K161556",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2017-06-29",
+      "device_name": "Rickettsia Real-time PCR Assay",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers For Disease Control and Prevention (CDC)",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Rickettsia Real-time PCR Assay",
+      "openfda_device_name": "Rickettsia Spp. Nucleic Acid Based Detection Assay",
+      "product_code": "PVQ",
+      "region": "us",
+      "regulatory_identifier": "K170940",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K170940",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2017-08-21",
+      "device_name": "RIDA GENE Norovirus GI/GII",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "R-Biopharm AG",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "RIDA GENE Norovirus GI/GII",
+      "openfda_device_name": "Reagents For Detection Of Norovirus Nucleic Acid",
+      "product_code": "PIQ",
+      "region": "us",
+      "regulatory_identifier": "K171511",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K171511",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2017-08-09",
+      "device_name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A/B Typing Kit, CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza B Lineage Genotyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza A/H5 Subtyping Kit",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A/B Typing Kit, CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza B Lineage Genotyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza A/H5 Subtyping Kit",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K172091",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K172091",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Medical Genetics",
+      "conditions": [],
+      "decision_date": "2018-01-12",
+      "device_name": "ipsogen JAK2 RGQ PCR Kit",
+      "generic_name": "",
+      "genes": [
+        "JAK2",
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Qiagen, Inc.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "ipsogen JAK2 RGQ PCR Kit",
+      "openfda_device_name": "Jak2 Gene Mutation Detection Test",
+      "product_code": "PSU",
+      "region": "us",
+      "regulatory_identifier": "K172287",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K172287",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2018-02-01",
+      "device_name": "Sentosa SA201 HSV 1/2 Qualitative PCR Test",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Vela Diagnostics USA, Inc.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Sentosa SA201 HSV 1/2 Qualitative PCR Test",
+      "openfda_device_name": "Herpes Simplex Virus Nucleic Acid Amplification Assay",
+      "product_code": "OQO",
+      "region": "us",
+      "regulatory_identifier": "K172509",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K172509",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2018-09-20",
+      "device_name": "Non-variola Orthopoxvirus Real-time PCR Primer and Probe Set",
+      "generic_name": "",
+      "genes": [
+        "SET"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Non-variola Orthopoxvirus Real-time PCR Primer and Probe Set",
+      "openfda_device_name": "Non-Variola Orthopoxvirus Real-Time Pcr Primer And Probe Set",
+      "product_code": "PBK",
+      "region": "us",
+      "regulatory_identifier": "K181205",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K181205",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2018-07-30",
+      "device_name": "CDC Human Influenza Virus Real-Time RT-PCR Diagnostic Panel: Influenza B Lineage Genotyping Kit,",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers For Disease Control and Prevention (CDC)",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real-Time RT-PCR Diagnostic Panel: Influenza B Lineage Genotyping Kit,",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K181736",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K181736",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2019-03-27",
+      "device_name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A/B Typing Kit, CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza B Lineage Genotyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza A/HS Subtyping Kit",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A/B Typing Kit, CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza B Lineage Genotyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza A/HS Subtyping Kit",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K190302",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K190302",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Clinical Chemistry",
+      "conditions": [],
+      "decision_date": "2020-02-21",
+      "device_name": "Applied Biosystems\u0099 3500 Dx Genetic Analyzer and Applied Biosystems\u0099 3500xL Dx Genetic Analyzer",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Life Technologies Corporation",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "Applied Biosystems\u0099 3500 Dx Genetic Analyzer and Applied Biosystems\u0099 3500xL Dx Genetic Analyzer",
+      "openfda_device_name": "Dna Genetic Analyzer",
+      "product_code": "PCA",
+      "region": "us",
+      "regulatory_identifier": "K191030",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K191030",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2021-09-30",
+      "device_name": "Acuitas AMR Gene Panel",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Opgen, Inc.",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "Acuitas AMR Gene Panel",
+      "openfda_device_name": "System, Nucleic Acid Amplification Test, Dna, Carbapenem Non-Susceptible Gram Negative Organism, Colony",
+      "product_code": "PMY",
+      "region": "us",
+      "regulatory_identifier": "K191288",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K191288",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2020-12-23",
+      "device_name": "Helix Genetic Health Risk App for late-onset Alzheimer\u0092s disease",
+      "generic_name": "",
+      "genes": [
+        "APP"
+      ],
+      "manufacturer_or_lab": "Helix Opco, LLC",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "Helix Genetic Health Risk App for late-onset Alzheimer\u0092s disease",
+      "openfda_device_name": "Genetic Variant Detection And Health Risk Assessment System",
+      "product_code": "PTA",
+      "region": "us",
+      "regulatory_identifier": "K192073",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K192073",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2019-11-07",
+      "device_name": "B. anthracis Real-time PCR Assay",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "B. anthracis Real-time PCR Assay",
+      "openfda_device_name": "Assay, Nucleic Acid Amplification, Bacillus Anthracis",
+      "product_code": "NHT",
+      "region": "us",
+      "regulatory_identifier": "K192871",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K192871",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2020-08-13",
+      "device_name": "AncestryDNA Factor V Leiden Genetic Health Risk Test",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Ancestry Genomics, Inc.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "AncestryDNA Factor V Leiden Genetic Health Risk Test",
+      "openfda_device_name": "Genetic Variant Detection And Health Risk Assessment System",
+      "product_code": "PTA",
+      "region": "us",
+      "regulatory_identifier": "K192944",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K192944",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2020-03-10",
+      "device_name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A/B Typing Kit, CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza A/H5 Subtyping Kit",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A/B Typing Kit, CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit, CDC Human Influenza Virus Real-time RT-PCR, Influenza A/H5 Subtyping Kit",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K200370",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K200370",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Medical Genetics",
+      "conditions": [],
+      "decision_date": "2022-01-06",
+      "device_name": "23andMe PGS Genetic Risk Report for Hereditary Prostate Cancer (HOXB13-Related)",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "23AndMe, Inc.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "23andMe PGS Genetic Risk Report for Hereditary Prostate Cancer (HOXB13-Related)",
+      "openfda_device_name": "Cancer Predisposition Risk Assessment System",
+      "product_code": "QAZ",
+      "region": "us",
+      "regulatory_identifier": "K211499",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K211499",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Orthopedic",
+      "conditions": [],
+      "decision_date": "2022-05-27",
+      "device_name": "CoLink PCR Plating System",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "In2bones USA, LLC",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CoLink PCR Plating System",
+      "openfda_device_name": "Plate, Fixation, Bone",
+      "product_code": "HRS",
+      "region": "us",
+      "regulatory_identifier": "K213698",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K213698",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2022-10-27",
+      "device_name": "AlphaID\u0099 At Home Genetic Health Risk Service",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Progenika Biopharma S.A., A Grifols Company",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "AlphaID\u0099 At Home Genetic Health Risk Service",
+      "openfda_device_name": "Genetic Variant Detection And Health Risk Assessment System",
+      "product_code": "PTA",
+      "region": "us",
+      "regulatory_identifier": "K221420",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K221420",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2022-06-10",
+      "device_name": "Non-variola Orthopoxvirus Real-time PCR Primer and Probe Set",
+      "generic_name": "",
+      "genes": [
+        "SET"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Non-variola Orthopoxvirus Real-time PCR Primer and Probe Set",
+      "openfda_device_name": "Non-Variola Orthopoxvirus Real-Time Pcr Primer And Probe Set",
+      "product_code": "PBK",
+      "region": "us",
+      "regulatory_identifier": "K221658",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K221658",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2022-06-24",
+      "device_name": "Non-variola Orthopoxvirus Real-time PCR Primer and Probe Set",
+      "generic_name": "",
+      "genes": [
+        "SET"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Non-variola Orthopoxvirus Real-time PCR Primer and Probe Set",
+      "openfda_device_name": "Non-Variola Orthopoxvirus Real-Time Pcr Primer And Probe Set",
+      "product_code": "PBK",
+      "region": "us",
+      "regulatory_identifier": "K221834",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K221834",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Medical Genetics",
+      "conditions": [],
+      "decision_date": "2023-09-05",
+      "device_name": "BCR-ABL1 (p210) % IS Kit (Digital PCR Method)",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Suzhou Sniper Medical Technologies Co., Ltd.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "BCR-ABL1 (p210) % IS Kit (Digital PCR Method)",
+      "openfda_device_name": "Bcr/Abl1 Monitoring Test",
+      "product_code": "OYX",
+      "region": "us",
+      "regulatory_identifier": "K221869",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K221869",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2022-08-30",
+      "device_name": "Non-variola Orthopoxvirus Real-time PCR Primer and Probe Set",
+      "generic_name": "",
+      "genes": [
+        "SET"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Non-variola Orthopoxvirus Real-time PCR Primer and Probe Set",
+      "openfda_device_name": "Non-Variola Orthopoxvirus Real-Time Pcr Primer And Probe Set",
+      "product_code": "PBK",
+      "region": "us",
+      "regulatory_identifier": "K222558",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K222558",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Medical Genetics",
+      "conditions": [],
+      "decision_date": "2023-08-31",
+      "device_name": "23andMe\u00ae Personal Genome Service\u00ae (PGS\u00ae) Genetic Health Risk Report for BRCA1/BRCA2 (Selected Variants)",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "23AndMe, Inc.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "23andMe\u00ae Personal Genome Service\u00ae (PGS\u00ae) Genetic Health Risk Report for BRCA1/BRCA2 (Selected Variants)",
+      "openfda_device_name": "Cancer Predisposition Risk Assessment System",
+      "product_code": "QAZ",
+      "region": "us",
+      "regulatory_identifier": "K223597",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K223597",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2024-07-10",
+      "device_name": "Applied Biosystems\u0099  TaqPath\u0099 COVID-19 Diagnostic PCR Kit",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Life Technologies Corporation",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Applied Biosystems\u0099  TaqPath\u0099 COVID-19 Diagnostic PCR Kit",
+      "openfda_device_name": "Respiratory Specimen Nucleic Acid Sars-Cov-2 Test",
+      "product_code": "QQX",
+      "region": "us",
+      "regulatory_identifier": "K233453",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K233453",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2024-05-21",
+      "device_name": "CDC Human Influenza Virus Real-Time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit (Ver4)",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real-Time RT-PCR Diagnostic Panel, Influenza A Subtyping Kit (Ver4)",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K241110",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K241110",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2025-01-07",
+      "device_name": "GlutenID Celiac Genetic Health Risk Test",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Targeted Genomics, LLC",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "GlutenID Celiac Genetic Health Risk Test",
+      "openfda_device_name": "Genetic Variant Detection And Health Risk Assessment System",
+      "product_code": "PTA",
+      "region": "us",
+      "regulatory_identifier": "K241456",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K241456",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2025-07-11",
+      "device_name": "CDC Human Influenza Virus Real-Time RT-PCR Diagnostic Panel: Influenza A/B Typing Kit (VER 2); Influenza A SubTyping Kit (VER 4); Influenza B Genotyping Kit (VER 1.1 and 2); and Influenza A/H5 Subtyping Kit (VER 4)",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real-Time RT-PCR Diagnostic Panel: Influenza A/B Typing Kit (VER 2); Influenza A SubTyping Kit (VER 4); Influenza B Genotyping Kit (VER 1.1 and 2); and Influenza A/H5 Subtyping Kit (VER 4)",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K243274",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K243274",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "2025-03-14",
+      "device_name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel: Influenza A/B Typing Kit (VER 2); Influenza A Subtyping Kit (VER 4); Influenza B Lineage Genotyping Kit (VER 1.1 and 2); and Influenza A/H5 Subtyping Kit (VER 4)",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CDC Human Influenza Virus Real-time RT-PCR Diagnostic Panel: Influenza A/B Typing Kit (VER 2); Influenza A Subtyping Kit (VER 4); Influenza B Lineage Genotyping Kit (VER 1.1 and 2); and Influenza A/H5 Subtyping Kit (VER 4)",
+      "openfda_device_name": "Influenza A And Influenza B Multiplex Nucleic Acid Assay",
+      "product_code": "OZE",
+      "region": "us",
+      "regulatory_identifier": "K243931",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K243931",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2025-09-30",
+      "device_name": "Francisella tularensis Real-time PCR assay",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Francisella tularensis Real-time PCR assay",
+      "openfda_device_name": "Biothreat Microbial Agent Nucleic Acid Detection Test",
+      "product_code": "SGA",
+      "region": "us",
+      "regulatory_identifier": "K252072",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K252072",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "2026-03-30",
+      "device_name": "Francisella tularensis Real-time PCR Assay",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centers for Disease Control and Prevention",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "Francisella tularensis Real-time PCR Assay",
+      "openfda_device_name": "Biothreat Microbial Agent Nucleic Acid Detection Test",
+      "product_code": "SGA",
+      "region": "us",
+      "regulatory_identifier": "K260812",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K260812",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "1984-08-02",
+      "device_name": "GENETIC SYS LEGIONELLA IMMUNOFLURORES",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Genetic Systems Corp.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "GENETIC SYS LEGIONELLA IMMUNOFLURORES",
+      "openfda_device_name": "Reagents, Antibody, Legionella, Direct & Indirect Fluorescent",
+      "product_code": "LHL",
+      "region": "us",
+      "regulatory_identifier": "K842683",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K842683",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Dental",
+      "conditions": [],
+      "decision_date": "1986-05-12",
+      "device_name": "CENTRIX PCR MOLAR MATRIX FORMS (BANDS)",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Centrix, Inc.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "CENTRIX PCR MOLAR MATRIX FORMS (BANDS)",
+      "openfda_device_name": "Instruments, Dental Hand",
+      "product_code": "DZN",
+      "region": "us",
+      "regulatory_identifier": "K861581",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K861581",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "1987-08-31",
+      "device_name": "GENE-TRAK CAMPYLOBACTER ASSAY",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Integrated Genetics",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "GENE-TRAK CAMPYLOBACTER ASSAY",
+      "openfda_device_name": "Dna-Reagents, Campylobacter Spp.",
+      "product_code": "LQO",
+      "region": "us",
+      "regulatory_identifier": "K863270",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K863270",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Radiology",
+      "conditions": [],
+      "decision_date": "1987-02-13",
+      "device_name": "PHILIPS COMPUTED RADIOGRAPHY SYSTEM (PCR)",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Parexel Intl. Corp.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "PHILIPS COMPUTED RADIOGRAPHY SYSTEM (PCR)",
+      "openfda_device_name": "System, Image Processing, Radiological",
+      "product_code": "LLZ",
+      "region": "us",
+      "regulatory_identifier": "K864519",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K864519",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "1987-07-16",
+      "device_name": "GENETIC SYSTEMS RSV IMMUNOFLUORESCENCE TEST KIT",
+      "generic_name": "",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Genetic Systems Corp.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "GENETIC SYSTEMS RSV IMMUNOFLUORESCENCE TEST KIT",
+      "openfda_device_name": "Respiratory Syncytial Virus, Antigen, Antibody, Ifa",
+      "product_code": "LKT",
+      "region": "us",
+      "regulatory_identifier": "K870176",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K870176",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "1987-11-20",
+      "device_name": "GENETIC SYSTEMS RSV REAGENT CONTROL SLIDES",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Genetic Systems Corp.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "GENETIC SYSTEMS RSV REAGENT CONTROL SLIDES",
+      "openfda_device_name": "Respiratory Syncytial Virus, Antigen, Antibody, Ifa",
+      "product_code": "LKT",
+      "region": "us",
+      "regulatory_identifier": "K873564",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K873564",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Immunology",
+      "conditions": [],
+      "decision_date": "1988-12-20",
+      "device_name": "QM300 PCR ANTIBODY PACK",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Kallestad Diag, A Div. of Erbamont, Inc.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "QM300 PCR ANTIBODY PACK",
+      "openfda_device_name": "System, Test, C-Reactive Protein",
+      "product_code": "DCN",
+      "region": "us",
+      "regulatory_identifier": "K885001",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K885001",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "1989-05-01",
+      "device_name": "GENETIC SYSTEMS PIPETTOR/DILUTOR",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Genetic Systems Corp.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "GENETIC SYSTEMS PIPETTOR/DILUTOR",
+      "openfda_device_name": "Device, Microtiter Diluting/Dispensing",
+      "product_code": "JTC",
+      "region": "us",
+      "regulatory_identifier": "K891765",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K891765",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "1989-05-01",
+      "device_name": "GENETIC SYSTEMS MICROPLATE STRIP WASHER",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Genetic Systems Corp.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "GENETIC SYSTEMS MICROPLATE STRIP WASHER",
+      "openfda_device_name": "Device, Microtiter Diluting/Dispensing",
+      "product_code": "JTC",
+      "region": "us",
+      "regulatory_identifier": "K891766",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K891766",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Clinical Chemistry",
+      "conditions": [],
+      "decision_date": "1989-07-25",
+      "device_name": "GENETIC SYSTEMS MICROPLATE READER",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Genetic Systems Corp.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "GENETIC SYSTEMS MICROPLATE READER",
+      "openfda_device_name": "Colorimeter, Photometer, Spectrophotometer For Clinical Use",
+      "product_code": "JJQ",
+      "region": "us",
+      "regulatory_identifier": "K891767",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K891767",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Microbiology",
+      "conditions": [],
+      "decision_date": "1989-05-01",
+      "device_name": "GENETIC SYSTEMS MICROPLATE WASHER",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Genetic Systems Corp.",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "GENETIC SYSTEMS MICROPLATE WASHER",
+      "openfda_device_name": "Device, Microtiter Diluting/Dispensing",
+      "product_code": "JTC",
+      "region": "us",
+      "regulatory_identifier": "K891768",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K891768",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Obstetrics/Gynecology",
+      "conditions": [],
+      "decision_date": "1989-08-04",
+      "device_name": "PHARMASEAL GENETIC AMNIOCENTESIS TRAY",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Baxter Healthcare Corp",
+      "matched_queries": [
+        "device_name_genetic"
+      ],
+      "name": "PHARMASEAL GENETIC AMNIOCENTESIS TRAY",
+      "openfda_device_name": "Sampler, Amniotic Fluid (Amniocentesis Tray)",
+      "product_code": "HIO",
+      "region": "us",
+      "regulatory_identifier": "K894031",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K894031",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Radiology",
+      "conditions": [],
+      "decision_date": "1989-09-12",
+      "device_name": "30KW HIGH FREQ. RADIO. GENE. MODELS HFQ-30/HFQ30SE",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Bennett X-Ray Corp.",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "30KW HIGH FREQ. RADIO. GENE. MODELS HFQ-30/HFQ30SE",
+      "openfda_device_name": "Generator, High-Voltage, X-Ray, Diagnostic",
+      "product_code": "IZO",
+      "region": "us",
+      "regulatory_identifier": "K894479",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K894479",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Cardiovascular",
+      "conditions": [],
+      "decision_date": "1989-10-17",
+      "device_name": "LABELING CHANGES TO PULSE GENE. & PULSE GENE. LEAD",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Biotronik, GmbH & Co.",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "LABELING CHANGES TO PULSE GENE. & PULSE GENE. LEAD",
+      "openfda_device_name": "Implantable Pacemaker Pulse-Generator",
+      "product_code": "DXY",
+      "region": "us",
+      "regulatory_identifier": "K894494",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K894494",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "General, Plastic Surgery",
+      "conditions": [],
+      "decision_date": "1989-11-15",
+      "device_name": "MODEL 8750 BIPOLAR/MONOPOLAR ELECTROSURGICAL GENE.",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Everest Medical Corp.",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "MODEL 8750 BIPOLAR/MONOPOLAR ELECTROSURGICAL GENE.",
+      "openfda_device_name": "Electrosurgical, Cutting & Coagulation & Accessories",
+      "product_code": "GEI",
+      "region": "us",
+      "regulatory_identifier": "K895841",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K895841",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Cardiovascular",
+      "conditions": [],
+      "decision_date": "1990-07-03",
+      "device_name": "MODIFIED MEDTRONIC CLASSIX MODEL 8438 PULSE GENE.",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Medtronic Vascular",
+      "matched_queries": [
+        "device_name_gene"
+      ],
+      "name": "MODIFIED MEDTRONIC CLASSIX MODEL 8438 PULSE GENE.",
+      "openfda_device_name": "Implantable Pacemaker Pulse-Generator",
+      "product_code": "DXY",
+      "region": "us",
+      "regulatory_identifier": "K901535",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K901535",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Radiology",
+      "conditions": [],
+      "decision_date": "1992-01-09",
+      "device_name": "PHILIPS PCR-ACE SYSTEM",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Philips Medical Systems, Inc.",
+      "matched_queries": [
+        "device_name_pcr"
+      ],
+      "name": "PHILIPS PCR-ACE SYSTEM",
+      "openfda_device_name": "System, Image Processing, Radiological",
+      "product_code": "LLZ",
+      "region": "us",
+      "regulatory_identifier": "K915237",
+      "source": "fda_device",
+      "source_db": "510k",
+      "source_id": "K915237",
+      "supplement_count": 0,
+      "trade_name": ""
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2012-07-06",
+      "device_name": "",
+      "generic_name": "Chromogenic in situ hybridization, nucleic acid amplification, HER2/NEU gene, breast cancer",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Invitrogen Corporation",
+      "matched_queries": [
+        "generic_name_gene"
+      ],
+      "name": "SPOT-LIGHT HER2 CISH KIT",
+      "openfda_device_name": "Chromogenic In Situ Hybridization, Nucleic Acid Amplification, Her2/Neu Gene, Breast Cancer",
+      "product_code": "NYQ",
+      "region": "us",
+      "regulatory_identifier": "P050040",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P050040",
+      "supplement_count": 2,
+      "trade_name": "SPOT-LIGHT HER2 CISH KIT"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2012-06-01",
+      "device_name": "",
+      "generic_name": "Fluorescence in situ hybridization, topoisomerase ii alpha, gene amplification and deletion",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Dako Denmark A/S",
+      "matched_queries": [
+        "generic_name_gene"
+      ],
+      "name": "TOP2A FISH PHARMADX KIT",
+      "openfda_device_name": "Fluorescence In Situ Hybridization, Topoisomerase Ii Alpha, Gene Amplification And Deletion",
+      "product_code": "NXG",
+      "region": "us",
+      "regulatory_identifier": "P050045",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P050045",
+      "supplement_count": 3,
+      "trade_name": "TOP2A FISH PHARMADX KIT"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2009-12-17",
+      "device_name": "",
+      "generic_name": "RT-PCR multigene expression test, sentinel lymph node, cancer metastasis detection",
+      "genes": [],
+      "manufacturer_or_lab": "Janssen Diagnostics",
+      "matched_queries": [
+        "generic_name_pcr"
+      ],
+      "name": "GENESEARCH BREAST LYMPH NODE (BLN) ASSAY",
+      "openfda_device_name": "Rt-Pcr Multigene Expression Test, Sentinel Lymph Node, Cancer Metastasis Detection",
+      "product_code": "OCB",
+      "region": "us",
+      "regulatory_identifier": "P060017",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P060017",
+      "supplement_count": 2,
+      "trade_name": "GENESEARCH BREAST LYMPH NODE (BLN) ASSAY"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2017-04-12",
+      "device_name": "",
+      "generic_name": "Chromogenic in situ hybridization, nucleic acid amplification, HER2/NEU gene, breast cancer",
+      "genes": [
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Dako Denmark A/S",
+      "matched_queries": [
+        "generic_name_gene"
+      ],
+      "name": "HER2 CISH pharmDX Kit",
+      "openfda_device_name": "Chromogenic In Situ Hybridization, Nucleic Acid Amplification, Her2/Neu Gene, Breast Cancer",
+      "product_code": "NYQ",
+      "region": "us",
+      "regulatory_identifier": "P100024",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P100024",
+      "supplement_count": 5,
+      "trade_name": "HER2 CISH pharmDX Kit"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2024-01-26",
+      "device_name": "",
+      "generic_name": "Chromogenic in situ hybridization, nucleic acid amplification, HER2/NEU gene, breast cancer",
+      "genes": [],
+      "manufacturer_or_lab": "Ventana Medical Systems, Inc.",
+      "matched_queries": [
+        "generic_name_gene"
+      ],
+      "name": "INFORM HER2 Dual ISH DNA Probe Cocktail",
+      "openfda_device_name": "Chromogenic In Situ Hybridization, Nucleic Acid Amplification, Her2/Neu Gene, Breast Cancer",
+      "product_code": "NYQ",
+      "region": "us",
+      "regulatory_identifier": "P100027",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P100027",
+      "supplement_count": 19,
+      "trade_name": "INFORM HER2 Dual ISH DNA Probe Cocktail"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2026-02-18",
+      "device_name": "",
+      "generic_name": "Fluorescence in situ hybridization, anaplastic lymphoma kinase, gene rearrangement",
+      "genes": [
+        "ALK",
+        "KIT"
+      ],
+      "manufacturer_or_lab": "Abbott Molecular, Inc.",
+      "matched_queries": [
+        "generic_name_gene"
+      ],
+      "name": "Vysis ALK Break Apart FISH Probe Kit",
+      "openfda_device_name": "Fluorescence In Situ Hybridization, Anaplastic Lymphoma Kinase, Gene Rearrangement",
+      "product_code": "OWE",
+      "region": "us",
+      "regulatory_identifier": "P110012",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P110012",
+      "supplement_count": 10,
+      "trade_name": "Vysis ALK Break Apart FISH Probe Kit"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2026-03-17",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "BRAF"
+      ],
+      "manufacturer_or_lab": "Roche Molecular Systems, Inc.",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "cobas\u00ae BRAF V600 Mutation Test",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P110020",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P110020",
+      "supplement_count": 44,
+      "trade_name": "cobas\u00ae BRAF V600 Mutation Test"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2025-01-16",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "KIT",
+        "KRAS"
+      ],
+      "manufacturer_or_lab": "QIAGEN GmbH",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "therascreen\u00ae KRAS RGQ PCR Kit",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P110027",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P110027",
+      "supplement_count": 17,
+      "trade_name": "therascreen\u00ae KRAS RGQ PCR Kit"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2012-07-06",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "KIT",
+        "KRAS"
+      ],
+      "manufacturer_or_lab": "QIAGEN Manchester, Ltd.",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "THERASCREEN KRAS RGQ PCR KIT",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P110030",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P110030",
+      "supplement_count": 0,
+      "trade_name": "THERASCREEN KRAS RGQ PCR KIT"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2021-12-20",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "BRAF"
+      ],
+      "manufacturer_or_lab": "bioMerieux, Inc.",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "THXID\u0099-BRAF",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P120014",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P120014",
+      "supplement_count": 12,
+      "trade_name": "THXID\u0099-BRAF"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2026-03-17",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "EGFR"
+      ],
+      "manufacturer_or_lab": "Roche",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "cobas\u00ae EGFR Mutation Test, v2.0",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P120019",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P120019",
+      "supplement_count": 41,
+      "trade_name": "cobas\u00ae EGFR Mutation Test, v2.0"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2021-07-07",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "EGFR",
+        "KIT"
+      ],
+      "manufacturer_or_lab": "QIAGEN GmbH",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "therascreen EGFR RGQ PCR Kit",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P120022",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P120022",
+      "supplement_count": 20,
+      "trade_name": "therascreen EGFR RGQ PCR Kit"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2024-10-04",
+      "device_name": "",
+      "generic_name": "",
+      "genes": [],
+      "manufacturer_or_lab": "Myriad Genetic Laboratories",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation",
+        "trade_name_cdx"
+      ],
+      "name": "BRACAnalysis CDx\u00ae",
+      "openfda_device_name": "",
+      "product_code": "",
+      "region": "us",
+      "regulatory_identifier": "P140020",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P140020",
+      "supplement_count": 24,
+      "trade_name": "BRACAnalysis CDx\u00ae"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2026-03-17",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "KRAS"
+      ],
+      "manufacturer_or_lab": "Roche Molecular Systems, Inc.",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "cobas\u00ae KRAS Mutation Test",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P140023",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P140023",
+      "supplement_count": 31,
+      "trade_name": "cobas\u00ae KRAS Mutation Test"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2025-06-20",
+      "device_name": "",
+      "generic_name": "Immunohistochemistry assay, antibody, anaplastic lymphoma kinase",
+      "genes": [
+        "ALK"
+      ],
+      "manufacturer_or_lab": "Ventana Medical Systems, Inc.",
+      "matched_queries": [
+        "trade_name_cdx"
+      ],
+      "name": "VENTANA ALK (D5F3) CDX ASSAY",
+      "openfda_device_name": "Immunohistochemistry Assay, Antibody, Anaplastic Lymphoma Kinase",
+      "product_code": "PKW",
+      "region": "us",
+      "regulatory_identifier": "P140025",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P140025",
+      "supplement_count": 14,
+      "trade_name": "VENTANA ALK (D5F3) CDX ASSAY"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2016-09-28",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "EGFR"
+      ],
+      "manufacturer_or_lab": "Roche Molecular Systems, Inc.",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "cobas EGFR MUTATION TEST v2",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P150044",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P150044",
+      "supplement_count": 0,
+      "trade_name": "cobas EGFR MUTATION TEST v2"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2016-10-19",
+      "device_name": "",
+      "generic_name": "Somatic gene mutation detection system",
+      "genes": [
+        "EGFR"
+      ],
+      "manufacturer_or_lab": "Roche Molecular Systems, Inc.",
+      "matched_queries": [
+        "generic_name_gene",
+        "generic_name_mutation"
+      ],
+      "name": "Cobas EGFR MUTATION TEST v2",
+      "openfda_device_name": "Somatic Gene Mutation Detection System",
+      "product_code": "OWD",
+      "region": "us",
+      "regulatory_identifier": "P150047",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P150047",
+      "supplement_count": 2,
+      "trade_name": "Cobas EGFR MUTATION TEST v2"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2018-07-02",
+      "device_name": "",
+      "generic_name": "Immunohistochemistry assay, antibody, programmed death-ligand 1",
+      "genes": [],
+      "manufacturer_or_lab": "Ventana Medical Systems, Inc.",
+      "matched_queries": [
+        "trade_name_cdx"
+      ],
+      "name": "VENTANA PD-L1(SP142) CDX ASSAY",
+      "openfda_device_name": "Immunohistochemistry Assay, Antibody, Programmed Death-Ligand 1",
+      "product_code": "PLS",
+      "region": "us",
+      "regulatory_identifier": "P160002",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P160002",
+      "supplement_count": 2,
+      "trade_name": "VENTANA PD-L1(SP142) CDX ASSAY"
+    },
+    {
+      "advisory_committee": "Pathology",
+      "conditions": [],
+      "decision_date": "2018-04-06",
+      "device_name": "",
+      "generic_name": "Next generation sequencing oncology panel, somatic or germline variant detection system",
+      "genes": [
+        "BRCA1",
+        "BRCA2"
+      ],
+      "manufacturer_or_lab": "Foundation Medicine, Inc.",
+      "matched_queries": [
+        "generic_name_sequencing",
+        "trade_name_cdx"
+      ],
+      "name": "FoundationFocus CDx BRCA HRD",
+      "openfda_device_name": "Next Generation Sequencing Oncology Panel, Somatic Or Germline Variant Detection System",
+      "product_code": "PQP",
+      "region": "us",
+      "regulatory_identifier": "P160018",
+      "source": "fda_device",
+      "source_db": "pma",
+      "source_id": "P160018",
+      "supplement_count": 1,
+      "trade_name": "FoundationFocus CDx BRCA HRD"
+    }
+  ],
+  "sample_size": 100,
+  "source": "fda_device"
+}

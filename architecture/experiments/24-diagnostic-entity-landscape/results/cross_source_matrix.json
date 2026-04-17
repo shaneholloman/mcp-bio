@@ -1,0 +1,132 @@
+{
+  "candidate_unified_data_model": {
+    "required_fields": [
+      "source",
+      "source_id",
+      "name",
+      "test_category",
+      "manufacturer_or_lab",
+      "genes",
+      "conditions",
+      "methods",
+      "specimen_types",
+      "regulatory_status",
+      "regulatory_identifier",
+      "region"
+    ],
+    "source_specific_extensions": {
+      "fda_device": [
+        "k_number_or_pma_number",
+        "decision_date",
+        "product_code",
+        "advisory_committee"
+      ],
+      "gtr": [
+        "offerer",
+        "certifications",
+        "clinical_validity",
+        "clinical_utility"
+      ],
+      "who_ivd": [
+        "assay_format",
+        "prequalification_year",
+        "regulatory_version"
+      ]
+    }
+  },
+  "decision_hint": {
+    "backbone_source": "gtr",
+    "note": "GTR is the only source that satisfies the ticket's gene-linkage success bar on the oncology sample. FDA is useful for regulation but not as the primary linkage spine; WHO IVD is orthogonal and more infectious-disease oriented.",
+    "regulatory_overlays": [
+      "fda_device",
+      "who_ivd"
+    ]
+  },
+  "disease_source_matrix": {
+    "breast cancer": {
+      "fda_510k": 2,
+      "gtr_bulk": 92,
+      "who_ivd": 0
+    },
+    "lung cancer": {
+      "fda_510k": 5,
+      "gtr_bulk": 58,
+      "who_ivd": 0
+    },
+    "melanoma": {
+      "fda_510k": 2,
+      "gtr_bulk": 283,
+      "who_ivd": 0
+    }
+  },
+  "gene_source_matrix": {
+    "BRAF": {
+      "fda_510k": 1,
+      "gtr_bulk": 437,
+      "who_ivd": 0
+    },
+    "BRCA1": {
+      "fda_510k": 2,
+      "gtr_bulk": 438,
+      "who_ivd": 0
+    },
+    "EGFR": {
+      "fda_510k": 0,
+      "gtr_bulk": 181,
+      "who_ivd": 0
+    },
+    "KRAS": {
+      "fda_510k": 0,
+      "gtr_bulk": 455,
+      "who_ivd": 0
+    },
+    "TP53": {
+      "fda_510k": 2,
+      "gtr_bulk": 598,
+      "who_ivd": 0
+    }
+  },
+  "normalized_name_overlap": {
+    "gtr_bulk_vs_fda_510k": 0,
+    "gtr_bulk_vs_who_ivd": 0,
+    "who_ivd_vs_fda_510k": 0
+  },
+  "sources": {
+    "fda_510k": {
+      "all_sample_genes_have_hits": false,
+      "companion_diagnostic_pma_counts": {
+        "osimertinib": {
+          "510k_count": 0,
+          "pma_count": 13
+        },
+        "pembrolizumab": {
+          "510k_count": 0,
+          "pma_count": 15
+        },
+        "trastuzumab": {
+          "510k_count": 0,
+          "pma_count": 21
+        },
+        "vemurafenib": {
+          "510k_count": 0,
+          "pma_count": 4
+        }
+      },
+      "decision_date_pct": 100.0
+    },
+    "gtr_api": {
+      "all_sample_genes_have_hits": true,
+      "mean_gene_search_latency_ms": 121.1,
+      "mean_gene_summary_latency_ms": 382.02
+    },
+    "gtr_bulk": {
+      "all_sample_genes_have_hits": true,
+      "gene_links_pct": 96.17,
+      "regulatory_metadata_pct": 55.76
+    },
+    "who_ivd": {
+      "all_sample_genes_have_hits": false,
+      "regulatory_metadata_pct": 100.0
+    }
+  }
+}

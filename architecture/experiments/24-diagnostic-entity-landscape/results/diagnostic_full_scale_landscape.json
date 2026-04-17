@@ -1,0 +1,1016 @@
+{
+  "artifact_root": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape",
+  "cli_surface_proposal": [
+    {
+      "command": "biomcp search diagnostic --gene BRCA1",
+      "purpose": "Gene to test pivot backed by GTR, with FDA and WHO overlays attached when present."
+    },
+    {
+      "command": "biomcp search diagnostic --disease \"breast cancer\"",
+      "purpose": "Condition to test pivot using GTR conditions first, then overlay regulatory records."
+    },
+    {
+      "command": "biomcp get diagnostic GTR000603548.1",
+      "purpose": "Fetch a single GTR-backed diagnostic card with source-native provenance and metadata."
+    },
+    {
+      "command": "biomcp get diagnostic P170019 --source fda",
+      "purpose": "Fetch a specific FDA PMA or 510(k) regulatory overlay record by identifier."
+    },
+    {
+      "command": "biomcp search diagnostic --gene BRCA1 --region us --regulatory",
+      "purpose": "Prefer U.S. records and surface FDA overlays alongside the GTR backbone."
+    }
+  ],
+  "clinvar_gene_universe": {
+    "primary": {
+      "file": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/work/clinvar_gene_specific_summary.txt",
+      "overview": "Overview of data in ClinVar by gene, dated April 14, 2026",
+      "pathogenic_gene_count": 11085,
+      "source": "clinvar_gene_specific_summary",
+      "timing": {
+        "elapsed_seconds": 0.41
+      }
+    },
+    "variant_summary_sanity_check": {
+      "all_pathogenic_gene_count": 15027,
+      "file": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/work/clinvar_variant_summary.txt.gz",
+      "germline_pathogenic_gene_count": 10739,
+      "source": "clinvar_variant_summary",
+      "timing": {
+        "elapsed_seconds": 55.08
+      }
+    }
+  },
+  "full_scale_definition": {
+    "clinvar_gene_universe": "All genes with nonzero `Alleles_reported_Pathogenic_Likely_pathogenic` in ClinVar `gene_specific_summary.txt`.",
+    "fda_overlay": "Combined PMA and 510(k) molecular-diagnostics slice from openFDA, deduped by regulatory identifier.",
+    "gtr_backbone": "All current GTR tests from `test_version.gz` joined to `test_condition_gene.txt`.",
+    "who_overlay": "Full WHO IVD CSV export scanned against the ClinVar pathogenic-gene universe."
+  },
+  "gene_source_coverage": {
+    "clinvar_pathogenic_gene_count": 11085,
+    "genes_with_any_source_hit": 8389,
+    "genes_with_any_source_hit_pct": 75.68,
+    "genes_with_fda_hit": 22,
+    "genes_with_fda_hit_pct": 0.2,
+    "genes_with_gtr_hit": 8389,
+    "genes_with_gtr_hit_pct": 75.68,
+    "genes_with_who_hit": 4,
+    "genes_with_who_hit_pct": 0.04,
+    "loc_or_antisense_like_subset": {
+      "gene_count": 2294,
+      "genes_with_any_source_hit": 130,
+      "genes_with_any_source_hit_pct": 5.67
+    },
+    "matrix_path": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/diagnostic_gene_source_matrix.json",
+    "omim_gene_subset": {
+      "gene_count": 8170,
+      "genes_with_any_source_hit": 7951,
+      "genes_with_any_source_hit_pct": 97.32
+    },
+    "top_uncovered_genes": [
+      {
+        "gene_id": 102724058,
+        "number_uncertain": 948,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 1033,
+        "symbol": "LOC102724058",
+        "total_alleles": 2697,
+        "total_submissions": 4418
+      },
+      {
+        "gene_id": 654841,
+        "number_uncertain": 763,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 846,
+        "symbol": "MFF-DT",
+        "total_alleles": 3242,
+        "total_submissions": 5628
+      },
+      {
+        "gene_id": 126862571,
+        "number_uncertain": 202,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 615,
+        "symbol": "LOC126862571",
+        "total_alleles": 1803,
+        "total_submissions": 6914
+      },
+      {
+        "gene_id": 55183,
+        "number_uncertain": 986,
+        "number_with_conflicts": 1,
+        "omim_gene_mim_number": 608952,
+        "pathogenic_allele_count": 500,
+        "symbol": "RIF1",
+        "total_alleles": 3083,
+        "total_submissions": 4838
+      },
+      {
+        "gene_id": 107133510,
+        "number_uncertain": 273,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 444,
+        "symbol": "LOC107133510",
+        "total_alleles": 1865,
+        "total_submissions": 4247
+      },
+      {
+        "gene_id": 106050102,
+        "number_uncertain": 100,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 379,
+        "symbol": "LOC106050102",
+        "total_alleles": 832,
+        "total_submissions": 1308
+      },
+      {
+        "gene_id": 106627981,
+        "number_uncertain": 224,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 351,
+        "symbol": "LOC106627981",
+        "total_alleles": 532,
+        "total_submissions": 1360
+      },
+      {
+        "gene_id": 112390310,
+        "number_uncertain": 469,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 346,
+        "symbol": "SYNGAP1-AS1",
+        "total_alleles": 1501,
+        "total_submissions": 2183
+      },
+      {
+        "gene_id": 140577507,
+        "number_uncertain": 494,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 340,
+        "symbol": "CFTR-AS2",
+        "total_alleles": 1241,
+        "total_submissions": 3654
+      },
+      {
+        "gene_id": 100873065,
+        "number_uncertain": 212,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 301140,
+        "pathogenic_allele_count": 339,
+        "symbol": "PTCHD1-AS",
+        "total_alleles": 801,
+        "total_submissions": 1088
+      },
+      {
+        "gene_id": 106099062,
+        "number_uncertain": 170,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 336,
+        "symbol": "LOC106099062",
+        "total_alleles": 897,
+        "total_submissions": 2656
+      },
+      {
+        "gene_id": 104472715,
+        "number_uncertain": 477,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 616259,
+        "pathogenic_allele_count": 292,
+        "symbol": "SNHG14",
+        "total_alleles": 1298,
+        "total_submissions": 1872
+      },
+      {
+        "gene_id": 100533107,
+        "number_uncertain": 2371,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 288,
+        "symbol": "RTEL1-TNFRSF6B",
+        "total_alleles": 5098,
+        "total_submissions": 8251
+      },
+      {
+        "gene_id": 107303340,
+        "number_uncertain": 489,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 277,
+        "symbol": "LOC107303340",
+        "total_alleles": 1235,
+        "total_submissions": 2506
+      },
+      {
+        "gene_id": 102723591,
+        "number_uncertain": 285,
+        "number_with_conflicts": 1,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 260,
+        "symbol": "PLXNB3-AS1",
+        "total_alleles": 1082,
+        "total_submissions": 1867
+      },
+      {
+        "gene_id": 100529207,
+        "number_uncertain": 937,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 255,
+        "symbol": "RAD51L3-RFFL",
+        "total_alleles": 2103,
+        "total_submissions": 5473
+      },
+      {
+        "gene_id": 339400,
+        "number_uncertain": 1596,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 250,
+        "symbol": "CCDST",
+        "total_alleles": 2615,
+        "total_submissions": 3577
+      },
+      {
+        "gene_id": 139355228,
+        "number_uncertain": 273,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 235,
+        "symbol": "DNAH5-AS1",
+        "total_alleles": 1321,
+        "total_submissions": 2064
+      },
+      {
+        "gene_id": 5435,
+        "number_uncertain": 177,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 604414,
+        "pathogenic_allele_count": 234,
+        "symbol": "POLR2F",
+        "total_alleles": 623,
+        "total_submissions": 919
+      },
+      {
+        "gene_id": 105372918,
+        "number_uncertain": 260,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 216,
+        "symbol": "USH2A-AS1",
+        "total_alleles": 825,
+        "total_submissions": 1589
+      },
+      {
+        "gene_id": 102723566,
+        "number_uncertain": 126,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 207,
+        "symbol": "LOC102723566",
+        "total_alleles": 605,
+        "total_submissions": 1044
+      },
+      {
+        "gene_id": 110806300,
+        "number_uncertain": 950,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 203,
+        "symbol": "FLNC-AS1",
+        "total_alleles": 2173,
+        "total_submissions": 3951
+      },
+      {
+        "gene_id": 100532724,
+        "number_uncertain": 885,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 203,
+        "symbol": "NPHP3-ACAD11",
+        "total_alleles": 1841,
+        "total_submissions": 3153
+      },
+      {
+        "gene_id": 107303338,
+        "number_uncertain": 528,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 198,
+        "symbol": "LOC107303338",
+        "total_alleles": 1492,
+        "total_submissions": 2501
+      },
+      {
+        "gene_id": 107075317,
+        "number_uncertain": 236,
+        "number_with_conflicts": 0,
+        "omim_gene_mim_number": 0,
+        "pathogenic_allele_count": 184,
+        "symbol": "LOC107075317",
+        "total_alleles": 589,
+        "total_submissions": 762
+      }
+    ]
+  },
+  "proposed_rust_module_boundaries": [
+    {
+      "module": "src/entities/diagnostic/mod.rs",
+      "responsibility": "Entity facade, search orchestration, and regional composition."
+    },
+    {
+      "module": "src/entities/diagnostic/model.rs",
+      "responsibility": "Public `Diagnostic`, `DiagnosticRegion`, and source-specific typed sections."
+    },
+    {
+      "module": "src/entities/diagnostic/bridge.rs",
+      "responsibility": "Alias-aware joins between GTR records and FDA/WHO overlays."
+    },
+    {
+      "module": "src/sources/gtr.rs",
+      "responsibility": "Bulk sync, file validation, and GTR-specific parsing for the backbone dataset."
+    },
+    {
+      "module": "src/sources/fda_device.rs",
+      "responsibility": "PMA plus 510(k) sync and normalization for U.S. regulatory overlays."
+    },
+    {
+      "module": "src/sources/who_ivd.rs",
+      "responsibility": "CSV-backed WHO IVD sync and normalization for WHO overlays."
+    }
+  ],
+  "proposed_unified_data_model": {
+    "required_fields": [
+      "source",
+      "source_id",
+      "name",
+      "test_category",
+      "manufacturer_or_lab",
+      "genes",
+      "conditions",
+      "methods",
+      "regulatory_status",
+      "regulatory_identifier",
+      "region"
+    ],
+    "source_specific_extensions": {
+      "fda_device": [
+        "source_db",
+        "trade_name",
+        "device_name",
+        "generic_name",
+        "decision_date",
+        "product_code",
+        "advisory_committee",
+        "matched_queries",
+        "supplement_count"
+      ],
+      "gtr": [
+        "institution",
+        "method_categories",
+        "clia_number",
+        "state_licenses",
+        "country",
+        "public_status"
+      ],
+      "who_ivd": [
+        "marker",
+        "regulatory_version",
+        "prequalification_year"
+      ]
+    }
+  },
+  "recommended_source_priority": [
+    {
+      "priority": "1",
+      "source": "gtr",
+      "why": "Only source with dense gene and disease links at both explore and full scale."
+    },
+    {
+      "priority": "2",
+      "source": "fda_device",
+      "why": "Best regulatory overlay for cleared and approved U.S. diagnostics, including BRCA1 validation targets."
+    },
+    {
+      "priority": "3",
+      "source": "who_ivd",
+      "why": "Useful regulatory overlay but negligible ClinVar-gene coverage in the measured landscape."
+    }
+  ],
+  "sources": {
+    "fda_device": {
+      "clinvar_genes_with_any_record": 22,
+      "clinvar_genes_with_any_record_pct": 0.2,
+      "query_summary": {
+        "k510": [
+          {
+            "mean_page_latency_ms": 442.3,
+            "page_count": 1,
+            "query": "device_name:genetic",
+            "reported_total": 19,
+            "slug": "device_name_genetic"
+          },
+          {
+            "mean_page_latency_ms": 387.0,
+            "page_count": 1,
+            "query": "device_name:gene",
+            "reported_total": 14,
+            "slug": "device_name_gene"
+          },
+          {
+            "mean_page_latency_ms": 338.6,
+            "page_count": 1,
+            "query": "device_name:sequencing",
+            "reported_total": 2,
+            "slug": "device_name_sequencing"
+          },
+          {
+            "mean_page_latency_ms": 430.0,
+            "page_count": 1,
+            "query": "device_name:pcr",
+            "reported_total": 46,
+            "slug": "device_name_pcr"
+          }
+        ],
+        "pma": [
+          {
+            "mean_page_latency_ms": 492.65,
+            "page_count": 2,
+            "query": "trade_name:cdx",
+            "reported_total": 194,
+            "slug": "trade_name_cdx"
+          },
+          {
+            "mean_page_latency_ms": 412.17,
+            "page_count": 4,
+            "query": "generic_name:gene",
+            "reported_total": 362,
+            "slug": "generic_name_gene"
+          },
+          {
+            "mean_page_latency_ms": 406.53,
+            "page_count": 3,
+            "query": "generic_name:mutation",
+            "reported_total": 263,
+            "slug": "generic_name_mutation"
+          },
+          {
+            "mean_page_latency_ms": 388.27,
+            "page_count": 3,
+            "query": "generic_name:sequencing",
+            "reported_total": 209,
+            "slug": "generic_name_sequencing"
+          },
+          {
+            "mean_page_latency_ms": 333.3,
+            "page_count": 1,
+            "query": "generic_name:pcr",
+            "reported_total": 4,
+            "slug": "generic_name_pcr"
+          }
+        ]
+      },
+      "record_counts": {
+        "combined_unique_records": 128,
+        "k510_unique_records": 81,
+        "pma_unique_records": 47
+      },
+      "sample_extract_path": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/diagnostic_fda_molecular_sample_100.json",
+      "schema_completeness": {
+        "advisory_committee_pct": 100.0,
+        "applicant_pct": 100.0,
+        "decision_date_pct": 100.0,
+        "gene_linked_records_pct": 42.19,
+        "name_pct": 100.0,
+        "product_code_pct": 99.22
+      },
+      "source_gene_count": 22,
+      "timing": {
+        "elapsed_seconds": 7.14
+      },
+      "top_advisory_committees": [
+        {
+          "count": 43,
+          "value": "Microbiology"
+        },
+        {
+          "count": 35,
+          "value": "Pathology"
+        },
+        {
+          "count": 18,
+          "value": "Medical Genetics"
+        },
+        {
+          "count": 11,
+          "value": "Immunology"
+        },
+        {
+          "count": 7,
+          "value": "Clinical Chemistry"
+        },
+        {
+          "count": 4,
+          "value": "Radiology"
+        },
+        {
+          "count": 3,
+          "value": "Cardiovascular"
+        },
+        {
+          "count": 3,
+          "value": "Obstetrics/Gynecology"
+        },
+        {
+          "count": 1,
+          "value": "Dental"
+        },
+        {
+          "count": 1,
+          "value": "General, Plastic Surgery"
+        }
+      ],
+      "top_genes_by_record_count": [
+        {
+          "count": 30,
+          "gene": "KIT"
+        },
+        {
+          "count": 7,
+          "gene": "SET"
+        },
+        {
+          "count": 5,
+          "gene": "EGFR"
+        },
+        {
+          "count": 4,
+          "gene": "BRAF"
+        },
+        {
+          "count": 4,
+          "gene": "KRAS"
+        },
+        {
+          "count": 2,
+          "gene": "ALK"
+        },
+        {
+          "count": 2,
+          "gene": "BRCA1"
+        },
+        {
+          "count": 2,
+          "gene": "BRCA2"
+        },
+        {
+          "count": 2,
+          "gene": "JAK2"
+        },
+        {
+          "count": 2,
+          "gene": "PIK3CA"
+        },
+        {
+          "count": 1,
+          "gene": "ACVR2A"
+        },
+        {
+          "count": 1,
+          "gene": "APP"
+        },
+        {
+          "count": 1,
+          "gene": "DIDO1"
+        },
+        {
+          "count": 1,
+          "gene": "EZH2"
+        },
+        {
+          "count": 1,
+          "gene": "FLT3"
+        },
+        {
+          "count": 1,
+          "gene": "IDH1"
+        },
+        {
+          "count": 1,
+          "gene": "IDH2"
+        },
+        {
+          "count": 1,
+          "gene": "MRE11"
+        },
+        {
+          "count": 1,
+          "gene": "NRAS"
+        },
+        {
+          "count": 1,
+          "gene": "PDGFRA"
+        },
+        {
+          "count": 1,
+          "gene": "RYR3"
+        },
+        {
+          "count": 1,
+          "gene": "SEC31A"
+        }
+      ],
+      "top_product_codes": [
+        {
+          "count": 19,
+          "value": "OWD"
+        },
+        {
+          "count": 14,
+          "value": "PQP"
+        },
+        {
+          "count": 13,
+          "value": "OZE"
+        },
+        {
+          "count": 5,
+          "value": "PBK"
+        },
+        {
+          "count": 5,
+          "value": "PTA"
+        },
+        {
+          "count": 4,
+          "value": "NYQ"
+        },
+        {
+          "count": 4,
+          "value": "OQW"
+        },
+        {
+          "count": 3,
+          "value": "JTC"
+        },
+        {
+          "count": 3,
+          "value": "LLZ"
+        },
+        {
+          "count": 3,
+          "value": "QAZ"
+        }
+      ]
+    },
+    "gtr": {
+      "clinvar_genes_with_any_test": 8389,
+      "clinvar_genes_with_any_test_pct": 75.68,
+      "link_density": {
+        "mean_diseases_per_test": 4.07,
+        "mean_genes_per_test": 4.85
+      },
+      "record_counts": {
+        "current_tests": 64374
+      },
+      "sample_extract_path": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/diagnostic_gtr_sample_100.json",
+      "schema_completeness": {
+        "any_regulatory_metadata_pct": 55.76,
+        "clia_number_pct": 55.51,
+        "disease_links_pct": 100.0,
+        "gene_links_pct": 96.52,
+        "manufacturer_or_lab_name_pct": 100.0,
+        "state_licenses_pct": 45.27
+      },
+      "source_gene_count": 19409,
+      "test_type_counts": {
+        "Unknown": 64374
+      },
+      "timing": {
+        "elapsed_seconds": 4.42
+      },
+      "top_countries": [
+        {
+          "count": 31619,
+          "value": "United States"
+        },
+        {
+          "count": 11273,
+          "value": "Turkey"
+        },
+        {
+          "count": 5252,
+          "value": "Spain"
+        },
+        {
+          "count": 4013,
+          "value": "India"
+        },
+        {
+          "count": 3400,
+          "value": "Portugal"
+        },
+        {
+          "count": 3055,
+          "value": "Germany"
+        },
+        {
+          "count": 2006,
+          "value": "Canada"
+        },
+        {
+          "count": 1280,
+          "value": "Netherlands"
+        },
+        {
+          "count": 1017,
+          "value": "Austria"
+        },
+        {
+          "count": 228,
+          "value": "Finland"
+        }
+      ],
+      "top_genes_by_test_count": [
+        {
+          "count": 600,
+          "gene": "TP53"
+        },
+        {
+          "count": 591,
+          "gene": "PTEN"
+        },
+        {
+          "count": 511,
+          "gene": "NF1"
+        },
+        {
+          "count": 495,
+          "gene": "ATM"
+        },
+        {
+          "count": 494,
+          "gene": "BRCA2"
+        },
+        {
+          "count": 471,
+          "gene": "MLH1"
+        },
+        {
+          "count": 457,
+          "gene": "KRAS"
+        },
+        {
+          "count": 454,
+          "gene": "LMNA"
+        },
+        {
+          "count": 445,
+          "gene": "BRAF"
+        },
+        {
+          "count": 441,
+          "gene": "MSH2"
+        },
+        {
+          "count": 439,
+          "gene": "BRCA1"
+        },
+        {
+          "count": 436,
+          "gene": "MSH6"
+        },
+        {
+          "count": 413,
+          "gene": "SMAD4"
+        },
+        {
+          "count": 408,
+          "gene": "PMS2"
+        },
+        {
+          "count": 402,
+          "gene": "HRAS"
+        },
+        {
+          "count": 388,
+          "gene": "FGFR3"
+        },
+        {
+          "count": 386,
+          "gene": "NRAS"
+        },
+        {
+          "count": 373,
+          "gene": "PTPN11"
+        },
+        {
+          "count": 370,
+          "gene": "PALB2"
+        },
+        {
+          "count": 363,
+          "gene": "FBN1"
+        },
+        {
+          "count": 356,
+          "gene": "FLNA"
+        },
+        {
+          "count": 355,
+          "gene": "COL2A1"
+        },
+        {
+          "count": 353,
+          "gene": "CFTR"
+        },
+        {
+          "count": 353,
+          "gene": "TSC1"
+        },
+        {
+          "count": 353,
+          "gene": "TSC2"
+        }
+      ],
+      "top_method_categories": [
+        {
+          "count": 47447,
+          "value": "Sequence analysis of the entire coding region"
+        },
+        {
+          "count": 28973,
+          "value": "Deletion/duplication analysis"
+        },
+        {
+          "count": 5081,
+          "value": "Sequence analysis of select exons"
+        },
+        {
+          "count": 4354,
+          "value": "Targeted variant analysis"
+        },
+        {
+          "count": 4061,
+          "value": "Mutation scanning of the entire coding region"
+        },
+        {
+          "count": 421,
+          "value": "Analyte"
+        },
+        {
+          "count": 206,
+          "value": "FISH-interphase"
+        },
+        {
+          "count": 192,
+          "value": "Methylation analysis"
+        },
+        {
+          "count": 189,
+          "value": "Enzyme assay"
+        },
+        {
+          "count": 166,
+          "value": "FISH-metaphase"
+        }
+      ],
+      "top_methods": [
+        {
+          "count": 45724,
+          "value": "Next-Generation (NGS)/Massively parallel sequencing (MPS)"
+        },
+        {
+          "count": 10255,
+          "value": "Bi-directional Sanger Sequence Analysis"
+        },
+        {
+          "count": 4132,
+          "value": "Multiplex Ligation-dependent Probe Amplification (MLPA)"
+        },
+        {
+          "count": 2412,
+          "value": "Oligonucleotide hybridization-based DNA sequencing"
+        },
+        {
+          "count": 1260,
+          "value": "Comparative Genomic Hybridization"
+        },
+        {
+          "count": 883,
+          "value": "Uni-directional Sanger sequencing"
+        },
+        {
+          "count": 744,
+          "value": "PCR"
+        },
+        {
+          "count": 460,
+          "value": "Microarray"
+        },
+        {
+          "count": 408,
+          "value": "Trinucleotide repeat by PCR or Southern Blot"
+        },
+        {
+          "count": 381,
+          "value": "Fluorescence in situ hybridization (FISH)"
+        }
+      ]
+    },
+    "who_ivd": {
+      "assay_formats": [
+        {
+          "count": 245,
+          "value": "Immunochromatographic (lateral flow)"
+        },
+        {
+          "count": 115,
+          "value": "NAT (nucleic acid testing)"
+        },
+        {
+          "count": 27,
+          "value": "IA - Enzyme immunoassay EIA"
+        },
+        {
+          "count": 20,
+          "value": "Flow cytometry"
+        },
+        {
+          "count": 17,
+          "value": "Immunofiltration (flow through)"
+        },
+        {
+          "count": 4,
+          "value": "NAT - PCR"
+        },
+        {
+          "count": 2,
+          "value": "Enzymatic"
+        },
+        {
+          "count": 2,
+          "value": "IA - Immunoblot"
+        },
+        {
+          "count": 1,
+          "value": "IA (immunoassay)"
+        },
+        {
+          "count": 1,
+          "value": "NAT (nucleic acid testing), NAT - PCR"
+        }
+      ],
+      "clinvar_genes_with_any_record": 4,
+      "clinvar_genes_with_any_record_pct": 0.04,
+      "record_counts": {
+        "rows": 435
+      },
+      "sample_extract_path": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/diagnostic_who_ivd_sample_100.json",
+      "schema_completeness": {
+        "gene_linked_records_pct": 5.75,
+        "manufacturer_pct": 100.0,
+        "pathogen_disease_marker_pct": 100.0,
+        "prequalification_year_pct": 100.0,
+        "regulatory_metadata_pct": 100.0,
+        "regulatory_version_pct": 100.0
+      },
+      "source_gene_count": 4,
+      "timing": {
+        "elapsed_seconds": 0.01
+      },
+      "top_genes_by_record_count": [
+        {
+          "count": 16,
+          "gene": "KIT"
+        },
+        {
+          "count": 9,
+          "gene": "CD4"
+        },
+        {
+          "count": 3,
+          "gene": "HR"
+        },
+        {
+          "count": 2,
+          "gene": "G6PD"
+        }
+      ]
+    }
+  },
+  "spike_slug": "24-diagnostic-entity-landscape",
+  "timing": {
+    "elapsed_seconds": 67.44
+  },
+  "validation_artifact": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/diagnostic_validation.json"
+}

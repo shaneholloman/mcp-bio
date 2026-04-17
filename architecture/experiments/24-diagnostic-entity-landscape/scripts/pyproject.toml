@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diagnostic-landscape-spike"
+version = "0.1.0"
+description = "Reusable library for the diagnostic entity data landscape spike."
+requires-python = ">=3.11"
+dependencies = ["requests"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["diagnostic_landscape*"]

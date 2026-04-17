@@ -1,0 +1,155 @@
+{
+  "gtr_disease_rounds": [
+    {
+      "label": "disease",
+      "mean_search_latency_ms": 114.57,
+      "mean_summary_latency_ms": 651.83,
+      "probes": [
+        {
+          "id_count": 10,
+          "search_latency_ms": 116.5,
+          "summary_latency_ms": 369.0,
+          "term": "breast cancer[DISNAME]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 116.7,
+          "summary_latency_ms": 1207.7,
+          "term": "melanoma[DISNAME]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 110.5,
+          "summary_latency_ms": 378.8,
+          "term": "lung cancer[DISNAME]"
+        }
+      ],
+      "round": 0
+    },
+    {
+      "label": "disease",
+      "mean_search_latency_ms": 126.1,
+      "mean_summary_latency_ms": 623.63,
+      "probes": [
+        {
+          "id_count": 10,
+          "search_latency_ms": 117.4,
+          "summary_latency_ms": 282.3,
+          "term": "breast cancer[DISNAME]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 142.9,
+          "summary_latency_ms": 1216.9,
+          "term": "melanoma[DISNAME]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 118.0,
+          "summary_latency_ms": 371.7,
+          "term": "lung cancer[DISNAME]"
+        }
+      ],
+      "round": 1
+    }
+  ],
+  "gtr_gene_rounds": [
+    {
+      "label": "gene",
+      "mean_search_latency_ms": 142.68,
+      "mean_summary_latency_ms": 535.0,
+      "probes": [
+        {
+          "id_count": 10,
+          "search_latency_ms": 145.2,
+          "summary_latency_ms": 469.6,
+          "term": "BRCA1[SYMB]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 122.6,
+          "summary_latency_ms": 360.8,
+          "term": "EGFR[SYMB]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 150.4,
+          "summary_latency_ms": 505.8,
+          "term": "BRAF[SYMB]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 170.7,
+          "summary_latency_ms": 1037.5,
+          "term": "KRAS[SYMB]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 124.5,
+          "summary_latency_ms": 301.3,
+          "term": "TP53[SYMB]"
+        }
+      ],
+      "round": 0
+    },
+    {
+      "label": "gene",
+      "mean_search_latency_ms": 133.98,
+      "mean_summary_latency_ms": 499.04,
+      "probes": [
+        {
+          "id_count": 10,
+          "search_latency_ms": 121.8,
+          "summary_latency_ms": 929.0,
+          "term": "BRCA1[SYMB]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 142.3,
+          "summary_latency_ms": 386.7,
+          "term": "EGFR[SYMB]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 138.5,
+          "summary_latency_ms": 446.9,
+          "term": "BRAF[SYMB]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 127.0,
+          "summary_latency_ms": 438.0,
+          "term": "KRAS[SYMB]"
+        },
+        {
+          "id_count": 10,
+          "search_latency_ms": 140.3,
+          "summary_latency_ms": 294.6,
+          "term": "TP53[SYMB]"
+        }
+      ],
+      "round": 1
+    }
+  ],
+  "openfda_510k_sample_runs": {
+    "mean_latency_ms": 652.13,
+    "runs": [
+      {
+        "latency_ms": 638.8,
+        "reported_total": 174612,
+        "run": 0
+      },
+      {
+        "latency_ms": 690.6,
+        "reported_total": 174612,
+        "run": 1
+      },
+      {
+        "latency_ms": 627.0,
+        "reported_total": 174612,
+        "run": 2
+      }
+    ]
+  },
+  "purpose": "Document live-service latency variance for regression-control waivers."
+}

@@ -1,0 +1,98 @@
+{
+  "approach": "WHO IVD CSV parse",
+  "assay_formats": [
+    {
+      "count": 245,
+      "value": "Immunochromatographic (lateral flow)"
+    },
+    {
+      "count": 115,
+      "value": "NAT (nucleic acid testing)"
+    },
+    {
+      "count": 27,
+      "value": "IA - Enzyme immunoassay EIA"
+    },
+    {
+      "count": 20,
+      "value": "Flow cytometry"
+    },
+    {
+      "count": 17,
+      "value": "Immunofiltration (flow through)"
+    },
+    {
+      "count": 4,
+      "value": "NAT - PCR"
+    },
+    {
+      "count": 2,
+      "value": "Enzymatic"
+    },
+    {
+      "count": 2,
+      "value": "IA - Immunoblot"
+    },
+    {
+      "count": 1,
+      "value": "IA (immunoassay)"
+    },
+    {
+      "count": 1,
+      "value": "NAT (nucleic acid testing), NAT - PCR"
+    }
+  ],
+  "file": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/work/who_ivd.csv",
+  "record_counts": {
+    "rows": 435
+  },
+  "sample_disease_matches": {
+    "breast cancer": {
+      "count": 0,
+      "examples": []
+    },
+    "lung cancer": {
+      "count": 0,
+      "examples": []
+    },
+    "melanoma": {
+      "count": 0,
+      "examples": []
+    }
+  },
+  "sample_gene_matches": {
+    "BRAF": {
+      "count": 0,
+      "examples": []
+    },
+    "BRCA1": {
+      "count": 0,
+      "examples": []
+    },
+    "EGFR": {
+      "count": 0,
+      "examples": []
+    },
+    "KRAS": {
+      "count": 0,
+      "examples": []
+    },
+    "TP53": {
+      "count": 0,
+      "examples": []
+    }
+  },
+  "sample_name_index": [],
+  "schema_completeness": {
+    "manufacturer_pct": 100.0,
+    "pathogen_disease_marker_pct": 100.0,
+    "prequalification_year_pct": 100.0,
+    "regulatory_metadata_pct": 100.0,
+    "regulatory_version_pct": 100.0
+  },
+  "source": "who_ivd",
+  "success_signals": {
+    "all_sample_diseases_have_hits": false,
+    "all_sample_genes_have_hits": false
+  }
+}
