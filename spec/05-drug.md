@@ -62,12 +62,20 @@ test ! -d "$tmp_data/biomcp/ema"
 
 ## Drug Search JSON Next Commands
 
-Non-empty drug search JSON should expose machine-readable follow-up commands
-for the preferred top hit and the full drug command surface.
+Explicit U.S. drug search JSON should use the unified top-level envelope while
+keeping the U.S. bucket under `regions.us`.
 
 ```bash
 json_out="$(biomcp --json search drug pembrolizumab --region us --limit 3)"
-echo "$json_out" | mustmatch like '"next_commands":'
+echo "$json_out" | mustmatch like '"region"'
+echo "$json_out" | jq -e '.region == "us"' > /dev/null
+echo "$json_out" | jq -e '(.regions | keys) == ["us"]' > /dev/null
+echo "$json_out" | jq -e '.regions.us.count >= 1' > /dev/null
+echo "$json_out" | jq -e '.regions.us.pagination.returned >= 1' > /dev/null
+echo "$json_out" | jq -e 'has("query") | not' > /dev/null
+echo "$json_out" | jq -e 'has("pagination") | not' > /dev/null
+echo "$json_out" | jq -e 'has("count") | not' > /dev/null
+echo "$json_out" | jq -e 'has("results") | not' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get drug .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list drug")' > /dev/null
 ```
@@ -243,6 +251,10 @@ echo "$out" | mustmatch like "get drug <name> regulatory [--region <us|eu|who|al
 echo "$out" | mustmatch like "get drug <name> safety [--region <us|eu|all>]"
 echo "$out" | mustmatch like "get drug <name> shortage [--region <us|eu|all>]"
 echo "$out" | mustmatch like "get drug <name> all [--region <us|eu|who|all>]"
+echo "$out" | mustmatch like 'top-level `region`, top-level `regions`, and optional top-level `_meta`'
+echo "$out" | mustmatch like 'Single-region searches expose one bucket under `regions.us`, `regions.eu`, or `regions.who`.'
+echo "$out" | mustmatch like 'Omitted `--region` on plain name/alias lookup and explicit `--region all` expose `regions.us`, `regions.eu`, and `regions.who`.'
+echo "$out" | mustmatch like 'Each region bucket keeps `pagination`, `count`, and `results`.'
 ```
 
 ## Compact Approval Fields
@@ -550,20 +562,18 @@ echo "$out" | mustmatch not like "pembrolizumab and berahyaluronidase alfa-pmph"
 
 ## EMA Search Region
 
-The EMA human-medicine fixture should support EU-only search rows with the EMA
-product number and authorization status while still honoring existing drug
-normalization.
+Explicit EMA search JSON should keep the same top-level envelope and canonical
+follow-up command shape while returning EMA rows under `regions.eu`.
 
 ```bash
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
-out="$(biomcp search drug Keytruda --region eu --limit 5)"
-echo "$out" | mustmatch like "# Drugs: Keytruda"
-echo "$out" | mustmatch like "|Name|Active Substance|EMA Number|Status|"
-echo "$out" | mustmatch like "|Keytruda|pembrolizumab|EMEA/H/C/003820|Authorised|"
-echo "$out" | mustmatch like "pembrolizumab"
-echo "$out" | mustmatch like "EMEA/H/C/003820"
-echo "$out" | mustmatch like "Authorised"
+json_out="$(biomcp --json search drug keytruda --region eu --limit 3)"
+echo "$json_out" | mustmatch like '"ema_product_number"'
+echo "$json_out" | jq -e '.region == "eu"' > /dev/null
+echo "$json_out" | jq -e '(.regions | keys) == ["eu"]' > /dev/null
+echo "$json_out" | jq -e '.regions.eu.results[0].ema_product_number | type == "string"' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands[0] == "biomcp get drug Keytruda"' > /dev/null
 ```
 
 ## EMA Influenza Vaccine Search
@@ -583,20 +593,18 @@ echo "$out" | mustmatch like "|Fluad Tetra|"
 
 ## WHO Search Region
 
-The WHO fixture should support WHO-only search rows with the WHO reference
-number, listing basis, and normalized prequalification date.
+Explicit WHO search JSON should keep WHO rows under `regions.who` without
+reviving the old flat top-level `results` envelope.
 
 ```bash
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp search drug trastuzumab --region who --limit 5)"
-echo "$out" | mustmatch like "# Drugs: trastuzumab"
-echo "$out" | mustmatch like "|INN|Therapeutic Area|Dosage Form|Applicant|WHO Ref|Listing Basis|Date|"
-echo "$out" | mustmatch like "Trastuzumab"
-echo "$out" | mustmatch like "Trastuzumab|Oncology"
-echo "$out" | mustmatch like "Samsung Bioepis NL B.V.|BT-ON001"
-echo "$out" | mustmatch like "Prequalification - Abridged"
-echo "$out" | mustmatch like "2019-12-18"
+json_out="$(biomcp --json search drug trastuzumab --region who --limit 3)"
+echo "$json_out" | mustmatch like '"who_reference_number"'
+echo "$json_out" | jq -e '.region == "who"' > /dev/null
+echo "$json_out" | jq -e '(.regions | keys) == ["who"]' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results[0].who_reference_number | type == "string"' > /dev/null
+echo "$json_out" | jq -e 'has("results") | not' > /dev/null
 ```
 
 ## WHO Structured Search Region
@@ -616,38 +624,40 @@ echo "$out" | mustmatch like "Novartis Pharma AG|MA026"
 
 ## Default Drug Search Covers US, EU, and WHO
 
-Omitting `--region` on a plain name query should render the same split
-U.S./EU/WHO layout as the explicit all-regions mode.
+The default plain-name search path should serialize identically to explicit
+`--region all` once both compare-mode regional datasets are available.
 
 ```bash
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp search drug Keytruda --limit 5)"
-echo "$out" | mustmatch like "# Drugs: Keytruda"
-echo "$out" | mustmatch like "## US (MyChem.info / OpenFDA)"
-echo "$out" | mustmatch like "## EU (EMA)"
-echo "$out" | mustmatch like "## WHO (WHO Prequalification)"
-echo "$out" | mustmatch like "EMEA/H/C/003820"
+default_json="$(biomcp --json search drug Keytruda --limit 3)"
+all_json="$(biomcp --json search drug Keytruda --region all --limit 3)"
+echo "$default_json" | mustmatch like '"regions"'
+test "$(
+  echo "$default_json" | jq -S -c '{region,regions,_meta}'
+)" = "$(
+  echo "$all_json" | jq -S -c '{region,regions,_meta}'
+)"
 ```
 
 ## All-Region Search Covers WHO
 
-`--region all` should render separate labeled U.S., EU, and WHO result blocks
-instead of flattening them into one unlabeled table.
+All-region JSON should canonicalize the top `get drug` follow-up the same way
+as the single-region EMA path instead of echoing the raw lowercased query.
 
 ```bash
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp search drug Keytruda --region all --limit 5)"
-echo "$out" | mustmatch like "# Drugs: Keytruda"
-echo "$out" | mustmatch like "## US (MyChem.info / OpenFDA)"
-echo "$out" | mustmatch like "## EU (EMA)"
-echo "$out" | mustmatch like "## WHO (WHO Prequalification)"
-echo "$out" | mustmatch like "EMEA/H/C/003820"
+json_out="$(biomcp --json search drug keytruda --region all --limit 1)"
+echo "$json_out" | mustmatch like '"region"'
+echo "$json_out" | jq -e '.region == "all"' > /dev/null
+echo "$json_out" | jq -e '(.regions | keys | sort) == ["eu", "us", "who"]' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands[0] == "biomcp get drug Keytruda"' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list drug")' > /dev/null
 ```
 
 ## EMA Regulatory Section

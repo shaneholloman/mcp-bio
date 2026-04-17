@@ -85,6 +85,18 @@ validate_search_rows() {
   rm -f "$tmp_row"
 }
 
+validate_drug_search_rows() {
+  local schema_file="$1"
+  local search_file="$2"
+  local tmp_row
+  tmp_row="$(mktemp)"
+  jq -c '.regions | to_entries[] | .value.results[]' "$search_file" | while IFS= read -r row; do
+    printf '%s\n' "$row" >"$tmp_row"
+    jsonschema_validate_file "$schema_file" "$tmp_row"
+  done
+  rm -f "$tmp_row"
+}
+
 validate_search_wrapper() {
   local search_file="$1"
   jq -e '
@@ -92,6 +104,24 @@ validate_search_wrapper() {
     (.count | type == "number" and . > 0) and
     (.results | type == "array" and length > 0) and
     (.pagination.returned | type == "number" and . > 0)
+  ' "$search_file"
+}
+
+validate_drug_search_wrapper() {
+  local search_file="$1"
+  jq -e '
+    (.region | type == "string") and
+    (.regions | type == "object" and length > 0) and
+    ([.regions[] |
+      (.pagination | type == "object") and
+      (.count | type == "number" and . > 0) and
+      (.results | type == "array" and length > 0) and
+      (.pagination.returned | type == "number" and . > 0)
+    ] | all) and
+    (has("pagination") | not) and
+    (has("count") | not) and
+    (has("results") | not) and
+    (has("query") | not)
   ' "$search_file"
 }
 
@@ -195,12 +225,12 @@ run_check "example get-trial matches trial schema" \
 run_check "search-article wrapper shape" \
   validate_search_wrapper "$EXAMPLES_DIR/search-article.json"
 run_check "search-drug wrapper shape" \
-  validate_search_wrapper "$EXAMPLES_DIR/search-drug.json"
+  validate_drug_search_wrapper "$EXAMPLES_DIR/search-drug.json"
 
 run_check "search-article rows match article schema" \
   validate_search_rows "$SCHEMAS_DIR/article.json" "$EXAMPLES_DIR/search-article.json"
 run_check "search-drug rows match drug schema" \
-  validate_search_rows "$SCHEMAS_DIR/drug.json" "$EXAMPLES_DIR/search-drug.json"
+  validate_drug_search_rows "$SCHEMAS_DIR/drug.json" "$EXAMPLES_DIR/search-drug.json"
 
 printf '\n== Tier 2-3: live payload + jq example checks ==\n'
 if BIOMCP_BIN_DISCOVERED="$(discover_biomcp)"; then
