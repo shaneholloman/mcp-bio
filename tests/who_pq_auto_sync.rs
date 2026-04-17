@@ -489,4 +489,6 @@ async fn who_sync_failure_mentions_recovery_paths() {
         !requests(&server).await.is_empty(),
         "expected WHO failure path to issue at least one export request"
     );
+    assert!(result.stderr.contains(&who_export_url));
+    assert!(result.stderr.contains(&who_api_export_url));
 }

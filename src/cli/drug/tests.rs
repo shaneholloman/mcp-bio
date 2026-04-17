@@ -499,6 +499,45 @@ fn drug_search_json_single_region_keeps_selected_bucket_and_who_fields() {
 }
 
 #[test]
+fn drug_search_json_single_region_keeps_api_identifier_when_present() {
+    let json = drug_search_json(
+        crate::entities::drug::DrugSearchPageWithRegion::Who(crate::entities::SearchPage::offset(
+            vec![crate::entities::drug::WhoPrequalificationSearchResult {
+                inn: "Artesunate".to_string(),
+                product_type: "Active Pharmaceutical Ingredient".to_string(),
+                therapeutic_area: "Malaria".to_string(),
+                dosage_form: None,
+                applicant: "Ipca Laboratories Ltd".to_string(),
+                who_reference_number: None,
+                who_product_id: Some("WHOAPI-001".to_string()),
+                listing_basis: None,
+                prequalification_date: Some("2012-04-04".to_string()),
+            }],
+            Some(1),
+        )),
+        Some("artesunate"),
+        0,
+        5,
+    )
+    .expect("WHO API search json");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert_eq!(
+        value["regions"]["who"]["results"][0]["who_product_id"],
+        "WHOAPI-001"
+    );
+    assert!(
+        value["regions"]["who"]["results"][0]
+            .get("who_reference_number")
+            .is_none()
+    );
+    assert_eq!(
+        value["regions"]["who"]["results"][0]["product_type"],
+        "Active Pharmaceutical Ingredient"
+    );
+}
+
+#[test]
 fn drug_search_json_single_region_keeps_empty_selected_bucket_and_omits_meta() {
     let json = drug_search_json(
         crate::entities::drug::DrugSearchPageWithRegion::Eu(crate::entities::SearchPage::offset(

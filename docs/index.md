@@ -122,7 +122,7 @@ search all [slot filters]    → counts-first cross-entity orientation
 | variant | MyVariant.info, ClinVar, gnomAD fields via MyVariant, CIViC, Cancer Genome Interpreter, OncoKB, cBioPortal, GWAS Catalog, AlphaGenome | `biomcp get variant "BRAF V600E" clinvar` |
 | article | PubMed, PubTator3, Europe PMC, PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` recommended) | `biomcp search article -g BRAF --limit 5` |
 | trial | ClinicalTrials.gov API v2, NCI CTS API | `biomcp search trial -c melanoma -s recruiting` |
-| drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
+| drug | MyChem.info, EMA local batch, WHO Prequalification local exports, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
 | disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter, DisGeNET | `biomcp get disease "chronic myeloid leukemia" funding` |
 | pathway | Reactome, KEGG, WikiPathways, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |
 | protein | UniProt, InterPro, STRING, ComplexPortal, PDB, AlphaFold | `biomcp get protein P15056 complexes` |
