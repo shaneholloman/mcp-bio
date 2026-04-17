@@ -67,7 +67,7 @@ keeping the U.S. bucket under `regions.us`.
 
 ```bash
 json_out="$(biomcp --json search drug pembrolizumab --region us --limit 3)"
-echo "$json_out" | mustmatch like '"region"'
+echo "$json_out" | mustmatch like '"region": "us"'
 echo "$json_out" | jq -e '.region == "us"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys) == ["us"]' > /dev/null
 echo "$json_out" | jq -e '.regions.us.count >= 1' > /dev/null
@@ -616,7 +616,7 @@ A zero-result WHO search should still keep the selected `who` bucket under
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
 json_out="$(biomcp --json search drug this-drug-does-not-exist-in-who-fixture --region who --limit 3)"
-echo "$json_out" | mustmatch like '"regions"'
+echo "$json_out" | mustmatch like '"region": "who"'
 echo "$json_out" | jq -e '.region == "who"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys) == ["who"]' > /dev/null
 echo "$json_out" | jq -e '.regions.who.count == 0' > /dev/null
@@ -652,7 +652,7 @@ bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
 default_json="$(biomcp --json search drug Keytruda --limit 3)"
 all_json="$(biomcp --json search drug Keytruda --region all --limit 3)"
-echo "$default_json" | mustmatch like '"regions"'
+echo "$default_json" | mustmatch like '"regions": {'
 test "$(
   echo "$default_json" | jq -S -c '{region,regions,_meta}'
 )" = "$(
@@ -671,7 +671,7 @@ bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
 json_out="$(biomcp --json search drug keytruda --region all --limit 1)"
-echo "$json_out" | mustmatch like '"region"'
+echo "$json_out" | mustmatch like '"region": "all"'
 echo "$json_out" | jq -e '.region == "all"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys | sort) == ["eu", "us", "who"]' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands[0] == "biomcp get drug Keytruda"' > /dev/null
