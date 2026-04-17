@@ -1,0 +1,107 @@
+{
+  "baseline_files": {
+    "cross_source_matrix": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/cross_source_matrix.json",
+    "fda_device": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/fda_device.json",
+    "gtr_api": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/gtr_api.json",
+    "gtr_bulk": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/gtr_bulk.json",
+    "who_ivd": "/home/ian/workspace/worktrees/230-spike-gtr-and-diagnostic-entity-data-landscape/architecture/experiments/24-diagnostic-entity-landscape/results/who_ivd.json"
+  },
+  "comparisons": {
+    "cross_source_matrix": {
+      "artifact": "cross_source_matrix",
+      "baseline_projection_checksum": "d2bd0dd255bad7fdedec0e5bae8475b5d618dc9e6775ff50bcc6bf963ee09e4e",
+      "current_projection_checksum": "d2bd0dd255bad7fdedec0e5bae8475b5d618dc9e6775ff50bcc6bf963ee09e4e",
+      "metric_mismatches": [],
+      "mismatch_count": 0,
+      "pass": true,
+      "performance_findings": [],
+      "projection_checksum_match": true
+    },
+    "fda_device": {
+      "artifact": "fda_device",
+      "baseline_projection_checksum": "dbb388a2219cda8443a5169e5873993a5ca14716b50a63d2de0725cad266945d",
+      "current_projection_checksum": "dbb388a2219cda8443a5169e5873993a5ca14716b50a63d2de0725cad266945d",
+      "metric_mismatches": [],
+      "mismatch_count": 0,
+      "pass": false,
+      "performance_findings": [
+        {
+          "allowed_max": 616.249,
+          "baseline": 598.3,
+          "current": 736.8,
+          "pass": false,
+          "path": "api_availability.sample_latency_ms"
+        }
+      ],
+      "projection_checksum_match": true
+    },
+    "gtr_api": {
+      "artifact": "gtr_api",
+      "baseline_projection_checksum": "a8c0d39dcc6da2088716937ba979d690aeb36a89bf5b86940bb4a5fb63154f9d",
+      "current_projection_checksum": "a8c0d39dcc6da2088716937ba979d690aeb36a89bf5b86940bb4a5fb63154f9d",
+      "metric_mismatches": [],
+      "mismatch_count": 0,
+      "pass": false,
+      "performance_findings": [
+        {
+          "allowed_max": 124.733,
+          "baseline": 121.1,
+          "current": 275.32,
+          "pass": false,
+          "path": "latency_summary_ms.mean_gene_search_latency_ms"
+        },
+        {
+          "allowed_max": 393.4806,
+          "baseline": 382.02,
+          "current": 413.36,
+          "pass": false,
+          "path": "latency_summary_ms.mean_gene_summary_latency_ms"
+        },
+        {
+          "allowed_max": 130.2641,
+          "baseline": 126.47,
+          "current": 136.83,
+          "pass": false,
+          "path": "latency_summary_ms.mean_disease_search_latency_ms"
+        },
+        {
+          "allowed_max": 623.0779,
+          "baseline": 604.93,
+          "current": 630.7,
+          "pass": false,
+          "path": "latency_summary_ms.mean_disease_summary_latency_ms"
+        }
+      ],
+      "projection_checksum_match": true
+    },
+    "gtr_bulk": {
+      "artifact": "gtr_bulk",
+      "baseline_projection_checksum": "e390300173f9ae776f04742b385f60b5d0317d434c79df8c5612ddcacf7bc71e",
+      "current_projection_checksum": "e390300173f9ae776f04742b385f60b5d0317d434c79df8c5612ddcacf7bc71e",
+      "metric_mismatches": [],
+      "mismatch_count": 0,
+      "pass": true,
+      "performance_findings": [
+        {
+          "allowed_max": 7.2924,
+          "baseline": 7.08,
+          "current": 3.66,
+          "pass": true,
+          "path": "timing.elapsed_seconds"
+        }
+      ],
+      "projection_checksum_match": true
+    },
+    "who_ivd": {
+      "artifact": "who_ivd",
+      "baseline_projection_checksum": "19ae9c0243f1999d95dc9a1f9f7eaa0bee013bd8f8d5d3ab87c6f2d5984d2efd",
+      "current_projection_checksum": "19ae9c0243f1999d95dc9a1f9f7eaa0bee013bd8f8d5d3ab87c6f2d5984d2efd",
+      "metric_mismatches": [],
+      "mismatch_count": 0,
+      "pass": true,
+      "performance_findings": [],
+      "projection_checksum_match": true
+    }
+  },
+  "overall_pass": false
+}
