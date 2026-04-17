@@ -1,0 +1,111 @@
+{
+  "artifact_paths": {
+    "full_scale_results": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/who_full_scale_results.json",
+    "loader_design": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/who_loader_design.json",
+    "probe_summary": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/who_vaccines_apis_summary.json",
+    "regression_control": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/who_regression_control.json",
+    "sample_records": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/who_sample_records.json",
+    "validation": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/who_validation.json"
+  },
+  "cache_state": {
+    "mychem_cache_exists": true,
+    "mychem_cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/mychem_query_cache.json",
+    "upstream_sources_cached": {
+      "who_apis.csv": true,
+      "who_finished_pharma.csv": true,
+      "who_immunization_devices.json": true,
+      "who_vaccines.csv": true
+    }
+  },
+  "contract_numbers": {
+    "api_identity": {
+      "finished_pharma_component_overlap_rate": 93.72,
+      "finished_pharma_exact_overlap_rate": 71.73,
+      "normalized_inn_exact_rate": 79.06,
+      "normalized_inn_phrase_or_exact_rate": 91.1,
+      "raw_inn_phrase_or_exact_rate": 90.05
+    },
+    "build_timings_seconds": {
+      "api_linkage_seconds": 0.055,
+      "design_payload_seconds": 0.0,
+      "metadata_and_devices_seconds": 0.0029,
+      "sample_records_seconds": 0.0024,
+      "schema_comparison_seconds": 0.0185,
+      "total_seconds": 0.198,
+      "vaccine_identity_seconds": 0.1118,
+      "validation_seconds": 0.0016
+    },
+    "record_counts": {
+      "apis": 191,
+      "finished_pharma": 656,
+      "immunization_device_categories": 11,
+      "immunization_devices": 459,
+      "vaccines": 284
+    },
+    "ticket_validation_counts": {
+      "BCG": 7,
+      "COVID-19": 4,
+      "HPV": 6,
+      "measles": 22,
+      "yellow fever": 10
+    },
+    "vaccine_identity": {
+      "exact_rate": 18.31,
+      "phrase_or_exact_rate": 57.39,
+      "winning_strategy": "component_with_commercial_fallback"
+    },
+    "vaccine_metadata": {
+      "cold_chain_percent": 0.0,
+      "dose_count_percent": 99.65,
+      "schedule_percent": 0.0
+    }
+  },
+  "full_scale_definition": "All three WHO lists plus the immunization-device catalog loaded, cross-referenced, validated, and summarized with persistent artifacts.",
+  "generated_at": "2026-04-17T19:55:30Z",
+  "recommendation": {
+    "device_catalog_in_scope": false,
+    "evidence": [
+      "API normalized-INN MyChem phrase/exact resolution: 91.1%",
+      "API component overlap with finished pharma: 93.72%",
+      "Best vaccine phrase/exact identity strategy: 57.39%",
+      "Vaccine immunization-schedule completeness: 0.0%",
+      "Vaccine cold-chain completeness: 0.0%"
+    ],
+    "separate_vaccine_loader_required": true,
+    "winning_loader_strategy": "extend_existing_loader_for_apis_only"
+  },
+  "source_snapshots": {
+    "apis": {
+      "bytes": 22403,
+      "cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/upstream/who_apis.csv",
+      "cached": true,
+      "modified_at": "2026-04-17T19:13:58Z",
+      "sha256": "717aa80b9f1906d872a8d2634753ec2152cc5aee68947aa9ee2eed28134a78e3",
+      "url": "https://extranet.who.int/prequal/medicines/prequalified/active-pharmaceutical-ingredients/export?page&_format=csv"
+    },
+    "devices": {
+      "bytes": 1875786,
+      "cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/upstream/who_immunization_devices.json",
+      "cached": true,
+      "modified_at": "2026-04-17T19:14:04Z",
+      "sha256": "c2183bf8bdd310cdc6b3b508509fc5b22027b39732244332b3d16235f6ea6c6d",
+      "url": "https://extranet.who.int/prequal/sites/default/files/immunization_devices/json/catalogs/immunization_devices_catalogue.json"
+    },
+    "finished_pharma": {
+      "bytes": 133833,
+      "cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/upstream/who_finished_pharma.csv",
+      "cached": true,
+      "modified_at": "2026-04-17T19:13:56Z",
+      "sha256": "263dbf20b7fc77ad3965a94d1712685b7e247daef93890cf06fba79276b28fbf",
+      "url": "https://extranet.who.int/prequal/medicines/prequalified/finished-pharmaceutical-products/export?page&_format=csv"
+    },
+    "vaccines": {
+      "bytes": 47869,
+      "cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/upstream/who_vaccines.csv",
+      "cached": true,
+      "modified_at": "2026-04-17T19:13:57Z",
+      "sha256": "1c5590a23ea8e27a8b573328f9ec275603ffe33ee11c17d41e9d5c28bf4376f5",
+      "url": "https://extranet.who.int/prequal/vaccines/prequalified/export"
+    }
+  }
+}

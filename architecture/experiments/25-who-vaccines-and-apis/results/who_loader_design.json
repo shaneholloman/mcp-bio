@@ -1,0 +1,127 @@
+{
+  "device_catalog_decision": {
+    "include_in_current_who_drug_pipeline": false,
+    "reason": "Device catalog is a category-keyed product catalog with zero required-header overlap against the WHO drug contract.",
+    "source_url": "https://extranet.who.int/prequal/sites/default/files/immunization_devices/json/catalogs/immunization_devices_catalogue.json"
+  },
+  "generated_at": "2026-04-17T19:55:30Z",
+  "product_type_filter_design": {
+    "default_values": [
+      "finished_pharma",
+      "api"
+    ],
+    "type": "who_product_type",
+    "values": [
+      {
+        "include_by_default": true,
+        "source_url": "https://extranet.who.int/prequal/medicines/prequalified/finished-pharmaceutical-products/export?page&_format=csv",
+        "value": "finished_pharma"
+      },
+      {
+        "include_by_default": true,
+        "source_url": "https://extranet.who.int/prequal/medicines/prequalified/active-pharmaceutical-ingredients/export?page&_format=csv",
+        "value": "api"
+      },
+      {
+        "blocked_reason": "No stable INN bridge and missing vaccine-specific downstream metadata.",
+        "include_by_default": false,
+        "source_url": "https://extranet.who.int/prequal/vaccines/prequalified/export",
+        "value": "vaccine"
+      }
+    ]
+  },
+  "proposed_vaccine_surface": {
+    "known_gaps": [
+      "No WHO vaccine INN field",
+      "No immunization schedule field",
+      "No cold-chain or storage field"
+    ],
+    "minimum_fields": [
+      "vaccine_type",
+      "commercial_name",
+      "presentation",
+      "dose_count",
+      "manufacturer",
+      "responsible_nra",
+      "prequalification_date"
+    ],
+    "strategy": "separate_loader_or_schema_extension",
+    "validation_anchor_counts": {
+      "BCG": 7,
+      "COVID-19": 4,
+      "HPV": 6,
+      "measles": 22,
+      "yellow fever": 10
+    }
+  },
+  "proposed_who_prequalification_entry_extensions": {
+    "field_changes": [
+      {
+        "applies_to": [
+          "api"
+        ],
+        "field": "who_product_id",
+        "reason": "API export keys rows with WHO Product ID instead of WHO reference number.",
+        "type": "Option<String>"
+      },
+      {
+        "applies_to": [
+          "api"
+        ],
+        "field": "grade",
+        "reason": "API export includes Standard / other grade values not present in finished pharma.",
+        "type": "Option<String>"
+      },
+      {
+        "applies_to": [
+          "api"
+        ],
+        "field": "confirmation_document_date",
+        "reason": "API export exposes a second dated regulatory milestone.",
+        "type": "Option<String>"
+      },
+      {
+        "applies_to": [
+          "finished_pharma",
+          "api",
+          "vaccine"
+        ],
+        "field": "dosage_form",
+        "reason": "API and vaccine exports do not expose the finished-pharma dosage-form field.",
+        "type": "Option<String>"
+      },
+      {
+        "applies_to": [
+          "finished_pharma",
+          "api",
+          "vaccine"
+        ],
+        "field": "listing_basis",
+        "reason": "API and vaccine exports do not carry finished-pharma listing-basis metadata.",
+        "type": "Option<String>"
+      },
+      {
+        "applies_to": [
+          "finished_pharma",
+          "api"
+        ],
+        "field": "presentation",
+        "reason": "API rows carry a canonical INN but not the finished-pharma presentation string.",
+        "type": "Option<String>"
+      }
+    ],
+    "status": "needed_for_api_support"
+  },
+  "recommendation": {
+    "device_catalog_in_scope": false,
+    "evidence": [
+      "API normalized-INN MyChem phrase/exact resolution: 91.1%",
+      "API component overlap with finished pharma: 93.72%",
+      "Best vaccine phrase/exact identity strategy: 57.39%",
+      "Vaccine immunization-schedule completeness: 0.0%",
+      "Vaccine cold-chain completeness: 0.0%"
+    ],
+    "separate_vaccine_loader_required": true,
+    "winning_loader_strategy": "extend_existing_loader_for_apis_only"
+  }
+}

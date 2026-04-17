@@ -1,0 +1,832 @@
+{
+  "apis": {
+    "component_overlap_examples": [
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Amodiaquine (hydrochloride)/Artesunate",
+              "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+              "who_reference_number": "MA056"
+            },
+            {
+              "inn": "Amodiaquine (hydrochloride)/Artesunate",
+              "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+              "who_reference_number": "MA056"
+            },
+            {
+              "inn": "Amodiaquine (hydrochloride)/Artesunate",
+              "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 135mg/50mg",
+              "who_reference_number": "MA057"
+            }
+          ],
+          "inn": "Amodiaquine (hydrochloride)",
+          "matching_segments": [
+            "amodiaquine"
+          ],
+          "who_product_id": "WHOAPI-030"
+        },
+        "source_row": {
+          "Applicant organization": "Ipca Laboratories Ltd",
+          "Confirmation of Prequalification Document Date": "4  Mar,  2022",
+          "Date of prequalification": "3  Sep,  2013",
+          "Grade": "Standard",
+          "INN": "Amodiaquine (hydrochloride)",
+          "Therapeutic area": "Malaria",
+          "WHO Product ID": "WHOAPI-030",
+          "confirmation_document_date_iso": "2022-03-04",
+          "normalized_inn": "amodiaquine",
+          "prequalification_date_iso": "2013-09-03"
+        },
+        "who_product_id": "WHOAPI-030"
+      },
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Amodiaquine (hydrochloride)/Artesunate",
+              "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+              "who_reference_number": "MA056"
+            },
+            {
+              "inn": "Amodiaquine (hydrochloride)/Artesunate",
+              "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+              "who_reference_number": "MA056"
+            },
+            {
+              "inn": "Amodiaquine (hydrochloride)/Artesunate",
+              "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 135mg/50mg",
+              "who_reference_number": "MA057"
+            }
+          ],
+          "inn": "Amodiaquine (hydrochloride)",
+          "matching_segments": [
+            "amodiaquine"
+          ],
+          "who_product_id": "WHOAPI-134"
+        },
+        "source_row": {
+          "Applicant organization": "Mangalam Drugs and Organics Ltd",
+          "Confirmation of Prequalification Document Date": "4  Oct,  2021",
+          "Date of prequalification": "7  Dec,  2011",
+          "Grade": "Standard",
+          "INN": "Amodiaquine (hydrochloride)",
+          "Therapeutic area": "Malaria",
+          "WHO Product ID": "WHOAPI-134",
+          "confirmation_document_date_iso": "2021-10-04",
+          "normalized_inn": "amodiaquine",
+          "prequalification_date_iso": "2011-12-07"
+        },
+        "who_product_id": "WHOAPI-134"
+      },
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA026"
+            },
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA026"
+            },
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA062"
+            }
+          ],
+          "inn": "Artemether",
+          "matching_segments": [
+            "artemether"
+          ],
+          "who_product_id": "WHOAPI-080"
+        },
+        "source_row": {
+          "Applicant organization": "Shanghai Desano Chemical Pharmaceutical Co Ltd",
+          "Confirmation of Prequalification Document Date": "31  Jan,  2024",
+          "Date of prequalification": "2  Oct,  2013",
+          "Grade": "Standard",
+          "INN": "Artemether",
+          "Therapeutic area": "Malaria",
+          "WHO Product ID": "WHOAPI-080",
+          "confirmation_document_date_iso": "2024-01-31",
+          "normalized_inn": "artemether",
+          "prequalification_date_iso": "2013-10-02"
+        },
+        "who_product_id": "WHOAPI-080"
+      },
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA026"
+            },
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA026"
+            },
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA062"
+            }
+          ],
+          "inn": "Artemether",
+          "matching_segments": [
+            "artemether"
+          ],
+          "who_product_id": "WHOAPI-120a"
+        },
+        "source_row": {
+          "Applicant organization": "Calyx Chemicals & Pharmaceuticals Ltd",
+          "Confirmation of Prequalification Document Date": "15  Jan,  2025",
+          "Date of prequalification": "26  Mar,  2012",
+          "Grade": "Standard",
+          "INN": "Artemether",
+          "Therapeutic area": "Malaria",
+          "WHO Product ID": "WHOAPI-120a",
+          "confirmation_document_date_iso": "2025-01-15",
+          "normalized_inn": "artemether",
+          "prequalification_date_iso": "2012-03-26"
+        },
+        "who_product_id": "WHOAPI-120a"
+      },
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA026"
+            },
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA026"
+            },
+            {
+              "inn": "Artemether/Lumefantrine",
+              "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+              "who_reference_number": "MA062"
+            }
+          ],
+          "inn": "Artemether",
+          "matching_segments": [
+            "artemether"
+          ],
+          "who_product_id": "WHOAPI-120b"
+        },
+        "source_row": {
+          "Applicant organization": "Calyx Chemicals & Pharmaceuticals Ltd",
+          "Confirmation of Prequalification Document Date": "6  Nov,  2025",
+          "Date of prequalification": "10  Oct,  2023",
+          "Grade": "Standard (",
+          "INN": "Artemether",
+          "Therapeutic area": "Malaria",
+          "WHO Product ID": "WHOAPI-120b",
+          "confirmation_document_date_iso": "2025-11-06",
+          "normalized_inn": "artemether",
+          "prequalification_date_iso": "2023-10-10"
+        },
+        "who_product_id": "WHOAPI-120b"
+      }
+    ],
+    "exact_overlap_examples": [
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Tablet 300mg",
+              "who_reference_number": "ANDA 077844 USFDA"
+            },
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+              "who_reference_number": "ANDA 077950 USFDA"
+            },
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Tablet 300mg",
+              "who_reference_number": "ANDA 078742 USFDA"
+            }
+          ],
+          "inn": "Abacavir (sulfate)",
+          "matching_segments": [
+            "abacavir"
+          ],
+          "who_product_id": "WHOAPI-010"
+        },
+        "source_row": {
+          "Applicant organization": "Matrix Pharmacorp Private Limited",
+          "Confirmation of Prequalification Document Date": "19  Sep,  2025",
+          "Date of prequalification": "27  May,  2014",
+          "Grade": "Standard",
+          "INN": "Abacavir (sulfate)",
+          "Therapeutic area": "HIV/AIDS",
+          "WHO Product ID": "WHOAPI-010",
+          "confirmation_document_date_iso": "2025-09-19",
+          "normalized_inn": "abacavir",
+          "prequalification_date_iso": "2014-05-27"
+        },
+        "who_product_id": "WHOAPI-010"
+      },
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Tablet 300mg",
+              "who_reference_number": "ANDA 077844 USFDA"
+            },
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+              "who_reference_number": "ANDA 077950 USFDA"
+            },
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Tablet 300mg",
+              "who_reference_number": "ANDA 078742 USFDA"
+            }
+          ],
+          "inn": "Abacavir (sulfate)",
+          "matching_segments": [
+            "abacavir"
+          ],
+          "who_product_id": "WHOAPI-193"
+        },
+        "source_row": {
+          "Applicant organization": "Laurus Labs Limited",
+          "Confirmation of Prequalification Document Date": "5  Feb,  2025",
+          "Date of prequalification": "1  Apr,  2014",
+          "Grade": "Standard",
+          "INN": "Abacavir (sulfate)",
+          "Therapeutic area": "HIV/AIDS",
+          "WHO Product ID": "WHOAPI-193",
+          "confirmation_document_date_iso": "2025-02-05",
+          "normalized_inn": "abacavir",
+          "prequalification_date_iso": "2014-04-01"
+        },
+        "who_product_id": "WHOAPI-193"
+      },
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Tablet 300mg",
+              "who_reference_number": "ANDA 077844 USFDA"
+            },
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+              "who_reference_number": "ANDA 077950 USFDA"
+            },
+            {
+              "inn": "Abacavir (sulfate)",
+              "presentation": "Abacavir (sulfate) Tablet 300mg",
+              "who_reference_number": "ANDA 078742 USFDA"
+            }
+          ],
+          "inn": "Abacavir (sulfate)",
+          "matching_segments": [
+            "abacavir"
+          ],
+          "who_product_id": "WHOAPI-377"
+        },
+        "source_row": {
+          "Applicant organization": "Jiangsu Weiqida Pharmaceutical Co Ltd",
+          "Confirmation of Prequalification Document Date": "9  Dec,  2022",
+          "Date of prequalification": "9  Dec,  2022",
+          "Grade": "Standard",
+          "INN": "Abacavir (sulfate)",
+          "Therapeutic area": "HIV/AIDS",
+          "WHO Product ID": "WHOAPI-377",
+          "confirmation_document_date_iso": "2022-12-09",
+          "normalized_inn": "abacavir",
+          "prequalification_date_iso": "2022-12-09"
+        },
+        "who_product_id": "WHOAPI-377"
+      },
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Albendazole",
+              "presentation": "Albendazole Tablet 400mg",
+              "who_reference_number": "NT005"
+            },
+            {
+              "inn": "Albendazole",
+              "presentation": "Albendazole Tablets, Chewable 400mg",
+              "who_reference_number": "NT012"
+            },
+            {
+              "inn": "Albendazole",
+              "presentation": "Albendazole Tablets, Chewable 400mg",
+              "who_reference_number": "NT014"
+            }
+          ],
+          "inn": "Albendazole",
+          "matching_segments": [
+            "albendazole"
+          ],
+          "who_product_id": "WHOAPI-427"
+        },
+        "source_row": {
+          "Applicant organization": "Sequent Scientific Limited",
+          "Confirmation of Prequalification Document Date": "26  Nov,  2025",
+          "Date of prequalification": "29  Jan,  2025",
+          "Grade": "Standard",
+          "INN": "Albendazole",
+          "Therapeutic area": "Neglected tropical diseases",
+          "WHO Product ID": "WHOAPI-427",
+          "confirmation_document_date_iso": "2025-11-26",
+          "normalized_inn": "albendazole",
+          "prequalification_date_iso": "2025-01-29"
+        },
+        "who_product_id": "WHOAPI-427"
+      },
+      {
+        "analysis": {
+          "finished_pharma_examples": [
+            {
+              "inn": "Albendazole",
+              "presentation": "Albendazole Tablet 400mg",
+              "who_reference_number": "NT005"
+            },
+            {
+              "inn": "Albendazole",
+              "presentation": "Albendazole Tablets, Chewable 400mg",
+              "who_reference_number": "NT012"
+            },
+            {
+              "inn": "Albendazole",
+              "presentation": "Albendazole Tablets, Chewable 400mg",
+              "who_reference_number": "NT014"
+            }
+          ],
+          "inn": "Albendazole",
+          "matching_segments": [
+            "albendazole"
+          ],
+          "who_product_id": "WHOAPI-432"
+        },
+        "source_row": {
+          "Applicant organization": "Changzhou Yabang-QH Pharmachem Co Ltd",
+          "Confirmation of Prequalification Document Date": "1  Dec,  2025",
+          "Date of prequalification": "1  Dec,  2025",
+          "Grade": "Micronised",
+          "INN": "Albendazole",
+          "Therapeutic area": "Neglected tropical diseases",
+          "WHO Product ID": "WHOAPI-432",
+          "confirmation_document_date_iso": "2025-12-01",
+          "normalized_inn": "albendazole",
+          "prequalification_date_iso": "2025-12-01"
+        },
+        "who_product_id": "WHOAPI-432"
+      }
+    ],
+    "finished_pharma_unresolved_examples": [
+      {
+        "analysis": {
+          "inn": "Artesunate (sterile)",
+          "normalized_inn": "artesunate (sterile)",
+          "who_product_id": "WHOAPI-240"
+        },
+        "source_row": {
+          "Applicant organization": "Ipca Laboratories Ltd",
+          "Confirmation of Prequalification Document Date": "1  Sep,  2023",
+          "Date of prequalification": "29  Jan,  2019",
+          "Grade": "Sterile",
+          "INN": "Artesunate (sterile)",
+          "Therapeutic area": "Malaria",
+          "WHO Product ID": "WHOAPI-240",
+          "confirmation_document_date_iso": "2023-09-01",
+          "normalized_inn": "artesunate (sterile)",
+          "prequalification_date_iso": "2019-01-29"
+        },
+        "who_product_id": "WHOAPI-240"
+      },
+      {
+        "analysis": {
+          "inn": "Medroxyprogesterone acetate - Sterile",
+          "normalized_inn": "medroxyprogesterone acetate - sterile",
+          "who_product_id": "WHOAPI-419"
+        },
+        "source_row": {
+          "Applicant organization": "Zhejiang Xianju Pharmaceutical Co., Ltd.",
+          "Confirmation of Prequalification Document Date": "1  Feb,  2024",
+          "Date of prequalification": "1  Feb,  2024",
+          "Grade": "micronised",
+          "INN": "Medroxyprogesterone acetate - Sterile",
+          "Therapeutic area": "Reproductive health",
+          "WHO Product ID": "WHOAPI-419",
+          "confirmation_document_date_iso": "2024-02-01",
+          "normalized_inn": "medroxyprogesterone acetate - sterile",
+          "prequalification_date_iso": "2024-02-01"
+        },
+        "who_product_id": "WHOAPI-419"
+      },
+      {
+        "analysis": {
+          "inn": "Misoprostol Dispersion (1:100 in HPMC)",
+          "normalized_inn": "misoprostol dispersion (1:100 in hpmc)",
+          "who_product_id": "WHOAPI-226"
+        },
+        "source_row": {
+          "Applicant organization": "Piramal Healthcare UK Ltd",
+          "Confirmation of Prequalification Document Date": "17  Jan,  2021",
+          "Date of prequalification": "17  Dec,  2015",
+          "Grade": "Standard",
+          "INN": "Misoprostol Dispersion (1:100 in HPMC)",
+          "Therapeutic area": "Reproductive health",
+          "WHO Product ID": "WHOAPI-226",
+          "confirmation_document_date_iso": "2021-01-17",
+          "normalized_inn": "misoprostol dispersion (1:100 in hpmc)",
+          "prequalification_date_iso": "2015-12-17"
+        },
+        "who_product_id": "WHOAPI-226"
+      },
+      {
+        "analysis": {
+          "inn": "Nirmatrelvir",
+          "normalized_inn": "nirmatrelvir",
+          "who_product_id": "WHOAPI-458"
+        },
+        "source_row": {
+          "Applicant organization": "Zhejiang Jiuzhou Pharmaceutical Co, Ltd",
+          "Confirmation of Prequalification Document Date": "4  Sep,  2023",
+          "Date of prequalification": "19  May,  2023",
+          "Grade": "Standard",
+          "INN": "Nirmatrelvir",
+          "Therapeutic area": "Covid-19",
+          "WHO Product ID": "WHOAPI-458",
+          "confirmation_document_date_iso": "2023-09-04",
+          "normalized_inn": "nirmatrelvir",
+          "prequalification_date_iso": "2023-05-19"
+        },
+        "who_product_id": "WHOAPI-458"
+      },
+      {
+        "analysis": {
+          "inn": "Nirmatrelvir",
+          "normalized_inn": "nirmatrelvir",
+          "who_product_id": "WHOAPI-464a"
+        },
+        "source_row": {
+          "Applicant organization": "Zhejiang Huahai Pharmaceutical Co. Ltd.",
+          "Confirmation of Prequalification Document Date": "15  Jan,  2024",
+          "Date of prequalification": "15  Jan,  2024",
+          "Grade": "Standard",
+          "INN": "Nirmatrelvir",
+          "Therapeutic area": "Covid-19",
+          "WHO Product ID": "WHOAPI-464a",
+          "confirmation_document_date_iso": "2024-01-15",
+          "normalized_inn": "nirmatrelvir",
+          "prequalification_date_iso": "2024-01-15"
+        },
+        "who_product_id": "WHOAPI-464a"
+      }
+    ],
+    "normalized_mychem_unresolved_examples": [
+      {
+        "analysis": {
+          "best_hit": null,
+          "inn": "Artesunate (sterile)",
+          "query": "artesunate (sterile)",
+          "top_hits": [],
+          "who_product_id": "WHOAPI-240"
+        },
+        "source_row": {
+          "Applicant organization": "Ipca Laboratories Ltd",
+          "Confirmation of Prequalification Document Date": "1  Sep,  2023",
+          "Date of prequalification": "29  Jan,  2019",
+          "Grade": "Sterile",
+          "INN": "Artesunate (sterile)",
+          "Therapeutic area": "Malaria",
+          "WHO Product ID": "WHOAPI-240",
+          "confirmation_document_date_iso": "2023-09-01",
+          "normalized_inn": "artesunate (sterile)",
+          "prequalification_date_iso": "2019-01-29"
+        },
+        "who_product_id": "WHOAPI-240"
+      },
+      {
+        "analysis": {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-005a"
+        },
+        "source_row": {
+          "Applicant organization": "Amsal Chem Pvt  Ltd",
+          "Confirmation of Prequalification Document Date": "29  Apr,  2024",
+          "Date of prequalification": "5  Sep,  2017",
+          "Grade": "Standard",
+          "INN": "Isoniazid",
+          "Therapeutic area": "Tuberculosis",
+          "WHO Product ID": "WHOAPI-005a",
+          "confirmation_document_date_iso": "2024-04-29",
+          "normalized_inn": "isoniazid",
+          "prequalification_date_iso": "2017-09-05"
+        },
+        "who_product_id": "WHOAPI-005a"
+      },
+      {
+        "analysis": {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-005b"
+        },
+        "source_row": {
+          "Applicant organization": "Amsal Chem Pvt  Ltd",
+          "Confirmation of Prequalification Document Date": "29  Apr,  2024",
+          "Date of prequalification": "5  Sep,  2017",
+          "Grade": "Standard",
+          "INN": "Isoniazid",
+          "Therapeutic area": "Tuberculosis",
+          "WHO Product ID": "WHOAPI-005b",
+          "confirmation_document_date_iso": "2024-04-29",
+          "normalized_inn": "isoniazid",
+          "prequalification_date_iso": "2017-09-05"
+        },
+        "who_product_id": "WHOAPI-005b"
+      },
+      {
+        "analysis": {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-086"
+        },
+        "source_row": {
+          "Applicant organization": "Calyx Chemicals & Pharmaceuticals Ltd",
+          "Confirmation of Prequalification Document Date": "23  Jun,  2024",
+          "Date of prequalification": "7  Dec,  2011",
+          "Grade": "Standard",
+          "INN": "Isoniazid",
+          "Therapeutic area": "Tuberculosis",
+          "WHO Product ID": "WHOAPI-086",
+          "confirmation_document_date_iso": "2024-06-23",
+          "normalized_inn": "isoniazid",
+          "prequalification_date_iso": "2011-12-07"
+        },
+        "who_product_id": "WHOAPI-086"
+      },
+      {
+        "analysis": {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-418"
+        },
+        "source_row": {
+          "Applicant organization": "Anuh Pharma Ltd.",
+          "Confirmation of Prequalification Document Date": "17  Feb,  2025",
+          "Date of prequalification": "31  Jan,  2024",
+          "Grade": "Standard",
+          "INN": "Isoniazid",
+          "Therapeutic area": "Tuberculosis",
+          "WHO Product ID": "WHOAPI-418",
+          "confirmation_document_date_iso": "2025-02-17",
+          "normalized_inn": "isoniazid",
+          "prequalification_date_iso": "2024-01-31"
+        },
+        "who_product_id": "WHOAPI-418"
+      }
+    ]
+  },
+  "generated_at": "2026-04-17T19:55:30Z",
+  "vaccines": {
+    "first_rows": [
+      {
+        "Commercial Name": "BEVAC\u00ae",
+        "Date of Prequalification": "16/01/2025",
+        "Manufacturer": "Biological E. Limited",
+        "No. of doses": "1",
+        "Presentation": "Vial",
+        "Responsible NRA": "Central Drugs Standard Control Organization",
+        "Vaccine Type": "Hepatitis B (Paediatric)"
+      },
+      {
+        "Commercial Name": "BEVAC\u00ae",
+        "Date of Prequalification": "16/01/2025",
+        "Manufacturer": "Biological E. Limited",
+        "No. of doses": "1",
+        "Presentation": "Vial",
+        "Responsible NRA": "Central Drugs Standard Control Organization",
+        "Vaccine Type": "Hepatitis B"
+      },
+      {
+        "Commercial Name": "PNEUBEVAX 14\u00ae",
+        "Date of Prequalification": "14/11/2025",
+        "Manufacturer": "Biological E. Limited",
+        "No. of doses": "5",
+        "Presentation": "Vial",
+        "Responsible NRA": "Central Drugs Standard Control Organization",
+        "Vaccine Type": "Pneumococcal (conjugate)"
+      },
+      {
+        "Commercial Name": "Abrysvo",
+        "Date of Prequalification": "12/03/2025",
+        "Manufacturer": "Pfizer Europe MA EEIG",
+        "No. of doses": "1",
+        "Presentation": "Two vial set (active + excipient)",
+        "Responsible NRA": "European Medicines Agency",
+        "Vaccine Type": "Respiratory Syncytical Virus vaccine"
+      },
+      {
+        "Commercial Name": "Adacel",
+        "Date of Prequalification": "08/05/2017",
+        "Manufacturer": "Sanofi Pasteur Limited",
+        "No. of doses": "1",
+        "Presentation": "Vial",
+        "Responsible NRA": "Health Canada - Sant\u00e9 Canada",
+        "Vaccine Type": "Diphtheria-Tetanus-Pertussis (acellular)"
+      }
+    ],
+    "validation_anchor_samples": {
+      "BCG": [
+        {
+          "Commercial Name": "BCG Freeze Dried Glutamate vaccine",
+          "Date of Prequalification": "01/01/1987",
+          "Manufacturer": "Japan BCG Laboratory",
+          "No. of doses": "10",
+          "Presentation": "Ampoule",
+          "Responsible NRA": "Pharmaceutical and Medical Devices Agency",
+          "Vaccine Type": "BCG"
+        },
+        {
+          "Commercial Name": "BCG Freeze Dried Glutamate vaccine",
+          "Date of Prequalification": "01/01/1987",
+          "Manufacturer": "Japan BCG Laboratory",
+          "No. of doses": "20",
+          "Presentation": "Ampoule",
+          "Responsible NRA": "Pharmaceutical and Medical Devices Agency",
+          "Vaccine Type": "BCG"
+        }
+      ],
+      "COVID-19": [
+        {
+          "Commercial Name": "BIMERVAX",
+          "Date of Prequalification": "09/10/2023",
+          "Manufacturer": "HIPRA HUMAN HEALTH, S.L.U",
+          "No. of doses": "1",
+          "Presentation": "Vial",
+          "Responsible NRA": "European Medicines Agency",
+          "Vaccine Type": "Covid-19"
+        },
+        {
+          "Commercial Name": "Comirnaty\u00ae",
+          "Date of Prequalification": "09/10/2024",
+          "Manufacturer": "BioNTech Manufacturing GmbH",
+          "No. of doses": "",
+          "Presentation": "Vial",
+          "Responsible NRA": "European Medicines Agency",
+          "Vaccine Type": "Covid-19"
+        }
+      ],
+      "HPV": [
+        {
+          "Commercial Name": "Cecolin\u00ae",
+          "Date of Prequalification": "14/10/2021",
+          "Manufacturer": "Xiamen Innovax Biotech Co. Ltd.",
+          "No. of doses": "1",
+          "Presentation": "Vial",
+          "Responsible NRA": "National Medical Products Administration",
+          "Vaccine Type": "Human Papillomavirus (Bivalent)"
+        },
+        {
+          "Commercial Name": "Cervarix",
+          "Date of Prequalification": "08/07/2009",
+          "Manufacturer": "GlaxoSmithKline Biologicals SA",
+          "No. of doses": "1",
+          "Presentation": "Vial",
+          "Responsible NRA": "Federal Agency for Medicines and Health Products",
+          "Vaccine Type": "Human Papillomavirus (Bivalent)"
+        }
+      ],
+      "measles": [
+        {
+          "Commercial Name": "Measles and Rubella Vaccine (Live) (Attenuated, Freeze Dried)",
+          "Date of Prequalification": "24/09/2019",
+          "Manufacturer": "Biological E. Limited",
+          "No. of doses": "1",
+          "Presentation": "Vial + Ampoule",
+          "Responsible NRA": "Central Drugs Standard Control Organization",
+          "Vaccine Type": "Measles and Rubella"
+        },
+        {
+          "Commercial Name": "Measles and Rubella Vaccine (Live) (Attenuated, Freeze Dried)",
+          "Date of Prequalification": "24/09/2019",
+          "Manufacturer": "Biological E. Limited",
+          "No. of doses": "5",
+          "Presentation": "Vial + Ampoule",
+          "Responsible NRA": "Central Drugs Standard Control Organization",
+          "Vaccine Type": "Measles and Rubella"
+        }
+      ],
+      "yellow fever": [
+        {
+          "Commercial Name": "n/a",
+          "Date of Prequalification": "26/03/2009",
+          "Manufacturer": "Federal State Autonomous Scientific Institution \u00abChumakov Federal Scientific Center for Research & Development of Immune-And Biological Products\u00bb, Russian Academy of Sciences",
+          "No. of doses": "2",
+          "Presentation": "Ampoule",
+          "Responsible NRA": "Federal Service on Surveillance in Healthcare (ROSZDRAVNADZOR) of the Russian Federation",
+          "Vaccine Type": "Yellow Fever"
+        },
+        {
+          "Commercial Name": "n/a",
+          "Date of Prequalification": "26/03/2009",
+          "Manufacturer": "Federal State Autonomous Scientific Institution \u00abChumakov Federal Scientific Center for Research & Development of Immune-And Biological Products\u00bb, Russian Academy of Sciences",
+          "No. of doses": "5",
+          "Presentation": "Ampoule",
+          "Responsible NRA": "Federal Service on Surveillance in Healthcare (ROSZDRAVNADZOR) of the Russian Federation",
+          "Vaccine Type": "Yellow Fever"
+        }
+      ]
+    }
+  }
+}

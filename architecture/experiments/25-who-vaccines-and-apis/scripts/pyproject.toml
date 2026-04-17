@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "who-vaccines-and-apis-spike"
+version = "0.1.0"
+description = "Pure-stdlib WHO vaccines and API exploration scripts."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+who-vaccines-schema-probe = "who_vaccines_apis.cli:schema_probe_main"
+who-vaccines-vaccine-identity-probe = "who_vaccines_apis.cli:vaccine_identity_probe_main"
+who-vaccines-api-linkage-probe = "who_vaccines_apis.cli:api_linkage_probe_main"
+who-vaccines-metadata-probe = "who_vaccines_apis.cli:metadata_probe_main"
+who-vaccines-run-all-probes = "who_vaccines_apis.cli:run_all_probes_main"
+who-vaccines-build-full-scale = "who_vaccines_apis.cli:build_full_scale_results_main"
+who-vaccines-regression-control = "who_vaccines_apis.cli:regression_control_main"
+who-vaccines-validate = "who_vaccines_apis.cli:validate_main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["who_vaccines_apis"]

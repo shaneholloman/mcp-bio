@@ -1,0 +1,890 @@
+{
+  "finished_pharma_overlap": {
+    "component_link_rate": 93.72,
+    "component_link_rows": 179,
+    "exact_inn_link_rate": 71.73,
+    "exact_inn_link_rows": 137,
+    "rows": 191,
+    "sample_component_links": [
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Amodiaquine (hydrochloride)/Artesunate",
+            "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+            "who_reference_number": "MA056"
+          },
+          {
+            "inn": "Amodiaquine (hydrochloride)/Artesunate",
+            "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+            "who_reference_number": "MA056"
+          },
+          {
+            "inn": "Amodiaquine (hydrochloride)/Artesunate",
+            "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 135mg/50mg",
+            "who_reference_number": "MA057"
+          }
+        ],
+        "inn": "Amodiaquine (hydrochloride)",
+        "matching_segments": [
+          "amodiaquine"
+        ],
+        "who_product_id": "WHOAPI-030"
+      },
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Amodiaquine (hydrochloride)/Artesunate",
+            "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+            "who_reference_number": "MA056"
+          },
+          {
+            "inn": "Amodiaquine (hydrochloride)/Artesunate",
+            "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+            "who_reference_number": "MA056"
+          },
+          {
+            "inn": "Amodiaquine (hydrochloride)/Artesunate",
+            "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 135mg/50mg",
+            "who_reference_number": "MA057"
+          }
+        ],
+        "inn": "Amodiaquine (hydrochloride)",
+        "matching_segments": [
+          "amodiaquine"
+        ],
+        "who_product_id": "WHOAPI-134"
+      },
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA026"
+          },
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA026"
+          },
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA062"
+          }
+        ],
+        "inn": "Artemether",
+        "matching_segments": [
+          "artemether"
+        ],
+        "who_product_id": "WHOAPI-080"
+      },
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA026"
+          },
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA026"
+          },
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA062"
+          }
+        ],
+        "inn": "Artemether",
+        "matching_segments": [
+          "artemether"
+        ],
+        "who_product_id": "WHOAPI-120a"
+      },
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA026"
+          },
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA026"
+          },
+          {
+            "inn": "Artemether/Lumefantrine",
+            "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+            "who_reference_number": "MA062"
+          }
+        ],
+        "inn": "Artemether",
+        "matching_segments": [
+          "artemether"
+        ],
+        "who_product_id": "WHOAPI-120b"
+      }
+    ],
+    "sample_exact_links": [
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Tablet 300mg",
+            "who_reference_number": "ANDA 077844 USFDA"
+          },
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+            "who_reference_number": "ANDA 077950 USFDA"
+          },
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Tablet 300mg",
+            "who_reference_number": "ANDA 078742 USFDA"
+          }
+        ],
+        "inn": "Abacavir (sulfate)",
+        "matching_segments": [
+          "abacavir"
+        ],
+        "who_product_id": "WHOAPI-010"
+      },
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Tablet 300mg",
+            "who_reference_number": "ANDA 077844 USFDA"
+          },
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+            "who_reference_number": "ANDA 077950 USFDA"
+          },
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Tablet 300mg",
+            "who_reference_number": "ANDA 078742 USFDA"
+          }
+        ],
+        "inn": "Abacavir (sulfate)",
+        "matching_segments": [
+          "abacavir"
+        ],
+        "who_product_id": "WHOAPI-193"
+      },
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Tablet 300mg",
+            "who_reference_number": "ANDA 077844 USFDA"
+          },
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+            "who_reference_number": "ANDA 077950 USFDA"
+          },
+          {
+            "inn": "Abacavir (sulfate)",
+            "presentation": "Abacavir (sulfate) Tablet 300mg",
+            "who_reference_number": "ANDA 078742 USFDA"
+          }
+        ],
+        "inn": "Abacavir (sulfate)",
+        "matching_segments": [
+          "abacavir"
+        ],
+        "who_product_id": "WHOAPI-377"
+      },
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Albendazole",
+            "presentation": "Albendazole Tablet 400mg",
+            "who_reference_number": "NT005"
+          },
+          {
+            "inn": "Albendazole",
+            "presentation": "Albendazole Tablets, Chewable 400mg",
+            "who_reference_number": "NT012"
+          },
+          {
+            "inn": "Albendazole",
+            "presentation": "Albendazole Tablets, Chewable 400mg",
+            "who_reference_number": "NT014"
+          }
+        ],
+        "inn": "Albendazole",
+        "matching_segments": [
+          "albendazole"
+        ],
+        "who_product_id": "WHOAPI-427"
+      },
+      {
+        "finished_pharma_examples": [
+          {
+            "inn": "Albendazole",
+            "presentation": "Albendazole Tablet 400mg",
+            "who_reference_number": "NT005"
+          },
+          {
+            "inn": "Albendazole",
+            "presentation": "Albendazole Tablets, Chewable 400mg",
+            "who_reference_number": "NT012"
+          },
+          {
+            "inn": "Albendazole",
+            "presentation": "Albendazole Tablets, Chewable 400mg",
+            "who_reference_number": "NT014"
+          }
+        ],
+        "inn": "Albendazole",
+        "matching_segments": [
+          "albendazole"
+        ],
+        "who_product_id": "WHOAPI-432"
+      }
+    ],
+    "sample_unresolved_rows": [
+      {
+        "inn": "Artesunate (sterile)",
+        "normalized_inn": "artesunate (sterile)",
+        "who_product_id": "WHOAPI-240"
+      },
+      {
+        "inn": "Medroxyprogesterone acetate - Sterile",
+        "normalized_inn": "medroxyprogesterone acetate - sterile",
+        "who_product_id": "WHOAPI-419"
+      },
+      {
+        "inn": "Misoprostol Dispersion (1:100 in HPMC)",
+        "normalized_inn": "misoprostol dispersion (1:100 in hpmc)",
+        "who_product_id": "WHOAPI-226"
+      },
+      {
+        "inn": "Nirmatrelvir",
+        "normalized_inn": "nirmatrelvir",
+        "who_product_id": "WHOAPI-458"
+      },
+      {
+        "inn": "Nirmatrelvir",
+        "normalized_inn": "nirmatrelvir",
+        "who_product_id": "WHOAPI-464a"
+      }
+    ]
+  },
+  "generated_at": "2026-04-17T19:55:39Z",
+  "mychem_identity_results": {
+    "normalized_inn": {
+      "any_hit_rate": 98.43,
+      "any_hit_rows": 188,
+      "exact_match_rate": 79.06,
+      "exact_match_rows": 151,
+      "no_query_rows": 0,
+      "phrase_or_exact_rate": 91.1,
+      "phrase_or_exact_rows": 174,
+      "rows": 191,
+      "sample_resolved_rows": [
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Abacavir",
+              "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+              "ABC",
+              "ABACAVIR",
+              "abacavir"
+            ],
+            "drugbank_id": "DB01048",
+            "primary_name": "Abacavir",
+            "score": 10.425032,
+            "substance_type": "chemical",
+            "unii": "WR2TIP26VS"
+          },
+          "inn": "Abacavir (sulfate)",
+          "query": "abacavir",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 10.758944,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 10.758944,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-010"
+        },
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Abacavir",
+              "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+              "ABC",
+              "ABACAVIR",
+              "abacavir"
+            ],
+            "drugbank_id": "DB01048",
+            "primary_name": "Abacavir",
+            "score": 10.425032,
+            "substance_type": "chemical",
+            "unii": "WR2TIP26VS"
+          },
+          "inn": "Abacavir (sulfate)",
+          "query": "abacavir",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 10.758944,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 10.758944,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-193"
+        },
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Abacavir",
+              "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+              "ABC",
+              "ABACAVIR",
+              "abacavir"
+            ],
+            "drugbank_id": "DB01048",
+            "primary_name": "Abacavir",
+            "score": 10.425032,
+            "substance_type": "chemical",
+            "unii": "WR2TIP26VS"
+          },
+          "inn": "Abacavir (sulfate)",
+          "query": "abacavir",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 10.758944,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 10.758944,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-377"
+        },
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Albendazole",
+              "(5-(propylthio)-1H-benzimidazol-2-yl)carbamic acid methyl ester",
+              "5-(propylthio)-2-carbomethoxyaminobenzimidazole",
+              "Albendazol",
+              "Albendazolum"
+            ],
+            "drugbank_id": "DB00518",
+            "primary_name": "Albendazole",
+            "score": 6.2746754,
+            "substance_type": "chemical",
+            "unii": "F4216019LN"
+          },
+          "inn": "Albendazole",
+          "query": "albendazole",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 16.108637,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 16.108637,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-427"
+        },
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Albendazole",
+              "(5-(propylthio)-1H-benzimidazol-2-yl)carbamic acid methyl ester",
+              "5-(propylthio)-2-carbomethoxyaminobenzimidazole",
+              "Albendazol",
+              "Albendazolum"
+            ],
+            "drugbank_id": "DB00518",
+            "primary_name": "Albendazole",
+            "score": 6.2746754,
+            "substance_type": "chemical",
+            "unii": "F4216019LN"
+          },
+          "inn": "Albendazole",
+          "query": "albendazole",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 16.108637,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 16.108637,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-432"
+        }
+      ],
+      "sample_unresolved_rows": [
+        {
+          "best_hit": null,
+          "inn": "Artesunate (sterile)",
+          "query": "artesunate (sterile)",
+          "top_hits": [],
+          "who_product_id": "WHOAPI-240"
+        },
+        {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-005a"
+        },
+        {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-005b"
+        },
+        {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-086"
+        },
+        {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-418"
+        }
+      ],
+      "strategy": "normalized_inn"
+    },
+    "raw_inn": {
+      "any_hit_rate": 98.43,
+      "any_hit_rows": 188,
+      "exact_match_rate": 78.01,
+      "exact_match_rows": 149,
+      "no_query_rows": 0,
+      "phrase_or_exact_rate": 90.05,
+      "phrase_or_exact_rows": 172,
+      "rows": 191,
+      "sample_resolved_rows": [
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Abacavir",
+              "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+              "ABC",
+              "ABACAVIR",
+              "abacavir"
+            ],
+            "drugbank_id": "DB01048",
+            "primary_name": "Abacavir",
+            "score": 15.801987,
+            "substance_type": "chemical",
+            "unii": "WR2TIP26VS"
+          },
+          "inn": "Abacavir (sulfate)",
+          "query": "Abacavir (sulfate)",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 18.38242,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 18.38242,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-010"
+        },
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Abacavir",
+              "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+              "ABC",
+              "ABACAVIR",
+              "abacavir"
+            ],
+            "drugbank_id": "DB01048",
+            "primary_name": "Abacavir",
+            "score": 15.801987,
+            "substance_type": "chemical",
+            "unii": "WR2TIP26VS"
+          },
+          "inn": "Abacavir (sulfate)",
+          "query": "Abacavir (sulfate)",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 18.38242,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 18.38242,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-193"
+        },
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Abacavir",
+              "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+              "ABC",
+              "ABACAVIR",
+              "abacavir"
+            ],
+            "drugbank_id": "DB01048",
+            "primary_name": "Abacavir",
+            "score": 15.801987,
+            "substance_type": "chemical",
+            "unii": "WR2TIP26VS"
+          },
+          "inn": "Abacavir (sulfate)",
+          "query": "Abacavir (sulfate)",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 18.38242,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 18.38242,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-377"
+        },
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Albendazole",
+              "(5-(propylthio)-1H-benzimidazol-2-yl)carbamic acid methyl ester",
+              "5-(propylthio)-2-carbomethoxyaminobenzimidazole",
+              "Albendazol",
+              "Albendazolum"
+            ],
+            "drugbank_id": "DB00518",
+            "primary_name": "Albendazole",
+            "score": 6.2746754,
+            "substance_type": "chemical",
+            "unii": "F4216019LN"
+          },
+          "inn": "Albendazole",
+          "query": "Albendazole",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 16.108637,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 16.108637,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-427"
+        },
+        {
+          "best_hit": {
+            "alias_sample": [
+              "Albendazole",
+              "(5-(propylthio)-1H-benzimidazol-2-yl)carbamic acid methyl ester",
+              "5-(propylthio)-2-carbomethoxyaminobenzimidazole",
+              "Albendazol",
+              "Albendazolum"
+            ],
+            "drugbank_id": "DB00518",
+            "primary_name": "Albendazole",
+            "score": 6.2746754,
+            "substance_type": "chemical",
+            "unii": "F4216019LN"
+          },
+          "inn": "Albendazole",
+          "query": "Albendazole",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 16.108637,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 16.108637,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-432"
+        }
+      ],
+      "sample_unresolved_rows": [
+        {
+          "best_hit": null,
+          "inn": "Artesunate (sterile)",
+          "query": "Artesunate (sterile)",
+          "top_hits": [],
+          "who_product_id": "WHOAPI-240"
+        },
+        {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "Isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-005a"
+        },
+        {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "Isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-005b"
+        },
+        {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "Isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-086"
+        },
+        {
+          "best_hit": null,
+          "inn": "Isoniazid",
+          "query": "Isoniazid",
+          "top_hits": [
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            },
+            {
+              "alias_sample": [],
+              "drugbank_id": null,
+              "primary_name": null,
+              "score": 15.2837105,
+              "substance_type": null,
+              "unii": null
+            }
+          ],
+          "who_product_id": "WHOAPI-418"
+        }
+      ],
+      "strategy": "raw_inn"
+    }
+  },
+  "row_count": 191
+}

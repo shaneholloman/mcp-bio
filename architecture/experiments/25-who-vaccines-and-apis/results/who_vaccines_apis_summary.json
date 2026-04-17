@@ -1,0 +1,3722 @@
+{
+  "generated_at": "2026-04-17T19:55:39Z",
+  "results": {
+    "api_linkage": {
+      "finished_pharma_overlap": {
+        "component_link_rate": 93.72,
+        "component_link_rows": 179,
+        "exact_inn_link_rate": 71.73,
+        "exact_inn_link_rows": 137,
+        "rows": 191,
+        "sample_component_links": [
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Amodiaquine (hydrochloride)/Artesunate",
+                "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+                "who_reference_number": "MA056"
+              },
+              {
+                "inn": "Amodiaquine (hydrochloride)/Artesunate",
+                "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+                "who_reference_number": "MA056"
+              },
+              {
+                "inn": "Amodiaquine (hydrochloride)/Artesunate",
+                "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 135mg/50mg",
+                "who_reference_number": "MA057"
+              }
+            ],
+            "inn": "Amodiaquine (hydrochloride)",
+            "matching_segments": [
+              "amodiaquine"
+            ],
+            "who_product_id": "WHOAPI-030"
+          },
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Amodiaquine (hydrochloride)/Artesunate",
+                "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+                "who_reference_number": "MA056"
+              },
+              {
+                "inn": "Amodiaquine (hydrochloride)/Artesunate",
+                "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 67.5mg/25mg",
+                "who_reference_number": "MA056"
+              },
+              {
+                "inn": "Amodiaquine (hydrochloride)/Artesunate",
+                "presentation": "Amodiaquine (hydrochloride)/Artesunate Tablet 135mg/50mg",
+                "who_reference_number": "MA057"
+              }
+            ],
+            "inn": "Amodiaquine (hydrochloride)",
+            "matching_segments": [
+              "amodiaquine"
+            ],
+            "who_product_id": "WHOAPI-134"
+          },
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA026"
+              },
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA026"
+              },
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA062"
+              }
+            ],
+            "inn": "Artemether",
+            "matching_segments": [
+              "artemether"
+            ],
+            "who_product_id": "WHOAPI-080"
+          },
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA026"
+              },
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA026"
+              },
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA062"
+              }
+            ],
+            "inn": "Artemether",
+            "matching_segments": [
+              "artemether"
+            ],
+            "who_product_id": "WHOAPI-120a"
+          },
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA026"
+              },
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA026"
+              },
+              {
+                "inn": "Artemether/Lumefantrine",
+                "presentation": "Artemether/Lumefantrine Tablet 20mg/120mg",
+                "who_reference_number": "MA062"
+              }
+            ],
+            "inn": "Artemether",
+            "matching_segments": [
+              "artemether"
+            ],
+            "who_product_id": "WHOAPI-120b"
+          }
+        ],
+        "sample_exact_links": [
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Tablet 300mg",
+                "who_reference_number": "ANDA 077844 USFDA"
+              },
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+                "who_reference_number": "ANDA 077950 USFDA"
+              },
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Tablet 300mg",
+                "who_reference_number": "ANDA 078742 USFDA"
+              }
+            ],
+            "inn": "Abacavir (sulfate)",
+            "matching_segments": [
+              "abacavir"
+            ],
+            "who_product_id": "WHOAPI-010"
+          },
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Tablet 300mg",
+                "who_reference_number": "ANDA 077844 USFDA"
+              },
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+                "who_reference_number": "ANDA 077950 USFDA"
+              },
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Tablet 300mg",
+                "who_reference_number": "ANDA 078742 USFDA"
+              }
+            ],
+            "inn": "Abacavir (sulfate)",
+            "matching_segments": [
+              "abacavir"
+            ],
+            "who_product_id": "WHOAPI-193"
+          },
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Tablet 300mg",
+                "who_reference_number": "ANDA 077844 USFDA"
+              },
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Solution, Oral 20mg/ml",
+                "who_reference_number": "ANDA 077950 USFDA"
+              },
+              {
+                "inn": "Abacavir (sulfate)",
+                "presentation": "Abacavir (sulfate) Tablet 300mg",
+                "who_reference_number": "ANDA 078742 USFDA"
+              }
+            ],
+            "inn": "Abacavir (sulfate)",
+            "matching_segments": [
+              "abacavir"
+            ],
+            "who_product_id": "WHOAPI-377"
+          },
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Albendazole",
+                "presentation": "Albendazole Tablet 400mg",
+                "who_reference_number": "NT005"
+              },
+              {
+                "inn": "Albendazole",
+                "presentation": "Albendazole Tablets, Chewable 400mg",
+                "who_reference_number": "NT012"
+              },
+              {
+                "inn": "Albendazole",
+                "presentation": "Albendazole Tablets, Chewable 400mg",
+                "who_reference_number": "NT014"
+              }
+            ],
+            "inn": "Albendazole",
+            "matching_segments": [
+              "albendazole"
+            ],
+            "who_product_id": "WHOAPI-427"
+          },
+          {
+            "finished_pharma_examples": [
+              {
+                "inn": "Albendazole",
+                "presentation": "Albendazole Tablet 400mg",
+                "who_reference_number": "NT005"
+              },
+              {
+                "inn": "Albendazole",
+                "presentation": "Albendazole Tablets, Chewable 400mg",
+                "who_reference_number": "NT012"
+              },
+              {
+                "inn": "Albendazole",
+                "presentation": "Albendazole Tablets, Chewable 400mg",
+                "who_reference_number": "NT014"
+              }
+            ],
+            "inn": "Albendazole",
+            "matching_segments": [
+              "albendazole"
+            ],
+            "who_product_id": "WHOAPI-432"
+          }
+        ],
+        "sample_unresolved_rows": [
+          {
+            "inn": "Artesunate (sterile)",
+            "normalized_inn": "artesunate (sterile)",
+            "who_product_id": "WHOAPI-240"
+          },
+          {
+            "inn": "Medroxyprogesterone acetate - Sterile",
+            "normalized_inn": "medroxyprogesterone acetate - sterile",
+            "who_product_id": "WHOAPI-419"
+          },
+          {
+            "inn": "Misoprostol Dispersion (1:100 in HPMC)",
+            "normalized_inn": "misoprostol dispersion (1:100 in hpmc)",
+            "who_product_id": "WHOAPI-226"
+          },
+          {
+            "inn": "Nirmatrelvir",
+            "normalized_inn": "nirmatrelvir",
+            "who_product_id": "WHOAPI-458"
+          },
+          {
+            "inn": "Nirmatrelvir",
+            "normalized_inn": "nirmatrelvir",
+            "who_product_id": "WHOAPI-464a"
+          }
+        ]
+      },
+      "generated_at": "2026-04-17T19:55:39Z",
+      "mychem_identity_results": {
+        "normalized_inn": {
+          "any_hit_rate": 98.43,
+          "any_hit_rows": 188,
+          "exact_match_rate": 79.06,
+          "exact_match_rows": 151,
+          "no_query_rows": 0,
+          "phrase_or_exact_rate": 91.1,
+          "phrase_or_exact_rows": 174,
+          "rows": 191,
+          "sample_resolved_rows": [
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Abacavir",
+                  "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+                  "ABC",
+                  "ABACAVIR",
+                  "abacavir"
+                ],
+                "drugbank_id": "DB01048",
+                "primary_name": "Abacavir",
+                "score": 10.425032,
+                "substance_type": "chemical",
+                "unii": "WR2TIP26VS"
+              },
+              "inn": "Abacavir (sulfate)",
+              "query": "abacavir",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.758944,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.758944,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-010"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Abacavir",
+                  "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+                  "ABC",
+                  "ABACAVIR",
+                  "abacavir"
+                ],
+                "drugbank_id": "DB01048",
+                "primary_name": "Abacavir",
+                "score": 10.425032,
+                "substance_type": "chemical",
+                "unii": "WR2TIP26VS"
+              },
+              "inn": "Abacavir (sulfate)",
+              "query": "abacavir",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.758944,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.758944,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-193"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Abacavir",
+                  "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+                  "ABC",
+                  "ABACAVIR",
+                  "abacavir"
+                ],
+                "drugbank_id": "DB01048",
+                "primary_name": "Abacavir",
+                "score": 10.425032,
+                "substance_type": "chemical",
+                "unii": "WR2TIP26VS"
+              },
+              "inn": "Abacavir (sulfate)",
+              "query": "abacavir",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.758944,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.758944,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-377"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Albendazole",
+                  "(5-(propylthio)-1H-benzimidazol-2-yl)carbamic acid methyl ester",
+                  "5-(propylthio)-2-carbomethoxyaminobenzimidazole",
+                  "Albendazol",
+                  "Albendazolum"
+                ],
+                "drugbank_id": "DB00518",
+                "primary_name": "Albendazole",
+                "score": 6.2746754,
+                "substance_type": "chemical",
+                "unii": "F4216019LN"
+              },
+              "inn": "Albendazole",
+              "query": "albendazole",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.108637,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.108637,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-427"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Albendazole",
+                  "(5-(propylthio)-1H-benzimidazol-2-yl)carbamic acid methyl ester",
+                  "5-(propylthio)-2-carbomethoxyaminobenzimidazole",
+                  "Albendazol",
+                  "Albendazolum"
+                ],
+                "drugbank_id": "DB00518",
+                "primary_name": "Albendazole",
+                "score": 6.2746754,
+                "substance_type": "chemical",
+                "unii": "F4216019LN"
+              },
+              "inn": "Albendazole",
+              "query": "albendazole",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.108637,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.108637,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-432"
+            }
+          ],
+          "sample_unresolved_rows": [
+            {
+              "best_hit": null,
+              "inn": "Artesunate (sterile)",
+              "query": "artesunate (sterile)",
+              "top_hits": [],
+              "who_product_id": "WHOAPI-240"
+            },
+            {
+              "best_hit": null,
+              "inn": "Isoniazid",
+              "query": "isoniazid",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-005a"
+            },
+            {
+              "best_hit": null,
+              "inn": "Isoniazid",
+              "query": "isoniazid",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-005b"
+            },
+            {
+              "best_hit": null,
+              "inn": "Isoniazid",
+              "query": "isoniazid",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-086"
+            },
+            {
+              "best_hit": null,
+              "inn": "Isoniazid",
+              "query": "isoniazid",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-418"
+            }
+          ],
+          "strategy": "normalized_inn"
+        },
+        "raw_inn": {
+          "any_hit_rate": 98.43,
+          "any_hit_rows": 188,
+          "exact_match_rate": 78.01,
+          "exact_match_rows": 149,
+          "no_query_rows": 0,
+          "phrase_or_exact_rate": 90.05,
+          "phrase_or_exact_rows": 172,
+          "rows": 191,
+          "sample_resolved_rows": [
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Abacavir",
+                  "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+                  "ABC",
+                  "ABACAVIR",
+                  "abacavir"
+                ],
+                "drugbank_id": "DB01048",
+                "primary_name": "Abacavir",
+                "score": 15.801987,
+                "substance_type": "chemical",
+                "unii": "WR2TIP26VS"
+              },
+              "inn": "Abacavir (sulfate)",
+              "query": "Abacavir (sulfate)",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 18.38242,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 18.38242,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-010"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Abacavir",
+                  "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+                  "ABC",
+                  "ABACAVIR",
+                  "abacavir"
+                ],
+                "drugbank_id": "DB01048",
+                "primary_name": "Abacavir",
+                "score": 15.801987,
+                "substance_type": "chemical",
+                "unii": "WR2TIP26VS"
+              },
+              "inn": "Abacavir (sulfate)",
+              "query": "Abacavir (sulfate)",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 18.38242,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 18.38242,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-193"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Abacavir",
+                  "{(1S-cis)-4-[2-amino-6-(cyclopropylamino)-9H-purin-9-yl]cyclopent-2-en-1-yl}methanol",
+                  "ABC",
+                  "ABACAVIR",
+                  "abacavir"
+                ],
+                "drugbank_id": "DB01048",
+                "primary_name": "Abacavir",
+                "score": 15.801987,
+                "substance_type": "chemical",
+                "unii": "WR2TIP26VS"
+              },
+              "inn": "Abacavir (sulfate)",
+              "query": "Abacavir (sulfate)",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 18.38242,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 18.38242,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-377"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Albendazole",
+                  "(5-(propylthio)-1H-benzimidazol-2-yl)carbamic acid methyl ester",
+                  "5-(propylthio)-2-carbomethoxyaminobenzimidazole",
+                  "Albendazol",
+                  "Albendazolum"
+                ],
+                "drugbank_id": "DB00518",
+                "primary_name": "Albendazole",
+                "score": 6.2746754,
+                "substance_type": "chemical",
+                "unii": "F4216019LN"
+              },
+              "inn": "Albendazole",
+              "query": "Albendazole",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.108637,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.108637,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-427"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Albendazole",
+                  "(5-(propylthio)-1H-benzimidazol-2-yl)carbamic acid methyl ester",
+                  "5-(propylthio)-2-carbomethoxyaminobenzimidazole",
+                  "Albendazol",
+                  "Albendazolum"
+                ],
+                "drugbank_id": "DB00518",
+                "primary_name": "Albendazole",
+                "score": 6.2746754,
+                "substance_type": "chemical",
+                "unii": "F4216019LN"
+              },
+              "inn": "Albendazole",
+              "query": "Albendazole",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.108637,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.108637,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-432"
+            }
+          ],
+          "sample_unresolved_rows": [
+            {
+              "best_hit": null,
+              "inn": "Artesunate (sterile)",
+              "query": "Artesunate (sterile)",
+              "top_hits": [],
+              "who_product_id": "WHOAPI-240"
+            },
+            {
+              "best_hit": null,
+              "inn": "Isoniazid",
+              "query": "Isoniazid",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-005a"
+            },
+            {
+              "best_hit": null,
+              "inn": "Isoniazid",
+              "query": "Isoniazid",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-005b"
+            },
+            {
+              "best_hit": null,
+              "inn": "Isoniazid",
+              "query": "Isoniazid",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-086"
+            },
+            {
+              "best_hit": null,
+              "inn": "Isoniazid",
+              "query": "Isoniazid",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 15.2837105,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "who_product_id": "WHOAPI-418"
+            }
+          ],
+          "strategy": "raw_inn"
+        }
+      },
+      "row_count": 191
+    },
+    "metadata_and_devices": {
+      "generated_at": "2026-04-17T19:55:39Z",
+      "immunization_device_catalog": {
+        "categories": {
+          "e001": 5,
+          "e002": 1,
+          "e003": 85,
+          "e004": 74,
+          "e005": 27,
+          "e006": 77,
+          "e007_ehc": 1,
+          "e007_vs": 8,
+          "e008": 74,
+          "e010": 13,
+          "e013": 94
+        },
+        "category_count": 11,
+        "field_completeness": {
+          "details": 100.0,
+          "id": 100.0,
+          "main_image": 100.0,
+          "product_sites": 100.0,
+          "specifications": 100.0,
+          "status": 100.0,
+          "title": 100.0
+        },
+        "headers": [
+          "details",
+          "id",
+          "main_image",
+          "product_sites",
+          "specifications",
+          "status",
+          "title"
+        ],
+        "item_count": 459
+      },
+      "ticket_validation_samples": {
+        "BCG": {
+          "count": 7,
+          "samples": [
+            {
+              "Commercial Name": "BCG Freeze Dried Glutamate vaccine",
+              "Date of Prequalification": "01/01/1987",
+              "Manufacturer": "Japan BCG Laboratory",
+              "No. of doses": "10",
+              "Presentation": "Ampoule",
+              "Responsible NRA": "Pharmaceutical and Medical Devices Agency",
+              "Vaccine Type": "BCG"
+            },
+            {
+              "Commercial Name": "BCG Freeze Dried Glutamate vaccine",
+              "Date of Prequalification": "01/01/1987",
+              "Manufacturer": "Japan BCG Laboratory",
+              "No. of doses": "20",
+              "Presentation": "Ampoule",
+              "Responsible NRA": "Pharmaceutical and Medical Devices Agency",
+              "Vaccine Type": "BCG"
+            }
+          ]
+        },
+        "COVID-19": {
+          "count": 4,
+          "samples": [
+            {
+              "Commercial Name": "BIMERVAX",
+              "Date of Prequalification": "09/10/2023",
+              "Manufacturer": "HIPRA HUMAN HEALTH, S.L.U",
+              "No. of doses": "1",
+              "Presentation": "Vial",
+              "Responsible NRA": "European Medicines Agency",
+              "Vaccine Type": "Covid-19"
+            },
+            {
+              "Commercial Name": "Comirnaty\u00ae",
+              "Date of Prequalification": "09/10/2024",
+              "Manufacturer": "BioNTech Manufacturing GmbH",
+              "No. of doses": "",
+              "Presentation": "Vial",
+              "Responsible NRA": "European Medicines Agency",
+              "Vaccine Type": "Covid-19"
+            }
+          ]
+        },
+        "HPV": {
+          "count": 6,
+          "samples": [
+            {
+              "Commercial Name": "Cecolin\u00ae",
+              "Date of Prequalification": "14/10/2021",
+              "Manufacturer": "Xiamen Innovax Biotech Co. Ltd.",
+              "No. of doses": "1",
+              "Presentation": "Vial",
+              "Responsible NRA": "National Medical Products Administration",
+              "Vaccine Type": "Human Papillomavirus (Bivalent)"
+            },
+            {
+              "Commercial Name": "Cervarix",
+              "Date of Prequalification": "08/07/2009",
+              "Manufacturer": "GlaxoSmithKline Biologicals SA",
+              "No. of doses": "1",
+              "Presentation": "Vial",
+              "Responsible NRA": "Federal Agency for Medicines and Health Products",
+              "Vaccine Type": "Human Papillomavirus (Bivalent)"
+            }
+          ]
+        },
+        "measles": {
+          "count": 22,
+          "samples": [
+            {
+              "Commercial Name": "Measles and Rubella Vaccine (Live) (Attenuated, Freeze Dried)",
+              "Date of Prequalification": "24/09/2019",
+              "Manufacturer": "Biological E. Limited",
+              "No. of doses": "1",
+              "Presentation": "Vial + Ampoule",
+              "Responsible NRA": "Central Drugs Standard Control Organization",
+              "Vaccine Type": "Measles and Rubella"
+            },
+            {
+              "Commercial Name": "Measles and Rubella Vaccine (Live) (Attenuated, Freeze Dried)",
+              "Date of Prequalification": "24/09/2019",
+              "Manufacturer": "Biological E. Limited",
+              "No. of doses": "5",
+              "Presentation": "Vial + Ampoule",
+              "Responsible NRA": "Central Drugs Standard Control Organization",
+              "Vaccine Type": "Measles and Rubella"
+            }
+          ]
+        },
+        "yellow fever": {
+          "count": 10,
+          "samples": [
+            {
+              "Commercial Name": "n/a",
+              "Date of Prequalification": "26/03/2009",
+              "Manufacturer": "Federal State Autonomous Scientific Institution \u00abChumakov Federal Scientific Center for Research & Development of Immune-And Biological Products\u00bb, Russian Academy of Sciences",
+              "No. of doses": "2",
+              "Presentation": "Ampoule",
+              "Responsible NRA": "Federal Service on Surveillance in Healthcare (ROSZDRAVNADZOR) of the Russian Federation",
+              "Vaccine Type": "Yellow Fever"
+            },
+            {
+              "Commercial Name": "n/a",
+              "Date of Prequalification": "26/03/2009",
+              "Manufacturer": "Federal State Autonomous Scientific Institution \u00abChumakov Federal Scientific Center for Research & Development of Immune-And Biological Products\u00bb, Russian Academy of Sciences",
+              "No. of doses": "5",
+              "Presentation": "Ampoule",
+              "Responsible NRA": "Federal Service on Surveillance in Healthcare (ROSZDRAVNADZOR) of the Russian Federation",
+              "Vaccine Type": "Yellow Fever"
+            }
+          ]
+        }
+      },
+      "vaccine_field_completeness": {
+        "commercial_name": {
+          "percent": 100.0,
+          "present": 284,
+          "total": 284
+        },
+        "date_of_prequalification": {
+          "percent": 100.0,
+          "present": 284,
+          "total": 284
+        },
+        "manufacturer": {
+          "percent": 100.0,
+          "present": 284,
+          "total": 284
+        },
+        "no_of_doses": {
+          "percent": 99.65,
+          "present": 283,
+          "total": 284
+        },
+        "presentation": {
+          "percent": 100.0,
+          "present": 284,
+          "total": 284
+        },
+        "responsible_nra": {
+          "percent": 100.0,
+          "present": 284,
+          "total": 284
+        },
+        "vaccine_type": {
+          "percent": 100.0,
+          "present": 284,
+          "total": 284
+        }
+      },
+      "vaccine_row_count": 284,
+      "vaccine_specific_field_assessment": {
+        "cold_chain_or_storage": {
+          "available": false,
+          "completeness": {
+            "percent": 0.0,
+            "present": 0,
+            "total": 284
+          },
+          "source_field": null
+        },
+        "dose_count": {
+          "available": true,
+          "completeness": {
+            "percent": 99.65,
+            "present": 283,
+            "total": 284
+          },
+          "source_field": "No. of doses"
+        },
+        "immunization_schedule": {
+          "available": false,
+          "completeness": {
+            "percent": 0.0,
+            "present": 0,
+            "total": 284
+          },
+          "source_field": null
+        },
+        "target_or_pathogen_proxy": {
+          "available": true,
+          "completeness": {
+            "percent": 100.0,
+            "present": 284,
+            "total": 284
+          },
+          "source_field": "Vaccine Type"
+        }
+      }
+    },
+    "schema_comparison": {
+      "current_contract_direct_header_coverage": {
+        "apis_shared_required_headers": {
+          "base_only": [
+            "APPLICANT",
+            "BASIS OF ALTERNATIVE LISTING",
+            "BASIS OF LISTING",
+            "DOSAGE FORM",
+            "INN, DOSAGE FORM AND STRENGTH",
+            "PRODUCT TYPE",
+            "WHO REFERENCE NUMBER"
+          ],
+          "other_only": [
+            "APPLICANT ORGANIZATION",
+            "CONFIRMATION OF PREQUALIFICATION DOCUMENT DATE",
+            "GRADE",
+            "INN",
+            "WHO PRODUCT ID"
+          ],
+          "shared": [
+            "DATE OF PREQUALIFICATION",
+            "THERAPEUTIC AREA"
+          ],
+          "shared_count": 2
+        },
+        "devices_shared_required_headers": {
+          "base_only": [
+            "APPLICANT",
+            "BASIS OF ALTERNATIVE LISTING",
+            "BASIS OF LISTING",
+            "DATE OF PREQUALIFICATION",
+            "DOSAGE FORM",
+            "INN, DOSAGE FORM AND STRENGTH",
+            "PRODUCT TYPE",
+            "THERAPEUTIC AREA",
+            "WHO REFERENCE NUMBER"
+          ],
+          "other_only": [
+            "DETAILS",
+            "ID",
+            "MAIN_IMAGE",
+            "PRODUCT_SITES",
+            "SPECIFICATIONS",
+            "STATUS",
+            "TITLE"
+          ],
+          "shared": [],
+          "shared_count": 0
+        },
+        "vaccines_shared_required_headers": {
+          "base_only": [
+            "APPLICANT",
+            "BASIS OF ALTERNATIVE LISTING",
+            "BASIS OF LISTING",
+            "DOSAGE FORM",
+            "INN, DOSAGE FORM AND STRENGTH",
+            "PRODUCT TYPE",
+            "THERAPEUTIC AREA",
+            "WHO REFERENCE NUMBER"
+          ],
+          "other_only": [
+            "COMMERCIAL NAME",
+            "MANUFACTURER",
+            "NO. OF DOSES",
+            "PRESENTATION",
+            "RESPONSIBLE NRA",
+            "VACCINE TYPE"
+          ],
+          "shared": [
+            "DATE OF PREQUALIFICATION"
+          ],
+          "shared_count": 1
+        }
+      },
+      "generated_at": "2026-04-17T19:55:39Z",
+      "header_overlap_against_finished_pharma": {
+        "apis": {
+          "base_only": [
+            "APPLICANT",
+            "BASIS OF ALTERNATIVE LISTING",
+            "BASIS OF LISTING",
+            "DOSAGE FORM",
+            "INN, DOSAGE FORM AND STRENGTH",
+            "PRODUCT TYPE",
+            "WHO REFERENCE NUMBER"
+          ],
+          "other_only": [
+            "APPLICANT ORGANIZATION",
+            "CONFIRMATION OF PREQUALIFICATION DOCUMENT DATE",
+            "GRADE",
+            "INN",
+            "WHO PRODUCT ID"
+          ],
+          "shared": [
+            "DATE OF PREQUALIFICATION",
+            "THERAPEUTIC AREA"
+          ],
+          "shared_count": 2
+        },
+        "immunization_devices": {
+          "base_only": [
+            "APPLICANT",
+            "BASIS OF ALTERNATIVE LISTING",
+            "BASIS OF LISTING",
+            "DATE OF PREQUALIFICATION",
+            "DOSAGE FORM",
+            "INN, DOSAGE FORM AND STRENGTH",
+            "PRODUCT TYPE",
+            "THERAPEUTIC AREA",
+            "WHO REFERENCE NUMBER"
+          ],
+          "other_only": [
+            "DETAILS",
+            "ID",
+            "MAIN_IMAGE",
+            "PRODUCT_SITES",
+            "SPECIFICATIONS",
+            "STATUS",
+            "TITLE"
+          ],
+          "shared": [],
+          "shared_count": 0
+        },
+        "vaccines": {
+          "base_only": [
+            "APPLICANT",
+            "BASIS OF ALTERNATIVE LISTING",
+            "BASIS OF LISTING",
+            "DOSAGE FORM",
+            "INN, DOSAGE FORM AND STRENGTH",
+            "PRODUCT TYPE",
+            "THERAPEUTIC AREA",
+            "WHO REFERENCE NUMBER"
+          ],
+          "other_only": [
+            "COMMERCIAL NAME",
+            "MANUFACTURER",
+            "NO. OF DOSES",
+            "PRESENTATION",
+            "RESPONSIBLE NRA",
+            "VACCINE TYPE"
+          ],
+          "shared": [
+            "DATE OF PREQUALIFICATION"
+          ],
+          "shared_count": 1
+        }
+      },
+      "record_counts": {
+        "apis": 191,
+        "finished_pharma": 656,
+        "immunization_device_categories": 11,
+        "immunization_devices": 459,
+        "vaccines": 284
+      },
+      "sample_rows": {
+        "apis": [
+          {
+            "Applicant organization": "Matrix Pharmacorp Private Limited",
+            "Confirmation of Prequalification Document Date": "19  Sep,  2025",
+            "Date of prequalification": "27  May,  2014",
+            "Grade": "Standard",
+            "INN": "Abacavir (sulfate)",
+            "Therapeutic area": "HIV/AIDS",
+            "WHO Product ID": "WHOAPI-010",
+            "confirmation_document_date_iso": "2025-09-19",
+            "normalized_inn": "abacavir",
+            "prequalification_date_iso": "2014-05-27"
+          },
+          {
+            "Applicant organization": "Laurus Labs Limited",
+            "Confirmation of Prequalification Document Date": "5  Feb,  2025",
+            "Date of prequalification": "1  Apr,  2014",
+            "Grade": "Standard",
+            "INN": "Abacavir (sulfate)",
+            "Therapeutic area": "HIV/AIDS",
+            "WHO Product ID": "WHOAPI-193",
+            "confirmation_document_date_iso": "2025-02-05",
+            "normalized_inn": "abacavir",
+            "prequalification_date_iso": "2014-04-01"
+          }
+        ],
+        "finished_pharma": [
+          {
+            "alternative_listing_basis": "USFDA - PEPFAR",
+            "applicant": "Aurobindo Pharma Ltd",
+            "dosage_form": "Tablet",
+            "inn": "Zidovudine",
+            "listing_basis": "Alternative Listing",
+            "normalized_inn": "zidovudine",
+            "normalized_presentation": "zidovudine tablet 300mg",
+            "prequalification_date": null,
+            "presentation": "Zidovudine Tablet 300mg",
+            "product_type": "Finished Pharmaceutical Product",
+            "therapeutic_area": "HIV/AIDS",
+            "who_reference_number": "ANDA 077267 USFDA"
+          },
+          {
+            "alternative_listing_basis": "USFDA - PEPFAR",
+            "applicant": "Aurobindo Pharma Ltd",
+            "dosage_form": "Solution, Oral",
+            "inn": "Zidovudine",
+            "listing_basis": "Alternative Listing",
+            "normalized_inn": "zidovudine",
+            "normalized_presentation": "zidovudine solution oral 10mg + ml",
+            "prequalification_date": null,
+            "presentation": "Zidovudine Solution, Oral 10mg/ml",
+            "product_type": "Finished Pharmaceutical Product",
+            "therapeutic_area": "HIV/AIDS",
+            "who_reference_number": "ANDA 077268 USFDA"
+          }
+        ],
+        "immunization_devices": [
+          {
+            "details": {
+              "address": "Ravitie 3, FI-15860 Hollola\nYl\u00f6j\u00e4rvi\nSatakunta\nFinland",
+              "appliance_type": "E001",
+              "country_of_manufacture": "Finland",
+              "date_of_acceptance": "17 Aug 2010",
+              "email": "petri.hiilloste@porkka.com",
+              "imd-pqs_code": "E001-001",
+              "manufacturer": "Porkka Finland Oy",
+              "manufacturers_reference": "Cold rooms and Freezer rooms",
+              "product_description": "Cold rooms and freezer rooms",
+              "product_name": "Cold rooms and Freezer rooms",
+              "status": "Prequalified",
+              "telephone": "+358 10 2019200",
+              "valid_until": "31 May 2026",
+              "website_address": "www.porkka.com"
+            },
+            "id": "E001-001",
+            "main_image": "https://extranet.who.int/prequal/sites/default/files/sf_files/sf_immunization_devices/sf_products_main_image/E001-001.jpg",
+            "product_sites": {
+              "address": "Ravitie 3, FI-15860 Hollola\nYl\u00f6j\u00e4rvi\nSatakunta\nFinland",
+              "organization_name": "Porkka Finland Oy"
+            },
+            "specifications": {
+              "enclosure_construction_options": {
+                "cold_room_sizes_available_(smallest,_m3)": "10.00",
+                "door_frame_heating_available": "Yes",
+                "door_size_options_available": "Yes",
+                "floor_panel_finish": "Glassfiber re-enforced anti-slip plywood",
+                "floor_panel_heater_mat_(fr_only)": "Yes",
+                "freezer_room_sizes_available_(s,m3)": "10.00",
+                "panel_insulation_material": "Polyurethane high density",
+                "panel_jointing_system": "Cam-lock jointing",
+                "panel_thickness_options": "100mm (standard); 150mm (option)",
+                "pressure_release_valve_(fr_only)": "Yes",
+                "shared_wall_construction": "Yes",
+                "shelving_material": "Plastic only",
+                "shelving_system": "Adjustable shelves only",
+                "strip_curtain_available": "Yes",
+                "type_of_foaming_agent": "N-Penthane",
+                "wall/celling_panel_finish": "Polyester coated steel"
+              },
+              "field_group_1": {
+                "comments": "Can provide cold rooms larger than 40m3 Freezer room sizes: >10 m3"
+              },
+              "product_specifications_equipment_options": {
+                "cold_climate_protection_cr": "Yes",
+                "cut-out_system": "Yes",
+                "duty_sharing": "Timed changeover;Manual changeover",
+                "electric_safety_compliant_to_iec_60335-1": "Yes",
+                "evaporator_plume_guard_cr": "Yes",
+                "high/low_voltage_protection": "Yes",
+                "iso_9001/13485_certified": "Other",
+                "iso_9001/13485_certified_(other)": "ISO 9001;ISO 13485;IEC 60335-1",
+                "lighting_system": "Tungsten",
+                "refrigerant": "R455A",
+                "refrigeration_unit_mounting_options": "Wall",
+                "refrigeration_unit_types": "Monoblock;Split type",
+                "surge_protection_available?": "Yes",
+                "voltage,frequency,phasing_options?": "Yes",
+                "voltage_regulator_available?": "Yes"
+              },
+              "product_specifications_main": {
+                "auto_defrost": "Yes",
+                "pre-qualified_regions": "All regions",
+                "temperature_zones": "Multizone"
+              },
+              "product_specifications_temperature_monitoring_&_alarm_options": {
+                "alarm_system": "Yes",
+                "iso_14001_certified": "Yes",
+                "temperature_recording_system": "Dial thermometer;Event logger"
+              },
+              "quality_standard": {
+                "specification_reference": "Applicable PQS specification: CR-FR01.2 Applicable PQS VP(s): CR-FR01-VP.2"
+              },
+              "warranty,_installation_and_maintainence": {
+                "installation_service": "Advisory service;Installer network",
+                "maintenance_service": "Advisory service;Maintenance network",
+                "warranty_period_(months)": "12.00"
+              }
+            },
+            "status": {
+              "current": "Prequalified",
+              "note": "If Current PQS status is 'Suspended' or 'Withdrawn', this product is NOT to be purchased.",
+              "valid_until": "31 May 2026"
+            },
+            "title": "E001: Cold rooms, freezer rooms, and related equipment"
+          },
+          {
+            "details": {
+              "address": "122 Avenue des Pyr\u00e9n\u00e9es\nVillenave d\u2019Ornon\nGironde\nFrance",
+              "appliance_type": "E001",
+              "country_of_manufacture": "France",
+              "date_of_acceptance": "20 Apr 2011",
+              "email": "clement.feuillon@eiffage.com",
+              "imd-pqs_code": "E001-002",
+              "manufacturer": "SN Zhendre",
+              "manufacturers_reference": "Refrigerator or freezer walk-in rooms 10 to 40m3",
+              "product_description": "Cold rooms and freezer rooms",
+              "product_name": "Refrigerator or freezer walk-in rooms 10 to 40m3",
+              "status": "Prequalified",
+              "telephone": "+33(0)6 79 02 13 95",
+              "valid_until": "31 May 2026",
+              "website_address": "www.zhendre.com"
+            },
+            "id": "E001-002",
+            "main_image": "https://extranet.who.int/prequal/sites/default/files/sf_files/sf_immunization_devices/sf_products_main_image/E001-002.jpg",
+            "product_sites": {
+              "address": "122 Avenue des Pyr\u00e9n\u00e9es\nVillenave d\u2019Ornon\nGironde\nFrance",
+              "organization_name": "SN Zhendre"
+            },
+            "specifications": {
+              "enclosure_construction_options": {
+                "cold_room_sizes_available_(smallest,_m3)": "10.00",
+                "door_frame_heating_available": "Yes",
+                "door_size_options_available": "No",
+                "floor_panel_finish": "Phenolic resin",
+                "floor_panel_heater_mat_(fr_only)": "No",
+                "freezer_room_sizes_available_(s,m3)": "10.00",
+                "panel_insulation_material": "Polyurethane high density",
+                "panel_jointing_system": "cam-lock, 2 polyethylene joints onto the 4 edges of each panel",
+                "panel_thickness_options": "100 mm - 150 mm",
+                "pressure_release_valve_(fr_only)": "Yes",
+                "shared_wall_construction": "---",
+                "shelving_material": "Plastic & Steel",
+                "shelving_system": "Adjustable shelves only",
+                "strip_curtain_available": "Yes",
+                "type_of_foaming_agent": "Polyurethane high density",
+                "wall/celling_panel_finish": "Galvanized steel 5/10 Iceberg white powedered-coated"
+              },
+              "field_group_1": {
+                "comments": "Freezer room sizes: >10 m3 Shelving material: anodized aluminium frame / polyethylene shelves"
+              },
+              "product_specifications_equipment_options": {
+                "cold_climate_protection_cr": "Yes",
+                "cut-out_system": "Yes",
+                "duty_sharing": "Manual changeover",
+                "electric_safety_compliant_to_iec_60335-1": "Yes",
+                "evaporator_plume_guard_cr": "Yes",
+                "high/low_voltage_protection": "Yes",
+                "iso_9001/13485_certified": "Other",
+                "iso_9001/13485_certified_(other)": "ISO 9001;IEC 60335-1",
+                "lighting_system": "Tungsten",
+                "refrigerant": "R455A",
+                "refrigeration_unit_mounting_options": "Wall;Wall split",
+                "refrigeration_unit_types": "Monoblock;Split type",
+                "surge_protection_available?": "Yes",
+                "voltage,frequency,phasing_options?": "Yes",
+                "voltage_regulator_available?": "Yes"
+              },
+              "product_specifications_main": {
+                "auto_defrost": "Yes",
+                "holdover_time_cr": "Not tested",
+                "holdover_time_fr": "Not tested",
+                "pre-qualified_regions": "All regions",
+                "temperature_zones": "Multizone"
+              },
+              "product_specifications_temperature_monitoring_&_alarm_options": {
+                "alarm_system": "Yes",
+                "iso_14001_certified": "Yes",
+                "temperature_recording_system": "Dial thermometer"
+              },
+              "quality_standard": {
+                "specification_reference": "Applicable PQS specification: E001/CR-FR01.4 Applicable VP: E001/CR-FR01-VP1.4 & E001/CR-FR01-VP2.4"
+              },
+              "warranty,_installation_and_maintainence": {
+                "installation_service": "Advisory service;Installer network",
+                "maintenance_service": "Advisory service;Maintenance network",
+                "warranty_period_(months)": "12.00"
+              }
+            },
+            "status": {
+              "current": "Prequalified",
+              "note": "If Current PQS status is 'Suspended' or 'Withdrawn', this product is NOT to be purchased.",
+              "valid_until": "31 May 2026"
+            },
+            "title": "E001: Cold rooms, freezer rooms, and related equipment"
+          }
+        ],
+        "vaccines": [
+          {
+            "Commercial Name": "BEVAC\u00ae",
+            "Date of Prequalification": "16/01/2025",
+            "Manufacturer": "Biological E. Limited",
+            "No. of doses": "1",
+            "Presentation": "Vial",
+            "Responsible NRA": "Central Drugs Standard Control Organization",
+            "Vaccine Type": "Hepatitis B (Paediatric)"
+          },
+          {
+            "Commercial Name": "BEVAC\u00ae",
+            "Date of Prequalification": "16/01/2025",
+            "Manufacturer": "Biological E. Limited",
+            "No. of doses": "1",
+            "Presentation": "Vial",
+            "Responsible NRA": "Central Drugs Standard Control Organization",
+            "Vaccine Type": "Hepatitis B"
+          }
+        ]
+      },
+      "source_schemas": {
+        "apis": {
+          "headers": [
+            "WHO Product ID",
+            "INN",
+            "Grade",
+            "Therapeutic area",
+            "Applicant organization",
+            "Date of prequalification",
+            "Confirmation of Prequalification Document Date"
+          ],
+          "normalized_headers": [
+            "WHO PRODUCT ID",
+            "INN",
+            "GRADE",
+            "THERAPEUTIC AREA",
+            "APPLICANT ORGANIZATION",
+            "DATE OF PREQUALIFICATION",
+            "CONFIRMATION OF PREQUALIFICATION DOCUMENT DATE"
+          ],
+          "row_count": 191
+        },
+        "finished_pharma": {
+          "headers": [
+            "WHO Reference Number",
+            "INN, Dosage Form and Strength",
+            "Product Type",
+            "Therapeutic Area",
+            "Applicant",
+            "Dosage Form",
+            "Basis of Listing",
+            "Basis of alternative listing",
+            "Date of Prequalification"
+          ],
+          "normalized_headers": [
+            "WHO REFERENCE NUMBER",
+            "INN, DOSAGE FORM AND STRENGTH",
+            "PRODUCT TYPE",
+            "THERAPEUTIC AREA",
+            "APPLICANT",
+            "DOSAGE FORM",
+            "BASIS OF LISTING",
+            "BASIS OF ALTERNATIVE LISTING",
+            "DATE OF PREQUALIFICATION"
+          ],
+          "row_count": 669
+        },
+        "immunization_devices": {
+          "categories": {
+            "e001": 5,
+            "e002": 1,
+            "e003": 85,
+            "e004": 74,
+            "e005": 27,
+            "e006": 77,
+            "e007_ehc": 1,
+            "e007_vs": 8,
+            "e008": 74,
+            "e010": 13,
+            "e013": 94
+          },
+          "category_count": 11,
+          "field_completeness": {
+            "details": 100.0,
+            "id": 100.0,
+            "main_image": 100.0,
+            "product_sites": 100.0,
+            "specifications": 100.0,
+            "status": 100.0,
+            "title": 100.0
+          },
+          "headers": [
+            "details",
+            "id",
+            "main_image",
+            "product_sites",
+            "specifications",
+            "status",
+            "title"
+          ],
+          "item_count": 459
+        },
+        "vaccines": {
+          "headers": [
+            "Date of Prequalification",
+            "Vaccine Type",
+            "Commercial Name",
+            "Presentation",
+            "No. of doses",
+            "Manufacturer",
+            "Responsible NRA"
+          ],
+          "normalized_headers": [
+            "DATE OF PREQUALIFICATION",
+            "VACCINE TYPE",
+            "COMMERCIAL NAME",
+            "PRESENTATION",
+            "NO. OF DOSES",
+            "MANUFACTURER",
+            "RESPONSIBLE NRA"
+          ],
+          "row_count": 284
+        }
+      }
+    },
+    "vaccine_identity": {
+      "generated_at": "2026-04-17T19:55:39Z",
+      "row_count": 284,
+      "strategy_results": {
+        "commercial_name": {
+          "any_hit_rate": 23.59,
+          "any_hit_rows": 67,
+          "exact_match_rate": 2.46,
+          "exact_match_rows": 7,
+          "no_query_rows": 0,
+          "phrase_or_exact_rate": 4.58,
+          "phrase_or_exact_rows": 13,
+          "rows": 284,
+          "sample_resolved_rows": [
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG VACCINE"
+                ],
+                "drugbank_id": null,
+                "primary_name": "BCG VACCINE",
+                "score": 13.178144,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "BCG Vaccine",
+              "query": "BCG Vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG VACCINE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG VACCINE",
+                  "score": 13.178144,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.010326,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG VACCINE"
+                ],
+                "drugbank_id": null,
+                "primary_name": "BCG VACCINE",
+                "score": 13.178144,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "BCG Vaccine",
+              "query": "BCG Vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG VACCINE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG VACCINE",
+                  "score": 13.178144,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.010326,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG VACCINE"
+                ],
+                "drugbank_id": null,
+                "primary_name": "BCG VACCINE",
+                "score": 13.178144,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "BCG Vaccine",
+              "query": "BCG Vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG VACCINE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG VACCINE",
+                  "score": 13.178144,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.010326,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG VACCINE"
+                ],
+                "drugbank_id": null,
+                "primary_name": "BCG VACCINE",
+                "score": 13.178144,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "BCG Vaccine",
+              "query": "BCG Vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG VACCINE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG VACCINE",
+                  "score": 13.178144,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.010326,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "10-Hydroxy-18-N-2-naphtyl-N-phenylaminobetae-none"
+                ],
+                "drugbank_id": null,
+                "primary_name": "10-Hydroxy-18-N-2-naphtyl-N-phenylaminobetae-none",
+                "score": 2.9947968,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "None",
+              "query": "None",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "10-Hydroxy-18-N-2-naphtyl-N-phenylaminobetae-none"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "10-Hydroxy-18-N-2-naphtyl-N-phenylaminobetae-none",
+                  "score": 2.9947968,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 2.8021965,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Influenza, seasonal (Trivalent)"
+            }
+          ],
+          "sample_unresolved_rows": [
+            {
+              "best_hit": null,
+              "commercial_name": "BEVAC\u00ae",
+              "query": "BEVAC\u00ae",
+              "top_hits": [],
+              "vaccine_type": "Hepatitis B (Paediatric)"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "BEVAC\u00ae",
+              "query": "BEVAC\u00ae",
+              "top_hits": [],
+              "vaccine_type": "Hepatitis B"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "PNEUBEVAX 14\u00ae",
+              "query": "PNEUBEVAX 14\u00ae",
+              "top_hits": [],
+              "vaccine_type": "Pneumococcal (conjugate)"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Abrysvo",
+              "query": "Abrysvo",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 9.872141,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Respiratory Syncytical Virus vaccine"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Adacel",
+              "query": "Adacel",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 9.871914,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus-Pertussis (acellular)"
+            }
+          ],
+          "strategy": "commercial_name"
+        },
+        "component_vaccine_coverage": {
+          "all_components_any_hit_rate": 77.46,
+          "all_components_any_hit_rows": 220,
+          "all_components_exact_rate": 17.25,
+          "all_components_exact_rows": 49,
+          "all_components_phrase_or_exact_rate": 57.04,
+          "all_components_phrase_or_exact_rows": 162,
+          "mean_component_phrase_or_exact_coverage_rate": 62.84,
+          "no_component_rows": 0,
+          "rows": 284,
+          "sample_resolved_rows": [
+            {
+              "commercial_name": "BEVAC\u00ae",
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "Hepatitis B Vaccine (Recombinant)",
+                      "HBSAG",
+                      "Hepatitis B antigen",
+                      "Hepatitis B surface antigen",
+                      "Hepatitis B Surface Antigen (rDNA)"
+                    ],
+                    "drugbank_id": "DB11627",
+                    "primary_name": "Hepatitis B Vaccine (Recombinant)",
+                    "score": 8.778597,
+                    "substance_type": "mixture",
+                    "unii": "IFJ010MNE4"
+                  },
+                  "component": "Hepatitis B",
+                  "exact_match": true,
+                  "mychem_total": 8,
+                  "normalized_query": "hepatitis b vaccine",
+                  "phrase_match": true,
+                  "query": "Hepatitis B vaccine",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.092828,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.025736,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "HEPATITIS B VIRUS VACCINE INACTIVATED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "HEPATITIS B VIRUS VACCINE INACTIVATED",
+                      "score": 11.989368,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 8
+                }
+              ],
+              "vaccine_type": "Hepatitis B (Paediatric)"
+            },
+            {
+              "commercial_name": "BEVAC\u00ae",
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "Hepatitis B Vaccine (Recombinant)",
+                      "HBSAG",
+                      "Hepatitis B antigen",
+                      "Hepatitis B surface antigen",
+                      "Hepatitis B Surface Antigen (rDNA)"
+                    ],
+                    "drugbank_id": "DB11627",
+                    "primary_name": "Hepatitis B Vaccine (Recombinant)",
+                    "score": 8.778597,
+                    "substance_type": "mixture",
+                    "unii": "IFJ010MNE4"
+                  },
+                  "component": "Hepatitis B",
+                  "exact_match": true,
+                  "mychem_total": 8,
+                  "normalized_query": "hepatitis b vaccine",
+                  "phrase_match": true,
+                  "query": "Hepatitis B vaccine",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.092828,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.025736,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "HEPATITIS B VIRUS VACCINE INACTIVATED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "HEPATITIS B VIRUS VACCINE INACTIVATED",
+                      "score": 11.989368,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 8
+                }
+              ],
+              "vaccine_type": "Hepatitis B"
+            },
+            {
+              "commercial_name": "Adacel",
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "DIPHTHERIA TOXOID"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "DIPHTHERIA TOXOID",
+                    "score": 8.490282,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Diphtheria",
+                  "exact_match": false,
+                  "mychem_total": 46,
+                  "normalized_query": "diphtheria",
+                  "phrase_match": true,
+                  "query": "Diphtheria",
+                  "top_hits": [
+                    {
+                      "alias_sample": [
+                        "DIPHTHERIA TOXOID"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "DIPHTHERIA TOXOID",
+                      "score": 8.490282,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "DIPHTHERIA TOXOID ADSORBED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "DIPHTHERIA TOXOID ADSORBED",
+                      "score": 7.1307755,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.1101456,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                },
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "TETANUS TOXOID"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "TETANUS TOXOID",
+                    "score": 8.564407,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Tetanus",
+                  "exact_match": false,
+                  "mychem_total": 46,
+                  "normalized_query": "tetanus",
+                  "phrase_match": true,
+                  "query": "Tetanus",
+                  "top_hits": [
+                    {
+                      "alias_sample": [
+                        "TETANUS TOXOID"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "TETANUS TOXOID",
+                      "score": 8.564407,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 8.424343,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.377762,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                },
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "PERTUSSIS VACCINE"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "PERTUSSIS VACCINE",
+                    "score": 12.320444,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Pertussis",
+                  "exact_match": true,
+                  "mychem_total": 10,
+                  "normalized_query": "pertussis vaccine",
+                  "phrase_match": true,
+                  "query": "Pertussis vaccine",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.900995,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "PERTUSSIS VACCINE ADSORBED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "PERTUSSIS VACCINE ADSORBED",
+                      "score": 12.595179,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "PERTUSSIS VACCINE"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "PERTUSSIS VACCINE",
+                      "score": 12.320444,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus-Pertussis (acellular)"
+            },
+            {
+              "commercial_name": "Adsorbed DT Vaccine",
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "DIPHTHERIA TOXOID"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "DIPHTHERIA TOXOID",
+                    "score": 8.490282,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Diphtheria",
+                  "exact_match": false,
+                  "mychem_total": 46,
+                  "normalized_query": "diphtheria",
+                  "phrase_match": true,
+                  "query": "Diphtheria",
+                  "top_hits": [
+                    {
+                      "alias_sample": [
+                        "DIPHTHERIA TOXOID"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "DIPHTHERIA TOXOID",
+                      "score": 8.490282,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "DIPHTHERIA TOXOID ADSORBED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "DIPHTHERIA TOXOID ADSORBED",
+                      "score": 7.1307755,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.1101456,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                },
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "TETANUS TOXOID"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "TETANUS TOXOID",
+                    "score": 8.564407,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Tetanus",
+                  "exact_match": false,
+                  "mychem_total": 46,
+                  "normalized_query": "tetanus",
+                  "phrase_match": true,
+                  "query": "Tetanus",
+                  "top_hits": [
+                    {
+                      "alias_sample": [
+                        "TETANUS TOXOID"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "TETANUS TOXOID",
+                      "score": 8.564407,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 8.424343,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.377762,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus"
+            },
+            {
+              "commercial_name": "Afluria\u00ae",
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "INFLUENZA A VIRUS WHOLE"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "INFLUENZA A VIRUS WHOLE",
+                    "score": 6.248081,
+                    "substance_type": "structurallyDiverse",
+                    "unii": "R9HH0NDE2E"
+                  },
+                  "component": "Influenza",
+                  "exact_match": false,
+                  "mychem_total": 244,
+                  "normalized_query": "influenza",
+                  "phrase_match": true,
+                  "query": "Influenza",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.879011,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.6214848,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.6214848,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Influenza, seasonal (Trivalent)"
+            }
+          ],
+          "sample_unresolved_rows": [
+            {
+              "commercial_name": "PNEUBEVAX 14\u00ae",
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Pneumococcal",
+                  "exact_match": false,
+                  "mychem_total": 30,
+                  "normalized_query": "pneumococcal",
+                  "phrase_match": false,
+                  "query": "Pneumococcal",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 8.872215,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.344776,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 6.2131176,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Pneumococcal (conjugate)"
+            },
+            {
+              "commercial_name": "Abrysvo",
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Respiratory Syncytical Virus vaccine",
+                  "exact_match": false,
+                  "mychem_total": 0,
+                  "normalized_query": "respiratory syncytical virus vaccine",
+                  "phrase_match": false,
+                  "query": "Respiratory Syncytical Virus vaccine",
+                  "top_hits": [],
+                  "total_hits": 0
+                }
+              ],
+              "vaccine_type": "Respiratory Syncytical Virus vaccine"
+            },
+            {
+              "commercial_name": "BIMERVAX",
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Covid-19",
+                  "exact_match": false,
+                  "mychem_total": 59,
+                  "normalized_query": "covid-19 vaccine",
+                  "phrase_match": false,
+                  "query": "Covid-19 vaccine",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 14.08087,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 13.832188,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 13.561977,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Covid-19"
+            },
+            {
+              "commercial_name": "BIOPOLIO",
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Polio Vaccine - Oral Trivalent",
+                  "exact_match": false,
+                  "mychem_total": 0,
+                  "normalized_query": "polio vaccine",
+                  "phrase_match": false,
+                  "query": "Polio Vaccine",
+                  "top_hits": [],
+                  "total_hits": 0
+                }
+              ],
+              "vaccine_type": "Polio Vaccine - Oral (OPV) Trivalent"
+            },
+            {
+              "commercial_name": "BIOPOLIO",
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Polio Vaccine - Oral Trivalent",
+                  "exact_match": false,
+                  "mychem_total": 0,
+                  "normalized_query": "polio vaccine",
+                  "phrase_match": false,
+                  "query": "Polio Vaccine",
+                  "top_hits": [],
+                  "total_hits": 0
+                }
+              ],
+              "vaccine_type": "Polio Vaccine - Oral (OPV) Trivalent"
+            }
+          ],
+          "strategy": "component_vaccine_coverage"
+        },
+        "component_with_commercial_fallback": {
+          "any_hit_rate": 81.34,
+          "any_hit_rows": 231,
+          "exact_match_rate": 18.31,
+          "exact_match_rows": 52,
+          "no_query_rows": 0,
+          "phrase_or_exact_rate": 57.39,
+          "phrase_or_exact_rows": 163,
+          "rows": 284,
+          "sample_resolved_rows": [
+            {
+              "commercial_name": "BEVAC\u00ae",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 0,
+                "normalized_query": "bevac\u00ae",
+                "phrase_match": false,
+                "query": "BEVAC\u00ae",
+                "top_hits": [],
+                "total_hits": 0
+              },
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "Hepatitis B Vaccine (Recombinant)",
+                      "HBSAG",
+                      "Hepatitis B antigen",
+                      "Hepatitis B surface antigen",
+                      "Hepatitis B Surface Antigen (rDNA)"
+                    ],
+                    "drugbank_id": "DB11627",
+                    "primary_name": "Hepatitis B Vaccine (Recombinant)",
+                    "score": 8.778597,
+                    "substance_type": "mixture",
+                    "unii": "IFJ010MNE4"
+                  },
+                  "component": "Hepatitis B",
+                  "exact_match": true,
+                  "mychem_total": 8,
+                  "normalized_query": "hepatitis b vaccine",
+                  "phrase_match": true,
+                  "query": "Hepatitis B vaccine",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.092828,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.025736,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "HEPATITIS B VIRUS VACCINE INACTIVATED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "HEPATITIS B VIRUS VACCINE INACTIVATED",
+                      "score": 11.989368,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 8
+                }
+              ],
+              "vaccine_type": "Hepatitis B (Paediatric)"
+            },
+            {
+              "commercial_name": "BEVAC\u00ae",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 0,
+                "normalized_query": "bevac\u00ae",
+                "phrase_match": false,
+                "query": "BEVAC\u00ae",
+                "top_hits": [],
+                "total_hits": 0
+              },
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "Hepatitis B Vaccine (Recombinant)",
+                      "HBSAG",
+                      "Hepatitis B antigen",
+                      "Hepatitis B surface antigen",
+                      "Hepatitis B Surface Antigen (rDNA)"
+                    ],
+                    "drugbank_id": "DB11627",
+                    "primary_name": "Hepatitis B Vaccine (Recombinant)",
+                    "score": 8.778597,
+                    "substance_type": "mixture",
+                    "unii": "IFJ010MNE4"
+                  },
+                  "component": "Hepatitis B",
+                  "exact_match": true,
+                  "mychem_total": 8,
+                  "normalized_query": "hepatitis b vaccine",
+                  "phrase_match": true,
+                  "query": "Hepatitis B vaccine",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.092828,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.025736,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "HEPATITIS B VIRUS VACCINE INACTIVATED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "HEPATITIS B VIRUS VACCINE INACTIVATED",
+                      "score": 11.989368,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 8
+                }
+              ],
+              "vaccine_type": "Hepatitis B"
+            },
+            {
+              "commercial_name": "Adacel",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 1,
+                "normalized_query": "adacel",
+                "phrase_match": false,
+                "query": "Adacel",
+                "top_hits": [
+                  {
+                    "alias_sample": [],
+                    "drugbank_id": null,
+                    "primary_name": null,
+                    "score": 9.871914,
+                    "substance_type": null,
+                    "unii": null
+                  }
+                ],
+                "total_hits": 1
+              },
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "DIPHTHERIA TOXOID"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "DIPHTHERIA TOXOID",
+                    "score": 8.490282,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Diphtheria",
+                  "exact_match": false,
+                  "mychem_total": 46,
+                  "normalized_query": "diphtheria",
+                  "phrase_match": true,
+                  "query": "Diphtheria",
+                  "top_hits": [
+                    {
+                      "alias_sample": [
+                        "DIPHTHERIA TOXOID"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "DIPHTHERIA TOXOID",
+                      "score": 8.490282,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "DIPHTHERIA TOXOID ADSORBED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "DIPHTHERIA TOXOID ADSORBED",
+                      "score": 7.1307755,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.1101456,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                },
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "TETANUS TOXOID"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "TETANUS TOXOID",
+                    "score": 8.564407,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Tetanus",
+                  "exact_match": false,
+                  "mychem_total": 46,
+                  "normalized_query": "tetanus",
+                  "phrase_match": true,
+                  "query": "Tetanus",
+                  "top_hits": [
+                    {
+                      "alias_sample": [
+                        "TETANUS TOXOID"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "TETANUS TOXOID",
+                      "score": 8.564407,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 8.424343,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.377762,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                },
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "PERTUSSIS VACCINE"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "PERTUSSIS VACCINE",
+                    "score": 12.320444,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Pertussis",
+                  "exact_match": true,
+                  "mychem_total": 10,
+                  "normalized_query": "pertussis vaccine",
+                  "phrase_match": true,
+                  "query": "Pertussis vaccine",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 12.900995,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "PERTUSSIS VACCINE ADSORBED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "PERTUSSIS VACCINE ADSORBED",
+                      "score": 12.595179,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "PERTUSSIS VACCINE"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "PERTUSSIS VACCINE",
+                      "score": 12.320444,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus-Pertussis (acellular)"
+            },
+            {
+              "commercial_name": "Adsorbed DT Vaccine",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 0,
+                "normalized_query": "adsorbed dt vaccine",
+                "phrase_match": false,
+                "query": "Adsorbed DT Vaccine",
+                "top_hits": [],
+                "total_hits": 0
+              },
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "DIPHTHERIA TOXOID"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "DIPHTHERIA TOXOID",
+                    "score": 8.490282,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Diphtheria",
+                  "exact_match": false,
+                  "mychem_total": 46,
+                  "normalized_query": "diphtheria",
+                  "phrase_match": true,
+                  "query": "Diphtheria",
+                  "top_hits": [
+                    {
+                      "alias_sample": [
+                        "DIPHTHERIA TOXOID"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "DIPHTHERIA TOXOID",
+                      "score": 8.490282,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [
+                        "DIPHTHERIA TOXOID ADSORBED"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "DIPHTHERIA TOXOID ADSORBED",
+                      "score": 7.1307755,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.1101456,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                },
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "TETANUS TOXOID"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "TETANUS TOXOID",
+                    "score": 8.564407,
+                    "substance_type": null,
+                    "unii": null
+                  },
+                  "component": "Tetanus",
+                  "exact_match": false,
+                  "mychem_total": 46,
+                  "normalized_query": "tetanus",
+                  "phrase_match": true,
+                  "query": "Tetanus",
+                  "top_hits": [
+                    {
+                      "alias_sample": [
+                        "TETANUS TOXOID"
+                      ],
+                      "drugbank_id": null,
+                      "primary_name": "TETANUS TOXOID",
+                      "score": 8.564407,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 8.424343,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.377762,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus"
+            },
+            {
+              "commercial_name": "Afluria\u00ae",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 0,
+                "normalized_query": "afluria\u00ae",
+                "phrase_match": false,
+                "query": "Afluria\u00ae",
+                "top_hits": [],
+                "total_hits": 0
+              },
+              "components": [
+                {
+                  "best_hit": {
+                    "alias_sample": [
+                      "INFLUENZA A VIRUS WHOLE"
+                    ],
+                    "drugbank_id": null,
+                    "primary_name": "INFLUENZA A VIRUS WHOLE",
+                    "score": 6.248081,
+                    "substance_type": "structurallyDiverse",
+                    "unii": "R9HH0NDE2E"
+                  },
+                  "component": "Influenza",
+                  "exact_match": false,
+                  "mychem_total": 244,
+                  "normalized_query": "influenza",
+                  "phrase_match": true,
+                  "query": "Influenza",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.879011,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.6214848,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.6214848,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Influenza, seasonal (Trivalent)"
+            }
+          ],
+          "sample_unresolved_rows": [
+            {
+              "commercial_name": "PNEUBEVAX 14\u00ae",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 0,
+                "normalized_query": "pneubevax 14\u00ae",
+                "phrase_match": false,
+                "query": "PNEUBEVAX 14\u00ae",
+                "top_hits": [],
+                "total_hits": 0
+              },
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Pneumococcal",
+                  "exact_match": false,
+                  "mychem_total": 30,
+                  "normalized_query": "pneumococcal",
+                  "phrase_match": false,
+                  "query": "Pneumococcal",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 8.872215,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 7.344776,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 6.2131176,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Pneumococcal (conjugate)"
+            },
+            {
+              "commercial_name": "Abrysvo",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 1,
+                "normalized_query": "abrysvo",
+                "phrase_match": false,
+                "query": "Abrysvo",
+                "top_hits": [
+                  {
+                    "alias_sample": [],
+                    "drugbank_id": null,
+                    "primary_name": null,
+                    "score": 9.872141,
+                    "substance_type": null,
+                    "unii": null
+                  }
+                ],
+                "total_hits": 1
+              },
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Respiratory Syncytical Virus vaccine",
+                  "exact_match": false,
+                  "mychem_total": 0,
+                  "normalized_query": "respiratory syncytical virus vaccine",
+                  "phrase_match": false,
+                  "query": "Respiratory Syncytical Virus vaccine",
+                  "top_hits": [],
+                  "total_hits": 0
+                }
+              ],
+              "vaccine_type": "Respiratory Syncytical Virus vaccine"
+            },
+            {
+              "commercial_name": "BIMERVAX",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 0,
+                "normalized_query": "bimervax",
+                "phrase_match": false,
+                "query": "BIMERVAX",
+                "top_hits": [],
+                "total_hits": 0
+              },
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Covid-19",
+                  "exact_match": false,
+                  "mychem_total": 59,
+                  "normalized_query": "covid-19 vaccine",
+                  "phrase_match": false,
+                  "query": "Covid-19 vaccine",
+                  "top_hits": [
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 14.08087,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 13.832188,
+                      "substance_type": null,
+                      "unii": null
+                    },
+                    {
+                      "alias_sample": [],
+                      "drugbank_id": null,
+                      "primary_name": null,
+                      "score": 13.561977,
+                      "substance_type": null,
+                      "unii": null
+                    }
+                  ],
+                  "total_hits": 10
+                }
+              ],
+              "vaccine_type": "Covid-19"
+            },
+            {
+              "commercial_name": "BIOPOLIO",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 0,
+                "normalized_query": "biopolio",
+                "phrase_match": false,
+                "query": "BIOPOLIO",
+                "top_hits": [],
+                "total_hits": 0
+              },
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Polio Vaccine - Oral Trivalent",
+                  "exact_match": false,
+                  "mychem_total": 0,
+                  "normalized_query": "polio vaccine",
+                  "phrase_match": false,
+                  "query": "Polio Vaccine",
+                  "top_hits": [],
+                  "total_hits": 0
+                }
+              ],
+              "vaccine_type": "Polio Vaccine - Oral (OPV) Trivalent"
+            },
+            {
+              "commercial_name": "BIOPOLIO",
+              "commercial_name_report": {
+                "best_hit": null,
+                "exact_match": false,
+                "mychem_total": 0,
+                "normalized_query": "biopolio",
+                "phrase_match": false,
+                "query": "BIOPOLIO",
+                "top_hits": [],
+                "total_hits": 0
+              },
+              "components": [
+                {
+                  "best_hit": null,
+                  "component": "Polio Vaccine - Oral Trivalent",
+                  "exact_match": false,
+                  "mychem_total": 0,
+                  "normalized_query": "polio vaccine",
+                  "phrase_match": false,
+                  "query": "Polio Vaccine",
+                  "top_hits": [],
+                  "total_hits": 0
+                }
+              ],
+              "vaccine_type": "Polio Vaccine - Oral (OPV) Trivalent"
+            }
+          ],
+          "strategy": "component_with_commercial_fallback"
+        },
+        "vaccine_type": {
+          "any_hit_rate": 52.11,
+          "any_hit_rows": 148,
+          "exact_match_rate": 7.04,
+          "exact_match_rows": 20,
+          "no_query_rows": 0,
+          "phrase_or_exact_rate": 30.28,
+          "phrase_or_exact_rows": 86,
+          "rows": 284,
+          "sample_resolved_rows": [
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "HEPATITIS B VIRUS"
+                ],
+                "drugbank_id": null,
+                "primary_name": "HEPATITIS B VIRUS",
+                "score": 10.372512,
+                "substance_type": "structurallyDiverse",
+                "unii": "77H9EM77P7"
+              },
+              "commercial_name": "BEVAC\u00ae",
+              "query": "Hepatitis B",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "HEPATITIS B VIRUS"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "HEPATITIS B VIRUS",
+                  "score": 10.372512,
+                  "substance_type": "structurallyDiverse",
+                  "unii": "77H9EM77P7"
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 9.32122,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Hepatitis B (Paediatric)"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "HEPATITIS B VIRUS"
+                ],
+                "drugbank_id": null,
+                "primary_name": "HEPATITIS B VIRUS",
+                "score": 10.372512,
+                "substance_type": "structurallyDiverse",
+                "unii": "77H9EM77P7"
+              },
+              "commercial_name": "BEVAC\u00ae",
+              "query": "Hepatitis B",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "HEPATITIS B VIRUS"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "HEPATITIS B VIRUS",
+                  "score": 10.372512,
+                  "substance_type": "structurallyDiverse",
+                  "unii": "77H9EM77P7"
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 9.32122,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Hepatitis B"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "VARICELLA-ZOSTER IMMUNE GLOBULIN"
+                ],
+                "drugbank_id": null,
+                "primary_name": "VARICELLA-ZOSTER IMMUNE GLOBULIN",
+                "score": 6.041996,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "BARYCELA inj.",
+              "query": "Varicella",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 6.9059696,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 6.1185875,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Varicella"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG vaccine",
+                  "Bacillus Calmette Guerin",
+                  "Bacillus Calmette-Gu\u00e9rin",
+                  "Bacillus calmette-guerin live antigen, unspecified substrain",
+                  "Bacillus Calmette\u2013Gu\u00e9rin (BCG) vaccine"
+                ],
+                "drugbank_id": "DB12768",
+                "primary_name": "BCG vaccine",
+                "score": 4.8124237,
+                "substance_type": "mixture",
+                "unii": "8VJE55B0VG"
+              },
+              "commercial_name": "BCG Freeze Dried Glutamate vaccine",
+              "query": "BCG",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG LIVE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG LIVE",
+                  "score": 9.239113,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 7.6926403,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG vaccine",
+                  "Bacillus Calmette Guerin",
+                  "Bacillus Calmette-Gu\u00e9rin",
+                  "Bacillus calmette-guerin live antigen, unspecified substrain",
+                  "Bacillus Calmette\u2013Gu\u00e9rin (BCG) vaccine"
+                ],
+                "drugbank_id": "DB12768",
+                "primary_name": "BCG vaccine",
+                "score": 4.8124237,
+                "substance_type": "mixture",
+                "unii": "8VJE55B0VG"
+              },
+              "commercial_name": "BCG Freeze Dried Glutamate vaccine",
+              "query": "BCG",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG LIVE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG LIVE",
+                  "score": 9.239113,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 7.6926403,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            }
+          ],
+          "sample_unresolved_rows": [
+            {
+              "best_hit": null,
+              "commercial_name": "PNEUBEVAX 14\u00ae",
+              "query": "Pneumococcal",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 8.872215,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 7.344776,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Pneumococcal (conjugate)"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Abrysvo",
+              "query": "Respiratory Syncytical Virus vaccine",
+              "top_hits": [],
+              "vaccine_type": "Respiratory Syncytical Virus vaccine"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Adacel",
+              "query": "Diphtheria-Tetanus-Pertussis",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 14.028791,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.953112,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus-Pertussis (acellular)"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Adsorbed DT Vaccine",
+              "query": "Diphtheria-Tetanus",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 12.193106,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 9.534929,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Afluria\u00ae",
+              "query": "Influenza, seasonal",
+              "top_hits": [],
+              "vaccine_type": "Influenza, seasonal (Trivalent)"
+            }
+          ],
+          "strategy": "vaccine_type"
+        },
+        "vaccine_type_plus_vaccine": {
+          "any_hit_rate": 52.11,
+          "any_hit_rows": 148,
+          "exact_match_rate": 12.68,
+          "exact_match_rows": 36,
+          "no_query_rows": 0,
+          "phrase_or_exact_rate": 17.61,
+          "phrase_or_exact_rows": 50,
+          "rows": 284,
+          "sample_resolved_rows": [
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Hepatitis B Vaccine (Recombinant)",
+                  "HBSAG",
+                  "Hepatitis B antigen",
+                  "Hepatitis B surface antigen",
+                  "Hepatitis B Surface Antigen (rDNA)"
+                ],
+                "drugbank_id": "DB11627",
+                "primary_name": "Hepatitis B Vaccine (Recombinant)",
+                "score": 8.778597,
+                "substance_type": "mixture",
+                "unii": "IFJ010MNE4"
+              },
+              "commercial_name": "BEVAC\u00ae",
+              "query": "Hepatitis B vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 12.092828,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 12.025736,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Hepatitis B (Paediatric)"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "Hepatitis B Vaccine (Recombinant)",
+                  "HBSAG",
+                  "Hepatitis B antigen",
+                  "Hepatitis B surface antigen",
+                  "Hepatitis B Surface Antigen (rDNA)"
+                ],
+                "drugbank_id": "DB11627",
+                "primary_name": "Hepatitis B Vaccine (Recombinant)",
+                "score": 8.778597,
+                "substance_type": "mixture",
+                "unii": "IFJ010MNE4"
+              },
+              "commercial_name": "BEVAC\u00ae",
+              "query": "Hepatitis B vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 12.092828,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 12.025736,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Hepatitis B"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG VACCINE"
+                ],
+                "drugbank_id": null,
+                "primary_name": "BCG VACCINE",
+                "score": 13.178144,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "BCG Freeze Dried Glutamate vaccine",
+              "query": "BCG vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG VACCINE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG VACCINE",
+                  "score": 13.178144,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.010326,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG VACCINE"
+                ],
+                "drugbank_id": null,
+                "primary_name": "BCG VACCINE",
+                "score": 13.178144,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "BCG Freeze Dried Glutamate vaccine",
+              "query": "BCG vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG VACCINE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG VACCINE",
+                  "score": 13.178144,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.010326,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            },
+            {
+              "best_hit": {
+                "alias_sample": [
+                  "BCG VACCINE"
+                ],
+                "drugbank_id": null,
+                "primary_name": "BCG VACCINE",
+                "score": 13.178144,
+                "substance_type": null,
+                "unii": null
+              },
+              "commercial_name": "BCG Vaccine",
+              "query": "BCG vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [
+                    "BCG VACCINE"
+                  ],
+                  "drugbank_id": null,
+                  "primary_name": "BCG VACCINE",
+                  "score": 13.178144,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.010326,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "BCG"
+            }
+          ],
+          "sample_unresolved_rows": [
+            {
+              "best_hit": null,
+              "commercial_name": "PNEUBEVAX 14\u00ae",
+              "query": "Pneumococcal vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 10.814934,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 9.745628,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Pneumococcal (conjugate)"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Abrysvo",
+              "query": "Respiratory Syncytical Virus vaccine vaccine",
+              "top_hits": [],
+              "vaccine_type": "Respiratory Syncytical Virus vaccine"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Adacel",
+              "query": "Diphtheria-Tetanus-Pertussis vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 16.180536,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 14.070011,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus-Pertussis (acellular)"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Adsorbed DT Vaccine",
+              "query": "Diphtheria-Tetanus vaccine",
+              "top_hits": [
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 17.34561,
+                  "substance_type": null,
+                  "unii": null
+                },
+                {
+                  "alias_sample": [],
+                  "drugbank_id": null,
+                  "primary_name": null,
+                  "score": 11.686674,
+                  "substance_type": null,
+                  "unii": null
+                }
+              ],
+              "vaccine_type": "Diphtheria-Tetanus"
+            },
+            {
+              "best_hit": null,
+              "commercial_name": "Afluria\u00ae",
+              "query": "Influenza, seasonal vaccine",
+              "top_hits": [],
+              "vaccine_type": "Influenza, seasonal (Trivalent)"
+            }
+          ],
+          "strategy": "vaccine_type_plus_vaccine"
+        }
+      },
+      "winner": {
+        "exact_rate": 18.31,
+        "phrase_or_exact_rate": 57.39,
+        "strategy": "component_with_commercial_fallback"
+      }
+    }
+  },
+  "stage_timings_seconds": {
+    "api_linkage_seconds": 0.0522,
+    "metadata_and_devices_seconds": 0.0027,
+    "schema_comparison_seconds": 0.0297,
+    "total_seconds": 0.1962,
+    "vaccine_identity_seconds": 0.1116
+  }
+}

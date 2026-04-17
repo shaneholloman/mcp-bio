@@ -1,0 +1,182 @@
+{
+  "generated_at": "2026-04-17T19:55:39Z",
+  "overall_passed": true,
+  "probes": {
+    "BCG": {
+      "count": 7,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 7,
+      "samples": [
+        {
+          "Commercial Name": "BCG Freeze Dried Glutamate vaccine",
+          "Date of Prequalification": "01/01/1987",
+          "Manufacturer": "Japan BCG Laboratory",
+          "No. of doses": "10",
+          "Presentation": "Ampoule",
+          "Responsible NRA": "Pharmaceutical and Medical Devices Agency",
+          "Vaccine Type": "BCG"
+        },
+        {
+          "Commercial Name": "BCG Freeze Dried Glutamate vaccine",
+          "Date of Prequalification": "01/01/1987",
+          "Manufacturer": "Japan BCG Laboratory",
+          "No. of doses": "20",
+          "Presentation": "Ampoule",
+          "Responsible NRA": "Pharmaceutical and Medical Devices Agency",
+          "Vaccine Type": "BCG"
+        }
+      ]
+    },
+    "COVID-19": {
+      "count": 4,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 4,
+      "samples": [
+        {
+          "Commercial Name": "BIMERVAX",
+          "Date of Prequalification": "09/10/2023",
+          "Manufacturer": "HIPRA HUMAN HEALTH, S.L.U",
+          "No. of doses": "1",
+          "Presentation": "Vial",
+          "Responsible NRA": "European Medicines Agency",
+          "Vaccine Type": "Covid-19"
+        },
+        {
+          "Commercial Name": "Comirnaty\u00ae",
+          "Date of Prequalification": "09/10/2024",
+          "Manufacturer": "BioNTech Manufacturing GmbH",
+          "No. of doses": "",
+          "Presentation": "Vial",
+          "Responsible NRA": "European Medicines Agency",
+          "Vaccine Type": "Covid-19"
+        }
+      ]
+    },
+    "HPV": {
+      "count": 6,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 6,
+      "samples": [
+        {
+          "Commercial Name": "Cecolin\u00ae",
+          "Date of Prequalification": "14/10/2021",
+          "Manufacturer": "Xiamen Innovax Biotech Co. Ltd.",
+          "No. of doses": "1",
+          "Presentation": "Vial",
+          "Responsible NRA": "National Medical Products Administration",
+          "Vaccine Type": "Human Papillomavirus (Bivalent)"
+        },
+        {
+          "Commercial Name": "Cervarix",
+          "Date of Prequalification": "08/07/2009",
+          "Manufacturer": "GlaxoSmithKline Biologicals SA",
+          "No. of doses": "1",
+          "Presentation": "Vial",
+          "Responsible NRA": "Federal Agency for Medicines and Health Products",
+          "Vaccine Type": "Human Papillomavirus (Bivalent)"
+        }
+      ]
+    },
+    "measles": {
+      "count": 22,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 22,
+      "samples": [
+        {
+          "Commercial Name": "Measles and Rubella Vaccine (Live) (Attenuated, Freeze Dried)",
+          "Date of Prequalification": "24/09/2019",
+          "Manufacturer": "Biological E. Limited",
+          "No. of doses": "1",
+          "Presentation": "Vial + Ampoule",
+          "Responsible NRA": "Central Drugs Standard Control Organization",
+          "Vaccine Type": "Measles and Rubella"
+        },
+        {
+          "Commercial Name": "Measles and Rubella Vaccine (Live) (Attenuated, Freeze Dried)",
+          "Date of Prequalification": "24/09/2019",
+          "Manufacturer": "Biological E. Limited",
+          "No. of doses": "5",
+          "Presentation": "Vial + Ampoule",
+          "Responsible NRA": "Central Drugs Standard Control Organization",
+          "Vaccine Type": "Measles and Rubella"
+        }
+      ]
+    },
+    "yellow fever": {
+      "count": 10,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 10,
+      "samples": [
+        {
+          "Commercial Name": "n/a",
+          "Date of Prequalification": "26/03/2009",
+          "Manufacturer": "Federal State Autonomous Scientific Institution \u00abChumakov Federal Scientific Center for Research & Development of Immune-And Biological Products\u00bb, Russian Academy of Sciences",
+          "No. of doses": "2",
+          "Presentation": "Ampoule",
+          "Responsible NRA": "Federal Service on Surveillance in Healthcare (ROSZDRAVNADZOR) of the Russian Federation",
+          "Vaccine Type": "Yellow Fever"
+        },
+        {
+          "Commercial Name": "n/a",
+          "Date of Prequalification": "26/03/2009",
+          "Manufacturer": "Federal State Autonomous Scientific Institution \u00abChumakov Federal Scientific Center for Research & Development of Immune-And Biological Products\u00bb, Russian Academy of Sciences",
+          "No. of doses": "5",
+          "Presentation": "Ampoule",
+          "Responsible NRA": "Federal Service on Surveillance in Healthcare (ROSZDRAVNADZOR) of the Russian Federation",
+          "Vaccine Type": "Yellow Fever"
+        }
+      ]
+    }
+  },
+  "validation_definition": {
+    "description": "Each target vaccine must appear in the WHO export and at least one matched row must carry all required metadata fields.",
+    "required_fields": [
+      "Vaccine Type",
+      "Commercial Name",
+      "Presentation",
+      "Manufacturer",
+      "Responsible NRA",
+      "Date of Prequalification"
+    ]
+  }
+}

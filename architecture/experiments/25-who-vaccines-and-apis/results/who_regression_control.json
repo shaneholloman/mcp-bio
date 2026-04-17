@@ -1,0 +1,389 @@
+{
+  "baseline_paths": {
+    "api_linkage": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/api_linkage_probe.json",
+    "metadata_and_devices": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/vaccine_metadata_and_device_probe.json",
+    "schema_comparison": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/who_schema_comparison.json",
+    "vaccine_identity": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/results/vaccine_identity_probe.json"
+  },
+  "comparisons": {
+    "api_linkage": {
+      "baseline_projection": {
+        "finished_pharma_overlap": {
+          "component_link_rate": 93.72,
+          "component_link_rows": 179,
+          "exact_inn_link_rate": 71.73,
+          "exact_inn_link_rows": 137,
+          "rows": 191
+        },
+        "mychem_identity_results": {
+          "normalized_inn": {
+            "any_hit_rate": 98.43,
+            "any_hit_rows": 188,
+            "exact_match_rate": 79.06,
+            "exact_match_rows": 151,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 91.1,
+            "phrase_or_exact_rows": 174,
+            "rows": 191
+          },
+          "raw_inn": {
+            "any_hit_rate": 98.43,
+            "any_hit_rows": 188,
+            "exact_match_rate": 78.01,
+            "exact_match_rows": 149,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 90.05,
+            "phrase_or_exact_rows": 172,
+            "rows": 191
+          }
+        },
+        "row_count": 191
+      },
+      "baseline_projection_checksum": "8583ab4e03c634f1186627b481eec3224c0e86b19246c6248ff3d9cdc6adfc24",
+      "comparison_mode": "exact_match",
+      "current_projection": {
+        "finished_pharma_overlap": {
+          "component_link_rate": 93.72,
+          "component_link_rows": 179,
+          "exact_inn_link_rate": 71.73,
+          "exact_inn_link_rows": 137,
+          "rows": 191
+        },
+        "mychem_identity_results": {
+          "normalized_inn": {
+            "any_hit_rate": 98.43,
+            "any_hit_rows": 188,
+            "exact_match_rate": 79.06,
+            "exact_match_rows": 151,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 91.1,
+            "phrase_or_exact_rows": 174,
+            "rows": 191
+          },
+          "raw_inn": {
+            "any_hit_rate": 98.43,
+            "any_hit_rows": 188,
+            "exact_match_rate": 78.01,
+            "exact_match_rows": 149,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 90.05,
+            "phrase_or_exact_rows": 172,
+            "rows": 191
+          }
+        },
+        "row_count": 191
+      },
+      "current_projection_checksum": "8583ab4e03c634f1186627b481eec3224c0e86b19246c6248ff3d9cdc6adfc24",
+      "diff_sample": [],
+      "mismatch_count": 0,
+      "passed": true
+    },
+    "metadata_and_devices": {
+      "baseline_projection": {
+        "immunization_device_catalog": {
+          "category_count": 11,
+          "item_count": 459
+        },
+        "ticket_validation_samples": {
+          "BCG": 7,
+          "COVID-19": 4,
+          "HPV": 6,
+          "measles": 22,
+          "yellow fever": 10
+        },
+        "vaccine_field_completeness": {
+          "commercial_name": 100.0,
+          "date_of_prequalification": 100.0,
+          "manufacturer": 100.0,
+          "no_of_doses": 99.65,
+          "presentation": 100.0,
+          "responsible_nra": 100.0,
+          "vaccine_type": 100.0
+        },
+        "vaccine_row_count": 284,
+        "vaccine_specific_field_assessment": {
+          "cold_chain_or_storage": 0.0,
+          "dose_count": 99.65,
+          "immunization_schedule": 0.0,
+          "target_or_pathogen_proxy": 100.0
+        }
+      },
+      "baseline_projection_checksum": "f5e9d7e76185e526eea4273374d57a1902d7505c5203268d380a41c8c34f9239",
+      "comparison_mode": "exact_match",
+      "current_projection": {
+        "immunization_device_catalog": {
+          "category_count": 11,
+          "item_count": 459
+        },
+        "ticket_validation_samples": {
+          "BCG": 7,
+          "COVID-19": 4,
+          "HPV": 6,
+          "measles": 22,
+          "yellow fever": 10
+        },
+        "vaccine_field_completeness": {
+          "commercial_name": 100.0,
+          "date_of_prequalification": 100.0,
+          "manufacturer": 100.0,
+          "no_of_doses": 99.65,
+          "presentation": 100.0,
+          "responsible_nra": 100.0,
+          "vaccine_type": 100.0
+        },
+        "vaccine_row_count": 284,
+        "vaccine_specific_field_assessment": {
+          "cold_chain_or_storage": 0.0,
+          "dose_count": 99.65,
+          "immunization_schedule": 0.0,
+          "target_or_pathogen_proxy": 100.0
+        }
+      },
+      "current_projection_checksum": "f5e9d7e76185e526eea4273374d57a1902d7505c5203268d380a41c8c34f9239",
+      "diff_sample": [],
+      "mismatch_count": 0,
+      "passed": true
+    },
+    "schema_comparison": {
+      "baseline_projection": {
+        "direct_required_header_coverage": {
+          "apis_shared_required_headers": {
+            "shared": [
+              "DATE OF PREQUALIFICATION",
+              "THERAPEUTIC AREA"
+            ],
+            "shared_count": 2
+          },
+          "devices_shared_required_headers": {
+            "shared": [],
+            "shared_count": 0
+          },
+          "vaccines_shared_required_headers": {
+            "shared": [
+              "DATE OF PREQUALIFICATION"
+            ],
+            "shared_count": 1
+          }
+        },
+        "record_counts": {
+          "apis": 191,
+          "finished_pharma": 656,
+          "immunization_device_categories": 11,
+          "immunization_devices": 459,
+          "vaccines": 284
+        }
+      },
+      "baseline_projection_checksum": "a711f110fd15a5503350192873d38225eb535bbc36d646743189361052366c52",
+      "comparison_mode": "exact_match",
+      "current_projection": {
+        "direct_required_header_coverage": {
+          "apis_shared_required_headers": {
+            "shared": [
+              "DATE OF PREQUALIFICATION",
+              "THERAPEUTIC AREA"
+            ],
+            "shared_count": 2
+          },
+          "devices_shared_required_headers": {
+            "shared": [],
+            "shared_count": 0
+          },
+          "vaccines_shared_required_headers": {
+            "shared": [
+              "DATE OF PREQUALIFICATION"
+            ],
+            "shared_count": 1
+          }
+        },
+        "record_counts": {
+          "apis": 191,
+          "finished_pharma": 656,
+          "immunization_device_categories": 11,
+          "immunization_devices": 459,
+          "vaccines": 284
+        }
+      },
+      "current_projection_checksum": "a711f110fd15a5503350192873d38225eb535bbc36d646743189361052366c52",
+      "diff_sample": [],
+      "mismatch_count": 0,
+      "passed": true
+    },
+    "vaccine_identity": {
+      "baseline_projection": {
+        "row_count": 284,
+        "strategy_results": {
+          "commercial_name": {
+            "any_hit_rate": 23.59,
+            "any_hit_rows": 67,
+            "exact_match_rate": 2.46,
+            "exact_match_rows": 7,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 4.58,
+            "phrase_or_exact_rows": 13,
+            "rows": 284
+          },
+          "component_vaccine_coverage": {
+            "all_components_any_hit_rate": 77.46,
+            "all_components_any_hit_rows": 220,
+            "all_components_exact_rate": 17.25,
+            "all_components_exact_rows": 49,
+            "all_components_phrase_or_exact_rate": 57.04,
+            "all_components_phrase_or_exact_rows": 162,
+            "mean_component_phrase_or_exact_coverage_rate": 62.84,
+            "no_component_rows": 0,
+            "rows": 284
+          },
+          "component_with_commercial_fallback": {
+            "any_hit_rate": 81.34,
+            "any_hit_rows": 231,
+            "exact_match_rate": 18.31,
+            "exact_match_rows": 52,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 57.39,
+            "phrase_or_exact_rows": 163,
+            "rows": 284
+          },
+          "vaccine_type": {
+            "any_hit_rate": 52.11,
+            "any_hit_rows": 148,
+            "exact_match_rate": 7.04,
+            "exact_match_rows": 20,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 30.28,
+            "phrase_or_exact_rows": 86,
+            "rows": 284
+          },
+          "vaccine_type_plus_vaccine": {
+            "any_hit_rate": 52.11,
+            "any_hit_rows": 148,
+            "exact_match_rate": 12.68,
+            "exact_match_rows": 36,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 17.61,
+            "phrase_or_exact_rows": 50,
+            "rows": 284
+          }
+        },
+        "winner": {
+          "exact_rate": 18.31,
+          "phrase_or_exact_rate": 57.39,
+          "strategy": "component_with_commercial_fallback"
+        }
+      },
+      "baseline_projection_checksum": "2f38b163160892c6c13205b08723fa47f842f5a93d8a0b8a9763fcb0d76bbad6",
+      "comparison_mode": "match_or_beat",
+      "current_projection": {
+        "row_count": 284,
+        "strategy_results": {
+          "commercial_name": {
+            "any_hit_rate": 23.59,
+            "any_hit_rows": 67,
+            "exact_match_rate": 2.46,
+            "exact_match_rows": 7,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 4.58,
+            "phrase_or_exact_rows": 13,
+            "rows": 284
+          },
+          "component_vaccine_coverage": {
+            "all_components_any_hit_rate": 77.46,
+            "all_components_any_hit_rows": 220,
+            "all_components_exact_rate": 17.25,
+            "all_components_exact_rows": 49,
+            "all_components_phrase_or_exact_rate": 57.04,
+            "all_components_phrase_or_exact_rows": 162,
+            "mean_component_phrase_or_exact_coverage_rate": 62.84,
+            "no_component_rows": 0,
+            "rows": 284
+          },
+          "component_with_commercial_fallback": {
+            "any_hit_rate": 81.34,
+            "any_hit_rows": 231,
+            "exact_match_rate": 18.31,
+            "exact_match_rows": 52,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 57.39,
+            "phrase_or_exact_rows": 163,
+            "rows": 284
+          },
+          "vaccine_type": {
+            "any_hit_rate": 52.11,
+            "any_hit_rows": 148,
+            "exact_match_rate": 7.04,
+            "exact_match_rows": 20,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 30.28,
+            "phrase_or_exact_rows": 86,
+            "rows": 284
+          },
+          "vaccine_type_plus_vaccine": {
+            "any_hit_rate": 52.11,
+            "any_hit_rows": 148,
+            "exact_match_rate": 12.68,
+            "exact_match_rows": 36,
+            "no_query_rows": 0,
+            "phrase_or_exact_rate": 17.61,
+            "phrase_or_exact_rows": 50,
+            "rows": 284
+          }
+        },
+        "winner": {
+          "exact_rate": 18.31,
+          "phrase_or_exact_rate": 57.39,
+          "strategy": "component_with_commercial_fallback"
+        }
+      },
+      "current_projection_checksum": "2f38b163160892c6c13205b08723fa47f842f5a93d8a0b8a9763fcb0d76bbad6",
+      "diff_sample": [],
+      "mismatch_count": 0,
+      "passed": true
+    }
+  },
+  "generated_at": "2026-04-17T19:55:39Z",
+  "overall_passed": true,
+  "rule": {
+    "note": "Regression control keeps exact metric projection matching for schema, API, and metadata probes. Vaccine identity is evaluated as match-or-beat against the explore projection so optimize-step improvements can pass without relaxing the other guards.",
+    "type": "probe_specific_match_or_beat"
+  },
+  "source_snapshots": {
+    "apis": {
+      "bytes": 22403,
+      "cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/upstream/who_apis.csv",
+      "cached": true,
+      "modified_at": "2026-04-17T19:13:58Z",
+      "sha256": "717aa80b9f1906d872a8d2634753ec2152cc5aee68947aa9ee2eed28134a78e3",
+      "url": "https://extranet.who.int/prequal/medicines/prequalified/active-pharmaceutical-ingredients/export?page&_format=csv"
+    },
+    "devices": {
+      "bytes": 1875786,
+      "cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/upstream/who_immunization_devices.json",
+      "cached": true,
+      "modified_at": "2026-04-17T19:14:04Z",
+      "sha256": "c2183bf8bdd310cdc6b3b508509fc5b22027b39732244332b3d16235f6ea6c6d",
+      "url": "https://extranet.who.int/prequal/sites/default/files/immunization_devices/json/catalogs/immunization_devices_catalogue.json"
+    },
+    "finished_pharma": {
+      "bytes": 133833,
+      "cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/upstream/who_finished_pharma.csv",
+      "cached": true,
+      "modified_at": "2026-04-17T19:13:56Z",
+      "sha256": "263dbf20b7fc77ad3965a94d1712685b7e247daef93890cf06fba79276b28fbf",
+      "url": "https://extranet.who.int/prequal/medicines/prequalified/finished-pharmaceutical-products/export?page&_format=csv"
+    },
+    "vaccines": {
+      "bytes": 47869,
+      "cache_path": "/home/ian/workspace/worktrees/231-spike-who-vaccines-and-api-extensions/architecture/experiments/25-who-vaccines-and-apis/work/upstream/who_vaccines.csv",
+      "cached": true,
+      "modified_at": "2026-04-17T19:13:57Z",
+      "sha256": "1c5590a23ea8e27a8b573328f9ec275603ffe33ee11c17d41e9d5c28bf4376f5",
+      "url": "https://extranet.who.int/prequal/vaccines/prequalified/export"
+    }
+  },
+  "stage_timings_seconds": {
+    "api_linkage_seconds": 0.0522,
+    "metadata_and_devices_seconds": 0.0027,
+    "schema_comparison_seconds": 0.0297,
+    "total_seconds": 0.1962,
+    "vaccine_identity_seconds": 0.1116
+  }
+}
