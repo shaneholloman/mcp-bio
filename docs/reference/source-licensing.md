@@ -190,7 +190,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### WHO Prequalification
 
-- BioMCP surfaces: `search drug --region who|all; search drug --indication <disease> --region who; get drug <name> regulatory --region who|all`
+- BioMCP surfaces: `search drug --region who|all; search drug --indication <disease> --region who; search drug <name> --region who --product-type <finished_pharma|api>; get drug <name> regulatory --region who|all`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: on-demand local download by BioMCP on first WHO use, or manual preseed via `BIOMCP_WHO_DIR`
@@ -198,7 +198,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Redistribution / reuse summary: preserve WHO attribution, review commercial-use conditions, and check third-party material rights before republishing
 - Official terms URL: <https://www.who.int/about/policies/publishing/copyright>
 - Reviewed on: `2026-04-10`
-- Notes: BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV into `BIOMCP_WHO_DIR` or the default data directory on first use, refreshes stale files, and supports explicit refresh via `biomcp who sync`.
+- Notes: BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV and active-pharmaceutical-ingredients CSV into `BIOMCP_WHO_DIR` or the default data directory on first use, refreshes stale files, and supports explicit refresh via `biomcp who sync`.
 
 ### Enrichr
 

@@ -1,6 +1,7 @@
-use super::{DrugCommand, DrugGetArgs, DrugSearchArgs};
+use super::{DrugCommand, DrugGetArgs, DrugSearchArgs, WhoProductTypeArg};
 use crate::cli::CommandOutcome;
 use crate::entities::drug::DrugRegion;
+use crate::sources::who_pq::WhoProductTypeFilter;
 
 pub(crate) async fn handle_get(
     args: DrugGetArgs,
@@ -25,6 +26,22 @@ pub(crate) async fn handle_search(
     args: DrugSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
+    let region_arg = args.region;
+    let who_product_type_arg = args.who_product_type;
+    if who_product_type_arg.is_some() && !matches!(region_arg, Some(crate::cli::DrugRegionArg::Who))
+    {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "The WHO-only --product-type filter requires explicit --region who; rerun with --region who.".into(),
+        )
+        .into());
+    }
+
+    let who_product_type = who_product_type_arg
+        .map(|value| match value {
+            WhoProductTypeArg::FinishedPharma => WhoProductTypeFilter::FinishedPharma,
+            WhoProductTypeArg::Api => WhoProductTypeFilter::Api,
+        })
+        .unwrap_or_default();
     let query = super::super::resolve_query_input(args.query, args.positional_query, "--query")?;
     let filters = crate::entities::drug::DrugSearchFilters {
         query,
@@ -36,10 +53,15 @@ pub(crate) async fn handle_search(
         pharm_class: args.pharm_class,
         interactions: args.interactions,
     };
-    let region = resolve_drug_search_region(args.region, &filters)?;
-    let page_with_region =
-        crate::entities::drug::search_page_with_region(&filters, args.limit, args.offset, region)
-            .await?;
+    let region = resolve_drug_search_region(region_arg, &filters)?;
+    let page_with_region = crate::entities::drug::search_page_with_region(
+        &filters,
+        args.limit,
+        args.offset,
+        region,
+        who_product_type,
+    )
+    .await?;
     if json {
         return drug_search_json(
             page_with_region,
@@ -51,6 +73,13 @@ pub(crate) async fn handle_search(
     }
 
     let mut query_summary = crate::entities::drug::search_query_summary(&filters);
+    if let Some(product_type) = who_product_type_arg {
+        let value = match product_type {
+            WhoProductTypeArg::FinishedPharma => "finished_pharma",
+            WhoProductTypeArg::Api => "api",
+        };
+        query_summary = format!("{query_summary}, product_type={value}");
+    }
     if args.offset > 0 {
         query_summary = format!("{query_summary}, offset={}", args.offset);
     }

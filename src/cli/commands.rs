@@ -78,7 +78,7 @@ EXAMPLES:
     /// WHO Prequalification local data management
     #[command(after_help = "\
 EXAMPLES:
-  biomcp who sync    # force refresh the WHO Prequalification CSV")]
+  biomcp who sync    # force refresh the WHO finished-pharma and API exports")]
     Who {
         #[command(subcommand)]
         cmd: system::WhoCommand,
@@ -304,6 +304,7 @@ When to use: use this when you know the drug or brand name, or switch to --indic
 EXAMPLES:
   biomcp search drug pembrolizumab
   biomcp search drug trastuzumab --region who --limit 5
+  biomcp search drug artesunate --region who --product-type api --limit 5
   biomcp search drug Keytruda --limit 5
   biomcp search drug Keytruda --region eu --limit 5
   biomcp search drug --indication malaria --region who --limit 5
@@ -313,6 +314,7 @@ Note: --interactions is currently unavailable from the public data sources BioMC
 Omitting --region on a plain name/alias search checks U.S., EU, and WHO data.
 If you omit --region while using structured filters such as --target or --indication, BioMCP stays on the U.S. MyChem path.
 Explicit --region who filters structured U.S. hits through WHO Prequalification.
+WHO-only --product-type <finished_pharma|api> requires explicit --region who.
 Explicit --region eu|all with structured filters still errors.
 
 See also: biomcp list drug")]

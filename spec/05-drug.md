@@ -41,6 +41,21 @@ echo "$out" | mustmatch like "WHO Prequalification local data ($BIOMCP_WHO_DIR)"
 echo "$out" | mustmatch like "| WHO Prequalification local data ($BIOMCP_WHO_DIR) | configured |"
 ```
 
+## WHO Missing API File Reports Contract
+
+The WHO local-data contract now requires both the finished-pharma export and
+the API export. A partial WHO root should name the missing file instead of
+silently reporting WHO as configured.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+rm -f "$BIOMCP_WHO_DIR/who_api.csv"
+out="$(biomcp health)"
+echo "$out" | mustmatch like "WHO Prequalification local data ($BIOMCP_WHO_DIR)"
+echo "$out" | mustmatch like "| WHO Prequalification local data ($BIOMCP_WHO_DIR) | error (missing: who_api.csv) |"
+```
+
 ## Searching by Name
 
 Name-first search is the stable PR-gate coverage for generic U.S. lookup
@@ -107,6 +122,8 @@ echo "$out" | mustmatch '/\[default: all\]/'
 echo "$out" | mustmatch like "Omitting --region on a plain name/alias search checks U.S., EU, and WHO data."
 echo "$out" | mustmatch like "If you omit --region while using structured filters such as --target or --indication, BioMCP stays on the U.S. MyChem path."
 echo "$out" | mustmatch like "Explicit --region who filters structured U.S. hits through WHO Prequalification."
+echo "$out" | mustmatch like "--product-type <PRODUCT_TYPE>"
+echo "$out" | mustmatch like "requires explicit --region who"
 ```
 
 ## Structured Indication Misses Are Informative
@@ -251,10 +268,13 @@ echo "$out" | mustmatch like "get drug <name> regulatory [--region <us|eu|who|al
 echo "$out" | mustmatch like "get drug <name> safety [--region <us|eu|all>]"
 echo "$out" | mustmatch like "get drug <name> shortage [--region <us|eu|all>]"
 echo "$out" | mustmatch like "get drug <name> all [--region <us|eu|who|all>]"
+echo "$out" | mustmatch like "search drug <query> --region who --product-type <finished_pharma|api>"
 echo "$out" | mustmatch like 'top-level `region`, top-level `regions`, and optional top-level `_meta`'
 echo "$out" | mustmatch like 'Single-region searches expose one bucket under `regions.us`, `regions.eu`, or `regions.who`.'
 echo "$out" | mustmatch like 'Omitted `--region` on plain name/alias lookup and explicit `--region all` expose `regions.us`, `regions.eu`, and `regions.who`.'
 echo "$out" | mustmatch like 'Each region bucket keeps `pagination`, `count`, and `results`.'
+echo "$out" | mustmatch like "who_pq.csv"
+echo "$out" | mustmatch like "who_api.csv"
 ```
 
 ## Compact Approval Fields
@@ -599,11 +619,14 @@ reviving the old flat top-level `results` envelope.
 ```bash
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-json_out="$(biomcp --json search drug trastuzumab --region who --limit 3)"
-echo "$json_out" | mustmatch like '"who_reference_number"'
+json_out="$(biomcp --json search drug artesunate --region who --limit 10)"
+echo "$json_out" | mustmatch like '"product_type"'
 echo "$json_out" | jq -e '.region == "who"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys) == ["who"]' > /dev/null
-echo "$json_out" | jq -e '.regions.who.results[0].who_reference_number | type == "string"' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.who_reference_number == "MA051")' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.who_product_id == "WHOAPI-001")' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.product_type == "Finished Pharmaceutical Product")' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.product_type == "Active Pharmaceutical Ingredient")' > /dev/null
 echo "$json_out" | jq -e 'has("results") | not' > /dev/null
 ```
 
@@ -625,6 +648,54 @@ echo "$json_out" | jq -e '.regions.who.results == []' > /dev/null
 echo "$json_out" | jq -e 'has("_meta") | not' > /dev/null
 ```
 
+## WHO API Search
+
+WHO name search should now surface both finished-pharma rows and API rows when
+the query matches both exports.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp search drug artesunate --region who --limit 10)"
+echo "$out" | mustmatch like "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|"
+echo "$out" | mustmatch like "Artesunate|Finished Pharmaceutical Product|Malaria"
+echo "$out" | mustmatch like "Artesunate|Active Pharmaceutical Ingredient|Malaria"
+echo "$out" | mustmatch like "Guilin Pharmaceutical Co., Ltd.|MA051|Prequalification - Full"
+echo "$out" | mustmatch like "WHOAPI-001"
+```
+
+## WHO Product Type API Filter
+
+The WHO-only product-type filter should keep only API rows when the user
+requests `--product-type api`.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp search drug artesunate --region who --product-type api --limit 10)"
+echo "$out" | mustmatch like "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|"
+echo "$out" | mustmatch like "Artesunate|Active Pharmaceutical Ingredient|Malaria"
+echo "$out" | mustmatch like "WHOAPI-001"
+echo "$out" | mustmatch not like "Finished Pharmaceutical Product"
+echo "$out" | mustmatch not like "MA051"
+```
+
+## WHO Product Type Finished-Pharma Filter
+
+The WHO-only product-type filter should keep only finished-pharma rows when the
+user requests `--product-type finished_pharma`.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp search drug artesunate --region who --product-type finished_pharma --limit 10)"
+echo "$out" | mustmatch like "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|"
+echo "$out" | mustmatch like "Artesunate|Finished Pharmaceutical Product|Malaria"
+echo "$out" | mustmatch like "Guilin Pharmaceutical Co., Ltd.|MA051|Prequalification - Full"
+echo "$out" | mustmatch not like "Active Pharmaceutical Ingredient"
+echo "$out" | mustmatch not like "WHOAPI-001"
+```
+
 ## WHO Structured Search Region
 
 Structured WHO search should keep the structured U.S. drug-search semantics and
@@ -634,9 +705,9 @@ filter the candidate hits through the WHO prequalification batch.
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
 out="$(biomcp search drug --indication malaria --region who --limit 5)"
-echo "$out" | mustmatch like "|INN|Therapeutic Area|Dosage Form|Applicant|WHO Ref|Listing Basis|Date|"
+echo "$out" | mustmatch like "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|"
 echo "$out" | mustmatch like "Artemether/Lumefantrine"
-echo "$out" | mustmatch like "Artemether/Lumefantrine|Malaria"
+echo "$out" | mustmatch like "Artemether/Lumefantrine|Finished Pharmaceutical Product|Malaria"
 echo "$out" | mustmatch like "Novartis Pharma AG|MA026"
 ```
 
@@ -737,11 +808,28 @@ bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
 out="$(biomcp get drug trastuzumab regulatory --region who)"
 echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
-echo "$out" | mustmatch like "| WHO Ref | Presentation |"
-echo "$out" | mustmatch like "Presentation"
+echo "$out" | mustmatch like "| WHO ID | Type | Presentation / INN |"
+echo "$out" | mustmatch like "| Listing Basis | Grade | Alternative Basis |"
+echo "$out" | mustmatch like "Confirmation Doc Date"
 echo "$out" | mustmatch like "Prequalification Date"
-echo "$out" | mustmatch like "| BT-ON001 | Trastuzumab Powder"
+echo "$out" | mustmatch like "| BT-ON001 | Biotherapeutic Product | Trastuzumab Powder"
 echo "$out" | mustmatch like "2019-12-18"
+```
+
+## WHO API Regulatory Section
+
+WHO regulatory output should also surface API-only metadata such as the WHO API
+identifier, grade, and confirmation-document date.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$(biomcp get drug abacavir regulatory --region who)"
+echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
+echo "$out" | mustmatch like "WHOAPI-010"
+echo "$out" | mustmatch like "Active Pharmaceutical Ingredient"
+echo "$out" | mustmatch like "| WHOAPI-010 | Active Pharmaceutical Ingredient | Abacavir (sulfate) | - | HIV/AIDS | Matrix Pharmacorp Private Limited | - | Standard |"
+echo "$out" | mustmatch like "2025-09-19"
 ```
 
 ## WHO Regulatory Empty State

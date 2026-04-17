@@ -203,30 +203,74 @@ pub struct DrugSearchResult {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WhoPrequalificationEntry {
-    pub who_reference_number: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub who_reference_number: Option<String>,
     pub inn: String,
-    pub presentation: String,
-    pub dosage_form: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub presentation: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dosage_form: Option<String>,
     pub product_type: String,
     pub therapeutic_area: String,
     pub applicant: String,
-    pub listing_basis: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub listing_basis: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alternative_listing_basis: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prequalification_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub who_product_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub grade: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub confirmation_document_date: Option<String>,
+}
+
+impl WhoPrequalificationEntry {
+    pub(crate) fn display_identifier(&self) -> &str {
+        self.who_reference_number
+            .as_deref()
+            .or(self.who_product_id.as_deref())
+            .unwrap_or("-")
+    }
+
+    pub(crate) fn stable_identifier_key(&self) -> String {
+        if let Some(value) = self.who_reference_number.as_deref() {
+            format!("ref:{value}")
+        } else if let Some(value) = self.who_product_id.as_deref() {
+            format!("product:{value}")
+        } else {
+            format!("missing:{}", self.inn.to_ascii_lowercase())
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WhoPrequalificationSearchResult {
     pub inn: String,
+    pub product_type: String,
     pub therapeutic_area: String,
-    pub dosage_form: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dosage_form: Option<String>,
     pub applicant: String,
-    pub who_reference_number: String,
-    pub listing_basis: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub who_reference_number: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub who_product_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub listing_basis: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prequalification_date: Option<String>,
+}
+
+impl WhoPrequalificationSearchResult {
+    pub(crate) fn display_identifier(&self) -> &str {
+        self.who_reference_number
+            .as_deref()
+            .or(self.who_product_id.as_deref())
+            .unwrap_or("-")
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

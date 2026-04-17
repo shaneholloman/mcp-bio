@@ -10,7 +10,7 @@ use crate::error::BioMcpError;
 use crate::sources::civic::{CivicClient, CivicContext};
 use crate::sources::ema::{EmaClient, EmaSyncMode};
 use crate::sources::openfda::OpenFdaClient;
-use crate::sources::who_pq::{WhoPqClient, WhoPqSyncMode};
+use crate::sources::who_pq::{WhoPqClient, WhoPqSyncMode, WhoProductTypeFilter};
 use crate::transform;
 
 use super::label::{
@@ -539,7 +539,7 @@ async fn populate_who_sections(
 
     let client = WhoPqClient::ready(WhoPqSyncMode::Auto).await?;
     let identity = build_who_identity(requested_name, drug);
-    drug.who_prequalification = Some(client.regulatory(&identity)?);
+    drug.who_prequalification = Some(client.regulatory(&identity, WhoProductTypeFilter::Both)?);
     Ok(())
 }
 

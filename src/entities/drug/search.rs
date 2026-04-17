@@ -10,7 +10,7 @@ use crate::error::BioMcpError;
 use crate::sources::ema::{EmaClient, EmaSyncMode};
 use crate::sources::mychem::{MyChemHit, MyChemNdcField};
 use crate::sources::openfda::OpenFdaClient;
-use crate::sources::who_pq::{WhoPqClient, WhoPqSyncMode};
+use crate::sources::who_pq::{WhoPqClient, WhoPqSyncMode, WhoProductTypeFilter};
 use crate::transform;
 
 use super::label::extract_openfda_values_from_result;
@@ -342,6 +342,7 @@ pub async fn search_name_query_with_region(
     limit: usize,
     offset: usize,
     region: DrugRegion,
+    product_type: WhoProductTypeFilter,
 ) -> Result<DrugSearchPageWithRegion, BioMcpError> {
     let query = query.trim();
     if query.is_empty() {
@@ -397,7 +398,7 @@ pub async fn search_name_query_with_region(
             who_client
                 .as_ref()
                 .expect("WHO client should exist for WHO region")
-                .search(&who_identity, limit, offset)?,
+                .search(&who_identity, limit, offset, product_type)?,
         )),
         DrugRegion::All => Ok(DrugSearchPageWithRegion::All {
             us: search_page(&filters, limit, offset).await?,
@@ -408,7 +409,7 @@ pub async fn search_name_query_with_region(
             who: who_client
                 .as_ref()
                 .expect("WHO client should exist for all region")
-                .search(&who_identity, limit, offset)?,
+                .search(&who_identity, limit, offset, product_type)?,
         }),
     }
 }
@@ -417,12 +418,17 @@ pub(super) async fn search_structured_who_page(
     filters: &DrugSearchFilters,
     limit: usize,
     offset: usize,
+    product_type: WhoProductTypeFilter,
 ) -> Result<SearchPage<WhoPrequalificationSearchResult>, BioMcpError> {
-    let who_rows = WhoPqClient::ready(WhoPqSyncMode::Auto).await?.read_rows()?;
+    let who_rows = crate::sources::who_pq::filter_rows_by_product_type(
+        &WhoPqClient::ready(WhoPqSyncMode::Auto).await?.read_rows()?,
+        product_type,
+    );
     search_structured_who_page_with(
         filters,
         limit,
         offset,
+        product_type,
         |filters, page_limit, page_offset| {
             let filters = filters.clone();
             async move { search_page(&filters, page_limit, page_offset).await }
@@ -441,6 +447,7 @@ pub(super) async fn search_structured_who_page_with<F, Fut, M>(
     filters: &DrugSearchFilters,
     limit: usize,
     offset: usize,
+    product_type: WhoProductTypeFilter,
     mut fetch_page: F,
     mut regulatory_rows: M,
 ) -> Result<SearchPage<WhoPrequalificationSearchResult>, BioMcpError>
@@ -457,21 +464,26 @@ where
     }
 
     let mut expanded = Vec::new();
-    let mut seen_refs = HashSet::new();
+    let mut seen_ids = HashSet::new();
     let mut mychem_offset = 0usize;
     let page_size = MAX_SEARCH_LIMIT;
 
     loop {
         let page = fetch_page(filters, page_size, mychem_offset).await?;
         for candidate in &page.results {
-            for row in regulatory_rows(&candidate.name) {
-                if seen_refs.insert(row.who_reference_number.clone()) {
+            for row in crate::sources::who_pq::filter_rows_by_product_type(
+                &regulatory_rows(&candidate.name),
+                product_type,
+            ) {
+                if seen_ids.insert(row.stable_identifier_key()) {
                     expanded.push(WhoPrequalificationSearchResult {
                         inn: row.inn,
+                        product_type: row.product_type,
                         therapeutic_area: row.therapeutic_area,
                         dosage_form: row.dosage_form,
                         applicant: row.applicant,
                         who_reference_number: row.who_reference_number,
+                        who_product_id: row.who_product_id,
                         listing_basis: row.listing_basis,
                         prequalification_date: row.prequalification_date,
                     });
@@ -503,6 +515,7 @@ pub async fn search_page_with_region(
     limit: usize,
     offset: usize,
     region: DrugRegion,
+    product_type: WhoProductTypeFilter,
 ) -> Result<DrugSearchPageWithRegion, BioMcpError> {
     if filters.has_structured_filters() {
         return match region {
@@ -510,7 +523,7 @@ pub async fn search_page_with_region(
                 search_page(filters, limit, offset).await?,
             )),
             DrugRegion::Who => Ok(DrugSearchPageWithRegion::Who(
-                search_structured_who_page(filters, limit, offset).await?,
+                search_structured_who_page(filters, limit, offset, product_type).await?,
             )),
             DrugRegion::Eu | DrugRegion::All => Err(BioMcpError::InvalidArgument(
                 "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification.".into(),
@@ -523,6 +536,7 @@ pub async fn search_page_with_region(
         limit,
         offset,
         region,
+        product_type,
     )
     .await
 }

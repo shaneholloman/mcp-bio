@@ -17,6 +17,7 @@ Regional or comparison search:
 biomcp search drug Keytruda --region eu --limit 5
 biomcp search drug "influenza vaccine" --region ema --limit 5
 biomcp search drug trastuzumab --region who --limit 5
+biomcp search drug artesunate --region who --product-type api --limit 5
 biomcp search drug Keytruda --region all --limit 5
 ```
 
@@ -38,8 +39,9 @@ biomcp search drug --indication malaria --region who --limit 5
 Omitting `--region` on a plain name/alias search checks U.S., EU, and WHO data.
 If you omit `--region` while using structured filters such as `--target` or
 `--indication`, BioMCP stays on the U.S. MyChem path. Explicit `--region who`
-filters structured U.S. hits through WHO Prequalification. Explicit `--region
-eu` or `--region all` with structured filters still errors.
+filters structured U.S. hits through WHO Prequalification. `--product-type
+<finished_pharma|api>` is WHO-only and requires explicit `--region who`.
+Explicit `--region eu` or `--region all` with structured filters still errors.
 `ema` is accepted as an input alias for the canonical `eu` region value.
 
 ## Get a drug record
@@ -159,17 +161,18 @@ EMA row meanings:
 
 ## WHO Prequalification local data setup
 
-WHO regional regulatory commands read the WHO Prequalification CSV from
-`BIOMCP_WHO_DIR` first, then the platform data directory
+WHO regional searches and regulatory commands read the WHO Prequalification
+exports from `BIOMCP_WHO_DIR` first, then the platform data directory
 (`~/.local/share/biomcp/who-pq` on typical Linux systems). On first use,
-BioMCP auto-downloads the finished-pharmaceutical-products CSV into that root
-and refreshes stale files after 72 hours. Use `biomcp who sync` to force a
-refresh at any time.
+BioMCP auto-downloads both the finished-pharmaceutical-products CSV and the
+active-pharmaceutical-ingredients CSV into that root and refreshes stale files
+after 72 hours. Use `biomcp who sync` to force a refresh at any time.
 
 Manual preseed still works. If you need an offline or pre-populated root,
-place this file in the target directory:
+place these files in the target directory:
 
 - `who_pq.csv`
+- `who_api.csv`
 
 Confirm local WHO readiness with full health output:
 
@@ -186,11 +189,11 @@ biomcp who sync
 WHO row meanings:
 
 - `configured`: `BIOMCP_WHO_DIR` is set and complete
-- `configured (stale)`: `BIOMCP_WHO_DIR` is set and complete, but `who_pq.csv` is older than the 72-hour refresh window
-- `available (default path)`: the default platform data directory contains a complete WHO CSV
-- `available (default path, stale)`: the default platform data directory contains a complete WHO CSV, but `who_pq.csv` is older than the 72-hour refresh window
-- `not configured`: no WHO CSV is installed at the default path yet
-- `error (missing: ...)`: the WHO directory exists but is missing the required file
+- `configured (stale)`: `BIOMCP_WHO_DIR` is set and complete, but at least one WHO export is older than the 72-hour refresh window
+- `available (default path)`: the default platform data directory contains a complete WHO root with both exports
+- `available (default path, stale)`: the default platform data directory contains both WHO exports, but at least one is older than the 72-hour refresh window
+- `not configured`: no complete WHO root is installed at the default path yet
+- `error (missing: ...)`: the WHO directory exists but is missing one of the required files
 
 ## Helper commands
 

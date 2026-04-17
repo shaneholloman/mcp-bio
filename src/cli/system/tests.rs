@@ -62,6 +62,23 @@ fn who_help_mentions_sync_example() {
 }
 
 #[test]
+fn who_sync_help_describes_dual_export_refresh() {
+    let mut command = Cli::command();
+    let who = command
+        .find_subcommand_mut("who")
+        .expect("who subcommand should exist");
+    let sync = who
+        .find_subcommand_mut("sync")
+        .expect("who sync subcommand should exist");
+    let mut help = Vec::new();
+    sync.write_long_help(&mut help)
+        .expect("who sync help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("WHO Prequalification local exports"));
+}
+
+#[test]
 fn discover_help_includes_when_to_use_guidance() {
     let mut command = Cli::command();
     let discover = command

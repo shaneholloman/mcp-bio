@@ -225,12 +225,12 @@ biomcp health
 
 Interpret the WHO row like this:
 
-- `configured`: `BIOMCP_WHO_DIR` is set and `who_pq.csv` is present
-- `configured (stale)`: `BIOMCP_WHO_DIR` is set and the WHO CSV is present, but older than the 72-hour refresh window
-- `available (default path)`: BioMCP found `who_pq.csv` in the default platform data directory
-- `available (default path, stale)`: the default-path WHO CSV is present but older than the 72-hour refresh window
-- `not configured`: no WHO CSV was found at the default path, so WHO regional drug features are currently unavailable but the install is not considered broken
-- `error (missing: ...)`: BioMCP found a partial WHO root or unreadable file; install the CSV or point `BIOMCP_WHO_DIR` at a complete root
+- `configured`: `BIOMCP_WHO_DIR` is set and both WHO exports are present
+- `configured (stale)`: `BIOMCP_WHO_DIR` is set and complete, but at least one WHO export is older than the 72-hour refresh window
+- `available (default path)`: BioMCP found both WHO exports in the default platform data directory
+- `available (default path, stale)`: the default-path WHO root is complete, but at least one export is older than the 72-hour refresh window
+- `not configured`: no complete WHO root was found at the default path, so WHO regional drug features are currently unavailable but the install is not considered broken
+- `error (missing: ...)`: BioMCP found a partial WHO root or unreadable file; install both exports or point `BIOMCP_WHO_DIR` at a complete root
 
 If a refresh fails, retry explicitly:
 
@@ -249,3 +249,4 @@ Manual preseed remains supported for offline or controlled environments. A
 complete WHO root must contain:
 
 - `who_pq.csv`
+- `who_api.csv`
