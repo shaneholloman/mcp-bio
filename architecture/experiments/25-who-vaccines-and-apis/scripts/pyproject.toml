@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "who-vaccines-and-apis-spike"
+version = "0.1.0"
+description = "Pure-stdlib WHO vaccines and API exploration scripts."
+requires-python = ">=3.11"
+dependencies = []
