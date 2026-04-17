@@ -607,6 +607,24 @@ echo "$json_out" | jq -e '.regions.who.results[0].who_reference_number | type ==
 echo "$json_out" | jq -e 'has("results") | not' > /dev/null
 ```
 
+## WHO Empty Search Region Keeps Selected Bucket
+
+A zero-result WHO search should still keep the selected `who` bucket under
+`regions` and omit `_meta` because there is no follow-up command to suggest.
+
+```bash
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+json_out="$(biomcp --json search drug this-drug-does-not-exist-in-who-fixture --region who --limit 3)"
+echo "$json_out" | mustmatch like '"regions"'
+echo "$json_out" | jq -e '.region == "who"' > /dev/null
+echo "$json_out" | jq -e '(.regions | keys) == ["who"]' > /dev/null
+echo "$json_out" | jq -e '.regions.who.count == 0' > /dev/null
+echo "$json_out" | jq -e '.regions.who.pagination.returned == 0' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results == []' > /dev/null
+echo "$json_out" | jq -e 'has("_meta") | not' > /dev/null
+```
+
 ## WHO Structured Search Region
 
 Structured WHO search should keep the structured U.S. drug-search semantics and

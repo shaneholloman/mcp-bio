@@ -423,6 +423,37 @@ fn drug_search_json_single_region_keeps_selected_bucket_and_who_fields() {
 }
 
 #[test]
+fn drug_search_json_single_region_keeps_empty_selected_bucket_and_omits_meta() {
+    let json = drug_search_json(
+        crate::entities::drug::DrugSearchPageWithRegion::Eu(crate::entities::SearchPage::offset(
+            Vec::<crate::entities::drug::EmaDrugSearchResult>::new(),
+            Some(0),
+        )),
+        Some("keytruda"),
+        0,
+        5,
+    )
+    .expect("empty EU search json");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert_eq!(value["region"], "eu");
+    assert_eq!(
+        value["regions"].as_object().map(|regions| regions.len()),
+        Some(1)
+    );
+    assert!(value["regions"].get("us").is_none());
+    assert!(value["regions"].get("who").is_none());
+    assert_eq!(value["regions"]["eu"]["count"], 0);
+    assert_eq!(value["regions"]["eu"]["pagination"]["returned"], 0);
+    assert_eq!(value["regions"]["eu"]["results"], serde_json::json!([]));
+    assert!(value.get("_meta").is_none());
+    assert!(value.get("pagination").is_none());
+    assert!(value.get("count").is_none());
+    assert!(value.get("results").is_none());
+    assert!(value.get("query").is_none());
+}
+
+#[test]
 fn drug_search_json_all_region_uses_unified_regions_envelope() {
     let json = drug_search_json(
         crate::entities::drug::DrugSearchPageWithRegion::All {
