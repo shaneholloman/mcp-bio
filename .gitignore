@@ -11,9 +11,13 @@ site/
 .climb/
 .climb-test-vault/
 .march/
-!.march/validation-profiles.toml
 .claude/
 .agents/
 paper/generated/
 benchmarks/bioasq/datasets/raw/
 benchmarks/bioasq/datasets/normalized/
+**/work/
+**/artifacts/
+**/bin/
+.zig-cache/
+zig-out/

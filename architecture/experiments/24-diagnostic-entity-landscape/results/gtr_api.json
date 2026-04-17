@@ -1,0 +1,3427 @@
+{
+  "approach": "GTR live query path",
+  "disease_queries": {
+    "breast cancer": {
+      "examples": [
+        {
+          "accession": "GTR000604264",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2310"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800487"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "34451"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "01D2016114"
+            },
+            {
+              "certificationtype": "AL - Alabama Department of Public Health ADPH",
+              "id": "30563"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7537166"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01669"
+            }
+          ],
+          "condition_count": 40,
+          "gene_count": 31,
+          "offerer": "Kailos Genetics",
+          "test_name": "Expedio Hereditary Cancer Predisposition Screening Assay",
+          "test_type": "Clinical",
+          "uid": "604264"
+        },
+        {
+          "accession": "GTR000514929",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1964"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2824"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033007"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "36393"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01762"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01763"
+            },
+            {
+              "certificationtype": "NJ - State of New jersey Department of Health and Senior Service",
+              "id": "43768"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800882"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF00342667"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 8884"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9392"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8289311"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "31D2142534"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8770489"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2040778"
+            }
+          ],
+          "condition_count": 33,
+          "gene_count": 23,
+          "offerer": "Labcorp Genetics (formerly Invitae), LabCorp",
+          "test_name": "Invitae Breast and Gyn Cancers Panel",
+          "test_type": "Clinical",
+          "uid": "514929"
+        },
+        {
+          "accession": "GTR000593438",
+          "certifications": [
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "35484"
+            },
+            {
+              "certificationtype": "TN - Tennessee Department of Health TDOH",
+              "id": "0000004255"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8743308"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "44D2062928"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "COS 00800522"
+            }
+          ],
+          "condition_count": 73,
+          "gene_count": 505,
+          "offerer": "PathGroup",
+          "test_name": "Endeavor",
+          "test_type": "Clinical",
+          "uid": "593438"
+        },
+        {
+          "accession": "GTR000552245",
+          "certifications": [
+            {
+              "certificationtype": "GA - Georgia Department of Community Health DCH",
+              "id": "067-071"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8702957"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "37090"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "11D2066426"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS 00800657"
+            }
+          ],
+          "condition_count": 36,
+          "gene_count": 39,
+          "offerer": "Otogenetics Corporation",
+          "test_name": "Otogenetics Hereditary Cancers",
+          "test_type": "Clinical",
+          "uid": "552245"
+        },
+        {
+          "accession": "GTR000551741",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1964"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2824"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033007"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "36393"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01762"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01763"
+            },
+            {
+              "certificationtype": "NJ - State of New jersey Department of Health and Senior Service",
+              "id": "43768"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800882"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF00342667"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 8884"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9392"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8289311"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "31D2142534"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8770489"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2040778"
+            }
+          ],
+          "condition_count": 17,
+          "gene_count": 7,
+          "offerer": "Labcorp Genetics (formerly Invitae), LabCorp",
+          "test_name": "Invitae Breast Cancer STAT Panel",
+          "test_type": "Clinical",
+          "uid": "551741"
+        }
+      ],
+      "fetched_docs": 10,
+      "query": {
+        "count": 435,
+        "latency_ms": 141.4,
+        "query_translation": "breast cancer[DISNAME]",
+        "term": "breast cancer[DISNAME]"
+      },
+      "schema_completeness": {
+        "analytes_pct": 100.0,
+        "certifications_pct": 100.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 311.7,
+      "test_type_counts": {
+        "Clinical": 10
+      }
+    },
+    "lung cancer": {
+      "examples": [
+        {
+          "accession": "GTR000619506",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "22D0001844"
+            }
+          ],
+          "condition_count": 44,
+          "gene_count": 324,
+          "offerer": "Laboratory for Molecular Pediatric Pathology, Boston Children's Hospital",
+          "test_name": "BRIGHTseq Beacon",
+          "test_type": "Clinical",
+          "uid": "619506"
+        },
+        {
+          "accession": "GTR000562503",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1303"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "3950.01"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "33884"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "COS 00800542"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7185561, AU ID: 1407125"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00694"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "52D2065132"
+            }
+          ],
+          "condition_count": 284,
+          "gene_count": 137,
+          "offerer": "PreventionGenetics, part of Exact Sciences",
+          "test_name": "Comprehensive Pediatric Solid Tumor Panel",
+          "test_type": "Clinical",
+          "uid": "562503"
+        },
+        {
+          "accession": "GTR000615365",
+          "certifications": [
+            {
+              "certificationtype": "CAP",
+              "id": "9255117"
+            },
+            {
+              "certificationtype": "Ministry of Health and Long-Term Care license",
+              "id": "5806"
+            },
+            {
+              "certificationtype": "IQMH + ISO15198 PLUS",
+              "id": "5806"
+            }
+          ],
+          "condition_count": 6,
+          "gene_count": "",
+          "offerer": "LifeLabs Genetics",
+          "test_name": "Signatera - Initial Baseline and Follow Up",
+          "test_type": "Clinical",
+          "uid": "615365"
+        },
+        {
+          "accession": "GTR000619763",
+          "certifications": [
+            {
+              "certificationtype": "CAP",
+              "id": "1808201"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7193341"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "24D0404292"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "24D1040592"
+            }
+          ],
+          "condition_count": 3,
+          "gene_count": 1,
+          "offerer": "Mayo Clinic Laboratories, Mayo Clinic",
+          "test_name": "ALK Mutation Analysis, Tumor",
+          "test_type": "Clinical",
+          "uid": "619763"
+        },
+        {
+          "accession": "GTR000619742",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2657"
+            },
+            {
+              "certificationtype": "NYS CLEP",
+              "id": "9396"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF-00349431"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "35703"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01650"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "9382893"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2117342"
+            },
+            {
+              "certificationtype": "WA - Washington State Department of Health DOH",
+              "id": "HFD-OS8"
+            }
+          ],
+          "condition_count": 77,
+          "gene_count": 75,
+          "offerer": "Helix, Inc.",
+          "test_name": "Helix Hereditary Comprehensive Cancer Panel Plus",
+          "test_type": "Clinical",
+          "uid": "619742"
+        }
+      ],
+      "fetched_docs": 10,
+      "query": {
+        "count": 132,
+        "latency_ms": 116.1,
+        "query_translation": "lung cancer[DISNAME]",
+        "term": "lung cancer[DISNAME]"
+      },
+      "schema_completeness": {
+        "analytes_pct": 90.0,
+        "certifications_pct": 100.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 378.2,
+      "test_type_counts": {
+        "Clinical": 10
+      }
+    },
+    "melanoma": {
+      "examples": [
+        {
+          "accession": "GTR000511179",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2250"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF00342581"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01737"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9283"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "33901"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "6359.01"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8042697"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2043189"
+            }
+          ],
+          "condition_count": 5128,
+          "gene_count": 4670,
+          "offerer": "Fulgent Genetics",
+          "test_name": "Clinical Exome",
+          "test_type": "Clinical",
+          "uid": "511179"
+        },
+        {
+          "accession": "GTR000531711",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2250"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF00342581"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01737"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9283"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "33901"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "6359.01"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8042697"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2043189"
+            }
+          ],
+          "condition_count": 329,
+          "gene_count": 127,
+          "offerer": "Fulgent Genetics",
+          "test_name": "Full Comprehensive Cancer Panel",
+          "test_type": "Clinical",
+          "uid": "531711"
+        },
+        {
+          "accession": "GTR000528916",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1964"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2824"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033007"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "36393"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01762"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01763"
+            },
+            {
+              "certificationtype": "NJ - State of New jersey Department of Health and Senior Service",
+              "id": "43768"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800882"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF00342667"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 8884"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9392"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8289311"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "31D2142534"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8770489"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2040778"
+            }
+          ],
+          "condition_count": 15,
+          "gene_count": 9,
+          "offerer": "Labcorp Genetics (formerly Invitae), LabCorp",
+          "test_name": "Invitae Melanoma Panel",
+          "test_type": "Clinical",
+          "uid": "528916"
+        },
+        {
+          "accession": "GTR000531632",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2250"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF00342581"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01737"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9283"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "33901"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "6359.01"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8042697"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2043189"
+            }
+          ],
+          "condition_count": 55,
+          "gene_count": 13,
+          "offerer": "Fulgent Genetics",
+          "test_name": "Melanoma Comprehensive Panel",
+          "test_type": "Clinical",
+          "uid": "531632"
+        },
+        {
+          "accession": "GTR000528909",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1964"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2824"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033007"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "36393"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01762"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01763"
+            },
+            {
+              "certificationtype": "NJ - State of New jersey Department of Health and Senior Service",
+              "id": "43768"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800882"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF00342667"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 8884"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9392"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8289311"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "31D2142534"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8770489"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2040778"
+            }
+          ],
+          "condition_count": 138,
+          "gene_count": 80,
+          "offerer": "Labcorp Genetics (formerly Invitae), LabCorp",
+          "test_name": "Invitae Multi-Cancer Panel",
+          "test_type": "Clinical",
+          "uid": "528909"
+        }
+      ],
+      "fetched_docs": 10,
+      "query": {
+        "count": 283,
+        "latency_ms": 121.9,
+        "query_translation": "melanoma[DISNAME]",
+        "term": "melanoma[DISNAME]"
+      },
+      "schema_completeness": {
+        "analytes_pct": 100.0,
+        "certifications_pct": 90.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 1124.9,
+      "test_type_counts": {
+        "Clinical": 10
+      }
+    }
+  },
+  "gene_queries": {
+    "BRAF": {
+      "examples": [
+        {
+          "accession": "GTR000614763",
+          "certifications": [
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "90013169"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "3070"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "Pending"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "40810"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "883157101"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "21D2181636"
+            }
+          ],
+          "condition_count": 469,
+          "gene_count": 448,
+          "offerer": "Precision Medicine Care (PMC\u00ae)",
+          "test_name": "RenaDx\u2122: Comprehensive Renal Disease Genetics Panel",
+          "test_type": "Clinical",
+          "uid": "614763"
+        },
+        {
+          "accession": "GTR000596380",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "12D0620308"
+            },
+            {
+              "certificationtype": "HI - State of Hawai'i Department of Health DOH",
+              "id": "CL-168"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "2435501"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 41,
+          "offerer": "Diagnostic Laboratory Services, Inc.",
+          "test_name": "NGS Oncology Melanoma Profile (Tissue Only)",
+          "test_type": "Clinical",
+          "uid": "596380"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000576389",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2149"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF 00343226"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8662734"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2053444"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "97821"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033759"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "MD 738209"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00941"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 412,
+          "offerer": "Personalis, Inc.",
+          "test_name": "NeXT Dx",
+          "test_type": "Clinical",
+          "uid": "576389"
+        }
+      ],
+      "fetched_docs": 10,
+      "primary_query": {
+        "count": 444,
+        "errors": {},
+        "ids": [
+          "614763",
+          "596380",
+          "593772",
+          "593444",
+          "576389",
+          "527948",
+          "619621",
+          "615366",
+          "613620",
+          "613444"
+        ],
+        "latency_ms": 125.7,
+        "query_translation": "BRAF[SYMB]",
+        "status_code": 200,
+        "term": "BRAF[SYMB]",
+        "warnings": {}
+      },
+      "schema_completeness": {
+        "analytes_pct": 100.0,
+        "certifications_pct": 100.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 449.9,
+      "test_type_counts": {
+        "Clinical": 10
+      }
+    },
+    "BRCA1": {
+      "examples": [
+        {
+          "accession": "GTR000607920",
+          "certifications": [
+            {
+              "certificationtype": "CAP",
+              "id": "8662247"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "14D2037930"
+            },
+            {
+              "certificationtype": "IL - Illinois Department of Public Health IDPH",
+              "id": "036.119395"
+            }
+          ],
+          "condition_count": 4,
+          "gene_count": 14,
+          "offerer": "GoPath Diagnostics",
+          "test_name": "ProstateNow",
+          "test_type": "Clinical",
+          "uid": "607920"
+        },
+        {
+          "accession": "GTR000604264",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2310"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800487"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "34451"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "01D2016114"
+            },
+            {
+              "certificationtype": "AL - Alabama Department of Public Health ADPH",
+              "id": "30563"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7537166"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01669"
+            }
+          ],
+          "condition_count": 40,
+          "gene_count": 31,
+          "offerer": "Kailos Genetics",
+          "test_name": "Expedio Hereditary Cancer Predisposition Screening Assay",
+          "test_type": "Clinical",
+          "uid": "604264"
+        },
+        {
+          "accession": "GTR000596380",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "12D0620308"
+            },
+            {
+              "certificationtype": "HI - State of Hawai'i Department of Health DOH",
+              "id": "CL-168"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "2435501"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 41,
+          "offerer": "Diagnostic Laboratory Services, Inc.",
+          "test_name": "NGS Oncology Melanoma Profile (Tissue Only)",
+          "test_type": "Clinical",
+          "uid": "596380"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        }
+      ],
+      "fetched_docs": 10,
+      "primary_query": {
+        "count": 441,
+        "errors": {},
+        "ids": [
+          "607920",
+          "604264",
+          "596380",
+          "593772",
+          "593444",
+          "576389",
+          "530120",
+          "527948",
+          "21517",
+          "619621"
+        ],
+        "latency_ms": 121.9,
+        "query_translation": "BRCA1[SYMB]",
+        "status_code": 200,
+        "term": "BRCA1[SYMB]",
+        "warnings": {}
+      },
+      "schema_completeness": {
+        "analytes_pct": 100.0,
+        "certifications_pct": 100.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 314.7,
+      "test_type_counts": {
+        "Clinical": 10
+      }
+    },
+    "EGFR": {
+      "examples": [
+        {
+          "accession": "GTR000596380",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "12D0620308"
+            },
+            {
+              "certificationtype": "HI - State of Hawai'i Department of Health DOH",
+              "id": "CL-168"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "2435501"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 41,
+          "offerer": "Diagnostic Laboratory Services, Inc.",
+          "test_name": "NGS Oncology Melanoma Profile (Tissue Only)",
+          "test_type": "Clinical",
+          "uid": "596380"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000576389",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2149"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF 00343226"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8662734"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2053444"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "97821"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033759"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "MD 738209"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00941"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 412,
+          "offerer": "Personalis, Inc.",
+          "test_name": "NeXT Dx",
+          "test_type": "Clinical",
+          "uid": "576389"
+        },
+        {
+          "accession": "GTR000527948",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 83,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360",
+          "test_type": "Clinical",
+          "uid": "527948"
+        }
+      ],
+      "fetched_docs": 10,
+      "primary_query": {
+        "count": 182,
+        "errors": {},
+        "ids": [
+          "596380",
+          "593772",
+          "593444",
+          "576389",
+          "527948",
+          "619621",
+          "613444",
+          "607978",
+          "604346",
+          "604302"
+        ],
+        "latency_ms": 117.5,
+        "query_translation": "EGFR[SYMB]",
+        "status_code": 200,
+        "term": "EGFR[SYMB]",
+        "warnings": {}
+      },
+      "schema_completeness": {
+        "analytes_pct": 100.0,
+        "certifications_pct": 80.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 393.0,
+      "test_type_counts": {
+        "Clinical": 10
+      }
+    },
+    "KRAS": {
+      "examples": [
+        {
+          "accession": "GTR000614763",
+          "certifications": [
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "90013169"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "3070"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "Pending"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "40810"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "883157101"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "21D2181636"
+            }
+          ],
+          "condition_count": 469,
+          "gene_count": 448,
+          "offerer": "Precision Medicine Care (PMC\u00ae)",
+          "test_name": "RenaDx\u2122: Comprehensive Renal Disease Genetics Panel",
+          "test_type": "Clinical",
+          "uid": "614763"
+        },
+        {
+          "accession": "GTR000596380",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "12D0620308"
+            },
+            {
+              "certificationtype": "HI - State of Hawai'i Department of Health DOH",
+              "id": "CL-168"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "2435501"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 41,
+          "offerer": "Diagnostic Laboratory Services, Inc.",
+          "test_name": "NGS Oncology Melanoma Profile (Tissue Only)",
+          "test_type": "Clinical",
+          "uid": "596380"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000576389",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2149"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF 00343226"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8662734"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2053444"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "97821"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033759"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "MD 738209"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00941"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 412,
+          "offerer": "Personalis, Inc.",
+          "test_name": "NeXT Dx",
+          "test_type": "Clinical",
+          "uid": "576389"
+        }
+      ],
+      "fetched_docs": 10,
+      "primary_query": {
+        "count": 457,
+        "errors": {},
+        "ids": [
+          "614763",
+          "596380",
+          "593772",
+          "593444",
+          "576389",
+          "527948",
+          "619621",
+          "615366",
+          "613620",
+          "613444"
+        ],
+        "latency_ms": 116.2,
+        "query_translation": "KRAS[SYMB]",
+        "status_code": 200,
+        "term": "KRAS[SYMB]",
+        "warnings": {}
+      },
+      "schema_completeness": {
+        "analytes_pct": 100.0,
+        "certifications_pct": 100.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 436.3,
+      "test_type_counts": {
+        "Clinical": 10
+      }
+    },
+    "TP53": {
+      "examples": [
+        {
+          "accession": "GTR000604264",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2310"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800487"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "34451"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "01D2016114"
+            },
+            {
+              "certificationtype": "AL - Alabama Department of Public Health ADPH",
+              "id": "30563"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7537166"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01669"
+            }
+          ],
+          "condition_count": 40,
+          "gene_count": 31,
+          "offerer": "Kailos Genetics",
+          "test_name": "Expedio Hereditary Cancer Predisposition Screening Assay",
+          "test_type": "Clinical",
+          "uid": "604264"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000576389",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2149"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF 00343226"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8662734"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2053444"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "97821"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033759"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "MD 738209"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00941"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 412,
+          "offerer": "Personalis, Inc.",
+          "test_name": "NeXT Dx",
+          "test_type": "Clinical",
+          "uid": "576389"
+        },
+        {
+          "accession": "GTR000530120",
+          "certifications": [
+            {
+              "certificationtype": "Ontario Ministry of Health",
+              "id": "4245"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "731"
+            }
+          ],
+          "condition_count": 39,
+          "gene_count": 30,
+          "offerer": "Molecular Genetics Laboratory, London Health Sciences Centre",
+          "test_name": "Hereditary Cancer Panel Comprehensive",
+          "test_type": "Clinical",
+          "uid": "530120"
+        }
+      ],
+      "fetched_docs": 10,
+      "primary_query": {
+        "count": 599,
+        "errors": {},
+        "ids": [
+          "604264",
+          "593772",
+          "593444",
+          "576389",
+          "530120",
+          "527948",
+          "502934",
+          "210160",
+          "619621",
+          "615366"
+        ],
+        "latency_ms": 124.2,
+        "query_translation": "TP53[SYMB]",
+        "status_code": 200,
+        "term": "TP53[SYMB]",
+        "warnings": {}
+      },
+      "schema_completeness": {
+        "analytes_pct": 100.0,
+        "certifications_pct": 100.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 316.2,
+      "test_type_counts": {
+        "Clinical": 10
+      }
+    }
+  },
+  "latency_summary_ms": {
+    "mean_disease_search_latency_ms": 126.47,
+    "mean_disease_summary_latency_ms": 604.93,
+    "mean_gene_search_latency_ms": 121.1,
+    "mean_gene_summary_latency_ms": 382.02
+  },
+  "sample_disease_matches": {
+    "breast cancer": {
+      "count": 435,
+      "examples": [
+        {
+          "accession": "GTR000604264",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2310"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800487"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "34451"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "01D2016114"
+            },
+            {
+              "certificationtype": "AL - Alabama Department of Public Health ADPH",
+              "id": "30563"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7537166"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01669"
+            }
+          ],
+          "condition_count": 40,
+          "gene_count": 31,
+          "offerer": "Kailos Genetics",
+          "test_name": "Expedio Hereditary Cancer Predisposition Screening Assay",
+          "test_type": "Clinical",
+          "uid": "604264"
+        },
+        {
+          "accession": "GTR000514929",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1964"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2824"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033007"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "36393"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01762"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01763"
+            },
+            {
+              "certificationtype": "NJ - State of New jersey Department of Health and Senior Service",
+              "id": "43768"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800882"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF00342667"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 8884"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9392"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8289311"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "31D2142534"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8770489"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2040778"
+            }
+          ],
+          "condition_count": 33,
+          "gene_count": 23,
+          "offerer": "Labcorp Genetics (formerly Invitae), LabCorp",
+          "test_name": "Invitae Breast and Gyn Cancers Panel",
+          "test_type": "Clinical",
+          "uid": "514929"
+        },
+        {
+          "accession": "GTR000593438",
+          "certifications": [
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "35484"
+            },
+            {
+              "certificationtype": "TN - Tennessee Department of Health TDOH",
+              "id": "0000004255"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8743308"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "44D2062928"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "COS 00800522"
+            }
+          ],
+          "condition_count": 73,
+          "gene_count": 505,
+          "offerer": "PathGroup",
+          "test_name": "Endeavor",
+          "test_type": "Clinical",
+          "uid": "593438"
+        },
+        {
+          "accession": "GTR000552245",
+          "certifications": [
+            {
+              "certificationtype": "GA - Georgia Department of Community Health DCH",
+              "id": "067-071"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8702957"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "37090"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "11D2066426"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS 00800657"
+            }
+          ],
+          "condition_count": 36,
+          "gene_count": 39,
+          "offerer": "Otogenetics Corporation",
+          "test_name": "Otogenetics Hereditary Cancers",
+          "test_type": "Clinical",
+          "uid": "552245"
+        },
+        {
+          "accession": "GTR000551741",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1964"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2824"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033007"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "36393"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01762"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01763"
+            },
+            {
+              "certificationtype": "NJ - State of New jersey Department of Health and Senior Service",
+              "id": "43768"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800882"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF00342667"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 8884"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9392"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8289311"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "31D2142534"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8770489"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2040778"
+            }
+          ],
+          "condition_count": 17,
+          "gene_count": 7,
+          "offerer": "Labcorp Genetics (formerly Invitae), LabCorp",
+          "test_name": "Invitae Breast Cancer STAT Panel",
+          "test_type": "Clinical",
+          "uid": "551741"
+        }
+      ]
+    },
+    "lung cancer": {
+      "count": 132,
+      "examples": [
+        {
+          "accession": "GTR000619506",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "22D0001844"
+            }
+          ],
+          "condition_count": 44,
+          "gene_count": 324,
+          "offerer": "Laboratory for Molecular Pediatric Pathology, Boston Children's Hospital",
+          "test_name": "BRIGHTseq Beacon",
+          "test_type": "Clinical",
+          "uid": "619506"
+        },
+        {
+          "accession": "GTR000562503",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1303"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "3950.01"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "33884"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "COS 00800542"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7185561, AU ID: 1407125"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00694"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "52D2065132"
+            }
+          ],
+          "condition_count": 284,
+          "gene_count": 137,
+          "offerer": "PreventionGenetics, part of Exact Sciences",
+          "test_name": "Comprehensive Pediatric Solid Tumor Panel",
+          "test_type": "Clinical",
+          "uid": "562503"
+        },
+        {
+          "accession": "GTR000615365",
+          "certifications": [
+            {
+              "certificationtype": "CAP",
+              "id": "9255117"
+            },
+            {
+              "certificationtype": "Ministry of Health and Long-Term Care license",
+              "id": "5806"
+            },
+            {
+              "certificationtype": "IQMH + ISO15198 PLUS",
+              "id": "5806"
+            }
+          ],
+          "condition_count": 6,
+          "gene_count": "",
+          "offerer": "LifeLabs Genetics",
+          "test_name": "Signatera - Initial Baseline and Follow Up",
+          "test_type": "Clinical",
+          "uid": "615365"
+        },
+        {
+          "accession": "GTR000619763",
+          "certifications": [
+            {
+              "certificationtype": "CAP",
+              "id": "1808201"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7193341"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "24D0404292"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "24D1040592"
+            }
+          ],
+          "condition_count": 3,
+          "gene_count": 1,
+          "offerer": "Mayo Clinic Laboratories, Mayo Clinic",
+          "test_name": "ALK Mutation Analysis, Tumor",
+          "test_type": "Clinical",
+          "uid": "619763"
+        },
+        {
+          "accession": "GTR000619742",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2657"
+            },
+            {
+              "certificationtype": "NYS CLEP",
+              "id": "9396"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF-00349431"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "35703"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01650"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "9382893"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2117342"
+            },
+            {
+              "certificationtype": "WA - Washington State Department of Health DOH",
+              "id": "HFD-OS8"
+            }
+          ],
+          "condition_count": 77,
+          "gene_count": 75,
+          "offerer": "Helix, Inc.",
+          "test_name": "Helix Hereditary Comprehensive Cancer Panel Plus",
+          "test_type": "Clinical",
+          "uid": "619742"
+        }
+      ]
+    },
+    "melanoma": {
+      "count": 283,
+      "examples": [
+        {
+          "accession": "GTR000511179",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2250"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF00342581"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01737"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9283"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "33901"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "6359.01"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8042697"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2043189"
+            }
+          ],
+          "condition_count": 5128,
+          "gene_count": 4670,
+          "offerer": "Fulgent Genetics",
+          "test_name": "Clinical Exome",
+          "test_type": "Clinical",
+          "uid": "511179"
+        },
+        {
+          "accession": "GTR000531711",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2250"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF00342581"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01737"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9283"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "33901"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "6359.01"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8042697"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2043189"
+            }
+          ],
+          "condition_count": 329,
+          "gene_count": 127,
+          "offerer": "Fulgent Genetics",
+          "test_name": "Full Comprehensive Cancer Panel",
+          "test_type": "Clinical",
+          "uid": "531711"
+        },
+        {
+          "accession": "GTR000528916",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1964"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2824"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033007"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "36393"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01762"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01763"
+            },
+            {
+              "certificationtype": "NJ - State of New jersey Department of Health and Senior Service",
+              "id": "43768"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800882"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF00342667"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 8884"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9392"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8289311"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "31D2142534"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8770489"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2040778"
+            }
+          ],
+          "condition_count": 15,
+          "gene_count": 9,
+          "offerer": "Labcorp Genetics (formerly Invitae), LabCorp",
+          "test_name": "Invitae Melanoma Panel",
+          "test_type": "Clinical",
+          "uid": "528916"
+        },
+        {
+          "accession": "GTR000531632",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2250"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF00342581"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01737"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9283"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "33901"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "6359.01"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8042697"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2043189"
+            }
+          ],
+          "condition_count": 55,
+          "gene_count": 13,
+          "offerer": "Fulgent Genetics",
+          "test_name": "Melanoma Comprehensive Panel",
+          "test_type": "Clinical",
+          "uid": "531632"
+        },
+        {
+          "accession": "GTR000528909",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "1964"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2824"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033007"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "36393"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01762"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01763"
+            },
+            {
+              "certificationtype": "NJ - State of New jersey Department of Health and Senior Service",
+              "id": "43768"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800882"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF00342667"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 8884"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "PFI: 9392"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8289311"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "31D2142534"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8770489"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2040778"
+            }
+          ],
+          "condition_count": 138,
+          "gene_count": 80,
+          "offerer": "Labcorp Genetics (formerly Invitae), LabCorp",
+          "test_name": "Invitae Multi-Cancer Panel",
+          "test_type": "Clinical",
+          "uid": "528909"
+        }
+      ]
+    }
+  },
+  "sample_gene_matches": {
+    "BRAF": {
+      "count": 444,
+      "examples": [
+        {
+          "accession": "GTR000614763",
+          "certifications": [
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "90013169"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "3070"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "Pending"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "40810"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "883157101"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "21D2181636"
+            }
+          ],
+          "condition_count": 469,
+          "gene_count": 448,
+          "offerer": "Precision Medicine Care (PMC\u00ae)",
+          "test_name": "RenaDx\u2122: Comprehensive Renal Disease Genetics Panel",
+          "test_type": "Clinical",
+          "uid": "614763"
+        },
+        {
+          "accession": "GTR000596380",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "12D0620308"
+            },
+            {
+              "certificationtype": "HI - State of Hawai'i Department of Health DOH",
+              "id": "CL-168"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "2435501"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 41,
+          "offerer": "Diagnostic Laboratory Services, Inc.",
+          "test_name": "NGS Oncology Melanoma Profile (Tissue Only)",
+          "test_type": "Clinical",
+          "uid": "596380"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000576389",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2149"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF 00343226"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8662734"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2053444"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "97821"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033759"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "MD 738209"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00941"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 412,
+          "offerer": "Personalis, Inc.",
+          "test_name": "NeXT Dx",
+          "test_type": "Clinical",
+          "uid": "576389"
+        }
+      ]
+    },
+    "BRCA1": {
+      "count": 441,
+      "examples": [
+        {
+          "accession": "GTR000607920",
+          "certifications": [
+            {
+              "certificationtype": "CAP",
+              "id": "8662247"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "14D2037930"
+            },
+            {
+              "certificationtype": "IL - Illinois Department of Public Health IDPH",
+              "id": "036.119395"
+            }
+          ],
+          "condition_count": 4,
+          "gene_count": 14,
+          "offerer": "GoPath Diagnostics",
+          "test_name": "ProstateNow",
+          "test_type": "Clinical",
+          "uid": "607920"
+        },
+        {
+          "accession": "GTR000604264",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2310"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800487"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "34451"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "01D2016114"
+            },
+            {
+              "certificationtype": "AL - Alabama Department of Public Health ADPH",
+              "id": "30563"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7537166"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01669"
+            }
+          ],
+          "condition_count": 40,
+          "gene_count": 31,
+          "offerer": "Kailos Genetics",
+          "test_name": "Expedio Hereditary Cancer Predisposition Screening Assay",
+          "test_type": "Clinical",
+          "uid": "604264"
+        },
+        {
+          "accession": "GTR000596380",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "12D0620308"
+            },
+            {
+              "certificationtype": "HI - State of Hawai'i Department of Health DOH",
+              "id": "CL-168"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "2435501"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 41,
+          "offerer": "Diagnostic Laboratory Services, Inc.",
+          "test_name": "NGS Oncology Melanoma Profile (Tissue Only)",
+          "test_type": "Clinical",
+          "uid": "596380"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        }
+      ]
+    },
+    "EGFR": {
+      "count": 182,
+      "examples": [
+        {
+          "accession": "GTR000596380",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "12D0620308"
+            },
+            {
+              "certificationtype": "HI - State of Hawai'i Department of Health DOH",
+              "id": "CL-168"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "2435501"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 41,
+          "offerer": "Diagnostic Laboratory Services, Inc.",
+          "test_name": "NGS Oncology Melanoma Profile (Tissue Only)",
+          "test_type": "Clinical",
+          "uid": "596380"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000576389",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2149"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF 00343226"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8662734"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2053444"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "97821"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033759"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "MD 738209"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00941"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 412,
+          "offerer": "Personalis, Inc.",
+          "test_name": "NeXT Dx",
+          "test_type": "Clinical",
+          "uid": "576389"
+        },
+        {
+          "accession": "GTR000527948",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 83,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360",
+          "test_type": "Clinical",
+          "uid": "527948"
+        }
+      ]
+    },
+    "KRAS": {
+      "count": 457,
+      "examples": [
+        {
+          "accession": "GTR000614763",
+          "certifications": [
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "90013169"
+            },
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "3070"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "Pending"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "40810"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "883157101"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "21D2181636"
+            }
+          ],
+          "condition_count": 469,
+          "gene_count": 448,
+          "offerer": "Precision Medicine Care (PMC\u00ae)",
+          "test_name": "RenaDx\u2122: Comprehensive Renal Disease Genetics Panel",
+          "test_type": "Clinical",
+          "uid": "614763"
+        },
+        {
+          "accession": "GTR000596380",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "12D0620308"
+            },
+            {
+              "certificationtype": "HI - State of Hawai'i Department of Health DOH",
+              "id": "CL-168"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "2435501"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 41,
+          "offerer": "Diagnostic Laboratory Services, Inc.",
+          "test_name": "NGS Oncology Melanoma Profile (Tissue Only)",
+          "test_type": "Clinical",
+          "uid": "596380"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000576389",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2149"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF 00343226"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8662734"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2053444"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "97821"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033759"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "MD 738209"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00941"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 412,
+          "offerer": "Personalis, Inc.",
+          "test_name": "NeXT Dx",
+          "test_type": "Clinical",
+          "uid": "576389"
+        }
+      ]
+    },
+    "TP53": {
+      "count": 599,
+      "examples": [
+        {
+          "accession": "GTR000604264",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2310"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDS-00800487"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "34451"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "01D2016114"
+            },
+            {
+              "certificationtype": "AL - Alabama Department of Public Health ADPH",
+              "id": "30563"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "7537166"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO01669"
+            }
+          ],
+          "condition_count": 40,
+          "gene_count": 31,
+          "offerer": "Kailos Genetics",
+          "test_name": "Expedio Hereditary Cancer Predisposition Screening Assay",
+          "test_type": "Clinical",
+          "uid": "604264"
+        },
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000576389",
+          "certifications": [
+            {
+              "certificationtype": "MD - Maryland Department of Health and Mental Hygiene DHMH",
+              "id": "2149"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CDF 00343226"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8662734"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2053444"
+            },
+            {
+              "certificationtype": "NY - New York State Department of Health NYSDOH",
+              "id": "97821"
+            },
+            {
+              "certificationtype": "PA - Pennsylvania Department of Health PADOH",
+              "id": "033759"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "MD 738209"
+            },
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00941"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 412,
+          "offerer": "Personalis, Inc.",
+          "test_name": "NeXT Dx",
+          "test_type": "Clinical",
+          "uid": "576389"
+        },
+        {
+          "accession": "GTR000530120",
+          "certifications": [
+            {
+              "certificationtype": "Ontario Ministry of Health",
+              "id": "4245"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "731"
+            }
+          ],
+          "condition_count": 39,
+          "gene_count": 30,
+          "offerer": "Molecular Genetics Laboratory, London Health Sciences Centre",
+          "test_name": "Hereditary Cancer Panel Comprehensive",
+          "test_type": "Clinical",
+          "uid": "530120"
+        }
+      ]
+    }
+  },
+  "sample_name_index": [
+    "alk mutation analysis, tumor",
+    "brightseq beacon",
+    "clinical exome",
+    "comprehensive pediatric solid tumor panel",
+    "endeavor",
+    "expedio hereditary cancer predisposition screening assay",
+    "full comprehensive cancer panel",
+    "guardant360",
+    "guardant360 response",
+    "guardant360 tissuenext",
+    "helix hereditary comprehensive cancer panel plus",
+    "hereditary cancer panel comprehensive",
+    "invitae breast and gyn cancers panel",
+    "invitae breast cancer stat panel",
+    "invitae melanoma panel",
+    "invitae multi-cancer panel",
+    "melanoma comprehensive panel",
+    "next dx",
+    "ngs oncology melanoma profile (tissue only)",
+    "otogenetics hereditary cancers",
+    "prostatenow",
+    "renadx\u2122: comprehensive renal disease genetics panel",
+    "signatera - initial baseline and follow up"
+  ],
+  "source": "gtr_api",
+  "success_signals": {
+    "all_sample_genes_have_hits": true,
+    "all_sample_genes_return_summaries": true
+  },
+  "tracked_search_fields": {
+    "DISNAME": "Name of Disease",
+    "MCAT": "name for method category",
+    "MTOD": "Name of Method",
+    "SYMB": "Gene Symbol",
+    "clinical_category": "Clinical Category"
+  },
+  "type_queries": {
+    "brca1_targeted_variant_analysis": {
+      "examples": [
+        {
+          "accession": "GTR000593772",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 84,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 TissueNext",
+          "test_type": "Clinical",
+          "uid": "593772"
+        },
+        {
+          "accession": "GTR000593444",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 74,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360 Response",
+          "test_type": "Clinical",
+          "uid": "593444"
+        },
+        {
+          "accession": "GTR000530120",
+          "certifications": [
+            {
+              "certificationtype": "Ontario Ministry of Health",
+              "id": "4245"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "731"
+            }
+          ],
+          "condition_count": 39,
+          "gene_count": 30,
+          "offerer": "Molecular Genetics Laboratory, London Health Sciences Centre",
+          "test_name": "Hereditary Cancer Panel Comprehensive",
+          "test_type": "Clinical",
+          "uid": "530120"
+        },
+        {
+          "accession": "GTR000527948",
+          "certifications": [
+            {
+              "certificationtype": "RI - State of Rhode Island Department of Health RIDOH",
+              "id": "LCO00946"
+            },
+            {
+              "certificationtype": "CA - California Department of Public Health CDPH",
+              "id": "CLF 00345402"
+            },
+            {
+              "certificationtype": "CAP",
+              "id": "8765297"
+            },
+            {
+              "certificationtype": "CLIA",
+              "id": "05D2070300"
+            },
+            {
+              "certificationtype": "ISO15189",
+              "id": "8765297"
+            }
+          ],
+          "condition_count": 1,
+          "gene_count": 83,
+          "offerer": "Guardant Health",
+          "test_name": "Guardant360",
+          "test_type": "Clinical",
+          "uid": "527948"
+        },
+        {
+          "accession": "GTR000597430",
+          "certifications": [
+            {
+              "certificationtype": "CLIA",
+              "id": "33D2109963"
+            }
+          ],
+          "condition_count": 2,
+          "gene_count": 10,
+          "offerer": "INTEGRATED MEDICAL PROFESSIONALS, PLLC",
+          "test_name": "Precision GU",
+          "test_type": "Clinical",
+          "uid": "597430"
+        }
+      ],
+      "fetched_docs": 5,
+      "query": {
+        "count": 45,
+        "errors": {},
+        "ids": [
+          "593772",
+          "593444",
+          "530120",
+          "527948",
+          "597430"
+        ],
+        "latency_ms": 119.0,
+        "query_translation": "BRCA1[SYMB] AND Targeted variant analysis[MCAT]",
+        "status_code": 200,
+        "term": "BRCA1[SYMB] AND Targeted variant analysis[MCAT]",
+        "warnings": {}
+      },
+      "schema_completeness": {
+        "analytes_pct": 100.0,
+        "certifications_pct": 100.0,
+        "conditions_pct": 100.0,
+        "methods_pct": 100.0,
+        "offerer_pct": 100.0,
+        "specimens_pct": 100.0
+      },
+      "summary_latency_ms": 457.6,
+      "test_type_counts": {
+        "Clinical": 5
+      }
+    }
+  }
+}

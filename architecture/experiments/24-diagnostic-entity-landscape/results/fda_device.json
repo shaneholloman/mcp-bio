@@ -1,0 +1,256 @@
+{
+  "api_availability": {
+    "sample_latency_ms": 598.3
+  },
+  "approach": "FDA device search probe",
+  "companion_diagnostic_probe": {
+    "drug_name_side_probe": {
+      "osimertinib": {
+        "510k_count": 0,
+        "pma_count": 13
+      },
+      "pembrolizumab": {
+        "510k_count": 0,
+        "pma_count": 15
+      },
+      "trastuzumab": {
+        "510k_count": 0,
+        "pma_count": 21
+      },
+      "vemurafenib": {
+        "510k_count": 0,
+        "pma_count": 4
+      }
+    },
+    "openfda_510k_exact_phrase_examples": [],
+    "openfda_510k_exact_phrase_hits_in_first_page": 0,
+    "openfda_510k_token_query_count": 5893,
+    "openfda_pma_exact_phrase_examples": [],
+    "openfda_pma_exact_phrase_hits_in_first_page": 0,
+    "openfda_pma_token_query_count": 662
+  },
+  "record_counts": {
+    "openfda_510k_total": 174612,
+    "sampled_records_for_schema_check": 100
+  },
+  "sample_disease_matches": {
+    "breast cancer": {
+      "count": 2,
+      "examples": [
+        {
+          "advisory_committee_description": "Immunology",
+          "applicant": "Nanostring Technologies",
+          "decision_date": "2013-09-06",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "PROSIGNA(TM) BREAST CANCER PROGNOSTIC GENE SIGNATURE ASSAY",
+          "k_number": "K130010",
+          "product_code": "NYI"
+        },
+        {
+          "advisory_committee_description": "Immunology",
+          "applicant": "Nanostring Technologies, Inc.",
+          "decision_date": "2014-11-07",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "PROSIGNA BREAST CANCER PROGNOSTIC GENE SIGNATURE ASSAY",
+          "k_number": "K141771",
+          "product_code": "NYI"
+        }
+      ],
+      "latency_ms": 336.6,
+      "query": "device_name:\"breast cancer\"",
+      "reported_total": 2
+    },
+    "lung cancer": {
+      "count": 5,
+      "examples": [
+        {
+          "advisory_committee_description": "Radiology",
+          "applicant": "Philips Medical Systems (Cleveland), Inc.",
+          "decision_date": "2016-04-08",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "Philips Multislice CT System with Low Dose CT Lung Cancer",
+          "k_number": "K153444",
+          "product_code": "JAK"
+        },
+        {
+          "advisory_committee_description": "Radiology",
+          "applicant": "Arineta , Ltd.",
+          "decision_date": "2025-01-13",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "SpotLight/SpotLight Duo with Low Dose Lung Cancer Screening Option",
+          "k_number": "K241200",
+          "product_code": "JAK"
+        },
+        {
+          "advisory_committee_description": "Radiology",
+          "applicant": "Hitachi Healthcare Americas",
+          "decision_date": "2018-05-16",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "Low Dose CT Lung Cancer Screening Option",
+          "k_number": "K180901",
+          "product_code": "JAK"
+        },
+        {
+          "advisory_committee_description": "Radiology",
+          "applicant": "Arineta , Ltd.",
+          "decision_date": "2025-04-15",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "SpotLight / SpotLight Duo with Low Dose Lung Cancer Screening Option",
+          "k_number": "K250650",
+          "product_code": "JAK"
+        },
+        {
+          "advisory_committee_description": "Radiology",
+          "applicant": "Ge Medical Systems, LLC",
+          "decision_date": "2015-08-14",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "Low Dose CT Lung Cancer Screening Option for Qualified GE Systems",
+          "k_number": "K151372",
+          "product_code": "JAK"
+        }
+      ],
+      "latency_ms": 347.0,
+      "query": "device_name:\"lung cancer\"",
+      "reported_total": 5
+    },
+    "melanoma": {
+      "count": 2,
+      "examples": [
+        {
+          "advisory_committee_description": "Immunology",
+          "applicant": "Dako Corp.",
+          "decision_date": "1994-06-13",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "DAKO MOUSE ANTI-HUMAN MELANOMA (DAKO ANTI-HMB45)",
+          "k_number": "K932136",
+          "product_code": "DEH"
+        },
+        {
+          "advisory_committee_description": "Immunology",
+          "applicant": "Ventana Medical Systems, Inc.",
+          "decision_date": "1997-04-22",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "VENTANA ANTI-MELANOMA PRIMARY ANTIBODY",
+          "k_number": "K941170",
+          "product_code": "DEH"
+        }
+      ],
+      "latency_ms": 335.0,
+      "query": "device_name:\"melanoma\"",
+      "reported_total": 2
+    }
+  },
+  "sample_gene_matches": {
+    "BRAF": {
+      "count": 1,
+      "examples": [
+        {
+          "advisory_committee_description": "Immunology",
+          "applicant": "Ventana Medical Systems",
+          "decision_date": "2017-10-27",
+          "decision_description": "Unknown",
+          "device_name": "VENTANA anti-MLH-1(M1) Mouse Monoclonal Primary Antibody, VENTANA anti-PMS2 (A16-4) Mouse Monoclonal Primary Antibody, VENTANA anti-MSH2 (G219-1129)  Mouse Monoclonal Primary Antibody, VENTANA anti-MSH6 (SP 93) Mouse Monoclonal Primary Antibody, VENTANA anti-BRAF V600E (VE1) Mouse Monoclonal Primary Antibody",
+          "k_number": "DEN170030",
+          "product_code": "PZJ"
+        }
+      ],
+      "latency_ms": 326.9,
+      "query": "device_name:\"BRAF\"",
+      "reported_total": 1
+    },
+    "BRCA1": {
+      "count": 2,
+      "examples": [
+        {
+          "advisory_committee_description": "Medical Genetics",
+          "applicant": "23AndMe, Inc.",
+          "decision_date": "2018-03-06",
+          "decision_description": "Unknown",
+          "device_name": "23andMe PGS Genetic Health Risk Report for BRCA1/BRCA2 (Selected Variants)",
+          "k_number": "DEN170046",
+          "product_code": "QAZ"
+        },
+        {
+          "advisory_committee_description": "Medical Genetics",
+          "applicant": "23AndMe, Inc.",
+          "decision_date": "2023-08-31",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "23andMe\u00ae Personal Genome Service\u00ae (PGS\u00ae) Genetic Health Risk Report for BRCA1/BRCA2 (Selected Variants)",
+          "k_number": "K223597",
+          "product_code": "QAZ"
+        }
+      ],
+      "latency_ms": 349.8,
+      "query": "device_name:\"BRCA1\"",
+      "reported_total": 2
+    },
+    "EGFR": {
+      "count": 0,
+      "examples": [],
+      "latency_ms": 331.5,
+      "query": "device_name:\"EGFR\"",
+      "reported_total": 1
+    },
+    "KRAS": {
+      "count": 0,
+      "examples": [],
+      "latency_ms": 325.1,
+      "query": "device_name:\"KRAS\"",
+      "reported_total": 0
+    },
+    "TP53": {
+      "count": 2,
+      "examples": [
+        {
+          "advisory_committee_description": "Immunology",
+          "applicant": "Abbott Molecular, Inc.",
+          "decision_date": "2011-08-09",
+          "decision_description": "Substantially Equivalent",
+          "device_name": "VYSIS CLL FISH PROBE KIT (VYSIS LSI TP53 SPECTRUMORANGE/ATM SPECTRUMGREEN) AND LSI D135319 SPECTRUMORANGE/13Q34",
+          "k_number": "K100015",
+          "product_code": "OVQ"
+        },
+        {
+          "advisory_committee_description": "Medical Genetics",
+          "applicant": "Cytocell, Ltd.",
+          "decision_date": "2018-12-21",
+          "decision_description": "Unknown",
+          "device_name": "MLL (KMT2A) Breakapart FISH Probe Kit; AML1 (RUNX1) Breakapart FISH Probe Kit, P53 (TP53) Deletion FISH Probe Kit; EVI1 (MECOM) Breakapart FISH Probe Kit, Del(20q) Deletion FISH Probe Kit; AML1/ETO (RUNX1/RUNXIT1)) Translocation, Dual Fusi, CBFB (CBFB) /MYH11 Translocation, Dual Fusion FISH Probe Kit,Del(5q)Deletion FISH Probe Kit; Del(7q)Deletion FISH Probe Kit",
+          "k_number": "DEN170070",
+          "product_code": "QDI"
+        }
+      ],
+      "latency_ms": 350.5,
+      "query": "device_name:\"TP53\"",
+      "reported_total": 2
+    }
+  },
+  "sample_name_index": [
+    "23andme pgs genetic health risk report for brca1/brca2 (selected variants)",
+    "23andme\u00ae personal genome service\u00ae (pgs\u00ae) genetic health risk report for brca1/brca2 (selected variants)",
+    "dako mouse anti-human melanoma (dako anti-hmb45)",
+    "low dose ct lung cancer screening option",
+    "low dose ct lung cancer screening option for qualified ge systems",
+    "mll (kmt2a) breakapart fish probe kit; aml1 (runx1) breakapart fish probe kit, p53 (tp53) deletion fish probe kit; evi1 (mecom) breakapart fish probe kit, del(20q) deletion fish probe kit; aml1/eto (runx1/runxit1)) translocation, dual fusi, cbfb (cbfb) /myh11 translocation, dual fusion fish probe kit,del(5q)deletion fish probe kit; del(7q)deletion fish probe kit",
+    "philips multislice ct system with low dose ct lung cancer",
+    "prosigna breast cancer prognostic gene signature assay",
+    "prosigna(tm) breast cancer prognostic gene signature assay",
+    "spotlight / spotlight duo with low dose lung cancer screening option",
+    "spotlight/spotlight duo with low dose lung cancer screening option",
+    "ventana anti-melanoma primary antibody",
+    "ventana anti-mlh-1(m1) mouse monoclonal primary antibody, ventana anti-pms2 (a16-4) mouse monoclonal primary antibody, ventana anti-msh2 (g219-1129)  mouse monoclonal primary antibody, ventana anti-msh6 (sp 93) mouse monoclonal primary antibody, ventana anti-braf v600e (ve1) mouse monoclonal primary antibody",
+    "vysis cll fish probe kit (vysis lsi tp53 spectrumorange/atm spectrumgreen) and lsi d135319 spectrumorange/13q34"
+  ],
+  "schema_completeness": {
+    "advisory_committee_pct": 100.0,
+    "applicant_pct": 100.0,
+    "decision_date_pct": 100.0,
+    "device_name_pct": 100.0,
+    "k_number_pct": 100.0
+  },
+  "source": "fda_device",
+  "success_signals": {
+    "all_sample_diseases_have_hits": true,
+    "all_sample_genes_have_hits": false
+  }
+}
