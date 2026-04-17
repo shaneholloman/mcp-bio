@@ -295,29 +295,13 @@ pub(crate) fn search_next_commands_disease(results: &[DiseaseSearchResult]) -> V
     related::search_next_commands_disease(results)
 }
 
-pub(crate) fn search_next_commands_drug(
-    results: &[DrugSearchResult],
+pub(crate) fn search_next_commands_drug_regions(
     requested_name: Option<&str>,
+    us_results: Option<&[DrugSearchResult]>,
+    eu_results: Option<&[EmaDrugSearchResult]>,
+    who_results: Option<&[WhoPrequalificationSearchResult]>,
 ) -> Vec<String> {
-    related::search_next_commands_drug(results, requested_name)
-}
-
-pub(crate) fn search_next_commands_drug_eu(
-    results: &[EmaDrugSearchResult],
-    requested_name: Option<&str>,
-) -> Vec<String> {
-    related::search_next_commands_drug_eu(results, requested_name)
-}
-
-pub(crate) fn search_next_commands_drug_who(
-    results: &[WhoPrequalificationSearchResult],
-    requested_name: Option<&str>,
-) -> Vec<String> {
-    related::search_next_commands_drug_who(results, requested_name)
-}
-
-pub(crate) fn search_next_commands_drug_all(requested_name: &str) -> Vec<String> {
-    related::search_next_commands_drug_all(requested_name)
+    related::search_next_commands_drug_regions(requested_name, us_results, eu_results, who_results)
 }
 
 pub(crate) fn search_next_commands_pgx(

@@ -37,18 +37,24 @@ pub(crate) async fn handle_search(
         interactions: args.interactions,
     };
     let region = resolve_drug_search_region(args.region, &filters)?;
+    let page_with_region =
+        crate::entities::drug::search_page_with_region(&filters, args.limit, args.offset, region)
+            .await?;
+    if json {
+        return drug_search_json(
+            page_with_region,
+            filters.query.as_deref(),
+            args.offset,
+            args.limit,
+        )
+        .map(CommandOutcome::stdout);
+    }
+
     let mut query_summary = crate::entities::drug::search_query_summary(&filters);
     if args.offset > 0 {
         query_summary = format!("{query_summary}, offset={}", args.offset);
     }
-    let text = match crate::entities::drug::search_page_with_region(
-        &filters,
-        args.limit,
-        args.offset,
-        region,
-    )
-    .await?
-    {
+    let text = match page_with_region {
         crate::entities::drug::DrugSearchPageWithRegion::Us(page) => {
             let results = page.results;
             let pagination = super::super::PaginationMeta::offset(
@@ -57,14 +63,6 @@ pub(crate) async fn handle_search(
                 results.len(),
                 page.total,
             );
-            if json {
-                let next_commands = crate::render::markdown::search_next_commands_drug(
-                    &results,
-                    filters.query.as_deref(),
-                );
-                return super::super::search_json_with_meta(results, pagination, next_commands)
-                    .map(CommandOutcome::stdout);
-            }
             let footer = super::super::pagination_footer_offset(&pagination);
             crate::render::markdown::drug_search_markdown_with_region(
                 &query_summary,
@@ -86,14 +84,6 @@ pub(crate) async fn handle_search(
                 results.len(),
                 page.total,
             );
-            if json {
-                let next_commands = crate::render::markdown::search_next_commands_drug_eu(
-                    &results,
-                    filters.query.as_deref(),
-                );
-                return super::super::search_json_with_meta(results, pagination, next_commands)
-                    .map(CommandOutcome::stdout);
-            }
             let footer = super::super::pagination_footer_offset(&pagination);
             crate::render::markdown::drug_search_markdown_with_region(
                 &query_summary,
@@ -115,14 +105,6 @@ pub(crate) async fn handle_search(
                 results.len(),
                 page.total,
             );
-            if json {
-                let next_commands = crate::render::markdown::search_next_commands_drug_who(
-                    &results,
-                    filters.query.as_deref(),
-                );
-                return super::super::search_json_with_meta(results, pagination, next_commands)
-                    .map(CommandOutcome::stdout);
-            }
             let footer = super::super::pagination_footer_offset(&pagination);
             crate::render::markdown::drug_search_markdown_with_region(
                 &query_summary,
@@ -137,20 +119,6 @@ pub(crate) async fn handle_search(
             )?
         }
         crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
-            if json {
-                let next_commands =
-                    if us.results.is_empty() && eu.results.is_empty() && who.results.is_empty() {
-                        Vec::new()
-                    } else {
-                        filters
-                            .query
-                            .as_deref()
-                            .map(crate::render::markdown::search_next_commands_drug_all)
-                            .unwrap_or_default()
-                    };
-                return drug_all_region_search_json(&query_summary, us, eu, who, next_commands)
-                    .map(CommandOutcome::stdout);
-            }
             crate::render::markdown::drug_search_markdown_with_region(
                 &query_summary,
                 region,
@@ -460,51 +428,116 @@ pub(super) async fn render_drug_card_outcome(
 }
 
 #[derive(serde::Serialize)]
-pub(super) struct RegionResults<T: serde::Serialize> {
+pub(super) struct DrugSearchRegionBucket<T: serde::Serialize> {
+    pagination: crate::cli::PaginationMeta,
     count: usize,
-    total: Option<usize>,
     results: Vec<T>,
 }
 
+#[derive(Default, serde::Serialize)]
+pub(super) struct DrugSearchJsonRegions {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    us: Option<DrugSearchRegionBucket<crate::entities::drug::DrugSearchResult>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    eu: Option<DrugSearchRegionBucket<crate::entities::drug::EmaDrugSearchResult>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    who: Option<DrugSearchRegionBucket<crate::entities::drug::WhoPrequalificationSearchResult>>,
+}
+
 #[derive(serde::Serialize)]
-pub(super) struct DrugAllRegionSearchResponse<
-    T: serde::Serialize,
-    U: serde::Serialize,
-    V: serde::Serialize,
-> {
+pub(super) struct DrugSearchJsonResponse {
     region: &'static str,
-    query: String,
-    us: RegionResults<T>,
-    eu: RegionResults<U>,
-    who: RegionResults<V>,
+    regions: DrugSearchJsonRegions,
     #[serde(skip_serializing_if = "Option::is_none")]
     _meta: Option<crate::cli::SearchJsonMeta>,
 }
 
-pub(super) fn to_region_results<T: serde::Serialize>(
+pub(super) fn bucket_from_page<T: serde::Serialize>(
     page: crate::entities::SearchPage<T>,
-) -> RegionResults<T> {
-    RegionResults {
-        count: page.results.len(),
-        total: page.total,
+    offset: usize,
+    limit: usize,
+) -> DrugSearchRegionBucket<T> {
+    let count = page.results.len();
+    DrugSearchRegionBucket {
+        pagination: crate::cli::PaginationMeta::offset(offset, limit, count, page.total),
+        count,
         results: page.results,
     }
 }
 
-pub(super) fn drug_all_region_search_json(
-    query: &str,
-    us: crate::entities::SearchPage<crate::entities::drug::DrugSearchResult>,
-    eu: crate::entities::SearchPage<crate::entities::drug::EmaDrugSearchResult>,
-    who: crate::entities::SearchPage<crate::entities::drug::WhoPrequalificationSearchResult>,
-    next_commands: Vec<String>,
+pub(super) fn drug_search_json(
+    page_with_region: crate::entities::drug::DrugSearchPageWithRegion,
+    requested_name: Option<&str>,
+    offset: usize,
+    limit: usize,
 ) -> anyhow::Result<String> {
-    crate::render::json::to_pretty(&DrugAllRegionSearchResponse {
-        region: crate::entities::drug::DrugRegion::All.as_str(),
-        query: query.to_string(),
-        us: to_region_results(us),
-        eu: to_region_results(eu),
-        who: to_region_results(who),
-        _meta: crate::cli::search_meta(next_commands),
-    })
-    .map_err(Into::into)
+    let response = match page_with_region {
+        crate::entities::drug::DrugSearchPageWithRegion::Us(page) => {
+            let next_commands = crate::render::markdown::search_next_commands_drug_regions(
+                requested_name,
+                Some(&page.results),
+                None,
+                None,
+            );
+            DrugSearchJsonResponse {
+                region: crate::entities::drug::DrugRegion::Us.as_str(),
+                regions: DrugSearchJsonRegions {
+                    us: Some(bucket_from_page(page, offset, limit)),
+                    ..Default::default()
+                },
+                _meta: crate::cli::search_meta(next_commands),
+            }
+        }
+        crate::entities::drug::DrugSearchPageWithRegion::Eu(page) => {
+            let next_commands = crate::render::markdown::search_next_commands_drug_regions(
+                requested_name,
+                None,
+                Some(&page.results),
+                None,
+            );
+            DrugSearchJsonResponse {
+                region: crate::entities::drug::DrugRegion::Eu.as_str(),
+                regions: DrugSearchJsonRegions {
+                    eu: Some(bucket_from_page(page, offset, limit)),
+                    ..Default::default()
+                },
+                _meta: crate::cli::search_meta(next_commands),
+            }
+        }
+        crate::entities::drug::DrugSearchPageWithRegion::Who(page) => {
+            let next_commands = crate::render::markdown::search_next_commands_drug_regions(
+                requested_name,
+                None,
+                None,
+                Some(&page.results),
+            );
+            DrugSearchJsonResponse {
+                region: crate::entities::drug::DrugRegion::Who.as_str(),
+                regions: DrugSearchJsonRegions {
+                    who: Some(bucket_from_page(page, offset, limit)),
+                    ..Default::default()
+                },
+                _meta: crate::cli::search_meta(next_commands),
+            }
+        }
+        crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
+            let next_commands = crate::render::markdown::search_next_commands_drug_regions(
+                requested_name,
+                Some(&us.results),
+                Some(&eu.results),
+                Some(&who.results),
+            );
+            DrugSearchJsonResponse {
+                region: crate::entities::drug::DrugRegion::All.as_str(),
+                regions: DrugSearchJsonRegions {
+                    us: Some(bucket_from_page(us, offset, limit)),
+                    eu: Some(bucket_from_page(eu, offset, limit)),
+                    who: Some(bucket_from_page(who, offset, limit)),
+                },
+                _meta: crate::cli::search_meta(next_commands),
+            }
+        }
+    };
+
+    crate::render::json::to_pretty(&response).map_err(Into::into)
 }

@@ -1,8 +1,6 @@
 use clap::{CommandFactory, Parser};
 
-use super::dispatch::{
-    drug_all_region_search_json, resolve_drug_get_region, resolve_drug_search_region,
-};
+use super::dispatch::{drug_search_json, resolve_drug_get_region, resolve_drug_search_region};
 use crate::cli::{Cli, Commands, DrugCommand, DrugRegionArg, GetEntity, SearchEntity};
 use crate::entities::drug::{DrugRegion, DrugSearchFilters};
 
@@ -370,30 +368,50 @@ fn get_drug_region_respects_explicit_region() {
 }
 
 #[test]
-fn search_json_with_meta_preserves_who_search_fields() {
-    let pagination = crate::cli::PaginationMeta::offset(0, 5, 1, Some(1));
-    let results = vec![crate::entities::drug::WhoPrequalificationSearchResult {
-        inn: "Trastuzumab".to_string(),
-        therapeutic_area: "Oncology".to_string(),
-        dosage_form: "Powder for concentrate for solution for infusion".to_string(),
-        applicant: "Samsung Bioepis NL B.V.".to_string(),
-        who_reference_number: "BT-ON001".to_string(),
-        listing_basis: "Prequalification - Abridged".to_string(),
-        prequalification_date: Some("2019-12-18".to_string()),
-    }];
-    let next_commands =
-        crate::render::markdown::search_next_commands_drug_who(&results, Some("trastuzumab"));
-    let json = crate::cli::search_json_with_meta(results, pagination, next_commands)
-        .expect("WHO search json");
+fn drug_search_json_single_region_keeps_selected_bucket_and_who_fields() {
+    let json = drug_search_json(
+        crate::entities::drug::DrugSearchPageWithRegion::Who(crate::entities::SearchPage::offset(
+            vec![crate::entities::drug::WhoPrequalificationSearchResult {
+                inn: "Trastuzumab".to_string(),
+                therapeutic_area: "Oncology".to_string(),
+                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
+                applicant: "Samsung Bioepis NL B.V.".to_string(),
+                who_reference_number: "BT-ON001".to_string(),
+                listing_basis: "Prequalification - Abridged".to_string(),
+                prequalification_date: Some("2019-12-18".to_string()),
+            }],
+            Some(1),
+        )),
+        Some("trastuzumab"),
+        0,
+        5,
+    )
+    .expect("WHO search json");
 
     let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
-    assert_eq!(value["count"], 1);
-    assert_eq!(value["results"][0]["who_reference_number"], "BT-ON001");
+    assert_eq!(value["region"], "who");
     assert_eq!(
-        value["results"][0]["listing_basis"],
+        value["regions"].as_object().map(|regions| regions.len()),
+        Some(1)
+    );
+    assert!(value.get("pagination").is_none());
+    assert!(value.get("count").is_none());
+    assert!(value.get("results").is_none());
+    assert!(value.get("query").is_none());
+    assert_eq!(value["regions"]["who"]["count"], 1);
+    assert_eq!(value["regions"]["who"]["pagination"]["returned"], 1);
+    assert_eq!(
+        value["regions"]["who"]["results"][0]["who_reference_number"],
+        "BT-ON001"
+    );
+    assert_eq!(
+        value["regions"]["who"]["results"][0]["listing_basis"],
         "Prequalification - Abridged"
     );
-    assert_eq!(value["results"][0]["prequalification_date"], "2019-12-18");
+    assert_eq!(
+        value["regions"]["who"]["results"][0]["prequalification_date"],
+        "2019-12-18"
+    );
     assert_eq!(
         value["_meta"]["next_commands"][0],
         serde_json::Value::String("biomcp get drug Trastuzumab".into())
@@ -405,63 +423,107 @@ fn search_json_with_meta_preserves_who_search_fields() {
 }
 
 #[test]
-fn drug_all_region_search_json_includes_who_bucket() {
-    let next_commands = crate::render::markdown::search_next_commands_drug_all("trastuzumab");
-    let json = drug_all_region_search_json(
-        "trastuzumab",
-        crate::entities::SearchPage::offset(
-            vec![crate::entities::drug::DrugSearchResult {
-                name: "trastuzumab".to_string(),
-                drugbank_id: None,
-                drug_type: None,
-                mechanism: None,
-                target: Some("ERBB2".to_string()),
-            }],
-            Some(1),
-        ),
-        crate::entities::SearchPage::offset(
-            vec![crate::entities::drug::EmaDrugSearchResult {
-                name: "Herzuma".to_string(),
-                active_substance: "trastuzumab".to_string(),
-                ema_product_number: "EMEA/H/C/004123".to_string(),
-                status: "Authorised".to_string(),
-            }],
-            Some(1),
-        ),
-        crate::entities::SearchPage::offset(
-            vec![crate::entities::drug::WhoPrequalificationSearchResult {
-                inn: "Trastuzumab".to_string(),
-                therapeutic_area: "Oncology".to_string(),
-                dosage_form: "Powder for concentrate for solution for infusion".to_string(),
-                applicant: "Samsung Bioepis NL B.V.".to_string(),
-                who_reference_number: "BT-ON001".to_string(),
-                listing_basis: "Prequalification - Abridged".to_string(),
-                prequalification_date: Some("2019-12-18".to_string()),
-            }],
-            Some(1),
-        ),
-        next_commands,
+fn drug_search_json_all_region_uses_unified_regions_envelope() {
+    let json = drug_search_json(
+        crate::entities::drug::DrugSearchPageWithRegion::All {
+            us: crate::entities::SearchPage::offset(
+                vec![crate::entities::drug::DrugSearchResult {
+                    name: "pembrolizumab".to_string(),
+                    drugbank_id: None,
+                    drug_type: None,
+                    mechanism: None,
+                    target: Some("PDCD1".to_string()),
+                }],
+                Some(1),
+            ),
+            eu: crate::entities::SearchPage::offset(
+                vec![crate::entities::drug::EmaDrugSearchResult {
+                    name: "Keytruda".to_string(),
+                    active_substance: "pembrolizumab".to_string(),
+                    ema_product_number: "EMEA/H/C/003820".to_string(),
+                    status: "Authorised".to_string(),
+                }],
+                Some(1),
+            ),
+            who: crate::entities::SearchPage::offset(
+                vec![crate::entities::drug::WhoPrequalificationSearchResult {
+                    inn: "Pembrolizumab".to_string(),
+                    therapeutic_area: "Oncology".to_string(),
+                    dosage_form: "Concentrate".to_string(),
+                    applicant: "Merck Sharp & Dohme".to_string(),
+                    who_reference_number: "BT-ON002".to_string(),
+                    listing_basis: "Prequalification".to_string(),
+                    prequalification_date: Some("2020-01-01".to_string()),
+                }],
+                Some(1),
+            ),
+        },
+        Some("keytruda"),
+        0,
+        5,
     )
     .expect("all-region drug search json");
 
     let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
     assert_eq!(value["region"], "all");
-    assert_eq!(value["who"]["count"], 1);
-    assert_eq!(value["who"]["total"], 1);
     assert_eq!(
-        value["who"]["results"][0]["who_reference_number"],
-        "BT-ON001"
+        value["regions"].as_object().map(|regions| regions.len()),
+        Some(3)
+    );
+    assert!(value.get("pagination").is_none());
+    assert!(value.get("count").is_none());
+    assert!(value.get("results").is_none());
+    assert!(value.get("query").is_none());
+    assert_eq!(value["regions"]["us"]["count"], 1);
+    assert_eq!(value["regions"]["eu"]["count"], 1);
+    assert_eq!(value["regions"]["who"]["count"], 1);
+    assert_eq!(
+        value["regions"]["who"]["results"][0]["who_reference_number"],
+        "BT-ON002"
     );
     assert_eq!(
-        value["eu"]["results"][0]["ema_product_number"],
-        "EMEA/H/C/004123"
+        value["regions"]["eu"]["results"][0]["ema_product_number"],
+        "EMEA/H/C/003820"
     );
     assert_eq!(
         value["_meta"]["next_commands"][0],
-        serde_json::Value::String("biomcp get drug trastuzumab".into())
+        serde_json::Value::String("biomcp get drug Keytruda".into())
     );
     assert_eq!(
         value["_meta"]["next_commands"][1],
         serde_json::Value::String("biomcp list drug".into())
+    );
+}
+
+#[test]
+fn drug_search_json_all_region_keeps_empty_buckets() {
+    let json = drug_search_json(
+        crate::entities::drug::DrugSearchPageWithRegion::All {
+            us: crate::entities::SearchPage::offset(Vec::new(), Some(0)),
+            eu: crate::entities::SearchPage::offset(
+                vec![crate::entities::drug::EmaDrugSearchResult {
+                    name: "Keytruda".to_string(),
+                    active_substance: "pembrolizumab".to_string(),
+                    ema_product_number: "EMEA/H/C/003820".to_string(),
+                    status: "Authorised".to_string(),
+                }],
+                Some(1),
+            ),
+            who: crate::entities::SearchPage::offset(Vec::new(), Some(0)),
+        },
+        Some("keytruda"),
+        0,
+        5,
+    )
+    .expect("all-region empty bucket json");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert_eq!(value["regions"]["us"]["count"], 0);
+    assert_eq!(value["regions"]["us"]["results"], serde_json::json!([]));
+    assert_eq!(value["regions"]["who"]["count"], 0);
+    assert_eq!(value["regions"]["who"]["results"], serde_json::json!([]));
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get drug Keytruda".into())
     );
 }

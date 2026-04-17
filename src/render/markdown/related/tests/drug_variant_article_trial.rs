@@ -46,6 +46,23 @@ fn related_drug_suggests_review_when_label_and_indications_are_sparse() {
 }
 
 #[test]
+fn search_next_commands_drug_prefers_requested_us_name() {
+    let related = search_next_commands_drug(
+        &[crate::entities::drug::DrugSearchResult {
+            name: "pembrolizumab".to_string(),
+            drugbank_id: None,
+            drug_type: None,
+            mechanism: None,
+            target: Some("PDCD1".to_string()),
+        }],
+        Some("pembrolizumab"),
+    );
+
+    assert_eq!(related[0], "biomcp get drug pembrolizumab");
+    assert_eq!(related[1], "biomcp list drug");
+}
+
+#[test]
 fn search_next_commands_drug_eu_prefers_active_substance_match() {
     let related = search_next_commands_drug_eu(
         &[crate::entities::drug::EmaDrugSearchResult {
@@ -55,6 +72,83 @@ fn search_next_commands_drug_eu_prefers_active_substance_match() {
             status: "Authorised".to_string(),
         }],
         Some("trastuzumab"),
+    );
+
+    assert_eq!(related[0], "biomcp get drug trastuzumab");
+    assert_eq!(related[1], "biomcp list drug");
+}
+
+#[test]
+fn search_next_commands_drug_who_use_inn() {
+    let related = search_next_commands_drug_who(
+        &[crate::entities::drug::WhoPrequalificationSearchResult {
+            inn: "Trastuzumab".to_string(),
+            therapeutic_area: "Oncology".to_string(),
+            dosage_form: "Concentrate".to_string(),
+            applicant: "Samsung Bioepis NL B.V.".to_string(),
+            who_reference_number: "BT-ON001".to_string(),
+            listing_basis: "Prequalification - Abridged".to_string(),
+            prequalification_date: Some("2019-12-18".to_string()),
+        }],
+        Some("trastuzumab"),
+    );
+
+    assert_eq!(related[0], "biomcp get drug Trastuzumab");
+    assert_eq!(related[1], "biomcp list drug");
+}
+
+#[test]
+fn search_next_commands_drug_regions_canonicalize_across_buckets() {
+    let related = search_next_commands_drug_regions(
+        Some("keytruda"),
+        Some(&[crate::entities::drug::DrugSearchResult {
+            name: "pembrolizumab".to_string(),
+            drugbank_id: None,
+            drug_type: None,
+            mechanism: None,
+            target: Some("PDCD1".to_string()),
+        }]),
+        Some(&[crate::entities::drug::EmaDrugSearchResult {
+            name: "Keytruda".to_string(),
+            active_substance: "pembrolizumab".to_string(),
+            ema_product_number: "EMEA/H/C/003820".to_string(),
+            status: "Authorised".to_string(),
+        }]),
+        Some(&[crate::entities::drug::WhoPrequalificationSearchResult {
+            inn: "Pembrolizumab".to_string(),
+            therapeutic_area: "Oncology".to_string(),
+            dosage_form: "Concentrate".to_string(),
+            applicant: "Merck Sharp & Dohme".to_string(),
+            who_reference_number: "BT-ON002".to_string(),
+            listing_basis: "Prequalification".to_string(),
+            prequalification_date: Some("2020-01-01".to_string()),
+        }]),
+    );
+
+    assert_eq!(related[0], "biomcp get drug Keytruda");
+    assert_eq!(related[1], "biomcp list drug");
+}
+
+#[test]
+fn search_next_commands_drug_regions_fall_back_without_requested_name() {
+    let related = search_next_commands_drug_regions(
+        None,
+        None,
+        Some(&[crate::entities::drug::EmaDrugSearchResult {
+            name: "Herzuma".to_string(),
+            active_substance: "trastuzumab".to_string(),
+            ema_product_number: "EMEA/H/C/004123".to_string(),
+            status: "Authorised".to_string(),
+        }]),
+        Some(&[crate::entities::drug::WhoPrequalificationSearchResult {
+            inn: "Trastuzumab".to_string(),
+            therapeutic_area: "Oncology".to_string(),
+            dosage_form: "Concentrate".to_string(),
+            applicant: "Samsung Bioepis NL B.V.".to_string(),
+            who_reference_number: "BT-ON001".to_string(),
+            listing_basis: "Prequalification - Abridged".to_string(),
+            prequalification_date: Some("2019-12-18".to_string()),
+        }]),
     );
 
     assert_eq!(related[0], "biomcp get drug trastuzumab");
