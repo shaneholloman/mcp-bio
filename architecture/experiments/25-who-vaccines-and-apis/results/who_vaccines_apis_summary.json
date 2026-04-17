@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-17T18:57:26Z",
+  "generated_at": "2026-04-17T19:16:13Z",
   "results": {
     "api_linkage": {
       "finished_pharma_overlap": {
@@ -280,7 +280,7 @@
           }
         ]
       },
-      "generated_at": "2026-04-17T18:56:04Z",
+      "generated_at": "2026-04-17T19:16:13Z",
       "mychem_identity_results": {
         "normalized_inn": {
           "any_hit_rate": 98.43,
@@ -892,7 +892,7 @@
       "row_count": 191
     },
     "metadata_and_devices": {
-      "generated_at": "2026-04-17T18:57:18Z",
+      "generated_at": "2026-04-17T19:16:13Z",
       "immunization_device_catalog": {
         "categories": {
           "e001": 5,
@@ -1122,7 +1122,7 @@
         }
       }
     },
-    "schema": {
+    "schema_comparison": {
       "current_contract_direct_header_coverage": {
         "apis_shared_required_headers": {
           "base_only": [
@@ -1196,7 +1196,7 @@
           "shared_count": 1
         }
       },
-      "generated_at": "2026-04-17T18:54:12Z",
+      "generated_at": "2026-04-17T19:16:13Z",
       "header_overlap_against_finished_pharma": {
         "apis": {
           "base_only": [
@@ -1641,7 +1641,7 @@
       }
     },
     "vaccine_identity": {
-      "generated_at": "2026-04-17T18:55:21Z",
+      "generated_at": "2026-04-17T19:16:13Z",
       "row_count": 284,
       "strategy_results": {
         "commercial_name": {
@@ -2917,5 +2917,12 @@
         "strategy": "component_vaccine_coverage"
       }
     }
+  },
+  "stage_timings_seconds": {
+    "api_linkage_seconds": 0.068,
+    "metadata_and_devices_seconds": 0.0037,
+    "schema_comparison_seconds": 0.0363,
+    "total_seconds": 0.1695,
+    "vaccine_identity_seconds": 0.0615
   }
 }

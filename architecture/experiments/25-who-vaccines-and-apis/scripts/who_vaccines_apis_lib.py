@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import json
 import os
@@ -48,6 +49,16 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 EXPERIMENT_ROOT = SCRIPT_DIR.parent
 RESULTS_DIR = EXPERIMENT_ROOT / "results"
 WORK_DIR = EXPERIMENT_ROOT / "work"
+UPSTREAM_CACHE_DIR = WORK_DIR / "upstream"
+MYCHEM_CACHE_PATH = WORK_DIR / "mychem_query_cache.json"
+DEFAULT_PROJECTION_DROP_KEYS = frozenset({"generated_at"})
+
+SOURCE_CACHE_FILES = {
+    WHO_FINISHED_URL: UPSTREAM_CACHE_DIR / "who_finished_pharma.csv",
+    WHO_VACCINES_URL: UPSTREAM_CACHE_DIR / "who_vaccines.csv",
+    WHO_API_URL: UPSTREAM_CACHE_DIR / "who_apis.csv",
+    WHO_DEVICES_URL: UPSTREAM_CACHE_DIR / "who_immunization_devices.json",
+}
 
 REQUIRED_FINISHED_HEADERS = [
     "WHO REFERENCE NUMBER",
@@ -87,6 +98,16 @@ def iso_now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def ensure_work_dirs() -> None:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    WORK_DIR.mkdir(parents=True, exist_ok=True)
+    UPSTREAM_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def round_seconds(value: float) -> float:
+    return round(value, 4)
+
+
 def clean_text(value: str | None) -> str | None:
     if value is None:
         return None
@@ -102,10 +123,49 @@ def header_key(value: str) -> str:
     return normalize_header(value).lower().replace(" ", "_")
 
 
+def cache_path_for_url(url: str) -> Path | None:
+    return SOURCE_CACHE_FILES.get(url)
+
+
+def sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+def sha256_json(payload: Any, drop_keys: frozenset[str] | None = None) -> str:
+    normalized = normalize_for_projection(payload, drop_keys=drop_keys)
+    encoded = json.dumps(normalized, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256_bytes(encoded)
+
+
+def source_snapshot(url: str) -> dict[str, Any]:
+    cache_path = cache_path_for_url(url)
+    if cache_path is None or not cache_path.is_file():
+        return {"url": url, "cached": False}
+    payload = cache_path.read_bytes()
+    return {
+        "url": url,
+        "cached": True,
+        "cache_path": str(cache_path.resolve()),
+        "bytes": len(payload),
+        "sha256": sha256_bytes(payload),
+        "modified_at": time.strftime(
+            "%Y-%m-%dT%H:%M:%SZ", time.gmtime(cache_path.stat().st_mtime)
+        ),
+    }
+
+
 def fetch_bytes(url: str) -> bytes:
+    ensure_work_dirs()
+    cache_path = cache_path_for_url(url)
+    if cache_path is not None and cache_path.is_file():
+        return cache_path.read_bytes()
     request = Request(url, headers={"User-Agent": USER_AGENT})
     with urlopen(request, timeout=120) as response:
-        return response.read()
+        payload = response.read()
+    if cache_path is not None:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_bytes(payload)
+    return payload
 
 
 def fetch_text(url: str) -> str:
@@ -268,6 +328,78 @@ def write_json(path: Path, payload: Any) -> None:
 
 def sample_rows(rows: list[dict[str, Any]], count: int = 3) -> list[dict[str, Any]]:
     return rows[:count]
+
+
+def normalize_for_projection(payload: Any, drop_keys: frozenset[str] | None = None) -> Any:
+    effective_drop_keys = DEFAULT_PROJECTION_DROP_KEYS if drop_keys is None else drop_keys
+    if isinstance(payload, dict):
+        return {
+            key: normalize_for_projection(value, drop_keys=effective_drop_keys)
+            for key, value in sorted(payload.items())
+            if key not in effective_drop_keys
+        }
+    if isinstance(payload, list):
+        return [normalize_for_projection(item, drop_keys=effective_drop_keys) for item in payload]
+    return payload
+
+
+def diff_payloads(
+    baseline: Any,
+    current: Any,
+    *,
+    drop_keys: frozenset[str] | None = None,
+    path: str = "",
+) -> list[dict[str, Any]]:
+    baseline = normalize_for_projection(baseline, drop_keys=drop_keys)
+    current = normalize_for_projection(current, drop_keys=drop_keys)
+    if type(baseline) is not type(current):
+        return [{"path": path or "$", "baseline": baseline, "current": current}]
+    if isinstance(baseline, dict):
+        out: list[dict[str, Any]] = []
+        keys = sorted(set(baseline) | set(current))
+        for key in keys:
+            child_path = f"{path}.{key}" if path else key
+            if key not in baseline or key not in current:
+                out.append(
+                    {
+                        "path": child_path,
+                        "baseline": baseline.get(key),
+                        "current": current.get(key),
+                    }
+                )
+                continue
+            out.extend(diff_payloads(baseline[key], current[key], drop_keys=drop_keys, path=child_path))
+        return out
+    if isinstance(baseline, list):
+        out: list[dict[str, Any]] = []
+        if len(baseline) != len(current):
+            out.append(
+                {
+                    "path": path or "$",
+                    "baseline_length": len(baseline),
+                    "current_length": len(current),
+                }
+            )
+        for idx, (baseline_item, current_item) in enumerate(zip(baseline, current, strict=False)):
+            out.extend(
+                diff_payloads(
+                    baseline_item,
+                    current_item,
+                    drop_keys=drop_keys,
+                    path=f"{path}[{idx}]" if path else f"[{idx}]",
+                )
+            )
+        return out
+    if baseline != current:
+        return [{"path": path or "$", "baseline": baseline, "current": current}]
+    return []
+
+
+def time_call(fn, *args, **kwargs) -> tuple[Any, float]:
+    started = time.perf_counter()
+    result = fn(*args, **kwargs)
+    elapsed = time.perf_counter() - started
+    return result, round_seconds(elapsed)
 
 
 def load_finished_pharma() -> dict[str, Any]:
@@ -468,16 +600,36 @@ def classify_hits(term: str, hits: list[dict[str, Any]]) -> dict[str, Any]:
 
 class MyChemResolver:
     def __init__(self, min_interval_seconds: float = 0.03) -> None:
-        self.cache: dict[tuple[str, int], dict[str, Any]] = {}
+        ensure_work_dirs()
+        self.cache: dict[str, dict[str, Any]] = {}
         self.min_interval_seconds = min_interval_seconds
         self._last_request = 0.0
+        self._dirty = False
+        if MYCHEM_CACHE_PATH.is_file():
+            cached = json.loads(MYCHEM_CACHE_PATH.read_text(encoding="utf-8"))
+            if isinstance(cached, dict):
+                self.cache = {str(key): value for key, value in cached.items() if isinstance(value, dict)}
+
+    @staticmethod
+    def _cache_key(query: str, size: int) -> str:
+        return f"{size}\t{query}"
+
+    def flush(self) -> None:
+        if not self._dirty:
+            return
+        MYCHEM_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        MYCHEM_CACHE_PATH.write_text(
+            json.dumps(self.cache, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        self._dirty = False
 
     def search(self, term: str, size: int = 10) -> dict[str, Any]:
         cleaned = clean_text(term)
         if not cleaned:
             return {"hits": [], "total": 0, "query": term}
         effective_query = sanitize_mychem_query(cleaned) or cleaned
-        cache_key = (effective_query, size)
+        cache_key = self._cache_key(effective_query, size)
         cached = self.cache.get(cache_key)
         if cached is not None:
             return cached
@@ -502,6 +654,7 @@ class MyChemResolver:
                     "hits": payload.get("hits", []),
                 }
                 self.cache[cache_key] = result
+                self._dirty = True
                 return result
             except Exception as exc:  # pragma: no cover - spike retry path
                 last_error = exc

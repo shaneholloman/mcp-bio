@@ -164,25 +164,29 @@ def run() -> dict:
     finished = load_finished_pharma()["entries"]
     exact_inns, segments, segment_samples = build_finished_indexes(finished)
     resolver = MyChemResolver()
-
-    mychem_results = {
-        "raw_inn": summarize_mychem_strategy(apis, resolver, lambda row: row.get("INN"), "raw_inn"),
-        "normalized_inn": summarize_mychem_strategy(
-            apis,
-            resolver,
-            lambda row: normalize_match_key(row.get("INN")),
-            "normalized_inn",
-        ),
-    }
-    overlap_results = summarize_finished_overlap(apis, exact_inns, segments, segment_samples)
-    payload = {
-        "generated_at": iso_now(),
-        "row_count": len(apis),
-        "mychem_identity_results": mychem_results,
-        "finished_pharma_overlap": overlap_results,
-    }
-    write_json(RESULT_PATH, payload)
-    return payload
+    try:
+        mychem_results = {
+            "raw_inn": summarize_mychem_strategy(
+                apis, resolver, lambda row: row.get("INN"), "raw_inn"
+            ),
+            "normalized_inn": summarize_mychem_strategy(
+                apis,
+                resolver,
+                lambda row: normalize_match_key(row.get("INN")),
+                "normalized_inn",
+            ),
+        }
+        overlap_results = summarize_finished_overlap(apis, exact_inns, segments, segment_samples)
+        payload = {
+            "generated_at": iso_now(),
+            "row_count": len(apis),
+            "mychem_identity_results": mychem_results,
+            "finished_pharma_overlap": overlap_results,
+        }
+        write_json(RESULT_PATH, payload)
+        return payload
+    finally:
+        resolver.flush()
 
 
 def main() -> None:

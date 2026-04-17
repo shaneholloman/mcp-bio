@@ -151,41 +151,48 @@ def summarize_component_strategy(rows: list[dict], resolver: MyChemResolver) -> 
 def run() -> dict:
     vaccines = load_vaccines()["rows"]
     resolver = MyChemResolver()
-    strategies = {
-        "commercial_name": lambda row: row.get("Commercial Name"),
-        "vaccine_type": lambda row: strip_parentheticals(row.get("Vaccine Type")),
-        "vaccine_type_plus_vaccine": lambda row: (
-            f"{strip_parentheticals(row.get('Vaccine Type'))} vaccine"
-            if clean_text(row.get("Vaccine Type"))
-            else None
-        ),
-    }
-    strategy_results = {
-        name: summarize_single_query_strategy(name, vaccines, query_fn, resolver)
-        for name, query_fn in strategies.items()
-    }
-    strategy_results["component_vaccine_coverage"] = summarize_component_strategy(vaccines, resolver)
-    winner = max(
-        strategy_results.values(),
-        key=lambda item: (
-            item.get("phrase_or_exact_rows", item.get("all_components_phrase_or_exact_rows", 0)),
-            item.get("exact_match_rows", item.get("all_components_exact_rows", 0)),
-        ),
-    )
-    payload = {
-        "generated_at": iso_now(),
-        "row_count": len(vaccines),
-        "strategy_results": strategy_results,
-        "winner": {
-            "strategy": winner["strategy"],
-            "phrase_or_exact_rate": winner.get(
-                "phrase_or_exact_rate", winner.get("all_components_phrase_or_exact_rate")
+    try:
+        strategies = {
+            "commercial_name": lambda row: row.get("Commercial Name"),
+            "vaccine_type": lambda row: strip_parentheticals(row.get("Vaccine Type")),
+            "vaccine_type_plus_vaccine": lambda row: (
+                f"{strip_parentheticals(row.get('Vaccine Type'))} vaccine"
+                if clean_text(row.get("Vaccine Type"))
+                else None
             ),
-            "exact_rate": winner.get("exact_match_rate", winner.get("all_components_exact_rate")),
-        },
-    }
-    write_json(RESULT_PATH, payload)
-    return payload
+        }
+        strategy_results = {
+            name: summarize_single_query_strategy(name, vaccines, query_fn, resolver)
+            for name, query_fn in strategies.items()
+        }
+        strategy_results["component_vaccine_coverage"] = summarize_component_strategy(
+            vaccines, resolver
+        )
+        winner = max(
+            strategy_results.values(),
+            key=lambda item: (
+                item.get("phrase_or_exact_rows", item.get("all_components_phrase_or_exact_rows", 0)),
+                item.get("exact_match_rows", item.get("all_components_exact_rows", 0)),
+            ),
+        )
+        payload = {
+            "generated_at": iso_now(),
+            "row_count": len(vaccines),
+            "strategy_results": strategy_results,
+            "winner": {
+                "strategy": winner["strategy"],
+                "phrase_or_exact_rate": winner.get(
+                    "phrase_or_exact_rate", winner.get("all_components_phrase_or_exact_rate")
+                ),
+                "exact_rate": winner.get(
+                    "exact_match_rate", winner.get("all_components_exact_rate")
+                ),
+            },
+        }
+        write_json(RESULT_PATH, payload)
+        return payload
+    finally:
+        resolver.flush()
 
 
 def main() -> None:

@@ -1,43 +1,19 @@
 {
   "generated_at": "2026-04-17T19:16:13Z",
-  "immunization_device_catalog": {
-    "categories": {
-      "e001": 5,
-      "e002": 1,
-      "e003": 85,
-      "e004": 74,
-      "e005": 27,
-      "e006": 77,
-      "e007_ehc": 1,
-      "e007_vs": 8,
-      "e008": 74,
-      "e010": 13,
-      "e013": 94
-    },
-    "category_count": 11,
-    "field_completeness": {
-      "details": 100.0,
-      "id": 100.0,
-      "main_image": 100.0,
-      "product_sites": 100.0,
-      "specifications": 100.0,
-      "status": 100.0,
-      "title": 100.0
-    },
-    "headers": [
-      "details",
-      "id",
-      "main_image",
-      "product_sites",
-      "specifications",
-      "status",
-      "title"
-    ],
-    "item_count": 459
-  },
-  "ticket_validation_samples": {
+  "overall_passed": true,
+  "probes": {
     "BCG": {
       "count": 7,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 7,
       "samples": [
         {
           "Commercial Name": "BCG Freeze Dried Glutamate vaccine",
@@ -61,6 +37,16 @@
     },
     "COVID-19": {
       "count": 4,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 4,
       "samples": [
         {
           "Commercial Name": "BIMERVAX",
@@ -84,6 +70,16 @@
     },
     "HPV": {
       "count": 6,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 6,
       "samples": [
         {
           "Commercial Name": "Cecolin\u00ae",
@@ -107,6 +103,16 @@
     },
     "measles": {
       "count": 22,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 22,
       "samples": [
         {
           "Commercial Name": "Measles and Rubella Vaccine (Live) (Attenuated, Freeze Dried)",
@@ -130,6 +136,16 @@
     },
     "yellow fever": {
       "count": 10,
+      "meaningful_metadata_fields": [
+        "Vaccine Type",
+        "Commercial Name",
+        "Presentation",
+        "Manufacturer",
+        "Responsible NRA",
+        "Date of Prequalification"
+      ],
+      "passed": true,
+      "rows_with_meaningful_metadata": 10,
       "samples": [
         {
           "Commercial Name": "n/a",
@@ -152,80 +168,15 @@
       ]
     }
   },
-  "vaccine_field_completeness": {
-    "commercial_name": {
-      "percent": 100.0,
-      "present": 284,
-      "total": 284
-    },
-    "date_of_prequalification": {
-      "percent": 100.0,
-      "present": 284,
-      "total": 284
-    },
-    "manufacturer": {
-      "percent": 100.0,
-      "present": 284,
-      "total": 284
-    },
-    "no_of_doses": {
-      "percent": 99.65,
-      "present": 283,
-      "total": 284
-    },
-    "presentation": {
-      "percent": 100.0,
-      "present": 284,
-      "total": 284
-    },
-    "responsible_nra": {
-      "percent": 100.0,
-      "present": 284,
-      "total": 284
-    },
-    "vaccine_type": {
-      "percent": 100.0,
-      "present": 284,
-      "total": 284
-    }
-  },
-  "vaccine_row_count": 284,
-  "vaccine_specific_field_assessment": {
-    "cold_chain_or_storage": {
-      "available": false,
-      "completeness": {
-        "percent": 0.0,
-        "present": 0,
-        "total": 284
-      },
-      "source_field": null
-    },
-    "dose_count": {
-      "available": true,
-      "completeness": {
-        "percent": 99.65,
-        "present": 283,
-        "total": 284
-      },
-      "source_field": "No. of doses"
-    },
-    "immunization_schedule": {
-      "available": false,
-      "completeness": {
-        "percent": 0.0,
-        "present": 0,
-        "total": 284
-      },
-      "source_field": null
-    },
-    "target_or_pathogen_proxy": {
-      "available": true,
-      "completeness": {
-        "percent": 100.0,
-        "present": 284,
-        "total": 284
-      },
-      "source_field": "Vaccine Type"
-    }
+  "validation_definition": {
+    "description": "Each target vaccine must appear in the WHO export and at least one matched row must carry all required metadata fields.",
+    "required_fields": [
+      "Vaccine Type",
+      "Commercial Name",
+      "Presentation",
+      "Manufacturer",
+      "Responsible NRA",
+      "Date of Prequalification"
+    ]
   }
 }
