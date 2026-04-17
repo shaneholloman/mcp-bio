@@ -317,7 +317,11 @@ def split_vaccine_components(value: str | None) -> list[str]:
     core = strip_parentheticals(value)
     if not core:
         return []
-    parts = [clean_text(part) for part in re.split(r"\s*/\s*", core) if clean_text(part)]
+    parts = [
+        clean_text(part)
+        for part in re.split(r"\s*(?:/|,| and )\s*|(?<=[A-Za-z])-(?=[A-Za-z])", core)
+        if clean_text(part)
+    ]
     return list(dict.fromkeys(part for part in parts if part))
 
 
