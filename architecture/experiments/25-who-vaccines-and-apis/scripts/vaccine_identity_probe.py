@@ -175,6 +175,78 @@ def summarize_component_strategy(rows: list[dict], resolver: MyChemResolver) -> 
     }
 
 
+def summarize_component_brand_fallback_strategy(rows: list[dict], resolver: MyChemResolver) -> dict:
+    exact = 0
+    phrase = 0
+    any_hit = 0
+    no_query = 0
+    resolved_samples = []
+    unresolved_samples = []
+
+    for row in rows:
+        component_reports = []
+        for component in split_vaccine_components(row.get("Vaccine Type")):
+            query_options = component_query_options(component)
+            if not query_options:
+                continue
+            reports = [resolve_query(resolver, query) for query in query_options]
+            best = max(reports, key=match_score)
+            best["component"] = component
+            component_reports.append(best)
+
+        brand_query = clean_text(row.get("Commercial Name"))
+        brand_report = resolve_query(resolver, brand_query) if brand_query else None
+
+        if not component_reports and brand_report is None:
+            no_query += 1
+            continue
+
+        component_exact = bool(component_reports) and all(
+            report["exact_match"] for report in component_reports
+        )
+        component_phrase = bool(component_reports) and all(
+            report["phrase_match"] for report in component_reports
+        )
+        phrase_match = component_phrase or bool(brand_report and brand_report["phrase_match"])
+        exact_match = component_exact or bool(brand_report and brand_report["exact_match"])
+        any_match = any(report["total_hits"] > 0 for report in component_reports) or bool(
+            brand_report and brand_report["total_hits"] > 0
+        )
+
+        if exact_match:
+            exact += 1
+        if phrase_match:
+            phrase += 1
+        if any_match:
+            any_hit += 1
+
+        sample = {
+            "commercial_name": row["Commercial Name"],
+            "vaccine_type": row["Vaccine Type"],
+            "components": component_reports,
+            "commercial_name_report": brand_report,
+        }
+        if phrase_match and len(resolved_samples) < 5:
+            resolved_samples.append(sample)
+        if not phrase_match and len(unresolved_samples) < 5:
+            unresolved_samples.append(sample)
+
+    total = len(rows)
+    return {
+        "strategy": "component_with_commercial_fallback",
+        "rows": total,
+        "no_query_rows": no_query,
+        "exact_match_rows": exact,
+        "exact_match_rate": round(exact / total * 100, 2) if total else 0.0,
+        "phrase_or_exact_rows": phrase,
+        "phrase_or_exact_rate": round(phrase / total * 100, 2) if total else 0.0,
+        "any_hit_rows": any_hit,
+        "any_hit_rate": round(any_hit / total * 100, 2) if total else 0.0,
+        "sample_resolved_rows": resolved_samples,
+        "sample_unresolved_rows": unresolved_samples,
+    }
+
+
 def run() -> dict:
     vaccines = load_vaccines()["rows"]
     resolver = MyChemResolver()
@@ -194,6 +266,9 @@ def run() -> dict:
         }
         strategy_results["component_vaccine_coverage"] = summarize_component_strategy(
             vaccines, resolver
+        )
+        strategy_results["component_with_commercial_fallback"] = (
+            summarize_component_brand_fallback_strategy(vaccines, resolver)
         )
         winner = max(
             strategy_results.values(),
