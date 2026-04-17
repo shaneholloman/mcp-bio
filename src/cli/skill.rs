@@ -651,32 +651,62 @@ mod tests {
 
     #[test]
     fn refreshed_search_examples_are_non_empty() {
-        for file_name in ["search-article.json", "search-drug.json"] {
-            let path = repo_root().join("skills/examples").join(file_name);
-            let payload = read_json_fixture(&path);
-            let count = payload
-                .get("count")
-                .and_then(Value::as_u64)
-                .expect("count should be present");
-            let returned = payload
-                .pointer("/pagination/returned")
-                .and_then(Value::as_u64)
-                .expect("pagination.returned should be present");
-            let results = payload
-                .get("results")
-                .and_then(Value::as_array)
-                .expect("results should be an array");
+        let article_path = repo_root().join("skills/examples/search-article.json");
+        let article_payload = read_json_fixture(&article_path);
+        let article_count = article_payload
+            .get("count")
+            .and_then(Value::as_u64)
+            .expect("article count should be present");
+        let article_returned = article_payload
+            .pointer("/pagination/returned")
+            .and_then(Value::as_u64)
+            .expect("article pagination.returned should be present");
+        let article_results = article_payload
+            .get("results")
+            .and_then(Value::as_array)
+            .expect("article results should be an array");
 
-            assert!(
-                count > 0,
-                "{file_name} should keep at least one example row"
-            );
-            assert!(returned > 0, "{file_name} should report returned rows");
-            assert!(
-                !results.is_empty(),
-                "{file_name} should keep non-empty results"
-            );
-        }
+        assert!(
+            article_count > 0,
+            "article example should keep at least one row"
+        );
+        assert!(
+            article_returned > 0,
+            "article example should report returned rows"
+        );
+        assert!(
+            !article_results.is_empty(),
+            "article example should keep non-empty results"
+        );
+
+        let drug_path = repo_root().join("skills/examples/search-drug.json");
+        let drug_payload = read_json_fixture(&drug_path);
+        let drug_count = drug_payload
+            .pointer("/regions/us/count")
+            .and_then(Value::as_u64)
+            .expect("drug regions.us.count should be present");
+        let drug_returned = drug_payload
+            .pointer("/regions/us/pagination/returned")
+            .and_then(Value::as_u64)
+            .expect("drug regions.us.pagination.returned should be present");
+        let drug_results = drug_payload
+            .pointer("/regions/us/results")
+            .and_then(Value::as_array)
+            .expect("drug regions.us.results should be an array");
+
+        assert_eq!(
+            drug_payload.get("region"),
+            Some(&Value::String("us".to_string()))
+        );
+        assert!(drug_count > 0, "drug example should keep at least one row");
+        assert!(
+            drug_returned > 0,
+            "drug example should report returned rows"
+        );
+        assert!(
+            !drug_results.is_empty(),
+            "drug example should keep non-empty results"
+        );
     }
 
     #[test]

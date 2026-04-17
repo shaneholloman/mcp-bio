@@ -186,6 +186,12 @@ biomcp search drug trastuzumab --region who --limit 5
 biomcp search drug --indication malaria --region who --limit 5
 ```
 
+Drug search JSON is region-aware: the top-level object exposes `region`,
+`regions`, and optional `_meta.next_commands`. Single-region searches use
+`regions.us.results`, `regions.eu.results`, or `regions.who.results`; omitted
+`--region` on a plain name lookup and explicit `--region all` expose all three
+region buckets, each with `pagination`, `count`, and `results`.
+
 ### Pathway
 
 ```bash
@@ -291,6 +297,9 @@ WHO data. If you omit `--region` while using structured filters such as
 `--region who` filters structured U.S. hits through WHO Prequalification.
 Explicit `--region eu` or `--region all` with structured filters still errors.
 `ema` is accepted as an input alias for the canonical `eu` region value.
+Drug search JSON stays under the same top-level `region` + `regions` envelope
+for every region mode, so scripts should navigate `regions.<region>.results`
+rather than a flat top-level `results` array.
 For `get drug`, use `--region` only with `regulatory`, `safety`, `shortage`, or
 `all`; WHO currently supports `regulatory` and `all`, while `approvals` stays
 U.S.-only.

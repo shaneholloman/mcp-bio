@@ -217,7 +217,19 @@ biomcp drug adverse-events pembrolizumab --limit 5
 
 ```bash
 biomcp --json get drug pembrolizumab
+biomcp --json search drug Keytruda --region eu --limit 3 | jq '.regions.eu.results[0].ema_product_number'
+biomcp --json search drug Keytruda --region all --limit 3 | jq '.regions | keys'
 ```
+
+`search drug --json` always returns the same top-level shape: `region`,
+`regions`, and optional `_meta.next_commands`. Each region bucket keeps the
+single-region wrapper fields `pagination`, `count`, and `results`.
+
+- Use `regions.us.results` for U.S. search rows.
+- Use `regions.eu.results` for EMA rows.
+- Use `regions.who.results` for WHO Prequalification rows.
+- Omitted `--region` on a plain name/alias search and explicit `--region all`
+  include all three buckets under `regions`.
 
 ## Practical tips
 

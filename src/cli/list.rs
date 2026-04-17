@@ -425,8 +425,12 @@ fn list_drug() -> String {
 
 ## JSON Output
 
+- `search drug --json` responses use a region-aware envelope: top-level `region`, top-level `regions`, and optional top-level `_meta`.
+- Single-region searches expose one bucket under `regions.us`, `regions.eu`, or `regions.who`.
+- Omitted `--region` on plain name/alias lookup and explicit `--region all` expose `regions.us`, `regions.eu`, and `regions.who`.
+- Each region bucket keeps `pagination`, `count`, and `results`.
 - Non-empty `search drug --json` responses include `_meta.next_commands`.
-- The top follow-up uses `biomcp get drug <name>` for the preferred top result or requested all-region name lookup.
+- The top follow-up uses `biomcp get drug <name>` for the preferred canonical match across the returned regional results.
 - `biomcp list drug` is always included so agents can inspect the full filter surface.
 - `biomcp --json drug adverse-events <name>` keeps the FAERS `summary` / `results` / `count` fields, adds `faers_not_found`, and includes `trial_adverse_events` only when the ClinicalTrials.gov fallback returns posted trial adverse-event terms.
 
@@ -1036,6 +1040,16 @@ mod tests {
         assert!(out.contains(
             "Omitting `--region` on `get drug <name> regulatory` is the one implicit combined-region get path; other no-flag `get drug` shapes stay on the default U.S. path."
         ));
+        assert!(out.contains(
+            "`search drug --json` responses use a region-aware envelope: top-level `region`, top-level `regions`, and optional top-level `_meta`."
+        ));
+        assert!(out.contains(
+            "Single-region searches expose one bucket under `regions.us`, `regions.eu`, or `regions.who`."
+        ));
+        assert!(out.contains(
+            "Omitted `--region` on plain name/alias lookup and explicit `--region all` expose `regions.us`, `regions.eu`, and `regions.who`."
+        ));
+        assert!(out.contains("Each region bucket keeps `pagination`, `count`, and `results`."));
         assert!(out.contains("drug trials <name> [--no-alias-expand]"));
         assert!(out.contains("inherits CTGov intervention alias expansion"));
         assert!(out.contains("Matched Intervention"));

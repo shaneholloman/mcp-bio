@@ -411,98 +411,98 @@ pub(super) fn search_next_commands_disease(results: &[DiseaseSearchResult]) -> V
     dedupe_markdown_commands(out)
 }
 
+fn non_empty_owned(value: &str) -> Option<String> {
+    let value = value.trim();
+    (!value.is_empty()).then(|| value.to_string())
+}
+
+fn drug_search_next_commands(
+    requested_name: Option<&str>,
+    us_results: Option<&[DrugSearchResult]>,
+    eu_results: Option<&[EmaDrugSearchResult]>,
+    who_results: Option<&[WhoPrequalificationSearchResult]>,
+) -> Vec<String> {
+    let has_results = us_results.is_some_and(|results| !results.is_empty())
+        || eu_results.is_some_and(|results| !results.is_empty())
+        || who_results.is_some_and(|results| !results.is_empty());
+    if !has_results {
+        return Vec::new();
+    }
+
+    let preferred = preferred_drug_name(
+        us_results
+            .into_iter()
+            .flat_map(|results| results.iter().map(|result| result.name.as_str()))
+            .chain(eu_results.into_iter().flat_map(|results| {
+                results
+                    .iter()
+                    .flat_map(|result| [result.name.as_str(), result.active_substance.as_str()])
+            }))
+            .chain(
+                who_results
+                    .into_iter()
+                    .flat_map(|results| results.iter().map(|result| result.inn.as_str())),
+            ),
+        requested_name,
+    );
+    let fallback = us_results
+        .and_then(|results| results.first())
+        .and_then(|result| non_empty_owned(&result.name))
+        .or_else(|| {
+            eu_results
+                .and_then(|results| results.first())
+                .and_then(|result| non_empty_owned(&result.active_substance))
+        })
+        .or_else(|| {
+            eu_results
+                .and_then(|results| results.first())
+                .and_then(|result| non_empty_owned(&result.name))
+        })
+        .or_else(|| {
+            who_results
+                .and_then(|results| results.first())
+                .and_then(|result| non_empty_owned(&result.inn))
+        });
+
+    let mut out = Vec::new();
+    if let Some(name) = preferred.or(fallback) {
+        out.push(format!("biomcp get drug {}", quote_arg(&name)));
+    }
+    out.push("biomcp list drug".to_string());
+    dedupe_markdown_commands(out)
+}
+
+#[cfg(test)]
 pub(super) fn search_next_commands_drug(
     results: &[DrugSearchResult],
     requested_name: Option<&str>,
 ) -> Vec<String> {
-    if results.is_empty() {
-        return Vec::new();
-    }
-
-    let mut out = Vec::new();
-    if let Some(name) = preferred_drug_name(
-        results.iter().map(|result| result.name.as_str()),
-        requested_name,
-    )
-    .or_else(|| {
-        results
-            .first()
-            .map(|result| result.name.trim())
-            .filter(|name| !name.is_empty())
-            .map(str::to_string)
-    }) {
-        out.push(format!("biomcp get drug {}", quote_arg(&name)));
-    }
-    out.push("biomcp list drug".to_string());
-    dedupe_markdown_commands(out)
+    drug_search_next_commands(requested_name, Some(results), None, None)
 }
 
+#[cfg(test)]
 pub(super) fn search_next_commands_drug_eu(
     results: &[EmaDrugSearchResult],
     requested_name: Option<&str>,
 ) -> Vec<String> {
-    if results.is_empty() {
-        return Vec::new();
-    }
-
-    let mut out = Vec::new();
-    if let Some(name) = preferred_drug_name(
-        results
-            .iter()
-            .flat_map(|result| [result.name.as_str(), result.active_substance.as_str()]),
-        requested_name,
-    )
-    .or_else(|| {
-        results
-            .first()
-            .map(|result| result.active_substance.trim())
-            .filter(|name| !name.is_empty())
-            .or_else(|| results.first().map(|result| result.name.trim()))
-            .filter(|name| !name.is_empty())
-            .map(str::to_string)
-    }) {
-        out.push(format!("biomcp get drug {}", quote_arg(&name)));
-    }
-    out.push("biomcp list drug".to_string());
-    dedupe_markdown_commands(out)
+    drug_search_next_commands(requested_name, None, Some(results), None)
 }
 
+#[cfg(test)]
 pub(super) fn search_next_commands_drug_who(
     results: &[WhoPrequalificationSearchResult],
     requested_name: Option<&str>,
 ) -> Vec<String> {
-    if results.is_empty() {
-        return Vec::new();
-    }
-
-    let mut out = Vec::new();
-    if let Some(name) = preferred_drug_name(
-        results.iter().map(|result| result.inn.as_str()),
-        requested_name,
-    )
-    .or_else(|| {
-        results
-            .first()
-            .map(|result| result.inn.trim())
-            .filter(|name| !name.is_empty())
-            .map(str::to_string)
-    }) {
-        out.push(format!("biomcp get drug {}", quote_arg(&name)));
-    }
-    out.push("biomcp list drug".to_string());
-    dedupe_markdown_commands(out)
+    drug_search_next_commands(requested_name, None, None, Some(results))
 }
 
-pub(super) fn search_next_commands_drug_all(requested_name: &str) -> Vec<String> {
-    let requested_name = requested_name.trim();
-    if requested_name.is_empty() {
-        return Vec::new();
-    }
-
-    dedupe_markdown_commands(vec![
-        format!("biomcp get drug {}", quote_arg(requested_name)),
-        "biomcp list drug".to_string(),
-    ])
+pub(super) fn search_next_commands_drug_regions(
+    requested_name: Option<&str>,
+    us_results: Option<&[DrugSearchResult]>,
+    eu_results: Option<&[EmaDrugSearchResult]>,
+    who_results: Option<&[WhoPrequalificationSearchResult]>,
+) -> Vec<String> {
+    drug_search_next_commands(requested_name, us_results, eu_results, who_results)
 }
 
 pub(super) fn search_next_commands_pgx(
