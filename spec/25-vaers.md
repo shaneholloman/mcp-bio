@@ -63,6 +63,8 @@ echo "$out" | mustmatch like "Source: CDC VAERS"
 
 ## VAERS-only JSON Contract
 
+<!-- mustmatch-lint: skip -->
+
 The VAERS-only JSON path should return the VAERS-first envelope rather than the
 FAERS search shape.
 

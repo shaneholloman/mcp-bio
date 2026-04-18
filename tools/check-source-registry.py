@@ -21,6 +21,7 @@ HEALTH_ALIASES = {
     "pubtator": "PubTator3",
     "seer": "SEER Explorer",
     "semantic_scholar": "Semantic Scholar",
+    "vaers": "CDC WONDER VAERS",
 }
 
 
