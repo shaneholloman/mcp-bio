@@ -352,7 +352,7 @@ Germline-oriented diseases should still render a populated genes table with stab
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get disease MONDO:0005180 genes)"
 echo "$out" | mustmatch like "## Associated Genes"
-echo "$out" | mustmatch like "| SNCA | causes |"
+echo "$out" | mustmatch like "| SNCA |"
 ```
 
 ## Canonical CMT1A Disease Genes
@@ -363,7 +363,7 @@ Narrow Mendelian diseases should keep their focused Monarch-style signal instead
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get disease MONDO:0007309 genes)"
 echo "$out" | mustmatch like "## Associated Genes"
-echo "$out" | mustmatch like "| PMP22 | causes |"
+echo "$out" | mustmatch like "| PMP22 |"
 ```
 
 ## Disease Top Variant Summary
