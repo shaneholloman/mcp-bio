@@ -307,6 +307,19 @@ query DiseaseGenes($efoId: String!, $size: Int!) {
             return Ok(OpenTargetsTargetDruggabilityContext::default());
         };
 
+        self.target_druggability_context_for_target_id(&target_id)
+            .await
+    }
+
+    pub async fn target_druggability_context_for_target_id(
+        &self,
+        target_id: &str,
+    ) -> Result<OpenTargetsTargetDruggabilityContext, BioMcpError> {
+        let target_id = target_id.trim();
+        if target_id.is_empty() {
+            return Ok(OpenTargetsTargetDruggabilityContext::default());
+        }
+
         let url = self.endpoint("graphql");
         let body = GraphQlRequest {
             query: r#"
@@ -381,6 +394,20 @@ query TargetDruggabilityContext($ensemblId: String!) {
         let Some(target_id) = self.resolve_target_id(symbol).await? else {
             return Ok(OpenTargetsTargetClinicalContext::default());
         };
+
+        self.target_clinical_context_for_target_id(&target_id, limit)
+            .await
+    }
+
+    pub async fn target_clinical_context_for_target_id(
+        &self,
+        target_id: &str,
+        limit: usize,
+    ) -> Result<OpenTargetsTargetClinicalContext, BioMcpError> {
+        let target_id = target_id.trim();
+        if target_id.is_empty() {
+            return Ok(OpenTargetsTargetClinicalContext::default());
+        }
 
         let size = limit.clamp(1, 25);
         let url = self.endpoint("graphql");

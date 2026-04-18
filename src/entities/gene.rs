@@ -1,5 +1,8 @@
 use std::collections::HashMap;
-use std::time::Duration;
+use std::fs;
+use std::future::Future;
+use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
@@ -21,7 +24,9 @@ use crate::sources::gtex::{GeneExpression, GtexClient};
 use crate::sources::hpa::{GeneHpa, HpaClient};
 use crate::sources::mygene::MyGeneClient;
 use crate::sources::nih_reporter::{NihReporterClient, NihReporterFundingSection};
-use crate::sources::opentargets::{OpenTargetsClient, OpenTargetsTargetDruggabilityContext};
+use crate::sources::opentargets::{
+    OpenTargetsClient, OpenTargetsTargetClinicalContext, OpenTargetsTargetDruggabilityContext,
+};
 use crate::sources::quickgo::QuickGoClient;
 use crate::sources::reactome::ReactomeClient;
 use crate::sources::string::StringClient;
@@ -278,9 +283,187 @@ impl GeneIncludeType {
     }
 }
 
-const OPTIONAL_ENRICHMENT_TIMEOUT: Duration = Duration::from_secs(8);
+const DEFAULT_OPTIONAL_ENRICHMENT_TIMEOUT_MS: u64 = 8_000;
+const GENE_TIMING_PATH_ENV: &str = "BIOMCP_GENE_TIMING_PATH";
+const GENE_OPTIONAL_TIMEOUT_MS_ENV: &str = "BIOMCP_GENE_OPTIONAL_TIMEOUT_MS";
+const GENE_GET_STRATEGY_ENV: &str = "BIOMCP_GENE_GET_STRATEGY";
 const FUNDING_NO_DATA_NOTE: &str = "No NIH funding data found for this query.";
 const FUNDING_UNAVAILABLE_NOTE: &str = "NIH Reporter funding data is temporarily unavailable.";
+
+#[derive(Debug, Clone, Serialize)]
+struct GeneTimingEntry {
+    section: String,
+    elapsed_ms: u128,
+    outcome: String,
+}
+
+#[derive(Debug, Serialize)]
+struct GeneTimingReport {
+    symbol: String,
+    strategy: String,
+    total_ms: u128,
+    sections: Vec<GeneTimingEntry>,
+}
+
+#[derive(Debug)]
+struct GeneTimingCollector {
+    symbol: String,
+    strategy: String,
+    started: Instant,
+    path: Option<PathBuf>,
+    sections: Vec<GeneTimingEntry>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum GeneGetStrategy {
+    Baseline,
+    OpenTargetsEnsembl,
+    ParallelTop,
+}
+
+impl GeneGetStrategy {
+    fn from_env() -> Self {
+        match std::env::var(GENE_GET_STRATEGY_ENV)
+            .ok()
+            .map(|value| value.trim().to_ascii_lowercase())
+            .as_deref()
+        {
+            Some("opentargets-ensembl") => Self::OpenTargetsEnsembl,
+            Some("parallel-top") => Self::ParallelTop,
+            _ => Self::Baseline,
+        }
+    }
+
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Baseline => "baseline",
+            Self::OpenTargetsEnsembl => "opentargets-ensembl",
+            Self::ParallelTop => "parallel-top",
+        }
+    }
+
+    fn prefers_known_opentargets_id(self) -> bool {
+        matches!(self, Self::OpenTargetsEnsembl | Self::ParallelTop)
+    }
+}
+
+impl GeneTimingCollector {
+    fn new(symbol: &str) -> Self {
+        Self {
+            symbol: symbol.trim().to_string(),
+            strategy: gene_get_strategy_label(),
+            started: Instant::now(),
+            path: std::env::var(GENE_TIMING_PATH_ENV)
+                .ok()
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty())
+                .map(PathBuf::from),
+            sections: Vec::new(),
+        }
+    }
+
+    fn enabled(&self) -> bool {
+        self.path.is_some()
+    }
+
+    fn record(&mut self, section: &str, started: Instant, outcome: impl Into<String>) {
+        if !self.enabled() {
+            return;
+        }
+
+        self.sections.push(GeneTimingEntry {
+            section: section.to_string(),
+            elapsed_ms: started.elapsed().as_millis(),
+            outcome: outcome.into(),
+        });
+    }
+
+    fn push(&mut self, entry: GeneTimingEntry) {
+        if !self.enabled() {
+            return;
+        }
+
+        self.sections.push(entry);
+    }
+
+    fn finish(self) {
+        let Some(path) = self.path else {
+            return;
+        };
+
+        let report = GeneTimingReport {
+            symbol: self.symbol,
+            strategy: self.strategy,
+            total_ms: self.started.elapsed().as_millis(),
+            sections: self.sections,
+        };
+
+        let bytes = match serde_json::to_vec_pretty(&report) {
+            Ok(bytes) => bytes,
+            Err(err) => {
+                warn!(path = %path.display(), "Failed to serialize gene timing report: {err}");
+                return;
+            }
+        };
+
+        if let Some(parent) = path.parent()
+            && let Err(err) = fs::create_dir_all(parent)
+        {
+            warn!(path = %parent.display(), "Failed to create gene timing directory: {err}");
+            return;
+        }
+
+        if let Err(err) = fs::write(&path, bytes) {
+            warn!(path = %path.display(), "Failed to write gene timing report: {err}");
+        }
+    }
+}
+
+fn gene_get_strategy_label() -> String {
+    gene_get_strategy().as_str().to_string()
+}
+
+fn gene_get_strategy() -> GeneGetStrategy {
+    GeneGetStrategy::from_env()
+}
+
+fn optional_enrichment_timeout() -> Duration {
+    let millis = std::env::var(GENE_OPTIONAL_TIMEOUT_MS_ENV)
+        .ok()
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or(DEFAULT_OPTIONAL_ENRICHMENT_TIMEOUT_MS);
+    Duration::from_millis(millis)
+}
+
+fn preferred_opentargets_id(gene: &Gene, strategy: GeneGetStrategy) -> Option<&str> {
+    if !strategy.prefers_known_opentargets_id() {
+        return None;
+    }
+
+    gene.ensembl_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+}
+
+async fn timed_section<T, F, C>(section: &str, fut: F, classify: C) -> (T, GeneTimingEntry)
+where
+    F: Future<Output = T>,
+    C: FnOnce(&T) -> String,
+{
+    let started = Instant::now();
+    let value = fut.await;
+    let outcome = classify(&value);
+    (
+        value,
+        GeneTimingEntry {
+            section: section.to_string(),
+            elapsed_ms: started.elapsed().as_millis(),
+            outcome,
+        },
+    )
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnrichmentResult {
@@ -810,15 +993,27 @@ fn merge_pathways(
     (!out.is_empty()).then_some(out)
 }
 
-async fn add_clinical_context(gene: &mut Gene) -> Result<(), BioMcpError> {
-    let symbol = gene.symbol.trim();
+async fn fetch_clinical_context(
+    symbol: &str,
+    target_id: Option<&str>,
+) -> Result<OpenTargetsTargetClinicalContext, BioMcpError> {
+    let symbol = symbol.trim();
     if symbol.is_empty() {
-        return Ok(());
+        return Ok(OpenTargetsTargetClinicalContext::default());
     }
 
-    let context = OpenTargetsClient::new()?
-        .target_clinical_context(symbol, 5)
-        .await?;
+    let client = OpenTargetsClient::new()?;
+    if let Some(target_id) = target_id {
+        Ok(client
+            .target_clinical_context_for_target_id(target_id, 5)
+            .await?)
+    } else {
+        Ok(client.target_clinical_context(symbol, 5).await?)
+    }
+}
+
+async fn add_clinical_context(gene: &mut Gene, target_id: Option<&str>) -> Result<(), BioMcpError> {
+    let context = fetch_clinical_context(&gene.symbol, target_id).await?;
     gene.clinical_diseases = context.diseases;
     gene.clinical_drugs = context.drugs;
     Ok(())
@@ -829,13 +1024,14 @@ async fn add_civic_section(gene: &mut Gene) {
     if symbol.is_empty() {
         return;
     }
+    let timeout = optional_enrichment_timeout();
 
     let civic_fut = async {
         let client = CivicClient::new()?;
         client.by_molecular_profile(symbol, 10).await
     };
 
-    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, civic_fut).await {
+    match tokio::time::timeout(timeout, civic_fut).await {
         Ok(Ok(context)) => gene.civic = Some(context),
         Ok(Err(err)) => {
             warn!(symbol = %gene.symbol, "CIViC unavailable for gene section: {err}");
@@ -844,7 +1040,7 @@ async fn add_civic_section(gene: &mut Gene) {
         Err(_) => {
             warn!(
                 symbol = %gene.symbol,
-                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                timeout_secs = timeout.as_secs(),
                 "CIViC gene section timed out"
             );
             gene.civic = Some(CivicContext::default());
@@ -852,16 +1048,11 @@ async fn add_civic_section(gene: &mut Gene) {
     }
 }
 
-async fn add_expression_section(gene: &mut Gene) {
-    let Some(ensembl_id) = gene
-        .ensembl_id
-        .as_deref()
-        .map(str::trim)
-        .filter(|v| !v.is_empty())
-    else {
-        gene.expression = Some(GeneExpression::default());
-        return;
+async fn fetch_expression_section(ensembl_id: Option<&str>, symbol: &str) -> GeneExpression {
+    let Some(ensembl_id) = ensembl_id.map(str::trim).filter(|v| !v.is_empty()) else {
+        return GeneExpression::default();
     };
+    let timeout = optional_enrichment_timeout();
 
     let expression_fut = async {
         let client = GtexClient::new()?;
@@ -869,80 +1060,91 @@ async fn add_expression_section(gene: &mut Gene) {
         Ok::<_, BioMcpError>(GeneExpression { tissues })
     };
 
-    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, expression_fut).await {
-        Ok(Ok(expression)) => gene.expression = Some(expression),
+    match tokio::time::timeout(timeout, expression_fut).await {
+        Ok(Ok(expression)) => expression,
         Ok(Err(err)) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 ensembl_id = %ensembl_id,
                 "GTEx unavailable for gene expression section: {err}"
             );
-            gene.expression = Some(GeneExpression::default());
+            GeneExpression::default()
         }
         Err(_) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 ensembl_id = %ensembl_id,
-                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                timeout_secs = timeout.as_secs(),
                 "GTEx expression section timed out"
             );
-            gene.expression = Some(GeneExpression::default());
+            GeneExpression::default()
         }
     }
 }
 
-async fn add_hpa_section(gene: &mut Gene) {
-    let Some(ensembl_id) = gene
-        .ensembl_id
-        .as_deref()
-        .map(str::trim)
-        .filter(|v| !v.is_empty())
-    else {
-        gene.hpa = Some(GeneHpa::default());
-        return;
+async fn add_expression_section(gene: &mut Gene) {
+    gene.expression =
+        Some(fetch_expression_section(gene.ensembl_id.as_deref(), &gene.symbol).await);
+}
+
+async fn fetch_hpa_section(ensembl_id: Option<&str>, symbol: &str) -> GeneHpa {
+    let Some(ensembl_id) = ensembl_id.map(str::trim).filter(|v| !v.is_empty()) else {
+        return GeneHpa::default();
     };
+    let timeout = optional_enrichment_timeout();
 
     let hpa_fut = async {
         let client = HpaClient::new()?;
         client.protein_data(ensembl_id).await
     };
 
-    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, hpa_fut).await {
-        Ok(Ok(hpa)) => gene.hpa = Some(hpa),
+    match tokio::time::timeout(timeout, hpa_fut).await {
+        Ok(Ok(hpa)) => hpa,
         Ok(Err(err)) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 ensembl_id = %ensembl_id,
                 "HPA unavailable for gene section: {err}"
             );
-            gene.hpa = Some(GeneHpa::default());
+            GeneHpa::default()
         }
         Err(_) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 ensembl_id = %ensembl_id,
-                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                timeout_secs = timeout.as_secs(),
                 "HPA gene section timed out"
             );
-            gene.hpa = Some(GeneHpa::default());
+            GeneHpa::default()
         }
     }
 }
 
-async fn add_druggability_section(gene: &mut Gene) {
-    let symbol = gene.symbol.trim();
-    if symbol.is_empty() {
-        gene.druggability = Some(GeneDruggability::default());
-        return;
-    }
+async fn add_hpa_section(gene: &mut Gene) {
+    gene.hpa = Some(fetch_hpa_section(gene.ensembl_id.as_deref(), &gene.symbol).await);
+}
 
-    let dgidb_fut = tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, async {
+async fn fetch_druggability_section(symbol: &str, target_id: Option<&str>) -> GeneDruggability {
+    let symbol = symbol.trim();
+    if symbol.is_empty() {
+        return GeneDruggability::default();
+    }
+    let timeout = optional_enrichment_timeout();
+    let target_id = target_id.map(str::to_string);
+
+    let dgidb_fut = tokio::time::timeout(timeout, async {
         let client = DgidbClient::new()?;
         client.gene_interactions(symbol).await
     });
-    let opentargets_fut = tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, async {
+    let opentargets_fut = tokio::time::timeout(timeout, async {
         let client = OpenTargetsClient::new()?;
-        client.target_druggability_context(symbol).await
+        if let Some(target_id) = target_id.as_deref() {
+            client
+                .target_druggability_context_for_target_id(target_id)
+                .await
+        } else {
+            client.target_druggability_context(symbol).await
+        }
     });
 
     let (dgidb_result, opentargets_result) = tokio::join!(dgidb_fut, opentargets_fut);
@@ -951,15 +1153,15 @@ async fn add_druggability_section(gene: &mut Gene) {
         Ok(Ok(druggability)) => Ok(druggability),
         Ok(Err(err)) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 "DGIdb unavailable for gene druggability section: {err}"
             );
             Err(err)
         }
         Err(_) => {
             warn!(
-                symbol = %gene.symbol,
-                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                symbol = %symbol,
+                timeout_secs = timeout.as_secs(),
                 "DGIdb gene section timed out"
             );
             Err(BioMcpError::Api {
@@ -973,15 +1175,15 @@ async fn add_druggability_section(gene: &mut Gene) {
         Ok(Ok(context)) => Ok(context),
         Ok(Err(err)) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 "OpenTargets unavailable for gene druggability section: {err}"
             );
             Err(err)
         }
         Err(_) => {
             warn!(
-                symbol = %gene.symbol,
-                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                symbol = %symbol,
+                timeout_secs = timeout.as_secs(),
                 "OpenTargets gene druggability section timed out"
             );
             Err(BioMcpError::Api {
@@ -991,7 +1193,11 @@ async fn add_druggability_section(gene: &mut Gene) {
         }
     };
 
-    gene.druggability = Some(merge_druggability_results(dgidb_result, opentargets_result));
+    merge_druggability_results(dgidb_result, opentargets_result)
+}
+
+async fn add_druggability_section(gene: &mut Gene, target_id: Option<&str>) {
+    gene.druggability = Some(fetch_druggability_section(&gene.symbol, target_id).await);
 }
 
 fn merge_druggability_results(
@@ -1030,12 +1236,12 @@ fn merge_druggability_results(
     merged
 }
 
-async fn add_clingen_section(gene: &mut Gene) {
-    let symbol = gene.symbol.trim();
+async fn fetch_clingen_section(symbol: &str) -> GeneClinGen {
+    let symbol = symbol.trim();
     if symbol.is_empty() {
-        gene.clingen = Some(GeneClinGen::default());
-        return;
+        return GeneClinGen::default();
     }
+    let timeout = optional_enrichment_timeout();
 
     let clingen_fut = async {
         let client = ClinGenClient::new()?;
@@ -1048,24 +1254,28 @@ async fn add_clingen_section(gene: &mut Gene) {
         })
     };
 
-    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, clingen_fut).await {
-        Ok(Ok(clingen)) => gene.clingen = Some(clingen),
+    match tokio::time::timeout(timeout, clingen_fut).await {
+        Ok(Ok(clingen)) => clingen,
         Ok(Err(err)) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 "ClinGen unavailable for gene clingen section: {err}"
             );
-            gene.clingen = Some(GeneClinGen::default());
+            GeneClinGen::default()
         }
         Err(_) => {
             warn!(
-                symbol = %gene.symbol,
-                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                symbol = %symbol,
+                timeout_secs = timeout.as_secs(),
                 "ClinGen gene section timed out"
             );
-            gene.clingen = Some(GeneClinGen::default());
+            GeneClinGen::default()
         }
     }
+}
+
+async fn add_clingen_section(gene: &mut Gene) {
+    gene.clingen = Some(fetch_clingen_section(&gene.symbol).await);
 }
 
 fn gnomad_constraint_section(
@@ -1093,13 +1303,14 @@ async fn add_constraint_section(gene: &mut Gene) {
         gene.constraint = Some(gnomad_constraint_section(None, None, None, None, None));
         return;
     }
+    let timeout = optional_enrichment_timeout();
 
     let constraint_fut = async {
         let client = GnomadClient::new()?;
         client.gene_constraint(symbol).await
     };
 
-    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, constraint_fut).await {
+    match tokio::time::timeout(timeout, constraint_fut).await {
         Ok(Ok(Some(constraint))) => {
             gene.constraint = Some(gnomad_constraint_section(
                 constraint.transcript,
@@ -1122,7 +1333,7 @@ async fn add_constraint_section(gene: &mut Gene) {
         Err(_) => {
             warn!(
                 symbol = %gene.symbol,
-                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                timeout_secs = timeout.as_secs(),
                 "gnomAD gene constraint section timed out"
             );
             gene.constraint = Some(gnomad_constraint_section(None, None, None, None, None));
@@ -1166,13 +1377,14 @@ async fn add_funding_section(gene: &mut Gene) {
         gene.funding_note = Some(FUNDING_NO_DATA_NOTE.into());
         return;
     }
+    let timeout = optional_enrichment_timeout();
 
     let funding_fut = async {
         let client = NihReporterClient::new()?;
         client.funding(symbol).await
     };
 
-    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, funding_fut).await {
+    match tokio::time::timeout(timeout, funding_fut).await {
         Ok(Ok(section)) => {
             let no_hits = section.matching_project_years == 0 && section.grants.is_empty();
             gene.funding = Some(section);
@@ -1190,13 +1402,384 @@ async fn add_funding_section(gene: &mut Gene) {
         Err(_) => {
             warn!(
                 symbol = %gene.symbol,
-                timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+                timeout_secs = timeout.as_secs(),
                 "NIH Reporter gene funding section timed out"
             );
             gene.funding = None;
             gene.funding_note = Some(FUNDING_UNAVAILABLE_NOTE.into());
         }
     }
+}
+
+async fn populate_sections_parallel_top(
+    gene: &mut Gene,
+    include: &[GeneIncludeType],
+    timing: &mut GeneTimingCollector,
+    opentargets_id: Option<&str>,
+) -> Result<(), BioMcpError> {
+    let symbol = gene.symbol.clone();
+    let ensembl_id = gene.ensembl_id.clone();
+    let uniprot_id = gene.uniprot_id.clone();
+    let enrichr_sections: Vec<GeneIncludeType> = include
+        .iter()
+        .copied()
+        .filter(|value| matches!(value, GeneIncludeType::Ontology | GeneIncludeType::Diseases))
+        .collect();
+
+    let clinical_target_id = opentargets_id.map(str::to_string);
+    let druggability_target_id = clinical_target_id.clone();
+
+    let clinical_context_fut = timed_section(
+        "clinical_context",
+        fetch_clinical_context(&symbol, clinical_target_id.as_deref()),
+        |result| match result {
+            Ok(context) if !context.diseases.is_empty() || !context.drugs.is_empty() => {
+                "data".to_string()
+            }
+            Ok(_) => "empty".to_string(),
+            Err(_) => "error".to_string(),
+        },
+    );
+
+    let enrichr_fut = async {
+        if enrichr_sections.is_empty() {
+            None
+        } else {
+            Some(
+                timed_section(
+                    "enrichr",
+                    enrich_gene(&symbol, &enrichr_sections),
+                    |result| match result {
+                        Ok((ontology, diseases))
+                            if ontology.as_ref().is_some_and(|rows| {
+                                rows.iter().any(|row| !row.terms.is_empty())
+                            }) || diseases.as_ref().is_some_and(|rows| {
+                                rows.iter().any(|row| !row.terms.is_empty())
+                            }) =>
+                        {
+                            "data".to_string()
+                        }
+                        Ok(_) => "empty".to_string(),
+                        Err(_) => "error".to_string(),
+                    },
+                )
+                .await,
+            )
+        }
+    };
+
+    let expression_fut = async {
+        if !include.contains(&GeneIncludeType::Expression) {
+            None
+        } else {
+            Some(
+                timed_section(
+                    "expression",
+                    fetch_expression_section(ensembl_id.as_deref(), &symbol),
+                    |expression| {
+                        if expression.tissues.is_empty() {
+                            "empty".to_string()
+                        } else {
+                            "data".to_string()
+                        }
+                    },
+                )
+                .await,
+            )
+        }
+    };
+
+    let hpa_fut = async {
+        if !include.contains(&GeneIncludeType::Hpa) {
+            None
+        } else {
+            Some(
+                timed_section(
+                    "hpa",
+                    fetch_hpa_section(ensembl_id.as_deref(), &symbol),
+                    |hpa| {
+                        if !hpa.tissues.is_empty()
+                            || !hpa.subcellular_main_location.is_empty()
+                            || !hpa.subcellular_additional_location.is_empty()
+                            || hpa.reliability.is_some()
+                            || hpa.protein_summary.is_some()
+                            || hpa.rna_summary.is_some()
+                        {
+                            "data".to_string()
+                        } else {
+                            "empty".to_string()
+                        }
+                    },
+                )
+                .await,
+            )
+        }
+    };
+
+    let druggability_fut = async {
+        if !include.contains(&GeneIncludeType::Druggability) {
+            None
+        } else {
+            Some(
+                timed_section(
+                    "druggability",
+                    fetch_druggability_section(&symbol, druggability_target_id.as_deref()),
+                    |section| {
+                        if !section.categories.is_empty()
+                            || !section.interactions.is_empty()
+                            || !section.tractability.is_empty()
+                            || !section.safety_liabilities.is_empty()
+                        {
+                            "data".to_string()
+                        } else {
+                            "empty".to_string()
+                        }
+                    },
+                )
+                .await,
+            )
+        }
+    };
+
+    let clingen_fut = async {
+        if !include.contains(&GeneIncludeType::ClinGen) {
+            None
+        } else {
+            Some(
+                timed_section("clingen", fetch_clingen_section(&symbol), |section| {
+                    if !section.validity.is_empty()
+                        || section.haploinsufficiency.is_some()
+                        || section.triplosensitivity.is_some()
+                    {
+                        "data".to_string()
+                    } else {
+                        "empty".to_string()
+                    }
+                })
+                .await,
+            )
+        }
+    };
+
+    let (
+        (clinical_context_result, clinical_context_entry),
+        enrichr_result,
+        expression_result,
+        hpa_result,
+        druggability_result,
+        clingen_result,
+    ) = tokio::join!(
+        clinical_context_fut,
+        enrichr_fut,
+        expression_fut,
+        hpa_fut,
+        druggability_fut,
+        clingen_fut
+    );
+
+    timing.push(clinical_context_entry);
+    match clinical_context_result {
+        Ok(context) => {
+            gene.clinical_diseases = context.diseases;
+            gene.clinical_drugs = context.drugs;
+        }
+        Err(err) => warn!("OpenTargets unavailable for gene clinical context: {err}"),
+    }
+
+    if let Some((result, entry)) = enrichr_result {
+        timing.push(entry);
+        let (ontology, diseases) = match result {
+            Ok(value) => value,
+            Err(err) => return Err(err),
+        };
+        gene.ontology = ontology;
+        gene.diseases = diseases;
+    }
+
+    if let Some((expression, entry)) = expression_result {
+        timing.push(entry);
+        gene.expression = Some(expression);
+    }
+
+    if let Some((hpa, entry)) = hpa_result {
+        timing.push(entry);
+        gene.hpa = Some(hpa);
+    }
+
+    if let Some((druggability, entry)) = druggability_result {
+        timing.push(entry);
+        gene.druggability = Some(druggability);
+    }
+
+    if let Some((clingen, entry)) = clingen_result {
+        timing.push(entry);
+        gene.clingen = Some(clingen);
+    }
+
+    if include.contains(&GeneIncludeType::Pathways) {
+        let started = Instant::now();
+        gene.pathways = match fetch_pathways_section(&gene.symbol).await {
+            Ok(value) => merge_pathways(gene.pathways.take(), value),
+            Err(err) => {
+                warn!("Reactome unavailable for gene pathways section: {err}");
+                gene.pathways.clone()
+            }
+        };
+        timing.record(
+            "pathways",
+            started,
+            if gene.pathways.as_ref().is_some_and(|rows| !rows.is_empty()) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    } else {
+        gene.pathways = None;
+    }
+
+    if include.contains(&GeneIncludeType::Protein) {
+        let started = Instant::now();
+        gene.protein = match fetch_protein_section(uniprot_id.as_deref(), &gene.symbol).await {
+            Ok(value) => value,
+            Err(err) => {
+                warn!("UniProt unavailable for gene protein section: {err}");
+                None
+            }
+        };
+        timing.record(
+            "protein",
+            started,
+            if gene.protein.is_some() {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
+    if include.contains(&GeneIncludeType::Go) {
+        let started = Instant::now();
+        gene.go = match fetch_go_section(uniprot_id.as_deref(), &gene.symbol).await {
+            Ok(value) => Some(value),
+            Err(err) => {
+                warn!("QuickGO unavailable for gene GO section: {err}");
+                Some(Vec::new())
+            }
+        };
+        timing.record(
+            "go",
+            started,
+            if gene.go.as_ref().is_some_and(|rows| !rows.is_empty()) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
+    if include.contains(&GeneIncludeType::Interactions) {
+        let started = Instant::now();
+        gene.interactions = match fetch_interactions_section(&gene.symbol).await {
+            Ok(value) => Some(value),
+            Err(err) => {
+                warn!("STRING unavailable for gene interactions section: {err}");
+                Some(Vec::new())
+            }
+        };
+        timing.record(
+            "interactions",
+            started,
+            if gene
+                .interactions
+                .as_ref()
+                .is_some_and(|rows| !rows.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
+    if include.contains(&GeneIncludeType::Civic) {
+        let started = Instant::now();
+        add_civic_section(gene).await;
+        timing.record(
+            "civic",
+            started,
+            if gene
+                .civic
+                .as_ref()
+                .is_some_and(|ctx| !ctx.evidence_items.is_empty() || !ctx.assertions.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
+    if include.contains(&GeneIncludeType::Constraint) {
+        let started = Instant::now();
+        add_constraint_section(gene).await;
+        timing.record(
+            "constraint",
+            started,
+            if gene.constraint.as_ref().is_some_and(|section| {
+                section.pli.is_some()
+                    || section.loeuf.is_some()
+                    || section.mis_z.is_some()
+                    || section.syn_z.is_some()
+                    || section.transcript.is_some()
+            }) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
+    if include.contains(&GeneIncludeType::Disgenet) {
+        let started = Instant::now();
+        if let Err(err) = add_disgenet_section(gene).await {
+            timing.record("disgenet", started, "error");
+            return Err(err);
+        }
+        timing.record(
+            "disgenet",
+            started,
+            if gene
+                .disgenet
+                .as_ref()
+                .is_some_and(|section| !section.associations.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
+    if include.contains(&GeneIncludeType::Funding) {
+        let started = Instant::now();
+        add_funding_section(gene).await;
+        timing.record(
+            "funding",
+            started,
+            if gene
+                .funding
+                .as_ref()
+                .is_some_and(|section| !section.grants.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
+    Ok(())
 }
 
 pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError> {
@@ -1206,18 +1789,49 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
         ));
     }
 
+    let strategy = gene_get_strategy();
+    let mut timing = GeneTimingCollector::new(symbol);
     let include = parse_sections(symbol, sections)?;
 
     let client = MyGeneClient::new()?;
-    let resp = client.get(symbol, false).await?;
+    let started = Instant::now();
+    let resp = client.get(symbol, false).await;
+    timing.record(
+        "mygene",
+        started,
+        if resp.is_ok() { "data" } else { "error" },
+    );
+    let resp = resp?;
 
     let mut gene = transform::gene::from_mygene_get(resp);
+    let opentargets_id = preferred_opentargets_id(&gene, strategy).map(str::to_string);
 
-    if let Err(err) = add_clinical_context(&mut gene).await {
-        warn!("OpenTargets unavailable for gene clinical context: {err}");
+    if strategy == GeneGetStrategy::ParallelTop {
+        populate_sections_parallel_top(&mut gene, &include, &mut timing, opentargets_id.as_deref())
+            .await?;
+        timing.finish();
+        return Ok(gene);
+    }
+
+    let started = Instant::now();
+    match add_clinical_context(&mut gene, opentargets_id.as_deref()).await {
+        Ok(()) => timing.record(
+            "clinical_context",
+            started,
+            if !gene.clinical_diseases.is_empty() || !gene.clinical_drugs.is_empty() {
+                "data"
+            } else {
+                "empty"
+            },
+        ),
+        Err(err) => {
+            timing.record("clinical_context", started, "error");
+            warn!("OpenTargets unavailable for gene clinical context: {err}");
+        }
     }
 
     if include.contains(&GeneIncludeType::Pathways) {
+        let started = Instant::now();
         gene.pathways = match fetch_pathways_section(&gene.symbol).await {
             Ok(v) => merge_pathways(gene.pathways.take(), v),
             Err(err) => {
@@ -1225,6 +1839,15 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
                 gene.pathways
             }
         };
+        timing.record(
+            "pathways",
+            started,
+            if gene.pathways.as_ref().is_some_and(|rows| !rows.is_empty()) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     } else {
         gene.pathways = None;
     }
@@ -1236,12 +1859,39 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
         .collect();
 
     if !enrichr_sections.is_empty() {
-        let (ontology, diseases) = enrich_gene(&gene.symbol, &enrichr_sections).await?;
+        let started = Instant::now();
+        let enrichr = enrich_gene(&gene.symbol, &enrichr_sections).await;
+        let (ontology, diseases) = match enrichr {
+            Ok(value) => value,
+            Err(err) => {
+                timing.record("enrichr", started, "error");
+                timing.finish();
+                return Err(err);
+            }
+        };
         gene.ontology = ontology;
         gene.diseases = diseases;
+        timing.record(
+            "enrichr",
+            started,
+            if gene
+                .ontology
+                .as_ref()
+                .is_some_and(|rows| rows.iter().any(|row| !row.terms.is_empty()))
+                || gene
+                    .diseases
+                    .as_ref()
+                    .is_some_and(|rows| rows.iter().any(|row| !row.terms.is_empty()))
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Protein) {
+        let started = Instant::now();
         gene.protein = match fetch_protein_section(gene.uniprot_id.as_deref(), &gene.symbol).await {
             Ok(v) => v,
             Err(err) => {
@@ -1249,9 +1899,19 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
                 None
             }
         };
+        timing.record(
+            "protein",
+            started,
+            if gene.protein.is_some() {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Go) {
+        let started = Instant::now();
         gene.go = match fetch_go_section(gene.uniprot_id.as_deref(), &gene.symbol).await {
             Ok(v) => Some(v),
             Err(err) => {
@@ -1259,9 +1919,19 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
                 Some(Vec::new())
             }
         };
+        timing.record(
+            "go",
+            started,
+            if gene.go.as_ref().is_some_and(|rows| !rows.is_empty()) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Interactions) {
+        let started = Instant::now();
         gene.interactions = match fetch_interactions_section(&gene.symbol).await {
             Ok(v) => Some(v),
             Err(err) => {
@@ -1269,40 +1939,176 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
                 Some(Vec::new())
             }
         };
+        timing.record(
+            "interactions",
+            started,
+            if gene
+                .interactions
+                .as_ref()
+                .is_some_and(|rows| !rows.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Civic) {
+        let started = Instant::now();
         add_civic_section(&mut gene).await;
+        timing.record(
+            "civic",
+            started,
+            if gene
+                .civic
+                .as_ref()
+                .is_some_and(|ctx| !ctx.evidence_items.is_empty() || !ctx.assertions.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Expression) {
+        let started = Instant::now();
         add_expression_section(&mut gene).await;
+        timing.record(
+            "expression",
+            started,
+            if gene
+                .expression
+                .as_ref()
+                .is_some_and(|expression| !expression.tissues.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Hpa) {
+        let started = Instant::now();
         add_hpa_section(&mut gene).await;
+        timing.record(
+            "hpa",
+            started,
+            if gene.hpa.as_ref().is_some_and(|hpa| {
+                !hpa.tissues.is_empty()
+                    || !hpa.subcellular_main_location.is_empty()
+                    || !hpa.subcellular_additional_location.is_empty()
+                    || hpa.reliability.is_some()
+                    || hpa.protein_summary.is_some()
+                    || hpa.rna_summary.is_some()
+            }) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Druggability) {
-        add_druggability_section(&mut gene).await;
+        let started = Instant::now();
+        add_druggability_section(&mut gene, opentargets_id.as_deref()).await;
+        timing.record(
+            "druggability",
+            started,
+            if gene.druggability.as_ref().is_some_and(|section| {
+                !section.categories.is_empty()
+                    || !section.interactions.is_empty()
+                    || !section.tractability.is_empty()
+                    || !section.safety_liabilities.is_empty()
+            }) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::ClinGen) {
+        let started = Instant::now();
         add_clingen_section(&mut gene).await;
+        timing.record(
+            "clingen",
+            started,
+            if gene.clingen.as_ref().is_some_and(|section| {
+                !section.validity.is_empty()
+                    || section.haploinsufficiency.is_some()
+                    || section.triplosensitivity.is_some()
+            }) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Constraint) {
+        let started = Instant::now();
         add_constraint_section(&mut gene).await;
+        timing.record(
+            "constraint",
+            started,
+            if gene.constraint.as_ref().is_some_and(|section| {
+                section.pli.is_some()
+                    || section.loeuf.is_some()
+                    || section.mis_z.is_some()
+                    || section.syn_z.is_some()
+                    || section.transcript.is_some()
+            }) {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Disgenet) {
-        add_disgenet_section(&mut gene).await?;
+        let started = Instant::now();
+        if let Err(err) = add_disgenet_section(&mut gene).await {
+            timing.record("disgenet", started, "error");
+            timing.finish();
+            return Err(err);
+        }
+        timing.record(
+            "disgenet",
+            started,
+            if gene
+                .disgenet
+                .as_ref()
+                .is_some_and(|section| !section.associations.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
     if include.contains(&GeneIncludeType::Funding) {
+        let started = Instant::now();
         add_funding_section(&mut gene).await;
+        timing.record(
+            "funding",
+            started,
+            if gene
+                .funding
+                .as_ref()
+                .is_some_and(|section| !section.grants.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
     }
 
+    timing.finish();
     Ok(gene)
 }
 

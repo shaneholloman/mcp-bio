@@ -1,0 +1,1404 @@
+{
+  "approaches": [
+    {
+      "env": {},
+      "label": "baseline"
+    },
+    {
+      "env": {
+        "BIOMCP_GENE_GET_STRATEGY": "opentargets-ensembl"
+      },
+      "label": "opentargets-ensembl"
+    },
+    {
+      "env": {
+        "BIOMCP_GENE_GET_STRATEGY": "parallel-top"
+      },
+      "label": "parallel-top"
+    }
+  ],
+  "exe": "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+  "experiment": "25-gene-all-latency",
+  "genes": [
+    "BRAF"
+  ],
+  "results": [
+    {
+      "approach": "baseline",
+      "command": [
+        "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+        "get",
+        "gene",
+        "BRAF",
+        "all"
+      ],
+      "env_overrides": {},
+      "gene": "BRAF",
+      "mode": "markdown",
+      "returncode": 0,
+      "run_index": 1,
+      "stderr_excerpt": "runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/baseline-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995929600 total_bytes=982240026624\n2026-04-18T18:27:35.427542Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/baseline-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995892736 total_bytes=982240026624\n2026-04-18T18:27:36.648166Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/baseline-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995859968 total_bytes=982240026624\n",
+      "stdout_bytes": 10909,
+      "timed_out": false,
+      "timing_sections": [
+        {
+          "elapsed_ms": 486,
+          "outcome": "data",
+          "section": "mygene"
+        },
+        {
+          "elapsed_ms": 638,
+          "outcome": "data",
+          "section": "clinical_context"
+        },
+        {
+          "elapsed_ms": 154,
+          "outcome": "data",
+          "section": "pathways"
+        },
+        {
+          "elapsed_ms": 491,
+          "outcome": "data",
+          "section": "enrichr"
+        },
+        {
+          "elapsed_ms": 624,
+          "outcome": "data",
+          "section": "protein"
+        },
+        {
+          "elapsed_ms": 556,
+          "outcome": "data",
+          "section": "go"
+        },
+        {
+          "elapsed_ms": 374,
+          "outcome": "data",
+          "section": "interactions"
+        },
+        {
+          "elapsed_ms": 334,
+          "outcome": "data",
+          "section": "civic"
+        },
+        {
+          "elapsed_ms": 483,
+          "outcome": "data",
+          "section": "expression"
+        },
+        {
+          "elapsed_ms": 754,
+          "outcome": "data",
+          "section": "hpa"
+        },
+        {
+          "elapsed_ms": 632,
+          "outcome": "data",
+          "section": "druggability"
+        },
+        {
+          "elapsed_ms": 3137,
+          "outcome": "data",
+          "section": "clingen"
+        },
+        {
+          "elapsed_ms": 311,
+          "outcome": "data",
+          "section": "constraint"
+        }
+      ],
+      "timing_total_ms": 8981,
+      "wall_clock_ms": 8990.62
+    },
+    {
+      "approach": "baseline",
+      "command": [
+        "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+        "--json",
+        "get",
+        "gene",
+        "BRAF",
+        "all"
+      ],
+      "env_overrides": {},
+      "gene": "BRAF",
+      "mode": "json",
+      "returncode": 0,
+      "run_index": 1,
+      "stderr_excerpt": "-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/baseline-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995909120 total_bytes=982240026624\n2026-04-18T18:27:43.798677Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/baseline-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995868160 total_bytes=982240026624\n2026-04-18T18:27:45.006677Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/baseline-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995835392 total_bytes=982240026624\n",
+      "stdout_bytes": 31278,
+      "timed_out": false,
+      "timing_sections": [
+        {
+          "elapsed_ms": 279,
+          "outcome": "data",
+          "section": "mygene"
+        },
+        {
+          "elapsed_ms": 698,
+          "outcome": "data",
+          "section": "clinical_context"
+        },
+        {
+          "elapsed_ms": 130,
+          "outcome": "data",
+          "section": "pathways"
+        },
+        {
+          "elapsed_ms": 449,
+          "outcome": "data",
+          "section": "enrichr"
+        },
+        {
+          "elapsed_ms": 482,
+          "outcome": "data",
+          "section": "protein"
+        },
+        {
+          "elapsed_ms": 512,
+          "outcome": "data",
+          "section": "go"
+        },
+        {
+          "elapsed_ms": 306,
+          "outcome": "data",
+          "section": "interactions"
+        },
+        {
+          "elapsed_ms": 225,
+          "outcome": "data",
+          "section": "civic"
+        },
+        {
+          "elapsed_ms": 478,
+          "outcome": "data",
+          "section": "expression"
+        },
+        {
+          "elapsed_ms": 753,
+          "outcome": "data",
+          "section": "hpa"
+        },
+        {
+          "elapsed_ms": 639,
+          "outcome": "data",
+          "section": "druggability"
+        },
+        {
+          "elapsed_ms": 3076,
+          "outcome": "data",
+          "section": "clingen"
+        },
+        {
+          "elapsed_ms": 118,
+          "outcome": "data",
+          "section": "constraint"
+        }
+      ],
+      "timing_total_ms": 8150,
+      "wall_clock_ms": 8159.15
+    },
+    {
+      "approach": "opentargets-ensembl",
+      "command": [
+        "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+        "get",
+        "gene",
+        "BRAF",
+        "all"
+      ],
+      "env_overrides": {
+        "BIOMCP_GENE_GET_STRATEGY": "opentargets-ensembl"
+      },
+      "gene": "BRAF",
+      "mode": "markdown",
+      "returncode": 0,
+      "run_index": 1,
+      "stderr_excerpt": "ture/experiments/25-gene-all-latency/work/opentargets-ensembl-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995905024 total_bytes=982240026624\n2026-04-18T18:27:51.178286Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/opentargets-ensembl-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995859968 total_bytes=982240026624\n2026-04-18T18:27:52.367778Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/opentargets-ensembl-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995823104 total_bytes=982240026624\n",
+      "stdout_bytes": 10909,
+      "timed_out": false,
+      "timing_sections": [
+        {
+          "elapsed_ms": 459,
+          "outcome": "data",
+          "section": "mygene"
+        },
+        {
+          "elapsed_ms": 189,
+          "outcome": "data",
+          "section": "clinical_context"
+        },
+        {
+          "elapsed_ms": 119,
+          "outcome": "data",
+          "section": "pathways"
+        },
+        {
+          "elapsed_ms": 447,
+          "outcome": "data",
+          "section": "enrichr"
+        },
+        {
+          "elapsed_ms": 494,
+          "outcome": "data",
+          "section": "protein"
+        },
+        {
+          "elapsed_ms": 518,
+          "outcome": "data",
+          "section": "go"
+        },
+        {
+          "elapsed_ms": 308,
+          "outcome": "data",
+          "section": "interactions"
+        },
+        {
+          "elapsed_ms": 231,
+          "outcome": "data",
+          "section": "civic"
+        },
+        {
+          "elapsed_ms": 378,
+          "outcome": "data",
+          "section": "expression"
+        },
+        {
+          "elapsed_ms": 760,
+          "outcome": "data",
+          "section": "hpa"
+        },
+        {
+          "elapsed_ms": 332,
+          "outcome": "data",
+          "section": "druggability"
+        },
+        {
+          "elapsed_ms": 2991,
+          "outcome": "data",
+          "section": "clingen"
+        },
+        {
+          "elapsed_ms": 111,
+          "outcome": "data",
+          "section": "constraint"
+        }
+      ],
+      "timing_total_ms": 7341,
+      "wall_clock_ms": 7351.27
+    },
+    {
+      "approach": "opentargets-ensembl",
+      "command": [
+        "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+        "--json",
+        "get",
+        "gene",
+        "BRAF",
+        "all"
+      ],
+      "env_overrides": {
+        "BIOMCP_GENE_GET_STRATEGY": "opentargets-ensembl"
+      },
+      "gene": "BRAF",
+      "mode": "json",
+      "returncode": 0,
+      "run_index": 1,
+      "stderr_excerpt": "get/architecture/experiments/25-gene-all-latency/work/opentargets-ensembl-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995880448 total_bytes=982240026624\n2026-04-18T18:27:58.731912Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/opentargets-ensembl-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995851776 total_bytes=982240026624\n2026-04-18T18:28:00.011909Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/opentargets-ensembl-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995819008 total_bytes=982240026624\n",
+      "stdout_bytes": 31278,
+      "timed_out": false,
+      "timing_sections": [
+        {
+          "elapsed_ms": 425,
+          "outcome": "data",
+          "section": "mygene"
+        },
+        {
+          "elapsed_ms": 185,
+          "outcome": "data",
+          "section": "clinical_context"
+        },
+        {
+          "elapsed_ms": 140,
+          "outcome": "data",
+          "section": "pathways"
+        },
+        {
+          "elapsed_ms": 478,
+          "outcome": "data",
+          "section": "enrichr"
+        },
+        {
+          "elapsed_ms": 480,
+          "outcome": "data",
+          "section": "protein"
+        },
+        {
+          "elapsed_ms": 512,
+          "outcome": "data",
+          "section": "go"
+        },
+        {
+          "elapsed_ms": 316,
+          "outcome": "data",
+          "section": "interactions"
+        },
+        {
+          "elapsed_ms": 235,
+          "outcome": "data",
+          "section": "civic"
+        },
+        {
+          "elapsed_ms": 372,
+          "outcome": "data",
+          "section": "expression"
+        },
+        {
+          "elapsed_ms": 755,
+          "outcome": "data",
+          "section": "hpa"
+        },
+        {
+          "elapsed_ms": 366,
+          "outcome": "data",
+          "section": "druggability"
+        },
+        {
+          "elapsed_ms": 3249,
+          "outcome": "data",
+          "section": "clingen"
+        },
+        {
+          "elapsed_ms": 114,
+          "outcome": "data",
+          "section": "constraint"
+        }
+      ],
+      "timing_total_ms": 7633,
+      "wall_clock_ms": 7641.89
+    },
+    {
+      "approach": "parallel-top",
+      "command": [
+        "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+        "get",
+        "gene",
+        "BRAF",
+        "all"
+      ],
+      "env_overrides": {
+        "BIOMCP_GENE_GET_STRATEGY": "parallel-top"
+      },
+      "gene": "BRAF",
+      "mode": "markdown",
+      "returncode": 0,
+      "run_index": 1,
+      "stderr_excerpt": "r-30s-budget/architecture/experiments/25-gene-all-latency/work/parallel-top-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995454464 total_bytes=982240026624\n2026-04-18T18:28:04.419397Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/parallel-top-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995433984 total_bytes=982240026624\n2026-04-18T18:28:04.727748Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/parallel-top-braf-markdown-run01/cache/http min_disk_free=10% available_bytes=77995405312 total_bytes=982240026624\n",
+      "stdout_bytes": 10909,
+      "timed_out": false,
+      "timing_sections": [
+        {
+          "elapsed_ms": 251,
+          "outcome": "data",
+          "section": "mygene"
+        },
+        {
+          "elapsed_ms": 187,
+          "outcome": "data",
+          "section": "clinical_context"
+        },
+        {
+          "elapsed_ms": 457,
+          "outcome": "data",
+          "section": "enrichr"
+        },
+        {
+          "elapsed_ms": 387,
+          "outcome": "data",
+          "section": "expression"
+        },
+        {
+          "elapsed_ms": 751,
+          "outcome": "data",
+          "section": "hpa"
+        },
+        {
+          "elapsed_ms": 638,
+          "outcome": "data",
+          "section": "druggability"
+        },
+        {
+          "elapsed_ms": 2920,
+          "outcome": "data",
+          "section": "clingen"
+        },
+        {
+          "elapsed_ms": 118,
+          "outcome": "data",
+          "section": "pathways"
+        },
+        {
+          "elapsed_ms": 489,
+          "outcome": "data",
+          "section": "protein"
+        },
+        {
+          "elapsed_ms": 502,
+          "outcome": "data",
+          "section": "go"
+        },
+        {
+          "elapsed_ms": 308,
+          "outcome": "data",
+          "section": "interactions"
+        },
+        {
+          "elapsed_ms": 221,
+          "outcome": "data",
+          "section": "civic"
+        },
+        {
+          "elapsed_ms": 110,
+          "outcome": "data",
+          "section": "constraint"
+        }
+      ],
+      "timing_total_ms": 4925,
+      "wall_clock_ms": 4934.79
+    },
+    {
+      "approach": "parallel-top",
+      "command": [
+        "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+        "--json",
+        "get",
+        "gene",
+        "BRAF",
+        "all"
+      ],
+      "env_overrides": {
+        "BIOMCP_GENE_GET_STRATEGY": "parallel-top"
+      },
+      "gene": "BRAF",
+      "mode": "json",
+      "returncode": 0,
+      "run_index": 1,
+      "stderr_excerpt": "runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/parallel-top-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995085824 total_bytes=982240026624\n2026-04-18T18:28:09.405705Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/parallel-top-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995073536 total_bytes=982240026624\n2026-04-18T18:28:09.730649Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/parallel-top-braf-json-run01/cache/http min_disk_free=10% available_bytes=77995040768 total_bytes=982240026624\n",
+      "stdout_bytes": 31278,
+      "timed_out": false,
+      "timing_sections": [
+        {
+          "elapsed_ms": 278,
+          "outcome": "data",
+          "section": "mygene"
+        },
+        {
+          "elapsed_ms": 182,
+          "outcome": "data",
+          "section": "clinical_context"
+        },
+        {
+          "elapsed_ms": 456,
+          "outcome": "data",
+          "section": "enrichr"
+        },
+        {
+          "elapsed_ms": 272,
+          "outcome": "data",
+          "section": "expression"
+        },
+        {
+          "elapsed_ms": 757,
+          "outcome": "data",
+          "section": "hpa"
+        },
+        {
+          "elapsed_ms": 630,
+          "outcome": "data",
+          "section": "druggability"
+        },
+        {
+          "elapsed_ms": 2942,
+          "outcome": "data",
+          "section": "clingen"
+        },
+        {
+          "elapsed_ms": 121,
+          "outcome": "data",
+          "section": "pathways"
+        },
+        {
+          "elapsed_ms": 486,
+          "outcome": "data",
+          "section": "protein"
+        },
+        {
+          "elapsed_ms": 505,
+          "outcome": "data",
+          "section": "go"
+        },
+        {
+          "elapsed_ms": 323,
+          "outcome": "data",
+          "section": "interactions"
+        },
+        {
+          "elapsed_ms": 210,
+          "outcome": "data",
+          "section": "civic"
+        },
+        {
+          "elapsed_ms": 108,
+          "outcome": "data",
+          "section": "constraint"
+        }
+      ],
+      "timing_total_ms": 4978,
+      "wall_clock_ms": 4985.11
+    }
+  ],
+  "runs_per_case": 1,
+  "summaries": [
+    {
+      "approach": "baseline",
+      "gene": "BRAF",
+      "mode": "markdown",
+      "p50_wall_clock_ms": 8990.62,
+      "p95_wall_clock_ms": 8990.62,
+      "section_summary": [
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 3137,
+          "p95_ms": 3137,
+          "runs_observed": 1,
+          "section": "clingen"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 754,
+          "p95_ms": 754,
+          "runs_observed": 1,
+          "section": "hpa"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 638,
+          "p95_ms": 638,
+          "runs_observed": 1,
+          "section": "clinical_context"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 632,
+          "p95_ms": 632,
+          "runs_observed": 1,
+          "section": "druggability"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 624,
+          "p95_ms": 624,
+          "runs_observed": 1,
+          "section": "protein"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 556,
+          "p95_ms": 556,
+          "runs_observed": 1,
+          "section": "go"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 491,
+          "p95_ms": 491,
+          "runs_observed": 1,
+          "section": "enrichr"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 486,
+          "p95_ms": 486,
+          "runs_observed": 1,
+          "section": "mygene"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 483,
+          "p95_ms": 483,
+          "runs_observed": 1,
+          "section": "expression"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 374,
+          "p95_ms": 374,
+          "runs_observed": 1,
+          "section": "interactions"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 334,
+          "p95_ms": 334,
+          "runs_observed": 1,
+          "section": "civic"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 311,
+          "p95_ms": 311,
+          "runs_observed": 1,
+          "section": "constraint"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 154,
+          "p95_ms": 154,
+          "runs_observed": 1,
+          "section": "pathways"
+        }
+      ],
+      "successful_runs": 1
+    },
+    {
+      "approach": "baseline",
+      "gene": "BRAF",
+      "mode": "json",
+      "p50_wall_clock_ms": 8159.15,
+      "p95_wall_clock_ms": 8159.15,
+      "section_summary": [
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 3076,
+          "p95_ms": 3076,
+          "runs_observed": 1,
+          "section": "clingen"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 753,
+          "p95_ms": 753,
+          "runs_observed": 1,
+          "section": "hpa"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 698,
+          "p95_ms": 698,
+          "runs_observed": 1,
+          "section": "clinical_context"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 639,
+          "p95_ms": 639,
+          "runs_observed": 1,
+          "section": "druggability"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 512,
+          "p95_ms": 512,
+          "runs_observed": 1,
+          "section": "go"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 482,
+          "p95_ms": 482,
+          "runs_observed": 1,
+          "section": "protein"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 478,
+          "p95_ms": 478,
+          "runs_observed": 1,
+          "section": "expression"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 449,
+          "p95_ms": 449,
+          "runs_observed": 1,
+          "section": "enrichr"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 306,
+          "p95_ms": 306,
+          "runs_observed": 1,
+          "section": "interactions"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 279,
+          "p95_ms": 279,
+          "runs_observed": 1,
+          "section": "mygene"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 225,
+          "p95_ms": 225,
+          "runs_observed": 1,
+          "section": "civic"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 130,
+          "p95_ms": 130,
+          "runs_observed": 1,
+          "section": "pathways"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 118,
+          "p95_ms": 118,
+          "runs_observed": 1,
+          "section": "constraint"
+        }
+      ],
+      "successful_runs": 1
+    },
+    {
+      "approach": "opentargets-ensembl",
+      "gene": "BRAF",
+      "mode": "markdown",
+      "p50_wall_clock_ms": 7351.27,
+      "p95_wall_clock_ms": 7351.27,
+      "section_summary": [
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 2991,
+          "p95_ms": 2991,
+          "runs_observed": 1,
+          "section": "clingen"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 760,
+          "p95_ms": 760,
+          "runs_observed": 1,
+          "section": "hpa"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 518,
+          "p95_ms": 518,
+          "runs_observed": 1,
+          "section": "go"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 494,
+          "p95_ms": 494,
+          "runs_observed": 1,
+          "section": "protein"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 459,
+          "p95_ms": 459,
+          "runs_observed": 1,
+          "section": "mygene"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 447,
+          "p95_ms": 447,
+          "runs_observed": 1,
+          "section": "enrichr"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 378,
+          "p95_ms": 378,
+          "runs_observed": 1,
+          "section": "expression"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 332,
+          "p95_ms": 332,
+          "runs_observed": 1,
+          "section": "druggability"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 308,
+          "p95_ms": 308,
+          "runs_observed": 1,
+          "section": "interactions"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 231,
+          "p95_ms": 231,
+          "runs_observed": 1,
+          "section": "civic"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 189,
+          "p95_ms": 189,
+          "runs_observed": 1,
+          "section": "clinical_context"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 119,
+          "p95_ms": 119,
+          "runs_observed": 1,
+          "section": "pathways"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 111,
+          "p95_ms": 111,
+          "runs_observed": 1,
+          "section": "constraint"
+        }
+      ],
+      "successful_runs": 1
+    },
+    {
+      "approach": "opentargets-ensembl",
+      "gene": "BRAF",
+      "mode": "json",
+      "p50_wall_clock_ms": 7641.89,
+      "p95_wall_clock_ms": 7641.89,
+      "section_summary": [
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 3249,
+          "p95_ms": 3249,
+          "runs_observed": 1,
+          "section": "clingen"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 755,
+          "p95_ms": 755,
+          "runs_observed": 1,
+          "section": "hpa"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 512,
+          "p95_ms": 512,
+          "runs_observed": 1,
+          "section": "go"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 480,
+          "p95_ms": 480,
+          "runs_observed": 1,
+          "section": "protein"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 478,
+          "p95_ms": 478,
+          "runs_observed": 1,
+          "section": "enrichr"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 425,
+          "p95_ms": 425,
+          "runs_observed": 1,
+          "section": "mygene"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 372,
+          "p95_ms": 372,
+          "runs_observed": 1,
+          "section": "expression"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 366,
+          "p95_ms": 366,
+          "runs_observed": 1,
+          "section": "druggability"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 316,
+          "p95_ms": 316,
+          "runs_observed": 1,
+          "section": "interactions"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 235,
+          "p95_ms": 235,
+          "runs_observed": 1,
+          "section": "civic"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 185,
+          "p95_ms": 185,
+          "runs_observed": 1,
+          "section": "clinical_context"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 140,
+          "p95_ms": 140,
+          "runs_observed": 1,
+          "section": "pathways"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 114,
+          "p95_ms": 114,
+          "runs_observed": 1,
+          "section": "constraint"
+        }
+      ],
+      "successful_runs": 1
+    },
+    {
+      "approach": "parallel-top",
+      "gene": "BRAF",
+      "mode": "markdown",
+      "p50_wall_clock_ms": 4934.79,
+      "p95_wall_clock_ms": 4934.79,
+      "section_summary": [
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 2920,
+          "p95_ms": 2920,
+          "runs_observed": 1,
+          "section": "clingen"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 751,
+          "p95_ms": 751,
+          "runs_observed": 1,
+          "section": "hpa"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 638,
+          "p95_ms": 638,
+          "runs_observed": 1,
+          "section": "druggability"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 502,
+          "p95_ms": 502,
+          "runs_observed": 1,
+          "section": "go"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 489,
+          "p95_ms": 489,
+          "runs_observed": 1,
+          "section": "protein"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 457,
+          "p95_ms": 457,
+          "runs_observed": 1,
+          "section": "enrichr"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 387,
+          "p95_ms": 387,
+          "runs_observed": 1,
+          "section": "expression"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 308,
+          "p95_ms": 308,
+          "runs_observed": 1,
+          "section": "interactions"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 251,
+          "p95_ms": 251,
+          "runs_observed": 1,
+          "section": "mygene"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 221,
+          "p95_ms": 221,
+          "runs_observed": 1,
+          "section": "civic"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 187,
+          "p95_ms": 187,
+          "runs_observed": 1,
+          "section": "clinical_context"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 118,
+          "p95_ms": 118,
+          "runs_observed": 1,
+          "section": "pathways"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 110,
+          "p95_ms": 110,
+          "runs_observed": 1,
+          "section": "constraint"
+        }
+      ],
+      "successful_runs": 1
+    },
+    {
+      "approach": "parallel-top",
+      "gene": "BRAF",
+      "mode": "json",
+      "p50_wall_clock_ms": 4985.11,
+      "p95_wall_clock_ms": 4985.11,
+      "section_summary": [
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 2942,
+          "p95_ms": 2942,
+          "runs_observed": 1,
+          "section": "clingen"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 757,
+          "p95_ms": 757,
+          "runs_observed": 1,
+          "section": "hpa"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 630,
+          "p95_ms": 630,
+          "runs_observed": 1,
+          "section": "druggability"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 505,
+          "p95_ms": 505,
+          "runs_observed": 1,
+          "section": "go"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 486,
+          "p95_ms": 486,
+          "runs_observed": 1,
+          "section": "protein"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 456,
+          "p95_ms": 456,
+          "runs_observed": 1,
+          "section": "enrichr"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 323,
+          "p95_ms": 323,
+          "runs_observed": 1,
+          "section": "interactions"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 278,
+          "p95_ms": 278,
+          "runs_observed": 1,
+          "section": "mygene"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 272,
+          "p95_ms": 272,
+          "runs_observed": 1,
+          "section": "expression"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 210,
+          "p95_ms": 210,
+          "runs_observed": 1,
+          "section": "civic"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 182,
+          "p95_ms": 182,
+          "runs_observed": 1,
+          "section": "clinical_context"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 121,
+          "p95_ms": 121,
+          "runs_observed": 1,
+          "section": "pathways"
+        },
+        {
+          "completion_rate": 1.0,
+          "outcomes": {
+            "data": 1
+          },
+          "p50_ms": 108,
+          "p95_ms": 108,
+          "runs_observed": 1,
+          "section": "constraint"
+        }
+      ],
+      "successful_runs": 1
+    }
+  ],
+  "timeout_seconds": 180
+}
