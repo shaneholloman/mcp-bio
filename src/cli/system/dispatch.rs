@@ -1,7 +1,10 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use super::{BatchArgs, CvxCommand, EmaCommand, EnrichArgs, GtrCommand, VersionArgs, WhoCommand};
+use super::{
+    BatchArgs, CvxCommand, EmaCommand, EnrichArgs, GtrCommand, VersionArgs, WhoCommand,
+    WhoIvdCommand,
+};
 use crate::cli::CommandOutcome;
 use futures::future::try_join_all;
 
@@ -390,6 +393,19 @@ pub(crate) async fn handle_gtr(cmd: GtrCommand) -> anyhow::Result<CommandOutcome
         GtrCommand::Sync => {
             crate::sources::gtr::GtrClient::sync(crate::sources::gtr::GtrSyncMode::Force).await?;
             "GTR local diagnostic data synchronized successfully.\n".to_string()
+        }
+    };
+    Ok(CommandOutcome::stdout(text))
+}
+
+pub(crate) async fn handle_who_ivd(cmd: WhoIvdCommand) -> anyhow::Result<CommandOutcome> {
+    let text = match cmd {
+        WhoIvdCommand::Sync => {
+            crate::sources::who_ivd::WhoIvdClient::sync(
+                crate::sources::who_ivd::WhoIvdSyncMode::Force,
+            )
+            .await?;
+            "WHO IVD local diagnostic data synchronized successfully.\n".to_string()
         }
     };
     Ok(CommandOutcome::stdout(text))

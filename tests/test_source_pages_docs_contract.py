@@ -448,6 +448,35 @@ SOURCE_PAGE_SPECS = {
             "biomcp get drug trastuzumab regulatory --region who",
         ],
     },
+    "who-ivd.md": {
+        "title": "WHO Prequalified IVD MCP Tool for Infectious Disease Diagnostics | BioMCP",
+        "description": "Use BioMCP to search WHO prequalified infectious-disease diagnostics, fetch source-native WHO IVD product cards, and manage the local WHO IVD CSV lifecycle without learning the raw export format.",
+        "api_access": "No BioMCP API key required. BioMCP downloads the WHO IVD CSV export on first",
+        "official_url": "https://extranet.who.int/prequal/vitro-diagnostics/prequalified/in-vitro-diagnostics",
+        "required_intro_phrases": [
+            "gene-centric genetic tests",
+            "WHO-backed branch of the multi-source `diagnostic` entity",
+            "`--source all` route merges WHO IVD with GTR",
+            "WHO IVD product codes can contain spaces",
+            "quotes follow-up `get diagnostic` commands automatically",
+        ],
+        "exposes": [
+            "search diagnostic --disease <name> --source who-ivd",
+            "search diagnostic --type <assay_format> --source who-ivd",
+            "search diagnostic --manufacturer <name> --source who-ivd",
+            "get diagnostic \"<product_code>\"",
+            "get diagnostic \"<product_code>\" conditions",
+            "biomcp health",
+            "biomcp who-ivd sync",
+        ],
+        "example_commands": [
+            "biomcp search diagnostic --disease HIV --source who-ivd --limit 5",
+            "biomcp get diagnostic \"<product_code>\"",
+            "biomcp get diagnostic \"<product_code>\" conditions",
+            "biomcp who-ivd sync",
+            "biomcp health",
+        ],
+    },
     "cdc-cvx.md": {
         "title": "CDC CVX/MVX MCP Tool for Vaccine Identity Bridge | BioMCP",
         "description": "Use BioMCP to bridge vaccine brand names into EMA-backed drug matches and explicit WHO vaccine searches with the local CDC CVX, trade-name, and MVX bundle.",
@@ -597,6 +626,7 @@ EXPECTED_NAV_BLOCK = """  - Sources:
       - cBioPortal: sources/cbioportal.md
       - EMA: sources/ema.md
       - WHO Prequalification: sources/who-prequalification.md
+      - WHO Prequalified IVD: sources/who-ivd.md
       - CDC CVX/MVX: sources/cdc-cvx.md
       - KEGG: sources/kegg.md
       - PharmGKB / CPIC: sources/pharmgkb.md
@@ -689,7 +719,7 @@ def test_sources_overview_page_has_required_metadata_and_links() -> None:
     )
     assert (
         _front_matter_value(overview, "description")
-        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, CDC WONDER VAERS, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, CDC WONDER VAERS, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, WHO Prequalified IVD, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
     )
 
     assert "# Biomedical Data Sources for AI Agents" in overview

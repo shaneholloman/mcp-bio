@@ -11,6 +11,7 @@ const BLOCKED_MCP_DESCRIPTION_TERMS: &[&str] = &[
     "`who sync`",
     "`cvx sync`",
     "`gtr sync`",
+    "`who-ivd sync`",
     "`update [--check]`",
     "`uninstall`",
 ];

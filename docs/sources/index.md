@@ -1,6 +1,6 @@
 ---
 title: "Biomedical Data Sources for AI Agents | BioMCP"
-description: "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, CDC WONDER VAERS, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+description: "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, CDC WONDER VAERS, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, WHO Prequalified IVD, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
 ---
 
 # Biomedical Data Sources for AI Agents
@@ -30,6 +30,7 @@ Use these pages when you already know the provider you trust, the keyword you ar
 | cBioPortal | Cancer cohort frequencies and local study analytics workflows | [cBioPortal](cbioportal.md) |
 | EMA | EU regulatory, safety, and shortage context for medicines | [EMA](ema.md) |
 | WHO Prequalification | WHO-backed medicine and vaccine prequalification search plus global access checks | [WHO Prequalification](who-prequalification.md) |
+| WHO Prequalified IVD | Infectious-disease diagnostic products, assay formats, and WHO product-card provenance | [WHO Prequalified IVD](who-ivd.md) |
 | CDC CVX/MVX | Vaccine brand-to-antigen bridge for EMA/default lookups and explicit WHO vaccine search | [CDC CVX/MVX](cdc-cvx.md) |
 | KEGG | KEGG pathway IDs, summary cards, and pathway genes | [KEGG](kegg.md) |
 | PharmGKB / CPIC | Pharmacogenomic recommendations, frequencies, and clinical annotations | [PharmGKB / CPIC](pharmgkb.md) |

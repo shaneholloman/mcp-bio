@@ -21,6 +21,7 @@ DIRECT_SOURCE_MODULES = {
     "disgenet": "DisGeNET",
     "ema": "EMA",
     "who_pq": "WHO Prequalification",
+    "who_ivd": "WHO Prequalified IVD",
     "enrichr": "Enrichr",
     "europepmc": "Europe PMC",
     "gnomad": "gnomAD",

@@ -239,6 +239,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Reviewed on: `2026-04-17`
 - Notes: BioMCP auto-downloads `test_version.gz` and `test_condition_gene.txt` into `BIOMCP_GTR_DIR` or the default data directory on first use, refreshes stale files after 7 days, and supports explicit refresh via `biomcp gtr sync`.
 
+### WHO Prequalified IVD
+
+- BioMCP surfaces: `search diagnostic --source who-ivd|all; get diagnostic <who_ivd_product_code>; biomcp health; biomcp who-ivd sync`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: on-demand local download by BioMCP on first WHO IVD use, or manual preseed via `BIOMCP_WHO_IVD_DIR`
+- License / terms summary: WHO content generally requires attribution; commercial reuse may require permission and third-party materials can carry separate rights
+- Redistribution / reuse summary: preserve WHO attribution, review commercial-use conditions, and check third-party material rights before republishing WHO IVD-derived content
+- Official terms URL: <https://www.who.int/about/policies/publishing/copyright>
+- Reviewed on: `2026-04-18`
+- Notes: BioMCP auto-downloads `who_ivd.csv` into `BIOMCP_WHO_IVD_DIR` or the default data directory on first use, refreshes stale files after 72 hours, and supports explicit refresh via `biomcp who-ivd sync`.
+
 ### Enrichr
 
 - BioMCP surfaces: `get gene <symbol> ontology`

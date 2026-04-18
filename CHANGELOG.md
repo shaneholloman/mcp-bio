@@ -18,6 +18,9 @@
 - Added the local GTR-backed `diagnostic` entity with `search/get diagnostic`,
   first-use bundle refresh, explicit `biomcp gtr sync`, and the supporting
   health/docs/spec contract. (236)
+- Expanded `diagnostic` into a local multi-source surface with WHO Prequalified IVD
+  infectious-disease products, source-aware search/get behavior, and explicit
+  `biomcp who-ivd sync`. (237)
 - Added entity-aware HATEOAS suggestions (`_meta.next_commands`) to article
   search JSON output; gene-anchored and keyword searches return contextually
   appropriate follow-up commands. (195, 202)

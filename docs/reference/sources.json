@@ -581,6 +581,23 @@
     "notes": "BioMCP requires `test_version.gz` and `test_condition_gene.txt`, auto-downloads them on first diagnostic use, refreshes stale files after 7 days, and supports explicit refresh via `biomcp gtr sync`."
   },
   {
+    "id": "who-ivd",
+    "name": "WHO Prequalified IVD",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": ["search diagnostic --source who-ivd|all", "get diagnostic <who_ivd_product_code>", "biomcp health", "biomcp who-ivd sync"],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "public WHO CSV export; BioMCP downloads and reads a local copy on demand, or operators can preseed `BIOMCP_WHO_IVD_DIR` manually",
+    "license_summary": "WHO content generally requires attribution; commercial reuse may require permission and third-party materials can carry separate rights",
+    "redistribution_summary": "Preserve WHO attribution, review commercial-use conditions, and verify third-party material rights before republishing WHO IVD-derived content",
+    "terms_url": "https://www.who.int/about/policies/publishing/copyright",
+    "key_url": null,
+    "reviewed_on": "2026-04-18",
+    "notes": "BioMCP requires `who_ivd.csv`, auto-downloads it on first diagnostic WHO IVD use, refreshes stale files after 72 hours, and supports explicit refresh via `biomcp who-ivd sync`."
+  },
+  {
     "id": "ncbi-id-converter",
     "name": "NCBI ID Converter",
     "tier": 1,

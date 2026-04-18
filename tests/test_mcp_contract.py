@@ -119,6 +119,7 @@ async def test_biomcp_description_matches_list_contract(
         assert "who sync" not in description
         assert "cvx sync" not in description
         assert "gtr sync" not in description
+        assert "who-ivd sync" not in description
         assert "skill install" not in description
         assert "study download --list" in description
         assert "study download <study_id>" not in description
@@ -203,6 +204,20 @@ async def test_gtr_sync_is_rejected_in_mcp_mode(mcp_session_factory) -> None:
         result = await session.call_tool(
             "biomcp",
             arguments={"command": "biomcp gtr sync"},
+        )
+
+    assert _is_error(result) is True
+    assert result.content
+    assert isinstance(result.content[0], types.TextContent)
+    assert "BioMCP allows read-only commands only" in result.content[0].text
+
+
+@pytest.mark.asyncio
+async def test_who_ivd_sync_is_rejected_in_mcp_mode(mcp_session_factory) -> None:
+    async with mcp_session_factory() as (session, _initialize_result):
+        result = await session.call_tool(
+            "biomcp",
+            arguments={"command": "biomcp who-ivd sync"},
         )
 
     assert _is_error(result) is True

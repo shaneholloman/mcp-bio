@@ -8,6 +8,7 @@ volatile upstream data values.
 | Section | Command focus | Why it matters |
 |---|---|---|
 | Markdown labels | `get <entity>` | Confirms visible source attribution at section boundaries |
+| Search labels | `search <entity>` | Confirms source-aware search surfaces expose visible provenance |
 | JSON section_sources | `get <entity> --json` | Confirms `_meta.section_sources` with stable key/label/sources fields |
 
 ## Markdown Source Labels
@@ -55,6 +56,20 @@ ae_out="$("$bin" get adverse-event 10329882)"
 echo "$ae_out" | mustmatch like "## Reactions (OpenFDA)"
 ```
 
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+gtr_diag_out="$("$bin" get diagnostic GTR000000001.1)"
+echo "$gtr_diag_out" | mustmatch like "Source: NCBI Genetic Testing Registry"
+
+who_diag_out="$("$bin" get diagnostic 'ITPW02232- TC40' conditions)"
+echo "$who_diag_out" | mustmatch like "Source: WHO Prequalified IVD"
+echo "$who_diag_out" | mustmatch like "## Conditions"
+```
+
 ## Search Source Labels
 
 VAERS search output should make the dataset boundary explicit instead of
@@ -67,6 +82,19 @@ bash fixtures/setup-vaers-spec-fixture.sh "$PWD"
 search_out="$("$bin" search adverse-event "MMR vaccine" --source vaers --limit 5)"
 echo "$search_out" | mustmatch like "## CDC VAERS Summary"
 echo "$search_out" | mustmatch like "Source: CDC VAERS"
+```
+
+Diagnostic WHO search output should expose source-aware rows and shell-safe
+quoted follow-up commands when the identifier contains spaces.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-ivd-env"
+search_out="$("$bin" search diagnostic --disease HIV --source who-ivd --limit 5)"
+echo "$search_out" | mustmatch like "|Source|"
+echo "$search_out" | mustmatch like "WHO Prequalified IVD"
+echo "$search_out" | mustmatch like 'Use `biomcp get diagnostic "ITPW02232- TC40"` for details.'
 ```
 
 ## JSON section_sources — Gene, Drug, Disease
@@ -117,7 +145,26 @@ echo "$disease_json" | mustmatch like "MyDisease.info"
 echo "$disease_json" | mustmatch like "ClinicalTrials.gov"
 ```
 
-## JSON section_sources — Variant, Trial, Article
+## JSON section_sources — Diagnostic, Variant, Trial, Article
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+gtr_diag_json="$("$bin" get diagnostic GTR000000001.1 genes --json)"
+echo "$gtr_diag_json" | mustmatch like '"section_sources": ['
+echo "$gtr_diag_json" | mustmatch like '"key": "summary"'
+echo "$gtr_diag_json" | mustmatch like '"key": "genes"'
+echo "$gtr_diag_json" | mustmatch like "NCBI Genetic Testing Registry"
+
+who_diag_json="$("$bin" get diagnostic 'ITPW02232- TC40' conditions --json)"
+echo "$who_diag_json" | mustmatch like '"section_sources": ['
+echo "$who_diag_json" | mustmatch like '"key": "summary"'
+echo "$who_diag_json" | mustmatch like '"key": "conditions"'
+echo "$who_diag_json" | mustmatch like "WHO Prequalified IVD"
+```
 
 ```bash
 variant_json="$(biomcp get variant rs334 --json)"

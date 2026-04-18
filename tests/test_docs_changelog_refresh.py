@@ -72,8 +72,10 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
     assert "CDC CVX/MVX vaccine identity bridge" in latest_release_block
     assert "biomcp cvx sync" in latest_new_features_block
     assert "local GTR-backed `diagnostic` entity" in latest_release_block
+    assert "WHO Prequalified IVD" in latest_release_block
     assert "biomcp gtr sync" in latest_new_features_block
-    assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221, 233, 235, 236}
+    assert "biomcp who-ivd sync" in latest_release_block
+    assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221, 233, 235, 236, 237}
     assert "pending separate merge" not in latest_release_block
     assert "0.8.22" not in latest_release_block
 
@@ -175,33 +177,37 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
     diagnostic_arch = _read("architecture/functional/diagnostic.md")
 
     for text in (readme, docs_index):
-        assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle |" in text
+        assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO Prequalified IVD local CSV |" in text
         assert "13 remote entity commands" in text
         assert "12 remote entity commands" not in text
 
     assert "biomcp gtr sync" in cli_reference
+    assert "biomcp who-ivd sync" in cli_reference
     assert "GTR local data" in cli_reference
+    assert "WHO IVD local data" in cli_reference
     assert "13 remote entity commands" in cli_reference
     assert "12 remote entity commands" not in cli_reference
 
     assert "13 remote entity commands" in functional
     assert "12 entity types" not in functional
     assert "15+ biomedical databases" not in functional
-    assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle |" in functional
+    assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO Prequalified IVD local CSV |" in functional
 
     assert "biomcp gtr sync" in ux_reference
+    assert "biomcp who-ivd sync" in ux_reference
     assert "all 13 remote entity commands" in ux_reference
     assert "all 12 entity types" not in ux_reference
 
     assert "Diagnostic: user-guide/diagnostic.md" in mkdocs
+    assert "WHO Prequalified IVD: sources/who-ivd.md" in mkdocs
     assert "15 biomedical databases" not in mkdocs
 
     assert diagnostic_guide.startswith("# Diagnostic")
     assert "biomcp search diagnostic --gene BRCA1 --limit 5" in diagnostic_guide
-    assert "biomcp search diagnostic --gene EGFR --type Clinical --limit 5" in diagnostic_guide
-    assert "biomcp search diagnostic --gene EGFR --type molecular --limit 5" not in diagnostic_guide
-    assert "current GTR export" in diagnostic_guide
+    assert "biomcp search diagnostic --disease HIV --source who-ivd --limit 5" in diagnostic_guide
+    assert 'biomcp get diagnostic "ITPW02232- TC40"' in diagnostic_guide
     assert "biomcp gtr sync" in diagnostic_guide
+    assert "biomcp who-ivd sync" in diagnostic_guide
     assert diagnostic_arch.startswith("# Diagnostic Functional Note")
 
 
