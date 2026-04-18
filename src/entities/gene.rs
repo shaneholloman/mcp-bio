@@ -480,6 +480,17 @@ where
     )
 }
 
+fn classify_clingen_section(section: &GeneClinGen) -> String {
+    if !section.validity.is_empty()
+        || section.haploinsufficiency.is_some()
+        || section.triplosensitivity.is_some()
+    {
+        "data".to_string()
+    } else {
+        "empty".to_string()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnrichmentResult {
     pub library: String,
@@ -1432,6 +1443,7 @@ async fn populate_sections_parallel_top(
     include: &[GeneIncludeType],
     timing: &mut GeneTimingCollector,
     opentargets_id: Option<&str>,
+    prefetched_clingen: Option<tokio::task::JoinHandle<(GeneClinGen, GeneTimingEntry)>>,
 ) -> Result<(), BioMcpError> {
     let symbol = gene.symbol.clone();
     let ensembl_id = gene.ensembl_id.clone();
@@ -1560,18 +1572,28 @@ async fn populate_sections_parallel_top(
     let clingen_fut = async {
         if !include.contains(&GeneIncludeType::ClinGen) {
             None
+        } else if let Some(prefetched) = prefetched_clingen {
+            match prefetched.await {
+                Ok(value) => Some(value),
+                Err(err) => {
+                    warn!("ClinGen prefetch task failed: {err}");
+                    Some((
+                        GeneClinGen::default(),
+                        GeneTimingEntry {
+                            section: "clingen".to_string(),
+                            elapsed_ms: 0,
+                            outcome: "error".to_string(),
+                        },
+                    ))
+                }
+            }
         } else {
             Some(
-                timed_section("clingen", fetch_clingen_section(&symbol), |section| {
-                    if !section.validity.is_empty()
-                        || section.haploinsufficiency.is_some()
-                        || section.triplosensitivity.is_some()
-                    {
-                        "data".to_string()
-                    } else {
-                        "empty".to_string()
-                    }
-                })
+                timed_section(
+                    "clingen",
+                    fetch_clingen_section(&symbol),
+                    classify_clingen_section,
+                )
                 .await,
             )
         }
@@ -1867,6 +1889,21 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
     let strategy = gene_get_strategy();
     let mut timing = GeneTimingCollector::new(symbol);
     let include = parse_sections(symbol, sections)?;
+    let use_parallel_top =
+        strategy == GeneGetStrategy::ParallelTop && should_use_parallel_top(&include);
+    let mut clingen_prefetch = if use_parallel_top && include.contains(&GeneIncludeType::ClinGen) {
+        let symbol = symbol.trim().to_string();
+        Some(tokio::spawn(async move {
+            timed_section(
+                "clingen",
+                fetch_clingen_section(&symbol),
+                classify_clingen_section,
+            )
+            .await
+        }))
+    } else {
+        None
+    };
 
     let client = MyGeneClient::new()?;
     let started = Instant::now();
@@ -1876,14 +1913,28 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
         started,
         if resp.is_ok() { "data" } else { "error" },
     );
-    let resp = resp?;
+    let resp = match resp {
+        Ok(resp) => resp,
+        Err(err) => {
+            if let Some(handle) = clingen_prefetch.take() {
+                handle.abort();
+            }
+            return Err(err);
+        }
+    };
 
     let mut gene = transform::gene::from_mygene_get(resp);
     let opentargets_id = preferred_opentargets_id(&gene, strategy).map(str::to_string);
 
-    if strategy == GeneGetStrategy::ParallelTop && should_use_parallel_top(&include) {
-        populate_sections_parallel_top(&mut gene, &include, &mut timing, opentargets_id.as_deref())
-            .await?;
+    if use_parallel_top {
+        populate_sections_parallel_top(
+            &mut gene,
+            &include,
+            &mut timing,
+            opentargets_id.as_deref(),
+            clingen_prefetch,
+        )
+        .await?;
         timing.finish();
         return Ok(gene);
     }
