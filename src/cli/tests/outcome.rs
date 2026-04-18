@@ -12,6 +12,7 @@ use super::super::test_support::{
 use super::super::{
     Cli, OutputStream, PaginationMeta, execute, execute_mcp, extract_json_from_sections,
     resolve_query_input, run_outcome, search_json, search_json_with_meta, search_meta,
+    search_meta_with_suggestions,
 };
 
 #[test]
@@ -99,6 +100,19 @@ fn search_meta_trims_empty_commands() {
         value["next_commands"][1],
         serde_json::Value::String("biomcp list gene".into())
     );
+    assert!(value.get("suggestions").is_none());
+}
+
+#[test]
+fn search_meta_with_suggestions_keeps_empty_suggestions_array() {
+    let meta = search_meta_with_suggestions(
+        vec!["biomcp get article 12345".to_string()],
+        Some(vec![String::new(), "   ".to_string()]),
+    )
+    .expect("search meta should be present");
+
+    let value = serde_json::to_value(meta).expect("meta json");
+    assert_eq!(value["suggestions"].as_array().map(Vec::len), Some(0));
 }
 
 #[test]

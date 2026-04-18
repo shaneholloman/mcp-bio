@@ -9,10 +9,11 @@ pub(in crate::cli) async fn handle_get(
     let json_output = json || json_override;
     let disease = crate::entities::disease::get(&args.name_or_id, &sections).await?;
     let text = if json_output {
-        crate::render::json::to_entity_json(
+        crate::render::json::to_entity_json_with_suggestions(
             &disease,
             crate::render::markdown::disease_evidence_urls(&disease),
             crate::render::markdown::disease_next_commands(&disease, &sections),
+            crate::render::markdown::related_disease(&disease),
             crate::render::provenance::disease_section_sources(&disease),
         )?
     } else {

@@ -447,6 +447,9 @@ out="$("$bin" --json get disease MONDO:0008222 phenotypes)"
 echo "$out" | mustmatch like '"key_features": ['
 echo "$out" | jq -e '.key_features | length >= 3' > /dev/null
 echo "$out" | jq -e '.key_features | any(test("periodic muscle paralysis"; "i"))' > /dev/null
+echo "$out" | jq -e '._meta.suggestions | type == "array"' > /dev/null
+echo "$out" | jq -e '[._meta.suggestions[] | select(test("^biomcp search trial -c "))] | length > 0' > /dev/null
+echo "$out" | jq -e '[._meta.suggestions[] | select(test("^biomcp get disease .+ genes$"))] | length == 0' > /dev/null
 ```
 
 ## Disease Phenotypes Keep Gene Pivot

@@ -114,6 +114,53 @@ fn gene_json_next_commands_omit_requested_section_follow_up() {
 }
 
 #[test]
+fn gene_json_suggestions_match_see_also_without_section_hints() {
+    let gene = Gene {
+        symbol: "BRAF".to_string(),
+        name: "B-Raf proto-oncogene".to_string(),
+        entrez_id: "673".to_string(),
+        ensembl_id: Some("ENSG00000157764".to_string()),
+        location: Some("7q34".to_string()),
+        genomic_coordinates: None,
+        omim_id: Some("164757".to_string()),
+        uniprot_id: Some("P15056".to_string()),
+        summary: None,
+        gene_type: None,
+        aliases: Vec::new(),
+        clinical_diseases: Vec::new(),
+        clinical_drugs: Vec::new(),
+        pathways: None,
+        ontology: None,
+        diseases: None,
+        protein: None,
+        go: None,
+        interactions: None,
+        civic: None,
+        expression: None,
+        hpa: None,
+        druggability: None,
+        clingen: None,
+        constraint: None,
+        disgenet: None,
+        funding: None,
+        funding_note: None,
+    };
+
+    let json = crate::render::json::to_entity_json_with_suggestions(
+        &gene,
+        crate::render::markdown::gene_evidence_urls(&gene),
+        crate::render::markdown::gene_next_commands(&gene, &[]),
+        crate::render::markdown::related_gene(&gene),
+        crate::render::provenance::gene_section_sources(&gene),
+    )
+    .expect("gene json");
+    let suggestions = collect_suggestions(&json);
+
+    assert!(suggestions.contains(&"biomcp search pgx -g BRAF".to_string()));
+    assert!(!suggestions.contains(&"biomcp get gene BRAF pathways".to_string()));
+}
+
+#[test]
 fn gene_json_next_commands_include_clingen_trial_search() {
     let gene = Gene {
         symbol: "SCN1A".to_string(),

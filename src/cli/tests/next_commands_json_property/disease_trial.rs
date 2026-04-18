@@ -117,6 +117,51 @@ fn disease_json_next_commands_omit_requested_section_follow_up() {
 }
 
 #[test]
+fn disease_json_suggestions_match_see_also_without_more_hints() {
+    let disease = Disease {
+        id: "MONDO:0005105".to_string(),
+        name: "melanoma".to_string(),
+        definition: None,
+        synonyms: Vec::new(),
+        parents: Vec::new(),
+        associated_genes: Vec::new(),
+        gene_associations: Vec::new(),
+        top_genes: Vec::new(),
+        top_gene_scores: Vec::new(),
+        treatment_landscape: Vec::new(),
+        recruiting_trial_count: None,
+        pathways: Vec::new(),
+        phenotypes: Vec::new(),
+        key_features: Vec::new(),
+        variants: Vec::new(),
+        top_variant: None,
+        models: Vec::new(),
+        prevalence: Vec::new(),
+        prevalence_note: None,
+        survival: None,
+        survival_note: None,
+        civic: None,
+        disgenet: None,
+        funding: None,
+        funding_note: None,
+        xrefs: std::collections::HashMap::new(),
+    };
+
+    let json = crate::render::json::to_entity_json_with_suggestions(
+        &disease,
+        crate::render::markdown::disease_evidence_urls(&disease),
+        crate::render::markdown::disease_next_commands(&disease, &[]),
+        crate::render::markdown::related_disease(&disease),
+        crate::render::provenance::disease_section_sources(&disease),
+    )
+    .expect("disease json");
+    let suggestions = collect_suggestions(&json);
+
+    assert!(suggestions.contains(&"biomcp search trial -c \"melanoma\"".to_string()));
+    assert!(!suggestions.contains(&"biomcp get disease MONDO:0005105 genes".to_string()));
+}
+
+#[test]
 fn disease_json_next_commands_include_top_gene_context() {
     let disease = Disease {
         id: "MONDO:0100135".to_string(),

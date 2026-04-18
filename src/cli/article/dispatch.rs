@@ -115,6 +115,8 @@ pub(in crate::cli) async fn handle_search(
     } else {
         None
     };
+    let suggestions =
+        crate::render::markdown::related_article_search_results(&results, &filters, source_filter);
     let next_commands =
         crate::render::markdown::search_next_commands_article(&results, &filters, source_filter);
 
@@ -129,6 +131,7 @@ pub(in crate::cli) async fn handle_search(
                 results,
                 pagination,
                 next_commands,
+                suggestions,
             },
         )?
     } else {
@@ -356,6 +359,7 @@ pub(super) struct ArticleSearchJsonPage {
     pub results: Vec<crate::entities::article::ArticleSearchResult>,
     pub pagination: crate::cli::PaginationMeta,
     pub next_commands: Vec<String>,
+    pub suggestions: Vec<String>,
 }
 
 pub(super) fn article_search_json(
@@ -395,7 +399,7 @@ pub(super) fn article_search_json(
         count,
         results: page.results,
         debug_plan,
-        _meta: crate::cli::search_meta(page.next_commands),
+        _meta: crate::cli::search_meta_with_suggestions(page.next_commands, Some(page.suggestions)),
     })
     .map_err(Into::into)
 }

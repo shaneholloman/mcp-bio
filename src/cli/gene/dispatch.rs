@@ -252,10 +252,11 @@ pub(super) async fn render_gene_card_outcome(
     match crate::entities::gene::get(symbol, sections).await {
         Ok(gene) => {
             let text = if json_output {
-                crate::render::json::to_entity_json(
+                crate::render::json::to_entity_json_with_suggestions(
                     &gene,
                     crate::render::markdown::gene_evidence_urls(&gene),
                     crate::render::markdown::gene_next_commands(&gene, sections),
+                    crate::render::markdown::related_gene(&gene),
                     crate::render::provenance::gene_section_sources(&gene),
                 )?
             } else {

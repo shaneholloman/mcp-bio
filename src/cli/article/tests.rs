@@ -266,6 +266,11 @@ fn article_search_json_includes_query_and_ranking_context() {
         &filters,
         crate::entities::article::ArticleSourceFilter::All,
     );
+    let suggestions = crate::render::markdown::related_article_search_results(
+        &results,
+        &filters,
+        crate::entities::article::ArticleSourceFilter::All,
+    );
     let json = article_search_json(
         &query,
         &filters,
@@ -278,6 +283,7 @@ fn article_search_json_includes_query_and_ranking_context() {
             results,
             pagination,
             next_commands,
+            suggestions,
         },
     )
     .expect("article search json should render");
@@ -321,6 +327,12 @@ fn article_search_json_includes_query_and_ranking_context() {
             .is_some_and(|commands| commands
                 .contains(&serde_json::Value::String("biomcp list article".into())))
     );
+    assert!(
+        value["_meta"]["suggestions"]
+            .as_array()
+            .is_some_and(|commands| !commands
+                .contains(&serde_json::Value::String("biomcp list article".into())))
+    );
 }
 
 #[test]
@@ -361,6 +373,11 @@ fn article_search_json_next_commands_include_entity_hints() {
         &filters,
         crate::entities::article::ArticleSourceFilter::All,
     );
+    let suggestions = crate::render::markdown::related_article_search_results(
+        &results,
+        &filters,
+        crate::entities::article::ArticleSourceFilter::All,
+    );
     let json = article_search_json(
         &query,
         &filters,
@@ -371,6 +388,7 @@ fn article_search_json_next_commands_include_entity_hints() {
             results,
             pagination,
             next_commands,
+            suggestions,
         },
     )
     .expect("article search json should render");
@@ -402,6 +420,20 @@ fn article_search_json_next_commands_include_entity_hints() {
         value["_meta"]["next_commands"]
             .as_array()
             .is_some_and(|commands| commands
+                .contains(&serde_json::Value::String("biomcp list article".into())))
+    );
+    assert_eq!(
+        value["_meta"]["suggestions"][1],
+        serde_json::Value::String("biomcp get gene SRY".into())
+    );
+    assert_eq!(
+        value["_meta"]["suggestions"][2],
+        serde_json::Value::String("biomcp search article -g SRY -k \"Sox9 miRNA\"".into())
+    );
+    assert!(
+        value["_meta"]["suggestions"]
+            .as_array()
+            .is_some_and(|commands| !commands
                 .contains(&serde_json::Value::String("biomcp list article".into())))
     );
 }
@@ -444,6 +476,11 @@ fn article_search_json_next_commands_preserve_source_filter() {
         &filters,
         crate::entities::article::ArticleSourceFilter::PubMed,
     );
+    let suggestions = crate::render::markdown::related_article_search_results(
+        &results,
+        &filters,
+        crate::entities::article::ArticleSourceFilter::PubMed,
+    );
     let json = article_search_json(
         &query,
         &filters,
@@ -454,6 +491,7 @@ fn article_search_json_next_commands_preserve_source_filter() {
             results,
             pagination,
             next_commands,
+            suggestions,
         },
     )
     .expect("article search json should render");

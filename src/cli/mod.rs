@@ -57,7 +57,7 @@ use self::shared::{
     log_pagination_truncation, normalize_cli_query, normalize_cli_tokens, paged_fetch_limit,
     paginate_results, pagination_footer_cursor, pagination_footer_offset, related_article_filters,
     render_batch_json, resolve_query_input, search_json, search_json_with_meta, search_meta,
-    try_alias_fallback_outcome,
+    search_meta_with_suggestions, try_alias_fallback_outcome,
 };
 
 #[cfg(test)]

@@ -68,6 +68,9 @@ echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get article [0
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list article")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get gene SRY")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp search article -g SRY -k \"Sox9 miRNA\"")' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp get gene SRY")' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp search article -g SRY -k \"Sox9 miRNA\"")' > /dev/null
+echo "$json_out" | jq -e '[._meta.suggestions[] | select(. == "biomcp list article")] | length == 0' > /dev/null
 ```
 
 ## Article Search Drug Keyword Pivot
@@ -86,6 +89,7 @@ echo "$out" | mustmatch not like "biomcp get gene DNA"
 json_out="$("$bin" --json search article -k "psoralen photobinding DNA" --limit 1)"
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get drug psoralen")' > /dev/null
 echo "$json_out" | jq -e '[._meta.next_commands[] | select(. == "biomcp get gene DNA")] | length == 0' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp get drug psoralen")' > /dev/null
 ```
 
 ## Searching by Keyword
