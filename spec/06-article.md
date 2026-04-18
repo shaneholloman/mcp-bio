@@ -8,6 +8,7 @@ Article commands provide literature retrieval and annotation-focused enrichment 
 | Keyword search | `search article -q "alternative microexon splicing metastasis" --source litsense2` | Confirms source-scoped free-text discovery |
 | Gene keyword pivot | `search article -k "SRY Sox9 miRNA"` | Confirms article search can suggest typed gene pivots from recognizable keyword tokens |
 | Drug keyword pivot | `search article -k "psoralen photobinding DNA"` | Confirms article search can suggest typed drug pivots without false-positive gene hints |
+| Discover keyword pivot | `search article -k "live attenuated vaccines"` | Confirms article search can point short entity-like keyword clauses back to `discover` |
 | PubTator source search | `search article --source pubtator` | Confirms default filtering still allows source-specific PubTator results |
 | Federated source preservation | `--json search article -q ...` | Confirms default filtering still preserves non-EuropePMC matches |
 | Article detail | `get article 22663011` | Confirms canonical article card output |
@@ -90,6 +91,22 @@ json_out="$("$bin" --json search article -k "psoralen photobinding DNA" --limit 
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get drug psoralen")' > /dev/null
 echo "$json_out" | jq -e '[._meta.next_commands[] | select(. == "biomcp get gene DNA")] | length == 0' > /dev/null
 echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp get drug psoralen")' > /dev/null
+```
+
+## Article Search Discover Keyword Pivot
+
+When keyword search contains a short entity-like phrase that is better handled
+by structured entity resolution, BioMCP should suggest `discover` in the
+markdown `See also:` block.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search article -k "live attenuated vaccines" --limit 1)"
+printf '%s\n' "$out" | grep -q '^See also:$'
+echo "$out" | mustmatch like 'biomcp discover "live attenuated vaccines"'
+
+guard_out="$("$bin" search article -k "live attenuated vaccines still in use review" --limit 1)"
+echo "$guard_out" | mustmatch not like 'biomcp discover "live attenuated vaccines still in use review"'
 ```
 
 ## Searching by Keyword

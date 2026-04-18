@@ -335,6 +335,16 @@ pub(super) fn related_article_search_results(
     dedupe_markdown_commands(out)
 }
 
+pub(super) fn markdown_related_article_search_results(
+    results: &[ArticleSearchResult],
+    filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
+) -> Vec<String> {
+    let mut out = related_article_search_results(results, filters, source_filter);
+    out.extend(article_support::article_keyword_cross_entity_markdown_hints(filters));
+    dedupe_markdown_commands(out)
+}
+
 pub(super) fn search_next_commands_article(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
