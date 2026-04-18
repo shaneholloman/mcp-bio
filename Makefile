@@ -80,16 +80,16 @@ install:
 	install -m 755 target/release/biomcp "$(HOME)/.local/bin/biomcp"
 
 spec:
-	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" RUST_LOG=error \
-		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 120 -v $(SPEC_XDIST_ARGS) --ignore spec/05-drug.md --ignore spec/13-study.md --ignore spec/21-cross-entity-see-also.md'
-	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" RUST_LOG=error \
-		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest $(SPEC_SERIAL_FILES) --mustmatch-lang bash --mustmatch-timeout 120 -v'
+	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" RUST_LOG=error \
+		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 120 -v $(SPEC_XDIST_ARGS) --ignore spec/05-drug.md --ignore spec/13-study.md --ignore spec/21-cross-entity-see-also.md'
+	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" RUST_LOG=error \
+		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest $(SPEC_SERIAL_FILES) --mustmatch-lang bash --mustmatch-timeout 120 -v'
 
 spec-pr:
-	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" RUST_LOG=error \
-		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v $(SPEC_XDIST_ARGS) $(SPEC_PR_DESELECT_ARGS) --ignore spec/05-drug.md --ignore spec/13-study.md --ignore spec/21-cross-entity-see-also.md'
-	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" RUST_LOG=error \
-		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" pytest $(SPEC_SERIAL_FILES) --mustmatch-lang bash --mustmatch-timeout 60 -v'
+	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" RUST_LOG=error \
+		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v $(SPEC_XDIST_ARGS) $(SPEC_PR_DESELECT_ARGS) --ignore spec/05-drug.md --ignore spec/13-study.md --ignore spec/21-cross-entity-see-also.md'
+	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" RUST_LOG=error \
+		uv run --extra dev sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest $(SPEC_SERIAL_FILES) --mustmatch-lang bash --mustmatch-timeout 60 -v'
 
 validate-skills:
 	XDG_CACHE_HOME="$(CURDIR)/.cache" PATH="$(CURDIR)/target/release:$(PATH)" \

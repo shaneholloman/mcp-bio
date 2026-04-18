@@ -215,9 +215,10 @@ complete EMA root must contain:
 ## 14) WHO drug data not available
 
 WHO regional regulatory search/get flows depend on the local WHO
-finished-pharmaceutical-products CSV plus the active-pharmaceutical-ingredients
-CSV. BioMCP auto-downloads both exports on first use for `--region who|all`
-drug workflows and for the default plain-name U.S.+EU+WHO drug search:
+finished-pharmaceutical-products CSV, the active-pharmaceutical-ingredients
+CSV, and the vaccine CSV. BioMCP auto-downloads all three exports on first use
+for `--region who|all` drug workflows, explicit WHO vaccine search
+(`--product-type vaccine`), and the default plain-name U.S.+EU+WHO drug search:
 
 ```bash
 biomcp health
@@ -225,12 +226,12 @@ biomcp health
 
 Interpret the WHO row like this:
 
-- `configured`: `BIOMCP_WHO_DIR` is set and both WHO exports are present
+- `configured`: `BIOMCP_WHO_DIR` is set and all three WHO exports are present
 - `configured (stale)`: `BIOMCP_WHO_DIR` is set and complete, but at least one WHO export is older than the 72-hour refresh window
-- `available (default path)`: BioMCP found both WHO exports in the default platform data directory
+- `available (default path)`: BioMCP found all three WHO exports in the default platform data directory
 - `available (default path, stale)`: the default-path WHO root is complete, but at least one export is older than the 72-hour refresh window
 - `not configured`: no complete WHO root was found at the default path, so WHO regional drug features are currently unavailable but the install is not considered broken
-- `error (missing: ...)`: BioMCP found a partial WHO root or unreadable file; install both exports or point `BIOMCP_WHO_DIR` at a complete root
+- `error (missing: ...)`: BioMCP found a partial WHO root or unreadable file; install all three exports or point `BIOMCP_WHO_DIR` at a complete root
 
 If a refresh fails, retry explicitly:
 
@@ -250,13 +251,16 @@ complete WHO root must contain:
 
 - `who_pq.csv`
 - `who_api.csv`
+- `who_vaccines.csv`
 
 ## 15) CDC CVX/MVX vaccine bridge data not available
 
 Default plain-name vaccine searches that include the EU path and explicit
 `search drug <brand> --region eu|all` vaccine searches can use the local CDC
-CVX/MVX bundle after MyChem identity resolution misses. Full `biomcp health`
-is the right readiness surface when you need to debug the local CDC state:
+CVX/MVX bundle after MyChem identity resolution misses. Explicit WHO vaccine
+name/brand searches with `--region who --product-type vaccine` can use the same
+bridge. Full `biomcp health` is the right readiness surface when you need to
+debug the local CDC state:
 
 ```bash
 biomcp health
@@ -268,7 +272,7 @@ Interpret the CDC row like this:
 - `configured (stale)`: `BIOMCP_CVX_DIR` is set and complete, but at least one CDC file is older than the 30-day refresh window
 - `available (default path)`: BioMCP found a complete CDC CVX/MVX bundle in the default platform data directory
 - `available (default path, stale)`: the default-path CDC bundle is complete, but at least one file is older than the 30-day refresh window
-- `not configured`: no complete CDC root was found at the default path, so the EMA vaccine-brand bridge is currently unavailable but the install is not considered broken
+- `not configured`: no complete CDC root was found at the default path, so the EMA/default/WHO vaccine-brand bridge is currently unavailable but the install is not considered broken
 - `error (missing: ...)`: BioMCP found a partial CDC root or unreadable file; install the missing files or point `BIOMCP_CVX_DIR` at a complete bundle
 
 If a refresh fails, retry explicitly:
@@ -291,8 +295,10 @@ complete CDC root must contain:
 - `TRADENAME.txt`
 - `mvx.txt`
 
-The CDC bundle only augments the EMA-side vaccine identity path. It does not
-change WHO lookups, and pure `--region us` searches do not use the CVX root.
+The CDC bundle augments the EMA/default vaccine identity path plus explicit WHO
+vaccine name/brand search when `--product-type vaccine` is set. It does not
+change WHO finished-pharma/API lookups or `get drug`, and pure `--region us`
+searches do not use the CVX root.
 
 ## 16) GTR diagnostic data not available
 

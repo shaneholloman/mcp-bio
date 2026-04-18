@@ -10,8 +10,10 @@ const WHO_EXPORT_PATH: &str =
     "/prequal/medicines/prequalified/finished-pharmaceutical-products/export";
 const WHO_API_EXPORT_PATH: &str =
     "/prequal/medicines/prequalified/active-pharmaceutical-ingredients/export";
+const WHO_VACCINES_EXPORT_PATH: &str = "/prequal/vaccines/prequalified/export";
 const WHO_CSV_FILE: &str = "who_pq.csv";
 const WHO_API_CSV_FILE: &str = "who_api.csv";
+const WHO_VACCINES_CSV_FILE: &str = "who_vaccines.csv";
 
 struct CommandResult {
     stdout: String,
@@ -79,6 +81,10 @@ fn export_api_url(server: &MockServer) -> String {
     format!("{}{}?page&_format=csv", server.uri(), WHO_API_EXPORT_PATH)
 }
 
+fn export_vaccines_url(server: &MockServer) -> String {
+    format!("{}{}", server.uri(), WHO_VACCINES_EXPORT_PATH)
+}
+
 async fn mount_success_server() -> MockServer {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
@@ -96,6 +102,15 @@ async fn mount_success_server() -> MockServer {
             ResponseTemplate::new(200)
                 .insert_header("content-type", "text/csv; charset=utf-8")
                 .set_body_string(load_fixture_body(WHO_API_CSV_FILE)),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path(WHO_VACCINES_EXPORT_PATH))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/csv; charset=utf-8")
+                .set_body_string(load_fixture_body(WHO_VACCINES_CSV_FILE)),
         )
         .mount(&server)
         .await;
@@ -122,6 +137,15 @@ async fn mount_failure_server(status: u16) -> MockServer {
         )
         .mount(&server)
         .await;
+    Mock::given(method("GET"))
+        .and(path(WHO_VACCINES_EXPORT_PATH))
+        .respond_with(
+            ResponseTemplate::new(status)
+                .insert_header("content-type", "text/plain")
+                .set_body_string("who upstream failure"),
+        )
+        .mount(&server)
+        .await;
     server
 }
 
@@ -138,6 +162,7 @@ fn run_biomcp(
     command.env_remove("BIOMCP_WHO_DIR");
     command.env_remove("BIOMCP_WHO_PQ_URL");
     command.env_remove("BIOMCP_WHO_PQ_API_URL");
+    command.env_remove("BIOMCP_WHO_VACCINES_URL");
     command.env_remove("BIOMCP_CACHE_MODE");
     command.env_remove("RUST_LOG");
     for (name, value) in extra_envs {
@@ -154,7 +179,12 @@ async fn request_count(server: &MockServer) -> usize {
         .await
         .expect("server should record requests")
         .into_iter()
-        .filter(|request| matches!(request.url.path(), WHO_EXPORT_PATH | WHO_API_EXPORT_PATH))
+        .filter(|request| {
+            matches!(
+                request.url.path(),
+                WHO_EXPORT_PATH | WHO_API_EXPORT_PATH | WHO_VACCINES_EXPORT_PATH
+            )
+        })
         .count()
 }
 
@@ -164,7 +194,12 @@ async fn requests(server: &MockServer) -> Vec<Request> {
         .await
         .expect("server should record requests")
         .into_iter()
-        .filter(|request| matches!(request.url.path(), WHO_EXPORT_PATH | WHO_API_EXPORT_PATH))
+        .filter(|request| {
+            matches!(
+                request.url.path(),
+                WHO_EXPORT_PATH | WHO_API_EXPORT_PATH | WHO_VACCINES_EXPORT_PATH
+            )
+        })
         .collect()
 }
 
@@ -204,6 +239,7 @@ async fn clean_who_search_downloads_missing_csv() {
     let cache_home = TempDirGuard::new("clean-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
+    let who_vaccines_export_url = export_vaccines_url(&server);
 
     let result = run_biomcp(
         &[
@@ -220,6 +256,7 @@ async fn clean_who_search_downloads_missing_csv() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
         ],
     );
 
@@ -227,12 +264,13 @@ async fn clean_who_search_downloads_missing_csv() {
     assert!(
         result
             .stderr
-            .contains("Downloading WHO Prequalification data (~134 KB + ~22 KB)...")
+            .contains("Downloading WHO Prequalification data (~134 KB + ~22 KB + ~47 KB)...")
     );
     let who_root = default_who_root(data_home.path());
     assert!(who_root.join(WHO_CSV_FILE).is_file());
     assert!(who_root.join(WHO_API_CSV_FILE).is_file());
-    assert_eq!(request_count(&server).await, 2);
+    assert!(who_root.join(WHO_VACCINES_CSV_FILE).is_file());
+    assert_eq!(request_count(&server).await, 3);
 }
 
 #[tokio::test]
@@ -242,6 +280,7 @@ async fn second_run_within_ttl_skips_download() {
     let cache_home = TempDirGuard::new("fresh-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
+    let who_vaccines_export_url = export_vaccines_url(&server);
 
     let first = run_biomcp(
         &[
@@ -258,6 +297,7 @@ async fn second_run_within_ttl_skips_download() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
         ],
     );
     assert_trastuzumab_search(&first);
@@ -277,6 +317,7 @@ async fn second_run_within_ttl_skips_download() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
         ],
     );
     assert_trastuzumab_search(&second);
@@ -290,7 +331,7 @@ async fn second_run_within_ttl_skips_download() {
             .stderr
             .contains("Refreshing stale WHO Prequalification data")
     );
-    assert_eq!(request_count(&server).await, 2);
+    assert_eq!(request_count(&server).await, 3);
 }
 
 #[tokio::test]
@@ -300,6 +341,7 @@ async fn stale_who_csv_refreshes_on_next_search() {
     let cache_home = TempDirGuard::new("stale-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
+    let who_vaccines_export_url = export_vaccines_url(&server);
 
     let first = run_biomcp(
         &[
@@ -316,12 +358,13 @@ async fn stale_who_csv_refreshes_on_next_search() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
         ],
     );
     assert_trastuzumab_search(&first);
 
-    let csv_path = default_who_root(data_home.path()).join(WHO_CSV_FILE);
-    set_stale(&csv_path);
+    let vaccine_csv_path = default_who_root(data_home.path()).join(WHO_VACCINES_CSV_FILE);
+    set_stale(&vaccine_csv_path);
 
     let second = run_biomcp(
         &[
@@ -338,15 +381,16 @@ async fn stale_who_csv_refreshes_on_next_search() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
         ],
     );
     assert_trastuzumab_search(&second);
     assert!(
         second
             .stderr
-            .contains("Refreshing stale WHO Prequalification data (~134 KB + ~22 KB)...")
+            .contains("Refreshing stale WHO Prequalification data (~134 KB + ~22 KB + ~47 KB)...")
     );
-    assert_eq!(request_count(&server).await, 4);
+    assert_eq!(request_count(&server).await, 6);
 }
 
 #[tokio::test]
@@ -356,6 +400,7 @@ async fn missing_who_csv_redownloads_on_next_search() {
     let cache_home = TempDirGuard::new("missing-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
+    let who_vaccines_export_url = export_vaccines_url(&server);
 
     let first = run_biomcp(
         &[
@@ -372,12 +417,13 @@ async fn missing_who_csv_redownloads_on_next_search() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
         ],
     );
     assert_trastuzumab_search(&first);
 
-    let csv_path = default_who_root(data_home.path()).join(WHO_CSV_FILE);
-    fs::remove_file(&csv_path).expect("WHO CSV should be removable");
+    let csv_path = default_who_root(data_home.path()).join(WHO_VACCINES_CSV_FILE);
+    fs::remove_file(&csv_path).expect("WHO vaccine CSV should be removable");
 
     let second = run_biomcp(
         &[
@@ -394,13 +440,14 @@ async fn missing_who_csv_redownloads_on_next_search() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
         ],
     );
     assert_trastuzumab_search(&second);
     assert!(
         second
             .stderr
-            .contains("Downloading WHO Prequalification data (~134 KB + ~22 KB)...")
+            .contains("Downloading WHO Prequalification data (~134 KB + ~22 KB + ~47 KB)...")
     );
     assert!(csv_path.is_file());
     assert!(
@@ -408,7 +455,12 @@ async fn missing_who_csv_redownloads_on_next_search() {
             .join(WHO_API_CSV_FILE)
             .is_file()
     );
-    assert_eq!(request_count(&server).await, 4);
+    assert!(
+        default_who_root(data_home.path())
+            .join(WHO_CSV_FILE)
+            .is_file()
+    );
+    assert_eq!(request_count(&server).await, 6);
 }
 
 #[tokio::test]
@@ -420,6 +472,7 @@ async fn explicit_who_sync_honors_custom_root() {
     let custom_root_string = custom_root.path().display().to_string();
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
+    let who_vaccines_export_url = export_vaccines_url(&server);
 
     let result = run_biomcp(
         &["who", "sync"],
@@ -428,6 +481,7 @@ async fn explicit_who_sync_honors_custom_root() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
             ("BIOMCP_WHO_DIR", &custom_root_string),
         ],
     );
@@ -445,6 +499,7 @@ async fn explicit_who_sync_honors_custom_root() {
     );
     assert!(custom_root.path().join(WHO_CSV_FILE).is_file());
     assert!(custom_root.path().join(WHO_API_CSV_FILE).is_file());
+    assert!(custom_root.path().join(WHO_VACCINES_CSV_FILE).is_file());
     assert!(
         !default_who_root(data_home.path())
             .join(WHO_CSV_FILE)
@@ -460,6 +515,7 @@ async fn who_sync_failure_mentions_recovery_paths() {
     let cache_home = TempDirGuard::new("failure-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
+    let who_vaccines_export_url = export_vaccines_url(&server);
 
     let result = run_biomcp(
         &[
@@ -476,6 +532,7 @@ async fn who_sync_failure_mentions_recovery_paths() {
         &[
             ("BIOMCP_WHO_PQ_URL", &who_export_url),
             ("BIOMCP_WHO_PQ_API_URL", &who_api_export_url),
+            ("BIOMCP_WHO_VACCINES_URL", &who_vaccines_export_url),
         ],
     );
 
@@ -491,4 +548,5 @@ async fn who_sync_failure_mentions_recovery_paths() {
     );
     assert!(result.stderr.contains(&who_export_url));
     assert!(result.stderr.contains(&who_api_export_url));
+    assert!(result.stderr.contains(&who_vaccines_export_url));
 }

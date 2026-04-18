@@ -9,7 +9,9 @@ use http_cache_reqwest::CacheMode;
 use regex::Regex;
 
 use crate::entities::SearchPage;
-use crate::entities::drug::{WhoPrequalificationEntry, WhoPrequalificationSearchResult};
+use crate::entities::drug::{
+    WhoPrequalificationEntry, WhoPrequalificationKind, WhoPrequalificationSearchResult,
+};
 use crate::error::BioMcpError;
 
 const SOURCE_NAME: &str = "WHO Prequalification";
@@ -20,12 +22,19 @@ pub(crate) const WHO_PQ_CSV_FILE: &str = "who_pq.csv";
 pub(crate) const WHO_PQ_API_EXPORT_URL: &str = "https://extranet.who.int/prequal/medicines/prequalified/active-pharmaceutical-ingredients/export?page&_format=csv";
 pub(crate) const WHO_PQ_API_EXPORT_URL_ENV: &str = "BIOMCP_WHO_PQ_API_URL";
 pub(crate) const WHO_PQ_API_CSV_FILE: &str = "who_api.csv";
-pub(crate) const WHO_PQ_REQUIRED_FILES: &[&str] = &[WHO_PQ_CSV_FILE, WHO_PQ_API_CSV_FILE];
+pub(crate) const WHO_VACCINES_EXPORT_URL: &str =
+    "https://extranet.who.int/prequal/vaccines/prequalified/export";
+pub(crate) const WHO_VACCINES_EXPORT_URL_ENV: &str = "BIOMCP_WHO_VACCINES_URL";
+pub(crate) const WHO_VACCINES_CSV_FILE: &str = "who_vaccines.csv";
+pub(crate) const WHO_PQ_REQUIRED_FILES: &[&str] =
+    &[WHO_PQ_CSV_FILE, WHO_PQ_API_CSV_FILE, WHO_VACCINES_CSV_FILE];
 pub(crate) const WHO_PQ_STALE_AFTER: Duration = Duration::from_secs(72 * 60 * 60);
 pub(crate) const WHO_PQ_SIZE_HINT: &str = "~134 KB";
 pub(crate) const WHO_PQ_API_SIZE_HINT: &str = "~22 KB";
+pub(crate) const WHO_VACCINES_SIZE_HINT: &str = "~47 KB";
 const WHO_PQ_MAX_BODY_BYTES: usize = 4 * 1024 * 1024;
 const WHO_PQ_API_MAX_BODY_BYTES: usize = 2 * 1024 * 1024;
+const WHO_VACCINES_MAX_BODY_BYTES: usize = 2 * 1024 * 1024;
 
 const REQUIRED_HEADERS: &[&str] = &[
     "WHO REFERENCE NUMBER",
@@ -49,6 +58,16 @@ const API_REQUIRED_HEADERS: &[&str] = &[
     "CONFIRMATION OF PREQUALIFICATION DOCUMENT DATE",
 ];
 
+const VACCINE_REQUIRED_HEADERS: &[&str] = &[
+    "DATE OF PREQUALIFICATION",
+    "VACCINE TYPE",
+    "COMMERCIAL NAME",
+    "PRESENTATION",
+    "NO. OF DOSES",
+    "MANUFACTURER",
+    "RESPONSIBLE NRA",
+];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum WhoPqSyncMode {
     Auto,
@@ -61,6 +80,7 @@ pub(crate) enum WhoProductTypeFilter {
     Both,
     FinishedPharma,
     Api,
+    Vaccine,
 }
 
 #[derive(Debug, Clone)]
@@ -137,6 +157,17 @@ struct RawWhoApiRow {
     confirmation_document_date: String,
 }
 
+#[derive(Debug, Default)]
+struct RawWhoVaccineRow {
+    prequalification_date: String,
+    vaccine_type: String,
+    commercial_name: String,
+    presentation: String,
+    dose_count: String,
+    manufacturer: String,
+    responsible_nra: String,
+}
+
 impl WhoPqClient {
     #[allow(dead_code)]
     pub(crate) fn new() -> Self {
@@ -191,15 +222,22 @@ impl WhoPqClient {
             .skip(offset)
             .take(limit)
             .map(|row| WhoPrequalificationSearchResult {
+                kind: row.kind,
                 inn: row.inn,
                 product_type: row.product_type,
                 therapeutic_area: row.therapeutic_area,
+                presentation: row.presentation,
                 dosage_form: row.dosage_form,
                 applicant: row.applicant,
                 who_reference_number: row.who_reference_number,
                 who_product_id: row.who_product_id,
                 listing_basis: row.listing_basis,
                 prequalification_date: row.prequalification_date,
+                vaccine_type: row.vaccine_type,
+                commercial_name: row.commercial_name,
+                dose_count: row.dose_count,
+                manufacturer: row.manufacturer,
+                responsible_nra: row.responsible_nra,
             })
             .collect();
         Ok(SearchPage::offset(results, Some(total)))
@@ -208,6 +246,7 @@ impl WhoPqClient {
     pub(crate) fn read_rows(&self) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError> {
         let mut out = self.read_export_rows(WHO_PQ_CSV_FILE, parse_who_pq_csv)?;
         out.extend(self.read_export_rows(WHO_PQ_API_CSV_FILE, parse_who_api_csv)?);
+        out.extend(self.read_export_rows(WHO_VACCINES_CSV_FILE, parse_who_vaccines_csv)?);
         Ok(out)
     }
 
@@ -335,6 +374,7 @@ fn parse_who_pq_csv(payload: &str) -> Result<Vec<WhoPrequalificationEntry>, BioM
 
         let inn = derive_inn(&row.presentation, &row.dosage_form);
         out.push(WhoPrequalificationEntry {
+            kind: WhoPrequalificationKind::FinishedPharma,
             who_reference_number: Some(row.who_reference_number),
             inn,
             presentation: Some(row.presentation),
@@ -348,6 +388,11 @@ fn parse_who_pq_csv(payload: &str) -> Result<Vec<WhoPrequalificationEntry>, BioM
             who_product_id: None,
             grade: None,
             confirmation_document_date: None,
+            vaccine_type: None,
+            commercial_name: None,
+            dose_count: None,
+            manufacturer: None,
+            responsible_nra: None,
         });
     }
 
@@ -410,6 +455,7 @@ fn parse_who_api_csv(payload: &str) -> Result<Vec<WhoPrequalificationEntry>, Bio
         }
 
         out.push(WhoPrequalificationEntry {
+            kind: WhoPrequalificationKind::Api,
             who_reference_number: None,
             inn: row.inn,
             presentation: None,
@@ -423,7 +469,88 @@ fn parse_who_api_csv(payload: &str) -> Result<Vec<WhoPrequalificationEntry>, Bio
             who_product_id: Some(row.who_product_id),
             grade: clean_optional(&row.grade),
             confirmation_document_date: normalize_who_date(&row.confirmation_document_date),
+            vaccine_type: None,
+            commercial_name: None,
+            dose_count: None,
+            manufacturer: None,
+            responsible_nra: None,
         });
+    }
+
+    Ok(out)
+}
+
+fn parse_who_vaccines_csv(payload: &str) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError> {
+    let mut reader = csv::ReaderBuilder::new()
+        .flexible(true)
+        .from_reader(payload.as_bytes());
+    let headers = reader.headers().map_err(|err| BioMcpError::Api {
+        api: WHO_PQ_API.to_string(),
+        message: format!("Failed to read WHO vaccine headers: {err}"),
+    })?;
+    let header_map = header_map(headers);
+    for required in VACCINE_REQUIRED_HEADERS {
+        if !header_map.contains_key(*required) {
+            return Err(BioMcpError::Api {
+                api: WHO_PQ_API.to_string(),
+                message: format!("WHO vaccine CSV is missing required column: {required}"),
+            });
+        }
+    }
+
+    let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    for record in reader.records() {
+        let record = record.map_err(|err| BioMcpError::Api {
+            api: WHO_PQ_API.to_string(),
+            message: format!("Failed to parse WHO vaccine CSV: {err}"),
+        })?;
+
+        let row = RawWhoVaccineRow {
+            prequalification_date: clean_csv_field(
+                &record,
+                &header_map,
+                "DATE OF PREQUALIFICATION",
+            ),
+            vaccine_type: clean_csv_field(&record, &header_map, "VACCINE TYPE"),
+            commercial_name: clean_csv_field(&record, &header_map, "COMMERCIAL NAME"),
+            presentation: clean_csv_field(&record, &header_map, "PRESENTATION"),
+            dose_count: clean_csv_field(&record, &header_map, "NO. OF DOSES"),
+            manufacturer: clean_csv_field(&record, &header_map, "MANUFACTURER"),
+            responsible_nra: clean_csv_field(&record, &header_map, "RESPONSIBLE NRA"),
+        };
+
+        if row.vaccine_type.is_empty() || row.manufacturer.is_empty() {
+            continue;
+        }
+
+        let entry = WhoPrequalificationEntry {
+            kind: WhoPrequalificationKind::Vaccine,
+            who_reference_number: None,
+            inn: row.vaccine_type.clone(),
+            presentation: clean_optional(&row.presentation),
+            dosage_form: None,
+            product_type: "Vaccine".to_string(),
+            therapeutic_area: "Vaccine".to_string(),
+            applicant: row.manufacturer.clone(),
+            listing_basis: None,
+            alternative_listing_basis: None,
+            prequalification_date: normalize_vaccine_date(&row.prequalification_date),
+            who_product_id: None,
+            grade: None,
+            confirmation_document_date: None,
+            vaccine_type: Some(row.vaccine_type),
+            commercial_name: clean_optional(&row.commercial_name),
+            dose_count: clean_optional(&row.dose_count),
+            manufacturer: Some(row.manufacturer),
+            responsible_nra: clean_optional(&row.responsible_nra),
+        };
+
+        if !seen.insert(entry.stable_identifier_key()) {
+            continue;
+        }
+
+        out.push(entry);
     }
 
     Ok(out)
@@ -481,6 +608,21 @@ fn normalize_who_date(value: &str) -> Option<String> {
         _ => return None,
     };
     let year = parts[2].parse::<u32>().ok()?;
+    Some(format!("{year:04}-{month:02}-{day:02}"))
+}
+
+fn normalize_vaccine_date(value: &str) -> Option<String> {
+    let value = clean_text(value)?;
+    let parts = value.split('/').map(str::trim).collect::<Vec<_>>();
+    if parts.len() != 3 {
+        return None;
+    }
+    let day = parts[0].parse::<u32>().ok()?;
+    let month = parts[1].parse::<u32>().ok()?;
+    let year = parts[2].parse::<u32>().ok()?;
+    if day == 0 || day > 31 || month == 0 || month > 12 {
+        return None;
+    }
     Some(format!("{year:04}-{month:02}-{day:02}"))
 }
 
@@ -566,7 +708,19 @@ fn contains_boundary_phrase(field: &str, term: &str) -> bool {
 fn entry_match_keys(row: &WhoPrequalificationEntry) -> Vec<String> {
     let mut out = Vec::new();
     let mut seen = HashSet::new();
-    for value in std::iter::once(row.inn.as_str()).chain(row.presentation.as_deref()) {
+    let values = if row.is_vaccine() {
+        let mut values = vec![
+            row.vaccine_type.as_deref(),
+            vaccine_family_key(row),
+            row.commercial_name.as_deref(),
+            row.presentation.as_deref(),
+        ];
+        values.retain(|value| value.is_some());
+        values
+    } else {
+        vec![Some(row.inn.as_str()), row.presentation.as_deref()]
+    };
+    for value in values.into_iter().flatten() {
         if let Some(value) = normalize_match_key(value)
             && seen.insert(value.clone())
         {
@@ -574,6 +728,13 @@ fn entry_match_keys(row: &WhoPrequalificationEntry) -> Vec<String> {
         }
     }
     out
+}
+
+fn vaccine_family_key(row: &WhoPrequalificationEntry) -> Option<&str> {
+    row.vaccine_type
+        .as_deref()
+        .and_then(|value| value.split_once('(').map(|(prefix, _)| prefix.trim()))
+        .filter(|value| !value.is_empty())
 }
 
 fn row_matches_identity(row: &WhoPrequalificationEntry, identity: &WhoPqIdentity) -> bool {
@@ -588,9 +749,10 @@ fn row_matches_identity(row: &WhoPrequalificationEntry, identity: &WhoPqIdentity
     }
 
     match_keys.iter().any(|field| {
-        terms
-            .iter()
-            .any(|term| contains_boundary_phrase(field, term))
+        terms.iter().any(|term| {
+            contains_boundary_phrase(field, term)
+                || (row.is_vaccine() && contains_boundary_phrase(term, field))
+        })
     })
 }
 
@@ -610,9 +772,15 @@ pub(crate) fn filter_rows_by_product_type(
 ) -> Vec<WhoPrequalificationEntry> {
     rows.iter()
         .filter(|row| match product_type {
-            WhoProductTypeFilter::Both => true,
-            WhoProductTypeFilter::FinishedPharma => row.who_reference_number.is_some(),
-            WhoProductTypeFilter::Api => row.who_product_id.is_some(),
+            WhoProductTypeFilter::Both => matches!(
+                row.kind,
+                WhoPrequalificationKind::FinishedPharma | WhoPrequalificationKind::Api
+            ),
+            WhoProductTypeFilter::FinishedPharma => {
+                matches!(row.kind, WhoPrequalificationKind::FinishedPharma)
+            }
+            WhoProductTypeFilter::Api => matches!(row.kind, WhoPrequalificationKind::Api),
+            WhoProductTypeFilter::Vaccine => matches!(row.kind, WhoPrequalificationKind::Vaccine),
         })
         .cloned()
         .collect()
@@ -634,13 +802,23 @@ fn who_pq_api_export_url() -> String {
         .unwrap_or_else(|| WHO_PQ_API_EXPORT_URL.to_string())
 }
 
+fn who_vaccines_export_url() -> String {
+    std::env::var(WHO_VACCINES_EXPORT_URL_ENV)
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| WHO_VACCINES_EXPORT_URL.to_string())
+}
+
 fn who_preseed_suggestion(root: &Path) -> String {
     format!(
-        "Run `biomcp who sync`, place {} from {} and {} from {} in {}, or set BIOMCP_WHO_DIR.",
+        "Run `biomcp who sync`, place {} from {}, {} from {}, and {} from {} in {}, or set BIOMCP_WHO_DIR.",
         WHO_PQ_CSV_FILE,
         who_pq_export_url(),
         WHO_PQ_API_CSV_FILE,
         who_pq_api_export_url(),
+        WHO_VACCINES_CSV_FILE,
+        who_vaccines_export_url(),
         root.display()
     )
 }
@@ -724,7 +902,7 @@ async fn sync_who_pq_root(root: &Path, mode: WhoPqSyncMode) -> Result<(), BioMcp
 
     tokio::fs::create_dir_all(root).await?;
     write_stderr_line(&format!(
-        "{} WHO Prequalification data ({WHO_PQ_SIZE_HINT} + {WHO_PQ_API_SIZE_HINT})...",
+        "{} WHO Prequalification data ({WHO_PQ_SIZE_HINT} + {WHO_PQ_API_SIZE_HINT} + {WHO_VACCINES_SIZE_HINT})...",
         sync_intro(state, mode)
     ))?;
 
@@ -740,6 +918,13 @@ async fn sync_who_pq_root(root: &Path, mode: WhoPqSyncMode) -> Result<(), BioMcp
             who_pq_api_export_url(),
             WHO_PQ_API_MAX_BODY_BYTES,
             parse_who_api_csv as fn(&str) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError>,
+        ),
+        (
+            WHO_VACCINES_CSV_FILE,
+            who_vaccines_export_url(),
+            WHO_VACCINES_MAX_BODY_BYTES,
+            parse_who_vaccines_csv
+                as fn(&str) -> Result<Vec<WhoPrequalificationEntry>, BioMcpError>,
         ),
     ] {
         let path = root.join(file_name);
@@ -879,12 +1064,12 @@ mod tests {
     use std::time::{Duration, SystemTime};
 
     use super::{
-        WHO_PQ_API_CSV_FILE, WHO_PQ_CSV_FILE, WHO_PQ_REQUIRED_FILES, WhoPqClient, WhoPqIdentity,
-        WhoProductTypeFilter, derive_inn, file_is_stale, filter_rows_by_product_type,
-        normalize_who_date, parse_who_api_csv, parse_who_pq_csv, row_matches_identity,
-        who_pq_missing_files,
+        WHO_PQ_API_CSV_FILE, WHO_PQ_CSV_FILE, WHO_PQ_REQUIRED_FILES, WHO_VACCINES_CSV_FILE,
+        WhoPqClient, WhoPqIdentity, WhoProductTypeFilter, derive_inn, file_is_stale,
+        filter_rows_by_product_type, normalize_vaccine_date, normalize_who_date, parse_who_api_csv,
+        parse_who_pq_csv, parse_who_vaccines_csv, row_matches_identity, who_pq_missing_files,
     };
-    use crate::entities::drug::WhoPrequalificationEntry;
+    use crate::entities::drug::{WhoPrequalificationEntry, WhoPrequalificationKind};
     use crate::test_support::TempDirGuard;
 
     fn fixture_csv() -> String {
@@ -909,6 +1094,17 @@ mod tests {
         .expect("WHO API fixture should be readable")
     }
 
+    fn fixture_vaccine_csv() -> String {
+        std::fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("spec")
+                .join("fixtures")
+                .join("who-pq")
+                .join(WHO_VACCINES_CSV_FILE),
+        )
+        .expect("WHO vaccine fixture should be readable")
+    }
+
     #[test]
     fn parse_who_pq_csv_requires_expected_headers() {
         let err = parse_who_pq_csv("wrong,header\n1,2\n").expect_err("parse should fail");
@@ -922,12 +1118,29 @@ mod tests {
     }
 
     #[test]
+    fn parse_who_vaccines_csv_requires_expected_headers() {
+        let err = parse_who_vaccines_csv("wrong,header\n1,2\n").expect_err("parse should fail");
+        assert!(err.to_string().contains("missing required column"));
+    }
+
+    #[test]
     fn normalize_who_date_converts_to_iso() {
         assert_eq!(
             normalize_who_date("18  Dec,  2019").as_deref(),
             Some("2019-12-18")
         );
         assert_eq!(normalize_who_date(""), None);
+    }
+
+    #[test]
+    fn normalize_vaccine_date_converts_to_iso() {
+        assert_eq!(
+            normalize_vaccine_date("09/10/2024").as_deref(),
+            Some("2024-10-09")
+        );
+        assert_eq!(normalize_vaccine_date(""), None);
+        assert_eq!(normalize_vaccine_date("00/10/2024"), None);
+        assert_eq!(normalize_vaccine_date("09/13/2024"), None);
     }
 
     #[test]
@@ -944,6 +1157,7 @@ mod tests {
     #[test]
     fn row_matching_strips_salt_suffixes_from_match_key() {
         let row = WhoPrequalificationEntry {
+            kind: WhoPrequalificationKind::FinishedPharma,
             who_reference_number: Some("ANDA 077844 USFDA".to_string()),
             inn: "Abacavir (sulfate)".to_string(),
             presentation: Some("Abacavir (sulfate) Tablet 300mg".to_string()),
@@ -957,6 +1171,11 @@ mod tests {
             who_product_id: None,
             grade: None,
             confirmation_document_date: None,
+            vaccine_type: None,
+            commercial_name: None,
+            dose_count: None,
+            manufacturer: None,
+            responsible_nra: None,
         };
 
         assert!(row_matches_identity(&row, &WhoPqIdentity::new("abacavir")));
@@ -994,7 +1213,10 @@ mod tests {
     fn who_pq_missing_files_tracks_required_file_contract() {
         let root = TempDirGuard::new("missing-files");
         let missing = who_pq_missing_files(root.path(), WHO_PQ_REQUIRED_FILES);
-        assert_eq!(missing, vec![WHO_PQ_CSV_FILE, WHO_PQ_API_CSV_FILE]);
+        assert_eq!(
+            missing,
+            vec![WHO_PQ_CSV_FILE, WHO_PQ_API_CSV_FILE, WHO_VACCINES_CSV_FILE]
+        );
     }
 
     #[test]
@@ -1023,6 +1245,11 @@ mod tests {
         std::fs::write(root.path().join(WHO_PQ_CSV_FILE), fixture_csv()).expect("write WHO CSV");
         std::fs::write(root.path().join(WHO_PQ_API_CSV_FILE), fixture_api_csv())
             .expect("write WHO API CSV");
+        std::fs::write(
+            root.path().join(WHO_VACCINES_CSV_FILE),
+            fixture_vaccine_csv(),
+        )
+        .expect("write WHO vaccine CSV");
 
         let rows = WhoPqClient::from_root(root.path())
             .read_rows()
@@ -1036,6 +1263,10 @@ mod tests {
             rows.iter()
                 .any(|row| row.who_product_id.as_deref() == Some("WHOAPI-001"))
         );
+        assert!(rows.iter().any(|row| {
+            row.commercial_name.as_deref() == Some("Gardasil 9")
+                && matches!(row.kind, WhoPrequalificationKind::Vaccine)
+        }));
     }
 
     #[test]
@@ -1076,6 +1307,123 @@ mod tests {
         let filtered = filter_rows_by_product_type(&rows, WhoProductTypeFilter::FinishedPharma);
         assert_eq!(filtered.len(), 1);
         assert_eq!(filtered[0].who_reference_number.as_deref(), Some("MA051"));
+    }
+
+    #[test]
+    fn who_product_type_filter_keeps_only_vaccine_rows() {
+        let rows = vec![
+            parse_who_pq_csv(&fixture_csv())
+                .expect("fixture should parse")
+                .into_iter()
+                .find(|row| row.who_reference_number.as_deref() == Some("MA051"))
+                .expect("finished row should exist"),
+            parse_who_api_csv(&fixture_api_csv())
+                .expect("API fixture should parse")
+                .into_iter()
+                .find(|row| row.who_product_id.as_deref() == Some("WHOAPI-001"))
+                .expect("API row should exist"),
+            parse_who_vaccines_csv(&fixture_vaccine_csv())
+                .expect("vaccine fixture should parse")
+                .into_iter()
+                .find(|row| row.commercial_name.as_deref() == Some("Comirnaty®"))
+                .expect("vaccine row should exist"),
+        ];
+
+        let filtered = filter_rows_by_product_type(&rows, WhoProductTypeFilter::Vaccine);
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].commercial_name.as_deref(), Some("Comirnaty®"));
+    }
+
+    #[test]
+    fn parse_who_vaccines_csv_preserves_blank_dose_rows() {
+        let rows = parse_who_vaccines_csv(&fixture_vaccine_csv()).expect("fixture should parse");
+        let row = rows
+            .into_iter()
+            .find(|row| row.commercial_name.as_deref() == Some("Comirnaty®"))
+            .expect("blank-dose vaccine row should exist");
+
+        assert!(matches!(row.kind, WhoPrequalificationKind::Vaccine));
+        assert_eq!(row.vaccine_type.as_deref(), Some("Covid-19"));
+        assert_eq!(row.inn, "Covid-19");
+        assert_eq!(row.applicant, "BioNTech Manufacturing GmbH");
+        assert_eq!(row.dose_count, None);
+        assert_eq!(row.prequalification_date.as_deref(), Some("2024-10-09"));
+    }
+
+    #[test]
+    fn vaccine_row_matching_uses_vaccine_type_and_brand_aliases() {
+        let rows = parse_who_vaccines_csv(&fixture_vaccine_csv()).expect("fixture should parse");
+        let bcg = rows
+            .iter()
+            .find(|row| {
+                row.commercial_name.as_deref() == Some("BCG Freeze Dried Glutamate vaccine")
+            })
+            .expect("BCG row should exist");
+        let gardasil = rows
+            .iter()
+            .find(|row| row.commercial_name.as_deref() == Some("Gardasil 9"))
+            .expect("Gardasil row should exist");
+
+        assert!(row_matches_identity(bcg, &WhoPqIdentity::new("BCG")));
+        assert!(row_matches_identity(
+            gardasil,
+            &WhoPqIdentity::new("Gardasil")
+        ));
+    }
+
+    #[test]
+    fn vaccine_dedupe_keeps_distinct_bevac_rows() {
+        let rows = parse_who_vaccines_csv(&fixture_vaccine_csv()).expect("fixture should parse");
+        let bevac = rows
+            .into_iter()
+            .filter(|row| row.commercial_name.as_deref() == Some("BEVAC®"))
+            .collect::<Vec<_>>();
+
+        assert_eq!(bevac.len(), 2);
+        assert_ne!(
+            bevac[0].stable_identifier_key(),
+            bevac[1].stable_identifier_key()
+        );
+    }
+
+    #[test]
+    fn vaccine_fixture_carries_full_validation_anchor_counts() {
+        let rows = parse_who_vaccines_csv(&fixture_vaccine_csv()).expect("fixture should parse");
+
+        let bcg = rows
+            .iter()
+            .filter(|row| row.vaccine_type.as_deref() == Some("BCG"))
+            .count();
+        let hpv = rows
+            .iter()
+            .filter(|row| {
+                row.vaccine_type
+                    .as_deref()
+                    .is_some_and(|value| value.contains("Human Papillomavirus"))
+            })
+            .count();
+        let covid = rows
+            .iter()
+            .filter(|row| row.vaccine_type.as_deref() == Some("Covid-19"))
+            .count();
+        let measles = rows
+            .iter()
+            .filter(|row| {
+                row.vaccine_type
+                    .as_deref()
+                    .is_some_and(|value| value.to_ascii_lowercase().contains("measles"))
+            })
+            .count();
+        let yellow_fever = rows
+            .iter()
+            .filter(|row| row.vaccine_type.as_deref() == Some("Yellow Fever"))
+            .count();
+
+        assert_eq!(bcg, 7);
+        assert_eq!(hpv, 6);
+        assert_eq!(covid, 4);
+        assert_eq!(measles, 22);
+        assert_eq!(yellow_fever, 10);
     }
 
     #[test]

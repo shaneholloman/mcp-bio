@@ -1397,6 +1397,9 @@ mod tests {
                 crate::sources::who_pq::WHO_PQ_API_CSV_FILE => {
                     b"WHO Product ID,INN,Grade,Therapeutic area,Applicant organization,Date of prequalification,Confirmation of Prequalification Document Date\n"
                 }
+                crate::sources::who_pq::WHO_VACCINES_CSV_FILE => {
+                    b"Date of Prequalification ,Vaccine Type,Commercial Name,Presentation,No. of doses,Manufacturer,Responsible NRA\n"
+                }
                 other => panic!("unexpected WHO fixture file: {other}"),
             };
             std::fs::write(root.join(file), bytes).expect("write WHO fixture file");
@@ -2026,12 +2029,36 @@ mod tests {
     #[test]
     fn who_local_data_errors_when_only_api_file_is_missing() {
         let root = TempDirGuard::new("health");
-        write_who_files(root.path(), &[crate::sources::who_pq::WHO_PQ_CSV_FILE]);
+        write_who_files(
+            root.path(),
+            &[
+                crate::sources::who_pq::WHO_PQ_CSV_FILE,
+                crate::sources::who_pq::WHO_VACCINES_CSV_FILE,
+            ],
+        );
 
         let outcome = who_local_data_outcome(root.path(), true);
 
         assert_eq!(outcome.class, ProbeClass::Error);
         assert_eq!(outcome.row.status, "error (missing: who_api.csv)");
+        assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn who_local_data_errors_when_only_vaccine_file_is_missing() {
+        let root = TempDirGuard::new("health");
+        write_who_files(
+            root.path(),
+            &[
+                crate::sources::who_pq::WHO_PQ_CSV_FILE,
+                crate::sources::who_pq::WHO_PQ_API_CSV_FILE,
+            ],
+        );
+
+        let outcome = who_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Error);
+        assert_eq!(outcome.row.status, "error (missing: who_vaccines.csv)");
         assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
     }
 

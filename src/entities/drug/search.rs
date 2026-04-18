@@ -338,6 +338,10 @@ async fn try_resolve_drug_identity(name: &str) -> Option<Drug> {
     }
 }
 
+fn should_resolve_drug_identity(region: DrugRegion, product_type: WhoProductTypeFilter) -> bool {
+    !(matches!(region, DrugRegion::Who) && matches!(product_type, WhoProductTypeFilter::Vaccine))
+}
+
 pub async fn search_name_query_with_region(
     query: &str,
     limit: usize,
@@ -364,30 +368,45 @@ pub async fn search_name_query_with_region(
         ..Default::default()
     };
 
-    let resolved_identity = try_resolve_drug_identity(query).await;
+    let who_vaccine_search = region.includes_who()
+        && matches!(
+            product_type,
+            crate::sources::who_pq::WhoProductTypeFilter::Vaccine
+        );
+    let resolved_identity = if should_resolve_drug_identity(region, product_type) {
+        try_resolve_drug_identity(query).await
+    } else {
+        None
+    };
+    let needs_cvx_aliases =
+        (region.includes_eu() && resolved_identity.is_none()) || who_vaccine_search;
+    let cvx_aliases = if needs_cvx_aliases {
+        match CvxClient::ready(CvxSyncMode::Auto).await {
+            Ok(client) => match client.lookup_brand_aliases(query) {
+                Ok(aliases) => aliases,
+                Err(err) => {
+                    warn!(
+                        query = %query,
+                        "CDC CVX/MVX alias lookup unavailable for vaccine bridge: {err}"
+                    );
+                    Vec::new()
+                }
+            },
+            Err(err) => {
+                warn!(
+                    query = %query,
+                    "CDC CVX/MVX auto-sync unavailable for vaccine bridge: {err}"
+                );
+                Vec::new()
+            }
+        }
+    } else {
+        Vec::new()
+    };
     let eu_identity = if region.includes_eu() {
         match resolved_identity.as_ref() {
             Some(drug) => build_ema_identity(query, drug),
             None => {
-                let cvx_aliases = match CvxClient::ready(CvxSyncMode::Auto).await {
-                    Ok(client) => match client.lookup_brand_aliases(query) {
-                        Ok(aliases) => aliases,
-                        Err(err) => {
-                            warn!(
-                                query = %query,
-                                "CDC CVX/MVX alias lookup unavailable for EMA fallback: {err}"
-                            );
-                            Vec::new()
-                        }
-                    },
-                    Err(err) => {
-                        warn!(
-                            query = %query,
-                            "CDC CVX/MVX auto-sync unavailable for EMA fallback: {err}"
-                        );
-                        Vec::new()
-                    }
-                };
                 if cvx_aliases.is_empty() {
                     EmaDrugIdentity::new(query)
                 } else {
@@ -398,9 +417,17 @@ pub async fn search_name_query_with_region(
     } else {
         EmaDrugIdentity::new(query)
     };
-    let who_identity = match resolved_identity.as_ref() {
-        Some(drug) => build_who_identity(query, drug),
-        None => crate::sources::who_pq::WhoPqIdentity::new(query),
+    let who_identity = if who_vaccine_search {
+        if cvx_aliases.is_empty() {
+            crate::sources::who_pq::WhoPqIdentity::new(query)
+        } else {
+            crate::sources::who_pq::WhoPqIdentity::with_aliases(query, None, &cvx_aliases)
+        }
+    } else {
+        match resolved_identity.as_ref() {
+            Some(drug) => build_who_identity(query, drug),
+            None => crate::sources::who_pq::WhoPqIdentity::new(query),
+        }
     };
 
     let eu_client = if region.includes_eu() {
@@ -507,15 +534,22 @@ where
             ) {
                 if seen_ids.insert(row.stable_identifier_key()) {
                     expanded.push(WhoPrequalificationSearchResult {
+                        kind: row.kind,
                         inn: row.inn,
                         product_type: row.product_type,
                         therapeutic_area: row.therapeutic_area,
+                        presentation: row.presentation,
                         dosage_form: row.dosage_form,
                         applicant: row.applicant,
                         who_reference_number: row.who_reference_number,
                         who_product_id: row.who_product_id,
                         listing_basis: row.listing_basis,
                         prequalification_date: row.prequalification_date,
+                        vaccine_type: row.vaccine_type,
+                        commercial_name: row.commercial_name,
+                        dose_count: row.dose_count,
+                        manufacturer: row.manufacturer,
+                        responsible_nra: row.responsible_nra,
                     });
                 }
             }
@@ -548,6 +582,16 @@ pub async fn search_page_with_region(
     product_type: WhoProductTypeFilter,
 ) -> Result<DrugSearchPageWithRegion, BioMcpError> {
     if filters.has_structured_filters() {
+        if matches!(region, DrugRegion::Who)
+            && matches!(
+                product_type,
+                crate::sources::who_pq::WhoProductTypeFilter::Vaccine
+            )
+        {
+            return Err(BioMcpError::InvalidArgument(
+                "WHO vaccine search is plain name/brand only. Use a vaccine name or brand with --region who --product-type vaccine.".into(),
+            ));
+        }
         return match region {
             DrugRegion::Us => Ok(DrugSearchPageWithRegion::Us(
                 search_page(filters, limit, offset).await?,

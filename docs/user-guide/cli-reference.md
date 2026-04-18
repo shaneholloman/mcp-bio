@@ -186,6 +186,7 @@ biomcp search drug Keytruda --region eu --limit 5
 biomcp search drug "influenza vaccine" --region ema --limit 5
 biomcp search drug prevnar --region eu --limit 5
 biomcp search drug trastuzumab --region who --limit 5
+biomcp search drug BCG --region who --product-type vaccine --limit 5
 biomcp search drug --indication malaria --region who --limit 5
 ```
 
@@ -197,8 +198,10 @@ region buckets, each with `pagination`, `count`, and `results`.
 
 For vaccine brand lookups, omitted `--region` on a plain name search and
 explicit `--region eu|all` can auto-read the local CDC CVX/MVX bundle after
-MyChem identity resolution misses. That bridge only augments the EMA-side
-search path; `--region us` stays U.S.-only and does not touch the CVX root.
+MyChem identity resolution misses. Explicit WHO vaccine name/brand searches
+with `--product-type vaccine` can use the same bridge. The CDC bundle augments
+EMA/default vaccine lookups plus explicit WHO vaccine search only; `--region us`
+stays U.S.-only and does not touch the CVX root.
 
 ### Diagnostic
 
@@ -307,6 +310,7 @@ biomcp get variant rs7903146 gwas
 ```bash
 biomcp get drug pembrolizumab
 biomcp search drug artesunate --region who --product-type api
+biomcp search drug BCG --region who --product-type vaccine
 biomcp get drug trastuzumab regulatory --region who
 biomcp get drug Keytruda regulatory --region eu
 biomcp get drug Dupixent regulatory --region ema
@@ -317,8 +321,12 @@ biomcp get drug carboplatin shortage
 Omitting `--region` on a plain name/alias `search drug` checks U.S., EU, and
 WHO data. If you omit `--region` while using structured filters such as
 `--target` or `--indication`, BioMCP stays on the U.S. MyChem path. Explicit
-`--region who` filters structured U.S. hits through WHO Prequalification.
-WHO-only `--product-type <finished_pharma|api>` requires explicit `--region who`.
+`--region who` filters structured U.S. hits through WHO Prequalification for
+finished-pharma/API searches. WHO-only `--product-type
+<finished_pharma|api|vaccine>` requires explicit `--region who`. WHO vaccine
+search is plain name/brand only, structured WHO filters reject
+`--product-type vaccine`, and default WHO search still excludes vaccines unless
+you request that product type explicitly.
 Explicit `--region eu` or `--region all` with structured filters still errors.
 `ema` is accepted as an input alias for the canonical `eu` region value.
 Drug search JSON stays under the same top-level `region` + `regions` envelope
@@ -326,7 +334,8 @@ for every region mode, so scripts should navigate `regions.<region>.results`
 rather than a flat top-level `results` array.
 For `get drug`, use `--region` only with `regulatory`, `safety`, `shortage`, or
 `all`; WHO currently supports `regulatory` and `all`, while `approvals` stays
-U.S.-only.
+U.S.-only. WHO vaccine support in this ticket is search-only, so
+`get drug <name> regulatory --region who|all` remains finished-pharma/API only.
 If you omit `--region` on `get drug <name> regulatory`, BioMCP checks U.S. and
 EU regulatory data. Other no-flag `get drug` shapes stay on the default U.S.
 path unless you pass `--region`.

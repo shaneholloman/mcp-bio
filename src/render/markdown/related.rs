@@ -448,6 +448,15 @@ fn drug_search_next_commands(
         return Vec::new();
     }
 
+    let who_only_vaccine_results = us_results.is_none_or(|results| results.is_empty())
+        && eu_results.is_none_or(|results| results.is_empty())
+        && who_results.is_some_and(|results| {
+            !results.is_empty() && results.iter().all(|row| row.is_vaccine())
+        });
+    if who_only_vaccine_results {
+        return vec!["biomcp list drug".to_string()];
+    }
+
     let preferred = preferred_drug_name(
         us_results
             .into_iter()

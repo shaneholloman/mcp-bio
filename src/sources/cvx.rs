@@ -115,7 +115,7 @@ impl CvxClient {
             .read_alias_records()?
             .into_iter()
             .filter_map(|record| {
-                let match_rank = match_kind(&record.normalized_product_name, &normalized_query)?;
+                let match_rank = record_match_rank(&record, &normalized_query)?;
                 Some((match_rank, record))
             })
             .collect::<Vec<_>>();
@@ -264,12 +264,27 @@ fn match_kind(normalized_product_name: &str, normalized_query: &str) -> Option<u
         && normalized_product_name
             .as_bytes()
             .get(normalized_query.len())
-            .is_some_and(|byte| *byte == b' ')
+            .is_some_and(|byte| *byte == b' ' || byte.is_ascii_digit())
     {
         Some(1)
     } else {
         None
     }
+}
+
+fn record_match_rank(record: &CvxAliasRecord, normalized_query: &str) -> Option<u8> {
+    let mut best = match_kind(&record.normalized_product_name, normalized_query);
+    for candidate in [&record.cvx_short_description, &record.cvx_full_vaccine_name] {
+        let Some(normalized_candidate) = normalize_match_key(candidate) else {
+            continue;
+        };
+        let Some(rank) = match_kind(&normalized_candidate, normalized_query) else {
+            continue;
+        };
+        let adjusted_rank = rank.saturating_add(2);
+        best = Some(best.map_or(adjusted_rank, |current| current.min(adjusted_rank)));
+    }
+    best
 }
 
 fn clean_text(value: &str) -> Option<String> {
@@ -860,6 +875,23 @@ mod tests {
                 "human papilloma virus vaccine, quadrivalent".to_string(),
                 "HPV9".to_string(),
                 "Human Papillomavirus 9-valent vaccine".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn lookup_brand_aliases_matches_cvx_family_terms_for_antigen_queries() {
+        let root = TempDirGuard::new("cvx-antigen");
+        write_fixture_bundle(root.path());
+        let client = CvxClient::from_root(root.path().to_path_buf());
+
+        assert_eq!(
+            client.lookup_brand_aliases("HPV").expect("HPV lookup"),
+            vec![
+                "HPV9".to_string(),
+                "Human Papillomavirus 9-valent vaccine".to_string(),
+                "HPV, quadrivalent".to_string(),
+                "human papilloma virus vaccine, quadrivalent".to_string(),
             ]
         );
     }

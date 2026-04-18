@@ -180,15 +180,15 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### CDC CVX/MVX
 
-- BioMCP surfaces: `search drug <name> --region eu|all; search drug <name> (default plain-name all-region search); biomcp health; biomcp cvx sync`
+- BioMCP surfaces: `search drug <name> --region eu|all; search drug <name> --region who --product-type vaccine; search drug <name> (default plain-name all-region search); biomcp health; biomcp cvx sync`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
-- Provider access / registration: on-demand local download by BioMCP on first EU/default vaccine-bridge use, or manual preseed via `BIOMCP_CVX_DIR`
+- Provider access / registration: on-demand local download by BioMCP on first EU/default/WHO-vaccine bridge use, or manual preseed via `BIOMCP_CVX_DIR`
 - License / terms summary: most CDC website materials are public domain, but attribution, disclaimer, and exceptions for third-party or non-federal content still apply
 - Redistribution / reuse summary: reuse is generally allowed with CDC attribution and non-endorsement language; avoid CDC logos and review exceptions before republishing
 - Official terms URL: <https://www.cdc.gov/other/agencymaterials.html>
 - Reviewed on: `2026-04-17`
-- Notes: BioMCP auto-downloads `cvx.txt`, `TRADENAME.txt`, and `mvx.txt` into `BIOMCP_CVX_DIR` or the default data directory on first use, refreshes stale files after 30 days, and supports explicit refresh via `biomcp cvx sync`. The bundle only augments the EMA-side vaccine identity path after MyChem misses; pure `--region us` search does not use it.
+- Notes: BioMCP auto-downloads `cvx.txt`, `TRADENAME.txt`, and `mvx.txt` into `BIOMCP_CVX_DIR` or the default data directory on first use, refreshes stale files after 30 days, and supports explicit refresh via `biomcp cvx sync`. The bundle augments EMA/default vaccine search plus explicit WHO vaccine name/brand search after MyChem misses; pure `--region us` search and WHO finished-pharma/API lookups do not use it.
 
 ### EMA
 
@@ -204,7 +204,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### WHO Prequalification
 
-- BioMCP surfaces: `search drug --region who|all; search drug --indication <disease> --region who; search drug <name> --region who --product-type <finished_pharma|api>; get drug <name> regulatory --region who|all`
+- BioMCP surfaces: `search drug --region who|all; search drug --indication <disease> --region who; search drug <name> --region who --product-type <finished_pharma|api|vaccine>; get drug <name> regulatory --region who|all`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: on-demand local download by BioMCP on first WHO use, or manual preseed via `BIOMCP_WHO_DIR`
@@ -212,7 +212,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Redistribution / reuse summary: preserve WHO attribution, review commercial-use conditions, and check third-party material rights before republishing
 - Official terms URL: <https://www.who.int/about/policies/publishing/copyright>
 - Reviewed on: `2026-04-10`
-- Notes: BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV and active-pharmaceutical-ingredients CSV into `BIOMCP_WHO_DIR` or the default data directory on first use, refreshes stale files, and supports explicit refresh via `biomcp who sync`.
+- Notes: BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV, active-pharmaceutical-ingredients CSV, and vaccine CSV into `BIOMCP_WHO_DIR` or the default data directory on first use, refreshes stale files, supports WHO-only `--product-type <finished_pharma|api|vaccine>` filtering on explicit `--region who` searches, and supports explicit refresh via `biomcp who sync`. WHO vaccine support is search-only; `get drug <name> regulatory --region who|all` remains finished-pharma/API only.
 
 ### NCBI Genetic Testing Registry
 

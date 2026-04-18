@@ -1212,6 +1212,7 @@ mod tests {
             ema_safety: None,
             ema_shortage: None,
             who_prequalification: Some(vec![crate::entities::drug::WhoPrequalificationEntry {
+                kind: crate::entities::drug::WhoPrequalificationKind::FinishedPharma,
                 who_reference_number: Some("BT-ON001".to_string()),
                 inn: "Trastuzumab".to_string(),
                 presentation: Some(
@@ -1228,6 +1229,11 @@ mod tests {
                 who_product_id: None,
                 grade: None,
                 confirmation_document_date: None,
+                vaccine_type: None,
+                commercial_name: None,
+                dose_count: None,
+                manufacturer: None,
+                responsible_nra: None,
             }]),
             civic: None,
         };

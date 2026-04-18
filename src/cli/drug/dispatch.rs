@@ -40,6 +40,7 @@ pub(crate) async fn handle_search(
         .map(|value| match value {
             WhoProductTypeArg::FinishedPharma => WhoProductTypeFilter::FinishedPharma,
             WhoProductTypeArg::Api => WhoProductTypeFilter::Api,
+            WhoProductTypeArg::Vaccine => WhoProductTypeFilter::Vaccine,
         })
         .unwrap_or_default();
     let query = super::super::resolve_query_input(args.query, args.positional_query, "--query")?;
@@ -77,6 +78,7 @@ pub(crate) async fn handle_search(
         let value = match product_type {
             WhoProductTypeArg::FinishedPharma => "finished_pharma",
             WhoProductTypeArg::Api => "api",
+            WhoProductTypeArg::Vaccine => "vaccine",
         };
         query_summary = format!("{query_summary}, product_type={value}");
     }

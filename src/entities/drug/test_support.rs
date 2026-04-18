@@ -8,7 +8,10 @@ pub(super) use crate::error::BioMcpError;
 pub(super) use crate::sources::mychem::MyChemHit;
 
 #[allow(unused_imports)]
-pub(super) use super::{DrugRegion, DrugSearchFilters, DrugSearchResult, WhoPrequalificationEntry};
+pub(super) use super::{
+    DrugRegion, DrugSearchFilters, DrugSearchResult, WhoPrequalificationEntry,
+    WhoPrequalificationKind,
+};
 
 pub(super) fn mychem_row(name: &str) -> DrugSearchResult {
     DrugSearchResult {
@@ -22,6 +25,7 @@ pub(super) fn mychem_row(name: &str) -> DrugSearchResult {
 
 pub(super) fn who_row(reference: &str, inn: &str) -> WhoPrequalificationEntry {
     WhoPrequalificationEntry {
+        kind: WhoPrequalificationKind::FinishedPharma,
         who_reference_number: Some(reference.to_string()),
         inn: inn.to_string(),
         presentation: Some(format!("{inn} Tablet 100mg")),
@@ -35,11 +39,17 @@ pub(super) fn who_row(reference: &str, inn: &str) -> WhoPrequalificationEntry {
         who_product_id: None,
         grade: None,
         confirmation_document_date: None,
+        vaccine_type: None,
+        commercial_name: None,
+        dose_count: None,
+        manufacturer: None,
+        responsible_nra: None,
     }
 }
 
 pub(super) fn who_api_row(product_id: &str, inn: &str) -> WhoPrequalificationEntry {
     WhoPrequalificationEntry {
+        kind: WhoPrequalificationKind::Api,
         who_reference_number: None,
         inn: inn.to_string(),
         presentation: None,
@@ -53,5 +63,10 @@ pub(super) fn who_api_row(product_id: &str, inn: &str) -> WhoPrequalificationEnt
         who_product_id: Some(product_id.to_string()),
         grade: Some("Standard".to_string()),
         confirmation_document_date: Some("2024-02-01".to_string()),
+        vaccine_type: None,
+        commercial_name: None,
+        dose_count: None,
+        manufacturer: None,
+        responsible_nra: None,
     }
 }
