@@ -11,7 +11,7 @@ Gene-first search:
 
 ```bash
 biomcp search diagnostic --gene BRCA1 --limit 5
-biomcp search diagnostic --gene EGFR --type molecular --limit 5
+biomcp search diagnostic --gene EGFR --type Clinical --limit 5
 ```
 
 Disease-first search:
@@ -30,6 +30,8 @@ Diagnostic search is filter-only. At least one of `--gene`, `--disease`,
 `--type`, or `--manufacturer` is required. All provided filters are
 conjunctive, `--limit` must stay within `1..=50`, and result ordering is
 deterministic: normalized test name ascending, then accession ascending.
+`--type` values come directly from the current GTR export and may vary across
+releases; recent live bundles use labels such as `Clinical` and `Research`.
 
 ## Get a diagnostic record
 

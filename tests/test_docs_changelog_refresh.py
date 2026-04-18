@@ -71,7 +71,9 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
     assert "biomcp ema sync" in latest_new_features_block
     assert "CDC CVX/MVX vaccine identity bridge" in latest_release_block
     assert "biomcp cvx sync" in latest_new_features_block
-    assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221, 233}
+    assert "local GTR-backed `diagnostic` entity" in latest_release_block
+    assert "biomcp gtr sync" in latest_new_features_block
+    assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221, 233, 236}
     assert "pending separate merge" not in latest_release_block
     assert "0.8.22" not in latest_release_block
 
@@ -196,6 +198,9 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
 
     assert diagnostic_guide.startswith("# Diagnostic")
     assert "biomcp search diagnostic --gene BRCA1 --limit 5" in diagnostic_guide
+    assert "biomcp search diagnostic --gene EGFR --type Clinical --limit 5" in diagnostic_guide
+    assert "biomcp search diagnostic --gene EGFR --type molecular --limit 5" not in diagnostic_guide
+    assert "current GTR export" in diagnostic_guide
     assert "biomcp gtr sync" in diagnostic_guide
     assert diagnostic_arch.startswith("# Diagnostic Functional Note")
 

@@ -10,6 +10,8 @@ contract plus the public search/get surfaces for the new `diagnostic` entity.
 | Search by gene | `search diagnostic --gene BRCA1` | Confirms the gene-first "what test exists?" workflow |
 | Search by disease | `search diagnostic --disease melanoma` | Confirms disease-name matching over joined condition names |
 | Conjunctive filters | `search diagnostic --gene EGFR --type molecular` | Confirms deterministic filter-only search |
+| Filter validation | `search diagnostic` | Confirms zero-filter calls fail fast with the documented contract error |
+| Search JSON follow-ups | `--json search diagnostic --gene BRCA1` | Confirms search JSON exposes actionable `_meta.next_commands` |
 | Detail card | `get diagnostic <id>` | Confirms progressive-disclosure summary plus sectioned detail |
 | JSON follow-ups | `--json get diagnostic <id>` | Confirms `_meta.next_commands` and section provenance |
 
@@ -67,6 +69,31 @@ echo "$out" | mustmatch like "# Diagnostic tests: gene=EGFR, type=molecular"
 echo "$out" | mustmatch like "|Accession|Name|Type|Manufacturer / Lab|Genes|Conditions|"
 ```
 
+## Filter Validation
+
+Diagnostic search without any filters should fail fast with the documented
+validation error instead of attempting an empty full-bundle scan.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+out="$(biomcp search diagnostic 2>&1 || true)"
+echo "$out" | mustmatch like "Error: Invalid argument: diagnostic search requires at least one of --gene, --disease, --type, or --manufacturer"
+```
+
+## Search JSON Follow-ups
+
+JSON search output should include `_meta.next_commands` so agents can drill the
+top result or inspect the list surface without reparsing markdown.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+json_out="$(biomcp --json search diagnostic --gene BRCA1 --limit 1)"
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic GTR000000001.1")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list diagnostic")' > /dev/null
+```
+
 ## Detail Card
 
 The base `get diagnostic` command should return a summary card by default, while
@@ -75,11 +102,18 @@ explicit sections reveal genes, conditions, and methods.
 ```bash
 bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-gtr-env"
-out="$(biomcp get diagnostic GTR000000001.1 genes conditions methods)"
-echo "$out" | mustmatch like "# Diagnostic: GTR000000001.1"
-echo "$out" | mustmatch like "BRCA1, BARD1"
-echo "$out" | mustmatch like "## Conditions"
-echo "$out" | mustmatch like "## Methods"
+summary_out="$(biomcp get diagnostic GTR000000001.1)"
+echo "$summary_out" | mustmatch like "# Diagnostic: GTR000000001.1"
+echo "$summary_out" | mustmatch like "Method Categories: Molecular genetics"
+echo "$summary_out" | mustmatch not like "## Genes"
+echo "$summary_out" | mustmatch not like "## Conditions"
+echo "$summary_out" | mustmatch not like "## Methods"
+
+detail_out="$(biomcp get diagnostic GTR000000001.1 genes conditions methods)"
+echo "$detail_out" | mustmatch like "# Diagnostic: GTR000000001.1"
+echo "$detail_out" | mustmatch like "BRCA1, BARD1"
+echo "$detail_out" | mustmatch like "## Conditions"
+echo "$detail_out" | mustmatch like "## Methods"
 ```
 
 ## JSON Follow-ups

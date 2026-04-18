@@ -205,13 +205,14 @@ search path; `--region us` stays U.S.-only and does not touch the CVX root.
 ```bash
 biomcp search diagnostic --gene BRCA1 --limit 5 --offset 0
 biomcp search diagnostic --disease melanoma --limit 5
-biomcp search diagnostic --gene EGFR --type molecular --limit 5
+biomcp search diagnostic --gene EGFR --type Clinical --limit 5
 ```
 
 Diagnostic search is filter-only. At least one of `--gene`, `--disease`,
 `--type`, or `--manufacturer` is required, and all provided filters are
 conjunctive. Diagnostic commands auto-sync the local GTR bundle on first use
-into `BIOMCP_GTR_DIR` or the default platform data directory.
+into `BIOMCP_GTR_DIR` or the default platform data directory. `--type` values
+come from the current GTR export and may vary across releases.
 
 ### Pathway
 

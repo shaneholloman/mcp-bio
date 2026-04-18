@@ -208,10 +208,11 @@ See also: biomcp list disease")]
 EXAMPLES:
   biomcp search diagnostic --gene BRCA1 --limit 5
   biomcp search diagnostic --disease melanoma --limit 5
-  biomcp search diagnostic --gene EGFR --type molecular --limit 5
+  biomcp search diagnostic --gene EGFR --type Clinical --limit 5
   biomcp search diagnostic --gene BRCA1 --manufacturer Tempus --limit 5
 
 Diagnostic search is filter-only. At least one of --gene, --disease, --type, or --manufacturer is required.
+`--type` values come from the current GTR export and may vary over time.
 See also: biomcp list diagnostic")]
     Diagnostic(diagnostic::DiagnosticSearchArgs),
     /// Search pharmacogenomic interactions

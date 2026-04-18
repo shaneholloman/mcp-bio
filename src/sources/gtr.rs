@@ -29,7 +29,6 @@ const TEST_VERSION_REQUIRED_HEADERS: &[&str] = &[
     "now_current",
     "lab_test_name",
     "manufacturer_test_name",
-    "test_type",
     "name_of_laboratory",
     "name_of_institution",
     "CLIA_number",
@@ -78,6 +77,7 @@ pub(crate) struct GtrIndex {
     pub records_by_id: HashMap<String, GtrRecord>,
     pub genes_by_id: HashMap<String, Vec<String>>,
     pub conditions_by_id: HashMap<String, Vec<String>>,
+    pub test_types_by_id: HashMap<String, Vec<String>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -115,16 +115,26 @@ impl GtrClient {
 
     pub(crate) fn load_index(&self) -> Result<GtrIndex, BioMcpError> {
         self.require_files()?;
-        let records_by_id = read_test_version_records(&self.root.join(GTR_TEST_VERSION_FILE))
+        let mut records_by_id = read_test_version_records(&self.root.join(GTR_TEST_VERSION_FILE))
             .map_err(|err| gtr_read_error(&self.root, err.to_string()))?;
-        let (genes_by_id, conditions_by_id) =
+        let (genes_by_id, conditions_by_id, test_types_by_id) =
             read_condition_gene_links(&self.root.join(GTR_CONDITION_GENE_FILE))
                 .map_err(|err| gtr_read_error(&self.root, err.to_string()))?;
+        for (accession, record) in &mut records_by_id {
+            if record.test_type.is_empty()
+                && let Some(test_type) = test_types_by_id
+                    .get(accession)
+                    .and_then(|values| values.first())
+            {
+                record.test_type = test_type.clone();
+            }
+        }
 
         Ok(GtrIndex {
             records_by_id,
             genes_by_id,
             conditions_by_id,
+            test_types_by_id,
         })
     }
 
@@ -337,26 +347,35 @@ async fn write_validated_pair(
     let test_version_path = root.join(GTR_TEST_VERSION_FILE);
     let condition_gene_path = root.join(GTR_CONDITION_GENE_FILE);
 
-    let test_version_unchanged = tokio::fs::read(&test_version_path)
-        .await
-        .ok()
+    let previous_test_version = tokio::fs::read(&test_version_path).await.ok();
+    let previous_condition_gene = tokio::fs::read(&condition_gene_path).await.ok();
+    let test_version_unchanged = previous_test_version
+        .as_deref()
         .is_some_and(|existing| existing == test_version_body);
-    let condition_gene_unchanged = tokio::fs::read(&condition_gene_path)
-        .await
-        .ok()
+    let condition_gene_unchanged = previous_condition_gene
+        .as_deref()
         .is_some_and(|existing| existing == condition_gene_body);
 
-    if test_version_unchanged {
-        touch_file(&test_version_path)?;
-    } else {
+    if !test_version_unchanged {
         crate::utils::download::write_atomic_bytes(&test_version_path, test_version_body).await?;
     }
 
+    if !condition_gene_unchanged
+        && let Err(err) =
+            crate::utils::download::write_atomic_bytes(&condition_gene_path, condition_gene_body)
+                .await
+    {
+        if !test_version_unchanged {
+            restore_previous_file(&test_version_path, previous_test_version.as_deref()).await?;
+        }
+        return Err(err);
+    }
+
+    if test_version_unchanged {
+        touch_file(&test_version_path)?;
+    }
     if condition_gene_unchanged {
         touch_file(&condition_gene_path)?;
-    } else {
-        crate::utils::download::write_atomic_bytes(&condition_gene_path, condition_gene_body)
-            .await?;
     }
 
     Ok(())
@@ -452,7 +471,7 @@ fn parse_test_version_tsv<R: Read>(reader: R) -> Result<HashMap<String, GtrRecor
     Ok(out)
 }
 
-fn read_condition_gene_links(path: &Path) -> Result<(LinkMap, LinkMap), BioMcpError> {
+fn read_condition_gene_links(path: &Path) -> Result<(LinkMap, LinkMap, LinkMap), BioMcpError> {
     let file = File::open(path).map_err(|err| BioMcpError::SourceUnavailable {
         source_name: SOURCE_NAME.to_string(),
         reason: format!("Could not read {}: {err}", path.display()),
@@ -461,7 +480,9 @@ fn read_condition_gene_links(path: &Path) -> Result<(LinkMap, LinkMap), BioMcpEr
     parse_condition_gene_links(BufReader::new(file))
 }
 
-fn parse_condition_gene_links<R: Read>(reader: R) -> Result<(LinkMap, LinkMap), BioMcpError> {
+fn parse_condition_gene_links<R: Read>(
+    reader: R,
+) -> Result<(LinkMap, LinkMap, LinkMap), BioMcpError> {
     let mut reader = csv::ReaderBuilder::new()
         .delimiter(b'\t')
         .flexible(true)
@@ -484,16 +505,25 @@ fn parse_condition_gene_links<R: Read>(reader: R) -> Result<(LinkMap, LinkMap), 
 
     let mut genes_by_id = HashMap::new();
     let mut conditions_by_id = HashMap::new();
+    let mut test_types_by_id = HashMap::new();
     for record in reader.records() {
         let record = record.map_err(|err| BioMcpError::Api {
             api: GTR_API.to_string(),
             message: format!("Failed to parse {GTR_CONDITION_GENE_FILE}: {err}"),
         })?;
         let accession = field(&record, &positions, "#accession_version");
+        let test_type = if positions.contains_key("test_type") {
+            field(&record, &positions, "test_type")
+        } else {
+            String::new()
+        };
         let object = field(&record, &positions, "object").to_ascii_lowercase();
         let object_name = field(&record, &positions, "object_name");
         if accession.is_empty() || object_name.is_empty() {
             continue;
+        }
+        if !test_type.is_empty() {
+            push_unique(&mut test_types_by_id, accession.clone(), test_type);
         }
 
         match object.as_str() {
@@ -503,10 +533,12 @@ fn parse_condition_gene_links<R: Read>(reader: R) -> Result<(LinkMap, LinkMap), 
         }
     }
 
-    Ok((genes_by_id, conditions_by_id))
+    Ok((genes_by_id, conditions_by_id, test_types_by_id))
 }
 
-fn parse_condition_gene_links_bytes(body: &[u8]) -> Result<(LinkMap, LinkMap), BioMcpError> {
+fn parse_condition_gene_links_bytes(
+    body: &[u8],
+) -> Result<(LinkMap, LinkMap, LinkMap), BioMcpError> {
     parse_condition_gene_links(body)
 }
 
@@ -563,6 +595,17 @@ fn has_readable_local_pair(root: &Path) -> bool {
         && GTR_REQUIRED_FILES.iter().all(|file_name| {
             root.join(file_name).is_file() && File::open(root.join(file_name)).is_ok()
         })
+}
+
+async fn restore_previous_file(path: &Path, previous: Option<&[u8]>) -> Result<(), BioMcpError> {
+    match previous {
+        Some(content) => crate::utils::download::write_atomic_bytes(path, content).await,
+        None => match tokio::fs::remove_file(path).await {
+            Ok(()) => Ok(()),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(err) => Err(err.into()),
+        },
+    }
 }
 
 fn touch_file(path: &Path) -> Result<(), BioMcpError> {
@@ -667,16 +710,28 @@ mod tests {
         env_lock().blocking_lock()
     }
 
-    fn test_version_gz_bytes() -> Vec<u8> {
-        let payload = "test_accession_ver\tnow_current\tlab_test_name\tmanufacturer_test_name\ttest_type\tname_of_laboratory\tname_of_institution\tCLIA_number\tstate_licenses\tfacility_country\ttest_currStat\ttest_pubStat\tmethod_categories\tmethods\tgenes\tcondition_identifiers\n\
-GTR000000001.1\t1\tBRCA1 Hereditary Cancer Panel\tOncoPanel BRCA1\tmolecular\tGenomOncology Lab\tGenomOncology Institute\t12D3456789\tNY|CA\tUSA\tCurrent\tPublic\tMolecular genetics\tSequence analysis|Deletion/duplication analysis\tBRCA1|BARD1\tOMIM:604370\n\
-GTR000000002.1\t1\tEGFR Melanoma Molecular Assay\tPrecision EGFR\tmolecular\tPrecision Diagnostics\tPrecision Health\t34D5678901\tCA\tUSA\tCurrent\tPublic\tMolecular genetics\tTargeted variant analysis\tEGFR\tDOID:1909\n\
-GTR000000099.1\t0\tLegacy Retired Test\tLegacyCo\tmolecular\tLegacy Lab\tLegacy Institute\t00D0000000\tMA\tUSA\tRetired\tPrivate\tMolecular genetics\tSanger sequencing\tRET\tOMIM:123456\n";
+    fn gzip_bytes(payload: &str) -> Vec<u8> {
         let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
         encoder
             .write_all(payload.as_bytes())
             .expect("write gzip fixture");
         encoder.finish().expect("finish gzip fixture")
+    }
+
+    fn test_version_gz_bytes() -> Vec<u8> {
+        let payload = "test_accession_ver\tnow_current\tlab_test_name\tmanufacturer_test_name\ttest_type\tname_of_laboratory\tname_of_institution\tCLIA_number\tstate_licenses\tfacility_country\ttest_currStat\ttest_pubStat\tmethod_categories\tmethods\tgenes\tcondition_identifiers\n\
+GTR000000001.1\t1\tBRCA1 Hereditary Cancer Panel\tOncoPanel BRCA1\tmolecular\tGenomOncology Lab\tGenomOncology Institute\t12D3456789\tNY|CA\tUSA\tCurrent\tPublic\tMolecular genetics\tSequence analysis|Deletion/duplication analysis\tBRCA1|BARD1\tOMIM:604370\n\
+GTR000000002.1\t1\tEGFR Melanoma Molecular Assay\tPrecision EGFR\tmolecular\tPrecision Diagnostics\tPrecision Health\t34D5678901\tCA\tUSA\tCurrent\tPublic\tMolecular genetics\tTargeted variant analysis\tEGFR\tDOID:1909\n\
+GTR000000099.1\t0\tLegacy Retired Test\tLegacyCo\tmolecular\tLegacy Lab\tLegacy Institute\t00D0000000\tMA\tUSA\tRetired\tPrivate\tMolecular genetics\tSanger sequencing\tRET\tOMIM:123456\n";
+        gzip_bytes(payload)
+    }
+
+    fn refreshed_test_version_gz_bytes() -> Vec<u8> {
+        let payload = "test_accession_ver\tnow_current\tlab_test_name\tmanufacturer_test_name\ttest_type\tname_of_laboratory\tname_of_institution\tCLIA_number\tstate_licenses\tfacility_country\ttest_currStat\ttest_pubStat\tmethod_categories\tmethods\tgenes\tcondition_identifiers\n\
+GTR000000001.1\t1\tBRCA1 Refreshed Cancer Panel\tOncoPanel BRCA1\tmolecular\tGenomOncology Lab\tGenomOncology Institute\t12D3456789\tNY|CA\tUSA\tCurrent\tPublic\tMolecular genetics\tSequence analysis|Deletion/duplication analysis\tBRCA1|BARD1\tOMIM:604370\n\
+GTR000000002.1\t1\tEGFR Melanoma Molecular Assay\tPrecision EGFR\tmolecular\tPrecision Diagnostics\tPrecision Health\t34D5678901\tCA\tUSA\tCurrent\tPublic\tMolecular genetics\tTargeted variant analysis\tEGFR\tDOID:1909\n\
+GTR000000099.1\t0\tLegacy Retired Test\tLegacyCo\tmolecular\tLegacy Lab\tLegacy Institute\t00D0000000\tMA\tUSA\tRetired\tPrivate\tMolecular genetics\tSanger sequencing\tRET\tOMIM:123456\n";
+        gzip_bytes(payload)
     }
 
     fn condition_gene_bytes() -> Vec<u8> {
@@ -690,6 +745,20 @@ GTR000000002.1\tcondition\tCutaneous melanoma\n\
 GTR000000099.1\tgene\tRET\n\
 GTR000000099.1\tcondition\tLegacy syndrome\n"
             .to_vec()
+    }
+
+    fn condition_gene_bytes_with_test_type() -> Vec<u8> {
+        b"#accession_version\ttest_type\tobject\tobject_name\n\
+GTR000000001.1\tClinical\tgene\tBRCA1\n\
+GTR000000001.1\tClinical\tcondition\tBreast cancer\n\
+"
+        .to_vec()
+    }
+
+    fn live_like_test_version_gz_bytes() -> Vec<u8> {
+        let payload = "test_accession_ver\tname_of_laboratory\tname_of_institution\tfacility_country\tCLIA_number\tstate_licenses\tlab_test_name\tmanufacturer_test_name\tmethod_categories\tmethods\tgenes\tnow_current\ttest_currStat\ttest_pubStat\n\
+GTR000000001.1\tGenomOncology Lab\tGenomOncology Institute\tUSA\t12D3456789\tNY|CA\tBRCA1 Hereditary Cancer Panel\t\tSequence analysis\tBi-directional Sanger Sequence Analysis\tBRCA1\t1\tCurrent\tPublic\n";
+        gzip_bytes(payload)
     }
 
     fn write_valid_fixture_pair(root: &Path) {
@@ -748,8 +817,18 @@ GTR000000099.1\tcondition\tLegacy syndrome\n"
     }
 
     #[test]
+    fn parse_test_version_accepts_live_header_without_test_type() {
+        let records =
+            parse_test_version_records_from_gzip_bytes(&live_like_test_version_gz_bytes())
+                .expect("live-like parse");
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records["GTR000000001.1"].test_type, "");
+    }
+
+    #[test]
     fn parse_condition_gene_joins_correctly() {
-        let (genes_by_id, conditions_by_id) =
+        let (genes_by_id, conditions_by_id, test_types_by_id) =
             parse_condition_gene_links_bytes(&condition_gene_bytes()).expect("parse");
 
         assert_eq!(
@@ -763,6 +842,7 @@ GTR000000099.1\tcondition\tLegacy syndrome\n"
                 "Breast cancer".to_string()
             ]
         );
+        assert!(test_types_by_id.is_empty());
     }
 
     #[test]
@@ -782,6 +862,35 @@ GTR000000099.1\tcondition\tLegacy syndrome\n"
             vec!["Cutaneous melanoma".to_string()]
         );
         assert!(index.record("GTR000000001.1").is_some());
+    }
+
+    #[test]
+    fn load_index_backfills_test_type_from_condition_gene_when_test_version_omits_it() {
+        let root = TempDirGuard::new("gtr-load-index-live-like");
+        std::fs::write(
+            root.path().join(GTR_TEST_VERSION_FILE),
+            live_like_test_version_gz_bytes(),
+        )
+        .expect("write live-like gzip");
+        std::fs::write(
+            root.path().join(GTR_CONDITION_GENE_FILE),
+            condition_gene_bytes_with_test_type(),
+        )
+        .expect("write live-like tsv");
+
+        let client = GtrClient::from_root(root.path());
+        let index = client.load_index().expect("load index");
+
+        assert_eq!(
+            index
+                .record("GTR000000001.1")
+                .map(|record| record.test_type.as_str()),
+            Some("Clinical")
+        );
+        assert_eq!(
+            index.test_types_by_id.get("GTR000000001.1"),
+            Some(&vec!["Clinical".to_string()])
+        );
     }
 
     #[test]
@@ -829,6 +938,37 @@ GTR000000099.1\tcondition\tLegacy syndrome\n"
         assert_eq!(
             std::fs::read(root.path().join(GTR_CONDITION_GENE_FILE)).expect("tsv unchanged"),
             original_condition_gene
+        );
+    }
+
+    #[tokio::test]
+    async fn write_validated_pair_rolls_back_first_file_when_second_write_fails() {
+        let root = TempDirGuard::new("gtr-validated-pair-rollback");
+        write_valid_fixture_pair(root.path());
+        let original_test_version =
+            std::fs::read(root.path().join(GTR_TEST_VERSION_FILE)).expect("read original gzip");
+
+        std::fs::remove_file(root.path().join(GTR_CONDITION_GENE_FILE))
+            .expect("remove condition gene fixture");
+        std::fs::create_dir(root.path().join(GTR_CONDITION_GENE_FILE))
+            .expect("create directory collision");
+
+        let err = write_validated_pair(
+            root.path(),
+            &refreshed_test_version_gz_bytes(),
+            &condition_gene_bytes(),
+        )
+        .await
+        .expect_err("second write failure should error");
+        assert!(
+            err.to_string().contains("directory")
+                || err.to_string().contains("Is a directory")
+                || err.to_string().contains("Access is denied"),
+            "unexpected error: {err}"
+        );
+        assert_eq!(
+            std::fs::read(root.path().join(GTR_TEST_VERSION_FILE)).expect("gzip rolled back"),
+            original_test_version
         );
     }
 }
