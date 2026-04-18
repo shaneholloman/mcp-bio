@@ -35,7 +35,7 @@ pub(crate) async fn handle_batch(args: BatchArgs, json: bool) -> anyhow::Result<
         "gene" => {
             let futs = parsed_ids
                 .iter()
-                .map(|id| crate::entities::gene::get(id, &batch_sections));
+                .map(|id| crate::gene::get(id, &batch_sections));
             let results = try_join_all(futs).await?;
             if json {
                 super::super::render_batch_json(&results, |item| {
