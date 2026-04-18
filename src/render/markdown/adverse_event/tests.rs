@@ -1,5 +1,34 @@
 use super::*;
 
+fn sample_vaers_payload(
+    status: crate::entities::adverse_event::VaersSearchStatus,
+) -> crate::entities::adverse_event::VaersSearchPayload {
+    crate::entities::adverse_event::VaersSearchPayload {
+        status,
+        message: Some("VAERS message".to_string()),
+        matched_vaccine: Some(crate::entities::adverse_event::VaersMatchedVaccine {
+            display_name: "MMR".to_string(),
+            wonder_code: "MMR".to_string(),
+            cvx_codes: vec!["03".to_string(), "94".to_string()],
+        }),
+        summary: Some(crate::entities::adverse_event::VaersSearchSummary {
+            total_reports: 83_359,
+            serious_reports: 5_795,
+            non_serious_reports: 77_564,
+            age_distribution: vec![crate::entities::adverse_event::VaersAgeBucket {
+                age_bucket: "< 6 months".to_string(),
+                reports: 536,
+                percentage: 0.64,
+            }],
+            top_reactions: vec![crate::entities::adverse_event::VaersReactionCount {
+                reaction: "ABASIA".to_string(),
+                count: 179,
+                percentage: 0.21,
+            }],
+        }),
+    }
+}
+
 #[test]
 fn adverse_event_markdown_includes_openfda_sections() {
     let event = AdverseEvent {
@@ -169,4 +198,61 @@ fn recall_search_markdown_renders_result_table() {
     assert!(markdown.contains("# Recalls"));
     assert!(markdown.contains("|Recall #|Classification|Product|Status|"));
     assert!(markdown.contains("|Z-1234-2025|Class II|Infusion pump cartridge|Ongoing|"));
+}
+
+#[test]
+fn combined_adverse_event_search_markdown_appends_vaers_summary_for_unavailable_status() {
+    let markdown = combined_adverse_event_search_markdown(
+        "drug=MMR vaccine",
+        &[],
+        &AdverseEventSearchSummary {
+            total_reports: 0,
+            returned_report_count: 0,
+            top_reactions: Vec::new(),
+        },
+        "",
+        Some("Drug not found in FAERS. FAERS is a post-marketing database."),
+        Some(&sample_vaers_payload(
+            crate::entities::adverse_event::VaersSearchStatus::Unavailable,
+        )),
+    )
+    .expect("combined markdown");
+
+    assert!(markdown.contains("## CDC VAERS Summary"));
+    assert!(markdown.contains("Status: unavailable"));
+    assert!(markdown.contains("Source: CDC VAERS"));
+}
+
+#[test]
+fn combined_adverse_event_search_markdown_skips_query_not_vaccine_status() {
+    let markdown = combined_adverse_event_search_markdown(
+        "drug=ibuprofen",
+        &[],
+        &AdverseEventSearchSummary {
+            total_reports: 0,
+            returned_report_count: 0,
+            top_reactions: Vec::new(),
+        },
+        "",
+        Some("Drug not found in FAERS. FAERS is a post-marketing database."),
+        Some(&sample_vaers_payload(
+            crate::entities::adverse_event::VaersSearchStatus::QueryNotVaccine,
+        )),
+    )
+    .expect("combined markdown");
+
+    assert!(!markdown.contains("## CDC VAERS Summary"));
+}
+
+#[test]
+fn vaers_only_markdown_renders_snake_case_status_labels() {
+    let markdown = vaers_only_markdown(
+        "ibuprofen",
+        &sample_vaers_payload(crate::entities::adverse_event::VaersSearchStatus::QueryNotVaccine),
+    );
+
+    assert!(markdown.contains("# Adverse Events: ibuprofen"));
+    assert!(markdown.contains("Status: query_not_vaccine"));
+    assert!(markdown.contains("VAERS message"));
+    assert!(markdown.contains("Source: CDC VAERS"));
 }

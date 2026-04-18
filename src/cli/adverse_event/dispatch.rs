@@ -1,6 +1,16 @@
 use super::{AdverseEventGetArgs, AdverseEventSearchArgs};
 use crate::cli::CommandOutcome;
 
+fn vaers_only_next_commands(query: &str) -> Vec<String> {
+    let query = crate::render::markdown::quote_arg(query);
+    vec![
+        format!("biomcp search adverse-event {query} --source faers"),
+        format!("biomcp search drug {query}"),
+        "biomcp health".to_string(),
+        "biomcp list adverse-event".to_string(),
+    ]
+}
+
 pub(crate) async fn handle_get(
     args: AdverseEventGetArgs,
     json: bool,
@@ -47,6 +57,8 @@ pub(crate) async fn handle_search(
     let drug = super::super::resolve_query_input(args.drug, args.positional_query, "--drug")?;
     let query_type =
         crate::entities::adverse_event::AdverseEventQueryType::from_flag(&args.r#type)?;
+    let source_filter =
+        crate::entities::adverse_event::AdverseEventSourceFilter::from_flag(&args.source)?;
 
     let text = match query_type {
         crate::entities::adverse_event::AdverseEventQueryType::Faers => {
@@ -105,6 +117,15 @@ pub(crate) async fn handle_search(
                 .map(str::trim)
                 .filter(|v| !v.is_empty())
             {
+                if matches!(
+                    source_filter,
+                    crate::entities::adverse_event::AdverseEventSourceFilter::Vaers
+                ) {
+                    return Err(crate::error::BioMcpError::InvalidArgument(
+                        "--count is not supported with --source vaers".into(),
+                    )
+                    .into());
+                }
                 let response =
                     crate::entities::adverse_event::search_count(&filters, count_field, args.limit)
                         .await?;
@@ -128,84 +149,230 @@ pub(crate) async fn handle_search(
                         &response.buckets,
                     )?
                 }
-            } else if json {
-                let response = crate::entities::adverse_event::search_with_summary(
-                    &filters,
-                    args.limit,
-                    args.offset,
-                )
-                .await?;
-                let summary = response.summary;
-                let results = response.results;
-                let pagination = super::super::PaginationMeta::offset(
-                    args.offset,
-                    args.limit,
-                    results.len(),
-                    Some(summary.total_reports),
-                );
-                #[derive(serde::Serialize)]
-                struct SearchResponse {
-                    pagination: super::super::PaginationMeta,
-                    count: usize,
-                    summary: crate::entities::adverse_event::AdverseEventSearchSummary,
-                    results: Vec<crate::entities::adverse_event::AdverseEventSearchResult>,
-                    #[serde(skip_serializing_if = "Option::is_none")]
-                    _meta: Option<crate::cli::SearchJsonMeta>,
-                }
-
-                let next_commands = crate::render::markdown::search_next_commands_faers(&results);
-                crate::render::json::to_pretty(&SearchResponse {
-                    pagination,
-                    count: results.len(),
-                    summary,
-                    results,
-                    _meta: crate::cli::search_meta(next_commands),
-                })?
             } else {
-                let status = crate::entities::adverse_event::search_with_status(
+                let source_response = crate::entities::adverse_event::search_with_source(
                     &filters,
+                    source_filter,
                     args.limit,
                     args.offset,
                 )
                 .await?;
-                let (results, summary, empty_state_message) = match status {
-                    crate::entities::adverse_event::FaersSearchStatus::NotFound => (
-                        Vec::new(),
-                        crate::entities::adverse_event::AdverseEventSearchSummary {
-                            total_reports: 0,
-                            returned_report_count: 0,
-                            top_reactions: Vec::new(),
-                        },
-                        Some(
-                            "Drug not found in FAERS. FAERS is a post-marketing database; expect no records for investigational, newly approved, or name-variant drugs.",
-                        ),
-                    ),
-                    crate::entities::adverse_event::FaersSearchStatus::Results(response) => {
-                        let message = response.results.is_empty().then_some(
-                            "Drug found in FAERS, but no events matched your filters. Try broadening the search.",
-                        );
-                        (response.results, response.summary, message)
+                let raw_query = filters.drug.clone().unwrap_or_default();
+                if json {
+                    #[derive(serde::Serialize)]
+                    struct FaersSearchResponse {
+                        source: &'static str,
+                        pagination: super::super::PaginationMeta,
+                        count: usize,
+                        summary: crate::entities::adverse_event::AdverseEventSearchSummary,
+                        results: Vec<crate::entities::adverse_event::AdverseEventSearchResult>,
+                        #[serde(skip_serializing_if = "Option::is_none")]
+                        _meta: Option<crate::cli::SearchJsonMeta>,
                     }
-                };
-                let pagination = super::super::PaginationMeta::offset(
-                    args.offset,
-                    args.limit,
-                    results.len(),
-                    Some(summary.total_reports),
-                );
-                let footer = super::super::pagination_footer_offset(&pagination);
-                crate::render::markdown::adverse_event_search_markdown_with_context(
-                    &query_summary,
-                    &results,
-                    &summary,
-                    &footer,
-                    empty_state_message,
-                    &[],
-                    None,
-                )?
+
+                    #[derive(serde::Serialize)]
+                    struct CombinedSearchResponse {
+                        source: &'static str,
+                        pagination: super::super::PaginationMeta,
+                        count: usize,
+                        summary: crate::entities::adverse_event::AdverseEventSearchSummary,
+                        results: Vec<crate::entities::adverse_event::AdverseEventSearchResult>,
+                        vaers: crate::entities::adverse_event::VaersSearchPayload,
+                        #[serde(skip_serializing_if = "Option::is_none")]
+                        _meta: Option<crate::cli::SearchJsonMeta>,
+                    }
+
+                    #[derive(serde::Serialize)]
+                    struct VaersOnlyResponse {
+                        source: &'static str,
+                        query: String,
+                        vaers: crate::entities::adverse_event::VaersSearchPayload,
+                        #[serde(skip_serializing_if = "Option::is_none")]
+                        _meta: Option<crate::cli::SearchJsonMeta>,
+                    }
+
+                    match source_response.source {
+                        crate::entities::adverse_event::AdverseEventSourceFilter::Faers => {
+                            let status = source_response.faers.expect("faers status");
+                            let (results, summary) = match status {
+                                crate::entities::adverse_event::FaersSearchStatus::NotFound => (
+                                    Vec::new(),
+                                    crate::entities::adverse_event::AdverseEventSearchSummary {
+                                        total_reports: 0,
+                                        returned_report_count: 0,
+                                        top_reactions: Vec::new(),
+                                    },
+                                ),
+                                crate::entities::adverse_event::FaersSearchStatus::Results(
+                                    response,
+                                ) => (response.results, response.summary),
+                            };
+                            let pagination = super::super::PaginationMeta::offset(
+                                args.offset,
+                                args.limit,
+                                results.len(),
+                                Some(summary.total_reports),
+                            );
+                            let next_commands =
+                                crate::render::markdown::search_next_commands_faers(&results);
+                            crate::render::json::to_pretty(&FaersSearchResponse {
+                                source: "faers",
+                                pagination,
+                                count: results.len(),
+                                summary,
+                                results,
+                                _meta: crate::cli::search_meta(next_commands),
+                            })?
+                        }
+                        crate::entities::adverse_event::AdverseEventSourceFilter::Vaers => {
+                            let vaers = source_response.vaers.expect("vaers payload");
+                            let next_commands = vaers_only_next_commands(&raw_query);
+                            crate::render::json::to_pretty(&VaersOnlyResponse {
+                                source: "vaers",
+                                query: raw_query.clone(),
+                                vaers,
+                                _meta: crate::cli::search_meta(next_commands),
+                            })?
+                        }
+                        crate::entities::adverse_event::AdverseEventSourceFilter::All => {
+                            let status = source_response.faers.expect("faers status");
+                            let vaers = source_response.vaers.expect("vaers payload");
+                            let (results, summary) = match status {
+                                crate::entities::adverse_event::FaersSearchStatus::NotFound => (
+                                    Vec::new(),
+                                    crate::entities::adverse_event::AdverseEventSearchSummary {
+                                        total_reports: 0,
+                                        returned_report_count: 0,
+                                        top_reactions: Vec::new(),
+                                    },
+                                ),
+                                crate::entities::adverse_event::FaersSearchStatus::Results(
+                                    response,
+                                ) => (response.results, response.summary),
+                            };
+                            let pagination = super::super::PaginationMeta::offset(
+                                args.offset,
+                                args.limit,
+                                results.len(),
+                                Some(summary.total_reports),
+                            );
+                            let next_commands = if results.is_empty() {
+                                vaers_only_next_commands(&raw_query)
+                            } else {
+                                crate::render::markdown::search_next_commands_faers(&results)
+                            };
+                            crate::render::json::to_pretty(&CombinedSearchResponse {
+                                source: "all",
+                                pagination,
+                                count: results.len(),
+                                summary,
+                                results,
+                                vaers,
+                                _meta: crate::cli::search_meta(next_commands),
+                            })?
+                        }
+                    }
+                } else {
+                    match source_response.source {
+                        crate::entities::adverse_event::AdverseEventSourceFilter::Faers => {
+                            let status = source_response.faers.expect("faers status");
+                            let (results, summary, empty_state_message) = match status {
+                                crate::entities::adverse_event::FaersSearchStatus::NotFound => (
+                                    Vec::new(),
+                                    crate::entities::adverse_event::AdverseEventSearchSummary {
+                                        total_reports: 0,
+                                        returned_report_count: 0,
+                                        top_reactions: Vec::new(),
+                                    },
+                                    Some(
+                                        "Drug not found in FAERS. FAERS is a post-marketing database; expect no records for investigational, newly approved, or name-variant drugs.",
+                                    ),
+                                ),
+                                crate::entities::adverse_event::FaersSearchStatus::Results(
+                                    response,
+                                ) => {
+                                    let message = response.results.is_empty().then_some(
+                                        "Drug found in FAERS, but no events matched your filters. Try broadening the search.",
+                                    );
+                                    (response.results, response.summary, message)
+                                }
+                            };
+                            let pagination = super::super::PaginationMeta::offset(
+                                args.offset,
+                                args.limit,
+                                results.len(),
+                                Some(summary.total_reports),
+                            );
+                            let footer = super::super::pagination_footer_offset(&pagination);
+                            crate::render::markdown::adverse_event_search_markdown_with_source_label(
+                                &query_summary,
+                                &results,
+                                &summary,
+                                &footer,
+                                empty_state_message,
+                                &[],
+                                None,
+                                "OpenFDA FAERS",
+                            )?
+                        }
+                        crate::entities::adverse_event::AdverseEventSourceFilter::Vaers => {
+                            let vaers = source_response.vaers.expect("vaers payload");
+                            crate::render::markdown::vaers_only_markdown(&raw_query, &vaers)
+                        }
+                        crate::entities::adverse_event::AdverseEventSourceFilter::All => {
+                            let status = source_response.faers.expect("faers status");
+                            let vaers = source_response.vaers.expect("vaers payload");
+                            let (results, summary, empty_state_message) = match status {
+                                crate::entities::adverse_event::FaersSearchStatus::NotFound => (
+                                    Vec::new(),
+                                    crate::entities::adverse_event::AdverseEventSearchSummary {
+                                        total_reports: 0,
+                                        returned_report_count: 0,
+                                        top_reactions: Vec::new(),
+                                    },
+                                    Some(
+                                        "Drug not found in FAERS. FAERS is a post-marketing database; expect no records for investigational, newly approved, or name-variant drugs.",
+                                    ),
+                                ),
+                                crate::entities::adverse_event::FaersSearchStatus::Results(
+                                    response,
+                                ) => {
+                                    let message = response.results.is_empty().then_some(
+                                        "Drug found in FAERS, but no events matched your filters. Try broadening the search.",
+                                    );
+                                    (response.results, response.summary, message)
+                                }
+                            };
+                            let pagination = super::super::PaginationMeta::offset(
+                                args.offset,
+                                args.limit,
+                                results.len(),
+                                Some(summary.total_reports),
+                            );
+                            let footer = super::super::pagination_footer_offset(&pagination);
+                            crate::render::markdown::combined_adverse_event_search_markdown(
+                                &query_summary,
+                                &results,
+                                &summary,
+                                &footer,
+                                empty_state_message,
+                                Some(&vaers),
+                            )?
+                        }
+                    }
+                }
             }
         }
         crate::entities::adverse_event::AdverseEventQueryType::Recall => {
+            if !matches!(
+                source_filter,
+                crate::entities::adverse_event::AdverseEventSourceFilter::All
+            ) {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--source is only supported for --type faers adverse-event search".into(),
+                )
+                .into());
+            }
             if args.date_from.is_some()
                 || args.date_to.is_some()
                 || args.suspect_only
@@ -278,6 +445,15 @@ pub(crate) async fn handle_search(
             )?
         }
         crate::entities::adverse_event::AdverseEventQueryType::Device => {
+            if !matches!(
+                source_filter,
+                crate::entities::adverse_event::AdverseEventSourceFilter::All
+            ) {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--source is only supported for --type faers adverse-event search".into(),
+                )
+                .into());
+            }
             if drug.is_some() {
                 return Err(crate::error::BioMcpError::InvalidArgument(
                     "--drug cannot be used with --type device (use --device)".into(),

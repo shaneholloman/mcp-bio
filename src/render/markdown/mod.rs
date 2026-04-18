@@ -345,6 +345,11 @@ pub(crate) fn search_next_commands_faers(results: &[AdverseEventSearchResult]) -
     related::search_next_commands_faers(results)
 }
 
+pub(crate) use adverse_event::{
+    adverse_event_search_markdown_with_source_label, combined_adverse_event_search_markdown,
+    vaers_only_markdown,
+};
+
 pub(crate) fn search_next_commands_device_events(
     results: &[DeviceEventSearchResult],
 ) -> Vec<String> {

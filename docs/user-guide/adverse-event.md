@@ -1,10 +1,20 @@
 # Adverse Event
 
-Use adverse-event commands for FDA safety surveillance across three datasets:
+Use adverse-event commands for safety surveillance across four source-backed
+paths:
 
-- FAERS reports,
+- OpenFDA FAERS drug adverse-event reports,
+- CDC WONDER VAERS aggregate vaccine adverse-event summaries,
 - recall notices,
 - device events.
+
+Vaccine searches default to combined OpenFDA FAERS + CDC VAERS when the query
+resolves to a vaccine and the active filters are VAERS-compatible. Non-vaccine
+searches stay FAERS-only in practice. `--source vaers` is aggregate-only,
+supports only the vaccine query text from `--drug` or the positional query,
+and does not support `--reaction`, `--outcome`, `--serious`, `--date-from`,
+`--date-to`, `--suspect-only`, `--sex`, `--age-min`, `--age-max`,
+`--reporter`, `--count`, or `--offset > 0`.
 
 ## Search FAERS reports
 
@@ -25,6 +35,28 @@ Reaction-focused filter:
 ```bash
 biomcp search adverse-event --drug pembrolizumab --reaction pneumonitis --limit 5
 ```
+
+## Search vaccine events with VAERS
+
+Combined FAERS + VAERS for vaccine queries:
+
+```bash
+biomcp search adverse-event "COVID-19 vaccine" --source all --limit 5
+```
+
+VAERS-only aggregate summary:
+
+```bash
+biomcp search adverse-event "MMR vaccine" --source vaers --limit 5
+```
+
+VAERS summaries are aggregate-only. They surface the matched vaccine display
+name, CDC WONDER code, CVX code(s) when the query resolves through the CDC
+CVX/MVX bridge, serious vs non-serious counts, age distribution, and top
+reaction counts.
+
+`--source` only applies to `--type faers`; recall and device searches keep
+their existing source-specific paths.
 
 ## Search recall notices
 
@@ -96,7 +128,8 @@ biomcp --json get adverse-event 10222779
 ## Practical tips
 
 - Include drug generic names for better FAERS recall.
-- Treat counts as signal, not incidence estimates.
+- Use plain vaccine names, family names, or common brand names when you want the VAERS path.
+- Treat FAERS rows and VAERS aggregate counts as signal, not incidence estimates.
 - Validate serious findings through full source documents when needed.
 
 ## Related guides

@@ -1,6 +1,6 @@
 ---
 title: "Biomedical Data Sources for AI Agents | BioMCP"
-description: "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+description: "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, CDC WONDER VAERS, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
 ---
 
 # Biomedical Data Sources for AI Agents
@@ -17,6 +17,7 @@ Use these pages when you already know the provider you trust, the keyword you ar
 | ClinicalTrials.gov | Recruiting-study search, eligibility text, and site details | [ClinicalTrials.gov](clinicaltrials-gov.md) |
 | ClinVar | Clinical significance and review-status context for variants | [ClinVar](clinvar.md) |
 | OpenFDA | FAERS, recalls, device events, labels, and U.S. approval context | [OpenFDA](openfda.md) |
+| CDC WONDER VAERS | Vaccine adverse-event summaries, seriousness breakdowns, and age-distribution context | [CDC WONDER VAERS](vaers.md) |
 | UniProt | Canonical protein cards and structure-linked context | [UniProt](uniprot.md) |
 | gnomAD | Population frequency and gene constraint context | [gnomAD](gnomad.md) |
 | Reactome | Pathway records, pathway genes, and contained events | [Reactome](reactome.md) |

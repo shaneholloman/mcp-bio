@@ -193,6 +193,27 @@
     "notes": "BioMCP auto-downloads cvx.txt, TRADENAME.txt, and mvx.txt into BIOMCP_CVX_DIR or the default data directory on first use, refreshes stale files after 30 days, supports explicit refresh via biomcp cvx sync, augments EMA/default vaccine search plus explicit WHO vaccine name/brand search after MyChem misses, and does not use the CVX root for pure --region us searches or WHO finished-pharma/API lookups."
   },
   {
+    "id": "vaers",
+    "name": "CDC WONDER VAERS",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": [
+      "search adverse-event --source vaers",
+      "search adverse-event --source all",
+      "biomcp health"
+    ],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "open public CDC WONDER web/API access; consent to the CDC WONDER data use restrictions is required",
+    "license_summary": "CDC WONDER data use restrictions require statistical reporting/analysis use and prohibit re-identification attempts",
+    "redistribution_summary": "reuse is allowed for statistical reporting and analysis with source attribution, but do not try to identify individuals or publish identifying linkages",
+    "terms_url": "https://wonder.cdc.gov/datause.html",
+    "key_url": null,
+    "reviewed_on": "2026-04-18",
+    "notes": "BioMCP calls the CDC WONDER VAERS D8 XML POST endpoint for aggregate vaccine adverse-event summaries only. The source is aggregate-only in this ticket; case-level VAERS export and direct report detail retrieval are intentionally out of scope."
+  },
+  {
     "id": "ema",
     "name": "EMA",
     "tier": 1,

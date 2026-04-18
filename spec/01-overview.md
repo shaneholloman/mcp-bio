@@ -22,7 +22,13 @@ echo "$out" | mustmatch '/^biomcp [0-9]+\.[0-9]+\.[0-9]+/'
 
 ## Health Check
 
-The API-only health command reports one row per live upstream provider plus explicit excluded rows for key-gated sources. Full `biomcp health` adds local readiness rows such as EMA local data, WHO Prequalification local data, CDC CVX/MVX local data, GTR local data, cache dir, and cache-limit warnings. We assert on the API-only table header and the explicit status summary here because those are stable formatting markers for the upstream inventory contract.
+The API-only health command reports one row per live upstream provider plus
+explicit excluded rows for key-gated sources. Full `biomcp health` adds local
+readiness rows such as EMA local data, WHO Prequalification local data, CDC
+CVX/MVX local data, GTR local data, cache dir, and cache-limit warnings. We
+assert on the API-only table header, the CDC WONDER VAERS row, and the explicit
+status summary here because those are stable formatting markers for the
+upstream inventory contract.
 
 ```bash
 bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
@@ -31,6 +37,7 @@ echo "$out" | mustmatch like "| API | Status | Latency |"
 echo "$out" | mustmatch like "| LitSense2 |"
 echo "$out" | mustmatch like "| NIH Reporter |"
 echo "$out" | mustmatch like "| SEER Explorer |"
+echo "$out" | mustmatch like "| CDC WONDER VAERS |"
 echo "$out" | mustmatch not like "EMA local data ("
 echo "$out" | mustmatch not like "WHO Prequalification local data ("
 echo "$out" | mustmatch not like "CDC CVX/MVX local data ("
@@ -52,6 +59,7 @@ echo "$json_out" | jq -e 'all(.rows[]; .api != "Cache limits")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "LitSense2")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "NIH Reporter")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "SEER Explorer")' > /dev/null
+echo "$json_out" | jq -e 'any(.rows[]; .api == "CDC WONDER VAERS")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "OncoKB" and .status == "excluded (set ONCOKB_TOKEN)" and .key_configured == false)' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "MyGene" and ((has("key_configured")) | not))' > /dev/null
 ```

@@ -73,7 +73,7 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
     assert "biomcp cvx sync" in latest_new_features_block
     assert "local GTR-backed `diagnostic` entity" in latest_release_block
     assert "biomcp gtr sync" in latest_new_features_block
-    assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221, 233, 236}
+    assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221, 233, 235, 236}
     assert "pending separate merge" not in latest_release_block
     assert "0.8.22" not in latest_release_block
 

@@ -801,19 +801,19 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     )
     assert re.search(
         r"^spec:\n"
-        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" RUST_LOG=error \\\n"
-        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 120 -v \$\(SPEC_XDIST_ARGS\) --ignore spec/05-drug\.md --ignore spec/13-study\.md --ignore spec/21-cross-entity-see-also\.md'\n"
-        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" RUST_LOG=error \\\n"
-        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest \$\(SPEC_SERIAL_FILES\) --mustmatch-lang bash --mustmatch-timeout 120 -v'$",
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" RUST_LOG=error \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 120 -v \$\(SPEC_XDIST_ARGS\) --ignore spec/05-drug\.md --ignore spec/13-study\.md --ignore spec/21-cross-entity-see-also\.md'\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" RUST_LOG=error \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" pytest \$\(SPEC_SERIAL_FILES\) --mustmatch-lang bash --mustmatch-timeout 120 -v'$",
         makefile,
         flags=re.MULTILINE,
     )
     assert re.search(
         r"^spec-pr:\n"
-        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" RUST_LOG=error \\\n"
-        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v \$\(SPEC_XDIST_ARGS\) \$\(SPEC_PR_DESELECT_ARGS\) --ignore spec/05-drug\.md --ignore spec/13-study\.md --ignore spec/21-cross-entity-see-also\.md'\n"
-        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" RUST_LOG=error \\\n"
-        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" pytest \$\(SPEC_SERIAL_FILES\) --mustmatch-lang bash --mustmatch-timeout 60 -v'$",
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" RUST_LOG=error \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" pytest spec/ --mustmatch-lang bash --mustmatch-timeout 60 -v \$\(SPEC_XDIST_ARGS\) \$\(SPEC_PR_DESELECT_ARGS\) --ignore spec/05-drug\.md --ignore spec/13-study\.md --ignore spec/21-cross-entity-see-also\.md'\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" RUST_LOG=error \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" pytest \$\(SPEC_SERIAL_FILES\) --mustmatch-lang bash --mustmatch-timeout 60 -v'$",
         makefile,
         flags=re.MULTILINE,
     )

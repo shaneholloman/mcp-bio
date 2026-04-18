@@ -1,8 +1,9 @@
 # Source Labels
 
-This spec verifies that `get` entity detail responses carry explicit source
-labels in both markdown and JSON output. Assertions are structural — they check
-for stable provenance strings, not volatile upstream data values.
+This spec verifies that entity detail responses and source-aware adverse-event
+search output carry explicit source labels in both markdown and JSON output.
+Assertions are structural — they check for stable provenance strings, not
+volatile upstream data values.
 
 | Section | Command focus | Why it matters |
 |---|---|---|
@@ -52,6 +53,20 @@ echo "$pgx_out" | mustmatch like "## Recommendations (CPIC)"
 
 ae_out="$("$bin" get adverse-event 10329882)"
 echo "$ae_out" | mustmatch like "## Reactions (OpenFDA)"
+```
+
+## Search Source Labels
+
+VAERS search output should make the dataset boundary explicit instead of
+looking like another OpenFDA FAERS table.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-vaers-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-vaers-env"
+search_out="$("$bin" search adverse-event "MMR vaccine" --source vaers --limit 5)"
+echo "$search_out" | mustmatch like "## CDC VAERS Summary"
+echo "$search_out" | mustmatch like "Source: CDC VAERS"
 ```
 
 ## JSON section_sources — Gene, Drug, Disease

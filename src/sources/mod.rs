@@ -68,6 +68,7 @@ pub(crate) mod semantic_scholar;
 pub(crate) mod string;
 pub(crate) mod umls;
 pub(crate) mod uniprot;
+pub(crate) mod vaers;
 pub(crate) mod who_pq;
 pub(crate) mod wikipathways;
 

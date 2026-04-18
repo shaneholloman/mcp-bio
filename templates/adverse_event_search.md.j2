@@ -5,7 +5,7 @@
 Found {{ count }} report{% if count != 1 %}s{% endif %}
 
 ## Summary
-- Total reports (OpenFDA): {{ summary.total_reports }}
+- Total reports ({{ summary_source_label or "OpenFDA FAERS" }}): {{ summary.total_reports }}
 - Returned reports: {{ summary.returned_report_count }}
 {% if summary.top_reactions -%}
 | Reaction | Count | Percent |

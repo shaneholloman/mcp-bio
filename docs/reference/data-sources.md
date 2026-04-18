@@ -48,6 +48,7 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 | Pathway | Reactome + KEGG + WikiPathways + g:Profiler | `https://reactome.org/ContentService`, `https://rest.kegg.jp`, `https://www.wikipathways.org/json`, `https://biit.cs.ut.ee/gprofiler/api` | No | Pathway search and detail use Reactome + KEGG + WikiPathways; `genes` are available across all three sources, while `events` and pathway `enrichment` remain Reactome-only; top-level `biomcp enrich` uses **g:Profiler** |
 | Protein | UniProt + InterPro + STRING + ComplexPortal | `https://rest.uniprot.org`, `https://www.ebi.ac.uk/interpro/api`, `https://string-db.org/api`, `https://www.ebi.ac.uk/intact/complex-ws` | No | Protein cards, domains, interactions, structures, and human protein complex membership; structure IDs are surfaced from UniProt cross-references to PDB and AlphaFold DB |
 | Drug/device safety, labels, shortages, and approvals | OpenFDA | `https://api.fda.gov` | Optional (`OPENFDA_API_KEY`) | FAERS, MAUDE, recalls, drug labels, shortages, and Drugs@FDA-derived approvals |
+| Vaccine adverse-event search | CDC WONDER VAERS | `https://wonder.cdc.gov/controller/datarequest/D8` | No | Aggregate-only vaccine adverse-event summaries for `search adverse-event --source vaers|all`; BioMCP uses the CDC WONDER XML POST contract, includes the required data-use agreement, and resolves vaccine identity through the CDC CVX/MVX bridge when available |
 | Gene enrichment sections | Enrichr | `https://maayanlab.cloud/Enrichr` | No | Gene enrichment sections inside entity outputs use Enrichr; this is distinct from top-level `biomcp enrich` |
 | Cohort frequencies (best-effort) | cBioPortal | `https://www.cbioportal.org/api` | No | Supplemental cancer frequency context |
 
@@ -88,6 +89,7 @@ and practical ceilings observed in command behavior.
 | Source / command path | BioMCP-enforced limit | Practical guidance |
 |-----------------------|-----------------------|--------------------|
 | OpenFDA adverse-event / recall / device | `--limit` must be 1-50 | Use narrower filters and iterative queries for large pulls |
+| CDC WONDER VAERS | Automated queries should run one at a time; CDC recommends about 2 minutes between repeated data-mining requests | Keep VAERS queries targeted, prefer fixture-frozen contract tests over live loops, and use `biomcp health --apis-only` for readiness checks |
 | Gene search | `--limit` must be 1-50 | Start with small limits, then increase |
 | Variant search | `--limit` must be 1-50 | Use `--gene` + `--consequence` to reduce noise |
 | PGx (CPIC) | Rate-limited to 1 request / 250ms | Keep result limits focused around target gene/drug |
@@ -132,6 +134,14 @@ OpenFDA drives three BioMCP features:
 
 OpenFDA may return no results for highly specific filters even when broader filters succeed.
 Start broad (`--drug`, `--type`) and then tighten with `--reaction`, `--outcome`, `--classification`, or date filters.
+
+## CDC WONDER VAERS behavior
+
+CDC WONDER VAERS drives the aggregate vaccine branch of `search adverse-event`.
+
+- `--source all` always keeps the OpenFDA FAERS path and adds VAERS only when the query resolves to a vaccine and the active filters are VAERS-compatible.
+- `--source vaers` is aggregate-only and uses the CDC WONDER D8 XML POST contract rather than case-level VAERS report retrieval.
+- CDC WONDER requires consent to its data use restrictions, and the public API guidance asks automated data-mining clients to send queries one at a time with recovery time between repeated requests.
 
 ## Provenance expectations
 
