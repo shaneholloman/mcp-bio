@@ -10,6 +10,7 @@ pub fn render(entity: Option<&str>) -> Result<String, BioMcpError> {
             "variant" => Ok(list_variant()),
             "article" => Ok(list_article()),
             "trial" => Ok(list_trial()),
+            "diagnostic" => Ok(list_diagnostic()),
             "drug" => Ok(list_drug()),
             "disease" => Ok(list_disease()),
             "phenotype" => Ok(list_phenotype()),
@@ -25,7 +26,7 @@ pub fn render(entity: Option<&str>) -> Result<String, BioMcpError> {
             "enrich" => Ok(list_enrich()),
             "skill" | "skills" => Ok(crate::cli::skill::list_use_cases()?),
             other => Err(BioMcpError::InvalidArgument(format!(
-                "Unknown entity: {other}\n\nValid entities:\n- gene\n- variant\n- article\n- trial\n- drug\n- disease\n- phenotype\n- pgx\n- gwas\n- pathway\n- protein\n- study\n- adverse-event\n- search-all\n- discover\n- batch\n- enrich\n- skill"
+                "Unknown entity: {other}\n\nValid entities:\n- gene\n- variant\n- article\n- trial\n- diagnostic\n- drug\n- disease\n- phenotype\n- pgx\n- gwas\n- pathway\n- protein\n- study\n- adverse-event\n- search-all\n- discover\n- batch\n- enrich\n- skill"
             ))),
         },
     }
@@ -382,6 +383,51 @@ fn list_trial() -> String {
     .to_string()
 }
 
+fn list_diagnostic() -> String {
+    r#"# diagnostic
+
+## When to use this surface
+
+- Use `search diagnostic` when you need source-native genetic test inventory from NCBI GTR.
+- Start with `--gene` or `--disease` for the common "what test exists?" workflow; add `--type` or `--manufacturer` only when narrowing a real result set.
+- Use `get diagnostic <gtr_accession>` for the base summary card, then add `genes`, `conditions`, `methods`, or `all` when you need progressive disclosure.
+
+## Commands
+
+- `get diagnostic <gtr_accession>` - summary card from the local GTR bundle
+- `get diagnostic <gtr_accession> genes` - joined gene list from GTR detail data
+- `get diagnostic <gtr_accession> conditions` - joined condition list from GTR detail data
+- `get diagnostic <gtr_accession> methods` - GTR methods list
+- `get diagnostic <gtr_accession> all` - include genes, conditions, and methods
+- `search diagnostic --gene <symbol>` - case-insensitive exact gene match
+- `search diagnostic --disease <name>` - case-insensitive substring match over condition names
+- `search diagnostic --type <test_type>` - case-insensitive exact type filter
+- `search diagnostic --manufacturer <name>` - case-insensitive substring over manufacturer/lab labels
+- `search diagnostic ... --limit <N> --offset <N>` - offset pagination with `1..=50` result limits
+
+## Search rules
+
+- At least one of `--gene`, `--disease`, `--type`, or `--manufacturer` is required.
+- All provided filters are conjunctive.
+- Result ordering is deterministic: normalized test name ascending, then accession ascending.
+- `summary` is always part of `get diagnostic`; supported section tokens are `genes`, `conditions`, `methods`, and `all`.
+
+## JSON Output
+
+- Non-empty `search diagnostic --json` responses include `_meta.next_commands`.
+- The first follow-up drills the top result with `biomcp get diagnostic <gtr_accession>`.
+- `biomcp list diagnostic` is always included so agents can inspect the full filter surface.
+- `get diagnostic --json` keeps section-aware follow-ups and `_meta.section_sources`.
+
+## Local data
+
+- BioMCP auto-downloads GTR local data on first diagnostic use into `BIOMCP_GTR_DIR` or the default platform data directory.
+- Full `biomcp health` reports `GTR local data (<resolved_root>)`; `biomcp health --apis-only` intentionally omits it.
+- Use `biomcp gtr sync` to force-refresh the local GTR bundle.
+"#
+    .to_string()
+}
+
 fn list_drug() -> String {
     r#"# drug
 
@@ -450,7 +496,7 @@ fn list_drug() -> String {
 - EU regional commands auto-download the EMA human-medicines JSON feeds into `BIOMCP_EMA_DIR` or the default data directory on first use.
 - Default/EU vaccine brand lookups can also auto-download the CDC CVX/MVX bundle into `BIOMCP_CVX_DIR` or the default data directory on first use.
 - WHO regional commands auto-download the WHO finished-pharma and API CSV exports into `BIOMCP_WHO_DIR` or the default data directory on first use (`who_pq.csv` and `who_api.csv`).
-- Run `biomcp ema sync`, `biomcp cvx sync`, or `biomcp who sync` to force-refresh the local regional data.
+- Run `biomcp ema sync`, `biomcp cvx sync`, `biomcp who sync`, or `biomcp gtr sync` to force-refresh the local runtime data.
 "#
     .to_string()
 }
@@ -908,6 +954,16 @@ mod tests {
     }
 
     #[test]
+    fn list_diagnostic_page_exists() {
+        let out = render(Some("diagnostic")).expect("list diagnostic should render");
+        assert!(out.contains("# diagnostic"));
+        assert!(out.contains("search diagnostic --gene <symbol>"));
+        assert!(out.contains("get diagnostic <gtr_accession> methods"));
+        assert!(out.contains("biomcp gtr sync"));
+        assert!(out.contains("GTR local data (<resolved_root>)"));
+    }
+
+    #[test]
     fn list_discover_page_mentions_gene_topic_article_followup() {
         let out = render(Some("discover")).expect("list discover should render");
         assert!(out.contains(
@@ -1070,6 +1126,7 @@ mod tests {
         assert!(out.contains("CDC CVX/MVX"));
         assert!(out.contains("biomcp cvx sync"));
         assert!(out.contains("biomcp ema sync"));
+        assert!(out.contains("biomcp gtr sync"));
         assert!(out.contains("biomcp who sync"));
     }
 

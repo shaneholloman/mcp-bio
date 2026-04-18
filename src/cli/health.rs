@@ -504,6 +504,8 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
 const EMA_LOCAL_DATA_AFFECTS: &str = "default plain-name drug search plus search/get drug --region eu|all and EU regulatory/safety/shortage sections";
 const CVX_LOCAL_DATA_AFFECTS: &str = "EMA vaccine identity bridge for plain-name drug search";
 const WHO_LOCAL_DATA_AFFECTS: &str = "default plain-name drug search plus search/get drug --region who|all and WHO regulatory sections";
+const GTR_LOCAL_DATA_AFFECTS: &str =
+    "search/get diagnostic and local GTR-backed diagnostic routing";
 
 fn health_sources() -> &'static [SourceDescriptor] {
     HEALTH_SOURCES
@@ -981,6 +983,35 @@ fn check_who_local_data() -> ProbeOutcome {
     who_local_data_outcome(&root, env_configured)
 }
 
+fn gtr_local_data_outcome(root: &Path, env_configured: bool) -> ProbeOutcome {
+    local_data_outcome(
+        "GTR local data",
+        root,
+        env_configured,
+        &crate::sources::gtr::GTR_REQUIRED_FILES,
+        crate::sources::gtr::GTR_STALE_AFTER,
+        GTR_LOCAL_DATA_AFFECTS,
+        |root, required_files| {
+            let required = required_files.to_vec();
+            crate::sources::gtr::gtr_missing_files(root)
+                .into_iter()
+                .filter_map(|missing| {
+                    required
+                        .iter()
+                        .copied()
+                        .find(|expected| *expected == missing.as_str())
+                })
+                .collect()
+        },
+    )
+}
+
+fn check_gtr_local_data() -> ProbeOutcome {
+    let env_configured = configured_key("BIOMCP_GTR_DIR").is_some();
+    let root = crate::sources::gtr::resolve_gtr_root();
+    gtr_local_data_outcome(&root, env_configured)
+}
+
 async fn probe_source(client: reqwest::Client, source: &SourceDescriptor) -> ProbeOutcome {
     match source.probe {
         ProbeKind::Get { url } => check_get(client, source.api, url, source.affects).await,
@@ -1215,6 +1246,7 @@ pub async fn check(apis_only: bool) -> Result<HealthReport, BioMcpError> {
         outcomes.push(check_ema_local_data());
         outcomes.push(check_cvx_local_data());
         outcomes.push(check_who_local_data());
+        outcomes.push(check_gtr_local_data());
         outcomes.push(check_cache_dir().await);
         outcomes.push(check_cache_limits().await);
     }
@@ -1320,11 +1352,11 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     use super::{
-        CVX_LOCAL_DATA_AFFECTS, EMA_LOCAL_DATA_AFFECTS, HealthReport, HealthRow, ProbeClass,
-        ProbeKind, ProbeOutcome, SourceDescriptor, WHO_LOCAL_DATA_AFFECTS, affects_for_api,
-        check_cache_dir, check_cache_limits_with, cvx_local_data_outcome, ema_local_data_outcome,
-        health_sources, probe_cache_dir, probe_source, report_from_outcomes,
-        who_local_data_outcome,
+        CVX_LOCAL_DATA_AFFECTS, EMA_LOCAL_DATA_AFFECTS, GTR_LOCAL_DATA_AFFECTS, HealthReport,
+        HealthRow, ProbeClass, ProbeKind, ProbeOutcome, SourceDescriptor, WHO_LOCAL_DATA_AFFECTS,
+        affects_for_api, check_cache_dir, check_cache_limits_with, cvx_local_data_outcome,
+        ema_local_data_outcome, gtr_local_data_outcome, health_sources, probe_cache_dir,
+        probe_source, report_from_outcomes, who_local_data_outcome,
     };
     use crate::cache::{
         CacheBlob, CacheConfigOrigins, CacheEntry, CachePlannerError, CacheSnapshot, ConfigOrigin,
@@ -1386,6 +1418,24 @@ mod tests {
                 other => panic!("unexpected CVX fixture file: {other}"),
             };
             std::fs::write(root.join(file), bytes).expect("write CVX fixture file");
+        }
+    }
+
+    fn write_gtr_files(root: &Path, files: &[&str]) {
+        for file in files {
+            match *file {
+                crate::sources::gtr::GTR_TEST_VERSION_FILE => std::fs::write(
+                    root.join(file),
+                    include_bytes!("../../spec/fixtures/gtr/test_version.gz"),
+                )
+                .expect("write GTR gzip fixture"),
+                crate::sources::gtr::GTR_CONDITION_GENE_FILE => std::fs::write(
+                    root.join(file),
+                    include_str!("../../spec/fixtures/gtr/test_condition_gene.txt"),
+                )
+                .expect("write GTR tsv fixture"),
+                other => panic!("unexpected GTR fixture file: {other}"),
+            }
         }
     }
 
@@ -1983,6 +2033,67 @@ mod tests {
         assert_eq!(outcome.class, ProbeClass::Error);
         assert_eq!(outcome.row.status, "error (missing: who_api.csv)");
         assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn gtr_local_data_not_configured_when_default_root_is_empty() {
+        let root = TempDirGuard::new("health");
+
+        let outcome = gtr_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Excluded);
+        assert_eq!(
+            outcome.row.api,
+            format!("GTR local data ({})", root.path().display())
+        );
+        assert_eq!(outcome.row.status, "not configured");
+        assert_eq!(outcome.row.affects.as_deref(), Some(GTR_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn gtr_local_data_errors_when_default_root_is_partial() {
+        let root = TempDirGuard::new("health");
+        write_gtr_files(root.path(), &[crate::sources::gtr::GTR_TEST_VERSION_FILE]);
+
+        let outcome = gtr_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Error);
+        assert_eq!(
+            outcome.row.status,
+            format!(
+                "error (missing: {})",
+                crate::sources::gtr::GTR_CONDITION_GENE_FILE
+            )
+        );
+        assert_eq!(outcome.row.affects.as_deref(), Some(GTR_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn gtr_local_data_reports_available_when_default_root_is_complete() {
+        let root = TempDirGuard::new("health");
+        write_gtr_files(root.path(), &crate::sources::gtr::GTR_REQUIRED_FILES);
+
+        let outcome = gtr_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Healthy);
+        assert_eq!(outcome.row.status, "available (default path)");
+        assert_eq!(outcome.row.affects, None);
+    }
+
+    #[test]
+    fn gtr_local_data_reports_configured_stale_when_env_root_is_complete_but_old() {
+        let root = TempDirGuard::new("health");
+        write_gtr_files(root.path(), &crate::sources::gtr::GTR_REQUIRED_FILES);
+        set_stale_mtime_with_age(
+            &root.path().join(crate::sources::gtr::GTR_TEST_VERSION_FILE),
+            crate::sources::gtr::GTR_STALE_AFTER + std::time::Duration::from_secs(60),
+        );
+
+        let outcome = gtr_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Warning);
+        assert_eq!(outcome.row.status, "configured (stale)");
+        assert_eq!(outcome.row.affects.as_deref(), Some(GTR_LOCAL_DATA_AFFECTS));
     }
 
     #[test]

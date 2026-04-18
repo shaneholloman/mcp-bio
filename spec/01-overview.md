@@ -22,7 +22,7 @@ echo "$out" | mustmatch '/^biomcp [0-9]+\.[0-9]+\.[0-9]+/'
 
 ## Health Check
 
-The API-only health command reports one row per live upstream provider plus explicit excluded rows for key-gated sources. Full `biomcp health` adds local readiness rows such as EMA local data, WHO Prequalification local data, CDC CVX/MVX local data, cache dir, and cache-limit warnings. We assert on the API-only table header and the explicit status summary here because those are stable formatting markers for the upstream inventory contract.
+The API-only health command reports one row per live upstream provider plus explicit excluded rows for key-gated sources. Full `biomcp health` adds local readiness rows such as EMA local data, WHO Prequalification local data, CDC CVX/MVX local data, GTR local data, cache dir, and cache-limit warnings. We assert on the API-only table header and the explicit status summary here because those are stable formatting markers for the upstream inventory contract.
 
 ```bash
 bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
@@ -34,6 +34,7 @@ echo "$out" | mustmatch like "| SEER Explorer |"
 echo "$out" | mustmatch not like "EMA local data ("
 echo "$out" | mustmatch not like "WHO Prequalification local data ("
 echo "$out" | mustmatch not like "CDC CVX/MVX local data ("
+echo "$out" | mustmatch not like "GTR local data ("
 echo "$out" | mustmatch not like "Cache dir ("
 echo "$out" | mustmatch not like "Cache limits"
 echo "$out" | mustmatch not like "(key:"
@@ -45,6 +46,7 @@ echo "$json_out" | jq -e 'all(.rows[]; ((.status | contains("(key:")) | not))' >
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("EMA local data (") | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("WHO Prequalification local data (") | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("CDC CVX/MVX local data (") | not))' > /dev/null
+echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("GTR local data (") | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("Cache dir (") | not))' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; .api != "Cache limits")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "LitSense2")' > /dev/null
@@ -66,6 +68,7 @@ echo "$out" | mustmatch like "## When to Use What"
 echo "$out" | mustmatch like "search drug --indication \"<disease>\""
 echo "$out" | mustmatch like "discover \"<free text>\""
 echo "$out" | mustmatch like "search all --gene BRAF --disease melanoma"
+echo "$out" | mustmatch like "- diagnostic"
 echo "$out" | mustmatch like "Turn a literature question into article filters"
 echo "$out" | mustmatch like "article citations <id>"
 echo "$out" | mustmatch like "batch <entity> <id1,id2,...>"
@@ -79,6 +82,7 @@ echo "$out" | mustmatch like '- `cache clear [--yes]` - destructively wipe `<res
 echo "$out" | mustmatch like '- `discover <query>`'
 echo "$out" | mustmatch like '- `cvx sync`'
 echo "$out" | mustmatch like '- `ema sync`'
+echo "$out" | mustmatch like '- `gtr sync`'
 echo "$out" | mustmatch like '- `who sync`'
 echo "$out" | mustmatch like $'## Entities\n\n- gene\n- variant\n- article\n- trial'
 ```

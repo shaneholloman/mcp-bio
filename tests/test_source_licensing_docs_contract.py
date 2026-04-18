@@ -37,6 +37,7 @@ DIRECT_SOURCE_MODULES = {
     "mydisease": "MyDisease.info",
     "mygene": "MyGene.info",
     "myvariant": "MyVariant.info",
+    "gtr": "NCBI Genetic Testing Registry",
     "ncbi_efetch": "NCBI E-utilities",
     "ncbi_idconv": "NCBI ID Converter",
     "nci_cts": "NCI CTS",

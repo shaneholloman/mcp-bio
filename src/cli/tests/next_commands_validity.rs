@@ -108,6 +108,20 @@ fn disease_search_json_next_commands_parse() {
 }
 
 #[test]
+fn diagnostic_next_commands_parse() {
+    assert_parses("biomcp get diagnostic GTR000000001.1 genes");
+    assert_parses("biomcp get diagnostic GTR000000001.1 conditions");
+    assert_parses("biomcp get diagnostic GTR000000001.1 methods");
+    assert_parses("biomcp list diagnostic");
+}
+
+#[test]
+fn diagnostic_search_json_next_commands_parse() {
+    assert_parses("biomcp get diagnostic GTR000000001.1");
+    assert_parses("biomcp list diagnostic");
+}
+
+#[test]
 fn pgx_next_commands_parse() {
     assert_parses("biomcp search pgx -g CYP2D6");
     assert_parses("biomcp search pgx -d warfarin");

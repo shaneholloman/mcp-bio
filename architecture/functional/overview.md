@@ -3,7 +3,7 @@
 ## What BioMCP Is For
 
 BioMCP is a biomedical data access layer for AI agents and human researchers.
-It provides a unified CLI and MCP server that queries 15+ biomedical databases
+It provides a unified CLI and MCP server that queries multiple public biomedical data sources
 through a single consistent command grammar. Users ask biomedical questions
 ("what trials are enrolling for BRAF V600E?", "what is the clinical significance
 of this variant?") and get structured, markdown-formatted answers drawn from
@@ -30,7 +30,7 @@ queries, no knowledge of upstream API idiosyncrasies required.
 
 ## Entity Surface
 
-BioMCP exposes 12 entity types. Most support both `search` and `get`
+BioMCP exposes 13 remote entity commands. Most support both `search` and `get`
 commands; `gwas` and `phenotype` are search-only and do not expose `get`.
 
 | Entity | Key Sources | Representative Command |
@@ -39,6 +39,7 @@ commands; `gwas` and `phenotype` are search-only and do not expose `get`.
 | variant | MyVariant.info, ClinVar, gnomAD, CIViC, OncoKB, cBioPortal, GWAS Catalog, AlphaGenome | `biomcp get variant "BRAF V600E" clinvar` |
 | article | PubMed, PubTator3, Europe PMC, LitSense2 (keyword-gated), PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` recommended) | `biomcp search article -g BRAF --limit 5` |
 | trial | ClinicalTrials.gov, NCI CTS API | `biomcp search trial -c melanoma -s recruiting` |
+| diagnostic | NCBI Genetic Testing Registry local bulk bundle | `biomcp search diagnostic --gene BRCA1 --limit 5` |
 | drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
 | disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter | `biomcp get disease "chronic myeloid leukemia" funding` |
 | pathway | Reactome, KEGG, WikiPathways, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |
@@ -48,7 +49,7 @@ commands; `gwas` and `phenotype` are search-only and do not expose `get`.
 | gwas | GWAS Catalog | `biomcp search gwas --trait "type 2 diabetes"` |
 | phenotype | Monarch Initiative (HPO) | `biomcp search phenotype "HP:0001250"` |
 
-This 12-row table is the high-level public entity surface. It intentionally
+This 13-row table is the high-level public entity surface. It intentionally
 does not fold the local `study` analytics family into the entity list.
 
 This table is a high-level shipped source map; section-specific constraints and

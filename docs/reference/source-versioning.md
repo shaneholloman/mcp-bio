@@ -19,6 +19,7 @@ This matrix tracks which upstream API endpoints are version-pinned and where unv
 | MyDisease.info | `https://mydisease.info/v1` | Versioned (`v1`) | Endpoint already pinned | 2026-02-15 |
 | MyGene.info | `https://mygene.info/v3` | Versioned (`v3`) | Endpoint already pinned | 2026-02-15 |
 | MyVariant.info | `https://myvariant.info/v1` | Versioned (`v1`) | Endpoint already pinned | 2026-02-15 |
+| NCBI Genetic Testing Registry | `https://ftp.ncbi.nlm.nih.gov/pub/GTR/data` | Unversioned bulk export | GTR bulk files are published at stable filenames and refreshed in place rather than by versioned path | 2026-04-17 |
 | NCBI ID Converter | `https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles` | Versioned (`v1`) | Endpoint already pinned | 2026-02-15 |
 | NCI CTS | `https://clinicaltrialsapi.cancer.gov/api/v2` | Versioned (`v2`) | Endpoint already pinned | 2026-02-15 |
 | NIH Reporter | `https://api.reporter.nih.gov/v2` | Versioned (`v2`) | Endpoint already pinned to the public NIH Reporter v2 project search API | 2026-04-11 |

@@ -27,6 +27,12 @@ pub enum CvxCommand {
     Sync,
 }
 
+#[derive(Subcommand, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GtrCommand {
+    /// Force refresh the local NCBI GTR diagnostic bundle
+    Sync,
+}
+
 #[derive(Args, Debug)]
 pub struct ServeHttpArgs {
     /// Host address to bind
@@ -46,7 +52,7 @@ pub struct UpdateArgs {
 
 #[derive(Args, Debug)]
 pub struct ListArgs {
-    /// Optional entity name (gene, variant, article, trial, drug, disease, pgx, gwas, pathway, protein, study, adverse-event, search-all)
+    /// Optional entity name (gene, variant, article, trial, diagnostic, drug, disease, pgx, gwas, pathway, protein, study, adverse-event, search-all)
     pub entity: Option<String>,
 }
 
@@ -88,8 +94,8 @@ pub struct VersionArgs {
 
 mod dispatch;
 pub(crate) use self::dispatch::{
-    handle_batch, handle_cvx, handle_ema, handle_enrich, handle_uninstall, handle_version,
-    handle_who,
+    handle_batch, handle_cvx, handle_ema, handle_enrich, handle_gtr, handle_uninstall,
+    handle_version, handle_who,
 };
 
 #[cfg(test)]

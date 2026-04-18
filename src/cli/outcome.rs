@@ -225,6 +225,9 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 entity: GetEntity::Disease(args),
             } => outcome_to_string(super::disease::handle_get(args, json).await?),
             Commands::Get {
+                entity: GetEntity::Diagnostic(args),
+            } => outcome_to_string(super::diagnostic::handle_get(args, json).await?),
+            Commands::Get {
                 entity: GetEntity::Pgx(args),
             } => outcome_to_string(super::pgx::handle_get(args, json).await?),
             Commands::Get {
@@ -312,6 +315,9 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 SearchEntity::Disease(args) => {
                     outcome_to_string(super::disease::handle_search(args, json).await?)
                 }
+                SearchEntity::Diagnostic(args) => {
+                    outcome_to_string(super::diagnostic::handle_search(args, json).await?)
+                }
                 SearchEntity::Pgx(args) => {
                     outcome_to_string(super::pgx::handle_search(args, json).await?)
                 }
@@ -383,6 +389,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
             Commands::Ema { cmd } => outcome_to_string(super::system::handle_ema(cmd).await?),
             Commands::Who { cmd } => outcome_to_string(super::system::handle_who(cmd).await?),
             Commands::Cvx { cmd } => outcome_to_string(super::system::handle_cvx(cmd).await?),
+            Commands::Gtr { cmd } => outcome_to_string(super::system::handle_gtr(cmd).await?),
             Commands::Skill { command } => match command {
                 None => Ok(crate::cli::skill::show_overview()?),
                 Some(crate::cli::skill::SkillCommand::List) => {

@@ -1,6 +1,6 @@
 use clap::{CommandFactory, Parser};
 
-use super::{CvxCommand, EmaCommand, WhoCommand};
+use super::{CvxCommand, EmaCommand, GtrCommand, WhoCommand};
 use crate::cli::{Cli, Commands, execute};
 
 fn parse_built_cli<I, T>(args: I) -> Cli
@@ -118,6 +118,48 @@ fn cvx_sync_help_describes_bundle_refresh() {
     let help = String::from_utf8(help).expect("help should be utf-8");
 
     assert!(help.contains("CDC CVX/MVX vaccine identity bundle"));
+}
+
+#[test]
+fn gtr_sync_parses_subcommand() {
+    let cli = parse_built_cli(["biomcp", "gtr", "sync"]);
+    assert!(matches!(
+        cli.command,
+        Commands::Gtr {
+            cmd: GtrCommand::Sync
+        }
+    ));
+}
+
+#[test]
+fn gtr_help_mentions_sync_example() {
+    let mut command = Cli::command();
+    let gtr = command
+        .find_subcommand_mut("gtr")
+        .expect("gtr subcommand should exist");
+    let mut help = Vec::new();
+    gtr.write_long_help(&mut help)
+        .expect("gtr help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("biomcp gtr sync"));
+}
+
+#[test]
+fn gtr_sync_help_describes_diagnostic_bundle_refresh() {
+    let mut command = Cli::command();
+    let gtr = command
+        .find_subcommand_mut("gtr")
+        .expect("gtr subcommand should exist");
+    let sync = gtr
+        .find_subcommand_mut("sync")
+        .expect("gtr sync subcommand should exist");
+    let mut help = Vec::new();
+    sync.write_long_help(&mut help)
+        .expect("gtr sync help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("local NCBI GTR diagnostic bundle"));
 }
 
 #[test]

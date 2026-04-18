@@ -29,6 +29,7 @@ biomcp cache path             → print the managed HTTP cache path (plain text;
 biomcp cache stats            → show HTTP cache statistics (JSON supported)
 biomcp cache clean            → remove orphan blobs and optionally age- or size-evict the HTTP cache (JSON supported)
 biomcp cache clear [--yes]    → destructively wipe the managed HTTP cache tree (JSON success; TTY or `--yes` required)
+biomcp gtr sync               → force-refresh the local GTR diagnostic bundle
 biomcp serve-http            → run the MCP Streamable HTTP server at `/mcp`
 ```
 
@@ -46,12 +47,13 @@ biomcp get gene BRAF all                  # everything
 
 biomcp get variant "BRAF V600E" clinvar population conservation
 biomcp get article 22663011 tldr
+biomcp get diagnostic GTR000000001.1 genes conditions
 biomcp get drug pembrolizumab label targets civic approvals
 biomcp get disease "Lynch syndrome" genes phenotypes variants
 biomcp get trial NCT02576665 eligibility locations outcomes
 ```
 
-The pattern is consistent across all 12 entity types: no-section gives a
+The pattern is consistent across all 13 remote entity commands: no-section gives a
 summary, named sections are additive, and `all` gives the standard default
 surface rather than every opt-in section. Opt-in sections such as `disgenet`
 and `funding` still require explicit naming.

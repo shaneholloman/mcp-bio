@@ -293,3 +293,42 @@ complete CDC root must contain:
 
 The CDC bundle only augments the EMA-side vaccine identity path. It does not
 change WHO lookups, and pure `--region us` searches do not use the CVX root.
+
+## 16) GTR diagnostic data not available
+
+Diagnostic search/get flows depend on the local NCBI GTR bundle. BioMCP
+auto-downloads `test_version.gz` and `test_condition_gene.txt` on first
+diagnostic use, but full `biomcp health` is still the right readiness surface
+when you need to debug the local GTR state:
+
+```bash
+biomcp health
+```
+
+Interpret the GTR row like this:
+
+- `configured`: `BIOMCP_GTR_DIR` is set and both GTR files are present
+- `configured (stale)`: `BIOMCP_GTR_DIR` is set and complete, but one or more GTR files are older than the 7-day refresh window
+- `available (default path)`: BioMCP found a complete GTR root in the default platform data directory
+- `available (default path, stale)`: the default-path GTR root is complete, but one or more files are older than the 7-day refresh window
+- `not configured`: no complete GTR root was found at the default path yet
+- `error (missing: ...)`: BioMCP found a partial GTR root or unreadable file; install both files or point `BIOMCP_GTR_DIR` at a complete root
+
+If a refresh fails, retry explicitly:
+
+```bash
+biomcp gtr sync
+```
+
+If you need to override the default path:
+
+```bash
+export BIOMCP_GTR_DIR="/path/to/gtr"
+biomcp health
+```
+
+Manual preseed remains supported for offline or controlled environments. A
+complete GTR root must contain:
+
+- `test_version.gz`
+- `test_condition_gene.txt`

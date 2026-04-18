@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use super::{BatchArgs, CvxCommand, EmaCommand, EnrichArgs, VersionArgs, WhoCommand};
+use super::{BatchArgs, CvxCommand, EmaCommand, EnrichArgs, GtrCommand, VersionArgs, WhoCommand};
 use crate::cli::CommandOutcome;
 use futures::future::try_join_all;
 
@@ -380,6 +380,16 @@ pub(crate) async fn handle_cvx(cmd: CvxCommand) -> anyhow::Result<CommandOutcome
         CvxCommand::Sync => {
             crate::sources::cvx::CvxClient::sync(crate::sources::cvx::CvxSyncMode::Force).await?;
             "CDC CVX/MVX local data bundle synchronized successfully.\n".to_string()
+        }
+    };
+    Ok(CommandOutcome::stdout(text))
+}
+
+pub(crate) async fn handle_gtr(cmd: GtrCommand) -> anyhow::Result<CommandOutcome> {
+    let text = match cmd {
+        GtrCommand::Sync => {
+            crate::sources::gtr::GtrClient::sync(crate::sources::gtr::GtrSyncMode::Force).await?;
+            "GTR local diagnostic data synchronized successfully.\n".to_string()
         }
     };
     Ok(CommandOutcome::stdout(text))

@@ -10,6 +10,7 @@ New to BioMCP? Try:
 
 - `skill install` - install BioMCP skill guidance to your agent
 - `get gene BRAF` - look up a gene
+- `search diagnostic --gene BRCA1 --limit 5` - find genetic tests for a known gene
 - `get variant "BRAF V600E"` - annotate a variant
 - `discover "chest pain"` - resolve free text before choosing an entity
 - `search trial -c melanoma` - find clinical trials
@@ -21,6 +22,7 @@ New to BioMCP? Try:
 |---|---|
 | How much NIH funded a disease or gene | `get disease <name_or_id> funding` or `get gene <symbol> funding` |
 | What drugs treat a disease | `search drug --indication "<disease>" --limit 5` |
+| What diagnostic test exists for a gene or disease | `search diagnostic --gene <symbol> --limit 5` or `search diagnostic --disease "<name>" --limit 5` |
 | What the 5-year survival outlook is for a cancer | `get disease <name_or_id> survival` |
 | Symptoms or phenotypes of a disease | `get disease <name_or_id> phenotypes` |
 | Which diseases match HPO IDs or symptom text | `search phenotype "<HP:... HP:...>"` or `search phenotype "seizure, developmental delay"` |
@@ -41,6 +43,7 @@ New to BioMCP? Try:
 - variant
 - article
 - trial
+- diagnostic
 - drug
 - disease
 - phenotype
@@ -72,6 +75,7 @@ New to BioMCP? Try:
 
 - `search variant ... --review-status --population --revel-min --gerp-min --tumor-site --condition --impact --lof --has --missing --therapy`
 - `search adverse-event ... --date-from --date-to --suspect-only --sex --age-min --age-max --reporter --count`
+- `search diagnostic ... --gene --disease --type --manufacturer`
 - `search gene ... --region --pathway --go` (use GO IDs like `GO:0004672`; search output includes Coordinates/UniProt/OMIM)
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
@@ -133,8 +137,9 @@ Results depend on source document wording and may vary across sources.
 - EU drug commands auto-download the EMA human-medicines JSON feeds on first use into the default data dir or `BIOMCP_EMA_DIR`, then refresh stale files after 72 hours.
 - WHO regional commands auto-download the WHO finished-pharma and API CSV exports on first use into the default data dir or `BIOMCP_WHO_DIR`, then refresh stale files after 72 hours.
 - Default/EU vaccine brand lookups can auto-download the CDC CVX/MVX bundle on first use into the default data dir or `BIOMCP_CVX_DIR`, then refresh stale files after 30 days.
-- Run `ema sync`, `who sync`, or `cvx sync` to force-refresh the local regional data.
-- Use `biomcp health --apis-only` for upstream/API checks and full `biomcp health` for local EMA/WHO/CVX/cache readiness plus cache-limit warnings.
+- Diagnostic commands auto-download the NCBI GTR bundle on first use into the default data dir or `BIOMCP_GTR_DIR`, then refresh stale files after 7 days.
+- Run `ema sync`, `who sync`, `cvx sync`, or `gtr sync` to force-refresh the local runtime data.
+- Use `biomcp health --apis-only` for upstream/API checks and full `biomcp health` for local EMA/WHO/CVX/GTR/cache readiness plus cache-limit warnings.
 - In multi-worker environments, run one shared `biomcp serve-http` process so workers share one Streamable HTTP `/mcp` endpoint and one limiter budget.
 
 ## Ops
@@ -146,6 +151,7 @@ Results depend on source document wording and may vary across sources.
 - `ema sync`
 - `who sync`
 - `cvx sync`
+- `gtr sync`
 - `update [--check]`
 - `uninstall`
 - `health [--apis-only]`

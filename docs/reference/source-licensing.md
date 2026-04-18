@@ -48,6 +48,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | gnomAD | 3 | direct_api | none | Broad Institute data policies with attribution and service-specific conditions | querying is open, but users should review the gnomAD policies before bulk reuse or republishing | <https://gnomad.broadinstitute.org/policies> |
 | g:Profiler | 1 | direct_api | none | open enrichment service with provider citation expectations | results are queryable and reusable, but cite g:Profiler and any underlying databases you depend on | <https://biit.cs.ut.ee/gprofiler/help.cgi> |
 | GTEx | 1 | direct_api | none | NIH-hosted public-access expression resource | public summary/expression views are broadly reusable; controlled-access data remains outside BioMCP's scope | <https://gtexportal.org/home/documentationPage> |
+| NCBI Genetic Testing Registry | 1 | direct_api | none | NLM/NCBI government data service with public bulk-export access | GTR records are broadly queryable and reusable, but preserve accession provenance and review any embedded third-party identifiers separately | <https://www.ncbi.nlm.nih.gov/gtr/docs/faq/> |
 | GWAS Catalog | 1 | direct_api | none | EMBL-EBI resource terms; summary statistics may carry separate licenses | query results are generally reusable, but dataset-level summary statistics can have separate downstream terms | <https://www.ebi.ac.uk/gwas/docs/about> |
 | Human Protein Atlas | 3 | direct_api | none | CC BY-SA 4.0 for copyrightable parts of the database | reuse is allowed with attribution and ShareAlike; third-party components may impose extra conditions | <https://www.proteinatlas.org/about/licence> |
 | HPO JAX API | 1 | direct_api | none | open HPO data with attribution and integrity requirements | reuse is allowed, but users should preserve attribution, version context, and source integrity | <https://human-phenotype-ontology.github.io/license.html> |
@@ -212,6 +213,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.who.int/about/policies/publishing/copyright>
 - Reviewed on: `2026-04-10`
 - Notes: BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV and active-pharmaceutical-ingredients CSV into `BIOMCP_WHO_DIR` or the default data directory on first use, refreshes stale files, and supports explicit refresh via `biomcp who sync`.
+
+### NCBI Genetic Testing Registry
+
+- BioMCP surfaces: `search diagnostic; get diagnostic <gtr_accession>; biomcp health; biomcp gtr sync`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: on-demand local download by BioMCP on first diagnostic use, or manual preseed via `BIOMCP_GTR_DIR`
+- License / terms summary: NLM/NCBI government data service with public bulk-export access
+- Redistribution / reuse summary: GTR records are broadly queryable and reusable, but preserve accession provenance and review any embedded third-party identifiers separately
+- Official terms URL: <https://www.ncbi.nlm.nih.gov/gtr/docs/faq/>
+- Reviewed on: `2026-04-17`
+- Notes: BioMCP auto-downloads `test_version.gz` and `test_condition_gene.txt` into `BIOMCP_GTR_DIR` or the default data directory on first use, refreshes stale files after 7 days, and supports explicit refresh via `biomcp gtr sync`.
 
 ### Enrichr
 

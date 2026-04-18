@@ -12,6 +12,7 @@ BLOCKED_FAMILIES = {
     "chart",
     "cvx",
     "ema",
+    "gtr",
     "mcp",
     "serve",
     "serve-http",
@@ -34,6 +35,7 @@ EXPECTED_STUDY_SUBCOMMANDS = {
 EXPECTED_SKILL_BLOCKED_SUBCOMMANDS = {"install"}
 EXPECTED_DESCRIPTION_BLOCKED_TERMS = {
     "`ema sync`",
+    "`gtr sync`",
     "`skill install`",
     "`uninstall`",
     "`update [--check]`",

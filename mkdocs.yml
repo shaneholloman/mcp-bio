@@ -26,6 +26,7 @@ nav:
       - Variant: user-guide/variant.md
       - Article: user-guide/article.md
       - Trial: user-guide/trial.md
+      - Diagnostic: user-guide/diagnostic.md
       - Drug: user-guide/drug.md
       - Disease: user-guide/disease.md
       - Pathway: user-guide/pathway.md
@@ -152,7 +153,7 @@ extra:
     - property: og:title
       content: BioMCP - Biomedical CLI and MCP Server
     - property: og:description
-      content: Single-binary CLI and MCP server for querying 15 biomedical databases
+      content: Single-binary CLI and MCP server for querying biomedical data sources
     - property: og:image
       content: https://biomcp.org/assets/icon.png
     - property: og:url
@@ -162,7 +163,7 @@ extra:
     - name: twitter:title
       content: BioMCP - Biomedical CLI and MCP Server
     - name: twitter:description
-      content: Single-binary CLI and MCP server for querying 15 biomedical databases
+      content: Single-binary CLI and MCP server for querying biomedical data sources
     - name: keywords
       content: biomedical, MCP, CLI, genomics, clinical trials, bioinformatics, Rust
 

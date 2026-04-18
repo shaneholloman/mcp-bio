@@ -18,6 +18,45 @@ fn sections_pathway_for_kegg_excludes_unsupported_sections() {
 }
 
 #[test]
+fn sections_diagnostic_omit_requested_section_from_more_block() {
+    let diagnostic = Diagnostic {
+        source: "gtr".to_string(),
+        source_id: "GTR000000001.1".to_string(),
+        accession: "GTR000000001.1".to_string(),
+        name: "BRCA1 Hereditary Cancer Panel".to_string(),
+        test_type: Some("molecular".to_string()),
+        manufacturer: Some("OncoPanel BRCA1".to_string()),
+        laboratory: Some("GenomOncology Lab".to_string()),
+        institution: Some("GenomOncology Institute".to_string()),
+        country: Some("USA".to_string()),
+        clia_number: Some("12D3456789".to_string()),
+        state_licenses: Some("NY|CA".to_string()),
+        current_status: Some("Current".to_string()),
+        public_status: Some("Public".to_string()),
+        method_categories: vec!["Molecular genetics".to_string()],
+        genes: Some(vec!["BRCA1".to_string()]),
+        conditions: Some(vec!["Breast cancer".to_string()]),
+        methods: Some(vec!["Sequence analysis".to_string()]),
+    };
+
+    let sections = sections_diagnostic(&diagnostic, &["genes".to_string()]);
+    assert_eq!(
+        sections,
+        vec!["conditions".to_string(), "methods".to_string()]
+    );
+
+    let commands = diagnostic_next_commands(&diagnostic, &["genes".to_string()]);
+    assert_eq!(
+        commands,
+        vec![
+            "biomcp get diagnostic GTR000000001.1 conditions".to_string(),
+            "biomcp get diagnostic GTR000000001.1 methods".to_string(),
+            "biomcp list diagnostic".to_string()
+        ]
+    );
+}
+
+#[test]
 fn sections_pathway_for_reactome_keeps_full_supported_set() {
     let pathway = Pathway {
         source: "Reactome".to_string(),

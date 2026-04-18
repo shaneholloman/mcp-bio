@@ -107,6 +107,9 @@ pub(super) fn section_description(entity: &str, section: &str) -> &'static str {
         ("article", "annotations") => "PubTator normalized entity mentions",
         ("article", "fulltext") => "cached full text when available",
         ("article", "tldr") => "Semantic Scholar summary and influence",
+        ("diagnostic", "genes") => "joined gene names from GTR detail links",
+        ("diagnostic", "conditions") => "joined condition names from GTR detail links",
+        ("diagnostic", "methods") => "GTR methods reported for this diagnostic test",
         ("disease", "genes") => "associated genes",
         ("disease", "pathways") => "pathways from associated genes",
         ("disease", "phenotypes") => "HPO phenotype annotations",
@@ -192,6 +195,19 @@ pub(crate) fn disease_next_commands(
     dedupe_markdown_commands(out)
 }
 
+pub(crate) fn diagnostic_next_commands(
+    diagnostic: &Diagnostic,
+    requested_sections: &[String],
+) -> Vec<String> {
+    let mut out = visible_section_commands(
+        "diagnostic",
+        &diagnostic.accession,
+        &sections_diagnostic(diagnostic, requested_sections),
+    );
+    out.extend(related_diagnostic(diagnostic));
+    dedupe_markdown_commands(out)
+}
+
 pub(crate) fn gene_next_commands(gene: &Gene, requested_sections: &[String]) -> Vec<String> {
     let mut out = visible_section_commands(
         "gene",
@@ -274,6 +290,17 @@ pub(super) fn sections_disease(disease: &Disease, requested: &[String]) -> Vec<S
         return Vec::new();
     }
     sections_for(requested, DISEASE_DISCOVERY_SECTION_NAMES)
+}
+
+pub(super) fn sections_diagnostic(diagnostic: &Diagnostic, requested: &[String]) -> Vec<String> {
+    let accession = quote_arg(&diagnostic.accession);
+    if accession.is_empty() {
+        return Vec::new();
+    }
+    sections_for(
+        requested,
+        crate::entities::diagnostic::DIAGNOSTIC_SECTION_NAMES,
+    )
 }
 
 pub(super) fn sections_pgx(pgx: &Pgx, requested: &[String]) -> Vec<String> {

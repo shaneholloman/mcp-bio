@@ -3,6 +3,7 @@ use serde::Serialize;
 
 use crate::cli::Cli;
 
+mod diagnostic;
 mod disease_trial;
 mod gene_article;
 mod pathway_adverse_event;

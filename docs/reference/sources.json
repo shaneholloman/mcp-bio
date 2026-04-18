@@ -542,6 +542,23 @@
     "notes": "BioMCP uses PMC `efetch` as a full-text fallback when Europe PMC does not serve the article. `NCBI_API_KEY` raises the baseline NCBI E-utilities budget but is not required."
   },
   {
+    "id": "gtr",
+    "name": "NCBI Genetic Testing Registry",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": ["search diagnostic", "get diagnostic <gtr_accession>", "biomcp health", "biomcp gtr sync"],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "public FTP bulk export; BioMCP downloads and reads local copies on demand, or operators can preseed `BIOMCP_GTR_DIR` manually",
+    "license_summary": "NLM/NCBI government data service with public bulk-export access",
+    "redistribution_summary": "GTR records are broadly queryable and reusable, but preserve accession provenance and review any embedded third-party identifiers separately",
+    "terms_url": "https://www.ncbi.nlm.nih.gov/gtr/docs/faq/",
+    "key_url": null,
+    "reviewed_on": "2026-04-17",
+    "notes": "BioMCP requires `test_version.gz` and `test_condition_gene.txt`, auto-downloads them on first diagnostic use, refreshes stale files after 7 days, and supports explicit refresh via `biomcp gtr sync`."
+  },
+  {
     "id": "ncbi-id-converter",
     "name": "NCBI ID Converter",
     "tier": 1,

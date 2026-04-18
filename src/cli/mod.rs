@@ -6,6 +6,7 @@ pub mod cache;
 pub mod chart;
 mod commands;
 pub mod debug_plan;
+mod diagnostic;
 pub mod discover;
 mod disease;
 mod drug;
@@ -43,7 +44,7 @@ pub use self::pathway::PathwayCommand;
 pub use self::protein::ProteinCommand;
 pub use self::shared::{build_cli, parse_cli_from_env, try_parse_cli};
 pub use self::study::StudyCommand;
-pub use self::system::{CvxCommand, EmaCommand, WhoCommand};
+pub use self::system::{CvxCommand, EmaCommand, GtrCommand, WhoCommand};
 pub use self::types::{
     ChartArgs, ChartType, Cli, CliOutput, CommandOutcome, DrugRegionArg, OutputStream,
 };

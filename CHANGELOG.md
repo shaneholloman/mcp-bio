@@ -12,6 +12,9 @@
 - Added the CDC CVX/MVX vaccine identity bridge for default and EU/all
   vaccine-brand drug search, backed by local CDC bundle downloads and explicit
   refresh via `biomcp cvx sync`. (233)
+- Added the local GTR-backed `diagnostic` entity with `search/get diagnostic`,
+  first-use bundle refresh, explicit `biomcp gtr sync`, and the supporting
+  health/docs/spec contract. (236)
 - Added entity-aware HATEOAS suggestions (`_meta.next_commands`) to article
   search JSON output; gene-anchored and keyword searches return contextually
   appropriate follow-up commands. (195, 202)
