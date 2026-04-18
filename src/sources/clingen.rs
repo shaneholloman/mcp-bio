@@ -138,11 +138,7 @@ impl ClinGenClient {
 
     pub async fn gene_context(&self, gene_symbol: &str) -> Result<GeneClinGen, BioMcpError> {
         let symbol = normalize_gene_symbol(gene_symbol)?;
-        let hgnc_id = self.lookup_hgnc_id(&symbol).await.unwrap_or_else(|err| {
-            warn!(symbol = %symbol, "ClinGen gene lookup failed, falling back to symbol matching: {err}");
-            None
-        });
-
+        let hgnc_fut = self.lookup_hgnc_id(&symbol);
         let validity_fut = self.get_text(
             self.client.get(self.endpoint(CLINGEN_VALIDITY_PATH)),
             CLINGEN_API,
@@ -151,7 +147,14 @@ impl ClinGenClient {
             self.client.get(self.endpoint(CLINGEN_DOSAGE_PATH)),
             CLINGEN_API,
         );
-        let (validity_csv, dosage_csv) = tokio::try_join!(validity_fut, dosage_fut)?;
+        let (hgnc_result, validity_csv, dosage_csv) =
+            tokio::join!(hgnc_fut, validity_fut, dosage_fut);
+        let hgnc_id = hgnc_result.unwrap_or_else(|err| {
+            warn!(symbol = %symbol, "ClinGen gene lookup failed, falling back to symbol matching: {err}");
+            None
+        });
+        let validity_csv = validity_csv?;
+        let dosage_csv = dosage_csv?;
         let validity = parse_validity_csv(&validity_csv, &symbol, hgnc_id.as_deref())?;
         let (haploinsufficiency, triplosensitivity) =
             parse_dosage_csv(&dosage_csv, &symbol, hgnc_id.as_deref())?;
