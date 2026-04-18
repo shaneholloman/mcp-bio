@@ -584,6 +584,50 @@ fn article_search_markdown_renders_related_block_before_pagination() {
 }
 
 #[test]
+fn article_search_markdown_includes_cross_entity_discover_hint_for_short_keyword_phrase() {
+    let rows = vec![ArticleSearchResult {
+        pmid: "22663011".into(),
+        title: "Entity-aware article".into(),
+        pmcid: None,
+        doi: None,
+        journal: Some("Journal".into()),
+        date: Some("2025-01-01".into()),
+        first_index_date: None,
+        citation_count: Some(12),
+        influential_citation_count: Some(4),
+        source: ArticleSource::EuropePmc,
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: Some("Abstract".into()),
+        ranking: None,
+        matched_sources: vec![ArticleSource::EuropePmc],
+        normalized_title: "entity-aware article".into(),
+        normalized_abstract: "abstract".into(),
+        publication_type: None,
+        source_local_position: 0,
+    }];
+    let mut filters = article_filters_for_test(crate::entities::article::ArticleSort::Relevance);
+    filters.keyword = Some("live attenuated vaccines".into());
+
+    let markdown = article_search_markdown_with_footer_and_context(
+        "keyword=live attenuated vaccines",
+        &rows,
+        "",
+        &filters,
+        ArticleSearchRenderContext {
+            source_filter: crate::entities::article::ArticleSourceFilter::All,
+            semantic_scholar_enabled: true,
+            note: None,
+            debug_plan: None,
+        },
+    )
+    .expect("markdown should render");
+
+    assert!(markdown.contains("See also:"));
+    assert!(markdown.contains("biomcp discover \"live attenuated vaccines\""));
+}
+
+#[test]
 fn format_newest_indexed_footer_is_deterministic() {
     let indexed = NaiveDate::from_ymd_opt(2025, 1, 15).expect("valid date");
     let today = NaiveDate::from_ymd_opt(2025, 1, 20).expect("valid date");

@@ -436,12 +436,13 @@ pub fn article_search_markdown_with_footer_and_context(
             is_retracted: row.is_retracted,
         })
         .collect::<Vec<_>>();
-    let related_block =
-        format_related_block(crate::render::markdown::related_article_search_results(
+    let related_block = format_related_block(
+        crate::render::markdown::markdown_related_article_search_results(
             results,
             filters,
             context.source_filter,
-        ));
+        ),
+    );
     let index_date_footer = newest_indexed_footer(results);
 
     let tmpl = env()?.get_template("article_search.md.j2")?;

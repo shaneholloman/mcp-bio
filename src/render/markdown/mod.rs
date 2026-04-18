@@ -288,6 +288,14 @@ pub(crate) fn related_article_search_results(
     related::related_article_search_results(results, filters, source_filter)
 }
 
+pub(crate) fn markdown_related_article_search_results(
+    results: &[ArticleSearchResult],
+    filters: &ArticleSearchFilters,
+    source_filter: crate::entities::article::ArticleSourceFilter,
+) -> Vec<String> {
+    related::markdown_related_article_search_results(results, filters, source_filter)
+}
+
 pub(crate) fn search_next_commands_article(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,

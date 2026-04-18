@@ -11,6 +11,28 @@ const ARTICLE_DRUG_SUFFIXES: &[&str] = &[
     "mab", "nib", "vir", "pril", "sartan", "statin", "platin", "rubicin", "taxel", "azole",
     "dipine", "parin", "tide", "cept", "olol", "afil", "semide", "idone",
 ];
+const ARTICLE_CROSS_ENTITY_MAX_TOKENS: usize = 3;
+const ARTICLE_DISEASE_SUFFIXES: &[&str] = &[
+    "cancer",
+    "carcinoma",
+    "deficiency",
+    "disease",
+    "disorder",
+    "infection",
+    "leukaemia",
+    "leukemia",
+    "lymphoma",
+    "melanoma",
+    "sarcoma",
+    "syndrome",
+    "tumor",
+    "tumour",
+];
+const ARTICLE_DISCOVER_SUFFIXES: &[&str] = &["vaccine", "vaccines"];
+const ARTICLE_QUESTION_PREFIXES: &[&str] = &[
+    "how ", "what ", "when ", "where ", "which ", "who ", "why ", "list ", "show ", "find ",
+    "give ", "tell ",
+];
 
 pub(super) fn article_annotation_command(
     bucket: ArticleAnnotationBucket,
@@ -179,6 +201,34 @@ fn remainder_without_token(tokens: &[&str], remove_index: usize) -> Option<Strin
     (!remainder.is_empty()).then_some(remainder)
 }
 
+fn article_keyword_cross_entity_eligible(keyword: &str, tokens: &[&str]) -> bool {
+    let keyword = keyword.trim();
+    !keyword.is_empty()
+        && tokens.len() <= ARTICLE_CROSS_ENTITY_MAX_TOKENS
+        && !keyword.contains('?')
+        && !ARTICLE_QUESTION_PREFIXES
+            .iter()
+            .any(|prefix| keyword.to_ascii_lowercase().starts_with(prefix))
+}
+
+fn article_keyword_last_token(tokens: &[&str]) -> Option<String> {
+    tokens
+        .last()
+        .map(|token| token.trim().to_ascii_lowercase())
+        .filter(|token| !token.is_empty())
+}
+
+fn article_keyword_looks_like_disease_phrase(tokens: &[&str]) -> bool {
+    article_keyword_last_token(tokens)
+        .is_some_and(|token| ARTICLE_DISEASE_SUFFIXES.contains(&token.as_str()))
+}
+
+fn article_keyword_looks_like_discover_phrase(tokens: &[&str]) -> bool {
+    article_keyword_looks_like_disease_phrase(tokens)
+        || article_keyword_last_token(tokens)
+            .is_some_and(|token| ARTICLE_DISCOVER_SUFFIXES.contains(&token.as_str()))
+}
+
 pub(super) fn article_keyword_entity_hints(filters: &ArticleSearchFilters) -> Vec<String> {
     let keyword = filters
         .keyword
@@ -213,6 +263,42 @@ pub(super) fn article_keyword_entity_hints(filters: &ArticleSearchFilters) -> Ve
         && let Some(drug) = first_article_drug_token(&tokens)
     {
         out.push(format!("biomcp get drug {}", quote_arg(&drug)));
+    }
+
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn article_keyword_cross_entity_markdown_hints(
+    filters: &ArticleSearchFilters,
+) -> Vec<String> {
+    let keyword = filters
+        .keyword
+        .as_deref()
+        .map(str::trim)
+        .filter(|keyword| !keyword.is_empty());
+    let Some(keyword) = keyword else {
+        return Vec::new();
+    };
+
+    let tokens = article_keyword_tokens(keyword);
+    if tokens.is_empty() || !article_keyword_cross_entity_eligible(keyword, &tokens) {
+        return Vec::new();
+    }
+
+    let has_gene_token = first_article_gene_token(&tokens).is_some();
+    let has_drug_token = first_article_drug_token(&tokens).is_some();
+    if has_gene_token || has_drug_token {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if filters.disease.is_none() {
+        if article_keyword_looks_like_discover_phrase(&tokens) {
+            out.push(format!("biomcp discover {}", shell_quote_arg(keyword)));
+        }
+        if article_keyword_looks_like_disease_phrase(&tokens) {
+            out.push(format!("biomcp get disease {}", quote_arg(keyword)));
+        }
     }
 
     dedupe_markdown_commands(out)

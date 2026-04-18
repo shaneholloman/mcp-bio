@@ -73,6 +73,17 @@ fn article_search_related_results_detect_drug_without_dna_false_positive() {
 }
 
 #[test]
+fn article_search_related_results_include_structured_drug_hint_for_drug_keyword() {
+    let related = related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("tofacitinib"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+    );
+
+    assert!(related.contains(&"biomcp get drug tofacitinib".to_string()));
+}
+
+#[test]
 fn article_search_related_results_skip_redundant_typed_hints() {
     let with_gene_filter = related_article_search_results(
         &[article_search_result("22663011")],
@@ -105,6 +116,42 @@ fn article_search_related_results_skip_non_entity_keyword_hints() {
         related[1],
         "biomcp search article -k \"cell cycle checkpoint\" --year-min 2025 --year-max 2025 --limit 5"
     );
+}
+
+#[test]
+fn markdown_article_search_related_results_include_discover_for_short_vaccine_phrase() {
+    let related = markdown_related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("live attenuated vaccines"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+    );
+
+    assert!(related.contains(&"biomcp discover \"live attenuated vaccines\"".to_string()));
+}
+
+#[test]
+fn markdown_article_search_related_results_include_discover_and_get_disease_for_short_disease_phrase(
+) {
+    let related = markdown_related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("Emanuel syndrome"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+    );
+
+    assert!(related.contains(&"biomcp discover \"Emanuel syndrome\"".to_string()));
+    assert!(related.contains(&"biomcp get disease \"Emanuel syndrome\"".to_string()));
+}
+
+#[test]
+fn markdown_article_search_related_results_skip_cross_entity_hints_for_long_phrase() {
+    let related = markdown_related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("live attenuated vaccines still in use review"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+    );
+
+    assert!(!related.iter().any(|command| command.starts_with("biomcp discover ")));
+    assert!(!related.iter().any(|command| command.starts_with("biomcp get disease ")));
 }
 
 #[test]
