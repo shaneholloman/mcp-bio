@@ -67,6 +67,8 @@ bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
 out="$(biomcp search diagnostic --gene EGFR --type molecular --limit 5)"
 echo "$out" | mustmatch like "# Diagnostic tests: gene=EGFR, type=molecular"
 echo "$out" | mustmatch like "|Accession|Name|Type|Manufacturer / Lab|Genes|Conditions|"
+echo "$out" | mustmatch like "GTR000000002.1"
+echo "$out" | mustmatch not like "GTR000000001.1"
 ```
 
 ## Filter Validation
