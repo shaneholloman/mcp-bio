@@ -166,6 +166,20 @@ echo "$who_diag_json" | mustmatch like '"key": "conditions"'
 echo "$who_diag_json" | mustmatch like "WHO Prequalified IVD"
 ```
 
+## JSON section_sources — Diagnostic Regulatory
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+gtr_regulatory_json="$("$bin" get diagnostic GTR000000001.1 regulatory --json)"
+echo "$gtr_regulatory_json" | mustmatch like '"regulatory": ['
+echo "$gtr_regulatory_json" | mustmatch like '"section_sources": ['
+echo "$gtr_regulatory_json" | mustmatch like '"key": "regulatory"'
+echo "$gtr_regulatory_json" | mustmatch like '"label": "Regulatory"'
+echo "$gtr_regulatory_json" | mustmatch like 'OpenFDA Device 510(k) / PMA'
+```
+
 ```bash
 variant_json="$(biomcp get variant rs334 --json)"
 echo "$variant_json" | mustmatch like '"section_sources": ['

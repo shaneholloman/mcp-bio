@@ -1,24 +1,25 @@
 # Diagnostic Functional Note
 
 The `diagnostic` entity is a source-aware local-runtime surface over two
-diagnostic bundles:
+diagnostic bundles plus one opt-in live regulatory overlay:
 
 - NCBI Genetic Testing Registry (GTR) for gene-centric genetic tests
 - WHO Prequalified IVD for infectious-disease diagnostic products
+- OpenFDA device 510(k) and PMA for optional U.S. regulatory status overlays
 
 ## Scope
 
 - `search diagnostic --source <gtr|who-ivd|all> --gene|--disease|--type|--manufacturer`
-- `get diagnostic <diagnostic_id> [genes|conditions|methods|all]`
+- `get diagnostic <diagnostic_id> [genes|conditions|methods|regulatory|all]`
 - `biomcp gtr sync`
 - `biomcp who-ivd sync`
 - full `biomcp health` readiness for the GTR and WHO IVD local bundles
 
 Out of scope in this slice:
 
-- FDA device overlays
 - a new `--source` flag on `get diagnostic`
 - cross-entity diagnostic helper commands
+- a full FDA device mirror, sync command, or background cache
 - live GTR or WHO IVD API calls beyond local refresh
 - persistent processed caches
 - any third diagnostic source
@@ -72,23 +73,31 @@ skipping the WHO IVD leg.
 implicit from the identifier: GTR accession regex first, WHO IVD exact product
 code lookup second.
 
-Optional public sections remain:
+Optional public sections are:
 
 - `genes`
 - `conditions`
 - `methods`
+- `regulatory`
 - `all`
 
 Section support is source-aware:
 
-- GTR supports `genes`, `conditions`, and `methods`
-- WHO IVD supports `conditions`
+- GTR supports `genes`, `conditions`, `methods`, and `regulatory`
+- WHO IVD supports `conditions` and `regulatory`
 
-`all` expands only to the sections supported by the resolved source. JSON keeps
+`all` expands only to the local source-native sections and intentionally
+excludes `regulatory` because the FDA overlay is live and optional. JSON keeps
 the same progressive-disclosure contract by omitting unrequested sections and
 preserving requested empty sections as `[]`. WHO IVD cards add source-native
 summary fields such as target/marker, regulatory version, and prequalification
 year instead of forcing GTR-only detail labels.
+
+The `regulatory` section queries OpenFDA device 510(k) and PMA endpoints
+against a bounded set of source-native aliases derived from the resolved
+diagnostic record. The base summary card still loads if OpenFDA fails; the
+overlay degrades to an empty `regulatory` section instead of failing the whole
+diagnostic lookup.
 
 ## MCP boundary
 

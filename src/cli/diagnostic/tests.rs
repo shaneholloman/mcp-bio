@@ -79,8 +79,9 @@ fn get_diagnostic_help_mentions_supported_sections() {
         .expect("diagnostic help should render");
     let help = String::from_utf8(help).expect("help should be utf-8");
 
-    assert!(help.contains("genes, conditions, methods, all"));
+    assert!(help.contains("genes, conditions, methods, regulatory, all"));
     assert!(help.contains("biomcp get diagnostic \"ITPW02232- TC40\" conditions"));
+    assert!(help.contains("biomcp get diagnostic GTR000000001.1 regulatory"));
 }
 
 #[test]

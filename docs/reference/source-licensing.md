@@ -229,7 +229,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### NCBI Genetic Testing Registry
 
-- BioMCP surfaces: `search diagnostic; get diagnostic <gtr_accession>; biomcp health; biomcp gtr sync`
+- BioMCP surfaces: `search diagnostic; get diagnostic <gtr_accession> [genes|conditions|methods|regulatory]; biomcp health; biomcp gtr sync`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: on-demand local download by BioMCP on first diagnostic use, or manual preseed via `BIOMCP_GTR_DIR`
@@ -241,7 +241,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### WHO Prequalified IVD
 
-- BioMCP surfaces: `search diagnostic --source who-ivd|all; get diagnostic <who_ivd_product_code>; biomcp health; biomcp who-ivd sync`
+- BioMCP surfaces: `search diagnostic --source who-ivd|all; get diagnostic <who_ivd_product_code> [conditions|regulatory]; biomcp health; biomcp who-ivd sync`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: on-demand local download by BioMCP on first WHO IVD use, or manual preseed via `BIOMCP_WHO_IVD_DIR`
@@ -459,7 +459,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### OpenFDA
 
-- BioMCP surfaces: `search adverse-event; get drug <name> label; get drug <name> approvals`
+- BioMCP surfaces: `search adverse-event; get drug <name> label; get drug <name> approvals; get diagnostic <diagnostic_id> regulatory`
 - Integration mode: `direct_api`
 - BioMCP auth: `optional_env` via `OPENFDA_API_KEY`
 - Provider access / registration: open public API; optional key increases quota headroom
@@ -467,8 +467,8 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Redistribution / reuse summary: data is broadly reusable, but avoid implying FDA endorsement and preserve source context
 - Official terms URL: <https://open.fda.gov/apis/authentication/>
 - API key / account URL: <https://open.fda.gov/apis/authentication/>
-- Reviewed on: `2026-03-20`
-- Notes: The authentication page says API keys are required while also publishing no-key quotas. BioMCP documents the real runtime behavior: baseline use works without a key, with higher quotas when one is configured.
+- Reviewed on: `2026-04-18`
+- Notes: The authentication page says API keys are required while also publishing no-key quotas. BioMCP documents the real runtime behavior: baseline use works without a key, with higher quotas when one is configured. Diagnostic `regulatory` uses the OpenFDA device 510(k) and PMA endpoints as an exact-name-first live overlay rather than a full mirrored device catalog.
 
 ### OpenTargets
 

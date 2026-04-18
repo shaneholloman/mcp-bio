@@ -2,10 +2,11 @@
 
 Use diagnostic commands when you need source-native diagnostic inventory from
 BioMCP's local-runtime diagnostic surface. The entity now merges two local
-sources:
+sources and one opt-in live regulatory overlay:
 
 - NCBI Genetic Testing Registry (GTR) for gene-centric genetic tests
 - WHO Prequalified IVD for infectious-disease diagnostics
+- OpenFDA device 510(k) and PMA for optional U.S. regulatory status overlays
 
 ## Search diagnostic tests
 
@@ -54,28 +55,33 @@ Default output returns the summary card only. The base card keeps concise
 metadata such as source label, test type, manufacturer, and the source-native
 summary fields for the resolved record. GTR cards keep laboratory, institution,
 country, CLIA number, statuses, and method categories. WHO IVD cards add
-target/marker, regulatory version, and prequalification year.
+target/marker, regulatory version, and prequalification year. The FDA overlay
+is opt-in and does not change the summary card unless you explicitly request
+`regulatory`.
 
 ## Request diagnostic sections
 
-Supported public section tokens remain `genes`, `conditions`, `methods`, and
-`all`, but support is resolved per source.
+Supported public section tokens are `genes`, `conditions`, `methods`,
+`regulatory`, and `all`, but support is resolved per source.
 
 ```bash
 biomcp get diagnostic GTR000000001.1 genes
 biomcp get diagnostic GTR000000001.1 conditions
 biomcp get diagnostic GTR000000001.1 methods
+biomcp get diagnostic GTR000000001.1 regulatory
 biomcp get diagnostic GTR000000001.1 all
 biomcp get diagnostic "ITPW02232- TC40" conditions
+biomcp get diagnostic "ITPW02232- TC40" regulatory
 biomcp get diagnostic "ITPW02232- TC40" all
 ```
 
 Source-aware section support:
 
-- GTR: `genes`, `conditions`, `methods`
-- WHO IVD: `conditions`
+- GTR: `genes`, `conditions`, `methods`, `regulatory`
+- WHO IVD: `conditions`, `regulatory`
 
-`all` expands only to the sections supported by the resolved source. `summary`
+`all` expands only to the source-native local sections and intentionally
+excludes `regulatory` because the FDA overlay is live and optional. `summary`
 is always included and is not a separate section token.
 
 Markdown hides unrequested sections entirely. When a requested section is
@@ -83,6 +89,13 @@ empty, BioMCP still renders the heading with a truthful empty-state note. JSON
 keeps the same distinction: unrequested sections are omitted, while requested
 empty sections serialize as `[]`. WHO IVD `genes` and `methods` are not empty
 sections; they are unsupported requests and fail before any data fetch.
+
+When you request `regulatory`, BioMCP queries OpenFDA device 510(k) and PMA
+records against a bounded set of source-native diagnostic names. Markdown adds
+`## Regulatory (FDA Device)` only when the section is requested. JSON adds a
+top-level `regulatory` field only when the section is requested. A no-match or
+temporary OpenFDA miss returns the same truthful empty state rather than
+failing the base diagnostic card.
 
 ## JSON metadata
 
@@ -95,7 +108,9 @@ source (`gtr` or `who-ivd`) so merged result pages stay truthful.
 `_meta.section_sources`. Follow-up commands are section-aware, so requesting
 `genes` suppresses the redundant `genes` follow-up but still suggests the
 remaining supported sections. WHO product codes can contain spaces, so
-follow-up commands quote them automatically.
+follow-up commands quote them automatically. GTR summary cards now advertise
+four visible follow-up section commands because `regulatory` is opt-in but
+still supported on that source.
 
 ## Local data setup
 
@@ -131,6 +146,7 @@ If you need to override the default path:
 ```bash
 export BIOMCP_GTR_DIR="/path/to/gtr"
 export BIOMCP_WHO_IVD_DIR="/path/to/who-ivd"
+export OPENFDA_API_KEY="..."
 biomcp health
 ```
 

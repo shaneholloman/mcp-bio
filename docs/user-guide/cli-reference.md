@@ -210,6 +210,8 @@ stays U.S.-only and does not touch the CVX root.
 biomcp search diagnostic --gene BRCA1 --limit 5 --offset 0
 biomcp search diagnostic --disease HIV --source who-ivd --limit 5
 biomcp search diagnostic --disease tuberculosis --source all --limit 5
+biomcp get diagnostic GTR000000001.1 regulatory
+biomcp get diagnostic "ITPW02232- TC40" regulatory
 ```
 
 Diagnostic search is filter-only. At least one of `--gene`, `--disease`,

@@ -1,4 +1,5 @@
 use super::*;
+use crate::entities::diagnostic::DiagnosticRegulatoryRecord;
 
 #[test]
 fn diagnostic_markdown_renders_requested_sections_and_truthful_empty_states() {
@@ -23,6 +24,7 @@ fn diagnostic_markdown_renders_requested_sections_and_truthful_empty_states() {
         genes: Some(vec![]),
         conditions: Some(vec!["Breast cancer".to_string()]),
         methods: Some(vec![]),
+        regulatory: None,
     };
 
     let markdown = diagnostic_markdown(
@@ -103,6 +105,7 @@ fn diagnostic_markdown_renders_who_summary_fields_and_supported_sections_only() 
         genes: None,
         conditions: Some(vec!["HIV".to_string()]),
         methods: None,
+        regulatory: None,
     };
 
     let markdown =
@@ -118,4 +121,83 @@ fn diagnostic_markdown_renders_who_summary_fields_and_supported_sections_only() 
     assert!(!markdown.contains("## Genes"));
     assert!(!markdown.contains("## Methods"));
     assert!(markdown.contains("biomcp list diagnostic"));
+}
+
+#[test]
+fn diagnostic_markdown_renders_regulatory_section_rows() {
+    let diagnostic = Diagnostic {
+        source: "gtr".to_string(),
+        source_id: "GTR000000001.1".to_string(),
+        accession: "GTR000000001.1".to_string(),
+        name: "FoundationOne CDx".to_string(),
+        test_type: Some("molecular".to_string()),
+        manufacturer: Some("Foundation Medicine, Inc.".to_string()),
+        target_marker: None,
+        regulatory_version: None,
+        prequalification_year: None,
+        laboratory: None,
+        institution: None,
+        country: None,
+        clia_number: None,
+        state_licenses: None,
+        current_status: None,
+        public_status: None,
+        method_categories: vec![],
+        genes: None,
+        conditions: None,
+        methods: None,
+        regulatory: Some(vec![DiagnosticRegulatoryRecord {
+            submission_type: "PMA".to_string(),
+            number: "P000019".to_string(),
+            display_name: "FoundationOne CDx".to_string(),
+            trade_name: Some("FoundationOne CDx".to_string()),
+            generic_name: None,
+            applicant: Some("Foundation Medicine, Inc.".to_string()),
+            decision_date: Some("2017-11-30".to_string()),
+            decision_description: Some("approved".to_string()),
+            advisory_committee: None,
+            product_code: Some("PQP".to_string()),
+            supplement_count: Some(2),
+        }]),
+    };
+
+    let markdown =
+        diagnostic_markdown(&diagnostic, &["regulatory".to_string()]).expect("rendered markdown");
+
+    assert!(markdown.contains("## Regulatory (FDA Device)"));
+    assert!(markdown.contains("| Type | Number | Name | Applicant | Decision Date | Decision | Product Code | Supplements |"));
+    assert!(markdown.contains("| PMA | P000019 | FoundationOne CDx | Foundation Medicine, Inc. | 2017-11-30 | approved | PQP | 2 |"));
+}
+
+#[test]
+fn diagnostic_markdown_renders_regulatory_empty_state_when_requested() {
+    let diagnostic = Diagnostic {
+        source: "who-ivd".to_string(),
+        source_id: "ITPW02232- TC40".to_string(),
+        accession: "ITPW02232- TC40".to_string(),
+        name: "ONE STEP Anti-HIV (1&2) Test".to_string(),
+        test_type: Some("Immunochromatographic (lateral flow)".to_string()),
+        manufacturer: Some("InTec Products, Inc.".to_string()),
+        target_marker: Some("HIV".to_string()),
+        regulatory_version: Some("Rest-of-World".to_string()),
+        prequalification_year: Some("2019".to_string()),
+        laboratory: None,
+        institution: None,
+        country: None,
+        clia_number: None,
+        state_licenses: None,
+        current_status: None,
+        public_status: None,
+        method_categories: vec![],
+        genes: None,
+        conditions: None,
+        methods: None,
+        regulatory: Some(vec![]),
+    };
+
+    let markdown =
+        diagnostic_markdown(&diagnostic, &["regulatory".to_string()]).expect("rendered markdown");
+
+    assert!(markdown.contains("## Regulatory (FDA Device)"));
+    assert!(markdown.contains("No FDA device 510(k) or PMA records matched this diagnostic."));
 }
