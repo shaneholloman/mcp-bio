@@ -11,10 +11,12 @@ multi-source search/get surfaces for the `diagnostic` entity.
 | Default gene search | `search diagnostic --gene BRCA1` | Confirms gene-first workflows still route through GTR under default `--source all` |
 | Explicit WHO gene validation | `search diagnostic --gene BRCA1 --source who-ivd` | Confirms WHO rejects unsupported gene-only search with a recovery hint |
 | WHO disease search | `search diagnostic --disease HIV --source who-ivd` | Confirms WHO disease search returns source-aware rows from the local CSV |
+| Mixed-source search | `search diagnostic --disease ma --source all` | Confirms merged pages preserve per-row provenance and avoid claiming an exact combined total |
 | GTR conjunctive filters | `search diagnostic --gene EGFR --type molecular --source gtr` | Confirms deterministic GTR filter behavior remains intact |
 | Search JSON follow-ups | `--json search diagnostic --disease HIV --source who-ivd` | Confirms WHO search JSON exposes shell-safe quoted follow-up commands |
 | GTR detail card | `get diagnostic GTR...` | Confirms existing GTR progressive-disclosure behavior remains intact |
 | WHO detail card | `get diagnostic "<who_code>"` | Confirms WHO summary/detail behavior, section limits, and quoted next steps |
+| WHO `all` expansion | `get diagnostic "<who_code>" all` | Confirms WHO `all` expands only to the source-supported section set |
 | WHO JSON follow-ups | `--json get diagnostic "<who_code>" conditions` | Confirms WHO JSON keeps quoted `_meta.next_commands` and source-aware `section_sources` |
 
 ## Local Health Readiness
@@ -84,6 +86,24 @@ echo "$out" | mustmatch like "ITPW02232- TC40"
 echo "$out" | mustmatch like "WHO Prequalified IVD"
 echo "$out" | mustmatch like "HIV"
 echo "$out" | mustmatch like 'Use `biomcp get diagnostic "ITPW02232- TC40"` for details.'
+```
+
+## Mixed-Source Search
+
+When both WHO IVD and GTR contribute rows, merged search pages should preserve
+row provenance and avoid claiming an exact combined total.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+out="$(biomcp search diagnostic --disease ma --source all --limit 10)"
+echo "$out" | mustmatch like "# Diagnostic tests: disease=ma"
+echo "$out" | mustmatch like "Found 2 diagnostic tests"
+echo "$out" | mustmatch not like "(of"
+echo "$out" | mustmatch like "NCBI Genetic Testing Registry"
+echo "$out" | mustmatch like "WHO Prequalified IVD"
 ```
 
 ## Search JSON Follow-ups
@@ -169,6 +189,22 @@ echo "$conditions_out" | mustmatch not like "## Genes"
 echo "$conditions_out" | mustmatch not like "## Methods"
 ```
 
+## WHO `all` Expansion
+
+WHO cards should treat `all` as a source-aware shorthand for the sections WHO
+actually supports rather than inventing empty GTR-style sections.
+
+```bash
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-ivd-env"
+all_out="$(biomcp get diagnostic 'ITPW02232- TC40' all)"
+echo "$all_out" | mustmatch like "# Diagnostic: ITPW02232- TC40"
+echo "$all_out" | mustmatch like "## Conditions"
+echo "$all_out" | mustmatch like "HIV"
+echo "$all_out" | mustmatch not like "## Genes"
+echo "$all_out" | mustmatch not like "## Methods"
+```
+
 ## WHO Unsupported Sections
 
 WHO detail cards only support `conditions`; `genes` and `methods` must fail
@@ -198,6 +234,9 @@ bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-ivd-env"
 json_out="$(biomcp --json get diagnostic 'ITPW02232- TC40' conditions)"
 echo "$json_out" | mustmatch like '"accession": "ITPW02232- TC40"'
+echo "$json_out" | jq -e 'has("conditions")' > /dev/null
+echo "$json_out" | jq -e 'has("genes") | not' > /dev/null
+echo "$json_out" | jq -e 'has("methods") | not' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic \"ITPW02232- TC40\"")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list diagnostic")' > /dev/null
 echo "$json_out" | jq -e '._meta.section_sources | any(.key == "summary" and (.sources | any(. == "WHO Prequalified IVD")))' > /dev/null
