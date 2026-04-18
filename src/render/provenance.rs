@@ -164,6 +164,13 @@ pub(crate) fn diagnostic_section_sources(diagnostic: &Diagnostic) -> Vec<Section
         "Methods",
         [source_label],
     );
+    push_section(
+        &mut out,
+        diagnostic.regulatory.is_some(),
+        "regulatory",
+        "Regulatory",
+        ["OpenFDA Device 510(k) / PMA"],
+    );
     out
 }
 
