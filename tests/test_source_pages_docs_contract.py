@@ -394,28 +394,60 @@ SOURCE_PAGE_SPECS = {
     },
     "who-prequalification.md": {
         "title": "WHO Prequalification MCP Tool for Global Drug Access | BioMCP",
-        "description": "Use BioMCP to search WHO Prequalification-backed drug records in BioMCP and retrieve global regulatory context through the local WHO batch.",
-        "api_access": "No BioMCP API key required. BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.",
+        "description": "Use BioMCP to search WHO Prequalification-backed drug records in BioMCP and retrieve global regulatory context through the local WHO finished-pharma and API exports.",
+        "api_access": "No BioMCP API key required. BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV and active-pharmaceutical-ingredients CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.",
         "official_url": "https://extranet.who.int/prequal/medicines/prequalified/finished-pharmaceutical-products/export?page&_format=csv",
         "required_intro_phrases": [
             "`BIOMCP_WHO_DIR`",
             "finished-pharmaceutical-products CSV",
+            "active-pharmaceutical-ingredients CSV",
             "`biomcp who sync`",
             "`--region who|all`",
+            "`--product-type <finished_pharma|api>`",
             "structured U.S. hits through WHO prequalification",
         ],
         "exposes": [
             "search drug <name> --region who",
             "search drug <name> --region all",
             "search drug --indication <disease> --region who",
+            "search drug <name> --region who --product-type <finished_pharma|api>",
             "get drug <name> regulatory --region who|all",
         ],
         "example_commands": [
             "biomcp search drug trastuzumab --region who --limit 5",
+            "biomcp search drug artesunate --region who --product-type api --limit 5",
             "biomcp search drug --indication malaria --region who --limit 5",
             "biomcp get drug trastuzumab regulatory --region who",
-            "biomcp get drug imatinib regulatory --region who",
             "biomcp who sync",
+        ],
+    },
+    "cdc-cvx.md": {
+        "title": "CDC CVX/MVX MCP Tool for Vaccine Identity Bridge | BioMCP",
+        "description": "Use BioMCP to bridge vaccine brand names into EMA-backed drug matches with the local CDC CVX, trade-name, and MVX bundle.",
+        "api_access": "No BioMCP API key required. BioMCP auto-downloads `cvx.txt`, `TRADENAME.txt`, and `mvx.txt` into `BIOMCP_CVX_DIR` or the default data directory on first use.",
+        "official_url": "https://www2.cdc.gov/vaccines/iis/iisstandards/downloads/cvx.txt",
+        "required_intro_phrases": [
+            "`BIOMCP_CVX_DIR`",
+            "`cvx.txt`",
+            "`TRADENAME.txt`",
+            "`mvx.txt`",
+            "`biomcp cvx sync`",
+            "MyChem identity resolution fails",
+            "`--region us`",
+        ],
+        "exposes": [
+            "search drug <vaccine_brand> --region eu",
+            "search drug <vaccine_brand> --region all",
+            "search drug <vaccine_brand>",
+            "biomcp health",
+            "biomcp cvx sync",
+        ],
+        "example_commands": [
+            "biomcp search drug gardasil --region eu --limit 5",
+            "biomcp search drug prevnar --region eu --limit 5",
+            "biomcp search drug fluzone --region eu --limit 5",
+            "biomcp health",
+            "biomcp cvx sync",
         ],
     },
     "kegg.md": {
@@ -536,6 +568,7 @@ EXPECTED_NAV_BLOCK = """  - Sources:
       - cBioPortal: sources/cbioportal.md
       - EMA: sources/ema.md
       - WHO Prequalification: sources/who-prequalification.md
+      - CDC CVX/MVX: sources/cdc-cvx.md
       - KEGG: sources/kegg.md
       - PharmGKB / CPIC: sources/pharmgkb.md
       - Human Protein Atlas: sources/human-protein-atlas.md
@@ -627,7 +660,7 @@ def test_sources_overview_page_has_required_metadata_and_links() -> None:
     )
     assert (
         _front_matter_value(overview, "description")
-        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
     )
 
     assert "# Biomedical Data Sources for AI Agents" in overview

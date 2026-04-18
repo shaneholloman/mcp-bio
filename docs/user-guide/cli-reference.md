@@ -40,6 +40,7 @@ biomcp cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]
 biomcp cache clear [--yes]
 biomcp ema sync
 biomcp who sync
+biomcp cvx sync
 biomcp health [--apis-only]
 biomcp list [entity]
 biomcp study list
@@ -70,9 +71,9 @@ biomcp skill article-follow-up
 
 `biomcp health --apis-only` is the upstream inventory smoke test. Full
 `biomcp health` also reports local readiness rows such as EMA local data,
-WHO Prequalification local data, cache dir status, and cache-limit warnings
-when the managed HTTP cache is over size or below the configured disk-free
-floor.
+WHO Prequalification local data, CDC CVX/MVX local data, cache dir status,
+and cache-limit warnings when the managed HTTP cache is over size or below
+the configured disk-free floor.
 
 `biomcp cache path` is a local-CLI-only operator command. It prints the managed
 HTTP cache path as plain text and ignores the global `--json` flag.
@@ -182,6 +183,7 @@ biomcp search drug -q "kinase inhibitor" --limit 5 --offset 0
 biomcp search drug Keytruda --limit 5
 biomcp search drug Keytruda --region eu --limit 5
 biomcp search drug "influenza vaccine" --region ema --limit 5
+biomcp search drug prevnar --region eu --limit 5
 biomcp search drug trastuzumab --region who --limit 5
 biomcp search drug --indication malaria --region who --limit 5
 ```
@@ -191,6 +193,11 @@ Drug search JSON is region-aware: the top-level object exposes `region`,
 `regions.us.results`, `regions.eu.results`, or `regions.who.results`; omitted
 `--region` on a plain name lookup and explicit `--region all` expose all three
 region buckets, each with `pagination`, `count`, and `results`.
+
+For vaccine brand lookups, omitted `--region` on a plain name search and
+explicit `--region eu|all` can auto-read the local CDC CVX/MVX bundle after
+MyChem identity resolution misses. That bridge only augments the EMA-side
+search path; `--region us` stays U.S.-only and does not touch the CVX root.
 
 ### Pathway
 

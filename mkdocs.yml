@@ -52,6 +52,7 @@ nav:
       - cBioPortal: sources/cbioportal.md
       - EMA: sources/ema.md
       - WHO Prequalification: sources/who-prequalification.md
+      - CDC CVX/MVX: sources/cdc-cvx.md
       - KEGG: sources/kegg.md
       - PharmGKB / CPIC: sources/pharmgkb.md
       - Human Protein Atlas: sources/human-protein-atlas.md

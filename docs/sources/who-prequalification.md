@@ -46,12 +46,6 @@ biomcp get drug trastuzumab regulatory --region who
 Returns WHO-backed regulatory context for the WHO region.
 
 ```bash
-biomcp get drug imatinib regulatory --region who
-```
-
-Returns the truthful WHO empty state when the drug is not WHO-prequalified.
-
-```bash
 biomcp who sync
 ```
 

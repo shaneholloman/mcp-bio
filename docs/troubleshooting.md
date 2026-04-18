@@ -215,9 +215,9 @@ complete EMA root must contain:
 ## 14) WHO drug data not available
 
 WHO regional regulatory search/get flows depend on the local WHO
-finished-pharmaceutical-products CSV. BioMCP auto-downloads that CSV on first
-use for `--region who|all` drug workflows and for the default plain-name
-U.S.+EU+WHO drug search:
+finished-pharmaceutical-products CSV plus the active-pharmaceutical-ingredients
+CSV. BioMCP auto-downloads both exports on first use for `--region who|all`
+drug workflows and for the default plain-name U.S.+EU+WHO drug search:
 
 ```bash
 biomcp health
@@ -250,3 +250,46 @@ complete WHO root must contain:
 
 - `who_pq.csv`
 - `who_api.csv`
+
+## 15) CDC CVX/MVX vaccine bridge data not available
+
+Default plain-name vaccine searches that include the EU path and explicit
+`search drug <brand> --region eu|all` vaccine searches can use the local CDC
+CVX/MVX bundle after MyChem identity resolution misses. Full `biomcp health`
+is the right readiness surface when you need to debug the local CDC state:
+
+```bash
+biomcp health
+```
+
+Interpret the CDC row like this:
+
+- `configured`: `BIOMCP_CVX_DIR` is set and all three CDC files are present
+- `configured (stale)`: `BIOMCP_CVX_DIR` is set and complete, but at least one CDC file is older than the 30-day refresh window
+- `available (default path)`: BioMCP found a complete CDC CVX/MVX bundle in the default platform data directory
+- `available (default path, stale)`: the default-path CDC bundle is complete, but at least one file is older than the 30-day refresh window
+- `not configured`: no complete CDC root was found at the default path, so the EMA vaccine-brand bridge is currently unavailable but the install is not considered broken
+- `error (missing: ...)`: BioMCP found a partial CDC root or unreadable file; install the missing files or point `BIOMCP_CVX_DIR` at a complete bundle
+
+If a refresh fails, retry explicitly:
+
+```bash
+biomcp cvx sync
+```
+
+If you need to override the default path:
+
+```bash
+export BIOMCP_CVX_DIR="/path/to/cvx"
+biomcp health
+```
+
+Manual preseed remains supported for offline or controlled environments. A
+complete CDC root must contain:
+
+- `cvx.txt`
+- `TRADENAME.txt`
+- `mvx.txt`
+
+The CDC bundle only augments the EMA-side vaccine identity path. It does not
+change WHO lookups, and pure `--region us` searches do not use the CVX root.

@@ -560,13 +560,14 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "default `get` output stays concise" in section_first_section
     assert "## Local Runtime Sources and File-Backed Assets" in source_integration
     assert (
-        "EMA and WHO Prequalification are the canonical local runtime drug sources"
+        "EMA, WHO Prequalification, and CDC CVX/MVX are the canonical local runtime drug sources"
         in local_runtime_section
     )
     assert "`BIOMCP_EMA_DIR` first, then the platform data directory" in local_runtime_section
     assert "`BIOMCP_WHO_DIR` first, then the platform data directory" in local_runtime_section
+    assert "`BIOMCP_CVX_DIR` first, then the platform data directory" in local_runtime_section
     assert (
-        "`biomcp health` includes the EMA and WHO local-data readiness rows"
+        "`biomcp health` includes the EMA, WHO, and CDC local-data readiness rows"
         in local_runtime_section
     )
     assert "`biomcp health --apis-only` excludes those rows" in local_runtime_section
@@ -577,6 +578,7 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
         in local_runtime_section
     )
     assert "`docs/user-guide/drug.md`" in local_runtime_section
+    assert "30-day refresh window" in local_runtime_section
     assert "BioASQ is the canonical file-backed non-runtime asset" in local_runtime_section
     assert (
         "do not join the runtime source inventory, `biomcp health`, or the source-readiness checklist"
@@ -586,15 +588,17 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "`benchmarks/bioasq/`" in local_runtime_section
     assert "## EMA local data setup" in drug_guide
     assert "## WHO Prequalification local data setup" in drug_guide
+    assert "## CDC CVX/MVX local data setup" in drug_guide
     assert "`configured`:" in drug_guide
-    assert drug_guide.count("`configured (stale)`:") >= 2
+    assert drug_guide.count("`configured (stale)`:") >= 3
     assert "`available (default path)`:" in drug_guide
-    assert drug_guide.count("`available (default path, stale)`:") >= 2
+    assert drug_guide.count("`available (default path, stale)`:") >= 3
     assert "`not configured`:" in drug_guide
     assert "`error (missing: ...)`:" in drug_guide
     assert "pub(crate) fn resolve_ema_root() -> PathBuf {" in ema_source
     assert 'std::env::var("BIOMCP_EMA_DIR")' in ema_source
     assert "EMA local data" in health
+    assert "CDC CVX/MVX local data" in health
     assert "available (default path)" in health
     assert "not configured" in health
     assert "error (missing:" in health
@@ -627,6 +631,7 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "invalid flag/section combinations fail fast before data fetches" in modifier_section
     assert "biomcp get drug trastuzumab regulatory --region who" in cli_commands
     assert "biomcp get drug trastuzumab regulatory --region who" in cli_reference_guide
+    assert "biomcp cvx sync" in cli_reference_guide
     assert "Data region for regional sections (regulatory, safety, shortage, or all)" in cli_drug_mod
     assert "get drug <name> regulatory [--region <us|eu|who|all>]" in cli_list
     assert "get drug <name> safety [--region <us|eu|all>]" in cli_list
