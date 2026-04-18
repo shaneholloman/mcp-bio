@@ -83,6 +83,8 @@ echo "$out" | mustmatch like "Error: Invalid argument: diagnostic search require
 
 ## Search JSON Follow-ups
 
+<!-- mustmatch-lint: skip -->
+
 JSON search output should include `_meta.next_commands` so agents can drill the
 top result or inspect the list surface without reparsing markdown.
 
