@@ -16,6 +16,27 @@ fi
 fixture_root="$(mktemp -d "$cache_dir/spec-mychem-empty.XXXXXX")"
 ready_file="$fixture_root/base-url"
 server_log="$fixture_root/server.log"
+server_pid=""
+
+cleanup_on_error() {
+  local status=$?
+  if [ "$status" -eq 0 ]; then
+    return
+  fi
+
+  if [ -n "${server_pid:-}" ] && kill -0 "$server_pid" 2>/dev/null; then
+    kill "$server_pid" 2>/dev/null || true
+    wait "$server_pid" 2>/dev/null || true
+  fi
+
+  case "${fixture_root:-}" in
+    "$cache_dir"/spec-mychem-empty.*)
+      rm -rf "$fixture_root"
+      ;;
+  esac
+}
+
+trap cleanup_on_error EXIT
 
 python3 - "$ready_file" <<'PY' >"$server_log" 2>&1 &
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -70,5 +91,7 @@ base_url="$(cat "$ready_file")"
 printf 'export BIOMCP_MYCHEM_BASE=%q\n' "$base_url/v1" >"$env_file"
 printf 'export BIOMCP_MYCHEM_EMPTY_PID=%q\n' "$server_pid" >>"$env_file"
 printf 'export BIOMCP_MYCHEM_EMPTY_ROOT=%q\n' "$fixture_root" >>"$env_file"
+printf 'export BIOMCP_MYCHEM_EMPTY_READY_FILE=%q\n' "$ready_file" >>"$env_file"
 
+trap - EXIT
 printf '%s\n' "$fixture_root"

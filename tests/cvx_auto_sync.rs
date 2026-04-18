@@ -170,6 +170,41 @@ async fn mount_parse_failure_server() -> MockServer {
     server
 }
 
+async fn mount_download_failure_server() -> MockServer {
+    let server = MockServer::start().await;
+    mount_empty_mychem(&server).await;
+
+    Mock::given(method("GET"))
+        .and(path(CVX_DOWNLOAD_PATH))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/csv; charset=utf-8")
+                .set_body_string(load_cvx_fixture_body(CVX_FILE)),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path(TRADENAME_DOWNLOAD_PATH))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/csv; charset=utf-8")
+                .set_body_string(load_cvx_fixture_body(TRADENAME_FILE)),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path(MVX_DOWNLOAD_PATH))
+        .respond_with(
+            ResponseTemplate::new(503)
+                .insert_header("content-type", "text/plain; charset=utf-8")
+                .set_body_string("temporary outage"),
+        )
+        .mount(&server)
+        .await;
+
+    server
+}
+
 fn run_biomcp(
     args: &[&str],
     data_home: &Path,
@@ -481,5 +516,68 @@ async fn cvx_sync_parse_failure_mentions_recovery_paths() {
     assert!(result.stderr.contains(&cvx_url));
     assert!(result.stderr.contains(&tradename_url));
     assert!(result.stderr.contains(&mvx_url));
-    assert_eq!(cvx_request_count(&server).await, 3);
+    assert!(
+        !requests_for_path(&server, CVX_DOWNLOAD_PATH)
+            .await
+            .is_empty()
+    );
+    assert!(
+        !requests_for_path(&server, TRADENAME_DOWNLOAD_PATH)
+            .await
+            .is_empty()
+    );
+    assert!(
+        !requests_for_path(&server, MVX_DOWNLOAD_PATH)
+            .await
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn cvx_sync_download_failure_mentions_recovery_paths() {
+    let server = mount_download_failure_server().await;
+    let data_home = TempDirGuard::new("download-failure-data-home");
+    let cache_home = TempDirGuard::new("download-failure-cache-home");
+    let cvx_url = download_url(&server, CVX_DOWNLOAD_PATH);
+    let tradename_url = download_url(&server, TRADENAME_DOWNLOAD_PATH);
+    let mvx_url = download_url(&server, MVX_DOWNLOAD_PATH);
+
+    let result = run_biomcp(
+        &["cvx", "sync"],
+        data_home.path(),
+        cache_home.path(),
+        &[
+            ("BIOMCP_CVX_URL", &cvx_url),
+            ("BIOMCP_CVX_TRADENAME_URL", &tradename_url),
+            ("BIOMCP_MVX_URL", &mvx_url),
+        ],
+    );
+
+    assert!(
+        !result.status.success(),
+        "cvx sync should fail when a download returns an error\nstdout:\n{}\nstderr:\n{}",
+        result.stdout,
+        result.stderr
+    );
+    assert!(result.stderr.contains("mvx.txt: HTTP 503"));
+    assert!(result.stderr.contains("biomcp cvx sync"));
+    assert!(result.stderr.contains("BIOMCP_CVX_DIR"));
+    assert!(result.stderr.contains(&cvx_url));
+    assert!(result.stderr.contains(&tradename_url));
+    assert!(result.stderr.contains(&mvx_url));
+    assert!(
+        !requests_for_path(&server, CVX_DOWNLOAD_PATH)
+            .await
+            .is_empty()
+    );
+    assert!(
+        !requests_for_path(&server, TRADENAME_DOWNLOAD_PATH)
+            .await
+            .is_empty()
+    );
+    assert!(
+        !requests_for_path(&server, MVX_DOWNLOAD_PATH)
+            .await
+            .is_empty()
+    );
 }

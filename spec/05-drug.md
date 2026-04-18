@@ -761,6 +761,7 @@ bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 bash fixtures/setup-mychem-empty-spec-fixture.sh "$PWD"
+trap 'bash fixtures/cleanup-mychem-empty-spec-fixture.sh "$PWD"' EXIT
 . "$PWD/.cache/spec-ema-env"
 . "$PWD/.cache/spec-who-pq-env"
 . "$PWD/.cache/spec-cvx-env"
@@ -797,6 +798,7 @@ row instead of requiring a direct medicine-name match.
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 bash fixtures/setup-mychem-empty-spec-fixture.sh "$PWD"
+trap 'bash fixtures/cleanup-mychem-empty-spec-fixture.sh "$PWD"' EXIT
 . "$PWD/.cache/spec-ema-env"
 . "$PWD/.cache/spec-cvx-env"
 . "$PWD/.cache/spec-mychem-empty-env"
@@ -815,6 +817,7 @@ medicine-name field.
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 bash fixtures/setup-mychem-empty-spec-fixture.sh "$PWD"
+trap 'bash fixtures/cleanup-mychem-empty-spec-fixture.sh "$PWD"' EXIT
 . "$PWD/.cache/spec-ema-env"
 . "$PWD/.cache/spec-cvx-env"
 . "$PWD/.cache/spec-mychem-empty-env"
