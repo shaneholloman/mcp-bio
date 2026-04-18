@@ -1260,13 +1260,7 @@ async fn fetch_clingen_section(symbol: &str) -> GeneClinGen {
 
     let clingen_fut = async {
         let client = ClinGenClient::new()?;
-        let validity = client.gene_validity(symbol).await?;
-        let (haploinsufficiency, triplosensitivity) = client.dosage_sensitivity(symbol).await?;
-        Ok::<_, BioMcpError>(GeneClinGen {
-            validity,
-            haploinsufficiency,
-            triplosensitivity,
-        })
+        client.gene_context(symbol).await
     };
 
     match tokio::time::timeout(timeout, clingen_fut).await {
