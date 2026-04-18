@@ -19,6 +19,16 @@ fn collect_next_commands(json: &str) -> Vec<String> {
         .collect()
 }
 
+fn collect_suggestions(json: &str) -> Vec<String> {
+    let value: serde_json::Value = serde_json::from_str(json).expect("valid json");
+    value["_meta"]["suggestions"]
+        .as_array()
+        .expect("suggestions array")
+        .iter()
+        .map(|cmd| cmd.as_str().expect("command string").to_string())
+        .collect()
+}
+
 fn assert_json_next_commands_parse(label: &str, json: &str) {
     let value: serde_json::Value =
         serde_json::from_str(json).unwrap_or_else(|e| panic!("{label}: invalid json: {e}"));

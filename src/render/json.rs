@@ -20,6 +20,8 @@ pub struct EvidenceUrl {
 struct EntityMeta {
     evidence_urls: Vec<EvidenceUrl>,
     next_commands: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    suggestions: Option<Vec<String>>,
     section_sources: Vec<SectionSource>,
 }
 
@@ -34,6 +36,7 @@ struct EntityJsonResponse<'a, T: Serialize> {
 struct DiscoverMeta {
     evidence_urls: Vec<EvidenceUrl>,
     next_commands: Vec<String>,
+    suggestions: Vec<String>,
     section_sources: Vec<SectionSource>,
     discovery_sources: Vec<String>,
 }
@@ -51,10 +54,27 @@ pub fn to_entity_json<T: Serialize>(
     next_commands: Vec<String>,
     section_sources: Vec<SectionSource>,
 ) -> Result<String, BioMcpError> {
-    to_pretty(&to_entity_json_value(
+    to_pretty(&to_entity_json_value_with_suggestions(
         entity,
         evidence_urls,
         next_commands,
+        None,
+        section_sources,
+    )?)
+}
+
+pub fn to_entity_json_with_suggestions<T: Serialize>(
+    entity: &T,
+    evidence_urls: Vec<(&str, String)>,
+    next_commands: Vec<String>,
+    suggestions: Vec<String>,
+    section_sources: Vec<SectionSource>,
+) -> Result<String, BioMcpError> {
+    to_pretty(&to_entity_json_value_with_suggestions(
+        entity,
+        evidence_urls,
+        next_commands,
+        Some(suggestions),
         section_sources,
     )?)
 }
@@ -63,6 +83,22 @@ pub fn to_entity_json_value<T: Serialize>(
     entity: &T,
     evidence_urls: Vec<(&str, String)>,
     next_commands: Vec<String>,
+    section_sources: Vec<SectionSource>,
+) -> Result<serde_json::Value, BioMcpError> {
+    to_entity_json_value_with_suggestions(
+        entity,
+        evidence_urls,
+        next_commands,
+        None,
+        section_sources,
+    )
+}
+
+pub fn to_entity_json_value_with_suggestions<T: Serialize>(
+    entity: &T,
+    evidence_urls: Vec<(&str, String)>,
+    next_commands: Vec<String>,
+    suggestions: Option<Vec<String>>,
     section_sources: Vec<SectionSource>,
 ) -> Result<serde_json::Value, BioMcpError> {
     let evidence_urls = evidence_urls
@@ -84,6 +120,13 @@ pub fn to_entity_json_value<T: Serialize>(
         .map(|cmd| cmd.trim().to_string())
         .filter(|cmd| !cmd.is_empty())
         .collect::<Vec<_>>();
+    let suggestions = suggestions.map(|commands| {
+        commands
+            .into_iter()
+            .map(|cmd| cmd.trim().to_string())
+            .filter(|cmd| !cmd.is_empty())
+            .collect::<Vec<_>>()
+    });
     let section_sources = section_sources
         .into_iter()
         .filter_map(SectionSource::normalized)
@@ -94,6 +137,7 @@ pub fn to_entity_json_value<T: Serialize>(
         _meta: EntityMeta {
             evidence_urls,
             next_commands,
+            suggestions,
             section_sources,
         },
     })?)
@@ -120,6 +164,7 @@ pub fn to_discover_json(result: &DiscoverResult) -> Result<String, BioMcpError> 
         .map(|cmd| cmd.trim().to_string())
         .filter(|cmd| !cmd.is_empty())
         .collect::<Vec<_>>();
+    let suggestions = next_commands.clone();
     let section_sources = crate::render::provenance::discover_section_sources(result)
         .into_iter()
         .filter_map(SectionSource::normalized)
@@ -139,6 +184,7 @@ pub fn to_discover_json(result: &DiscoverResult) -> Result<String, BioMcpError> 
         _meta: DiscoverMeta {
             evidence_urls,
             next_commands,
+            suggestions,
             section_sources,
             discovery_sources,
         },
@@ -358,7 +404,7 @@ fn match_tier_name(match_tier: crate::entities::discover::MatchTier) -> &'static
 mod tests {
     use super::{
         to_alias_suggestion_json, to_discover_json, to_entity_json, to_entity_json_value,
-        to_pretty, to_variant_guidance_json,
+        to_entity_json_with_suggestions, to_pretty, to_variant_guidance_json,
     };
     use crate::entities::discover::{
         AliasCanonicalMatch, AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept,
@@ -605,6 +651,7 @@ mod tests {
             "https://example.org/source-a"
         );
         assert_eq!(value["_meta"]["next_commands"][0], "biomcp get gene BRAF");
+        assert!(value["_meta"].get("suggestions").is_none());
         assert_eq!(value["_meta"]["section_sources"][0]["key"], "summary");
         assert_eq!(value["_meta"]["section_sources"][0]["label"], "Summary");
         assert_eq!(
@@ -647,11 +694,58 @@ mod tests {
             "https://example.org/source-a"
         );
         assert_eq!(value["_meta"]["next_commands"][0], "biomcp get gene BRAF");
+        assert!(value["_meta"].get("suggestions").is_none());
         assert_eq!(value["_meta"]["section_sources"][0]["key"], "summary");
         assert_eq!(value["_meta"]["section_sources"][0]["label"], "Summary");
         assert_eq!(
             value["_meta"]["section_sources"][0]["sources"][0],
             "NCBI Gene"
+        );
+    }
+
+    #[test]
+    fn to_entity_json_with_suggestions_adds_suggestions_meta() {
+        #[derive(Serialize)]
+        struct DemoEntity<'a> {
+            id: &'a str,
+        }
+
+        let json = to_entity_json_with_suggestions(
+            &DemoEntity { id: "demo-4" },
+            Vec::new(),
+            vec!["biomcp get gene BRAF".to_string()],
+            vec![" biomcp search pgx -g BRAF ".to_string(), String::new()],
+            Vec::new(),
+        )
+        .expect("entity json");
+
+        let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+        assert_eq!(
+            value["_meta"]["suggestions"][0],
+            "biomcp search pgx -g BRAF"
+        );
+    }
+
+    #[test]
+    fn to_entity_json_with_suggestions_keeps_empty_suggestions_array() {
+        #[derive(Serialize)]
+        struct DemoEntity<'a> {
+            id: &'a str,
+        }
+
+        let json = to_entity_json_with_suggestions(
+            &DemoEntity { id: "demo-5" },
+            Vec::new(),
+            vec!["biomcp get gene BRAF".to_string()],
+            vec![String::new(), "   ".to_string()],
+            Vec::new(),
+        )
+        .expect("entity json");
+
+        let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+        assert_eq!(
+            value["_meta"]["suggestions"].as_array().map(Vec::len),
+            Some(0)
         );
     }
 
@@ -771,6 +865,10 @@ mod tests {
         );
         assert_eq!(
             value["_meta"]["next_commands"][0],
+            "biomcp get drug pembrolizumab"
+        );
+        assert_eq!(
+            value["_meta"]["suggestions"][0],
             "biomcp get drug pembrolizumab"
         );
         assert_eq!(

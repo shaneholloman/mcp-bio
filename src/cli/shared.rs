@@ -303,6 +303,8 @@ struct SearchJsonResponse<T: serde::Serialize> {
 #[derive(Debug, Clone, serde::Serialize)]
 pub(super) struct SearchJsonMeta {
     pub(super) next_commands: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(super) suggestions: Option<Vec<String>>,
 }
 
 #[derive(serde::Serialize)]
@@ -336,8 +338,19 @@ pub(super) fn normalize_next_commands(next_commands: Vec<String>) -> Vec<String>
 }
 
 pub(super) fn search_meta(next_commands: Vec<String>) -> Option<SearchJsonMeta> {
+    search_meta_with_suggestions(next_commands, None)
+}
+
+pub(super) fn search_meta_with_suggestions(
+    next_commands: Vec<String>,
+    suggestions: Option<Vec<String>>,
+) -> Option<SearchJsonMeta> {
     let next_commands = normalize_next_commands(next_commands);
-    (!next_commands.is_empty()).then_some(SearchJsonMeta { next_commands })
+    let suggestions = suggestions.map(normalize_next_commands);
+    (!next_commands.is_empty() || suggestions.is_some()).then_some(SearchJsonMeta {
+        next_commands,
+        suggestions,
+    })
 }
 
 pub(super) fn search_json_with_meta<T: serde::Serialize>(

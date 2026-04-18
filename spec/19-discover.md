@@ -137,6 +137,7 @@ echo "$out" | mustmatch like 'biomcp search article -g CTCF -k cohesin --limit 5
 
 json_out="$("$bin" --json discover "CTCF cohesin")"
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp search article -g CTCF -k cohesin --limit 5")' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp search article -g CTCF -k cohesin --limit 5")' > /dev/null
 
 function_out="$("$bin" discover "CTCF function cohesin")"
 echo "$function_out" | mustmatch like 'biomcp search article -g CTCF -k cohesin --limit 5'

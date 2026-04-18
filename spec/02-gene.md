@@ -64,6 +64,8 @@ echo "$json" | jq -e '._meta.next_commands[:4] == [
   "biomcp get gene BRAF diseases",
   "biomcp get gene BRAF funding"
 ]' > /dev/null
+echo "$json" | jq -e '._meta.suggestions | any(. == "biomcp search pgx -g BRAF")' > /dev/null
+echo "$json" | jq -e '[._meta.suggestions[] | select(. == "biomcp get gene BRAF pathways")] | length == 0' > /dev/null
 ```
 
 ## Gene Card Guidance
