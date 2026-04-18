@@ -177,19 +177,20 @@
     "via": null,
     "bioMcp_surfaces": [
       "search drug <name> --region eu|all",
+      "search drug <name> --region who --product-type vaccine",
       "search drug <name> (default plain-name all-region search)",
       "biomcp health",
       "biomcp cvx sync"
     ],
     "bioMcp_auth": "none",
     "env_var": null,
-    "provider_access": "on-demand local download by BioMCP on first EU/default vaccine-bridge use, or manual preseed via BIOMCP_CVX_DIR",
+    "provider_access": "on-demand local download by BioMCP on first EU/default/WHO-vaccine bridge use, or manual preseed via BIOMCP_CVX_DIR",
     "license_summary": "most CDC website materials are public domain, but attribution, disclaimer, and exceptions for third-party or non-federal content still apply",
     "redistribution_summary": "reuse is generally allowed with CDC attribution and non-endorsement language; avoid CDC logos and review exceptions before republishing",
     "terms_url": "https://www.cdc.gov/other/agencymaterials.html",
     "key_url": null,
     "reviewed_on": "2026-04-17",
-    "notes": "BioMCP auto-downloads cvx.txt, TRADENAME.txt, and mvx.txt into BIOMCP_CVX_DIR or the default data directory on first use, refreshes stale files after 30 days, supports explicit refresh via biomcp cvx sync, augments the EMA-side vaccine identity path after MyChem misses, and does not use the CVX root for pure --region us searches."
+    "notes": "BioMCP auto-downloads cvx.txt, TRADENAME.txt, and mvx.txt into BIOMCP_CVX_DIR or the default data directory on first use, refreshes stale files after 30 days, supports explicit refresh via biomcp cvx sync, augments EMA/default vaccine search plus explicit WHO vaccine name/brand search after MyChem misses, and does not use the CVX root for pure --region us searches or WHO finished-pharma/API lookups."
   },
   {
     "id": "ema",
@@ -222,7 +223,7 @@
     "bioMcp_surfaces": [
       "search drug --region who|all",
       "search drug --indication <disease> --region who",
-      "search drug <name> --region who --product-type <finished_pharma|api>",
+      "search drug <name> --region who --product-type <finished_pharma|api|vaccine>",
       "get drug <name> regulatory --region who|all"
     ],
     "bioMcp_auth": "none",
@@ -233,7 +234,7 @@
     "terms_url": "https://www.who.int/about/policies/publishing/copyright",
     "key_url": null,
     "reviewed_on": "2026-04-10",
-    "notes": "BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV and active-pharmaceutical-ingredients CSV into BIOMCP_WHO_DIR or the default data directory on first use, refreshes stale files, supports WHO-only `--product-type <finished_pharma|api>` filtering on explicit `--region who` searches, and supports explicit refresh via biomcp who sync."
+    "notes": "BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV, active-pharmaceutical-ingredients CSV, and vaccine CSV into BIOMCP_WHO_DIR or the default data directory on first use, refreshes stale files, supports WHO-only `--product-type <finished_pharma|api|vaccine>` filtering on explicit `--region who` searches, and supports explicit refresh via biomcp who sync. WHO vaccine support is search-only; `get drug <name> regulatory --region who|all` remains finished-pharma/API only."
   },
   {
     "id": "enrichr",

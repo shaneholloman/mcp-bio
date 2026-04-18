@@ -21,9 +21,10 @@ Drug commands connect mechanism and target context with trial and adverse-event 
 Full `biomcp health` should expose local EMA readiness separately from the API-only inventory so operators can confirm EU drug prerequisites before debugging query output.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
-out="$(biomcp health)"
+out="$("$bin" health)"
 echo "$out" | mustmatch like "EMA local data ($BIOMCP_EMA_DIR)"
 echo "$out" | mustmatch like "| EMA local data ($BIOMCP_EMA_DIR) | configured |"
 echo "$out" | mustmatch '/\| Cache dir \(.+\) \| ok \| [0-9]+ms \| - \|/'
@@ -36,26 +37,43 @@ API-only inventory so operators can confirm WHO drug prerequisites before
 debugging query output.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp health)"
+out="$("$bin" health)"
 echo "$out" | mustmatch like "WHO Prequalification local data ($BIOMCP_WHO_DIR)"
 echo "$out" | mustmatch like "| WHO Prequalification local data ($BIOMCP_WHO_DIR) | configured |"
 ```
 
 ## WHO Missing API File Reports Contract
 
-The WHO local-data contract now requires both the finished-pharma export and
-the API export. A partial WHO root should name the missing file instead of
-silently reporting WHO as configured.
+The WHO local-data contract now requires the finished-pharma export, the API
+export, and the vaccine export. A partial WHO root should name the missing file
+instead of silently reporting WHO as configured.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
 rm -f "$BIOMCP_WHO_DIR/who_api.csv"
-out="$(biomcp health)"
+out="$("$bin" health)"
 echo "$out" | mustmatch like "WHO Prequalification local data ($BIOMCP_WHO_DIR)"
 echo "$out" | mustmatch like "| WHO Prequalification local data ($BIOMCP_WHO_DIR) | error (missing: who_api.csv) |"
+```
+
+## WHO Missing Vaccine File Reports Contract
+
+The WHO local-data contract should also report the vaccine export as a
+first-class required file when it is the only missing WHO artifact.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+rm -f "$BIOMCP_WHO_DIR/who_vaccines.csv"
+out="$("$bin" health)"
+echo "$out" | mustmatch like "WHO Prequalification local data ($BIOMCP_WHO_DIR)"
+echo "$out" | mustmatch like "| WHO Prequalification local data ($BIOMCP_WHO_DIR) | error (missing: who_vaccines.csv) |"
 ```
 
 ## CDC CVX/MVX Health Readiness
@@ -65,9 +83,10 @@ the API-only inventory so operators can confirm vaccine-brand bridge
 prerequisites before debugging plain-name drug search.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-cvx-env"
-out="$(biomcp health)"
+out="$("$bin" health)"
 echo "$out" | mustmatch like "CDC CVX/MVX local data ($BIOMCP_CVX_DIR)"
 echo "$out" | mustmatch like "| CDC CVX/MVX local data ($BIOMCP_CVX_DIR) | configured |"
 ```
@@ -82,10 +101,11 @@ cover the default U.S.+EU+WHO no-flag path and the explicit EU/all-region
 vaccine variants.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 tmp_data="$(mktemp -d)"
 tmp_cache="$(mktemp -d)"
 err="$(mktemp)"
-out="$(env -u BIOMCP_EMA_DIR -u BIOMCP_CVX_DIR XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" biomcp search drug pembrolizumab --region us --limit 3 2>"$err")"
+out="$(env -u BIOMCP_EMA_DIR -u BIOMCP_CVX_DIR XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" "$bin" search drug pembrolizumab --region us --limit 3 2>"$err")"
 echo "$out" | mustmatch like "# Drugs: pembrolizumab"
 echo "$out" | mustmatch like "|Name|Mechanism|Target|"
 cat "$err" | mustmatch not like "Downloading EMA data"
@@ -100,7 +120,8 @@ Explicit U.S. drug search JSON should use the unified top-level envelope while
 keeping the U.S. bucket under `regions.us`.
 
 ```bash
-json_out="$(biomcp --json search drug pembrolizumab --region us --limit 3)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+json_out="$("$bin" --json search drug pembrolizumab --region us --limit 3)"
 echo "$json_out" | mustmatch like '"region": "us"'
 echo "$json_out" | jq -e '.region == "us"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys) == ["us"]' > /dev/null
@@ -120,7 +141,7 @@ Brand-only names should transparently reuse the plain drug-search fallback when
 direct `get drug` lookup misses but the name resolves to one canonical drug.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" get drug XIPERE)"
 echo "$out" | mustmatch like "# triamcinolone acetonide"
 echo "$out" | mustmatch not like "Error: drug 'XIPERE' not found."
@@ -133,7 +154,8 @@ The inline help should advertise the no-flag cross-region default while keeping
 the structured-filter exception explicit.
 
 ```bash
-out="$(biomcp search drug --help)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search drug --help)"
 echo "$out" | mustmatch like "When to use:"
 echo "$out" | mustmatch like "when you know the drug or brand name"
 echo "$out" | mustmatch like "--indication, --target, or --mechanism"
@@ -142,7 +164,11 @@ echo "$out" | mustmatch like "Omitting --region on a plain name/alias search che
 echo "$out" | mustmatch like "If you omit --region while using structured filters such as --target or --indication, BioMCP stays on the U.S. MyChem path."
 echo "$out" | mustmatch like "Explicit --region who filters structured U.S. hits through WHO Prequalification."
 echo "$out" | mustmatch like "--product-type <PRODUCT_TYPE>"
+echo "$out" | mustmatch like "finished_pharma"
+echo "$out" | mustmatch like "[possible values: finished_pharma, api, vaccine]"
 echo "$out" | mustmatch like "requires explicit --region who"
+echo "$out" | mustmatch like "WHO vaccine search is plain name/brand only"
+echo "$out" | mustmatch like "Default WHO search excludes vaccines"
 ```
 
 ## Structured Indication Misses Are Informative
@@ -150,7 +176,8 @@ echo "$out" | mustmatch like "requires explicit --region who"
 When a structured indication query finds no U.S. regulatory match, the output should frame that absence as evidence about the regulatory surface rather than a generic failure.
 
 ```bash
-out="$(biomcp search drug --indication 'Marfan syndrome' --region us --limit 3)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search drug --indication 'Marfan syndrome' --region us --limit 3)"
 echo "$out" | mustmatch like "U.S. regulatory data"
 echo "$out" | mustmatch like "This absence is informative"
 echo "$out" | mustmatch like 'biomcp search article -k "Marfan syndrome treatment" --type review --limit 5'
@@ -162,7 +189,7 @@ echo "$out" | mustmatch not like $'No drugs found\n\nShowing 0 of 0 results.'
 `get drug` expands mechanism, targets, indications, and key metadata. We assert on the normalized heading and a stable metadata/section marker.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" get drug pembrolizumab)"
 echo "$out" | mustmatch like "# pembrolizumab"
 echo "$out" | mustmatch like "DrugBank ID: DB09037"
@@ -178,7 +205,8 @@ echo "$out" | mustmatch like "post-marketing signal"
 Investigational or sparse label cards should point the user to review literature for indication context instead of pretending the structured card is complete.
 
 ```bash
-out="$(biomcp get drug orteronel)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug orteronel)"
 echo "$out" | mustmatch like "biomcp search article --drug orteronel --type review --limit 5"
 echo "$out" | mustmatch like "indication context"
 ```
@@ -188,7 +216,8 @@ echo "$out" | mustmatch like "indication context"
 Indications are sourced from OpenTargets and should render user-facing stage labels instead of leaking GraphQL failures or raw field names. This checks the repaired indication path without binding the spec to a particular disease row.
 
 ```bash
-out="$(biomcp get drug pembrolizumab indications)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug pembrolizumab indications)"
 echo "$out" | mustmatch like "## Indications (Open Targets)"
 echo "$out" | mustmatch not like "Cannot query field"
 echo "$out" | mustmatch '/\((Approved|Phase [0-9](\/[0-9])?|Early Phase 1)\)/'
@@ -201,7 +230,7 @@ keep the verbose FDA subsections behind `--raw`. The same compact contract
 should hold for JSON output.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" get drug pembrolizumab label)"
 echo "$out" | mustmatch like "## FDA Label"
 echo "$out" | mustmatch like "### Approved Indications"
@@ -226,7 +255,7 @@ The compact summary should surface every approved indication block from label
 section 1, including multi-indication labels such as thalidomide.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" get drug thalidomide label)"
 echo "$out" | mustmatch like "### Approved Indications"
 echo "$out" | mustmatch like "Multiple Myeloma"
@@ -243,7 +272,7 @@ operator explicitly asks for them. The same raw opt-in should hold for JSON
 output.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" get drug pembrolizumab label --raw)"
 echo "$out" | mustmatch like "### Indications and Usage"
 echo "$out" | mustmatch like "### Warnings and Precautions"
@@ -262,7 +291,7 @@ The inline help should agree with `biomcp list drug` and the implementation for
 supported typed sections, including the regional EMA additions.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" get drug --help)"
 echo "$out" | mustmatch like "Sections to include (label, regulatory, safety, shortage, targets, indications, interactions, civic, approvals, all)"
 echo "$out" | mustmatch like "Data region for regional sections"
@@ -280,20 +309,21 @@ sections and the MCP help mirror. The list output should continue to document
 the same regional section grammar that `get drug --help` exposes.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" list drug)"
 echo "$out" | mustmatch like "get drug <name> label [--raw]"
 echo "$out" | mustmatch like "get drug <name> regulatory [--region <us|eu|who|all>]"
 echo "$out" | mustmatch like "get drug <name> safety [--region <us|eu|all>]"
 echo "$out" | mustmatch like "get drug <name> shortage [--region <us|eu|all>]"
 echo "$out" | mustmatch like "get drug <name> all [--region <us|eu|who|all>]"
-echo "$out" | mustmatch like "search drug <query> --region who --product-type <finished_pharma|api>"
+echo "$out" | mustmatch like "search drug <query> --region who --product-type <finished_pharma|api|vaccine>"
 echo "$out" | mustmatch like 'top-level `region`, top-level `regions`, and optional top-level `_meta`'
 echo "$out" | mustmatch like 'Single-region searches expose one bucket under `regions.us`, `regions.eu`, or `regions.who`.'
 echo "$out" | mustmatch like 'Omitted `--region` on plain name/alias lookup and explicit `--region all` expose `regions.us`, `regions.eu`, and `regions.who`.'
 echo "$out" | mustmatch like 'Each region bucket keeps `pagination`, `count`, and `results`.'
 echo "$out" | mustmatch like "who_pq.csv"
 echo "$out" | mustmatch like "who_api.csv"
+echo "$out" | mustmatch like "who_vaccines.csv"
 ```
 
 ## Compact Approval Fields
@@ -301,7 +331,8 @@ echo "$out" | mustmatch like "who_api.csv"
 Drug JSON should expose additive approval aliases and a compact summary so approval questions do not require parsing the base card prose.
 
 ```bash
-out="$(biomcp --json get drug pembrolizumab)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" --json get drug pembrolizumab)"
 echo "$out" | mustmatch like '"approval_date"'
 echo "$out" | jq -e '.approval_date | type == "string"' > /dev/null
 echo "$out" | jq -e '.approval_date_raw | type == "string"' > /dev/null
@@ -315,7 +346,8 @@ echo "$out" | jq -e '.approval_summary | type == "string"' > /dev/null
 The drug card should render the human-friendly display date in the base header instead of only the raw ISO string.
 
 ```bash
-out="$(biomcp get drug pembrolizumab)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug pembrolizumab)"
 echo "$out" | mustmatch '/FDA Approved.*[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}/'
 ```
 
@@ -324,7 +356,8 @@ echo "$out" | mustmatch '/FDA Approved.*[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}/'
 Target-only expansion is useful when the workflow is gene-centric. This check ensures the section heading and expected target token are present.
 
 ```bash
-out="$(biomcp get drug pembrolizumab targets)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug pembrolizumab targets)"
 echo "$out" | mustmatch like "## Targets"
 echo "$out" | mustmatch like $'## Targets (ChEMBL / Open Targets)\nPDCD1'
 echo "$out" | mustmatch not like "Family:"
@@ -337,7 +370,8 @@ When the displayed targets resolve to a well-known family, the base card should
 still surface the concrete family members in the main target list.
 
 ```bash
-out="$(biomcp get drug olaparib)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug olaparib)"
 echo "$out" | mustmatch like "## Targets"
 echo "$out" | mustmatch like "PARP1, PARP2, PARP3"
 ```
@@ -347,7 +381,8 @@ echo "$out" | mustmatch like "PARP1, PARP2, PARP3"
 The additive JSON contract should preserve the existing targets list while exposing the family summary when available.
 
 ```bash
-out="$(biomcp --json get drug olaparib)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" --json get drug olaparib)"
 echo "$out" | mustmatch like '"target_family": "PARP"'
 echo "$out" | jq -e '.target_family == "PARP"' >/dev/null
 echo "$out" | jq -e '(.targets | index("PARP1")) and (.targets | index("PARP2")) and (.targets | index("PARP3"))' >/dev/null
@@ -359,7 +394,8 @@ echo "$out" | jq -e 'if has("target_family_name") then (.target_family_name | ty
 Single-target drugs should keep the existing JSON shape and omit the additive family fields entirely.
 
 ```bash
-out="$(biomcp --json get drug pembrolizumab)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" --json get drug pembrolizumab)"
 echo "$out" | mustmatch like '"targets": ['
 echo "$out" | jq -e 'has("target_family") | not' >/dev/null
 echo "$out" | jq -e 'has("target_family_name") | not' >/dev/null
@@ -370,7 +406,8 @@ echo "$out" | jq -e 'has("target_family_name") | not' >/dev/null
 Drugs with unrelated targets should keep the plain target list without a misleading family summary.
 
 ```bash
-out="$(biomcp get drug imatinib)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug imatinib)"
 echo "$out" | mustmatch like "## Targets"
 echo "$out" | mustmatch like "ABL1, DDR1, DDR2, BCR, KIT, PDGFRB"
 echo "$out" | mustmatch not like "Family:"
@@ -382,14 +419,14 @@ echo "$out" | mustmatch not like "Members:"
 Variant-specific therapy targets should render separately from the generic ChEMBL/Open Targets list so the source labels stay truthful while still surfacing matchable CIViC context.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" get drug rindopepimut targets)"
 echo "$out" | mustmatch like "## Targets (ChEMBL / Open Targets)"
 echo "$out" | mustmatch like "Variant Targets (CIViC): EGFRvIII"
 ```
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" --json get drug rindopepimut targets)"
 echo "$out" | jq -e '
   (.variant_targets | index("EGFRvIII"))
@@ -402,7 +439,8 @@ echo "$out" | jq -e '
 The public MyChem payload does not reliably expose structured DrugBank interaction rows, so BioMCP should render OpenFDA label text when it exists instead of claiming no interactions are known.
 
 ```bash
-out="$(biomcp get drug Warfarin interactions)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug Warfarin interactions)"
 echo "$out" | mustmatch like "## Interactions"
 echo "$out" | mustmatch like "DRUG INTERACTIONS"
 echo "$out" | mustmatch not like "No known drug-drug interactions found."
@@ -413,7 +451,8 @@ echo "$out" | mustmatch not like "No known drug-drug interactions found."
 When public label text is also unavailable, the interactions section must say so explicitly rather than implying the drug has no interactions.
 
 ```bash
-out="$(biomcp get drug pembrolizumab interactions)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug pembrolizumab interactions)"
 echo "$out" | mustmatch like "## Interactions"
 echo "$out" | mustmatch like "Interaction details not available from public sources."
 echo "$out" | mustmatch not like "No known drug-drug interactions found."
@@ -426,7 +465,7 @@ expansion, surface the matched alias, and keep the strict-literal opt-out
 visible in the query echo.
 
 ```bash timeout=180
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" drug trials daraxonrasib --limit 10)"
 strict="$("$bin" drug trials daraxonrasib --no-alias-expand --limit 10)"
 echo "$out" | mustmatch like "intervention=daraxonrasib"
@@ -441,7 +480,7 @@ The helper help text should document that the CTGov path inherits trial alias
 expansion and exposes the strict-literal opt-out flag.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" drug trials --help)"
 list_out="$("$bin" list drug)"
 echo "$out" | mustmatch like "--no-alias-expand"
@@ -459,7 +498,8 @@ FAERS coverage, the existing report table remains the primary contract and shoul
 grow a ClinicalTrials.gov fallback section.
 
 ```bash
-out="$(biomcp drug adverse-events pembrolizumab --limit 3)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" drug adverse-events pembrolizumab --limit 3)"
 echo "$out" | mustmatch like "# Adverse Events: drug=pembrolizumab"
 echo "$out" | mustmatch like "|Report ID|Drug|Reactions|Serious|"
 echo "$out" | mustmatch not like "Trial-Reported Adverse Events (ClinicalTrials.gov)"
@@ -472,7 +512,7 @@ investigational or newly approved drugs, then append a clearly labeled
 ClinicalTrials.gov trial-results section.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
 out="$("$bin" drug adverse-events daraxonrasib --limit 5)"
@@ -487,7 +527,7 @@ The JSON contract keeps the FAERS-shaped top-level fields but marks the 404 bran
 explicitly and emits aggregated trial adverse-event terms with source-aware naming.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
 json_out="$("$bin" --json drug adverse-events daraxonrasib --limit 5)"
@@ -505,7 +545,7 @@ should stay truthful about both sources and omit the fallback table instead of
 inventing empty rows.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
 out="$("$bin" drug adverse-events ctgov-empty --limit 5)"
@@ -521,7 +561,7 @@ branch should explain that the drug matched FAERS indexing but no events matched
 and it must not query or render ClinicalTrials.gov fallback content.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
 out="$("$bin" drug adverse-events faers-empty --limit 5)"
@@ -536,7 +576,7 @@ echo "$out" | mustmatch not like "| Rash | 2 |"
 ever triggering or rendering ClinicalTrials.gov fallback content.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-drug-ae-fallback-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-drug-ae-fallback-env"
 out_404="$("$bin" search adverse-event -d daraxonrasib --limit 5)"
@@ -552,7 +592,8 @@ echo "$out_empty" | mustmatch not like "Trial-Reported Adverse Events (ClinicalT
 Direct adverse-event search is useful for safety reconnaissance independent of drug metadata. We verify the heading and stable summary marker.
 
 ```bash
-out="$(biomcp search adverse-event -d ibuprofen --limit 3)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search adverse-event -d ibuprofen --limit 3)"
 echo "$out" | mustmatch like "# Adverse Events: drug=ibuprofen"
 echo "$out" | mustmatch like "Total reports (OpenFDA)"
 ```
@@ -563,7 +604,8 @@ Non-empty adverse-event search JSON should expose machine-readable follow-up
 commands for the top report and the command-family reference.
 
 ```bash
-json_out="$(biomcp --json search adverse-event -d ibuprofen --limit 3)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+json_out="$("$bin" --json search adverse-event -d ibuprofen --limit 3)"
 echo "$json_out" | mustmatch like '"next_commands":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get adverse-event .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list adverse-event")' > /dev/null
@@ -575,7 +617,7 @@ The list surface should document the repaired empty-state wording and the JSON f
 that identify when ClinicalTrials.gov contributed fallback data.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 list_out="$("$bin" list drug)"
 echo "$list_out" | mustmatch like '`drug adverse-events <name>` - checks FAERS first'
 echo "$list_out" | mustmatch like "falls back to ClinicalTrials.gov trial-reported adverse events only on FAERS 404"
@@ -590,7 +632,7 @@ name. The OpenFDA rescue path should prefer the exact Keytruda label over the
 newer KEYTRUDA QLEX combo label and respect the requested limit/total text.
 
 ```bash
-bin="${BIOMCP_BIN:-biomcp}"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" search drug Keytruda --region us --limit 1)"
 echo "$out" | mustmatch like "# Drugs: Keytruda"
 echo "$out" | mustmatch like "Found 1 drug"
@@ -605,9 +647,10 @@ Explicit EMA search JSON should keep the same top-level envelope and canonical
 follow-up command shape while returning EMA rows under `regions.eu`.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
-json_out="$(biomcp --json search drug keytruda --region eu --limit 3)"
+json_out="$("$bin" --json search drug keytruda --region eu --limit 3)"
 echo "$json_out" | mustmatch like '"ema_product_number"'
 echo "$json_out" | jq -e '.region == "eu"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys) == ["eu"]' > /dev/null
@@ -622,9 +665,10 @@ queries such as "influenza vaccine" surface the seeded influenza products even
 when the phrase does not appear in the medicine name.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
-out="$(biomcp search drug --region ema -q 'influenza vaccine' --limit 5)"
+out="$("$bin" search drug --region ema -q 'influenza vaccine' --limit 5)"
 echo "$out" | mustmatch like "# Drugs: influenza vaccine"
 echo "$out" | mustmatch like "|Flucelvax Tetra|"
 echo "$out" | mustmatch like "|Fluad Tetra|"
@@ -636,9 +680,10 @@ Explicit WHO search JSON should keep WHO rows under `regions.who` without
 reviving the old flat top-level `results` envelope.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-json_out="$(biomcp --json search drug artesunate --region who --limit 10)"
+json_out="$("$bin" --json search drug artesunate --region who --limit 10)"
 echo "$json_out" | mustmatch like '"product_type"'
 echo "$json_out" | jq -e '.region == "who"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys) == ["who"]' > /dev/null
@@ -646,6 +691,7 @@ echo "$json_out" | jq -e '.regions.who.results | any(.who_reference_number == "M
 echo "$json_out" | jq -e '.regions.who.results | any(.who_product_id == "WHOAPI-001")' > /dev/null
 echo "$json_out" | jq -e '.regions.who.results | any(.product_type == "Finished Pharmaceutical Product")' > /dev/null
 echo "$json_out" | jq -e '.regions.who.results | any(.product_type == "Active Pharmaceutical Ingredient")' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.product_type == "Vaccine") | not' > /dev/null
 echo "$json_out" | jq -e 'has("results") | not' > /dev/null
 ```
 
@@ -655,9 +701,10 @@ A zero-result WHO search should still keep the selected `who` bucket under
 `regions` and omit `_meta` because there is no follow-up command to suggest.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-json_out="$(biomcp --json search drug this-drug-does-not-exist-in-who-fixture --region who --limit 3)"
+json_out="$("$bin" --json search drug this-drug-does-not-exist-in-who-fixture --region who --limit 3)"
 echo "$json_out" | mustmatch like '"region": "who"'
 echo "$json_out" | jq -e '.region == "who"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys) == ["who"]' > /dev/null
@@ -673,9 +720,10 @@ WHO name search should now surface both finished-pharma rows and API rows when
 the query matches both exports.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp search drug artesunate --region who --limit 10)"
+out="$("$bin" search drug artesunate --region who --limit 10)"
 echo "$out" | mustmatch like "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|"
 echo "$out" | mustmatch like "Artesunate|Finished Pharmaceutical Product|Malaria"
 echo "$out" | mustmatch like "Artesunate|Active Pharmaceutical Ingredient|Malaria"
@@ -689,9 +737,10 @@ The WHO-only product-type filter should keep only API rows when the user
 requests `--product-type api`.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp search drug artesunate --region who --product-type api --limit 10)"
+out="$("$bin" search drug artesunate --region who --product-type api --limit 10)"
 echo "$out" | mustmatch like "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|"
 echo "$out" | mustmatch like "Artesunate|Active Pharmaceutical Ingredient|Malaria"
 echo "$out" | mustmatch like "WHOAPI-001"
@@ -705,14 +754,127 @@ The WHO-only product-type filter should keep only finished-pharma rows when the
 user requests `--product-type finished_pharma`.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp search drug artesunate --region who --product-type finished_pharma --limit 10)"
+out="$("$bin" search drug artesunate --region who --product-type finished_pharma --limit 10)"
 echo "$out" | mustmatch like "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|"
 echo "$out" | mustmatch like "Artesunate|Finished Pharmaceutical Product|Malaria"
 echo "$out" | mustmatch like "Guilin Pharmaceutical Co., Ltd.|MA051|Prequalification - Full"
 echo "$out" | mustmatch not like "Active Pharmaceutical Ingredient"
 echo "$out" | mustmatch not like "WHOAPI-001"
+```
+
+## WHO Vaccine Search BCG
+
+Explicit WHO vaccine search should return the vaccine table contract instead of
+the finished-pharma/API WHO table, and it should work on a vaccine-type query
+such as `BCG`.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+. "$PWD/.cache/spec-cvx-env"
+out="$("$bin" search drug BCG --region who --product-type vaccine --limit 10)"
+echo "$out" | mustmatch like "# Drugs: BCG"
+echo "$out" | mustmatch like "|Vaccine Type|Commercial Name|Presentation|Doses|Manufacturer|Responsible NRA|Date|"
+echo "$out" | mustmatch like "Japan BCG Laboratory"
+echo "$out" | mustmatch not like 'Use `get drug <name>` for full details.'
+```
+
+## WHO Vaccine Search HPV
+
+Explicit WHO vaccine search should also work for HPV queries and keep the
+vaccine-specific manufacturer/presentation columns visible.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+. "$PWD/.cache/spec-cvx-env"
+out="$("$bin" search drug HPV --region who --product-type vaccine --limit 10)"
+echo "$out" | mustmatch like "# Drugs: HPV"
+echo "$out" | mustmatch like "|Vaccine Type|Commercial Name|Presentation|Doses|Manufacturer|Responsible NRA|Date|"
+echo "$out" | mustmatch like "Human Papillomavirus"
+echo "$out" | mustmatch like "Gardasil 9"
+```
+
+## WHO Vaccine JSON Contract
+
+WHO vaccine JSON rows should expose the explicit vaccine fields instead of
+forcing callers to infer vaccine behavior from generic WHO fields.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+. "$PWD/.cache/spec-cvx-env"
+json_out="$("$bin" --json search drug BCG --region who --product-type vaccine --limit 10)"
+echo "$json_out" | mustmatch like '"vaccine_type": "BCG"'
+echo "$json_out" | jq -e '.region == "who"' > /dev/null
+echo "$json_out" | jq -e '(.regions | keys) == ["who"]' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.vaccine_type == "BCG")' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.commercial_name != null)' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.presentation != null)' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.manufacturer != null)' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.responsible_nra != null)' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.prequalification_date != null)' > /dev/null
+```
+
+## WHO Vaccine Blank Dose Boundary
+
+Blank `No. of doses` rows such as `Comirnaty®` should stay searchable and
+render `-` in markdown instead of being dropped during parsing or filtering.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+. "$PWD/.cache/spec-cvx-env"
+out="$("$bin" search drug Comirnaty --region who --product-type vaccine --limit 10)"
+echo "$out" | mustmatch like "|Vaccine Type|Commercial Name|Presentation|Doses|Manufacturer|Responsible NRA|Date|"
+echo "$out" | mustmatch like "Comirnaty®|Vial|-|BioNTech Manufacturing GmbH"
+json_out="$("$bin" --json search drug Comirnaty --region who --product-type vaccine --limit 10)"
+echo "$json_out" | jq -e '.regions.who.results | any(.commercial_name | test("Comirnaty"; "i"))' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.dose_count == null)' > /dev/null
+```
+
+## WHO Vaccine Structured Query Rejects Fast
+
+WHO vaccine mode is plain name/brand only. Structured WHO filters should fail
+before any data fetch and point the operator back to explicit vaccine search.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+out="$("$bin" search drug --indication malaria --region who --product-type vaccine --limit 5 2>&1 >/dev/null || true)"
+echo "$out" | mustmatch like "WHO vaccine search is plain name/brand only"
+echo "$out" | mustmatch like "--region who --product-type vaccine"
+echo "$out" | mustmatch like "Use a vaccine name or brand"
+```
+
+## WHO Vaccine Search Guidance Omits Get Drug
+
+WHO vaccine search is explicitly search-only in this ticket, so markdown and
+JSON guidance should not point the operator at a broken `get drug` follow-up.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-who-pq-env"
+. "$PWD/.cache/spec-cvx-env"
+out="$("$bin" search drug BCG --region who --product-type vaccine --limit 10)"
+echo "$out" | mustmatch not like 'Use `get drug <name>` for full details.'
+json_out="$("$bin" --json search drug BCG --region who --product-type vaccine --limit 10)"
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list drug")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(test("^biomcp get drug ")) | not' > /dev/null
 ```
 
 ## WHO Structured Search Region
@@ -721,9 +883,10 @@ Structured WHO search should keep the structured U.S. drug-search semantics and
 filter the candidate hits through the WHO prequalification batch.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp search drug --indication malaria --region who --limit 5)"
+out="$("$bin" search drug --indication malaria --region who --limit 5)"
 echo "$out" | mustmatch like "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|"
 echo "$out" | mustmatch like "Artemether/Lumefantrine"
 echo "$out" | mustmatch like "Artemether/Lumefantrine|Finished Pharmaceutical Product|Malaria"
@@ -736,12 +899,13 @@ The default plain-name search path should serialize identically to explicit
 `--region all` once both compare-mode regional datasets are available.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-default_json="$(biomcp --json search drug Keytruda --limit 3)"
-all_json="$(biomcp --json search drug Keytruda --region all --limit 3)"
+default_json="$("$bin" --json search drug Keytruda --limit 3)"
+all_json="$("$bin" --json search drug Keytruda --region all --limit 3)"
 echo "$default_json" | mustmatch like '"regions": {'
 test "$(
   echo "$default_json" | jq -S -c '{region,regions,_meta}'
@@ -757,6 +921,7 @@ while using the local CDC alias bundle to seed EMA vaccine matches when MyChem
 cannot resolve the brand name.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
@@ -766,7 +931,7 @@ trap 'bash fixtures/cleanup-mychem-empty-spec-fixture.sh "$PWD"' EXIT
 . "$PWD/.cache/spec-who-pq-env"
 . "$PWD/.cache/spec-cvx-env"
 . "$PWD/.cache/spec-mychem-empty-env"
-json_out="$(biomcp --json search drug gardasil --limit 5)"
+json_out="$("$bin" --json search drug gardasil --limit 5)"
 echo "$json_out" | mustmatch like '"region": "all"'
 echo "$json_out" | jq -e '.region == "all"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys | sort) == ["eu", "us", "who"]' > /dev/null
@@ -780,11 +945,12 @@ The EMA vaccine surface should stay reachable for seeded COVID-19 vaccines when
 the user searches by the brand name.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
 . "$PWD/.cache/spec-cvx-env"
-out="$(biomcp search drug comirnaty --region eu --limit 5)"
+out="$("$bin" search drug comirnaty --region eu --limit 5)"
 echo "$out" | mustmatch like "# Drugs: comirnaty"
 echo "$out" | mustmatch like "|Comirnaty|"
 ```
@@ -795,6 +961,7 @@ echo "$out" | mustmatch like "|Comirnaty|"
 row instead of requiring a direct medicine-name match.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 bash fixtures/setup-mychem-empty-spec-fixture.sh "$PWD"
@@ -802,7 +969,7 @@ trap 'bash fixtures/cleanup-mychem-empty-spec-fixture.sh "$PWD"' EXIT
 . "$PWD/.cache/spec-ema-env"
 . "$PWD/.cache/spec-cvx-env"
 . "$PWD/.cache/spec-mychem-empty-env"
-out="$(biomcp search drug prevnar --region eu --limit 5)"
+out="$("$bin" search drug prevnar --region eu --limit 5)"
 echo "$out" | mustmatch like "# Drugs: prevnar"
 echo "$out" | mustmatch like "|Prevenar 13|"
 ```
@@ -814,6 +981,7 @@ influenza products even though the brand itself is not present in the EMA
 medicine-name field.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 bash fixtures/setup-mychem-empty-spec-fixture.sh "$PWD"
@@ -821,7 +989,7 @@ trap 'bash fixtures/cleanup-mychem-empty-spec-fixture.sh "$PWD"' EXIT
 . "$PWD/.cache/spec-ema-env"
 . "$PWD/.cache/spec-cvx-env"
 . "$PWD/.cache/spec-mychem-empty-env"
-out="$(biomcp search drug fluzone --region eu --limit 5)"
+out="$("$bin" search drug fluzone --region eu --limit 5)"
 echo "$out" | mustmatch like "# Drugs: fluzone"
 echo "$out" | mustmatch like "|Flucelvax Tetra|"
 echo "$out" | mustmatch like "|Fluad Tetra|"
@@ -833,11 +1001,12 @@ All-region JSON should canonicalize the top `get drug` follow-up the same way
 as the single-region EMA path instead of echoing the raw lowercased query.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-json_out="$(biomcp --json search drug keytruda --region all --limit 1)"
+json_out="$("$bin" --json search drug keytruda --region all --limit 1)"
 echo "$json_out" | mustmatch like '"region": "all"'
 echo "$json_out" | jq -e '.region == "all"' > /dev/null
 echo "$json_out" | jq -e '(.regions | keys | sort) == ["eu", "us", "who"]' > /dev/null
@@ -851,9 +1020,10 @@ The EU regulatory section should anchor on the EMA medicine row and show recent
 post-authorisation activity.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
-out="$(biomcp get drug Keytruda regulatory --region eu)"
+out="$("$bin" get drug Keytruda regulatory --region eu)"
 echo "$out" | mustmatch like "## Regulatory (EU"
 echo "$out" | mustmatch like "EMEA/H/C/003820"
 echo "$out" | mustmatch like "Authorised"
@@ -867,9 +1037,10 @@ render the repaired EMA regulatory data, including the marketing-authorisation
 date and authorized indication text.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
-out="$(biomcp get drug Dupixent regulatory --region ema)"
+out="$("$bin" get drug Dupixent regulatory --region ema)"
 echo "$out" | mustmatch like "## Regulatory (EU"
 echo "$out" | mustmatch like "EMEA/H/C/004390"
 echo "$out" | mustmatch like "26/09/2017"
@@ -884,11 +1055,12 @@ U.S. and EU regulatory blocks while keeping the regular no-flag `get drug ...
 all` behavior unchanged.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp get drug nivolumab regulatory)"
+out="$("$bin" get drug nivolumab regulatory)"
 echo "$out" | mustmatch like "## Regulatory (US - Drugs@FDA)"
 echo "$out" | mustmatch like "## Regulatory (EU - EMA)"
 echo "$out" | mustmatch like "EMEA/H/C/003985"
@@ -900,9 +1072,10 @@ The WHO regulatory section should anchor on WHO medicine rows and show the WHO
 reference, listing basis, and normalized prequalification date.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp get drug trastuzumab regulatory --region who)"
+out="$("$bin" get drug trastuzumab regulatory --region who)"
 echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
 echo "$out" | mustmatch like "| WHO ID | Type | Presentation / INN |"
 echo "$out" | mustmatch like "| Listing Basis | Grade | Alternative Basis |"
@@ -918,9 +1091,10 @@ WHO regulatory output should also surface API-only metadata such as the WHO API
 identifier, grade, and confirmation-document date.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp get drug abacavir regulatory --region who)"
+out="$("$bin" get drug abacavir regulatory --region who)"
 echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
 echo "$out" | mustmatch like "WHOAPI-010"
 echo "$out" | mustmatch like "Active Pharmaceutical Ingredient"
@@ -934,9 +1108,10 @@ When a drug is not WHO-prequalified, the WHO regulatory path should return the
 truthful empty-state copy instead of an error.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp get drug imatinib regulatory --region who)"
+out="$("$bin" get drug imatinib regulatory --region who)"
 echo "$out" | mustmatch like "Not WHO-prequalified"
 ```
 
@@ -946,10 +1121,11 @@ WHO regional data is regulatory-only. Explicit `safety` and `shortage`
 requests with `--region who` should fail before any data fetch.
 
 ```bash
-out="$(biomcp get drug trastuzumab safety --region who 2>&1 || true)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" get drug trastuzumab safety --region who 2>&1 || true)"
 echo "$out" | mustmatch like "Error: Invalid argument: WHO regional data currently supports regulatory only"
 
-out="$(biomcp get drug trastuzumab shortage --region who 2>&1 || true)"
+out="$("$bin" get drug trastuzumab shortage --region who 2>&1 || true)"
 echo "$out" | mustmatch like "Error: Invalid argument: WHO regional data currently supports regulatory only"
 ```
 
@@ -960,14 +1136,16 @@ nonregional sections, render WHO regulatory data, and omit unsupported WHO
 safety/shortage regional blocks.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash spec/fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
 ```
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
-out="$(biomcp get drug trastuzumab all --region who)"
+out="$("$bin" get drug trastuzumab all --region who)"
 echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
 echo "$out" | mustmatch like "| BT-ON001 | Biotherapeutic Product | Trastuzumab Powder"
 echo "$out" | mustmatch not like "## Safety ("
@@ -980,9 +1158,10 @@ The EU safety surface should render DHPC matches and keep referrals/PSUSAs
 truthful when the EMA batch has no matching rows.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
-out="$(biomcp get drug Ozempic safety --region eu)"
+out="$("$bin" get drug Ozempic safety --region eu)"
 echo "$out" | mustmatch like "## Safety (EU"
 echo "$out" | mustmatch like "| Medicine | Type | Outcome | First Published | Last Updated |"
 echo "$out" | mustmatch like "Medicine shortage"
@@ -998,9 +1177,10 @@ EU shortage output should expose the EMA shortage status, alternatives flag,
 and update date from the local batch.
 
 ```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-ema-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-ema-env"
-out="$(biomcp get drug Ozempic shortage --region eu)"
+out="$("$bin" get drug Ozempic shortage --region eu)"
 echo "$out" | mustmatch like "## Shortage (EU"
 echo "$out" | mustmatch '/Resolved.*13\/01\/2026/'
 echo "$out" | mustmatch '/Yes.*13\/01\/2026/'
@@ -1013,7 +1193,8 @@ The mechanism filter should surface purine analogs even when the upstream text
 labels only expose the ATC class or a non-purine NDC pharmacology class.
 
 ```bash
-out="$(biomcp search drug --mechanism purine --limit 10)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search drug --mechanism purine --limit 10)"
 echo "$out" | mustmatch like "pentostatin"
 echo "$out" | mustmatch like "nelarabine"
 echo "$out" | mustmatch like "cladribine"
@@ -1027,7 +1208,8 @@ Combining indication and mechanism filters should still keep the expected
 purine analog leukemia drugs visible.
 
 ```bash
-out="$(biomcp search drug --indication leukemia --mechanism purine --limit 10)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search drug --indication leukemia --mechanism purine --limit 10)"
 echo "$out" | mustmatch like "pentostatin"
 echo "$out" | mustmatch like "nelarabine"
 echo "$out" | mustmatch like "cladribine"
@@ -1039,6 +1221,7 @@ The alias lookup already works today and should stay covered by executable
 proof so future normalization changes do not break it.
 
 ```bash
-out="$(biomcp search drug deoxycoformycin --limit 5)"
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+out="$("$bin" search drug deoxycoformycin --limit 5)"
 echo "$out" | mustmatch like "pentostatin"
 ```

@@ -17,7 +17,7 @@ pub enum EmaCommand {
 
 #[derive(Subcommand, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WhoCommand {
-    /// Force refresh the WHO Prequalification local exports
+    /// Force refresh the WHO Prequalification local exports (finished pharma, API, vaccines)
     Sync,
 }
 

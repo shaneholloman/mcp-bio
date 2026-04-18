@@ -114,6 +114,54 @@ pub fn drug_search_markdown_with_footer(
     Ok(with_pagination_footer(body, pagination_footer))
 }
 
+fn who_results_are_vaccines(results: &[WhoPrequalificationSearchResult]) -> bool {
+    !results.is_empty()
+        && results
+            .iter()
+            .all(WhoPrequalificationSearchResult::is_vaccine)
+}
+
+fn render_who_vaccine_search_table(out: &mut String, rows: &[WhoPrequalificationSearchResult]) {
+    out.push_str(
+        "|Vaccine Type|Commercial Name|Presentation|Doses|Manufacturer|Responsible NRA|Date|\n",
+    );
+    out.push_str("|---|---|---|---|---|---|---|\n");
+    for row in rows {
+        let _ = writeln!(
+            out,
+            "|{}|{}|{}|{}|{}|{}|{}|",
+            row.vaccine_type
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| markdown_cell(&row.inn)),
+            row.commercial_name
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            row.presentation
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            row.dose_count
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            row.manufacturer
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| markdown_cell(&row.applicant)),
+            row.responsible_nra
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+            row.prequalification_date
+                .as_deref()
+                .map(markdown_cell)
+                .unwrap_or_else(|| "-".to_string()),
+        );
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn drug_search_markdown_with_region(
     query: &str,
@@ -168,7 +216,12 @@ pub fn drug_search_markdown_with_region(
                     markdown_cell(&row.status),
                 );
             }
-            out.push_str("\nUse `get drug <name>` for full details.\n");
+            if !(us_results.is_empty()
+                && eu_results.is_empty()
+                && who_results_are_vaccines(who_results))
+            {
+                out.push_str("\nUse `get drug <name>` for full details.\n");
+            }
             if !pagination_footer.trim().is_empty() {
                 let _ = writeln!(out, "\n{pagination_footer}");
             }
@@ -197,34 +250,40 @@ pub fn drug_search_markdown_with_region(
                 "Found {count} drug{}\n",
                 if count == 1 { "" } else { "s" }
             );
-            out.push_str(
-                "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|\n",
-            );
-            out.push_str("|---|---|---|---|---|---|---|---|\n");
-            for row in who_results {
-                let _ = writeln!(
-                    out,
-                    "|{}|{}|{}|{}|{}|{}|{}|{}|",
-                    markdown_cell(&row.inn),
-                    markdown_cell(&row.product_type),
-                    markdown_cell(&row.therapeutic_area),
-                    row.dosage_form
-                        .as_deref()
-                        .map(markdown_cell)
-                        .unwrap_or_else(|| "-".to_string()),
-                    markdown_cell(&row.applicant),
-                    markdown_cell(row.display_identifier()),
-                    row.listing_basis
-                        .as_deref()
-                        .map(markdown_cell)
-                        .unwrap_or_else(|| "-".to_string()),
-                    row.prequalification_date
-                        .as_deref()
-                        .map(markdown_cell)
-                        .unwrap_or_else(|| "-".to_string()),
+            if who_results_are_vaccines(who_results) {
+                render_who_vaccine_search_table(&mut out, who_results);
+            } else {
+                out.push_str(
+                    "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|\n",
                 );
+                out.push_str("|---|---|---|---|---|---|---|---|\n");
+                for row in who_results {
+                    let _ = writeln!(
+                        out,
+                        "|{}|{}|{}|{}|{}|{}|{}|{}|",
+                        markdown_cell(&row.inn),
+                        markdown_cell(&row.product_type),
+                        markdown_cell(&row.therapeutic_area),
+                        row.dosage_form
+                            .as_deref()
+                            .map(markdown_cell)
+                            .unwrap_or_else(|| "-".to_string()),
+                        markdown_cell(&row.applicant),
+                        markdown_cell(row.display_identifier()),
+                        row.listing_basis
+                            .as_deref()
+                            .map(markdown_cell)
+                            .unwrap_or_else(|| "-".to_string()),
+                        row.prequalification_date
+                            .as_deref()
+                            .map(markdown_cell)
+                            .unwrap_or_else(|| "-".to_string()),
+                    );
+                }
             }
-            out.push_str("\nUse `get drug <name>` for full details.\n");
+            if !who_results_are_vaccines(who_results) {
+                out.push_str("\nUse `get drug <name>` for full details.\n");
+            }
             if !pagination_footer.trim().is_empty() {
                 let _ = writeln!(out, "\n{pagination_footer}");
             }
@@ -305,32 +364,36 @@ pub fn drug_search_markdown_with_region(
                     "Found {who_count} drug{}\n",
                     if who_count == 1 { "" } else { "s" }
                 );
-                out.push_str(
-                    "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|\n",
-                );
-                out.push_str("|---|---|---|---|---|---|---|---|\n");
-                for row in who_results {
-                    let _ = writeln!(
-                        out,
-                        "|{}|{}|{}|{}|{}|{}|{}|{}|",
-                        markdown_cell(&row.inn),
-                        markdown_cell(&row.product_type),
-                        markdown_cell(&row.therapeutic_area),
-                        row.dosage_form
-                            .as_deref()
-                            .map(markdown_cell)
-                            .unwrap_or_else(|| "-".to_string()),
-                        markdown_cell(&row.applicant),
-                        markdown_cell(row.display_identifier()),
-                        row.listing_basis
-                            .as_deref()
-                            .map(markdown_cell)
-                            .unwrap_or_else(|| "-".to_string()),
-                        row.prequalification_date
-                            .as_deref()
-                            .map(markdown_cell)
-                            .unwrap_or_else(|| "-".to_string()),
+                if who_results_are_vaccines(who_results) {
+                    render_who_vaccine_search_table(&mut out, who_results);
+                } else {
+                    out.push_str(
+                        "|INN|Type|Therapeutic Area|Dosage Form|Applicant|WHO ID|Listing Basis|Date|\n",
                     );
+                    out.push_str("|---|---|---|---|---|---|---|---|\n");
+                    for row in who_results {
+                        let _ = writeln!(
+                            out,
+                            "|{}|{}|{}|{}|{}|{}|{}|{}|",
+                            markdown_cell(&row.inn),
+                            markdown_cell(&row.product_type),
+                            markdown_cell(&row.therapeutic_area),
+                            row.dosage_form
+                                .as_deref()
+                                .map(markdown_cell)
+                                .unwrap_or_else(|| "-".to_string()),
+                            markdown_cell(&row.applicant),
+                            markdown_cell(row.display_identifier()),
+                            row.listing_basis
+                                .as_deref()
+                                .map(markdown_cell)
+                                .unwrap_or_else(|| "-".to_string()),
+                            row.prequalification_date
+                                .as_deref()
+                                .map(markdown_cell)
+                                .unwrap_or_else(|| "-".to_string()),
+                        );
+                    }
                 }
             }
 

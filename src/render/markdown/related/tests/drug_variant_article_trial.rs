@@ -82,15 +82,24 @@ fn search_next_commands_drug_eu_prefers_active_substance_match() {
 fn search_next_commands_drug_who_use_inn() {
     let related = search_next_commands_drug_who(
         &[crate::entities::drug::WhoPrequalificationSearchResult {
+            kind: crate::entities::drug::WhoPrequalificationKind::FinishedPharma,
             inn: "Trastuzumab".to_string(),
             product_type: "Biotherapeutic Product".to_string(),
             therapeutic_area: "Oncology".to_string(),
+            presentation: Some(
+                "Trastuzumab Powder for concentrate for solution for infusion 150 mg".to_string(),
+            ),
             dosage_form: Some("Concentrate".to_string()),
             applicant: "Samsung Bioepis NL B.V.".to_string(),
             who_reference_number: Some("BT-ON001".to_string()),
             who_product_id: None,
             listing_basis: Some("Prequalification - Abridged".to_string()),
             prequalification_date: Some("2019-12-18".to_string()),
+            vaccine_type: None,
+            commercial_name: None,
+            dose_count: None,
+            manufacturer: None,
+            responsible_nra: None,
         }],
         Some("trastuzumab"),
     );
@@ -117,15 +126,22 @@ fn search_next_commands_drug_regions_canonicalize_across_buckets() {
             status: "Authorised".to_string(),
         }]),
         Some(&[crate::entities::drug::WhoPrequalificationSearchResult {
+            kind: crate::entities::drug::WhoPrequalificationKind::FinishedPharma,
             inn: "Pembrolizumab".to_string(),
             product_type: "Biotherapeutic Product".to_string(),
             therapeutic_area: "Oncology".to_string(),
+            presentation: Some("Pembrolizumab Concentrate".to_string()),
             dosage_form: Some("Concentrate".to_string()),
             applicant: "Merck Sharp & Dohme".to_string(),
             who_reference_number: Some("BT-ON002".to_string()),
             who_product_id: None,
             listing_basis: Some("Prequalification".to_string()),
             prequalification_date: Some("2020-01-01".to_string()),
+            vaccine_type: None,
+            commercial_name: None,
+            dose_count: None,
+            manufacturer: None,
+            responsible_nra: None,
         }]),
     );
 
@@ -145,20 +161,56 @@ fn search_next_commands_drug_regions_fall_back_without_requested_name() {
             status: "Authorised".to_string(),
         }]),
         Some(&[crate::entities::drug::WhoPrequalificationSearchResult {
+            kind: crate::entities::drug::WhoPrequalificationKind::FinishedPharma,
             inn: "Trastuzumab".to_string(),
             product_type: "Biotherapeutic Product".to_string(),
             therapeutic_area: "Oncology".to_string(),
+            presentation: Some(
+                "Trastuzumab Powder for concentrate for solution for infusion 150 mg".to_string(),
+            ),
             dosage_form: Some("Concentrate".to_string()),
             applicant: "Samsung Bioepis NL B.V.".to_string(),
             who_reference_number: Some("BT-ON001".to_string()),
             who_product_id: None,
             listing_basis: Some("Prequalification - Abridged".to_string()),
             prequalification_date: Some("2019-12-18".to_string()),
+            vaccine_type: None,
+            commercial_name: None,
+            dose_count: None,
+            manufacturer: None,
+            responsible_nra: None,
         }]),
     );
 
     assert_eq!(related[0], "biomcp get drug trastuzumab");
     assert_eq!(related[1], "biomcp list drug");
+}
+
+#[test]
+fn search_next_commands_drug_who_vaccine_only_stays_list_only() {
+    let related = search_next_commands_drug_who(
+        &[crate::entities::drug::WhoPrequalificationSearchResult {
+            kind: crate::entities::drug::WhoPrequalificationKind::Vaccine,
+            inn: "BCG".to_string(),
+            product_type: "Vaccine".to_string(),
+            therapeutic_area: "Vaccine".to_string(),
+            presentation: Some("Ampoule".to_string()),
+            dosage_form: None,
+            applicant: "Japan BCG Laboratory".to_string(),
+            who_reference_number: None,
+            who_product_id: None,
+            listing_basis: None,
+            prequalification_date: Some("1987-01-01".to_string()),
+            vaccine_type: Some("BCG".to_string()),
+            commercial_name: Some("BCG Freeze Dried Glutamate vaccine".to_string()),
+            dose_count: Some("10".to_string()),
+            manufacturer: Some("Japan BCG Laboratory".to_string()),
+            responsible_nra: Some("Pharmaceutical and Medical Devices Agency".to_string()),
+        }],
+        Some("BCG"),
+    );
+
+    assert_eq!(related, vec!["biomcp list drug".to_string()]);
 }
 
 #[test]

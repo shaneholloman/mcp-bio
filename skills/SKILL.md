@@ -15,8 +15,8 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Symptom or phenotype questions: `biomcp get disease <name_or_id> phenotypes`
 - Gene-function questions: `biomcp get gene <symbol>`
 - Drug-safety questions: `biomcp drug adverse-events <name>` and `biomcp get drug <name> safety`
-- EMA and WHO regional drug data are local runtime files that auto-download on first use, CDC CVX/MVX is the companion local vaccine-brand bridge for default/EU vaccine searches, and GTR is the local diagnostic-test backbone; run `biomcp ema sync`, `biomcp who sync`, `biomcp cvx sync`, or `biomcp gtr sync` to force-refresh before freshness-sensitive local-runtime lookups.
-- Vaccine brand-name questions that miss on MyChem often need `biomcp search drug <brand> --region eu` or omitted `--region`, which can bridge through CDC CVX/MVX into EMA vaccine matches.
+- EMA and WHO regional drug data are local runtime files that auto-download on first use, CDC CVX/MVX is the companion local vaccine-brand bridge for default/EU vaccine searches plus explicit WHO vaccine search, and GTR is the local diagnostic-test backbone; run `biomcp ema sync`, `biomcp who sync`, `biomcp cvx sync`, or `biomcp gtr sync` to force-refresh before freshness-sensitive local-runtime lookups.
+- Vaccine brand-name questions that miss on MyChem often need `biomcp search drug <brand> --region eu`, omitted `--region`, or explicit `biomcp search drug <brand> --region who --product-type vaccine`, which can bridge through CDC CVX/MVX into EMA or WHO vaccine matches.
 - Review-literature questions: `biomcp search article -k "<query>" --type review --limit 5`
 - After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls. Batch up to 20 shortlisted papers in one call.
 - Use `biomcp batch gene <GENE1,GENE2,...>` when you need the same basic card fields, chromosome, or sectioned output for multiple genes.

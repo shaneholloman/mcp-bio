@@ -201,8 +201,18 @@ pub struct DrugSearchResult {
     pub target: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub(crate) enum WhoPrequalificationKind {
+    #[default]
+    FinishedPharma,
+    Api,
+    Vaccine,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WhoPrequalificationEntry {
+    #[serde(skip)]
+    pub(crate) kind: WhoPrequalificationKind,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub who_reference_number: Option<String>,
     pub inn: String,
@@ -225,9 +235,23 @@ pub struct WhoPrequalificationEntry {
     pub grade: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub confirmation_document_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vaccine_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub commercial_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dose_count: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub manufacturer: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub responsible_nra: Option<String>,
 }
 
 impl WhoPrequalificationEntry {
+    pub(crate) fn is_vaccine(&self) -> bool {
+        matches!(self.kind, WhoPrequalificationKind::Vaccine)
+    }
+
     pub(crate) fn display_identifier(&self) -> &str {
         self.who_reference_number
             .as_deref()
@@ -240,6 +264,17 @@ impl WhoPrequalificationEntry {
             format!("ref:{value}")
         } else if let Some(value) = self.who_product_id.as_deref() {
             format!("product:{value}")
+        } else if self.is_vaccine() {
+            format!(
+                "vaccine:{}|{}|{}|{}|{}|{}|{}",
+                stable_who_identity_component(self.vaccine_type.as_deref()),
+                stable_who_identity_component(self.commercial_name.as_deref()),
+                stable_who_identity_component(self.manufacturer.as_deref()),
+                stable_who_identity_component(self.presentation.as_deref()),
+                stable_who_identity_component(self.dose_count.as_deref()),
+                stable_who_identity_component(self.responsible_nra.as_deref()),
+                stable_who_identity_component(self.prequalification_date.as_deref()),
+            )
         } else {
             format!("missing:{}", self.inn.to_ascii_lowercase())
         }
@@ -248,9 +283,13 @@ impl WhoPrequalificationEntry {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WhoPrequalificationSearchResult {
+    #[serde(skip)]
+    pub(crate) kind: WhoPrequalificationKind,
     pub inn: String,
     pub product_type: String,
     pub therapeutic_area: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub presentation: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dosage_form: Option<String>,
     pub applicant: String,
@@ -262,15 +301,38 @@ pub struct WhoPrequalificationSearchResult {
     pub listing_basis: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prequalification_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vaccine_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub commercial_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dose_count: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub manufacturer: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub responsible_nra: Option<String>,
 }
 
 impl WhoPrequalificationSearchResult {
+    pub(crate) fn is_vaccine(&self) -> bool {
+        matches!(self.kind, WhoPrequalificationKind::Vaccine)
+    }
+
     pub(crate) fn display_identifier(&self) -> &str {
         self.who_reference_number
             .as_deref()
             .or(self.who_product_id.as_deref())
             .unwrap_or("-")
     }
+}
+
+fn stable_who_identity_component(value: Option<&str>) -> String {
+    value
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(|value| value.split_whitespace().collect::<Vec<_>>().join(" "))
+        .map(|value| value.to_ascii_lowercase())
+        .unwrap_or_else(|| "-".to_string())
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

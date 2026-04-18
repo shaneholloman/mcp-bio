@@ -362,6 +362,7 @@ fn drug_markdown_with_region_who_renders_regulatory_block() {
         ema_safety: None,
         ema_shortage: None,
         who_prequalification: Some(vec![WhoPrequalificationEntry {
+            kind: crate::entities::drug::WhoPrequalificationKind::FinishedPharma,
             who_reference_number: Some("BT-ON001".to_string()),
             inn: "Trastuzumab".to_string(),
             presentation: Some(
@@ -377,6 +378,11 @@ fn drug_markdown_with_region_who_renders_regulatory_block() {
             who_product_id: None,
             grade: None,
             confirmation_document_date: None,
+            vaccine_type: None,
+            commercial_name: None,
+            dose_count: None,
+            manufacturer: None,
+            responsible_nra: None,
         }]),
         civic: None,
     };
@@ -413,15 +419,24 @@ fn drug_search_all_region_markdown_includes_who_block() {
         }],
         Some(1),
         &[crate::entities::drug::WhoPrequalificationSearchResult {
+            kind: crate::entities::drug::WhoPrequalificationKind::FinishedPharma,
             inn: "Trastuzumab".to_string(),
             product_type: "Biotherapeutic Product".to_string(),
             therapeutic_area: "Oncology".to_string(),
+            presentation: Some(
+                "Trastuzumab Powder for concentrate for solution for infusion 150 mg".to_string(),
+            ),
             dosage_form: Some("Powder for concentrate for solution for infusion".to_string()),
             applicant: "Samsung Bioepis NL B.V.".to_string(),
             who_reference_number: Some("BT-ON001".to_string()),
             who_product_id: None,
             listing_basis: Some("Prequalification - Abridged".to_string()),
             prequalification_date: Some("2019-12-18".to_string()),
+            vaccine_type: None,
+            commercial_name: None,
+            dose_count: None,
+            manufacturer: None,
+            responsible_nra: None,
         }],
         Some(1),
         "",
@@ -433,6 +448,46 @@ fn drug_search_all_region_markdown_includes_who_block() {
     assert!(markdown.contains("## WHO (WHO Prequalification)"));
     assert!(markdown.contains("BT-ON001"));
     assert!(markdown.contains("EMEA/H/C/004123"));
+}
+
+#[test]
+fn drug_search_who_vaccine_markdown_uses_vaccine_table_and_no_get_footer() {
+    let markdown = drug_search_markdown_with_region(
+        "BCG",
+        DrugRegion::Who,
+        &[],
+        None,
+        &[],
+        None,
+        &[crate::entities::drug::WhoPrequalificationSearchResult {
+            kind: crate::entities::drug::WhoPrequalificationKind::Vaccine,
+            inn: "BCG".to_string(),
+            product_type: "Vaccine".to_string(),
+            therapeutic_area: "Vaccine".to_string(),
+            presentation: Some("Ampoule".to_string()),
+            dosage_form: None,
+            applicant: "Japan BCG Laboratory".to_string(),
+            who_reference_number: None,
+            who_product_id: None,
+            listing_basis: None,
+            prequalification_date: Some("1987-01-01".to_string()),
+            vaccine_type: Some("BCG".to_string()),
+            commercial_name: Some("BCG Freeze Dried Glutamate vaccine".to_string()),
+            dose_count: None,
+            manufacturer: Some("Japan BCG Laboratory".to_string()),
+            responsible_nra: Some("Pharmaceutical and Medical Devices Agency".to_string()),
+        }],
+        Some(1),
+        "",
+    )
+    .expect("markdown");
+
+    assert!(markdown.contains(
+        "|Vaccine Type|Commercial Name|Presentation|Doses|Manufacturer|Responsible NRA|Date|"
+    ));
+    assert!(markdown.contains("BCG Freeze Dried Glutamate vaccine"));
+    assert!(markdown.contains("|-|"));
+    assert!(!markdown.contains("Use `get drug <name>` for full details."));
 }
 
 #[test]

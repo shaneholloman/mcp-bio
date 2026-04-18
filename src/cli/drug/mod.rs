@@ -10,6 +10,8 @@ pub enum WhoProductTypeArg {
     FinishedPharma,
     #[value(name = "api")]
     Api,
+    #[value(name = "vaccine")]
+    Vaccine,
 }
 
 #[derive(Args, Debug)]

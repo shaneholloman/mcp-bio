@@ -18,6 +18,7 @@ biomcp search drug Keytruda --region eu --limit 5
 biomcp search drug "influenza vaccine" --region ema --limit 5
 biomcp search drug trastuzumab --region who --limit 5
 biomcp search drug artesunate --region who --product-type api --limit 5
+biomcp search drug BCG --region who --product-type vaccine --limit 5
 biomcp search drug Keytruda --region all --limit 5
 ```
 
@@ -39,14 +40,24 @@ biomcp search drug --indication malaria --region who --limit 5
 Omitting `--region` on a plain name/alias search checks U.S., EU, and WHO data.
 If you omit `--region` while using structured filters such as `--target` or
 `--indication`, BioMCP stays on the U.S. MyChem path. Explicit `--region who`
-filters structured U.S. hits through WHO Prequalification. `--product-type
-<finished_pharma|api>` is WHO-only and requires explicit `--region who`.
+filters structured U.S. hits through WHO Prequalification for finished-pharma
+and API lookups. `--product-type <finished_pharma|api|vaccine>` is WHO-only
+and requires explicit `--region who`. WHO vaccine search is plain name/brand
+only, so structured WHO filters reject `--product-type vaccine`, and default
+WHO search still excludes vaccines unless you request that product type
+explicitly.
 Explicit `--region eu` or `--region all` with structured filters still errors.
 `ema` is accepted as an input alias for the canonical `eu` region value.
 When MyChem cannot resolve a vaccine brand name, omitted `--region` on a plain
-name search and explicit `--region eu|all` can also use the local CDC CVX/MVX
-bundle to expand EMA vaccine aliases. That bridge does not change WHO matching
-and does not run for pure `--region us` searches.
+name search, explicit `--region eu|all`, and explicit WHO vaccine
+name/brand search with `--product-type vaccine` can also use the local CDC
+CVX/MVX bundle to expand vaccine aliases. That bridge does not change WHO
+finished-pharma/API matching, does not create a WHO vaccine `get drug` detail
+surface, and does not run for pure `--region us` searches.
+
+WHO vaccine support in this release is search-only. Use
+`search drug <name> --region who --product-type vaccine` for vaccine rows;
+`get drug <name> regulatory --region who|all` remains finished-pharma/API only.
 
 ## Get a drug record
 
@@ -168,15 +179,17 @@ EMA row meanings:
 WHO regional searches and regulatory commands read the WHO Prequalification
 exports from `BIOMCP_WHO_DIR` first, then the platform data directory
 (`~/.local/share/biomcp/who-pq` on typical Linux systems). On first use,
-BioMCP auto-downloads both the finished-pharmaceutical-products CSV and the
-active-pharmaceutical-ingredients CSV into that root and refreshes stale files
-after 72 hours. Use `biomcp who sync` to force a refresh at any time.
+BioMCP auto-downloads the finished-pharmaceutical-products CSV, the
+active-pharmaceutical-ingredients CSV, and the vaccine export into that root
+and refreshes stale files after 72 hours. Use `biomcp who sync` to force a
+refresh at any time.
 
 Manual preseed still works. If you need an offline or pre-populated root,
 place these files in the target directory:
 
 - `who_pq.csv`
 - `who_api.csv`
+- `who_vaccines.csv`
 
 Confirm local WHO readiness with full health output:
 
@@ -194,8 +207,8 @@ WHO row meanings:
 
 - `configured`: `BIOMCP_WHO_DIR` is set and complete
 - `configured (stale)`: `BIOMCP_WHO_DIR` is set and complete, but at least one WHO export is older than the 72-hour refresh window
-- `available (default path)`: the default platform data directory contains a complete WHO root with both exports
-- `available (default path, stale)`: the default platform data directory contains both WHO exports, but at least one is older than the 72-hour refresh window
+- `available (default path)`: the default platform data directory contains a complete WHO root with all three exports
+- `available (default path, stale)`: the default platform data directory contains all three WHO exports, but at least one is older than the 72-hour refresh window
 - `not configured`: no complete WHO root is installed at the default path yet
 - `error (missing: ...)`: the WHO directory exists but is missing one of the required files
 
@@ -211,7 +224,9 @@ to force a refresh at any time.
 
 The CDC bundle only augments omitted `--region` plain-name vaccine searches and
 explicit `search drug <name> --region eu|all` vaccine searches after MyChem
-identity resolution misses. It does not inject aliases into WHO lookups, and
+identity resolution misses. It also augments explicit WHO vaccine name/brand
+searches when you pass `--region who --product-type vaccine`. It does not
+inject aliases into WHO finished-pharma/API lookups or `get drug`, and
 `--region us` does not create or read the CVX root.
 
 Manual preseed still works. If you need an offline or pre-populated root,
