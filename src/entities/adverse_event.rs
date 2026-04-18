@@ -278,6 +278,20 @@ const VAERS_BRIDGE: &[VaersBridgeEntry] = &[
             "comirnaty",
         ],
     },
+    VaersBridgeEntry {
+        display_name: "Influenza vaccine",
+        wonder_code: "FLU",
+        cvx_codes: &["140", "141"],
+        query_terms: &[
+            "flu",
+            "flu shot",
+            "flu vaccine",
+            "influenza",
+            "influenza shot",
+            "influenza vaccine",
+            "influenza vaccination",
+        ],
+    },
 ];
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
@@ -678,6 +692,12 @@ enum ResolvedVaersVaccine {
     Unmapped(String),
 }
 
+#[derive(Debug, Clone, Copy)]
+enum CvxLookupMode {
+    AutoSync,
+    LocalOnly,
+}
+
 fn unsupported_vaers_filter_names(filters: &AdverseEventSearchFilters) -> Vec<&'static str> {
     let mut out = Vec::new();
     if filters
@@ -823,25 +843,33 @@ fn matched_vaccine_from_bridge(
     None
 }
 
-async fn lookup_vaccine_candidates(query: &str) -> Vec<CvxVaccineCandidate> {
-    match CvxClient::ready(CvxSyncMode::Auto).await {
-        Ok(client) => match client.lookup_vaccine_candidates(query) {
-            Ok(candidates) => candidates,
+async fn lookup_vaccine_candidates(query: &str, mode: CvxLookupMode) -> Vec<CvxVaccineCandidate> {
+    match mode {
+        CvxLookupMode::LocalOnly => CvxClient::new()
+            .lookup_vaccine_candidates(query)
+            .unwrap_or_default(),
+        CvxLookupMode::AutoSync => match CvxClient::ready(CvxSyncMode::Auto).await {
+            Ok(client) => match client.lookup_vaccine_candidates(query) {
+                Ok(candidates) => candidates,
+                Err(err) => {
+                    warn!(query = %query, "CDC CVX/MVX vaccine lookup unavailable for VAERS bridge: {err}");
+                    Vec::new()
+                }
+            },
             Err(err) => {
-                warn!(query = %query, "CDC CVX/MVX vaccine lookup unavailable for VAERS bridge: {err}");
+                warn!(query = %query, "CDC CVX/MVX auto-sync unavailable for VAERS bridge: {err}");
                 Vec::new()
             }
         },
-        Err(err) => {
-            warn!(query = %query, "CDC CVX/MVX auto-sync unavailable for VAERS bridge: {err}");
-            Vec::new()
-        }
     }
 }
 
-async fn resolve_vaers_vaccine(query: &str) -> ResolvedVaersVaccine {
+async fn resolve_vaers_vaccine(
+    query: &str,
+    cvx_lookup_mode: CvxLookupMode,
+) -> ResolvedVaersVaccine {
     let normalized_query = normalize_vaccine_match_key(query).unwrap_or_default();
-    let candidates = lookup_vaccine_candidates(query).await;
+    let candidates = lookup_vaccine_candidates(query, cvx_lookup_mode).await;
 
     if let Some(matched) = matched_vaccine_from_bridge(&normalized_query, &candidates) {
         return ResolvedVaersVaccine::Matched(matched);
@@ -909,8 +937,11 @@ fn vaers_summary_from_tables(
     }
 }
 
-async fn fetch_vaers_payload(query: &str) -> Result<VaersSearchPayload, BioMcpError> {
-    match resolve_vaers_vaccine(query).await {
+async fn fetch_vaers_payload(
+    query: &str,
+    cvx_lookup_mode: CvxLookupMode,
+) -> Result<VaersSearchPayload, BioMcpError> {
+    match resolve_vaers_vaccine(query, cvx_lookup_mode).await {
         ResolvedVaersVaccine::Matched(matched_vaccine) => {
             let client = VaersClient::new()?;
             let tables = client.summary(&matched_vaccine.wonder_code).await?;
@@ -969,7 +1000,7 @@ pub async fn search_with_source(
                 return Err(explicit_vaers_filter_error(&unsupported));
             }
 
-            let vaers = fetch_vaers_payload(query).await.map_err(|err| {
+            let vaers = fetch_vaers_payload(query, CvxLookupMode::AutoSync).await.map_err(|err| {
                 BioMcpError::SourceUnavailable {
                     source_name: "CDC VAERS".into(),
                     reason: err.to_string(),
@@ -989,7 +1020,7 @@ pub async fn search_with_source(
             if unsupported.is_empty() {
                 let (faers_result, vaers_result) = tokio::join!(
                     search_with_status(filters, limit, offset),
-                    fetch_vaers_payload(query)
+                    fetch_vaers_payload(query, CvxLookupMode::LocalOnly)
                 );
                 let vaers = match vaers_result {
                     Ok(payload) => payload,
@@ -1769,7 +1800,7 @@ pub fn recall_query_summary(filters: &RecallSearchFilters) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::set_env_var;
+    use crate::test_support::{TempDirGuard, set_env_var};
     use wiremock::matchers::{body_string_contains, method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -2064,6 +2095,122 @@ mod tests {
         assert!(matches!(response.faers, Some(FaersSearchStatus::NotFound)));
         assert_eq!(vaers.status, VaersSearchStatus::UnsupportedFilters);
         assert!(vaers.message.unwrap_or_default().contains("--reaction"));
+    }
+
+    #[tokio::test]
+    async fn search_with_source_all_non_vaccine_does_not_auto_sync_cvx() {
+        let _env_lock = crate::test_support::env_lock().lock().await;
+        let openfda_server = MockServer::start().await;
+        let cvx_server = MockServer::start().await;
+        let cvx_root = TempDirGuard::new("adverse-event-cvx-empty");
+        let filters = AdverseEventSearchFilters {
+            drug: Some("ibuprofen".into()),
+            ..Default::default()
+        };
+        let query = build_openfda_query(&filters).unwrap();
+        let cvx_url = format!("{}/cvx.txt", cvx_server.uri());
+        let tradename_url = format!("{}/TRADENAME.txt", cvx_server.uri());
+        let mvx_url = format!("{}/mvx.txt", cvx_server.uri());
+        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&openfda_server.uri()));
+        let _cvx_root_env = set_env_var(
+            "BIOMCP_CVX_DIR",
+            Some(&cvx_root.path().display().to_string()),
+        );
+        let _cvx_url_env = set_env_var("BIOMCP_CVX_URL", Some(&cvx_url));
+        let _tradename_url_env = set_env_var("BIOMCP_CVX_TRADENAME_URL", Some(&tradename_url));
+        let _mvx_url_env = set_env_var("BIOMCP_MVX_URL", Some(&mvx_url));
+
+        Mock::given(method("GET"))
+            .and(path("/drug/event.json"))
+            .and(query_param("search", query.as_str()))
+            .and(query_param("limit", "5"))
+            .and(query_param("skip", "0"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "error": {"code": "NOT_FOUND", "message": "No matches found!"}
+            })))
+            .mount(&openfda_server)
+            .await;
+
+        let response = search_with_source(&filters, AdverseEventSourceFilter::All, 5, 0)
+            .await
+            .expect("combined source response");
+        let vaers = response.vaers.expect("vaers payload");
+
+        assert!(matches!(response.faers, Some(FaersSearchStatus::NotFound)));
+        assert_eq!(vaers.status, VaersSearchStatus::QueryNotVaccine);
+        assert!(
+            cvx_server
+                .received_requests()
+                .await
+                .expect("cvx mock requests")
+                .is_empty()
+        );
+    }
+
+    #[tokio::test]
+    async fn search_with_source_vaers_resolves_influenza_family_queries() {
+        let _env_lock = crate::test_support::env_lock().lock().await;
+        let server = MockServer::start().await;
+        let _vaers_env = set_env_var("BIOMCP_VAERS_BASE", Some(&server.uri()));
+        let _cvx_env = set_env_var("BIOMCP_CVX_DIR", Some(&cvx_fixture_dir()));
+        let filters = AdverseEventSearchFilters {
+            drug: Some("influenza vaccine".into()),
+            ..Default::default()
+        };
+
+        Mock::given(method("POST"))
+            .and(path("/controller/datarequest/D8"))
+            .and(body_string_contains("D8.V13-level2"))
+            .and(body_string_contains("FLU"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
+                    .set_body_raw(
+                        VAERS_REACTIONS_RESPONSE_FIXTURE,
+                        "text/html; charset=ISO-8859-1",
+                    ),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/controller/datarequest/D8"))
+            .and(body_string_contains("D8.V10"))
+            .and(body_string_contains("FLU"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
+                    .set_body_raw(
+                        VAERS_SERIOUS_RESPONSE_FIXTURE,
+                        "text/html; charset=ISO-8859-1",
+                    ),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/controller/datarequest/D8"))
+            .and(body_string_contains("D8.V1"))
+            .and(body_string_contains("FLU"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
+                    .set_body_raw(VAERS_AGE_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
+            )
+            .mount(&server)
+            .await;
+
+        let response = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 0)
+            .await
+            .expect("vaers search response");
+        let vaers = response.vaers.expect("vaers payload");
+        let matched = vaers.matched_vaccine.expect("matched vaccine");
+
+        assert_eq!(vaers.status, VaersSearchStatus::Ok);
+        assert_eq!(matched.display_name, "Influenza vaccine");
+        assert_eq!(matched.wonder_code, "FLU");
+        assert_eq!(
+            matched.cvx_codes,
+            vec!["140".to_string(), "141".to_string()]
+        );
     }
 
     #[tokio::test]

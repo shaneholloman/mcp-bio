@@ -907,7 +907,7 @@ fn list_adverse_event() -> String {
 
 - default `--source all` always runs OpenFDA FAERS and adds CDC VAERS only when the query resolves to a vaccine and the active filters are VAERS-compatible
 - `--source vaers` is aggregate-only and supports plain vaccine query text from `--drug` or the positional query
-- VAERS intentionally does not support --reaction, --outcome, --suspect-only, --sex, --reporter, --count, or --offset > 0
+- VAERS intentionally does not support --reaction, --outcome, --serious, --date-from, --date-to, --suspect-only, --sex, --age-min, --age-max, --reporter, --count, or --offset > 0
 - `--source` only applies to `--type faers`; recall and device searches keep their existing source-specific paths
 
 ## Other query types

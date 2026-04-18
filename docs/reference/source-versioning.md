@@ -40,4 +40,7 @@ This matrix tracks which upstream API endpoints are version-pinned and where unv
 ## Notes
 
 - If a provider introduces a stable version path, update the corresponding `src/sources/*.rs` base constant and this table in the same change.
+- CDC WONDER VAERS intentionally stays out of `./scripts/contract-smoke.sh`: the
+  D8 contract is POST/XML, relatively volatile, and already covered by the
+  real-query health row plus fixture-frozen unit/spec tests.
 - gnomAD versioning is handled by dataset selection in GraphQL variables and is verified by dataset fallback tests.

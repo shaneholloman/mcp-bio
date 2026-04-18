@@ -10,8 +10,10 @@ paths:
 
 Vaccine searches default to combined OpenFDA FAERS + CDC VAERS when the query
 resolves to a vaccine and the active filters are VAERS-compatible. Non-vaccine
-searches stay FAERS-only in practice. `--source vaers` is aggregate-only and
-does not support `--reaction`, `--outcome`, `--suspect-only`, `--sex`,
+searches stay FAERS-only in practice. `--source vaers` is aggregate-only,
+supports only the vaccine query text from `--drug` or the positional query,
+and does not support `--reaction`, `--outcome`, `--serious`, `--date-from`,
+`--date-to`, `--suspect-only`, `--sex`, `--age-min`, `--age-max`,
 `--reporter`, `--count`, or `--offset > 0`.
 
 ## Search FAERS reports

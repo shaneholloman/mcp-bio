@@ -19,6 +19,11 @@ the operator.
 
 ## What BioMCP exposes
 
+The VAERS-only path supports only the vaccine query text from `--drug` or the
+positional argument. FAERS-specific filters such as reaction, seriousness,
+date, demographic, reporter, and count filters stay on the OpenFDA FAERS path
+in this ticket.
+
 | Command | What BioMCP gets from this source | Integration note |
 |---|---|---|
 | `search adverse-event <vaccine_query> --source vaers` | Aggregate VAERS vaccine summary | Direct CDC WONDER D8 XML POST query |

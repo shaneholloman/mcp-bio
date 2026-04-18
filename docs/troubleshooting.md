@@ -83,8 +83,9 @@ biomcp search adverse-event --type recall --classification "Class I" --limit 50
 ```
 
 If you use `--source all` with unsupported VAERS filters such as `--reaction`,
-BioMCP should keep the FAERS result and record the skipped VAERS status in JSON
-instead of failing the whole search.
+`--outcome`, `--serious`, date filters, age filters, `--suspect-only`,
+`--sex`, `--reporter`, or `--count`, BioMCP should keep the FAERS result and
+record the skipped VAERS status in JSON instead of failing the whole search.
 
 If you have an OpenFDA API key, export it to increase quota stability:
 

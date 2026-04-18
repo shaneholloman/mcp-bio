@@ -36,6 +36,7 @@ bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" list adverse-event)"
 echo "$out" | mustmatch like "--source <faers|vaers|all>"
 echo "$out" | mustmatch like "search adverse-event <vaccine query> --source vaers"
+echo "$out" | mustmatch like "supports plain vaccine query text"
 echo "$out" | mustmatch like "query resolves to a vaccine"
 echo "$out" | mustmatch like "VAERS intentionally does not support --reaction"
 ```
@@ -61,9 +62,22 @@ echo "$out" | mustmatch like "### Top reactions"
 echo "$out" | mustmatch like "Source: CDC VAERS"
 ```
 
-## VAERS-only JSON Contract
+## Influenza Family Queries Resolve To VAERS
 
-<!-- mustmatch-lint: skip -->
+The approved design called for a narrow family-alias fallback for common
+queries such as influenza/flu. Those generic vaccine-family queries should
+still resolve to a CDC WONDER code.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-vaers-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-vaers-env"
+out="$("$bin" search adverse-event "influenza vaccine" --source vaers --limit 5)"
+echo "$out" | mustmatch like "Matched vaccine: Influenza vaccine"
+echo "$out" | mustmatch like "CDC WONDER code: FLU"
+```
+
+## VAERS-only JSON Contract
 
 The VAERS-only JSON path should return the VAERS-first envelope rather than the
 FAERS search shape.
@@ -73,6 +87,7 @@ bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-vaers-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-vaers-env"
 json_out="$("$bin" --json search adverse-event "MMR vaccine" --source vaers --limit 5)"
+echo "$json_out" | mustmatch like '"source": "vaers"'
 echo "$json_out" | jq -e '.source == "vaers"' > /dev/null
 echo "$json_out" | jq -e '.query == "MMR vaccine"' > /dev/null
 echo "$json_out" | jq -e '.vaers.status == "ok"' > /dev/null
