@@ -1576,6 +1576,82 @@ async fn populate_sections_parallel_top(
         }
     };
 
+    let pathways_fut = async {
+        if !include.contains(&GeneIncludeType::Pathways) {
+            None
+        } else {
+            Some(
+                timed_section(
+                    "pathways",
+                    fetch_pathways_section(&symbol),
+                    |result| match result {
+                        Ok(Some(rows)) if !rows.is_empty() => "data".to_string(),
+                        Ok(_) => "empty".to_string(),
+                        Err(_) => "error".to_string(),
+                    },
+                )
+                .await,
+            )
+        }
+    };
+
+    let protein_fut = async {
+        if !include.contains(&GeneIncludeType::Protein) {
+            None
+        } else {
+            Some(
+                timed_section(
+                    "protein",
+                    fetch_protein_section(uniprot_id.as_deref(), &symbol),
+                    |result| match result {
+                        Ok(Some(_)) => "data".to_string(),
+                        Ok(None) => "empty".to_string(),
+                        Err(_) => "error".to_string(),
+                    },
+                )
+                .await,
+            )
+        }
+    };
+
+    let go_fut = async {
+        if !include.contains(&GeneIncludeType::Go) {
+            None
+        } else {
+            Some(
+                timed_section(
+                    "go",
+                    fetch_go_section(uniprot_id.as_deref(), &symbol),
+                    |result| match result {
+                        Ok(rows) if !rows.is_empty() => "data".to_string(),
+                        Ok(_) => "empty".to_string(),
+                        Err(_) => "error".to_string(),
+                    },
+                )
+                .await,
+            )
+        }
+    };
+
+    let interactions_fut = async {
+        if !include.contains(&GeneIncludeType::Interactions) {
+            None
+        } else {
+            Some(
+                timed_section(
+                    "interactions",
+                    fetch_interactions_section(&symbol),
+                    |result| match result {
+                        Ok(rows) if !rows.is_empty() => "data".to_string(),
+                        Ok(_) => "empty".to_string(),
+                        Err(_) => "error".to_string(),
+                    },
+                )
+                .await,
+            )
+        }
+    };
+
     let (
         (clinical_context_result, clinical_context_entry),
         enrichr_result,
@@ -1583,13 +1659,21 @@ async fn populate_sections_parallel_top(
         hpa_result,
         druggability_result,
         clingen_result,
+        pathways_result,
+        protein_result,
+        go_result,
+        interactions_result,
     ) = tokio::join!(
         clinical_context_fut,
         enrichr_fut,
         expression_fut,
         hpa_fut,
         druggability_fut,
-        clingen_fut
+        clingen_fut,
+        pathways_fut,
+        protein_fut,
+        go_fut,
+        interactions_fut
     );
 
     timing.push(clinical_context_entry);
@@ -1631,90 +1715,50 @@ async fn populate_sections_parallel_top(
         gene.clingen = Some(clingen);
     }
 
-    if include.contains(&GeneIncludeType::Pathways) {
-        let started = Instant::now();
-        gene.pathways = match fetch_pathways_section(&gene.symbol).await {
+    if let Some((result, entry)) = pathways_result {
+        timing.push(entry);
+        gene.pathways = match result {
             Ok(value) => merge_pathways(gene.pathways.take(), value),
             Err(err) => {
                 warn!("Reactome unavailable for gene pathways section: {err}");
                 gene.pathways.clone()
             }
         };
-        timing.record(
-            "pathways",
-            started,
-            if gene.pathways.as_ref().is_some_and(|rows| !rows.is_empty()) {
-                "data"
-            } else {
-                "empty"
-            },
-        );
     } else {
         gene.pathways = None;
     }
 
-    if include.contains(&GeneIncludeType::Protein) {
-        let started = Instant::now();
-        gene.protein = match fetch_protein_section(uniprot_id.as_deref(), &gene.symbol).await {
+    if let Some((result, entry)) = protein_result {
+        timing.push(entry);
+        gene.protein = match result {
             Ok(value) => value,
             Err(err) => {
                 warn!("UniProt unavailable for gene protein section: {err}");
                 None
             }
         };
-        timing.record(
-            "protein",
-            started,
-            if gene.protein.is_some() {
-                "data"
-            } else {
-                "empty"
-            },
-        );
     }
 
-    if include.contains(&GeneIncludeType::Go) {
-        let started = Instant::now();
-        gene.go = match fetch_go_section(uniprot_id.as_deref(), &gene.symbol).await {
+    if let Some((result, entry)) = go_result {
+        timing.push(entry);
+        gene.go = match result {
             Ok(value) => Some(value),
             Err(err) => {
                 warn!("QuickGO unavailable for gene GO section: {err}");
                 Some(Vec::new())
             }
         };
-        timing.record(
-            "go",
-            started,
-            if gene.go.as_ref().is_some_and(|rows| !rows.is_empty()) {
-                "data"
-            } else {
-                "empty"
-            },
-        );
     }
 
-    if include.contains(&GeneIncludeType::Interactions) {
-        let started = Instant::now();
-        gene.interactions = match fetch_interactions_section(&gene.symbol).await {
+    if let Some((result, entry)) = interactions_result {
+        timing.push(entry);
+        gene.interactions = match result {
             Ok(value) => Some(value),
             Err(err) => {
                 warn!("STRING unavailable for gene interactions section: {err}");
                 Some(Vec::new())
             }
         };
-        timing.record(
-            "interactions",
-            started,
-            if gene
-                .interactions
-                .as_ref()
-                .is_some_and(|rows| !rows.is_empty())
-            {
-                "data"
-            } else {
-                "empty"
-            },
-        );
     }
 
     if include.contains(&GeneIncludeType::Civic) {
