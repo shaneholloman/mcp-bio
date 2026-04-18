@@ -382,6 +382,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
             },
             Commands::Ema { cmd } => outcome_to_string(super::system::handle_ema(cmd).await?),
             Commands::Who { cmd } => outcome_to_string(super::system::handle_who(cmd).await?),
+            Commands::Cvx { cmd } => outcome_to_string(super::system::handle_cvx(cmd).await?),
             Commands::Skill { command } => match command {
                 None => Ok(crate::cli::skill::show_overview()?),
                 Some(crate::cli::skill::SkillCommand::List) => {

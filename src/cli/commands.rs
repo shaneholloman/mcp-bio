@@ -83,6 +83,14 @@ EXAMPLES:
         #[command(subcommand)]
         cmd: system::WhoCommand,
     },
+    /// CDC CVX/MVX vaccine identity local data management
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp cvx sync    # force refresh the CDC CVX/MVX vaccine identity bundle")]
+    Cvx {
+        #[command(subcommand)]
+        cmd: system::CvxCommand,
+    },
     /// Run MCP server over stdio
     Mcp,
     /// Alias for `mcp` (Claude Desktop friendly)

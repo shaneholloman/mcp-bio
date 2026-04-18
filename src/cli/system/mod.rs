@@ -21,6 +21,12 @@ pub enum WhoCommand {
     Sync,
 }
 
+#[derive(Subcommand, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CvxCommand {
+    /// Force refresh the CDC CVX/MVX vaccine identity bundle
+    Sync,
+}
+
 #[derive(Args, Debug)]
 pub struct ServeHttpArgs {
     /// Host address to bind
@@ -82,7 +88,8 @@ pub struct VersionArgs {
 
 mod dispatch;
 pub(crate) use self::dispatch::{
-    handle_batch, handle_ema, handle_enrich, handle_uninstall, handle_version, handle_who,
+    handle_batch, handle_cvx, handle_ema, handle_enrich, handle_uninstall, handle_version,
+    handle_who,
 };
 
 #[cfg(test)]

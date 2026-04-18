@@ -502,6 +502,7 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
 ];
 
 const EMA_LOCAL_DATA_AFFECTS: &str = "default plain-name drug search plus search/get drug --region eu|all and EU regulatory/safety/shortage sections";
+const CVX_LOCAL_DATA_AFFECTS: &str = "EMA vaccine identity bridge for plain-name drug search";
 const WHO_LOCAL_DATA_AFFECTS: &str = "default plain-name drug search plus search/get drug --region who|all and WHO regulatory sections";
 
 fn health_sources() -> &'static [SourceDescriptor] {
@@ -944,6 +945,24 @@ fn check_ema_local_data() -> ProbeOutcome {
     ema_local_data_outcome(&root, env_configured)
 }
 
+fn cvx_local_data_outcome(root: &Path, env_configured: bool) -> ProbeOutcome {
+    local_data_outcome(
+        "CDC CVX/MVX local data",
+        root,
+        env_configured,
+        crate::sources::cvx::CVX_REQUIRED_FILES,
+        crate::sources::cvx::CVX_STALE_AFTER,
+        CVX_LOCAL_DATA_AFFECTS,
+        crate::sources::cvx::cvx_missing_files,
+    )
+}
+
+fn check_cvx_local_data() -> ProbeOutcome {
+    let env_configured = configured_key("BIOMCP_CVX_DIR").is_some();
+    let root = crate::sources::cvx::resolve_cvx_root();
+    cvx_local_data_outcome(&root, env_configured)
+}
+
 fn who_local_data_outcome(root: &Path, env_configured: bool) -> ProbeOutcome {
     local_data_outcome(
         "WHO Prequalification local data",
@@ -1178,7 +1197,7 @@ fn report_from_outcomes(outcomes: Vec<ProbeOutcome>) -> HealthReport {
     }
 }
 
-/// Runs connectivity checks for configured upstream APIs and local EMA/cache readiness.
+/// Runs connectivity checks for configured upstream APIs and local EMA/CVX/WHO/cache readiness.
 ///
 /// # Errors
 ///
@@ -1194,6 +1213,7 @@ pub async fn check(apis_only: bool) -> Result<HealthReport, BioMcpError> {
 
     if !apis_only {
         outcomes.push(check_ema_local_data());
+        outcomes.push(check_cvx_local_data());
         outcomes.push(check_who_local_data());
         outcomes.push(check_cache_dir().await);
         outcomes.push(check_cache_limits().await);
@@ -1300,10 +1320,11 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     use super::{
-        EMA_LOCAL_DATA_AFFECTS, HealthReport, HealthRow, ProbeClass, ProbeKind, ProbeOutcome,
-        SourceDescriptor, WHO_LOCAL_DATA_AFFECTS, affects_for_api, check_cache_dir,
-        check_cache_limits_with, ema_local_data_outcome, health_sources, probe_cache_dir,
-        probe_source, report_from_outcomes, who_local_data_outcome,
+        CVX_LOCAL_DATA_AFFECTS, EMA_LOCAL_DATA_AFFECTS, HealthReport, HealthRow, ProbeClass,
+        ProbeKind, ProbeOutcome, SourceDescriptor, WHO_LOCAL_DATA_AFFECTS, affects_for_api,
+        check_cache_dir, check_cache_limits_with, cvx_local_data_outcome, ema_local_data_outcome,
+        health_sources, probe_cache_dir, probe_source, report_from_outcomes,
+        who_local_data_outcome,
     };
     use crate::cache::{
         CacheBlob, CacheConfigOrigins, CacheEntry, CachePlannerError, CacheSnapshot, ConfigOrigin,
@@ -1350,17 +1371,39 @@ mod tests {
         }
     }
 
-    fn set_stale_mtime(path: &Path) {
+    fn write_cvx_files(root: &Path, files: &[&str]) {
+        for file in files {
+            let bytes: &[u8] = match *file {
+                crate::sources::cvx::CVX_FILE => {
+                    b"62|HPV, quadrivalent|human papilloma virus vaccine, quadrivalent||Active|False|2020/06/02\n"
+                }
+                crate::sources::cvx::TRADENAME_FILE => {
+                    b"GARDASIL|HPV, quadrivalent|62|Merck and Co., Inc.|MSD|Active|Active|2010/05/28|\n"
+                }
+                crate::sources::cvx::MVX_FILE => {
+                    b"MSD|Merck and Co., Inc.||Active|2012/10/18\n"
+                }
+                other => panic!("unexpected CVX fixture file: {other}"),
+            };
+            std::fs::write(root.join(file), bytes).expect("write CVX fixture file");
+        }
+    }
+
+    fn set_stale_mtime_with_age(path: &Path, age: std::time::Duration) {
         let file = std::fs::OpenOptions::new()
             .write(true)
             .open(path)
             .expect("fixture file should open");
         file.set_modified(
             std::time::SystemTime::now()
-                .checked_sub(std::time::Duration::from_secs(73 * 60 * 60))
+                .checked_sub(age)
                 .expect("stale time should be valid"),
         )
         .expect("mtime should update");
+    }
+
+    fn set_stale_mtime(path: &Path) {
+        set_stale_mtime_with_age(path, std::time::Duration::from_secs(73 * 60 * 60));
     }
 
     fn set_stale_ema_mtimes(root: &Path) {
@@ -1762,6 +1805,72 @@ mod tests {
         );
         assert_eq!(row["affects"], EMA_LOCAL_DATA_AFFECTS);
         assert!(row.get("key_configured").is_none());
+    }
+
+    #[test]
+    fn cvx_local_data_not_configured_when_default_root_is_empty() {
+        let root = TempDirGuard::new("health");
+
+        let outcome = cvx_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Excluded);
+        assert_eq!(
+            outcome.row.api,
+            format!("CDC CVX/MVX local data ({})", root.path().display())
+        );
+        assert_eq!(outcome.row.status, "not configured");
+        assert_eq!(outcome.row.latency, "n/a");
+        assert_eq!(outcome.row.affects.as_deref(), Some(CVX_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn cvx_local_data_errors_when_default_root_is_partial() {
+        let root = TempDirGuard::new("health");
+        write_cvx_files(root.path(), &[crate::sources::cvx::CVX_FILE]);
+
+        let outcome = cvx_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Error);
+        assert_eq!(
+            outcome.row.status,
+            format!(
+                "error (missing: {})",
+                crate::sources::cvx::CVX_REQUIRED_FILES[1..].join(", ")
+            )
+        );
+        assert_eq!(outcome.row.affects.as_deref(), Some(CVX_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn cvx_local_data_reports_available_when_default_root_is_complete() {
+        let root = TempDirGuard::new("health");
+        write_cvx_files(root.path(), crate::sources::cvx::CVX_REQUIRED_FILES);
+
+        let outcome = cvx_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Healthy);
+        assert_eq!(
+            outcome.row.api,
+            format!("CDC CVX/MVX local data ({})", root.path().display())
+        );
+        assert_eq!(outcome.row.status, "available (default path)");
+        assert_eq!(outcome.row.affects, None);
+    }
+
+    #[test]
+    fn cvx_local_data_reports_configured_stale_when_env_root_is_complete_but_old() {
+        let root = TempDirGuard::new("health");
+        write_cvx_files(root.path(), crate::sources::cvx::CVX_REQUIRED_FILES);
+        set_stale_mtime_with_age(
+            &root.path().join(crate::sources::cvx::MVX_FILE),
+            crate::sources::cvx::CVX_STALE_AFTER + std::time::Duration::from_secs(60),
+        );
+
+        let outcome = cvx_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Warning);
+        assert_eq!(outcome.row.status, "configured (stale)");
+        assert_eq!(outcome.row.affects.as_deref(), Some(CVX_LOCAL_DATA_AFFECTS));
     }
 
     #[test]

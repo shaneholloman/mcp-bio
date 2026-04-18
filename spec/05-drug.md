@@ -5,7 +5,9 @@ Drug commands connect mechanism and target context with trial and adverse-event 
 | Section | Command focus | Why it matters |
 |---|---|---|
 | EMA health readiness | `biomcp health` | Confirms the local EMA batch is surfaced as an operator-readable readiness row |
+| CDC CVX/MVX health readiness | `biomcp health` | Confirms the local CDC vaccine-identity bundle is surfaced as an operator-readable readiness row |
 | Drug search | `search drug pembrolizumab --region us` | Confirms stable U.S. name-based lookup |
+| Vaccine brand bridge | `search drug gardasil` | Confirms vaccine brand names can fan into the EMA/CVX bridge when MyChem identity resolution misses |
 | Indication miss framing | `search drug --indication "Marfan syndrome"` | Confirms zero structured hits are explained as regulatory evidence |
 | Drug detail | `get drug pembrolizumab` | Confirms mechanism/target card |
 | Sparse drug guidance | `get drug orteronel` | Confirms article-search follow-up for investigational cards |
@@ -56,23 +58,40 @@ echo "$out" | mustmatch like "WHO Prequalification local data ($BIOMCP_WHO_DIR)"
 echo "$out" | mustmatch like "| WHO Prequalification local data ($BIOMCP_WHO_DIR) | error (missing: who_api.csv) |"
 ```
 
+## CDC CVX/MVX Health Readiness
+
+Full `biomcp health` should also expose CDC CVX/MVX readiness separately from
+the API-only inventory so operators can confirm vaccine-brand bridge
+prerequisites before debugging plain-name drug search.
+
+```bash
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-cvx-env"
+out="$(biomcp health)"
+echo "$out" | mustmatch like "CDC CVX/MVX local data ($BIOMCP_CVX_DIR)"
+echo "$out" | mustmatch like "| CDC CVX/MVX local data ($BIOMCP_CVX_DIR) | configured |"
+```
+
 ## Searching by Name
 
 Name-first search is the stable PR-gate coverage for generic U.S. lookup
-without the EMA local-data dependency. This section runs with
-`BIOMCP_EMA_DIR` unset and fresh XDG roots so a regression back to EMA
-auto-sync is visible immediately. The later EMA-seeded sections cover the
-default U.S.+EU no-flag path and the explicit EU/all-region variants.
+without the EMA or CDC local-data dependency. This section runs with
+`BIOMCP_EMA_DIR` and `BIOMCP_CVX_DIR` unset and fresh XDG roots so regressions
+back to EMA or CDC auto-sync are visible immediately. The later seeded sections
+cover the default U.S.+EU+WHO no-flag path and the explicit EU/all-region
+vaccine variants.
 
 ```bash
 tmp_data="$(mktemp -d)"
 tmp_cache="$(mktemp -d)"
 err="$(mktemp)"
-out="$(env -u BIOMCP_EMA_DIR XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" biomcp search drug pembrolizumab --region us --limit 3 2>"$err")"
+out="$(env -u BIOMCP_EMA_DIR -u BIOMCP_CVX_DIR XDG_DATA_HOME="$tmp_data" XDG_CACHE_HOME="$tmp_cache" biomcp search drug pembrolizumab --region us --limit 3 2>"$err")"
 echo "$out" | mustmatch like "# Drugs: pembrolizumab"
 echo "$out" | mustmatch like "|Name|Mechanism|Target|"
 cat "$err" | mustmatch not like "Downloading EMA data"
+cat "$err" | mustmatch not like "CDC CVX/MVX local data"
 test ! -d "$tmp_data/biomcp/ema"
+test ! -d "$tmp_data/biomcp/cvx"
 ```
 
 ## Drug Search JSON Next Commands
@@ -731,6 +750,80 @@ test "$(
 )"
 ```
 
+## Default Vaccine Brand Search Uses EMA/CVX Bridge
+
+The default no-flag plain-name path should keep the split U.S./EU/WHO envelope
+while using the local CDC alias bundle to seed EMA vaccine matches when MyChem
+cannot resolve the brand name.
+
+```bash
+bash fixtures/setup-ema-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+bash fixtures/setup-mychem-empty-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-ema-env"
+. "$PWD/.cache/spec-who-pq-env"
+. "$PWD/.cache/spec-cvx-env"
+. "$PWD/.cache/spec-mychem-empty-env"
+json_out="$(biomcp --json search drug gardasil --limit 5)"
+echo "$json_out" | mustmatch like '"region": "all"'
+echo "$json_out" | jq -e '.region == "all"' > /dev/null
+echo "$json_out" | jq -e '(.regions | keys | sort) == ["eu", "us", "who"]' > /dev/null
+echo "$json_out" | jq -e '.regions.eu.count >= 1' > /dev/null
+echo "$json_out" | jq -e '.regions.eu.results | any(.name == "Silgard")' > /dev/null
+```
+
+## Vaccine Brand Search — Comirnaty
+
+The EMA vaccine surface should stay reachable for seeded COVID-19 vaccines when
+the user searches by the brand name.
+
+```bash
+bash fixtures/setup-ema-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-ema-env"
+. "$PWD/.cache/spec-cvx-env"
+out="$(biomcp search drug comirnaty --region eu --limit 5)"
+echo "$out" | mustmatch like "# Drugs: comirnaty"
+echo "$out" | mustmatch like "|Comirnaty|"
+```
+
+## Vaccine Brand Search — Prevnar
+
+`prevnar` should bridge through CDC aliases into the seeded EMA `Prevenar 13`
+row instead of requiring a direct medicine-name match.
+
+```bash
+bash fixtures/setup-ema-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+bash fixtures/setup-mychem-empty-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-ema-env"
+. "$PWD/.cache/spec-cvx-env"
+. "$PWD/.cache/spec-mychem-empty-env"
+out="$(biomcp search drug prevnar --region eu --limit 5)"
+echo "$out" | mustmatch like "# Drugs: prevnar"
+echo "$out" | mustmatch like "|Prevenar 13|"
+```
+
+## Vaccine Brand Search — Fluzone
+
+`fluzone` should bridge through the CDC alias bundle into the seeded EMA
+influenza products even though the brand itself is not present in the EMA
+medicine-name field.
+
+```bash
+bash fixtures/setup-ema-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+bash fixtures/setup-mychem-empty-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-ema-env"
+. "$PWD/.cache/spec-cvx-env"
+. "$PWD/.cache/spec-mychem-empty-env"
+out="$(biomcp search drug fluzone --region eu --limit 5)"
+echo "$out" | mustmatch like "# Drugs: fluzone"
+echo "$out" | mustmatch like "|Flucelvax Tetra|"
+echo "$out" | mustmatch like "|Fluad Tetra|"
+```
+
 ## All-Region Search Covers WHO
 
 All-region JSON should canonicalize the top `get drug` follow-up the same way
@@ -873,7 +966,7 @@ bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-pq-env"
 out="$(biomcp get drug trastuzumab all --region who)"
 echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
-echo "$out" | mustmatch like "| BT-ON001 | Trastuzumab Powder"
+echo "$out" | mustmatch like "| BT-ON001 | Biotherapeutic Product | Trastuzumab Powder"
 echo "$out" | mustmatch not like "## Safety ("
 echo "$out" | mustmatch not like "## Shortage ("
 ```

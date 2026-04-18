@@ -1,0 +1,10 @@
+GARDASIL|HPV, quadrivalent|62        |Merck and Co., Inc.|MSD       |Active|Inactive|2010/05/28|
+Gardasil 9|HPV9|165       |Merck and Co., Inc.|MSD       |Active|Active|2014/12/11|
+COMIRNATY|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose|208       |Pfizer, Inc|PFR       |Active|Active|2023/09/06|
+COMIRNATY|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose, tris-sucrose|217       |Pfizer, Inc|PFR       |Active|Active|2023/09/06|
+Pfizer-BioNTech COVID-19 Vaccine (EUA labeled)  COMIRNATY (BLA labeled)|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose|208       |Pfizer, Inc|PFR       |Active|Inactive|2025/09/09|
+Pfizer-BioNTech COVID-19 Vaccine (EUA labeled)  COMIRNATY (BLA labeled)|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose, tris-sucrose|217       |Pfizer, Inc|PFR       |Active|Inactive|2025/09/09|
+PREVNAR 13|Pneumococcal conjugate PCV 13|133       |Pfizer, Inc|PFR       |Active|Active|2010/05/28|
+PREVNAR 13|Pneumococcal conjugate PCV 13|133       |Wyeth|WAL       |Active|Inactive|2010/05/28|
+Fluzone trivalent, preservative free|Influenza, split virus, trivalent, PF|140       |Sanofi Pasteur|PMC       |Active|Active|2024/05/17|
+Fluzone trivalent, with preservative|Influenza, split virus, trivalent, preservative|141       |Sanofi Pasteur|PMC       |Active|Active|2024/05/14|

@@ -406,11 +406,15 @@ impl EmaClient {
             {
                 2
             } else if !token_terms.is_empty()
+                && field_matches_terms(&active_substance, &token_terms)
+            {
+                3
+            } else if !token_terms.is_empty()
                 && therapeutic_indication
                     .as_deref()
                     .is_some_and(|value| field_matches_terms(value, &token_terms))
             {
-                3
+                4
             } else {
                 continue;
             };
@@ -1102,6 +1106,29 @@ mod tests {
 
         assert!(names.contains(&"Flucelvax Tetra"));
         assert!(names.contains(&"Fluad Tetra"));
+    }
+
+    #[test]
+    fn search_medicines_matches_cvx_alias_tokens_on_active_substance() {
+        let client = fixture_client();
+        let aliases = vec![
+            "Pneumococcal conjugate PCV 13".to_string(),
+            "pneumococcal conjugate vaccine, 13 valent".to_string(),
+        ];
+        let page = client
+            .search_medicines(
+                &EmaDrugIdentity::with_aliases("prevnar", None, &aliases),
+                10,
+                0,
+            )
+            .expect("search page");
+        let names = page
+            .results
+            .iter()
+            .map(|row| row.name.as_str())
+            .collect::<Vec<_>>();
+
+        assert!(names.contains(&"Prevenar 13"));
     }
 
     #[test]

@@ -43,7 +43,7 @@ pub use self::pathway::PathwayCommand;
 pub use self::protein::ProteinCommand;
 pub use self::shared::{build_cli, parse_cli_from_env, try_parse_cli};
 pub use self::study::StudyCommand;
-pub use self::system::{EmaCommand, WhoCommand};
+pub use self::system::{CvxCommand, EmaCommand, WhoCommand};
 pub use self::types::{
     ChartArgs, ChartType, Cli, CliOutput, CommandOutcome, DrugRegionArg, OutputStream,
 };
