@@ -6,6 +6,7 @@ This matrix tracks which upstream API endpoints are version-pinned and where unv
 |---|---|---|---|---|
 | AlphaGenome | `https://gdmscience.googleapis.com:443` | Unversioned | Google endpoint is service-versioned server-side; no stable path segment exposed | 2026-02-15 |
 | cBioPortal | `https://www.cbioportal.org/api` | Unversioned | Public API path is stable without explicit version segment | 2026-02-15 |
+| CDC WONDER VAERS | `https://wonder.cdc.gov/controller/datarequest/D8` | Unversioned | CDC WONDER exposes the VAERS D8 database through a stable dataset ID and XML POST contract; BioMCP freezes the request/response shape in fixtures instead of relying on a versioned path segment | 2026-04-18 |
 | ChEMBL | `https://www.ebi.ac.uk/chembl/api/data` | Unversioned | ChEMBL data API is stable at `/api/data`; no URL version convention | 2026-02-15 |
 | ClinicalTrials.gov | `https://clinicaltrials.gov/api/v2` | Versioned (`v2`) | Endpoint already pinned to public v2 API | 2026-02-15 |
 | Enrichr | `https://maayanlab.cloud/Enrichr` | Unversioned | Service does not publish versioned path variant for current API | 2026-02-15 |

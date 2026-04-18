@@ -1,3 +1,5 @@
+M-M-R II|MMR|03        |Merck and Co., Inc.|MSD       |Active|Active|2020/06/02|
+ProQuad|MMRV|94        |Merck and Co., Inc.|MSD       |Active|Active|2020/06/02|
 GARDASIL|HPV, quadrivalent|62        |Merck and Co., Inc.|MSD       |Active|Inactive|2010/05/28|
 Gardasil 9|HPV9|165       |Merck and Co., Inc.|MSD       |Active|Active|2014/12/11|
 COMIRNATY|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose|208       |Pfizer, Inc|PFR       |Active|Active|2023/09/06|

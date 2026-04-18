@@ -74,7 +74,7 @@ New to BioMCP? Try:
 ## Filter Highlights
 
 - `search variant ... --review-status --population --revel-min --gerp-min --tumor-site --condition --impact --lof --has --missing --therapy`
-- `search adverse-event ... --date-from --date-to --suspect-only --sex --age-min --age-max --reporter --count`
+- `search adverse-event ... --source <faers, vaers, all> --date-from --date-to --suspect-only --sex --age-min --age-max --reporter --count`
 - `search diagnostic ... --gene --disease --type --manufacturer`
 - `search gene ... --region --pathway --go` (use GO IDs like `GO:0004672`; search output includes Coordinates/UniProt/OMIM)
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)

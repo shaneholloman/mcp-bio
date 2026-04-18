@@ -52,9 +52,17 @@ pub struct AdverseEventSearchArgs {
     /// Server-side count aggregation field
     #[arg(long)]
     pub count: Option<String>,
-    /// Query type: faers (default), recall, or device
+    /// Query type: faers (default search path), recall, or device
     #[arg(long, default_value = "faers")]
     pub r#type: String,
+    /// Adverse-event source [values: faers, vaers, all] (default: all; only applies to --type faers)
+    #[arg(
+        long,
+        default_value = "all",
+        value_name = "faers|vaers|all",
+        value_parser = ["faers", "vaers", "all"]
+    )]
+    pub source: String,
     /// Filter by recall classification (Class I, Class II, Class III)
     #[arg(long)]
     pub classification: Option<String>,

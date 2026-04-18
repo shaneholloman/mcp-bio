@@ -1,6 +1,8 @@
 # Drug Approvals and Adverse-Event Summary
 
-This reference covers the new Drugs@FDA approvals section and FAERS summary statistics.
+This reference covers the Drugs@FDA approvals section plus the adverse-event
+search summary contract for OpenFDA FAERS and vaccine-capable CDC WONDER VAERS
+searches.
 
 ## Drug approvals (Drugs@FDA)
 
@@ -24,17 +26,17 @@ existing normalized approval date:
 - `approval_date_display` provides a human-friendly month-name rendering,
 - `approval_summary` provides a one-line `"FDA approved on <date>"` summary.
 
-## FAERS summary statistics
+## Adverse-event summary statistics
 
-FAERS search responses include summary metadata above the report table:
+OpenFDA FAERS search responses include summary metadata above the report table:
 
 ```bash
 biomcp search adverse-event -d pembrolizumab --limit 10
 ```
 
-Summary fields:
+OpenFDA FAERS summary fields:
 
-- total reports from OpenFDA metadata,
+- total reports from OpenFDA FAERS metadata,
 - returned report count,
 - top reactions with count and percentage.
 
@@ -43,3 +45,16 @@ The same summary appears in:
 ```bash
 biomcp drug adverse-events pembrolizumab --limit 10
 ```
+
+For vaccine queries, `search adverse-event` also supports CDC WONDER VAERS:
+
+```bash
+biomcp search adverse-event "COVID-19 vaccine" --source all --limit 10
+biomcp search adverse-event "MMR vaccine" --source vaers --limit 10
+```
+
+`--source all` preserves the FAERS table and adds a CDC VAERS aggregate summary
+when the query resolves to a vaccine and the active filters are VAERS-compatible.
+`--source vaers` is aggregate-only and surfaces matched vaccine identity, CDC
+WONDER code, CVX code(s) when available, serious vs non-serious counts, age
+distribution, and top reactions.

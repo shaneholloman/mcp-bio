@@ -124,6 +124,32 @@ SOURCE_PAGE_SPECS = {
             "biomcp get drug dabrafenib approvals",
         ],
     },
+    "vaers.md": {
+        "title": "CDC WONDER VAERS MCP Tool for Vaccine Safety Signals | BioMCP",
+        "description": "Use BioMCP to query CDC WONDER VAERS aggregate vaccine adverse-event summaries in BioMCP with reaction counts, seriousness breakdowns, and age distribution.",
+        "api_access": "No BioMCP API key required. BioMCP calls the CDC WONDER D8 XML POST endpoint and includes the required agreement to the CDC WONDER data use restrictions.",
+        "official_url": "https://wonder.cdc.gov/vaers.html",
+        "required_intro_phrases": [
+            "aggregate-only",
+            "`search adverse-event --source vaers`",
+            "`--source all`",
+            "CDC WONDER D8",
+            "CDC CVX/MVX bridge",
+        ],
+        "exposes": [
+            "search adverse-event <vaccine_query> --source vaers",
+            "search adverse-event <vaccine_query> --source all",
+            "search adverse-event <vaccine_query>",
+            "biomcp health",
+        ],
+        "example_commands": [
+            'biomcp search adverse-event "MMR vaccine" --source vaers --limit 5',
+            'biomcp search adverse-event "COVID-19 vaccine" --source all --limit 5',
+            'biomcp search adverse-event "influenza vaccine" --source all --limit 5',
+            'biomcp search adverse-event "COVID-19 vaccine" --source faers --limit 5',
+            "biomcp health --apis-only",
+        ],
+    },
     "uniprot.md": {
         "title": "UniProt MCP Tool for Protein Data | BioMCP",
         "description": "Use BioMCP to search UniProt proteins, fetch canonical protein cards, and surface structure-linked context for AI agents and research workflows.",
@@ -663,7 +689,7 @@ def test_sources_overview_page_has_required_metadata_and_links() -> None:
     )
     assert (
         _front_matter_value(overview, "description")
-        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
+        == "Explore BioMCP source guides for PubMed, ClinicalTrials.gov, ClinVar, OpenFDA, CDC WONDER VAERS, UniProt, gnomAD, Reactome, Semantic Scholar, ChEMBL, OpenTargets, SEER Explorer, CIViC, OncoKB, cBioPortal, EMA, WHO Prequalification, CDC CVX/MVX, KEGG, PharmGKB / CPIC, Human Protein Atlas, and Monarch Initiative."
     )
 
     assert "# Biomedical Data Sources for AI Agents" in overview

@@ -87,11 +87,35 @@ pub fn adverse_event_search_markdown_with_context(
     trial_adverse_events: &[crate::entities::adverse_event::TrialAdverseEventTerm],
     trial_adverse_event_drug: Option<&str>,
 ) -> Result<String, BioMcpError> {
+    adverse_event_search_markdown_with_source_label(
+        query,
+        results,
+        summary,
+        pagination_footer,
+        empty_state_message,
+        trial_adverse_events,
+        trial_adverse_event_drug,
+        "OpenFDA FAERS",
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn adverse_event_search_markdown_with_source_label(
+    query: &str,
+    results: &[AdverseEventSearchResult],
+    summary: &AdverseEventSearchSummary,
+    pagination_footer: &str,
+    empty_state_message: Option<&str>,
+    trial_adverse_events: &[crate::entities::adverse_event::TrialAdverseEventTerm],
+    trial_adverse_event_drug: Option<&str>,
+    summary_source_label: &str,
+) -> Result<String, BioMcpError> {
     let tmpl = env()?.get_template("adverse_event_search.md.j2")?;
     let body = tmpl.render(context! {
         query => query,
         count => results.len(),
         summary => summary,
+        summary_source_label => summary_source_label,
         results => results,
         empty_state_message => empty_state_message,
         trial_adverse_events => trial_adverse_events,
@@ -99,6 +123,137 @@ pub fn adverse_event_search_markdown_with_context(
         pagination_footer => pagination_footer,
     })?;
     Ok(with_pagination_footer(body, pagination_footer))
+}
+
+pub fn combined_adverse_event_search_markdown(
+    query: &str,
+    results: &[AdverseEventSearchResult],
+    summary: &AdverseEventSearchSummary,
+    pagination_footer: &str,
+    empty_state_message: Option<&str>,
+    vaers: Option<&crate::entities::adverse_event::VaersSearchPayload>,
+) -> Result<String, BioMcpError> {
+    let mut body = adverse_event_search_markdown_with_source_label(
+        query,
+        results,
+        summary,
+        pagination_footer,
+        empty_state_message,
+        &[],
+        None,
+        "OpenFDA FAERS",
+    )?;
+
+    if let Some(vaers) = vaers.filter(|payload| should_append_vaers_section(payload)) {
+        if !body.ends_with('\n') {
+            body.push('\n');
+        }
+        body.push('\n');
+        body.push_str(&render_vaers_summary_section(vaers));
+    }
+
+    Ok(body)
+}
+
+pub fn vaers_only_markdown(
+    query: &str,
+    vaers: &crate::entities::adverse_event::VaersSearchPayload,
+) -> String {
+    let mut out = String::new();
+    out.push_str(&format!("# Adverse Events: {query}\n\n"));
+    out.push_str(&render_vaers_summary_section(vaers));
+    out
+}
+
+fn should_append_vaers_section(vaers: &crate::entities::adverse_event::VaersSearchPayload) -> bool {
+    matches!(
+        vaers.status,
+        crate::entities::adverse_event::VaersSearchStatus::Ok
+            | crate::entities::adverse_event::VaersSearchStatus::Empty
+            | crate::entities::adverse_event::VaersSearchStatus::Unavailable
+    )
+}
+
+fn vaers_status_label(status: crate::entities::adverse_event::VaersSearchStatus) -> &'static str {
+    match status {
+        crate::entities::adverse_event::VaersSearchStatus::Ok => "ok",
+        crate::entities::adverse_event::VaersSearchStatus::Empty => "empty",
+        crate::entities::adverse_event::VaersSearchStatus::QueryNotVaccine => "query_not_vaccine",
+        crate::entities::adverse_event::VaersSearchStatus::UnsupportedFilters => {
+            "unsupported_filters"
+        }
+        crate::entities::adverse_event::VaersSearchStatus::UnmappedVaccine => "unmapped_vaccine",
+        crate::entities::adverse_event::VaersSearchStatus::Unavailable => "unavailable",
+    }
+}
+
+fn render_vaers_summary_section(
+    vaers: &crate::entities::adverse_event::VaersSearchPayload,
+) -> String {
+    let mut out = String::new();
+    out.push_str("## CDC VAERS Summary\n\n");
+
+    if let Some(matched) = &vaers.matched_vaccine {
+        out.push_str(&format!("Matched vaccine: {}\n", matched.display_name));
+        out.push_str(&format!("CDC WONDER code: {}\n", matched.wonder_code));
+        if !matched.cvx_codes.is_empty() {
+            out.push_str(&format!("CVX codes: {}\n", matched.cvx_codes.join(", ")));
+        }
+        out.push('\n');
+    }
+
+    if vaers.status != crate::entities::adverse_event::VaersSearchStatus::Ok {
+        out.push_str(&format!("Status: {}\n", vaers_status_label(vaers.status)));
+        if let Some(message) = &vaers.message {
+            out.push_str(message);
+            out.push('\n');
+        }
+        out.push('\n');
+    }
+
+    if let Some(summary) = &vaers.summary {
+        out.push_str(&format!("Total reports: {}\n", summary.total_reports));
+        out.push_str(&format!("Serious reports: {}\n", summary.serious_reports));
+        out.push_str(&format!(
+            "Non-serious reports: {}\n\n",
+            summary.non_serious_reports
+        ));
+
+        out.push_str("### Age distribution\n\n");
+        out.push_str("| Age bucket | Reports | Percent |\n");
+        out.push_str("|---|---|---|\n");
+        for row in &summary.age_distribution {
+            out.push_str(&format!(
+                "| {} | {} | {:.2}% |\n",
+                row.age_bucket, row.reports, row.percentage
+            ));
+        }
+        if summary.age_distribution.is_empty() {
+            out.push_str("| - | 0 | 0.00% |\n");
+        }
+        out.push('\n');
+
+        out.push_str("### Top reactions\n\n");
+        out.push_str("| Reaction | Reports | Percent |\n");
+        out.push_str("|---|---|---|\n");
+        for row in &summary.top_reactions {
+            out.push_str(&format!(
+                "| {} | {} | {:.2}% |\n",
+                row.reaction, row.count, row.percentage
+            ));
+        }
+        if summary.top_reactions.is_empty() {
+            out.push_str("| - | 0 | 0.00% |\n");
+        }
+        out.push('\n');
+    }
+
+    if vaers.summary.is_none() && vaers.message.is_none() {
+        out.push_str("No CDC VAERS aggregate summary available.\n\n");
+    }
+
+    out.push_str("Source: CDC VAERS\n");
+    out
 }
 
 pub fn adverse_event_count_markdown(

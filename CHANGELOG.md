@@ -12,6 +12,9 @@
 - Added the CDC CVX/MVX vaccine identity bridge for default and EU/all
   vaccine-brand drug search, backed by local CDC bundle downloads and explicit
   refresh via `biomcp cvx sync`. (233)
+- Added CDC WONDER VAERS as the aggregate vaccine adverse-event source for
+  `search adverse-event --source <faers|vaers|all>`, including combined
+  vaccine search, health visibility, and source inventory/docs surfaces. (235)
 - Added the local GTR-backed `diagnostic` entity with `search/get diagnostic`,
   first-use bundle refresh, explicit `biomcp gtr sync`, and the supporting
   health/docs/spec contract. (236)

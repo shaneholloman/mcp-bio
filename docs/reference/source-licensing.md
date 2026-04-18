@@ -34,6 +34,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | AlphaGenome | 2 | direct_api | required_env | custom provider terms; access is gated by Google/DeepMind service controls | do not assume open redistribution rights for returned prediction outputs | <https://deepmind.google/science/alphagenome/> |
 | cBioPortal | 3 | direct_api | none | public API with study-specific downstream terms | reuse depends on the specific study or consortium behind each dataset | <https://www.cbioportal.org/> |
 | CDC CVX/MVX | 1 | direct_api | none | most CDC website materials are public domain, but attribution, disclaimer, and exceptions for third-party or non-federal content still apply | reuse is generally allowed with CDC attribution and non-endorsement language; avoid CDC logos and review exceptions before republishing | <https://www.cdc.gov/other/agencymaterials.html> |
+| CDC WONDER VAERS | 1 | direct_api | none | CDC WONDER data use restrictions require statistical reporting/analysis use and prohibit re-identification attempts | reuse is allowed for statistical reporting and analysis with source attribution, but do not try to identify individuals or publish identifying linkages | <https://wonder.cdc.gov/datause.html> |
 | ChEMBL | 1 | direct_api | none | EMBL-EBI open data service; ChEMBL is published for broad reuse | reuse is generally allowed under the provider's open-data terms with attribution where required | <https://www.ebi.ac.uk/chembl/> |
 | CIViC | 1 | direct_api | none | open community knowledgebase; CIViC content is published for unrestricted reuse | reuse is broadly permitted; attribution remains best practice | <https://civicdb.org/home> |
 | ClinGen | 1 | direct_api | none | public ClinGen curation resources with publication and attribution expectations | generally queryable and reusable, but users should preserve attribution and source context | <https://clinicalgenome.org/> |
@@ -189,6 +190,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.cdc.gov/other/agencymaterials.html>
 - Reviewed on: `2026-04-17`
 - Notes: BioMCP auto-downloads `cvx.txt`, `TRADENAME.txt`, and `mvx.txt` into `BIOMCP_CVX_DIR` or the default data directory on first use, refreshes stale files after 30 days, and supports explicit refresh via `biomcp cvx sync`. The bundle augments EMA/default vaccine search plus explicit WHO vaccine name/brand search after MyChem misses; pure `--region us` search and WHO finished-pharma/API lookups do not use it.
+
+### CDC WONDER VAERS
+
+- BioMCP surfaces: `search adverse-event --source vaers; search adverse-event --source all; biomcp health`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: open public CDC WONDER web/API access; consent to the CDC WONDER data use restrictions is required
+- License / terms summary: CDC WONDER data use restrictions require statistical reporting/analysis use and prohibit re-identification attempts
+- Redistribution / reuse summary: reuse is allowed for statistical reporting and analysis with source attribution, but do not try to identify individuals or publish identifying linkages
+- Official terms URL: <https://wonder.cdc.gov/datause.html>
+- Reviewed on: `2026-04-18`
+- Notes: BioMCP calls the CDC WONDER VAERS D8 XML POST endpoint for aggregate vaccine adverse-event summaries only. The source is aggregate-only in this ticket; case-level VAERS export and direct report detail retrieval are intentionally out of scope.
 
 ### EMA
 

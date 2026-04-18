@@ -71,6 +71,7 @@ struct MvxRow {
 #[cfg_attr(not(test), allow(dead_code))]
 #[derive(Debug, Clone)]
 struct CvxAliasRecord {
+    cvx_code: String,
     product_name: String,
     normalized_product_name: String,
     product_name_status: String,
@@ -80,6 +81,14 @@ struct CvxAliasRecord {
     cvx_non_vaccine: bool,
     mvx_code: Option<String>,
     mvx_manufacturer_name: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct CvxVaccineCandidate {
+    pub cvx_code: String,
+    pub product_name: String,
+    pub short_description: String,
+    pub full_vaccine_name: String,
 }
 
 impl CvxClient {
@@ -107,6 +116,43 @@ impl CvxClient {
     }
 
     pub(crate) fn lookup_brand_aliases(&self, query: &str) -> Result<Vec<String>, BioMcpError> {
+        let mut out = Vec::new();
+        let mut seen = HashSet::new();
+        for record in self.lookup_vaccine_candidates(query)? {
+            for term in [&record.short_description, &record.full_vaccine_name] {
+                let Some(dedupe_key) = normalize_match_key(term) else {
+                    continue;
+                };
+                let value = clean_text(term).unwrap_or_else(|| term.trim().to_string());
+                if seen.insert(dedupe_key) {
+                    out.push(value);
+                }
+            }
+        }
+
+        Ok(out)
+    }
+
+    pub(crate) fn lookup_vaccine_candidates(
+        &self,
+        query: &str,
+    ) -> Result<Vec<CvxVaccineCandidate>, BioMcpError> {
+        let mut out = Vec::new();
+        let mut seen = HashSet::new();
+        for record in self.matching_alias_records(query)? {
+            if seen.insert(record.cvx_code.clone()) {
+                out.push(CvxVaccineCandidate {
+                    cvx_code: record.cvx_code,
+                    product_name: record.product_name,
+                    short_description: record.cvx_short_description,
+                    full_vaccine_name: record.cvx_full_vaccine_name,
+                });
+            }
+        }
+        Ok(out)
+    }
+
+    fn matching_alias_records(&self, query: &str) -> Result<Vec<CvxAliasRecord>, BioMcpError> {
         let Some(normalized_query) = normalize_match_key(query) else {
             return Ok(Vec::new());
         };
@@ -115,6 +161,9 @@ impl CvxClient {
             .read_alias_records()?
             .into_iter()
             .filter_map(|record| {
+                if record.cvx_non_vaccine {
+                    return None;
+                }
                 let match_rank = record_match_rank(&record, &normalized_query)?;
                 Some((match_rank, record))
             })
@@ -132,25 +181,7 @@ impl CvxClient {
                 .then_with(|| a.product_name.cmp(&b.product_name))
         });
 
-        let mut out = Vec::new();
-        let mut seen = HashSet::new();
-        for (_, record) in matches {
-            if record.cvx_non_vaccine {
-                continue;
-            }
-
-            for term in [&record.cvx_short_description, &record.cvx_full_vaccine_name] {
-                let Some(dedupe_key) = normalize_match_key(term) else {
-                    continue;
-                };
-                let value = clean_text(term).unwrap_or_else(|| term.trim().to_string());
-                if seen.insert(dedupe_key) {
-                    out.push(value);
-                }
-            }
-        }
-
-        Ok(out)
+        Ok(matches.into_iter().map(|(_, record)| record).collect())
     }
 
     fn read_alias_records(&self) -> Result<Vec<CvxAliasRecord>, BioMcpError> {
@@ -218,6 +249,7 @@ impl CvxClient {
                 .as_deref()
                 .and_then(|mvx_code| mvx_map.get(mvx_code));
             out.push(CvxAliasRecord {
+                cvx_code: code.cvx_code.clone(),
                 product_name: product.product_name,
                 normalized_product_name: product.normalized_product_name,
                 product_name_status: product.product_name_status,
@@ -773,12 +805,12 @@ mod tests {
     fn write_fixture_bundle(root: &Path) {
         std::fs::write(
             root.join("cvx.txt"),
-            "62|HPV, quadrivalent|human papilloma virus vaccine, quadrivalent||Active|False|2020/06/02\n165|HPV9|Human Papillomavirus 9-valent vaccine||Active|False|2014/12/11\n133|Pneumococcal conjugate PCV 13|pneumococcal conjugate vaccine, 13 valent||Active|False|2010/05/28\n140|Influenza, split virus, trivalent, PF|Influenza, split virus, trivalent, injectable, preservative free||Active|False|2024/05/02\n141|Influenza, split virus, trivalent, preservative|Influenza, split virus, trivalent, injectable, contains preservative||Active|False|2024/05/02\n208|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose|SARS-COV-2 (COVID-19) vaccine, mRNA, spike protein, LNP, preservative free, 30 mcg/0.3mL dose||Inactive|False|2023/11/14\n217|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose, tris-sucrose|SARS-COV-2 (COVID-19) vaccine, mRNA, spike protein, LNP, preservative free, 30 mcg/0.3mL dose, tris-sucrose formulation||Inactive|False|2023/11/02\n27|botulinum antitoxin|botulinum antitoxin||Active|True|2020/09/04\n",
+            "03|MMR|measles, mumps and rubella virus vaccine, live||Active|False|2020/06/02\n94|MMRV|measles, mumps, rubella, and varicella vaccine, live||Active|False|2020/06/02\n62|HPV, quadrivalent|human papilloma virus vaccine, quadrivalent||Active|False|2020/06/02\n165|HPV9|Human Papillomavirus 9-valent vaccine||Active|False|2014/12/11\n133|Pneumococcal conjugate PCV 13|pneumococcal conjugate vaccine, 13 valent||Active|False|2010/05/28\n140|Influenza, split virus, trivalent, PF|Influenza, split virus, trivalent, injectable, preservative free||Active|False|2024/05/02\n141|Influenza, split virus, trivalent, preservative|Influenza, split virus, trivalent, injectable, contains preservative||Active|False|2024/05/02\n208|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose|SARS-COV-2 (COVID-19) vaccine, mRNA, spike protein, LNP, preservative free, 30 mcg/0.3mL dose||Inactive|False|2023/11/14\n217|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose, tris-sucrose|SARS-COV-2 (COVID-19) vaccine, mRNA, spike protein, LNP, preservative free, 30 mcg/0.3mL dose, tris-sucrose formulation||Inactive|False|2023/11/02\n27|botulinum antitoxin|botulinum antitoxin||Active|True|2020/09/04\n",
         )
         .expect("write cvx fixture");
         std::fs::write(
             root.join("TRADENAME.txt"),
-            "GARDASIL|HPV, quadrivalent|62|Merck and Co., Inc.|MSD|Active|Inactive|2010/05/28|\nGardasil 9|HPV9|165|Merck and Co., Inc.|MSD|Active|Active|2014/12/11|\nCOMIRNATY|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose|208|Pfizer, Inc|PFR|Active|Active|2023/09/06|\nCOMIRNATY|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose, tris-sucrose|217|Pfizer, Inc|PFR|Active|Active|2023/09/06|\nPREVNAR 13|Pneumococcal conjugate PCV 13|133|Pfizer, Inc|PFR|Active|Active|2010/05/28|\nPREVNAR 13|Pneumococcal conjugate PCV 13|133|Wyeth|WAL|Active|Inactive|2010/05/28|\nFluzone trivalent, preservative free|Influenza, split virus, trivalent, PF|140|Sanofi Pasteur|PMC|Active|Active|2024/05/17|\nFluzone trivalent, with preservative|Influenza, split virus, trivalent, preservative|141|Sanofi Pasteur|PMC|Active|Active|2024/05/14|\nNEVERMATCH|botulinum antitoxin|27|Nobody|ZZZ|Active|Active|2020/09/04|\n",
+            "M-M-R II|MMR|03|Merck and Co., Inc.|MSD|Active|Active|2020/06/02|\nProQuad|MMRV|94|Merck and Co., Inc.|MSD|Active|Active|2020/06/02|\nGARDASIL|HPV, quadrivalent|62|Merck and Co., Inc.|MSD|Active|Inactive|2010/05/28|\nGardasil 9|HPV9|165|Merck and Co., Inc.|MSD|Active|Active|2014/12/11|\nCOMIRNATY|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose|208|Pfizer, Inc|PFR|Active|Active|2023/09/06|\nCOMIRNATY|COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose, tris-sucrose|217|Pfizer, Inc|PFR|Active|Active|2023/09/06|\nPREVNAR 13|Pneumococcal conjugate PCV 13|133|Pfizer, Inc|PFR|Active|Active|2010/05/28|\nPREVNAR 13|Pneumococcal conjugate PCV 13|133|Wyeth|WAL|Active|Inactive|2010/05/28|\nFluzone trivalent, preservative free|Influenza, split virus, trivalent, PF|140|Sanofi Pasteur|PMC|Active|Active|2024/05/17|\nFluzone trivalent, with preservative|Influenza, split virus, trivalent, preservative|141|Sanofi Pasteur|PMC|Active|Active|2024/05/14|\nNEVERMATCH|botulinum antitoxin|27|Nobody|ZZZ|Active|Active|2020/09/04|\n",
         )
         .expect("write tradename fixture");
         std::fs::write(
@@ -925,6 +957,25 @@ mod tests {
                 .lookup_brand_aliases("nevermatch")
                 .expect("lookup should succeed")
                 .is_empty()
+        );
+    }
+
+    #[test]
+    fn lookup_vaccine_candidates_returns_cvx_codes_for_brand_matches() {
+        let root = TempDirGuard::new("cvx-candidates");
+        write_fixture_bundle(root.path());
+        let client = CvxClient::from_root(root.path().to_path_buf());
+
+        let candidates = client
+            .lookup_vaccine_candidates("comirnaty")
+            .expect("candidate lookup");
+
+        assert_eq!(
+            candidates
+                .iter()
+                .map(|candidate| candidate.cvx_code.as_str())
+                .collect::<Vec<_>>(),
+            vec!["208", "217"]
         );
     }
 

@@ -372,12 +372,18 @@ EXAMPLES:
 
 See also: biomcp list protein")]
     Protein(protein::ProteinSearchArgs),
-    /// Search adverse event reports (OpenFDA FAERS)
+    /// Search adverse event reports (OpenFDA FAERS / CDC VAERS / recalls / devices)
     #[command(after_help = "\
 EXAMPLES:
   biomcp search adverse-event -d pembrolizumab --reaction rash
-  biomcp search adverse-event -d carboplatin --serious death --date-from 2020 --date-to 2024 --count patient.reaction.reactionmeddrapt
+  biomcp search adverse-event \"COVID-19 vaccine\" --source all --limit 5
+  biomcp search adverse-event \"MMR vaccine\" --source vaers --limit 5
   biomcp search adverse-event --type recall -d nivolumab
+
+Vaccine queries default to combined OpenFDA FAERS + CDC VAERS when the query
+resolves to a vaccine and the active filters are VAERS-compatible. `--source
+vaers` is aggregate-only, and some FAERS filters are intentionally unsupported
+on the VAERS path.
 
 See also: biomcp list adverse-event")]
     AdverseEvent(adverse_event::AdverseEventSearchArgs),

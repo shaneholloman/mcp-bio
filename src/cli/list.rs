@@ -892,15 +892,23 @@ fn list_adverse_event() -> String {
 
 ## Commands
 
-- `search adverse-event --drug <name>` - FAERS reports (OpenFDA)
+- `search adverse-event --drug <name> --source <faers|vaers|all>` - FAERS by default for ordinary drug queries; vaccine-resolved searches can add CDC VAERS
+- `search adverse-event <vaccine query> --source vaers` - aggregate CDC WONDER VAERS summary
 - `search adverse-event --drug <name> --outcome <death|hospitalization|disability>`
 - `search adverse-event --drug <name> --serious <type>`
 - `search adverse-event --drug <name> --date-from <YYYY|YYYY-MM-DD> --date-to <YYYY|YYYY-MM-DD>`
 - `search adverse-event --drug <name> --suspect-only --sex <m|f> --age-min <N> --age-max <N>`
 - `search adverse-event --drug <name> --reporter <type>`
-- `search adverse-event --drug <name> --count <field>` - aggregation mode
+- `search adverse-event --drug <name> --count <field>` - OpenFDA FAERS aggregation mode
 - `search adverse-event ... --limit <N> --offset <N>`
 - `get adverse-event <report_id>` - retrieve report by ID
+
+## Source behavior
+
+- default `--source all` always runs OpenFDA FAERS and adds CDC VAERS only when the query resolves to a vaccine and the active filters are VAERS-compatible
+- `--source vaers` is aggregate-only and supports plain vaccine query text from `--drug` or the positional query
+- VAERS intentionally does not support --reaction, --outcome, --suspect-only, --sex, --reporter, --count, or --offset > 0
+- `--source` only applies to `--type faers`; recall and device searches keep their existing source-specific paths
 
 ## Other query types
 
@@ -912,6 +920,8 @@ fn list_adverse_event() -> String {
 ## JSON Output
 
 - Non-empty `search adverse-event --json` responses include `_meta.next_commands`.
+- `--source all` keeps the FAERS envelope and adds a truthful `vaers` status block.
+- `--source vaers` returns a VAERS-first envelope with `source`, `query`, `vaers`, and `_meta`.
 - FAERS and device searches drill the top result with `biomcp get adverse-event <report_id>`.
 - Recall searches currently return `biomcp list adverse-event` without a recall-specific `get` command.
 - `biomcp list adverse-event` is always included so agents can inspect the full filter surface.

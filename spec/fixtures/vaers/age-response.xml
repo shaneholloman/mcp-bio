@@ -1,0 +1,1370 @@
+<?xml version="1.0"?>
+<page>
+<platform>prod</platform>
+<title>The Vaccine Adverse Event Reporting System (VAERS) Results Form</title>
+<default-map/>
+<agreement-signed>true</agreement-signed>
+<dataset code="D8" label="The Vaccine Adverse Event Reporting System (VAERS)" family="VAERS" validatorFamily="" totals="true" vintage="03/27/2026" agreement-required="true">
+	<variable code="D8.V13" label="Symptoms" type="hier1,use-finder" display-code="F" use-finder="true">
+		<hier-level code="D8.V13-level1" level="1" label="Index" type="nogroupby"/>
+		<hier-level code="D8.V13-level2" level="2" label="Symptoms" type="valuesvary"/>
+	</variable>
+	<variable groupby-heading="Vaccine Characteristics"/>
+	<variable code="D8.V14" label="Vaccine Products" type="display-label-code,hier1,use-finder" display-code="T-Last" use-finder="true">
+		<hier-level code="D8.V14-level1" level="1" label="Vaccine Type" type=""/>
+		<hier-level code="D8.V14-level2" level="2" label="Vaccine" type="valuesvary"/>
+	</variable>
+	<variable code="D8.V6" label="Vaccine Manufacturer" type="" display-code="F" use-finder="false">
+		<value code="566" label="AVENTIS PASTEUR"/>
+		<value code="589" label="BAVARIAN NORDIC"/>
+		<value code="571" label="BAXTER HEALTHCARE CORP."/>
+		<value code="561" label="BERNA BIOTECH, LTD."/>
+		<value code="574" label="BSI"/>
+		<value code="020" label="BURROUGHS WELLCOME"/>
+		<value code="121" label="CONNAUGHT LABORATORIES"/>
+		<value code="562" label="CONNAUGHT LTD."/>
+		<value code="579" label="CSL LIMITED"/>
+		<value code="588" label="DYNAVAX TECHNOLOGIES CORPORATION"/>
+		<value code="568" label="EMERGENT BIOSOLUTIONS"/>
+		<value code="572" label="EVANS VACCINES"/>
+		<value code="569" label="GLAXOSMITHKLINE BIOLOGICALS"/>
+		<value code="308" label="GREER LABORATORIES, INC."/>
+		<value code="581" label="INTERCELL AG"/>
+		<value code="592" label="JANSSEN"/>
+		<value code="035" label="LEDERLE LABORATORIES"/>
+		<value code="223" label="LEDERLE PRAXSIS"/>
+		<value code="560" label="MASS. PUB HLTH BIOL LAB"/>
+		<value code="529" label="MEDEVA PHARMA, LTD."/>
+		<value code="577" label="MEDIMMUNE VACCINES, INC."/>
+		<value code="044" label="MERCK &amp; CO. INC."/>
+		<value code="540" label="MICHIGAN DEPT PUB HLTH"/>
+		<value code="099" label="MILES LABORATORIES"/>
+		<value code="591" label="MODERNA"/>
+		<value code="593" label="MSP VACCINE COMPANY"/>
+		<value code="565" label="NORTH AMERICAN VACCINES"/>
+		<value code="578" label="NOVARTIS VACCINES AND DIAGNOSTICS"/>
+		<value code="595" label="NOVAVAX"/>
+		<value code="176" label="ORGANON-TEKNIKA"/>
+		<value code="564" label="PARKDALE PHARMACEUTICALS"/>
+		<value code="050" label="PARKE-DAVIS"/>
+		<value code="573" label="PASTEUR MERIEUX CONNAUGHT"/>
+		<value code="222" label="PASTEUR MERIEUX INST."/>
+		<value code="586" label="PAXVAX"/>
+		<value code="590" label="PFIZER\BIONTECH"/>
+		<value code="088" label="PFIZER\WYETH"/>
+		<value code="585" label="PROTEIN SCIENCES CORPORATION"/>
+		<value code="576" label="SANOFI PASTEUR"/>
+		<value code="216" label="SCLAVO"/>
+		<value code="587" label="SEQIRUS, INC."/>
+		<value code="067" label="SMITHKLINE BEECHAM"/>
+		<value code="584" label="TEVA PHARMACEUTICALS"/>
+		<value code="597" label="VALNEVA USA, INC."/>
+		<value code="594" label="VBI VACCINES"/>
+		<value code="000" label="UNKNOWN MANUFACTURER"/>
+	</variable>
+	<variable code="D8.V25" label="Vaccine Dose" type="" display-code="F" use-finder="false">
+		<value code="1" label="1 Dose"/>
+		<value code="2" label="2 Doses"/>
+		<value code="3" label="3 Doses"/>
+		<value code="4" label="4 Doses"/>
+		<value code="5" label="5 Doses"/>
+		<value code="6" label="6 Doses"/>
+		<value code="7+" label="7 or more Doses"/>
+		<value code="Unk" label="Unknown"/>
+		<value code="NA" label="Not Applicable"/>
+	</variable>
+	<variable code="D8.V24" label="Vaccine Lot" type="case-insensitive-data-values,datatype=char,maxlen=15,novalues,text,wildcard" display-code="F" use-finder="false">
+	</variable>
+	<variable groupby-heading="endgroup"/>
+	<variable groupby-heading="Demographics"/>
+	<variable code="D8.V1" label="Age" type="" display-code="F" use-finder="false">
+		<value code="0" label="&lt; 6 months"/>
+		<value code="1" label="6-11 months"/>
+		<value code="1-2" label="1-2 years"/>
+		<value code="3-5" label="3-5 years"/>
+		<value code="6-17" label="6-17 years"/>
+		<value code="18-29" label="18-29 years"/>
+		<value code="30-39" label="30-39 years"/>
+		<value code="40-49" label="40-49 years"/>
+		<value code="50-59" label="50-59 years"/>
+		<value code="60-64" label="60-64 years"/>
+		<value code="65-79" label="65-79 years"/>
+		<value code="80+" label="80+ years"/>
+		<value code="U" label="Unknown"/>
+	</variable>
+	<variable code="D8.V5" label="Sex" type="" display-code="F" use-finder="false">
+		<value code="F" label="Female"/>
+		<value code="M" label="Male"/>
+		<value code="MI" label="Missing"/>
+	</variable>
+	<variable code="D8.V12" label="State / Territory" type="default=00,geo=state" display-code="F" use-finder="false">
+		<value code="00" label="The United States/Territories/Unknown"/>
+		<value code="01" label="Alabama"/>
+		<value code="02" label="Alaska"/>
+		<value code="04" label="Arizona"/>
+		<value code="05" label="Arkansas"/>
+		<value code="06" label="California"/>
+		<value code="08" label="Colorado"/>
+		<value code="09" label="Connecticut"/>
+		<value code="10" label="Delaware"/>
+		<value code="11" label="District of Columbia"/>
+		<value code="12" label="Florida"/>
+		<value code="13" label="Georgia"/>
+		<value code="15" label="Hawaii"/>
+		<value code="16" label="Idaho"/>
+		<value code="17" label="Illinois"/>
+		<value code="18" label="Indiana"/>
+		<value code="19" label="Iowa"/>
+		<value code="20" label="Kansas"/>
+		<value code="21" label="Kentucky"/>
+		<value code="22" label="Louisiana"/>
+		<value code="23" label="Maine"/>
+		<value code="24" label="Maryland"/>
+		<value code="25" label="Massachusetts"/>
+		<value code="26" label="Michigan"/>
+		<value code="27" label="Minnesota"/>
+		<value code="28" label="Mississippi"/>
+		<value code="29" label="Missouri"/>
+		<value code="30" label="Montana"/>
+		<value code="31" label="Nebraska"/>
+		<value code="32" label="Nevada"/>
+		<value code="33" label="New Hampshire"/>
+		<value code="34" label="New Jersey"/>
+		<value code="35" label="New Mexico"/>
+		<value code="36" label="New York"/>
+		<value code="37" label="North Carolina"/>
+		<value code="38" label="North Dakota"/>
+		<value code="39" label="Ohio"/>
+		<value code="40" label="Oklahoma"/>
+		<value code="41" label="Oregon"/>
+		<value code="42" label="Pennsylvania"/>
+		<value code="44" label="Rhode Island"/>
+		<value code="45" label="South Carolina"/>
+		<value code="46" label="South Dakota"/>
+		<value code="47" label="Tennessee"/>
+		<value code="48" label="Texas"/>
+		<value code="49" label="Utah"/>
+		<value code="50" label="Vermont"/>
+		<value code="51" label="Virginia"/>
+		<value code="53" label="Washington"/>
+		<value code="54" label="West Virginia"/>
+		<value code="55" label="Wisconsin"/>
+		<value code="56" label="Wyoming"/>
+		<value code="60" label="American Samoa"/>
+		<value code="81" label="Baker Island"/>
+		<value code="64" label="Federated States of Micronesia"/>
+		<value code="66" label="Guam"/>
+		<value code="84" label="Howland Island"/>
+		<value code="86" label="Jarvis Island"/>
+		<value code="67" label="Johnston Atoll"/>
+		<value code="89" label="Kingman Reef"/>
+		<value code="68" label="Marshall Islands"/>
+		<value code="71" label="Midway Islands"/>
+		<value code="76" label="Navassa Island"/>
+		<value code="69" label="Northern Mariana Islands"/>
+		<value code="95" label="Palmyra Atoll"/>
+		<value code="72" label="Puerto Rico"/>
+		<value code="78" label="Virgin Islands"/>
+		<value code="79" label="Wake Island"/>
+		<value code="FR" label="Foreign"/>
+		<value code="U" label="Unknown"/>
+	</variable>
+	<variable groupby-heading="endgroup"/>
+	<variable groupby-heading="Event Characteristics"/>
+	<variable code="D8.V32" label="Days In Hospital" type="" display-code="F" use-finder="false">
+		<value code="None" label="None"/>
+		<value code="0" label="&lt; 24 hrs"/>
+		<value code="1" label="1 day"/>
+		<value code="2" label="2 days"/>
+		<value code="3" label="3 days"/>
+		<value code="4" label="4 days"/>
+		<value code="5" label="5 days"/>
+		<value code="6" label="6 days"/>
+		<value code="7" label="7 days"/>
+		<value code="8" label="8 days"/>
+		<value code="9" label="9 days"/>
+		<value code="10-14" label="10-14 days"/>
+		<value code="15-30" label="15-30 days"/>
+		<value code="31-60" label="31-60 days"/>
+		<value code="61-120" label="61-120 days"/>
+		<value code="121+" label="Over 120 days"/>
+		<value code="U" label="Unknown"/>
+	</variable>
+	<variable code="D8.V11" label="Event Category" type="" display-code="F" use-finder="false">
+		<value code="DTH" label="Death"/>
+		<value code="LT" label="Life Threatening"/>
+		<value code="DBL" label="Permanent Disability"/>
+		<value code="BD" label="Congenital Anomaly / Birth Defect *"/>
+		<value code="H" label="Hospitalized"/>
+		<value code="HP" label="Existing Hospitalization Prolonged"/>
+		<value code="ER/OF" label="Emergency Room / Office Visit **"/>
+		<value code="ER" label="Emergency Room *"/>
+		<value code="OF" label="Office Visit *"/>
+		<value code="NONE" label="None of the above"/>
+	</variable>
+	<variable code="D8.V33" label="Report Form Version" type="" display-code="F" use-finder="false">
+		<value code="1" label="VAERS-1"/>
+		<value code="2" label="VAERS 2.0"/>
+	</variable>
+	<variable code="D8.V22" label="Mfr/Imm Project Number" type="case-insensitive-data-values,datatype=char,maxlen=25,novalues,text,wildcard" display-code="F" use-finder="false">
+	</variable>
+	<variable code="D8.V7" label="Onset Interval" type="" display-code="F" use-finder="false">
+		<value code="0" label="0 days"/>
+		<value code="1" label="1 day"/>
+		<value code="2" label="2 days"/>
+		<value code="3" label="3 days"/>
+		<value code="4" label="4 days"/>
+		<value code="5" label="5 days"/>
+		<value code="6" label="6 days"/>
+		<value code="7" label="7 days"/>
+		<value code="8" label="8 days"/>
+		<value code="9" label="9 days"/>
+		<value code="10-14" label="10-14 days"/>
+		<value code="15-30" label="15-30 days"/>
+		<value code="31-60" label="31-60 days"/>
+		<value code="61-120" label="61-120 days"/>
+		<value code="121+" label="Over 120 days"/>
+		<value code="U" label="Unknown"/>
+	</variable>
+	<variable code="D8.V9" label="Recovered" type="" display-code="F" use-finder="false">
+		<value code="N" label="No"/>
+		<value code="Y" label="Yes"/>
+		<value code="U" label="Unknown"/>
+		<value code="M" label="Missing"/>
+	</variable>
+	<variable code="D8.V10" label="Serious" type="" display-code="F" use-finder="false">
+		<value code="Y" label="Yes"/>
+		<value code="N" label="No"/>
+	</variable>
+	<variable code="D8.V19" label="Vaccine Administered By" type="" display-code="F" use-finder="false">
+		<value code="PUB" label="Public"/>
+		<value code="PVT" label="Private"/>
+		<value code="OTH" label="Other"/>
+		<value code="MIL" label="Military"/>
+		<value code="WRK" label="Work *"/>
+		<value code="PHM" label="Pharmacy *"/>
+		<value code="SEN" label="Senior Living *"/>
+		<value code="SCH" label="School *"/>
+		<value code="UN" label="Unknown"/>
+	</variable>
+	<variable code="D8.V20" label="Vaccine Purchased By" type="" display-code="F" use-finder="false">
+		<value code="PUB" label="Public **"/>
+		<value code="PVT" label="Private **"/>
+		<value code="OTH" label="Other **"/>
+		<value code="MIL" label="Military **"/>
+		<value code="UN" label="Unknown **"/>
+		<value code="NA" label="Not Applicable *"/>
+	</variable>
+	<variable code="D8.V15" label="VAERS ID" type="byvar-action,datatype=char,novalues,text,wildcard" display-code="F" use-finder="false">
+	</variable>
+	<variable groupby-heading="endgroup"/>
+	<variable groupby-heading="Dates"/>
+	<variable code="D8.V16" label="Date Report Completed" type="hier1,use-finder" display-code="F" use-finder="true">
+		<hier-level code="D8.V16-level1" level="1" label="Year Reported" type=""/>
+		<hier-level code="D8.V16-level2" level="2" label="Month Reported" type=""/>
+	</variable>
+	<variable code="D8.V2" label="Date Report Received" type="hier1,use-finder" display-code="F" use-finder="true">
+		<hier-level code="D8.V2-level1" level="1" label="Year Received" type=""/>
+		<hier-level code="D8.V2-level2" level="2" label="Month Received" type=""/>
+	</variable>
+	<variable code="D8.V3" label="Date Vaccinated" type="hier1,use-finder" display-code="F" use-finder="true">
+		<hier-level code="D8.V3-level1" level="1" label="Year Vaccinated" type=""/>
+		<hier-level code="D8.V3-level2" level="2" label="Month Vaccinated" type=""/>
+	</variable>
+	<variable code="D8.V17" label="Date of Onset" type="hier1,use-finder" display-code="F" use-finder="true">
+		<hier-level code="D8.V17-level1" level="1" label="Year of Onset" type=""/>
+		<hier-level code="D8.V17-level2" level="2" label="Month of Onset" type=""/>
+	</variable>
+	<variable code="D8.V18" label="Date Died" type="hier1,use-finder" display-code="F" use-finder="true">
+		<hier-level code="D8.V18-level1" level="1" label="Year Died" type=""/>
+		<hier-level code="D8.V18-level2" level="2" label="Month Died" type=""/>
+	</variable>
+	<variable groupby-heading="endgroup"/>
+	<variable code="D8.V26" label="Adverse Event Description" type="datatype=char,fulltext,maxlen=100,nogroupby,novalues" display-code="F" use-finder="false">
+	</variable>
+	<variable code="D8.V27" label="Lab Data" type="datatype=char,fulltext,maxlen=100,nogroupby,novalues" display-code="F" use-finder="false">
+	</variable>
+	<variable code="D8.V28" label="Current Illness" type="datatype=char,fulltext,maxlen=100,nogroupby,novalues" display-code="F" use-finder="false">
+	</variable>
+	<variable code="D8.V29" label="Adverse Events After Prior Vaccinations" type="datatype=char,fulltext,maxlen=100,nogroupby,novalues" display-code="F" use-finder="false">
+	</variable>
+	<variable code="D8.V30" label="Medications At Time Of Vaccination" type="datatype=char,fulltext,maxlen=100,nogroupby,novalues" display-code="F" use-finder="false">
+	</variable>
+	<variable code="D8.V31" label="History/Allergies" type="datatype=char,fulltext,maxlen=40,nogroupby,novalues" display-code="F" use-finder="false">
+	</variable>
+	<variable code="D8.V34" label="process date" type="nogroupby" display-code="F" use-finder="false">
+		<value code="0" label="01/31/2025"/>
+	</variable>
+	<measure code="D8.M1" label="Events Reported" type="count" datatype="int" isdefault="true"/>
+	<measure code="D8.M2" label="Percent" type="percent" datatype="double" isdefault="true"/>
+	<measure code="D8.M3" label="Adverse Event Description" type="text" datatype="text" isdefault="false"/>
+	<measure code="D8.M4" label="Lab Data" type="text" datatype="text" isdefault="false"/>
+	<measure code="D8.M5" label="Current Illness" type="text" datatype="text" isdefault="false"/>
+	<measure code="D8.M6" label="Adverse Events After Prior Vaccinations" type="text" datatype="text" isdefault="false"/>
+	<measure code="D8.M7" label="Medications At Time Of Vaccination" type="text" datatype="text" isdefault="false"/>
+	<measure code="D8.M8" label="History/Allergies" type="text" datatype="text" isdefault="false"/>
+<documentation>
+	<citation></citation>
+	<helpfile>/wonder/help/vaers.html</helpfile>
+	<citationURL>http://wonder.cdc.gov/vaers.html</citationURL>
+	<about><p style="font-size:17px; text-align:center;">
+                        <b> About VAERS and the Collected Data </b>
+                        </p>
+                        <p>
+                        The VAERS database contains information on <u>unverified</u> 
+                        reports of adverse events (illnesses, health problems and/or symptoms) following immunization with US-licensed vaccines. 
+						Reports are accepted from anyone and can be submitted electronically at 
+                        <a href="http://vaers.hhs.gov">www.vaers.hhs.gov</a>.  
+                        </p>
+
+
+
+
+
+						<table style="width:100%">
+						<tr style="height:20px; color:#FFFFFF !important; font-size:17px; text-align:left; vertical-align:middle; background-color:#75a9ed; font-weight:bold; margin-top:20px;">
+						<td> &#xA0; Search Current VAERS Data</td>
+						</tr>
+						</table> 
+
+
+
+
+
+
+
+
+
+
+
+                        <table  style="margin-left:15px; margin-right:15px">
+                        <tr>
+                        <td style="vertical-align:top; padding-right:40px; width:50%;">
+						<p>
+                        </p>
+						
+						
+                       
+						
+                        <div id="vaers-buttons1" class="displayon" style="margin:20px 0 10px 0;">
+                                <input class="button2 disabled" style="display:block; margin-left:auto; margin-right:auto;" onclick="('Click the I Agree button to gain access to the dataset and signify that you have read and understood the disclaimer.')" title="Click the I Agree button to gain access to the dataset and signify that you have read and understood the disclaimer." value="VAERS Data Search" name="tab-request" type="button" />
+                              
+            </div>
+                        <div id="vaers-buttons2" class="displayoff" style="margin:20px 0 10px 0;">
+                                <input class="button2" style="display:block; margin-left:auto; margin-right:auto;" onclick="submitSet(this); sendTab()" title="Click to see the request page" value="VAERS Data Search" name="tab-request" type="submit" />
+                               
+                        </div>
+                        <p> The VAERS Data Search allows you to search information from reports collected from 1990 to the present.
+Instructions on how to search are listed in next section.</p>
+                </td>
+                        <td style="vertical-align:top">
+ 	<p>
+                        
+                        </p>
+
+                        <div style="margin:20px 0 10px 0;">
+              
+                                <input class="button2" style="display:block; margin-left:auto; margin-right:auto; margin-top:15px;" onclick="window.location.href='https://wonder.cdc.gov/controller/datarequest/D8;jsessionid=FC3814FFFE433FE766F0697B139E';" title="Click to see the report page" value="VAERS Report Details" name="tab-report" type="submit" />
+                        </div>
+						
+
+                        <p> This allows you to search for  details on a specific VAERS report. 
+							Enter the VAERS ID number assigned to view report information.</p>
+
+
+                        </td>
+                        </tr>
+                        </table>
+                               
+
+
+
+						<table style="width:100%">
+						<tr style="height:20px; color:#FFFFFF !important; font-size:17px; text-align:left; vertical-align:middle; background-color:#75a9ed; font-weight:bold; margin-top:20px;">
+						<td> &#xA0; Written and Video Instructions on How to Search VAERS Data</td>
+						</tr>
+						</table> 
+
+
+
+
+
+						<p>
+                        Below are written and video instructions on how to search VAERS data shared on CDC WONDER.  
+                        </p>
+
+						<p>
+                        The <B>written instructions</B> are on the <a href= "https://www.cdc.gov/vaccinesafety/ensuringsafety/monitoring/vaers/access-VAERS-data.html" > How to Access VAERS Data through VAERS WONDER System page. </a> 
+ 
+                        </p>
+
+
+
+						<p>
+                        The <B>video instructions</B> are posted on the CDC YouTube page: <a href= "https://www.youtube.com/watch?v=cOH7cFWS7o4" > How to Access VAERS Data shared on WONDER - YouTube. </a> 
+ 
+                        </p>
+
+
+						<p>
+                        The video instructions explain how to search VAERS data shared on CDC WONDER, the purpose of VAERS, and the strengths and limitations of the data the system collects.
+ 
+                        </p>
+
+						<p>
+                        The video is also sectioned to jump to specific information:
+ 
+                        </p>
+
+
+						<p>
+							<ul>
+							<li> <a href= "http://youtu.be/cOH7cFWS7o4?t=44s" > Section 1: Introduction to VAERS. </a> </li>
+							<li> <a href= "http://youtu.be/cOH7cFWS7o4?t=2m28s" > Section 2: How to Search VAERS Public Data. </a> </li>
+							<li> <a href= "http://youtu.be/cOH7cFWS7o4?t=10m37s" > Section 3: Strengths and Limitations of VAERS Data. </a> </li>
+							<li> <a href= "http://youtu.be/cOH7cFWS7o4?t=12m13s" > Section 4: Where to Get More Information. </a> </li>
+							</ul>
+                        </p>
+
+
+
+
+
+						<table style="width:100%">
+						<tr style="height:20px; color:#FFFFFF !important; font-size:17px; text-align:left; vertical-align:middle; background-color:#75a9ed; font-weight:bold; margin-top:20px;">
+						<td>&#xA0; Disclaimer</td>
+						</tr>
+						</table> 
+
+
+
+
+
+
+
+
+
+                       <p>
+                                                
+						VAERS accepts reports of adverse events that occur following vaccination. 
+						<B>Anyone, including healthcare providers, vaccine manufacturers, and the public, can submit reports to the system. 
+						While very important in monitoring vaccine safety, VAERS reports alone cannot be used to determine if a vaccine 
+						caused or contributed to an adverse event or illness.</B>
+						Vaccine providers are encouraged to report any clinically 
+						significant health problem following vaccination to VAERS even if they are not sure if the vaccine was the cause. 
+						In some situations, reporting to VAERS is required of healthcare providers and vaccine manufacturers.
+						</p>
+						<p>
+						<b>
+						VAERS reports may contain information that is incomplete, inaccurate, coincidental, or unverifiable.
+						</b>
+						Reports to VAERS can also be biased. As a result, there are limitations on how the data can be used scientifically. 
+						Data from VAERS reports should always be interpreted with these limitations in mind.
+						</p>
+						<p>
+						The strengths of VAERS are that it is national in scope and can often quickly detect an early hint or warning 
+						of a safety problem with a vaccine. VAERS is one component of CDC's and FDA's multifaceted approach to 
+						monitoring safety after vaccines are licensed or authorized for use. There are multiple, complementary systems 
+						that CDC and FDA use to capture and validate data from different sources. 
+						VAERS is designed to rapidly detect unusual or unexpected patterns of adverse events, also referred to as 
+						"safety signals." If a possible safety signal is found in VAERS, further analysis is performed with other 
+						safety systems, such as the CDC's Vaccine Safety Datalink (VSD) and Clinical Immunization Safety Assessment 
+						(CISA) Project, or in the FDA BEST (Biologics Effectiveness and Safety) system. These systems are less 
+						impacted by the limitations of spontaneous and voluntary reporting in VAERS and can better assess possible 
+						links between vaccination and adverse events. Additionally, CDC and FDA cannot provide individual 
+						medical advice regarding any report to VAERS.
+                                                </p> <p>
+                                                Key considerations and limitations of VAERS data:
+                                                <ul><li>
+						<b>
+						The number of reports alone cannot be interpreted as evidence of a causal association 
+						between a vaccine and an adverse event,
+						</b> 
+						or as evidence about the existence, severity, frequency, or rates of problems associated with vaccines.
+						</li><li>
+						Reports may include incomplete, inaccurate, coincidental, and unverified information.
+						</li><li>
+						VAERS does not obtain follow up records on every report. 
+						If a report is classified as serious, VAERS requests additional information, 
+						such as health records, to further evaluate the report. 
+						</li><li>
+						VAERS data are limited to vaccine adverse event reports received between 1990 
+						and the most recent date for which data are available.
+						</li><li>
+						VAERS data do not represent all known safety information for a vaccine and 
+						should be interpreted in the context of other scientific information.
+						</li></ul>
+						</p><p>
+						<b>VAERS data available to the public include only the initial report data to VAERS. 
+						Updated data which contains data from medical records and corrections reported during follow up 
+						are used by the government for analysis. However, for numerous reasons including data consistency, 
+						these amended data are not available to the public.</b>
+						</p><p>
+						Additionally, reports to VAERS that appear to be false or fabricated with the intent to mislead CDC and FDA 
+						may be reviewed before they are added to the VAERS database.
+						<b>
+						Knowingly filing a false VAERS report is a violation of Federal law (18 U.S. Code section 1001) 
+						punishable by fine and imprisonment.
+						</b>
+						</p>
+						<p> 
+						At the request of European regulators, CDC and FDA have removed certain data fields 
+						(country codes; reported symptom case narrative free text; 
+						diagnostic laboratory data free text field; illness at time of vaccination free text field; 
+						chronic conditions free text medical history field; allergies free text field) 
+						from foreign VAERS reports which were submitted to VAERS and may not comply with European regulations.  
+						Domestic (U.S.) VAERS reports are not affected by this process. 
+						</p></about>
+	<dataurl>https://vaers.hhs.gov/data.html</dataurl>
+	<part2citation>, CDC WONDER On-line Database.</part2citation>
+	<part1citation>United States Department of Health and Human Services (DHHS), Public Health Service (PHS),  Centers for Disease Control (CDC) / Food and Drug Administration (FDA), Vaccine Adverse Event Reporting System (VAERS) 1990 -</part1citation>
+	<caveat code="D8.C13">
+		<text evaluate="false"><![CDATA[<p>  
+                                VAERS accepts reports of adverse events and reactions that occur following vaccination. Healthcare providers, vaccine manufacturers, 
+                                and the public can submit reports to VAERS. While very important in monitoring vaccine safety, VAERS reports alone cannot be used to 
+                                determine if a vaccine caused or contributed to an adverse event or illness. The reports may contain information that is incomplete, 
+                                inaccurate, coincidental, or unverifiable. Most reports to VAERS are voluntary, which means they are subject to biases. This creates 
+                                specific limitations on how the data can be used scientifically. Data from VAERS reports should always be interpreted with these 
+                                limitations in mind. 
+                                </p>  
+                                <p>  
+                                The strengths of VAERS are that it is national in scope and can quickly provide an early warning of a safety problem with a vaccine. 
+                                As part of CDC and FDA's multi-system approach to post-licensure vaccine safety monitoring, VAERS is designed to rapidly detect 
+                                unusual or unexpected patterns of adverse events, also known as "safety signals." If a safety signal is found in VAERS, further 
+                                studies can be done in safety systems such as the CDC's Vaccine Safety Datalink (VSD) or the Clinical Immunization Safety 
+                                Assessment (CISA) project. These systems do not have the same limitations as VAERS, and can better assess health risks and 
+                                possible connections between adverse events and a vaccine. 
+                                </p> 
+                                <p>
+                                Key considerations and limitations of VAERS data:
+                                <ul><li>
+                                Vaccine providers are encouraged to report any clinically significant health problem following vaccination to VAERS, 
+                                whether or not they believe the vaccine was the cause.
+                                </li><li>
+                                Reports may include incomplete, inaccurate, coincidental and unverified information. 
+                                </li><li>
+                                The number of reports alone cannot be interpreted or used to reach conclusions about the existence, severity, frequency, 
+                                or rates of problems associated with vaccines.
+                                </li><li>
+                                VAERS data are limited to vaccine adverse event reports received between 1990 and the most recent date for which data are available.
+                                </li><li>
+                                VAERS data do not represent all known safety information for a vaccine and should be interpreted in the context of other 
+                                scientific information.
+                                </li></ul>
+                                </p>]]></text>
+		<rule>true()</rule>
+	</caveat>
+	<caveat code="D8.C8">
+		<text evaluate="false"><![CDATA[More events may be found if the Location criteria is set to "All Locations".]]></text>
+		<rule>wonder:zero-records()</rule>
+	</caveat>
+	<caveat xmlns:wonder="http://wonder.cdc.gov"
+        xmlns:xalan="http://xml.apache.org/xalan" report="report" code="D8.C6">
+		<text evaluate="true">wonder:concat($documentation/disclaimer)</text>
+		<rule>true()</rule>
+	</caveat>
+	<caveat code="D8.C1">
+		<text evaluate="false"><![CDATA[Some items may have more than 1 occurrence in any single event report, 
+                                such as Symptoms, Vaccine Products,  Manufacturers, and Event Categories.
+                                If data are grouped by any of these items, then
+                                the number in the Events Reported column may exceed the total number of unique events.
+                                If percentages are shown, then the associated percentage of total unique event reports will exceed 100% in such cases.
+                                For example, the number of Symptoms mentioned is likely to exceed the number of events reported,
+                                because many reports include more than 1 Symptom. 
+                                When more than 1 Symptom occurs in a single report, then the percentage of Symptoms to unique events is more than 100%.
+                                #Suppress#]
+                                ></text>
+                        <rule>true()</rule>
+                </caveat>
+                <caveat code="D8.C2">
+                        <text><![CDATA[The number used as the denominator for percentages is the total number of distinct events found in the results, and is shown in the Percentage heading. #Percent#]]></text>
+		<rule>wonder:vaers-percent()</rule>
+	</caveat>
+	<caveat code="D8.C3">
+		<text evaluate="false"><![CDATA[Percentages are not displayed if non-primary records are included in the results. #Percent#]]></text>
+		<rule>not(wonder:vaers-percent())</rule>
+	</caveat>
+	<caveat xmlns:wonder="http://wonder.cdc.gov"
+        xmlns:xalan="http://xml.apache.org/xalan" code="D8.C5">
+		<text evaluate="true">concat("These items in the results table are not
+        fully selected: ", wonder:partial-hier-labels(), ". The
+        Query Description lists the actual values
+        selected.")</text>
+		<rule>wonder:partial-hier()</rule>
+	</caveat>
+	<caveat xmlns:wonder="http://wonder.cdc.gov"
+        xmlns:xalan="http://xml.apache.org/xalan" report="report" code="D8.C7">
+		<text evaluate="true">concat("Data contains VAERS reports processed as
+        of ", wonder:vaers-vintage(), ". The VAERS data in WONDER
+        are updated monthly, yet the VAERS system receives
+        continuous updates including revisions and new reports for
+        preceding time periods. Duplicate event reports and/or
+        reports determined to be false are removed from VAERS.
+        #Reporting#")</text>
+		<rule>true()</rule>
+	</caveat>
+	<caveat code="D8.C9">
+		<text evaluate="false"><![CDATA[Under <a href="/wonder/help/vaers/21CFR600-80.htm">Title 21, Code of Federal Regulations Section 600.80</a>, 
+                                a serious event is defined with any 
+                                of the following outcomes:  Death, a life-threatening adverse experience, inpatient hospitalization or 
+                                prolongation of existing hospitalization, a persistent or significant disability/incapacity, or a congenital 
+                                anomaly/birth defect.]]></text>
+		<rule>wonder:vaers-serious()</rule>
+	</caveat>
+	<caveat code="D8.C10">
+		<text evaluate="false"><![CDATA[Vaccine Purchased By data are only available for events reported using the VAERS-1 form, active 07/01/1990 to 06/29/2017.  
+                                Events reported using the VAERS 2.0 form are assigned the "Not Available" value for Vaccine Purchased By.]]></text>
+		<rule>wonder:vaers-purchasedby()</rule>
+	</caveat>
+	<caveat code="D8.C11">
+		<text evaluate="false"><![CDATA[Values of Event Category field vary in their availability over time due to changes in the reporting form.
+                                The "Emergency Room/Office Visit" value was avaliable only for events reported using the VAERS-1 form, active 07/01/1990 to 06/29/2017.  
+                                The "Congenital Anomaly/Birth Defect", "Emergency Room", and "Office Visit" values are available only for events reported using the VAERS 2.0 form, active 06/30/2017 to present. 
+                                These changes must be considered when evaluating count of events for these categories.]]></text>
+		<rule>wonder:vaers-eventcategory()</rule>
+	</caveat>
+	<caveat code="D8.C12">
+		<text evaluate="false"><![CDATA[Values of Vaccine Administered By field vary in their availability over time due to changes in the reporting form.
+                                The "Work", "Pharmacy", "Senior Living", and "School" values are available only for events reported using the VAERS 2.0 form, active 06/30/2017 to present. 
+                                These changes must be considered when evaluating count of events for these categories.]]></text>
+		<rule>wonder:vaers-administeredby()</rule>
+	</caveat>
+	<caveat code="D8.C14">
+		<text evaluate="false"><![CDATA[About COVID19 vaccines:
+					<UL><LI>
+						For more information on how many persons have been vaccinated in the US for COVID19 to date, see 
+						<a target= "_blank" href=https://covid.cdc.gov/covid-data-tracker/#vaccinations/>https://covid.cdc.gov/covid-data-tracker/#vaccinations/</a>.
+					</LI><LI>
+						One report may state that the patient received more than one brand of COVID-19 vaccine on the same visit.  This is a reporting error, but explains why the total number of reports may not equal the total number of COVID-19 vaccine doses.
+					</LI></UL>]]></text>
+		<rule>wonder:vaers-covid-vaccine()</rule>
+	</caveat>
+<footnote report="report">'VAERS.F1'</footnote>
+<footnote>wonder:fn-vaers-form2()</footnote>
+<footnote>wonder:fn-vaers-form1()</footnote>
+</documentation>
+</dataset>
+<response>
+<request query-date="Apr 18, 2026 9:22:55 AM">
+<variable-selections>
+	<variable code="D8.V14" from-finder="true">
+		<value code="MMR" label="MEASLES, MUMPS AND RUBELLA VIRUS VACCINE, LIVE"/>
+	</variable>
+	<variable code="D8.V12" from-finder="false">
+		<value code="00"/>
+		<expanded-value code="01"/>
+		<expanded-value code="02"/>
+		<expanded-value code="04"/>
+		<expanded-value code="05"/>
+		<expanded-value code="06"/>
+		<expanded-value code="08"/>
+		<expanded-value code="09"/>
+		<expanded-value code="10"/>
+		<expanded-value code="11"/>
+		<expanded-value code="12"/>
+		<expanded-value code="13"/>
+		<expanded-value code="15"/>
+		<expanded-value code="16"/>
+		<expanded-value code="17"/>
+		<expanded-value code="18"/>
+		<expanded-value code="19"/>
+		<expanded-value code="20"/>
+		<expanded-value code="21"/>
+		<expanded-value code="22"/>
+		<expanded-value code="23"/>
+		<expanded-value code="24"/>
+		<expanded-value code="25"/>
+		<expanded-value code="26"/>
+		<expanded-value code="27"/>
+		<expanded-value code="28"/>
+		<expanded-value code="29"/>
+		<expanded-value code="30"/>
+		<expanded-value code="31"/>
+		<expanded-value code="32"/>
+		<expanded-value code="33"/>
+		<expanded-value code="34"/>
+		<expanded-value code="35"/>
+		<expanded-value code="36"/>
+		<expanded-value code="37"/>
+		<expanded-value code="38"/>
+		<expanded-value code="39"/>
+		<expanded-value code="40"/>
+		<expanded-value code="41"/>
+		<expanded-value code="42"/>
+		<expanded-value code="44"/>
+		<expanded-value code="45"/>
+		<expanded-value code="46"/>
+		<expanded-value code="47"/>
+		<expanded-value code="48"/>
+		<expanded-value code="49"/>
+		<expanded-value code="50"/>
+		<expanded-value code="51"/>
+		<expanded-value code="53"/>
+		<expanded-value code="54"/>
+		<expanded-value code="55"/>
+		<expanded-value code="56"/>
+		<expanded-value code="60"/>
+		<expanded-value code="81"/>
+		<expanded-value code="64"/>
+		<expanded-value code="66"/>
+		<expanded-value code="84"/>
+		<expanded-value code="86"/>
+		<expanded-value code="67"/>
+		<expanded-value code="89"/>
+		<expanded-value code="68"/>
+		<expanded-value code="71"/>
+		<expanded-value code="76"/>
+		<expanded-value code="69"/>
+		<expanded-value code="95"/>
+		<expanded-value code="72"/>
+		<expanded-value code="78"/>
+		<expanded-value code="79"/>
+		<expanded-value code="U"/>
+	</variable>
+</variable-selections>
+<byvariables>
+	<variable code="D8.V1"/>
+</byvariables>
+<list-variables>
+</list-variables>
+<measure-selections>
+	<measure code="D8.M1"/>
+	<measure code="D8.M2"/>
+</measure-selections>
+<other-parameters>
+	<parameter code="O_show_totals" label="Show Totals" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>true</value>
+	</parameter>
+	<parameter code="O_show_zeros" label="Show Zero Values" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>false</value>
+	</parameter>
+	<parameter code="O_show_suppressed" label="Show Suppressed" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>false</value>
+	</parameter>
+	<parameter code="O_precision" label="Precision" display="false">
+		<option value="0" label="0"/>
+		<option value="1" label="1"/>
+		<option value="2" label="2"/>
+		<option value="3" label="3"/>
+		<option value="4" label="4"/>
+		<option value="5" label="5"/>
+		<option value="6" label="6"/>
+		<option value="7" label="7"/>
+		<option value="8" label="8"/>
+		<option value="9" label="9"/>
+		<value>2</value>
+	</parameter>
+	<parameter code="O_timeout" label="Data Access Timeout" display="false">
+		<option value="60" label="1"/>
+		<option value="120" label="2"/>
+		<option value="180" label="3"/>
+		<option value="240" label="4"/>
+		<option value="300" label="5"/>
+		<option value="360" label="6"/>
+		<option value="420" label="7"/>
+		<option value="480" label="8"/>
+		<option value="540" label="9"/>
+		<option value="600" label="10"/>
+		<option value="660" label="11"/>
+		<option value="720" label="12"/>
+		<option value="780" label="13"/>
+		<option value="840" label="14"/>
+		<option value="900" label="15"/>
+		<value>600</value>
+	</parameter>
+	<parameter code="O_groups_count" label="Groups" display="false">
+		<option value="2" label="Two"/>
+		<option value="3" label="Three"/>
+		<option value="4" label="Four"/>
+		<option value="5" label="Five"/>
+		<option value="6" label="Six"/>
+		<option value="7" label="Seven"/>
+		<option value="8" label="Eight"/>
+		<option value="9" label="Nine"/>
+		<option value="10" label="Ten"/>
+		<value>4</value>
+	</parameter>
+	<parameter code="O_groups_methods" label="Group Breaks Method" display="false">
+		<option value="QUANTILE" label="Quantile"/>
+		<option value="EQUAL" label="Equal Interval"/>
+		<value>QUANTILE</value>
+	</parameter>
+	<parameter code="O_V18_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V13_fand_htadv" display="false">
+		<value>codes-div-extra2</value>
+	</parameter>
+	<parameter code="O_V13_fand_htreg" display="false">
+		<value>codes-div-extra</value>
+	</parameter>
+	<parameter code="O_V13_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V3_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_javascript" display="false">
+		<value>on</value>
+	</parameter>
+	<parameter code="O_V13_fand_sect" display="false">
+		<value>2</value>
+	</parameter>
+	<parameter code="O_oc-sect1-request" display="false">
+		<value>close</value>
+	</parameter>
+	<parameter code="O_V2_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V14_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_title" display="false">
+		<value></value>
+	</parameter>
+	<parameter code="O_V17_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_export-format" display="false">
+		<value>xls</value>
+	</parameter>
+	<parameter code="O_V16_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_labels_opt" display="false">
+		<value>false</value>
+	</parameter>
+	<parameter code="O_show_rank" display="false">
+		<value>false</value>
+	</parameter>
+	<parameter code="O_groups" display="false">
+		<value>false</value>
+	</parameter>
+</other-parameters>
+<request-parameters>
+	<parameter>
+		<name>B_1</name>
+		<value>D8.V1</value>
+	</parameter>
+	<parameter>
+		<name>B_2</name>
+		<value>*None*</value>
+	</parameter>
+	<parameter>
+		<name>B_3</name>
+		<value>*None*</value>
+	</parameter>
+	<parameter>
+		<name>B_4</name>
+		<value>*None*</value>
+	</parameter>
+	<parameter>
+		<name>B_5</name>
+		<value>*None*</value>
+	</parameter>
+	<parameter>
+		<name>M_1</name>
+		<value>D8.M1</value>
+	</parameter>
+	<parameter>
+		<name>M_2</name>
+		<value>D8.M2</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V1</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V10</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V11</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V12</name>
+		<value>00</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V13</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V13_AND2</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V13_AND3</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V13_AND4</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V13_AND5</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V14</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V15</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V16</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V17</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V18</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V19</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V2</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V20</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V22</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V24</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V25</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V26</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V27</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V28</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V29</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V3</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V30</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V31</name>
+		<value></value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V32</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V33</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V5</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V6</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V7</name>
+		<value>*All*</value>
+	</parameter>
+	<parameter>
+		<name>V_D8.V9</name>
+		<value>*All*</value>
+	</parameter>
+</request-parameters>
+</request>
+<other-parameters>
+	<parameter code="O_show_totals" label="Show Totals" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>true</value>
+	</parameter>
+	<parameter code="O_show_zeros" label="Show Zero Values" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>false</value>
+	</parameter>
+	<parameter code="O_show_suppressed" label="Show Suppressed" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>false</value>
+	</parameter>
+	<parameter code="O_precision" label="Precision" display="false">
+		<option value="0" label="0"/>
+		<option value="1" label="1"/>
+		<option value="2" label="2"/>
+		<option value="3" label="3"/>
+		<option value="4" label="4"/>
+		<option value="5" label="5"/>
+		<option value="6" label="6"/>
+		<option value="7" label="7"/>
+		<option value="8" label="8"/>
+		<option value="9" label="9"/>
+		<value>2</value>
+	</parameter>
+	<parameter code="O_timeout" label="Data Access Timeout" display="false">
+		<option value="60" label="1"/>
+		<option value="120" label="2"/>
+		<option value="180" label="3"/>
+		<option value="240" label="4"/>
+		<option value="300" label="5"/>
+		<option value="360" label="6"/>
+		<option value="420" label="7"/>
+		<option value="480" label="8"/>
+		<option value="540" label="9"/>
+		<option value="600" label="10"/>
+		<option value="660" label="11"/>
+		<option value="720" label="12"/>
+		<option value="780" label="13"/>
+		<option value="840" label="14"/>
+		<option value="900" label="15"/>
+		<value>600</value>
+	</parameter>
+	<parameter code="O_groups_count" label="Groups" display="false">
+		<option value="2" label="Two"/>
+		<option value="3" label="Three"/>
+		<option value="4" label="Four"/>
+		<option value="5" label="Five"/>
+		<option value="6" label="Six"/>
+		<option value="7" label="Seven"/>
+		<option value="8" label="Eight"/>
+		<option value="9" label="Nine"/>
+		<option value="10" label="Ten"/>
+		<value>4</value>
+	</parameter>
+	<parameter code="O_groups_methods" label="Group Breaks Method" display="false">
+		<option value="QUANTILE" label="Quantile"/>
+		<option value="EQUAL" label="Equal Interval"/>
+		<value>QUANTILE</value>
+	</parameter>
+	<parameter code="O_percent_of" label="" display="false">
+		<value>83,359</value>
+	</parameter>
+	<parameter code="O_V18_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V13_fand_htadv" display="false">
+		<value>codes-div-extra2</value>
+	</parameter>
+	<parameter code="O_V13_fand_htreg" display="false">
+		<value>codes-div-extra</value>
+	</parameter>
+	<parameter code="O_V13_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V3_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_javascript" display="false">
+		<value>on</value>
+	</parameter>
+	<parameter code="O_V13_fand_sect" display="false">
+		<value>2</value>
+	</parameter>
+	<parameter code="O_oc-sect1-request" display="false">
+		<value>close</value>
+	</parameter>
+	<parameter code="O_V2_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V14_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_title" display="false">
+		<value></value>
+	</parameter>
+	<parameter code="O_V17_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_export-format" display="false">
+		<value>xls</value>
+	</parameter>
+	<parameter code="O_V16_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_labels_opt" display="false">
+		<value>disabled</value>
+	</parameter>
+	<parameter code="O_show_rank" display="false">
+		<value>false</value>
+	</parameter>
+	<parameter code="O_groups" display="false">
+		<value>false</value>
+	</parameter>
+	<parameter code="O_labels_quick" display="false">
+		<value>disabled</value>
+	</parameter>
+</other-parameters>
+<measure-selections>
+	<measure code="D8.M1" min="9" max="83,359" minNtNz="9" maxNtNz="29,731" minNtWz="9" maxNtWz="29,731" minWtNz="9" maxWtNz="83,359"/>
+	<measure code="D8.M2" min="0.01" max="100.00" minNtNz="0.01" maxNtNz="35.67" minNtWz="0.01" maxNtWz="35.67" minWtNz="0.01" maxWtNz="100.00"/>
+</measure-selections>
+<measure-selections-all>
+	<measure code="D8.M1"/>
+	<measure code="D8.M2"/>
+</measure-selections-all>
+<data-table show-all-labels="false">
+<r><c l="&lt; 6 months"/><c v="449"/><c v="0.54%"/></r>
+<r><c l="6-11 months"/><c v="437"/><c v="0.52%"/></r>
+<r><c l="1-2 years"/><c v="29,731"/><c v="35.67%"/></r>
+<r><c l="3-5 years"/><c v="24,357"/><c v="29.22%"/></r>
+<r><c l="6-17 years"/><c v="6,753"/><c v="8.10%"/></r>
+<r><c l="18-29 years"/><c v="4,089"/><c v="4.91%"/></r>
+<r><c l="30-39 years"/><c v="3,284"/><c v="3.94%"/></r>
+<r><c l="40-49 years"/><c v="2,263"/><c v="2.71%"/></r>
+<r><c l="50-59 years"/><c v="1,302"/><c v="1.56%"/></r>
+<r><c l="60-64 years"/><c v="313"/><c v="0.38%"/></r>
+<r><c l="65-79 years"/><c v="239"/><c v="0.29%"/></r>
+<r><c l="80+ years"/><c v="9"/><c v="0.01%"/></r>
+<r><c l="Unknown"/><c v="10,133"/><c v="12.16%"/></r>
+<r><c c="1"/><c dt="83,359"/><c dt="100.00%"/></r>
+</data-table>
+<options>
+<other-parameters>
+	<parameter code="O_show_totals" label="Show Totals" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>true</value>
+	</parameter>
+	<parameter code="O_show_zeros" label="Show Zero Values" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>false</value>
+	</parameter>
+	<parameter code="O_show_suppressed" label="Show Suppressed" display="true">
+		<option value="true" label="True"/>
+		<option value="false" label="False"/>
+		<option value="disabled" label="Disabled"/>
+		<value>false</value>
+	</parameter>
+	<parameter code="O_precision" label="Precision" display="false">
+		<option value="0" label="0"/>
+		<option value="1" label="1"/>
+		<option value="2" label="2"/>
+		<option value="3" label="3"/>
+		<option value="4" label="4"/>
+		<option value="5" label="5"/>
+		<option value="6" label="6"/>
+		<option value="7" label="7"/>
+		<option value="8" label="8"/>
+		<option value="9" label="9"/>
+		<value>2</value>
+	</parameter>
+	<parameter code="O_timeout" label="Data Access Timeout" display="false">
+		<option value="60" label="1"/>
+		<option value="120" label="2"/>
+		<option value="180" label="3"/>
+		<option value="240" label="4"/>
+		<option value="300" label="5"/>
+		<option value="360" label="6"/>
+		<option value="420" label="7"/>
+		<option value="480" label="8"/>
+		<option value="540" label="9"/>
+		<option value="600" label="10"/>
+		<option value="660" label="11"/>
+		<option value="720" label="12"/>
+		<option value="780" label="13"/>
+		<option value="840" label="14"/>
+		<option value="900" label="15"/>
+		<value>600</value>
+	</parameter>
+	<parameter code="O_groups_count" label="Groups" display="false">
+		<option value="2" label="Two"/>
+		<option value="3" label="Three"/>
+		<option value="4" label="Four"/>
+		<option value="5" label="Five"/>
+		<option value="6" label="Six"/>
+		<option value="7" label="Seven"/>
+		<option value="8" label="Eight"/>
+		<option value="9" label="Nine"/>
+		<option value="10" label="Ten"/>
+		<value>4</value>
+	</parameter>
+	<parameter code="O_groups_methods" label="Group Breaks Method" display="false">
+		<option value="QUANTILE" label="Quantile"/>
+		<option value="EQUAL" label="Equal Interval"/>
+		<value>QUANTILE</value>
+	</parameter>
+	<parameter code="O_percent_of" label="" display="false">
+		<value>83,359</value>
+	</parameter>
+	<parameter code="O_V18_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V13_fand_htadv" display="false">
+		<value>codes-div-extra2</value>
+	</parameter>
+	<parameter code="O_V13_fand_htreg" display="false">
+		<value>codes-div-extra</value>
+	</parameter>
+	<parameter code="O_V13_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V3_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_javascript" display="false">
+		<value>on</value>
+	</parameter>
+	<parameter code="O_V13_fand_sect" display="false">
+		<value>2</value>
+	</parameter>
+	<parameter code="O_oc-sect1-request" display="false">
+		<value>close</value>
+	</parameter>
+	<parameter code="O_V2_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_V14_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_title" display="false">
+		<value></value>
+	</parameter>
+	<parameter code="O_V17_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_export-format" display="false">
+		<value>xls</value>
+	</parameter>
+	<parameter code="O_V16_fmode" display="false">
+		<value>freg</value>
+	</parameter>
+	<parameter code="O_labels_opt" display="false">
+		<value>disabled</value>
+	</parameter>
+	<parameter code="O_show_rank" display="false">
+		<value>false</value>
+	</parameter>
+	<parameter code="O_groups" display="false">
+		<value>false</value>
+	</parameter>
+	<parameter code="O_labels_quick" display="false">
+		<value>disabled</value>
+	</parameter>
+</other-parameters>
+<measure-selections-show>
+	<measure code="D8.M1"/>
+	<measure code="D8.M2"/>
+</measure-selections-show>
+<groups>
+</groups>
+</options>
+<footnotes>
+<footnote>
+<symbol>Note:</symbol>
+<text>Submitting a report to VAERS does not mean that
+    healthcare personnel or the vaccine caused or contributed to
+    the adverse event (possible side effect).</text>
+</footnote>
+</footnotes>
+<caveats>
+<caveat><![CDATA[<p>  
+                                VAERS accepts reports of adverse events and reactions that occur following vaccination. Healthcare providers, vaccine manufacturers, 
+                                and the public can submit reports to VAERS. While very important in monitoring vaccine safety, VAERS reports alone cannot be used to 
+                                determine if a vaccine caused or contributed to an adverse event or illness. The reports may contain information that is incomplete, 
+                                inaccurate, coincidental, or unverifiable. Most reports to VAERS are voluntary, which means they are subject to biases. This creates 
+                                specific limitations on how the data can be used scientifically. Data from VAERS reports should always be interpreted with these 
+                                limitations in mind. 
+                                </p>  
+                                <p>  
+                                The strengths of VAERS are that it is national in scope and can quickly provide an early warning of a safety problem with a vaccine. 
+                                As part of CDC and FDA's multi-system approach to post-licensure vaccine safety monitoring, VAERS is designed to rapidly detect 
+                                unusual or unexpected patterns of adverse events, also known as "safety signals." If a safety signal is found in VAERS, further 
+                                studies can be done in safety systems such as the CDC's Vaccine Safety Datalink (VSD) or the Clinical Immunization Safety 
+                                Assessment (CISA) project. These systems do not have the same limitations as VAERS, and can better assess health risks and 
+                                possible connections between adverse events and a vaccine. 
+                                </p> 
+                                <p>
+                                Key considerations and limitations of VAERS data:
+                                <ul><li>
+                                Vaccine providers are encouraged to report any clinically significant health problem following vaccination to VAERS, 
+                                whether or not they believe the vaccine was the cause.
+                                </li><li>
+                                Reports may include incomplete, inaccurate, coincidental and unverified information. 
+                                </li><li>
+                                The number of reports alone cannot be interpreted or used to reach conclusions about the existence, severity, frequency, 
+                                or rates of problems associated with vaccines.
+                                </li><li>
+                                VAERS data are limited to vaccine adverse event reports received between 1990 and the most recent date for which data are available.
+                                </li><li>
+                                VAERS data do not represent all known safety information for a vaccine and should be interpreted in the context of other 
+                                scientific information.
+                                </li></ul>
+                                </p>]]></caveat>
+<caveat><![CDATA[]]></caveat>
+<caveat><![CDATA[Some items may have more than 1 occurrence in any single event report, 
+                                such as Symptoms, Vaccine Products,  Manufacturers, and Event Categories.
+                                If data are grouped by any of these items, then
+                                the number in the Events Reported column may exceed the total number of unique events.
+                                If percentages are shown, then the associated percentage of total unique event reports will exceed 100% in such cases.
+                                For example, the number of Symptoms mentioned is likely to exceed the number of events reported,
+                                because many reports include more than 1 Symptom. 
+                                When more than 1 Symptom occurs in a single report, then the percentage of Symptoms to unique events is more than 100%.
+                                <a href="/wonder/help/vaers.html#Suppress" target="WONDER_Help" onclick="setfocus('WONDER_Help')">More information.</a>]]></caveat>
+<caveat><![CDATA[Data contains VAERS reports processed as
+        of 03/27/2026. The VAERS data in WONDER
+        are updated monthly, yet the VAERS system receives
+        continuous updates including revisions and new reports for
+        preceding time periods. Duplicate event reports and/or
+        reports determined to be false are removed from VAERS.
+        <a href="/wonder/help/vaers.html#Reporting" target="WONDER_Help" onclick="setfocus('WONDER_Help')">More information.</a>]]></caveat>
+</caveats>
+</response>
+<message><![CDATA[VAERS data in CDC WONDER are updated every month.  Hence, results for the same query can change from month to month.]]></message>
+<message><![CDATA[These results are for 83,359 total events.]]></message>
+<tabs2>
+	<tab label="Request Form" status="closed" target="request" title="Click to see the request page"/>
+	<tab label="Results" status="open" target="results" title="Click to see the results table"/>
+	<tab label="Map" status="closed" target="map" title="Click to create maps"/>
+	<tab label="Chart" status="closed" target="chart" title="Click to create charts"/>
+	<tab label="Report" status="closed" target="report" title="Click to see or create special reports"/>
+	<tab label="About" status="closed" target="about" title="Information about this dataset"/>
+</tabs2>
+<thisfile>/wonder/templates/xsl/table_response.xsl</thisfile>
+</page>

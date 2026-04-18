@@ -68,6 +68,8 @@ biomcp search pathway -q "MAPK signaling" --limit 5
 biomcp search pathway -q "Pathways in cancer" --limit 5
 biomcp search protein -q kinase --limit 5
 biomcp search adverse-event --drug pembrolizumab --serious --limit 5
+biomcp search adverse-event "COVID-19 vaccine" --source all --limit 5
+biomcp search adverse-event "MMR vaccine" --source vaers --limit 5
 biomcp search all --gene BRAF --disease melanoma
 biomcp search all --keyword resistance --counts-only
 biomcp discover "chest pain"

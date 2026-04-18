@@ -595,7 +595,8 @@ Direct adverse-event search is useful for safety reconnaissance independent of d
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 out="$("$bin" search adverse-event -d ibuprofen --limit 3)"
 echo "$out" | mustmatch like "# Adverse Events: drug=ibuprofen"
-echo "$out" | mustmatch like "Total reports (OpenFDA)"
+echo "$out" | mustmatch like "Total reports (OpenFDA FAERS)"
+echo "$out" | mustmatch not like "## CDC VAERS Summary"
 ```
 
 ## FAERS JSON Next Commands
@@ -607,6 +608,8 @@ commands for the top report and the command-family reference.
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 json_out="$("$bin" --json search adverse-event -d ibuprofen --limit 3)"
 echo "$json_out" | mustmatch like '"next_commands":'
+echo "$json_out" | jq -e '.source == "all"' > /dev/null
+echo "$json_out" | jq -e '.vaers.status == "query_not_vaccine"' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get adverse-event .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list adverse-event")' > /dev/null
 ```

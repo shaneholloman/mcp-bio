@@ -16,6 +16,7 @@ DIRECT_SOURCE_MODULES = {
     "complexportal": "ComplexPortal",
     "cpic": "CPIC",
     "cvx": "CDC CVX/MVX",
+    "vaers": "CDC WONDER VAERS",
     "dgidb": "DGIdb",
     "disgenet": "DisGeNET",
     "ema": "EMA",

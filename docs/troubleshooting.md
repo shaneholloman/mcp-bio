@@ -68,15 +68,23 @@ biomcp search trial -c melanoma --source ctgov --limit 5
 biomcp search trial -c melanoma --source nci --limit 5
 ```
 
-## 4) OpenFDA FAERS / recall pagination limits
+## 4) OpenFDA FAERS / CDC WONDER VAERS / recall limits
 
-OpenFDA-backed searches are currently capped by BioMCP at `--limit <= 50` per request.
-If you need more data, page your own workflow with narrower queries and repeated commands.
+OpenFDA-backed adverse-event, recall, and device searches are currently capped
+by BioMCP at `--limit <= 50` per request. CDC WONDER VAERS is a separate
+aggregate-only path: use plain vaccine query text, avoid FAERS-only filters on
+that route, and use `biomcp health --apis-only` if the VAERS row looks
+unavailable.
 
 ```bash
 biomcp search adverse-event --drug pembrolizumab --limit 50
+biomcp search adverse-event "MMR vaccine" --source vaers --limit 10
 biomcp search adverse-event --type recall --classification "Class I" --limit 50
 ```
+
+If you use `--source all` with unsupported VAERS filters such as `--reaction`,
+BioMCP should keep the FAERS result and record the skipped VAERS status in JSON
+instead of failing the whole search.
 
 If you have an OpenFDA API key, export it to increase quota stability:
 

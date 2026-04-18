@@ -51,11 +51,23 @@ biomcp search adverse-event --drug <name> --outcome death --limit 10
 
 Do not write `biomcp drug adverse-events <name> --outcome ...`.
 
+Vaccine-focused aggregate safety summary:
+
+```bash
+biomcp search adverse-event "<vaccine name>" --source all --limit 10
+biomcp search adverse-event "<vaccine name>" --source vaers --limit 10
+```
+
+Use `--source vaers` when you specifically want the aggregate CDC WONDER VAERS
+summary; leave the default `--source all` path when you want FAERS plus VAERS
+for vaccine queries.
+
 Example:
 
 ```bash
 biomcp get drug pembrolizumab label interactions approvals
 biomcp drug adverse-events pembrolizumab
+biomcp search adverse-event "COVID-19 vaccine" --source all --limit 10
 ```
 
 ## Broad Gene-Disease Workflow

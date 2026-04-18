@@ -234,7 +234,9 @@ biomcp search protein -q kinase --all-species --limit 5
 ### Adverse event
 
 ```bash
-biomcp search adverse-event --drug pembrolizumab --serious --limit 5 --offset 0
+biomcp search adverse-event --drug pembrolizumab --source faers --serious --limit 5 --offset 0
+biomcp search adverse-event "COVID-19 vaccine" --source all --limit 5
+biomcp search adverse-event "MMR vaccine" --source vaers --limit 5
 biomcp search adverse-event --type device --manufacturer Medtronic --limit 5
 biomcp search adverse-event --type device --product-code PQP --limit 5
 ```

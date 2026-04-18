@@ -142,6 +142,7 @@ enum ProbeKind {
     AlphaGenomeConnect {
         env_var: &'static str,
     },
+    VaersQuery,
 }
 
 const HEALTH_SOURCES: &[SourceDescriptor] = &[
@@ -245,6 +246,11 @@ const HEALTH_SOURCES: &[SourceDescriptor] = &[
         probe: ProbeKind::Get {
             url: "https://api.fda.gov/drug/event.json?limit=1",
         },
+    },
+    SourceDescriptor {
+        api: "CDC WONDER VAERS",
+        affects: Some("vaccine adverse-event search for --source vaers|all"),
+        probe: ProbeKind::VaersQuery,
     },
     SourceDescriptor {
         api: "OncoKB",
@@ -852,6 +858,48 @@ async fn check_alphagenome_connect(
     }
 }
 
+async fn check_vaers_query(api: &str, affects: Option<&'static str>) -> ProbeOutcome {
+    let start = Instant::now();
+    let client = match crate::sources::vaers::VaersClient::new() {
+        Ok(client) => client,
+        Err(err) => {
+            return outcome(
+                health_row(
+                    api,
+                    "error".into(),
+                    api_error_latency(start, &err),
+                    affects,
+                    None,
+                ),
+                ProbeClass::Error,
+            );
+        }
+    };
+
+    match client.health_check().await {
+        Ok(()) => outcome(
+            health_row(
+                api,
+                "ok".into(),
+                format!("{}ms", start.elapsed().as_millis()),
+                None,
+                None,
+            ),
+            ProbeClass::Healthy,
+        ),
+        Err(err) => outcome(
+            health_row(
+                api,
+                "error".into(),
+                api_error_latency(start, &err),
+                affects,
+                None,
+            ),
+            ProbeClass::Error,
+        ),
+    }
+}
+
 fn local_data_is_stale(root: &Path, files: &[&str], stale_after: Duration) -> bool {
     files.iter().any(|file| {
         root.join(file)
@@ -1088,6 +1136,7 @@ async fn probe_source(client: reqwest::Client, source: &SourceDescriptor) -> Pro
         ProbeKind::AlphaGenomeConnect { env_var } => {
             check_alphagenome_connect(source.api, env_var, source.affects).await
         }
+        ProbeKind::VaersQuery => check_vaers_query(source.api, source.affects).await,
     }
 }
 
@@ -1348,7 +1397,7 @@ mod tests {
 
     use ssri::Integrity;
     use tokio::sync::MutexGuard;
-    use wiremock::matchers::{header, method, path};
+    use wiremock::matchers::{body_string_contains, header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     use super::{
@@ -1699,6 +1748,7 @@ mod tests {
                 "NCI CTS",
                 "Enrichr",
                 "OpenFDA",
+                "CDC WONDER VAERS",
                 "OncoKB",
                 "DisGeNET",
                 "AlphaGenome",
@@ -1734,6 +1784,41 @@ mod tests {
                 "cBioPortal",
             ]
         );
+    }
+
+    #[test]
+    fn probe_source_runs_vaers_query_against_fixture_server() {
+        const REACTIONS_RESPONSE_FIXTURE: &str =
+            include_str!("../../spec/fixtures/vaers/reactions-response.xml");
+
+        let _env_lock = env_lock();
+        block_on(async {
+            let server = MockServer::start().await;
+            let _vaers_env = set_env_var("BIOMCP_VAERS_BASE", Some(&server.uri()));
+            let source = health_sources()
+                .iter()
+                .find(|source| source.api == "CDC WONDER VAERS")
+                .expect("vaers health source");
+
+            Mock::given(method("POST"))
+                .and(path("/controller/datarequest/D8"))
+                .and(body_string_contains("request_xml="))
+                .and(body_string_contains("MMR"))
+                .respond_with(
+                    ResponseTemplate::new(200)
+                        .insert_header("content-type", "text/html; charset=ISO-8859-1")
+                        .set_body_raw(REACTIONS_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
+                )
+                .mount(&server)
+                .await;
+
+            let outcome = probe_source(reqwest::Client::new(), source).await;
+            assert_eq!(outcome.class, ProbeClass::Healthy);
+            assert_eq!(outcome.row.api, "CDC WONDER VAERS");
+            assert_eq!(outcome.row.status, "ok");
+            assert_eq!(outcome.row.affects, None);
+            assert_millisecond_latency(&outcome.row.latency);
+        });
     }
 
     #[test]

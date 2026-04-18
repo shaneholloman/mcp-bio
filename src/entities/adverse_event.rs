@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use tracing::warn;
 
 use crate::entities::SearchPage;
 use crate::entities::drug::resolve_trial_aliases;
@@ -9,7 +10,9 @@ use crate::sources::clinicaltrials::{
     CTGOV_ADVERSE_EVENT_SEARCH_FIELDS, ClinicalTrialsClient, CtGovAdverseEvent, CtGovSearchParams,
     CtGovStudy,
 };
+use crate::sources::cvx::{CvxClient, CvxSyncMode, CvxVaccineCandidate};
 use crate::sources::openfda::OpenFdaClient;
+use crate::sources::vaers::VaersClient;
 use crate::transform;
 use crate::utils::date::validate_since;
 
@@ -140,6 +143,89 @@ impl AdverseEventQueryType {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AdverseEventSourceFilter {
+    Faers,
+    Vaers,
+    All,
+}
+
+impl AdverseEventSourceFilter {
+    pub fn from_flag(value: &str) -> Result<Self, BioMcpError> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "" | "all" => Ok(Self::All),
+            "faers" => Ok(Self::Faers),
+            "vaers" => Ok(Self::Vaers),
+            other => Err(BioMcpError::InvalidArgument(format!(
+                "--source must be one of: faers, vaers, all (got {other})"
+            ))),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VaersMatchedVaccine {
+    pub display_name: String,
+    pub wonder_code: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cvx_codes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VaersReactionCount {
+    pub reaction: String,
+    pub count: usize,
+    pub percentage: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VaersAgeBucket {
+    pub age_bucket: String,
+    pub reports: usize,
+    pub percentage: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VaersSearchSummary {
+    pub total_reports: usize,
+    pub serious_reports: usize,
+    pub non_serious_reports: usize,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub age_distribution: Vec<VaersAgeBucket>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub top_reactions: Vec<VaersReactionCount>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VaersSearchStatus {
+    Ok,
+    Empty,
+    QueryNotVaccine,
+    UnsupportedFilters,
+    UnmappedVaccine,
+    Unavailable,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VaersSearchPayload {
+    pub status: VaersSearchStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub matched_vaccine: Option<VaersMatchedVaccine>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary: Option<VaersSearchSummary>,
+}
+
+#[derive(Debug, Clone)]
+pub struct AdverseEventSourceSearch {
+    pub source: AdverseEventSourceFilter,
+    pub faers: Option<FaersSearchStatus>,
+    pub vaers: Option<VaersSearchPayload>,
+}
+
 const ADVERSE_EVENT_SECTION_REACTIONS: &str = "reactions";
 const ADVERSE_EVENT_SECTION_OUTCOMES: &str = "outcomes";
 const ADVERSE_EVENT_SECTION_CONCOMITANT: &str = "concomitant";
@@ -157,6 +243,42 @@ pub const ADVERSE_EVENT_SECTION_NAMES: &[&str] = &[
 const TRIAL_ADVERSE_EVENT_LIMIT: usize = 20;
 const CTGOV_ADVERSE_EVENT_PAGE_SIZE: usize = 100;
 const CTGOV_ADVERSE_EVENT_PAGE_CAP: usize = 20;
+const VAERS_TOP_REACTION_LIMIT: usize = 10;
+
+struct VaersBridgeEntry {
+    display_name: &'static str,
+    wonder_code: &'static str,
+    cvx_codes: &'static [&'static str],
+    query_terms: &'static [&'static str],
+}
+
+const VAERS_BRIDGE: &[VaersBridgeEntry] = &[
+    VaersBridgeEntry {
+        display_name: "MMR",
+        wonder_code: "MMR",
+        cvx_codes: &["03", "94"],
+        query_terms: &[
+            "mmr",
+            "mmr vaccine",
+            "measles mumps rubella",
+            "measles mumps rubella vaccine",
+            "measles mumps and rubella",
+            "measles mumps and rubella vaccine",
+        ],
+    },
+    VaersBridgeEntry {
+        display_name: "COVID-19 vaccine",
+        wonder_code: "COVID19",
+        cvx_codes: &["208", "217"],
+        query_terms: &[
+            "covid 19 vaccine",
+            "covid19 vaccine",
+            "covid vaccine",
+            "sars cov 2 vaccine",
+            "comirnaty",
+        ],
+    },
+];
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct AdverseEventSections {
@@ -527,6 +649,374 @@ fn empty_search_response() -> AdverseEventSearchResponse {
     AdverseEventSearchResponse {
         summary: empty_search_summary(),
         results: Vec::new(),
+    }
+}
+
+impl VaersSearchPayload {
+    fn status_only(status: VaersSearchStatus, message: impl Into<String>) -> Self {
+        Self {
+            status,
+            message: Some(message.into()),
+            matched_vaccine: None,
+            summary: None,
+        }
+    }
+
+    fn ok(matched_vaccine: VaersMatchedVaccine, summary: VaersSearchSummary) -> Self {
+        Self {
+            status: VaersSearchStatus::Ok,
+            message: None,
+            matched_vaccine: Some(matched_vaccine),
+            summary: Some(summary),
+        }
+    }
+}
+
+enum ResolvedVaersVaccine {
+    Matched(VaersMatchedVaccine),
+    QueryNotVaccine(String),
+    Unmapped(String),
+}
+
+fn unsupported_vaers_filter_names(filters: &AdverseEventSearchFilters) -> Vec<&'static str> {
+    let mut out = Vec::new();
+    if filters
+        .reaction
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+    {
+        out.push("--reaction");
+    }
+    if filters
+        .outcome
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+    {
+        out.push("--outcome");
+    }
+    if filters
+        .serious
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+    {
+        out.push("--serious");
+    }
+    if filters
+        .since
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+    {
+        out.push("--date-from");
+    }
+    if filters
+        .date_to
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+    {
+        out.push("--date-to");
+    }
+    if filters.suspect_only {
+        out.push("--suspect-only");
+    }
+    if filters
+        .sex
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+    {
+        out.push("--sex");
+    }
+    if filters.age_min.is_some() {
+        out.push("--age-min");
+    }
+    if filters.age_max.is_some() {
+        out.push("--age-max");
+    }
+    if filters
+        .reporter
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+    {
+        out.push("--reporter");
+    }
+    out
+}
+
+fn normalize_vaccine_match_key(value: &str) -> Option<String> {
+    let mut normalized = String::new();
+    let mut last_was_space = true;
+    for ch in value.trim().chars() {
+        let mapped = if ch.is_ascii_alphanumeric() {
+            ch.to_ascii_lowercase()
+        } else {
+            ' '
+        };
+        if mapped == ' ' {
+            if !last_was_space {
+                normalized.push(mapped);
+            }
+            last_was_space = true;
+        } else {
+            normalized.push(mapped);
+            last_was_space = false;
+        }
+    }
+    let trimmed = normalized.trim().to_string();
+    (!trimmed.is_empty()).then_some(trimmed)
+}
+
+fn query_looks_like_vaccine(normalized_query: &str, candidates: &[CvxVaccineCandidate]) -> bool {
+    !candidates.is_empty()
+        || normalized_query == "mmr"
+        || normalized_query.contains("vaccine")
+        || normalized_query.contains("vaccination")
+        || normalized_query.contains("booster")
+        || normalized_query.contains("shot")
+}
+
+fn dedupe_cvx_codes(codes: impl IntoIterator<Item = String>) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut out = Vec::new();
+    for code in codes {
+        let trimmed = code.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if seen.insert(trimmed.to_string()) {
+            out.push(trimmed.to_string());
+        }
+    }
+    out
+}
+
+fn entry_matches_query(entry: &VaersBridgeEntry, normalized_query: &str) -> bool {
+    entry.query_terms.contains(&normalized_query)
+}
+
+fn matched_vaccine_from_bridge(
+    normalized_query: &str,
+    candidates: &[CvxVaccineCandidate],
+) -> Option<VaersMatchedVaccine> {
+    for entry in VAERS_BRIDGE {
+        let candidate_codes = candidates
+            .iter()
+            .filter(|candidate| entry.cvx_codes.contains(&candidate.cvx_code.as_str()))
+            .map(|candidate| candidate.cvx_code.clone())
+            .collect::<Vec<_>>();
+
+        if entry_matches_query(entry, normalized_query) || !candidate_codes.is_empty() {
+            let cvx_codes = if candidate_codes.is_empty() {
+                entry
+                    .cvx_codes
+                    .iter()
+                    .map(|code| (*code).to_string())
+                    .collect::<Vec<_>>()
+            } else {
+                dedupe_cvx_codes(candidate_codes)
+            };
+            return Some(VaersMatchedVaccine {
+                display_name: entry.display_name.to_string(),
+                wonder_code: entry.wonder_code.to_string(),
+                cvx_codes,
+            });
+        }
+    }
+    None
+}
+
+async fn lookup_vaccine_candidates(query: &str) -> Vec<CvxVaccineCandidate> {
+    match CvxClient::ready(CvxSyncMode::Auto).await {
+        Ok(client) => match client.lookup_vaccine_candidates(query) {
+            Ok(candidates) => candidates,
+            Err(err) => {
+                warn!(query = %query, "CDC CVX/MVX vaccine lookup unavailable for VAERS bridge: {err}");
+                Vec::new()
+            }
+        },
+        Err(err) => {
+            warn!(query = %query, "CDC CVX/MVX auto-sync unavailable for VAERS bridge: {err}");
+            Vec::new()
+        }
+    }
+}
+
+async fn resolve_vaers_vaccine(query: &str) -> ResolvedVaersVaccine {
+    let normalized_query = normalize_vaccine_match_key(query).unwrap_or_default();
+    let candidates = lookup_vaccine_candidates(query).await;
+
+    if let Some(matched) = matched_vaccine_from_bridge(&normalized_query, &candidates) {
+        return ResolvedVaersVaccine::Matched(matched);
+    }
+
+    if query_looks_like_vaccine(&normalized_query, &candidates) {
+        ResolvedVaersVaccine::Unmapped(
+            "VAERS aggregate search does not yet map this vaccine family to a CDC WONDER code."
+                .to_string(),
+        )
+    } else {
+        ResolvedVaersVaccine::QueryNotVaccine(
+            "VAERS is vaccine-only; this query did not resolve to a vaccine identity.".to_string(),
+        )
+    }
+}
+
+fn vaers_summary_from_tables(
+    matched_vaccine: VaersMatchedVaccine,
+    tables: crate::sources::vaers::VaersSummaryTables,
+) -> VaersSearchPayload {
+    let mut top_reactions = tables
+        .reactions
+        .into_iter()
+        .map(|row| VaersReactionCount {
+            reaction: row.label,
+            count: row.count,
+            percentage: row.percentage,
+        })
+        .collect::<Vec<_>>();
+    top_reactions.sort_by(|a, b| {
+        b.count
+            .cmp(&a.count)
+            .then_with(|| a.reaction.cmp(&b.reaction))
+    });
+    top_reactions.truncate(VAERS_TOP_REACTION_LIMIT);
+
+    let age_distribution = tables
+        .age_distribution
+        .into_iter()
+        .map(|row| VaersAgeBucket {
+            age_bucket: row.label,
+            reports: row.count,
+            percentage: row.percentage,
+        })
+        .collect::<Vec<_>>();
+
+    let summary = VaersSearchSummary {
+        total_reports: tables.total_reports,
+        serious_reports: tables.serious_reports,
+        non_serious_reports: tables.non_serious_reports,
+        age_distribution,
+        top_reactions,
+    };
+
+    if summary.total_reports == 0 {
+        VaersSearchPayload {
+            status: VaersSearchStatus::Empty,
+            message: Some("CDC VAERS returned no aggregate reports for this vaccine query.".into()),
+            matched_vaccine: Some(matched_vaccine),
+            summary: Some(summary),
+        }
+    } else {
+        VaersSearchPayload::ok(matched_vaccine, summary)
+    }
+}
+
+async fn fetch_vaers_payload(query: &str) -> Result<VaersSearchPayload, BioMcpError> {
+    match resolve_vaers_vaccine(query).await {
+        ResolvedVaersVaccine::Matched(matched_vaccine) => {
+            let client = VaersClient::new()?;
+            let tables = client.summary(&matched_vaccine.wonder_code).await?;
+            Ok(vaers_summary_from_tables(matched_vaccine, tables))
+        }
+        ResolvedVaersVaccine::QueryNotVaccine(message) => Ok(VaersSearchPayload::status_only(
+            VaersSearchStatus::QueryNotVaccine,
+            message,
+        )),
+        ResolvedVaersVaccine::Unmapped(message) => Ok(VaersSearchPayload::status_only(
+            VaersSearchStatus::UnmappedVaccine,
+            message,
+        )),
+    }
+}
+
+fn explicit_vaers_filter_error(unsupported: &[&str]) -> BioMcpError {
+    BioMcpError::InvalidArgument(format!(
+        "--source vaers only supports the vaccine query text in this ticket; unsupported flags: {}",
+        unsupported.join(", ")
+    ))
+}
+
+pub async fn search_with_source(
+    filters: &AdverseEventSearchFilters,
+    source: AdverseEventSourceFilter,
+    limit: usize,
+    offset: usize,
+) -> Result<AdverseEventSourceSearch, BioMcpError> {
+    let query = filters
+        .drug
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            BioMcpError::InvalidArgument(
+                "drug name is required. Example: biomcp search adverse-event \"MMR vaccine\""
+                    .into(),
+            )
+        })?;
+    let unsupported = unsupported_vaers_filter_names(filters);
+
+    match source {
+        AdverseEventSourceFilter::Faers => Ok(AdverseEventSourceSearch {
+            source,
+            faers: Some(search_with_status(filters, limit, offset).await?),
+            vaers: None,
+        }),
+        AdverseEventSourceFilter::Vaers => {
+            if offset > 0 {
+                return Err(BioMcpError::InvalidArgument(
+                    "--source vaers does not support --offset > 0".into(),
+                ));
+            }
+            if !unsupported.is_empty() {
+                return Err(explicit_vaers_filter_error(&unsupported));
+            }
+
+            let vaers = fetch_vaers_payload(query).await.map_err(|err| {
+                BioMcpError::SourceUnavailable {
+                    source_name: "CDC VAERS".into(),
+                    reason: err.to_string(),
+                    suggestion: format!(
+                        "Try: biomcp health --apis-only or biomcp search adverse-event {} --source faers",
+                        crate::render::markdown::quote_arg(query)
+                    ),
+                }
+            })?;
+            Ok(AdverseEventSourceSearch {
+                source,
+                faers: None,
+                vaers: Some(vaers),
+            })
+        }
+        AdverseEventSourceFilter::All => {
+            if unsupported.is_empty() {
+                let (faers_result, vaers_result) = tokio::join!(
+                    search_with_status(filters, limit, offset),
+                    fetch_vaers_payload(query)
+                );
+                let vaers = match vaers_result {
+                    Ok(payload) => payload,
+                    Err(err) => VaersSearchPayload::status_only(
+                        VaersSearchStatus::Unavailable,
+                        format!("CDC VAERS unavailable: {err}"),
+                    ),
+                };
+                Ok(AdverseEventSourceSearch {
+                    source,
+                    faers: Some(faers_result?),
+                    vaers: Some(vaers),
+                })
+            } else {
+                Ok(AdverseEventSourceSearch {
+                    source,
+                    faers: Some(search_with_status(filters, limit, offset).await?),
+                    vaers: Some(VaersSearchPayload::status_only(
+                        VaersSearchStatus::UnsupportedFilters,
+                        format!(
+                            "CDC VAERS skipped because these filters are unsupported for aggregate vaccine search: {}",
+                            unsupported.join(", ")
+                        ),
+                    )),
+                })
+            }
+        }
     }
 }
 
@@ -1280,8 +1770,23 @@ pub fn recall_query_summary(filters: &RecallSearchFilters) -> String {
 mod tests {
     use super::*;
     use crate::test_support::set_env_var;
-    use wiremock::matchers::{method, path, query_param};
+    use wiremock::matchers::{body_string_contains, method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    const VAERS_REACTIONS_RESPONSE_FIXTURE: &str =
+        include_str!("../../spec/fixtures/vaers/reactions-response.xml");
+    const VAERS_SERIOUS_RESPONSE_FIXTURE: &str =
+        include_str!("../../spec/fixtures/vaers/serious-response.xml");
+    const VAERS_AGE_RESPONSE_FIXTURE: &str =
+        include_str!("../../spec/fixtures/vaers/age-response.xml");
+
+    fn cvx_fixture_dir() -> String {
+        std::env::current_dir()
+            .expect("repo root")
+            .join("spec/fixtures/cvx")
+            .display()
+            .to_string()
+    }
 
     #[test]
     fn build_openfda_query_requires_drug_name() {
@@ -1363,6 +1868,12 @@ mod tests {
     #[test]
     fn query_type_rejects_unknown_flag() {
         let err = AdverseEventQueryType::from_flag("foo").unwrap_err();
+        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
+    }
+
+    #[test]
+    fn source_filter_rejects_unknown_flag() {
+        let err = AdverseEventSourceFilter::from_flag("foo").unwrap_err();
         assert!(matches!(err, BioMcpError::InvalidArgument(_)));
     }
 
@@ -1469,6 +1980,162 @@ mod tests {
                 assert!(response.results.is_empty());
             }
         }
+    }
+
+    #[tokio::test]
+    async fn search_with_source_vaers_rejects_offset() {
+        let filters = AdverseEventSearchFilters {
+            drug: Some("MMR vaccine".into()),
+            ..Default::default()
+        };
+
+        let err = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 1)
+            .await
+            .expect_err("vaers search should reject offset");
+        assert!(
+            err.to_string()
+                .contains("--source vaers does not support --offset > 0")
+        );
+    }
+
+    #[tokio::test]
+    async fn search_with_source_vaers_rejects_unsupported_filters() {
+        let filters = AdverseEventSearchFilters {
+            drug: Some("MMR vaccine".into()),
+            reaction: Some("fever".into()),
+            ..Default::default()
+        };
+
+        let err = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 0)
+            .await
+            .expect_err("vaers search should reject unsupported filters");
+        assert!(err.to_string().contains("--reaction"));
+    }
+
+    #[tokio::test]
+    async fn search_with_source_vaers_returns_query_not_vaccine_without_upstream_call() {
+        let _env_lock = crate::test_support::env_lock().lock().await;
+        let _cvx_env = set_env_var("BIOMCP_CVX_DIR", Some(&cvx_fixture_dir()));
+        let filters = AdverseEventSearchFilters {
+            drug: Some("ibuprofen".into()),
+            ..Default::default()
+        };
+
+        let response = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 0)
+            .await
+            .expect("vaers search response");
+        let vaers = response.vaers.expect("vaers payload");
+
+        assert_eq!(response.source, AdverseEventSourceFilter::Vaers);
+        assert_eq!(vaers.status, VaersSearchStatus::QueryNotVaccine);
+        assert!(vaers.message.unwrap_or_default().contains("vaccine-only"));
+        assert!(vaers.summary.is_none());
+    }
+
+    #[tokio::test]
+    async fn search_with_source_all_skips_vaers_for_unsupported_filters() {
+        let _env_lock = crate::test_support::env_lock().lock().await;
+        let server = MockServer::start().await;
+        let filters = AdverseEventSearchFilters {
+            drug: Some("COVID-19 vaccine".into()),
+            reaction: Some("fever".into()),
+            ..Default::default()
+        };
+        let query = build_openfda_query(&filters).unwrap();
+        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/drug/event.json"))
+            .and(query_param("search", query.as_str()))
+            .and(query_param("limit", "5"))
+            .and(query_param("skip", "0"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "error": {"code": "NOT_FOUND", "message": "No matches found!"}
+            })))
+            .mount(&server)
+            .await;
+
+        let response = search_with_source(&filters, AdverseEventSourceFilter::All, 5, 0)
+            .await
+            .expect("combined source response");
+        let vaers = response.vaers.expect("vaers payload");
+
+        assert_eq!(response.source, AdverseEventSourceFilter::All);
+        assert!(matches!(response.faers, Some(FaersSearchStatus::NotFound)));
+        assert_eq!(vaers.status, VaersSearchStatus::UnsupportedFilters);
+        assert!(vaers.message.unwrap_or_default().contains("--reaction"));
+    }
+
+    #[tokio::test]
+    async fn search_with_source_vaers_returns_summary_for_mmr() {
+        let _env_lock = crate::test_support::env_lock().lock().await;
+        let server = MockServer::start().await;
+        let _vaers_env = set_env_var("BIOMCP_VAERS_BASE", Some(&server.uri()));
+        let _cvx_env = set_env_var("BIOMCP_CVX_DIR", Some(&cvx_fixture_dir()));
+        let filters = AdverseEventSearchFilters {
+            drug: Some("MMR vaccine".into()),
+            ..Default::default()
+        };
+
+        Mock::given(method("POST"))
+            .and(path("/controller/datarequest/D8"))
+            .and(body_string_contains("D8.V13-level2"))
+            .and(body_string_contains("MMR"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
+                    .set_body_raw(
+                        VAERS_REACTIONS_RESPONSE_FIXTURE,
+                        "text/html; charset=ISO-8859-1",
+                    ),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/controller/datarequest/D8"))
+            .and(body_string_contains("D8.V10"))
+            .and(body_string_contains("MMR"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
+                    .set_body_raw(
+                        VAERS_SERIOUS_RESPONSE_FIXTURE,
+                        "text/html; charset=ISO-8859-1",
+                    ),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/controller/datarequest/D8"))
+            .and(body_string_contains("D8.V1"))
+            .and(body_string_contains("MMR"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
+                    .set_body_raw(VAERS_AGE_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
+            )
+            .mount(&server)
+            .await;
+
+        let response = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 0)
+            .await
+            .expect("vaers search response");
+        let vaers = response.vaers.expect("vaers payload");
+        let summary = vaers.summary.expect("vaers summary");
+        let matched = vaers.matched_vaccine.expect("matched vaccine");
+
+        assert_eq!(response.source, AdverseEventSourceFilter::Vaers);
+        assert_eq!(vaers.status, VaersSearchStatus::Ok);
+        assert_eq!(matched.display_name, "MMR");
+        assert_eq!(matched.wonder_code, "MMR");
+        assert_eq!(matched.cvx_codes, vec!["03".to_string(), "94".to_string()]);
+        assert_eq!(summary.total_reports, 83_359);
+        assert_eq!(summary.serious_reports, 5_795);
+        assert_eq!(summary.non_serious_reports, 77_564);
+        assert!(!summary.age_distribution.is_empty());
+        assert!(!summary.top_reactions.is_empty());
+        assert!(summary.top_reactions.iter().all(|row| row.count > 0));
+        assert!(summary.top_reactions.len() <= 10);
     }
 
     #[tokio::test]
