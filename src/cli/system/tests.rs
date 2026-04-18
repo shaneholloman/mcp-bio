@@ -1,6 +1,6 @@
 use clap::{CommandFactory, Parser};
 
-use super::{CvxCommand, EmaCommand, GtrCommand, WhoCommand};
+use super::{CvxCommand, EmaCommand, GtrCommand, WhoCommand, WhoIvdCommand};
 use crate::cli::{Cli, Commands, execute};
 
 fn parse_built_cli<I, T>(args: I) -> Cli
@@ -160,6 +160,49 @@ fn gtr_sync_help_describes_diagnostic_bundle_refresh() {
     let help = String::from_utf8(help).expect("help should be utf-8");
 
     assert!(help.contains("local NCBI GTR diagnostic bundle"));
+}
+
+#[test]
+fn who_ivd_sync_parses_subcommand() {
+    let cli = parse_built_cli(["biomcp", "who-ivd", "sync"]);
+    assert!(matches!(
+        cli.command,
+        Commands::WhoIvd {
+            cmd: WhoIvdCommand::Sync
+        }
+    ));
+}
+
+#[test]
+fn who_ivd_help_mentions_sync_example() {
+    let mut command = Cli::command();
+    let who_ivd = command
+        .find_subcommand_mut("who-ivd")
+        .expect("who-ivd subcommand should exist");
+    let mut help = Vec::new();
+    who_ivd
+        .write_long_help(&mut help)
+        .expect("who-ivd help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("biomcp who-ivd sync"));
+}
+
+#[test]
+fn who_ivd_sync_help_describes_diagnostic_csv_refresh() {
+    let mut command = Cli::command();
+    let who_ivd = command
+        .find_subcommand_mut("who-ivd")
+        .expect("who-ivd subcommand should exist");
+    let sync = who_ivd
+        .find_subcommand_mut("sync")
+        .expect("who-ivd sync subcommand should exist");
+    let mut help = Vec::new();
+    sync.write_long_help(&mut help)
+        .expect("who-ivd sync help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("WHO Prequalified IVD diagnostic CSV export"));
 }
 
 #[test]

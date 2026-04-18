@@ -13,6 +13,7 @@ BLOCKED_FAMILIES = {
     "cvx",
     "ema",
     "gtr",
+    "who-ivd",
     "mcp",
     "serve",
     "serve-http",
@@ -36,6 +37,7 @@ EXPECTED_SKILL_BLOCKED_SUBCOMMANDS = {"install"}
 EXPECTED_DESCRIPTION_BLOCKED_TERMS = {
     "`ema sync`",
     "`gtr sync`",
+    "`who-ivd sync`",
     "`skill install`",
     "`uninstall`",
     "`update [--check]`",

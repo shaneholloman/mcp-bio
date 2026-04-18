@@ -478,6 +478,11 @@ mod tests {
         ]));
         assert!(!is_allowed_mcp_command(&[
             "biomcp".into(),
+            "who-ivd".into(),
+            "sync".into()
+        ]));
+        assert!(!is_allowed_mcp_command(&[
+            "biomcp".into(),
             "study".into(),
             "download".into(),
             "msk_impact_2017".into()

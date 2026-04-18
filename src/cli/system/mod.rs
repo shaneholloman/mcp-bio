@@ -33,6 +33,12 @@ pub enum GtrCommand {
     Sync,
 }
 
+#[derive(Subcommand, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WhoIvdCommand {
+    /// Force refresh the WHO Prequalified IVD diagnostic CSV export
+    Sync,
+}
+
 #[derive(Args, Debug)]
 pub struct ServeHttpArgs {
     /// Host address to bind
@@ -95,7 +101,7 @@ pub struct VersionArgs {
 mod dispatch;
 pub(crate) use self::dispatch::{
     handle_batch, handle_cvx, handle_ema, handle_enrich, handle_gtr, handle_uninstall,
-    handle_version, handle_who,
+    handle_version, handle_who, handle_who_ivd,
 };
 
 #[cfg(test)]

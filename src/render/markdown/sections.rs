@@ -107,9 +107,11 @@ pub(super) fn section_description(entity: &str, section: &str) -> &'static str {
         ("article", "annotations") => "PubTator normalized entity mentions",
         ("article", "fulltext") => "cached full text when available",
         ("article", "tldr") => "Semantic Scholar summary and influence",
-        ("diagnostic", "genes") => "joined gene names from GTR detail links",
-        ("diagnostic", "conditions") => "joined condition names from GTR detail links",
-        ("diagnostic", "methods") => "GTR methods reported for this diagnostic test",
+        ("diagnostic", "genes") => "diagnostic-associated gene names",
+        ("diagnostic", "conditions") => {
+            "condition, pathogen, or marker names reported for this diagnostic"
+        }
+        ("diagnostic", "methods") => "reported testing methods for this diagnostic",
         ("disease", "genes") => "associated genes",
         ("disease", "pathways") => "pathways from associated genes",
         ("disease", "phenotypes") => "HPO phenotype annotations",
@@ -204,6 +206,12 @@ pub(crate) fn diagnostic_next_commands(
         &diagnostic.accession,
         &sections_diagnostic(diagnostic, requested_sections),
     );
+    if out.is_empty() && is_section_only_requested(requested_sections) {
+        let accession = quote_arg(&diagnostic.accession);
+        if !accession.is_empty() {
+            out.push(format!("biomcp get diagnostic {accession}"));
+        }
+    }
     out.extend(related_diagnostic(diagnostic));
     dedupe_markdown_commands(out)
 }
@@ -299,7 +307,7 @@ pub(super) fn sections_diagnostic(diagnostic: &Diagnostic, requested: &[String])
     }
     sections_for(
         requested,
-        crate::entities::diagnostic::DIAGNOSTIC_SECTION_NAMES,
+        crate::entities::diagnostic::supported_diagnostic_sections_for_source(&diagnostic.source),
     )
 }
 

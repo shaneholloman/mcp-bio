@@ -26,6 +26,7 @@ pub(in crate::cli) async fn handle_search(
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
     let filters = crate::entities::diagnostic::DiagnosticSearchFilters {
+        source: args.source.into(),
         gene: args.gene,
         disease: args.disease,
         test_type: args.test_type,

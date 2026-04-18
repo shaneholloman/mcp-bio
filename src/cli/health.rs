@@ -512,6 +512,8 @@ const CVX_LOCAL_DATA_AFFECTS: &str = "EMA vaccine identity bridge for plain-name
 const WHO_LOCAL_DATA_AFFECTS: &str = "default plain-name drug search plus search/get drug --region who|all and WHO regulatory sections";
 const GTR_LOCAL_DATA_AFFECTS: &str =
     "search/get diagnostic and local GTR-backed diagnostic routing";
+const WHO_IVD_LOCAL_DATA_AFFECTS: &str =
+    "search/get diagnostic and local WHO IVD-backed infectious-disease diagnostic routing";
 
 fn health_sources() -> &'static [SourceDescriptor] {
     HEALTH_SOURCES
@@ -1060,6 +1062,24 @@ fn check_gtr_local_data() -> ProbeOutcome {
     gtr_local_data_outcome(&root, env_configured)
 }
 
+fn who_ivd_local_data_outcome(root: &Path, env_configured: bool) -> ProbeOutcome {
+    local_data_outcome(
+        "WHO IVD local data",
+        root,
+        env_configured,
+        crate::sources::who_ivd::WHO_IVD_REQUIRED_FILES,
+        crate::sources::who_ivd::WHO_IVD_STALE_AFTER,
+        WHO_IVD_LOCAL_DATA_AFFECTS,
+        crate::sources::who_ivd::who_ivd_missing_files,
+    )
+}
+
+fn check_who_ivd_local_data() -> ProbeOutcome {
+    let env_configured = configured_key("BIOMCP_WHO_IVD_DIR").is_some();
+    let root = crate::sources::who_ivd::resolve_who_ivd_root();
+    who_ivd_local_data_outcome(&root, env_configured)
+}
+
 async fn probe_source(client: reqwest::Client, source: &SourceDescriptor) -> ProbeOutcome {
     match source.probe {
         ProbeKind::Get { url } => check_get(client, source.api, url, source.affects).await,
@@ -1296,6 +1316,7 @@ pub async fn check(apis_only: bool) -> Result<HealthReport, BioMcpError> {
         outcomes.push(check_cvx_local_data());
         outcomes.push(check_who_local_data());
         outcomes.push(check_gtr_local_data());
+        outcomes.push(check_who_ivd_local_data());
         outcomes.push(check_cache_dir().await);
         outcomes.push(check_cache_limits().await);
     }
@@ -1402,10 +1423,11 @@ mod tests {
 
     use super::{
         CVX_LOCAL_DATA_AFFECTS, EMA_LOCAL_DATA_AFFECTS, GTR_LOCAL_DATA_AFFECTS, HealthReport,
-        HealthRow, ProbeClass, ProbeKind, ProbeOutcome, SourceDescriptor, WHO_LOCAL_DATA_AFFECTS,
-        affects_for_api, check_cache_dir, check_cache_limits_with, cvx_local_data_outcome,
-        ema_local_data_outcome, gtr_local_data_outcome, health_sources, probe_cache_dir,
-        probe_source, report_from_outcomes, who_local_data_outcome,
+        HealthRow, ProbeClass, ProbeKind, ProbeOutcome, SourceDescriptor,
+        WHO_IVD_LOCAL_DATA_AFFECTS, WHO_LOCAL_DATA_AFFECTS, affects_for_api, check_cache_dir,
+        check_cache_limits_with, cvx_local_data_outcome, ema_local_data_outcome,
+        gtr_local_data_outcome, health_sources, probe_cache_dir, probe_source,
+        report_from_outcomes, who_ivd_local_data_outcome, who_local_data_outcome,
     };
     use crate::cache::{
         CacheBlob, CacheConfigOrigins, CacheEntry, CachePlannerError, CacheSnapshot, ConfigOrigin,
@@ -1488,6 +1510,18 @@ mod tests {
                 .expect("write GTR tsv fixture"),
                 other => panic!("unexpected GTR fixture file: {other}"),
             }
+        }
+    }
+
+    fn write_who_ivd_files(root: &Path, files: &[&str]) {
+        for file in files {
+            let bytes: &[u8] = match *file {
+                crate::sources::who_ivd::WHO_IVD_CSV_FILE => {
+                    b"Product name,Product Code,WHO Product ID,Assay Format,Regulatory Version,Manufacturer name,Pathogen/Disease/Marker,Year prequalification\n"
+                }
+                other => panic!("unexpected WHO IVD fixture file: {other}"),
+            };
+            std::fs::write(root.join(file), bytes).expect("write WHO IVD fixture file");
         }
     }
 
@@ -2145,6 +2179,88 @@ mod tests {
         assert_eq!(outcome.class, ProbeClass::Error);
         assert_eq!(outcome.row.status, "error (missing: who_vaccines.csv)");
         assert_eq!(outcome.row.affects.as_deref(), Some(WHO_LOCAL_DATA_AFFECTS));
+    }
+
+    #[test]
+    fn who_ivd_local_data_not_configured_when_default_root_is_empty() {
+        let root = TempDirGuard::new("health");
+
+        let outcome = who_ivd_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Excluded);
+        assert_eq!(
+            outcome.row.api,
+            format!("WHO IVD local data ({})", root.path().display())
+        );
+        assert_eq!(outcome.row.status, "not configured");
+        assert_eq!(
+            outcome.row.affects.as_deref(),
+            Some(WHO_IVD_LOCAL_DATA_AFFECTS)
+        );
+    }
+
+    #[test]
+    fn who_ivd_local_data_errors_when_env_root_is_missing_file() {
+        let root = TempDirGuard::new("health");
+
+        let outcome = who_ivd_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Error);
+        assert_eq!(
+            outcome.row.status,
+            format!(
+                "error (missing: {})",
+                crate::sources::who_ivd::WHO_IVD_REQUIRED_FILES.join(", ")
+            )
+        );
+        assert_eq!(
+            outcome.row.affects.as_deref(),
+            Some(WHO_IVD_LOCAL_DATA_AFFECTS)
+        );
+    }
+
+    #[test]
+    fn who_ivd_local_data_reports_available_when_default_root_is_complete() {
+        let root = TempDirGuard::new("health");
+        write_who_ivd_files(root.path(), crate::sources::who_ivd::WHO_IVD_REQUIRED_FILES);
+
+        let outcome = who_ivd_local_data_outcome(root.path(), false);
+
+        assert_eq!(outcome.class, ProbeClass::Healthy);
+        assert_eq!(
+            outcome.row.api,
+            format!("WHO IVD local data ({})", root.path().display())
+        );
+        assert_eq!(outcome.row.status, "available (default path)");
+        assert_eq!(outcome.row.affects, None);
+    }
+
+    #[test]
+    fn who_ivd_local_data_reports_configured_when_env_root_is_complete() {
+        let root = TempDirGuard::new("health");
+        write_who_ivd_files(root.path(), crate::sources::who_ivd::WHO_IVD_REQUIRED_FILES);
+
+        let outcome = who_ivd_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Healthy);
+        assert_eq!(outcome.row.status, "configured");
+        assert_eq!(outcome.row.affects, None);
+    }
+
+    #[test]
+    fn who_ivd_local_data_reports_configured_stale_when_env_root_is_complete_but_old() {
+        let root = TempDirGuard::new("health");
+        write_who_ivd_files(root.path(), crate::sources::who_ivd::WHO_IVD_REQUIRED_FILES);
+        set_stale_mtime(&root.path().join(crate::sources::who_ivd::WHO_IVD_CSV_FILE));
+
+        let outcome = who_ivd_local_data_outcome(root.path(), true);
+
+        assert_eq!(outcome.class, ProbeClass::Warning);
+        assert_eq!(outcome.row.status, "configured (stale)");
+        assert_eq!(
+            outcome.row.affects.as_deref(),
+            Some(WHO_IVD_LOCAL_DATA_AFFECTS)
+        );
     }
 
     #[test]

@@ -1,9 +1,24 @@
 //! Diagnostic markdown renderers.
 
 use super::*;
+use serde::Serialize;
 
 #[cfg(test)]
 mod tests;
+
+#[derive(Debug, Serialize)]
+struct DiagnosticSearchRow<'a> {
+    accession: &'a str,
+    name: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    test_type: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    manufacturer_or_lab: Option<&'a str>,
+    source: &'a str,
+    source_label: String,
+    genes: &'a [String],
+    conditions: &'a [String],
+}
 
 pub fn diagnostic_markdown(
     diagnostic: &Diagnostic,
@@ -12,21 +27,34 @@ pub fn diagnostic_markdown(
     let tmpl = env()?.get_template("diagnostic.md.j2")?;
     let include_all = has_all_section(requested_sections);
     let requested = requested_section_names(requested_sections);
+    let supported =
+        crate::entities::diagnostic::supported_diagnostic_sections_for_source(&diagnostic.source);
     let has_requested = |name: &str| {
         requested
             .iter()
             .any(|section| section.eq_ignore_ascii_case(name))
     };
-    let show_genes_section = include_all || has_requested("genes");
-    let show_conditions_section = include_all || has_requested("conditions");
-    let show_methods_section = include_all || has_requested("methods");
+    let supports = |name: &str| {
+        supported
+            .iter()
+            .any(|section| section.eq_ignore_ascii_case(name))
+    };
+    let show_genes_section = supports("genes") && (include_all || has_requested("genes"));
+    let show_conditions_section =
+        supports("conditions") && (include_all || has_requested("conditions"));
+    let show_methods_section = supports("methods") && (include_all || has_requested("methods"));
 
     tmpl.render(context! {
         accession => &diagnostic.accession,
+        source_label => crate::entities::diagnostic::diagnostic_source_label(&diagnostic.source),
         source_id => &diagnostic.source_id,
         name => &diagnostic.name,
+        test_type_label => if diagnostic.source.eq_ignore_ascii_case(crate::entities::diagnostic::DIAGNOSTIC_SOURCE_WHO_IVD) { "Assay Format" } else { "Type" },
         test_type => &diagnostic.test_type,
         manufacturer => &diagnostic.manufacturer,
+        target_marker => &diagnostic.target_marker,
+        regulatory_version => &diagnostic.regulatory_version,
+        prequalification_year => &diagnostic.prequalification_year,
         laboratory => &diagnostic.laboratory,
         institution => &diagnostic.institution,
         country => &diagnostic.country,
@@ -67,6 +95,20 @@ pub fn diagnostic_search_markdown_with_footer(
     pagination_footer: &str,
 ) -> Result<String, BioMcpError> {
     let tmpl = env()?.get_template("diagnostic_search.md.j2")?;
+    let rendered_results = results
+        .iter()
+        .map(|result| DiagnosticSearchRow {
+            accession: &result.accession,
+            name: &result.name,
+            test_type: result.test_type.as_deref(),
+            manufacturer_or_lab: result.manufacturer_or_lab.as_deref(),
+            source: &result.source,
+            source_label: crate::entities::diagnostic::diagnostic_source_label(&result.source)
+                .to_string(),
+            genes: &result.genes,
+            conditions: &result.conditions,
+        })
+        .collect::<Vec<_>>();
     let top_accession = results
         .first()
         .map(|result| result.accession.as_str())
@@ -75,8 +117,8 @@ pub fn diagnostic_search_markdown_with_footer(
         query => query,
         count => results.len(),
         total => total,
-        top_accession => top_accession,
-        results => results,
+        top_accession => crate::render::markdown::quote_arg(top_accession),
+        results => &rendered_results,
         pagination_footer => pagination_footer,
     })?;
     Ok(with_pagination_footer(body, pagination_footer))

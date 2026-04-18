@@ -7,11 +7,16 @@ pub use self::get::get;
 #[allow(unused_imports)]
 pub use self::search::{search, search_page, search_query_summary};
 
+use std::sync::OnceLock;
+
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::sources::gtr::{GtrIndex, GtrRecord};
+use crate::sources::who_ivd::WhoIvdRecord;
 
-pub(crate) const DIAGNOSTIC_SOURCE: &str = "gtr";
+pub(crate) const DIAGNOSTIC_SOURCE_GTR: &str = "gtr";
+pub(crate) const DIAGNOSTIC_SOURCE_WHO_IVD: &str = "who-ivd";
 const DIAGNOSTIC_SECTION_GENES: &str = "genes";
 const DIAGNOSTIC_SECTION_CONDITIONS: &str = "conditions";
 const DIAGNOSTIC_SECTION_METHODS: &str = "methods";
@@ -24,6 +29,57 @@ pub const DIAGNOSTIC_SECTION_NAMES: &[&str] = &[
     DIAGNOSTIC_SECTION_ALL,
 ];
 
+const GTR_DIAGNOSTIC_SECTION_NAMES: &[&str] = &[
+    DIAGNOSTIC_SECTION_GENES,
+    DIAGNOSTIC_SECTION_CONDITIONS,
+    DIAGNOSTIC_SECTION_METHODS,
+    DIAGNOSTIC_SECTION_ALL,
+];
+const WHO_IVD_DIAGNOSTIC_SECTION_NAMES: &[&str] =
+    &[DIAGNOSTIC_SECTION_CONDITIONS, DIAGNOSTIC_SECTION_ALL];
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum DiagnosticSourceFilter {
+    Gtr,
+    WhoIvd,
+    #[default]
+    All,
+}
+
+impl DiagnosticSourceFilter {
+    #[allow(dead_code)]
+    pub fn from_flag(value: &str) -> Result<Self, crate::error::BioMcpError> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "" | "all" => Ok(Self::All),
+            DIAGNOSTIC_SOURCE_GTR => Ok(Self::Gtr),
+            DIAGNOSTIC_SOURCE_WHO_IVD => Ok(Self::WhoIvd),
+            other => Err(crate::error::BioMcpError::InvalidArgument(format!(
+                "--source must be one of: {DIAGNOSTIC_SOURCE_GTR}, {DIAGNOSTIC_SOURCE_WHO_IVD}, all (got {other})"
+            ))),
+        }
+    }
+
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Gtr => DIAGNOSTIC_SOURCE_GTR,
+            Self::WhoIvd => DIAGNOSTIC_SOURCE_WHO_IVD,
+            Self::All => "all",
+        }
+    }
+
+    pub(crate) fn includes_gtr(self) -> bool {
+        matches!(self, Self::Gtr | Self::All)
+    }
+
+    pub(crate) fn includes_who_ivd(self) -> bool {
+        matches!(self, Self::WhoIvd | Self::All)
+    }
+
+    pub(crate) fn query_summary(self) -> Option<String> {
+        (!matches!(self, Self::All)).then(|| format!("source={}", self.as_str()))
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Diagnostic {
     pub source: String,
@@ -34,6 +90,12 @@ pub struct Diagnostic {
     pub test_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub manufacturer: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target_marker: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regulatory_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prequalification_year: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub laboratory: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -60,6 +122,7 @@ pub struct Diagnostic {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiagnosticSearchResult {
+    pub source: String,
     pub accession: String,
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -74,10 +137,42 @@ pub struct DiagnosticSearchResult {
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticSearchFilters {
+    pub source: DiagnosticSourceFilter,
     pub gene: Option<String>,
     pub disease: Option<String>,
     pub test_type: Option<String>,
     pub manufacturer: Option<String>,
+}
+
+fn gtr_accession_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^GTR\d+\.\d+$").expect("valid GTR accession regex"))
+}
+
+pub(crate) fn looks_like_gtr_accession(value: &str) -> bool {
+    gtr_accession_re().is_match(value.trim())
+}
+
+pub(crate) fn diagnostic_source_label(source: &str) -> &'static str {
+    if source
+        .trim()
+        .eq_ignore_ascii_case(DIAGNOSTIC_SOURCE_WHO_IVD)
+    {
+        "WHO Prequalified IVD"
+    } else {
+        "NCBI Genetic Testing Registry"
+    }
+}
+
+pub(crate) fn supported_diagnostic_sections_for_source(source: &str) -> &'static [&'static str] {
+    if source
+        .trim()
+        .eq_ignore_ascii_case(DIAGNOSTIC_SOURCE_WHO_IVD)
+    {
+        WHO_IVD_DIAGNOSTIC_SECTION_NAMES
+    } else {
+        GTR_DIAGNOSTIC_SECTION_NAMES
+    }
 }
 
 pub(crate) fn preferred_diagnostic_name(record: &GtrRecord) -> String {
@@ -99,12 +194,25 @@ pub(crate) fn optional_text(value: &str) -> Option<String> {
 
 pub(crate) fn search_result(record: &GtrRecord, index: &GtrIndex) -> DiagnosticSearchResult {
     DiagnosticSearchResult {
+        source: DIAGNOSTIC_SOURCE_GTR.to_string(),
         accession: record.accession.clone(),
         name: preferred_diagnostic_name(record),
         test_type: optional_text(&record.test_type),
         manufacturer_or_lab: manufacturer_or_lab_label(record),
         genes: index.merged_genes(&record.accession),
         conditions: index.conditions(&record.accession),
+    }
+}
+
+pub(crate) fn who_ivd_search_result(record: &WhoIvdRecord) -> DiagnosticSearchResult {
+    DiagnosticSearchResult {
+        source: DIAGNOSTIC_SOURCE_WHO_IVD.to_string(),
+        accession: record.product_code.clone(),
+        name: optional_text(&record.product_name).unwrap_or_else(|| record.product_code.clone()),
+        test_type: optional_text(&record.assay_format),
+        manufacturer_or_lab: optional_text(&record.manufacturer_name),
+        genes: Vec::new(),
+        conditions: optional_text(&record.target_marker).into_iter().collect(),
     }
 }
 
@@ -115,9 +223,10 @@ mod tests {
     use std::path::Path;
 
     use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE, resolve_gtr_root};
+    use crate::sources::who_ivd::WHO_IVD_CSV_FILE;
     use crate::test_support::{TempDirGuard, env_lock, set_env_var};
 
-    async fn install_fixture_root(
+    async fn install_gtr_fixture_root(
         label: &str,
     ) -> (
         tokio::sync::MutexGuard<'static, ()>,
@@ -126,7 +235,7 @@ mod tests {
     ) {
         let lock = env_lock().lock().await;
         let root = TempDirGuard::new(label);
-        write_fixture(root.path());
+        write_gtr_fixture(root.path());
         let env = set_env_var(
             "BIOMCP_GTR_DIR",
             Some(root.path().to_str().expect("utf-8 path")),
@@ -134,7 +243,32 @@ mod tests {
         (lock, root, env)
     }
 
-    fn write_fixture(root: &Path) {
+    async fn install_all_fixture_roots(
+        label: &str,
+    ) -> (
+        tokio::sync::MutexGuard<'static, ()>,
+        TempDirGuard,
+        crate::test_support::EnvVarGuard,
+        TempDirGuard,
+        crate::test_support::EnvVarGuard,
+    ) {
+        let lock = env_lock().lock().await;
+        let gtr_root = TempDirGuard::new(&format!("{label}-gtr"));
+        write_gtr_fixture(gtr_root.path());
+        let gtr_env = set_env_var(
+            "BIOMCP_GTR_DIR",
+            Some(gtr_root.path().to_str().expect("utf-8 path")),
+        );
+        let who_root = TempDirGuard::new(&format!("{label}-who-ivd"));
+        write_who_ivd_fixture(who_root.path());
+        let who_env = set_env_var(
+            "BIOMCP_WHO_IVD_DIR",
+            Some(who_root.path().to_str().expect("utf-8 path")),
+        );
+        (lock, gtr_root, gtr_env, who_root, who_env)
+    }
+
+    fn write_gtr_fixture(root: &Path) {
         std::fs::write(
             root.join(GTR_TEST_VERSION_FILE),
             include_bytes!("../../../spec/fixtures/gtr/test_version.gz"),
@@ -145,6 +279,14 @@ mod tests {
             include_str!("../../../spec/fixtures/gtr/test_condition_gene.txt"),
         )
         .expect("write test_condition_gene.txt");
+    }
+
+    fn write_who_ivd_fixture(root: &Path) {
+        std::fs::write(
+            root.join(WHO_IVD_CSV_FILE),
+            include_str!("../../../spec/fixtures/who-ivd/who_ivd.csv"),
+        )
+        .expect("write who_ivd.csv");
     }
 
     #[tokio::test]
@@ -161,10 +303,11 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_applies_conjunctive_filters_and_stable_ordering() {
-        let (_lock, _root, _env) = install_fixture_root("diagnostic-search").await;
+        let (_lock, _root, _env) = install_gtr_fixture_root("diagnostic-search").await;
 
         let page = search_page(
             &DiagnosticSearchFilters {
+                source: DiagnosticSourceFilter::All,
                 gene: Some("EGFR".to_string()),
                 disease: Some("melanoma".to_string()),
                 test_type: Some("molecular".to_string()),
@@ -178,6 +321,7 @@ mod tests {
 
         assert_eq!(page.total, Some(1));
         assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].source, "gtr");
         assert_eq!(page.results[0].accession, "GTR000000002.1");
         assert_eq!(page.results[0].name, "EGFR Melanoma Molecular Assay");
         assert_eq!(page.results[0].genes, vec!["EGFR".to_string()]);
@@ -200,14 +344,92 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn search_page_rejects_explicit_who_gene_filter() {
+        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
+            install_all_fixture_roots("diagnostic-search-who-gene").await;
+
+        let err = search_page(
+            &DiagnosticSearchFilters {
+                source: DiagnosticSourceFilter::WhoIvd,
+                gene: Some("BRCA1".to_string()),
+                ..DiagnosticSearchFilters::default()
+            },
+            10,
+            0,
+        )
+        .await
+        .expect_err("WHO gene filter should fail");
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: WHO IVD does not support --gene; use --source gtr or omit --source for gene-first diagnostic searches"
+        );
+    }
+
+    #[tokio::test]
+    async fn search_page_returns_who_rows_for_disease_filter() {
+        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
+            install_all_fixture_roots("diagnostic-search-who-disease").await;
+
+        let page = search_page(
+            &DiagnosticSearchFilters {
+                source: DiagnosticSourceFilter::WhoIvd,
+                disease: Some("HIV".to_string()),
+                ..DiagnosticSearchFilters::default()
+            },
+            10,
+            0,
+        )
+        .await
+        .expect("WHO IVD search");
+
+        assert_eq!(page.total, Some(1));
+        assert_eq!(page.results.len(), 1);
+        assert_eq!(page.results[0].source, "who-ivd");
+        assert_eq!(page.results[0].accession, "ITPW02232- TC40");
+        assert_eq!(page.results[0].name, "ONE STEP Anti-HIV (1&2) Test");
+        assert_eq!(page.results[0].conditions, vec!["HIV".to_string()]);
+    }
+
+    #[tokio::test]
+    async fn search_page_all_source_uses_unknown_total_when_both_sources_match() {
+        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
+            install_all_fixture_roots("diagnostic-search-all").await;
+
+        let page = search_page(
+            &DiagnosticSearchFilters {
+                source: DiagnosticSourceFilter::All,
+                disease: Some("ma".to_string()),
+                ..DiagnosticSearchFilters::default()
+            },
+            10,
+            0,
+        )
+        .await
+        .expect("merged search");
+
+        assert_eq!(page.total, None);
+        assert_eq!(
+            page.results
+                .iter()
+                .map(|row| row.source.as_str())
+                .collect::<Vec<_>>(),
+            vec!["who-ivd", "gtr"]
+        );
+    }
+
+    #[tokio::test]
     async fn get_keeps_summary_by_default_and_requested_sections_as_options() {
-        let (_lock, _root, _env) = install_fixture_root("diagnostic-get").await;
+        let (_lock, _root, _env) = install_gtr_fixture_root("diagnostic-get").await;
 
         let summary = get("GTR000000001.1", &[]).await.expect("summary get");
         assert_eq!(summary.source, "gtr");
         assert_eq!(summary.source_id, "GTR000000001.1");
         assert_eq!(summary.accession, "GTR000000001.1");
         assert_eq!(summary.name, "BRCA1 Hereditary Cancer Panel");
+        assert!(summary.target_marker.is_none());
+        assert!(summary.regulatory_version.is_none());
+        assert!(summary.prequalification_year.is_none());
         assert!(summary.genes.is_none());
         assert!(summary.conditions.is_none());
         assert!(summary.methods.is_none());
@@ -246,9 +468,71 @@ mod tests {
         );
     }
 
+    #[tokio::test]
+    async fn get_who_ivd_keeps_summary_and_resolves_supported_sections() {
+        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
+            install_all_fixture_roots("diagnostic-get-who").await;
+
+        let summary = get("ITPW02232- TC40", &[]).await.expect("summary get");
+        assert_eq!(summary.source, "who-ivd");
+        assert_eq!(summary.source_id, "ITPW02232- TC40");
+        assert_eq!(summary.accession, "ITPW02232- TC40");
+        assert_eq!(summary.name, "ONE STEP Anti-HIV (1&2) Test");
+        assert_eq!(
+            summary.test_type.as_deref(),
+            Some("Immunochromatographic (lateral flow)")
+        );
+        assert_eq!(
+            summary.manufacturer.as_deref(),
+            Some("InTec Products, Inc.")
+        );
+        assert_eq!(summary.target_marker.as_deref(), Some("HIV"));
+        assert_eq!(summary.regulatory_version.as_deref(), Some("Rest-of-World"));
+        assert_eq!(summary.prequalification_year.as_deref(), Some("2019"));
+        assert!(summary.genes.is_none());
+        assert!(summary.conditions.is_none());
+        assert!(summary.methods.is_none());
+        assert!(summary.method_categories.is_empty());
+
+        let conditions = get("ITPW02232- TC40", &["conditions".to_string()])
+            .await
+            .expect("conditions get");
+        assert_eq!(conditions.conditions, Some(vec!["HIV".to_string()]));
+
+        let expanded = get("ITPW02232- TC40", &["all".to_string()])
+            .await
+            .expect("all get");
+        assert_eq!(expanded.conditions, Some(vec!["HIV".to_string()]));
+        assert!(expanded.genes.is_none());
+        assert!(expanded.methods.is_none());
+    }
+
+    #[tokio::test]
+    async fn get_who_ivd_rejects_unsupported_sections_with_recovery_hint() {
+        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
+            install_all_fixture_roots("diagnostic-get-who-sections").await;
+
+        let genes = get("ITPW02232- TC40", &["genes".to_string()])
+            .await
+            .expect_err("WHO genes should fail");
+        assert_eq!(
+            genes.to_string(),
+            "Invalid argument: Section `genes` is not available for WHO Prequalified IVD diagnostic records. Try `biomcp get diagnostic \"ITPW02232- TC40\" conditions`"
+        );
+
+        let methods = get("ITPW02232- TC40", &["methods".to_string()])
+            .await
+            .expect_err("WHO methods should fail");
+        assert_eq!(
+            methods.to_string(),
+            "Invalid argument: Section `methods` is not available for WHO Prequalified IVD diagnostic records. Try `biomcp get diagnostic \"ITPW02232- TC40\" conditions`"
+        );
+    }
+
     #[test]
     fn search_query_summary_uses_documented_filter_order() {
         let summary = search_query_summary(&DiagnosticSearchFilters {
+            source: DiagnosticSourceFilter::Gtr,
             gene: Some("BRCA1".to_string()),
             disease: Some("melanoma".to_string()),
             test_type: Some("molecular".to_string()),
@@ -257,7 +541,23 @@ mod tests {
 
         assert_eq!(
             summary,
-            "gene=BRCA1, disease=melanoma, type=molecular, manufacturer=Tempus"
+            "gene=BRCA1, disease=melanoma, type=molecular, manufacturer=Tempus, source=gtr"
+        );
+    }
+
+    #[test]
+    fn diagnostic_source_filter_from_flag_accepts_expected_values() {
+        assert_eq!(
+            DiagnosticSourceFilter::from_flag("gtr").expect("gtr"),
+            DiagnosticSourceFilter::Gtr
+        );
+        assert_eq!(
+            DiagnosticSourceFilter::from_flag("who-ivd").expect("who-ivd"),
+            DiagnosticSourceFilter::WhoIvd
+        );
+        assert_eq!(
+            DiagnosticSourceFilter::from_flag("").expect("default"),
+            DiagnosticSourceFilter::All
         );
     }
 }

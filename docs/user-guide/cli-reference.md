@@ -42,6 +42,7 @@ biomcp ema sync
 biomcp who sync
 biomcp cvx sync
 biomcp gtr sync
+biomcp who-ivd sync
 biomcp health [--apis-only]
 biomcp list [entity]
 biomcp study list
@@ -72,9 +73,9 @@ biomcp skill article-follow-up
 
 `biomcp health --apis-only` is the upstream inventory smoke test. Full
 `biomcp health` also reports local readiness rows such as EMA local data,
-WHO Prequalification local data, CDC CVX/MVX local data, GTR local data, cache dir status,
-and cache-limit warnings when the managed HTTP cache is over size or below
-the configured disk-free floor.
+WHO Prequalification local data, CDC CVX/MVX local data, GTR local data,
+WHO IVD local data, cache dir status, and cache-limit warnings when the
+managed HTTP cache is over size or below the configured disk-free floor.
 
 `biomcp cache path` is a local-CLI-only operator command. It prints the managed
 HTTP cache path as plain text and ignores the global `--json` flag.
@@ -207,15 +208,19 @@ stays U.S.-only and does not touch the CVX root.
 
 ```bash
 biomcp search diagnostic --gene BRCA1 --limit 5 --offset 0
-biomcp search diagnostic --disease melanoma --limit 5
-biomcp search diagnostic --gene EGFR --type Clinical --limit 5
+biomcp search diagnostic --disease HIV --source who-ivd --limit 5
+biomcp search diagnostic --disease tuberculosis --source all --limit 5
 ```
 
 Diagnostic search is filter-only. At least one of `--gene`, `--disease`,
 `--type`, or `--manufacturer` is required, and all provided filters are
-conjunctive. Diagnostic commands auto-sync the local GTR bundle on first use
-into `BIOMCP_GTR_DIR` or the default platform data directory. `--type` values
-come from the current GTR export and may vary across releases.
+conjunctive. `--source` accepts `gtr`, `who-ivd`, or `all` (default). GTR
+remains the gene-capable source; WHO IVD supports `--disease`, `--type`, and
+`--manufacturer`, and explicit `--source who-ivd --gene ...` fails fast with a
+recovery hint. Diagnostic commands auto-sync the local GTR bundle into
+`BIOMCP_GTR_DIR` and the WHO IVD CSV into `BIOMCP_WHO_IVD_DIR` on first use,
+falling back to the default platform data directory when those env vars are
+unset.
 
 ### Pathway
 
@@ -346,12 +351,15 @@ path unless you pass `--region`.
 
 ```bash
 biomcp get diagnostic GTR000000001.1
-biomcp get diagnostic GTR000000001.1 genes conditions
-biomcp get diagnostic GTR000000001.1 all
+biomcp get diagnostic "ITPW02232- TC40"
+biomcp get diagnostic "ITPW02232- TC40" conditions
+biomcp get diagnostic "ITPW02232- TC40" all
 ```
 
 `get diagnostic` always renders the summary card first. Supported section names
-are `genes`, `conditions`, `methods`, and `all`. In JSON mode, unrequested
+are `genes`, `conditions`, `methods`, and `all`, but support is source-aware:
+GTR supports `genes`, `conditions`, and `methods`, while WHO IVD supports
+`conditions` only and expands `all` to `conditions`. In JSON mode, unrequested
 sections are omitted while requested empty sections remain present as `[]`.
 
 ### Pathway

@@ -309,36 +309,43 @@ vaccine name/brand search when `--product-type vaccine` is set. It does not
 change WHO finished-pharma/API lookups or `get drug`, and pure `--region us`
 searches do not use the CVX root.
 
-## 16) GTR diagnostic data not available
+## 16) Diagnostic local data not available
 
-Diagnostic search/get flows depend on the local NCBI GTR bundle. BioMCP
-auto-downloads `test_version.gz` and `test_condition_gene.txt` on first
-diagnostic use, but full `biomcp health` is still the right readiness surface
-when you need to debug the local GTR state:
+Diagnostic search/get flows depend on two local bundles:
+
+- the NCBI GTR bundle for gene-centric diagnostics
+- the WHO IVD CSV for infectious-disease diagnostics
+
+BioMCP auto-downloads both on first use, but full `biomcp health` is still the
+right readiness surface when you need to debug the local diagnostic state:
 
 ```bash
 biomcp health
 ```
 
-Interpret the GTR row like this:
+Interpret the rows like this:
 
-- `configured`: `BIOMCP_GTR_DIR` is set and both GTR files are present
-- `configured (stale)`: `BIOMCP_GTR_DIR` is set and complete, but one or more GTR files are older than the 7-day refresh window
-- `available (default path)`: BioMCP found a complete GTR root in the default platform data directory
-- `available (default path, stale)`: the default-path GTR root is complete, but one or more files are older than the 7-day refresh window
-- `not configured`: no complete GTR root was found at the default path yet
-- `error (missing: ...)`: BioMCP found a partial GTR root or unreadable file; install both files or point `BIOMCP_GTR_DIR` at a complete root
+- `GTR local data (...)`: local GTR readiness for gene-capable diagnostic search/get
+- `WHO IVD local data (...)`: local WHO infectious-disease diagnostic readiness
+- `configured`: the corresponding env var is set and the required file set is present
+- `configured (stale)`: the configured root is complete but older than the source-specific refresh window
+- `available (default path)`: the default platform data directory contains a complete root
+- `available (default path, stale)`: the default root is complete but stale
+- `not configured`: no complete root exists yet at the default path
+- `error (missing: ...)`: BioMCP found a partial root or unreadable file
 
 If a refresh fails, retry explicitly:
 
 ```bash
 biomcp gtr sync
+biomcp who-ivd sync
 ```
 
 If you need to override the default path:
 
 ```bash
 export BIOMCP_GTR_DIR="/path/to/gtr"
+export BIOMCP_WHO_IVD_DIR="/path/to/who-ivd"
 biomcp health
 ```
 
@@ -347,3 +354,7 @@ complete GTR root must contain:
 
 - `test_version.gz`
 - `test_condition_gene.txt`
+
+A complete WHO IVD root must contain:
+
+- `who_ivd.csv`

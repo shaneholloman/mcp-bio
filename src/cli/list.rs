@@ -388,42 +388,50 @@ fn list_diagnostic() -> String {
 
 ## When to use this surface
 
-- Use `search diagnostic` when you need source-native genetic test inventory from NCBI GTR.
-- Start with `--gene` or `--disease` for the common "what test exists?" workflow; add `--type` or `--manufacturer` only when narrowing a real result set.
-- Use `get diagnostic <gtr_accession>` for the base summary card, then add `genes`, `conditions`, `methods`, or `all` when you need progressive disclosure.
+- Use `search diagnostic` when you need source-native diagnostic inventory from the local GTR and WHO IVD bundles.
+- Start with `--gene` for GTR genetic-test questions, or `--disease --source who-ivd` for WHO infectious-disease diagnostics; add `--type` or `--manufacturer` only when narrowing a real result set.
+- Use `get diagnostic <id>` for the base summary card, then add `genes`, `conditions`, `methods`, or `all` when you need progressive disclosure.
 
 ## Commands
 
 - `get diagnostic <gtr_accession>` - summary card from the local GTR bundle
+- `get diagnostic "<who_ivd_product_code>"` - summary card from the local WHO IVD CSV
 - `get diagnostic <gtr_accession> genes` - joined gene list from GTR detail data
 - `get diagnostic <gtr_accession> conditions` - joined condition list from GTR detail data
 - `get diagnostic <gtr_accession> methods` - GTR methods list
-- `get diagnostic <gtr_accession> all` - include genes, conditions, and methods
+- `get diagnostic "<who_ivd_product_code>" conditions` - WHO target/marker section
+- `get diagnostic <id> all` - include every section supported by the resolved source
 - `search diagnostic --gene <symbol>` - case-insensitive exact gene match
-- `search diagnostic --disease <name>` - case-insensitive substring match over condition names
-- `search diagnostic --type <test_type>` - case-insensitive exact type filter
-- `search diagnostic --manufacturer <name>` - case-insensitive substring over manufacturer/lab labels
+- `search diagnostic --disease <name> --source who-ivd` - case-insensitive substring match over WHO pathogen/disease/marker
+- `search diagnostic --disease <name> --source gtr` - case-insensitive substring match over GTR condition names
+- `search diagnostic --type <test_type> --source <gtr|who-ivd|all>` - case-insensitive exact type filter
+- `search diagnostic --manufacturer <name> --source <gtr|who-ivd|all>` - case-insensitive substring over manufacturer/lab labels
 - `search diagnostic ... --limit <N> --offset <N>` - offset pagination with `1..=50` result limits
 
 ## Search rules
 
 - At least one of `--gene`, `--disease`, `--type`, or `--manufacturer` is required.
 - All provided filters are conjunctive.
+- `--source` accepts `gtr`, `who-ivd`, or `all` (default).
+- Explicit `--source who-ivd --gene ...` is invalid; use `--source gtr` or omit `--source` for gene-first workflows.
 - Result ordering is deterministic: normalized test name ascending, then accession ascending.
-- `summary` is always part of `get diagnostic`; supported section tokens are `genes`, `conditions`, `methods`, and `all`.
+- `summary` is always part of `get diagnostic`; supported public section tokens remain `genes`, `conditions`, `methods`, and `all`.
+- `all` expands per source: GTR supports `genes`, `conditions`, `methods`; WHO IVD supports `conditions`.
 
 ## JSON Output
 
 - Non-empty `search diagnostic --json` responses include `_meta.next_commands`.
-- The first follow-up drills the top result with `biomcp get diagnostic <gtr_accession>`.
+- The first follow-up drills the top result with `biomcp get diagnostic <id>` and quotes WHO product codes that contain spaces.
 - `biomcp list diagnostic` is always included so agents can inspect the full filter surface.
 - `get diagnostic --json` keeps section-aware follow-ups and `_meta.section_sources`.
 
 ## Local data
 
 - BioMCP auto-downloads GTR local data on first diagnostic use into `BIOMCP_GTR_DIR` or the default platform data directory.
-- Full `biomcp health` reports `GTR local data (<resolved_root>)`; `biomcp health --apis-only` intentionally omits it.
+- BioMCP auto-downloads WHO IVD local data on first WHO diagnostic use into `BIOMCP_WHO_IVD_DIR` or the default platform data directory.
+- Full `biomcp health` reports `GTR local data (<resolved_root>)` and `WHO IVD local data (<resolved_root>)`; `biomcp health --apis-only` intentionally omits them.
 - Use `biomcp gtr sync` to force-refresh the local GTR bundle.
+- Use `biomcp who-ivd sync` to force-refresh the local WHO IVD CSV.
 "#
     .to_string()
 }
@@ -499,7 +507,7 @@ fn list_drug() -> String {
 - EU regional commands auto-download the EMA human-medicines JSON feeds into `BIOMCP_EMA_DIR` or the default data directory on first use.
 - Default/EU vaccine brand lookups and explicit WHO vaccine name/brand searches can also auto-download the CDC CVX/MVX bundle into `BIOMCP_CVX_DIR` or the default data directory on first use.
 - WHO regional commands auto-download the WHO finished-pharma, API, and vaccine CSV exports into `BIOMCP_WHO_DIR` or the default data directory on first use (`who_pq.csv`, `who_api.csv`, and `who_vaccines.csv`).
-- Run `biomcp ema sync`, `biomcp cvx sync`, `biomcp who sync`, or `biomcp gtr sync` to force-refresh the local runtime data.
+- Run `biomcp ema sync`, `biomcp cvx sync`, `biomcp who sync`, `biomcp gtr sync`, or `biomcp who-ivd sync` to force-refresh the local runtime data.
 "#
     .to_string()
 }
@@ -971,9 +979,10 @@ mod tests {
         let out = render(Some("diagnostic")).expect("list diagnostic should render");
         assert!(out.contains("# diagnostic"));
         assert!(out.contains("search diagnostic --gene <symbol>"));
-        assert!(out.contains("get diagnostic <gtr_accession> methods"));
+        assert!(out.contains("get diagnostic \"<who_ivd_product_code>\" conditions"));
         assert!(out.contains("biomcp gtr sync"));
-        assert!(out.contains("GTR local data (<resolved_root>)"));
+        assert!(out.contains("biomcp who-ivd sync"));
+        assert!(out.contains("WHO IVD local data (<resolved_root>)"));
     }
 
     #[test]
@@ -1147,6 +1156,7 @@ mod tests {
         assert!(out.contains("biomcp cvx sync"));
         assert!(out.contains("biomcp ema sync"));
         assert!(out.contains("biomcp gtr sync"));
+        assert!(out.contains("biomcp who-ivd sync"));
         assert!(out.contains("biomcp who sync"));
     }
 

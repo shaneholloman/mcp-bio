@@ -99,6 +99,14 @@ EXAMPLES:
         #[command(subcommand)]
         cmd: system::GtrCommand,
     },
+    /// WHO Prequalified IVD local data management
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp who-ivd sync    # force refresh the local WHO IVD diagnostic CSV")]
+    WhoIvd {
+        #[command(subcommand)]
+        cmd: system::WhoIvdCommand,
+    },
     /// Run MCP server over stdio
     Mcp,
     /// Alias for `mcp` (Claude Desktop friendly)
@@ -203,16 +211,16 @@ EXAMPLES:
 
 See also: biomcp list disease")]
     Disease(disease::DiseaseSearchArgs),
-    /// Search source-native diagnostic tests from local NCBI GTR data
+    /// Search source-native diagnostic tests from local GTR and WHO IVD data
     #[command(after_help = "\
 EXAMPLES:
   biomcp search diagnostic --gene BRCA1 --limit 5
-  biomcp search diagnostic --disease melanoma --limit 5
-  biomcp search diagnostic --gene EGFR --type Clinical --limit 5
-  biomcp search diagnostic --gene BRCA1 --manufacturer Tempus --limit 5
+  biomcp search diagnostic --disease HIV --source who-ivd --limit 5
+  biomcp search diagnostic --gene EGFR --type Clinical --source gtr --limit 5
+  biomcp search diagnostic --manufacturer InTec --source who-ivd --limit 5
 
 Diagnostic search is filter-only. At least one of --gene, --disease, --type, or --manufacturer is required.
-`--type` values come from the current GTR export and may vary over time.
+`--source` accepts gtr, who-ivd, or all. WHO IVD is disease/type/manufacturer-oriented; GTR remains the gene-capable source.
 See also: biomcp list diagnostic")]
     Diagnostic(diagnostic::DiagnosticSearchArgs),
     /// Search pharmacogenomic interactions
@@ -424,13 +432,13 @@ EXAMPLES:
 
 See also: biomcp list disease")]
     Disease(disease::DiseaseGetArgs),
-    /// Get diagnostic test detail by exact GTR accession version
+    /// Get diagnostic test detail by exact GTR accession or WHO IVD product code
     #[command(after_help = "\
 EXAMPLES:
   biomcp get diagnostic GTR000000001.1
   biomcp get diagnostic GTR000000001.1 genes
-  biomcp get diagnostic GTR000000001.1 conditions
-  biomcp get diagnostic GTR000000001.1 methods
+  biomcp get diagnostic \"ITPW02232- TC40\"
+  biomcp get diagnostic \"ITPW02232- TC40\" conditions
 
 See also: biomcp list diagnostic")]
     Diagnostic(diagnostic::DiagnosticGetArgs),

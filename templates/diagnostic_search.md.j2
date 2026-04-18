@@ -5,10 +5,10 @@ No diagnostic tests found.
 {% else -%}
 Found {{ count }} diagnostic test{% if count != 1 %}s{% endif %}{% if total %} (of {{ total }} total){% endif %}
 
-|Accession|Name|Type|Manufacturer / Lab|Genes|Conditions|
-|---|---|---|---|---|---|
+|Accession|Name|Type|Manufacturer / Lab|Source|Genes|Conditions|
+|---|---|---|---|---|---|---|
 {% for row in results -%}
-|{{ row.accession }}|{{ row.name }}|{{ row.test_type or "-" }}|{{ row.manufacturer_or_lab or "-" }}|{% if row.genes %}{{ row.genes | join(", ") }}{% else %}-{% endif %}|{% if row.conditions %}{{ row.conditions | join(", ") }}{% else %}-{% endif %}|
+|{{ row.accession }}|{{ row.name }}|{{ row.test_type or "-" }}|{{ row.manufacturer_or_lab or "-" }}|{{ row.source_label }}|{% if row.genes %}{{ row.genes | join(", ") }}{% else %}-{% endif %}|{% if row.conditions %}{{ row.conditions | join(", ") }}{% else %}-{% endif %}|
 {% endfor %}
 
 Use `biomcp get diagnostic {{ top_accession }}` for details.
