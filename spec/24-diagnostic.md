@@ -84,7 +84,7 @@ echo "$out" | mustmatch like "# Diagnostic tests: disease=HIV"
 echo "$out" | mustmatch like "|Accession|Name|Type|Manufacturer / Lab|Source|Genes|Conditions|"
 echo "$out" | mustmatch like "ITPW02232- TC40"
 echo "$out" | mustmatch like "WHO Prequalified IVD"
-echo "$out" | mustmatch like "HIV"
+echo "$out" | mustmatch like "WHO Prequalified IVD|-|HIV|"
 echo "$out" | mustmatch like 'Use `biomcp get diagnostic "ITPW02232- TC40"` for details.'
 ```
 
@@ -184,7 +184,7 @@ echo "$summary_out" | mustmatch like 'biomcp get diagnostic "ITPW02232- TC40" co
 conditions_out="$(biomcp get diagnostic 'ITPW02232- TC40' conditions)"
 echo "$conditions_out" | mustmatch like "# Diagnostic: ITPW02232- TC40"
 echo "$conditions_out" | mustmatch like "## Conditions"
-echo "$conditions_out" | mustmatch like "HIV"
+echo "$conditions_out" | mustmatch like "Target / Marker: HIV"
 echo "$conditions_out" | mustmatch not like "## Genes"
 echo "$conditions_out" | mustmatch not like "## Methods"
 ```
@@ -200,7 +200,7 @@ bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
 all_out="$(biomcp get diagnostic 'ITPW02232- TC40' all)"
 echo "$all_out" | mustmatch like "# Diagnostic: ITPW02232- TC40"
 echo "$all_out" | mustmatch like "## Conditions"
-echo "$all_out" | mustmatch like "HIV"
+echo "$all_out" | mustmatch like "Target / Marker: HIV"
 echo "$all_out" | mustmatch not like "## Genes"
 echo "$all_out" | mustmatch not like "## Methods"
 ```

@@ -92,7 +92,7 @@ bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-ivd-env"
 search_out="$("$bin" search diagnostic --disease HIV --source who-ivd --limit 5)"
-echo "$search_out" | mustmatch like "|Source|"
+echo "$search_out" | mustmatch like "|Source|Genes|Conditions|"
 echo "$search_out" | mustmatch like "WHO Prequalified IVD"
 echo "$search_out" | mustmatch like 'Use `biomcp get diagnostic "ITPW02232- TC40"` for details.'
 ```
