@@ -2,6 +2,26 @@
 
 use super::*;
 
+#[test]
+fn explicit_who_vaccine_search_skips_drug_identity_resolution() {
+    assert!(!should_resolve_drug_identity(
+        DrugRegion::Who,
+        crate::sources::who_pq::WhoProductTypeFilter::Vaccine
+    ));
+    assert!(should_resolve_drug_identity(
+        DrugRegion::Who,
+        crate::sources::who_pq::WhoProductTypeFilter::Api
+    ));
+    assert!(should_resolve_drug_identity(
+        DrugRegion::Eu,
+        crate::sources::who_pq::WhoProductTypeFilter::Vaccine
+    ));
+    assert!(should_resolve_drug_identity(
+        DrugRegion::All,
+        crate::sources::who_pq::WhoProductTypeFilter::Vaccine
+    ));
+}
+
 #[tokio::test]
 async fn structured_who_search_stops_after_one_extra_match_and_reports_unknown_total() {
     let filters = DrugSearchFilters {

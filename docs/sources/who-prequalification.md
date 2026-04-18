@@ -51,12 +51,6 @@ biomcp get drug trastuzumab regulatory --region who
 
 Returns WHO-backed regulatory context for the WHO region.
 
-```bash
-biomcp who sync
-```
-
-Refreshes all three local WHO exports without waiting for the next automatic sync.
-
 ## API access
 
 No BioMCP API key required. BioMCP auto-downloads the WHO finished-pharmaceutical-products CSV, active-pharmaceutical-ingredients CSV, and vaccine CSV into `BIOMCP_WHO_DIR` or the default data directory on first use.

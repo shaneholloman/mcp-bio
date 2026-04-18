@@ -165,7 +165,7 @@ echo "$out" | mustmatch like "If you omit --region while using structured filter
 echo "$out" | mustmatch like "Explicit --region who filters structured U.S. hits through WHO Prequalification."
 echo "$out" | mustmatch like "--product-type <PRODUCT_TYPE>"
 echo "$out" | mustmatch like "finished_pharma"
-echo "$out" | mustmatch like "[possible values: finished_pharma, api, vaccine]"
+echo "$out" | mustmatch like "possible values: finished_pharma, api, vaccine"
 echo "$out" | mustmatch like "requires explicit --region who"
 echo "$out" | mustmatch like "WHO vaccine search is plain name/brand only"
 echo "$out" | mustmatch like "Default WHO search excludes vaccines"
@@ -779,6 +779,7 @@ bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-cvx-env"
 out="$("$bin" search drug BCG --region who --product-type vaccine --limit 10)"
 echo "$out" | mustmatch like "# Drugs: BCG"
+echo "$out" | mustmatch like "Found 7 drugs"
 echo "$out" | mustmatch like "|Vaccine Type|Commercial Name|Presentation|Doses|Manufacturer|Responsible NRA|Date|"
 echo "$out" | mustmatch like "Japan BCG Laboratory"
 echo "$out" | mustmatch not like 'Use `get drug <name>` for full details.'
@@ -797,6 +798,7 @@ bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-cvx-env"
 out="$("$bin" search drug HPV --region who --product-type vaccine --limit 10)"
 echo "$out" | mustmatch like "# Drugs: HPV"
+echo "$out" | mustmatch like "Found 6 drugs"
 echo "$out" | mustmatch like "|Vaccine Type|Commercial Name|Presentation|Doses|Manufacturer|Responsible NRA|Date|"
 echo "$out" | mustmatch like "Human Papillomavirus"
 echo "$out" | mustmatch like "Gardasil 9"
@@ -820,6 +822,7 @@ echo "$json_out" | jq -e '(.regions | keys) == ["who"]' > /dev/null
 echo "$json_out" | jq -e '.regions.who.results | any(.vaccine_type == "BCG")' > /dev/null
 echo "$json_out" | jq -e '.regions.who.results | any(.commercial_name != null)' > /dev/null
 echo "$json_out" | jq -e '.regions.who.results | any(.presentation != null)' > /dev/null
+echo "$json_out" | jq -e '.regions.who.results | any(.dose_count != null)' > /dev/null
 echo "$json_out" | jq -e '.regions.who.results | any(.manufacturer != null)' > /dev/null
 echo "$json_out" | jq -e '.regions.who.results | any(.responsible_nra != null)' > /dev/null
 echo "$json_out" | jq -e '.regions.who.results | any(.prequalification_date != null)' > /dev/null

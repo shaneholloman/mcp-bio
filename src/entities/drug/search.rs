@@ -338,6 +338,10 @@ async fn try_resolve_drug_identity(name: &str) -> Option<Drug> {
     }
 }
 
+fn should_resolve_drug_identity(region: DrugRegion, product_type: WhoProductTypeFilter) -> bool {
+    !(matches!(region, DrugRegion::Who) && matches!(product_type, WhoProductTypeFilter::Vaccine))
+}
+
 pub async fn search_name_query_with_region(
     query: &str,
     limit: usize,
@@ -364,12 +368,16 @@ pub async fn search_name_query_with_region(
         ..Default::default()
     };
 
-    let resolved_identity = try_resolve_drug_identity(query).await;
     let who_vaccine_search = region.includes_who()
         && matches!(
             product_type,
             crate::sources::who_pq::WhoProductTypeFilter::Vaccine
         );
+    let resolved_identity = if should_resolve_drug_identity(region, product_type) {
+        try_resolve_drug_identity(query).await
+    } else {
+        None
+    };
     let needs_cvx_aliases =
         (region.includes_eu() && resolved_identity.is_none()) || who_vaccine_search;
     let cvx_aliases = if needs_cvx_aliases {

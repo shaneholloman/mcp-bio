@@ -52,12 +52,6 @@ biomcp health
 
 Shows whether the local CDC CVX/MVX bundle is configured, stale, missing files, or available at the default path.
 
-```bash
-biomcp cvx sync
-```
-
-Refreshes the local CDC CVX/MVX bundle immediately.
-
 ## API access
 
 No BioMCP API key required. BioMCP auto-downloads `cvx.txt`, `TRADENAME.txt`, and `mvx.txt` into `BIOMCP_CVX_DIR` or the default data directory on first use.

@@ -620,6 +620,9 @@ fn normalize_vaccine_date(value: &str) -> Option<String> {
     let day = parts[0].parse::<u32>().ok()?;
     let month = parts[1].parse::<u32>().ok()?;
     let year = parts[2].parse::<u32>().ok()?;
+    if day == 0 || day > 31 || month == 0 || month > 12 {
+        return None;
+    }
     Some(format!("{year:04}-{month:02}-{day:02}"))
 }
 
@@ -1136,6 +1139,8 @@ mod tests {
             Some("2024-10-09")
         );
         assert_eq!(normalize_vaccine_date(""), None);
+        assert_eq!(normalize_vaccine_date("00/10/2024"), None);
+        assert_eq!(normalize_vaccine_date("09/13/2024"), None);
     }
 
     #[test]
@@ -1379,6 +1384,46 @@ mod tests {
             bevac[0].stable_identifier_key(),
             bevac[1].stable_identifier_key()
         );
+    }
+
+    #[test]
+    fn vaccine_fixture_carries_full_validation_anchor_counts() {
+        let rows = parse_who_vaccines_csv(&fixture_vaccine_csv()).expect("fixture should parse");
+
+        let bcg = rows
+            .iter()
+            .filter(|row| row.vaccine_type.as_deref() == Some("BCG"))
+            .count();
+        let hpv = rows
+            .iter()
+            .filter(|row| {
+                row.vaccine_type
+                    .as_deref()
+                    .is_some_and(|value| value.contains("Human Papillomavirus"))
+            })
+            .count();
+        let covid = rows
+            .iter()
+            .filter(|row| row.vaccine_type.as_deref() == Some("Covid-19"))
+            .count();
+        let measles = rows
+            .iter()
+            .filter(|row| {
+                row.vaccine_type
+                    .as_deref()
+                    .is_some_and(|value| value.to_ascii_lowercase().contains("measles"))
+            })
+            .count();
+        let yellow_fever = rows
+            .iter()
+            .filter(|row| row.vaccine_type.as_deref() == Some("Yellow Fever"))
+            .count();
+
+        assert_eq!(bcg, 7);
+        assert_eq!(hpv, 6);
+        assert_eq!(covid, 4);
+        assert_eq!(measles, 22);
+        assert_eq!(yellow_fever, 10);
     }
 
     #[test]

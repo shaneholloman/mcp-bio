@@ -12,9 +12,6 @@
 - Added the CDC CVX/MVX vaccine identity bridge for default and EU/all
   vaccine-brand drug search, backed by local CDC bundle downloads and explicit
   refresh via `biomcp cvx sync`. (233)
-- Added explicit WHO vaccine search via the CVX identity bridge, backed by the
-  third WHO vaccine export, search-only WHO vaccine guidance, and `biomcp who
-  sync` coverage for all three WHO exports. (234)
 - Added the local GTR-backed `diagnostic` entity with `search/get diagnostic`,
   first-use bundle refresh, explicit `biomcp gtr sync`, and the supporting
   health/docs/spec contract. (236)
