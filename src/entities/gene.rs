@@ -1034,10 +1034,10 @@ async fn add_clinical_context(gene: &mut Gene, target_id: Option<&str>) -> Resul
     Ok(())
 }
 
-async fn add_civic_section(gene: &mut Gene) {
-    let symbol = gene.symbol.trim();
+async fn fetch_civic_section(symbol: &str) -> CivicContext {
+    let symbol = symbol.trim();
     if symbol.is_empty() {
-        return;
+        return CivicContext::default();
     }
     let timeout = optional_enrichment_timeout();
 
@@ -1047,20 +1047,28 @@ async fn add_civic_section(gene: &mut Gene) {
     };
 
     match tokio::time::timeout(timeout, civic_fut).await {
-        Ok(Ok(context)) => gene.civic = Some(context),
+        Ok(Ok(context)) => context,
         Ok(Err(err)) => {
-            warn!(symbol = %gene.symbol, "CIViC unavailable for gene section: {err}");
-            gene.civic = Some(CivicContext::default());
+            warn!(symbol = %symbol, "CIViC unavailable for gene section: {err}");
+            CivicContext::default()
         }
         Err(_) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 timeout_secs = timeout.as_secs(),
                 "CIViC gene section timed out"
             );
-            gene.civic = Some(CivicContext::default());
+            CivicContext::default()
         }
     }
+}
+
+async fn add_civic_section(gene: &mut Gene) {
+    let symbol = gene.symbol.trim();
+    if symbol.is_empty() {
+        return;
+    }
+    gene.civic = Some(fetch_civic_section(&gene.symbol).await);
 }
 
 async fn fetch_expression_section(ensembl_id: Option<&str>, symbol: &str) -> GeneExpression {
@@ -1306,11 +1314,10 @@ fn gnomad_constraint_section(
     }
 }
 
-async fn add_constraint_section(gene: &mut Gene) {
-    let symbol = gene.symbol.trim();
+async fn fetch_constraint_section(symbol: &str) -> GeneConstraint {
+    let symbol = symbol.trim();
     if symbol.is_empty() {
-        gene.constraint = Some(gnomad_constraint_section(None, None, None, None, None));
-        return;
+        return gnomad_constraint_section(None, None, None, None, None);
     }
     let timeout = optional_enrichment_timeout();
 
@@ -1320,34 +1327,34 @@ async fn add_constraint_section(gene: &mut Gene) {
     };
 
     match tokio::time::timeout(timeout, constraint_fut).await {
-        Ok(Ok(Some(constraint))) => {
-            gene.constraint = Some(gnomad_constraint_section(
-                constraint.transcript,
-                constraint.pli,
-                constraint.loeuf,
-                constraint.mis_z,
-                constraint.syn_z,
-            ));
-        }
-        Ok(Ok(None)) => {
-            gene.constraint = Some(gnomad_constraint_section(None, None, None, None, None));
-        }
+        Ok(Ok(Some(constraint))) => gnomad_constraint_section(
+            constraint.transcript,
+            constraint.pli,
+            constraint.loeuf,
+            constraint.mis_z,
+            constraint.syn_z,
+        ),
+        Ok(Ok(None)) => gnomad_constraint_section(None, None, None, None, None),
         Ok(Err(err)) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 "gnomAD unavailable for gene constraint section: {err}"
             );
-            gene.constraint = Some(gnomad_constraint_section(None, None, None, None, None));
+            gnomad_constraint_section(None, None, None, None, None)
         }
         Err(_) => {
             warn!(
-                symbol = %gene.symbol,
+                symbol = %symbol,
                 timeout_secs = timeout.as_secs(),
                 "gnomAD gene constraint section timed out"
             );
-            gene.constraint = Some(gnomad_constraint_section(None, None, None, None, None));
+            gnomad_constraint_section(None, None, None, None, None)
         }
     }
+}
+
+async fn add_constraint_section(gene: &mut Gene) {
+    gene.constraint = Some(fetch_constraint_section(&gene.symbol).await);
 }
 
 fn map_disgenet_gene_association(row: DisgenetAssociationRecord) -> GeneDisgenetAssociation {
@@ -1646,6 +1653,45 @@ async fn populate_sections_parallel_top(
         }
     };
 
+    let civic_fut = async {
+        if !include.contains(&GeneIncludeType::Civic) {
+            None
+        } else {
+            Some(
+                timed_section("civic", fetch_civic_section(&symbol), |context| {
+                    if !context.evidence_items.is_empty() || !context.assertions.is_empty() {
+                        "data".to_string()
+                    } else {
+                        "empty".to_string()
+                    }
+                })
+                .await,
+            )
+        }
+    };
+
+    let constraint_fut = async {
+        if !include.contains(&GeneIncludeType::Constraint) {
+            None
+        } else {
+            Some(
+                timed_section("constraint", fetch_constraint_section(&symbol), |section| {
+                    if section.pli.is_some()
+                        || section.loeuf.is_some()
+                        || section.mis_z.is_some()
+                        || section.syn_z.is_some()
+                        || section.transcript.is_some()
+                    {
+                        "data".to_string()
+                    } else {
+                        "empty".to_string()
+                    }
+                })
+                .await,
+            )
+        }
+    };
+
     let (
         (clinical_context_result, clinical_context_entry),
         enrichr_result,
@@ -1657,6 +1703,8 @@ async fn populate_sections_parallel_top(
         protein_result,
         go_result,
         interactions_result,
+        civic_result,
+        constraint_result,
     ) = tokio::join!(
         clinical_context_fut,
         enrichr_fut,
@@ -1667,7 +1715,9 @@ async fn populate_sections_parallel_top(
         pathways_fut,
         protein_fut,
         go_fut,
-        interactions_fut
+        interactions_fut,
+        civic_fut,
+        constraint_fut
     );
 
     timing.push(clinical_context_entry);
@@ -1755,42 +1805,14 @@ async fn populate_sections_parallel_top(
         };
     }
 
-    if include.contains(&GeneIncludeType::Civic) {
-        let started = Instant::now();
-        add_civic_section(gene).await;
-        timing.record(
-            "civic",
-            started,
-            if gene
-                .civic
-                .as_ref()
-                .is_some_and(|ctx| !ctx.evidence_items.is_empty() || !ctx.assertions.is_empty())
-            {
-                "data"
-            } else {
-                "empty"
-            },
-        );
+    if let Some((civic, entry)) = civic_result {
+        timing.push(entry);
+        gene.civic = Some(civic);
     }
 
-    if include.contains(&GeneIncludeType::Constraint) {
-        let started = Instant::now();
-        add_constraint_section(gene).await;
-        timing.record(
-            "constraint",
-            started,
-            if gene.constraint.as_ref().is_some_and(|section| {
-                section.pli.is_some()
-                    || section.loeuf.is_some()
-                    || section.mis_z.is_some()
-                    || section.syn_z.is_some()
-                    || section.transcript.is_some()
-            }) {
-                "data"
-            } else {
-                "empty"
-            },
-        );
+    if let Some((constraint, entry)) = constraint_result {
+        timing.push(entry);
+        gene.constraint = Some(constraint);
     }
 
     if include.contains(&GeneIncludeType::Disgenet) {
