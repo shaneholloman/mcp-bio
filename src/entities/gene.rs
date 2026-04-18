@@ -328,9 +328,10 @@ impl GeneGetStrategy {
             .map(|value| value.trim().to_ascii_lowercase())
             .as_deref()
         {
+            Some("baseline") => Self::Baseline,
             Some("opentargets-ensembl") => Self::OpenTargetsEnsembl,
             Some("parallel-top") => Self::ParallelTop,
-            _ => Self::Baseline,
+            _ => Self::ParallelTop,
         }
     }
 
@@ -425,6 +426,20 @@ fn gene_get_strategy_label() -> String {
 
 fn gene_get_strategy() -> GeneGetStrategy {
     GeneGetStrategy::from_env()
+}
+
+fn should_use_parallel_top(include: &[GeneIncludeType]) -> bool {
+    include.iter().any(|section| {
+        matches!(
+            section,
+            GeneIncludeType::Ontology
+                | GeneIncludeType::Diseases
+                | GeneIncludeType::Expression
+                | GeneIncludeType::Hpa
+                | GeneIncludeType::Druggability
+                | GeneIncludeType::ClinGen
+        )
+    })
 }
 
 fn optional_enrichment_timeout() -> Duration {
@@ -1806,7 +1821,7 @@ pub async fn get(symbol: &str, sections: &[String]) -> Result<Gene, BioMcpError>
     let mut gene = transform::gene::from_mygene_get(resp);
     let opentargets_id = preferred_opentargets_id(&gene, strategy).map(str::to_string);
 
-    if strategy == GeneGetStrategy::ParallelTop {
+    if strategy == GeneGetStrategy::ParallelTop && should_use_parallel_top(&include) {
         populate_sections_parallel_top(&mut gene, &include, &mut timing, opentargets_id.as_deref())
             .await?;
         timing.finish();

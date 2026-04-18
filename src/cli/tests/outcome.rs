@@ -329,67 +329,84 @@ async fn ambiguous_gene_miss_points_to_discover() {
     assert!(outcome.text.contains("2. biomcp search gene -q V600E"));
 }
 
-#[tokio::test]
-async fn alias_fallback_ols_failure_preserves_original_not_found() {
-    let _guard = lock_env().await;
-    let mygene = MockServer::start().await;
-    let ols = MockServer::start().await;
-    let _mygene_base = set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
-    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-    let _umls_key = set_env_var("UMLS_API_KEY", None);
+#[test]
+fn alias_fallback_ols_failure_preserves_original_not_found() {
+    std::thread::Builder::new()
+        .name("alias-fallback-ols-failure-test".into())
+        .stack_size(8 * 1024 * 1024)
+        .spawn(|| {
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("runtime")
+                .block_on(async {
+                    let _guard = lock_env().await;
+                    let mygene = MockServer::start().await;
+                    let ols = MockServer::start().await;
+                    let _mygene_base =
+                        set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
+                    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
+                    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
+                    let _umls_key = set_env_var("UMLS_API_KEY", None);
 
-    mount_gene_lookup_miss(&mygene, "ERBB1").await;
-    let ols_calls = Arc::new(AtomicUsize::new(0));
-    let ols_calls_for_responder = Arc::clone(&ols_calls);
-    Mock::given(method("GET"))
-        .and(path("/api/search"))
-        .and(query_param("q", "ERBB1"))
-        .respond_with(move |_request: &wiremock::Request| {
-            let call_index = ols_calls_for_responder.fetch_add(1, Ordering::SeqCst);
-            if call_index == 0 {
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "response": {
-                        "docs": [{
-                            "iri": "http://example.org/hgnc/HGNC_3236",
-                            "ontology_name": "hgnc",
-                            "ontology_prefix": "hgnc",
-                            "short_form": "hgnc:3236",
-                            "obo_id": "HGNC:3236",
-                            "label": "EGFR",
-                            "description": [],
-                            "exact_synonyms": ["ERBB1"],
-                            "type": "class"
-                        }]
-                    }
-                }))
-            } else {
-                ResponseTemplate::new(500).set_body_raw("upstream down", "text/plain")
-            }
+                    mount_gene_lookup_miss(&mygene, "ERBB1").await;
+                    let ols_calls = Arc::new(AtomicUsize::new(0));
+                    let ols_calls_for_responder = Arc::clone(&ols_calls);
+                    Mock::given(method("GET"))
+                        .and(path("/api/search"))
+                        .and(query_param("q", "ERBB1"))
+                        .respond_with(move |_request: &wiremock::Request| {
+                            let call_index = ols_calls_for_responder.fetch_add(1, Ordering::SeqCst);
+                            if call_index == 0 {
+                                ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                                    "response": {
+                                        "docs": [{
+                                            "iri": "http://example.org/hgnc/HGNC_3236",
+                                            "ontology_name": "hgnc",
+                                            "ontology_prefix": "hgnc",
+                                            "short_form": "hgnc:3236",
+                                            "obo_id": "HGNC:3236",
+                                            "label": "EGFR",
+                                            "description": [],
+                                            "exact_synonyms": ["ERBB1"],
+                                            "type": "class"
+                                        }]
+                                    }
+                                }))
+                            } else {
+                                ResponseTemplate::new(500)
+                                    .set_body_raw("upstream down", "text/plain")
+                            }
+                        })
+                        .expect(2u64..)
+                        .mount(&ols)
+                        .await;
+
+                    crate::entities::discover::resolve_query(
+                        "ERBB1",
+                        crate::entities::discover::DiscoverMode::Command,
+                    )
+                    .await
+                    .expect("warm cache with a successful discover lookup");
+
+                    let cli =
+                        Cli::try_parse_from(["biomcp", "get", "gene", "ERBB1"]).expect("parse");
+                    let err = run_outcome(cli)
+                        .await
+                        .expect_err("should preserve not found");
+                    let rendered = err.to_string();
+
+                    assert!(
+                        ols_calls.load(Ordering::SeqCst) >= 2,
+                        "alias fallback should re-query OLS after the cache warm-up"
+                    );
+                    assert!(rendered.contains("gene 'ERBB1' not found"));
+                    assert!(rendered.contains("Try searching: biomcp search gene -q ERBB1"));
+                });
         })
-        .expect(2u64..)
-        .mount(&ols)
-        .await;
-
-    crate::entities::discover::resolve_query(
-        "ERBB1",
-        crate::entities::discover::DiscoverMode::Command,
-    )
-    .await
-    .expect("warm cache with a successful discover lookup");
-
-    let cli = Cli::try_parse_from(["biomcp", "get", "gene", "ERBB1"]).expect("parse");
-    let err = run_outcome(cli)
-        .await
-        .expect_err("should preserve not found");
-    let rendered = err.to_string();
-
-    assert!(
-        ols_calls.load(Ordering::SeqCst) >= 2,
-        "alias fallback should re-query OLS after the cache warm-up"
-    );
-    assert!(rendered.contains("gene 'ERBB1' not found"));
-    assert!(rendered.contains("Try searching: biomcp search gene -q ERBB1"));
+        .expect("spawn")
+        .join()
+        .expect("thread should complete");
 }
 
 #[tokio::test]
