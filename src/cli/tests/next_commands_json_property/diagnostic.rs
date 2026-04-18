@@ -170,3 +170,107 @@ fn diagnostic_json_next_commands_keep_four_visible_gtr_sections() {
         ]
     );
 }
+
+#[test]
+fn diagnostic_json_omits_regulatory_field_when_unrequested() {
+    let diagnostic = Diagnostic {
+        source: "gtr".to_string(),
+        source_id: "GTR000000001.1".to_string(),
+        accession: "GTR000000001.1".to_string(),
+        name: "BRCA1 Hereditary Cancer Panel".to_string(),
+        test_type: Some("molecular".to_string()),
+        manufacturer: Some("OncoPanel BRCA1".to_string()),
+        target_marker: None,
+        regulatory_version: None,
+        prequalification_year: None,
+        laboratory: Some("GenomOncology Lab".to_string()),
+        institution: Some("GenomOncology Institute".to_string()),
+        country: Some("USA".to_string()),
+        clia_number: Some("12D3456789".to_string()),
+        state_licenses: Some("NY|CA".to_string()),
+        current_status: Some("Current".to_string()),
+        public_status: Some("Public".to_string()),
+        method_categories: vec!["Molecular genetics".to_string()],
+        genes: None,
+        conditions: None,
+        methods: None,
+        regulatory: None,
+    };
+
+    let value = crate::render::json::to_entity_json_value(
+        &diagnostic,
+        crate::render::markdown::diagnostic_evidence_urls(&diagnostic),
+        crate::render::markdown::diagnostic_next_commands(&diagnostic, &[]),
+        crate::render::provenance::diagnostic_section_sources(&diagnostic),
+    )
+    .expect("diagnostic json value");
+
+    assert!(value.get("regulatory").is_none());
+    assert!(
+        !value["_meta"]["section_sources"]
+            .as_array()
+            .expect("section_sources array")
+            .iter()
+            .any(|source| source["key"] == "regulatory")
+    );
+}
+
+#[test]
+fn diagnostic_json_includes_regulatory_field_and_provenance_when_requested() {
+    let diagnostic = Diagnostic {
+        source: "who-ivd".to_string(),
+        source_id: "ITPW02232- TC40".to_string(),
+        accession: "ITPW02232- TC40".to_string(),
+        name: "ONE STEP Anti-HIV (1&2) Test".to_string(),
+        test_type: Some("Immunochromatographic (lateral flow)".to_string()),
+        manufacturer: Some("InTec Products, Inc.".to_string()),
+        target_marker: Some("HIV".to_string()),
+        regulatory_version: Some("Rest-of-World".to_string()),
+        prequalification_year: Some("2019".to_string()),
+        laboratory: None,
+        institution: None,
+        country: None,
+        clia_number: None,
+        state_licenses: None,
+        current_status: None,
+        public_status: None,
+        method_categories: vec![],
+        genes: None,
+        conditions: None,
+        methods: None,
+        regulatory: Some(vec![DiagnosticRegulatoryRecord {
+            submission_type: "510(k)".to_string(),
+            number: "K123456".to_string(),
+            display_name: "ONE STEP Anti-HIV (1&2) Test".to_string(),
+            trade_name: None,
+            generic_name: None,
+            applicant: Some("InTec Products, Inc.".to_string()),
+            decision_date: Some("2023-08-01".to_string()),
+            decision_description: Some("cleared".to_string()),
+            advisory_committee: None,
+            product_code: Some("NPR".to_string()),
+            supplement_count: None,
+        }]),
+    };
+
+    let value = crate::render::json::to_entity_json_value(
+        &diagnostic,
+        crate::render::markdown::diagnostic_evidence_urls(&diagnostic),
+        crate::render::markdown::diagnostic_next_commands(&diagnostic, &["regulatory".to_string()]),
+        crate::render::provenance::diagnostic_section_sources(&diagnostic),
+    )
+    .expect("diagnostic json value");
+
+    assert_eq!(value["regulatory"][0]["number"], "K123456");
+    let regulatory_source = value["_meta"]["section_sources"]
+        .as_array()
+        .expect("section_sources array")
+        .iter()
+        .find(|source| source["key"] == "regulatory")
+        .expect("regulatory section source");
+    assert_eq!(regulatory_source["label"], "Regulatory");
+    assert_eq!(
+        regulatory_source["sources"][0],
+        "OpenFDA Device 510(k) / PMA"
+    );
+}

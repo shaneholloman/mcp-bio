@@ -982,7 +982,10 @@ mod tests {
         let out = render(Some("diagnostic")).expect("list diagnostic should render");
         assert!(out.contains("# diagnostic"));
         assert!(out.contains("search diagnostic --gene <symbol>"));
+        assert!(out.contains("get diagnostic <id> regulatory"));
         assert!(out.contains("get diagnostic \"<who_ivd_product_code>\" conditions"));
+        assert!(out.contains("supported public section tokens are `genes`, `conditions`, `methods`, `regulatory`, and `all`."));
+        assert!(out.contains("intentionally excludes `regulatory`"));
         assert!(out.contains("biomcp gtr sync"));
         assert!(out.contains("biomcp who-ivd sync"));
         assert!(out.contains("WHO IVD local data (<resolved_root>)"));

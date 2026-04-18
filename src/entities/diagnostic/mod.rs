@@ -545,6 +545,52 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn get_who_ivd_regulatory_is_valid_and_returns_empty_vec_on_no_match() {
+        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
+            install_all_fixture_roots("diagnostic-get-who-regulatory").await;
+        let server = MockServer::start().await;
+        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/device/510k.json"))
+            .and(query_param("limit", "25"))
+            .and(query_param(
+                "search",
+                r#"device_name:"ONE STEP Anti\-HIV \(1\&2\) Test""#,
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 25, "total": 0}},
+                "results": []
+            })))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/device/pma.json"))
+            .and(query_param("limit", "25"))
+            .and(query_param(
+                "search",
+                r#"trade_name:"ONE STEP Anti\-HIV \(1\&2\) Test""#,
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 25, "total": 0}},
+                "results": []
+            })))
+            .mount(&server)
+            .await;
+
+        let diagnostic = get("ITPW02232- TC40", &["regulatory".to_string()])
+            .await
+            .expect("WHO regulatory get");
+
+        assert_eq!(diagnostic.source, "who-ivd");
+        assert!(
+            diagnostic.regulatory.as_ref().is_some_and(Vec::is_empty),
+            "requested WHO regulatory overlay should serialize as an empty section on no match"
+        );
+    }
+
+    #[tokio::test]
     async fn get_who_ivd_rejects_unsupported_sections_with_recovery_hint() {
         let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
             install_all_fixture_roots("diagnostic-get-who-sections").await;

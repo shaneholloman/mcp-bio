@@ -44,8 +44,12 @@ pub fn diagnostic_markdown(
     let show_conditions_section =
         supports("conditions") && (include_all || has_requested("conditions"));
     let show_methods_section = supports("methods") && (include_all || has_requested("methods"));
-    let regulatory_block =
-        render_regulatory_block(&diagnostic.name, diagnostic.regulatory.as_deref());
+    let show_regulatory_section = supports("regulatory") && has_requested("regulatory");
+    let regulatory_block = if show_regulatory_section {
+        render_regulatory_block(diagnostic.regulatory.as_deref())
+    } else {
+        String::new()
+    };
 
     tmpl.render(context! {
         accession => &diagnostic.accession,
@@ -83,7 +87,7 @@ pub fn diagnostic_markdown(
     .map_err(Into::into)
 }
 
-fn render_regulatory_block(_name: &str, rows: Option<&[DiagnosticRegulatoryRecord]>) -> String {
+fn render_regulatory_block(rows: Option<&[DiagnosticRegulatoryRecord]>) -> String {
     let Some(rows) = rows else {
         return String::new();
     };

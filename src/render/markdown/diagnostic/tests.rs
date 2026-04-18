@@ -170,6 +170,50 @@ fn diagnostic_markdown_renders_regulatory_section_rows() {
 }
 
 #[test]
+fn diagnostic_markdown_keeps_regulatory_hidden_for_all_expansion() {
+    let diagnostic = Diagnostic {
+        source: "gtr".to_string(),
+        source_id: "GTR000000001.1".to_string(),
+        accession: "GTR000000001.1".to_string(),
+        name: "FoundationOne CDx".to_string(),
+        test_type: Some("molecular".to_string()),
+        manufacturer: Some("Foundation Medicine, Inc.".to_string()),
+        target_marker: None,
+        regulatory_version: None,
+        prequalification_year: None,
+        laboratory: None,
+        institution: None,
+        country: None,
+        clia_number: None,
+        state_licenses: None,
+        current_status: None,
+        public_status: None,
+        method_categories: vec![],
+        genes: None,
+        conditions: None,
+        methods: None,
+        regulatory: Some(vec![DiagnosticRegulatoryRecord {
+            submission_type: "PMA".to_string(),
+            number: "P000019".to_string(),
+            display_name: "FoundationOne CDx".to_string(),
+            trade_name: Some("FoundationOne CDx".to_string()),
+            generic_name: None,
+            applicant: Some("Foundation Medicine, Inc.".to_string()),
+            decision_date: Some("2017-11-30".to_string()),
+            decision_description: Some("approved".to_string()),
+            advisory_committee: None,
+            product_code: Some("PQP".to_string()),
+            supplement_count: Some(2),
+        }]),
+    };
+
+    let markdown =
+        diagnostic_markdown(&diagnostic, &["all".to_string()]).expect("rendered markdown");
+
+    assert!(!markdown.contains("## Regulatory (FDA Device)"));
+}
+
+#[test]
 fn diagnostic_markdown_renders_regulatory_empty_state_when_requested() {
     let diagnostic = Diagnostic {
         source: "who-ivd".to_string(),
