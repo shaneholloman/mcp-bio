@@ -1,11 +1,17 @@
 # Diagnostic: {{ accession }}
 
-Source: GTR
+Source: {{ source_label }}
 Source ID: {{ source_id }}
 Name: {{ name }}
-{% if test_type %}Type: {{ test_type }}
+{% if test_type %}{{ test_type_label }}: {{ test_type }}
 {% endif -%}
 {% if manufacturer %}Manufacturer: {{ manufacturer }}
+{% endif -%}
+{% if target_marker %}Target / Marker: {{ target_marker }}
+{% endif -%}
+{% if regulatory_version %}Regulatory Version: {{ regulatory_version }}
+{% endif -%}
+{% if prequalification_year %}Prequalification Year: {{ prequalification_year }}
 {% endif -%}
 {% if laboratory %}Laboratory: {{ laboratory }}
 {% endif -%}
@@ -30,7 +36,7 @@ Name: {{ name }}
 {% if genes is not none and genes -%}
 {{ genes | join(", ") }}
 {% else -%}
-No genes listed in GTR.
+No genes listed in {{ source_label }}.
 {% endif -%}
 {% endif -%}
 
@@ -40,7 +46,7 @@ No genes listed in GTR.
 {% if conditions is not none and conditions -%}
 {{ conditions | join(", ") }}
 {% else -%}
-No conditions listed in GTR.
+No conditions listed in {{ source_label }}.
 {% endif -%}
 {% endif -%}
 
@@ -52,7 +58,7 @@ No conditions listed in GTR.
 - {{ method }}
 {% endfor -%}
 {% else -%}
-No methods listed in GTR.
+No methods listed in {{ source_label }}.
 {% endif -%}
 {% endif -%}
 

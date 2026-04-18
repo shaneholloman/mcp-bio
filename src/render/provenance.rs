@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use crate::entities::adverse_event::{AdverseEvent, AdverseEventReport, DeviceEvent};
 use crate::entities::article::Article;
-use crate::entities::diagnostic::Diagnostic;
+use crate::entities::diagnostic::{Diagnostic, diagnostic_source_label};
 use crate::entities::discover::DiscoverResult;
 use crate::entities::disease::Disease;
 use crate::entities::drug::Drug;
@@ -124,6 +124,9 @@ pub(crate) fn diagnostic_section_sources(diagnostic: &Diagnostic) -> Vec<Section
         || has_text(&diagnostic.name)
         || has_opt_text(&diagnostic.test_type)
         || has_opt_text(&diagnostic.manufacturer)
+        || has_opt_text(&diagnostic.target_marker)
+        || has_opt_text(&diagnostic.regulatory_version)
+        || has_opt_text(&diagnostic.prequalification_year)
         || has_opt_text(&diagnostic.laboratory)
         || has_opt_text(&diagnostic.institution)
         || has_opt_text(&diagnostic.country)
@@ -132,33 +135,34 @@ pub(crate) fn diagnostic_section_sources(diagnostic: &Diagnostic) -> Vec<Section
         || has_opt_text(&diagnostic.current_status)
         || has_opt_text(&diagnostic.public_status)
         || !diagnostic.method_categories.is_empty();
+    let source_label = diagnostic_source_label(&diagnostic.source);
     push_section(
         &mut out,
         summary_present,
         "summary",
         "Summary",
-        ["NCBI Genetic Testing Registry"],
+        [source_label],
     );
     push_section(
         &mut out,
         diagnostic.genes.is_some(),
         "genes",
         "Genes",
-        ["NCBI Genetic Testing Registry"],
+        [source_label],
     );
     push_section(
         &mut out,
         diagnostic.conditions.is_some(),
         "conditions",
         "Conditions",
-        ["NCBI Genetic Testing Registry"],
+        [source_label],
     );
     push_section(
         &mut out,
         diagnostic.methods.is_some(),
         "methods",
         "Methods",
-        ["NCBI Genetic Testing Registry"],
+        [source_label],
     );
     out
 }

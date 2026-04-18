@@ -1,8 +1,12 @@
 use crate::entities::SearchPage;
 use crate::error::BioMcpError;
 use crate::sources::gtr::{GtrClient, GtrIndex, GtrRecord, GtrSyncMode};
+use crate::sources::who_ivd::{WhoIvdClient, WhoIvdRecord, WhoIvdSyncMode};
 
-use super::{DiagnosticSearchFilters, DiagnosticSearchResult, search_result};
+use super::{
+    DiagnosticSearchFilters, DiagnosticSearchResult, DiagnosticSourceFilter, search_result,
+    who_ivd_search_result,
+};
 
 const MAX_SEARCH_LIMIT: usize = 50;
 const ZERO_FILTER_ERROR: &str =
@@ -10,6 +14,7 @@ const ZERO_FILTER_ERROR: &str =
 
 #[derive(Debug, Clone)]
 struct NormalizedSearchFilters {
+    source: DiagnosticSourceFilter,
     gene: Option<String>,
     disease: Option<String>,
     test_type: Option<String>,
@@ -19,6 +24,7 @@ struct NormalizedSearchFilters {
 impl NormalizedSearchFilters {
     fn from_filters(filters: &DiagnosticSearchFilters) -> Result<Self, BioMcpError> {
         let normalized = Self {
+            source: filters.source,
             gene: normalized_exact(filters.gene.as_deref()),
             disease: normalized_contains(filters.disease.as_deref()),
             test_type: normalized_exact(filters.test_type.as_deref()),
@@ -33,10 +39,17 @@ impl NormalizedSearchFilters {
             return Err(BioMcpError::InvalidArgument(ZERO_FILTER_ERROR.to_string()));
         }
 
+        if matches!(normalized.source, DiagnosticSourceFilter::WhoIvd) && normalized.gene.is_some()
+        {
+            return Err(BioMcpError::InvalidArgument(
+                "WHO IVD does not support --gene; use --source gtr or omit --source for gene-first diagnostic searches".to_string(),
+            ));
+        }
+
         Ok(normalized)
     }
 
-    fn matches(&self, record: &GtrRecord, index: &GtrIndex) -> bool {
+    fn matches_gtr(&self, record: &GtrRecord, index: &GtrIndex) -> bool {
         if let Some(gene) = self.gene.as_deref()
             && !index
                 .merged_genes(&record.accession)
@@ -63,6 +76,31 @@ impl NormalizedSearchFilters {
 
         if let Some(manufacturer) = self.manufacturer.as_deref()
             && !manufacturer_matches(record, manufacturer)
+        {
+            return false;
+        }
+
+        true
+    }
+
+    fn matches_who_ivd(&self, record: &WhoIvdRecord) -> bool {
+        if let Some(disease) = self.disease.as_deref()
+            && !record.target_marker.to_ascii_lowercase().contains(disease)
+        {
+            return false;
+        }
+
+        if let Some(test_type) = self.test_type.as_deref()
+            && !record.assay_format.trim().eq_ignore_ascii_case(test_type)
+        {
+            return false;
+        }
+
+        if let Some(manufacturer) = self.manufacturer.as_deref()
+            && !record
+                .manufacturer_name
+                .to_ascii_lowercase()
+                .contains(manufacturer)
         {
             return false;
         }
@@ -124,20 +162,51 @@ pub async fn search_page(
     }
 
     let filters = NormalizedSearchFilters::from_filters(filters)?;
-    let client = GtrClient::ready(GtrSyncMode::Auto).await?;
-    let index = client.load_index()?;
+    let mut results = Vec::new();
+    let mut matching_sources = 0usize;
+    let mut known_total = 0usize;
 
-    let mut results = index
-        .records_by_id
-        .values()
-        .filter(|record| filters.matches(record, &index))
-        .map(|record| search_result(record, &index))
-        .collect::<Vec<_>>();
+    if filters.source.includes_gtr() {
+        let client = GtrClient::ready(GtrSyncMode::Auto).await?;
+        let index = client.load_index()?;
+        let gtr_results = index
+            .records_by_id
+            .values()
+            .filter(|record| filters.matches_gtr(record, &index))
+            .map(|record| search_result(record, &index))
+            .collect::<Vec<_>>();
+        if !gtr_results.is_empty() {
+            matching_sources += 1;
+            known_total += gtr_results.len();
+        }
+        results.extend(gtr_results);
+    }
+
+    let should_query_who_ivd = filters.source.includes_who_ivd() && filters.gene.is_none();
+    if should_query_who_ivd {
+        let client = WhoIvdClient::ready(WhoIvdSyncMode::Auto).await?;
+        let who_results = client
+            .read_rows()?
+            .into_iter()
+            .filter(|record| filters.matches_who_ivd(record))
+            .map(|record| who_ivd_search_result(&record))
+            .collect::<Vec<_>>();
+        if !who_results.is_empty() {
+            matching_sources += 1;
+            known_total += who_results.len();
+        }
+        results.extend(who_results);
+    }
+
     results.sort_by_key(result_sort_key);
 
-    let total = results.len();
+    let total = match filters.source {
+        DiagnosticSourceFilter::All if matching_sources > 1 => None,
+        DiagnosticSourceFilter::All if matching_sources == 0 => Some(0),
+        _ => Some(known_total),
+    };
     let results = results.into_iter().skip(offset).take(limit).collect();
-    Ok(SearchPage::offset(results, Some(total)))
+    Ok(SearchPage::offset(results, total))
 }
 
 pub fn search_query_summary(filters: &DiagnosticSearchFilters) -> String {
@@ -173,6 +242,9 @@ pub fn search_query_summary(filters: &DiagnosticSearchFilters) -> String {
         .filter(|value| !value.is_empty())
     {
         parts.push(format!("manufacturer={manufacturer}"));
+    }
+    if let Some(source) = filters.source.query_summary() {
+        parts.push(source);
     }
     parts.join(", ")
 }

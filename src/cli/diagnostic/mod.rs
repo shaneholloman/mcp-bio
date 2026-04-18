@@ -1,9 +1,30 @@
 //! Diagnostic CLI payloads.
 
-use clap::Args;
+use clap::{Args, ValueEnum};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum DiagnosticSourceArg {
+    Gtr,
+    #[value(name = "who-ivd")]
+    WhoIvd,
+    All,
+}
+
+impl From<DiagnosticSourceArg> for crate::entities::diagnostic::DiagnosticSourceFilter {
+    fn from(value: DiagnosticSourceArg) -> Self {
+        match value {
+            DiagnosticSourceArg::Gtr => Self::Gtr,
+            DiagnosticSourceArg::WhoIvd => Self::WhoIvd,
+            DiagnosticSourceArg::All => Self::All,
+        }
+    }
+}
 
 #[derive(Args, Debug)]
 pub struct DiagnosticSearchArgs {
+    /// Diagnostic source [default: all]
+    #[arg(long, value_enum, default_value_t = DiagnosticSourceArg::All)]
+    pub source: DiagnosticSourceArg,
     /// Filter by gene symbol
     #[arg(short = 'g', long)]
     pub gene: Option<String>,
@@ -26,7 +47,7 @@ pub struct DiagnosticSearchArgs {
 
 #[derive(Args, Debug)]
 pub struct DiagnosticGetArgs {
-    /// GTR accession version (e.g., GTR000000001.1)
+    /// Diagnostic accession or WHO IVD product code (e.g., GTR000000001.1 or "ITPW02232- TC40")
     pub accession: String,
     /// Sections to include (genes, conditions, methods, all)
     #[arg(trailing_var_arg = true)]

@@ -1,6 +1,7 @@
 use clap::{CommandFactory, Parser};
 
 use crate::cli::{Cli, Commands, GetEntity, SearchEntity};
+use crate::entities::diagnostic::DiagnosticSourceFilter;
 use crate::test_support::{TempDirGuard, env_lock, set_env_var};
 
 fn write_gtr_fixture(root: &std::path::Path) {
@@ -36,6 +37,7 @@ fn search_diagnostic_parses_filter_only_flags() {
             Commands::Search {
                 entity:
                     SearchEntity::Diagnostic(crate::cli::diagnostic::DiagnosticSearchArgs {
+                        source,
                         gene,
                         disease,
                         test_type,
@@ -50,6 +52,10 @@ fn search_diagnostic_parses_filter_only_flags() {
         panic!("expected search diagnostic command");
     };
 
+    assert!(matches!(
+        DiagnosticSourceFilter::from(source),
+        DiagnosticSourceFilter::All
+    ));
     assert_eq!(gene.as_deref(), Some("BRCA1"));
     assert_eq!(disease, None);
     assert_eq!(test_type.as_deref(), Some("molecular"));
@@ -74,11 +80,11 @@ fn get_diagnostic_help_mentions_supported_sections() {
     let help = String::from_utf8(help).expect("help should be utf-8");
 
     assert!(help.contains("genes, conditions, methods, all"));
-    assert!(help.contains("biomcp get diagnostic GTR000000001.1 methods"));
+    assert!(help.contains("biomcp get diagnostic \"ITPW02232- TC40\" conditions"));
 }
 
 #[test]
-fn search_diagnostic_help_uses_live_gtr_type_example() {
+fn search_diagnostic_help_mentions_source_aware_examples() {
     let mut command = Cli::command();
     let search = command
         .find_subcommand_mut("search")
@@ -92,9 +98,13 @@ fn search_diagnostic_help_uses_live_gtr_type_example() {
         .expect("diagnostic help should render");
     let help = String::from_utf8(help).expect("help should be utf-8");
 
-    assert!(help.contains("biomcp search diagnostic --gene EGFR --type Clinical --limit 5"));
-    assert!(help.contains("`--type` values come from the current GTR export"));
-    assert!(!help.contains("--type molecular"));
+    assert!(help.contains("biomcp search diagnostic --disease HIV --source who-ivd --limit 5"));
+    assert!(
+        help.contains(
+            "biomcp search diagnostic --gene EGFR --type Clinical --source gtr --limit 5"
+        )
+    );
+    assert!(help.contains("`--source` accepts gtr, who-ivd, or all"));
 }
 
 #[tokio::test]
