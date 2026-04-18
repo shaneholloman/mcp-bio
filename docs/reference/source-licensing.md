@@ -33,6 +33,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 |---|---|---|---|---|---|---|
 | AlphaGenome | 2 | direct_api | required_env | custom provider terms; access is gated by Google/DeepMind service controls | do not assume open redistribution rights for returned prediction outputs | <https://deepmind.google/science/alphagenome/> |
 | cBioPortal | 3 | direct_api | none | public API with study-specific downstream terms | reuse depends on the specific study or consortium behind each dataset | <https://www.cbioportal.org/> |
+| CDC CVX/MVX | 1 | direct_api | none | most CDC website materials are public domain, but attribution, disclaimer, and exceptions for third-party or non-federal content still apply | reuse is generally allowed with CDC attribution and non-endorsement language; avoid CDC logos and review exceptions before republishing | <https://www.cdc.gov/other/agencymaterials.html> |
 | ChEMBL | 1 | direct_api | none | EMBL-EBI open data service; ChEMBL is published for broad reuse | reuse is generally allowed under the provider's open-data terms with attribution where required | <https://www.ebi.ac.uk/chembl/> |
 | CIViC | 1 | direct_api | none | open community knowledgebase; CIViC content is published for unrestricted reuse | reuse is broadly permitted; attribution remains best practice | <https://civicdb.org/home> |
 | ClinGen | 1 | direct_api | none | public ClinGen curation resources with publication and attribution expectations | generally queryable and reusable, but users should preserve attribution and source context | <https://clinicalgenome.org/> |
@@ -175,6 +176,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.dgidb.org/about>
 - Reviewed on: `2026-03-20`
 - Notes: DGIdb itself is open to query, but it aggregates claims from many external drug-gene sources.
+
+### CDC CVX/MVX
+
+- BioMCP surfaces: `search drug <name> --region eu|all; search drug <name> (default plain-name all-region search); biomcp health; biomcp cvx sync`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: on-demand local download by BioMCP on first EU/default vaccine-bridge use, or manual preseed via `BIOMCP_CVX_DIR`
+- License / terms summary: most CDC website materials are public domain, but attribution, disclaimer, and exceptions for third-party or non-federal content still apply
+- Redistribution / reuse summary: reuse is generally allowed with CDC attribution and non-endorsement language; avoid CDC logos and review exceptions before republishing
+- Official terms URL: <https://www.cdc.gov/other/agencymaterials.html>
+- Reviewed on: `2026-04-17`
+- Notes: BioMCP auto-downloads `cvx.txt`, `TRADENAME.txt`, and `mvx.txt` into `BIOMCP_CVX_DIR` or the default data directory on first use, refreshes stale files after 30 days, and supports explicit refresh via `biomcp cvx sync`. The bundle only augments the EMA-side vaccine identity path after MyChem misses; pure `--region us` search does not use it.
 
 ### EMA
 

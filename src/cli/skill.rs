@@ -602,6 +602,7 @@ mod tests {
         assert!(overview.contains("biomcp search drug --indication \"<disease>\""));
         assert!(overview.contains("biomcp ema sync"));
         assert!(overview.contains("biomcp who sync"));
+        assert!(overview.contains("biomcp cvx sync"));
         assert!(overview.contains("biomcp discover \"<free text>\""));
         assert!(overview.contains("[Find Articles](../docs/how-to/find-articles.md)"));
         assert!(overview.contains("Never do more than 3 article searches for one question."));
@@ -622,6 +623,7 @@ mod tests {
         );
         assert!(overview.find("biomcp ema sync") < overview.find("## Section reference"));
         assert!(overview.find("biomcp who sync") < overview.find("## Section reference"));
+        assert!(overview.find("biomcp cvx sync") < overview.find("## Section reference"));
         assert!(overview.find("## How-to guide reference") < overview.find("## Anti-patterns"));
         assert!(overview.find("## Anti-patterns") < overview.find("## Output and evidence rules"));
         assert!(

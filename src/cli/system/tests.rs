@@ -1,6 +1,6 @@
 use clap::{CommandFactory, Parser};
 
-use super::{EmaCommand, WhoCommand};
+use super::{CvxCommand, EmaCommand, WhoCommand};
 use crate::cli::{Cli, Commands, execute};
 
 fn parse_built_cli<I, T>(args: I) -> Cli
@@ -76,6 +76,48 @@ fn who_sync_help_describes_dual_export_refresh() {
     let help = String::from_utf8(help).expect("help should be utf-8");
 
     assert!(help.contains("WHO Prequalification local exports"));
+}
+
+#[test]
+fn cvx_sync_parses_subcommand() {
+    let cli = parse_built_cli(["biomcp", "cvx", "sync"]);
+    assert!(matches!(
+        cli.command,
+        Commands::Cvx {
+            cmd: CvxCommand::Sync
+        }
+    ));
+}
+
+#[test]
+fn cvx_help_mentions_sync_example() {
+    let mut command = Cli::command();
+    let cvx = command
+        .find_subcommand_mut("cvx")
+        .expect("cvx subcommand should exist");
+    let mut help = Vec::new();
+    cvx.write_long_help(&mut help)
+        .expect("cvx help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("biomcp cvx sync"));
+}
+
+#[test]
+fn cvx_sync_help_describes_bundle_refresh() {
+    let mut command = Cli::command();
+    let cvx = command
+        .find_subcommand_mut("cvx")
+        .expect("cvx subcommand should exist");
+    let sync = cvx
+        .find_subcommand_mut("sync")
+        .expect("cvx sync subcommand should exist");
+    let mut help = Vec::new();
+    sync.write_long_help(&mut help)
+        .expect("cvx sync help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("CDC CVX/MVX vaccine identity bundle"));
 }
 
 #[test]

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use super::{BatchArgs, EmaCommand, EnrichArgs, VersionArgs, WhoCommand};
+use super::{BatchArgs, CvxCommand, EmaCommand, EnrichArgs, VersionArgs, WhoCommand};
 use crate::cli::CommandOutcome;
 use futures::future::try_join_all;
 
@@ -370,6 +370,16 @@ pub(crate) async fn handle_who(cmd: WhoCommand) -> anyhow::Result<CommandOutcome
             crate::sources::who_pq::WhoPqClient::sync(crate::sources::who_pq::WhoPqSyncMode::Force)
                 .await?;
             "WHO Prequalification data synchronized successfully.\n".to_string()
+        }
+    };
+    Ok(CommandOutcome::stdout(text))
+}
+
+pub(crate) async fn handle_cvx(cmd: CvxCommand) -> anyhow::Result<CommandOutcome> {
+    let text = match cmd {
+        CvxCommand::Sync => {
+            crate::sources::cvx::CvxClient::sync(crate::sources::cvx::CvxSyncMode::Force).await?;
+            "CDC CVX/MVX local data bundle synchronized successfully.\n".to_string()
         }
     };
     Ok(CommandOutcome::stdout(text))

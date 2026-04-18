@@ -10,6 +10,7 @@ from pathlib import Path
 BLOCKED_FAMILIES = {
     "cache",
     "chart",
+    "cvx",
     "ema",
     "mcp",
     "serve",

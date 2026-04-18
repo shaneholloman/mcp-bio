@@ -1,0 +1,7 @@
+62        |HPV, quadrivalent|human papilloma virus vaccine, quadrivalent||Active|False|2020/06/02
+165       |HPV9|Human Papillomavirus 9-valent vaccine||Active|False|2014/12/11
+133       |Pneumococcal conjugate PCV 13|pneumococcal conjugate vaccine, 13 valent||Active|False|2010/05/28
+140       |Influenza, split virus, trivalent, PF|Influenza, split virus, trivalent, injectable, preservative free|Trivalent code reactivated for 2024/2025 season|Active|False|2024/05/02
+141       |Influenza, split virus, trivalent, preservative|Influenza, split virus, trivalent, injectable, contains preservative|Trivalent code reactivated for 2024/2025 season|Active|False|2024/05/02
+208       |COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose|SARS-COV-2 (COVID-19) vaccine, mRNA, spike protein, LNP, preservative free, 30 mcg/0.3mL dose|Original monovalent Pfizer adult vaccine (12+ yrs). FDA rescinded all doses for US use 4/18/2023.  Continue to use to record historic US Pfizer vaccines and Non-US vaccines administered (includes tradename Comirnaty)|Inactive|False|2023/11/14
+217       |COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose, tris-sucrose|SARS-COV-2 (COVID-19) vaccine, mRNA, spike protein, LNP, preservative free, 30 mcg/0.3mL dose, tris-sucrose formulation|Original monovalent Pfizer tris-sucrose formulation FDA EUA (12+ yrs) and BLA (16+ yrs), FDA rescinded monovalent use 08/31/2022, BLA NDCs not retired until 09/11/2023. |Inactive|False|2023/11/02

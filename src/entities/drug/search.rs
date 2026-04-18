@@ -7,7 +7,8 @@ use tracing::warn;
 
 use crate::entities::SearchPage;
 use crate::error::BioMcpError;
-use crate::sources::ema::{EmaClient, EmaSyncMode};
+use crate::sources::cvx::{CvxClient, CvxSyncMode};
+use crate::sources::ema::{EmaClient, EmaDrugIdentity, EmaSyncMode};
 use crate::sources::mychem::{MyChemHit, MyChemNdcField};
 use crate::sources::openfda::OpenFdaClient;
 use crate::sources::who_pq::{WhoPqClient, WhoPqSyncMode, WhoProductTypeFilter};
@@ -364,9 +365,38 @@ pub async fn search_name_query_with_region(
     };
 
     let resolved_identity = try_resolve_drug_identity(query).await;
-    let eu_identity = match resolved_identity.as_ref() {
-        Some(drug) => build_ema_identity(query, drug),
-        None => crate::sources::ema::EmaDrugIdentity::new(query),
+    let eu_identity = if region.includes_eu() {
+        match resolved_identity.as_ref() {
+            Some(drug) => build_ema_identity(query, drug),
+            None => {
+                let cvx_aliases = match CvxClient::ready(CvxSyncMode::Auto).await {
+                    Ok(client) => match client.lookup_brand_aliases(query) {
+                        Ok(aliases) => aliases,
+                        Err(err) => {
+                            warn!(
+                                query = %query,
+                                "CDC CVX/MVX alias lookup unavailable for EMA fallback: {err}"
+                            );
+                            Vec::new()
+                        }
+                    },
+                    Err(err) => {
+                        warn!(
+                            query = %query,
+                            "CDC CVX/MVX auto-sync unavailable for EMA fallback: {err}"
+                        );
+                        Vec::new()
+                    }
+                };
+                if cvx_aliases.is_empty() {
+                    EmaDrugIdentity::new(query)
+                } else {
+                    EmaDrugIdentity::with_aliases(query, None, &cvx_aliases)
+                }
+            }
+        }
+    } else {
+        EmaDrugIdentity::new(query)
     };
     let who_identity = match resolved_identity.as_ref() {
         Some(drug) => build_who_identity(query, drug),

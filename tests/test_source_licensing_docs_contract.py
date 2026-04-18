@@ -15,6 +15,7 @@ DIRECT_SOURCE_MODULES = {
     "clinicaltrials": "ClinicalTrials.gov",
     "complexportal": "ComplexPortal",
     "cpic": "CPIC",
+    "cvx": "CDC CVX/MVX",
     "dgidb": "DGIdb",
     "disgenet": "DisGeNET",
     "ema": "EMA",

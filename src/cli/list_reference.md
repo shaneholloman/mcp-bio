@@ -79,7 +79,7 @@ New to BioMCP? Try:
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
 - Article result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>` follow-ups when keyword text contains a recognizable entity token
 - Article result pages can also suggest year-refinement follow-ups when visible rows expose publication years and the current search has no explicit date bounds
-- `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification; `--product-type <finished_pharma|api>` is WHO-only and requires explicit `--region who`; explicit `eu|all` with structured filters errors; `ema` is accepted as an alias for `eu`)
+- `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification; `--product-type <finished_pharma|api>` is WHO-only and requires explicit `--region who`; explicit `eu|all` with structured filters errors; `ema` is accepted as an alias for `eu`; omitted `--region` on plain-name vaccine lookups and explicit `eu|all` vaccine lookups can also use the CDC CVX/MVX bridge after MyChem identity misses, while pure `--region us` search does not use the CVX root)
 
 ## Helpers
 
@@ -132,8 +132,9 @@ Results depend on source document wording and may vary across sources.
 - `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.
 - EU drug commands auto-download the EMA human-medicines JSON feeds on first use into the default data dir or `BIOMCP_EMA_DIR`, then refresh stale files after 72 hours.
 - WHO regional commands auto-download the WHO finished-pharma and API CSV exports on first use into the default data dir or `BIOMCP_WHO_DIR`, then refresh stale files after 72 hours.
-- Run `ema sync` or `who sync` to force-refresh the local regional data.
-- Use `biomcp health --apis-only` for upstream/API checks and full `biomcp health` for local EMA/WHO/cache readiness plus cache-limit warnings.
+- Default/EU vaccine brand lookups can auto-download the CDC CVX/MVX bundle on first use into the default data dir or `BIOMCP_CVX_DIR`, then refresh stale files after 30 days.
+- Run `ema sync`, `who sync`, or `cvx sync` to force-refresh the local regional data.
+- Use `biomcp health --apis-only` for upstream/API checks and full `biomcp health` for local EMA/WHO/CVX/cache readiness plus cache-limit warnings.
 - In multi-worker environments, run one shared `biomcp serve-http` process so workers share one Streamable HTTP `/mcp` endpoint and one limiter budget.
 
 ## Ops
@@ -144,6 +145,7 @@ Results depend on source document wording and may vary across sources.
 - `cache clear [--yes]` - destructively wipe `<resolved cache_root>/http`; never touches `downloads/`; supports `--json` on success and requires a TTY unless `--yes` is passed
 - `ema sync`
 - `who sync`
+- `cvx sync`
 - `update [--check]`
 - `uninstall`
 - `health [--apis-only]`

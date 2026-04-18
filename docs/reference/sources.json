@@ -170,6 +170,28 @@
     "notes": "DisGeNET's public site advertises free and commercial plans. BioMCP documents the API as key-gated and treats it as provider-controlled."
   },
   {
+    "id": "cdc-cvx",
+    "name": "CDC CVX/MVX",
+    "tier": 1,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": [
+      "search drug <name> --region eu|all",
+      "search drug <name> (default plain-name all-region search)",
+      "biomcp health",
+      "biomcp cvx sync"
+    ],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "on-demand local download by BioMCP on first EU/default vaccine-bridge use, or manual preseed via BIOMCP_CVX_DIR",
+    "license_summary": "most CDC website materials are public domain, but attribution, disclaimer, and exceptions for third-party or non-federal content still apply",
+    "redistribution_summary": "reuse is generally allowed with CDC attribution and non-endorsement language; avoid CDC logos and review exceptions before republishing",
+    "terms_url": "https://www.cdc.gov/other/agencymaterials.html",
+    "key_url": null,
+    "reviewed_on": "2026-04-17",
+    "notes": "BioMCP auto-downloads cvx.txt, TRADENAME.txt, and mvx.txt into BIOMCP_CVX_DIR or the default data directory on first use, refreshes stale files after 30 days, supports explicit refresh via biomcp cvx sync, augments the EMA-side vaccine identity path after MyChem misses, and does not use the CVX root for pure --region us searches."
+  },
+  {
     "id": "ema",
     "name": "EMA",
     "tier": 1,

@@ -43,6 +43,10 @@ filters structured U.S. hits through WHO Prequalification. `--product-type
 <finished_pharma|api>` is WHO-only and requires explicit `--region who`.
 Explicit `--region eu` or `--region all` with structured filters still errors.
 `ema` is accepted as an input alias for the canonical `eu` region value.
+When MyChem cannot resolve a vaccine brand name, omitted `--region` on a plain
+name search and explicit `--region eu|all` can also use the local CDC CVX/MVX
+bundle to expand EMA vaccine aliases. That bridge does not change WHO matching
+and does not run for pure `--region us` searches.
 
 ## Get a drug record
 
@@ -194,6 +198,49 @@ WHO row meanings:
 - `available (default path, stale)`: the default platform data directory contains both WHO exports, but at least one is older than the 72-hour refresh window
 - `not configured`: no complete WHO root is installed at the default path yet
 - `error (missing: ...)`: the WHO directory exists but is missing one of the required files
+
+## CDC CVX/MVX local data setup
+
+Default plain-name vaccine searches that include the EU path can use local CDC
+CVX/MVX data as a vaccine identity bridge when MyChem does not recognize the
+brand name directly. BioMCP reads `BIOMCP_CVX_DIR` first, then the platform
+data directory (`~/.local/share/biomcp/cvx` on typical Linux systems). On
+first use, BioMCP auto-downloads `cvx.txt`, `TRADENAME.txt`, and `mvx.txt`
+into that root and refreshes stale files after 30 days. Use `biomcp cvx sync`
+to force a refresh at any time.
+
+The CDC bundle only augments omitted `--region` plain-name vaccine searches and
+explicit `search drug <name> --region eu|all` vaccine searches after MyChem
+identity resolution misses. It does not inject aliases into WHO lookups, and
+`--region us` does not create or read the CVX root.
+
+Manual preseed still works. If you need an offline or pre-populated root,
+place these files in the target directory:
+
+- `cvx.txt`
+- `TRADENAME.txt`
+- `mvx.txt`
+
+Confirm local CDC readiness with full health output:
+
+```bash
+biomcp health
+```
+
+Force-refresh CDC CVX/MVX local data manually:
+
+```bash
+biomcp cvx sync
+```
+
+CDC row meanings:
+
+- `configured`: `BIOMCP_CVX_DIR` is set and the full CDC bundle is present
+- `configured (stale)`: `BIOMCP_CVX_DIR` is set and complete, but at least one CDC file is older than the 30-day refresh window
+- `available (default path)`: the default platform data directory contains a complete CDC CVX/MVX bundle
+- `available (default path, stale)`: the default platform data directory contains a complete CDC bundle, but at least one file is older than the 30-day refresh window
+- `not configured`: no complete CDC CVX/MVX root is installed at the default path yet
+- `error (missing: ...)`: the CDC directory exists but is missing one or more required files
 
 ## Helper commands
 

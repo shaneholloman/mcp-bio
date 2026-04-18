@@ -41,6 +41,36 @@
       "therapeutic_indication": ["Opdivo as monotherapy or in combination with ipilimumab is indicated for the treatment of advanced (unresectable or metastatic) melanoma in adults and adolescents 12 years of age and older."]
     },
     {
+      "name_of_medicine": ["Silgard"],
+      "active_substance": ["human papillomavirus vaccine, quadrivalent"],
+      "ema_product_number": ["EMEA/H/C/000703"],
+      "medicine_status": ["Authorised"],
+      "category": ["Human"],
+      "marketing_authorisation_developer_applicant_holder": ["Merck Sharp & Dohme B.V."],
+      "marketing_authorisation_date": ["20/09/2006"],
+      "therapeutic_indication": ["Active immunisation against premalignant genital lesions and cervical cancer caused by human papillomavirus types 6, 11, 16, and 18."]
+    },
+    {
+      "name_of_medicine": ["Comirnaty"],
+      "active_substance": ["tozinameran"],
+      "ema_product_number": ["EMEA/H/C/005735"],
+      "medicine_status": ["Authorised"],
+      "category": ["Human"],
+      "marketing_authorisation_developer_applicant_holder": ["BioNTech Manufacturing GmbH"],
+      "marketing_authorisation_date": ["21/12/2020"],
+      "therapeutic_indication": ["Comirnaty is indicated for active immunisation to prevent COVID-19 caused by SARS-CoV-2."]
+    },
+    {
+      "name_of_medicine": ["Prevenar 13"],
+      "active_substance": ["pneumococcal polysaccharide conjugate vaccine (13 valent, adsorbed)"],
+      "ema_product_number": ["EMEA/H/C/001104"],
+      "medicine_status": ["Authorised"],
+      "category": ["Human"],
+      "marketing_authorisation_developer_applicant_holder": ["Pfizer Europe MA EEIG"],
+      "marketing_authorisation_date": ["09/12/2009"],
+      "therapeutic_indication": ["Active immunisation for the prevention of invasive disease, pneumonia and acute otitis media caused by Streptococcus pneumoniae."]
+    },
+    {
       "name_of_medicine": ["Flucelvax Tetra"],
       "active_substance": ["A/Wisconsin/67/2022 (H1N1)pdm09-like strain"],
       "ema_product_number": ["EMEA/H/C/004814"],

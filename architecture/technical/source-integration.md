@@ -53,24 +53,29 @@ Not every file-backed dependency participates in the same runtime lifecycle.
 
 ### Local runtime sources
 
-EMA and WHO Prequalification are the canonical local runtime drug sources.
+EMA, WHO Prequalification, and CDC CVX/MVX are the canonical local runtime drug sources.
 
 - Runtime resolution is owned by the source module, not hard-coded in docs.
 - EMA resolves `BIOMCP_EMA_DIR` first, then the platform data directory.
 - WHO resolves `BIOMCP_WHO_DIR` first, then the platform data directory.
-- Full `biomcp health` includes the EMA and WHO local-data readiness rows.
-- `biomcp health --apis-only` excludes those rows because local EMA/WHO data
-  is not an upstream API.
+- CDC CVX/MVX resolves `BIOMCP_CVX_DIR` first, then the platform data directory.
+- Full `biomcp health` includes the EMA, WHO, and CDC local-data readiness rows.
+- `biomcp health --apis-only` excludes those rows because local EMA/WHO/CVX
+  data is not an upstream API.
 - The row status contract is `configured`, `configured (stale)`,
   `available (default path)`, `available (default path, stale)`,
   `not configured`, and `error (missing: ...)`.
+- EMA and WHO use a 72-hour stale window; CDC CVX/MVX uses a 30-day refresh window.
 - Operator-facing setup details live in `docs/user-guide/drug.md`, including
-  the `EMA local data setup` and `WHO Prequalification local data setup`
-  sections and required local files.
+  the `EMA local data setup`, `WHO Prequalification local data setup`, and
+  `CDC CVX/MVX local data setup` sections and required local files.
+- CDC CVX/MVX only augments the EMA plain-name vaccine identity path after
+  MyChem misses; it is not a WHO alias source and pure `--region us` searches
+  do not use the CVX root.
 
 This keeps local runtime readiness grounded in `src/cli/health.rs` and
-`src/sources/ema.rs` / `src/sources/who_pq.rs` while leaving operator setup
-details in the user guide.
+`src/sources/ema.rs` / `src/sources/who_pq.rs` / `src/sources/cvx.rs` while
+leaving operator setup details in the user guide.
 
 ### File-backed non-runtime assets
 

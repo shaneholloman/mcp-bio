@@ -1,0 +1,4 @@
+MSD|Merck and Co., Inc.||Active|2012/10/18
+PMC|Sanofi Pasteur|Effective 2026  NDCs updated to Sanofi USA, Inc. Former company names include Aventis Pasteur, Pasteur Merieux Connaught; includes Connaught Laboratories and Pasteur Merieux. Acquired ACAMBIS; Acquired Protein Sciences (8/28/2017)|Active|2026/04/14
+WAL|Wyeth|acquired by Pfizer 10/15/2009|Active|2010/05/28
+PFR|Pfizer, Inc|COVID-19 vaccine in co-development with BioNTech.  Pfizer includes Wyeth-Lederle Vaccines and Pediatrics, Wyeth Laboratories, Lederle Laboratories, and Praxis Biologics|Active|2020/10/30

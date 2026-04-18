@@ -448,8 +448,9 @@ fn list_drug() -> String {
 - `drug trials <name>` inherits CTGov intervention alias expansion, adds `Matched Intervention` / `matched_intervention_label` when an alternate alias matched first, and accepts `--no-alias-expand` for literal matching.
 - `drug adverse-events <name>` explains when a drug is absent from FAERS versus present with no matching FAERS events; only the FAERS-404 branch queries ClinicalTrials.gov.
 - EU regional commands auto-download the EMA human-medicines JSON feeds into `BIOMCP_EMA_DIR` or the default data directory on first use.
+- Default/EU vaccine brand lookups can also auto-download the CDC CVX/MVX bundle into `BIOMCP_CVX_DIR` or the default data directory on first use.
 - WHO regional commands auto-download the WHO finished-pharma and API CSV exports into `BIOMCP_WHO_DIR` or the default data directory on first use (`who_pq.csv` and `who_api.csv`).
-- Run `biomcp ema sync` or `biomcp who sync` to force-refresh the local regional data.
+- Run `biomcp ema sync`, `biomcp cvx sync`, or `biomcp who sync` to force-refresh the local regional data.
 "#
     .to_string()
 }
@@ -1066,6 +1067,8 @@ mod tests {
         );
         assert!(out.contains("who_pq.csv"));
         assert!(out.contains("who_api.csv"));
+        assert!(out.contains("CDC CVX/MVX"));
+        assert!(out.contains("biomcp cvx sync"));
         assert!(out.contains("biomcp ema sync"));
         assert!(out.contains("biomcp who sync"));
     }

@@ -9,6 +9,9 @@
 - Added EMA regulatory region (`--region eu`) to `search drug` and `get drug`,
   backed by local EMA human-medicine feeds; data auto-downloads on first use via
   `biomcp ema sync`. (203)
+- Added the CDC CVX/MVX vaccine identity bridge for default and EU/all
+  vaccine-brand drug search, backed by local CDC bundle downloads and explicit
+  refresh via `biomcp cvx sync`. (233)
 - Added entity-aware HATEOAS suggestions (`_meta.next_commands`) to article
   search JSON output; gene-anchored and keyword searches return contextually
   appropriate follow-up commands. (195, 202)

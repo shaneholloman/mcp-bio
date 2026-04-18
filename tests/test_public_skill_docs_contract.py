@@ -120,6 +120,8 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "auto-download on first use" in routing_rules
     assert "biomcp ema sync" in routing_rules
     assert "biomcp who sync" in routing_rules
+    assert "biomcp cvx sync" in routing_rules
+    assert "CDC CVX/MVX" in routing_rules
     assert 'biomcp search drug --indication "<disease>"' in skill_file
     assert 'biomcp discover "<free text>"' in skill_file
     assert "[Guide Workflows](../docs/how-to/guide-workflows.md)" in skill_file
