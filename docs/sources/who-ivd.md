@@ -23,6 +23,7 @@ code and quotes follow-up `get diagnostic` commands automatically.
 | `search diagnostic --manufacturer <name> --source who-ivd` | WHO manufacturer search | Case-insensitive substring over `Manufacturer name` |
 | `get diagnostic "<product_code>"` | WHO source-native diagnostic summary card | Product code is the detail identifier |
 | `get diagnostic "<product_code>" conditions` | WHO target/marker section | WHO IVD supports `conditions` but not `genes` or `methods` |
+| `get diagnostic "<product_code>" regulatory` | FDA device clearance/approval overlay | OpenFDA 510(k)/PMA overlay matched from the WHO product name; not WHO-native data |
 | `biomcp health` | WHO IVD readiness row | Reports the local CSV lifecycle and root path |
 | `biomcp who-ivd sync` | Explicit WHO IVD refresh | Force-refreshes `who_ivd.csv` |
 
@@ -47,6 +48,13 @@ biomcp get diagnostic "<product_code>" conditions
 Expands the WHO-supported `conditions` section only.
 
 ```bash
+biomcp get diagnostic "<product_code>" regulatory
+```
+
+Adds the optional FDA device overlay when OpenFDA matches the WHO product name
+to device 510(k) or PMA records.
+
+```bash
 biomcp who-ivd sync
 ```
 
@@ -62,7 +70,8 @@ Shows the `WHO IVD local data` readiness row alongside the other local-runtime b
 
 No BioMCP API key required. BioMCP downloads the WHO IVD CSV export on first
 use into `BIOMCP_WHO_IVD_DIR` or the default platform data directory, then
-refreshes stale data after 72 hours.
+refreshes stale data after 72 hours. The optional `regulatory` overlay also
+benefits from `OPENFDA_API_KEY` for OpenFDA quota headroom.
 
 ## Official source
 

@@ -437,8 +437,13 @@ See also: biomcp list disease")]
 EXAMPLES:
   biomcp get diagnostic GTR000000001.1
   biomcp get diagnostic GTR000000001.1 genes
+  biomcp get diagnostic GTR000000001.1 regulatory
   biomcp get diagnostic \"ITPW02232- TC40\"
   biomcp get diagnostic \"ITPW02232- TC40\" conditions
+  biomcp get diagnostic \"ITPW02232- TC40\" regulatory
+
+Supported section tokens: genes, conditions, methods, regulatory, all
+`regulatory` is opt-in and is not expanded by `all`.
 
 See also: biomcp list diagnostic")]
     Diagnostic(diagnostic::DiagnosticGetArgs),

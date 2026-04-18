@@ -54,6 +54,7 @@ fn related_diagnostic_only_points_back_to_list_help() {
         genes: None,
         conditions: None,
         methods: None,
+        regulatory: None,
     };
 
     assert_eq!(

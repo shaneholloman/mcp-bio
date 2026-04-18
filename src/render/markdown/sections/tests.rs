@@ -40,12 +40,17 @@ fn sections_diagnostic_omit_requested_section_from_more_block() {
         genes: Some(vec!["BRCA1".to_string()]),
         conditions: Some(vec!["Breast cancer".to_string()]),
         methods: Some(vec!["Sequence analysis".to_string()]),
+        regulatory: None,
     };
 
     let sections = sections_diagnostic(&diagnostic, &["genes".to_string()]);
     assert_eq!(
         sections,
-        vec!["conditions".to_string(), "methods".to_string()]
+        vec![
+            "conditions".to_string(),
+            "methods".to_string(),
+            "regulatory".to_string()
+        ]
     );
 
     let commands = diagnostic_next_commands(&diagnostic, &["genes".to_string()]);
@@ -54,6 +59,7 @@ fn sections_diagnostic_omit_requested_section_from_more_block() {
         vec![
             "biomcp get diagnostic GTR000000001.1 conditions".to_string(),
             "biomcp get diagnostic GTR000000001.1 methods".to_string(),
+            "biomcp get diagnostic GTR000000001.1 regulatory".to_string(),
             "biomcp list diagnostic".to_string()
         ]
     );
@@ -82,19 +88,58 @@ fn sections_diagnostic_for_who_only_offer_conditions_and_quote_accession() {
         genes: None,
         conditions: None,
         methods: None,
+        regulatory: None,
     };
 
     assert_eq!(
         sections_diagnostic(&diagnostic, &[]),
-        vec!["conditions".to_string()]
+        vec!["conditions".to_string(), "regulatory".to_string()]
     );
     assert_eq!(
         diagnostic_next_commands(&diagnostic, &[]),
         vec![
             "biomcp get diagnostic \"ITPW02232- TC40\" conditions".to_string(),
+            "biomcp get diagnostic \"ITPW02232- TC40\" regulatory".to_string(),
             "biomcp list diagnostic".to_string()
         ]
     );
+}
+
+#[test]
+fn diagnostic_more_block_keeps_four_visible_section_commands() {
+    let diagnostic = Diagnostic {
+        source: "gtr".to_string(),
+        source_id: "GTR000000001.1".to_string(),
+        accession: "GTR000000001.1".to_string(),
+        name: "BRCA1 Hereditary Cancer Panel".to_string(),
+        test_type: Some("molecular".to_string()),
+        manufacturer: Some("OncoPanel BRCA1".to_string()),
+        target_marker: None,
+        regulatory_version: None,
+        prequalification_year: None,
+        laboratory: Some("GenomOncology Lab".to_string()),
+        institution: Some("GenomOncology Institute".to_string()),
+        country: Some("USA".to_string()),
+        clia_number: Some("12D3456789".to_string()),
+        state_licenses: Some("NY|CA".to_string()),
+        current_status: Some("Current".to_string()),
+        public_status: Some("Public".to_string()),
+        method_categories: vec!["Molecular genetics".to_string()],
+        genes: None,
+        conditions: None,
+        methods: None,
+        regulatory: None,
+    };
+
+    let block = format_sections_block(
+        "diagnostic",
+        &diagnostic.accession,
+        sections_diagnostic(&diagnostic, &[]),
+    );
+    assert!(block.contains("biomcp get diagnostic GTR000000001.1 genes"));
+    assert!(block.contains("biomcp get diagnostic GTR000000001.1 conditions"));
+    assert!(block.contains("biomcp get diagnostic GTR000000001.1 methods"));
+    assert!(block.contains("biomcp get diagnostic GTR000000001.1 regulatory"));
 }
 
 #[test]

@@ -1,20 +1,49 @@
+use std::cmp::Ordering;
+use std::collections::{HashMap, HashSet};
+use std::time::Duration;
+
+use tracing::warn;
+
 use crate::error::BioMcpError;
 use crate::sources::gtr::{GtrClient, GtrIndex, GtrRecord, GtrSyncMode};
+use crate::sources::openfda::{Fda510kResult, FdaPmaResult, OpenFdaClient};
 use crate::sources::who_ivd::{WhoIvdClient, WhoIvdRecord, WhoIvdSyncMode};
 
 use super::{
     DIAGNOSTIC_SECTION_CONDITIONS, DIAGNOSTIC_SECTION_GENES, DIAGNOSTIC_SECTION_METHODS,
-    DIAGNOSTIC_SECTION_NAMES, DIAGNOSTIC_SOURCE_GTR, DIAGNOSTIC_SOURCE_WHO_IVD, Diagnostic,
-    diagnostic_source_label, looks_like_gtr_accession, optional_text, preferred_diagnostic_name,
+    DIAGNOSTIC_SECTION_NAMES, DIAGNOSTIC_SECTION_REGULATORY, DIAGNOSTIC_SOURCE_GTR,
+    DIAGNOSTIC_SOURCE_WHO_IVD, Diagnostic, DiagnosticRegulatoryRecord, diagnostic_source_label,
+    looks_like_gtr_accession, optional_text, preferred_diagnostic_name,
     supported_diagnostic_sections_for_source,
 };
+
+const OPTIONAL_REGULATORY_TIMEOUT: Duration = Duration::from_secs(8);
+const REGULATORY_ALIAS_LIMIT: usize = 6;
+const REGULATORY_ENDPOINT_LIMIT: usize = 25;
+const REGULATORY_RESULT_LIMIT: usize = 8;
 
 #[derive(Debug, Clone, Copy, Default)]
 struct DiagnosticSections {
     include_genes: bool,
     include_conditions: bool,
     include_methods: bool,
+    include_regulatory: bool,
     include_all: bool,
+}
+
+#[derive(Debug, Clone)]
+struct DiagnosticRegulatoryLookupContext {
+    display_name: String,
+    aliases: Vec<String>,
+    manufacturer: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct RankedRegulatoryRecord {
+    record: DiagnosticRegulatoryRecord,
+    alias_rank: usize,
+    manufacturer_overlap: bool,
+    decision_key: String,
 }
 
 fn parse_sections(sections: &[String]) -> Result<DiagnosticSections, BioMcpError> {
@@ -30,6 +59,7 @@ fn parse_sections(sections: &[String]) -> Result<DiagnosticSections, BioMcpError
             DIAGNOSTIC_SECTION_GENES => out.include_genes = true,
             DIAGNOSTIC_SECTION_CONDITIONS => out.include_conditions = true,
             DIAGNOSTIC_SECTION_METHODS => out.include_methods = true,
+            DIAGNOSTIC_SECTION_REGULATORY => out.include_regulatory = true,
             "all" => out.include_all = true,
             _ => {
                 return Err(BioMcpError::InvalidArgument(format!(
@@ -139,6 +169,7 @@ fn diagnostic_from_record(
             .include_conditions
             .then(|| index.conditions(&record.accession)),
         methods: sections.include_methods.then(|| record.methods.clone()),
+        regulatory: None,
     }
 }
 
@@ -169,6 +200,367 @@ fn diagnostic_from_who_ivd_record(
             .include_conditions
             .then(|| optional_text(&record.target_marker).into_iter().collect()),
         methods: None,
+        regulatory: None,
+    }
+}
+
+fn collapse_whitespace(value: &str) -> String {
+    value.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn normalize_regulatory_alias(value: &str) -> String {
+    collapse_whitespace(
+        &value
+            .replace(['®', '™'], " ")
+            .replace("(R)", " ")
+            .replace("(r)", " ")
+            .replace("(TM)", " ")
+            .replace("(tm)", " ")
+            .replace("(Tm)", " ")
+            .replace("(tM)", " "),
+    )
+}
+
+fn normalize_overlap_text(value: &str) -> String {
+    let mut out = String::new();
+    let mut pending_space = false;
+    for ch in value.chars() {
+        if ch.is_ascii_alphanumeric() {
+            if pending_space && !out.is_empty() {
+                out.push(' ');
+            }
+            out.push(ch.to_ascii_lowercase());
+            pending_space = false;
+        } else if !out.is_empty() {
+            pending_space = true;
+        }
+    }
+    out
+}
+
+fn clean_option_text(value: Option<&str>) -> Option<String> {
+    value
+        .map(collapse_whitespace)
+        .filter(|text| !text.is_empty())
+}
+
+fn push_lookup_alias(aliases: &mut Vec<String>, seen: &mut HashSet<String>, value: &str) {
+    if aliases.len() >= REGULATORY_ALIAS_LIMIT {
+        return;
+    }
+
+    let original = collapse_whitespace(value);
+    if original.is_empty() {
+        return;
+    }
+
+    let original_key = original.to_ascii_lowercase();
+    if seen.insert(original_key) {
+        aliases.push(original.clone());
+        if aliases.len() >= REGULATORY_ALIAS_LIMIT {
+            return;
+        }
+    }
+
+    let normalized = normalize_regulatory_alias(&original);
+    if normalized.is_empty() {
+        return;
+    }
+    let normalized_key = normalized.to_ascii_lowercase();
+    if seen.insert(normalized_key) {
+        aliases.push(normalized);
+    }
+}
+
+fn build_gtr_regulatory_lookup_context(record: &GtrRecord) -> DiagnosticRegulatoryLookupContext {
+    let display_name = preferred_diagnostic_name(record);
+    let mut aliases = Vec::new();
+    let mut seen = HashSet::new();
+    push_lookup_alias(&mut aliases, &mut seen, &display_name);
+    push_lookup_alias(&mut aliases, &mut seen, &record.lab_test_name);
+    push_lookup_alias(&mut aliases, &mut seen, &record.manufacturer_test_name);
+    if aliases.is_empty() {
+        aliases.push(display_name.clone());
+    }
+    aliases.truncate(REGULATORY_ALIAS_LIMIT);
+
+    DiagnosticRegulatoryLookupContext {
+        display_name,
+        aliases,
+        manufacturer: optional_text(&record.name_of_laboratory)
+            .or_else(|| optional_text(&record.name_of_institution))
+            .or_else(|| optional_text(&record.manufacturer_test_name)),
+    }
+}
+
+fn build_who_regulatory_lookup_context(record: &WhoIvdRecord) -> DiagnosticRegulatoryLookupContext {
+    let display_name =
+        optional_text(&record.product_name).unwrap_or_else(|| record.product_code.clone());
+    let mut aliases = Vec::new();
+    let mut seen = HashSet::new();
+    push_lookup_alias(&mut aliases, &mut seen, &display_name);
+    if aliases.is_empty() {
+        aliases.push(display_name.clone());
+    }
+
+    DiagnosticRegulatoryLookupContext {
+        display_name,
+        aliases,
+        manufacturer: optional_text(&record.manufacturer_name),
+    }
+}
+
+fn build_device_query(field: &str, aliases: &[String]) -> String {
+    aliases
+        .iter()
+        .take(REGULATORY_ALIAS_LIMIT)
+        .filter_map(|alias| {
+            let alias = alias.trim();
+            (!alias.is_empty())
+                .then(|| format!("{field}:\"{}\"", OpenFdaClient::escape_query_value(alias)))
+        })
+        .collect::<Vec<_>>()
+        .join(" OR ")
+}
+
+fn alias_match_rank(ctx: &DiagnosticRegulatoryLookupContext, candidate: &str) -> usize {
+    let candidate = normalize_regulatory_alias(candidate).to_ascii_lowercase();
+    if candidate.is_empty() {
+        return usize::MAX;
+    }
+
+    ctx.aliases
+        .iter()
+        .position(|alias| normalize_regulatory_alias(alias).eq_ignore_ascii_case(&candidate))
+        .unwrap_or(usize::MAX)
+}
+
+fn has_manufacturer_overlap(manufacturer: Option<&str>, applicant: Option<&str>) -> bool {
+    let Some(manufacturer) = manufacturer
+        .map(normalize_overlap_text)
+        .filter(|value| !value.is_empty())
+    else {
+        return false;
+    };
+    let Some(applicant) = applicant
+        .map(normalize_overlap_text)
+        .filter(|value| !value.is_empty())
+    else {
+        return false;
+    };
+
+    manufacturer.contains(&applicant) || applicant.contains(&manufacturer)
+}
+
+fn decision_key(value: Option<&str>) -> String {
+    value
+        .unwrap_or_default()
+        .chars()
+        .filter(|ch| ch.is_ascii_digit())
+        .collect()
+}
+
+fn rank_record(
+    ctx: &DiagnosticRegulatoryLookupContext,
+    record: DiagnosticRegulatoryRecord,
+) -> RankedRegulatoryRecord {
+    RankedRegulatoryRecord {
+        alias_rank: alias_match_rank(ctx, &record.display_name),
+        manufacturer_overlap: has_manufacturer_overlap(
+            ctx.manufacturer.as_deref(),
+            record.applicant.as_deref(),
+        ),
+        decision_key: decision_key(record.decision_date.as_deref()),
+        record,
+    }
+}
+
+fn compare_ranked_records(
+    left: &RankedRegulatoryRecord,
+    right: &RankedRegulatoryRecord,
+) -> Ordering {
+    left.alias_rank
+        .cmp(&right.alias_rank)
+        .then_with(|| right.manufacturer_overlap.cmp(&left.manufacturer_overlap))
+        .then_with(|| right.decision_key.cmp(&left.decision_key))
+        .then_with(|| left.record.number.cmp(&right.record.number))
+}
+
+fn should_replace_record(
+    existing: &RankedRegulatoryRecord,
+    candidate: &RankedRegulatoryRecord,
+) -> bool {
+    if candidate.decision_key != existing.decision_key {
+        return candidate.decision_key > existing.decision_key;
+    }
+    compare_ranked_records(candidate, existing).is_lt()
+}
+
+fn merge_510k_results(
+    ctx: &DiagnosticRegulatoryLookupContext,
+    rows: &[Fda510kResult],
+) -> Vec<RankedRegulatoryRecord> {
+    let mut deduped = HashMap::new();
+
+    for row in rows {
+        let Some(number) = clean_option_text(row.k_number.as_deref()) else {
+            continue;
+        };
+        let record = DiagnosticRegulatoryRecord {
+            submission_type: "510(k)".to_string(),
+            number: number.clone(),
+            display_name: clean_option_text(row.device_name.as_deref())
+                .unwrap_or_else(|| ctx.display_name.clone()),
+            trade_name: None,
+            generic_name: None,
+            applicant: clean_option_text(row.applicant.as_deref()),
+            decision_date: clean_option_text(row.decision_date.as_deref()),
+            decision_description: clean_option_text(row.decision_description.as_deref()),
+            advisory_committee: clean_option_text(row.advisory_committee_description.as_deref()),
+            product_code: clean_option_text(row.product_code.as_deref()),
+            supplement_count: None,
+        };
+        let candidate = rank_record(ctx, record);
+        match deduped.get(&number) {
+            Some(existing) if !should_replace_record(existing, &candidate) => {}
+            _ => {
+                deduped.insert(number, candidate);
+            }
+        }
+    }
+
+    deduped.into_values().collect()
+}
+
+fn merge_pma_results(
+    ctx: &DiagnosticRegulatoryLookupContext,
+    rows: &[FdaPmaResult],
+) -> Vec<RankedRegulatoryRecord> {
+    let mut deduped = HashMap::new();
+    let mut supplement_counts: HashMap<String, HashSet<String>> = HashMap::new();
+
+    for row in rows {
+        let Some(number) = clean_option_text(row.pma_number.as_deref()) else {
+            continue;
+        };
+        if let Some(supplement_number) = clean_option_text(row.supplement_number.as_deref()) {
+            supplement_counts
+                .entry(number.clone())
+                .or_default()
+                .insert(supplement_number);
+        }
+
+        let trade_name = clean_option_text(row.trade_name.as_deref());
+        let generic_name = clean_option_text(row.generic_name.as_deref());
+        let record = DiagnosticRegulatoryRecord {
+            submission_type: "PMA".to_string(),
+            number: number.clone(),
+            display_name: trade_name
+                .clone()
+                .or_else(|| generic_name.clone())
+                .unwrap_or_else(|| ctx.display_name.clone()),
+            trade_name,
+            generic_name,
+            applicant: clean_option_text(row.applicant.as_deref()),
+            decision_date: clean_option_text(row.decision_date.as_deref()),
+            decision_description: clean_option_text(row.decision_description.as_deref()),
+            advisory_committee: clean_option_text(row.advisory_committee_description.as_deref()),
+            product_code: clean_option_text(row.product_code.as_deref()),
+            supplement_count: None,
+        };
+        let candidate = rank_record(ctx, record);
+        match deduped.get(&number) {
+            Some(existing) if !should_replace_record(existing, &candidate) => {}
+            _ => {
+                deduped.insert(number, candidate);
+            }
+        }
+    }
+
+    let mut out = deduped.into_values().collect::<Vec<_>>();
+    for row in &mut out {
+        row.record.supplement_count = supplement_counts
+            .get(&row.record.number)
+            .map(HashSet::len)
+            .filter(|count| *count > 0);
+    }
+    out
+}
+
+async fn fetch_fda_regulatory(
+    ctx: &DiagnosticRegulatoryLookupContext,
+) -> Result<Vec<DiagnosticRegulatoryRecord>, BioMcpError> {
+    if ctx.aliases.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let device_query = build_device_query("device_name", &ctx.aliases);
+    let pma_query = build_device_query("trade_name", &ctx.aliases);
+    if device_query.is_empty() && pma_query.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let client = OpenFdaClient::new()?;
+    let (device_rows, pma_rows) = tokio::join!(
+        async {
+            if device_query.is_empty() {
+                Ok(None)
+            } else {
+                client
+                    .device_510k_search(&device_query, REGULATORY_ENDPOINT_LIMIT)
+                    .await
+            }
+        },
+        async {
+            if pma_query.is_empty() {
+                Ok(None)
+            } else {
+                client
+                    .device_pma_search(&pma_query, REGULATORY_ENDPOINT_LIMIT)
+                    .await
+            }
+        }
+    );
+
+    let mut ranked = Vec::new();
+    ranked.extend(merge_510k_results(
+        ctx,
+        &device_rows?.map(|resp| resp.results).unwrap_or_default(),
+    ));
+    ranked.extend(merge_pma_results(
+        ctx,
+        &pma_rows?.map(|resp| resp.results).unwrap_or_default(),
+    ));
+
+    ranked.sort_by(compare_ranked_records);
+    ranked.truncate(REGULATORY_RESULT_LIMIT);
+    Ok(ranked.into_iter().map(|row| row.record).collect())
+}
+
+async fn load_regulatory_records(
+    accession: &str,
+    source: &str,
+    ctx: &DiagnosticRegulatoryLookupContext,
+) -> Vec<DiagnosticRegulatoryRecord> {
+    match tokio::time::timeout(OPTIONAL_REGULATORY_TIMEOUT, fetch_fda_regulatory(ctx)).await {
+        Ok(Ok(records)) => records,
+        Ok(Err(err)) => {
+            warn!(
+                diagnostic = %accession,
+                source = %source,
+                "OpenFDA diagnostic regulatory overlay unavailable: {err}"
+            );
+            Vec::new()
+        }
+        Err(_) => {
+            warn!(
+                diagnostic = %accession,
+                source = %source,
+                timeout_secs = OPTIONAL_REGULATORY_TIMEOUT.as_secs(),
+                "OpenFDA diagnostic regulatory overlay timed out"
+            );
+            Vec::new()
+        }
     }
 }
 
@@ -190,7 +582,15 @@ pub async fn get(accession: &str, sections: &[String]) -> Result<Diagnostic, Bio
                 "Try searching with a filter such as `biomcp search diagnostic --gene BRCA1` or inspect `biomcp list diagnostic`.".to_string(),
         })?;
         let sections = resolve_sections_for_source(DIAGNOSTIC_SOURCE_GTR, accession, sections)?;
-        return Ok(diagnostic_from_record(record, &index, sections));
+        let regulatory_ctx = sections
+            .include_regulatory
+            .then(|| build_gtr_regulatory_lookup_context(record));
+        let mut diagnostic = diagnostic_from_record(record, &index, sections);
+        if let Some(ctx) = regulatory_ctx.as_ref() {
+            diagnostic.regulatory =
+                Some(load_regulatory_records(accession, DIAGNOSTIC_SOURCE_GTR, ctx).await);
+        }
+        return Ok(diagnostic);
     }
 
     let client = WhoIvdClient::ready(WhoIvdSyncMode::Auto).await?;
@@ -201,5 +601,13 @@ pub async fn get(accession: &str, sections: &[String]) -> Result<Diagnostic, Bio
             "Try searching with a filter such as `biomcp search diagnostic --disease HIV --source who-ivd` or inspect `biomcp list diagnostic`.".to_string(),
     })?;
     let sections = resolve_sections_for_source(DIAGNOSTIC_SOURCE_WHO_IVD, accession, sections)?;
-    Ok(diagnostic_from_who_ivd_record(&record, sections))
+    let regulatory_ctx = sections
+        .include_regulatory
+        .then(|| build_who_regulatory_lookup_context(&record));
+    let mut diagnostic = diagnostic_from_who_ivd_record(&record, sections);
+    if let Some(ctx) = regulatory_ctx.as_ref() {
+        diagnostic.regulatory =
+            Some(load_regulatory_records(accession, DIAGNOSTIC_SOURCE_WHO_IVD, ctx).await);
+    }
+    Ok(diagnostic)
 }

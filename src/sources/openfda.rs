@@ -273,6 +273,68 @@ impl OpenFdaClient {
         self.get_json_optional(req).await
     }
 
+    pub async fn device_510k_search(
+        &self,
+        query: &str,
+        limit: usize,
+    ) -> Result<Option<OpenFdaResponse<Fda510kResult>>, BioMcpError> {
+        let query = query.trim();
+        if query.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "Query is required. Example: biomcp get diagnostic \"FoundationOne CDx\" regulatory".into(),
+            ));
+        }
+        if query.len() > 1024 {
+            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
+        }
+        if limit == 0 || limit > 50 {
+            return Err(BioMcpError::InvalidArgument(
+                "--limit must be between 1 and 50".into(),
+            ));
+        }
+
+        let url = self.endpoint("device/510k.json");
+        let mut req = self
+            .client
+            .get(&url)
+            .query(&[("search", query), ("limit", &limit.to_string())]);
+        if let Some(key) = self.api_key.as_deref() {
+            req = req.query(&[("api_key", key)]);
+        }
+        self.get_json_optional(req).await
+    }
+
+    pub async fn device_pma_search(
+        &self,
+        query: &str,
+        limit: usize,
+    ) -> Result<Option<OpenFdaResponse<FdaPmaResult>>, BioMcpError> {
+        let query = query.trim();
+        if query.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "Query is required. Example: biomcp get diagnostic \"FoundationOne CDx\" regulatory".into(),
+            ));
+        }
+        if query.len() > 1024 {
+            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
+        }
+        if limit == 0 || limit > 50 {
+            return Err(BioMcpError::InvalidArgument(
+                "--limit must be between 1 and 50".into(),
+            ));
+        }
+
+        let url = self.endpoint("device/pma.json");
+        let mut req = self
+            .client
+            .get(&url)
+            .query(&[("search", query), ("limit", &limit.to_string())]);
+        if let Some(key) = self.api_key.as_deref() {
+            req = req.query(&[("api_key", key)]);
+        }
+        self.get_json_optional(req).await
+    }
+
     pub async fn enforcement_search(
         &self,
         query: &str,
@@ -581,6 +643,46 @@ pub struct DrugsFdaOpenFda {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct Fda510kResult {
+    #[serde(default)]
+    pub k_number: Option<String>,
+    #[serde(default)]
+    pub device_name: Option<String>,
+    #[serde(default)]
+    pub applicant: Option<String>,
+    #[serde(default)]
+    pub decision_date: Option<String>,
+    #[serde(default)]
+    pub decision_description: Option<String>,
+    #[serde(default)]
+    pub advisory_committee_description: Option<String>,
+    #[serde(default)]
+    pub product_code: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct FdaPmaResult {
+    #[serde(default)]
+    pub pma_number: Option<String>,
+    #[serde(default)]
+    pub trade_name: Option<String>,
+    #[serde(default)]
+    pub generic_name: Option<String>,
+    #[serde(default)]
+    pub applicant: Option<String>,
+    #[serde(default)]
+    pub decision_date: Option<String>,
+    #[serde(default)]
+    pub decision_description: Option<String>,
+    #[serde(default)]
+    pub advisory_committee_description: Option<String>,
+    #[serde(default)]
+    pub product_code: Option<String>,
+    #[serde(default)]
+    pub supplement_number: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct DeviceEventResult {
     pub mdr_report_key: String,
     #[serde(default)]
@@ -699,6 +801,90 @@ mod tests {
         let client = OpenFdaClient::new_for_test(server.uri(), None).unwrap();
         let resp = client
             .drugsfda_search("openfda.brand_name:test", 3, 0)
+            .await
+            .unwrap();
+        assert!(resp.is_some());
+    }
+
+    #[tokio::test]
+    async fn device_510k_search_validates_limit_bounds() {
+        let client = OpenFdaClient::new_for_test("http://127.0.0.1".into(), None).unwrap();
+        let err = client
+            .device_510k_search("device_name:\"FoundationOne CDx\"", 0)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
+
+        let err = client
+            .device_510k_search("device_name:\"FoundationOne CDx\"", 51)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
+    }
+
+    #[tokio::test]
+    async fn device_510k_search_hits_expected_endpoint() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/device/510k.json"))
+            .and(query_param("search", "device_name:\"FoundationOne CDx\""))
+            .and(query_param("limit", "3"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 3, "total": 1}},
+                "results": [{
+                    "k_number": "K123456",
+                    "device_name": "FoundationOne CDx"
+                }]
+            })))
+            .mount(&server)
+            .await;
+
+        let client = OpenFdaClient::new_for_test(server.uri(), None).unwrap();
+        let resp = client
+            .device_510k_search("device_name:\"FoundationOne CDx\"", 3)
+            .await
+            .unwrap();
+        assert!(resp.is_some());
+    }
+
+    #[tokio::test]
+    async fn device_pma_search_validates_limit_bounds() {
+        let client = OpenFdaClient::new_for_test("http://127.0.0.1".into(), None).unwrap();
+        let err = client
+            .device_pma_search("trade_name:\"FoundationOne CDx\"", 0)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
+
+        let err = client
+            .device_pma_search("trade_name:\"FoundationOne CDx\"", 51)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
+    }
+
+    #[tokio::test]
+    async fn device_pma_search_hits_expected_endpoint() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/device/pma.json"))
+            .and(query_param("search", "trade_name:\"FoundationOne CDx\""))
+            .and(query_param("limit", "3"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 3, "total": 1}},
+                "results": [{
+                    "pma_number": "P000019",
+                    "trade_name": "FoundationOne CDx"
+                }]
+            })))
+            .mount(&server)
+            .await;
+
+        let client = OpenFdaClient::new_for_test(server.uri(), None).unwrap();
+        let resp = client
+            .device_pma_search("trade_name:\"FoundationOne CDx\"", 3)
             .await
             .unwrap();
         assert!(resp.is_some());

@@ -30,6 +30,9 @@ Name: {{ name }}
 {% if method_categories %}Method Categories: {{ method_categories | join(", ") }}
 {% endif %}
 
+{% if regulatory_block %}{{ regulatory_block }}
+{% endif -%}
+
 {% if show_genes_section -%}
 ## Genes
 

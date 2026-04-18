@@ -112,6 +112,7 @@ pub(super) fn section_description(entity: &str, section: &str) -> &'static str {
             "condition, pathogen, or marker names reported for this diagnostic"
         }
         ("diagnostic", "methods") => "reported testing methods for this diagnostic",
+        ("diagnostic", "regulatory") => "FDA 510(k) clearance and PMA approval records",
         ("disease", "genes") => "associated genes",
         ("disease", "pathways") => "pathways from associated genes",
         ("disease", "phenotypes") => "HPO phenotype annotations",
@@ -167,6 +168,7 @@ fn visible_section_limit(entity: &str) -> usize {
     match entity {
         "disease" => 5,
         "gene" => 4,
+        "diagnostic" => 4,
         _ => 3,
     }
 }

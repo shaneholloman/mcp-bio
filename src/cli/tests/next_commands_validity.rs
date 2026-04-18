@@ -112,7 +112,9 @@ fn diagnostic_next_commands_parse() {
     assert_parses("biomcp get diagnostic GTR000000001.1 genes");
     assert_parses("biomcp get diagnostic GTR000000001.1 conditions");
     assert_parses("biomcp get diagnostic GTR000000001.1 methods");
+    assert_parses("biomcp get diagnostic GTR000000001.1 regulatory");
     assert_parses("biomcp get diagnostic \"ITPW02232- TC40\" conditions");
+    assert_parses("biomcp get diagnostic \"ITPW02232- TC40\" regulatory");
     assert_parses("biomcp list diagnostic");
 }
 

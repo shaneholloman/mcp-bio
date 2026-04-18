@@ -569,7 +569,7 @@
     "tier": 1,
     "integration_mode": "direct_api",
     "via": null,
-    "bioMcp_surfaces": ["search diagnostic", "get diagnostic <gtr_accession>", "biomcp health", "biomcp gtr sync"],
+    "bioMcp_surfaces": ["search diagnostic", "get diagnostic <gtr_accession> [genes|conditions|methods|regulatory]", "biomcp health", "biomcp gtr sync"],
     "bioMcp_auth": "none",
     "env_var": null,
     "provider_access": "public FTP bulk export; BioMCP downloads and reads local copies on demand, or operators can preseed `BIOMCP_GTR_DIR` manually",
@@ -586,7 +586,7 @@
     "tier": 1,
     "integration_mode": "direct_api",
     "via": null,
-    "bioMcp_surfaces": ["search diagnostic --source who-ivd|all", "get diagnostic <who_ivd_product_code>", "biomcp health", "biomcp who-ivd sync"],
+    "bioMcp_surfaces": ["search diagnostic --source who-ivd|all", "get diagnostic <who_ivd_product_code> [conditions|regulatory]", "biomcp health", "biomcp who-ivd sync"],
     "bioMcp_auth": "none",
     "env_var": null,
     "provider_access": "public WHO CSV export; BioMCP downloads and reads a local copy on demand, or operators can preseed `BIOMCP_WHO_IVD_DIR` manually",
@@ -688,7 +688,7 @@
     "tier": 1,
     "integration_mode": "direct_api",
     "via": null,
-    "bioMcp_surfaces": ["search adverse-event", "get drug <name> label", "get drug <name> approvals"],
+    "bioMcp_surfaces": ["search adverse-event", "get drug <name> label", "get drug <name> approvals", "get diagnostic <diagnostic_id> regulatory"],
     "bioMcp_auth": "optional_env",
     "env_var": "OPENFDA_API_KEY",
     "provider_access": "open public API; optional key increases quota headroom",
@@ -696,8 +696,8 @@
     "redistribution_summary": "data is broadly reusable, but avoid implying FDA endorsement and preserve source context",
     "terms_url": "https://open.fda.gov/apis/authentication/",
     "key_url": "https://open.fda.gov/apis/authentication/",
-    "reviewed_on": "2026-03-20",
-    "notes": "The authentication page says API keys are required while also publishing no-key quotas. BioMCP documents the real runtime behavior: baseline use works without a key, with higher quotas when one is configured."
+    "reviewed_on": "2026-04-18",
+    "notes": "The authentication page says API keys are required while also publishing no-key quotas. BioMCP documents the real runtime behavior: baseline use works without a key, with higher quotas when one is configured. Diagnostic regulatory uses the OpenFDA device 510(k) and PMA endpoints as an exact-name-first live overlay rather than a mirrored device catalog."
   },
   {
     "id": "opentargets",

@@ -20,12 +20,14 @@ pub(crate) const DIAGNOSTIC_SOURCE_WHO_IVD: &str = "who-ivd";
 const DIAGNOSTIC_SECTION_GENES: &str = "genes";
 const DIAGNOSTIC_SECTION_CONDITIONS: &str = "conditions";
 const DIAGNOSTIC_SECTION_METHODS: &str = "methods";
+pub(crate) const DIAGNOSTIC_SECTION_REGULATORY: &str = "regulatory";
 const DIAGNOSTIC_SECTION_ALL: &str = "all";
 
 pub const DIAGNOSTIC_SECTION_NAMES: &[&str] = &[
     DIAGNOSTIC_SECTION_GENES,
     DIAGNOSTIC_SECTION_CONDITIONS,
     DIAGNOSTIC_SECTION_METHODS,
+    DIAGNOSTIC_SECTION_REGULATORY,
     DIAGNOSTIC_SECTION_ALL,
 ];
 
@@ -33,10 +35,37 @@ const GTR_DIAGNOSTIC_SECTION_NAMES: &[&str] = &[
     DIAGNOSTIC_SECTION_GENES,
     DIAGNOSTIC_SECTION_CONDITIONS,
     DIAGNOSTIC_SECTION_METHODS,
+    DIAGNOSTIC_SECTION_REGULATORY,
     DIAGNOSTIC_SECTION_ALL,
 ];
-const WHO_IVD_DIAGNOSTIC_SECTION_NAMES: &[&str] =
-    &[DIAGNOSTIC_SECTION_CONDITIONS, DIAGNOSTIC_SECTION_ALL];
+const WHO_IVD_DIAGNOSTIC_SECTION_NAMES: &[&str] = &[
+    DIAGNOSTIC_SECTION_CONDITIONS,
+    DIAGNOSTIC_SECTION_REGULATORY,
+    DIAGNOSTIC_SECTION_ALL,
+];
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiagnosticRegulatoryRecord {
+    pub submission_type: String,
+    pub number: String,
+    pub display_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trade_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub generic_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub applicant: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub decision_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub decision_description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub advisory_committee: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub product_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub supplement_count: Option<usize>,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum DiagnosticSourceFilter {
@@ -118,6 +147,8 @@ pub struct Diagnostic {
     pub conditions: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub methods: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regulatory: Option<Vec<DiagnosticRegulatoryRecord>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -225,6 +256,8 @@ mod tests {
     use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE, resolve_gtr_root};
     use crate::sources::who_ivd::WHO_IVD_CSV_FILE;
     use crate::test_support::{TempDirGuard, env_lock, set_env_var};
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     async fn install_gtr_fixture_root(
         label: &str,
@@ -433,6 +466,7 @@ mod tests {
         assert!(summary.genes.is_none());
         assert!(summary.conditions.is_none());
         assert!(summary.methods.is_none());
+        assert!(summary.regulatory.is_none());
         assert_eq!(
             summary.method_categories,
             vec!["Molecular genetics".to_string()]
@@ -466,6 +500,7 @@ mod tests {
                 "Deletion/duplication analysis".to_string()
             ])
         );
+        assert!(expanded.regulatory.is_none());
     }
 
     #[tokio::test]
@@ -492,6 +527,7 @@ mod tests {
         assert!(summary.genes.is_none());
         assert!(summary.conditions.is_none());
         assert!(summary.methods.is_none());
+        assert!(summary.regulatory.is_none());
         assert!(summary.method_categories.is_empty());
 
         let conditions = get("ITPW02232- TC40", &["conditions".to_string()])
@@ -505,6 +541,53 @@ mod tests {
         assert_eq!(expanded.conditions, Some(vec!["HIV".to_string()]));
         assert!(expanded.genes.is_none());
         assert!(expanded.methods.is_none());
+        assert!(expanded.regulatory.is_none());
+    }
+
+    #[tokio::test]
+    async fn get_who_ivd_regulatory_is_valid_and_returns_empty_vec_on_no_match() {
+        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
+            install_all_fixture_roots("diagnostic-get-who-regulatory").await;
+        let server = MockServer::start().await;
+        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/device/510k.json"))
+            .and(query_param("limit", "25"))
+            .and(query_param(
+                "search",
+                r#"device_name:"ONE STEP Anti\-HIV \(1\&2\) Test""#,
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 25, "total": 0}},
+                "results": []
+            })))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/device/pma.json"))
+            .and(query_param("limit", "25"))
+            .and(query_param(
+                "search",
+                r#"trade_name:"ONE STEP Anti\-HIV \(1\&2\) Test""#,
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 25, "total": 0}},
+                "results": []
+            })))
+            .mount(&server)
+            .await;
+
+        let diagnostic = get("ITPW02232- TC40", &["regulatory".to_string()])
+            .await
+            .expect("WHO regulatory get");
+
+        assert_eq!(diagnostic.source, "who-ivd");
+        assert!(
+            diagnostic.regulatory.as_ref().is_some_and(Vec::is_empty),
+            "requested WHO regulatory overlay should serialize as an empty section on no match"
+        );
     }
 
     #[tokio::test]
@@ -527,6 +610,79 @@ mod tests {
             methods.to_string(),
             "Invalid argument: Section `methods` is not available for WHO Prequalified IVD diagnostic records. Try `biomcp get diagnostic \"ITPW02232- TC40\" conditions`"
         );
+    }
+
+    #[tokio::test]
+    async fn get_regulatory_uses_alias_queries_and_dedupes_pma_supplements() {
+        let (_lock, _root, _gtr_env) = install_gtr_fixture_root("diagnostic-get-regulatory").await;
+        let server = MockServer::start().await;
+        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/device/510k.json"))
+            .and(query_param("limit", "25"))
+            .and(query_param(
+                "search",
+                "device_name:\"BRCA1 Hereditary Cancer Panel\" OR device_name:\"OncoPanel BRCA1\"",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 25, "total": 0}},
+                "results": []
+            })))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/device/pma.json"))
+            .and(query_param("limit", "25"))
+            .and(query_param(
+                "search",
+                "trade_name:\"BRCA1 Hereditary Cancer Panel\" OR trade_name:\"OncoPanel BRCA1\"",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "meta": {"results": {"skip": 0, "limit": 25, "total": 2}},
+                "results": [
+                    {
+                        "pma_number": "P000019",
+                        "trade_name": "OncoPanel BRCA1",
+                        "generic_name": "Hereditary cancer panel",
+                        "applicant": "GenomOncology Lab",
+                        "decision_date": "2024-01-15",
+                        "decision_description": "supplement approved",
+                        "product_code": "PQP",
+                        "supplement_number": "S001"
+                    },
+                    {
+                        "pma_number": "P000019",
+                        "trade_name": "OncoPanel BRCA1",
+                        "generic_name": "Hereditary cancer panel",
+                        "applicant": "GenomOncology Lab",
+                        "decision_date": "2024-09-10",
+                        "decision_description": "panel expanded",
+                        "product_code": "PQP",
+                        "supplement_number": "S002"
+                    }
+                ]
+            })))
+            .mount(&server)
+            .await;
+
+        let diagnostic = get("GTR000000001.1", &["regulatory".to_string()])
+            .await
+            .expect("regulatory get");
+        let regulatory = diagnostic
+            .regulatory
+            .expect("regulatory records should be present when requested");
+
+        assert_eq!(regulatory.len(), 1);
+        assert_eq!(regulatory[0].submission_type, "PMA");
+        assert_eq!(regulatory[0].number, "P000019");
+        assert_eq!(regulatory[0].display_name, "OncoPanel BRCA1");
+        assert_eq!(
+            regulatory[0].decision_description.as_deref(),
+            Some("panel expanded")
+        );
+        assert_eq!(regulatory[0].supplement_count, Some(2));
     }
 
     #[test]

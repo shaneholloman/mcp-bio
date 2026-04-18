@@ -390,7 +390,7 @@ fn list_diagnostic() -> String {
 
 - Use `search diagnostic` when you need source-native diagnostic inventory from the local GTR and WHO IVD bundles.
 - Start with `--gene` for GTR genetic-test questions, or `--disease --source who-ivd` for WHO infectious-disease diagnostics; add `--type` or `--manufacturer` only when narrowing a real result set.
-- Use `get diagnostic <id>` for the base summary card, then add `genes`, `conditions`, `methods`, or `all` when you need progressive disclosure.
+- Use `get diagnostic <id>` for the base summary card, then add `genes`, `conditions`, `methods`, or `regulatory` when you need progressive disclosure.
 
 ## Commands
 
@@ -399,6 +399,7 @@ fn list_diagnostic() -> String {
 - `get diagnostic <gtr_accession> genes` - joined gene list from GTR detail data
 - `get diagnostic <gtr_accession> conditions` - joined condition list from GTR detail data
 - `get diagnostic <gtr_accession> methods` - GTR methods list
+- `get diagnostic <id> regulatory` - optional live FDA device 510(k)/PMA overlay matched from source-native diagnostic names
 - `get diagnostic "<who_ivd_product_code>" conditions` - WHO target/marker section
 - `get diagnostic <id> all` - include every section supported by the resolved source
 - `search diagnostic --gene <symbol>` - case-insensitive exact gene match
@@ -415,8 +416,9 @@ fn list_diagnostic() -> String {
 - `--source` accepts `gtr`, `who-ivd`, or `all` (default).
 - Explicit `--source who-ivd --gene ...` is invalid; use `--source gtr` or omit `--source` for gene-first workflows.
 - Result ordering is deterministic: normalized test name ascending, then accession ascending.
-- `summary` is always part of `get diagnostic`; supported public section tokens remain `genes`, `conditions`, `methods`, and `all`.
-- `all` expands per source: GTR supports `genes`, `conditions`, `methods`; WHO IVD supports `conditions`.
+- `summary` is always part of `get diagnostic`; supported public section tokens are `genes`, `conditions`, `methods`, `regulatory`, and `all`.
+- Source-aware section support: GTR supports `genes`, `conditions`, `methods`, and `regulatory`; WHO IVD supports `conditions` and `regulatory`.
+- `all` stays source-aware but intentionally excludes `regulatory` because the FDA overlay is live and opt-in.
 
 ## JSON Output
 
@@ -424,6 +426,7 @@ fn list_diagnostic() -> String {
 - The first follow-up drills the top result with `biomcp get diagnostic <id>` and quotes WHO product codes that contain spaces.
 - `biomcp list diagnostic` is always included so agents can inspect the full filter surface.
 - `get diagnostic --json` keeps section-aware follow-ups and `_meta.section_sources`.
+- `get diagnostic --json ... regulatory` adds a top-level `regulatory` field; omitting the section omits the field, and no FDA match serializes `regulatory: []`.
 
 ## Local data
 
@@ -979,7 +982,10 @@ mod tests {
         let out = render(Some("diagnostic")).expect("list diagnostic should render");
         assert!(out.contains("# diagnostic"));
         assert!(out.contains("search diagnostic --gene <symbol>"));
+        assert!(out.contains("get diagnostic <id> regulatory"));
         assert!(out.contains("get diagnostic \"<who_ivd_product_code>\" conditions"));
+        assert!(out.contains("supported public section tokens are `genes`, `conditions`, `methods`, `regulatory`, and `all`."));
+        assert!(out.contains("intentionally excludes `regulatory`"));
         assert!(out.contains("biomcp gtr sync"));
         assert!(out.contains("biomcp who-ivd sync"));
         assert!(out.contains("WHO IVD local data (<resolved_root>)"));

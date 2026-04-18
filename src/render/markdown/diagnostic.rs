@@ -2,6 +2,7 @@
 
 use super::*;
 use serde::Serialize;
+use std::fmt::Write as _;
 
 #[cfg(test)]
 mod tests;
@@ -43,6 +44,12 @@ pub fn diagnostic_markdown(
     let show_conditions_section =
         supports("conditions") && (include_all || has_requested("conditions"));
     let show_methods_section = supports("methods") && (include_all || has_requested("methods"));
+    let show_regulatory_section = supports("regulatory") && has_requested("regulatory");
+    let regulatory_block = if show_regulatory_section {
+        render_regulatory_block(diagnostic.regulatory.as_deref())
+    } else {
+        String::new()
+    };
 
     tmpl.render(context! {
         accession => &diagnostic.accession,
@@ -69,6 +76,7 @@ pub fn diagnostic_markdown(
         show_genes_section => show_genes_section,
         show_conditions_section => show_conditions_section,
         show_methods_section => show_methods_section,
+        regulatory_block => regulatory_block,
         sections_block => format_sections_block(
             "diagnostic",
             &diagnostic.accession,
@@ -77,6 +85,44 @@ pub fn diagnostic_markdown(
         related_block => format_related_block(related_diagnostic(diagnostic)),
     })
     .map_err(Into::into)
+}
+
+fn render_regulatory_block(rows: Option<&[DiagnosticRegulatoryRecord]>) -> String {
+    let Some(rows) = rows else {
+        return String::new();
+    };
+
+    let mut out = String::from("## Regulatory (FDA Device)\n\n");
+    if rows.is_empty() {
+        out.push_str("No FDA device 510(k) or PMA records matched this diagnostic.\n\n");
+        return out;
+    }
+
+    out.push_str(
+        "| Type | Number | Name | Applicant | Decision Date | Decision | Product Code | Supplements |\n",
+    );
+    out.push_str("| --- | --- | --- | --- | --- | --- | --- | --- |\n");
+    for row in rows {
+        let supplements = row
+            .supplement_count
+            .filter(|count| *count > 0)
+            .map(|count| count.to_string())
+            .unwrap_or_else(|| "-".to_string());
+        let _ = writeln!(
+            out,
+            "| {} | {} | {} | {} | {} | {} | {} | {} |",
+            markdown_cell(&row.submission_type),
+            markdown_cell(&row.number),
+            markdown_cell(&row.display_name),
+            markdown_cell(row.applicant.as_deref().unwrap_or_default()),
+            markdown_cell(row.decision_date.as_deref().unwrap_or_default()),
+            markdown_cell(row.decision_description.as_deref().unwrap_or_default()),
+            markdown_cell(row.product_code.as_deref().unwrap_or_default()),
+            markdown_cell(&supplements),
+        );
+    }
+    out.push('\n');
+    out
 }
 
 #[allow(dead_code)]

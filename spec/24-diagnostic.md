@@ -15,6 +15,7 @@ multi-source search/get surfaces for the `diagnostic` entity.
 | GTR conjunctive filters | `search diagnostic --gene EGFR --type molecular --source gtr` | Confirms deterministic GTR filter behavior remains intact |
 | Search JSON follow-ups | `--json search diagnostic --disease HIV --source who-ivd` | Confirms WHO search JSON exposes shell-safe quoted follow-up commands |
 | GTR detail card | `get diagnostic GTR...` | Confirms existing GTR progressive-disclosure behavior remains intact |
+| Diagnostic regulatory overlay | `get diagnostic <id> regulatory` | Confirms the opt-in FDA device block renders and stays outside `all` |
 | WHO detail card | `get diagnostic "<who_code>"` | Confirms WHO summary/detail behavior, section limits, and quoted next steps |
 | WHO `all` expansion | `get diagnostic "<who_code>" all` | Confirms WHO `all` expands only to the source-supported section set |
 | WHO JSON follow-ups | `--json get diagnostic "<who_code>" conditions` | Confirms WHO JSON keeps quoted `_meta.next_commands` and source-aware `section_sources` |
@@ -118,7 +119,7 @@ bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-ivd-env"
 json_out="$(biomcp --json search diagnostic --disease HIV --source who-ivd --limit 1)"
 echo "$json_out" | jq -e '.[0].source == "who-ivd"' > /dev/null
-echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic \"ITPW02232- TC40\"")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic \"ITPW02232- TC40\" regulatory")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list diagnostic")' > /dev/null
 ```
 
@@ -160,6 +161,30 @@ echo "$detail_out" | mustmatch like "# Diagnostic: GTR000000001.1"
 echo "$detail_out" | mustmatch like "BRCA1, BARD1"
 echo "$detail_out" | mustmatch like "## Conditions"
 echo "$detail_out" | mustmatch like "## Methods"
+echo "$detail_out" | mustmatch not like "## Regulatory (FDA Device)"
+```
+
+## Diagnostic Regulatory Overlay
+
+<!-- mustmatch-lint: skip -->
+
+The FDA device overlay is opt-in. Requesting `regulatory` should render the FDA
+block for both GTR and WHO diagnostics, while `all` continues to exclude it.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+gtr_regulatory_out="$(biomcp get diagnostic GTR000000001.1 regulatory)"
+echo "$gtr_regulatory_out" | mustmatch like "# Diagnostic: GTR000000001.1"
+echo "$gtr_regulatory_out" | mustmatch like "## Regulatory (FDA Device)"
+echo "$gtr_regulatory_out" | mustmatch like "No FDA device 510(k) or PMA records matched this diagnostic."
+
+who_regulatory_out="$(biomcp get diagnostic 'ITPW02232- TC40' regulatory)"
+echo "$who_regulatory_out" | mustmatch like "# Diagnostic: ITPW02232- TC40"
+echo "$who_regulatory_out" | mustmatch like "## Regulatory (FDA Device)"
+echo "$who_regulatory_out" | mustmatch like "No FDA device 510(k) or PMA records matched this diagnostic."
 ```
 
 ## WHO Detail Card
@@ -203,6 +228,7 @@ echo "$all_out" | mustmatch like "## Conditions"
 echo "$all_out" | mustmatch like "Target / Marker: HIV"
 echo "$all_out" | mustmatch not like "## Genes"
 echo "$all_out" | mustmatch not like "## Methods"
+echo "$all_out" | mustmatch not like "## Regulatory (FDA Device)"
 ```
 
 ## WHO Unsupported Sections
@@ -237,7 +263,7 @@ echo "$json_out" | mustmatch like '"accession": "ITPW02232- TC40"'
 echo "$json_out" | jq -e 'has("conditions")' > /dev/null
 echo "$json_out" | jq -e 'has("genes") | not' > /dev/null
 echo "$json_out" | jq -e 'has("methods") | not' > /dev/null
-echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic \"ITPW02232- TC40\"")' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic \"ITPW02232- TC40\" regulatory")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list diagnostic")' > /dev/null
 echo "$json_out" | jq -e '._meta.section_sources | any(.key == "summary" and (.sources | any(. == "WHO Prequalified IVD")))' > /dev/null
 echo "$json_out" | jq -e '._meta.section_sources | any(.key == "conditions" and (.sources | any(. == "WHO Prequalified IVD")))' > /dev/null

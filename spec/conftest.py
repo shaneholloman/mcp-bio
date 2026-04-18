@@ -11,6 +11,8 @@ OPENFDA_SPEC_NODEIDS = {
     "spec/11-evidence-urls.md::Markdown Evidence Links",
     "spec/11-evidence-urls.md::JSON Metadata Contract",
     "spec/12-search-positionals.md::Adverse-event Positional Query",
+    "spec/24-diagnostic.md::Diagnostic Regulatory Overlay",
+    "spec/18-source-labels.md::JSON section_sources — Diagnostic Regulatory",
 }
 
 S2_SPEC_NODEIDS = {

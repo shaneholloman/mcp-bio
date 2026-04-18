@@ -210,6 +210,8 @@ stays U.S.-only and does not touch the CVX root.
 biomcp search diagnostic --gene BRCA1 --limit 5 --offset 0
 biomcp search diagnostic --disease HIV --source who-ivd --limit 5
 biomcp search diagnostic --disease tuberculosis --source all --limit 5
+biomcp get diagnostic GTR000000001.1 regulatory
+biomcp get diagnostic "ITPW02232- TC40" regulatory
 ```
 
 Diagnostic search is filter-only. At least one of `--gene`, `--disease`,
@@ -351,16 +353,20 @@ path unless you pass `--region`.
 
 ```bash
 biomcp get diagnostic GTR000000001.1
+biomcp get diagnostic GTR000000001.1 regulatory
 biomcp get diagnostic "ITPW02232- TC40"
 biomcp get diagnostic "ITPW02232- TC40" conditions
+biomcp get diagnostic "ITPW02232- TC40" regulatory
 biomcp get diagnostic "ITPW02232- TC40" all
 ```
 
 `get diagnostic` always renders the summary card first. Supported section names
-are `genes`, `conditions`, `methods`, and `all`, but support is source-aware:
-GTR supports `genes`, `conditions`, and `methods`, while WHO IVD supports
-`conditions` only and expands `all` to `conditions`. In JSON mode, unrequested
-sections are omitted while requested empty sections remain present as `[]`.
+are `genes`, `conditions`, `methods`, `regulatory`, and `all`, but support is
+source-aware: GTR supports `genes`, `conditions`, `methods`, and
+`regulatory`, while WHO IVD supports `conditions` and `regulatory`. `all`
+expands only to the source-native local sections and intentionally excludes the
+live FDA overlay. In JSON mode, unrequested sections are omitted while
+requested empty sections remain present as `[]`.
 
 ### Pathway
 

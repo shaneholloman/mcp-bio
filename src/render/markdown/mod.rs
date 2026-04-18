@@ -102,7 +102,7 @@ use crate::entities::article::{
     ArticleGraphResult, ArticleRankingMetadata, ArticleRankingMode, ArticleRecommendationsResult,
     ArticleRelatedPaper, ArticleSearchFilters, ArticleSearchResult, ArticleSort, ArticleSource,
 };
-use crate::entities::diagnostic::{Diagnostic, DiagnosticSearchResult};
+use crate::entities::diagnostic::{Diagnostic, DiagnosticRegulatoryRecord, DiagnosticSearchResult};
 use crate::entities::discover::{DiscoverResult, DiscoverType};
 use crate::entities::disease::{
     Disease, DiseaseAssociationScoreSummary, DiseaseSearchResult, PhenotypeSearchResult,
