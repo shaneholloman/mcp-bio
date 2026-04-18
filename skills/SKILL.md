@@ -61,8 +61,12 @@ matching how-to guide before you improvise the command sequence.
 |---|---|---|
 | Specific variant pathogenicity or clinical-evidence question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Use the bounded variant-pathogenicity workflow instead of mixing ad hoc variant, trial, and article commands |
 | Specific drug safety or adverse-event question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Start with the drug-safety workflow before widening to literature |
+| Drug approval, licensing, or regulatory-date question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Use the structured-first workflow discipline: check `get drug ... regulatory` before falling back to articles for approval facts |
 | Broad gene-in-disease orientation | [Guide Workflows](../docs/how-to/guide-workflows.md) | Follow the shipped counts-first workflow for gene, drug, trial, and article pivots |
+| Gene-disease association for a known gene | [Guide Workflows](../docs/how-to/guide-workflows.md) | Check `get gene ... diseases` and `search variant --gene ...` for the full disease spectrum before searching articles |
+| Gene localization or protein-function question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Pull `get gene ... protein` and `get gene ... hpa` first because UniProt and HPA usually answer localization or function directly |
 | You know the concept but not the first entity to inspect | [Search All Workflow](../docs/how-to/search-all-workflow.md) | Use `search all` to choose the next typed command intentionally |
+| "Most common" or prevalence question about a disease | [Search All Workflow](../docs/how-to/search-all-workflow.md) | Use `biomcp discover` to resolve the canonical disease entity, then inspect structured disease data before widening to article search |
 | You already know the anchor entity and want the built-in related view | [Cross-Entity Pivots](../docs/how-to/cross-entity-pivots.md) | Move from a known gene, disease, drug, or variant into trials, articles, drugs, or pathways without rebuilding the query |
 | You need literature for a known gene, disease, drug, method, or outcome | [Find Articles](../docs/how-to/find-articles.md) | Translate the question into typed flags plus a focused keyword clause |
 | You need recruiting or completed trials for a disease, drug, or biomarker | [Find Trials](../docs/how-to/find-trials.md) | Start with condition and intervention filters, then add biomarker or geography only when needed |
