@@ -1,6 +1,6 @@
 ---
 name: biomcp
-description: Search and retrieve biomedical data - genes, variants, clinical trials, articles, drugs, diseases, pathways, proteins, adverse events, pharmacogenomics, and phenotype-disease matching. Use for gene function, variant pathogenicity, trials, drug safety, pathway context, disease workups, and literature evidence.
+description: Search and retrieve biomedical data - genes, variants, clinical trials, diagnostic tests, articles, drugs, diseases, pathways, proteins, adverse events, pharmacogenomics, and phenotype-disease matching. Use for gene function, variant pathogenicity, trials, diagnostics, drug safety, pathway context, disease workups, and literature evidence.
 ---
 
 # BioMCP CLI
@@ -11,10 +11,11 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Use `biomcp discover "<free text>"` when you only have free text and need the CLI to pick the first typed command.
 - Use `biomcp search all --gene <gene> --disease "<disease>"` when you know the entities but not the next pivot.
 - Treatment questions: `biomcp search drug --indication "<disease>" --limit 5`
+- Diagnostic-test questions: `biomcp search diagnostic --gene <symbol> --limit 5` or `biomcp search diagnostic --disease "<disease>" --limit 5`
 - Symptom or phenotype questions: `biomcp get disease <name_or_id> phenotypes`
 - Gene-function questions: `biomcp get gene <symbol>`
 - Drug-safety questions: `biomcp drug adverse-events <name>` and `biomcp get drug <name> safety`
-- EMA and WHO regional drug data are local runtime files that auto-download on first use, and CDC CVX/MVX is the companion local vaccine-brand bridge for default/EU vaccine searches; run `biomcp ema sync`, `biomcp who sync`, or `biomcp cvx sync` to force-refresh before freshness-sensitive regional drug lookups.
+- EMA and WHO regional drug data are local runtime files that auto-download on first use, CDC CVX/MVX is the companion local vaccine-brand bridge for default/EU vaccine searches, and GTR is the local diagnostic-test backbone; run `biomcp ema sync`, `biomcp who sync`, `biomcp cvx sync`, or `biomcp gtr sync` to force-refresh before freshness-sensitive local-runtime lookups.
 - Vaccine brand-name questions that miss on MyChem often need `biomcp search drug <brand> --region eu` or omitted `--region`, which can bridge through CDC CVX/MVX into EMA vaccine matches.
 - Review-literature questions: `biomcp search article -k "<query>" --type review --limit 5`
 - After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls. Batch up to 20 shortlisted papers in one call.
@@ -33,6 +34,9 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - `get disease ... genes`: associated genes
 - `get disease ... phenotypes`: HPO phenotype annotations; source-backed and sometimes incomplete
 - `get disease ... pathways`: pathways from associated genes
+- `get diagnostic ... genes`: joined gene names from the GTR detail bundle
+- `get diagnostic ... conditions`: joined disease or condition names from GTR
+- `get diagnostic ... methods`: source-native GTR testing methods
 - `get drug ... label`: FDA label indications, warnings, and dosage
 - `get drug ... regulatory`: regulatory summary
 - `get drug ... safety`: safety context and warnings

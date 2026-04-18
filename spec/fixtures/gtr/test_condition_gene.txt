@@ -1,0 +1,9 @@
+#accession_version	object	object_name
+GTR000000001.1	gene	BRCA1
+GTR000000001.1	gene	BARD1
+GTR000000001.1	condition	Hereditary breast ovarian cancer syndrome
+GTR000000001.1	condition	Breast cancer
+GTR000000002.1	gene	EGFR
+GTR000000002.1	condition	Cutaneous melanoma
+GTR000000099.1	gene	RET
+GTR000000099.1	condition	Legacy syndrome

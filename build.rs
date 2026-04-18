@@ -10,6 +10,7 @@ const BLOCKED_MCP_DESCRIPTION_TERMS: &[&str] = &[
     "`ema sync`",
     "`who sync`",
     "`cvx sync`",
+    "`gtr sync`",
     "`update [--check]`",
     "`uninstall`",
 ];

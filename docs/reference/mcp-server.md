@@ -52,7 +52,7 @@ subset. That sanitized description keeps the catalog-only
 `study download --list` form, but it must not advertise
 `study download <study_id>` or the combined CLI syntax
 `study download [--list] [<study_id>]`. CLI-only packaging or mutating
-commands such as `skill install`, `ema sync`, `who sync`, `cvx sync`, `update`, and
+commands such as `skill install`, `ema sync`, `who sync`, `cvx sync`, `gtr sync`, `update`, and
 `uninstall`
 must not appear in the MCP tool description. CLI-only cache commands such as
 `cache path`, `cache stats`, `cache clean`, and `cache clear` reveal workstation-local paths and filesystem context, so they also stay out of the MCP tool description.
@@ -71,6 +71,7 @@ assert "`skill install`" in build
 assert "`ema sync`" in build
 assert "`who sync`" in build
 assert "`cvx sync`" in build
+assert "`gtr sync`" in build
 assert "`update [--check]`" in build
 assert "`uninstall`" in build
 assert "study download --list" in build
@@ -119,9 +120,9 @@ The MCP `biomcp` tool accepts read-only CLI commands, including `discover`
 and the exact `study download --list` catalog lookup. Mutating commands
 remain blocked. Cache-family commands such as `cache path`, `cache stats`,
 `cache clean`, and `cache clear` are also rejected because they reveal workstation-local paths and filesystem context.
-In particular, `study download <study_id>` is rejected because installation
+In particular, `study download <study_id>` and `gtr sync` are rejected because installation
 performs network and filesystem writes into the local study directory;
-operators should run study installs directly via the CLI, outside MCP.
+operators should run study installs and local-runtime refresh commands directly via the CLI, outside MCP.
 
 ```python
 from pathlib import Path
@@ -135,6 +136,7 @@ assert '"download" => args.len() == 4 && args[3] == "--list"' in shell
 assert "discover/skill" in shell or "discover/skill)." in shell
 assert 'assert "study download --list" in description' in tests
 assert 'test_mutating_study_download_is_rejected_in_mcp_mode' in tests
+assert 'test_gtr_sync_is_rejected_in_mcp_mode' in tests
 assert '"BioMCP allows read-only commands only" in result.content[0].text' in tests
 assert 'test_cache_path_is_rejected_in_mcp_mode' in tests
 assert '"CLI-only over MCP" in result.content[0].text' in tests

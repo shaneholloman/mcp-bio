@@ -1,0 +1,19 @@
+# Diagnostic tests: {{ query }}
+
+{% if count == 0 -%}
+No diagnostic tests found.
+{% else -%}
+Found {{ count }} diagnostic test{% if count != 1 %}s{% endif %}{% if total %} (of {{ total }} total){% endif %}
+
+|Accession|Name|Type|Manufacturer / Lab|Genes|Conditions|
+|---|---|---|---|---|---|
+{% for row in results -%}
+|{{ row.accession }}|{{ row.name }}|{{ row.test_type or "-" }}|{{ row.manufacturer_or_lab or "-" }}|{% if row.genes %}{{ row.genes | join(", ") }}{% else %}-{% endif %}|{% if row.conditions %}{{ row.conditions | join(", ") }}{% else %}-{% endif %}|
+{% endfor %}
+
+Use `biomcp get diagnostic {{ top_accession }}` for details.
+{% if pagination_footer %}
+
+{{ pagination_footer }}
+{% endif %}
+{% endif -%}

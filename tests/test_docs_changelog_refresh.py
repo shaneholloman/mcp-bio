@@ -162,6 +162,44 @@ def test_remote_http_docs_are_promoted_for_newcomers() -> None:
     assert "Available tools:" not in demo_readme
 
 
+def test_diagnostic_docs_and_count_language_are_current() -> None:
+    readme = _read("README.md")
+    docs_index = _read("docs/index.md")
+    cli_reference = _read("docs/user-guide/cli-reference.md")
+    functional = _read("architecture/functional/overview.md")
+    ux_reference = _read("architecture/ux/cli-reference.md")
+    mkdocs = _read("mkdocs.yml")
+    diagnostic_guide = _read("docs/user-guide/diagnostic.md")
+    diagnostic_arch = _read("architecture/functional/diagnostic.md")
+
+    for text in (readme, docs_index):
+        assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle |" in text
+        assert "13 remote entity commands" in text
+        assert "12 remote entity commands" not in text
+
+    assert "biomcp gtr sync" in cli_reference
+    assert "GTR local data" in cli_reference
+    assert "13 remote entity commands" in cli_reference
+    assert "12 remote entity commands" not in cli_reference
+
+    assert "13 remote entity commands" in functional
+    assert "12 entity types" not in functional
+    assert "15+ biomedical databases" not in functional
+    assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle |" in functional
+
+    assert "biomcp gtr sync" in ux_reference
+    assert "all 13 remote entity commands" in ux_reference
+    assert "all 12 entity types" not in ux_reference
+
+    assert "Diagnostic: user-guide/diagnostic.md" in mkdocs
+    assert "15 biomedical databases" not in mkdocs
+
+    assert diagnostic_guide.startswith("# Diagnostic")
+    assert "biomcp search diagnostic --gene BRCA1 --limit 5" in diagnostic_guide
+    assert "biomcp gtr sync" in diagnostic_guide
+    assert diagnostic_arch.startswith("# Diagnostic Functional Note")
+
+
 def test_streamable_http_demo_script_is_runnable_repo_artifact() -> None:
     demo_script = _read("examples/streamable-http/streamable_http_client.py")
 
@@ -379,7 +417,7 @@ def test_public_docs_surface_local_study_analytics() -> None:
 
     assert "plus local study analytics" in readme
     assert "## Local study analytics" in readme
-    assert "12 remote entity commands" in readme
+    assert "13 remote entity commands" in readme
     assert "study download" in readme
 
     assert "## Study commands" in quick_reference
@@ -392,7 +430,7 @@ def test_public_docs_surface_local_study_analytics() -> None:
     assert "BIOMCP_STUDY_DIR" in cli_reference
     assert "local cBioPortal analytics family for downloaded" in cli_reference
     assert "cBioPortal-style datasets" in cli_reference
-    assert "12 remote entity commands" in cli_reference
+    assert "13 remote entity commands" in cli_reference
     assert "data_mutations.txt" in cli_reference
     assert "data_clinical_patient.txt" in cli_reference
     for command in study_commands:

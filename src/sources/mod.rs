@@ -35,6 +35,7 @@ pub(crate) mod europepmc;
 pub(crate) mod gnomad;
 pub(crate) mod gprofiler;
 pub(crate) mod gtex;
+pub(crate) mod gtr;
 pub(crate) mod gwas;
 pub(crate) mod hpa;
 pub(crate) mod hpo;

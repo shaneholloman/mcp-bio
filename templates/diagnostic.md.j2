@@ -1,0 +1,62 @@
+# Diagnostic: {{ accession }}
+
+Source: GTR
+Source ID: {{ source_id }}
+Name: {{ name }}
+{% if test_type %}Type: {{ test_type }}
+{% endif -%}
+{% if manufacturer %}Manufacturer: {{ manufacturer }}
+{% endif -%}
+{% if laboratory %}Laboratory: {{ laboratory }}
+{% endif -%}
+{% if institution %}Institution: {{ institution }}
+{% endif -%}
+{% if country %}Country: {{ country }}
+{% endif -%}
+{% if clia_number %}CLIA Number: {{ clia_number }}
+{% endif -%}
+{% if state_licenses %}State Licenses: {{ state_licenses }}
+{% endif -%}
+{% if current_status %}Current Status: {{ current_status }}
+{% endif -%}
+{% if public_status %}Public Status: {{ public_status }}
+{% endif -%}
+{% if method_categories %}Method Categories: {{ method_categories | join(", ") }}
+{% endif %}
+
+{% if show_genes_section -%}
+## Genes
+
+{% if genes is not none and genes -%}
+{{ genes | join(", ") }}
+{% else -%}
+No genes listed in GTR.
+{% endif -%}
+{% endif -%}
+
+{% if show_conditions_section -%}
+## Conditions
+
+{% if conditions is not none and conditions -%}
+{{ conditions | join(", ") }}
+{% else -%}
+No conditions listed in GTR.
+{% endif -%}
+{% endif -%}
+
+{% if show_methods_section -%}
+## Methods
+
+{% if methods is not none and methods -%}
+{% for method in methods -%}
+- {{ method }}
+{% endfor -%}
+{% else -%}
+No methods listed in GTR.
+{% endif -%}
+{% endif -%}
+
+{% if sections_block %}{{ sections_block }}
+{% endif -%}
+{% if related_block %}{{ related_block }}
+{% endif -%}

@@ -83,6 +83,8 @@ pub(super) fn related_command_description(command: &str) -> Option<&'static str>
         Some("mutation frequency ranking")
     } else if command == "biomcp study download --list" {
         Some("browse downloadable cancer genomics studies")
+    } else if command == "biomcp list diagnostic" {
+        Some("diagnostic filters and local GTR usage")
     } else if command.starts_with("biomcp drug adverse-events ") {
         Some("inspect safety reports and adverse-event signal")
     } else {
@@ -408,6 +410,23 @@ pub(super) fn search_next_commands_disease(results: &[DiseaseSearchResult]) -> V
         out.push(format!("biomcp get disease {id}"));
     }
     out.push("biomcp list disease".to_string());
+    dedupe_markdown_commands(out)
+}
+
+pub(super) fn search_next_commands_diagnostic(results: &[DiagnosticSearchResult]) -> Vec<String> {
+    if results.is_empty() {
+        return Vec::new();
+    }
+
+    let mut out = Vec::new();
+    if let Some(accession) = results
+        .first()
+        .map(|result| quote_arg(&result.accession))
+        .filter(|accession| !accession.is_empty())
+    {
+        out.push(format!("biomcp get diagnostic {accession}"));
+    }
+    out.push("biomcp list diagnostic".to_string());
     dedupe_markdown_commands(out)
 }
 
@@ -898,6 +917,10 @@ pub(super) fn related_pgx(pgx: &Pgx) -> Vec<String> {
         out.push(format!("biomcp search pgx -d {drug}"));
     }
     out
+}
+
+pub(super) fn related_diagnostic(_diagnostic: &Diagnostic) -> Vec<String> {
+    vec!["biomcp list diagnostic".to_string()]
 }
 
 pub(super) fn related_pathway(pathway: &Pathway) -> Vec<String> {

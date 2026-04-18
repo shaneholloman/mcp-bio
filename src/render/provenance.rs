@@ -4,6 +4,7 @@ use serde::Serialize;
 
 use crate::entities::adverse_event::{AdverseEvent, AdverseEventReport, DeviceEvent};
 use crate::entities::article::Article;
+use crate::entities::diagnostic::Diagnostic;
 use crate::entities::discover::DiscoverResult;
 use crate::entities::disease::Disease;
 use crate::entities::drug::Drug;
@@ -111,6 +112,53 @@ pub(crate) fn discover_section_sources(result: &DiscoverResult) -> Vec<SectionSo
         "plain_language",
         "Plain Language",
         ["MedlinePlus"],
+    );
+    out
+}
+
+pub(crate) fn diagnostic_section_sources(diagnostic: &Diagnostic) -> Vec<SectionSource> {
+    let mut out = Vec::new();
+    let summary_present = has_text(&diagnostic.source)
+        || has_text(&diagnostic.source_id)
+        || has_text(&diagnostic.accession)
+        || has_text(&diagnostic.name)
+        || has_opt_text(&diagnostic.test_type)
+        || has_opt_text(&diagnostic.manufacturer)
+        || has_opt_text(&diagnostic.laboratory)
+        || has_opt_text(&diagnostic.institution)
+        || has_opt_text(&diagnostic.country)
+        || has_opt_text(&diagnostic.clia_number)
+        || has_opt_text(&diagnostic.state_licenses)
+        || has_opt_text(&diagnostic.current_status)
+        || has_opt_text(&diagnostic.public_status)
+        || !diagnostic.method_categories.is_empty();
+    push_section(
+        &mut out,
+        summary_present,
+        "summary",
+        "Summary",
+        ["NCBI Genetic Testing Registry"],
+    );
+    push_section(
+        &mut out,
+        diagnostic.genes.is_some(),
+        "genes",
+        "Genes",
+        ["NCBI Genetic Testing Registry"],
+    );
+    push_section(
+        &mut out,
+        diagnostic.conditions.is_some(),
+        "conditions",
+        "Conditions",
+        ["NCBI Genetic Testing Registry"],
+    );
+    push_section(
+        &mut out,
+        diagnostic.methods.is_some(),
+        "methods",
+        "Methods",
+        ["NCBI Genetic Testing Registry"],
     );
     out
 }

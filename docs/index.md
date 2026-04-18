@@ -122,6 +122,7 @@ search all [slot filters]    → counts-first cross-entity orientation
 | variant | MyVariant.info, ClinVar, gnomAD fields via MyVariant, CIViC, Cancer Genome Interpreter, OncoKB, cBioPortal, GWAS Catalog, AlphaGenome | `biomcp get variant "BRAF V600E" clinvar` |
 | article | PubMed, PubTator3, Europe PMC, PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` recommended) | `biomcp search article -g BRAF --limit 5` |
 | trial | ClinicalTrials.gov API v2, NCI CTS API | `biomcp search trial -c melanoma -s recruiting` |
+| diagnostic | NCBI Genetic Testing Registry local bulk bundle | `biomcp search diagnostic --gene BRCA1 --limit 5` |
 | drug | MyChem.info, EMA local batch, WHO Prequalification local exports, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
 | disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter, DisGeNET | `biomcp get disease "chronic myeloid leukemia" funding` |
 | pathway | Reactome, KEGG, WikiPathways, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |
@@ -201,7 +202,7 @@ catalog. Read it with `biomcp skill`, install it with
 ## Local study analytics
 
 `study` is BioMCP's local analysis family for downloaded cBioPortal-style datasets.
-The 12 remote entity commands handle live API-backed discovery and detail; `study`
+The 13 remote entity commands handle live API-backed discovery and detail; `study`
 commands cover local query, cohort, survival, compare, and co-occurrence workflows.
 
 ```bash

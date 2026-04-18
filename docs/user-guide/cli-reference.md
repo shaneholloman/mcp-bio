@@ -41,6 +41,7 @@ biomcp cache clear [--yes]
 biomcp ema sync
 biomcp who sync
 biomcp cvx sync
+biomcp gtr sync
 biomcp health [--apis-only]
 biomcp list [entity]
 biomcp study list
@@ -71,7 +72,7 @@ biomcp skill article-follow-up
 
 `biomcp health --apis-only` is the upstream inventory smoke test. Full
 `biomcp health` also reports local readiness rows such as EMA local data,
-WHO Prequalification local data, CDC CVX/MVX local data, cache dir status,
+WHO Prequalification local data, CDC CVX/MVX local data, GTR local data, cache dir status,
 and cache-limit warnings when the managed HTTP cache is over size or below
 the configured disk-free floor.
 
@@ -199,6 +200,19 @@ explicit `--region eu|all` can auto-read the local CDC CVX/MVX bundle after
 MyChem identity resolution misses. That bridge only augments the EMA-side
 search path; `--region us` stays U.S.-only and does not touch the CVX root.
 
+### Diagnostic
+
+```bash
+biomcp search diagnostic --gene BRCA1 --limit 5 --offset 0
+biomcp search diagnostic --disease melanoma --limit 5
+biomcp search diagnostic --gene EGFR --type molecular --limit 5
+```
+
+Diagnostic search is filter-only. At least one of `--gene`, `--disease`,
+`--type`, or `--manufacturer` is required, and all provided filters are
+conjunctive. Diagnostic commands auto-sync the local GTR bundle on first use
+into `BIOMCP_GTR_DIR` or the default platform data directory.
+
 ### Pathway
 
 ```bash
@@ -316,6 +330,18 @@ If you omit `--region` on `get drug <name> regulatory`, BioMCP checks U.S. and
 EU regulatory data. Other no-flag `get drug` shapes stay on the default U.S.
 path unless you pass `--region`.
 
+### Diagnostic
+
+```bash
+biomcp get diagnostic GTR000000001.1
+biomcp get diagnostic GTR000000001.1 genes conditions
+biomcp get diagnostic GTR000000001.1 all
+```
+
+`get diagnostic` always renders the summary card first. Supported section names
+are `genes`, `conditions`, `methods`, and `all`. In JSON mode, unrequested
+sections are omitted while requested empty sections remain present as `[]`.
+
 ### Pathway
 
 ```bash
@@ -409,7 +435,7 @@ biomcp chart violin
 ## Local study analytics
 
 `study` is BioMCP's local cBioPortal analytics family for downloaded
-cBioPortal-style datasets. Unlike the 12 remote entity commands, `study`
+cBioPortal-style datasets. Unlike the 13 remote entity commands, `study`
 operates on files in your local study root instead of querying remote APIs for
 each request.
 
@@ -420,7 +446,7 @@ root. `biomcp study download --list` shows downloadable IDs, and
 
 | Use this | When |
 |----------|------|
-| `biomcp search/get/<entity>` | You want live API-backed discovery or detail across the 12 remote entity commands |
+| `biomcp search/get/<entity>` | You want live API-backed discovery or detail across the 13 remote entity commands |
 | `biomcp study download` | You need to fetch a cBioPortal-style study dataset into your local study root |
 | `biomcp study ...` analytics commands | You already have local study files and want cohort, query, survival, compare, or co-occurrence analysis |
 

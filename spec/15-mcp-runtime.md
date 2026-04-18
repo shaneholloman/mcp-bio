@@ -85,6 +85,22 @@ echo "$out" | mustmatch like '"isError":true'
 echo "$out" | mustmatch like "BioMCP allows read-only commands only"
 ```
 
+## GTR Sync Stays CLI-only
+
+`biomcp gtr sync` mutates the local runtime root, so MCP must reject it instead
+of advertising or executing it remotely.
+
+```bash
+bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
+out="$( (printf '%s\n%s\n%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"spec","version":"0.1"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"biomcp","arguments":{"command":"biomcp gtr sync"}}}'; \
+  sleep 1) | "$bin" serve 2>/dev/null)"
+echo "$out" | mustmatch like '"isError":true'
+echo "$out" | mustmatch like "BioMCP allows read-only commands only"
+```
+
 ## Cache Family Stays CLI-only
 
 The MCP runtime must reject `biomcp cache path` even though it is read-only,

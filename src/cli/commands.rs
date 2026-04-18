@@ -3,8 +3,8 @@
 use clap::Subcommand;
 
 use super::{
-    adverse_event, article, cache, chart, disease, drug, gene, gwas, pathway, pgx, phenotype,
-    protein, search_all_command, skill, study, system, trial, variant,
+    adverse_event, article, cache, chart, diagnostic, disease, drug, gene, gwas, pathway, pgx,
+    phenotype, protein, search_all_command, skill, study, system, trial, variant,
 };
 
 #[derive(Subcommand, Debug)]
@@ -90,6 +90,14 @@ EXAMPLES:
     Cvx {
         #[command(subcommand)]
         cmd: system::CvxCommand,
+    },
+    /// NCBI GTR local data management
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp gtr sync    # force refresh the local GTR diagnostic bundle")]
+    Gtr {
+        #[command(subcommand)]
+        cmd: system::GtrCommand,
     },
     /// Run MCP server over stdio
     Mcp,
@@ -195,6 +203,17 @@ EXAMPLES:
 
 See also: biomcp list disease")]
     Disease(disease::DiseaseSearchArgs),
+    /// Search source-native diagnostic tests from local NCBI GTR data
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp search diagnostic --gene BRCA1 --limit 5
+  biomcp search diagnostic --disease melanoma --limit 5
+  biomcp search diagnostic --gene EGFR --type molecular --limit 5
+  biomcp search diagnostic --gene BRCA1 --manufacturer Tempus --limit 5
+
+Diagnostic search is filter-only. At least one of --gene, --disease, --type, or --manufacturer is required.
+See also: biomcp list diagnostic")]
+    Diagnostic(diagnostic::DiagnosticSearchArgs),
     /// Search pharmacogenomic interactions
     #[command(after_help = "\
 EXAMPLES:
@@ -394,6 +413,16 @@ EXAMPLES:
 
 See also: biomcp list disease")]
     Disease(disease::DiseaseGetArgs),
+    /// Get diagnostic test detail by exact GTR accession version
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp get diagnostic GTR000000001.1
+  biomcp get diagnostic GTR000000001.1 genes
+  biomcp get diagnostic GTR000000001.1 conditions
+  biomcp get diagnostic GTR000000001.1 methods
+
+See also: biomcp list diagnostic")]
+    Diagnostic(diagnostic::DiagnosticGetArgs),
     /// Get pharmacogenomics card by gene or drug (e.g., CYP2D6, warfarin)
     #[command(after_help = "\
 EXAMPLES:

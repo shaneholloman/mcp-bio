@@ -2,6 +2,7 @@
 
 mod adverse_event;
 mod article;
+mod diagnostic;
 mod discovery;
 mod disease;
 mod drug;
@@ -40,6 +41,10 @@ pub use self::article::{
     ArticleSearchRenderContext, article_batch_markdown, article_entities_markdown,
     article_graph_markdown, article_markdown, article_recommendations_markdown,
     article_search_markdown_with_footer_and_context,
+};
+#[allow(unused_imports)]
+pub use self::diagnostic::{
+    diagnostic_markdown, diagnostic_search_markdown, diagnostic_search_markdown_with_footer,
 };
 #[allow(unused_imports)]
 pub use self::discovery::{render_discover, search_all_markdown};
@@ -97,6 +102,7 @@ use crate::entities::article::{
     ArticleGraphResult, ArticleRankingMetadata, ArticleRankingMode, ArticleRecommendationsResult,
     ArticleRelatedPaper, ArticleSearchFilters, ArticleSearchResult, ArticleSort, ArticleSource,
 };
+use crate::entities::diagnostic::{Diagnostic, DiagnosticSearchResult};
 use crate::entities::discover::{DiscoverResult, DiscoverType};
 use crate::entities::disease::{
     Disease, DiseaseAssociationScoreSummary, DiseaseSearchResult, PhenotypeSearchResult,
@@ -143,6 +149,10 @@ pub(crate) fn article_evidence_urls(article: &Article) -> Vec<(&'static str, Str
 
 pub(crate) fn device_event_evidence_urls(event: &DeviceEvent) -> Vec<(&'static str, String)> {
     evidence::device_event_evidence_urls(event)
+}
+
+pub(crate) fn diagnostic_evidence_urls(_diagnostic: &Diagnostic) -> Vec<(&'static str, String)> {
+    Vec::new()
 }
 
 pub(crate) fn discover_evidence_urls(result: &DiscoverResult) -> Vec<(&'static str, String)> {
@@ -204,11 +214,22 @@ pub(crate) fn related_device_event(event: &DeviceEvent) -> Vec<String> {
     related::related_device_event(event)
 }
 
+pub(crate) fn diagnostic_next_commands(
+    diagnostic: &Diagnostic,
+    requested_sections: &[String],
+) -> Vec<String> {
+    sections::diagnostic_next_commands(diagnostic, requested_sections)
+}
+
 pub(crate) fn disease_next_commands(
     disease: &Disease,
     requested_sections: &[String],
 ) -> Vec<String> {
     sections::disease_next_commands(disease, requested_sections)
+}
+
+pub(crate) fn related_diagnostic(diagnostic: &Diagnostic) -> Vec<String> {
+    related::related_diagnostic(diagnostic)
 }
 
 pub(crate) fn related_disease(disease: &Disease) -> Vec<String> {
@@ -293,6 +314,10 @@ pub(crate) fn search_next_commands_gene(results: &[GeneSearchResult]) -> Vec<Str
 
 pub(crate) fn search_next_commands_disease(results: &[DiseaseSearchResult]) -> Vec<String> {
     related::search_next_commands_disease(results)
+}
+
+pub(crate) fn search_next_commands_diagnostic(results: &[DiagnosticSearchResult]) -> Vec<String> {
+    related::search_next_commands_diagnostic(results)
 }
 
 pub(crate) fn search_next_commands_drug_regions(
@@ -510,6 +535,14 @@ fn env() -> Result<&'static Environment<'static>, BioMcpError> {
     env.add_template(
         "article_search.md.j2",
         include_str!("../../../templates/article_search.md.j2"),
+    )?;
+    env.add_template(
+        "diagnostic.md.j2",
+        include_str!("../../../templates/diagnostic.md.j2"),
+    )?;
+    env.add_template(
+        "diagnostic_search.md.j2",
+        include_str!("../../../templates/diagnostic_search.md.j2"),
     )?;
     env.add_template(
         "disease.md.j2",
