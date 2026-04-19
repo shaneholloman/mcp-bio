@@ -8,7 +8,7 @@ use std::fmt::Write as _;
 mod tests;
 
 #[derive(Debug, Serialize)]
-struct DiagnosticSearchRow<'a> {
+pub(crate) struct DiagnosticSearchRow<'a> {
     accession: &'a str,
     name: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -141,20 +141,7 @@ pub fn diagnostic_search_markdown_with_footer(
     pagination_footer: &str,
 ) -> Result<String, BioMcpError> {
     let tmpl = env()?.get_template("diagnostic_search.md.j2")?;
-    let rendered_results = results
-        .iter()
-        .map(|result| DiagnosticSearchRow {
-            accession: &result.accession,
-            name: &result.name,
-            test_type: result.test_type.as_deref(),
-            manufacturer_or_lab: result.manufacturer_or_lab.as_deref(),
-            source: &result.source,
-            source_label: crate::entities::diagnostic::diagnostic_source_label(&result.source)
-                .to_string(),
-            genes: &result.genes,
-            conditions: &result.conditions,
-        })
-        .collect::<Vec<_>>();
+    let rendered_results = diagnostic_search_rows(results);
     let top_accession = results
         .first()
         .map(|result| result.accession.as_str())
@@ -168,4 +155,23 @@ pub fn diagnostic_search_markdown_with_footer(
         pagination_footer => pagination_footer,
     })?;
     Ok(with_pagination_footer(body, pagination_footer))
+}
+
+pub(crate) fn diagnostic_search_rows(
+    results: &[DiagnosticSearchResult],
+) -> Vec<DiagnosticSearchRow<'_>> {
+    results
+        .iter()
+        .map(|result| DiagnosticSearchRow {
+            accession: &result.accession,
+            name: &result.name,
+            test_type: result.test_type.as_deref(),
+            manufacturer_or_lab: result.manufacturer_or_lab.as_deref(),
+            source: &result.source,
+            source_label: crate::entities::diagnostic::diagnostic_source_label(&result.source)
+                .to_string(),
+            genes: &result.genes,
+            conditions: &result.conditions,
+        })
+        .collect()
 }

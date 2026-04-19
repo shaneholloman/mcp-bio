@@ -31,6 +31,8 @@ fn disease_json_next_commands_parse() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 
@@ -45,14 +47,15 @@ fn disease_json_next_commands_parse() {
             "biomcp get disease MONDO:0005105 genes",
             "biomcp get disease MONDO:0005105 pathways",
             "biomcp get disease MONDO:0005105 phenotypes",
+            "biomcp get disease MONDO:0005105 diagnostics",
             "biomcp get disease MONDO:0005105 survival",
-            "biomcp get disease MONDO:0005105 funding",
         ]
     );
     assert!(
         next_commands.contains(&"biomcp search trial -c \"melanoma\"".to_string()),
         "expected disease cross-entity helper after section follow-ups: {next_commands:?}"
     );
+    assert!(next_commands.contains(&"biomcp search diagnostic --disease \"melanoma\"".to_string()));
 
     assert_entity_json_next_commands(
         "disease",
@@ -91,6 +94,8 @@ fn disease_json_next_commands_omit_requested_section_follow_up() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 
@@ -144,6 +149,8 @@ fn disease_json_suggestions_match_see_also_without_more_hints() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 
@@ -197,6 +204,8 @@ fn disease_json_next_commands_include_top_gene_context() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 

@@ -183,6 +183,8 @@ pub fn from_mygene_get(resp: MyGeneGetResponse) -> Gene {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     }
 }
 

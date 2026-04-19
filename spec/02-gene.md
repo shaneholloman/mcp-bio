@@ -13,6 +13,7 @@ Genes are a primary anchor in BioMCP and frequently drive downstream trial, arti
 | Druggability section | `get gene EGFR druggability` | Confirms combined DGIdb/OpenTargets contract |
 | Funding section | `get gene ERBB2 funding` | Confirms NIH Reporter funding contract |
 | Funding stays opt-in | `get gene ERBB2 all` | Confirms `all` still excludes NIH Reporter funding |
+| Diagnostics pivot | `get gene BRCA1 diagnostics` | Confirms GTR-backed diagnostic-test rows from a gene card |
 | Trial helper | `gene trials BRAF` | Confirms cross-entity trial pivot |
 | Article helper | `gene articles BRAF` | Confirms cross-entity literature pivot |
 
@@ -53,18 +54,20 @@ echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list gene")' >
 `get gene` should return a concise identity card with persistent identifiers. Entrez ID is a durable anchor for this entity.
 
 ```bash
-out="$(biomcp get gene BRAF)"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene BRAF)"
 echo "$out" | mustmatch like "# BRAF (B-Raf proto-oncogene"
 echo "$out" | mustmatch like "Entrez ID: 673"
-echo "$out" | mustmatch like $'More:\n  biomcp get gene BRAF pathways   - Reactome/KEGG pathway context\n  biomcp get gene BRAF ontology   - GO-style functional enrichment\n  biomcp get gene BRAF diseases   - disease associations\n  biomcp get gene BRAF funding   - NIH Reporter grant support'
-json="$(biomcp --json get gene BRAF)"
+echo "$out" | mustmatch like $'More:\n  biomcp get gene BRAF pathways   - Reactome/KEGG pathway context\n  biomcp get gene BRAF ontology   - GO-style functional enrichment\n  biomcp get gene BRAF diseases   - disease associations\n  biomcp get gene BRAF diagnostics   - diagnostic tests for this gene from GTR'
+json="$("$bin" --json get gene BRAF)"
 echo "$json" | jq -e '._meta.next_commands[:4] == [
   "biomcp get gene BRAF pathways",
   "biomcp get gene BRAF ontology",
   "biomcp get gene BRAF diseases",
-  "biomcp get gene BRAF funding"
+  "biomcp get gene BRAF diagnostics"
 ]' > /dev/null
 echo "$json" | jq -e '._meta.suggestions | any(. == "biomcp search pgx -g BRAF")' > /dev/null
+echo "$json" | jq -e '._meta.suggestions | any(. == "biomcp search diagnostic --gene BRAF")' > /dev/null
 echo "$json" | jq -e '[._meta.suggestions[] | select(. == "biomcp get gene BRAF pathways")] | length == 0' > /dev/null
 ```
 
@@ -73,12 +76,13 @@ echo "$json" | jq -e '[._meta.suggestions[] | select(. == "biomcp get gene BRAF 
 The base gene card should explain what aliases are for and, when the summary implies localization or structure follow-up, surface executable deepen commands instead of generic guesses.
 
 ```bash
-out="$(biomcp get gene OPA1)"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene OPA1)"
 echo "$out" | mustmatch like "Aliases are alternate names used in literature and databases"
 echo "$out" | mustmatch like "biomcp get gene OPA1 protein"
 echo "$out" | mustmatch like "biomcp get gene OPA1 hpa"
 echo "$out" | mustmatch like "localization"
-echo "$out" | mustmatch like "biomcp get gene OPA1 funding"
+echo "$out" | mustmatch like "biomcp get gene OPA1 diagnostics"
 ```
 
 ## Progressive Disclosure
@@ -250,6 +254,42 @@ invent a fake NIH Reporter block when the user did not ask for one.
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get gene ERBB2 all)"
 echo "$out" | mustmatch not like "## Funding (NIH Reporter)"
+```
+
+## Gene Diagnostics Pivot
+
+Gene cards should be able to pivot into source-native diagnostic tests without
+leaving the `get gene` flow. The fixture keeps the proof local and confirms
+that embedded rows render public source labels and JSON provenance.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene BRCA1 diagnostics)"
+echo "$out" | mustmatch like "## Diagnostics"
+echo "$out" | mustmatch like "| Accession | Name | Type | Manufacturer / Lab | Source | Genes | Conditions |"
+echo "$out" | mustmatch like "GTR000000001.1"
+echo "$out" | mustmatch like "BRCA1 Hereditary Cancer Panel"
+echo "$out" | mustmatch like "NCBI Genetic Testing Registry"
+json="$("$bin" --json get gene BRCA1 diagnostics)"
+echo "$json" | jq -e '.diagnostics | length >= 1' > /dev/null
+echo "$json" | jq -e '.diagnostics[0].source == "gtr"' > /dev/null
+echo "$json" | jq -e 'any(._meta.section_sources[]; .key == "diagnostics" and (.sources | index("NCBI Genetic Testing Registry")))' > /dev/null
+```
+
+## Gene Diagnostics Stays Opt-In
+
+`diagnostics` should remain an explicit section so `get gene <symbol> all` does
+not trigger local diagnostic data access or render diagnostic fields.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene BRCA1 all)"
+echo "$out" | mustmatch not like "## Diagnostics"
+json="$("$bin" --json get gene BRCA1 all)"
+echo "$json" | jq -e 'has("diagnostics") | not' > /dev/null
+echo "$json" | jq -e 'has("diagnostics_note") | not' > /dev/null
 ```
 
 ## Gene to Trials

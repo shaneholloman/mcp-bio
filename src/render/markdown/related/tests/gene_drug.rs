@@ -49,6 +49,8 @@ fn related_gene_prioritizes_localization_deepening_when_supported() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let related = related_gene(&gene);
@@ -56,6 +58,7 @@ fn related_gene_prioritizes_localization_deepening_when_supported() {
     assert_eq!(related[1], "biomcp get gene OPA1 hpa");
     assert!(related.contains(&"biomcp search pgx -g OPA1".to_string()));
     assert!(related.contains(&"biomcp search variant -g OPA1".to_string()));
+    assert!(related.contains(&"biomcp search diagnostic --gene OPA1".to_string()));
 }
 
 #[test]
@@ -118,6 +121,8 @@ fn related_gene_promotes_clingen_trial_search_before_generic_pivots() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let related = related_gene(&gene);
@@ -132,6 +137,7 @@ fn related_gene_promotes_clingen_trial_search_before_generic_pivots() {
         Some("recruiting trials for the top ClinGen disease on this gene card")
     );
     assert!(related.contains(&"biomcp search pgx -g OPA1".to_string()));
+    assert!(related.contains(&"biomcp search diagnostic --gene OPA1".to_string()));
 }
 
 #[test]
@@ -175,4 +181,3 @@ fn related_drug_includes_pgx_search() {
     let related = related_drug(&drug);
     assert!(related.contains(&"biomcp search pgx -d warfarin".to_string()));
 }
-

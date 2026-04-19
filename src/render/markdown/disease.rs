@@ -244,6 +244,7 @@ pub fn disease_markdown(
     let show_prevalence_section = include_all || has_requested("prevalence");
     let show_survival_section = include_all || has_requested("survival");
     let show_funding_section = has_requested("funding");
+    let show_diagnostics_section = has_requested("diagnostics");
     let show_civic_section = include_all || has_requested("civic");
     let show_disgenet_section = has_requested("disgenet");
     let disease_label = if disease.name.trim().is_empty() {
@@ -262,6 +263,8 @@ pub fn disease_markdown(
     let survival_history_rows = disease_survival_history_rows(disease);
     let funding_rows = funding_rows(disease.funding.as_ref());
     let funding_summary = funding_summary_line(disease.funding.as_ref());
+    let diagnostic_rows =
+        super::diagnostic::diagnostic_search_rows(disease.diagnostics.as_deref().unwrap_or(&[]));
     let body = tmpl.render(context! {
         section_only => section_only,
         section_header => section_header(disease_label, requested_sections),
@@ -294,6 +297,8 @@ pub fn disease_markdown(
         funding_note => &disease.funding_note,
         funding_rows => funding_rows,
         funding_summary => funding_summary,
+        diagnostics_note => &disease.diagnostics_note,
+        diagnostic_rows => diagnostic_rows,
         survival_source_line => survival_source_line,
         survival_summary_rows => survival_summary_rows,
         survival_history_rows => survival_history_rows,
@@ -307,6 +312,7 @@ pub fn disease_markdown(
         show_prevalence_section => show_prevalence_section,
         show_survival_section => show_survival_section,
         show_funding_section => show_funding_section,
+        show_diagnostics_section => show_diagnostics_section,
         show_civic_section => show_civic_section,
         show_disgenet_section => show_disgenet_section,
         xrefs => xrefs,

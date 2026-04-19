@@ -401,11 +401,12 @@ See also: biomcp list adverse-event")]
 pub enum GetEntity {
     /// Get gene by symbol
     #[command(after_help = "\
-When to use: use this for the default card, then add protein, hpa, expression, diseases, or funding when you need deeper biology, localization, or NIH grant context.
+When to use: use this for the default card, then add protein, hpa, expression, diseases, diagnostics, or funding when you need deeper biology, localization, diagnostic-test, or NIH grant context.
 
 EXAMPLES:
   biomcp get gene BRAF
   biomcp get gene BRAF pathways
+  biomcp get gene BRCA1 diagnostics
   biomcp get gene BRAF hpa
   biomcp get gene ERBB2 funding
 
@@ -422,11 +423,12 @@ See also: biomcp list article")]
     Article(article::ArticleGetArgs),
     /// Get disease by name or ID (e.g., MONDO:0005105)
     #[command(after_help = "\
-When to use: use this for the normalized disease card, then add funding or survival when you need NIH grant context or cancer outcomes before pivoting to search article -d for broader review literature.
+When to use: use this for the normalized disease card, then add diagnostics, funding, or survival when you need diagnostic tests, NIH grant context, or cancer outcomes before pivoting to search article -d for broader review literature.
 
 EXAMPLES:
   biomcp get disease melanoma
   biomcp get disease MONDO:0005105 genes
+  biomcp get disease tuberculosis diagnostics
   biomcp get disease \"chronic myeloid leukemia\" funding
   biomcp get disease \"chronic myeloid leukemia\" survival
 

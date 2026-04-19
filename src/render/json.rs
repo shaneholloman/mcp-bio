@@ -465,6 +465,8 @@ mod tests {
             disgenet: None,
             funding: None,
             funding_note: None,
+            diagnostics: None,
+            diagnostics_note: None,
         };
 
         let json = to_pretty(&gene).expect("gene json");
@@ -513,6 +515,8 @@ mod tests {
             }),
             funding: None,
             funding_note: None,
+            diagnostics: None,
+            diagnostics_note: None,
         };
 
         let json = to_pretty(&gene).expect("gene json");

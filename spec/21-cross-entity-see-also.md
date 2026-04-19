@@ -9,8 +9,10 @@ empty-state must surface the structured path directly.
 |---|---|---|
 | Drug to PGx | `get drug warfarin` | Teaches the structured PGx surface from a drug card |
 | Gene to PGx | `get gene TP53` | Teaches the PGx search from a gene card |
+| Gene to Diagnostic Search | `get gene BRCA1` | Teaches diagnostic search from a gene card |
 | Disease to Gene | `get disease "Dravet syndrome" genes` | Promotes the top ranked causal gene from the current disease response |
 | Disease to Drug | `get disease melanoma` | Teaches indication-oriented drug search from a disease card |
+| Disease to Diagnostic Search | `get disease melanoma` | Teaches diagnostic search from a disease card |
 | Gene to Recruiting Trials | `get gene SCN1A clingen` | Reuses the current top ClinGen disease label for a trial pivot |
 | Variant Search Follow-up | `search variant -g SCN5A --condition "Brugada"` | Restores HATEOAS follow-up commands on variant result pages |
 | Pathogenic Variant Keeps Drug Pivot | `get variant "BRAF V600E" clinvar` | Keeps target/drug follow-up near the top for pathogenic variants |
@@ -67,6 +69,24 @@ echo "$pgx_out" | mustmatch like "No PGx interactions found."
 echo "$pgx_out" | mustmatch like "# PGx Search: gene=TP53"
 ```
 
+## Gene to Diagnostic Search
+
+Gene cards should point to diagnostic search in both markdown and JSON so
+agents can move from a gene card into the full diagnostic-test inventory.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene BRCA1)"
+echo "$out" | mustmatch like "biomcp search diagnostic --gene BRCA1"
+echo "$out" | mustmatch like "diagnostic tests for this gene"
+```
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" --json get gene BRCA1)"
+echo "$out" | jq -e '._meta.next_commands | index("biomcp search diagnostic --gene BRCA1") != null' > /dev/null
+```
+
 ## Disease to Gene
 
 Disease cards with ranked gene context should promote the current top gene into
@@ -97,7 +117,8 @@ Disease cards should point to typed indication search so the follow-up command
 returns treatment-oriented drug results instead of name matches.
 
 ```bash
-out="$(biomcp get disease melanoma)"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease melanoma)"
 echo "$out" | mustmatch like 'biomcp search drug --indication "melanoma"'
 echo "$out" | mustmatch like "treatment options for this condition"
 if echo "$out" | grep -F "biomcp search drug melanoma" >/dev/null; then
@@ -107,12 +128,31 @@ fi
 ```
 
 ```bash
-out="$(biomcp --json get disease melanoma)"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" --json get disease melanoma)"
 echo "$out" | jq -e '._meta.next_commands | index("biomcp search drug --indication \"melanoma\"") != null' > /dev/null
 
 drug_out="$(biomcp search drug --indication "melanoma" --limit 5)"
 echo "$drug_out" | mustmatch like "# Drugs: indication=melanoma"
 echo "$drug_out" | mustmatch like "pembrolizumab"
+```
+
+## Disease to Diagnostic Search
+
+Disease cards should point to diagnostic search in both markdown and JSON so
+agents can move from a disease card into the full diagnostic-test inventory.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease melanoma)"
+echo "$out" | mustmatch like 'biomcp search diagnostic --disease "melanoma"'
+echo "$out" | mustmatch like "diagnostic tests for this condition"
+```
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" --json get disease melanoma)"
+echo "$out" | jq -e '._meta.next_commands | index("biomcp search diagnostic --disease \"melanoma\"") != null' > /dev/null
 ```
 
 ## Gene to Recruiting Trials
@@ -209,14 +249,17 @@ echo "$out" | jq -e '[._meta.next_commands[] | select(startswith("biomcp search 
 ## Gene More Ordering
 
 This ticket should not demote `ontology`; the default gene card still needs the
-top follow-up trio to stay `pathways`, `ontology`, and `diseases`.
+top follow-up trio to stay `pathways`, `ontology`, and `diseases`, with
+`diagnostics` visible as the fourth section command.
 
 ```bash
-out="$(biomcp get gene NANOG)"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene NANOG)"
 echo "$out" | mustmatch like $'More:\n  biomcp get gene NANOG pathways'
 echo "$out" | mustmatch like "biomcp get gene NANOG pathways"
 echo "$out" | mustmatch like "biomcp get gene NANOG ontology"
 echo "$out" | mustmatch like "biomcp get gene NANOG diseases"
+echo "$out" | mustmatch like "biomcp get gene NANOG diagnostics"
 ```
 
 ## Oncology Study Local Match

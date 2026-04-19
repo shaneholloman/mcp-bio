@@ -10,6 +10,7 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 | Disease funding | `get disease "chronic myeloid leukemia" funding` | Confirms NIH Reporter funding contract |
 | Non-cancer funding | `get disease "Marfan syndrome" funding` | Confirms funding coverage is not cancer-specific |
 | Funding stays opt-in | `get disease "chronic myeloid leukemia" all` | Confirms `all` still excludes NIH Reporter funding |
+| Diagnostics pivot | `get disease tuberculosis diagnostics` | Confirms local diagnostic-test rows from disease context |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
 | Disease phenotypes keep gene pivot | `get disease "Duchenne muscular dystrophy" phenotypes` | Confirms phenotype-only output still keeps the existing disease-to-genes pivot |
@@ -142,19 +143,21 @@ echo "$out" | mustmatch not like "Resolved via discover + crosswalk"
 The disease detail card should resolve the query label to a normalized concept. This check targets heading and canonical ID line.
 
 ```bash
-out="$(biomcp get disease melanoma)"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease melanoma)"
 echo "$out" | mustmatch like "# melanoma"
 echo "$out" | mustmatch like "ID: MONDO:0005105"
 echo "$out" | mustmatch like "Genes (Open Targets): CDKN2A (OT"
-echo "$out" | mustmatch like $'More:\n  biomcp get disease MONDO:0005105 genes   - associated genes\n  biomcp get disease MONDO:0005105 pathways   - pathways from associated genes\n  biomcp get disease MONDO:0005105 phenotypes   - HPO phenotype annotations\n  biomcp get disease MONDO:0005105 survival   - SEER Explorer cancer survival rates\n  biomcp get disease MONDO:0005105 funding   - NIH Reporter grant support'
-json="$(biomcp --json get disease melanoma)"
+echo "$out" | mustmatch like $'More:\n  biomcp get disease MONDO:0005105 genes   - associated genes\n  biomcp get disease MONDO:0005105 pathways   - pathways from associated genes\n  biomcp get disease MONDO:0005105 phenotypes   - HPO phenotype annotations\n  biomcp get disease MONDO:0005105 diagnostics   - diagnostic tests for this condition from GTR and WHO IVD\n  biomcp get disease MONDO:0005105 survival   - SEER Explorer cancer survival rates'
+json="$("$bin" --json get disease melanoma)"
 echo "$json" | jq -e '._meta.next_commands[:5] == [
   "biomcp get disease MONDO:0005105 genes",
   "biomcp get disease MONDO:0005105 pathways",
   "biomcp get disease MONDO:0005105 phenotypes",
-  "biomcp get disease MONDO:0005105 survival",
-  "biomcp get disease MONDO:0005105 funding"
+  "biomcp get disease MONDO:0005105 diagnostics",
+  "biomcp get disease MONDO:0005105 survival"
 ]' > /dev/null
+echo "$json" | jq -e '._meta.suggestions | any(. == "biomcp search diagnostic --disease \"melanoma\"")' > /dev/null
 ```
 
 ## Disease Survival
@@ -266,6 +269,44 @@ echo "$out" | mustmatch not like "## Funding (NIH Reporter)"
 json="$("$bin" --json get disease "chronic myeloid leukemia" all)"
 echo "$json" | jq -e '.survival != null or .survival_note != null' > /dev/null
 echo "$json" | jq -e '.funding == null and .funding_note == null' > /dev/null
+```
+
+## Disease Diagnostics Pivot
+
+Disease cards should be able to pivot into local diagnostic tests from both
+diagnostic sources. The fixture keeps the proof local and confirms WHO IVD rows
+can appear under the default source route.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease tuberculosis diagnostics)"
+echo "$out" | mustmatch like "## Diagnostics"
+echo "$out" | mustmatch like "| Accession | Name | Type | Manufacturer / Lab | Source | Genes | Conditions |"
+echo "$out" | mustmatch like "Loopamp MTBC Detection Kit"
+echo "$out" | mustmatch like "Mycobacterium tuberculosis complex (MTBC)"
+echo "$out" | mustmatch like "WHO Prequalified IVD"
+json="$("$bin" --json get disease tuberculosis diagnostics)"
+echo "$json" | jq -e '.diagnostics | length >= 1' > /dev/null
+echo "$json" | jq -e '.diagnostics | any(.source == "who-ivd")' > /dev/null
+echo "$json" | jq -e 'any(._meta.section_sources[]; .key == "diagnostics" and (.sources | index("WHO Prequalified IVD")))' > /dev/null
+```
+
+## Disease Diagnostics Stays Opt-In
+
+`diagnostics` should remain an explicit section so `get disease <name_or_id>
+all` does not trigger local diagnostic data access or render diagnostic fields.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease melanoma all)"
+echo "$out" | mustmatch not like "## Diagnostics"
+json="$("$bin" --json get disease melanoma all)"
+echo "$json" | jq -e 'has("diagnostics") | not' > /dev/null
+echo "$json" | jq -e 'has("diagnostics_note") | not' > /dev/null
 ```
 
 ## Disease Crosswalk Identifier Resolution

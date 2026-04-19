@@ -38,6 +38,8 @@ fn gene_markdown_section_only_shows_constraint_section() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["constraint".to_string()]).expect("rendered markdown");
@@ -92,6 +94,8 @@ fn gene_markdown_section_only_shows_disgenet_section() {
         }),
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["disgenet".to_string()]).expect("rendered markdown");
@@ -146,6 +150,8 @@ fn gene_markdown_disgenet_renders_sparse_optional_fields() {
         }),
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["disgenet".to_string()]).expect("rendered markdown");
@@ -204,6 +210,8 @@ fn gene_markdown_funding_renders_linked_rows_and_currency() {
             }],
         }),
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["funding".to_string()]).expect("funding markdown");
@@ -259,10 +267,13 @@ fn gene_markdown_all_keeps_opt_in_sections_hidden() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["all".to_string()]).expect("all markdown");
 
+    assert!(!markdown.contains("## Diagnostics"));
     assert!(!markdown.contains("## Funding (NIH Reporter)"));
     assert!(!markdown.contains("## DisGeNET"));
 }
@@ -309,6 +320,8 @@ fn gene_markdown_pathways_show_source_labels() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &[]).expect("rendered markdown");

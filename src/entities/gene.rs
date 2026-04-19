@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use tracing::warn;
 
 use crate::entities::SearchPage;
+use crate::entities::diagnostic::{DiagnosticSearchFilters, DiagnosticSearchResult};
 use crate::error::BioMcpError;
 use crate::sources::civic::{CivicClient, CivicContext};
 use crate::sources::clingen::{ClinGenClient, GeneClinGen};
@@ -84,6 +85,10 @@ pub struct Gene {
     pub funding: Option<NihReporterFundingSection>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub funding_note: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub diagnostics: Option<Vec<DiagnosticSearchResult>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub diagnostics_note: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -194,6 +199,7 @@ pub enum GeneIncludeType {
     Pathways,
     Ontology,
     Diseases,
+    Diagnostics,
     Protein,
     Go,
     Interactions,
@@ -212,6 +218,7 @@ pub type GeneSection = GeneIncludeType;
 const GENE_SECTION_PATHWAYS: &str = "pathways";
 const GENE_SECTION_ONTOLOGY: &str = "ontology";
 const GENE_SECTION_DISEASES: &str = "diseases";
+const GENE_SECTION_DIAGNOSTICS: &str = "diagnostics";
 const GENE_SECTION_PROTEIN: &str = "protein";
 const GENE_SECTION_GO: &str = "go";
 const GENE_SECTION_INTERACTIONS: &str = "interactions";
@@ -229,6 +236,7 @@ pub const GENE_SECTION_NAMES: &[&str] = &[
     GENE_SECTION_PATHWAYS,
     GENE_SECTION_ONTOLOGY,
     GENE_SECTION_DISEASES,
+    GENE_SECTION_DIAGNOSTICS,
     GENE_SECTION_PROTEIN,
     GENE_SECTION_GO,
     GENE_SECTION_INTERACTIONS,
@@ -249,6 +257,7 @@ impl GeneIncludeType {
             GENE_SECTION_PATHWAYS | "pathway" => Some(Self::Pathways),
             GENE_SECTION_ONTOLOGY => Some(Self::Ontology),
             GENE_SECTION_DISEASES | "disease" => Some(Self::Diseases),
+            GENE_SECTION_DIAGNOSTICS => Some(Self::Diagnostics),
             GENE_SECTION_PROTEIN => Some(Self::Protein),
             GENE_SECTION_GO => Some(Self::Go),
             GENE_SECTION_INTERACTIONS | "interaction" => Some(Self::Interactions),
@@ -269,6 +278,7 @@ impl GeneIncludeType {
             Self::Pathways => GENE_SECTION_PATHWAYS,
             Self::Ontology => GENE_SECTION_ONTOLOGY,
             Self::Diseases => GENE_SECTION_DISEASES,
+            Self::Diagnostics => GENE_SECTION_DIAGNOSTICS,
             Self::Protein => GENE_SECTION_PROTEIN,
             Self::Go => GENE_SECTION_GO,
             Self::Interactions => GENE_SECTION_INTERACTIONS,
@@ -304,6 +314,7 @@ impl GeneIncludeType {
         match self {
             // Pathways come from Reactome directly, not Enrichr.
             Self::Pathways => &[],
+            Self::Diagnostics => &[],
             Self::Ontology => &["GO_Biological_Process_2025", "GO_Molecular_Function_2025"],
             Self::Diseases => &["DisGeNET", "OMIM_Disease"],
             Self::Protein
@@ -327,6 +338,9 @@ const GENE_OPTIONAL_TIMEOUT_MS_ENV: &str = "BIOMCP_GENE_OPTIONAL_TIMEOUT_MS";
 const GENE_GET_STRATEGY_ENV: &str = "BIOMCP_GENE_GET_STRATEGY";
 const FUNDING_NO_DATA_NOTE: &str = "No NIH funding data found for this query.";
 const FUNDING_UNAVAILABLE_NOTE: &str = "NIH Reporter funding data is temporarily unavailable.";
+const DIAGNOSTIC_PIVOT_LIMIT: usize = 10;
+const GENE_DIAGNOSTICS_UNAVAILABLE_NOTE: &str =
+    "Diagnostic local data is unavailable. Run `biomcp gtr sync` to enable gene diagnostic pivots.";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GeneTimingEntry {
@@ -789,6 +803,7 @@ async fn enrich_gene(
             | GeneIncludeType::Druggability
             | GeneIncludeType::ClinGen
             | GeneIncludeType::Constraint
+            | GeneIncludeType::Diagnostics
             | GeneIncludeType::Disgenet
             | GeneIncludeType::Funding => {}
             GeneIncludeType::Ontology => {
@@ -1540,6 +1555,32 @@ async fn add_funding_section(gene: &mut Gene, timeout: Duration) {
     }
 }
 
+async fn add_diagnostics_section(gene: &mut Gene) {
+    let query = gene.symbol.trim();
+    if query.is_empty() {
+        gene.diagnostics = Some(Vec::new());
+        gene.diagnostics_note = None;
+        return;
+    }
+
+    let filters = DiagnosticSearchFilters {
+        gene: Some(query.to_string()),
+        ..Default::default()
+    };
+
+    match crate::entities::diagnostic::search_page(&filters, DIAGNOSTIC_PIVOT_LIMIT, 0).await {
+        Ok(page) => {
+            gene.diagnostics = Some(page.results);
+            gene.diagnostics_note = None;
+        }
+        Err(err) => {
+            warn!(gene = %query, "Diagnostic local data unavailable for gene diagnostics section: {err}");
+            gene.diagnostics = None;
+            gene.diagnostics_note = Some(GENE_DIAGNOSTICS_UNAVAILABLE_NOTE.into());
+        }
+    }
+}
+
 async fn populate_sections_parallel_top(
     gene: &mut Gene,
     include: &[GeneIncludeType],
@@ -1973,6 +2014,26 @@ async fn populate_sections_parallel_top(
         );
     }
 
+    if include.contains(&GeneIncludeType::Diagnostics) {
+        let started = Instant::now();
+        add_diagnostics_section(gene).await;
+        timing.record(
+            "diagnostics",
+            started,
+            if gene.diagnostics_note.is_some() {
+                "error"
+            } else if gene
+                .diagnostics
+                .as_ref()
+                .is_some_and(|section| !section.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
     if include.contains(&GeneIncludeType::Funding) {
         let started = Instant::now();
         add_funding_section(gene, optional_timeout).await;
@@ -2341,6 +2402,26 @@ pub async fn get_with_report(
                 .disgenet
                 .as_ref()
                 .is_some_and(|section| !section.associations.is_empty())
+            {
+                "data"
+            } else {
+                "empty"
+            },
+        );
+    }
+
+    if include.contains(&GeneIncludeType::Diagnostics) {
+        let started = Instant::now();
+        add_diagnostics_section(&mut gene).await;
+        timing.record(
+            "diagnostics",
+            started,
+            if gene.diagnostics_note.is_some() {
+                "error"
+            } else if gene
+                .diagnostics
+                .as_ref()
+                .is_some_and(|section| !section.is_empty())
             {
                 "data"
             } else {
@@ -2734,6 +2815,7 @@ mod tests {
         assert!(GENE_SECTION_NAMES.contains(&"constraint"));
         assert!(GENE_SECTION_NAMES.contains(&"disgenet"));
         assert!(GENE_SECTION_NAMES.contains(&"funding"));
+        assert!(GENE_SECTION_NAMES.contains(&"diagnostics"));
     }
 
     #[test]
@@ -2748,16 +2830,19 @@ mod tests {
                 "constraint".to_string(),
                 "disgenet".to_string(),
                 "funding".to_string(),
+                "diagnostics".to_string(),
             ],
         )
         .expect("new gene sections should parse");
-        assert_eq!(parsed.len(), 7);
+        assert_eq!(parsed.len(), 8);
+        assert!(parsed.contains(&GeneIncludeType::Diagnostics));
     }
 
     #[test]
-    fn parse_sections_all_keeps_disgenet_opt_in() {
+    fn parse_sections_all_keeps_optional_sections_opt_in() {
         let parsed = parse_sections("BRAF", &["all".to_string()]).expect("all should parse");
         assert_eq!(parsed.len(), 12);
+        assert!(!parsed.contains(&GeneIncludeType::Diagnostics));
         assert!(!parsed.contains(&GeneIncludeType::Disgenet));
         assert!(!parsed.contains(&GeneIncludeType::Funding));
     }

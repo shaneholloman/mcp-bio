@@ -25,7 +25,8 @@ fn get_disease_help_includes_when_to_use_guidance() {
 
     assert!(help.contains("When to use:"));
     assert!(help.contains("normalized disease card"));
-    assert!(help.contains("funding or survival"));
+    assert!(help.contains("diagnostics, funding, or survival"));
+    assert!(help.contains("tuberculosis diagnostics"));
     assert!(help.contains("search article -d"));
 }
 

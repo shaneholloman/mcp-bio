@@ -100,7 +100,7 @@ echo "$gene_json" | jq -e '._meta.next_commands[:4] == [
   "biomcp get gene BRAF pathways",
   "biomcp get gene BRAF ontology",
   "biomcp get gene BRAF diseases",
-  "biomcp get gene BRAF funding"
+  "biomcp get gene BRAF diagnostics"
 ]' > /dev/null
 
 disease_json="$("$bin" get disease melanoma --json)"
@@ -109,8 +109,8 @@ echo "$disease_json" | jq -e '._meta.next_commands[:5] == [
   "biomcp get disease MONDO:0005105 genes",
   "biomcp get disease MONDO:0005105 pathways",
   "biomcp get disease MONDO:0005105 phenotypes",
-  "biomcp get disease MONDO:0005105 survival",
-  "biomcp get disease MONDO:0005105 funding"
+  "biomcp get disease MONDO:0005105 diagnostics",
+  "biomcp get disease MONDO:0005105 survival"
 ]' > /dev/null
 
 variant_json="$("$bin" get variant "BRAF V600E" --json)"
@@ -168,7 +168,7 @@ echo "$gene_json" | jq -e '._meta.next_commands[:4] == [
   "biomcp get gene BRAF pathways",
   "biomcp get gene BRAF ontology",
   "biomcp get gene BRAF diseases",
-  "biomcp get gene BRAF funding"
+  "biomcp get gene BRAF diagnostics"
 ]' > /dev/null
 
 disease_json="$("$bin" get disease melanoma --json)"
@@ -176,8 +176,8 @@ echo "$disease_json" | jq -e '._meta.next_commands[:5] == [
   "biomcp get disease MONDO:0005105 genes",
   "biomcp get disease MONDO:0005105 pathways",
   "biomcp get disease MONDO:0005105 phenotypes",
-  "biomcp get disease MONDO:0005105 survival",
-  "biomcp get disease MONDO:0005105 funding"
+  "biomcp get disease MONDO:0005105 diagnostics",
+  "biomcp get disease MONDO:0005105 survival"
 ]' > /dev/null
 ```
 

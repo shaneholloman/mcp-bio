@@ -44,6 +44,28 @@ gene-capable source. WHO IVD supports `--disease`, `--type`, and
 returns a source-aware recovery hint. On the default `--source all` route,
 gene-only searches stay valid because the WHO IVD leg is skipped.
 
+## Cross-entity diagnostic pivots
+
+Gene and disease cards can embed diagnostic-test summaries as opt-in sections:
+
+```bash
+biomcp get gene BRCA1 diagnostics
+biomcp get disease tuberculosis diagnostics
+```
+
+The gene pivot uses the same GTR-backed diagnostic search as
+`biomcp search diagnostic --gene <symbol>`. The disease pivot uses the default
+multi-source diagnostic route, so GTR and WHO IVD rows can appear together when
+both local bundles match the condition. Embedded sections show a compact table
+with accession, name, type, manufacturer or lab, public source label, genes,
+and conditions.
+
+`diagnostics` is intentionally opt-in on gene and disease cards. It is not
+expanded by `biomcp get gene <symbol> all` or
+`biomcp get disease <name_or_id> all`. When local diagnostic data is
+unavailable, the parent gene or disease card still succeeds and renders a note
+with the sync command to enable the pivot.
+
 ## Get a diagnostic record
 
 ```bash

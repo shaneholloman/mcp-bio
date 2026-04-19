@@ -188,15 +188,17 @@ Every `get` command supports selectable sections for focused output:
 ```bash
 biomcp get gene BRAF                    # summary card
 biomcp get gene BRAF pathways           # add pathway section
+biomcp get gene BRCA1 diagnostics       # diagnostic-test pivot from GTR
 biomcp get gene BRAF hpa                # protein tissue expression + localization
 biomcp get gene BRAF civic interactions # multiple sections
-biomcp get gene BRAF all                # everything
+biomcp get gene BRAF all                # standard sections; diagnostics/funding stay opt-in
 
 biomcp get variant "BRAF V600E" clinvar population conservation
 biomcp get article 22663011 tldr
 biomcp get drug pembrolizumab label targets civic approvals
 biomcp get drug trastuzumab regulatory --region who
 biomcp get disease "Lynch syndrome" genes phenotypes variants
+biomcp get disease tuberculosis diagnostics
 biomcp get diagnostic GTR000000001.1 regulatory
 biomcp get trial NCT02576665 eligibility locations outcomes
 ```

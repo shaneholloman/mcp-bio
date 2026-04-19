@@ -21,6 +21,9 @@
 - Expanded `diagnostic` into a local multi-source surface with WHO Prequalified IVD
   infectious-disease products, source-aware search/get behavior, and explicit
   `biomcp who-ivd sync`. (237)
+- Added opt-in diagnostic pivots to gene and disease cards with
+  `get gene <symbol> diagnostics` and `get disease <name_or_id> diagnostics`,
+  backed by local GTR and WHO IVD diagnostic search. (239)
 - Added entity-aware HATEOAS suggestions (`_meta.next_commands`) to article
   search JSON output; gene-anchored and keyword searches return contextually
   appropriate follow-up commands. (195, 202)

@@ -59,6 +59,8 @@ pub(super) fn test_disease(id: &str, name: &str) -> Disease {
         survival_note: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         civic: None,
         disgenet: None,
         xrefs: HashMap::new(),

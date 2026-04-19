@@ -10,6 +10,8 @@ New to BioMCP? Try:
 
 - `skill install` - install BioMCP skill guidance to your agent
 - `get gene BRAF` - look up a gene
+- `get gene BRCA1 diagnostics` - inspect GTR diagnostic tests for a known gene
+- `get disease tuberculosis diagnostics` - inspect local diagnostic tests for a condition
 - `search diagnostic --gene BRCA1 --limit 5` - find genetic tests for a known gene
 - `search diagnostic --disease HIV --source who-ivd --limit 5` - find WHO infectious-disease diagnostics
 - `get variant "BRAF V600E"` - annotate a variant
@@ -23,7 +25,7 @@ New to BioMCP? Try:
 |---|---|
 | How much NIH funded a disease or gene | `get disease <name_or_id> funding` or `get gene <symbol> funding` |
 | What drugs treat a disease | `search drug --indication "<disease>" --limit 5` |
-| What diagnostic test exists for a gene or disease | `search diagnostic --gene <symbol> --limit 5` or `search diagnostic --disease "<name>" --source who-ivd --limit 5` |
+| What diagnostic test exists for a gene or disease | `get gene <symbol> diagnostics`, `get disease <name_or_id> diagnostics`, or `search diagnostic --gene <symbol> --limit 5` |
 | What the 5-year survival outlook is for a cancer | `get disease <name_or_id> survival` |
 | Symptoms or phenotypes of a disease | `get disease <name_or_id> phenotypes` |
 | Which diseases match HPO IDs or symptom text | `search phenotype "<HP:... HP:...>"` or `search phenotype "seizure, developmental delay"` |
@@ -62,6 +64,8 @@ New to BioMCP? Try:
 - `search all [slot filters]` - curated multi-entity orientation (`--gene/--variant/--disease/--drug/--keyword`)
 - `search trial [filters]` - trial search is filter-only
 - `get <entity> <id> [section...]` - fetch by identifier with optional sections
+- `get gene <symbol> diagnostics` - opt-in diagnostic-test pivot from a gene card
+- `get disease <name_or_id> diagnostics` - opt-in diagnostic-test pivot from a disease card
 - `get drug <name> regulatory [--region <us|eu|who|all>]` - region-aware U.S./EU/WHO regulatory context
 - `get drug <name> safety|shortage [--region <us|eu|all>]` - region-aware U.S./EU drug safety and shortage context
 - `get drug <name> all [--region <us|eu|who|all>]` - include all sections plus region-aware regulatory context

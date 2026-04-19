@@ -61,6 +61,21 @@ Note: single-gene Enrichr p-values are exploratory and should be interpreted cau
 {% endfor -%}
 {% endfor -%}
 {% endif -%}
+{% if show_diagnostics_section -%}
+## Diagnostics
+
+{% if diagnostic_rows -%}
+| Accession | Name | Type | Manufacturer / Lab | Source | Genes | Conditions |
+|---|---|---|---|---|---|---|
+{% for row in diagnostic_rows -%}
+| {{ row.accession }} | {{ row.name }} | {{ row.test_type or "-" }} | {{ row.manufacturer_or_lab or "-" }} | {{ row.source_label }} | {% if row.genes %}{{ row.genes | join(", ") }}{% else %}-{% endif %} | {% if row.conditions %}{{ row.conditions | join(", ") }}{% else %}-{% endif %} |
+{% endfor -%}
+{% elif diagnostics_note -%}
+{{ diagnostics_note }}
+{% else -%}
+No diagnostic tests found for this gene.
+{% endif -%}
+{% endif -%}
 {% if protein -%}
 ## Protein (UniProt)
 

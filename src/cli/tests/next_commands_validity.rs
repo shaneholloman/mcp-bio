@@ -11,12 +11,14 @@ fn assert_parses(cmd: &str) {
 
 #[test]
 fn gene_next_commands_parse() {
+    assert_parses("biomcp get gene BRAF diagnostics");
     assert_parses("biomcp get gene BRAF funding");
     assert_parses(r#"biomcp search trial -c "Dravet syndrome" -s recruiting"#);
     assert_parses("biomcp search pgx -g BRAF");
     assert_parses("biomcp search variant -g BRAF");
     assert_parses("biomcp search article -g BRAF");
     assert_parses("biomcp search drug --target BRAF");
+    assert_parses("biomcp search diagnostic --gene BRAF");
     assert_parses("biomcp gene trials BRAF");
 }
 
@@ -92,6 +94,7 @@ fn trial_search_json_next_commands_parse() {
 
 #[test]
 fn disease_next_commands_parse() {
+    assert_parses("biomcp get disease MONDO:0005105 diagnostics");
     assert_parses("biomcp get disease MONDO:0005105 survival");
     assert_parses("biomcp get disease MONDO:0005105 funding");
     assert_parses("biomcp get gene SCN1A clingen constraint");
@@ -99,6 +102,7 @@ fn disease_next_commands_parse() {
     assert_parses("biomcp search trial -c melanoma");
     assert_parses("biomcp search article -d melanoma");
     assert_parses(r#"biomcp search drug --indication "melanoma""#);
+    assert_parses(r#"biomcp search diagnostic --disease "melanoma""#);
 }
 
 #[test]

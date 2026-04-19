@@ -77,7 +77,7 @@ The old version returned everything for every query in verbose indented blocks. 
 biomcp get gene BRAF              → summary card (~200 tokens)
 biomcp get gene BRAF pathways     → + Reactome pathways
 biomcp get gene BRAF civic        → + CIViC evidence
-biomcp get gene BRAF all          → everything (~2,000 tokens)
+biomcp get gene BRAF all          → standard deep bundle (~2,000 tokens)
 ```
 
 Every command also supports `--json` for agents that parse structured data. Same data, two formats, every command. The goal is simple: keep the agent's context window free for reasoning, not formatting ceremony.

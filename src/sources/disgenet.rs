@@ -444,6 +444,8 @@ mod tests {
             disgenet: None,
             funding: None,
             funding_note: None,
+            diagnostics: None,
+            diagnostics_note: None,
         }
     }
 
@@ -478,6 +480,8 @@ mod tests {
             disgenet: None,
             funding: None,
             funding_note: None,
+            diagnostics: None,
+            diagnostics_note: None,
             xrefs,
         }
     }

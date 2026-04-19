@@ -100,6 +100,8 @@ fn markdown_detail_outputs_label_gene_drug_and_disease_sources() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
     let gene_markdown = gene_markdown(&gene, &[]).expect("gene markdown");
     assert!(gene_markdown.contains("Source: NCBI Gene / MyGene.info"));
@@ -192,6 +194,8 @@ fn markdown_detail_outputs_label_gene_drug_and_disease_sources() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
     let disease_markdown =

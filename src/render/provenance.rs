@@ -281,6 +281,23 @@ pub(crate) fn gene_section_sources(gene: &Gene) -> Vec<SectionSource> {
         "Diseases",
         ["Enrichr"],
     );
+    if let Some(rows) = &gene.diagnostics {
+        push_section(
+            &mut out,
+            !rows.is_empty(),
+            "diagnostics",
+            "Diagnostics",
+            rows.iter().map(|row| diagnostic_source_label(&row.source)),
+        );
+    } else {
+        push_section(
+            &mut out,
+            has_opt_text(&gene.diagnostics_note),
+            "diagnostics",
+            "Diagnostics",
+            ["NCBI Genetic Testing Registry"],
+        );
+    }
     push_section(
         &mut out,
         gene.protein.is_some(),
@@ -552,6 +569,23 @@ pub(crate) fn disease_section_sources(disease: &Disease) -> Vec<SectionSource> {
         "Phenotypes",
         ["Monarch Initiative", "HPO"],
     );
+    if let Some(rows) = &disease.diagnostics {
+        push_section(
+            &mut out,
+            !rows.is_empty(),
+            "diagnostics",
+            "Diagnostics",
+            rows.iter().map(|row| diagnostic_source_label(&row.source)),
+        );
+    } else {
+        push_section(
+            &mut out,
+            has_opt_text(&disease.diagnostics_note),
+            "diagnostics",
+            "Diagnostics",
+            ["NCBI Genetic Testing Registry", "WHO Prequalified IVD"],
+        );
+    }
     push_section(
         &mut out,
         !disease.variants.is_empty(),
@@ -1283,6 +1317,8 @@ mod tests {
             disgenet: None,
             funding: None,
             funding_note: None,
+            diagnostics: None,
+            diagnostics_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -1339,6 +1375,8 @@ mod tests {
                 }],
             }),
             funding_note: None,
+            diagnostics: None,
+            diagnostics_note: None,
         };
 
         let sources = gene_section_sources(&gene);
@@ -1346,6 +1384,57 @@ mod tests {
             source.key == "funding"
                 && source.label == "Funding"
                 && source.sources == vec!["NIH Reporter".to_string()]
+        }));
+    }
+
+    #[test]
+    fn gene_section_sources_include_diagnostics_from_rows() {
+        let gene = Gene {
+            symbol: "BRCA1".to_string(),
+            name: "BRCA1 DNA repair associated".to_string(),
+            entrez_id: "672".to_string(),
+            ensembl_id: None,
+            location: None,
+            genomic_coordinates: None,
+            omim_id: None,
+            uniprot_id: None,
+            summary: None,
+            gene_type: None,
+            aliases: Vec::new(),
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: None,
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: None,
+            druggability: None,
+            clingen: None,
+            constraint: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+            diagnostics: Some(vec![crate::entities::diagnostic::DiagnosticSearchResult {
+                source: "gtr".to_string(),
+                accession: "GTR000000001.1".to_string(),
+                name: "BRCA1 Hereditary Cancer Panel".to_string(),
+                test_type: Some("Clinical".to_string()),
+                manufacturer_or_lab: Some("Example Lab".to_string()),
+                genes: vec!["BRCA1".to_string()],
+                conditions: vec!["breast cancer".to_string()],
+            }]),
+            diagnostics_note: None,
+        };
+
+        let sources = gene_section_sources(&gene);
+        assert!(sources.iter().any(|source| {
+            source.key == "diagnostics"
+                && source.label == "Diagnostics"
+                && source.sources == vec!["NCBI Genetic Testing Registry".to_string()]
         }));
     }
 
@@ -1377,6 +1466,8 @@ mod tests {
             disgenet: None,
             funding: None,
             funding_note: Some("No NIH funding data found for this query.".into()),
+            diagnostics: None,
+            diagnostics_note: None,
             xrefs: std::collections::HashMap::new(),
         };
 
@@ -1385,6 +1476,70 @@ mod tests {
             source.key == "funding"
                 && source.label == "Funding"
                 && source.sources == vec!["NIH Reporter".to_string()]
+        }));
+    }
+
+    #[test]
+    fn disease_section_sources_include_diagnostics_from_rows() {
+        let disease = Disease {
+            id: "MONDO:0005105".to_string(),
+            name: "melanoma".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+            diagnostics: Some(vec![
+                crate::entities::diagnostic::DiagnosticSearchResult {
+                    source: "gtr".to_string(),
+                    accession: "GTR000000001.1".to_string(),
+                    name: "BRCA1 Hereditary Cancer Panel".to_string(),
+                    test_type: Some("Clinical".to_string()),
+                    manufacturer_or_lab: Some("Example Lab".to_string()),
+                    genes: vec!["BRCA1".to_string()],
+                    conditions: vec!["melanoma".to_string()],
+                },
+                crate::entities::diagnostic::DiagnosticSearchResult {
+                    source: "who-ivd".to_string(),
+                    accession: "ITPW00000".to_string(),
+                    name: "Example IVD".to_string(),
+                    test_type: Some("Molecular".to_string()),
+                    manufacturer_or_lab: Some("WHO Lab".to_string()),
+                    genes: Vec::new(),
+                    conditions: vec!["melanoma".to_string()],
+                },
+            ]),
+            diagnostics_note: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let sources = disease_section_sources(&disease);
+        assert!(sources.iter().any(|source| {
+            source.key == "diagnostics"
+                && source.label == "Diagnostics"
+                && source.sources
+                    == vec![
+                        "NCBI Genetic Testing Registry".to_string(),
+                        "WHO Prequalified IVD".to_string(),
+                    ]
         }));
     }
 }
