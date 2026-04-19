@@ -26,6 +26,7 @@ def clean_text(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip()
 
 
+@lru_cache(maxsize=None)
 def _cache_path(query: str) -> str:
     return str(CACHE_DIR / f"{slugify(query) or 'query'}.json")
 
