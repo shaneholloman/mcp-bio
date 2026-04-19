@@ -1,0 +1,54 @@
+{
+  "decision_inputs": {
+    "html_build_ready": true,
+    "jats_build_ready": true,
+    "obsidian_cli_optional_only": true,
+    "pdf_is_fallback": true
+  },
+  "generated_at": "2026-04-19T11:24:11Z",
+  "html_success_count": 3,
+  "jats_success_count": 2,
+  "obsidian_cli_available": true,
+  "obsidian_cli_working_commands": [],
+  "pdf_winners_by_document": {
+    "cdc_sti_guideline": {
+      "document": "cdc_sti_guideline",
+      "document_type": "guideline",
+      "engine": "unpdf",
+      "figure_handling": 1,
+      "heading_detection": 5,
+      "overall_readability": 5,
+      "overall_score": 4,
+      "reference_extraction": 3,
+      "success": true,
+      "table_preservation": 5
+    },
+    "dailymed_keytruda_label": {
+      "document": "dailymed_keytruda_label",
+      "document_type": "drug",
+      "engine": "pdf_oxide",
+      "figure_handling": 1,
+      "heading_detection": 5,
+      "overall_readability": 5,
+      "overall_score": 3,
+      "reference_extraction": 1,
+      "success": true,
+      "table_preservation": 3
+    },
+    "pmc_oa_article_pdf": {
+      "document": "pmc_oa_article_pdf",
+      "document_type": "article",
+      "engine": "unpdf",
+      "figure_handling": 3,
+      "heading_detection": 5,
+      "overall_readability": 5,
+      "overall_score": 4,
+      "reference_extraction": 1,
+      "success": true,
+      "table_preservation": 5
+    }
+  },
+  "rust_pdf_success_count": 5,
+  "vault_note_count": 8,
+  "vault_success": true
+}

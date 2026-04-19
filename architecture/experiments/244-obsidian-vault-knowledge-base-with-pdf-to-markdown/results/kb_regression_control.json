@@ -1,0 +1,448 @@
+{
+  "approach": "explore_benchmark_reproduced_on_exploit_code",
+  "checks": [
+    {
+      "baseline": 2,
+      "current": 2,
+      "metric": "jats_success_count",
+      "passed": true,
+      "rule": "current must be >= baseline"
+    },
+    {
+      "baseline": 3,
+      "current": 3,
+      "metric": "html_success_count",
+      "passed": true,
+      "rule": "current must be >= baseline"
+    },
+    {
+      "baseline": 5,
+      "current": 5,
+      "metric": "rust_pdf_success_count",
+      "passed": true,
+      "rule": "current must be >= baseline"
+    },
+    {
+      "baseline": 8,
+      "current": 8,
+      "metric": "vault_note_count",
+      "passed": true,
+      "rule": "current must be >= baseline"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "jats.PMC9984800.success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 5,
+      "current": 5,
+      "metric": "jats.PMC9984800.quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 23,
+      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+      "current": 24,
+      "metric": "jats.PMC9984800.elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03",
+      "waived": true
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "jats.PMC9891841.success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 4,
+      "current": 4,
+      "metric": "jats.PMC9891841.quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 64,
+      "current": 65,
+      "metric": "jats.PMC9891841.elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "html.pmc_article_page.success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 5,
+      "current": 5,
+      "metric": "html.pmc_article_page.quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 258,
+      "current": 265,
+      "metric": "html.pmc_article_page.elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "html.biorxiv_preprint_page.success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 4,
+      "current": 4,
+      "metric": "html.biorxiv_preprint_page.quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 141,
+      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+      "current": 147,
+      "metric": "html.biorxiv_preprint_page.elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03",
+      "waived": true
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "html.nih_news_release.success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 5,
+      "current": 5,
+      "metric": "html.nih_news_release.quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 104,
+      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+      "current": 109,
+      "metric": "html.nih_news_release.elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03",
+      "waived": true
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 4,
+      "current": 4,
+      "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 111,
+      "current": 92,
+      "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 4,
+      "current": 4,
+      "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 744,
+      "current": 735,
+      "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "pdf.('pmc_oa_article_pdf', 'pymupdf4llm').success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 3,
+      "current": 3,
+      "metric": "pdf.('pmc_oa_article_pdf', 'pymupdf4llm').quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 5435,
+      "current": 4265,
+      "metric": "pdf.('pmc_oa_article_pdf', 'pymupdf4llm').elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "pdf.('dailymed_keytruda_label', 'unpdf').success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 2,
+      "current": 2,
+      "metric": "pdf.('dailymed_keytruda_label', 'unpdf').quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 11507,
+      "current": 8907,
+      "metric": "pdf.('dailymed_keytruda_label', 'unpdf').elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "pdf.('dailymed_keytruda_label', 'pdf_oxide').success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 3,
+      "current": 3,
+      "metric": "pdf.('dailymed_keytruda_label', 'pdf_oxide').quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 10004,
+      "current": 7639,
+      "metric": "pdf.('dailymed_keytruda_label', 'pdf_oxide').elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "pdf.('dailymed_keytruda_label', 'pymupdf4llm').success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 3,
+      "current": 3,
+      "metric": "pdf.('dailymed_keytruda_label', 'pymupdf4llm').quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 3820,
+      "current": 2043,
+      "metric": "pdf.('dailymed_keytruda_label', 'pymupdf4llm').elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "pdf.('cdc_sti_guideline', 'unpdf').success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 4,
+      "current": 4,
+      "metric": "pdf.('cdc_sti_guideline', 'unpdf').quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 3387,
+      "current": 2554,
+      "metric": "pdf.('cdc_sti_guideline', 'unpdf').elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": false,
+      "current": false,
+      "metric": "pdf.('cdc_sti_guideline', 'pdf-oxide').success",
+      "passed": true,
+      "rule": "known failed document/engine may remain failed"
+    },
+    {
+      "baseline": true,
+      "current": true,
+      "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').success",
+      "passed": true,
+      "rule": "success must stay equal or improve"
+    },
+    {
+      "baseline": 3,
+      "current": 3,
+      "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').quality_score",
+      "passed": true,
+      "rule": "quality score must stay equal or improve"
+    },
+    {
+      "baseline": 3177,
+      "current": 2673,
+      "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03"
+    },
+    {
+      "baseline": 7,
+      "current": 8,
+      "metric": "frontmatter_search.doi:",
+      "passed": true,
+      "rule": "structured frontmatter search count must stay equal or improve"
+    },
+    {
+      "baseline": 2,
+      "current": 3,
+      "metric": "frontmatter_search.pmcid: PMC9984800",
+      "passed": true,
+      "rule": "structured frontmatter search count must stay equal or improve"
+    },
+    {
+      "baseline": 3,
+      "current": 3,
+      "metric": "frontmatter_search.tags: source/pdf",
+      "passed": true,
+      "rule": "structured frontmatter search count must stay equal or improve"
+    },
+    {
+      "baseline": 3,
+      "current": 4,
+      "metric": "frontmatter_search.type: article",
+      "passed": true,
+      "rule": "structured frontmatter search count must stay equal or improve"
+    },
+    {
+      "baseline": 1,
+      "current": 1,
+      "metric": "frontmatter_search.type: preprint",
+      "passed": true,
+      "rule": "structured frontmatter search count must stay equal or improve"
+    },
+    {
+      "baseline": 1,
+      "current": 0,
+      "metric": "duplicate_path_mismatches",
+      "passed": true,
+      "rule": "correctness mismatch count must decrease or stay equal"
+    }
+  ],
+  "failures": [],
+  "generated_at": "2026-04-19T12:18:11Z",
+  "passed": true,
+  "regression_rule": {
+    "build_load_time": "not measured separately in explore baseline",
+    "correctness": "mismatch count must decrease or stay equal; checksum changes require mismatch improvement",
+    "latency": "must match/beat or be within 3% tolerance; tiny sub-500ms deltas <=25ms are treated as noise evidence",
+    "rss": "not measured in explore baseline"
+  },
+  "waivers": [
+    {
+      "baseline": 23,
+      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+      "current": 24,
+      "metric": "jats.PMC9984800.elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03",
+      "waived": true
+    },
+    {
+      "baseline": 141,
+      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+      "current": 147,
+      "metric": "html.biorxiv_preprint_page.elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03",
+      "waived": true
+    },
+    {
+      "baseline": 104,
+      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+      "current": 109,
+      "metric": "html.nih_news_release.elapsed_ms",
+      "passed": true,
+      "rule": "current <= baseline * 1.03",
+      "waived": true
+    },
+    {
+      "baseline": 7,
+      "cause": "Unique note paths preserve records that explore overwrote.",
+      "current": 8,
+      "metric": "frontmatter_search.doi:",
+      "rule": "count increase accepted as correctness improvement"
+    },
+    {
+      "baseline": 2,
+      "cause": "Unique note paths preserve records that explore overwrote.",
+      "current": 3,
+      "metric": "frontmatter_search.pmcid: PMC9984800",
+      "rule": "count increase accepted as correctness improvement"
+    },
+    {
+      "baseline": 3,
+      "cause": "Unique note paths preserve records that explore overwrote.",
+      "current": 4,
+      "metric": "frontmatter_search.type: article",
+      "rule": "count increase accepted as correctness improvement"
+    },
+    {
+      "baseline_duplicate_path_mismatches": 1,
+      "cause": "Extraction quality metrics did not regress and the vault correctness mismatch count improved. HTML diffs are attribute-order changes; the CDC unpdf diff changes heading wrapping while preserving PDF quality score.",
+      "current_duplicate_path_mismatches": 0,
+      "diffs": [
+        {
+          "baseline_sha256": "c7e2683a65be0dcdb28f884bc252651e40b60196195dd770db2536eb743d3d7f",
+          "current_sha256": "1fdd6c9a6da96ff52c13b494187c3fba326ce6ca34b32439af8069543c5cdc60",
+          "family": "html",
+          "key": "pmc_article_page"
+        },
+        {
+          "baseline_sha256": "bbf5fbcf86996471b79c00311042ae044e1d2e43413146d254f5fb0ba88864b3",
+          "current_sha256": "7790f7447bf2feee4d933c780e317bdaceed684059d957db5bd1fa69c2b7fb7d",
+          "family": "html",
+          "key": "nih_news_release"
+        },
+        {
+          "baseline_sha256": "b08d834b83f7907c35be2de9d1757e3f5e8758c505c970f6206246574ec83bc3",
+          "current_sha256": "00cf7d0289e10ad905c91cb476f8933436d31237c43c1a144ec0d94ff48bf229",
+          "family": "pdf",
+          "key": "('cdc_sti_guideline', 'unpdf')"
+        }
+      ],
+      "metric": "extraction_output_checksums",
+      "passed": true,
+      "rule": "checksum changes require a correctness mismatch-count improvement"
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "approach": "html_open_page_ingest",
+  "engine": "readability-rust 0.1.0 + html2md 0.2.15",
+  "page_count": 3,
+  "records": [
+    {
+      "elapsed_ms": 258,
+      "engine": "readability-rust+html2md",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/source/pmc_article_page.html",
+      "kind": "html",
+      "markdown_sample": "Abstract\n----------\n\n*BRAF* activation occurs as part of the mitogen-activated protein kinase (MAPK) cellular signaling pathway which leads to increased cellular proliferation and survival. Mutations in *BRAF* can result in unbridled activation of downstream kinases with subsequent uncontrolled cellular growth that formulate the basis for oncogenesis in multiple tumor types. Targeting *BRAF* by selective inhibitors has been one of the early successes in precision oncology. Agents have been explored either as monotherapy or in combination with *MEK* inhibition in *BRAF* V600-mutant pan-cancers and with *EGFR* inhibition in colorectal cancer. Spectrum of *BRAF* inhibition has evolved from being melanoma-specific to being a pan-cancer target. In this article, we review *BRAF* and *MEK* inhibitor drug development journey from tissue-specific melanoma, non-small-cell lung cancer, and anaplastic thyroid cancer to tissue-agnostic approvals.\n\n**Key words:** BRAF, MEK, cancer, precision oncology, targeted therapy\n\nHighlights\n----------\n\n* \u2022\n\n  *BRAF* alterations lead to unbridled activation of the MAPK pathway which can result in cancer development and progression.\n\n* \u2022\n\n  *BRAF* and *MEK* inhibitors led to paradigm change in management of *BRAF*-mutated melanoma, lung, and anaplastic thyroid cancers.\n\n* \u2022\n\n  *BRAF* plus *MEK* inhibitor combination has shown clinical activity in \\>20 different *BRAF* V600-positive tumor types.\n\n* \u2022\n\n  Dabrafenib and trametinib has received FDA accelerated approval for metastatic solid tumors with *BRAF* V600E mutations.\n\n* \u2022\n\n  The recent tissue-agnostic approval is transformative as it prioritizes mutational status over tissue of origin.\n\nIntroduction\n----------\n\nThe RAF family proteins are serine/threonine protein kinases that constitute a cornerstone of the mitogen-activated protein kinase (MAPK) pathway which is frequently dysfunctional in many human cancers. Three RAF isoforms (A-RAF, B-RAF, and C-RAF) have been described as important regulators of cell growth, differentiation, and survival. RAF isoforms are activated through binding of small G proteins to the N-terminal of RAF proteins. Activation of RAF leads to downstream phosphorylation of MEK1 and MEK2 and their downstream ERK1 and ERK2 ([Figure\u00a01](#fig1)).[1](#bib1), [2](#bib2), [3](#bib3)\n\n### Figure\u00a01. ###\n\n[<img width=\"756\" alt=\"Figure&nbsp;1\" class=\"graphic zoom-in\" src=\"https://cdn.ncbi.nlm.nih.gov/pmc/blobs/e583/9984800/5ed7d5ad01d1/gr1.jpg\" loading=\"lazy\" height=\"534\">](https://www.ncbi.nlm.nih.gov/core/lw/2.0/html/tileshop_pmc/tileshop_pmc_inline.html?title=Click%20on%20image%20to%20zoom&p=PMC3&id=9984800_gr1.jpg)\n\n[Open in a new tab](figure/fig1/)\n\n**Targeting BRAF pathway: figure shows the BRAF signaling pathway and cancers with the highest frequency of BRAF alterations according to AACR GENIE. Included are only cancers where BRAF was profiled in at least 100 samples.**\n\nBRAFi, BRAF inhibitor; MEKi, MEK inhibitor.\n\n*BRAF* alterations\n----------\n\n*BRAF* mutations are the second most common alterations that occur in the MAPK pathway. Their role in cancer development was described in 2002 by Davies et\u00a0al.;[<sup>4</sup>](#bib4) and since then, multiple efforts have led to substantial advances in characterizing their impact and improving their targetability.\n\nIn attempt to explore tissue distribution of *BRAF* alterations, we reviewed sequencing data of 153 554 samples from different tumor types in the AACR GENIE database v12.1.[<sup>5</sup>](#bib5)*BRAF* alterations were found in 9173 samples, accounting for 6% of all profiled samples. Prevalence varied significantly across different tumor types and histologies with the highest frequency of distribution observed in thyroid cancer (41%) ([Figure\u00a01](#fig1)).\n\n*BRAF* mutations have been functionally categorized into three different classes that have variable levels of *RAS* dependency. Class I mutations, which include V600 E/K/D, are *RAS* independent and hence maintain high level of activity regardless of *RAS* signaling even in their monomeric status. Class II mutations include non-V600 mutations e.g. *G469A*, *K601E*, and *L597Q* as well as fusions and deletions. While also being *RAS*-independent, class II have intermediate monomeric kinase activity and usually require dimerization to function. Class III mutations, including *D594* and *G466*, are *RAS* dependent and need to form dimers for activation. This class is strongly dependent on upstream activation and often occurs with upstream mutations including *RAS*, unlike class I and II which usually show mutual exclusivity due to the downstream inhibition of *RAS* via *ERK*.[6](#bib6), [7](#bib7), [8](#bib8), [9](#bib9) In our AACR GENIE analysis, class I alterations were the most prevalent being present in 4869 of *BRAF*-altered samples (53%).\n\nDetection of *BRAF* mutations\n----------\n\nThere is a wide variety of technologies that can be used for\u00a0detection of *BRAF* alterations. For example, immunohistochemistry, P",
+      "metrics": {
+        "article_title": "Precision oncology for  BRAF -mutant cancers with  BRAF  and  MEK  inhibitors: from melanoma to tissue-agnostic therapy",
+        "average_line_len": 345.6923076923077,
+        "base_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+        "extraction_error": null,
+        "extraction_mode": "readability",
+        "has_doi_signal": true,
+        "has_figure_signal": true,
+        "has_reference_signal": true,
+        "has_table_signal": true,
+        "heading_count": 17,
+        "image_ref_count": 0,
+        "link_count": 529,
+        "markdown_bytes": 158367,
+        "nonempty_line_count": 455,
+        "quality_score": 5,
+        "replacement_char_count": 0,
+        "table_row_count": 82,
+        "word_count": 9599
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/markdown/pmc_article_page.md",
+      "source": {
+        "id": "pmc_article_page",
+        "pmcid": "PMC9984800",
+        "source_name": "PMC",
+        "title_hint": "PMC article page",
+        "type": "article",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+        "url_template": "https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/"
+      },
+      "success": true
+    },
+    {
+      "elapsed_ms": 141,
+      "engine": "readability-rust+html2md",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/source/biorxiv_preprint_page.html",
+      "kind": "html",
+      "markdown_sample": "Abstract\n----------\n\nThe efficient coding hypothesis, which proposes that neurons are optimized to maximize information about the environment, has provided a guiding theoretical framework for sensory and systems neuroscience. More recently, a theory known as the Bayesian Brain hypothesis has focused on the brain\u2019s ability to integrate sensory and prior sources of information in order to perform Bayesian inference. Although pieces of a connection between these two hypotheses have appeared in prior work, a general formulation that treats the optimality criterion as an arbitrary functional of the posterior distribution \u2013 and thereby admits both information-theoretic and non-information-theoretic objectives within a single formalism \u2013 has remained largely implicit. Here we make this formulation explicit, developing a Bayesian theory of efficient coding that defines Bayesian efficient codes in terms of four basic ingredients: (1) a stimulus prior distribution; (2) an encoding model; (3) a capacity constraint, specifying a neural resource limit; and (4) a loss functional, quantifying the desirability or undesirability of various posterior distributions. Classic efficient codes arise as the special case in which the loss functional is the posterior entropy, leading to a code that maximizes mutual information, but alternate loss functionals give solutions that differ dramatically from information-maximizing codes. Within this framework we introduce *covtropy*, a novel family of posterior-functional losses parameterized by a single exponent, and use it to show that decorrelation of sensory inputs \u2013 optimal under classic efficient codes in low-noise settings \u2013 can be disadvantageous for objectives that penalize large errors. We then reanalyze Laughlin\u2019s seminal data on contrast coding in the blowfly large monopolar cell, and find that the measured response nonlinearity is better explained by minimizing *L*<sub><em>p</em></sub> reconstruction error with *p* = 1*/*2 than by infomax, overturning a forty-year-old interpretation. Bayesian efficient coding thus enlarges the family of normatively optimal codes and provides a more general framework for understanding the design principles of sensory systems.\n\n**Author summary** Sensory neurons work under tight budgets. They represent a rich, noisy world with limited spikes, limited dynamic range, and limited energy. Two long-standing ideas address this problem. One, called efficient coding, asks *why* neurons encode signals in the ways they do: which signals to amplify, which to filter out. A second, the Bayesian brain hypothesis, asks *how* the brain turns those signals into a percept: how to combine sensory evidence with prior knowledge to form a best guess about the world. We develop a framework that asks both questions at once. An optimal sensory code in our framework is specified by four interlocking ingredients: a prior description of the world, a model of how neurons respond to it, a limit on the resources they can spend, and a rule for what counts as a good internal representation. Classical information-maximizing codes emerge as one special case, one corner of a much larger family of Bayesian efficient codes. Applying this framework to Laughlin\u2019s 1981 blowfly experiment, long held up as the textbook example of information maximization, we find that the fly\u2019s neurons are better explained by minimizing decoding error than by maximizing information.\n\n### Competing Interest Statement ###\n\nI. M. Park is a co-founder of RyvivyR. J. W. Pillow declares no competing interests. RyvivyR had no role in the design, analysis, or writing of this manuscript, and this does not alter our adherence to PLOS Computational Biology policies on sharing data and materials.\n\nFootnotes\n----------\n\n* This revision substantially updates the framing and related-work discussion relative to v4. - Emphasized covtropy as a novel single-parameter family of posterior-functional losses interpolating between infomax, MSE, and mini-max coding. - Cited Schaffner et al. (2023, Nature Human Behaviour), who independently provided a normative justification for the p = 1/2 exponent we identified empirically, grounded in fitness-maximizing two-alternative forced choice. - Spelled out methodological differences from Wang & Stocker (2016) in the H1 analysis. - Added a discussion paragraph documenting the uptake of the BEC framework since 2017, with representative citations across sensory coding, decision-making, and cognition. - Updated competing interests declaration. No equations, figures, or core results were changed. (table was beautified)\n\nFunder Information Declared\n----------\n\nSimons Foundation, https://ror.org/01cmst727, SCGB AWD1004351\n\nU.S. National Science Foundation, IIS-1150186, IIS-1845836\n\nNational Institutes of Health, https://ror.org/01cwqze88, EB-026946, DA-056404\n\nThomas Hartman Center for Parkinson\u2013s Research, 64249",
+      "metrics": {
+        "article_title": "Bayesian efficient coding",
+        "average_line_len": 327.53333333333336,
+        "base_url": "https://www.biorxiv.org/content/10.1101/178418v5",
+        "extraction_error": null,
+        "extraction_mode": "readability",
+        "has_doi_signal": false,
+        "has_figure_signal": true,
+        "has_reference_signal": false,
+        "has_table_signal": true,
+        "heading_count": 1,
+        "image_ref_count": 0,
+        "link_count": 0,
+        "markdown_bytes": 4938,
+        "nonempty_line_count": 15,
+        "quality_score": 4,
+        "replacement_char_count": 0,
+        "table_row_count": 0,
+        "word_count": 700
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/markdown/biorxiv_preprint_page.md",
+      "source": {
+        "id": "biorxiv_preprint_page",
+        "source_name": "bioRxiv",
+        "title_hint": "bioRxiv preprint page",
+        "type": "preprint",
+        "url": "https://www.biorxiv.org/content/10.1101/178418v5"
+      },
+      "success": true
+    },
+    {
+      "elapsed_ms": 104,
+      "engine": "readability-rust+html2md",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/source/nih_news_release.html",
+      "kind": "html",
+      "markdown_sample": "Wednesday, August 21, 2024\n\nNIH-funded study finds long COVID affects adolescents differently than younger children\n==========\n\n[\n\nImage\n\n<img srcset=\"/sites/default/files/styles/max_325x325/public/2025-03/53563755340_b314b9da01_c.jpg?itok=dNnp8FLc 325w, /sites/default/files/styles/max_650x650/public/2025-03/53563755340_b314b9da01_c.jpg?itok=3Lg0oxAq 650w, /sites/default/files/styles/max_1300x1300/public/2025-03/53563755340_b314b9da01_c.jpg?itok=vZgIOQ1F 800w\" width=\"650\" sizes=\"(min-width: 1024px) 325px, (min-width: 640px) 50vw, 100vw\" src=\"/sites/default/files/styles/max_650x650/public/2025-03/53563755340_b314b9da01_c.jpg?itok=3Lg0oxAq\" alt=\"Novel Coronavirus SARS-CoV-2 (Omicron)\" height=\"auto\" loading=\"eager\">\n\nColorized scanning electron micrograph of a cell (pink) infected with the Omicron strain of SARS-CoV-2 virus particles (yellow), isolated from a patient sample. Image captured at the NIAID Integrated Research Facility (IRF) in Fort Detrick, Maryland.\n\nNIAID\n\n](/sites/default/files/2025-03/53563755340_b314b9da01_c.jpg)\n\nScientists investigating long COVID in youth found similar but distinguishable patterns between school-age children (ages 6-11 years) and adolescents (ages 12-17 years) and identified their most common symptoms. The study, supported by the National Institutes of Health (NIH) and published in *JAMA*, comes from research conducted through the [NIH\u2019s Researching COVID to Enhance Recovery (RECOVER) Initiative](https://recovercovid.org/), a wide-reaching effort to understand, diagnose, treat, and prevent long COVID, a condition marked by symptoms and health problems that linger after an infection with SARS-CoV-2, the virus that causes COVID-19.\n\nChildren and adolescents were found to experience prolonged symptoms after SARS-CoV-2 infection in almost every organ system with most having symptoms affecting more than one system.\n\n\u201cMost research characterizing long COVID symptoms is focused on adults, which can lead to the misperception that long COVID in children is rare or that their symptoms are like those of adults,\u201d said David Goff, M.D., Ph.D., division director for the Division of Cardiovascular Sciences at the NIH\u2019s National Heart, Lung, and Blood Institute. \u201cBecause the symptoms can vary from child to child or present in different patterns, without a proper characterization of symptoms across the life span, it\u2019s difficult to know how to optimize care for affected children and adolescents.\u201d\n\nThe observational study included 3,860 children and adolescents with a SARS-CoV-2 infection history at more than 60 sites across the United States between March 2022 and December 2023. A comparison group of 1,516 children and adolescents with no history of a SARS-CoV-2 infection were also included to disentangle whether prolonged symptoms of those who had experienced COVID-19 were related to SARS-CoV-2 itself or more broadly related to the effects of the pandemic.\n\nCaregivers completed a comprehensive symptom survey that asked about 75 prolonged symptoms in all major body systems that occurred at least 90 days after an initial SARS-CoV-2 infection and lasted for at least a month. They also completed a survey asking for their perception of the child\u2019s overall health, physical health, and quality of life. The researchers then employed a commonly used statistical technique to identify which symptoms were best at differentiating participants who did and did not have history of SARS-CoV-2 infection. They identified combinations of symptoms distinct for each age group that together generated a long COVID research index, which indicates the likely condition of long COVID.\n\nResearchers identified 18 prolonged symptoms that were more common in school-age children, including headache (57%), followed by trouble with memory or focusing (44%), trouble sleeping (44%), and stomach pain (43%). Other common symptoms in school-age children not included in the research index included body, muscle, and joint pain; daytime tiredness/sleepiness or low energy; and feeling anxious.\n\nIn adolescents, 17 symptoms were more common, including daytime tiredness/sleepiness or low energy (80%); body, muscle, or joint pain (60%); headaches (55%); and trouble with memory or focusing (47%). Feeling anxious and trouble sleeping were other commonly reported symptoms that were not included in the research index.\n\n\u201cThe symptoms that make up the research index are not the only symptoms a child may have and they\u2019re not the most severe, but they are most predictive in determining who may have long COVID,\u201d said Rachel Gross, M.D., associate professor in the departments of pediatrics and population health at New York University Grossman School of Medicine and lead author on the study.\n\nFourteen symptoms overlapped between the age groups. Comparing previous research on long COVID in adults, the new study found that adults and adolescents had a greater overlap in symptoms, such as loss of or change in smell or taste. Researchers found less ov",
+      "metrics": {
+        "article_title": "NIH-funded study finds long COVID affects adolescents differently than younger children \n",
+        "average_line_len": 272.6764705882353,
+        "base_url": "https://www.nih.gov/news-events/news-releases/nih-funded-study-finds-long-covid-affects-adolescents-differently-younger-children",
+        "extraction_error": null,
+        "extraction_mode": "readability",
+        "has_doi_signal": true,
+        "has_figure_signal": false,
+        "has_reference_signal": false,
+        "has_table_signal": false,
+        "heading_count": 3,
+        "image_ref_count": 0,
+        "link_count": 11,
+        "markdown_bytes": 9336,
+        "nonempty_line_count": 34,
+        "quality_score": 5,
+        "replacement_char_count": 0,
+        "table_row_count": 0,
+        "word_count": 1215
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/markdown/nih_news_release.md",
+      "source": {
+        "id": "nih_news_release",
+        "source_name": "NIH",
+        "title_hint": "NIH biomedical news release",
+        "type": "news",
+        "url": "https://www.nih.gov/news-events/news-releases/nih-funded-study-finds-long-covid-affects-adolescents-differently-younger-children"
+      },
+      "success": true
+    }
+  ]
+}

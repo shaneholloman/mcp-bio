@@ -1,0 +1,211 @@
+{
+  "approach": "end_to_end_temp_vault",
+  "frontmatter_fields": [
+    "authors",
+    "biomcp_entities",
+    "doi",
+    "journal",
+    "license",
+    "nct_id",
+    "pmcid",
+    "pmid",
+    "published_at",
+    "retrieved_at",
+    "source_name",
+    "source_url",
+    "status",
+    "tags",
+    "title",
+    "type"
+  ],
+  "frontmatter_search": {
+    "doi:": {
+      "match_count": 7,
+      "matches": [
+        "Sources/Bayesian-efficient-coding.md",
+        "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+        "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+        "Sources/PMC-OA-article-PDF.md",
+        "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+        "Sources/CDC-STI-treatment-guideline.md",
+        "Sources/KEYTRUDA-DailyMed-drug-label.md"
+      ]
+    },
+    "pmcid: PMC9984800": {
+      "match_count": 2,
+      "matches": [
+        "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+        "Sources/PMC-OA-article-PDF.md"
+      ]
+    },
+    "tags: source/pdf": {
+      "match_count": 3,
+      "matches": [
+        "Sources/PMC-OA-article-PDF.md",
+        "Sources/CDC-STI-treatment-guideline.md",
+        "Sources/KEYTRUDA-DailyMed-drug-label.md"
+      ]
+    },
+    "type: article": {
+      "match_count": 3,
+      "matches": [
+        "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+        "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+        "Sources/PMC-OA-article-PDF.md"
+      ]
+    },
+    "type: preprint": {
+      "match_count": 1,
+      "matches": [
+        "Sources/Bayesian-efficient-coding.md"
+      ]
+    }
+  },
+  "local_search": {
+    "KEYTRUDA": {
+      "match_count": 1,
+      "matches": [
+        "Sources/KEYTRUDA-DailyMed-drug-label.md"
+      ]
+    },
+    "doi:": {
+      "match_count": 7,
+      "matches": [
+        "Sources/Bayesian-efficient-coding.md",
+        "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+        "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+        "Sources/PMC-OA-article-PDF.md",
+        "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+        "Sources/CDC-STI-treatment-guideline.md",
+        "Sources/KEYTRUDA-DailyMed-drug-label.md"
+      ]
+    },
+    "long covid": {
+      "match_count": 1,
+      "matches": [
+        "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md"
+      ]
+    },
+    "pmcid: PMC9984800": {
+      "match_count": 0,
+      "matches": []
+    },
+    "source/pdf": {
+      "match_count": 3,
+      "matches": [
+        "Sources/PMC-OA-article-PDF.md",
+        "Sources/CDC-STI-treatment-guideline.md",
+        "Sources/KEYTRUDA-DailyMed-drug-label.md"
+      ]
+    },
+    "type: article": {
+      "match_count": 0,
+      "matches": []
+    },
+    "type: preprint": {
+      "match_count": 0,
+      "matches": []
+    }
+  },
+  "note_count": 8,
+  "notes": [
+    {
+      "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+      "source_name": "PMC OA JATS",
+      "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+      "status": "imported",
+      "tags": [
+        "biomcp/kb-spike",
+        "source/jats"
+      ],
+      "title": "Precision oncology for *BRAF*-mutant cancers with *BRAF* and *MEK* inhibitors: from melanoma to tissue-agnostic therapy",
+      "type": "article"
+    },
+    {
+      "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+      "source_name": "PMC OA JATS",
+      "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9891841/",
+      "status": "imported",
+      "tags": [
+        "biomcp/kb-spike",
+        "source/jats"
+      ],
+      "title": "Relevant Dermatoses Among U.S. Military Service Members: An Operational Review of Management Strategies and Telemedicine Utilization",
+      "type": "article"
+    },
+    {
+      "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+      "source_name": "PMC",
+      "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+      "status": "extracted",
+      "tags": [
+        "biomcp/kb-spike",
+        "source/html"
+      ],
+      "title": "Precision oncology for  BRAF -mutant cancers with  BRAF  and  MEK  inhibitors: from melanoma to tissue-agnostic therapy",
+      "type": "article"
+    },
+    {
+      "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/Bayesian-efficient-coding.md",
+      "source_name": "bioRxiv",
+      "source_url": "https://www.biorxiv.org/content/10.1101/178418v5",
+      "status": "extracted",
+      "tags": [
+        "biomcp/kb-spike",
+        "source/html"
+      ],
+      "title": "Bayesian efficient coding",
+      "type": "preprint"
+    },
+    {
+      "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+      "source_name": "NIH",
+      "source_url": "https://www.nih.gov/news-events/news-releases/nih-funded-study-finds-long-covid-affects-adolescents-differently-younger-children",
+      "status": "extracted",
+      "tags": [
+        "biomcp/kb-spike",
+        "source/html"
+      ],
+      "title": "NIH-funded study finds long COVID affects adolescents differently than younger children \n",
+      "type": "news"
+    },
+    {
+      "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/PMC-OA-article-PDF.md",
+      "source_name": "PMC OA via unpdf",
+      "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+      "status": "extracted",
+      "tags": [
+        "biomcp/kb-spike",
+        "source/pdf"
+      ],
+      "title": "PMC OA article PDF",
+      "type": "article"
+    },
+    {
+      "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/KEYTRUDA-DailyMed-drug-label.md",
+      "source_name": "DailyMed via pdf_oxide",
+      "source_url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf",
+      "status": "extracted",
+      "tags": [
+        "biomcp/kb-spike",
+        "source/pdf"
+      ],
+      "title": "KEYTRUDA DailyMed drug label",
+      "type": "drug"
+    },
+    {
+      "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/CDC-STI-treatment-guideline.md",
+      "source_name": "CDC via unpdf",
+      "source_url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf",
+      "status": "extracted",
+      "tags": [
+        "biomcp/kb-spike",
+        "source/pdf"
+      ],
+      "title": "CDC STI treatment guideline",
+      "type": "guideline"
+    }
+  ],
+  "success": true,
+  "vault_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault"
+}
