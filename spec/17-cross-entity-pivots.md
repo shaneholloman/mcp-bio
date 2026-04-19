@@ -11,8 +11,8 @@ commands that the guide teaches.
 | Entry points | README, docs home, getting started, quick reference | Keeps newcomer routes connected |
 | Variant pivots | `variant trials`, `variant articles` | Mutation-first investigation flow |
 | Drug pivots | `drug trials`, `drug adverse-events` | Therapy-to-trial and therapy-to-safety flow |
-| Disease pivots | `disease trials`, `disease drugs`, `disease articles` | Diagnosis-centered pivots |
-| Gene pivots | `gene trials`, `gene drugs`, `gene articles`, `gene pathways` | Canonical biomarker pivots |
+| Disease pivots | `disease trials`, `disease drugs`, `disease articles`, `get disease ... diagnostics` | Diagnosis-centered pivots |
+| Gene pivots | `gene trials`, `gene drugs`, `gene articles`, `gene pathways`, `get gene ... diagnostics` | Canonical biomarker pivots |
 
 ## Guide page
 
@@ -27,6 +27,7 @@ echo "$out" | mustmatch like "# How to: use cross-entity pivots"
 echo "$out" | mustmatch like "## When to use a pivot helper vs. a fresh search"
 echo "$out" | mustmatch like "you already know the entity you"
 echo "$out" | mustmatch like 'richer downstream filters such as `--status`, `--phase`, or'
+echo "$out" | mustmatch like "Diagnostic pivots from gene and disease are `get` sections, not new helper subcommands."
 echo "$out" | mustmatch like "## Variant pivots"
 echo "$out" | mustmatch like "## Drug pivots"
 echo "$out" | mustmatch like "## Disease pivots"
@@ -34,7 +35,9 @@ echo "$out" | mustmatch like "## Gene pivots"
 echo "$out" | mustmatch like "biomcp variant trials \"BRAF V600E\" --limit 5"
 echo "$out" | mustmatch like "biomcp drug adverse-events pembrolizumab --limit 5"
 echo "$out" | mustmatch like "biomcp disease articles \"Lynch syndrome\" --limit 5"
+echo "$out" | mustmatch like "biomcp get disease tuberculosis diagnostics"
 echo "$out" | mustmatch like "biomcp gene pathways BRAF --limit 5"
+echo "$out" | mustmatch like "biomcp get gene BRCA1 diagnostics"
 echo "$out" | mustmatch like "## Other pivot helpers"
 ```
 
@@ -169,6 +172,23 @@ echo "$out" | mustmatch like "# Articles: disease=Lynch syndrome"
 echo "$out" | mustmatch like "| PMID | Title |"
 ```
 
+## Disease to Diagnostics
+
+Disease-to-diagnostics is an opt-in `get disease` section rather than a helper
+subcommand. It should preserve disease context and render local source labels.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease tuberculosis diagnostics)"
+echo "$out" | mustmatch like "## Diagnostics"
+echo "$out" | mustmatch like "Loopamp MTBC Detection Kit"
+echo "$out" | mustmatch like "WHO Prequalified IVD"
+```
+
 ## Gene to Trials
 
 Gene-to-trial pivots should switch into biomarker search and preserve the trial
@@ -200,6 +220,21 @@ schema.
 out="$(biomcp gene articles BRCA1 --limit 3)"
 echo "$out" | mustmatch like "# Articles: gene=BRCA1"
 echo "$out" | mustmatch like "| PMID | Title |"
+```
+
+## Gene to Diagnostics
+
+Gene-to-diagnostics is an opt-in `get gene` section rather than a helper
+subcommand. It should preserve gene context and render GTR source labels.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get gene BRCA1 diagnostics)"
+echo "$out" | mustmatch like "## Diagnostics"
+echo "$out" | mustmatch like "BRCA1 Hereditary Cancer Panel"
+echo "$out" | mustmatch like "NCBI Genetic Testing Registry"
 ```
 
 ## Gene to Pathways

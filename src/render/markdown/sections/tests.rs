@@ -217,7 +217,7 @@ fn format_sections_block_keeps_gene_ontology_in_top_more_entries() {
 }
 
 #[test]
-fn sections_disease_base_card_surfaces_survival_and_funding_before_all() {
+fn sections_disease_base_card_surfaces_diagnostics_before_optional_sections() {
     let disease = Disease {
         id: "MONDO:0005105".to_string(),
         name: "melanoma".to_string(),
@@ -244,6 +244,8 @@ fn sections_disease_base_card_surfaces_survival_and_funding_before_all() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 
@@ -254,7 +256,7 @@ fn sections_disease_base_card_surfaces_survival_and_funding_before_all() {
             .take(5)
             .map(String::as_str)
             .collect::<Vec<_>>(),
-        vec!["genes", "pathways", "phenotypes", "survival", "funding"]
+        vec!["genes", "pathways", "phenotypes", "diagnostics", "survival"]
     );
 
     let block = format_sections_block("disease", &disease.id, sections);
@@ -267,23 +269,23 @@ fn sections_disease_base_card_surfaces_survival_and_funding_before_all() {
     let phenotypes = block
         .find("biomcp get disease MONDO:0005105 phenotypes")
         .expect("phenotypes command");
+    let diagnostics = block
+        .find("biomcp get disease MONDO:0005105 diagnostics")
+        .expect("diagnostics command");
     let survival = block
         .find("biomcp get disease MONDO:0005105 survival")
         .expect("survival command");
-    let funding = block
-        .find("biomcp get disease MONDO:0005105 funding")
-        .expect("funding command");
     assert!(genes < pathways);
     assert!(pathways < phenotypes);
-    assert!(phenotypes < survival);
-    assert!(survival < funding);
+    assert!(phenotypes < diagnostics);
+    assert!(diagnostics < survival);
+    assert!(block.contains("diagnostic tests for this condition from GTR and WHO IVD"));
     assert!(block.contains("SEER Explorer cancer survival rates"));
-    assert!(block.contains("NIH Reporter grant support"));
     assert!(!block.contains("biomcp get disease MONDO:0005105 variants"));
 }
 
 #[test]
-fn sections_gene_base_card_surfaces_funding_as_fourth_command() {
+fn sections_gene_base_card_surfaces_diagnostics_as_fourth_command() {
     let gene = Gene {
         symbol: "BRAF".to_string(),
         name: "B-Raf proto-oncogene".to_string(),
@@ -313,16 +315,18 @@ fn sections_gene_base_card_surfaces_funding_as_fourth_command() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let sections = sections_gene(&gene, &[]);
     assert_eq!(
         sections
             .iter()
-            .take(5)
+            .take(4)
             .map(String::as_str)
             .collect::<Vec<_>>(),
-        vec!["pathways", "ontology", "diseases", "funding", "protein"]
+        vec!["pathways", "ontology", "diseases", "diagnostics"]
     );
 
     let block = format_sections_block("gene", &gene.symbol, sections);
@@ -335,13 +339,13 @@ fn sections_gene_base_card_surfaces_funding_as_fourth_command() {
     let diseases = block
         .find("biomcp get gene BRAF diseases")
         .expect("diseases command");
-    let funding = block
-        .find("biomcp get gene BRAF funding")
-        .expect("funding command");
+    let diagnostics = block
+        .find("biomcp get gene BRAF diagnostics")
+        .expect("diagnostics command");
     assert!(pathways < ontology);
     assert!(ontology < diseases);
-    assert!(diseases < funding);
-    assert!(block.contains("NIH Reporter grant support"));
+    assert!(diseases < diagnostics);
+    assert!(block.contains("diagnostic tests for this gene from GTR"));
     assert!(!block.contains("biomcp get gene BRAF protein"));
 }
 

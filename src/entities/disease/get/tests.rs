@@ -5,6 +5,7 @@ use super::*;
 fn parse_sections_supports_new_disease_sections() {
     let flags = parse_sections(&[
         "phenotypes".to_string(),
+        "diagnostics".to_string(),
         "variants".to_string(),
         "models".to_string(),
         "prevalence".to_string(),
@@ -17,6 +18,7 @@ fn parse_sections_supports_new_disease_sections() {
     assert!(flags.include_genes);
     assert!(flags.include_pathways);
     assert!(flags.include_phenotypes);
+    assert!(flags.include_diagnostics);
     assert!(flags.include_variants);
     assert!(flags.include_models);
     assert!(flags.include_prevalence);
@@ -27,11 +29,27 @@ fn parse_sections_supports_new_disease_sections() {
 }
 
 #[test]
-fn parse_sections_all_keeps_disgenet_opt_in() {
-    let flags = parse_sections(&["all".to_string()]).expect("sections should parse");
-    assert!(flags.include_survival);
+fn disease_parse_sections_accepts_diagnostics() {
+    let flags = parse_sections(&["diagnostics".to_string()]).expect("diagnostics should parse");
+    assert!(flags.include_diagnostics);
+    assert!(!flags.include_genes);
     assert!(!flags.include_funding);
     assert!(!flags.include_disgenet);
+}
+
+#[test]
+fn parse_sections_all_keeps_optional_sections_opt_in() {
+    let flags = parse_sections(&["all".to_string()]).expect("sections should parse");
+    assert!(flags.include_survival);
+    assert!(!flags.include_diagnostics);
+    assert!(!flags.include_funding);
+    assert!(!flags.include_disgenet);
+}
+
+#[test]
+fn disease_parse_sections_all_keeps_diagnostics_opt_in() {
+    let flags = parse_sections(&["all".to_string()]).expect("sections should parse");
+    assert!(!flags.include_diagnostics);
 }
 
 #[tokio::test]

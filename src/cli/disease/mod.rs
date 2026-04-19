@@ -37,7 +37,7 @@ pub struct DiseaseSearchArgs {
 pub struct DiseaseGetArgs {
     /// Disease name (e.g., melanoma) or ID (e.g., MONDO:0005105)
     pub name_or_id: String,
-    /// Sections to include (genes, pathways, phenotypes, variants, models, prevalence, survival, civic, disgenet, funding, all)
+    /// Sections to include (genes, pathways, phenotypes, diagnostics, variants, models, prevalence, survival, civic, disgenet, funding, all)
     #[arg(trailing_var_arg = true)]
     pub sections: Vec<String>,
 }

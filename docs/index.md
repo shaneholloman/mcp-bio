@@ -132,10 +132,10 @@ search all [slot filters]    → counts-first cross-entity orientation
 | gwas | GWAS Catalog | `biomcp search gwas --trait "type 2 diabetes"` |
 | phenotype | Monarch Initiative (HPO semantic similarity) | `biomcp search phenotype "HP:0001250"` |
 
-## Cross-entity helpers
+## Cross-entity pivots
 
 See the [cross-entity pivot guide](how-to/cross-entity-pivots.md) for when to
-use a helper versus a fresh search.
+use a helper, a sectioned diagnostic pivot, or a fresh search.
 
 ```bash
 biomcp variant trials "BRAF V600E" --limit 5
@@ -145,10 +145,12 @@ biomcp drug trials pembrolizumab
 biomcp disease trials melanoma
 biomcp disease drugs melanoma
 biomcp disease articles "Lynch syndrome"
+biomcp get disease tuberculosis diagnostics
 biomcp gene trials BRAF
 biomcp gene drugs BRAF
 biomcp gene articles BRCA1
 biomcp gene pathways BRAF
+biomcp get gene BRCA1 diagnostics
 biomcp pathway drugs R-HSA-5673001
 biomcp pathway drugs hsa05200
 biomcp pathway articles R-HSA-5673001

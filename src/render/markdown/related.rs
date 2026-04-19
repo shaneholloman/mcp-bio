@@ -67,6 +67,10 @@ pub(super) fn related_command_description(command: &str) -> Option<&'static str>
     } else if command.starts_with("biomcp search trial -c ") && command.ends_with(" -s recruiting")
     {
         Some("recruiting trials for the top ClinGen disease on this gene card")
+    } else if command.starts_with("biomcp search diagnostic --gene ") {
+        Some("diagnostic tests for this gene")
+    } else if command.starts_with("biomcp search diagnostic --disease ") {
+        Some("diagnostic tests for this condition")
     } else if command.starts_with("biomcp search pgx -d ")
         || command.starts_with("biomcp search pgx -g ")
     {
@@ -231,6 +235,7 @@ pub(super) fn related_gene(gene: &Gene) -> Vec<String> {
             force_quote_arg(&disease)
         ));
     }
+    out.push(format!("biomcp search diagnostic --gene {symbol}"));
     out.push(format!("biomcp search pgx -g {symbol}"));
     out.push(format!("biomcp search variant -g {symbol}"));
     out.push(format!("biomcp search article -g {symbol}"));
@@ -755,6 +760,7 @@ pub(super) fn related_disease(disease: &Disease) -> Vec<String> {
     if !name.is_empty() {
         out.push(format!("biomcp search trial -c {name}"));
         out.push(format!("biomcp search article -d {name}"));
+        out.push(format!("biomcp search diagnostic --disease {name}"));
         out.push(format!("biomcp search drug --indication {name}"));
     }
     if is_oncology_disease(disease) {

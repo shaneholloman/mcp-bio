@@ -20,8 +20,11 @@ pub fn gene_markdown(gene: &Gene, requested_sections: &[String]) -> Result<Strin
     let show_constraint_section = include_all || has_requested("constraint");
     let show_disgenet_section = has_requested("disgenet");
     let show_funding_section = has_requested("funding");
+    let show_diagnostics_section = has_requested("diagnostics");
     let funding_rows = funding_rows(gene.funding.as_ref());
     let funding_summary = funding_summary_line(gene.funding.as_ref());
+    let diagnostic_rows =
+        super::diagnostic::diagnostic_search_rows(gene.diagnostics.as_deref().unwrap_or(&[]));
     let body = tmpl.render(context! {
         section_only => section_only,
         section_header => section_header(&gene.symbol, requested_sections),
@@ -55,6 +58,8 @@ pub fn gene_markdown(gene: &Gene, requested_sections: &[String]) -> Result<Strin
         funding_note => &gene.funding_note,
         funding_rows => funding_rows,
         funding_summary => funding_summary,
+        diagnostics_note => &gene.diagnostics_note,
+        diagnostic_rows => diagnostic_rows,
         show_civic_section => show_civic_section,
         show_expression_section => show_expression_section,
         show_hpa_section => show_hpa_section,
@@ -63,6 +68,7 @@ pub fn gene_markdown(gene: &Gene, requested_sections: &[String]) -> Result<Strin
         show_constraint_section => show_constraint_section,
         show_disgenet_section => show_disgenet_section,
         show_funding_section => show_funding_section,
+        show_diagnostics_section => show_diagnostics_section,
         sections_block => format_sections_block("gene", &gene.symbol, sections_gene(gene, requested_sections)),
         related_block => format_related_block(related_gene(gene)),
     })?;

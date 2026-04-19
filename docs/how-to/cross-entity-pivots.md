@@ -2,8 +2,10 @@
 
 Cross-entity pivot helpers let you move from one BioMCP entity to a related one
 without rebuilding the next query from scratch. The grammar is:
-`biomcp <entity> <helper> <id>`. Use it when you already know the entity you
-want to investigate and need the built-in related lookup.
+`biomcp <entity> <helper> <id>` for helper families and
+`biomcp get <entity> <id> <section>` for sectioned pivots such as diagnostics.
+Use these when you already know the entity you want to investigate and need the
+built-in related lookup.
 
 ## When to use a pivot helper vs. a fresh search
 
@@ -22,7 +24,8 @@ exploring or need richer downstream filters such as `--status`, `--phase`, or
 
 Current boundary: helper subcommands accept the pivot identifier plus paging or
 source-style options, but they do not replace the full search surfaces for
-trials, articles, or other entities.
+trials, articles, or other entities. Diagnostic pivots from gene and disease
+are `get` sections, not new helper subcommands.
 
 ## Variant pivots
 
@@ -56,33 +59,39 @@ rate limits.
 ## Disease pivots
 
 Disease pivots are useful when you want to move from a diagnosis into the most
-common next surfaces: trials, drugs, and articles.
+common next surfaces: trials, drugs, articles, and diagnostic tests.
 
 ```bash
 biomcp disease trials melanoma --limit 5
 biomcp disease drugs melanoma --limit 5
 biomcp disease articles "Lynch syndrome" --limit 5
+biomcp get disease tuberculosis diagnostics
 ```
 
 These helpers keep the disease context intact. Article pivots are best-effort:
 the mix of article sources can vary, so rely on the heading and table shape
-rather than a specific provider subsection.
+rather than a specific provider subsection. The diagnostics pivot is an opt-in
+`get disease` section that can combine GTR and WHO IVD local rows for the
+resolved condition.
 
 ## Gene pivots
 
 Gene pivots are useful when a biomarker or target is the center of the session
-and you want the standard downstream clinical and pathway views.
+and you want the standard downstream clinical, diagnostic, and pathway views.
 
 ```bash
 biomcp gene trials BRAF --limit 5
 biomcp gene drugs BRAF --limit 5
 biomcp gene articles BRCA1 --limit 5
 biomcp gene pathways BRAF --limit 5
+biomcp get gene BRCA1 diagnostics
 ```
 
 `gene drugs` pivots into target-based drug lookup. `gene pathways` returns the
 source-labelled pathway table for the gene, which is useful when you want
-to expand from a biomarker into pathway context without leaving the CLI.
+to expand from a biomarker into pathway context without leaving the CLI. The
+diagnostics pivot is an opt-in `get gene` section backed by GTR diagnostic
+tests for the gene.
 
 ## Other pivot helpers
 

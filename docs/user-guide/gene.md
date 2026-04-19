@@ -99,7 +99,14 @@ Funding context (NIH Reporter grants mentioning the canonical symbol in the most
 biomcp get gene ERBB2 funding
 ```
 
-The funding section is opt-in and is not included in `biomcp get gene <symbol> all`.
+Diagnostic-test pivot (GTR tests for the gene):
+
+```bash
+biomcp get gene BRCA1 diagnostics
+```
+
+The diagnostics and funding sections are opt-in and are not included in
+`biomcp get gene <symbol> all`.
 
 Gene-disease validity (ClinGen):
 

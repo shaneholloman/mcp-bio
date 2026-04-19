@@ -36,6 +36,8 @@ fn disease_markdown_section_only_shows_disgenet_section() {
         }),
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 
@@ -86,6 +88,8 @@ fn disease_markdown_disgenet_renders_sparse_optional_fields() {
         }),
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 
@@ -129,6 +133,8 @@ fn disease_markdown_funding_renders_truthful_notes_without_table() {
             grants: Vec::new(),
         }),
         funding_note: Some("No NIH funding data found for this query.".to_string()),
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 
@@ -177,11 +183,14 @@ fn disease_markdown_all_keeps_opt_in_sections_hidden() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 
     let markdown = disease_markdown(&disease, &["all".to_string()]).expect("all markdown");
 
+    assert!(!markdown.contains("## Diagnostics"));
     assert!(!markdown.contains("## Funding (NIH Reporter)"));
     assert!(!markdown.contains("## DisGeNET"));
 }

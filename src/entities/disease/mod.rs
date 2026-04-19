@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::warn;
 
 use crate::entities::SearchPage;
+use crate::entities::diagnostic::DiagnosticSearchResult;
 use crate::entities::drug::{self, DrugSearchFilters};
 use crate::entities::trial::{self, TrialSearchFilters, TrialSource};
 use crate::error::BioMcpError;
@@ -71,6 +72,10 @@ pub struct Disease {
     pub funding: Option<NihReporterFundingSection>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub funding_note: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub diagnostics: Option<Vec<DiagnosticSearchResult>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub diagnostics_note: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub civic: Option<CivicContext>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -260,6 +265,7 @@ pub struct DiseaseSearchFilters {
 const DISEASE_SECTION_GENES: &str = "genes";
 const DISEASE_SECTION_PATHWAYS: &str = "pathways";
 const DISEASE_SECTION_PHENOTYPES: &str = "phenotypes";
+const DISEASE_SECTION_DIAGNOSTICS: &str = "diagnostics";
 const DISEASE_SECTION_VARIANTS: &str = "variants";
 const DISEASE_SECTION_MODELS: &str = "models";
 const DISEASE_SECTION_PREVALENCE: &str = "prevalence";
@@ -273,6 +279,7 @@ pub const DISEASE_SECTION_NAMES: &[&str] = &[
     DISEASE_SECTION_GENES,
     DISEASE_SECTION_PATHWAYS,
     DISEASE_SECTION_PHENOTYPES,
+    DISEASE_SECTION_DIAGNOSTICS,
     DISEASE_SECTION_VARIANTS,
     DISEASE_SECTION_MODELS,
     DISEASE_SECTION_PREVALENCE,

@@ -29,6 +29,8 @@ fn gene_markdown_includes_evidence_links() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &[]).expect("rendered markdown");
@@ -68,6 +70,8 @@ fn gene_markdown_section_only_shows_new_gene_enrichment_sections() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(
@@ -144,6 +148,8 @@ fn gene_markdown_renders_combined_dgidb_and_opentargets_druggability() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["druggability".to_string()]).expect("rendered markdown");
@@ -205,6 +211,8 @@ fn gene_markdown_renders_dgidb_interaction_table_alongside_opentargets_data() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["druggability".to_string()]).expect("rendered markdown");
@@ -264,6 +272,8 @@ fn gene_markdown_renders_hpa_section_details() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let summary = gene_markdown(&gene, &[]).expect("rendered markdown");
@@ -340,6 +350,8 @@ fn gene_markdown_renders_protein_isoforms_with_count_and_displayed_length() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -387,6 +399,8 @@ fn gene_markdown_without_isoforms_keeps_protein_lines_contiguous() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -437,6 +451,8 @@ fn gene_markdown_renders_protein_alternative_names() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -486,6 +502,8 @@ fn gene_markdown_preserves_full_protein_function_text() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");
@@ -532,6 +550,8 @@ fn gene_markdown_omits_protein_alternative_names_when_absent() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let markdown = gene_markdown(&gene, &["protein".to_string()]).expect("gene markdown");

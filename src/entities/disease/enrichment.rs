@@ -10,12 +10,15 @@ use super::associations::{
 };
 use super::get::DiseaseSections;
 use super::resolution::{DiseaseLookupInput, normalize_disease_id, parse_disease_lookup_input};
+use crate::entities::diagnostic::DiagnosticSearchFilters;
 
 const OPTIONAL_ENRICHMENT_TIMEOUT: Duration = Duration::from_secs(8);
+const DIAGNOSTIC_PIVOT_LIMIT: usize = 10;
 const SURVIVAL_NO_DATA_NOTE: &str = "SEER survival data not available for this condition.";
 const SURVIVAL_UNAVAILABLE_NOTE: &str = "SEER survival data is temporarily unavailable.";
 const FUNDING_NO_DATA_NOTE: &str = "No NIH funding data found for this query.";
 const FUNDING_UNAVAILABLE_NOTE: &str = "NIH Reporter funding data is temporarily unavailable.";
+const DISEASE_DIAGNOSTICS_UNAVAILABLE_NOTE: &str = "Diagnostic local data is unavailable. Run `biomcp gtr sync` and `biomcp who-ivd sync` to enable disease diagnostic pivots.";
 
 fn normalize_ols_disease_id(value: &str) -> Option<String> {
     normalize_disease_id(value).or_else(|| normalize_disease_id(&value.replace('_', ":")))
@@ -321,6 +324,30 @@ async fn add_civic_section(disease: &mut Disease) {
     }
 }
 
+async fn add_diagnostics_section(disease: &mut Disease) {
+    let Some(query) = disease_query_value(disease) else {
+        disease.diagnostics = Some(Vec::new());
+        disease.diagnostics_note = None;
+        return;
+    };
+
+    let filters = DiagnosticSearchFilters {
+        disease: Some(query.clone()),
+        ..Default::default()
+    };
+    match crate::entities::diagnostic::search_page(&filters, DIAGNOSTIC_PIVOT_LIMIT, 0).await {
+        Ok(page) => {
+            disease.diagnostics = Some(page.results);
+            disease.diagnostics_note = None;
+        }
+        Err(err) => {
+            warn!(query = %query, "Diagnostic local data unavailable for disease diagnostic pivot: {err}");
+            disease.diagnostics = None;
+            disease.diagnostics_note = Some(DISEASE_DIAGNOSTICS_UNAVAILABLE_NOTE.into());
+        }
+    }
+}
+
 fn empty_funding_section(query: String) -> NihReporterFundingSection {
     NihReporterFundingSection {
         query,
@@ -471,6 +498,9 @@ pub(super) async fn apply_requested_sections(
     if sections.include_funding {
         add_funding_section(disease, requested_lookup).await;
     }
+    if sections.include_diagnostics {
+        add_diagnostics_section(disease).await;
+    }
     if sections.include_civic {
         add_civic_section(disease).await;
     }
@@ -503,6 +533,10 @@ pub(super) async fn apply_requested_sections(
     if !sections.include_funding {
         disease.funding = None;
         disease.funding_note = None;
+    }
+    if !sections.include_diagnostics {
+        disease.diagnostics = None;
+        disease.diagnostics_note = None;
     }
     if !sections.include_civic {
         disease.civic = None;

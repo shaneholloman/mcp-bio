@@ -31,6 +31,8 @@ fn gene_evidence_urls_include_ensembl_and_omim() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let urls = gene_evidence_urls(&gene);
@@ -149,6 +151,8 @@ fn disease_evidence_urls_include_record_links() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::from([
             ("Orphanet".to_string(), "586".to_string()),
             ("OMIM".to_string(), "219700".to_string()),

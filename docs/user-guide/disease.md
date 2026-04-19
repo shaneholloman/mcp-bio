@@ -95,6 +95,12 @@ The survival section is filtered to all ages and all races / ethnicities. When
 the normalized disease does not map cleanly to one SEER cancer site, BioMCP
 returns a stable `survival_note` instead of failing the disease card.
 
+Diagnostic-test pivot (GTR and WHO IVD tests for the condition):
+
+```bash
+biomcp get disease tuberculosis diagnostics
+```
+
 Funding (NIH Reporter grants for the requested disease phrase, with canonical-name fallback for identifier lookups, over the most recent 5 NIH fiscal years):
 
 ```bash
@@ -102,7 +108,8 @@ biomcp get disease "chronic myeloid leukemia" funding
 biomcp get disease "Marfan syndrome" funding
 ```
 
-The funding section stays opt-in and is not included in `biomcp get disease <name_or_id> all`.
+The diagnostics, DisGeNET, and funding sections stay opt-in and are not included
+in `biomcp get disease <name_or_id> all`.
 
 CIViC (clinical evidence):
 

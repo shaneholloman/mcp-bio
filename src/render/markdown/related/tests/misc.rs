@@ -46,6 +46,8 @@ fn related_disease_malformed_study_lookup_falls_back_to_download_list() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
         xrefs: std::collections::HashMap::new(),
     };
 

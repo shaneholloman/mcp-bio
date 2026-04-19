@@ -11,7 +11,7 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Use `biomcp discover "<free text>"` when you only have free text and need the CLI to pick the first typed command.
 - Use `biomcp search all --gene <gene> --disease "<disease>"` when you know the entities but not the next pivot.
 - Treatment questions: `biomcp search drug --indication "<disease>" --limit 5`
-- Diagnostic-test questions: `biomcp search diagnostic --gene <symbol> --limit 5` or `biomcp search diagnostic --disease "<disease>" --limit 5`
+- Diagnostic-test questions: use structured pivots first with `biomcp get gene <symbol> diagnostics` or `biomcp get disease "<disease>" diagnostics`; use `biomcp search diagnostic --gene <symbol> --limit 5` or `biomcp search diagnostic --disease "<disease>" --limit 5` when you need the full search surface.
 - Symptom or phenotype questions: `biomcp get disease <name_or_id> phenotypes`
 - Gene-function questions: `biomcp get gene <symbol>`
 - Drug-safety questions: `biomcp drug adverse-events <name>` and `biomcp get drug <name> safety`
@@ -29,11 +29,13 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - `get gene ... hpa`: Human Protein Atlas tissue expression and localization
 - `get gene ... expression`: GTEx tissue expression
 - `get gene ... diseases`: disease associations
+- `get gene ... diagnostics`: GTR diagnostic-test pivot for a gene
 - `get article ... annotations`: PubTator normalized entity mentions for standardized extraction
 - `get article ... tldr`: Semantic Scholar summary and influence
 - `get disease ... genes`: associated genes
 - `get disease ... phenotypes`: HPO phenotype annotations; source-backed and sometimes incomplete
 - `get disease ... pathways`: pathways from associated genes
+- `get disease ... diagnostics`: GTR and WHO IVD diagnostic-test pivot for a condition
 - `get diagnostic ... genes`: joined gene names from the GTR detail bundle
 - `get diagnostic ... conditions`: joined disease or condition names from GTR
 - `get diagnostic ... methods`: source-native GTR testing methods
@@ -47,6 +49,7 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 
 - `gene articles <symbol>` and `search article -g <symbol>` are equivalent starting points for gene-filtered literature.
 - Use helpers when the pivot is obvious: `drug trials`, `disease trials`, `variant articles`, `article citations`.
+- Use sectioned diagnostic pivots for gene or disease contexts: `get gene <symbol> diagnostics` and `get disease <name_or_id> diagnostics`.
 - Use `search article -d "<disease>" --type review --limit 5` when disease phenotypes or drug indications look sparse.
 - Use `article batch` as the default multi-article follow-up after `search article`; it replaces sequential `get article` calls and preserves Semantic Scholar enrichment when available.
 - Use `batch <entity> <id1,id2,...> --sections <s1,s2,...>` when you need the same card shape for several entities.

@@ -42,6 +42,7 @@ biomcp batch <entity> <id1,id2,...>    # parallel gets
 ```bash
 biomcp get gene BRAF
 biomcp get gene BRAF pathways
+biomcp get gene BRCA1 diagnostics
 biomcp get variant "BRAF V600E"
 biomcp get variant "BRAF V600E" clinvar
 biomcp get article 22663011
@@ -51,6 +52,7 @@ biomcp get trial NCT02576665
 biomcp get trial NCT02576665 eligibility
 biomcp get drug carboplatin shortage
 biomcp get disease MONDO:0005105
+biomcp get disease tuberculosis diagnostics
 biomcp get pathway hsa05200 genes
 biomcp get protein P15056 domains
 biomcp get protein P15056 complexes
@@ -70,6 +72,8 @@ biomcp search protein -q kinase --limit 5
 biomcp search adverse-event --drug pembrolizumab --serious --limit 5
 biomcp search adverse-event "COVID-19 vaccine" --source all --limit 5
 biomcp search adverse-event "MMR vaccine" --source vaers --limit 5
+biomcp search diagnostic --gene BRCA1 --limit 5
+biomcp search diagnostic --disease tuberculosis --source all --limit 5
 biomcp search all --gene BRAF --disease melanoma
 biomcp search all --keyword resistance --counts-only
 biomcp discover "chest pain"

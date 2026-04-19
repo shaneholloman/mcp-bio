@@ -33,6 +33,8 @@ fn gene_json_next_commands_parse() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let next_commands = crate::render::markdown::gene_next_commands(&gene, &[]);
@@ -46,13 +48,14 @@ fn gene_json_next_commands_parse() {
             "biomcp get gene BRAF pathways",
             "biomcp get gene BRAF ontology",
             "biomcp get gene BRAF diseases",
-            "biomcp get gene BRAF funding",
+            "biomcp get gene BRAF diagnostics",
         ]
     );
     assert!(
         next_commands.contains(&"biomcp search pgx -g BRAF".to_string()),
         "expected gene cross-entity helper after section follow-ups: {next_commands:?}"
     );
+    assert!(next_commands.contains(&"biomcp search diagnostic --gene BRAF".to_string()));
 
     assert_entity_json_next_commands(
         "gene",
@@ -94,6 +97,8 @@ fn gene_json_next_commands_omit_requested_section_follow_up() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let requested_sections = ["funding".to_string()];
@@ -144,6 +149,8 @@ fn gene_json_suggestions_match_see_also_without_section_hints() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let json = crate::render::json::to_entity_json_with_suggestions(
@@ -200,6 +207,8 @@ fn gene_json_next_commands_include_clingen_trial_search() {
         disgenet: None,
         funding: None,
         funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
     };
 
     let next_commands = crate::render::markdown::gene_next_commands(&gene, &[]);

@@ -26,7 +26,8 @@ fn get_gene_help_includes_when_to_use_guidance() {
 
     assert!(help.contains("When to use:"));
     assert!(help.contains("default card"));
-    assert!(help.contains("protein, hpa, expression, diseases, or funding"));
+    assert!(help.contains("protein, hpa, expression, diseases, diagnostics, or funding"));
+    assert!(help.contains("BRCA1 diagnostics"));
     assert!(help.contains("ERBB2 funding"));
 }
 
