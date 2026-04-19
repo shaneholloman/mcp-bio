@@ -52,7 +52,10 @@ def discover_feed_links(page_url: str, html: str) -> list[str]:
             continue
         if not any(token in typ for token in ("rss", "atom", "xml")):
             continue
-        links.append(normalize_link(tag["href"], page_url))
+        link = normalize_link(tag["href"], page_url)
+        if "comments/feed" in link or "oembed" in link:
+            continue
+        links.append(link)
     return sorted(set(links))
 
 
@@ -134,7 +137,10 @@ def link_score(a: Any, url: str, base_url: str) -> int:
         score += 1
     if NAV_RE.match(text):
         score -= 5
-    if any(token in path for token in ("newsletter", "podcast", "events", "jobs", "sponsor")):
+    if any(
+        token in path
+        for token in ("newsletter", "podcast", "events", "jobs", "sponsor", "topic-hub", "/tag/")
+    ):
         score -= 2
     return score
 
@@ -200,6 +206,17 @@ def choose_best_mode(feeds: list[dict[str, Any]], page: dict[str, Any]) -> str:
     return "blocked_or_no_discovery"
 
 
+def feed_rank(feed: dict[str, Any]) -> tuple[int, int, float]:
+    url = feed.get("url") or ""
+    penalty = 0
+    if "comments/feed" in url or "oembed" in url:
+        penalty -= 10
+    link_count = feed.get("field_counts", {}).get("link", 0)
+    age = feed.get("latest_age_hours")
+    freshness = -float(age) if age is not None else -99999.0
+    return (feed.get("entries", 0) + penalty, link_count, freshness)
+
+
 def run(output: str) -> None:
     now = utc_now()
     session = requests.Session()
@@ -215,7 +232,7 @@ def run(output: str) -> None:
             feed_fetch, feed_text = fetch_url(session, url)
             feeds.append(parse_feed(url, feed_fetch, feed_text, now))
 
-        best_feed = max(feeds, key=lambda feed: feed.get("entries", 0), default={})
+        best_feed = max(feeds, key=feed_rank, default={})
         page = parse_headline_page(source, page_fetch, page_html) if page_html else {
             "page_url": source["page_url"],
             "fetch": page_fetch,

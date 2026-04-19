@@ -110,7 +110,7 @@ def main() -> None:
             "results/article_extraction_results.json"
         ),
     )
-    parser.add_argument("--max-articles", type=int, default=18)
+    parser.add_argument("--max-articles", type=int, default=24)
     args = parser.parse_args()
     run(args.discovery, args.output, args.max_articles)
 

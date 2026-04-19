@@ -72,6 +72,7 @@ DRUGS = [
     "Lumakras",
     "adagrasib",
     "Krazati",
+    "daraxonrasib",
     "osimertinib",
     "Tagrisso",
     "trastuzumab",
@@ -155,7 +156,7 @@ def extract_entities(text: str) -> dict[str, Any]:
         {
             match.group(0)
             for match in re.finditer(
-                r"\b[A-Za-z][A-Za-z0-9-]{3,}(?:mab|nib|parib|ciclib|limab|zumab|tinib)\b",
+                r"\b[A-Za-z][A-Za-z0-9-]{3,}(?:mab|nib|rasib|parib|ciclib|limab|zumab|tinib)\b",
                 text,
             )
         },
@@ -235,6 +236,8 @@ def run_biomcp(args: list[str], timeout: int = 25) -> dict[str, Any]:
             summary["name"] = parsed.get("name")
         if "symbol" in parsed:
             summary["symbol"] = parsed.get("symbol")
+        if "id" in parsed:
+            summary["id"] = parsed.get("id")
         if "results" in parsed and isinstance(parsed["results"], list) and parsed["results"]:
             first = parsed["results"][0]
             summary["first_result"] = {
@@ -275,6 +278,22 @@ def choose_pivots(article_results: list[dict[str, Any]]) -> list[dict[str, Any]]
                         "type": "gene",
                         "value": gene,
                         "result": run_biomcp(["get", "gene", gene]),
+                    }
+                )
+                break
+        for disease in sorted(entities.get("diseases", []), key=len, reverse=True):
+            if disease.lower() == "cancer":
+                continue
+            key = ("disease", disease.lower())
+            if key not in seen:
+                seen.add(key)
+                pivots.append(
+                    {
+                        "article_url": article["url"],
+                        "article_title": article["title"],
+                        "type": "disease",
+                        "value": disease,
+                        "result": run_biomcp(["get", "disease", disease]),
                     }
                 )
                 break
