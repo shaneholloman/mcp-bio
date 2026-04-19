@@ -757,6 +757,7 @@ def extract_one(
     signals = paywall_signals(html[:20000], extracted[:4000], fallback[:4000])
     text_len = len(extracted)
     fallback_len = len(fallback)
+    analysis_text = extracted if len(extracted) >= 500 else fallback
     quality = extraction_quality_score(fetch.get("status"), text_len, fallback_len, signals)
     status = extraction_status(fetch.get("status"), text_len, quality, signals)
     return {
@@ -777,6 +778,12 @@ def extract_one(
         "quality_score_0_5": quality,
         "has_useful_text": quality >= 3 and text_len >= 800,
         "text_sample": clean_ws(extracted[:500]),
+        "_analysis_text": analysis_text,
+        "_analysis_fetch_meta": {
+            "fetch": fetch,
+            "text_chars": len(analysis_text),
+            "paywall_signals": signals,
+        },
     }
 
 
@@ -1074,10 +1081,16 @@ def analyze_entities_and_briefing(
         ),
         reverse=True,
     )
-    session = requests.Session()
     article_results = []
     for article in candidates[:max_entity_articles]:
-        text, fetch_meta = fetch_extract_text(session, article["url"], registry, bench)
+        cached_text = article.get("_analysis_text")
+        if isinstance(cached_text, str):
+            text = cached_text
+            fetch_meta = dict(article.get("_analysis_fetch_meta") or {})
+            fetch_meta["reused_from_article_extraction"] = True
+        else:
+            session = requests.Session()
+            text, fetch_meta = fetch_extract_text(session, article["url"], registry, bench)
         combined = f"{article.get('title') or ''}\n{text}"
         entities = extract_entities(combined)
         score, reasons = profile_score(
@@ -1478,6 +1491,10 @@ def build_recommendations(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def public_article_records(articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{key: value for key, value in article.items() if not key.startswith("_")} for article in articles]
+
+
 def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
     bench = Bench()
     bench.start("startup_load")
@@ -1532,7 +1549,7 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
             "conservative_ranking": bool(args.conservative_ranking),
         },
         "discovery": discovery,
-        "articles": articles,
+        "articles": public_article_records(articles),
         "extraction_summary": extraction_summary,
         "entity_articles": entity_articles,
         "entity_summary": entity_summary,
