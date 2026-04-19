@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from clinical_features_spike import (
+    extract_clinical_feature_dataset,
+    extract_disease_clinical_features,
+    load_hpo_rows_by_disease,
+    summarize_clinical_feature_dataset,
+)
 from clinical_features_spike.extraction import extract_features, select_topics
 from clinical_features_spike.medlineplus import all_diseases, explore_topics_by_disease
 from clinical_features_spike.reports import build_full_scale_payload, build_regression_control_payload, build_validation_payload
@@ -43,3 +49,21 @@ def test_full_scale_fixture_validation_passes() -> None:
     assert full_scale["summary"]["total_matched_expected_symptoms"] >= 14
     assert regression["rule_results"]["medlineplus_correctness"]["passed"] is True
     assert validation["passed"] is True
+
+
+def test_public_api_extracts_importable_dataset_without_cli() -> None:
+    diseases = {row["key"]: row for row in all_diseases()}
+    hpo_rows = load_hpo_rows_by_disease()
+
+    row = extract_disease_clinical_features(
+        diseases["uterine_fibroid"],
+        hpo_rows=hpo_rows["uterine_fibroid"],
+        allow_live=False,
+    )
+    assert row["topic_selection"]["selection_policy"] == "direct_pages_only"
+    assert row["phenotype_coverage"]["clinical_feature_count"] == 6
+
+    dataset = extract_clinical_feature_dataset(allow_live=False)
+    summary = summarize_clinical_feature_dataset(dataset)
+    assert summary["clinical_feature_count"] == 15
+    assert summary["output_checksum"] == "f08c35ff31306ff4696bd953eaba4b00aeed9e6746a1228469e1479238e3d34f"

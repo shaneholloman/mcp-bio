@@ -321,7 +321,7 @@
       "diseases": [
         {
           "disease_key": "uterine_fibroid",
-          "elapsed_ms": 1005.5,
+          "elapsed_ms": 1004.7,
           "error": null,
           "exit_code": 0,
           "expected_symptom_overlap": {
@@ -344,7 +344,7 @@
         },
         {
           "disease_key": "endometriosis",
-          "elapsed_ms": 848.8,
+          "elapsed_ms": 860.9,
           "error": null,
           "exit_code": 0,
           "expected_symptom_overlap": {
@@ -366,7 +366,7 @@
         },
         {
           "disease_key": "chronic_venous_insufficiency",
-          "elapsed_ms": 841.3,
+          "elapsed_ms": 854.5,
           "error": null,
           "exit_code": 0,
           "expected_symptom_overlap": {
@@ -388,7 +388,7 @@
           "phenotype_count": 0
         }
       ],
-      "elapsed_ms": 2745.8,
+      "elapsed_ms": 2771.5,
       "ran": true,
       "row_checksum": "74f9bd48513f6706c1d05e8ff3baa219b06ccfce2a1e7b16d329aa810d975520",
       "total_expected_symptoms": 23,
@@ -400,14 +400,14 @@
       "clinical_feature_count": 15,
       "direct_page_diseases": 2,
       "disease_count": 3,
-      "diseases_per_second": 361.446,
-      "elapsed_ms": 8.3,
+      "diseases_per_second": 833.333,
+      "elapsed_ms": 3.6,
       "expected_symptom_recall": 0.652,
-      "features_per_second": 1807.229,
+      "features_per_second": 4166.667,
       "mapped_feature_count": 15,
       "mismatch_count": 8,
       "output_checksum": "f08c35ff31306ff4696bd953eaba4b00aeed9e6746a1228469e1479238e3d34f",
-      "peak_rss_kb": 25324,
+      "peak_rss_kb": 25736,
       "total_candidate_topics": 12,
       "total_expected_symptoms": 23,
       "total_matched_expected_symptoms": 15,
@@ -434,7 +434,7 @@
     },
     "medlineplus_mismatch_count": 9
   },
-  "generated_at": "2026-04-19T16:17:19+00:00",
+  "generated_at": "2026-04-19T16:48:59+00:00",
   "regression_rule": {
     "correctness": "Exploit mismatch count must strictly decrease or stay equal versus explore.",
     "peak_rss": "Peak RSS must be within the 5% tolerance for the Python exploit harness.",

@@ -10,17 +10,15 @@ from typing import Any
 
 from phenotype_spike_common import DISEASES
 
+from .api import extract_clinical_feature_dataset, summarize_clinical_feature_dataset
 from .common import EXPERIMENT_DIR, RESULTS_DIR, WORK_DIR, load_json, stable_checksum, utc_now_iso, write_json
 from .extraction import (
     blind_topic_recall,
     excerpt_contains_extraction_anchor,
-    extract_features,
-    phenotype_coverage,
-    select_topics,
     selected_feature_recall,
     simple_mismatch_count,
 )
-from .medlineplus import all_diseases, explore_topics_by_disease, load_topics_for_disease
+from .medlineplus import explore_topics_by_disease
 
 
 FULL_SCALE_PATH = RESULTS_DIR / "clinical_features_full_scale.json"
@@ -32,53 +30,29 @@ EXPLORE_HPO_PATH = RESULTS_DIR / "current_biomcp_hpo_baseline.json"
 EXPLORE_MEDLINEPLUS_PATH = RESULTS_DIR / "clinical_summary_medlineplus_probe.json"
 
 
-def _hpo_rows_by_disease() -> dict[str, list[dict[str, Any]]]:
-    payload = load_json(EXPLORE_HPO_PATH)
-    return {
-        row["disease_key"]: row.get("phenotype_rows", [])
-        for row in payload.get("diseases", [])
-    }
-
-
 def _explore_medlineplus_summary() -> dict[str, Any]:
     return load_json(EXPLORE_MEDLINEPLUS_PATH)["summary"]
 
 
 def build_full_scale_payload(*, allow_live: bool = True, refresh_cache: bool = False) -> dict[str, Any]:
     started = time.perf_counter()
-    hpo_rows = _hpo_rows_by_disease()
-    diseases: list[dict[str, Any]] = []
-    for disease in all_diseases():
-        topic_payload = load_topics_for_disease(
-            disease,
-            allow_live=allow_live,
-            refresh_cache=refresh_cache,
-        )
-        selection = select_topics(disease, topic_payload["topics"])
-        features = extract_features(disease, selection["topics"])
-        coverage = phenotype_coverage(disease, hpo_rows.get(disease["key"], []), features)
-        diseases.append(
-            {
-                "disease_key": disease["key"],
-                "label": disease["label"],
-                "biomcp_query": disease["biomcp_query"],
-                "source_mode": topic_payload["source_mode"],
-                "fallback_used": topic_payload["fallback_used"],
-                "work_dir": topic_payload["work_dir"],
-                "attempts": topic_payload["attempts"],
-                "topic_selection": selection,
-                "phenotypes": hpo_rows.get(disease["key"], []),
-                "clinical_features": features,
-                "phenotype_coverage": coverage,
-                "feature_checksum": stable_checksum(coverage["feature_label_checksum_input"]),
-            }
-        )
+    diseases = extract_clinical_feature_dataset(
+        allow_live=allow_live,
+        refresh_cache=refresh_cache,
+    )
 
     elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
-    total_expected = sum(row["phenotype_coverage"]["expected_symptom_total"] for row in diseases)
-    total_matched = sum(row["phenotype_coverage"]["expected_symptom_matched"] for row in diseases)
-    total_features = sum(row["phenotype_coverage"]["clinical_feature_count"] for row in diseases)
+    summary = summarize_clinical_feature_dataset(diseases)
+    total_features = summary["clinical_feature_count"]
     ru_maxrss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    summary.update(
+        {
+            "elapsed_ms": elapsed_ms,
+            "diseases_per_second": round(len(diseases) / (elapsed_ms / 1000), 3) if elapsed_ms else None,
+            "features_per_second": round(total_features / (elapsed_ms / 1000), 3) if elapsed_ms else None,
+            "peak_rss_kb": ru_maxrss_kb,
+        }
+    )
     payload = {
         "generated_at": utc_now_iso(),
         "approach": "source_native_medlineplus_clinical_features_with_hpo_mapping_fixture",
@@ -103,46 +77,9 @@ def build_full_scale_payload(*, allow_live: bool = True, refresh_cache: bool = F
             "feature_checksum": "Stable checksum over feature label, mapped HPO ID, and source-native page ID.",
             "peak_rss_kb": "Python process peak resident set size reported by resource.getrusage.",
         },
-        "summary": {
-            "disease_count": len(diseases),
-            "total_candidate_topics": sum(row["topic_selection"]["candidate_topic_count"] for row in diseases),
-            "total_selected_topics": sum(row["topic_selection"]["selected_topic_count"] for row in diseases),
-            "total_topic_noise_reduction": sum(row["topic_selection"]["noise_reduction_count"] for row in diseases),
-            "direct_page_diseases": sum(
-                1 for row in diseases if row["topic_selection"]["selection_policy"] == "direct_pages_only"
-            ),
-            "clinical_feature_count": total_features,
-            "mapped_feature_count": sum(row["phenotype_coverage"]["mapped_feature_count"] for row in diseases),
-            "unmapped_feature_count": sum(row["phenotype_coverage"]["unmapped_feature_count"] for row in diseases),
-            "total_expected_symptoms": total_expected,
-            "total_matched_expected_symptoms": total_matched,
-            "expected_symptom_recall": round(total_matched / total_expected, 3) if total_expected else None,
-            "mismatch_count": total_expected - total_matched,
-            "elapsed_ms": elapsed_ms,
-            "diseases_per_second": round(len(diseases) / (elapsed_ms / 1000), 3) if elapsed_ms else None,
-            "features_per_second": round(total_features / (elapsed_ms / 1000), 3) if elapsed_ms else None,
-            "peak_rss_kb": ru_maxrss_kb,
-        },
+        "summary": summary,
         "diseases": diseases,
     }
-    payload["summary"]["output_checksum"] = stable_checksum(
-        [
-            {
-                "disease_key": row["disease_key"],
-                "feature_checksum": row["feature_checksum"],
-                "coverage": {
-                    key: row["phenotype_coverage"][key]
-                    for key in [
-                        "clinical_feature_count",
-                        "mapped_feature_count",
-                        "expected_symptom_matched",
-                        "expected_symptom_recall",
-                    ]
-                },
-            }
-            for row in diseases
-        ]
-    )
     return payload
 
 
