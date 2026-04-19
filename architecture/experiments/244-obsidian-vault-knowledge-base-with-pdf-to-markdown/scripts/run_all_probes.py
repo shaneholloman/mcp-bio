@@ -613,7 +613,9 @@ def assert_pdf(path: Path) -> None:
         raise RuntimeError(f"{path} is not a PDF")
 
 
-def run_rust_probe(args: list[str]) -> dict[str, Any]:
+def run_rust_probe(
+    args: list[str], timeout_seconds: int = RUST_PROBE_TIMEOUT_SECONDS
+) -> dict[str, Any]:
     env = os.environ.copy()
     env["CARGO_TARGET_DIR"] = str(RUST_TARGET_DIR)
     cmd = ["cargo", "run", "--quiet", "--manifest-path", str(RUST_MANIFEST), "--", *args]
@@ -624,7 +626,7 @@ def run_rust_probe(args: list[str]) -> dict[str, Any]:
             text=True,
             capture_output=True,
             env=env,
-            timeout=RUST_PROBE_TIMEOUT_SECONDS,
+            timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired as exc:
         return {
