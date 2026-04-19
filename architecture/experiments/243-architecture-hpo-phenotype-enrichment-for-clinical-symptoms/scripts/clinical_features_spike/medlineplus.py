@@ -159,7 +159,7 @@ def load_topics_for_disease(
         "topic_count": len(topics),
         "source_mode": source_mode,
         "fallback_used": fallback_used,
-        "work_dir": str(CACHE_DIR.resolve()),
+        "work_dir": str(CACHE_DIR),
     }
 
 
