@@ -1,0 +1,185 @@
+{
+  "approach": "current_biomcp_hpo_monarch_baseline",
+  "diseases": [
+    {
+      "biomcp_query": "uterine leiomyoma",
+      "command": [
+        "biomcp",
+        "--json",
+        "get",
+        "disease",
+        "uterine leiomyoma",
+        "phenotypes"
+      ],
+      "definition": "A benign smooth muscle neoplasm arising from the body of the uterus. It is characterized by the presence of spindle cells with cigar-shaped nuclei, interlacing fascicles, and a whorled pattern. [NCIT:C3434]",
+      "disease_key": "uterine_fibroid",
+      "elapsed_ms": 1073.9,
+      "error": null,
+      "exit_code": 0,
+      "expected_symptom_overlap": {
+        "expected_total": 8,
+        "matched": {},
+        "matched_total": 0,
+        "missing": [
+          "heavy menstrual bleeding",
+          "pelvic pain",
+          "lower back pain",
+          "fatigue",
+          "urinary frequency",
+          "constipation",
+          "infertility",
+          "dyspareunia"
+        ],
+        "recall": 0.0
+      },
+      "key_features": [],
+      "label": "uterine fibroid",
+      "phenotype_count": 2,
+      "phenotype_names": [
+        "Uterine leiomyoma",
+        "Typified by somatic mosaicism"
+      ],
+      "phenotype_rows": [
+        {
+          "evidence": "PCS",
+          "hpo_id": "HP:0000131",
+          "name": "Uterine leiomyoma",
+          "source": "infores:omim"
+        },
+        {
+          "evidence": "has mode of inheritance",
+          "hpo_id": "HP:0001442",
+          "name": "Typified by somatic mosaicism",
+          "source": "infores:hpo-annotations"
+        }
+      ],
+      "resolved_id": "MONDO:0007886",
+      "resolved_name": "uterine fibroid",
+      "section_sources": [
+        "HPO",
+        "Monarch Initiative"
+      ],
+      "source_labels": [
+        "infores:hpo-annotations",
+        "infores:omim"
+      ],
+      "ticket_id": "ICD10CM:D25",
+      "xrefs": {
+        "ICD-10": "D25",
+        "MeSH": "D007889",
+        "NCI": "C3434",
+        "OMIM": "150699",
+        "SNOMED": "44598004",
+        "doid": "DOID:13223",
+        "umls_cui": "C0042133"
+      }
+    },
+    {
+      "biomcp_query": "endometriosis",
+      "command": [
+        "biomcp",
+        "--json",
+        "get",
+        "disease",
+        "endometriosis",
+        "phenotypes"
+      ],
+      "definition": "The growth of functional endometrial tissue in anatomic sites outside the uterine body. It most often occurs in the pelvic organs. [NCIT:C3014]",
+      "disease_key": "endometriosis",
+      "elapsed_ms": 929.4,
+      "error": null,
+      "exit_code": 0,
+      "expected_symptom_overlap": {
+        "expected_total": 7,
+        "matched": {},
+        "matched_total": 0,
+        "missing": [
+          "pelvic pain",
+          "dysmenorrhea",
+          "dyspareunia",
+          "infertility",
+          "dyschezia",
+          "dysuria",
+          "abdominal pain"
+        ],
+        "recall": 0.0
+      },
+      "key_features": [],
+      "label": "endometriosis",
+      "phenotype_count": 0,
+      "phenotype_names": [],
+      "phenotype_rows": [],
+      "resolved_id": "MONDO:0005133",
+      "resolved_name": "endometriosis",
+      "section_sources": [],
+      "source_labels": [],
+      "ticket_id": null,
+      "xrefs": {
+        "ICD-10": "N80",
+        "MeSH": "D004715",
+        "NCI": "C3014",
+        "SNOMED": "11871002",
+        "doid": "DOID:289",
+        "umls_cui": "C0014175"
+      }
+    },
+    {
+      "biomcp_query": "chronic venous insufficiency",
+      "command": [
+        "biomcp",
+        "--json",
+        "get",
+        "disease",
+        "chronic venous insufficiency",
+        "phenotypes"
+      ],
+      "definition": "Chronic form of venous insufficiency (disease). [MONDO:patterns/chronic]",
+      "disease_key": "chronic_venous_insufficiency",
+      "elapsed_ms": 844.7,
+      "error": null,
+      "exit_code": 0,
+      "expected_symptom_overlap": {
+        "expected_total": 8,
+        "matched": {},
+        "matched_total": 0,
+        "missing": [
+          "leg swelling",
+          "leg pain",
+          "varicose veins",
+          "venous ulcer",
+          "skin discoloration",
+          "stasis dermatitis",
+          "itching",
+          "heaviness"
+        ],
+        "recall": 0.0
+      },
+      "key_features": [],
+      "label": "chronic venous insufficiency",
+      "phenotype_count": 0,
+      "phenotype_names": [],
+      "phenotype_rows": [],
+      "resolved_id": "MONDO:0000492",
+      "resolved_name": "chronic venous insufficiency",
+      "section_sources": [],
+      "source_labels": [],
+      "ticket_id": null,
+      "xrefs": {
+        "doid": "DOID:0050853",
+        "umls_cui": "C1306557"
+      }
+    }
+  ],
+  "generated_at": "2026-04-19T15:57:09+00:00",
+  "metric_definitions": {
+    "expected_symptom_recall": "Manual small-set lexical recall against expected recognizable clinical symptoms for the disease.",
+    "phenotype_count": "Number of current BioMCP disease.phenotypes rows returned by `get disease ... phenotypes --json`."
+  },
+  "summary": {
+    "disease_count": 3,
+    "expected_symptom_recall": 0.0,
+    "total_expected_symptoms": 23,
+    "total_matched_expected_symptoms": 0,
+    "total_phenotype_rows": 2
+  }
+}
