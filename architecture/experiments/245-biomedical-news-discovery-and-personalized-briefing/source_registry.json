@@ -1,7 +1,7 @@
 {
   "version": 1,
   "default_timeout_seconds": 20,
-  "default_request_pause_seconds": 0.25,
+  "default_request_pause_seconds": 0.05,
   "user_agent": "BioMCP-News-Spike/0.2 (https://github.com/genomoncology/biomcp; live-source feasibility probe)",
   "sources": [
     {
