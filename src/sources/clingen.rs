@@ -96,6 +96,7 @@ impl ClinGenClient {
         })
     }
 
+    #[cfg(test)]
     pub async fn gene_validity(
         &self,
         gene_symbol: &str,
@@ -115,6 +116,7 @@ impl ClinGenClient {
         parse_validity_csv(&csv_payload, &symbol, hgnc_id.as_deref())
     }
 
+    #[cfg(test)]
     pub async fn dosage_sensitivity(
         &self,
         gene_symbol: &str,
@@ -132,6 +134,36 @@ impl ClinGenClient {
             )
             .await?;
         parse_dosage_csv(&csv_payload, &symbol, hgnc_id.as_deref())
+    }
+
+    pub async fn gene_context(&self, gene_symbol: &str) -> Result<GeneClinGen, BioMcpError> {
+        let symbol = normalize_gene_symbol(gene_symbol)?;
+        let hgnc_fut = self.lookup_hgnc_id(&symbol);
+        let validity_fut = self.get_text(
+            self.client.get(self.endpoint(CLINGEN_VALIDITY_PATH)),
+            CLINGEN_API,
+        );
+        let dosage_fut = self.get_text(
+            self.client.get(self.endpoint(CLINGEN_DOSAGE_PATH)),
+            CLINGEN_API,
+        );
+        let (hgnc_result, validity_csv, dosage_csv) =
+            tokio::join!(hgnc_fut, validity_fut, dosage_fut);
+        let hgnc_id = hgnc_result.unwrap_or_else(|err| {
+            warn!(symbol = %symbol, "ClinGen gene lookup failed, falling back to symbol matching: {err}");
+            None
+        });
+        let validity_csv = validity_csv?;
+        let dosage_csv = dosage_csv?;
+        let validity = parse_validity_csv(&validity_csv, &symbol, hgnc_id.as_deref())?;
+        let (haploinsufficiency, triplosensitivity) =
+            parse_dosage_csv(&dosage_csv, &symbol, hgnc_id.as_deref())?;
+
+        Ok(GeneClinGen {
+            validity,
+            haploinsufficiency,
+            triplosensitivity,
+        })
     }
 
     async fn lookup_hgnc_id(&self, gene_symbol: &str) -> Result<Option<String>, BioMcpError> {
@@ -514,6 +546,43 @@ mod tests {
             Some("Sufficient Evidence for Haploinsufficiency")
         );
         assert_eq!(triplo.as_deref(), Some("No Evidence for Triplosensitivity"));
+    }
+
+    #[tokio::test]
+    async fn gene_context_reuses_lookup_for_validity_and_dosage() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/api/genes/look/BRAF"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(LOOKUP_BRAF))
+            .expect(1)
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/kb/gene-validity/download"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(VALIDITY_FIXTURE))
+            .expect(1)
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/kb/gene-dosage/download"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(DOSAGE_FIXTURE))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = ClinGenClient::new_for_test(server.uri()).expect("client");
+        let context = client.gene_context("BRAF").await.expect("context");
+
+        assert_eq!(context.validity.len(), 2);
+        assert_eq!(
+            context.haploinsufficiency.as_deref(),
+            Some("Sufficient Evidence for Haploinsufficiency")
+        );
+        assert_eq!(
+            context.triplosensitivity.as_deref(),
+            Some("No Evidence for Triplosensitivity")
+        );
     }
 
     #[tokio::test]

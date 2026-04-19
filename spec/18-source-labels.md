@@ -20,6 +20,12 @@ bin="${BIOMCP_BIN:-biomcp}"
 gene_out="$("$bin" get gene CFTR all)"
 echo "$gene_out" | mustmatch like "Source: NCBI Gene / MyGene.info"
 echo "$gene_out" | mustmatch like "## Summary (NCBI Gene)"
+
+gene_json="$("$bin" get gene CFTR all --json)"
+echo "$gene_json" | mustmatch like '"section_sources": ['
+echo "$gene_json" | mustmatch like '"key": "summary"'
+echo "$gene_json" | mustmatch like '"key": "identity"'
+echo "$gene_json" | mustmatch like '"label": "NCBI Gene"'
 ```
 
 ```bash
@@ -99,16 +105,9 @@ echo "$search_out" | mustmatch like 'Use `biomcp get diagnostic "ITPW02232- TC40
 
 ## JSON section_sources — Gene, Drug, Disease
 
-Core entity types must include a non-empty `_meta.section_sources` array.
-
-```bash
-bin="${BIOMCP_BIN:-biomcp}"
-gene_json="$("$bin" get gene CFTR all --json)"
-echo "$gene_json" | mustmatch like '"section_sources": ['
-echo "$gene_json" | mustmatch like '"key": "summary"'
-echo "$gene_json" | mustmatch like '"key": "identity"'
-echo "$gene_json" | mustmatch like '"label": "NCBI Gene"'
-```
+Core entity types must include a non-empty `_meta.section_sources` array. The
+gene markdown and JSON assertions intentionally stay paired in the earlier
+`get gene CFTR all` block so the spec gate proves the combined runtime path.
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"

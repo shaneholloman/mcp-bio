@@ -1,0 +1,1870 @@
+{
+  "experiment": "25-gene-all-latency",
+  "input": "architecture/experiments/25-gene-all-latency/results/harden_regression_control_rerun.json",
+  "section_matrix_ms": {
+    "harden-rerun": {
+      "json": {
+        "civic": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 231,
+            "p95_ms": 232.8,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 0.0,
+            "outcomes": {
+              "empty": 5
+            },
+            "p50_ms": 208,
+            "p95_ms": 209.6,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 227,
+            "p95_ms": 231.8,
+            "runs_observed": 5
+          }
+        },
+        "clingen": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 1758,
+            "p95_ms": 1773.0,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 1686,
+            "p95_ms": 1918.8,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 1705,
+            "p95_ms": 1964.0,
+            "runs_observed": 5
+          }
+        },
+        "clinical_context": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 187,
+            "p95_ms": 191.0,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 187,
+            "p95_ms": 195.2,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 183,
+            "p95_ms": 196.4,
+            "runs_observed": 5
+          }
+        },
+        "constraint": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 109,
+            "p95_ms": 110.8,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 112,
+            "p95_ms": 937.6,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 114,
+            "p95_ms": 192.2,
+            "runs_observed": 5
+          }
+        },
+        "druggability": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 633,
+            "p95_ms": 635.8,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 637,
+            "p95_ms": 638.0,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 638,
+            "p95_ms": 643.0,
+            "runs_observed": 5
+          }
+        },
+        "enrichr": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 457,
+            "p95_ms": 458.6,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 449,
+            "p95_ms": 456.8,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 524,
+            "p95_ms": 555.0,
+            "runs_observed": 5
+          }
+        },
+        "expression": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 285,
+            "p95_ms": 467.6,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 291,
+            "p95_ms": 377.8,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 363,
+            "p95_ms": 453.4,
+            "runs_observed": 5
+          }
+        },
+        "go": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 2127,
+            "p95_ms": 3018.2,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 508,
+            "p95_ms": 516.4,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 525,
+            "p95_ms": 529.0,
+            "runs_observed": 5
+          }
+        },
+        "hpa": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 755,
+            "p95_ms": 756.0,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 694,
+            "p95_ms": 700.6,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 700,
+            "p95_ms": 704.6,
+            "runs_observed": 5
+          }
+        },
+        "interactions": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 321,
+            "p95_ms": 601.4,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 309,
+            "p95_ms": 319.8,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 319,
+            "p95_ms": 323.8,
+            "runs_observed": 5
+          }
+        },
+        "mygene": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 263,
+            "p95_ms": 270.8,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 260,
+            "p95_ms": 265.0,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 259,
+            "p95_ms": 300.4,
+            "runs_observed": 5
+          }
+        },
+        "pathways": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 125,
+            "p95_ms": 127.8,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 106,
+            "p95_ms": 109.8,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 179,
+            "p95_ms": 185.0,
+            "runs_observed": 5
+          }
+        },
+        "protein": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 484,
+            "p95_ms": 490.0,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 539,
+            "p95_ms": 546.2,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 602,
+            "p95_ms": 605.4,
+            "runs_observed": 5
+          }
+        }
+      },
+      "markdown": {
+        "civic": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 234,
+            "p95_ms": 235.8,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 0.0,
+            "outcomes": {
+              "empty": 5
+            },
+            "p50_ms": 202,
+            "p95_ms": 207.2,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 225,
+            "p95_ms": 227.4,
+            "runs_observed": 5
+          }
+        },
+        "clingen": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 1805,
+            "p95_ms": 1856.4,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 1691,
+            "p95_ms": 1787.8,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 1784,
+            "p95_ms": 1862.0,
+            "runs_observed": 5
+          }
+        },
+        "clinical_context": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 181,
+            "p95_ms": 193.6,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 184,
+            "p95_ms": 190.4,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 192,
+            "p95_ms": 196.6,
+            "runs_observed": 5
+          }
+        },
+        "constraint": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 114,
+            "p95_ms": 149.6,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 113,
+            "p95_ms": 115.4,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 112,
+            "p95_ms": 116.8,
+            "runs_observed": 5
+          }
+        },
+        "druggability": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 637,
+            "p95_ms": 641.0,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 638,
+            "p95_ms": 642.0,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 640,
+            "p95_ms": 643.8,
+            "runs_observed": 5
+          }
+        },
+        "enrichr": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 458,
+            "p95_ms": 665.8,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 450,
+            "p95_ms": 463.4,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 525,
+            "p95_ms": 529.6,
+            "runs_observed": 5
+          }
+        },
+        "expression": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 287,
+            "p95_ms": 437.4,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 277,
+            "p95_ms": 481.4,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 464,
+            "p95_ms": 484.0,
+            "runs_observed": 5
+          }
+        },
+        "go": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 8260,
+            "p95_ms": 19548.0,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 520,
+            "p95_ms": 1223.8,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 519,
+            "p95_ms": 523.8,
+            "runs_observed": 5
+          }
+        },
+        "hpa": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 752,
+            "p95_ms": 759.6,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 693,
+            "p95_ms": 701.4,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 700,
+            "p95_ms": 714.6,
+            "runs_observed": 5
+          }
+        },
+        "interactions": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 317,
+            "p95_ms": 326.2,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 316,
+            "p95_ms": 336.6,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 332,
+            "p95_ms": 341.2,
+            "runs_observed": 5
+          }
+        },
+        "mygene": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 266,
+            "p95_ms": 301.8,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 261,
+            "p95_ms": 271.2,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 263,
+            "p95_ms": 277.4,
+            "runs_observed": 5
+          }
+        },
+        "pathways": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 122,
+            "p95_ms": 133.6,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 100,
+            "p95_ms": 114.0,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 183,
+            "p95_ms": 7323.0,
+            "runs_observed": 5
+          }
+        },
+        "protein": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 484,
+            "p95_ms": 486.6,
+            "runs_observed": 5
+          },
+          "CFTR": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 534,
+            "p95_ms": 547.4,
+            "runs_observed": 5
+          },
+          "TP53": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 608,
+            "p95_ms": 617.2,
+            "runs_observed": 5
+          }
+        }
+      }
+    }
+  },
+  "section_rows": [
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 8260,
+      "p95_ms": 19548.0,
+      "runs_observed": 5,
+      "section": "go"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 1805,
+      "p95_ms": 1856.4,
+      "runs_observed": 5,
+      "section": "clingen"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 752,
+      "p95_ms": 759.6,
+      "runs_observed": 5,
+      "section": "hpa"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 637,
+      "p95_ms": 641.0,
+      "runs_observed": 5,
+      "section": "druggability"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 484,
+      "p95_ms": 486.6,
+      "runs_observed": 5,
+      "section": "protein"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 458,
+      "p95_ms": 665.8,
+      "runs_observed": 5,
+      "section": "enrichr"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 317,
+      "p95_ms": 326.2,
+      "runs_observed": 5,
+      "section": "interactions"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 287,
+      "p95_ms": 437.4,
+      "runs_observed": 5,
+      "section": "expression"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 266,
+      "p95_ms": 301.8,
+      "runs_observed": 5,
+      "section": "mygene"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 234,
+      "p95_ms": 235.8,
+      "runs_observed": 5,
+      "section": "civic"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 181,
+      "p95_ms": 193.6,
+      "runs_observed": 5,
+      "section": "clinical_context"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 122,
+      "p95_ms": 133.6,
+      "runs_observed": 5,
+      "section": "pathways"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 114,
+      "p95_ms": 149.6,
+      "runs_observed": 5,
+      "section": "constraint"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 2127,
+      "p95_ms": 3018.2,
+      "runs_observed": 5,
+      "section": "go"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 1758,
+      "p95_ms": 1773.0,
+      "runs_observed": 5,
+      "section": "clingen"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 755,
+      "p95_ms": 756.0,
+      "runs_observed": 5,
+      "section": "hpa"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 633,
+      "p95_ms": 635.8,
+      "runs_observed": 5,
+      "section": "druggability"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 484,
+      "p95_ms": 490.0,
+      "runs_observed": 5,
+      "section": "protein"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 457,
+      "p95_ms": 458.6,
+      "runs_observed": 5,
+      "section": "enrichr"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 321,
+      "p95_ms": 601.4,
+      "runs_observed": 5,
+      "section": "interactions"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 285,
+      "p95_ms": 467.6,
+      "runs_observed": 5,
+      "section": "expression"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 263,
+      "p95_ms": 270.8,
+      "runs_observed": 5,
+      "section": "mygene"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 231,
+      "p95_ms": 232.8,
+      "runs_observed": 5,
+      "section": "civic"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 187,
+      "p95_ms": 191.0,
+      "runs_observed": 5,
+      "section": "clinical_context"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 125,
+      "p95_ms": 127.8,
+      "runs_observed": 5,
+      "section": "pathways"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 109,
+      "p95_ms": 110.8,
+      "runs_observed": 5,
+      "section": "constraint"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 1784,
+      "p95_ms": 1862.0,
+      "runs_observed": 5,
+      "section": "clingen"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 700,
+      "p95_ms": 714.6,
+      "runs_observed": 5,
+      "section": "hpa"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 640,
+      "p95_ms": 643.8,
+      "runs_observed": 5,
+      "section": "druggability"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 608,
+      "p95_ms": 617.2,
+      "runs_observed": 5,
+      "section": "protein"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 525,
+      "p95_ms": 529.6,
+      "runs_observed": 5,
+      "section": "enrichr"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 519,
+      "p95_ms": 523.8,
+      "runs_observed": 5,
+      "section": "go"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 464,
+      "p95_ms": 484.0,
+      "runs_observed": 5,
+      "section": "expression"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 332,
+      "p95_ms": 341.2,
+      "runs_observed": 5,
+      "section": "interactions"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 263,
+      "p95_ms": 277.4,
+      "runs_observed": 5,
+      "section": "mygene"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 225,
+      "p95_ms": 227.4,
+      "runs_observed": 5,
+      "section": "civic"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 192,
+      "p95_ms": 196.6,
+      "runs_observed": 5,
+      "section": "clinical_context"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 183,
+      "p95_ms": 7323.0,
+      "runs_observed": 5,
+      "section": "pathways"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 112,
+      "p95_ms": 116.8,
+      "runs_observed": 5,
+      "section": "constraint"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 1705,
+      "p95_ms": 1964.0,
+      "runs_observed": 5,
+      "section": "clingen"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 700,
+      "p95_ms": 704.6,
+      "runs_observed": 5,
+      "section": "hpa"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 638,
+      "p95_ms": 643.0,
+      "runs_observed": 5,
+      "section": "druggability"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 602,
+      "p95_ms": 605.4,
+      "runs_observed": 5,
+      "section": "protein"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 525,
+      "p95_ms": 529.0,
+      "runs_observed": 5,
+      "section": "go"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 524,
+      "p95_ms": 555.0,
+      "runs_observed": 5,
+      "section": "enrichr"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 363,
+      "p95_ms": 453.4,
+      "runs_observed": 5,
+      "section": "expression"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 319,
+      "p95_ms": 323.8,
+      "runs_observed": 5,
+      "section": "interactions"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 259,
+      "p95_ms": 300.4,
+      "runs_observed": 5,
+      "section": "mygene"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 227,
+      "p95_ms": 231.8,
+      "runs_observed": 5,
+      "section": "civic"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 183,
+      "p95_ms": 196.4,
+      "runs_observed": 5,
+      "section": "clinical_context"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 179,
+      "p95_ms": 185.0,
+      "runs_observed": 5,
+      "section": "pathways"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "TP53",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 114,
+      "p95_ms": 192.2,
+      "runs_observed": 5,
+      "section": "constraint"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 1691,
+      "p95_ms": 1787.8,
+      "runs_observed": 5,
+      "section": "clingen"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 693,
+      "p95_ms": 701.4,
+      "runs_observed": 5,
+      "section": "hpa"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 638,
+      "p95_ms": 642.0,
+      "runs_observed": 5,
+      "section": "druggability"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 534,
+      "p95_ms": 547.4,
+      "runs_observed": 5,
+      "section": "protein"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 520,
+      "p95_ms": 1223.8,
+      "runs_observed": 5,
+      "section": "go"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 450,
+      "p95_ms": 463.4,
+      "runs_observed": 5,
+      "section": "enrichr"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 316,
+      "p95_ms": 336.6,
+      "runs_observed": 5,
+      "section": "interactions"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 277,
+      "p95_ms": 481.4,
+      "runs_observed": 5,
+      "section": "expression"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 261,
+      "p95_ms": 271.2,
+      "runs_observed": 5,
+      "section": "mygene"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 0.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "empty": 5
+      },
+      "p50_ms": 202,
+      "p95_ms": 207.2,
+      "runs_observed": 5,
+      "section": "civic"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 184,
+      "p95_ms": 190.4,
+      "runs_observed": 5,
+      "section": "clinical_context"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 113,
+      "p95_ms": 115.4,
+      "runs_observed": 5,
+      "section": "constraint"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 100,
+      "p95_ms": 114.0,
+      "runs_observed": 5,
+      "section": "pathways"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 1686,
+      "p95_ms": 1918.8,
+      "runs_observed": 5,
+      "section": "clingen"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 694,
+      "p95_ms": 700.6,
+      "runs_observed": 5,
+      "section": "hpa"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 637,
+      "p95_ms": 638.0,
+      "runs_observed": 5,
+      "section": "druggability"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 539,
+      "p95_ms": 546.2,
+      "runs_observed": 5,
+      "section": "protein"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 508,
+      "p95_ms": 516.4,
+      "runs_observed": 5,
+      "section": "go"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 449,
+      "p95_ms": 456.8,
+      "runs_observed": 5,
+      "section": "enrichr"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 309,
+      "p95_ms": 319.8,
+      "runs_observed": 5,
+      "section": "interactions"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 291,
+      "p95_ms": 377.8,
+      "runs_observed": 5,
+      "section": "expression"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 260,
+      "p95_ms": 265.0,
+      "runs_observed": 5,
+      "section": "mygene"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 0.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "empty": 5
+      },
+      "p50_ms": 208,
+      "p95_ms": 209.6,
+      "runs_observed": 5,
+      "section": "civic"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 187,
+      "p95_ms": 195.2,
+      "runs_observed": 5,
+      "section": "clinical_context"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 112,
+      "p95_ms": 937.6,
+      "runs_observed": 5,
+      "section": "constraint"
+    },
+    {
+      "approach": "harden-rerun",
+      "completion_rate": 1.0,
+      "gene": "CFTR",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 106,
+      "p95_ms": 109.8,
+      "runs_observed": 5,
+      "section": "pathways"
+    }
+  ],
+  "summary_rows": [
+    {
+      "approach": "harden-rerun",
+      "gene": "BRAF",
+      "mode": "markdown",
+      "p50_wall_clock_ms": 8537.7,
+      "p95_wall_clock_ms": 19839.53,
+      "successful_runs": 5
+    },
+    {
+      "approach": "harden-rerun",
+      "gene": "BRAF",
+      "mode": "json",
+      "p50_wall_clock_ms": 2395.82,
+      "p95_wall_clock_ms": 3295.43,
+      "successful_runs": 5
+    },
+    {
+      "approach": "harden-rerun",
+      "gene": "TP53",
+      "mode": "markdown",
+      "p50_wall_clock_ms": 1812.15,
+      "p95_wall_clock_ms": 7880.79,
+      "successful_runs": 5
+    },
+    {
+      "approach": "harden-rerun",
+      "gene": "TP53",
+      "mode": "json",
+      "p50_wall_clock_ms": 1715.83,
+      "p95_wall_clock_ms": 1974.51,
+      "successful_runs": 5
+    },
+    {
+      "approach": "harden-rerun",
+      "gene": "CFTR",
+      "mode": "markdown",
+      "p50_wall_clock_ms": 1699.39,
+      "p95_wall_clock_ms": 1798.21,
+      "successful_runs": 5
+    },
+    {
+      "approach": "harden-rerun",
+      "gene": "CFTR",
+      "mode": "json",
+      "p50_wall_clock_ms": 1695.14,
+      "p95_wall_clock_ms": 1927.61,
+      "successful_runs": 5
+    }
+  ],
+  "wall_clock_matrix_ms": {
+    "harden-rerun": {
+      "json": {
+        "BRAF": {
+          "p50_wall_clock_ms": 2395.82,
+          "p95_wall_clock_ms": 3295.43,
+          "successful_runs": 5
+        },
+        "CFTR": {
+          "p50_wall_clock_ms": 1695.14,
+          "p95_wall_clock_ms": 1927.61,
+          "successful_runs": 5
+        },
+        "TP53": {
+          "p50_wall_clock_ms": 1715.83,
+          "p95_wall_clock_ms": 1974.51,
+          "successful_runs": 5
+        }
+      },
+      "markdown": {
+        "BRAF": {
+          "p50_wall_clock_ms": 8537.7,
+          "p95_wall_clock_ms": 19839.53,
+          "successful_runs": 5
+        },
+        "CFTR": {
+          "p50_wall_clock_ms": 1699.39,
+          "p95_wall_clock_ms": 1798.21,
+          "successful_runs": 5
+        },
+        "TP53": {
+          "p50_wall_clock_ms": 1812.15,
+          "p95_wall_clock_ms": 7880.79,
+          "successful_runs": 5
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "baseline": {
+    "env": {
+      "BIOMCP_GENE_GET_STRATEGY": "baseline"
+    },
+    "label": "baseline"
+  },
+  "candidate": {
+    "env": {},
+    "label": "opt-pass5-clingen-lookup-overlap"
+  },
+  "exe": "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+  "experiment": "25-gene-all-latency",
+  "genes": [
+    "BRAF"
+  ],
+  "results": [
+    {
+      "added_field_count": 0,
+      "baseline_json": {
+        "canonical_checksum_sha256": "0d5d568ca2caa4b3f302241d357018fc6f9f836d43cc054b05a6b8f59ae0a747",
+        "checksum_sha256": "c29c0520d8f4e0efee70bd19828dcb1cd0641df6e90b5c9883bc293df4b452fd",
+        "command": [
+          "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+          "--json",
+          "get",
+          "gene",
+          "BRAF",
+          "all"
+        ],
+        "env_overrides": {
+          "BIOMCP_GENE_GET_STRATEGY": "baseline"
+        },
+        "label": "baseline",
+        "mode": "json",
+        "output_path": "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/captures/baseline-braf-json.txt",
+        "returncode": 0,
+        "stderr_excerpt": "/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68727566336 total_bytes=982240026624\n2026-04-18T20:59:24.456334Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68722335744 total_bytes=982240026624\n2026-04-18T20:59:24.771280Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68721786880 total_bytes=982240026624\n"
+      },
+      "baseline_markdown": {
+        "checksum_sha256": "32e066deb5e3400ebcc55d20069498b7b4fc329791ddb8062bd3053cc399e01c",
+        "command": [
+          "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+          "get",
+          "gene",
+          "BRAF",
+          "all"
+        ],
+        "env_overrides": {
+          "BIOMCP_GENE_GET_STRATEGY": "baseline"
+        },
+        "label": "baseline",
+        "mode": "markdown",
+        "output_path": "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/captures/baseline-braf-markdown.txt",
+        "returncode": 0,
+        "stderr_excerpt": "/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68997255168 total_bytes=982240026624\n2026-04-18T20:59:16.083384Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68977799168 total_bytes=982240026624\n2026-04-18T20:59:16.419526Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68931448832 total_bytes=982240026624\n"
+      },
+      "cache_root": "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache",
+      "candidate_json": {
+        "canonical_checksum_sha256": "0d5d568ca2caa4b3f302241d357018fc6f9f836d43cc054b05a6b8f59ae0a747",
+        "checksum_sha256": "c29c0520d8f4e0efee70bd19828dcb1cd0641df6e90b5c9883bc293df4b452fd",
+        "command": [
+          "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+          "--json",
+          "get",
+          "gene",
+          "BRAF",
+          "all"
+        ],
+        "env_overrides": {},
+        "label": "opt-pass5-clingen-lookup-overlap",
+        "mode": "json",
+        "output_path": "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/captures/opt-pass5-clingen-lookup-overlap-braf-json.txt",
+        "returncode": 0,
+        "stderr_excerpt": "/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68719996928 total_bytes=982240026624\n2026-04-18T20:59:26.274973Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68640325632 total_bytes=982240026624\n2026-04-18T20:59:26.590206Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68623769600 total_bytes=982240026624\n"
+      },
+      "candidate_markdown": {
+        "checksum_sha256": "32e066deb5e3400ebcc55d20069498b7b4fc329791ddb8062bd3053cc399e01c",
+        "command": [
+          "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/target/release/biomcp",
+          "get",
+          "gene",
+          "BRAF",
+          "all"
+        ],
+        "env_overrides": {},
+        "label": "opt-pass5-clingen-lookup-overlap",
+        "mode": "markdown",
+        "output_path": "/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/captures/opt-pass5-clingen-lookup-overlap-braf-markdown.txt",
+        "returncode": 0,
+        "stderr_excerpt": "/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68882337792 total_bytes=982240026624\n2026-04-18T20:59:18.108407Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68882206720 total_bytes=982240026624\n2026-04-18T20:59:18.419062Z  WARN biomcp_cli::cache::manager: cache cleanup completed but free disk space is still below the configured floor cache_path=/home/ian/workspace/worktrees/225-reduce-biomcp-get-gene-symbol-all-runtime-under-30s-budget/architecture/experiments/25-gene-all-latency/work/validation/braf/cache/http min_disk_free=10% available_bytes=68881850368 total_bytes=982240026624\n"
+      },
+      "changed_field_count": 0,
+      "dropped_field_count": 0,
+      "gene": "BRAF",
+      "json_identical": true,
+      "markdown_identical": true,
+      "mismatch_count": 0,
+      "sample_diffs": []
+    }
+  ]
+}

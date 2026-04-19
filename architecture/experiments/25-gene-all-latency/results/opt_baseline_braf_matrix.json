@@ -1,0 +1,674 @@
+{
+  "experiment": "25-gene-all-latency",
+  "input": "architecture/experiments/25-gene-all-latency/results/opt_baseline_braf.json",
+  "section_matrix_ms": {
+    "opt-baseline": {
+      "json": {
+        "civic": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 224,
+            "p95_ms": 231.8,
+            "runs_observed": 5
+          }
+        },
+        "clingen": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 2902,
+            "p95_ms": 3100.6,
+            "runs_observed": 5
+          }
+        },
+        "clinical_context": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 189,
+            "p95_ms": 190.8,
+            "runs_observed": 5
+          }
+        },
+        "constraint": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 114,
+            "p95_ms": 116.6,
+            "runs_observed": 5
+          }
+        },
+        "druggability": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 636,
+            "p95_ms": 637.8,
+            "runs_observed": 5
+          }
+        },
+        "enrichr": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 463,
+            "p95_ms": 466.2,
+            "runs_observed": 5
+          }
+        },
+        "expression": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 273,
+            "p95_ms": 440.2,
+            "runs_observed": 5
+          }
+        },
+        "go": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 506,
+            "p95_ms": 513.6,
+            "runs_observed": 5
+          }
+        },
+        "hpa": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 753,
+            "p95_ms": 754.0,
+            "runs_observed": 5
+          }
+        },
+        "interactions": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 324,
+            "p95_ms": 356.6,
+            "runs_observed": 5
+          }
+        },
+        "mygene": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 261,
+            "p95_ms": 267.6,
+            "runs_observed": 5
+          }
+        },
+        "pathways": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 121,
+            "p95_ms": 130.0,
+            "runs_observed": 5
+          }
+        },
+        "protein": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 485,
+            "p95_ms": 489.8,
+            "runs_observed": 5
+          }
+        }
+      },
+      "markdown": {
+        "civic": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 217,
+            "p95_ms": 485.6,
+            "runs_observed": 5
+          }
+        },
+        "clingen": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 3084,
+            "p95_ms": 3811.0,
+            "runs_observed": 5
+          }
+        },
+        "clinical_context": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 188,
+            "p95_ms": 532.0,
+            "runs_observed": 5
+          }
+        },
+        "constraint": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 104,
+            "p95_ms": 177.0,
+            "runs_observed": 5
+          }
+        },
+        "druggability": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 637,
+            "p95_ms": 678.0,
+            "runs_observed": 5
+          }
+        },
+        "enrichr": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 468,
+            "p95_ms": 507.6,
+            "runs_observed": 5
+          }
+        },
+        "expression": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 270,
+            "p95_ms": 286.6,
+            "runs_observed": 5
+          }
+        },
+        "go": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 512,
+            "p95_ms": 700.6,
+            "runs_observed": 5
+          }
+        },
+        "hpa": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 756,
+            "p95_ms": 760.0,
+            "runs_observed": 5
+          }
+        },
+        "interactions": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 317,
+            "p95_ms": 368.2,
+            "runs_observed": 5
+          }
+        },
+        "mygene": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 254,
+            "p95_ms": 278.0,
+            "runs_observed": 5
+          }
+        },
+        "pathways": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 137,
+            "p95_ms": 152.4,
+            "runs_observed": 5
+          }
+        },
+        "protein": {
+          "BRAF": {
+            "completion_rate": 1.0,
+            "outcomes": {
+              "data": 5
+            },
+            "p50_ms": 482,
+            "p95_ms": 555.6,
+            "runs_observed": 5
+          }
+        }
+      }
+    }
+  },
+  "section_rows": [
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 3084,
+      "p95_ms": 3811.0,
+      "runs_observed": 5,
+      "section": "clingen"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 756,
+      "p95_ms": 760.0,
+      "runs_observed": 5,
+      "section": "hpa"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 637,
+      "p95_ms": 678.0,
+      "runs_observed": 5,
+      "section": "druggability"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 512,
+      "p95_ms": 700.6,
+      "runs_observed": 5,
+      "section": "go"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 482,
+      "p95_ms": 555.6,
+      "runs_observed": 5,
+      "section": "protein"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 468,
+      "p95_ms": 507.6,
+      "runs_observed": 5,
+      "section": "enrichr"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 317,
+      "p95_ms": 368.2,
+      "runs_observed": 5,
+      "section": "interactions"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 270,
+      "p95_ms": 286.6,
+      "runs_observed": 5,
+      "section": "expression"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 254,
+      "p95_ms": 278.0,
+      "runs_observed": 5,
+      "section": "mygene"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 217,
+      "p95_ms": 485.6,
+      "runs_observed": 5,
+      "section": "civic"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 188,
+      "p95_ms": 532.0,
+      "runs_observed": 5,
+      "section": "clinical_context"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 137,
+      "p95_ms": 152.4,
+      "runs_observed": 5,
+      "section": "pathways"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "markdown",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 104,
+      "p95_ms": 177.0,
+      "runs_observed": 5,
+      "section": "constraint"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 2902,
+      "p95_ms": 3100.6,
+      "runs_observed": 5,
+      "section": "clingen"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 753,
+      "p95_ms": 754.0,
+      "runs_observed": 5,
+      "section": "hpa"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 636,
+      "p95_ms": 637.8,
+      "runs_observed": 5,
+      "section": "druggability"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 506,
+      "p95_ms": 513.6,
+      "runs_observed": 5,
+      "section": "go"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 485,
+      "p95_ms": 489.8,
+      "runs_observed": 5,
+      "section": "protein"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 463,
+      "p95_ms": 466.2,
+      "runs_observed": 5,
+      "section": "enrichr"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 324,
+      "p95_ms": 356.6,
+      "runs_observed": 5,
+      "section": "interactions"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 273,
+      "p95_ms": 440.2,
+      "runs_observed": 5,
+      "section": "expression"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 261,
+      "p95_ms": 267.6,
+      "runs_observed": 5,
+      "section": "mygene"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 224,
+      "p95_ms": 231.8,
+      "runs_observed": 5,
+      "section": "civic"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 189,
+      "p95_ms": 190.8,
+      "runs_observed": 5,
+      "section": "clinical_context"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 121,
+      "p95_ms": 130.0,
+      "runs_observed": 5,
+      "section": "pathways"
+    },
+    {
+      "approach": "opt-baseline",
+      "completion_rate": 1.0,
+      "gene": "BRAF",
+      "mode": "json",
+      "outcomes": {
+        "data": 5
+      },
+      "p50_ms": 114,
+      "p95_ms": 116.6,
+      "runs_observed": 5,
+      "section": "constraint"
+    }
+  ],
+  "summary_rows": [
+    {
+      "approach": "opt-baseline",
+      "gene": "BRAF",
+      "mode": "markdown",
+      "p50_wall_clock_ms": 5101.78,
+      "p95_wall_clock_ms": 6516.67,
+      "successful_runs": 5
+    },
+    {
+      "approach": "opt-baseline",
+      "gene": "BRAF",
+      "mode": "json",
+      "p50_wall_clock_ms": 4942.09,
+      "p95_wall_clock_ms": 5166.75,
+      "successful_runs": 5
+    }
+  ],
+  "wall_clock_matrix_ms": {
+    "opt-baseline": {
+      "json": {
+        "BRAF": {
+          "p50_wall_clock_ms": 4942.09,
+          "p95_wall_clock_ms": 5166.75,
+          "successful_runs": 5
+        }
+      },
+      "markdown": {
+        "BRAF": {
+          "p50_wall_clock_ms": 5101.78,
+          "p95_wall_clock_ms": 6516.67,
+          "successful_runs": 5
+        }
+      }
+    }
+  }
+}
