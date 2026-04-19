@@ -49,12 +49,6 @@ def _parse_search_xml(body: str) -> list[dict[str, str]]:
 
 
 def medlineplus_search(query: str, *, allow_live: bool, refresh_cache: bool) -> dict[str, Any]:
-    path = CACHE_DIR / f"{slugify(query) or 'query'}.json"
-    if path.exists() and not refresh_cache:
-        cached = json.loads(path.read_text(encoding="utf-8"))
-        cached["cache_hit"] = True
-        return cached
-
     if not allow_live:
         return {
             "ok": False,
@@ -66,6 +60,12 @@ def medlineplus_search(query: str, *, allow_live: bool, refresh_cache: bool) -> 
             "cache_path": _cache_path(query),
             "error": "live fetch disabled",
         }
+
+    path = CACHE_DIR / f"{slugify(query) or 'query'}.json"
+    if path.exists() and not refresh_cache:
+        cached = json.loads(path.read_text(encoding="utf-8"))
+        cached["cache_hit"] = True
+        return cached
 
     params = urllib.parse.urlencode({"db": "healthTopics", "term": query, "retmax": "5"})
     url = f"https://wsearch.nlm.nih.gov/ws/query?{params}"
