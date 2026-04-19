@@ -52,6 +52,7 @@ def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+@lru_cache(maxsize=256)
 def compact_evidence(text: str, pattern: str, radius: int = 150) -> str:
     tokens = re.findall(r"[A-Za-z0-9]+", pattern)
     normalized_pattern = r"\W+".join(re.escape(token) for token in tokens)
