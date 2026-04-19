@@ -89,12 +89,12 @@ def build_full_scale_payload(*, allow_live: bool = True, refresh_cache: bool = F
             "and persistent result artifacts."
         ),
         "artifact_paths": {
-            "results_dir": str(RESULTS_DIR.resolve()),
-            "work_dir": str(WORK_DIR.resolve()),
-            "full_scale": str(FULL_SCALE_PATH.resolve()),
-            "regression_control": str(REGRESSION_CONTROL_PATH.resolve()),
-            "validation": str(VALIDATION_PATH.resolve()),
-            "contract_numbers": str(CONTRACT_PATH.resolve()),
+            "results_dir": str(RESULTS_DIR),
+            "work_dir": str(WORK_DIR),
+            "full_scale": str(FULL_SCALE_PATH),
+            "regression_control": str(REGRESSION_CONTROL_PATH),
+            "validation": str(VALIDATION_PATH),
+            "contract_numbers": str(CONTRACT_PATH),
         },
         "metric_definitions": {
             "expected_symptom_recall": "Lexical recall against the same expected symptom concepts used by explore.",
