@@ -24,6 +24,7 @@ def normalize_text(value: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", value.lower())).strip()
 
 
+@lru_cache(maxsize=None)
 def slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", value.lower())
 
