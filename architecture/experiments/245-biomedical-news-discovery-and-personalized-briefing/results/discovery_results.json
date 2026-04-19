@@ -1,0 +1,2872 @@
+{
+  "approach": "rss_feed_first_vs_headline_page_discovery",
+  "generated_at": "2026-04-19T12:51:42+00:00",
+  "source_matrix": [
+    {
+      "best_feed_url": "https://www.fiercebiotech.com/rss/xml",
+      "feed_entries": 25,
+      "feed_latest_age_hours": 37.31,
+      "headline_date_fields": 0,
+      "headline_items": 12,
+      "mode": "rss",
+      "page_status": 200,
+      "source_id": "fierce-biotech"
+    },
+    {
+      "best_feed_url": "https://www.fiercepharma.com/rss/xml",
+      "feed_entries": 25,
+      "feed_latest_age_hours": 50.03,
+      "headline_date_fields": 0,
+      "headline_items": 12,
+      "mode": "rss",
+      "page_status": 200,
+      "source_id": "fierce-pharma"
+    },
+    {
+      "best_feed_url": "https://www.biopharmadive.com/feeds/news/",
+      "feed_entries": 10,
+      "feed_latest_age_hours": 40.33,
+      "headline_date_fields": 4,
+      "headline_items": 25,
+      "mode": "rss",
+      "page_status": 200,
+      "source_id": "biopharma-dive"
+    },
+    {
+      "best_feed_url": "https://www.statnews.com/category/biotech/feed/",
+      "feed_entries": 20,
+      "feed_latest_age_hours": 4.36,
+      "headline_date_fields": 17,
+      "headline_items": 25,
+      "mode": "rss",
+      "page_status": 200,
+      "source_id": "stat"
+    },
+    {
+      "best_feed_url": "https://endpoints.news/feed/",
+      "feed_entries": 24,
+      "feed_latest_age_hours": 13.63,
+      "headline_date_fields": 0,
+      "headline_items": 25,
+      "mode": "rss",
+      "page_status": 200,
+      "source_id": "endpoints"
+    },
+    {
+      "best_feed_url": "https://www.genomeweb.com/feed",
+      "feed_entries": 0,
+      "feed_latest_age_hours": null,
+      "headline_date_fields": 0,
+      "headline_items": 0,
+      "mode": "blocked_or_no_discovery",
+      "page_status": 403,
+      "source_id": "genomeweb"
+    }
+  ],
+  "sources": [
+    {
+      "autodiscovered_feed_urls": [],
+      "headline_page": {
+        "date_fields": 0,
+        "deduped_candidate_links": 12,
+        "fetch": {
+          "bytes": 1927130,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 194,
+          "error": null,
+          "final_url": "https://www.fiercebiotech.com/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.fiercebiotech.com/"
+        },
+        "items": [
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "AACR: Pazdur bemoans state of FDA, warns of political influence",
+            "url": "https://www.fiercebiotech.com/biotech/fda-veteran-pazdur-bemoans-state-agency-warns-political-influence"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "A new benchmark for biotech IPOs? Kailera raises $625M",
+            "url": "https://www.fiercebiotech.com/biotech/kailera-raises-head-turning-625m-ipo-fund-obesity-pipeline"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Small pools, big ideas: Rare disease community reimagines trials",
+            "url": "https://www.fiercebiotech.com/biotech/small-pools-big-ideas-how-rare-disease-community-reimagining-clinical-trials"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "AACR: Merck unveils PD-1xVEGF bispecific data in NSCLC",
+            "url": "https://www.fiercebiotech.com/biotech/merck-debuts-pd-1xvegf-bispecific-data-nsclc-remains-tight-lipped-phase-3-plans"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "UCB strikes $1.15B deal for cell therapy biotech Neurona",
+            "url": "https://www.fiercebiotech.com/biotech/ucbs-115b-deal-neurona-touches-several-ambitions-including-strategic-expansion-advanced"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Metsera sale architect swings to Structure\u2014Chutes & Ladders",
+            "url": "https://www.fiercebiotech.com/biotech/chutes-ladders-metsera-acquisition-architect-swings-structure"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "OpenAI launches biotech-specific AI model dubbed GPT-Rosalind",
+            "url": "https://www.fiercebiotech.com/biotech/openai-launches-biotech-specific-ai-model-gpt-rosalind"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Roivant\u2019s CEO thinks China is a \u2018red herring\u2019",
+            "url": "https://www.fiercebiotech.com/biotech/roivants-ceo-thinks-china-red-herring"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "RyghtAI launches clinical trial site search engine",
+            "url": "https://www.fiercebiotech.com/cro/ryghtai-launches-free-clinical-trial-site-search-engine"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 2,
+            "title": "Cell & Gene Therapy",
+            "url": "https://www.fiercebiotech.com/keyword/cell-gene-therapy"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 2,
+            "title": "AI and Machine Learning",
+            "url": "https://www.fiercebiotech.com/ai-and-machine-learning"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 2,
+            "title": "Clinical Development",
+            "url": "https://www.fiercebiotech.com/keyword/clinical-development"
+          }
+        ],
+        "latest_age_hours": null,
+        "latest_date": null,
+        "page_url": "https://www.fiercebiotech.com/",
+        "raw_candidate_links": 17
+      },
+      "page_url": "https://www.fiercebiotech.com/",
+      "recommended_discovery_mode": "rss",
+      "rss_best": {
+        "bozo": false,
+        "bozo_exception": null,
+        "entries": 25,
+        "feed_title": "Fierce Biotech",
+        "fetch": {
+          "bytes": 20483,
+          "content_type": "application/rss+xml; charset=utf-8",
+          "elapsed_ms": 22,
+          "error": null,
+          "final_url": "https://www.fiercebiotech.com/rss/xml",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.fiercebiotech.com/rss/xml"
+        },
+        "field_counts": {
+          "link": 25,
+          "published_or_updated": 25,
+          "summary": 25,
+          "title": 25
+        },
+        "items": [
+          {
+            "link": "https://www.fiercebiotech.com/biotech/fda-veteran-pazdur-bemoans-state-agency-warns-political-influence",
+            "published": "2026-04-17T23:33:00+00:00",
+            "summary_chars": 144,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/fda-veteran-pazdur-bemoans-state-agency-warns-political-influence\" hreflang=\"en\">AACR: FDA vet Pazdur bemoans state of agency, warns of political influence and \u2018sense of anxiety\u2019</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/merck-debuts-pd-1xvegf-bispecific-data-nsclc-remains-tight-lipped-phase-3-plans",
+            "published": "2026-04-17T12:23:00+00:00",
+            "summary_chars": 272,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/merck-debuts-pd-1xvegf-bispecific-data-nsclc-remains-tight-lipped-phase-3-plans\" hreflang=\"en\">AACR: Merck unveils PD-1xVEGF bispecific data in NSCLC, remains tight-lipped on phase 3 plans</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/ucbs-115b-deal-neurona-touches-several-ambitions-including-strategic-expansion-advanced",
+            "published": "2026-04-17T13:36:00+00:00",
+            "summary_chars": 206,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/ucbs-115b-deal-neurona-touches-several-ambitions-including-strategic-expansion-advanced\" hreflang=\"en\">UCB pays $650M+ for Neurona, marking 'strategic expansion' into regenerative medicine</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/chutes-ladders-metsera-acquisition-architect-swings-structure",
+            "published": "2026-04-16T16:49:00+00:00",
+            "summary_chars": 233,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/chutes-ladders-metsera-acquisition-architect-swings-structure\" hreflang=\"en\">Chutes &amp; Ladders\u2014Metsera acquisition architect swings to Structure</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/openai-launches-biotech-specific-ai-model-gpt-rosalind",
+            "published": "2026-04-17T09:41:00+00:00",
+            "summary_chars": 197,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/openai-launches-biotech-specific-ai-model-gpt-rosalind\" hreflang=\"en\">OpenAI launches biotech-specific AI model dubbed GPT-Rosalind</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/medtech/abbott-lowers-eps-guidance-exact-sciences-buy-shares-slide",
+            "published": "2026-04-17T07:02:00+00:00",
+            "summary_chars": 65,
+            "title": "<a href=\"https://www.fiercebiotech.com/medtech/abbott-lowers-eps-guidance-exact-sciences-buy-shares-slide\" hreflang=\"en\">Abbott lowers EPS guidance on Exact Sciences buy as shares slide </a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/roivants-ceo-thinks-china-red-herring",
+            "published": "2026-04-16T11:15:00+00:00",
+            "summary_chars": 204,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/roivants-ceo-thinks-china-red-herring\" hreflang=\"en\">Roivant\u2019s CEO thinks China is a \u2018red herring\u2019</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/kailera-raises-head-turning-625m-ipo-fund-obesity-pipeline",
+            "published": "2026-04-17T04:44:00+00:00",
+            "summary_chars": 154,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/kailera-raises-head-turning-625m-ipo-fund-obesity-pipeline\" hreflang=\"en\">Kailera CEO 'knew we were in a good spot' before obesity biotech's record-breaking $625M IPO</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/small-pools-big-ideas-how-rare-disease-community-reimagining-clinical-trials",
+            "published": "2026-04-16T16:23:00+00:00",
+            "summary_chars": 187,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/small-pools-big-ideas-how-rare-disease-community-reimagining-clinical-trials\" hreflang=\"en\">Small pools, big ideas: How the rare disease community is reimagining clinical trials</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/cro/ryghtai-launches-free-clinical-trial-site-search-engine",
+            "published": "2026-04-16T13:29:00+00:00",
+            "summary_chars": 201,
+            "title": "<a href=\"https://www.fiercebiotech.com/cro/ryghtai-launches-free-clinical-trial-site-search-engine\" hreflang=\"en\">RyghtAI launches clinical site search engine to aid drug developers, CROs with trial design</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question",
+            "published": "2026-04-16T10:27:00+00:00",
+            "summary_chars": 231,
+            "title": "<a href=\"https://www.fiercebiotech.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question\" hreflang=\"en\">'Absent or trivial' effects: Anti-amyloid Alzheimer's drugs called into question once again</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/jj-pockets-25m-refund-meiragtx-struggling-eye-disease-gene-therapy",
+            "published": "2026-04-16T10:19:00+00:00",
+            "summary_chars": 233,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/jj-pockets-25m-refund-meiragtx-struggling-eye-disease-gene-therapy\" hreflang=\"en\">Johnson &amp; Johnson hands back failed eye disease gene therapy to MeiraGTx </a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/big-pharma-backed-storm-blows-56m-fundraise-launches-phase-2-sarcoma-trial",
+            "published": "2026-04-16T10:14:00+00:00",
+            "summary_chars": 131,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/big-pharma-backed-storm-blows-56m-fundraise-launches-phase-2-sarcoma-trial\" hreflang=\"en\">Pfizer\u2013backed Storm blows into $56M series C, launches phase 2 sarcoma trial</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/aligos-sells-china-rights-hpv-drug-hepatology-player-amoytop-445m-deal",
+            "published": "2026-04-16T08:46:00+00:00",
+            "summary_chars": 188,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/aligos-sells-china-rights-hpv-drug-hepatology-player-amoytop-445m-deal\" hreflang=\"en\">Aligos sells China rights to HBV drug to hepatology player Amoytop in $445M deal</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/fierce-biotech-fundraising-tracker-26",
+            "published": "2025-12-22T15:30:00+00:00",
+            "summary_chars": 113,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/fierce-biotech-fundraising-tracker-26\" hreflang=\"en\">Fierce Biotech Fundraising Tracker '26: Storm's $56M series C; Beeline's Bain-backed $300M</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/cro/rare-disease-research-and-mytomorrows-partner-rare-disease-clinical-trial-access",
+            "published": "2026-04-14T14:37:00+00:00",
+            "summary_chars": 231,
+            "title": "<a href=\"https://www.fiercebiotech.com/cro/rare-disease-research-and-mytomorrows-partner-rare-disease-clinical-trial-access\" hreflang=\"en\">Rare Disease Research, myTomorrows team up to help patients access trials</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/eying-3-approvals-coming-years-ocugens-ceo-wants-bring-gene-therapy-masses",
+            "published": "2026-04-09T16:07:00+00:00",
+            "summary_chars": 149,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/eying-3-approvals-coming-years-ocugens-ceo-wants-bring-gene-therapy-masses\" hreflang=\"en\">Eying 3 approvals in 2 years, Ocugen\u2019s CEO wants to bring gene therapy to the masses</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/medtech/qiagen-launches-latest-diagnostic-bloodstream-infections",
+            "published": "2026-04-16T07:57:00+00:00",
+            "summary_chars": 112,
+            "title": "<a href=\"https://www.fiercebiotech.com/medtech/qiagen-launches-latest-diagnostic-bloodstream-infections\" hreflang=\"en\">Qiagen launches latest diagnostic for bloodstream infections</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/biotech/early-stage-funding-slumps-toward-post-pandemic-low-piling-more-pressure-biotech-startups",
+            "published": "2026-04-16T04:28:00+00:00",
+            "summary_chars": 191,
+            "title": "<a href=\"https://www.fiercebiotech.com/biotech/early-stage-funding-slumps-toward-post-pandemic-low-piling-more-pressure-biotech-startups\" hreflang=\"en\">Early-stage funding slumps toward post-pandemic low, piling more pressure on biotech startups</a>"
+          },
+          {
+            "link": "https://www.fiercebiotech.com/pharma/fda-advisory-committee-set-weigh-taking-action-certain-unapproved-peptides",
+            "published": "2026-04-15T16:25:00+00:00",
+            "summary_chars": 166,
+            "title": "<a href=\"https://www.fiercebiotech.com/pharma/fda-advisory-committee-set-weigh-taking-action-certain-unapproved-peptides\" hreflang=\"en\">UPDATED: Heeding RFK Jr.'s call, FDA reclassifies 12 unapproved peptides ahead of advisory committee meeting</a>"
+          }
+        ],
+        "latest_age_hours": 37.31,
+        "latest_published": "2026-04-17T23:33:00+00:00",
+        "url": "https://www.fiercebiotech.com/rss/xml"
+      },
+      "rss_candidates_tested": [
+        "https://www.fiercebiotech.com/biotech/rss/xml",
+        "https://www.fiercebiotech.com/rss",
+        "https://www.fiercebiotech.com/rss/xml"
+      ],
+      "rss_results": [
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:2:751: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 5413,
+            "content_type": "text/html; charset=UTF-8",
+            "elapsed_ms": 21,
+            "error": null,
+            "final_url": "https://www.fiercebiotech.com/biotech/rss/xml",
+            "ok": false,
+            "status": 403,
+            "url": "https://www.fiercebiotech.com/biotech/rss/xml"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.fiercebiotech.com/biotech/rss/xml"
+        },
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:7:13: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 4249168,
+            "content_type": "text/html; charset=UTF-8",
+            "elapsed_ms": 320,
+            "error": null,
+            "final_url": "https://www.fiercebiotech.com/rss",
+            "ok": false,
+            "status": 404,
+            "url": "https://www.fiercebiotech.com/rss"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.fiercebiotech.com/rss"
+        },
+        {
+          "bozo": false,
+          "bozo_exception": null,
+          "entries": 25,
+          "feed_title": "Fierce Biotech",
+          "fetch": {
+            "bytes": 20483,
+            "content_type": "application/rss+xml; charset=utf-8",
+            "elapsed_ms": 22,
+            "error": null,
+            "final_url": "https://www.fiercebiotech.com/rss/xml",
+            "ok": true,
+            "status": 200,
+            "url": "https://www.fiercebiotech.com/rss/xml"
+          },
+          "field_counts": {
+            "link": 25,
+            "published_or_updated": 25,
+            "summary": 25,
+            "title": 25
+          },
+          "items": [
+            {
+              "link": "https://www.fiercebiotech.com/biotech/fda-veteran-pazdur-bemoans-state-agency-warns-political-influence",
+              "published": "2026-04-17T23:33:00+00:00",
+              "summary_chars": 144,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/fda-veteran-pazdur-bemoans-state-agency-warns-political-influence\" hreflang=\"en\">AACR: FDA vet Pazdur bemoans state of agency, warns of political influence and \u2018sense of anxiety\u2019</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/merck-debuts-pd-1xvegf-bispecific-data-nsclc-remains-tight-lipped-phase-3-plans",
+              "published": "2026-04-17T12:23:00+00:00",
+              "summary_chars": 272,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/merck-debuts-pd-1xvegf-bispecific-data-nsclc-remains-tight-lipped-phase-3-plans\" hreflang=\"en\">AACR: Merck unveils PD-1xVEGF bispecific data in NSCLC, remains tight-lipped on phase 3 plans</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/ucbs-115b-deal-neurona-touches-several-ambitions-including-strategic-expansion-advanced",
+              "published": "2026-04-17T13:36:00+00:00",
+              "summary_chars": 206,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/ucbs-115b-deal-neurona-touches-several-ambitions-including-strategic-expansion-advanced\" hreflang=\"en\">UCB pays $650M+ for Neurona, marking 'strategic expansion' into regenerative medicine</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/chutes-ladders-metsera-acquisition-architect-swings-structure",
+              "published": "2026-04-16T16:49:00+00:00",
+              "summary_chars": 233,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/chutes-ladders-metsera-acquisition-architect-swings-structure\" hreflang=\"en\">Chutes &amp; Ladders\u2014Metsera acquisition architect swings to Structure</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/openai-launches-biotech-specific-ai-model-gpt-rosalind",
+              "published": "2026-04-17T09:41:00+00:00",
+              "summary_chars": 197,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/openai-launches-biotech-specific-ai-model-gpt-rosalind\" hreflang=\"en\">OpenAI launches biotech-specific AI model dubbed GPT-Rosalind</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/medtech/abbott-lowers-eps-guidance-exact-sciences-buy-shares-slide",
+              "published": "2026-04-17T07:02:00+00:00",
+              "summary_chars": 65,
+              "title": "<a href=\"https://www.fiercebiotech.com/medtech/abbott-lowers-eps-guidance-exact-sciences-buy-shares-slide\" hreflang=\"en\">Abbott lowers EPS guidance on Exact Sciences buy as shares slide </a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/roivants-ceo-thinks-china-red-herring",
+              "published": "2026-04-16T11:15:00+00:00",
+              "summary_chars": 204,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/roivants-ceo-thinks-china-red-herring\" hreflang=\"en\">Roivant\u2019s CEO thinks China is a \u2018red herring\u2019</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/kailera-raises-head-turning-625m-ipo-fund-obesity-pipeline",
+              "published": "2026-04-17T04:44:00+00:00",
+              "summary_chars": 154,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/kailera-raises-head-turning-625m-ipo-fund-obesity-pipeline\" hreflang=\"en\">Kailera CEO 'knew we were in a good spot' before obesity biotech's record-breaking $625M IPO</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/small-pools-big-ideas-how-rare-disease-community-reimagining-clinical-trials",
+              "published": "2026-04-16T16:23:00+00:00",
+              "summary_chars": 187,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/small-pools-big-ideas-how-rare-disease-community-reimagining-clinical-trials\" hreflang=\"en\">Small pools, big ideas: How the rare disease community is reimagining clinical trials</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/cro/ryghtai-launches-free-clinical-trial-site-search-engine",
+              "published": "2026-04-16T13:29:00+00:00",
+              "summary_chars": 201,
+              "title": "<a href=\"https://www.fiercebiotech.com/cro/ryghtai-launches-free-clinical-trial-site-search-engine\" hreflang=\"en\">RyghtAI launches clinical site search engine to aid drug developers, CROs with trial design</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question",
+              "published": "2026-04-16T10:27:00+00:00",
+              "summary_chars": 231,
+              "title": "<a href=\"https://www.fiercebiotech.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question\" hreflang=\"en\">'Absent or trivial' effects: Anti-amyloid Alzheimer's drugs called into question once again</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/jj-pockets-25m-refund-meiragtx-struggling-eye-disease-gene-therapy",
+              "published": "2026-04-16T10:19:00+00:00",
+              "summary_chars": 233,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/jj-pockets-25m-refund-meiragtx-struggling-eye-disease-gene-therapy\" hreflang=\"en\">Johnson &amp; Johnson hands back failed eye disease gene therapy to MeiraGTx </a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/big-pharma-backed-storm-blows-56m-fundraise-launches-phase-2-sarcoma-trial",
+              "published": "2026-04-16T10:14:00+00:00",
+              "summary_chars": 131,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/big-pharma-backed-storm-blows-56m-fundraise-launches-phase-2-sarcoma-trial\" hreflang=\"en\">Pfizer\u2013backed Storm blows into $56M series C, launches phase 2 sarcoma trial</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/aligos-sells-china-rights-hpv-drug-hepatology-player-amoytop-445m-deal",
+              "published": "2026-04-16T08:46:00+00:00",
+              "summary_chars": 188,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/aligos-sells-china-rights-hpv-drug-hepatology-player-amoytop-445m-deal\" hreflang=\"en\">Aligos sells China rights to HBV drug to hepatology player Amoytop in $445M deal</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/fierce-biotech-fundraising-tracker-26",
+              "published": "2025-12-22T15:30:00+00:00",
+              "summary_chars": 113,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/fierce-biotech-fundraising-tracker-26\" hreflang=\"en\">Fierce Biotech Fundraising Tracker '26: Storm's $56M series C; Beeline's Bain-backed $300M</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/cro/rare-disease-research-and-mytomorrows-partner-rare-disease-clinical-trial-access",
+              "published": "2026-04-14T14:37:00+00:00",
+              "summary_chars": 231,
+              "title": "<a href=\"https://www.fiercebiotech.com/cro/rare-disease-research-and-mytomorrows-partner-rare-disease-clinical-trial-access\" hreflang=\"en\">Rare Disease Research, myTomorrows team up to help patients access trials</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/eying-3-approvals-coming-years-ocugens-ceo-wants-bring-gene-therapy-masses",
+              "published": "2026-04-09T16:07:00+00:00",
+              "summary_chars": 149,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/eying-3-approvals-coming-years-ocugens-ceo-wants-bring-gene-therapy-masses\" hreflang=\"en\">Eying 3 approvals in 2 years, Ocugen\u2019s CEO wants to bring gene therapy to the masses</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/medtech/qiagen-launches-latest-diagnostic-bloodstream-infections",
+              "published": "2026-04-16T07:57:00+00:00",
+              "summary_chars": 112,
+              "title": "<a href=\"https://www.fiercebiotech.com/medtech/qiagen-launches-latest-diagnostic-bloodstream-infections\" hreflang=\"en\">Qiagen launches latest diagnostic for bloodstream infections</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/biotech/early-stage-funding-slumps-toward-post-pandemic-low-piling-more-pressure-biotech-startups",
+              "published": "2026-04-16T04:28:00+00:00",
+              "summary_chars": 191,
+              "title": "<a href=\"https://www.fiercebiotech.com/biotech/early-stage-funding-slumps-toward-post-pandemic-low-piling-more-pressure-biotech-startups\" hreflang=\"en\">Early-stage funding slumps toward post-pandemic low, piling more pressure on biotech startups</a>"
+            },
+            {
+              "link": "https://www.fiercebiotech.com/pharma/fda-advisory-committee-set-weigh-taking-action-certain-unapproved-peptides",
+              "published": "2026-04-15T16:25:00+00:00",
+              "summary_chars": 166,
+              "title": "<a href=\"https://www.fiercebiotech.com/pharma/fda-advisory-committee-set-weigh-taking-action-certain-unapproved-peptides\" hreflang=\"en\">UPDATED: Heeding RFK Jr.'s call, FDA reclassifies 12 unapproved peptides ahead of advisory committee meeting</a>"
+            }
+          ],
+          "latest_age_hours": 37.31,
+          "latest_published": "2026-04-17T23:33:00+00:00",
+          "url": "https://www.fiercebiotech.com/rss/xml"
+        }
+      ],
+      "source_id": "fierce-biotech",
+      "source_name": "Fierce Biotech"
+    },
+    {
+      "autodiscovered_feed_urls": [],
+      "headline_page": {
+        "date_fields": 0,
+        "deduped_candidate_links": 12,
+        "fetch": {
+          "bytes": 1923158,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 194,
+          "error": null,
+          "final_url": "https://www.fiercepharma.com/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.fiercepharma.com/"
+        },
+        "items": [
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "More transparency, evidence needed for accelerated nods: ICER",
+            "url": "https://www.fiercepharma.com/pharma/fda-should-increase-transparency-and-bolster-evidence-needed-accelerated-drug-approvals-icer"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "In Lilly patent spat, appeals court revives $177M verdict to Teva",
+            "url": "https://www.fiercepharma.com/pharma/tevas-migraine-patent-spat-lilly-federal-circuit-reverses-prior-loss-ajovy"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Astellas, GSK-Hansoh, Daiichi\u2014Fierce Pharma Asia",
+            "url": "https://www.fiercepharma.com/pharma/astellas-stem-cell-therapy-rethink-gsk-bullish-adc-plan-daiichi-otc-sale"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "BIO comes out swinging with 'Fight of Our Lives' campaign",
+            "url": "https://www.fiercepharma.com/marketing/bio-comes-out-swinging-fight-our-lives-campaign-industrys-50th-birthday"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Verily helps patients 'Make it Make Sense' in new campaign",
+            "url": "https://www.fiercepharma.com/marketing/verily-health-simplifies-medical-jargon-alphabet-soup-ai-powered-app-new-campaign"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Regulatory tracker: GSK's Blenrep gets all-clear in NICE guidance",
+            "url": "https://www.fiercepharma.com/pharma/fierce-pharma-regulatory-tracker-2026"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Anti-amyloid Alzheimer's drugs show 'trivial' effects: report",
+            "url": "https://www.fiercepharma.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Roche to launch another Elevidys study, eying EU approval",
+            "url": "https://www.fiercepharma.com/pharma/roche-launch-another-elevidys-study-after-eu-rejection-duchenne-gene-therapy"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Lilly answers FDA's call for more Foundayo safety information",
+            "url": "https://www.fiercepharma.com/pharma/lilly-answers-fdas-call-more-foundayo-safety-info-plotting-diabetes-filing-parallel"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Omnicom brews Olixir from FCB Health, rebranding storied agency",
+            "url": "https://www.fiercepharma.com/marketing/omnicom-brews-olixir-fcb-health-rebranding-storied-agency-after-interpublic-takeover"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 2,
+            "title": "Cell & Gene Therapy",
+            "url": "https://www.fiercepharma.com/keyword/cell-gene-therapy"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 2,
+            "title": "AI and Machine Learning",
+            "url": "https://www.fiercepharma.com/ai-and-machine-learning"
+          }
+        ],
+        "latest_age_hours": null,
+        "latest_date": null,
+        "page_url": "https://www.fiercepharma.com/",
+        "raw_candidate_links": 14
+      },
+      "page_url": "https://www.fiercepharma.com/",
+      "recommended_discovery_mode": "rss",
+      "rss_best": {
+        "bozo": false,
+        "bozo_exception": null,
+        "entries": 25,
+        "feed_title": "Fierce Pharma",
+        "fetch": {
+          "bytes": 21711,
+          "content_type": "application/rss+xml; charset=utf-8",
+          "elapsed_ms": 81,
+          "error": null,
+          "final_url": "https://www.fiercepharma.com/rss/xml",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.fiercepharma.com/rss/xml"
+        },
+        "field_counts": {
+          "link": 25,
+          "published_or_updated": 25,
+          "summary": 25,
+          "title": 25
+        },
+        "items": [
+          {
+            "link": "https://www.fiercepharma.com/pharma/fda-should-increase-transparency-and-bolster-evidence-needed-accelerated-drug-approvals-icer",
+            "published": "2026-04-17T10:50:00+00:00",
+            "summary_chars": 245,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/fda-should-increase-transparency-and-bolster-evidence-needed-accelerated-drug-approvals-icer\" hreflang=\"en\">FDA's accelerated approval pathway needs stronger transparency, evidence standards: ICER</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/tevas-migraine-patent-spat-lilly-federal-circuit-reverses-prior-loss-ajovy",
+            "published": "2026-04-17T09:53:00+00:00",
+            "summary_chars": 138,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/tevas-migraine-patent-spat-lilly-federal-circuit-reverses-prior-loss-ajovy\" hreflang=\"en\">Teva scores in appeal as court revives $177M verdict against Lilly in migraine patent spat</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/astellas-stem-cell-therapy-rethink-gsk-bullish-adc-plan-daiichi-otc-sale",
+            "published": "2026-04-17T08:48:00+00:00",
+            "summary_chars": 215,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/astellas-stem-cell-therapy-rethink-gsk-bullish-adc-plan-daiichi-otc-sale\" hreflang=\"en\">Fierce Pharma Asia\u2014Astellas\u2019 stem cell therapy rethink; GSK\u2019s bullish ADC plan; Daiichi\u2019s OTC sale</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/marketing/bio-comes-out-swinging-fight-our-lives-campaign-industrys-50th-birthday",
+            "published": "2026-04-17T06:18:00+00:00",
+            "summary_chars": 221,
+            "title": "<a href=\"https://www.fiercepharma.com/marketing/bio-comes-out-swinging-fight-our-lives-campaign-industrys-50th-birthday\" hreflang=\"en\">BIO comes out swinging with 'Fight of Our Lives' campaign for the industry\u2019s 50th birthday</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/marketing/verily-health-simplifies-medical-jargon-alphabet-soup-ai-powered-app-new-campaign",
+            "published": "2026-04-16T15:52:00+00:00",
+            "summary_chars": 151,
+            "title": "<a href=\"https://www.fiercepharma.com/marketing/verily-health-simplifies-medical-jargon-alphabet-soup-ai-powered-app-new-campaign\" hreflang=\"en\">Verily Health simplifies medical jargon alphabet soup with AI-powered app in new campaign</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/manufacturing/viatris-extended-release-xanax-and-tevas-blood-pressure-patch-hit-separate-recalls",
+            "published": "2026-04-16T14:39:00+00:00",
+            "summary_chars": 234,
+            "title": "<a href=\"https://www.fiercepharma.com/manufacturing/viatris-extended-release-xanax-and-tevas-blood-pressure-patch-hit-separate-recalls\" hreflang=\"en\">Viatris, Teva kick off separate recalls over dissolution, raw material issues</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/fierce-pharma-regulatory-tracker-2026",
+            "published": "2026-01-02T08:07:00+00:00",
+            "summary_chars": 266,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/fierce-pharma-regulatory-tracker-2026\" hreflang=\"en\">Regulatory tracker: GSK's Blenrep gets all-clear in NICE final guidance</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question",
+            "published": "2026-04-16T10:27:00+00:00",
+            "summary_chars": 231,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question\" hreflang=\"en\">'Absent or trivial' effects: Anti-amyloid Alzheimer's drugs called into question once again</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/roche-launch-another-elevidys-study-after-eu-rejection-duchenne-gene-therapy",
+            "published": "2026-04-16T09:40:00+00:00",
+            "summary_chars": 216,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/roche-launch-another-elevidys-study-after-eu-rejection-duchenne-gene-therapy\" hreflang=\"en\">Roche to launch another Elevidys study after EU rejection of Duchenne gene therapy</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/lilly-answers-fdas-call-more-foundayo-safety-info-plotting-diabetes-filing-parallel",
+            "published": "2026-04-16T09:26:00+00:00",
+            "summary_chars": 236,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/lilly-answers-fdas-call-more-foundayo-safety-info-plotting-diabetes-filing-parallel\" hreflang=\"en\">Lilly answers FDA's call for more Foundayo safety info, plotting diabetes filing in parallel</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/marketing/omnicom-brews-olixir-fcb-health-rebranding-storied-agency-after-interpublic-takeover",
+            "published": "2026-04-16T08:02:00+00:00",
+            "summary_chars": 185,
+            "title": "<a href=\"https://www.fiercepharma.com/marketing/omnicom-brews-olixir-fcb-health-rebranding-storied-agency-after-interpublic-takeover\" hreflang=\"en\">Omnicom brews Olixir from FCB Health, rebranding storied agency after Interpublic takeover</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/fda-advisory-committee-set-weigh-taking-action-certain-unapproved-peptides",
+            "published": "2026-04-15T16:25:00+00:00",
+            "summary_chars": 166,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/fda-advisory-committee-set-weigh-taking-action-certain-unapproved-peptides\" hreflang=\"en\">UPDATED: Heeding RFK Jr.'s call, FDA reclassifies 12 unapproved peptides ahead of advisory committee meeting</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/industrys-latest-otc-pivot-daiichi-sankyo-lines-15b-consumer-health-unit-sale-beverage-giant",
+            "published": "2026-04-15T15:10:00+00:00",
+            "summary_chars": 255,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/industrys-latest-otc-pivot-daiichi-sankyo-lines-15b-consumer-health-unit-sale-beverage-giant\" hreflang=\"en\">In industry's latest OTC pivot, Daiichi Sankyo lines up $1.5B consumer health unit sale to beverage giant Suntory</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/gilead-global-fund-widen-global-yeztugo-access-agreement-msf-says-supply-not-nearly-enough",
+            "published": "2026-04-15T11:16:00+00:00",
+            "summary_chars": 219,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/gilead-global-fund-widen-global-yeztugo-access-agreement-msf-says-supply-not-nearly-enough\" hreflang=\"en\">Gilead widens global Yeztugo access agreement, but MSF says supply is 'not nearly enough'</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/ai-and-machine-learning/novartis-ceo-vas-narasimhan-joins-anthropic-board-pharmas-link-ai-deepens",
+            "published": "2026-04-15T10:14:00+00:00",
+            "summary_chars": 168,
+            "title": "<a href=\"https://www.fiercepharma.com/ai-and-machine-learning/novartis-ceo-vas-narasimhan-joins-anthropic-board-pharmas-link-ai-deepens\" hreflang=\"en\">Novartis CEO Vas Narasimhan joins Anthropic\u2019s board as biopharma\u2019s ties to AI deepen</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/manufacturing/astellas-manufacturing-chief-looks-supply-bridging-research-production-north-star",
+            "published": "2026-04-15T09:51:00+00:00",
+            "summary_chars": 249,
+            "title": "<a href=\"https://www.fiercepharma.com/manufacturing/astellas-manufacturing-chief-looks-supply-bridging-research-production-north-star\" hreflang=\"en\">Astellas manufacturing chief views reliable supply, bridging research as his production 'north star'</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/marketing/teva-launches-new-online-schizophrenia-community-project",
+            "published": "2026-04-15T09:24:00+00:00",
+            "summary_chars": 216,
+            "title": "<a href=\"https://www.fiercepharma.com/marketing/teva-launches-new-online-schizophrenia-community-project\" hreflang=\"en\">Teva launches new online schizophrenia community project </a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/marketing/pfizer-recruits-former-angel-latest-mission-against-cancer",
+            "published": "2026-04-15T09:46:00+00:00",
+            "summary_chars": 169,
+            "title": "<a href=\"https://www.fiercepharma.com/marketing/pfizer-recruits-former-angel-latest-mission-against-cancer\" hreflang=\"en\">Pfizer recruits former Angel Lucy Liu for latest mission against cancer</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/marketing/ionis-method-madness-its-drug-name-tournament-2026-win",
+            "published": "2026-04-15T04:18:00+00:00",
+            "summary_chars": 235,
+            "title": "<a href=\"https://www.fiercepharma.com/marketing/ionis-method-madness-its-drug-name-tournament-2026-win\" hreflang=\"en\">Ionis exec shares method to the Madness after 2026 Drug Name Tournament win</a>"
+          },
+          {
+            "link": "https://www.fiercepharma.com/pharma/landmark-fsgs-nod-hand-travere-plots-path-grabbing-filsparis-3b-us-opportunity",
+            "published": "2026-04-14T17:27:00+00:00",
+            "summary_chars": 184,
+            "title": "<a href=\"https://www.fiercepharma.com/pharma/landmark-fsgs-nod-hand-travere-plots-path-grabbing-filsparis-3b-us-opportunity\" hreflang=\"en\">Travere maps course for Filspari's $3B US opportunity after landmark rare disease nod</a>"
+          }
+        ],
+        "latest_age_hours": 50.03,
+        "latest_published": "2026-04-17T10:50:00+00:00",
+        "url": "https://www.fiercepharma.com/rss/xml"
+      },
+      "rss_candidates_tested": [
+        "https://www.fiercepharma.com/pharma/rss/xml",
+        "https://www.fiercepharma.com/rss",
+        "https://www.fiercepharma.com/rss/xml"
+      ],
+      "rss_results": [
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:2:751: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 5430,
+            "content_type": "text/html; charset=UTF-8",
+            "elapsed_ms": 19,
+            "error": null,
+            "final_url": "https://www.fiercepharma.com/pharma/rss/xml",
+            "ok": false,
+            "status": 403,
+            "url": "https://www.fiercepharma.com/pharma/rss/xml"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.fiercepharma.com/pharma/rss/xml"
+        },
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:2:751: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 5376,
+            "content_type": "text/html; charset=UTF-8",
+            "elapsed_ms": 76,
+            "error": null,
+            "final_url": "https://www.fiercepharma.com/rss",
+            "ok": false,
+            "status": 403,
+            "url": "https://www.fiercepharma.com/rss"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.fiercepharma.com/rss"
+        },
+        {
+          "bozo": false,
+          "bozo_exception": null,
+          "entries": 25,
+          "feed_title": "Fierce Pharma",
+          "fetch": {
+            "bytes": 21711,
+            "content_type": "application/rss+xml; charset=utf-8",
+            "elapsed_ms": 81,
+            "error": null,
+            "final_url": "https://www.fiercepharma.com/rss/xml",
+            "ok": true,
+            "status": 200,
+            "url": "https://www.fiercepharma.com/rss/xml"
+          },
+          "field_counts": {
+            "link": 25,
+            "published_or_updated": 25,
+            "summary": 25,
+            "title": 25
+          },
+          "items": [
+            {
+              "link": "https://www.fiercepharma.com/pharma/fda-should-increase-transparency-and-bolster-evidence-needed-accelerated-drug-approvals-icer",
+              "published": "2026-04-17T10:50:00+00:00",
+              "summary_chars": 245,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/fda-should-increase-transparency-and-bolster-evidence-needed-accelerated-drug-approvals-icer\" hreflang=\"en\">FDA's accelerated approval pathway needs stronger transparency, evidence standards: ICER</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/tevas-migraine-patent-spat-lilly-federal-circuit-reverses-prior-loss-ajovy",
+              "published": "2026-04-17T09:53:00+00:00",
+              "summary_chars": 138,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/tevas-migraine-patent-spat-lilly-federal-circuit-reverses-prior-loss-ajovy\" hreflang=\"en\">Teva scores in appeal as court revives $177M verdict against Lilly in migraine patent spat</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/astellas-stem-cell-therapy-rethink-gsk-bullish-adc-plan-daiichi-otc-sale",
+              "published": "2026-04-17T08:48:00+00:00",
+              "summary_chars": 215,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/astellas-stem-cell-therapy-rethink-gsk-bullish-adc-plan-daiichi-otc-sale\" hreflang=\"en\">Fierce Pharma Asia\u2014Astellas\u2019 stem cell therapy rethink; GSK\u2019s bullish ADC plan; Daiichi\u2019s OTC sale</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/marketing/bio-comes-out-swinging-fight-our-lives-campaign-industrys-50th-birthday",
+              "published": "2026-04-17T06:18:00+00:00",
+              "summary_chars": 221,
+              "title": "<a href=\"https://www.fiercepharma.com/marketing/bio-comes-out-swinging-fight-our-lives-campaign-industrys-50th-birthday\" hreflang=\"en\">BIO comes out swinging with 'Fight of Our Lives' campaign for the industry\u2019s 50th birthday</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/marketing/verily-health-simplifies-medical-jargon-alphabet-soup-ai-powered-app-new-campaign",
+              "published": "2026-04-16T15:52:00+00:00",
+              "summary_chars": 151,
+              "title": "<a href=\"https://www.fiercepharma.com/marketing/verily-health-simplifies-medical-jargon-alphabet-soup-ai-powered-app-new-campaign\" hreflang=\"en\">Verily Health simplifies medical jargon alphabet soup with AI-powered app in new campaign</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/manufacturing/viatris-extended-release-xanax-and-tevas-blood-pressure-patch-hit-separate-recalls",
+              "published": "2026-04-16T14:39:00+00:00",
+              "summary_chars": 234,
+              "title": "<a href=\"https://www.fiercepharma.com/manufacturing/viatris-extended-release-xanax-and-tevas-blood-pressure-patch-hit-separate-recalls\" hreflang=\"en\">Viatris, Teva kick off separate recalls over dissolution, raw material issues</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/fierce-pharma-regulatory-tracker-2026",
+              "published": "2026-01-02T08:07:00+00:00",
+              "summary_chars": 266,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/fierce-pharma-regulatory-tracker-2026\" hreflang=\"en\">Regulatory tracker: GSK's Blenrep gets all-clear in NICE final guidance</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question",
+              "published": "2026-04-16T10:27:00+00:00",
+              "summary_chars": 231,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/absent-or-trivial-effects-anti-amyloid-alzheimers-drugs-called-question\" hreflang=\"en\">'Absent or trivial' effects: Anti-amyloid Alzheimer's drugs called into question once again</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/roche-launch-another-elevidys-study-after-eu-rejection-duchenne-gene-therapy",
+              "published": "2026-04-16T09:40:00+00:00",
+              "summary_chars": 216,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/roche-launch-another-elevidys-study-after-eu-rejection-duchenne-gene-therapy\" hreflang=\"en\">Roche to launch another Elevidys study after EU rejection of Duchenne gene therapy</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/lilly-answers-fdas-call-more-foundayo-safety-info-plotting-diabetes-filing-parallel",
+              "published": "2026-04-16T09:26:00+00:00",
+              "summary_chars": 236,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/lilly-answers-fdas-call-more-foundayo-safety-info-plotting-diabetes-filing-parallel\" hreflang=\"en\">Lilly answers FDA's call for more Foundayo safety info, plotting diabetes filing in parallel</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/marketing/omnicom-brews-olixir-fcb-health-rebranding-storied-agency-after-interpublic-takeover",
+              "published": "2026-04-16T08:02:00+00:00",
+              "summary_chars": 185,
+              "title": "<a href=\"https://www.fiercepharma.com/marketing/omnicom-brews-olixir-fcb-health-rebranding-storied-agency-after-interpublic-takeover\" hreflang=\"en\">Omnicom brews Olixir from FCB Health, rebranding storied agency after Interpublic takeover</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/fda-advisory-committee-set-weigh-taking-action-certain-unapproved-peptides",
+              "published": "2026-04-15T16:25:00+00:00",
+              "summary_chars": 166,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/fda-advisory-committee-set-weigh-taking-action-certain-unapproved-peptides\" hreflang=\"en\">UPDATED: Heeding RFK Jr.'s call, FDA reclassifies 12 unapproved peptides ahead of advisory committee meeting</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/industrys-latest-otc-pivot-daiichi-sankyo-lines-15b-consumer-health-unit-sale-beverage-giant",
+              "published": "2026-04-15T15:10:00+00:00",
+              "summary_chars": 255,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/industrys-latest-otc-pivot-daiichi-sankyo-lines-15b-consumer-health-unit-sale-beverage-giant\" hreflang=\"en\">In industry's latest OTC pivot, Daiichi Sankyo lines up $1.5B consumer health unit sale to beverage giant Suntory</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/gilead-global-fund-widen-global-yeztugo-access-agreement-msf-says-supply-not-nearly-enough",
+              "published": "2026-04-15T11:16:00+00:00",
+              "summary_chars": 219,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/gilead-global-fund-widen-global-yeztugo-access-agreement-msf-says-supply-not-nearly-enough\" hreflang=\"en\">Gilead widens global Yeztugo access agreement, but MSF says supply is 'not nearly enough'</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/ai-and-machine-learning/novartis-ceo-vas-narasimhan-joins-anthropic-board-pharmas-link-ai-deepens",
+              "published": "2026-04-15T10:14:00+00:00",
+              "summary_chars": 168,
+              "title": "<a href=\"https://www.fiercepharma.com/ai-and-machine-learning/novartis-ceo-vas-narasimhan-joins-anthropic-board-pharmas-link-ai-deepens\" hreflang=\"en\">Novartis CEO Vas Narasimhan joins Anthropic\u2019s board as biopharma\u2019s ties to AI deepen</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/manufacturing/astellas-manufacturing-chief-looks-supply-bridging-research-production-north-star",
+              "published": "2026-04-15T09:51:00+00:00",
+              "summary_chars": 249,
+              "title": "<a href=\"https://www.fiercepharma.com/manufacturing/astellas-manufacturing-chief-looks-supply-bridging-research-production-north-star\" hreflang=\"en\">Astellas manufacturing chief views reliable supply, bridging research as his production 'north star'</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/marketing/teva-launches-new-online-schizophrenia-community-project",
+              "published": "2026-04-15T09:24:00+00:00",
+              "summary_chars": 216,
+              "title": "<a href=\"https://www.fiercepharma.com/marketing/teva-launches-new-online-schizophrenia-community-project\" hreflang=\"en\">Teva launches new online schizophrenia community project </a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/marketing/pfizer-recruits-former-angel-latest-mission-against-cancer",
+              "published": "2026-04-15T09:46:00+00:00",
+              "summary_chars": 169,
+              "title": "<a href=\"https://www.fiercepharma.com/marketing/pfizer-recruits-former-angel-latest-mission-against-cancer\" hreflang=\"en\">Pfizer recruits former Angel Lucy Liu for latest mission against cancer</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/marketing/ionis-method-madness-its-drug-name-tournament-2026-win",
+              "published": "2026-04-15T04:18:00+00:00",
+              "summary_chars": 235,
+              "title": "<a href=\"https://www.fiercepharma.com/marketing/ionis-method-madness-its-drug-name-tournament-2026-win\" hreflang=\"en\">Ionis exec shares method to the Madness after 2026 Drug Name Tournament win</a>"
+            },
+            {
+              "link": "https://www.fiercepharma.com/pharma/landmark-fsgs-nod-hand-travere-plots-path-grabbing-filsparis-3b-us-opportunity",
+              "published": "2026-04-14T17:27:00+00:00",
+              "summary_chars": 184,
+              "title": "<a href=\"https://www.fiercepharma.com/pharma/landmark-fsgs-nod-hand-travere-plots-path-grabbing-filsparis-3b-us-opportunity\" hreflang=\"en\">Travere maps course for Filspari's $3B US opportunity after landmark rare disease nod</a>"
+            }
+          ],
+          "latest_age_hours": 50.03,
+          "latest_published": "2026-04-17T10:50:00+00:00",
+          "url": "https://www.fiercepharma.com/rss/xml"
+        }
+      ],
+      "source_id": "fierce-pharma",
+      "source_name": "Fierce Pharma"
+    },
+    {
+      "autodiscovered_feed_urls": [
+        "https://www.biopharmadive.com/feeds/news/"
+      ],
+      "headline_page": {
+        "date_fields": 4,
+        "deduped_candidate_links": 36,
+        "fetch": {
+          "bytes": 339395,
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_ms": 166,
+          "error": null,
+          "final_url": "https://www.biopharmadive.com/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.biopharmadive.com/news/"
+        },
+        "items": [
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "UCB, betting on seizure cell therapy, to buy Neurona for up to $1.2B",
+            "url": "https://www.biopharmadive.com/news/ucb-neurona-deal-acquisition-cell-therapy-epilepsy-biotech/817863/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Kailera nets $625M in one of biotech\u2019s biggest-ever IPOs",
+            "url": "https://www.biopharmadive.com/news/kailera-ipo-price-obesity-drugs-hengrui-ron-renaud/817463/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Roche to start new Elevidys study following setback in Europe",
+            "url": "https://www.biopharmadive.com/news/roche-elevidys-europe-trial-duchenne-gene-therapy-sarepta/817674/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "FDA moves toward easing restrictions on certain peptides",
+            "url": "https://www.biopharmadive.com/news/fda-peptides-rfk-advisory-committee-restrictions/817685/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "10 clinical trials to watch in the first half of 2026",
+            "url": "https://www.biopharmadive.com/news/biotech-pharma-clinical-trials-watch-2026/808255/"
+          },
+          {
+            "date": "2026-04-17T00:00:00+00:00",
+            "date_text": "April 17, 2026",
+            "score": 5,
+            "title": "Biotech IPOs are the industry\u2019s lifeblood. Track how they\u2019re performing.",
+            "url": "https://www.biopharmadive.com/news/biotech-ipo-performance-tracker/587604/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Erica Schwartz, ex-deputy surgeon general, picked to be next CDC director",
+            "url": "https://www.biopharmadive.com/news/cdc-director-erica-schwartz-trump-nominate/817768/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Lilly\u2019s obesity pill off to a strong start; OpenAI debuts new drug discovery tool",
+            "url": "https://www.biopharmadive.com/news/foundayo-launch-openai-rosalind-janux-gilead-arcellx/817789/"
+          },
+          {
+            "date": "2026-03-30T00:00:00+00:00",
+            "date_text": "March 30, 2026",
+            "score": 5,
+            "title": "5 FDA decisions to watch in the second quarter of 2026",
+            "url": "https://www.biopharmadive.com/news/fda-approval-decisions-watch-2026/808684/"
+          },
+          {
+            "date": "2026-04-17T00:00:00+00:00",
+            "date_text": "April 17, 2026",
+            "score": 5,
+            "title": "Biotech M&A is accelerating. Track the deals that are happening here.",
+            "url": "https://www.biopharmadive.com/news/biotech-pharma-deals-merger-acquisitions-tracker/604262/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Lilly\u2019s new obesity pill passes heart safety test in diabetes",
+            "url": "https://www.biopharmadive.com/news/foundayo-heart-safety-diabetes-obesity-eli-lilly/817694/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Replimune cuts staff; MeiraGTx reacquires eye gene therapy",
+            "url": "https://www.biopharmadive.com/news/replimune-layoffs-meiragtx-revolution-biogen-apellis/817593/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Beeline, a Bain-backed biotech, debuts with immune drugs from Bristol Myers",
+            "url": "https://www.biopharmadive.com/news/bain-beeline-immune-drugs-bristol-myers/817538/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Terremoto raises $108M to pursue development of drugs targeting AKT",
+            "url": "https://www.biopharmadive.com/news/terremoto-raises-108m-to-pursue-development-of-drugs-targeting-akt/817566/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Obsidian, Galera to advance cell therapy following reverse merger",
+            "url": "https://www.biopharmadive.com/news/obsidian-galera-reverse-merger-private-placement-cell-therapy/817532/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "FDA asks Lilly to evaluate obesity pill\u2019s liver risk",
+            "url": "https://www.biopharmadive.com/news/fda-foundayo-liver-safety-eli-lilly/817556/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "J&J leans on Tremfya, cancer drugs to overcome Stelara losses",
+            "url": "https://www.biopharmadive.com/news/johnson-johnson-2026-q1-earnings-stelara-tremfya-myeloma/817422/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Lilly boosts ADC portfolio with CrossBridge Bio deal",
+            "url": "https://www.biopharmadive.com/news/lilly-crossbridge-acquire-deal-antibody-drug-conjugates/817421/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Revolution pancreatic cancer drug nearly doubles survival in key trial",
+            "url": "https://www.biopharmadive.com/news/revolution-pancreatic-cancer-ras-drug-results/817300/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Travere wins long-awaited approval for kidney disease drug",
+            "url": "https://www.biopharmadive.com/news/travere-fda-approve-flispari-fsgs-kidney-disease/817415/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Allogene data suggest \u2018off-the-shelf\u2019 CAR-T could delay relapse in lymphoma",
+            "url": "https://www.biopharmadive.com/news/allogene-cema-cel-allogeneic-lymphoma-data/817316/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Novo teams with OpenAI; Ideaya gets muted response to eye drug data",
+            "url": "https://www.biopharmadive.com/news/novo-openai-regeneron-radiopharmaceuticals-ideaya-neomorph-gsk/817278/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Spyre drug for inflammatory bowel disease shows promise in early study",
+            "url": "https://www.biopharmadive.com/news/spyre-inflammatory-bowel-disease-drug-results-a4b7/817298/"
+          },
+          {
+            "date": "2026-04-10T00:00:00+00:00",
+            "date_text": "April 10, 2026",
+            "score": 5,
+            "title": "Biotech startups are built on venture capital. Track funding rounds here.",
+            "url": "https://www.biopharmadive.com/news/biotech-venture-capital-funding-startup-tracker/726829/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 5,
+            "title": "Oricell closes a \u2018pre-IPO\u2019 megaround to aim CAR-T at solid tumors",
+            "url": "https://www.biopharmadive.com/news/oricell-car-t-liver-cancer-china-ipo-financing/817199/"
+          }
+        ],
+        "latest_age_hours": 60.86,
+        "latest_date": "2026-04-17T00:00:00+00:00",
+        "page_url": "https://www.biopharmadive.com/news/",
+        "raw_candidate_links": 42
+      },
+      "page_url": "https://www.biopharmadive.com/news/",
+      "recommended_discovery_mode": "rss",
+      "rss_best": {
+        "bozo": false,
+        "bozo_exception": null,
+        "entries": 10,
+        "feed_title": "BioPharma Dive - Latest News",
+        "fetch": {
+          "bytes": 9387,
+          "content_type": "application/rss+xml; charset=utf-8",
+          "elapsed_ms": 46,
+          "error": null,
+          "final_url": "https://www.biopharmadive.com/feeds/news/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.biopharmadive.com/feeds/news/"
+        },
+        "field_counts": {
+          "link": 10,
+          "published_or_updated": 10,
+          "summary": 10,
+          "title": 10
+        },
+        "items": [
+          {
+            "link": "https://www.biopharmadive.com/news/ucb-neurona-deal-acquisition-cell-therapy-epilepsy-biotech/817863/",
+            "published": "2026-04-17T20:32:00+00:00",
+            "summary_chars": 406,
+            "title": "UCB, betting on seizure cell therapy, to buy Neurona for up to $1.2B"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/foundayo-launch-openai-rosalind-janux-gilead-arcellx/817789/",
+            "published": "2026-04-17T14:04:00+00:00",
+            "summary_chars": 475,
+            "title": "Lilly\u2019s obesity pill off to a strong start; OpenAI debuts new drug discovery tool"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/pharma-ceo-pay-2025-lilly-pfizer-abbie-gsk-jnj/817774/",
+            "published": "2026-04-17T10:49:00+00:00",
+            "summary_chars": 374,
+            "title": "5 notable pharma CEO pay hikes in 2025"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/kailera-ipo-price-obesity-drugs-hengrui-ron-renaud/817463/",
+            "published": "2026-04-17T00:38:00+00:00",
+            "summary_chars": 436,
+            "title": "Kailera nets $625M in one of biotech\u2019s biggest-ever IPOs"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/cdc-director-erica-schwartz-trump-nominate/817768/",
+            "published": "2026-04-16T21:51:00+00:00",
+            "summary_chars": 389,
+            "title": "Erica Schwartz, ex-deputy surgeon general, picked to be next CDC director"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/fda-peptides-rfk-advisory-committee-restrictions/817685/",
+            "published": "2026-04-16T15:41:00+00:00",
+            "summary_chars": 438,
+            "title": "FDA moves toward easing restrictions on certain peptides"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/foundayo-heart-safety-diabetes-obesity-eli-lilly/817694/",
+            "published": "2026-04-16T15:26:00+00:00",
+            "summary_chars": 369,
+            "title": "Lilly\u2019s new obesity pill passes heart safety test in diabetes"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/replimune-layoffs-meiragtx-revolution-biogen-apellis/817593/",
+            "published": "2026-04-16T15:00:00+00:00",
+            "summary_chars": 466,
+            "title": "Replimune cuts staff; MeiraGTx reacquires eye gene therapy"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/roche-elevidys-europe-trial-duchenne-gene-therapy-sarepta/817674/",
+            "published": "2026-04-16T13:58:00+00:00",
+            "summary_chars": 165,
+            "title": "Roche to start new Elevidys study following setback in Europe"
+          },
+          {
+            "link": "https://www.biopharmadive.com/news/bain-beeline-immune-drugs-bristol-myers/817538/",
+            "published": "2026-04-15T16:01:00+00:00",
+            "summary_chars": 389,
+            "title": "Beeline, a Bain-backed biotech, debuts with immune drugs from Bristol Myers"
+          }
+        ],
+        "latest_age_hours": 40.33,
+        "latest_published": "2026-04-17T20:32:00+00:00",
+        "url": "https://www.biopharmadive.com/feeds/news/"
+      },
+      "rss_candidates_tested": [
+        "https://www.biopharmadive.com/feeds/",
+        "https://www.biopharmadive.com/feeds/news/",
+        "https://www.biopharmadive.com/rss/"
+      ],
+      "rss_results": [
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:8:277: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 185664,
+            "content_type": "text/html; charset=utf-8",
+            "elapsed_ms": 108,
+            "error": null,
+            "final_url": "https://www.biopharmadive.com/feeds/",
+            "ok": false,
+            "status": 404,
+            "url": "https://www.biopharmadive.com/feeds/"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.biopharmadive.com/feeds/"
+        },
+        {
+          "bozo": false,
+          "bozo_exception": null,
+          "entries": 10,
+          "feed_title": "BioPharma Dive - Latest News",
+          "fetch": {
+            "bytes": 9387,
+            "content_type": "application/rss+xml; charset=utf-8",
+            "elapsed_ms": 46,
+            "error": null,
+            "final_url": "https://www.biopharmadive.com/feeds/news/",
+            "ok": true,
+            "status": 200,
+            "url": "https://www.biopharmadive.com/feeds/news/"
+          },
+          "field_counts": {
+            "link": 10,
+            "published_or_updated": 10,
+            "summary": 10,
+            "title": 10
+          },
+          "items": [
+            {
+              "link": "https://www.biopharmadive.com/news/ucb-neurona-deal-acquisition-cell-therapy-epilepsy-biotech/817863/",
+              "published": "2026-04-17T20:32:00+00:00",
+              "summary_chars": 406,
+              "title": "UCB, betting on seizure cell therapy, to buy Neurona for up to $1.2B"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/foundayo-launch-openai-rosalind-janux-gilead-arcellx/817789/",
+              "published": "2026-04-17T14:04:00+00:00",
+              "summary_chars": 475,
+              "title": "Lilly\u2019s obesity pill off to a strong start; OpenAI debuts new drug discovery tool"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/pharma-ceo-pay-2025-lilly-pfizer-abbie-gsk-jnj/817774/",
+              "published": "2026-04-17T10:49:00+00:00",
+              "summary_chars": 374,
+              "title": "5 notable pharma CEO pay hikes in 2025"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/kailera-ipo-price-obesity-drugs-hengrui-ron-renaud/817463/",
+              "published": "2026-04-17T00:38:00+00:00",
+              "summary_chars": 436,
+              "title": "Kailera nets $625M in one of biotech\u2019s biggest-ever IPOs"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/cdc-director-erica-schwartz-trump-nominate/817768/",
+              "published": "2026-04-16T21:51:00+00:00",
+              "summary_chars": 389,
+              "title": "Erica Schwartz, ex-deputy surgeon general, picked to be next CDC director"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/fda-peptides-rfk-advisory-committee-restrictions/817685/",
+              "published": "2026-04-16T15:41:00+00:00",
+              "summary_chars": 438,
+              "title": "FDA moves toward easing restrictions on certain peptides"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/foundayo-heart-safety-diabetes-obesity-eli-lilly/817694/",
+              "published": "2026-04-16T15:26:00+00:00",
+              "summary_chars": 369,
+              "title": "Lilly\u2019s new obesity pill passes heart safety test in diabetes"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/replimune-layoffs-meiragtx-revolution-biogen-apellis/817593/",
+              "published": "2026-04-16T15:00:00+00:00",
+              "summary_chars": 466,
+              "title": "Replimune cuts staff; MeiraGTx reacquires eye gene therapy"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/roche-elevidys-europe-trial-duchenne-gene-therapy-sarepta/817674/",
+              "published": "2026-04-16T13:58:00+00:00",
+              "summary_chars": 165,
+              "title": "Roche to start new Elevidys study following setback in Europe"
+            },
+            {
+              "link": "https://www.biopharmadive.com/news/bain-beeline-immune-drugs-bristol-myers/817538/",
+              "published": "2026-04-15T16:01:00+00:00",
+              "summary_chars": 389,
+              "title": "Beeline, a Bain-backed biotech, debuts with immune drugs from Bristol Myers"
+            }
+          ],
+          "latest_age_hours": 40.33,
+          "latest_published": "2026-04-17T20:32:00+00:00",
+          "url": "https://www.biopharmadive.com/feeds/news/"
+        },
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:8:277: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 185658,
+            "content_type": "text/html; charset=utf-8",
+            "elapsed_ms": 60,
+            "error": null,
+            "final_url": "https://www.biopharmadive.com/rss/",
+            "ok": false,
+            "status": 404,
+            "url": "https://www.biopharmadive.com/rss/"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.biopharmadive.com/rss/"
+        }
+      ],
+      "source_id": "biopharma-dive",
+      "source_name": "BioPharma Dive"
+    },
+    {
+      "autodiscovered_feed_urls": [
+        "https://www.statnews.com/feed/"
+      ],
+      "headline_page": {
+        "date_fields": 17,
+        "deduped_candidate_links": 104,
+        "fetch": {
+          "bytes": 350763,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 128,
+          "error": null,
+          "final_url": "https://www.statnews.com/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.statnews.com/"
+        },
+        "items": [
+          {
+            "date": null,
+            "date_text": null,
+            "score": 7,
+            "title": "STAT Plus: Cell therapy primed liver transplant patients to avoid organ rejection, small study shows",
+            "url": "https://www.statnews.com/2026/04/17/organ-transplant-new-approach-immunosuppression-nature-communications-study/"
+          },
+          {
+            "date": "2026-04-17T08:30:00+00:00",
+            "date_text": "2026-04-17T04:30:00-04:00",
+            "score": 7,
+            "title": "Don\u2019t believe headlines saying that vaccine skepticism is widespread",
+            "url": "https://www.statnews.com/2026/04/17/vaccine-skepticism-politico-poll-analysis/"
+          },
+          {
+            "date": "2026-04-17T08:30:00+00:00",
+            "date_text": "2026-04-17T04:30:00-04:00",
+            "score": 7,
+            "title": "Health care is not ready for the new era of AI-enabled cyberattacks",
+            "url": "https://www.statnews.com/2026/04/17/health-care-cybersecurity-ransomware-project-glasswing/"
+          },
+          {
+            "date": "2026-04-16T21:51:13+00:00",
+            "date_text": "2026-04-16T17:51:13-04:00",
+            "score": 7,
+            "title": "STAT Plus: HaloMD\u2019s legal win highlights the difficulty of challenging arbitration decisions",
+            "url": "https://www.statnews.com/2026/04/16/halomd-lawsuit-bluecross-blueshield-difficult-to-challenge-arbitration/"
+          },
+          {
+            "date": "2026-04-16T19:52:56+00:00",
+            "date_text": "2026-04-16T15:52:56-04:00",
+            "score": 7,
+            "title": "Trump taps former public health leader Erica Schwartz to run CDC",
+            "url": "https://www.statnews.com/2026/04/16/erica-schwartz-cdc-director-nominee/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 7,
+            "title": "A pancreatic cancer breakthrough, and new hope for an off-the-shelf CAR-T treatment",
+            "url": "https://www.statnews.com/2026/04/16/pancreatic-cancer-revolution-car-t-lymphoma-readout-loud/"
+          },
+          {
+            "date": "2026-04-19T08:30:00+00:00",
+            "date_text": "2026-04-19T04:30:00-04:00",
+            "score": 7,
+            "title": "STAT Plus: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades",
+            "url": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/"
+          },
+          {
+            "date": "2026-04-18T15:00:14+00:00",
+            "date_text": "2026-04-18T11:00:14-04:00",
+            "score": 7,
+            "title": "How Trump is pushing psychedelics reform through the health agencies",
+            "url": "https://www.statnews.com/2026/04/18/psychedelics-ptsd-mental-health-research-boost-from-trump-executive-order/"
+          },
+          {
+            "date": "2026-04-18T11:00:00+00:00",
+            "date_text": "2026-04-18T07:00:00-04:00",
+            "score": 7,
+            "title": "Optimism for Trump\u2019s CDC pick is tempered by questions about RFK Jr.\u2019s role",
+            "url": "https://www.statnews.com/2026/04/18/erica-schwartz-cdc-director-nominee-reaction-cautious-optimism/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 7,
+            "title": "Medical schools must continue to teach students about structural barriers to care",
+            "url": "https://www.statnews.com/2026/04/15/lcme-structural-competency-medical-schools-equity/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 7,
+            "title": "Erectile dysfunction is more than a sexual issue",
+            "url": "https://www.statnews.com/2026/04/13/erectile-dysfunction-cardiovascular-disease-dementia-risk/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 7,
+            "title": "STAT Plus: Researchers behind GLP-1 obesity drugs advance new approach: Drop GLP-1 as a target",
+            "url": "https://www.statnews.com/2026/04/16/glp1-weight-loss-new-approach/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 7,
+            "title": "STAT Plus: FDA eyes expanding testosterone therapy for libido",
+            "url": "https://www.statnews.com/2026/04/17/biotech-news-fda-eyes-expanding-testosterone-for-libido/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 7,
+            "title": "STAT Plus: Revolution Medicines touts \u2018unprecedented\u2019 data for pancreatic cancer pill",
+            "url": "https://www.statnews.com/2026/04/13/revolution-medicines-successful-treatment-pancreatic-cancer-daily-pill/"
+          },
+          {
+            "date": "2026-04-17T13:07:51+00:00",
+            "date_text": "2026-04-17T09:07:51-04:00",
+            "score": 7,
+            "title": "STAT Plus: Pharmalittle: We\u2019re reading about Lilly weight loss pill trial results, slashed U.K. clinical trial times, and more",
+            "url": "https://www.statnews.com/pharmalot/2026/04/17/lilly-weight-loss-pill-results-uk-slashing-clinical-trial-times/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 7,
+            "title": "STAT Plus: CMS proposes rolling back breakthrough device payment flexibilities",
+            "url": "https://www.statnews.com/2026/04/15/cms-proposes-rolling-back-breakthrough-device-payment/"
+          },
+          {
+            "date": "2026-04-16T18:41:21+00:00",
+            "date_text": "2026-04-16T14:41:21-04:00",
+            "score": 7,
+            "title": "STAT Plus: Kennedy focuses on affordability, combating fraud in Capitol Hill hearings",
+            "url": "https://www.statnews.com/2026/04/16/rfk-jr-congressional-hearing-trump-health-agenda/"
+          },
+          {
+            "date": "2026-04-16T10:32:07+00:00",
+            "date_text": "2026-04-16T06:32:07-04:00",
+            "score": 7,
+            "title": "STAT Plus: Roche to launch another Elevidys trial, with eyes on European approval",
+            "url": "https://www.statnews.com/2026/04/16/roche-elevidys-pivotal-trial-europe-sarepta/"
+          },
+          {
+            "date": "2026-04-16T10:30:00+00:00",
+            "date_text": "2026-04-16T06:30:00-04:00",
+            "score": 7,
+            "title": "STAT Plus: Travere\u2019s drug for a kidney disease doesn\u2019t improve kidney function. The FDA approved it anyway",
+            "url": "https://www.statnews.com/2026/04/16/travere-therapeutics-kidney-disease-fda-approval/"
+          },
+          {
+            "date": "2026-04-16T10:00:00+00:00",
+            "date_text": "2026-04-16T06:00:00-04:00",
+            "score": 7,
+            "title": "STAT Plus: 7 key issues we\u2019re watching as RFK Jr. faces a Congressional gauntlet",
+            "url": "https://www.statnews.com/2026/04/16/kennedy-congress-testimony-balance-maha-goals-trump-priorities/"
+          },
+          {
+            "date": "2026-04-16T08:30:00+00:00",
+            "date_text": "2026-04-16T04:30:00-04:00",
+            "score": 7,
+            "title": "The medical AI revolution requires rethinking health care\u2019s architecture",
+            "url": "https://www.statnews.com/2026/04/16/medical-ai-revolution-consumer-devices-health-records/"
+          },
+          {
+            "date": "2026-04-16T08:30:00+00:00",
+            "date_text": "2026-04-16T04:30:00-04:00",
+            "score": 7,
+            "title": "Voice-first chatbots will exacerbate AI\u2019s mental health threat",
+            "url": "https://www.statnews.com/2026/04/16/voice-chatbots-ai-psychosis-mental-health/"
+          },
+          {
+            "date": "2026-04-13T08:30:00+00:00",
+            "date_text": "2026-04-13T04:30:00-04:00",
+            "score": 7,
+            "title": "STAT Plus: Hospitals roll out chatbots, looking to reclaim their role in patients\u2019 health conversations",
+            "url": "https://www.statnews.com/2026/04/13/hospitals-launch-chatbots-creating-new-funnel-for-patients/"
+          },
+          {
+            "date": "2026-04-13T08:30:00+00:00",
+            "date_text": "2026-04-13T04:30:00-04:00",
+            "score": 7,
+            "title": "STAT Plus: Landmines await Vinay Prasad\u2019s successor at the FDA",
+            "url": "https://www.statnews.com/2026/04/13/vinay-prasad-replacement-fda-cber/"
+          },
+          {
+            "date": "2026-04-15T08:30:00+00:00",
+            "date_text": "2026-04-15T04:30:00-04:00",
+            "score": 7,
+            "title": "STAT Plus: Flawed study on the antidepressant Paxil came with a cautionary note \u2014 if you knew how to find it",
+            "url": "https://www.statnews.com/pharmalot/2026/04/15/paxil-adolescent-antidepressant-pivotal-study-expression-concern/"
+          }
+        ],
+        "latest_age_hours": 4.36,
+        "latest_date": "2026-04-19T08:30:00+00:00",
+        "page_url": "https://www.statnews.com/",
+        "raw_candidate_links": 145
+      },
+      "page_url": "https://www.statnews.com/",
+      "recommended_discovery_mode": "rss",
+      "rss_best": {
+        "bozo": false,
+        "bozo_exception": null,
+        "entries": 20,
+        "feed_title": "STAT Biotech news: Market-moving coverage of drug development",
+        "fetch": {
+          "bytes": 55641,
+          "content_type": "application/rss+xml; charset=UTF-8",
+          "elapsed_ms": 36,
+          "error": null,
+          "final_url": "https://www.statnews.com/category/biotech/feed/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.statnews.com/category/biotech/feed/"
+        },
+        "field_counts": {
+          "link": 20,
+          "published_or_updated": 20,
+          "summary": 20,
+          "title": 20
+        },
+        "items": [
+          {
+            "link": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss",
+            "published": "2026-04-19T08:30:00+00:00",
+            "summary_chars": 155,
+            "title": "STAT+: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/17/revolution-medicines-daraxonrasib-clinical-trial-readout-loud-podcast-transcript/?utm_campaign=rss",
+            "published": "2026-04-17T17:37:53+00:00",
+            "summary_chars": 94,
+            "title": "STAT+: A pancreatic cancer expert on why Revolution Medicines\u2019 study could \u2018open up a new era\u2019 of treatment"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/17/biotech-news-fda-eyes-expanding-testosterone-for-libido/?utm_campaign=rss",
+            "published": "2026-04-17T13:40:42+00:00",
+            "summary_chars": 112,
+            "title": "STAT+: FDA eyes expanding testosterone therapy for libido"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/16/glp1-weight-loss-new-approach/?utm_campaign=rss",
+            "published": "2026-04-16T15:58:16+00:00",
+            "summary_chars": 173,
+            "title": "STAT+: Researchers behind GLP-1 obesity drugs advance new approach: Drop GLP-1 as a target"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/16/biotech-news-cochrane-review-reignites-alzheimers-amyloid-war/?utm_campaign=rss",
+            "published": "2026-04-16T15:18:54+00:00",
+            "summary_chars": 89,
+            "title": "STAT+: Cochrane review reignites Alzheimer\u2019s amyloid wars"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/16/roche-elevidys-pivotal-trial-europe-sarepta/?utm_campaign=rss",
+            "published": "2026-04-16T10:32:07+00:00",
+            "summary_chars": 131,
+            "title": "STAT+: Roche to launch another Elevidys trial, with eyes on European approval"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/16/travere-therapeutics-kidney-disease-fda-approval/?utm_campaign=rss",
+            "published": "2026-04-16T10:30:00+00:00",
+            "summary_chars": 82,
+            "title": "STAT+: Travere\u2019s drug for a kidney disease doesn\u2019t improve kidney function. The FDA approved it anyway"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/15/biotech-news-novartis-ceo-joins-anthropic-board/?utm_campaign=rss",
+            "published": "2026-04-15T13:41:49+00:00",
+            "summary_chars": 116,
+            "title": "STAT+: Novartis CEO joins Anthropic\u2019s board"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/15/beeline-medicines-bain-bristol-myers-squibb-lupus/?utm_campaign=rss",
+            "published": "2026-04-15T11:00:00+00:00",
+            "summary_chars": 138,
+            "title": "STAT+: New Bain biotech startup, building on BMS drugs, gets a name and a CEO"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/14/biotech-news-fda-pressures-drugmakers-to-report-trial-results/?utm_campaign=rss",
+            "published": "2026-04-14T14:29:53+00:00",
+            "summary_chars": 108,
+            "title": "STAT+: FDA pressures drugmakers to report trial results"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/14/hunter-syndrome-avlayah-age-based-approvals/?utm_campaign=rss",
+            "published": "2026-04-14T08:30:00+00:00",
+            "summary_chars": 101,
+            "title": "Opinion: My brother can\u2019t access a just-approved breakthrough drug for his rare disease"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/14/ben-sasse-revolution-medicines-daraxonrasib-clinical-trial/?utm_campaign=rss",
+            "published": "2026-04-14T08:30:00+00:00",
+            "summary_chars": 133,
+            "title": "For Ben Sasse, Revolution Medicines\u2019 pancreatic cancer trial felt like his best, only option"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/13/biotech-news-gsk-advacing-ovarian-cancer-drug-mo-rez/?utm_campaign=rss",
+            "published": "2026-04-13T13:25:46+00:00",
+            "summary_chars": 110,
+            "title": "STAT+: GSK advancing ovarian cancer drug mo-rez"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/13/revolution-medicines-successful-treatment-pancreatic-cancer-daily-pill/?utm_campaign=rss",
+            "published": "2026-04-13T12:00:00+00:00",
+            "summary_chars": 111,
+            "title": "STAT+: Revolution Medicines touts \u2018unprecedented\u2019 data for pancreatic cancer pill"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/13/allogene-therapeutics-car-t-treatment-eliminates-cancer-cells-b-cell-lymphoma/?utm_campaign=rss",
+            "published": "2026-04-13T11:30:00+00:00",
+            "summary_chars": 137,
+            "title": "STAT+: Allogene Therapeutics\u2019 CAR-T treatment eliminates residual cancer cells in B-cell lymphoma patients"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/13/spyre-ibd-drug-success-early-trial/?utm_campaign=rss",
+            "published": "2026-04-13T11:00:00+00:00",
+            "summary_chars": 132,
+            "title": "STAT+: Spyre Therapeutics IBD drug shows promise in early trial"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/10/skin-cancer-replimune-fda-approval/?utm_campaign=rss",
+            "published": "2026-04-10T15:23:00+00:00",
+            "summary_chars": 112,
+            "title": "STAT+: Replimune skin cancer drug that became FDA flashpoint is rejected again"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/10/biotech-news-vcs-scrambled-playbook-china-us/?utm_campaign=rss",
+            "published": "2026-04-10T13:38:21+00:00",
+            "summary_chars": 81,
+            "title": "STAT+: A new trick for old science, and biotech VCs\u2019 scrambled playbook"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/09/autoimmune-diseases-car-t-therapy-advances/?utm_campaign=rss",
+            "published": "2026-04-09T15:00:00+00:00",
+            "summary_chars": 123,
+            "title": "STAT+: 5 years after lupus breakthrough, CAR-T is still surprising autoimmunity researchers"
+          },
+          {
+            "link": "https://www.statnews.com/2026/04/09/biotech-news-genetics-may-shape-glp-1-outcomes-slightly/?utm_campaign=rss",
+            "published": "2026-04-09T12:59:49+00:00",
+            "summary_chars": 118,
+            "title": "STAT+: Genetics may shape GLP-1 outcomes, slightly"
+          }
+        ],
+        "latest_age_hours": 4.36,
+        "latest_published": "2026-04-19T08:30:00+00:00",
+        "url": "https://www.statnews.com/category/biotech/feed/"
+      },
+      "rss_candidates_tested": [
+        "https://www.statnews.com/category/biotech/feed/",
+        "https://www.statnews.com/feed/"
+      ],
+      "rss_results": [
+        {
+          "bozo": false,
+          "bozo_exception": null,
+          "entries": 20,
+          "feed_title": "STAT Biotech news: Market-moving coverage of drug development",
+          "fetch": {
+            "bytes": 55641,
+            "content_type": "application/rss+xml; charset=UTF-8",
+            "elapsed_ms": 36,
+            "error": null,
+            "final_url": "https://www.statnews.com/category/biotech/feed/",
+            "ok": true,
+            "status": 200,
+            "url": "https://www.statnews.com/category/biotech/feed/"
+          },
+          "field_counts": {
+            "link": 20,
+            "published_or_updated": 20,
+            "summary": 20,
+            "title": 20
+          },
+          "items": [
+            {
+              "link": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss",
+              "published": "2026-04-19T08:30:00+00:00",
+              "summary_chars": 155,
+              "title": "STAT+: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/17/revolution-medicines-daraxonrasib-clinical-trial-readout-loud-podcast-transcript/?utm_campaign=rss",
+              "published": "2026-04-17T17:37:53+00:00",
+              "summary_chars": 94,
+              "title": "STAT+: A pancreatic cancer expert on why Revolution Medicines\u2019 study could \u2018open up a new era\u2019 of treatment"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/17/biotech-news-fda-eyes-expanding-testosterone-for-libido/?utm_campaign=rss",
+              "published": "2026-04-17T13:40:42+00:00",
+              "summary_chars": 112,
+              "title": "STAT+: FDA eyes expanding testosterone therapy for libido"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/glp1-weight-loss-new-approach/?utm_campaign=rss",
+              "published": "2026-04-16T15:58:16+00:00",
+              "summary_chars": 173,
+              "title": "STAT+: Researchers behind GLP-1 obesity drugs advance new approach: Drop GLP-1 as a target"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/biotech-news-cochrane-review-reignites-alzheimers-amyloid-war/?utm_campaign=rss",
+              "published": "2026-04-16T15:18:54+00:00",
+              "summary_chars": 89,
+              "title": "STAT+: Cochrane review reignites Alzheimer\u2019s amyloid wars"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/roche-elevidys-pivotal-trial-europe-sarepta/?utm_campaign=rss",
+              "published": "2026-04-16T10:32:07+00:00",
+              "summary_chars": 131,
+              "title": "STAT+: Roche to launch another Elevidys trial, with eyes on European approval"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/travere-therapeutics-kidney-disease-fda-approval/?utm_campaign=rss",
+              "published": "2026-04-16T10:30:00+00:00",
+              "summary_chars": 82,
+              "title": "STAT+: Travere\u2019s drug for a kidney disease doesn\u2019t improve kidney function. The FDA approved it anyway"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/15/biotech-news-novartis-ceo-joins-anthropic-board/?utm_campaign=rss",
+              "published": "2026-04-15T13:41:49+00:00",
+              "summary_chars": 116,
+              "title": "STAT+: Novartis CEO joins Anthropic\u2019s board"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/15/beeline-medicines-bain-bristol-myers-squibb-lupus/?utm_campaign=rss",
+              "published": "2026-04-15T11:00:00+00:00",
+              "summary_chars": 138,
+              "title": "STAT+: New Bain biotech startup, building on BMS drugs, gets a name and a CEO"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/14/biotech-news-fda-pressures-drugmakers-to-report-trial-results/?utm_campaign=rss",
+              "published": "2026-04-14T14:29:53+00:00",
+              "summary_chars": 108,
+              "title": "STAT+: FDA pressures drugmakers to report trial results"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/14/hunter-syndrome-avlayah-age-based-approvals/?utm_campaign=rss",
+              "published": "2026-04-14T08:30:00+00:00",
+              "summary_chars": 101,
+              "title": "Opinion: My brother can\u2019t access a just-approved breakthrough drug for his rare disease"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/14/ben-sasse-revolution-medicines-daraxonrasib-clinical-trial/?utm_campaign=rss",
+              "published": "2026-04-14T08:30:00+00:00",
+              "summary_chars": 133,
+              "title": "For Ben Sasse, Revolution Medicines\u2019 pancreatic cancer trial felt like his best, only option"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/13/biotech-news-gsk-advacing-ovarian-cancer-drug-mo-rez/?utm_campaign=rss",
+              "published": "2026-04-13T13:25:46+00:00",
+              "summary_chars": 110,
+              "title": "STAT+: GSK advancing ovarian cancer drug mo-rez"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/13/revolution-medicines-successful-treatment-pancreatic-cancer-daily-pill/?utm_campaign=rss",
+              "published": "2026-04-13T12:00:00+00:00",
+              "summary_chars": 111,
+              "title": "STAT+: Revolution Medicines touts \u2018unprecedented\u2019 data for pancreatic cancer pill"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/13/allogene-therapeutics-car-t-treatment-eliminates-cancer-cells-b-cell-lymphoma/?utm_campaign=rss",
+              "published": "2026-04-13T11:30:00+00:00",
+              "summary_chars": 137,
+              "title": "STAT+: Allogene Therapeutics\u2019 CAR-T treatment eliminates residual cancer cells in B-cell lymphoma patients"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/13/spyre-ibd-drug-success-early-trial/?utm_campaign=rss",
+              "published": "2026-04-13T11:00:00+00:00",
+              "summary_chars": 132,
+              "title": "STAT+: Spyre Therapeutics IBD drug shows promise in early trial"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/10/skin-cancer-replimune-fda-approval/?utm_campaign=rss",
+              "published": "2026-04-10T15:23:00+00:00",
+              "summary_chars": 112,
+              "title": "STAT+: Replimune skin cancer drug that became FDA flashpoint is rejected again"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/10/biotech-news-vcs-scrambled-playbook-china-us/?utm_campaign=rss",
+              "published": "2026-04-10T13:38:21+00:00",
+              "summary_chars": 81,
+              "title": "STAT+: A new trick for old science, and biotech VCs\u2019 scrambled playbook"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/09/autoimmune-diseases-car-t-therapy-advances/?utm_campaign=rss",
+              "published": "2026-04-09T15:00:00+00:00",
+              "summary_chars": 123,
+              "title": "STAT+: 5 years after lupus breakthrough, CAR-T is still surprising autoimmunity researchers"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/09/biotech-news-genetics-may-shape-glp-1-outcomes-slightly/?utm_campaign=rss",
+              "published": "2026-04-09T12:59:49+00:00",
+              "summary_chars": 118,
+              "title": "STAT+: Genetics may shape GLP-1 outcomes, slightly"
+            }
+          ],
+          "latest_age_hours": 4.36,
+          "latest_published": "2026-04-19T08:30:00+00:00",
+          "url": "https://www.statnews.com/category/biotech/feed/"
+        },
+        {
+          "bozo": false,
+          "bozo_exception": null,
+          "entries": 20,
+          "feed_title": "STAT",
+          "fetch": {
+            "bytes": 60007,
+            "content_type": "application/rss+xml; charset=UTF-8",
+            "elapsed_ms": 41,
+            "error": null,
+            "final_url": "https://www.statnews.com/feed/",
+            "ok": true,
+            "status": 200,
+            "url": "https://www.statnews.com/feed/"
+          },
+          "field_counts": {
+            "link": 20,
+            "published_or_updated": 20,
+            "summary": 20,
+            "title": 20
+          },
+          "items": [
+            {
+              "link": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss",
+              "published": "2026-04-19T08:30:00+00:00",
+              "summary_chars": 155,
+              "title": "STAT+: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/18/psychedelics-ptsd-mental-health-research-boost-from-trump-executive-order/?utm_campaign=rss",
+              "published": "2026-04-18T15:00:14+00:00",
+              "summary_chars": 132,
+              "title": "How Trump is pushing psychedelics reform through the health agencies"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/18/erica-schwartz-cdc-director-nominee-reaction-cautious-optimism/?utm_campaign=rss",
+              "published": "2026-04-18T11:00:00+00:00",
+              "summary_chars": 120,
+              "title": "Optimism for Trump\u2019s CDC pick is tempered by questions about RFK Jr.\u2019s role"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/18/maha-public-health-why-should-i-trust-you-podcast/?utm_campaign=rss",
+              "published": "2026-04-18T11:00:00+00:00",
+              "summary_chars": 159,
+              "title": "Opinion: The podcast bringing together MAHA and public health for hard conversations"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/17/revolution-medicines-daraxonrasib-clinical-trial-readout-loud-podcast-transcript/?utm_campaign=rss",
+              "published": "2026-04-17T17:37:53+00:00",
+              "summary_chars": 94,
+              "title": "STAT+: A pancreatic cancer expert on why Revolution Medicines\u2019 study could \u2018open up a new era\u2019 of treatment"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/17/biotech-news-fda-eyes-expanding-testosterone-for-libido/?utm_campaign=rss",
+              "published": "2026-04-17T13:40:42+00:00",
+              "summary_chars": 112,
+              "title": "STAT+: FDA eyes expanding testosterone therapy for libido"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/17/health-news-people-detained-by-ice-dying-at-a-record-rate/?utm_campaign=rss",
+              "published": "2026-04-17T13:23:38+00:00",
+              "summary_chars": 111,
+              "title": "The deadly consequences of ICE detention"
+            },
+            {
+              "link": "https://www.statnews.com/pharmalot/2026/04/17/pharma-biotech-medicines-jobs-gsk-executive-changes/?utm_campaign=rss",
+              "published": "2026-04-17T13:09:14+00:00",
+              "summary_chars": 126,
+              "title": "STAT+: Up and down the ladder: The latest comings and goings"
+            },
+            {
+              "link": "https://www.statnews.com/pharmalot/2026/04/17/lilly-weight-loss-pill-results-uk-slashing-clinical-trial-times/?utm_campaign=rss",
+              "published": "2026-04-17T13:07:51+00:00",
+              "summary_chars": 155,
+              "title": "STAT+: Pharmalittle: We\u2019re reading about Lilly weight loss pill trial results, slashed U.K. clinical trial times, and more"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/17/organ-transplant-new-approach-immunosuppression-nature-communications-study/?utm_campaign=rss",
+              "published": "2026-04-17T09:00:00+00:00",
+              "summary_chars": 130,
+              "title": "STAT+: Cell therapy primed liver transplant patients to avoid organ rejection, small study shows"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/17/health-care-cybersecurity-ransomware-project-glasswing/?utm_campaign=rss",
+              "published": "2026-04-17T08:30:00+00:00",
+              "summary_chars": 133,
+              "title": "Opinion: Health care is not ready for the new era of AI-enabled cyberattacks"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/17/vaccine-skepticism-politico-poll-analysis/?utm_campaign=rss",
+              "published": "2026-04-17T08:30:00+00:00",
+              "summary_chars": 94,
+              "title": "Opinion: Don\u2019t believe headlines saying that vaccine skepticism is widespread"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/halomd-lawsuit-bluecross-blueshield-difficult-to-challenge-arbitration/?utm_campaign=rss",
+              "published": "2026-04-16T21:51:13+00:00",
+              "summary_chars": 98,
+              "title": "STAT+: HaloMD\u2019s legal win highlights the difficulty of challenging arbitration decisions"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/erica-schwartz-cdc-director-nominee/?utm_campaign=rss",
+              "published": "2026-04-16T19:52:56+00:00",
+              "summary_chars": 121,
+              "title": "Trump taps former public health leader Erica Schwartz to run CDC"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/pancreatic-cancer-revolution-car-t-lymphoma-readout-loud/?utm_campaign=rss",
+              "published": "2026-04-16T19:37:47+00:00",
+              "summary_chars": 128,
+              "title": "A pancreatic cancer breakthrough, and new hope for an off-the-shelf CAR-T treatment"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/rfk-jr-congressional-hearing-trump-health-agenda/?utm_campaign=rss",
+              "published": "2026-04-16T18:41:21+00:00",
+              "summary_chars": 85,
+              "title": "STAT+: Kennedy focuses on affordability, combating fraud in Capitol Hill hearings"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/glp1-weight-loss-new-approach/?utm_campaign=rss",
+              "published": "2026-04-16T15:58:16+00:00",
+              "summary_chars": 173,
+              "title": "STAT+: Researchers behind GLP-1 obesity drugs advance new approach: Drop GLP-1 as a target"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/biotech-news-cochrane-review-reignites-alzheimers-amyloid-war/?utm_campaign=rss",
+              "published": "2026-04-16T15:18:54+00:00",
+              "summary_chars": 89,
+              "title": "STAT+: Cochrane review reignites Alzheimer\u2019s amyloid wars"
+            },
+            {
+              "link": "https://www.statnews.com/2026/04/16/rfk-jr-begins-his-congressional-testimony-marathon-dc-diagnosis/?utm_campaign=rss",
+              "published": "2026-04-16T14:38:42+00:00",
+              "summary_chars": 138,
+              "title": "STAT+: RFK Jr. begins his testimony marathon"
+            },
+            {
+              "link": "https://www.statnews.com/pharmalot/2026/04/16/alzheimers-drugs-review-fda-panel-for-compounded-peptides/?utm_campaign=rss",
+              "published": "2026-04-16T13:15:21+00:00",
+              "summary_chars": 132,
+              "title": "STAT+: Pharmalittle: We\u2019re reading about a review of Alzheimer\u2019s drugs, FDA interest in compounded peptides, and more"
+            }
+          ],
+          "latest_age_hours": 4.36,
+          "latest_published": "2026-04-19T08:30:00+00:00",
+          "url": "https://www.statnews.com/feed/"
+        }
+      ],
+      "source_id": "stat",
+      "source_name": "STAT"
+    },
+    {
+      "autodiscovered_feed_urls": [
+        "https://endpoints.news/feed/"
+      ],
+      "headline_page": {
+        "date_fields": 0,
+        "deduped_candidate_links": 39,
+        "fetch": {
+          "bytes": 71296,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 70,
+          "error": null,
+          "final_url": "https://endpoints.news/news/",
+          "ok": true,
+          "status": 200,
+          "url": "https://endpoints.news/news/"
+        },
+        "items": [
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Three gene ther\u00ada\u00adpy pi\u00ado\u00adneers just won the Break\u00adthrough Prize. This is their sto\u00adry",
+            "url": "https://endpoints.news/three-gene-therapy-pioneers-just-won-the-breakthrough-prize-this-is-their-story/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "RevMed\u2019s stun\u00adning suc\u00adcess; FDA to re\u00adclas\u00adsi\u00adfy pep\u00adtides; and more",
+            "url": "https://endpoints.news/revmeds-stunning-success-fda-to-reclassify-peptides-foundayo-safety-info-requested-and-more/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "New CDC pick is laud\u00aded by pub\u00adlic health pros, lament\u00aded by vac\u00adcine skep\u00adtics",
+            "url": "https://endpoints.news/new-cdc-pick-schwartz-is-praised-by-public-health-pros/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Q&A: On IPO day, Kail\u00adera CEO Ron Re\u00adnaud talks about obe\u00adsi\u00adty mar\u00adket, Chi\u00adna and biotech sen\u00adti\u00adment",
+            "url": "https://endpoints.news/kailera-ipo-interview-ceo-renaud-talks-biotech-market-china-and-obesity-pipeline/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Pan\u00adcre\u00adat\u00adic can\u00adcer da\u00adta, the RAS bo\u00adnan\u00adza and Chi\u00adna ADC stand\u00adouts are ready for AACR",
+            "url": "https://endpoints.news/aacr26-preview-revolution-medicines-the-ras-bonanza-and-china-adc-standouts/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Tre\u00advi rais\u00ades $150M; Spain and Boston set up biotech fund",
+            "url": "https://endpoints.news/trevi-raises-150m-spain-and-boston-set-up-biotech-fund/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Bio\u00advac gets $108M back\u00ading for vac\u00adcine fac\u00adto\u00adry in South Africa",
+            "url": "https://endpoints.news/biovac-gets-108m-backing-for-vaccine-factory-in-south-africa/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "How ex\u00adpen\u00adsive would a Rev\u00ado\u00adlu\u00adtion Med\u00adi\u00adcines buy\u00adout be af\u00adter its Phase 3 win?",
+            "url": "https://endpoints.news/revolution-medicines-buyout-price-soars-after-pancreatic-cancer-win/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Lil\u00adly\u2019s tirzepatide sheds lean mus\u00adcle hard\u00ader than No\u00advo\u2019s semaglu\u00adtide, study sug\u00adgests",
+            "url": "https://endpoints.news/lillys-tirzepatide-sheds-lean-muscle-harder-than-novos-semaglutide-study-suggests/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "No\u00advar\u00adtis' Vas Narasimhan heads to An\u00adthrop\u00adic's board; Met\u00adsera alum joins Struc\u00adture as COO",
+            "url": "https://endpoints.news/novartis-vas-narasimhan-heads-to-anthropics-board-structure-therapeutics-finds-coo-from-metsera/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "RFK Jr. de\u00adfends FDA, Makary fol\u00adlow\u00ading Re\u00adpub\u00adli\u00adcan ques\u00adtions",
+            "url": "https://endpoints.news/rfk-jr-defends-fda-makary-following-republican-questions/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Ope\u00adnAI de\u00adbuts a life sci\u00adences AI mod\u00adel, en\u00adter\u00ading crowd of tech gi\u00adants sell\u00ading to phar\u00adma",
+            "url": "https://endpoints.news/openai-launches-biopharma-focused-ai-model-to-compete-with-anthropic/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Cochrane re\u00adview dis\u00admiss\u00ading amy\u00adloid drugs draws im\u00adme\u00addi\u00adate back\u00adlash",
+            "url": "https://endpoints.news/cochrane-review-dismissing-amyloid-drugs-draws-immediate-backlash/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Roche to start a new Phase 3 tri\u00adal for Ele\u00adv\u00adidys af\u00adter get\u00adting re\u00adbuffed by EU reg\u00adu\u00adla\u00adtor last year",
+            "url": "https://endpoints.news/roche-to-start-a-new-phase-3-trial-for-elevidys/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "MeiraGTx buys back gene ther\u00ada\u00adpy from J&J Storm brings in $56M Se\u00adries C; Ad\u00adlai Nortye nabs $150M",
+            "url": "https://endpoints.news/meiragtx-buys-back-gene-therapy-from-j-storm-brings-in-56m-series-c/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Us\u00ading ver\u00adsus sell\u00ading lu\u00adcra\u00adtive PRVs: Mod\u00ader\u00adna's cau\u00adtion\u00adary tale",
+            "url": "https://endpoints.news/using-versus-selling-lucrative-prvs-modernas-cautionary-tale/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "MSF says Gilead\u00ad's lenaca\u00adpavir sup\u00adply 'not near\u00adly enough'; PolyPep\u00adtide\u2019s strate\u00adgic re\u00adview",
+            "url": "https://endpoints.news/msf-says-gileads-lenacapavir-supply-not-nearly-enough-polypeptides-strategic-review/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Lil\u00adly's obe\u00adsi\u00adty pill heads for di\u00ada\u00adbetes fil\u00ading af\u00adter heart risk tri\u00adal",
+            "url": "https://endpoints.news/lillys-obesity-pill-heads-for-diabetes-filing-after-heart-risk-trial/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Women\u2019s health biotech Freya Bio\u00adsciences ad\u00advances mi\u00adcro\u00adbial ther\u00ada\u00adpy for IVF im\u00adplan\u00adta\u00adtion fail\u00adure",
+            "url": "https://endpoints.news/freya-biosciences-advances-microbial-treatment-for-ivf-implantation-failure/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Scrib\u00ading start\u00adup Abridge adds NE\u00adJM, JA\u00adMA as it moves in\u00adto med\u00adical AI search",
+            "url": "https://endpoints.news/scribing-startup-abridge-adds-nejm-jama-as-it-moves-into-medical-ai-search/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Up\u00addat\u00aded: FDA will re\u00adclas\u00adsi\u00adfy at least a dozen pep\u00adtides, tee\u00ading up po\u00adten\u00adtial tele\u00adhealth win",
+            "url": "https://endpoints.news/fda-weighs-support-for-compounding-popular-peptides/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 3,
+            "title": "Biotech stocks are on a tear again: Sig\u00adnal In\u00adsights",
+            "url": "https://endpoints.news/biotech-stocks-are-on-a-tear-again/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 2,
+            "title": "Letters to the Editor",
+            "url": "https://endpoints.news/channel/letters-to-the-editor/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 2,
+            "title": "Nikkei Biotechnology",
+            "url": "https://endpoints.news/channel/nikkei-biotechnology/"
+          },
+          {
+            "date": null,
+            "date_text": null,
+            "score": 2,
+            "title": "Editorial Standards",
+            "url": "https://endpoints.news/editorial-standards/"
+          }
+        ],
+        "latest_age_hours": null,
+        "latest_date": null,
+        "page_url": "https://endpoints.news/news/",
+        "raw_candidate_links": 42
+      },
+      "page_url": "https://endpoints.news/news/",
+      "recommended_discovery_mode": "rss",
+      "rss_best": {
+        "bozo": false,
+        "bozo_exception": null,
+        "entries": 24,
+        "feed_title": "Endpoints News",
+        "fetch": {
+          "bytes": 19234,
+          "content_type": "application/rss+xml; charset=UTF-8",
+          "elapsed_ms": 22,
+          "error": null,
+          "final_url": "https://endpoints.news/feed/",
+          "ok": true,
+          "status": 200,
+          "url": "https://endpoints.news/feed/"
+        },
+        "field_counts": {
+          "link": 24,
+          "published_or_updated": 24,
+          "summary": 24,
+          "title": 24
+        },
+        "items": [
+          {
+            "link": "https://endpoints.news/three-gene-therapy-pioneers-just-won-the-breakthrough-prize-this-is-their-story/",
+            "published": "2026-04-18T23:13:44+00:00",
+            "summary_chars": 212,
+            "title": "Three gene therapy pioneers just won the Breakthrough Prize. This is their story"
+          },
+          {
+            "link": "https://endpoints.news/revmeds-stunning-success-fda-to-reclassify-peptides-foundayo-safety-info-requested-and-more/",
+            "published": "2026-04-18T10:00:24+00:00",
+            "summary_chars": 215,
+            "title": "RevMed\u2019s stunning success; FDA to reclassify peptides; and more"
+          },
+          {
+            "link": "https://endpoints.news/new-cdc-pick-schwartz-is-praised-by-public-health-pros/",
+            "published": "2026-04-17T17:17:43+00:00",
+            "summary_chars": 223,
+            "title": "New CDC pick Schwartz is praised by public health pros"
+          },
+          {
+            "link": "https://endpoints.news/kailera-ipo-interview-ceo-renaud-talks-biotech-market-china-and-obesity-pipeline/",
+            "published": "2026-04-17T16:06:25+00:00",
+            "summary_chars": 210,
+            "title": "Kailera IPO interview: CEO Renaud talks biotech market, China and obesity pipeline"
+          },
+          {
+            "link": "https://endpoints.news/aacr26-preview-revolution-medicines-the-ras-bonanza-and-china-adc-standouts/",
+            "published": "2026-04-17T15:38:49+00:00",
+            "summary_chars": 240,
+            "title": "#AACR26 preview: Revolution Medicines, the RAS bonanza and China ADC standouts"
+          },
+          {
+            "link": "https://endpoints.news/trevi-raises-150m-spain-and-boston-set-up-biotech-fund/",
+            "published": "2026-04-17T15:10:29+00:00",
+            "summary_chars": 184,
+            "title": "Trevi raises $150M; Spain and Boston set up biotech fund"
+          },
+          {
+            "link": "https://endpoints.news/biovac-gets-108m-backing-for-vaccine-factory-in-south-africa/",
+            "published": "2026-04-17T13:32:30+00:00",
+            "summary_chars": 233,
+            "title": "Biovac gets $108M backing for vaccine factory in South Africa"
+          },
+          {
+            "link": "https://endpoints.news/revolution-medicines-buyout-price-soars-after-pancreatic-cancer-win/",
+            "published": "2026-04-17T13:20:06+00:00",
+            "summary_chars": 210,
+            "title": "Revolution Medicines' buyout price soars after pancreatic cancer win"
+          },
+          {
+            "link": "https://endpoints.news/kailera-raises-625m-ipo-in-biotech-record/",
+            "published": "2026-04-17T11:28:56+00:00",
+            "summary_chars": 214,
+            "title": "Kailera raises $625M IPO in biotech record"
+          },
+          {
+            "link": "https://endpoints.news/lillys-tirzepatide-sheds-lean-muscle-harder-than-novos-semaglutide-study-suggests/",
+            "published": "2026-04-17T11:15:32+00:00",
+            "summary_chars": 222,
+            "title": "Lilly\u2019s tirzepatide sheds lean muscle harder than Novo\u2019s semaglutide, study suggests"
+          },
+          {
+            "link": "https://endpoints.news/novartis-vas-narasimhan-heads-to-anthropics-board-structure-therapeutics-finds-coo-from-metsera/",
+            "published": "2026-04-17T11:00:50+00:00",
+            "summary_chars": 185,
+            "title": "Novartis' Vas Narasimhan heads to Anthropic's board; Metsera alum joins Structure as COO"
+          },
+          {
+            "link": "https://endpoints.news/rfk-jr-defends-fda-makary-following-republican-questions/",
+            "published": "2026-04-16T19:03:14+00:00",
+            "summary_chars": 213,
+            "title": "RFK Jr. defends FDA, Makary following Republican questions"
+          },
+          {
+            "link": "https://endpoints.news/openai-launches-biopharma-focused-ai-model-to-compete-with-anthropic/",
+            "published": "2026-04-16T19:00:34+00:00",
+            "summary_chars": 244,
+            "title": "OpenAI launches biopharma-focused AI model to compete with Anthropic"
+          },
+          {
+            "link": "https://endpoints.news/cochrane-review-dismissing-amyloid-drugs-draws-immediate-backlash/",
+            "published": "2026-04-16T15:46:21+00:00",
+            "summary_chars": 237,
+            "title": "Cochrane review dismissing amyloid drugs draws immediate backlash"
+          },
+          {
+            "link": "https://endpoints.news/roche-to-start-a-new-phase-3-trial-for-elevidys/",
+            "published": "2026-04-16T15:35:05+00:00",
+            "summary_chars": 198,
+            "title": "Roche to start a new Phase 3 trial for Elevidys"
+          },
+          {
+            "link": "https://endpoints.news/meiragtx-buys-back-gene-therapy-from-j-storm-brings-in-56m-series-c/",
+            "published": "2026-04-16T15:21:54+00:00",
+            "summary_chars": 218,
+            "title": "MeiraGTx buys back gene therapy from J&J; Storm brings in $56M Series C"
+          },
+          {
+            "link": "https://endpoints.news/blurring-the-lines-of-healthcare-ai/",
+            "published": "2026-04-16T14:34:13+00:00",
+            "summary_chars": 206,
+            "title": "Blurring the lines of healthcare AI"
+          },
+          {
+            "link": "https://endpoints.news/using-versus-selling-lucrative-prvs-modernas-cautionary-tale/",
+            "published": "2026-04-16T14:21:31+00:00",
+            "summary_chars": 199,
+            "title": "Using versus selling lucrative PRVs: Moderna's cautionary tale"
+          },
+          {
+            "link": "https://endpoints.news/msf-says-gileads-lenacapavir-supply-not-nearly-enough-polypeptides-strategic-review/",
+            "published": "2026-04-16T14:00:25+00:00",
+            "summary_chars": 208,
+            "title": "MSF says Gilead's lenacapavir supply 'not nearly enough'; PolyPeptide\u2019s strategic review"
+          },
+          {
+            "link": "https://endpoints.news/lillys-obesity-pill-heads-for-diabetes-filing-after-heart-risk-trial/",
+            "published": "2026-04-16T11:26:00+00:00",
+            "summary_chars": 206,
+            "title": "Lilly's obesity pill heads for diabetes filing after heart risk trial"
+          }
+        ],
+        "latest_age_hours": 13.63,
+        "latest_published": "2026-04-18T23:13:44+00:00",
+        "url": "https://endpoints.news/feed/"
+      },
+      "rss_candidates_tested": [
+        "https://endpoints.news/feed/",
+        "https://endpoints.news/news/feed/"
+      ],
+      "rss_results": [
+        {
+          "bozo": false,
+          "bozo_exception": null,
+          "entries": 24,
+          "feed_title": "Endpoints News",
+          "fetch": {
+            "bytes": 19234,
+            "content_type": "application/rss+xml; charset=UTF-8",
+            "elapsed_ms": 22,
+            "error": null,
+            "final_url": "https://endpoints.news/feed/",
+            "ok": true,
+            "status": 200,
+            "url": "https://endpoints.news/feed/"
+          },
+          "field_counts": {
+            "link": 24,
+            "published_or_updated": 24,
+            "summary": 24,
+            "title": 24
+          },
+          "items": [
+            {
+              "link": "https://endpoints.news/three-gene-therapy-pioneers-just-won-the-breakthrough-prize-this-is-their-story/",
+              "published": "2026-04-18T23:13:44+00:00",
+              "summary_chars": 212,
+              "title": "Three gene therapy pioneers just won the Breakthrough Prize. This is their story"
+            },
+            {
+              "link": "https://endpoints.news/revmeds-stunning-success-fda-to-reclassify-peptides-foundayo-safety-info-requested-and-more/",
+              "published": "2026-04-18T10:00:24+00:00",
+              "summary_chars": 215,
+              "title": "RevMed\u2019s stunning success; FDA to reclassify peptides; and more"
+            },
+            {
+              "link": "https://endpoints.news/new-cdc-pick-schwartz-is-praised-by-public-health-pros/",
+              "published": "2026-04-17T17:17:43+00:00",
+              "summary_chars": 223,
+              "title": "New CDC pick Schwartz is praised by public health pros"
+            },
+            {
+              "link": "https://endpoints.news/kailera-ipo-interview-ceo-renaud-talks-biotech-market-china-and-obesity-pipeline/",
+              "published": "2026-04-17T16:06:25+00:00",
+              "summary_chars": 210,
+              "title": "Kailera IPO interview: CEO Renaud talks biotech market, China and obesity pipeline"
+            },
+            {
+              "link": "https://endpoints.news/aacr26-preview-revolution-medicines-the-ras-bonanza-and-china-adc-standouts/",
+              "published": "2026-04-17T15:38:49+00:00",
+              "summary_chars": 240,
+              "title": "#AACR26 preview: Revolution Medicines, the RAS bonanza and China ADC standouts"
+            },
+            {
+              "link": "https://endpoints.news/trevi-raises-150m-spain-and-boston-set-up-biotech-fund/",
+              "published": "2026-04-17T15:10:29+00:00",
+              "summary_chars": 184,
+              "title": "Trevi raises $150M; Spain and Boston set up biotech fund"
+            },
+            {
+              "link": "https://endpoints.news/biovac-gets-108m-backing-for-vaccine-factory-in-south-africa/",
+              "published": "2026-04-17T13:32:30+00:00",
+              "summary_chars": 233,
+              "title": "Biovac gets $108M backing for vaccine factory in South Africa"
+            },
+            {
+              "link": "https://endpoints.news/revolution-medicines-buyout-price-soars-after-pancreatic-cancer-win/",
+              "published": "2026-04-17T13:20:06+00:00",
+              "summary_chars": 210,
+              "title": "Revolution Medicines' buyout price soars after pancreatic cancer win"
+            },
+            {
+              "link": "https://endpoints.news/kailera-raises-625m-ipo-in-biotech-record/",
+              "published": "2026-04-17T11:28:56+00:00",
+              "summary_chars": 214,
+              "title": "Kailera raises $625M IPO in biotech record"
+            },
+            {
+              "link": "https://endpoints.news/lillys-tirzepatide-sheds-lean-muscle-harder-than-novos-semaglutide-study-suggests/",
+              "published": "2026-04-17T11:15:32+00:00",
+              "summary_chars": 222,
+              "title": "Lilly\u2019s tirzepatide sheds lean muscle harder than Novo\u2019s semaglutide, study suggests"
+            },
+            {
+              "link": "https://endpoints.news/novartis-vas-narasimhan-heads-to-anthropics-board-structure-therapeutics-finds-coo-from-metsera/",
+              "published": "2026-04-17T11:00:50+00:00",
+              "summary_chars": 185,
+              "title": "Novartis' Vas Narasimhan heads to Anthropic's board; Metsera alum joins Structure as COO"
+            },
+            {
+              "link": "https://endpoints.news/rfk-jr-defends-fda-makary-following-republican-questions/",
+              "published": "2026-04-16T19:03:14+00:00",
+              "summary_chars": 213,
+              "title": "RFK Jr. defends FDA, Makary following Republican questions"
+            },
+            {
+              "link": "https://endpoints.news/openai-launches-biopharma-focused-ai-model-to-compete-with-anthropic/",
+              "published": "2026-04-16T19:00:34+00:00",
+              "summary_chars": 244,
+              "title": "OpenAI launches biopharma-focused AI model to compete with Anthropic"
+            },
+            {
+              "link": "https://endpoints.news/cochrane-review-dismissing-amyloid-drugs-draws-immediate-backlash/",
+              "published": "2026-04-16T15:46:21+00:00",
+              "summary_chars": 237,
+              "title": "Cochrane review dismissing amyloid drugs draws immediate backlash"
+            },
+            {
+              "link": "https://endpoints.news/roche-to-start-a-new-phase-3-trial-for-elevidys/",
+              "published": "2026-04-16T15:35:05+00:00",
+              "summary_chars": 198,
+              "title": "Roche to start a new Phase 3 trial for Elevidys"
+            },
+            {
+              "link": "https://endpoints.news/meiragtx-buys-back-gene-therapy-from-j-storm-brings-in-56m-series-c/",
+              "published": "2026-04-16T15:21:54+00:00",
+              "summary_chars": 218,
+              "title": "MeiraGTx buys back gene therapy from J&J; Storm brings in $56M Series C"
+            },
+            {
+              "link": "https://endpoints.news/blurring-the-lines-of-healthcare-ai/",
+              "published": "2026-04-16T14:34:13+00:00",
+              "summary_chars": 206,
+              "title": "Blurring the lines of healthcare AI"
+            },
+            {
+              "link": "https://endpoints.news/using-versus-selling-lucrative-prvs-modernas-cautionary-tale/",
+              "published": "2026-04-16T14:21:31+00:00",
+              "summary_chars": 199,
+              "title": "Using versus selling lucrative PRVs: Moderna's cautionary tale"
+            },
+            {
+              "link": "https://endpoints.news/msf-says-gileads-lenacapavir-supply-not-nearly-enough-polypeptides-strategic-review/",
+              "published": "2026-04-16T14:00:25+00:00",
+              "summary_chars": 208,
+              "title": "MSF says Gilead's lenacapavir supply 'not nearly enough'; PolyPeptide\u2019s strategic review"
+            },
+            {
+              "link": "https://endpoints.news/lillys-obesity-pill-heads-for-diabetes-filing-after-heart-risk-trial/",
+              "published": "2026-04-16T11:26:00+00:00",
+              "summary_chars": 206,
+              "title": "Lilly's obesity pill heads for diabetes filing after heart risk trial"
+            }
+          ],
+          "latest_age_hours": 13.63,
+          "latest_published": "2026-04-18T23:13:44+00:00",
+          "url": "https://endpoints.news/feed/"
+        },
+        {
+          "bozo": false,
+          "bozo_exception": null,
+          "entries": 24,
+          "feed_title": "Endpoints News",
+          "fetch": {
+            "bytes": 19234,
+            "content_type": "application/rss+xml; charset=UTF-8",
+            "elapsed_ms": 29,
+            "error": null,
+            "final_url": "https://endpoints.news/news/feed/",
+            "ok": true,
+            "status": 200,
+            "url": "https://endpoints.news/news/feed/"
+          },
+          "field_counts": {
+            "link": 24,
+            "published_or_updated": 24,
+            "summary": 24,
+            "title": 24
+          },
+          "items": [
+            {
+              "link": "https://endpoints.news/three-gene-therapy-pioneers-just-won-the-breakthrough-prize-this-is-their-story/",
+              "published": "2026-04-18T23:13:44+00:00",
+              "summary_chars": 212,
+              "title": "Three gene therapy pioneers just won the Breakthrough Prize. This is their story"
+            },
+            {
+              "link": "https://endpoints.news/revmeds-stunning-success-fda-to-reclassify-peptides-foundayo-safety-info-requested-and-more/",
+              "published": "2026-04-18T10:00:24+00:00",
+              "summary_chars": 215,
+              "title": "RevMed\u2019s stunning success; FDA to reclassify peptides; and more"
+            },
+            {
+              "link": "https://endpoints.news/new-cdc-pick-schwartz-is-praised-by-public-health-pros/",
+              "published": "2026-04-17T17:17:43+00:00",
+              "summary_chars": 223,
+              "title": "New CDC pick Schwartz is praised by public health pros"
+            },
+            {
+              "link": "https://endpoints.news/kailera-ipo-interview-ceo-renaud-talks-biotech-market-china-and-obesity-pipeline/",
+              "published": "2026-04-17T16:06:25+00:00",
+              "summary_chars": 210,
+              "title": "Kailera IPO interview: CEO Renaud talks biotech market, China and obesity pipeline"
+            },
+            {
+              "link": "https://endpoints.news/aacr26-preview-revolution-medicines-the-ras-bonanza-and-china-adc-standouts/",
+              "published": "2026-04-17T15:38:49+00:00",
+              "summary_chars": 240,
+              "title": "#AACR26 preview: Revolution Medicines, the RAS bonanza and China ADC standouts"
+            },
+            {
+              "link": "https://endpoints.news/trevi-raises-150m-spain-and-boston-set-up-biotech-fund/",
+              "published": "2026-04-17T15:10:29+00:00",
+              "summary_chars": 184,
+              "title": "Trevi raises $150M; Spain and Boston set up biotech fund"
+            },
+            {
+              "link": "https://endpoints.news/biovac-gets-108m-backing-for-vaccine-factory-in-south-africa/",
+              "published": "2026-04-17T13:32:30+00:00",
+              "summary_chars": 233,
+              "title": "Biovac gets $108M backing for vaccine factory in South Africa"
+            },
+            {
+              "link": "https://endpoints.news/revolution-medicines-buyout-price-soars-after-pancreatic-cancer-win/",
+              "published": "2026-04-17T13:20:06+00:00",
+              "summary_chars": 210,
+              "title": "Revolution Medicines' buyout price soars after pancreatic cancer win"
+            },
+            {
+              "link": "https://endpoints.news/kailera-raises-625m-ipo-in-biotech-record/",
+              "published": "2026-04-17T11:28:56+00:00",
+              "summary_chars": 214,
+              "title": "Kailera raises $625M IPO in biotech record"
+            },
+            {
+              "link": "https://endpoints.news/lillys-tirzepatide-sheds-lean-muscle-harder-than-novos-semaglutide-study-suggests/",
+              "published": "2026-04-17T11:15:32+00:00",
+              "summary_chars": 222,
+              "title": "Lilly\u2019s tirzepatide sheds lean muscle harder than Novo\u2019s semaglutide, study suggests"
+            },
+            {
+              "link": "https://endpoints.news/novartis-vas-narasimhan-heads-to-anthropics-board-structure-therapeutics-finds-coo-from-metsera/",
+              "published": "2026-04-17T11:00:50+00:00",
+              "summary_chars": 185,
+              "title": "Novartis' Vas Narasimhan heads to Anthropic's board; Metsera alum joins Structure as COO"
+            },
+            {
+              "link": "https://endpoints.news/rfk-jr-defends-fda-makary-following-republican-questions/",
+              "published": "2026-04-16T19:03:14+00:00",
+              "summary_chars": 213,
+              "title": "RFK Jr. defends FDA, Makary following Republican questions"
+            },
+            {
+              "link": "https://endpoints.news/openai-launches-biopharma-focused-ai-model-to-compete-with-anthropic/",
+              "published": "2026-04-16T19:00:34+00:00",
+              "summary_chars": 244,
+              "title": "OpenAI launches biopharma-focused AI model to compete with Anthropic"
+            },
+            {
+              "link": "https://endpoints.news/cochrane-review-dismissing-amyloid-drugs-draws-immediate-backlash/",
+              "published": "2026-04-16T15:46:21+00:00",
+              "summary_chars": 237,
+              "title": "Cochrane review dismissing amyloid drugs draws immediate backlash"
+            },
+            {
+              "link": "https://endpoints.news/roche-to-start-a-new-phase-3-trial-for-elevidys/",
+              "published": "2026-04-16T15:35:05+00:00",
+              "summary_chars": 198,
+              "title": "Roche to start a new Phase 3 trial for Elevidys"
+            },
+            {
+              "link": "https://endpoints.news/meiragtx-buys-back-gene-therapy-from-j-storm-brings-in-56m-series-c/",
+              "published": "2026-04-16T15:21:54+00:00",
+              "summary_chars": 218,
+              "title": "MeiraGTx buys back gene therapy from J&J; Storm brings in $56M Series C"
+            },
+            {
+              "link": "https://endpoints.news/blurring-the-lines-of-healthcare-ai/",
+              "published": "2026-04-16T14:34:13+00:00",
+              "summary_chars": 206,
+              "title": "Blurring the lines of healthcare AI"
+            },
+            {
+              "link": "https://endpoints.news/using-versus-selling-lucrative-prvs-modernas-cautionary-tale/",
+              "published": "2026-04-16T14:21:31+00:00",
+              "summary_chars": 199,
+              "title": "Using versus selling lucrative PRVs: Moderna's cautionary tale"
+            },
+            {
+              "link": "https://endpoints.news/msf-says-gileads-lenacapavir-supply-not-nearly-enough-polypeptides-strategic-review/",
+              "published": "2026-04-16T14:00:25+00:00",
+              "summary_chars": 208,
+              "title": "MSF says Gilead's lenacapavir supply 'not nearly enough'; PolyPeptide\u2019s strategic review"
+            },
+            {
+              "link": "https://endpoints.news/lillys-obesity-pill-heads-for-diabetes-filing-after-heart-risk-trial/",
+              "published": "2026-04-16T11:26:00+00:00",
+              "summary_chars": 206,
+              "title": "Lilly's obesity pill heads for diabetes filing after heart risk trial"
+            }
+          ],
+          "latest_age_hours": 13.63,
+          "latest_published": "2026-04-18T23:13:44+00:00",
+          "url": "https://endpoints.news/news/feed/"
+        }
+      ],
+      "source_id": "endpoints",
+      "source_name": "Endpoints News"
+    },
+    {
+      "autodiscovered_feed_urls": [],
+      "headline_page": {
+        "date_fields": 0,
+        "deduped_candidate_links": 0,
+        "fetch": {
+          "bytes": 4844,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 65,
+          "error": null,
+          "final_url": "https://www.genomeweb.com/",
+          "ok": false,
+          "status": 403,
+          "url": "https://www.genomeweb.com/"
+        },
+        "items": [],
+        "latest_age_hours": null,
+        "latest_date": null,
+        "page_url": "https://www.genomeweb.com/",
+        "raw_candidate_links": 0
+      },
+      "page_url": "https://www.genomeweb.com/",
+      "recommended_discovery_mode": "blocked_or_no_discovery",
+      "rss_best": {
+        "bozo": true,
+        "bozo_exception": "<unknown>:2:751: not well-formed (invalid token)",
+        "entries": 0,
+        "feed_title": "",
+        "fetch": {
+          "bytes": 4856,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 61,
+          "error": null,
+          "final_url": "https://www.genomeweb.com/feed",
+          "ok": false,
+          "status": 403,
+          "url": "https://www.genomeweb.com/feed"
+        },
+        "field_counts": {
+          "link": 0,
+          "published_or_updated": 0,
+          "summary": 0,
+          "title": 0
+        },
+        "items": [],
+        "latest_age_hours": null,
+        "latest_published": null,
+        "url": "https://www.genomeweb.com/feed"
+      },
+      "rss_candidates_tested": [
+        "https://www.genomeweb.com/feed",
+        "https://www.genomeweb.com/news/feed",
+        "https://www.genomeweb.com/rss.xml"
+      ],
+      "rss_results": [
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:2:751: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 4856,
+            "content_type": "text/html; charset=UTF-8",
+            "elapsed_ms": 61,
+            "error": null,
+            "final_url": "https://www.genomeweb.com/feed",
+            "ok": false,
+            "status": 403,
+            "url": "https://www.genomeweb.com/feed"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.genomeweb.com/feed"
+        },
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:2:751: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 4893,
+            "content_type": "text/html; charset=UTF-8",
+            "elapsed_ms": 63,
+            "error": null,
+            "final_url": "https://www.genomeweb.com/news/feed",
+            "ok": false,
+            "status": 403,
+            "url": "https://www.genomeweb.com/news/feed"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.genomeweb.com/news/feed"
+        },
+        {
+          "bozo": true,
+          "bozo_exception": "<unknown>:2:751: not well-formed (invalid token)",
+          "entries": 0,
+          "feed_title": "",
+          "fetch": {
+            "bytes": 4865,
+            "content_type": "text/html; charset=UTF-8",
+            "elapsed_ms": 64,
+            "error": null,
+            "final_url": "https://www.genomeweb.com/rss.xml",
+            "ok": false,
+            "status": 403,
+            "url": "https://www.genomeweb.com/rss.xml"
+          },
+          "field_counts": {
+            "link": 0,
+            "published_or_updated": 0,
+            "summary": 0,
+            "title": 0
+          },
+          "items": [],
+          "latest_age_hours": null,
+          "latest_published": null,
+          "url": "https://www.genomeweb.com/rss.xml"
+        }
+      ],
+      "source_id": "genomeweb",
+      "source_name": "GenomeWeb"
+    }
+  ]
+}

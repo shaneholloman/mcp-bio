@@ -1,0 +1,28 @@
+{
+  "id": "oncology-kras-melanoma",
+  "role": "oncologist",
+  "specialty": "medical oncology",
+  "interests": [
+    "immunotherapy",
+    "KRAS",
+    "melanoma"
+  ],
+  "keywords": {
+    "oncologist": 3,
+    "oncology": 3,
+    "cancer": 3,
+    "tumor": 2,
+    "melanoma": 5,
+    "immunotherapy": 5,
+    "immune checkpoint": 4,
+    "checkpoint inhibitor": 4,
+    "PD-1": 4,
+    "PD-L1": 4,
+    "KRAS": 5,
+    "sotorasib": 4,
+    "adagrasib": 4,
+    "clinical trial": 2,
+    "phase": 1
+  },
+  "bookmarks": []
+}

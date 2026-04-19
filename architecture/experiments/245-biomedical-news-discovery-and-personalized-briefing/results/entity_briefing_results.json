@@ -1,0 +1,733 @@
+{
+  "approach": "heuristic_entities_biomcp_pivots_keyword_profile_briefing",
+  "articles": [
+    {
+      "entities": {
+        "approval_cues": [
+          "approval"
+        ],
+        "companies": [
+          "AbbVie",
+          "Eli Lilly",
+          "GSK",
+          "J&J",
+          "Johnson & Johnson",
+          "Lilly",
+          "Novartis",
+          "Pfizer"
+        ],
+        "diseases": [],
+        "dois": [],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": [],
+        "phase_mentions": [],
+        "pmids": [],
+        "trial_cues": []
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 296367,
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_ms": 98,
+          "error": null,
+          "final_url": "https://www.biopharmadive.com/news/pharma-ceo-pay-2025-lilly-pfizer-abbie-gsk-jnj/817774/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.biopharmadive.com/news/pharma-ceo-pay-2025-lilly-pfizer-abbie-gsk-jnj/817774/"
+        },
+        "paywall_signals": [],
+        "text_chars": 4592
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [],
+      "profile_score": 0,
+      "source_id": "biopharma-dive",
+      "source_name": "BioPharma Dive",
+      "title": "5 notable pharma CEO pay hikes in 2025",
+      "url": "https://www.biopharmadive.com/news/pharma-ceo-pay-2025-lilly-pfizer-abbie-gsk-jnj/817774/"
+    },
+    {
+      "entities": {
+        "approval_cues": [
+          "approval",
+          "approved",
+          "FDA"
+        ],
+        "companies": [],
+        "diseases": [],
+        "dois": [],
+        "drugs": [],
+        "genes": [
+          "MET"
+        ],
+        "nct_ids": [],
+        "phase_mentions": [],
+        "pmids": [],
+        "trial_cues": []
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 322669,
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_ms": 46,
+          "error": null,
+          "final_url": "https://www.biopharmadive.com/news/ucb-neurona-deal-acquisition-cell-therapy-epilepsy-biotech/817863/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.biopharmadive.com/news/ucb-neurona-deal-acquisition-cell-therapy-epilepsy-biotech/817863/"
+        },
+        "paywall_signals": [],
+        "text_chars": 3997
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [],
+      "profile_score": 2,
+      "source_id": "biopharma-dive",
+      "source_name": "BioPharma Dive",
+      "title": "UCB, betting on seizure cell therapy, to buy Neurona for up to $1.2B",
+      "url": "https://www.biopharmadive.com/news/ucb-neurona-deal-acquisition-cell-therapy-epilepsy-biotech/817863/"
+    },
+    {
+      "entities": {
+        "approval_cues": [],
+        "companies": [
+          "Eli Lilly",
+          "Lilly",
+          "Moderna",
+          "Pfizer"
+        ],
+        "diseases": [],
+        "dois": [],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": [],
+        "phase_mentions": [
+          "Phase 2",
+          "Phase 3"
+        ],
+        "pmids": [],
+        "trial_cues": [
+          "study",
+          "trial"
+        ]
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 312502,
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_ms": 43,
+          "error": null,
+          "final_url": "https://www.biopharmadive.com/news/kailera-ipo-price-obesity-drugs-hengrui-ron-renaud/817463/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.biopharmadive.com/news/kailera-ipo-price-obesity-drugs-hengrui-ron-renaud/817463/"
+        },
+        "paywall_signals": [],
+        "text_chars": 3803
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [
+        "phase"
+      ],
+      "profile_score": 2,
+      "source_id": "biopharma-dive",
+      "source_name": "BioPharma Dive",
+      "title": "Kailera nets $625M in one of biotech\u2019s biggest-ever IPOs",
+      "url": "https://www.biopharmadive.com/news/kailera-ipo-price-obesity-drugs-hengrui-ron-renaud/817463/"
+    },
+    {
+      "entities": {
+        "approval_cues": [],
+        "companies": [
+          "Amgen",
+          "Eli Lilly",
+          "Gilead",
+          "Lilly",
+          "Moderna"
+        ],
+        "diseases": [
+          "cancer"
+        ],
+        "dois": [],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": [],
+        "phase_mentions": [
+          "Phase 1"
+        ],
+        "pmids": [],
+        "trial_cues": [
+          "trial"
+        ]
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 383109,
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_ms": 47,
+          "error": null,
+          "final_url": "https://www.biopharmadive.com/news/foundayo-launch-openai-rosalind-janux-gilead-arcellx/817789/",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.biopharmadive.com/news/foundayo-launch-openai-rosalind-janux-gilead-arcellx/817789/"
+        },
+        "paywall_signals": [],
+        "text_chars": 2939
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [
+        "oncology",
+        "cancer",
+        "phase"
+      ],
+      "profile_score": 8,
+      "source_id": "biopharma-dive",
+      "source_name": "BioPharma Dive",
+      "title": "Lilly\u2019s obesity pill off to a strong start; OpenAI debuts new drug discovery tool",
+      "url": "https://www.biopharmadive.com/news/foundayo-launch-openai-rosalind-janux-gilead-arcellx/817789/"
+    },
+    {
+      "entities": {
+        "approval_cues": [],
+        "companies": [],
+        "diseases": [
+          "cancer",
+          "pancreatic cancer"
+        ],
+        "dois": [],
+        "drugs": [
+          "daraxonrasib"
+        ],
+        "genes": [
+          "KRAS"
+        ],
+        "nct_ids": [],
+        "phase_mentions": [],
+        "pmids": [],
+        "trial_cues": [
+          "trial"
+        ]
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 174798,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 122,
+          "error": null,
+          "final_url": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss"
+        },
+        "paywall_signals": [],
+        "text_chars": 2391
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [
+        "oncologist",
+        "oncology",
+        "cancer",
+        "KRAS",
+        "clinical trial"
+      ],
+      "profile_score": 20,
+      "source_id": "stat",
+      "source_name": "STAT",
+      "title": "STAT+: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades",
+      "url": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss"
+    },
+    {
+      "entities": {
+        "approval_cues": [
+          "approved"
+        ],
+        "companies": [
+          "Eli Lilly",
+          "Lilly"
+        ],
+        "diseases": [],
+        "dois": [],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": [],
+        "phase_mentions": [],
+        "pmids": [],
+        "trial_cues": []
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 179256,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 57,
+          "error": null,
+          "final_url": "https://www.statnews.com/2026/04/16/glp1-weight-loss-new-approach/?utm_campaign=rss",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.statnews.com/2026/04/16/glp1-weight-loss-new-approach/?utm_campaign=rss"
+        },
+        "paywall_signals": [],
+        "text_chars": 1260
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [],
+      "profile_score": 0,
+      "source_id": "stat",
+      "source_name": "STAT",
+      "title": "STAT+: Researchers behind GLP-1 obesity drugs advance new approach: Drop GLP-1 as a target",
+      "url": "https://www.statnews.com/2026/04/16/glp1-weight-loss-new-approach/?utm_campaign=rss"
+    },
+    {
+      "entities": {
+        "approval_cues": [
+          "FDA"
+        ],
+        "companies": [],
+        "diseases": [],
+        "dois": [],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": [],
+        "phase_mentions": [],
+        "pmids": [],
+        "trial_cues": []
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 179511,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 39,
+          "error": null,
+          "final_url": "https://www.statnews.com/2026/04/17/biotech-news-fda-eyes-expanding-testosterone-for-libido/?utm_campaign=rss",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.statnews.com/2026/04/17/biotech-news-fda-eyes-expanding-testosterone-for-libido/?utm_campaign=rss"
+        },
+        "paywall_signals": [],
+        "text_chars": 1016
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [],
+      "profile_score": 0,
+      "source_id": "stat",
+      "source_name": "STAT",
+      "title": "STAT+: FDA eyes expanding testosterone therapy for libido",
+      "url": "https://www.statnews.com/2026/04/17/biotech-news-fda-eyes-expanding-testosterone-for-libido/?utm_campaign=rss"
+    },
+    {
+      "entities": {
+        "approval_cues": [
+          "approval"
+        ],
+        "companies": [],
+        "diseases": [
+          "cancer",
+          "pancreatic cancer"
+        ],
+        "dois": [],
+        "drugs": [
+          "daraxonrasib"
+        ],
+        "genes": [],
+        "nct_ids": [],
+        "phase_mentions": [
+          "Phase 3"
+        ],
+        "pmids": [],
+        "trial_cues": [
+          "readout",
+          "study",
+          "trial"
+        ]
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 195794,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 51,
+          "error": null,
+          "final_url": "https://www.statnews.com/2026/04/17/revolution-medicines-daraxonrasib-clinical-trial-readout-loud-podcast-transcript/?utm_campaign=rss",
+          "ok": true,
+          "status": 200,
+          "url": "https://www.statnews.com/2026/04/17/revolution-medicines-daraxonrasib-clinical-trial-readout-loud-podcast-transcript/?utm_campaign=rss"
+        },
+        "paywall_signals": [],
+        "text_chars": 876
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [
+        "cancer",
+        "phase"
+      ],
+      "profile_score": 6,
+      "source_id": "stat",
+      "source_name": "STAT",
+      "title": "STAT+: A pancreatic cancer expert on why Revolution Medicines\u2019 study could \u2018open up a new era\u2019 of treatment",
+      "url": "https://www.statnews.com/2026/04/17/revolution-medicines-daraxonrasib-clinical-trial-readout-loud-podcast-transcript/?utm_campaign=rss"
+    },
+    {
+      "entities": {
+        "approval_cues": [],
+        "companies": [],
+        "diseases": [],
+        "dois": [],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": [],
+        "phase_mentions": [],
+        "pmids": [],
+        "trial_cues": []
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 69550,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 141,
+          "error": null,
+          "final_url": "https://endpoints.news/three-gene-therapy-pioneers-just-won-the-breakthrough-prize-this-is-their-story/",
+          "ok": true,
+          "status": 200,
+          "url": "https://endpoints.news/three-gene-therapy-pioneers-just-won-the-breakthrough-prize-this-is-their-story/"
+        },
+        "paywall_signals": [],
+        "text_chars": 702
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [],
+      "profile_score": 0,
+      "source_id": "endpoints",
+      "source_name": "Endpoints News",
+      "title": "Three gene therapy pioneers just won the Breakthrough Prize. This is their story",
+      "url": "https://endpoints.news/three-gene-therapy-pioneers-just-won-the-breakthrough-prize-this-is-their-story/"
+    },
+    {
+      "entities": {
+        "approval_cues": [
+          "FDA"
+        ],
+        "companies": [
+          "Bayer"
+        ],
+        "diseases": [],
+        "dois": [],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": [],
+        "phase_mentions": [],
+        "pmids": [],
+        "trial_cues": []
+      },
+      "fetch_extract": {
+        "fetch": {
+          "bytes": 68800,
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_ms": 386,
+          "error": null,
+          "final_url": "https://endpoints.news/new-cdc-pick-schwartz-is-praised-by-public-health-pros/",
+          "ok": true,
+          "status": 200,
+          "url": "https://endpoints.news/new-cdc-pick-schwartz-is-praised-by-public-health-pros/"
+        },
+        "paywall_signals": [],
+        "text_chars": 603
+      },
+      "precision_assessment": {
+        "companies": "small dictionary; high precision but low recall",
+        "drugs": "dictionary plus suffix heuristic; suffix heuristic needs curation",
+        "genes": "dictionary exact-match; possible false positives for short symbols",
+        "ids": "no ids found"
+      },
+      "profile_reasons": [],
+      "profile_score": 0,
+      "source_id": "endpoints",
+      "source_name": "Endpoints News",
+      "title": "New CDC pick Schwartz is praised by public health pros",
+      "url": "https://endpoints.news/new-cdc-pick-schwartz-is-praised-by-public-health-pros/"
+    }
+  ],
+  "cross_reference_pivots": [
+    {
+      "article_title": "UCB, betting on seizure cell therapy, to buy Neurona for up to $1.2B",
+      "article_url": "https://www.biopharmadive.com/news/ucb-neurona-deal-acquisition-cell-therapy-epilepsy-biotech/817863/",
+      "result": {
+        "command": [
+          "biomcp",
+          "--json",
+          "get",
+          "gene",
+          "MET"
+        ],
+        "name": "MET proto-oncogene, receptor tyrosine kinase",
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "symbol": "MET"
+      },
+      "type": "gene",
+      "value": "MET"
+    },
+    {
+      "article_title": "STAT+: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades",
+      "article_url": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss",
+      "result": {
+        "command": [
+          "biomcp",
+          "--json",
+          "get",
+          "drug",
+          "daraxonrasib"
+        ],
+        "name": "daraxonrasib",
+        "ok": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      "type": "drug",
+      "value": "daraxonrasib"
+    },
+    {
+      "article_title": "STAT+: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades",
+      "article_url": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss",
+      "result": {
+        "command": [
+          "biomcp",
+          "--json",
+          "get",
+          "gene",
+          "KRAS"
+        ],
+        "name": "KRAS proto-oncogene, GTPase",
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "symbol": "KRAS"
+      },
+      "type": "gene",
+      "value": "KRAS"
+    },
+    {
+      "article_title": "STAT+: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades",
+      "article_url": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss",
+      "result": {
+        "command": [
+          "biomcp",
+          "--json",
+          "get",
+          "disease",
+          "pancreatic cancer"
+        ],
+        "id": "MONDO:0005192",
+        "name": "pancreatic carcinoma",
+        "ok": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      "type": "disease",
+      "value": "pancreatic cancer"
+    },
+    {
+      "result": {
+        "command": [
+          "biomcp",
+          "--json",
+          "search",
+          "trial",
+          "-i",
+          "daraxonrasib",
+          "--limit",
+          "1"
+        ],
+        "count": 1,
+        "first_result": {
+          "nct_id": "NCT07349537",
+          "title": "Study of RMC-5127 in Patients With Advanced KRAS G12V-Mutant Solid Tumors"
+        },
+        "ok": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      "type": "trial_search",
+      "value": "daraxonrasib"
+    }
+  ],
+  "generated_at": "2026-04-19T12:54:09+00:00",
+  "input_extraction_results": "architecture/experiments/245-biomedical-news-discovery-and-personalized-briefing/results/article_extraction_results.json",
+  "personalized_briefing": [
+    {
+      "entities": {
+        "companies": [],
+        "diseases": [
+          "cancer",
+          "pancreatic cancer"
+        ],
+        "drugs": [
+          "daraxonrasib"
+        ],
+        "genes": [
+          "KRAS"
+        ],
+        "nct_ids": []
+      },
+      "profile_score": 20,
+      "rank": 1,
+      "reasons": [
+        "oncologist",
+        "oncology",
+        "cancer",
+        "KRAS",
+        "clinical trial"
+      ],
+      "source_id": "stat",
+      "title": "STAT+: The race to catch KRAS, pancreatic cancer\u2019s \u2018greasy ball,\u2019 and create the most promising drug in decades",
+      "url": "https://www.statnews.com/2026/04/19/daraxonrasib-pancreatic-cancer-kras-revolution-medicines-patient-story/?utm_campaign=rss"
+    },
+    {
+      "entities": {
+        "companies": [
+          "Amgen",
+          "Eli Lilly",
+          "Gilead",
+          "Lilly",
+          "Moderna"
+        ],
+        "diseases": [
+          "cancer"
+        ],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": []
+      },
+      "profile_score": 8,
+      "rank": 2,
+      "reasons": [
+        "oncology",
+        "cancer",
+        "phase"
+      ],
+      "source_id": "biopharma-dive",
+      "title": "Lilly\u2019s obesity pill off to a strong start; OpenAI debuts new drug discovery tool",
+      "url": "https://www.biopharmadive.com/news/foundayo-launch-openai-rosalind-janux-gilead-arcellx/817789/"
+    },
+    {
+      "entities": {
+        "companies": [],
+        "diseases": [
+          "cancer",
+          "pancreatic cancer"
+        ],
+        "drugs": [
+          "daraxonrasib"
+        ],
+        "genes": [],
+        "nct_ids": []
+      },
+      "profile_score": 6,
+      "rank": 3,
+      "reasons": [
+        "cancer",
+        "phase"
+      ],
+      "source_id": "stat",
+      "title": "STAT+: A pancreatic cancer expert on why Revolution Medicines\u2019 study could \u2018open up a new era\u2019 of treatment",
+      "url": "https://www.statnews.com/2026/04/17/revolution-medicines-daraxonrasib-clinical-trial-readout-loud-podcast-transcript/?utm_campaign=rss"
+    },
+    {
+      "entities": {
+        "companies": [],
+        "diseases": [],
+        "drugs": [],
+        "genes": [
+          "MET"
+        ],
+        "nct_ids": []
+      },
+      "profile_score": 2,
+      "rank": 4,
+      "reasons": [],
+      "source_id": "biopharma-dive",
+      "title": "UCB, betting on seizure cell therapy, to buy Neurona for up to $1.2B",
+      "url": "https://www.biopharmadive.com/news/ucb-neurona-deal-acquisition-cell-therapy-epilepsy-biotech/817863/"
+    },
+    {
+      "entities": {
+        "companies": [
+          "Eli Lilly",
+          "Lilly",
+          "Moderna",
+          "Pfizer"
+        ],
+        "diseases": [],
+        "drugs": [],
+        "genes": [],
+        "nct_ids": []
+      },
+      "profile_score": 2,
+      "rank": 5,
+      "reasons": [
+        "phase"
+      ],
+      "source_id": "biopharma-dive",
+      "title": "Kailera nets $625M in one of biotech\u2019s biggest-ever IPOs",
+      "url": "https://www.biopharmadive.com/news/kailera-ipo-price-obesity-drugs-hengrui-ron-renaud/817463/"
+    }
+  ],
+  "profile": {
+    "interests": [
+      "immunotherapy",
+      "KRAS",
+      "melanoma"
+    ],
+    "role": "oncologist"
+  },
+  "summary": {
+    "articles_analyzed": 10,
+    "articles_with_any_entity": 9,
+    "pivot_attempts": 5,
+    "successful_pivots": 5
+  }
+}
