@@ -1,0 +1,45 @@
+{
+  "checks": {
+    "all_result_paths_persistent": true,
+    "direct_page_selection_reduces_noise": true,
+    "evidence_text_contains_anchor": true,
+    "hpo_control_available_or_documented": true,
+    "recall_matches_or_beats_explore": true,
+    "schema_required_fields": true
+  },
+  "details": {
+    "bad_evidence_rows": [],
+    "direct_selection_checks": [
+      {
+        "candidate_topic_count": 5,
+        "disease_key": "uterine_fibroid",
+        "passed": true,
+        "selected_titles": [
+          "Uterine Fibroids"
+        ],
+        "selected_topic_count": 1
+      },
+      {
+        "candidate_topic_count": 3,
+        "disease_key": "endometriosis",
+        "passed": true,
+        "selected_titles": [
+          "Endometriosis"
+        ],
+        "selected_topic_count": 1
+      }
+    ],
+    "feature_count": 15,
+    "missing_feature_keys": [],
+    "result_paths": {
+      "contract_numbers": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_contract_numbers.json",
+      "full_scale": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_full_scale.json",
+      "regression_control": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_regression_control.json",
+      "results_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results",
+      "validation": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_validation.json",
+      "work_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work"
+    }
+  },
+  "generated_at": "2026-04-19T16:48:59+00:00",
+  "passed": true
+}

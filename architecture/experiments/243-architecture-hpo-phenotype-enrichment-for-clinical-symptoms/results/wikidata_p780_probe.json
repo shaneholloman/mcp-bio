@@ -1,0 +1,201 @@
+{
+  "approach": "wikidata_p780_symptom_broad_coverage",
+  "diseases": [
+    {
+      "disease_key": "uterine_fibroid",
+      "elapsed_ms": 671.7,
+      "error": null,
+      "expected_symptom_overlap": {
+        "expected_total": 8,
+        "matched": {},
+        "matched_total": 0,
+        "missing": [
+          "heavy menstrual bleeding",
+          "pelvic pain",
+          "lower back pain",
+          "fatigue",
+          "urinary frequency",
+          "constipation",
+          "infertility",
+          "dyspareunia"
+        ],
+        "recall": 0.0
+      },
+      "item_count": 1,
+      "items": [
+        {
+          "identifiers": {
+            "omim": [
+              "150699"
+            ]
+          },
+          "item": "http://www.wikidata.org/entity/Q556281",
+          "label": "uterine fibroid",
+          "matched_labels": [
+            "uterine fibroid"
+          ],
+          "symptom_count": 0,
+          "symptoms": []
+        }
+      ],
+      "label": "uterine fibroid",
+      "queried_labels": [
+        "uterine fibroid",
+        "uterine leiomyoma",
+        "leiomyoma of uterus"
+      ],
+      "query_ok": true,
+      "status": 200,
+      "total_symptom_assertions": 0,
+      "unique_symptom_labels": []
+    },
+    {
+      "disease_key": "endometriosis",
+      "elapsed_ms": 667.6,
+      "error": null,
+      "expected_symptom_overlap": {
+        "expected_total": 7,
+        "matched": {},
+        "matched_total": 0,
+        "missing": [
+          "pelvic pain",
+          "dysmenorrhea",
+          "dyspareunia",
+          "infertility",
+          "dyschezia",
+          "dysuria",
+          "abdominal pain"
+        ],
+        "recall": 0.0
+      },
+      "item_count": 1,
+      "items": [
+        {
+          "identifiers": {
+            "icd10": [
+              "N80"
+            ],
+            "mesh": [
+              "D004715"
+            ],
+            "omim": [
+              "131200"
+            ],
+            "snomed": [
+              "129103003"
+            ]
+          },
+          "item": "http://www.wikidata.org/entity/Q205764",
+          "label": "endometriosis",
+          "matched_labels": [
+            "endometriosis"
+          ],
+          "symptom_count": 0,
+          "symptoms": []
+        }
+      ],
+      "label": "endometriosis",
+      "queried_labels": [
+        "endometriosis"
+      ],
+      "query_ok": true,
+      "status": 200,
+      "total_symptom_assertions": 0,
+      "unique_symptom_labels": []
+    },
+    {
+      "disease_key": "chronic_venous_insufficiency",
+      "elapsed_ms": 357.9,
+      "error": null,
+      "expected_symptom_overlap": {
+        "expected_total": 8,
+        "matched": {},
+        "matched_total": 0,
+        "missing": [
+          "leg swelling",
+          "leg pain",
+          "varicose veins",
+          "venous ulcer",
+          "skin discoloration",
+          "stasis dermatitis",
+          "itching",
+          "heaviness"
+        ],
+        "recall": 0.0
+      },
+      "item_count": 3,
+      "items": [
+        {
+          "identifiers": {
+            "icd10": [
+              "I87.2"
+            ],
+            "snomed": [
+              "20696009"
+            ]
+          },
+          "item": "http://www.wikidata.org/entity/Q1088042",
+          "label": "chronic venous insufficiency",
+          "matched_labels": [
+            "chronic venous insufficiency"
+          ],
+          "symptom_count": 0,
+          "symptoms": []
+        },
+        {
+          "identifiers": {
+            "mesh": [
+              "D014689"
+            ]
+          },
+          "item": "http://www.wikidata.org/entity/Q9008818",
+          "label": "venous insufficiency",
+          "matched_labels": [
+            "venous insufficiency"
+          ],
+          "symptom_count": 0,
+          "symptoms": []
+        },
+        {
+          "identifiers": {
+            "icd10": [
+              "I83.0",
+              "I83.2"
+            ]
+          },
+          "item": "http://www.wikidata.org/entity/Q1573613",
+          "label": "venous ulcer",
+          "matched_labels": [
+            "venous ulcer"
+          ],
+          "symptom_count": 0,
+          "symptoms": []
+        }
+      ],
+      "label": "chronic venous insufficiency",
+      "queried_labels": [
+        "chronic venous insufficiency",
+        "venous insufficiency",
+        "venous ulcer",
+        "venous leg ulcer"
+      ],
+      "query_ok": true,
+      "status": 200,
+      "total_symptom_assertions": 0,
+      "unique_symptom_labels": []
+    }
+  ],
+  "generated_at": "2026-04-19T15:57:18+00:00",
+  "metric_definitions": {
+    "expected_symptom_recall": "Manual small-set lexical recall against expected recognizable clinical symptoms for the disease.",
+    "total_symptom_assertions": "Number of Wikidata P780 disease-to-symptom rows found for exact English labels."
+  },
+  "summary": {
+    "disease_count": 3,
+    "diseases_with_p780": 0,
+    "expected_symptom_recall": 0.0,
+    "total_expected_symptoms": 23,
+    "total_matched_expected_symptoms": 0,
+    "total_symptom_assertions": 0
+  }
+}

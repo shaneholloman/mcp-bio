@@ -1,0 +1,27 @@
+{
+  "artifact_paths": {
+    "contract_numbers": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_contract_numbers.json",
+    "full_scale": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_full_scale.json",
+    "regression_control": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_regression_control.json",
+    "results_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results",
+    "validation": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_validation.json",
+    "work_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work"
+  },
+  "contract_numbers": {
+    "clinical_feature_count": 15,
+    "direct_page_diseases": 2,
+    "disease_count": 3,
+    "elapsed_ms": 3.6,
+    "expected_symptom_recall": 0.652,
+    "features_per_second": 4166.667,
+    "mapped_feature_count": 15,
+    "mismatch_count": 8,
+    "output_checksum": "f08c35ff31306ff4696bd953eaba4b00aeed9e6746a1228469e1479238e3d34f",
+    "peak_rss_kb": 25736,
+    "selected_topic_count": 5,
+    "topic_noise_reduction_count": 7
+  },
+  "generated_at": "2026-04-19T16:48:59+00:00",
+  "regression_passed": true,
+  "validation_passed": true
+}

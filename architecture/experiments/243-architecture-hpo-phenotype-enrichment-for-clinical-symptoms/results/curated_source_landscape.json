@@ -1,0 +1,491 @@
+{
+  "approach": "curated_source_landscape_probe",
+  "diseases": [
+    {
+      "disease_key": "uterine_fibroid",
+      "identifiers": {
+        "icd10": "D25",
+        "mesh": "D007889",
+        "omim": "150699",
+        "snomed": "44598004"
+      },
+      "label": "uterine fibroid",
+      "queries": [
+        "uterine fibroid",
+        "uterine leiomyoma",
+        "leiomyoma of uterus"
+      ],
+      "sources": {
+        "disease_ontology": {
+          "elapsed_ms": 392.9,
+          "error": null,
+          "hit_count": 0,
+          "hits": [],
+          "ok": true,
+          "status": 200
+        },
+        "medgen": {
+          "elapsed_ms": 105.1,
+          "error": null,
+          "hit_count": 5,
+          "hits": [
+            {
+              "concept_id": "C5437976",
+              "definition": {},
+              "semantic_type": {
+                "value": "Pathologic Function"
+              },
+              "title": "Abnormal uterine bleeding due to subserous leiomyoma of uterus",
+              "uid": "1721254"
+            },
+            {
+              "concept_id": "C5190727",
+              "definition": {},
+              "semantic_type": {
+                "value": "Pathologic Function"
+              },
+              "title": "Abnormal uterine bleeding due to intramural uterine fibroid",
+              "uid": "1677797"
+            },
+            {
+              "concept_id": "C5190726",
+              "definition": {},
+              "semantic_type": {
+                "value": "Pathologic Function"
+              },
+              "title": "Abnormal uterine bleeding due to submucous uterine fibroid",
+              "uid": "1677702"
+            },
+            {
+              "concept_id": "C5190725",
+              "definition": {},
+              "semantic_type": {
+                "value": "Pathologic Function"
+              },
+              "title": "Abnormal uterine bleeding due to uterine fibroid",
+              "uid": "1677570"
+            },
+            {
+              "concept_id": "C3839245",
+              "definition": {},
+              "semantic_type": {
+                "value": "Neoplastic Process"
+              },
+              "title": "Intracavitary leiomyoma of uterus",
+              "uid": "825090"
+            }
+          ],
+          "ok": true,
+          "status": 200
+        },
+        "omim": {
+          "clinical_synopsis_available": "not measured without OMIM_API_KEY",
+          "credential_required": true,
+          "hit_count": null,
+          "ok": false,
+          "status": null
+        },
+        "opentargets_hpo": {
+          "elapsed_ms": 672.5,
+          "error": null,
+          "ok": true,
+          "phenotype_count": 3,
+          "phenotypes": [
+            {
+              "evidence_count": 1,
+              "id": "HP_0001442",
+              "name": "Typified by somatic mosaicism",
+              "resources": [
+                "HPO"
+              ]
+            },
+            {
+              "evidence_count": 1,
+              "id": "HP_0000131",
+              "name": "Uterine leiomyoma",
+              "resources": [
+                "HPO"
+              ]
+            },
+            {
+              "evidence_count": 1,
+              "id": "HP_0003581",
+              "name": "Adult onset",
+              "resources": [
+                "HPO"
+              ]
+            }
+          ],
+          "resolved": {
+            "id": "EFO_0000731",
+            "name": "uterine fibroid"
+          },
+          "status": 200
+        },
+        "orphanet": {
+          "elapsed_ms": 940.1,
+          "error": null,
+          "hit_count": 0,
+          "hits": [],
+          "ok": true,
+          "status": 200
+        },
+        "snomed_ct": {
+          "elapsed_ms": 409.4,
+          "error": null,
+          "hit_count": 5,
+          "hits": [
+            {
+              "concept_id": "95315005",
+              "fsn": "Uterine leiomyoma (disorder)",
+              "term": "Uterine fibroid"
+            },
+            {
+              "concept_id": "154616000",
+              "fsn": "Uterine fibroid (disorder)",
+              "term": "Uterine fibroid"
+            },
+            {
+              "concept_id": "95315005",
+              "fsn": "Uterine leiomyoma (disorder)",
+              "term": "Uterine fibroids"
+            }
+          ],
+          "ok": true,
+          "status": 200
+        }
+      }
+    },
+    {
+      "disease_key": "endometriosis",
+      "identifiers": {
+        "icd10": "N80",
+        "mesh": "D004715",
+        "snomed": "11871002"
+      },
+      "label": "endometriosis",
+      "queries": [
+        "endometriosis"
+      ],
+      "sources": {
+        "disease_ontology": {
+          "elapsed_ms": 389.6,
+          "error": null,
+          "hit_count": 1,
+          "hits": [
+            {
+              "iri": "http://purl.obolibrary.org/obo/DOID_289",
+              "label": "endometriosis",
+              "ontology_name": "doid",
+              "short_form": "DOID_289"
+            }
+          ],
+          "ok": true,
+          "status": 200
+        },
+        "medgen": {
+          "elapsed_ms": 102.1,
+          "error": null,
+          "hit_count": 5,
+          "hits": [
+            {
+              "concept_id": "C2216351",
+              "definition": {},
+              "semantic_type": {
+                "value": "Disease or Syndrome"
+              },
+              "title": "Endometrioma of left ovary",
+              "uid": "1863270"
+            },
+            {
+              "concept_id": "C5675204",
+              "definition": {},
+              "semantic_type": {
+                "value": "Disease or Syndrome"
+              },
+              "title": "Superficial endometriosis of appendix",
+              "uid": "1862251"
+            },
+            {
+              "concept_id": "C5675239",
+              "definition": {},
+              "semantic_type": {
+                "value": "Disease or Syndrome"
+              },
+              "title": "Endometriosis of abdomen",
+              "uid": "1861846"
+            },
+            {
+              "concept_id": "C5675194",
+              "definition": {},
+              "semantic_type": {
+                "value": "Disease or Syndrome"
+              },
+              "title": "Deep endometriosis of rectum",
+              "uid": "1861778"
+            },
+            {
+              "concept_id": "C5675211",
+              "definition": {},
+              "semantic_type": {
+                "value": "Disease or Syndrome"
+              },
+              "title": "Superficial endometriosis of small intestine",
+              "uid": "1861702"
+            }
+          ],
+          "ok": true,
+          "status": 200
+        },
+        "omim": {
+          "clinical_synopsis_available": "not measured without OMIM_API_KEY",
+          "credential_required": true,
+          "hit_count": null,
+          "ok": false,
+          "status": null
+        },
+        "opentargets_hpo": {
+          "elapsed_ms": 394.2,
+          "error": null,
+          "ok": true,
+          "phenotype_count": 0,
+          "phenotypes": [],
+          "resolved": {
+            "id": "EFO_0001065",
+            "name": "endometriosis"
+          },
+          "status": 200
+        },
+        "orphanet": {
+          "elapsed_ms": 397.5,
+          "error": null,
+          "hit_count": 0,
+          "hits": [],
+          "ok": true,
+          "status": 200
+        },
+        "snomed_ct": {
+          "elapsed_ms": 316.7,
+          "error": null,
+          "hit_count": 5,
+          "hits": [
+            {
+              "concept_id": "129103003",
+              "fsn": "Endometriosis (disorder)",
+              "term": "Endometriosis"
+            },
+            {
+              "concept_id": "198246007",
+              "fsn": "Endometriosis (& [adenomyosis]) (disorder)",
+              "term": "Endometriosis"
+            },
+            {
+              "concept_id": "266588002",
+              "fsn": "Endometriosis (disorder)",
+              "term": "Endometriosis"
+            }
+          ],
+          "ok": true,
+          "status": 200
+        }
+      }
+    },
+    {
+      "disease_key": "chronic_venous_insufficiency",
+      "identifiers": {
+        "doid": "DOID:0050853",
+        "umls": "C1306557"
+      },
+      "label": "chronic venous insufficiency",
+      "queries": [
+        "chronic venous insufficiency",
+        "venous insufficiency",
+        "venous leg ulcer"
+      ],
+      "sources": {
+        "disease_ontology": {
+          "elapsed_ms": 393.2,
+          "error": null,
+          "hit_count": 0,
+          "hits": [],
+          "ok": true,
+          "status": 200
+        },
+        "medgen": {
+          "elapsed_ms": 115.6,
+          "error": null,
+          "hit_count": 3,
+          "hits": [
+            {
+              "concept_id": "C4708643",
+              "definition": {
+                "value": "Benign condition with purple-coloured patches, plaques or nodules, usually found bilaterally on the extensor surfaces of the lower extremities and associated with chronic venous insufficiency and arteriovenous malformations. A reactive angiodysplasia of preexisting cutaneous blood vessels that resembles malignant conditions like Kaposi''s sarcoma and requires histopathological examination for its diagnosis and differentiation."
+              },
+              "semantic_type": {
+                "value": "Disease or Syndrome"
+              },
+              "title": "Acroangiodermatitis of skin",
+              "uid": "1642987"
+            },
+            {
+              "concept_id": "C2586181",
+              "definition": {},
+              "semantic_type": {
+                "value": "Disease or Syndrome"
+              },
+              "title": "Ulcer of limb due to chronic venous insufficiency",
+              "uid": "750432"
+            },
+            {
+              "concept_id": "C1306557",
+              "definition": {
+                "value": "Chronic form of venous insufficiency (disease)."
+              },
+              "semantic_type": {
+                "value": "Disease or Syndrome"
+              },
+              "title": "Chronic venous insufficiency",
+              "uid": "727071"
+            }
+          ],
+          "ok": true,
+          "status": 200
+        },
+        "omim": {
+          "clinical_synopsis_available": "not measured without OMIM_API_KEY",
+          "credential_required": true,
+          "hit_count": null,
+          "ok": false,
+          "status": null
+        },
+        "opentargets_hpo": {
+          "elapsed_ms": 387.8,
+          "error": null,
+          "ok": true,
+          "phenotype_count": 0,
+          "phenotypes": [],
+          "resolved": {
+            "id": "EFO_0007940",
+            "name": "chronic venous insufficiency"
+          },
+          "status": 200
+        },
+        "orphanet": {
+          "elapsed_ms": 436.1,
+          "error": null,
+          "hit_count": 0,
+          "hits": [],
+          "ok": true,
+          "status": 200
+        },
+        "snomed_ct": {
+          "elapsed_ms": 175.2,
+          "error": null,
+          "hit_count": 5,
+          "hits": [
+            {
+              "concept_id": "20696009",
+              "fsn": "Peripheral venous insufficiency (disorder)",
+              "term": "Chronic venous insufficiency"
+            },
+            {
+              "concept_id": "195516009",
+              "fsn": "Chronic venous insufficiency NOS (disorder)",
+              "term": "Chronic venous insufficiency NOS"
+            },
+            {
+              "concept_id": "725958000",
+              "fsn": "Chronic cerebrospinal venous insufficiency (disorder)",
+              "term": "Chronic cerebrospinal venous insufficiency"
+            }
+          ],
+          "ok": true,
+          "status": 200
+        }
+      }
+    }
+  ],
+  "generated_at": "2026-04-19T16:01:13+00:00",
+  "metric_definitions": {
+    "credential_required": "Whether the source could not be measured without credentials or license/API-key setup.",
+    "hit_count": "Number of small-scale query hits returned by the source-specific resolution probe.",
+    "phenotype_count": "For OpenTargets HPO only, number of disease phenotype rows returned by GraphQL."
+  },
+  "source_metadata": {
+    "current_hpo_monarch": {
+      "api_availability": "available without BioMCP-specific key",
+      "integration_note": "Already integrated in `get disease <id> phenotypes`.",
+      "quality_tier": "curated HPO/Monarch",
+      "refresh_cadence": "follows upstream HPO annotation/Monarch KG releases; BioMCP resolves live API responses",
+      "source_url": "https://monarchinitiative.org/"
+    },
+    "disease_ontology": {
+      "api_availability": "public OLS API",
+      "integration_note": "Good disease identity/xrefs; does not carry symptom annotations as a core relation.",
+      "quality_tier": "curated disease classification",
+      "refresh_cadence": "monthly Disease Ontology data releases; OBO Foundry also updates daily from GitHub",
+      "source_url": "https://disease-ontology.org/"
+    },
+    "medgen": {
+      "api_availability": "public NCBI E-utilities",
+      "integration_note": "Useful for disease resolution/xrefs; symptom lists are not exposed as a simple phenotype table.",
+      "quality_tier": "curated NCBI concept aggregation",
+      "refresh_cadence": "NCBI-managed Entrez database updates",
+      "source_url": "https://www.ncbi.nlm.nih.gov/medgen/"
+    },
+    "omim": {
+      "api_availability": "API key and OMIM terms required",
+      "integration_note": "Potentially high value for Mendelian diseases; clinical synopsis licensing is the main blocker.",
+      "quality_tier": "curated clinical synopsis",
+      "refresh_cadence": "OMIM is updated daily",
+      "source_url": "https://www.omim.org/api"
+    },
+    "opentargets_hpo": {
+      "api_availability": "public GraphQL",
+      "integration_note": "Client already queries disease phenotypes for prevalence context, not phenotype rows.",
+      "quality_tier": "curated/aggregated HPO evidence",
+      "refresh_cadence": "versioned Open Targets Platform releases",
+      "source_url": "https://platform.opentargets.org/api"
+    },
+    "orphanet": {
+      "api_availability": "public ORDO via OLS and Orphadata downloads; direct downloads may require terms acceptance",
+      "integration_note": "Strong for rare diseases, weak fit for common diseases in this sample.",
+      "quality_tier": "curated rare-disease clinical/HPO annotations",
+      "refresh_cadence": "Orphadata product releases with dated XML/diff files",
+      "source_url": "https://www.orphadata.com/"
+    },
+    "snomed_ct": {
+      "api_availability": "browser APIs exist, but production use requires SNOMED CT licensing/edition management",
+      "integration_note": "Finding-site/morphology relations are useful for anatomy/pathology, not direct symptom lists.",
+      "quality_tier": "clinical terminology, licensed",
+      "refresh_cadence": "SNOMED CT International Edition monthly releases",
+      "source_url": "https://www.snomed.org/snomed-ct"
+    }
+  },
+  "summary_by_source": {
+    "disease_ontology": {
+      "disease_count": 3,
+      "diseases_with_any_resolution_or_data": 1
+    },
+    "medgen": {
+      "disease_count": 3,
+      "diseases_with_any_resolution_or_data": 3
+    },
+    "omim": {
+      "disease_count": 3,
+      "diseases_with_any_resolution_or_data": 0
+    },
+    "opentargets_hpo": {
+      "disease_count": 3,
+      "diseases_with_any_resolution_or_data": 1
+    },
+    "orphanet": {
+      "disease_count": 3,
+      "diseases_with_any_resolution_or_data": 0
+    },
+    "snomed_ct": {
+      "disease_count": 3,
+      "diseases_with_any_resolution_or_data": 3
+    }
+  }
+}
