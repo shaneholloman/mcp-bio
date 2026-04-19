@@ -152,10 +152,13 @@ def phenotype_coverage(
     clinical_features: list[dict[str, Any]],
 ) -> dict[str, Any]:
     expected = disease["expected_symptoms"]
-    overlap = expected_overlap(
-        [feature["label"] for feature in clinical_features],
-        expected,
-    )
+    feature_labels = feature_label_set(clinical_features)
+    missing = [
+        concept
+        for concept in expected
+        if normalize_text(concept) not in feature_labels
+    ]
+    matched_total = len(expected) - len(missing)
     mapped = [row for row in clinical_features if row.get("normalized_hpo_id")]
     labels_for_checksum = [
         {
@@ -170,10 +173,10 @@ def phenotype_coverage(
         "clinical_feature_count": len(clinical_features),
         "mapped_feature_count": len(mapped),
         "unmapped_feature_count": len(clinical_features) - len(mapped),
-        "expected_symptom_total": overlap["expected_total"],
-        "expected_symptom_matched": overlap["matched_total"],
-        "expected_symptom_missing": overlap["missing"],
-        "expected_symptom_recall": overlap["recall"],
+        "expected_symptom_total": len(expected),
+        "expected_symptom_matched": matched_total,
+        "expected_symptom_missing": missing,
+        "expected_symptom_recall": round(matched_total / len(expected), 3) if expected else None,
         "feature_label_checksum_input": labels_for_checksum,
         "coverage_note": (
             "Clinical features include source-native MedlinePlus terms and "
