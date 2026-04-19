@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "default_timeout_seconds": 20,
+  "default_request_pause_seconds": 0.25,
+  "user_agent": "BioMCP-News-Spike/0.2 (https://github.com/genomoncology/biomcp; live-source feasibility probe)",
+  "sources": [
+    {
+      "id": "fierce-biotech",
+      "name": "Fierce Biotech",
+      "enabled_by_default": true,
+      "priority": 100,
+      "quality_tier": "core",
+      "page_url": "https://www.fiercebiotech.com/",
+      "rss_candidates": [
+        "https://www.fiercebiotech.com/rss/xml",
+        "https://www.fiercebiotech.com/rss",
+        "https://www.fiercebiotech.com/biotech/rss/xml"
+      ],
+      "discovery": {
+        "default_mode": "rss",
+        "fallback_mode": "headline_page",
+        "article_path_tokens": ["/biotech/", "/medtech/", "/pharma/", "/sponsored/"],
+        "exclude_path_tokens": ["/events", "/newsletter", "/podcast", "/resources", "/special-reports", "/tag/"]
+      },
+      "access": {
+        "mode": "open_discovery_http_blocked_articles",
+        "notes": "RSS and homepage discovery work, but direct article fetches returned Cloudflare 403 in explore."
+      },
+      "fetch": {
+        "default_mode": "http",
+        "allow_browser_followup": true
+      },
+      "extract": {
+        "mode": "trafilatura",
+        "confidence": "low_until_browser_fetch"
+      },
+      "rights": {
+        "cache_metadata": true,
+        "cache_structured_extraction": true,
+        "cache_full_text_local_only": true,
+        "sync_full_text": false
+      },
+      "topics": ["biotech", "drug-development", "trials", "fda", "deals"]
+    },
+    {
+      "id": "fierce-pharma",
+      "name": "Fierce Pharma",
+      "enabled_by_default": true,
+      "priority": 95,
+      "quality_tier": "core",
+      "page_url": "https://www.fiercepharma.com/",
+      "rss_candidates": [
+        "https://www.fiercepharma.com/rss/xml",
+        "https://www.fiercepharma.com/rss",
+        "https://www.fiercepharma.com/pharma/rss/xml"
+      ],
+      "discovery": {
+        "default_mode": "rss",
+        "fallback_mode": "headline_page",
+        "article_path_tokens": ["/pharma/", "/marketing/", "/manufacturing/", "/regulatory/"],
+        "exclude_path_tokens": ["/events", "/newsletter", "/podcast", "/resources", "/special-reports", "/tag/"]
+      },
+      "access": {
+        "mode": "open_discovery_http_blocked_articles",
+        "notes": "RSS and homepage discovery work, but direct article fetches returned Cloudflare 403 in explore."
+      },
+      "fetch": {
+        "default_mode": "http",
+        "allow_browser_followup": true
+      },
+      "extract": {
+        "mode": "trafilatura",
+        "confidence": "low_until_browser_fetch"
+      },
+      "rights": {
+        "cache_metadata": true,
+        "cache_structured_extraction": true,
+        "cache_full_text_local_only": true,
+        "sync_full_text": false
+      },
+      "topics": ["pharma", "commercial", "approvals", "manufacturing", "policy"]
+    },
+    {
+      "id": "biopharma-dive",
+      "name": "BioPharma Dive",
+      "enabled_by_default": true,
+      "priority": 92,
+      "quality_tier": "core",
+      "page_url": "https://www.biopharmadive.com/news/",
+      "rss_candidates": [
+        "https://www.biopharmadive.com/feeds/news/",
+        "https://www.biopharmadive.com/feeds/",
+        "https://www.biopharmadive.com/rss/"
+      ],
+      "discovery": {
+        "default_mode": "rss",
+        "fallback_mode": "headline_page",
+        "article_path_tokens": ["/news/"],
+        "exclude_path_tokens": ["/events", "/library", "/press-release", "/trendline", "/spons/"]
+      },
+      "access": {
+        "mode": "open",
+        "notes": "Explore found consistently useful direct HTTP extraction."
+      },
+      "fetch": {
+        "default_mode": "http",
+        "allow_browser_followup": false
+      },
+      "extract": {
+        "mode": "trafilatura",
+        "confidence": "high"
+      },
+      "rights": {
+        "cache_metadata": true,
+        "cache_structured_extraction": true,
+        "cache_full_text_local_only": true,
+        "sync_full_text": false
+      },
+      "topics": ["biopharma", "clinical-trials", "approvals", "deals", "regulatory"]
+    },
+    {
+      "id": "stat",
+      "name": "STAT",
+      "enabled_by_default": true,
+      "priority": 90,
+      "quality_tier": "core",
+      "page_url": "https://www.statnews.com/",
+      "rss_candidates": [
+        "https://www.statnews.com/feed/",
+        "https://www.statnews.com/category/biotech/feed/"
+      ],
+      "discovery": {
+        "default_mode": "rss",
+        "fallback_mode": "headline_page",
+        "article_path_tokens": ["/20"],
+        "exclude_path_tokens": ["/about", "/advertise", "/newsletter", "/podcast", "/events", "/category/"]
+      },
+      "access": {
+        "mode": "metered_or_subscriber",
+        "notes": "Explore found readable direct HTTP text for several stories, including STAT+ pages; cache/export should remain conservative."
+      },
+      "fetch": {
+        "default_mode": "http",
+        "allow_browser_followup": true
+      },
+      "extract": {
+        "mode": "trafilatura",
+        "confidence": "medium"
+      },
+      "rights": {
+        "cache_metadata": true,
+        "cache_structured_extraction": true,
+        "cache_full_text_local_only": true,
+        "sync_full_text": false
+      },
+      "topics": ["biotech", "medicine", "policy", "clinical-trials", "health-tech"]
+    },
+    {
+      "id": "endpoints",
+      "name": "Endpoints News",
+      "enabled_by_default": true,
+      "priority": 88,
+      "quality_tier": "core",
+      "page_url": "https://endpoints.news/news/",
+      "rss_candidates": [
+        "https://endpoints.news/feed/",
+        "https://endpoints.news/news/feed/"
+      ],
+      "discovery": {
+        "default_mode": "rss",
+        "fallback_mode": "headline_page",
+        "article_path_tokens": ["/"],
+        "exclude_path_tokens": ["/about", "/events", "/jobs", "/newsletter", "/podcast", "/tag/", "/topic/"]
+      },
+      "access": {
+        "mode": "registered_or_subscriber",
+        "notes": "Explore found good RSS but only short partial direct HTTP extraction."
+      },
+      "fetch": {
+        "default_mode": "http",
+        "allow_browser_followup": true
+      },
+      "extract": {
+        "mode": "trafilatura",
+        "confidence": "low_until_source_specific_extraction"
+      },
+      "rights": {
+        "cache_metadata": true,
+        "cache_structured_extraction": true,
+        "cache_full_text_local_only": true,
+        "sync_full_text": false
+      },
+      "topics": ["biotech", "pharma", "clinical-readouts", "deals", "markets"]
+    },
+    {
+      "id": "genomeweb",
+      "name": "GenomeWeb",
+      "enabled_by_default": true,
+      "priority": 82,
+      "quality_tier": "core",
+      "page_url": "https://www.genomeweb.com/",
+      "rss_candidates": [
+        "https://www.genomeweb.com/rss.xml",
+        "https://www.genomeweb.com/news/feed",
+        "https://www.genomeweb.com/feed"
+      ],
+      "discovery": {
+        "default_mode": "rss",
+        "fallback_mode": "headline_page",
+        "article_path_tokens": ["/"],
+        "exclude_path_tokens": ["/about", "/contact", "/events", "/resources", "/user", "/subscribe"]
+      },
+      "access": {
+        "mode": "registered_or_subscriber",
+        "notes": "Explore found unauthenticated direct HTTP blocked at discovery."
+      },
+      "fetch": {
+        "default_mode": "http",
+        "allow_browser_followup": true
+      },
+      "extract": {
+        "mode": "trafilatura",
+        "confidence": "blocked_until_auth_or_browser"
+      },
+      "rights": {
+        "cache_metadata": true,
+        "cache_structured_extraction": true,
+        "cache_full_text_local_only": true,
+        "sync_full_text": false
+      },
+      "topics": ["genomics", "diagnostics", "sequencing", "molecular-diagnostics", "translational-medicine"]
+    }
+  ]
+}
