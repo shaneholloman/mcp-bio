@@ -51,15 +51,8 @@ fn related_disease_malformed_study_lookup_falls_back_to_download_list() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system time")
-        .as_nanos();
-    let root = std::env::temp_dir().join(format!(
-        "biomcp-render-study-malformed-{}-{unique}",
-        std::process::id()
-    ));
-    let study_dir = root.join("broken-study");
+    let root = crate::test_support::TempDirGuard::new("render-study-malformed");
+    let study_dir = root.path().join("broken-study");
     std::fs::create_dir_all(&study_dir).expect("create malformed study dir");
     std::fs::write(
         study_dir.join("meta_study.txt"),
@@ -72,14 +65,11 @@ fn related_disease_malformed_study_lookup_falls_back_to_download_list() {
         )
         .expect("write mutations");
 
-    let original = std::env::var_os("BIOMCP_STUDY_DIR");
-    unsafe { std::env::set_var("BIOMCP_STUDY_DIR", &root) };
+    let _study_dir = crate::test_support::set_env_var(
+        "BIOMCP_STUDY_DIR",
+        Some(root.path().to_str().expect("study root path should be utf-8")),
+    );
     let related = related_disease(&disease);
-    match original {
-        Some(value) => unsafe { std::env::set_var("BIOMCP_STUDY_DIR", value) },
-        None => unsafe { std::env::remove_var("BIOMCP_STUDY_DIR") },
-    }
-    let _ = std::fs::remove_dir_all(&root);
 
     assert!(related.contains(&"biomcp study download --list".to_string()));
 }

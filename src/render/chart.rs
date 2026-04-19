@@ -970,13 +970,13 @@ fn suggest_bins(sample_count: usize) -> usize {
 mod tests {
     use std::fs;
     use std::path::PathBuf;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::entities::study::{
         CnaDistributionResult, CoOccurrencePair, CoOccurrenceResult, MutationComparisonResult,
         MutationFrequencyResult, MutationGroupStats, SampleUniverseBasis, StudyQueryType,
         SurvivalEndpoint, SurvivalGroupResult, SurvivalResult,
     };
+    use crate::test_support::TempDirGuard;
 
     use super::{
         ChartRenderOptions, display_mutation_class, render_cna_chart, render_co_occurrence_chart,
@@ -1013,31 +1013,22 @@ mod tests {
     }
 
     struct TestOutputDir {
+        _guard: TempDirGuard,
         path: PathBuf,
     }
 
     impl TestOutputDir {
         fn new() -> Self {
-            let suffix = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("system clock should be after epoch")
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-chart-tests-{}-{suffix}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&path).expect("temp chart dir");
-            Self { path }
+            let guard = TempDirGuard::new("chart-tests");
+            let path = guard.path().to_path_buf();
+            Self {
+                _guard: guard,
+                path,
+            }
         }
 
         fn svg_path(&self, name: &str) -> PathBuf {
             self.path.join(name)
-        }
-    }
-
-    impl Drop for TestOutputDir {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.path);
         }
     }
 

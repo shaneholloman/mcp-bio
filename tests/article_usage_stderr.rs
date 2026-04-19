@@ -1,7 +1,4 @@
-use std::fs;
-use std::path::PathBuf;
 use std::process::{Command, Output};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use wiremock::MockServer;
 
@@ -21,23 +18,16 @@ impl CommandResult {
     }
 }
 
-fn unique_temp_dir(label: &str) -> PathBuf {
-    let stamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("system clock should be after unix epoch")
-        .as_nanos();
-    let path = std::env::temp_dir().join(format!("biomcp-{label}-{}-{stamp}", std::process::id()));
-    fs::create_dir_all(&path).expect("temp dir should be created");
-    path
-}
-
 fn run_article_search(
     args: &[&str],
     pubtator_base: &str,
     europepmc_base: &str,
     s2_base: &str,
 ) -> CommandResult {
-    let cache_home = unique_temp_dir("article-usage-stderr-cache");
+    let cache_home = tempfile::Builder::new()
+        .prefix("biomcp-article-usage-stderr-cache-")
+        .tempdir()
+        .expect("temp dir should be created");
     let mut command = Command::new(env!("CARGO_BIN_EXE_biomcp"));
     command.args(["search", "article"]);
     command.args(args);
@@ -45,12 +35,11 @@ fn run_article_search(
     command.env("BIOMCP_EUROPEPMC_BASE", europepmc_base);
     command.env("BIOMCP_S2_BASE", s2_base);
     command.env("BIOMCP_CACHE_MODE", "off");
-    command.env("XDG_CACHE_HOME", &cache_home);
+    command.env("XDG_CACHE_HOME", cache_home.path());
     command.env_remove("RUST_LOG");
     command.env_remove("S2_API_KEY");
 
     let output = command.output().expect("article search command should run");
-    let _ = fs::remove_dir_all(cache_home);
     CommandResult::from_output(output)
 }
 

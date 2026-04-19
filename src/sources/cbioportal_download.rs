@@ -411,6 +411,7 @@ fn install_study_archive(
 mod tests {
     use super::*;
 
+    use crate::test_support::TempDirGuard;
     use flate2::Compression;
     use flate2::write::GzEncoder;
     use std::io::Write;
@@ -420,27 +421,18 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     struct TempRoot {
+        _guard: TempDirGuard,
         path: PathBuf,
     }
 
     impl TempRoot {
         fn new(name: &str) -> Self {
-            let unique = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("system clock before unix epoch")
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "biomcp-study-download-test-{name}-{}-{unique}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&path).expect("create temp root");
-            Self { path }
-        }
-    }
-
-    impl Drop for TempRoot {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.path);
+            let guard = TempDirGuard::new(&format!("study-download-{name}"));
+            let path = guard.path().to_path_buf();
+            Self {
+                _guard: guard,
+                path,
+            }
         }
     }
 

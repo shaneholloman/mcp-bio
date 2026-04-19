@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime};
 
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, Request, ResponseTemplate};
@@ -31,33 +31,11 @@ impl CommandResult {
     }
 }
 
-struct TempDirGuard {
-    path: PathBuf,
-}
-
-impl TempDirGuard {
-    fn new(label: &str) -> Self {
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system clock should be after unix epoch")
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "biomcp-who-auto-sync-{label}-{}-{stamp}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&path).expect("temp dir should be created");
-        Self { path }
-    }
-
-    fn path(&self) -> &Path {
-        &self.path
-    }
-}
-
-impl Drop for TempDirGuard {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.path);
-    }
+fn temp_dir(label: &str) -> tempfile::TempDir {
+    tempfile::Builder::new()
+        .prefix(&format!("biomcp-who-auto-sync-{label}-"))
+        .tempdir()
+        .expect("temp dir should be created")
 }
 
 fn default_who_root(data_home: &Path) -> PathBuf {
@@ -235,8 +213,8 @@ fn assert_trastuzumab_search(result: &CommandResult) {
 #[tokio::test]
 async fn clean_who_search_downloads_missing_csv() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("clean-data-home");
-    let cache_home = TempDirGuard::new("clean-cache-home");
+    let data_home = temp_dir("clean-data-home");
+    let cache_home = temp_dir("clean-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
     let who_vaccines_export_url = export_vaccines_url(&server);
@@ -276,8 +254,8 @@ async fn clean_who_search_downloads_missing_csv() {
 #[tokio::test]
 async fn second_run_within_ttl_skips_download() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("fresh-data-home");
-    let cache_home = TempDirGuard::new("fresh-cache-home");
+    let data_home = temp_dir("fresh-data-home");
+    let cache_home = temp_dir("fresh-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
     let who_vaccines_export_url = export_vaccines_url(&server);
@@ -337,8 +315,8 @@ async fn second_run_within_ttl_skips_download() {
 #[tokio::test]
 async fn stale_who_csv_refreshes_on_next_search() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("stale-data-home");
-    let cache_home = TempDirGuard::new("stale-cache-home");
+    let data_home = temp_dir("stale-data-home");
+    let cache_home = temp_dir("stale-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
     let who_vaccines_export_url = export_vaccines_url(&server);
@@ -396,8 +374,8 @@ async fn stale_who_csv_refreshes_on_next_search() {
 #[tokio::test]
 async fn missing_who_csv_redownloads_on_next_search() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("missing-data-home");
-    let cache_home = TempDirGuard::new("missing-cache-home");
+    let data_home = temp_dir("missing-data-home");
+    let cache_home = temp_dir("missing-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
     let who_vaccines_export_url = export_vaccines_url(&server);
@@ -466,9 +444,9 @@ async fn missing_who_csv_redownloads_on_next_search() {
 #[tokio::test]
 async fn explicit_who_sync_honors_custom_root() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("custom-data-home");
-    let cache_home = TempDirGuard::new("custom-cache-home");
-    let custom_root = TempDirGuard::new("custom-who-root");
+    let data_home = temp_dir("custom-data-home");
+    let cache_home = temp_dir("custom-cache-home");
+    let custom_root = temp_dir("custom-who-root");
     let custom_root_string = custom_root.path().display().to_string();
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
@@ -511,8 +489,8 @@ async fn explicit_who_sync_honors_custom_root() {
 #[tokio::test]
 async fn who_sync_failure_mentions_recovery_paths() {
     let server = mount_failure_server(500).await;
-    let data_home = TempDirGuard::new("failure-data-home");
-    let cache_home = TempDirGuard::new("failure-cache-home");
+    let data_home = temp_dir("failure-data-home");
+    let cache_home = temp_dir("failure-cache-home");
     let who_export_url = export_url(&server);
     let who_api_export_url = export_api_url(&server);
     let who_vaccines_export_url = export_vaccines_url(&server);

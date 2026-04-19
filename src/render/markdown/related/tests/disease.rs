@@ -315,23 +315,13 @@ fn related_disease_oncology_without_local_match_falls_back_to_download_list() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system time")
-        .as_nanos();
-    let root = std::env::temp_dir().join(format!(
-        "biomcp-render-study-empty-{}-{unique}",
-        std::process::id()
-    ));
-    std::fs::create_dir_all(&root).expect("create empty study root");
-    let original = std::env::var_os("BIOMCP_STUDY_DIR");
-    unsafe { std::env::set_var("BIOMCP_STUDY_DIR", &root) };
+    let root = crate::test_support::TempDirGuard::new("render-study-empty");
+    std::fs::create_dir_all(root.path()).expect("create empty study root");
+    let _study_dir = crate::test_support::set_env_var(
+        "BIOMCP_STUDY_DIR",
+        Some(root.path().to_str().expect("study root path should be utf-8")),
+    );
     let related = related_disease(&disease);
-    match original {
-        Some(value) => unsafe { std::env::set_var("BIOMCP_STUDY_DIR", value) },
-        None => unsafe { std::env::remove_var("BIOMCP_STUDY_DIR") },
-    }
-    let _ = std::fs::remove_dir_all(&root);
 
     assert!(related.contains(&"biomcp study download --list".to_string()));
 }
@@ -339,15 +329,8 @@ fn related_disease_oncology_without_local_match_falls_back_to_download_list() {
 #[test]
 fn related_disease_oncology_with_local_match_prefers_top_mutated() {
     let _guard = crate::test_support::env_lock().blocking_lock();
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system time")
-        .as_nanos();
-    let root = std::env::temp_dir().join(format!(
-        "biomcp-render-study-match-{}-{unique}",
-        std::process::id()
-    ));
-    let study_dir = root.join("brca_tcga_pan_can_atlas_2018");
+    let root = crate::test_support::TempDirGuard::new("render-study-match");
+    let study_dir = root.path().join("brca_tcga_pan_can_atlas_2018");
     std::fs::create_dir_all(&study_dir).expect("create study dir");
     std::fs::write(
             study_dir.join("meta_study.txt"),
@@ -404,14 +387,11 @@ fn related_disease_oncology_with_local_match_prefers_top_mutated() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let original = std::env::var_os("BIOMCP_STUDY_DIR");
-    unsafe { std::env::set_var("BIOMCP_STUDY_DIR", &root) };
+    let _study_dir = crate::test_support::set_env_var(
+        "BIOMCP_STUDY_DIR",
+        Some(root.path().to_str().expect("study root path should be utf-8")),
+    );
     let related = related_disease(&disease);
-    match original {
-        Some(value) => unsafe { std::env::set_var("BIOMCP_STUDY_DIR", value) },
-        None => unsafe { std::env::remove_var("BIOMCP_STUDY_DIR") },
-    }
-    let _ = std::fs::remove_dir_all(&root);
 
     assert!(
         related
@@ -423,15 +403,8 @@ fn related_disease_oncology_with_local_match_prefers_top_mutated() {
 #[test]
 fn related_disease_oncology_matches_noncontiguous_carcinoma_study_labels() {
     let _guard = crate::test_support::env_lock().blocking_lock();
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system time")
-        .as_nanos();
-    let root = std::env::temp_dir().join(format!(
-        "biomcp-render-study-carcinoma-{}-{unique}",
-        std::process::id()
-    ));
-    let study_dir = root.join("brca_tcga_pan_can_atlas_2018");
+    let root = crate::test_support::TempDirGuard::new("render-study-carcinoma");
+    let study_dir = root.path().join("brca_tcga_pan_can_atlas_2018");
     std::fs::create_dir_all(&study_dir).expect("create study dir");
     std::fs::write(
             study_dir.join("meta_study.txt"),
@@ -488,14 +461,11 @@ fn related_disease_oncology_matches_noncontiguous_carcinoma_study_labels() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let original = std::env::var_os("BIOMCP_STUDY_DIR");
-    unsafe { std::env::set_var("BIOMCP_STUDY_DIR", &root) };
+    let _study_dir = crate::test_support::set_env_var(
+        "BIOMCP_STUDY_DIR",
+        Some(root.path().to_str().expect("study root path should be utf-8")),
+    );
     let related = related_disease(&disease);
-    match original {
-        Some(value) => unsafe { std::env::set_var("BIOMCP_STUDY_DIR", value) },
-        None => unsafe { std::env::remove_var("BIOMCP_STUDY_DIR") },
-    }
-    let _ = std::fs::remove_dir_all(&root);
 
     assert!(
         related

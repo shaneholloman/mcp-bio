@@ -1020,32 +1020,23 @@ where
 mod tests {
     use super::*;
 
+    use crate::test_support::{EnvVarGuard, TempDirGuard, set_env_var};
     use std::fs;
     use std::path::{Path, PathBuf};
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     struct TestStudyDir {
+        _guard: TempDirGuard,
         root: PathBuf,
     }
 
     impl TestStudyDir {
         fn new(name: &str) -> Self {
-            let unique = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("system clock before unix epoch")
-                .as_nanos();
-            let root = std::env::temp_dir().join(format!(
-                "biomcp-study-entity-test-{name}-{}-{unique}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&root).expect("create root");
-            Self { root }
-        }
-    }
-
-    impl Drop for TestStudyDir {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.root);
+            let guard = TempDirGuard::new(&format!("study-entity-{name}"));
+            let root = guard.path().to_path_buf();
+            Self {
+                _guard: guard,
+                root,
+            }
         }
     }
 
@@ -1085,6 +1076,13 @@ mod tests {
             &study.join("data_clinical_patient.txt"),
             "# comment\nPATIENT_ID\tOS_STATUS\tOS_MONTHS\tDFS_STATUS\tDFS_MONTHS\tPFS_STATUS\tPFS_MONTHS\tDSS_STATUS\tDSS_MONTHS\nP1\t1:DECEASED\t12\t1:Recurred\t8\t1:Progressed\t7\t1:Died of disease\t12\nP2\t0:LIVING\t24\t0:DiseaseFree\t20\t0:No progression\t18\t0:Alive\t24\nP3\t1:DECEASED\tNA\t1:Recurred\t10\t1:Progressed\t8\t1:Died of disease\t10\n",
         );
+    }
+
+    fn set_study_dir(root: &Path) -> EnvVarGuard {
+        set_env_var(
+            "BIOMCP_STUDY_DIR",
+            Some(root.to_str().expect("study root path should be utf-8")),
+        )
     }
 
     #[test]
@@ -1149,10 +1147,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("list");
         minimal_study_fixture(&fixture.root, "demo_study");
-        // SAFETY: tests serialize env var mutation through a process-wide mutex.
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let studies = list_studies().await.expect("list studies");
         assert_eq!(studies.len(), 1);
@@ -1172,10 +1167,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("query-mutations");
         minimal_study_fixture(&fixture.root, "demo_study");
-        // SAFETY: tests serialize env var mutation through a process-wide mutex.
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let result = query_study("demo_study", "TP53", StudyQueryType::Mutations)
             .await
@@ -1201,10 +1193,7 @@ mod tests {
             &fixture.root.join("demo_study").join("data_mutations.txt"),
             "Hugo_Symbol\tTumor_Sample_Barcode\tVariant_Classification\tHGVSp_Short\nTP53\tS1\tMissense_Mutation\tp.R175H\nTP53\tS2\tMissense_Mutation\tp.R248Q\nKRAS\tS2\tMissense_Mutation\tp.G12D\nKRAS\tS3\tMissense_Mutation\tp.G12V\nBRAF\tS1\tMissense_Mutation\tp.V600E\n",
         );
-        // SAFETY: tests serialize env var mutation through a process-wide mutex.
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let result = top_mutated_genes("demo_study", 10)
             .await
@@ -1224,10 +1213,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("unknown-study");
         minimal_study_fixture(&fixture.root, "demo_study");
-        // SAFETY: tests serialize env var mutation through a process-wide mutex.
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let err = query_study("missing", "TP53", StudyQueryType::Mutations)
             .await
@@ -1240,10 +1226,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("co-occur-count");
         minimal_study_fixture(&fixture.root, "demo_study");
-        // SAFETY: tests serialize env var mutation through a process-wide mutex.
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let err = co_occurrence("demo_study", &["TP53".to_string()])
             .await
@@ -1256,9 +1239,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("cohort");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let result = cohort("demo_study", "TP53")
             .await
@@ -1277,9 +1258,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("survival");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let result = survival("demo_study", "TP53", SurvivalEndpoint::Os)
             .await
@@ -1306,9 +1285,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("compare-expression");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let result = compare_expression("demo_study", "TP53", "ERBB2")
             .await
@@ -1332,9 +1309,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("filter");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let result = filter(
             "demo_study",
@@ -1374,9 +1349,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("compare-mutations");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let result = compare_mutations("demo_study", "TP53", "KRAS")
             .await
@@ -1397,9 +1370,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("expression-values");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let values = expression_values("demo_study", "ERBB2")
             .await
@@ -1412,9 +1383,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("mutation-counts-by-sample");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let counts = mutation_counts_by_sample("demo_study", "TP53")
             .await
@@ -1427,9 +1396,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("expression-pairs-by-sample");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let pairs = expression_pairs_by_sample("demo_study", "TP53", "ERBB2")
             .await
@@ -1442,9 +1409,7 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("compare-expression-values");
         minimal_study_fixture(&fixture.root, "demo_study");
-        unsafe {
-            std::env::set_var("BIOMCP_STUDY_DIR", &fixture.root);
-        }
+        let _study_dir = set_study_dir(&fixture.root);
 
         let groups = compare_expression_values("demo_study", "TP53", "ERBB2")
             .await
