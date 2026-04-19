@@ -1843,18 +1843,18 @@ async fn populate_sections_parallel_top(
         civic_result,
         constraint_result,
     ) = tokio::join!(
-        clinical_context_fut,
-        enrichr_fut,
-        expression_fut,
-        hpa_fut,
-        druggability_fut,
-        clingen_fut,
-        pathways_fut,
-        protein_fut,
-        go_fut,
-        interactions_fut,
-        civic_fut,
-        constraint_fut
+        Box::pin(clinical_context_fut),
+        Box::pin(enrichr_fut),
+        Box::pin(expression_fut),
+        Box::pin(hpa_fut),
+        Box::pin(druggability_fut),
+        Box::pin(clingen_fut),
+        Box::pin(pathways_fut),
+        Box::pin(protein_fut),
+        Box::pin(go_fut),
+        Box::pin(interactions_fut),
+        Box::pin(civic_fut),
+        Box::pin(constraint_fut),
     );
 
     timing.push(clinical_context_entry);
