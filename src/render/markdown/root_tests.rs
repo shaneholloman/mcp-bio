@@ -182,6 +182,7 @@ fn markdown_detail_outputs_label_gene_drug_and_disease_sources() {
             name: "Ion channel transport".to_string(),
         }],
         phenotypes: Vec::new(),
+        clinical_features: Vec::new(),
         key_features: Vec::new(),
         variants: Vec::new(),
         top_variant: None,

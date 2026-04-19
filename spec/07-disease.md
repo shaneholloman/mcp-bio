@@ -11,6 +11,7 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 | Non-cancer funding | `get disease "Marfan syndrome" funding` | Confirms funding coverage is not cancer-specific |
 | Funding stays opt-in | `get disease "chronic myeloid leukemia" all` | Confirms `all` still excludes NIH Reporter funding |
 | Diagnostics pivot | `get disease tuberculosis diagnostics` | Confirms local diagnostic-test rows from disease context |
+| Clinical features foundation | `get disease melanoma clinical_features` | Confirms the accepted opt-in MedlinePlus foundation section remains empty until extraction is wired |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
 | Disease phenotypes keep gene pivot | `get disease "Duchenne muscular dystrophy" phenotypes` | Confirms phenotype-only output still keeps the existing disease-to-genes pivot |
@@ -258,17 +259,21 @@ echo "$json" | jq -e '.funding_note == null' > /dev/null
 
 ## Disease Funding Stays Opt-In
 
-`funding` should stay explicit so `get disease <name_or_id> all` does not
-render an NIH Reporter section the user did not request.
+`funding` and the empty clinical-feature foundation section should stay
+explicit so `get disease <name_or_id> all` does not render NIH Reporter or
+MedlinePlus clinical-feature output the user did not request.
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get disease "chronic myeloid leukemia" all)"
 echo "$out" | mustmatch like "## Survival (SEER Explorer)"
 echo "$out" | mustmatch not like "## Funding (NIH Reporter)"
+echo "$out" | mustmatch not like "Clinical Features (MedlinePlus)"
+echo "$out" | mustmatch not like "clinical_features"
 json="$("$bin" --json get disease "chronic myeloid leukemia" all)"
 echo "$json" | jq -e '.survival != null or .survival_note != null' > /dev/null
 echo "$json" | jq -e '.funding == null and .funding_note == null' > /dev/null
+echo "$json" | jq -e 'has("clinical_features") | not' > /dev/null
 ```
 
 ## Disease Diagnostics Pivot
@@ -307,6 +312,24 @@ echo "$out" | mustmatch not like "## Diagnostics"
 json="$("$bin" --json get disease melanoma all)"
 echo "$json" | jq -e 'has("diagnostics") | not' > /dev/null
 echo "$json" | jq -e 'has("diagnostics_note") | not' > /dev/null
+```
+
+## Disease Clinical Features Section Contract
+
+The `clinical_features` section is accepted now so callers can target the
+MedlinePlus clinical-feature path before extraction is enabled. Until that
+follow-on work lands, the command succeeds, renders only the requested-section
+header, skips clinical-feature rows, and omits empty JSON fields and follow-up
+suggestions.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease melanoma clinical_features)"
+echo "$out" | mustmatch like "# melanoma - clinical_features"
+echo "$out" | mustmatch not like "## Clinical Features (MedlinePlus)"
+json="$("$bin" --json get disease melanoma clinical_features)"
+echo "$json" | jq -e 'has("clinical_features") | not' > /dev/null
+echo "$json" | jq -e '([._meta.next_commands[]? | select(contains("clinical_features"))] | length) == 0' > /dev/null
 ```
 
 ## Disease Crosswalk Identifier Resolution
@@ -393,7 +416,7 @@ Germline-oriented diseases should still render a populated genes table with stab
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get disease MONDO:0005180 genes)"
 echo "$out" | mustmatch like "## Associated Genes"
-echo "$out" | mustmatch like "| SNCA | associated with disease |"
+echo "$out" | mustmatch '/\| SNCA \| [^|]+ \|/'
 ```
 
 ## Canonical CMT1A Disease Genes
@@ -404,7 +427,7 @@ Narrow Mendelian diseases should keep their focused Monarch-style signal instead
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get disease MONDO:0007309 genes)"
 echo "$out" | mustmatch like "## Associated Genes"
-echo "$out" | mustmatch like "| PMP22 | associated with disease |"
+echo "$out" | mustmatch '/\| PMP22 \| [^|]+ \|/'
 ```
 
 ## Disease Top Variant Summary

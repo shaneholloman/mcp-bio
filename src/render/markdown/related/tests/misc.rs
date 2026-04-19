@@ -34,6 +34,7 @@ fn related_disease_malformed_study_lookup_falls_back_to_download_list() {
         recruiting_trial_count: None,
         pathways: Vec::new(),
         phenotypes: Vec::new(),
+        clinical_features: Vec::new(),
         key_features: Vec::new(),
         variants: Vec::new(),
         top_variant: None,

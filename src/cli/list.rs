@@ -526,6 +526,7 @@ fn list_disease() -> String {
 - Use `get disease <name_or_id> funding` when the question is about NIH grant support for a disease.
 - Use `get disease <name_or_id> survival` when the question is specifically about cancer survival outcomes.
 - Use `get disease <name_or_id> phenotypes` for symptom-style questions.
+- Use `get disease <name_or_id> clinical_features` only when you need the accepted MedlinePlus clinical-feature foundation section; it is opt-in and remains empty until extraction support is wired.
 - Use `search article -d <disease>` when you need broader review literature or want to supplement sparse structured data.
 
 ## Commands
@@ -542,7 +543,8 @@ fn list_disease() -> String {
 - `get disease <name_or_id> civic` - CIViC disease-context evidence
 - `get disease <name_or_id> disgenet` - DisGeNET scored disease-gene associations (requires `DISGENET_API_KEY`)
 - `get disease <name_or_id> funding` - NIH Reporter grants for the requested disease phrase, or the resolved canonical name for identifier lookups, over the most recent 5 NIH fiscal years
-- `get disease <name_or_id> all` - include all standard disease sections (`diagnostics`, `disgenet`, and `funding` stay opt-in)
+- `get disease <name_or_id> clinical_features` - accepted MedlinePlus clinical-feature foundation section; currently empty until extraction support is wired
+- `get disease <name_or_id> all` - include all standard disease sections (`diagnostics`, `disgenet`, `funding`, and `clinical_features` stay opt-in)
 - `search disease <query>` - positional search by name
 - `search disease -q <query>` - search by name
 - `search phenotype "<HP terms or symptom phrases>"` - HPO IDs or resolved symptom text to ranked diseases
@@ -1177,7 +1179,7 @@ mod tests {
     }
 
     #[test]
-    fn list_disease_mentions_disgenet_section() {
+    fn list_disease_mentions_opt_in_sections() {
         let out = render(Some("disease")).expect("list disease should render");
         assert!(out.contains("## When to use this surface"));
         assert_eq!(out.matches("## When to use this surface").count(), 1);
@@ -1191,7 +1193,13 @@ mod tests {
         assert!(out.contains("get disease <name_or_id> diagnostics"));
         assert!(out.contains("Use `search article -d <disease>` when you need broader review"));
         assert!(out.contains("get disease <name_or_id> disgenet"));
-        assert!(out.contains("`diagnostics`, `disgenet`, and `funding` stay opt-in"));
+        assert!(out.contains("get disease <name_or_id> clinical_features"));
+        assert!(
+            out.contains(
+                "`diagnostics`, `disgenet`, `funding`, and `clinical_features` stay opt-in"
+            )
+        );
+        assert!(out.contains("currently empty until extraction support is wired"));
     }
 
     #[test]

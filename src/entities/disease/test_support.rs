@@ -49,6 +49,7 @@ pub(super) fn test_disease(id: &str, name: &str) -> Disease {
         recruiting_trial_count: None,
         pathways: Vec::new(),
         phenotypes: Vec::new(),
+        clinical_features: Vec::new(),
         key_features: Vec::new(),
         variants: Vec::new(),
         top_variant: None,
