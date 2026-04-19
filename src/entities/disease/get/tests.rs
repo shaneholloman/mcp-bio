@@ -26,6 +26,7 @@ fn parse_sections_supports_new_disease_sections() {
     assert!(flags.include_funding);
     assert!(flags.include_civic);
     assert!(flags.include_disgenet);
+    assert!(!flags.include_clinical_features);
 }
 
 #[test]
@@ -34,6 +35,25 @@ fn disease_parse_sections_accepts_diagnostics() {
     assert!(flags.include_diagnostics);
     assert!(!flags.include_genes);
     assert!(!flags.include_funding);
+    assert!(!flags.include_disgenet);
+    assert!(!flags.include_clinical_features);
+}
+
+#[test]
+fn parse_sections_accepts_clinical_features() {
+    let flags =
+        parse_sections(&["clinical_features".to_string()]).expect("clinical_features should parse");
+    assert!(flags.include_clinical_features);
+    assert!(!flags.include_genes);
+    assert!(!flags.include_pathways);
+    assert!(!flags.include_phenotypes);
+    assert!(!flags.include_diagnostics);
+    assert!(!flags.include_variants);
+    assert!(!flags.include_models);
+    assert!(!flags.include_prevalence);
+    assert!(!flags.include_survival);
+    assert!(!flags.include_funding);
+    assert!(!flags.include_civic);
     assert!(!flags.include_disgenet);
 }
 
@@ -44,12 +64,20 @@ fn parse_sections_all_keeps_optional_sections_opt_in() {
     assert!(!flags.include_diagnostics);
     assert!(!flags.include_funding);
     assert!(!flags.include_disgenet);
+    assert!(!flags.include_clinical_features);
 }
 
 #[test]
 fn disease_parse_sections_all_keeps_diagnostics_opt_in() {
     let flags = parse_sections(&["all".to_string()]).expect("sections should parse");
     assert!(!flags.include_diagnostics);
+}
+
+#[test]
+fn parse_sections_unknown_section_lists_clinical_features() {
+    let err =
+        parse_sections(&["not_a_section".to_string()]).expect_err("unknown section should fail");
+    assert!(err.to_string().contains("clinical_features"));
 }
 
 #[tokio::test]

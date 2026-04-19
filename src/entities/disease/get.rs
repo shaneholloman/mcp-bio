@@ -22,6 +22,7 @@ pub(super) struct DiseaseSections {
     pub(super) include_funding: bool,
     pub(super) include_civic: bool,
     pub(super) include_disgenet: bool,
+    pub(super) include_clinical_features: bool,
 }
 
 fn parse_sections(sections: &[String]) -> Result<DiseaseSections, BioMcpError> {
@@ -49,6 +50,7 @@ fn parse_sections(sections: &[String]) -> Result<DiseaseSections, BioMcpError> {
             DISEASE_SECTION_FUNDING => out.include_funding = true,
             DISEASE_SECTION_CIVIC => out.include_civic = true,
             DISEASE_SECTION_DISGENET => out.include_disgenet = true,
+            DISEASE_SECTION_CLINICAL_FEATURES => out.include_clinical_features = true,
             DISEASE_SECTION_ALL => include_all = true,
             _ => {
                 return Err(BioMcpError::InvalidArgument(format!(

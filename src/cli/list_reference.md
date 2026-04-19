@@ -28,6 +28,7 @@ New to BioMCP? Try:
 | What diagnostic test exists for a gene or disease | `get gene <symbol> diagnostics`, `get disease <name_or_id> diagnostics`, or `search diagnostic --gene <symbol> --limit 5` |
 | What the 5-year survival outlook is for a cancer | `get disease <name_or_id> survival` |
 | Symptoms or phenotypes of a disease | `get disease <name_or_id> phenotypes` |
+| Accepted MedlinePlus clinical-feature foundation section for a disease | `get disease <name_or_id> clinical_features` |
 | Which diseases match HPO IDs or symptom text | `search phenotype "<HP:... HP:...>"` or `search phenotype "seizure, developmental delay"` |
 | What a gene does | `get gene <symbol>` |
 | Tissue expression or localization of a gene product | `get gene <symbol> hpa` or `get gene <symbol> protein` |
@@ -66,6 +67,7 @@ New to BioMCP? Try:
 - `get <entity> <id> [section...]` - fetch by identifier with optional sections
 - `get gene <symbol> diagnostics` - opt-in diagnostic-test pivot from a gene card
 - `get disease <name_or_id> diagnostics` - opt-in diagnostic-test pivot from a disease card
+- `get disease <name_or_id> clinical_features` - accepted MedlinePlus clinical-feature foundation section; reserved for the source-native clinical-feature path and currently empty until extraction support is wired
 - `get drug <name> regulatory [--region <us|eu|who|all>]` - region-aware U.S./EU/WHO regulatory context
 - `get drug <name> safety|shortage [--region <us|eu|all>]` - region-aware U.S./EU drug safety and shortage context
 - `get drug <name> all [--region <us|eu|who|all>]` - include all sections plus region-aware regulatory context

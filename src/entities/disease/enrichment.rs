@@ -544,6 +544,9 @@ pub(super) async fn apply_requested_sections(
     if !sections.include_disgenet {
         disease.disgenet = None;
     }
+    if !sections.include_clinical_features {
+        disease.clinical_features.clear();
+    }
 
     disease.key_features = transform::disease::derive_key_features(disease);
 

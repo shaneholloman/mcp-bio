@@ -57,6 +57,16 @@ When BioMCP can extract a reliable disease summary, the phenotype section render
 `key_features[]` in `--json` output. The table remains the comprehensive phenotype
 annotation list, and the existing completeness note still applies.
 
+Clinical features (accepted MedlinePlus foundation section):
+
+```bash
+biomcp get disease <name_or_id> clinical_features
+```
+
+This opt-in section is accepted so downstream MedlinePlus clinical-feature
+extraction has a stable command contract. It remains empty until extraction
+support is enabled and is not included in `biomcp get disease <name_or_id> all`.
+
 Variants (CIViC disease-associated variants):
 
 ```bash
@@ -108,8 +118,8 @@ biomcp get disease "chronic myeloid leukemia" funding
 biomcp get disease "Marfan syndrome" funding
 ```
 
-The diagnostics, DisGeNET, and funding sections stay opt-in and are not included
-in `biomcp get disease <name_or_id> all`.
+The diagnostics, DisGeNET, funding, and clinical features sections stay opt-in
+and are not included in `biomcp get disease <name_or_id> all`.
 
 CIViC (clinical evidence):
 

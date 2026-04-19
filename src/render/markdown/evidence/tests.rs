@@ -132,6 +132,7 @@ fn disease_evidence_urls_include_record_links() {
             qualifiers: Vec::new(),
             source: Some("infores:omim".to_string()),
         }],
+        clinical_features: Vec::new(),
         key_features: Vec::new(),
         variants: Vec::new(),
         top_variant: None,

@@ -53,6 +53,8 @@ pub struct Disease {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub phenotypes: Vec<DiseasePhenotype>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub clinical_features: Vec<DiseaseClinicalFeature>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub key_features: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub variants: Vec<DiseaseVariantAssociation>,
@@ -111,6 +113,34 @@ pub struct DiseasePhenotype {
     pub qualifiers: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiseaseClinicalFeature {
+    pub rank: u16,
+    pub label: String,
+    pub feature_type: String,
+    pub source: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_url: Option<String>,
+    pub source_native_id: String,
+    pub evidence_tier: String,
+    pub evidence_text: String,
+    pub evidence_match: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body_system: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub topic_title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub topic_relation: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub topic_selection_score: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub normalized_hpo_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub normalized_hpo_label: Option<String>,
+    pub mapping_confidence: f64,
+    pub mapping_method: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -273,6 +303,7 @@ const DISEASE_SECTION_SURVIVAL: &str = "survival";
 const DISEASE_SECTION_FUNDING: &str = "funding";
 const DISEASE_SECTION_CIVIC: &str = "civic";
 const DISEASE_SECTION_DISGENET: &str = "disgenet";
+const DISEASE_SECTION_CLINICAL_FEATURES: &str = "clinical_features";
 const DISEASE_SECTION_ALL: &str = "all";
 
 pub const DISEASE_SECTION_NAMES: &[&str] = &[
@@ -287,6 +318,7 @@ pub const DISEASE_SECTION_NAMES: &[&str] = &[
     DISEASE_SECTION_FUNDING,
     DISEASE_SECTION_CIVIC,
     DISEASE_SECTION_DISGENET,
+    DISEASE_SECTION_CLINICAL_FEATURES,
     DISEASE_SECTION_ALL,
 ];
 
