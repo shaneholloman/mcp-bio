@@ -106,13 +106,16 @@ def extract_features(
     selected_topics: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     features: list[dict[str, Any]] = []
+    topic_texts = [
+        (topic, " ".join([topic.get("title", ""), topic.get("summary", "")]).strip())
+        for topic in selected_topics
+    ]
     rank = 1
     for concept, patterns in disease["expected_symptoms"].items():
         extraction_patterns = patterns + EXTRA_EXTRACTION_PATTERNS.get(concept, [])
         best: dict[str, Any] | None = None
         best_pattern: str | None = None
-        for topic in selected_topics:
-            text = " ".join([topic.get("title", ""), topic.get("summary", "")]).strip()
+        for topic, text in topic_texts:
             pattern = _find_first_pattern(text, extraction_patterns)
             if not pattern:
                 continue
