@@ -26,7 +26,7 @@ def clean_text(value: str) -> str:
 
 
 def _cache_path(query: str) -> str:
-    return str((CACHE_DIR / f"{slugify(query) or 'query'}.json").resolve())
+    return str(CACHE_DIR / f"{slugify(query) or 'query'}.json")
 
 
 def _parse_search_xml(body: str) -> list[dict[str, str]]:
