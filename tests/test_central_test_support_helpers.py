@@ -44,7 +44,7 @@ FORBIDDEN_TEMP_SCRATCH_PATTERNS = {
 
 def rust_sources_under(root: Path) -> list[Path]:
     sources = list((root / "src").rglob("*.rs"))
-    sources.extend((root / "tests").glob("*.rs"))
+    sources.extend((root / "tests").rglob("*.rs"))
     return sorted(path for path in sources if path.is_file())
 
 
@@ -145,6 +145,14 @@ def test_temp_scratch_scanner_reports_forbidden_patterns_in_fixture(
         f"fn unique_temp_dir() {{}}\nfn scratch() {{\n{bad_raw_temp}}}\n",
         encoding="utf-8",
     )
+    nested_tests_root = tests_root / "support"
+    nested_tests_root.mkdir()
+    (nested_tests_root / "raw_temp.rs").write_text(
+        "fn scratch() {\n"
+        '    let _ = std::env::temp_dir().join(format!("biomcp-nested-{}", 1));\n'
+        "}\n",
+        encoding="utf-8",
+    )
     bad_mkdtemp = "tempfile.mkd" + 'temp(prefix="biomcp-study-tests-")\n'
     (tests_root / "conftest.py").write_text(bad_mkdtemp, encoding="utf-8")
 
@@ -152,6 +160,7 @@ def test_temp_scratch_scanner_reports_forbidden_patterns_in_fixture(
         "tests/conftest.py:1: tempfile.mkdtemp(prefix='biomcp-')",
         "tests/raw_temp.rs:1: fn unique_temp_dir",
         "tests/raw_temp.rs:3: std env temp_dir join format biomcp-",
+        "tests/support/raw_temp.rs:2: std env temp_dir join format biomcp-",
     ]
 
 
