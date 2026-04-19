@@ -1,0 +1,171 @@
+{
+  "approach": "obsidian_cli_and_uri_probe",
+  "commands": [
+    {
+      "app_state": "not_deliberately_prestarted",
+      "argv": [
+        "/snap/bin/obsidian",
+        "--help"
+      ],
+      "command": "help",
+      "exit_code": -11,
+      "stderr": "",
+      "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:24:04 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+      "timed_out": false,
+      "works": false
+    },
+    {
+      "app_state": "not_deliberately_prestarted",
+      "argv": [
+        "/snap/bin/obsidian",
+        "search",
+        "query=pmcid: PMC9984800",
+        "--vault",
+        "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault"
+      ],
+      "command": "search",
+      "exit_code": -11,
+      "stderr": "",
+      "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:24:05 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+      "timed_out": false,
+      "works": false
+    },
+    {
+      "app_state": "not_deliberately_prestarted",
+      "argv": [
+        "/snap/bin/obsidian",
+        "create",
+        "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/cli-created.md",
+        "--content",
+        "CLI probe"
+      ],
+      "command": "create",
+      "exit_code": -11,
+      "stderr": "",
+      "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:24:07 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+      "timed_out": false,
+      "works": false
+    },
+    {
+      "app_state": "not_deliberately_prestarted",
+      "argv": [
+        "/snap/bin/obsidian",
+        "read",
+        "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault/Sources/Bayesian-efficient-coding.md"
+      ],
+      "command": "read",
+      "exit_code": -11,
+      "stderr": "",
+      "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:24:08 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+      "timed_out": false,
+      "works": false
+    },
+    {
+      "app_state": "not_deliberately_prestarted",
+      "argv": [
+        "/snap/bin/obsidian",
+        "tags",
+        "--vault",
+        "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/temp-obsidian-vault"
+      ],
+      "command": "tags",
+      "exit_code": -11,
+      "stderr": "",
+      "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:24:09 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+      "timed_out": false,
+      "works": false
+    }
+  ],
+  "desktop_requirement_assessment": "local obsidian command behaved like a desktop app wrapper, not a reliable headless CLI",
+  "frontmatter_search_probe": {
+    "local_filesystem_results": {
+      "pmcid: PMC9984800": {
+        "match_count": 0,
+        "matches": []
+      },
+      "source/pdf": {
+        "match_count": 3,
+        "matches": [
+          "Sources/PMC-OA-article-PDF.md",
+          "Sources/CDC-STI-treatment-guideline.md",
+          "Sources/KEYTRUDA-DailyMed-drug-label.md"
+        ]
+      },
+      "tags:": {
+        "match_count": 7,
+        "matches": [
+          "Sources/Bayesian-efficient-coding.md",
+          "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+          "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+          "Sources/PMC-OA-article-PDF.md",
+          "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+          "Sources/CDC-STI-treatment-guideline.md",
+          "Sources/KEYTRUDA-DailyMed-drug-label.md"
+        ]
+      },
+      "type: article": {
+        "match_count": 0,
+        "matches": []
+      }
+    },
+    "obsidian_cli_frontmatter_search": "not confirmed; local snap wrapper did not expose reliable noninteractive CLI behavior in this environment",
+    "structured_frontmatter_results": {
+      "doi:": {
+        "match_count": 7,
+        "matches": [
+          "Sources/Bayesian-efficient-coding.md",
+          "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+          "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+          "Sources/PMC-OA-article-PDF.md",
+          "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+          "Sources/CDC-STI-treatment-guideline.md",
+          "Sources/KEYTRUDA-DailyMed-drug-label.md"
+        ]
+      },
+      "pmcid: PMC9984800": {
+        "match_count": 2,
+        "matches": [
+          "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+          "Sources/PMC-OA-article-PDF.md"
+        ]
+      },
+      "tags: source/pdf": {
+        "match_count": 3,
+        "matches": [
+          "Sources/PMC-OA-article-PDF.md",
+          "Sources/CDC-STI-treatment-guideline.md",
+          "Sources/KEYTRUDA-DailyMed-drug-label.md"
+        ]
+      },
+      "type: article": {
+        "match_count": 3,
+        "matches": [
+          "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+          "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+          "Sources/PMC-OA-article-PDF.md"
+        ]
+      }
+    }
+  },
+  "obsidian_path": "/snap/bin/obsidian",
+  "scheme_handler": {
+    "query_command": {
+      "argv": [
+        "xdg-mime",
+        "query",
+        "default",
+        "x-scheme-handler/obsidian"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "",
+      "timed_out": false
+    },
+    "registered_handler": null
+  },
+  "uri_examples": {
+    "new": "obsidian://new?vault=temp-obsidian-vault&name=BioMCP+URI+Test&content=%23+BioMCP+URI+Test",
+    "search": "obsidian://search?vault=temp-obsidian-vault&query=pmcid%3A+PMC9984800"
+  },
+  "uri_execution": "not opened; probe records handler registration and valid URI construction to avoid forcing desktop UI during automated spike"
+}

@@ -1,0 +1,564 @@
+{
+  "approach": "pdf_fallback_extraction",
+  "documents": [
+    {
+      "id": "pmc_oa_article_pdf",
+      "pmcid": "PMC9984800",
+      "source_name": "PMC OA",
+      "title_hint": "PMC OA article PDF",
+      "type": "article"
+    },
+    {
+      "id": "dailymed_keytruda_label",
+      "source_name": "DailyMed",
+      "title_hint": "KEYTRUDA DailyMed drug label",
+      "type": "drug",
+      "url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf"
+    },
+    {
+      "id": "cdc_sti_guideline",
+      "source_name": "CDC",
+      "title_hint": "CDC STI treatment guideline",
+      "type": "guideline",
+      "url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf"
+    }
+  ],
+  "page_limit": 12,
+  "quality_matrix": [
+    {
+      "document": "pmc_oa_article_pdf",
+      "document_type": "article",
+      "engine": "unpdf",
+      "figure_handling": 3,
+      "heading_detection": 5,
+      "overall_readability": 5,
+      "overall_score": 4,
+      "reference_extraction": 1,
+      "success": true,
+      "table_preservation": 5
+    },
+    {
+      "document": "pmc_oa_article_pdf",
+      "document_type": "article",
+      "engine": "pdf_oxide",
+      "figure_handling": 3,
+      "heading_detection": 4,
+      "overall_readability": 5,
+      "overall_score": 4,
+      "reference_extraction": 1,
+      "success": true,
+      "table_preservation": 5
+    },
+    {
+      "document": "pmc_oa_article_pdf",
+      "document_type": "article",
+      "engine": "pymupdf4llm",
+      "figure_handling": 3,
+      "heading_detection": 5,
+      "overall_readability": 3,
+      "overall_score": 3,
+      "reference_extraction": 1,
+      "success": true,
+      "table_preservation": 5
+    },
+    {
+      "document": "dailymed_keytruda_label",
+      "document_type": "drug",
+      "engine": "unpdf",
+      "figure_handling": 1,
+      "heading_detection": 4,
+      "overall_readability": 5,
+      "overall_score": 2,
+      "reference_extraction": 1,
+      "success": true,
+      "table_preservation": 1
+    },
+    {
+      "document": "dailymed_keytruda_label",
+      "document_type": "drug",
+      "engine": "pdf_oxide",
+      "figure_handling": 1,
+      "heading_detection": 5,
+      "overall_readability": 5,
+      "overall_score": 3,
+      "reference_extraction": 1,
+      "success": true,
+      "table_preservation": 3
+    },
+    {
+      "document": "dailymed_keytruda_label",
+      "document_type": "drug",
+      "engine": "pymupdf4llm",
+      "figure_handling": 1,
+      "heading_detection": 5,
+      "overall_readability": 5,
+      "overall_score": 3,
+      "reference_extraction": 1,
+      "success": true,
+      "table_preservation": 3
+    },
+    {
+      "document": "cdc_sti_guideline",
+      "document_type": "guideline",
+      "engine": "unpdf",
+      "figure_handling": 1,
+      "heading_detection": 5,
+      "overall_readability": 5,
+      "overall_score": 4,
+      "reference_extraction": 3,
+      "success": true,
+      "table_preservation": 5
+    },
+    {
+      "document": "cdc_sti_guideline",
+      "document_type": "guideline",
+      "engine": "pdf-oxide",
+      "figure_handling": null,
+      "heading_detection": null,
+      "overall_readability": null,
+      "overall_score": null,
+      "reference_extraction": null,
+      "success": false,
+      "table_preservation": null
+    },
+    {
+      "document": "cdc_sti_guideline",
+      "document_type": "guideline",
+      "engine": "pymupdf4llm",
+      "figure_handling": 1,
+      "heading_detection": 5,
+      "overall_readability": 5,
+      "overall_score": 3,
+      "reference_extraction": 3,
+      "success": true,
+      "table_preservation": 3
+    }
+  ],
+  "records": [
+    {
+      "download": {
+        "fallback_reason": "% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\ncurl: (22) The requested URL returned error: 404",
+        "fallback_url": "https://europepmc.org/articles/PMC9984800?pdf=render",
+        "oa_url": "https://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_pdf/0d/5e/main.PMC9984800.pdf",
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/pmc_oa_article_pdf.pdf",
+        "pmcid": "PMC9984800"
+      },
+      "elapsed_ms": 111,
+      "engine": "unpdf",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/pmc_oa_article_pdf.pdf",
+      "kind": "pdf",
+      "markdown_sample": "## REVIEW\n\n# Precision oncology for from melanoma to tissueagnostic therapy\n\n# BRAF -mutant cancers with\n\n# BRAF and\n\n# MEK inhibitors:\n\n1,2 1,3 , 4\\* fi a University, Shebin Al-Kom, Menou\n\n| M. A. Gouda & V. Subbiah |  | \n\n| 1 | 2 | \n| Department of Investigational Cancer Therapeutics, Division of Cancer Medicine,The University of Texas MD Anderson Cancer Center, Houston, USA; | Department of |\n\n3 fi a, Egypt; Division of Pediatrics, The University of Texas MD Anderson Cancer Clinical Oncology, Faculty of Medicine, Menou\n\n4 Center, Houston; MD Anderson Cancer Network, The University of Texas MD Anderson Cancer Center, Houston, USA Available online xxx\n\nBRAF activation occurs as part of the mitogenactivated protein kinase (MAPK) cellular signaling pathway which leads to increased cellular proliferation and survival. Mutations in with subsequent uncontrolled cellular growth that formulate the basis for oncogenesis in multiple tumor types. INTRODUCTION Targeting BRAF by selective inhibitors has been one of the early successes in precision oncology. Agents have been The RAF family proteins areserine/threonine protein kinases explored either as monotherapy or in combination with that constitute a cornerstone of the mitogenactivated pro- EGFR inhibition in colorectal cancer. Spectrum of being a pancancer target. In this article, we review speci fi c melanoma, nonsmallcell lung cancer, and anaplastic thyroid cancer to tissueagnostic approvals. Key words: BRAF, MEK, cancer, precision oncology, targeted therapy\n\nBRAF can result in unbridled activation of downstream kinases\n\n5 BRAF altertumor types in the AACR GENIE database v12.1. ations were found in 9173 samp inhibition in BRAF V600-mutant pancancers and with pro fi ledsamples.Prevalencevariedsigni inhibition has evolved from being melanomaspeci tumor types and histologies with the highest frequency of and MEK inhibitor drug development journey from tissuedistribution observed in thyroid cancer (41%) ( BRAF mutations have been functionally categorized into three different classes that have variable levels of pendency. Class I mutations, which include V600 E/K/D, are\n\nles, accounting for 6% of all fi cantlyacrossdifferent MEK BRAF BRAF\n\nfi cto Figure 1 ). RAS de- 1-3 4\n\n| BRAF tein kinase (MAPK) pathway which is frequently dysfunc- | ALTERATIONS | \n\n| BRAF | mutations are the second most common alterations | \n| that occur in the MAPK pathway.Their role in cancer devel- |  |\n\nand since BRAF alterations,\n\nthen, multiple efforts have led to substantial advances in characterizing their impact and improving their targetability. In attempt to explore tissue distribution of RAS independent and hence maintain high level of activity regardless of RAS signaling even in their monomeric status. Class II mutations include non-V600 mutations e.g. monomeric kinase activity and usually require dimerization DETECTION OF BRAF MUTATIONS There is a wide variety of technologies that can be used for detection of BRAF alterations. For example, immunohistochemistry, PCRbased and sequencingbased technol- 6-9 In our AACR G469A ,\n\n| wereviewedsequencingdataof153554samplesfromdifferent |  | \n\n| GENIE analysis, class I alterations were the most prevalent K601E , and | L597Q as well as fusions and deletions. While | \n| also being being present in 4869 of | RAS -independent, class II have intermediate BRAF -altered samples (53%). |\n\n\\* Correspondence to: Prof. Vivek Subbiah, Department of Investigational Cancer Therapeutics (Phase I Clinical Trials Program), Unit 455, Division of Cancertional in many human cancers. Three RAF isoforms (A-RAF, opment was described in 2002 by Davies et al.;\n\nMedicine, The University of Texas MD Anderson Cancer Center, 1515 Hol- Volume 8 - Issue 2 - 2023 Email: vsubbiah@mdanderson.org (V. Subbiah). Twitter handle: @VivekSubbiah (V. Subbiah). 2059-7029/\u00a9 2023 The Author(s). Published by Elsevier Ltd on behalf of European Society for Medical Oncology. This is an open access article under the CC BY-NC-ND license ( http://creativecommons.org/licenses/byncnd/4.0/\n\nhttps://doi.org/10.1016/j.esmoop.2023.100788 1\n\nto function. Class III mutations, including ogies have all been validated for identi often occurs with upstream mutations including class I and II which usually show mutual exclusivity due to D594 and G466 , fi cation of BRAF RAS , unlike\n\n| B-RAF, and C-RAF) have been described as important regu- |  | \n\n| lators of cell growth, differentiation, and survival. RAF iso- | are RAS dependent and need to form dimers for activation. | \n| formsareactivatedthroughbindingofsmallGproteinstothe | This class is strongly dependent on upstream activation and | \n| combe Blvd, Houston, TX 77030, USA. Tel: \u00fe 1-713-563-1930 |  |\n\nNterminal of RAF proteins. Activation of RAF leads to\n\ndownstream phosphorylation of MEK1 and MEK2 and their\n\nthe downstream inhibition of RAS via ERK .\n\ndownstream ERK1 and ERK2 ( Figure 1 ).\n\nESMO Open M. A. Gouda & V. Subbiah\n\nRAS\u2013RAF pathway Oncogenic",
+      "metrics": {
+        "average_line_len": 117.48947368421052,
+        "has_doi_signal": true,
+        "has_figure_signal": true,
+        "has_reference_signal": false,
+        "has_table_signal": true,
+        "heading_count": 14,
+        "image_ref_count": 0,
+        "link_count": 0,
+        "markdown_bytes": 45432,
+        "nonempty_line_count": 380,
+        "page_count": 15,
+        "page_limit": 12,
+        "pages_processed": 12,
+        "quality": {
+          "figure_handling": 3,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 4,
+          "reference_extraction": 1,
+          "table_preservation": 5
+        },
+        "replacement_char_count": 0,
+        "table_row_count": 133,
+        "word_count": 7006
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/pmc_oa_article_pdf.unpdf.md",
+      "source": {
+        "id": "pmc_oa_article_pdf",
+        "pmcid": "PMC9984800",
+        "source_name": "PMC OA",
+        "title_hint": "PMC OA article PDF",
+        "type": "article"
+      },
+      "success": true
+    },
+    {
+      "download": {
+        "fallback_reason": "% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\ncurl: (22) The requested URL returned error: 404",
+        "fallback_url": "https://europepmc.org/articles/PMC9984800?pdf=render",
+        "oa_url": "https://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_pdf/0d/5e/main.PMC9984800.pdf",
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/pmc_oa_article_pdf.pdf",
+        "pmcid": "PMC9984800"
+      },
+      "elapsed_ms": 744,
+      "engine": "pdf_oxide",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/pmc_oa_article_pdf.pdf",
+      "kind": "pdf",
+      "markdown_sample": "<!-- page 1 -->\n\nREVIEW\n\n## Precision oncology forBRAF -mutant cancers with\n\n## from melanoma to tissue-agnostic therapy\n\n1,21,3,4*M. A. Gouda & V. Subbiah\n\n1Department of Investigational Cancer Therapeutics, Division of Cancer Medicine, The University of Texas MD Anderson Cancer Center, Houston, Clinical Oncology, Faculty of Medicine, Menou\ufb01a University, Shebin Al-Kom, Menou\n\n4Center, Houston; MD Anderson Cancer Network, The University of Texas MD Anderson Cancer Center, Houston, USA\n\nAvailable online xxx\n\nBRAF activation occurs as part of the mitogen-activated protein kinase (MAPK) cellular signaling pathway which leads to increased cellular proliferation and survival. Mutations BRAF in with subsequent uncontrolled cellular growth that formulate the basis for oncogenesis in multiple tumor types. Targeting BRAF by selective inhibitors has been one of the early successes in precision oncology. Agents have been explored either as monotherapy or in combination withMEK EGFR inhibition in colorectal cancer. Spectrum ofBRAF being a pan-cancer target. In this article, we reviewBRAF speci\ufb01c melanoma, non-small-cell lung cancer, and anaplastic thyroid cancer to tissue-agnostic approvals. Key words: BRAF, MEK, cancer, precision oncology, targeted therapy\n\nINTRODUCTION\n\nThe RAF family proteins are serine/threonine protein kinases that constitute a cornerstone of the mitogen-activated pro- tein kinase (MAPK) pathway which is frequently dysfunc- tional in many human cancers. Three RAF isoforms (A-RAF, B-RAF, and C-RAF) have been described as important regu- lators of cell growth, differentiation, and survival. RAF iso- forms are activated through binding of small G proteins to the N-terminal of RAF proteins. Activation of RAF leads to downstream phosphorylation of MEK1 and MEK2 and their 1-3downstream ERK1 and ERK2Figure 1).\n\nBRAF ALTERATIONS\n\nBRAF mutations are the second most common alterations that occur in the MAPK pathway. Their role in cancer devel- 4opment was described in 2002 by Davies et al.;and since then, multiple efforts have led to substantial advances in characterizing their impact and improving their targetability. In attempt to explore tissue distribution BRAF of alterations, we reviewed sequencing data of 153 554 samples from different\n\nCorrespondence to: Prof. Vivek Subbiah, Department of Investigational Can- cer Therapeutics (Phase I Clinical Trials Program), Unit 455, Division of Cancer Medicine, The University of Texas MD Anderson Cancer Center, 1515 Hol-\n\ncombe Blvd, Houston, TX 77030, USA. Tel:\u00fe1-713-563-1930 E-mail: [vsubbiah@mdanderson.org](mailto:vsubbiah@mdanderson.org) (V. Subbiah). Twitter handle: @VivekSubbiah (V. Subbiah).\n\n2059-7029/\u00a9 2023 The Author(s). Published by Elsevier Ltd on behalf of European Society for Medical Oncology. This is an open access article under the CC BY-NC-ND license [http://creativecommons.org/licenses/by-nc-nd/4.0/](http://creativecommons.org/licenses/by-nc-nd/4.0/)\n\nVolume 8 Issue 2 2023\n\n## BRAF and MEK inhibitors:\n\n2Department USA; of 3\ufb01a, Egypt; Division of Pediatrics, The University of Texas MD Anderson Cancer\n\ncan result in unbridled activation of downstream kinases\n\ninhibition in BRAF V600-mutant pan-cancers and with inhibition has evolved from being melanoma-speci\ufb01cto and MEK inhibitor drug development journey from tissue-\n\n5 BRAF alter-tumor types in the AACR GENIE database v12.1. ations were found in 9173 samples, accounting for 6% of all pro\ufb01led samples. Prevalence varied signi\ufb01cantly across different tumor types and histologies with the highest frequency of distribution observed in thyroid cancer (41%)Figure 1). BRAF mutations have been functionally categorized into three different classes that have variable levels RASof de- pendency. Class I mutations, which include V600 E/K/D, are RAS independent and hence maintain high level of activity regardless of RAS signaling even in their monomeric status. Class II mutations include non-V600 mutations e.g.G469A K601E, and L597Q as well as fusions and deletions. While also being RAS-independent, class II have intermediate monomeric kinase activity and usually require dimerization to function. Class III mutations, includingD594 and G466 are RAS dependent and need to form dimers for activation. This class is strongly dependent on upstream activation and often occurs with upstream mutations includingRAS, unlike class I and II which usually show mutual exclusivity due to 6-9the downstream inhibition ofRAS via ERK In our AACR GENIE analysis, class I alterations were the most prevalent being present in 4869 ofBRAF-altered samples (53%).\n\nDETECTION OF BRAF MUTATIONS\n\nThere is a wide variety of technologies that can be used for detection of BRAF alterations. For example, immuno- histochemistry, PCR-based and sequencing-based technol- ogies have all been validated for identi\ufb01cation of BRAF\n\n[https://doi.org/10.1016/j.esmoop.2023.100788](https://doi.org/10.1016/j.esmoop.2023.100788) 1\n\n\n<!-- page 2 -->\n\nESMO Open\n\n**R",
+      "metrics": {
+        "average_line_len": 67.83233532934132,
+        "has_doi_signal": true,
+        "has_figure_signal": true,
+        "has_reference_signal": false,
+        "has_table_signal": true,
+        "heading_count": 3,
+        "image_ref_count": 0,
+        "link_count": 3,
+        "markdown_bytes": 46592,
+        "nonempty_line_count": 668,
+        "page_count": 15,
+        "page_limit": 12,
+        "pages_processed": 12,
+        "quality": {
+          "figure_handling": 3,
+          "heading_detection": 4,
+          "overall_readability": 5,
+          "overall_score": 4,
+          "reference_extraction": 1,
+          "table_preservation": 5
+        },
+        "replacement_char_count": 0,
+        "table_row_count": 105,
+        "word_count": 6314
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/pmc_oa_article_pdf.pdf-oxide.md",
+      "source": {
+        "id": "pmc_oa_article_pdf",
+        "pmcid": "PMC9984800",
+        "source_name": "PMC OA",
+        "title_hint": "PMC OA article PDF",
+        "type": "article"
+      },
+      "success": true
+    },
+    {
+      "download": {
+        "fallback_reason": "% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\ncurl: (22) The requested URL returned error: 404",
+        "fallback_url": "https://europepmc.org/articles/PMC9984800?pdf=render",
+        "oa_url": "https://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_pdf/0d/5e/main.PMC9984800.pdf",
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/pmc_oa_article_pdf.pdf",
+        "pmcid": "PMC9984800"
+      },
+      "elapsed_ms": 5435,
+      "engine": "pymupdf4llm",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/pmc_oa_article_pdf.pdf",
+      "kind": "pdf",
+      "markdown_sample": "**==> picture [99 x 42] intentionally omitted <==**\n\n## REVIEW \n\n## Precision oncology for BRAF-mutant cancers with BRAF and MEK inhibitors: from melanoma to tissue-agnostic therapy \n\n## M. A. Gouda[1][,][2] & V. Subbiah[1][,][3][,][4*] \n\n1Department of Investigational Cancer Therapeutics, Division of Cancer Medicine, The University of Texas MD Anderson Cancer Center, Houston, USA; 2Department of Clinical Oncology, Faculty of Medicine, Menoufia University, Shebin Al-Kom, Menoufia, Egypt;[3] Division of Pediatrics, The University of Texas MD Anderson Cancer Center, Houston;[4] MD Anderson Cancer Network, The University of Texas MD Anderson Cancer Center, Houston, USA \n\n## Available online xxx \n\nBRAF activation occurs as part of the mitogen-activated protein kinase (MAPK) cellular signaling pathway which leads to increased cellular proliferation and survival. Mutations in BRAF can result in unbridled activation of downstream kinases with subsequent uncontrolled cellular growth that formulate the basis for oncogenesis in multiple tumor types. Targeting BRAF by selective inhibitors has been one of the early successes in precision oncology. Agents have been explored either as monotherapy or in combination with MEK inhibition in BRAF V600-mutant pan-cancers and with EGFR inhibition in colorectal cancer. Spectrum of BRAF inhibition has evolved from being melanoma-specific to being a pan-cancer target. In this article, we review BRAF and MEK inhibitor drug development journey from tissuespecific melanoma, non-small-cell lung cancer, and anaplastic thyroid cancer to tissue-agnostic approvals. Key words: BRAF, MEK, cancer, precision oncology, targeted therapy \n\n## INTRODUCTION \n\nThe RAF family proteins are serine/threonine protein kinases that constitute a cornerstone of the mitogen-activated protein kinase (MAPK) pathway which is frequently dysfunctional in many human cancers. Three RAF isoforms (A-RAF, B-RAF, and C-RAF) have been described as important regulators of cell growth, differentiation, and survival. RAF isoforms are activated through binding of small G proteins to the N-terminal of RAF proteins. Activation of RAF leads to downstream phosphorylation of MEK1 and MEK2 and their downstream ERK1 and ERK2 (Figure 1).[1-3] \n\n## BRAF ALTERATIONS \n\nBRAF mutations are the second most common alterations that occur in the MAPK pathway. Their role in cancer development was described in 2002 by Davies et al.;[4] and since then, multiple efforts have led to substantial advances in characterizing their impact and improving their targetability. \n\nIn attempt to explore tissue distribution of BRAF alterations, wereviewedsequencingdataof153554samplesfromdifferent \n\n> *Correspondence to: Prof. Vivek Subbiah, Department of Investigational Cancer Therapeutics (Phase I Clinical Trials Program), Unit 455, Division of Cancer Medicine, The University of Texas MD Anderson Cancer Center, 1515 Holcombe Blvd, Houston, TX 77030, USA. Tel: \u00fe1-713-563-1930 \n\n> E-mail: vsubbiah@mdanderson.org (V. Subbiah). Twitter handle: @VivekSubbiah (V. Subbiah). \n\n> 2059-7029/\u00a9 2023 The Author(s). Published by Elsevier Ltd on behalf of European Society for Medical Oncology. This is an open access article under the CC BY-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/). \n\ntumor types in the AACR GENIE database v12.1.[5] BRAF alterations were found in 9173 samples, accounting for 6% of all profiledsamples.Prevalencevariedsignificantlyacrossdifferent tumor types and histologies with the highest frequency of distribution observed in thyroid cancer (41%) (Figure 1). \n\nBRAF mutations have been functionally categorized into three different classes that have variable levels of RAS dependency. Class I mutations, which include V600 E/K/D, are RAS independent and hence maintain high level of activity regardless of RAS signaling even in their monomeric status. Class II mutations include non-V600 mutations e.g. G469A, K601E, and L597Q as well as fusions and deletions. While also being RAS-independent, class II have intermediate monomeric kinase activity and usually require dimerization to function. Class III mutations, including D594 and G466, are RAS dependent and need to form dimers for activation. This class is strongly dependent on upstream activation and often occurs with upstream mutations including RAS, unlike class I and II which usually show mutual exclusivity due to the downstream inhibition of RAS via ERK.[6-9] In our AACR GENIE analysis, class I alterations were the most prevalent ~~be~~ ing present in 4869 of BRAF-altered samples (53%). \n\n## DETECTION OF BRAF MUTATIONS \n\nThere is a wide variety of technologies that can be used for detection of BRAF alterations. For example, immunohistochemistry, PCR-based and sequencing-based technologies have all been validated for identification of BRAF \n\nVolume 8 - Issue 2 - 2023 \n\nhttps://doi.org/10.1016/j.esmoop.2023.100788 1 \n\nESMO Open \n\nM. A. Gouda & V. Subbiah \n\n**==> picture [491 x 347] inten",
+      "metrics": {
+        "average_line_len": 203.95217391304348,
+        "has_doi_signal": true,
+        "has_figure_signal": true,
+        "has_reference_signal": false,
+        "has_table_signal": true,
+        "heading_count": 23,
+        "image_ref_count": 0,
+        "link_count": 0,
+        "markdown_bytes": 47500,
+        "nonempty_line_count": 230,
+        "page_count": 15,
+        "page_limit": 12,
+        "pages_processed": 12,
+        "quality": {
+          "figure_handling": 3,
+          "heading_detection": 5,
+          "overall_readability": 3,
+          "overall_score": 3,
+          "reference_extraction": 1,
+          "table_preservation": 5
+        },
+        "replacement_char_count": 13,
+        "table_row_count": 110,
+        "word_count": 5703
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/pmc_oa_article_pdf.pymupdf4llm.md",
+      "source": {
+        "id": "pmc_oa_article_pdf",
+        "pmcid": "PMC9984800",
+        "source_name": "PMC OA",
+        "title_hint": "PMC OA article PDF",
+        "type": "article"
+      },
+      "success": true
+    },
+    {
+      "download": {
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/dailymed_keytruda_label.pdf",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf"
+      },
+      "elapsed_ms": 11507,
+      "engine": "unpdf",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/dailymed_keytruda_label.pdf",
+      "kind": "pdf",
+      "markdown_sample": "\u0000a \u0000s \u0000 \u0000a \u0000 \u0000s \u0000i \u0000n \u0000g \u0000l \u0000a \u0000u \u0000t \u0000h \u0000o \u0000r \u0000i \u0000z \u0000e \n \u0000N \u0000S \u0000C \u0000C \u0000 \u0000w \u0000a \u0000s \u0000 \u0000a \u0000 \u0000s \u0000i \u0000n \u0000g \u0000l \u0000u \u0000n \u0000r \u0000e \u0000s \u0000e \u0000c \u0000t \u0000a \u0000i \u0000n \u0000 \u0000c \u0000o \u0000m\u0000b\u0000i \u0000n \u0000w \u0000i \u0000t \u0000h \u0000o \u0000u \u0000t \u0000 \u0000c \u0000i \u0000n \u0000e \u0000o \u0000a \u0000d \u0000j \u0000u \u0000v \u0000a \n \u00001 \u0000 \u0000\\[ \u0000C \u0000o \u0000m\u0000b \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000e \u0000 \u0000t \u0000r \u0000e \n \u0000e \u0000a \u0000d \u0000 \u0000a \u0000n \u0000d \u0000 \u0000N \u0000e \u0000w \u0000i \u0000t \u0000h \u0000 \u0000u \u0000n \u0000r \u0000e \u0000s \u0000i \u0000n \u0000 \u0000c \u0000o \u0000m\u0000b\u0000i \u0000n \u0000M \u0000a \u0000l \u0000i \u0000g \u0000n \u0000a \u0000n \u0000t \u0000 \u0000P \u0000l \u0000e \u0000a \u0000d \u0000u \u0000l \u0000t \u0000 \u0000p \u0000a \u0000t \u0000i \u0000a \u0000s \u0000 \u0000a \u0000 \u0000s \u0000i \u0000n \u0000g \u0000l \u0000a \u0000g \u0000e \u0000n \u0000t \u0000 \u0000a \u0000s \u0000  \u0000w \u0000i \u0000t \u0000h \u0000 \u0000p \u0000l \u0000a \u0000t \u0000i \u0000n \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000e \u0000 \u0000t \u0000r \u0000e \u0000p \u0000r \u0000o \u0000g \u0000r \u0000e \u0000s \u0000s \u0000i \u0000c \u0000o \u0000n \u0000t \u0000a \u0000i \u0000n \u0000i \u0000n \u0000g \u0000( \n \u0000P \u0000S \u0000 \u0000\u2265 \u00001 \u0000% \u0000a \u0000s \u0000 \u0000a \u0000 \u0000s \u0000i \u0000n \u0000g \u0000l \u0000m\u0000e\u0000t \u0000a \u0000s \u0000S \u0000t \u0000a \u0000g \u0000e \u0000  \u0000t \u0000u \u0000m\u0000o\u0000r \u0000 \u0000a \u0000b \u0000P \u0000r \u0000o \u0000p \u0000o \u0000r \u0000t \u0000i \u0000o \u0000n \u0000a \u0000s \u0000 \u0000a \u0000 \u0000s \u0000i \u0000n \u0000g \u0000l \u0000o \u0000f \u0000 \u0000p \u0000a \u0000t \u0000i \u0000e \u0000n \u0000t \u0000i \u0000n \u0000 \u0000c \u0000o \u0000m\u0000b\u0000i \u0000n \u0000m\u0000e\u0000t \u0000a \u0000s \u0000t \u0000a \u0000t \u0000i \u0000n \u0000 \u0000c \u0000o \u0000m\u0000b\u0000i \u0000n \u0000N \u0000o \u0000n \u0000- \u0000S \u0000m\u0000a\u0000l \u0000l \u0000 \u0000C \u0000m\u0000e\u0000l \u0000a \u0000n \u0000o \u0000m \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000e \u0000 \u0000a \u0000d \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000e \u0000 \u0000t \u0000r \u0000e \u0000M \u0000e \u0000l \u0000a \u0000n \u0000o \u0000m\u0000a \u0000K \u0000E \u0000Y \n \u0000R \u0000U \u0000D \u0000A \u0000 \u0000i \u0000s \u0000D \u0000o \u0000s \u0000a \u0000g \u0000e \u0000 \u0000a \u0000n \u0000d \u0000I \u0000n \u0000d \u0000i \u0000c \u0000a \u0000t \u0000i \u0000o \u0000n \u0000s \u0000 \u0000a \u0000I \u0000n \u0000i \u0000t \u0000i \u0000a \u0000l \u0000 \u0000U \u0000. \u0000S \u0000. \u0000  \u0000K \u0000E \u0000Y \n \u0000R \u0000U \u0000D \u0000A \u0000e \u0000f \u0000f \u0000e \u0000c \u0000t \u0000i \u0000v \u0000e \u0000l \u0000y \u0000. \n \u0000h \u0000e \u0000s \u0000e \u0000 \u0000h \u0000i \u0000g \u0000h \n \u0000I \u0000G \n \n \u0000I \u0000G \n \n\n\u0000- \u0000- \u0000- \u0000- \u0000- \u0000- \u0000- \u0000- \u0000- \u0000- \u0000M\u0000e\u0000r \u0000c \u0000k \u0000 \u0000S \u0000h \u0000K \u0000E \u0000Y \n \u0000R \u0000U \u0000D \u0000A \u0000K \u0000E \u0000Y \n \u0000R \u0000U \u0000D \u0000A\n\n\u0000e \u0000 \u0000a \u0000g \u0000e \u0000n \u0000t \u0000 \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000d \u0000 \u0000t \u0000e \u0000s \u0000t \u0000. \u0000 \u0000( \u00001 \u0000. \u00004 \u0000, \u0000 \u00002 \u0000h \u0000o \u0000s \u0000e \u0000 \u0000t \u0000u \u0000m\u0000o\u0000r \u0000s \u0000  \u0000e \u0000 \u0000a \u0000g \u0000e \u0000n \u0000t \u0000 \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000b \u0000l \u0000e \u0000, \u0000 \u0000r \u0000e \u0000c \u0000u \u0000r \u0000r \u0000e \u0000n \u0000a \u0000t \u0000i \u0000o \u0000n \u0000 \u0000w \u0000i \u0000t \u0000h \u0000 \u0000p \u0000l \u0000a \u0000s \u0000p \u0000l \u0000a \u0000t \u0000i \u0000n \u0000 \u0000a \u0000n \u0000d \u0000 \u0000t \u0000h \u0000n \u0000t \u0000 \u0000t \u0000r \u0000e \u0000a \u0000t \u0000m\u0000e\u0000n \u0000t \u0000i \u0000n \u0000e \u0000d \u0000 \u0000P \u0000o \u0000s \u0000i \u0000t \u0000i \u0000v \u0000e \u0000  \u0000a \u0000t \u0000m\u0000e\u0000n \u0000t \u0000 \u0000o \u0000f \u0000 \u0000a \u0000d \u0000c \u0000k \u0000 \u0000S \u0000q \u0000u \u0000a \u0000m\u0000o\u0000u \u0000e \u0000c \u0000t \u0000a \u0000b \u0000l \u0000e \u0000 \u0000a \u0000d \u0000v \u0000a \u0000a \u0000t \u0000i \u0000o \u0000n \u0000 \u0000w \u0000i \u0000t \u0000h \u0000 \u0000p \u0000e \u0000m \u0000u \u0000r \u0000a \u0000l \u0000 \u0000M \u0000e \u0000s \u0000o \u0000t \u0000h \u0000e \u0000e \u0000n \u0000t \u0000s \u0000 \u0000w \u0000i \u0000t \u0000h \u0000 \u0000S \u0000t \u0000a \u0000g \u0000e \u0000 \u0000a \u0000g \u0000e \u0000n \u0000t \u0000, \u0000 \u0000f \u0000o \u0000r \u0000 \u0000a \u0000a \u0000d \u0000j \u0000u \u0000v \u0000a \u0000n \u0000t \u0000 \u0000t \u0000r \u0000e \u0000a \u0000u \u0000m\u0000-\u0000c \u0000o \u0000n \u0000t \u0000a \u0000i \u0000n \u0000i \u0000n \u0000a \u0000t \u0000m\u0000e\u0000n \u0000t \u0000 \u0000o \u0000f \u0000 \u0000p \u0000a \u0000o \u0000n \u0000 \u0000o \u0000n \u0000 \u0000F \u0000D \u0000A \u0000- \u0000a \u0000p \u0000 \u0000c \u0000h \u0000e \u0000m\u0000o\u0000t \u0000h \u0000e \u0000r \u0000a \u0000) \u0000 \u0000a \u0000s \u0000 \u0000d \u0000e \u0000t \u0000e \u0000r \u0000m\u0000i\u0000n \u0000e \u0000 \u0000a \u0000g \u0000e \u0000n \u0000t \u0000 \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000t \u0000a \u0000t \u0000i \u0000c \u0000. \u0000 \u0000( \u00001 \u0000. \u00002 \u0000, \u0000 \u00002 \u0000. \u00001 \u0000I \u0000I \u0000I \u0000 \u0000w \u0000h \u0000e \u0000r \u0000e \u0000 \u0000p \u0000a \u0000t \u0000i \u0000e \u0000e \u0000r \u0000r \u0000a \u0000t \u0000i \u0000o \u0000n \u0000s \u0000, \u0000 \u0000a \u0000n \u0000d \u0000 \u0000S \u0000c \u0000o \u0000r \u0000e \u0000 \u0000( \n \u0000P \u0000S \u0000) \u0000e \u0000 \u0000a \u0000g \u0000e \u0000n \u0000t \u0000 \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000s \u0000 \u0000w \u0000i \u0000t \u0000h \u0000 \u0000m\u0000e\u0000t \u0000a \u0000s \u0000t \u0000a \u0000t \u0000i \u0000o \u0000n \u0000 \u0000w \u0000i \u0000t \u0000h \u0000 \u0000c \u0000a \u0000r \u0000i \u0000c \u0000 \u0000n \u0000o \u0000n \u0000s \u0000q \u0000u \u0000a \u0000m\u0000o \u0000a \u0000t \u0000i \u0000o \u0000n \u0000 \u0000w \u0000i \u0000t \u0000h \u0000 \u0000p \u0000e \u0000m \u0000e \u0000l \u0000l \u0000 \n \u0000u \u0000n \u0000g \u0000 \u0000C \u0000a \u0000n \u0000c \u0000a \u0000 \u0000f \u0000o \u0000l \u0000l \u0000o \u0000w \u0000i \u0000n \u0000g \u0000 \u0000c \u0000o \u0000j \u0000u \u0000v \u0000a \u0000n \u0000t \u0000 \u0000t \u0000r \u0000e \u0000a \u0000t \u0000m \u0000a \u0000t \u0000m\u0000e\u0000n \u0000t \u0000 \u0000o \u0000f \u0000 \u0000p \u0000a \u0000 \u0000a \u0000 \u0000p \u0000r \u0000o \u0000g \u0000r \u0000a \u0000m\u0000m \u0000 \u0000A \u0000d \u0000m\u0000i\u0000n \u0000i \u0000s \u0000t \u0000r \u0000a \u0000t \u0000i \u0000o \u0000n \u0000d \u0000 \u0000U \u0000s \u0000a \u0000g \u0000e \u0000 \u0000( \u00001 \u0000) \u0000A \u0000p \u0000p \u0000r \u0000o \u0000v \u0000a \u0000l \u0000: \u0000 \u00002 \u0000( \u0000p \u0000e \u0000m\u0000b\u0000r \u0000o \u0000l \u0000i\n\n\u0000 \u0000S \u0000e \u0000e \u0000 \u0000f \u0000u \u0000l \u0000l \u0000 \u0000p \u0000r \u0000l \u0000i \u0000g \u0000h \u0000t \u0000s \u0000 \u0000d \u0000o \u0000 \u0000n \u0000o \u0000S \u0000 \u0000O \u0000F \u0000 \u0000P \u0000R \u0000E \u0000S \u0000C\n\n\u0000a \u0000r \u0000p \u0000 \u0000& \u0000 \u0000D \u0000o \u0000h \u0000- \u0000 \u0000p \u0000e \u0000m\u0000b\u0000r \u0000o \u0000- \u0000 \u0000p \u0000e \u0000m\u0000b\u0000r \u0000o\n\n\u0000e \u0000 \u0000t \u0000r \u0000e \u0000a \u0000t \u0000m\u0000e\u0000n \u0000t \u0000  \u0000. \u00001 \u0000) \u0000e \u0000x \u0000p \u0000r \u0000e \u0000s \u0000s \u0000 \u0000P \u0000D \u0000- \n \u0000e \u0000 \u0000f \u0000i \u0000r \u0000s \u0000t \u0000- \u0000l \u0000i \u0000n \u0000e \u0000 \u0000t \u0000r \u0000e \u0000t \u0000 \n \u0000N \u0000S \u0000C \u0000C \u0000. \u0000 \u0000( \u00001 \u0000. \u00004 \u0000t \u0000i \u0000n \u0000u \u0000m\u0000 \u0000a \u0000n \u0000d \u0000 \u0000F \u0000U \u0000e \u0000n \u0000 \u0000a \u0000s \u0000 \u0000a \u0000 \u0000s \u0000i \u0000n \u0000g \u0000l \u0000e \u0000, \u0000 \u0000c \u0000o \u0000n \u0000t \u0000i \u0000n \u0000u \u0000e \u0000d \u0000 \u0000a \u0000S \u0000c \u0000o \u0000r \u0000e \u0000 \u0000( \u0000C \u0000P \u0000S \u0000) \u0000 \u0000\u2265 \u0000u \u0000l \u0000t \u0000 \u0000p \u0000a \u0000t \u0000i \u0000e \u0000n \u0000t \u0000s \u0000 \u0000w \u0000s \u0000 \u0000C \u0000e \u0000l \u0000l \u0000 \u0000C \u0000a \u0000n \u0000c \u0000e \u0000r \u0000n \u0000c \u0000e \u0000d \u0000 \u0000o \u0000r \u0000 \u0000m\u0000e\u0000t \u0000a \u0000e \u0000t \u0000r \u0000e \u0000x \u0000e \u0000d \u0000 \u0000a \u0000n \u0000d \u0000l \u0000i \u0000o \u0000m\u0000a\u0000 \u0000( \u0000M \u0000P \u0000M \u0000) \u0000e \u0000 \u0000I \u0000B \u0000 \u0000( \n \u00002 \u0000a \u0000 \u0000\u2265 \u00004 \u0000d \u0000j \u0000u \u0000v \u0000a \u0000n \u0000t \u0000 \u0000t \u0000r \u0000e \u0000a \u0000t \u0000t \u0000m\u0000e\u0000n \u0000t \u0000 \u0000a \u0000f \u0000t \u0000e \u0000r \u0000 \u0000s \u0000g \u0000 \u0000c \u0000h \u0000e \u0000m\u0000o\u0000t \u0000h \u0000e \u0000r \u0000t \u0000i \u0000e \u0000n \u0000t \u0000s \u0000 \u0000w \u0000i \u0000t \u0000h \u0000 \u0000r \u0000e \u0000p \u0000r \u0000o \u0000v \u0000e \u0000d \u0000 \u0000t \u0000h \u0000e \u0000r \u0000a \u0000p \u0000y \u0000. \u0000 \u0000P \u0000a \u0000t \u0000i \u0000e \u0000n \u0000t \u0000s \u0000 \u0000w \u0000e \u0000d \u0000 \u0000b \u0000y \u0000 \u0000a \u0000n \u0000 \u0000F \u0000D \u0000A \u0000e \u0000 \u0000t \u0000r \u0000e \u0000a \u0000t \u0000m\u0000e\u0000n \u0000t \u0000  \u0000) \u0000n \u0000t \u0000s \u0000 \u0000a \u0000r \u0000e \u0000 \u0000n \u0000o \u0000t \u0000 \u0000c \u0000 \u0000i \u0000s \u0000: \u0000 \u0000\u2265 \u00001 \u0000%\u0000\\]\u0000 \u0000a \u0000s \u0000 \u0000d \u0000e \u0000t \u0000e \u0000 \u0000f \u0000i \u0000r \u0000s \u0000t \u0000- \u0000l \u0000i \u0000n \u0000e \u0000 \u0000t \u0000r \u0000e \u0000a \u0000t \u0000i \u0000c \u0000 \u0000s \u0000q \u0000u \u0000a \u0000m\u0000o\u0000u \u0000b \u0000o \u0000p \u0000l \u0000a \u0000t \u0000i \u0000n \u0000 \u0000a \u0000n \u0000d \u0000  \u0000u \u0000s \u0000 \u0000N \u0000S \u0000C \n \u0000C \u0000, \u0000 \u0000w \u0000e \u0000t \u0000r \u0000e \u0000x \u0000e \u0000d \u0000 \u0000a \u0000n \u0000d \u0000e \u0000r \u0000 \u0000( \u0000N \u0000S \u0000C \n \u0000C \u0000) \u0000m\u0000p\u0000l \u0000e \u0000t \u0000e \u0000 \u0000r \u0000e \u0000s \u0000e \u0000c \u0000e \u0000n \u0000t \u0000 \u0000o \u0000f \u0000 \u0000a \u0000d \u0000u \u0000l \u0000t \u0000 \u0000a \u0000t \u0000i \u0000e \u0000n \u0000t \u0000s \u0000 \u0000w \u0000i \u0000t \u0000h \u0000 \u0000u \u0000n \u0000e \u0000d \u0000 \u0000d \u0000e \u0000a \u0000t \u0000h \u0000 \u0000r \u0000e \u0000c \u0000e \u0000n \u0000 \u0000( \u00002 \u0000)\n\n\u00000 \u00001 \u00004 \u0000z \u0000u \u0000m\u0000a\u0000b \u0000) \u0000 \u0000i \u0000n \u0000j \u0000e \u0000e \u0000s \u0000c \u0000r \u0000i \u0000b \u0000i \u0000n \u0000g \u0000 \u0000i \u0000n \u0000t \u0000 \u0000i \u0000n \u0000c \u0000l \u0000u \u0000d \u0000e \u0000 \u0000a \u0000l \u0000R \u0000I \u0000B \u0000I \u0000N \u0000G \u0000 \u0000I \u0000N \u0000F \u0000O\n\n\u0000m\u0000e\u0000 \n \n \u0000C \u0000  \u0000l \u0000i \u0000z \u0000u \u0000m\u0000a\u0000b \u0000 \u0000i \u0000n \u0000l \u0000i \u0000z \u0000u \u0000m\u0000a\u0000b \u0000 \u0000i \u0000n\n\n\u0000o \u0000f \u0000 \u0000p \u0000a \u0000t \u0000i \u0000e \u0000n \u0000t \u0000s \u0000 \u0000w \u0000i \u0000t \u00001 \u0000 \u0000\\[ \u0000C \u0000o \u0000m\u0000b\u0000i \u0000n \u0000e \u0000d \u0000  \u0000a \u0000t \u0000m\u0000e\u0000n \u0000t \u0000 \u0000o \u0000f \u0000 \u0000p \u0000a \u0000) \u0000 \u0000f \u0000o \u0000r \u0000 \u0000t \u0000h \u0000e \u0000 \u0000f \u0000i \u0000r \u0000s \u0000t \u0000- \u0000l \u0000 \u0000a \u0000g \u0000e \u0000n \u0000t \u0000. \u0000 \u0000( \u00001 \u0000. \u00004 \u0000) \u0000s \u0000 \u0000a \u0000d \u0000j \u0000u \u0000v \u0000a \u0000n \u0000t \u0000 \u0000t \u0000r \u0000e \u00001 \u0000\\] \u0000 \u0000a \u0000s \u0000 \u0000d \u0000e \u0000t \u0000e \u0000r \u0000m \u0000i \u0000t \u0000h \u0000 \u0000r \u0000e \u0000s \u0000e \u0000c \u0000t \u0000a \u0000b \u0000l \u0000e \u0000 \u0000( \n \u0000N \u0000S \u0000C \u0000C \u0000) \u0000s \u0000t \u0000a \u0000t \u0000i \u0000c \u0000 \u0000M \u0000P \u0000M \u0000. \u0000 \u0000( \u0000 \u0000p \u0000l \u0000a \u0000t \u0000i \u0000n \u0000u \u0000m\u0000 \u0000c \u0000h \u0000e \u0000 \u0000c \u0000m\u0000)\u0000, \u0000 \u0000I \u0000I \u0000, \u0000 \u0000o \u0000r \u0000 \u0000I \u0000I \u0000I \u0000A \u0000m\u0000e\u0000n \u0000t \u0000 \u0000f \u0000o \u0000l \u0000l \u0000o \u0000w \u0000i \u0000n \u0000g \u0000u \u0000r \u0000g \u0000e \u0000r \u0000y \u0000. \u0000 \u0000( \u00001 \u0000. \u00002 \u0000) \u0000a \u0000p \u0000y \u0000 \u0000a \u0000s \u0000 \u0000n \u0000e \u0000o \u0000a \u0000d \u0000s \u0000e \u0000",
+      "metrics": {
+        "average_line_len": 165.6153846153846,
+        "has_doi_signal": false,
+        "has_figure_signal": false,
+        "has_reference_signal": false,
+        "has_table_signal": false,
+        "heading_count": 3,
+        "image_ref_count": 0,
+        "link_count": 0,
+        "markdown_bytes": 98456,
+        "nonempty_line_count": 585,
+        "page_count": 242,
+        "page_limit": 12,
+        "pages_processed": 12,
+        "quality": {
+          "figure_handling": 1,
+          "heading_detection": 4,
+          "overall_readability": 5,
+          "overall_score": 2,
+          "reference_extraction": 1,
+          "table_preservation": 1
+        },
+        "replacement_char_count": 0,
+        "table_row_count": 0,
+        "word_count": 32826
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/dailymed_keytruda_label.unpdf.md",
+      "source": {
+        "id": "dailymed_keytruda_label",
+        "source_name": "DailyMed",
+        "title_hint": "KEYTRUDA DailyMed drug label",
+        "type": "drug",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf"
+      },
+      "success": true
+    },
+    {
+      "download": {
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/dailymed_keytruda_label.pdf",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf"
+      },
+      "elapsed_ms": 10004,
+      "engine": "pdf_oxide",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/dailymed_keytruda_label.pdf",
+      "kind": "pdf",
+      "markdown_sample": "<!-- page 1 -->\n\n**KE**\n\n### YTRUDA- pembrol\n\n**KE**\n\n### YTRUDA- pembrol Merck Sharp & Dohme LLC ----------\n\n**HIGHLIGHTS OF PRESCRI** **These highlights do not include all the information needed to use KEYT** **effectively. See full prescribing information for KEYT**\n\n**KEYTRUDA (pembrolizumab) injection, for intravenous use**  **Initial U.S. Approval: 2014**\n\n**i**\n\n### zumab injection, powder, l\n\n**i**\n\n### zumab injection, sol\n\n**BING INFORMATION**\n\n**RECENT MAJ**\n\nIndications and Usage (1) Dosage and Administration (2)\n\n**INDICATIONS AND USAGE** KEYTRUDA is a programmed death receptor-1 (PD-1)-blocking antibody indicated: Melanoma for the treatment of patients with unresectable or metastatic melanoma. (1.1) for the adjuvant treatment of adult and pediatric (12 years and older) patients w melanoma following complete resection. (1.1)\n\nNon-Small Cell Lung Cancer (NSCLC) in combination with pemetrexed and platinum chemotherapy, as first-line treatment of patients w metastatic nonsquamous NSCLC, with no EGFR in combination with carboplatin and either paclitaxel or paclitaxel protein-bound, as first-line treatment of patients with metastatic squamous NSCLC. (1.2) as a single agent for the first-line treatment of patients w Proportion Score (TPS) \u22651%] as determined by an FDA-authorized test, w tumor aberrations, and is: Stage III where patients are not candidates for surgical resection or definitive chemoradiation, or metastatic. (1.2, 2.1) as a single agent for the treatment of patients w (TPS \u22651%) as determined by an FDA-authorized test, w containing chemotherapy. Patients with EGFR or ALK genomic tumor aberrations should have disease progression on FDA-approved therapy for these aberrations prior to receiving KEY for the treatment of patients with resectable (tumors \u22654 cm or node positive) NSCLC in combination with platinum-containing chemotherapy as neoadjuvant treatment, and then continued as a single agent as adjuvant treatment after surgery. (1.2) as a single agent, for adjuvant treatment following resection and platinum-based chemotherapy for adult patients with Stage IB (T2a \u22654 cm), II, or II\n\nMalignant Pleural Mesothelioma (MPM) in combination with pemetrexed and platinum chemotherapy, as first-line treatment of adult patients with unresectable advanced or metastatic MPM. (1.3)\n\nHead and Neck Squamous Cell Cancer (HNSCC) for the treatment of adult patients with resectable locally advanced HNSCC w L1 [Combined Positive Score (CPS) \u22651] as determined by an FDA-authorized test, as a single agent as neoadjuvant treatment, continued as adjuvant treatment in combination w without cisplatin and then as a single agent. (1.4) in combination with platinum and FU for the first-line treatment of patients w unresectable, recurrent HNSCC. (1.4) as a single agent for the first-line treatment of patients w HNSCC whose tumors express PD-L1 [Combined Positive Score (CPS) \u22651] as determined by an FDA- authorized test. (1.4, 2.1) as a single agent for the treatment of patients w\n\n### yophi ution\n\n**RUDA.**\n\n**OR CHANGES**\n\n**li**\n\n### zed, for sol\n\nor ALK genomic tumor aberrations. (1.2)\n\nith NSCLC expressing PD-L1 [T\n\nith metastatic NSCLC w ith disease progression on or after platinum-\n\nIA NSCLC. (1.2)\n\nith metastatic or w\n\nith recurrent or metastatic HNSCC w\n\n### ution\n\n**RUDA safely and**\n\n02/2026 02/2026\n\nith Stage IIB, IIC, or III\n\nith\n\numor ith no EGFR or ALK genomic\n\nhose tumors express PD-L1\n\nTRUDA. (1.2, 2.1)\n\nhose tumors express PD-\n\nith radiotherapy (RT) with or\n\nith metastatic or with\n\nith unresectable, recurrent\n\nith disease\n\n\n<!-- page 2 -->\n\nas a single agent for the treatment of patients w progression on or after platinum-containing chemotherapy. (1.4)\n\nClassical Hodgkin Lymphoma (cHL) for the treatment of adult patients w for the treatment of pediatric patients w\n\nith relapsed or refractory cHL. (1.5) ith refractory cHL, or cHL that has relapsed after 2 or more\n\nlines of therapy. (1.5)\n\nPrimary Mediastinal Large B-Cell Lymphoma (PMBCL) for the treatment of adult and pediatric patients w more prior lines of therapy. (1.6) Limitations of Use: KEYTRUDA is not recommended for treatment of patients w urgent cytoreductive therapy.\n\nUrothelial Cancer in combination with enfortumab vedotin, for the treatment of adult patients w metastatic urothelial cancer. (1.7) as a single agent for the treatment of patients w who: are not eligible for any platinum-containing chemotherapy, or who have disease progression during or follow months of neoadjuvant or adjuvant treatment w in combination with enfortumab vedotin, as neoadjuvant treatment and then continued after cystectomy as adjuvant treatment of adult patients w ineligible for cisplatin-containing chemotherapy. (1.7) as a single agent for the treatment of patients w risk, non-muscle invasive bladder cancer (NMI tumors who are ineligible for or have elected not to undergo cystectomy. (1.7)\n\nMicrosatellite Instability-High or Mismatch Repair Deficient Cancer for the ",
+      "metrics": {
+        "average_line_len": 119.49832775919732,
+        "has_doi_signal": false,
+        "has_figure_signal": false,
+        "has_reference_signal": false,
+        "has_table_signal": true,
+        "heading_count": 7,
+        "image_ref_count": 0,
+        "link_count": 1,
+        "markdown_bytes": 36338,
+        "nonempty_line_count": 299,
+        "page_count": 242,
+        "page_limit": 12,
+        "pages_processed": 12,
+        "quality": {
+          "figure_handling": 1,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 3,
+          "reference_extraction": 1,
+          "table_preservation": 3
+        },
+        "replacement_char_count": 0,
+        "table_row_count": 0,
+        "word_count": 5281
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/dailymed_keytruda_label.pdf-oxide.md",
+      "source": {
+        "id": "dailymed_keytruda_label",
+        "source_name": "DailyMed",
+        "title_hint": "KEYTRUDA DailyMed drug label",
+        "type": "drug",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf"
+      },
+      "success": true
+    },
+    {
+      "download": {
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/dailymed_keytruda_label.pdf",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf"
+      },
+      "elapsed_ms": 3820,
+      "engine": "pymupdf4llm",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/dailymed_keytruda_label.pdf",
+      "kind": "pdf",
+      "markdown_sample": "**KEYTRUDA- pembrolizumab injection, powder, lyophilized, for solution KEYTRUDA- pembrolizumab injection, solution Merck Sharp & Dohme LLC** \n\n---------- \n\n## **HIGHLIGHTS OF PRESCRIBING INFORMATION** \n\n**These highlights do not include all the information needed to use KEYTRUDA safely and effectively. See full prescribing information for KEYTRUDA.** \n\n**KEYTRUDA\u00ae (pembrolizumab) injection, for intravenous use Initial U.S. Approval: 2014** \n\n## ~~**RECENT MAJOR CHANGES**~~ \n\nIndications and Usage (1) 02/2026 Dosage and Administration (2) 02/2026 \n\n## ~~**INDICATIONS AND USAGE**~~ \n\nKEYTRUDA is a programmed death receptor-1 (PD-1)-blocking antibody indicated: Melanoma \n\nfor the treatment of patients with unresectable or metastatic melanoma. (1.1) \n\n- for the adjuvant treatment of adult and pediatric (12 years and older) patients with Stage IIB, IIC, or III melanoma following complete resection. (1.1) \n\n## Non-Small Cell Lung Cancer (NSCLC) \n\n- in combination with pemetrexed and platinum chemotherapy, as first-line treatment of patients with metastatic nonsquamous NSCLC, with no EGFR or ALK genomic tumor aberrations. (1.2) in combination with carboplatin and either paclitaxel or paclitaxel protein-bound, as first-line treatment of patients with metastatic squamous NSCLC. (1.2) \n\n- as a single agent for the first-line treatment of patients with NSCLC expressing PD-L1 [Tumor Proportion Score (TPS) \u22651%] as determined by an FDA-authorized test, with no EGFR or ALK genomic tumor aberrations, and is: \n\n   - Stage III where patients are not candidates for surgical resection or definitive chemoradiation, or metastatic. (1.2, 2.1) \n\n- as a single agent for the treatment of patients with metastatic NSCLC whose tumors express PD-L1 (TPS \u22651%) as determined by an FDA-authorized test, with disease progression on or after platinumcontaining chemotherapy. Patients with EGFR or ALK genomic tumor aberrations should have disease progression on FDA-approved therapy for these aberrations prior to receiving KEYTRUDA. (1.2, 2.1) for the treatment of patients with resectable (tumors \u22654 cm or node positive) NSCLC in combination with platinum-containing chemotherapy as neoadjuvant treatment, and then continued as a single agent as adjuvant treatment after surgery. (1.2) \n\n- as a single agent, for adjuvant treatment following resection and platinum-based chemotherapy for adult patients with Stage IB (T2a \u22654 cm), II, or IIIA NSCLC. (1.2) \n\n## Malignant Pleural Mesothelioma (MPM) \n\n- in combination with pemetrexed and platinum chemotherapy, as first-line treatment of adult patients with unresectable advanced or metastatic MPM. (1.3) \n\n## Head and Neck Squamous Cell Cancer (HNSCC) \n\n- for the treatment of adult patients with resectable locally advanced HNSCC whose tumors express PDL1 [Combined Positive Score (CPS) \u22651] as determined by an FDA-authorized test, as a single agent as neoadjuvant treatment, continued as adjuvant treatment in combination with radiotherapy (RT) with or without cisplatin and then as a single agent. (1.4) \n\n- in combination with platinum and FU for the first-line treatment of patients with metastatic or with unresectable, recurrent HNSCC. (1.4) \n\n- as a single agent for the first-line treatment of patients with metastatic or with unresectable, recurrent HNSCC whose tumors express PD-L1 [Combined Positive Score (CPS) \u22651] as determined by an FDAauthorized test. (1.4, 2.1) \n\n- as a single agent for the treatment of patients with recurrent or metastatic HNSCC with disease \n\ng g p \n\nprogression on or after platinum-containing chemotherapy. (1.4) \n\n## Classical Hodgkin Lymphoma (cHL) \n\n- for the treatment of adult patients with relapsed or refractory cHL. (1.5) \n\n- for the treatment of pediatric patients with refractory cHL, or cHL that has relapsed after 2 or more lines of therapy. (1.5) \n\n## - Primary Mediastinal Large B Cell Lymphoma (PMBCL) \n\n- for the treatment of adult and pediatric patients with refractory PMBCL, or who have relapsed after 2 or more prior lines of therapy. (1.6) \n\n- Limitations of Use: KEYTRUDA is not recommended for treatment of patients with PMBCL who require urgent cytoreductive therapy. \n\n## Urothelial Cancer \n\n- in combination with enfortumab vedotin, for the treatment of adult patients with locally advanced or metastatic urothelial cancer. (1.7) \n\n- as a single agent for the treatment of patients with locally advanced or metastatic urothelial carcinoma who: \n\n   - are not eligible for any platinum-containing chemotherapy, or \n\n   - who have disease progression during or following platinum-containing chemotherapy or within 12 months of neoadjuvant or adjuvant treatment with platinum-containing chemotherapy. (1.7) \n\n- in combination with enfortumab vedotin, as neoadjuvant treatment and then continued after cystectomy as adjuvant treatment of adult patients with muscle invasive bladder cancer (MIBC) who are ineligible for cisplatin-containing chemotherapy. (1.7) \n\n- as a single agent for the tr",
+      "metrics": {
+        "average_line_len": 129.00363636363636,
+        "has_doi_signal": false,
+        "has_figure_signal": false,
+        "has_reference_signal": false,
+        "has_table_signal": true,
+        "heading_count": 69,
+        "image_ref_count": 0,
+        "link_count": 0,
+        "markdown_bytes": 36401,
+        "nonempty_line_count": 275,
+        "page_count": 242,
+        "page_limit": 12,
+        "pages_processed": 12,
+        "quality": {
+          "figure_handling": 1,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 3,
+          "reference_extraction": 1,
+          "table_preservation": 3
+        },
+        "replacement_char_count": 0,
+        "table_row_count": 0,
+        "word_count": 5144
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/dailymed_keytruda_label.pymupdf4llm.md",
+      "source": {
+        "id": "dailymed_keytruda_label",
+        "source_name": "DailyMed",
+        "title_hint": "KEYTRUDA DailyMed drug label",
+        "type": "drug",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf"
+      },
+      "success": true
+    },
+    {
+      "download": {
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/cdc_sti_guideline.pdf",
+        "url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf"
+      },
+      "elapsed_ms": 3387,
+      "engine": "unpdf",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/cdc_sti_guideline.pdf",
+      "kind": "pdf",
+      "markdown_sample": "## Recommendations and Reports / Vol. 70 / No. 4\n\n# Sexually Transmitted Infections Treatment  Guidelines, 2021\n\n## Morbidity and Mortality Weekly Report July 23, 2021 \n\nU.S. Department of Health and Human Services Centers for Disease Control and Prevention\n\n| CONTENTS |  | \n\n| Introduction ............................................................................................................ | 1 | \n| Methods .................................................................................................................... | 1 | \n| Clinical Prevention Guidance ............................................................................ | 2 | \n| STI Detection Among Special Populations ............................................... | 11 | \n| HIV Infection ......................................................................................................... | 24 | \n| Diseases Characterized by Genital, Anal, or Perianal Ulcers ............... | 27 | \n| Syphilis ................................................................................................................... | 39 | \n| Management of Persons Who Have a History of Penicillin Allergy | .. 56 | \n| Diseases Characterized by Urethritis and Cervicitis ............................... | 60 | \n| Chlamydial Infections ....................................................................................... | 65 | \n| Gonococcal Infections ...................................................................................... | 71 | \n| Mycoplasma genitalium .................................................................................... | 80 | \n| Diseases Characterized by Vulvovaginal Itching, Burning, Irritation, |  |\n\nOdor, or Discharge (p.82) \n| Pelvic Inflammatory Disease .......................................................................... |  | 94 | \n\n| Epididymitis .......................................................................................................... |  | 98 | \n| Human Papillomavirus Infections | .............................................................. | 100 | \n| Viral Hepatitis ..................................................................................................... |  | 113 | \n| Proctitis, Proctocolitis, and Enteritis | .......................................................... | 124 | \n| Ectoparasitic Infections .................................................................................. |  | 126 | \n| Sexual Assault and Abuse and STIs | ............................................................ | 128 | \n| References ........................................................................................................... |  | 135 |\n\n# Sexually Transmitted Infections Treatment Guidelines, 2021\n\n1,2 1 1,3 ; Christine M. Johnston, MD 5 University of Alabama at Birmingham, Birmingham, Alabama; 1,4 1,5 ; Christina A. Muzny, MD ;  1 2 Emory University, Atlanta, Georgia; Kimberly A. Workowski, MD ; Laura H. Bachmann, MD ; Philip A. Chan, MD 1,6 1,7 ; Hilary Reno, MD ; Jonathan M. Zenilman, MD 4 University of Washington, Seattle, Washington; \n\n1,8 ; Gail A. Bolan, MD 8 Johns Hopkins University, Baltimore, Maryland Ina Park, MD\n\n1 Division of STD Prevention, National Center for HIV/AIDS, Viral Hepatitis, STD, and TB Prevention, CDC, Atlanta, Georgia;  3 Brown University, Providence, Rhode Island;  6 University of California San Francisco, San Francisco, California; \n\n7 Washington University, St. Louis, Missouri; \n\nSummary , and Trichomonas vaginalis\n\nThese guidelines for the treatment of persons who have or are at risk for sexually transmitted infections (STIs) were updated by  CDC after consultation with professionals knowledgeable in the field of STIs who met in Atlanta, Georgia, June 11\u201314, 2019.  The information in this report updates the 2015 guidelines. These guidelines discuss 1) updated recommendations for treatment of  Neisseria gonorrhoeae, Chlamydia trachomatis treatment regimen for pelvic inflammatory disease; 3) alternative treatment options for bacterial vaginosis; 4) management of  Mycoplasma genitalium; 5) human papillomavirus vaccine recommendations and counseling messages; 6) expanded risk factors  for syphilis testing among pregnant women; 7) onetime testing for hepatitis C infection; 8) evaluation of men who have sex with  men after sexual assault; and 9) twostep testing for serologic diagnosis of genital herpes simplex virus. Physicians and other health  care providers can use these guidelines to assist in prevention and treatment of STIs.\n\n; 2) addition of metronidazole to the recommended \n\nThese STI treatment guidelines complement  for Providing Quality Sexually Transmitted Diseases Clinical  Services, 2020 ( in primary care and STD specialty care settings. This guidance  specifies operational determinants of quality services in various  clinical settings, describes onsite treatment and partner  services, and indicates when STIrelated conditions should be  managed through c",
+      "metrics": {
+        "average_line_len": 304.984126984127,
+        "has_doi_signal": false,
+        "has_figure_signal": false,
+        "has_reference_signal": true,
+        "has_table_signal": true,
+        "heading_count": 11,
+        "image_ref_count": 0,
+        "link_count": 0,
+        "markdown_bytes": 58087,
+        "nonempty_line_count": 189,
+        "page_count": 192,
+        "page_limit": 12,
+        "pages_processed": 12,
+        "quality": {
+          "figure_handling": 1,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 4,
+          "reference_extraction": 3,
+          "table_preservation": 5
+        },
+        "replacement_char_count": 0,
+        "table_row_count": 66,
+        "word_count": 8364
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/cdc_sti_guideline.unpdf.md",
+      "source": {
+        "id": "cdc_sti_guideline",
+        "source_name": "CDC",
+        "title_hint": "CDC STI treatment guideline",
+        "type": "guideline",
+        "url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf"
+      },
+      "success": true
+    },
+    {
+      "command": [
+        "cargo",
+        "run",
+        "--quiet",
+        "--manifest-path",
+        "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/scripts/rust_probe/Cargo.toml",
+        "--",
+        "pdf",
+        "--engine",
+        "pdf-oxide",
+        "--input",
+        "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/cdc_sti_guideline.pdf",
+        "--output",
+        "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/cdc_sti_guideline.pdf-oxide.md",
+        "--page-limit",
+        "12"
+      ],
+      "download": {
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/cdc_sti_guideline.pdf",
+        "url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf"
+      },
+      "elapsed_ms": 90101,
+      "engine": "pdf-oxide",
+      "error": "timed out after 90 seconds",
+      "exit_code": null,
+      "kind": "pdf",
+      "markdown_sample": "",
+      "metrics": {
+        "timeout_seconds": 90
+      },
+      "source": {
+        "id": "cdc_sti_guideline",
+        "source_name": "CDC",
+        "title_hint": "CDC STI treatment guideline",
+        "type": "guideline",
+        "url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf"
+      },
+      "success": false
+    },
+    {
+      "download": {
+        "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/cdc_sti_guideline.pdf",
+        "url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf"
+      },
+      "elapsed_ms": 3177,
+      "engine": "pymupdf4llm",
+      "error": null,
+      "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/source/cdc_sti_guideline.pdf",
+      "kind": "pdf",
+      "markdown_sample": "Morbidity and Mortality Weekly Report \n\nRecommendations and Reports / Vol. 70 / No. 4 \n\nJuly 23, 2021 \n\n## **Sexually Transmitted Infections Treatment Guidelines, 2021** \n\n**==> picture [105 x 59] intentionally omitted <==**\n\n**U.S. Department of Health and Human Services Centers for Disease Control and Prevention** \n\nRecommendations and Reports \n\n## **CONTENTS** \n\nIntroduction ............................................................................................................1 Methods ....................................................................................................................1 Clinical Prevention Guidance ............................................................................2 STI Detection Among Special Populations ............................................... 11 HIV Infection ......................................................................................................... 24 Diseases Characterized by Genital, Anal, or Perianal Ulcers ............... 27 Syphilis ................................................................................................................... 39 Management of Persons Who Have a History of Penicillin Allergy .. 56 Diseases Characterized by Urethritis and Cervicitis ............................... 60 Chlamydial Infections ....................................................................................... 65 Gonococcal Infections ...................................................................................... 71 _Mycoplasma genitalium_ .................................................................................... 80 Diseases Characterized by Vulvovaginal Itching, Burning, Irritation, Odor, or Discharge ........................................................................................... 82 Pelvic Inflammatory Disease .......................................................................... 94 Epididymitis .......................................................................................................... 98 Human Papillomavirus Infections ..............................................................100 Viral Hepatitis .....................................................................................................113 Proctitis, Proctocolitis, and Enteritis ..........................................................124 Ectoparasitic Infections ..................................................................................126 Sexual Assault and Abuse and STIs ............................................................128 References ...........................................................................................................135 \n\nThe _MMWR_ series of publications is published by the Center for Surveillance, Epidemiology, and Laboratory Services, Centers for Disease Control and Prevention (CDC), U.S. Department of Health and Human Services, Atlanta, GA 30329-4027. \n\n**Suggested citation:** [Author names; first three, then et al., if more than six.] [Title]. MMWR Recomm Rep 2021;70(No. RR-#):[inclusive page numbers]. \n\n## **Centers for Disease Control and Prevention** \n\nRochelle P. Walensky, MD, MPH, _Director_ \n\nDebra Houry, MD, MPH, _Acting Principal Deputy Director_ Daniel B. Jernigan, MD, MPH, _Acting Deputy Director for Public Health Science and Surveillance_ Rebecca Bunnell, PhD, MEd, _Director, Office of Science_ Jennifer Layden, MD, PhD, _Deputy Director, Office of Science_ Michael F. Iademarco, MD, MPH, _Director, Center for Surveillance, Epidemiology, and Laboratory Services_ \n\n## _**MMWR**_ **Editorial and Production Staff (Serials)** \n\nCharlotte K. Kent, PhD, MPH, _Editor in Chief_ Christine G. Casey, MD, _Editor_ Mary Dott, MD, MPH, _Online Editor_ Terisa F. Rutledge, _Managing Editor_ David C. Johnson, _Lead Technical Writer-Editor_ Marella Meadows, _Project Editor_ \n\nMatthew L. Boulton, MD, MPH Carolyn Brooks, ScD, MA Jay C. Butler, MD Virginia A. Caine, MD Jonathan E. Fielding, MD, MPH, MBA David W. Fleming, MD \n\nMartha F. Boyd, _Lead Visual Information Specialist_ Alexander J. Gottardy, Maureen A. Leahy, Julia C. Martinroe, Stephen R. Spriggs, Tong Yang, _Visual Information Specialists_ \n\nQuang M. Doan, MBA, Phyllis H. King, Terraye M. Starr, Moua Yang, _Information Technology Specialists_ \n\n## _**MMWR**_ **Editorial Board** \n\nTimothy F. Jones, MD, _Chairman_ William E. Halperin, MD, DrPH, MPH Jewel Mullen, MD, MPH, MPA Jeff Niederdeppe, PhD Celeste Philip, MD, MPH Patricia Quinlisk, MD, MPH Patrick L. Remington, MD, MPH \n\nIan Branam, MA, _Acting Lead Health Communication Specialist_ Shelton Bartley, MPH, Lowery Johnson, Amanda Ray, Jacqueline N. Sanchez, MS, _Health Communication Specialists_ Will Yang, MA, _Visual Information Specialist_ \n\nCarlos Roig, MS, MA William Schaffner, MD Nathaniel Smith, MD, MPH Morgan Bobb Swanson, BS Abbigail Tumpey, MPH \n\nRecommendations and Reports \n\n## **Sexually Transmitted Infections Treatment Guidelines, 2021** \n\nKimberly A. Worko",
+      "metrics": {
+        "average_line_len": 307.96938775510205,
+        "has_doi_signal": false,
+        "has_figure_signal": false,
+        "has_reference_signal": true,
+        "has_table_signal": true,
+        "heading_count": 39,
+        "image_ref_count": 0,
+        "link_count": 0,
+        "markdown_bytes": 61169,
+        "nonempty_line_count": 196,
+        "page_count": 192,
+        "page_limit": 12,
+        "pages_processed": 12,
+        "quality": {
+          "figure_handling": 1,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 3,
+          "reference_extraction": 3,
+          "table_preservation": 3
+        },
+        "replacement_char_count": 0,
+        "table_row_count": 0,
+        "word_count": 8649
+      },
+      "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/pdf/markdown/cdc_sti_guideline.pymupdf4llm.md",
+      "source": {
+        "id": "cdc_sti_guideline",
+        "source_name": "CDC",
+        "title_hint": "CDC STI treatment guideline",
+        "type": "guideline",
+        "url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf"
+      },
+      "success": true
+    }
+  ]
+}
