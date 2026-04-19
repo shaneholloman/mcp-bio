@@ -8,6 +8,7 @@ import time
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from functools import lru_cache
 from typing import Any
 
 from phenotype_spike_common import DISEASES, HTTP_TIMEOUT_SECONDS, USER_AGENT
@@ -103,6 +104,7 @@ def medlineplus_search(query: str, *, allow_live: bool, refresh_cache: bool) -> 
         }
 
 
+@lru_cache(maxsize=1)
 def explore_topics_by_disease() -> dict[str, list[dict[str, str]]]:
     payload = load_json(EXPLORE_MEDLINEPLUS_PATH)
     out: dict[str, list[dict[str, str]]] = {}
