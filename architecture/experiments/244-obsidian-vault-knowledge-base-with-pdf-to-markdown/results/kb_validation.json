@@ -1,0 +1,1305 @@
+{
+  "approach": "ticket_success_validation",
+  "checks": [
+    {
+      "evidence": {
+        "approach": "end_to_end_obsidian_vault",
+        "duplicate_path_mismatches": 0,
+        "frontmatter_fields": [
+          "authors",
+          "biomcp_entities",
+          "doi",
+          "journal",
+          "license",
+          "nct_id",
+          "pmcid",
+          "pmid",
+          "published_at",
+          "retrieved_at",
+          "source_name",
+          "source_url",
+          "status",
+          "tags",
+          "title",
+          "type"
+        ],
+        "frontmatter_search": {
+          "doi:": {
+            "match_count": 8,
+            "matches": [
+              "Sources/Bayesian-efficient-coding.md",
+              "Sources/CDC-STI-treatment-guideline.md",
+              "Sources/KEYTRUDA-DailyMed-drug-label.md",
+              "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+              "Sources/PMC-OA-article-PDF.md",
+              "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+              "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+              "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md"
+            ]
+          },
+          "pmcid: PMC9984800": {
+            "match_count": 3,
+            "matches": [
+              "Sources/PMC-OA-article-PDF.md",
+              "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+              "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md"
+            ]
+          },
+          "tags: source/pdf": {
+            "match_count": 3,
+            "matches": [
+              "Sources/CDC-STI-treatment-guideline.md",
+              "Sources/KEYTRUDA-DailyMed-drug-label.md",
+              "Sources/PMC-OA-article-PDF.md"
+            ]
+          },
+          "type: article": {
+            "match_count": 4,
+            "matches": [
+              "Sources/PMC-OA-article-PDF.md",
+              "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+              "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+              "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md"
+            ]
+          },
+          "type: preprint": {
+            "match_count": 1,
+            "matches": [
+              "Sources/Bayesian-efficient-coding.md"
+            ]
+          }
+        },
+        "local_search": {
+          "KEYTRUDA": {
+            "match_count": 1,
+            "matches": [
+              "Sources/KEYTRUDA-DailyMed-drug-label.md"
+            ]
+          },
+          "doi:": {
+            "match_count": 8,
+            "matches": [
+              "Sources/Bayesian-efficient-coding.md",
+              "Sources/CDC-STI-treatment-guideline.md",
+              "Sources/KEYTRUDA-DailyMed-drug-label.md",
+              "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+              "Sources/PMC-OA-article-PDF.md",
+              "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+              "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+              "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md"
+            ]
+          },
+          "long covid": {
+            "match_count": 1,
+            "matches": [
+              "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md"
+            ]
+          },
+          "pmcid: PMC9984800": {
+            "match_count": 0,
+            "matches": []
+          },
+          "source/pdf": {
+            "match_count": 3,
+            "matches": [
+              "Sources/CDC-STI-treatment-guideline.md",
+              "Sources/KEYTRUDA-DailyMed-drug-label.md",
+              "Sources/PMC-OA-article-PDF.md"
+            ]
+          },
+          "type: article": {
+            "match_count": 0,
+            "matches": []
+          },
+          "type: preprint": {
+            "match_count": 0,
+            "matches": []
+          }
+        },
+        "note_count": 8,
+        "note_records": 8,
+        "notes": [
+          {
+            "body_sha256": "d4f90989c9ee83320513648928f8a70f75b2b2ff585449ae9f64a66270d07139",
+            "body_source_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/jats/markdown/PMC9984800.md",
+            "note_sha256": "bf8daeaf21a9c8ce708b91620a43d94444ceecd87dd35371bcc1e6f703818a89",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+            "relative_path": "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+            "source_name": "PMC OA JATS",
+            "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+            "status": "imported",
+            "tags": [
+              "biomcp/kb-spike",
+              "source/jats"
+            ],
+            "title": "Precision oncology for *BRAF*-mutant cancers with *BRAF* and *MEK* inhibitors: from melanoma to tissue-agnostic therapy",
+            "type": "article"
+          },
+          {
+            "body_sha256": "af4c23dd8336da59c5c0ca111293f1e182140471a852c50eaa401a5149bb0310",
+            "body_source_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/jats/markdown/PMC9891841.md",
+            "note_sha256": "0d3adffda39d0826400b6a255c2a3277e48da2849dbbef29750d199f239c5bb9",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+            "relative_path": "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md",
+            "source_name": "PMC OA JATS",
+            "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9891841/",
+            "status": "imported",
+            "tags": [
+              "biomcp/kb-spike",
+              "source/jats"
+            ],
+            "title": "Relevant Dermatoses Among U.S. Military Service Members: An Operational Review of Management Strategies and Telemedicine Utilization",
+            "type": "article"
+          },
+          {
+            "body_sha256": "0b72c42e543e195cdd87c207035f753fd7b9662c244eec310d07627dfe22b911",
+            "body_source_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/html/markdown/pmc_article_page.md",
+            "note_sha256": "edbe8723ddce241d607918fa3e401aa9302085dbd7a6695d5885e52c31e22595",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+            "relative_path": "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+            "source_name": "PMC",
+            "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+            "status": "extracted",
+            "tags": [
+              "biomcp/kb-spike",
+              "source/html"
+            ],
+            "title": "Precision oncology for  BRAF -mutant cancers with  BRAF  and  MEK  inhibitors: from melanoma to tissue-agnostic therapy",
+            "type": "article"
+          },
+          {
+            "body_sha256": "99db1aaac9430634cf4aa5cd0efe0f04430c750e0024f85ec7b66663a744760f",
+            "body_source_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/html/markdown/biorxiv_preprint_page.md",
+            "note_sha256": "318b101249e4b4cc9ce092fb93ee22271b5a99afe4d744634e3d8ff64319c640",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/Bayesian-efficient-coding.md",
+            "relative_path": "Sources/Bayesian-efficient-coding.md",
+            "source_name": "bioRxiv",
+            "source_url": "https://www.biorxiv.org/content/10.1101/178418v5",
+            "status": "extracted",
+            "tags": [
+              "biomcp/kb-spike",
+              "source/html"
+            ],
+            "title": "Bayesian efficient coding",
+            "type": "preprint"
+          },
+          {
+            "body_sha256": "21c9d0db52161c1e1124eae2fbd2b8ed7fa680c76ddd2fa922d357994048e421",
+            "body_source_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/html/markdown/nih_news_release.md",
+            "note_sha256": "8aca79f4cdcbe5dc3ea1dc7e9607c8524b44869595186598ff360f906a8ef44f",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+            "relative_path": "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+            "source_name": "NIH",
+            "source_url": "https://www.nih.gov/news-events/news-releases/nih-funded-study-finds-long-covid-affects-adolescents-differently-younger-children",
+            "status": "extracted",
+            "tags": [
+              "biomcp/kb-spike",
+              "source/html"
+            ],
+            "title": "NIH-funded study finds long COVID affects adolescents differently than younger children \n",
+            "type": "news"
+          },
+          {
+            "body_sha256": "a9b363d7ac9839c2f63b5cc80b9b9436649ad7f64c05622682b4da69ca72fecb",
+            "body_source_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/pdf/markdown/pmc_oa_article_pdf.unpdf.md",
+            "note_sha256": "cf0df84d478abdbc22e7daf8955a053b7333505d72bcea33ca9e400ba5e90e3d",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/PMC-OA-article-PDF.md",
+            "relative_path": "Sources/PMC-OA-article-PDF.md",
+            "source_name": "PMC OA via unpdf",
+            "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+            "status": "extracted",
+            "tags": [
+              "biomcp/kb-spike",
+              "source/pdf"
+            ],
+            "title": "PMC OA article PDF",
+            "type": "article"
+          },
+          {
+            "body_sha256": "6f6d66447e681a872bf53e797729cf237f45158d61a098a30ffb213e23cfb053",
+            "body_source_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/pdf/markdown/dailymed_keytruda_label.pdf-oxide.md",
+            "note_sha256": "a8f28d4e1c65cb04026ccede81e6c505daa053a8373052e68cb49611010b5d7e",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/KEYTRUDA-DailyMed-drug-label.md",
+            "relative_path": "Sources/KEYTRUDA-DailyMed-drug-label.md",
+            "source_name": "DailyMed via pdf_oxide",
+            "source_url": "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=9333c79b-d487-4538-a9f0-71b91a02b287&type=pdf&name=9333c79b-d487-4538-a9f0-71b91a02b287.pdf",
+            "status": "extracted",
+            "tags": [
+              "biomcp/kb-spike",
+              "source/pdf"
+            ],
+            "title": "KEYTRUDA DailyMed drug label",
+            "type": "drug"
+          },
+          {
+            "body_sha256": "abd78e89e88452da1a3034992ed7afee92f9d61fcee813b9ac3b7327bb988251",
+            "body_source_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/pdf/markdown/cdc_sti_guideline.unpdf.md",
+            "note_sha256": "75141bdf2f3b0a7ce990f144de93f0d411fbbc1a6acc06cf9c4aee3b1dfbd2d2",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/CDC-STI-treatment-guideline.md",
+            "relative_path": "Sources/CDC-STI-treatment-guideline.md",
+            "source_name": "CDC via unpdf",
+            "source_url": "https://www.cdc.gov/std/treatment-guidelines/STI-Guidelines-2021.pdf",
+            "status": "extracted",
+            "tags": [
+              "biomcp/kb-spike",
+              "source/pdf"
+            ],
+            "title": "CDC STI treatment guideline",
+            "type": "guideline"
+          }
+        ],
+        "success": true,
+        "vault_path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault"
+      },
+      "name": "temporary_vault_populated",
+      "passed": true
+    },
+    {
+      "evidence": [
+        [
+          "biomcp/kb-spike",
+          "source/jats"
+        ],
+        [
+          "biomcp/kb-spike",
+          "source/jats"
+        ],
+        [
+          "biomcp/kb-spike",
+          "source/html"
+        ],
+        [
+          "biomcp/kb-spike",
+          "source/html"
+        ],
+        [
+          "biomcp/kb-spike",
+          "source/html"
+        ],
+        [
+          "biomcp/kb-spike",
+          "source/pdf"
+        ],
+        [
+          "biomcp/kb-spike",
+          "source/pdf"
+        ],
+        [
+          "biomcp/kb-spike",
+          "source/pdf"
+        ]
+      ],
+      "name": "source_diversity",
+      "passed": true
+    },
+    {
+      "evidence": [
+        "authors",
+        "biomcp_entities",
+        "doi",
+        "journal",
+        "license",
+        "nct_id",
+        "pmcid",
+        "pmid",
+        "published_at",
+        "retrieved_at",
+        "source_name",
+        "source_url",
+        "status",
+        "tags",
+        "title",
+        "type"
+      ],
+      "name": "frontmatter_schema",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "doi:": {
+          "match_count": 8,
+          "matches": [
+            "Sources/Bayesian-efficient-coding.md",
+            "Sources/CDC-STI-treatment-guideline.md",
+            "Sources/KEYTRUDA-DailyMed-drug-label.md",
+            "Sources/NIH-funded-study-finds-long-COVID-affects-adolescents-differently-than-younger-c.md",
+            "Sources/PMC-OA-article-PDF.md",
+            "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+            "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+            "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md"
+          ]
+        },
+        "pmcid: PMC9984800": {
+          "match_count": 3,
+          "matches": [
+            "Sources/PMC-OA-article-PDF.md",
+            "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+            "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md"
+          ]
+        },
+        "tags: source/pdf": {
+          "match_count": 3,
+          "matches": [
+            "Sources/CDC-STI-treatment-guideline.md",
+            "Sources/KEYTRUDA-DailyMed-drug-label.md",
+            "Sources/PMC-OA-article-PDF.md"
+          ]
+        },
+        "type: article": {
+          "match_count": 4,
+          "matches": [
+            "Sources/PMC-OA-article-PDF.md",
+            "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me-2.md",
+            "Sources/Precision-oncology-for-BRAF--mutant-cancers-with-BRAF-and-MEK-inhibitors-from-me.md",
+            "Sources/Relevant-Dermatoses-Among-U.S.-Military-Service-Members-An-Operational-Review-of.md"
+          ]
+        },
+        "type: preprint": {
+          "match_count": 1,
+          "matches": [
+            "Sources/Bayesian-efficient-coding.md"
+          ]
+        }
+      },
+      "name": "structured_frontmatter_search",
+      "passed": true
+    },
+    {
+      "evidence": [
+        {
+          "elapsed_ms": 43,
+          "engine": "roxmltree-minimal",
+          "error": null,
+          "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/jats/xml/PMC9984800.nxml",
+          "kind": "jats",
+          "markdown_sample": "# Precision oncology for *BRAF*-mutant cancers with *BRAF* and *MEK* inhibitors: from melanoma to tissue-agnostic therapy\n\n## Abstract\n\n*BRAF* activation occurs as part of the mitogen-activated protein kinase (MAPK) cellular signaling pathway which leads to increased cellular proliferation and survival. Mutations in *BRAF* can result in unbridled activation of downstream kinases with subsequent uncontrolled cellular growth that formulate the basis for oncogenesis in multiple tumor types. Targeting *BRAF* by selective inhibitors has been one of the early successes in precision oncology. Agents have been explored either as monotherapy or in combination with *MEK* inhibition in *BRAF* V600-mutant pan-cancers and with *EGFR* inhibition in colorectal cancer. Spectrum of *BRAF* inhibition has evolved from being melanoma-specific to being a pan-cancer target. In this article, we review *BRAF* and *MEK* inhibitor drug development journey from tissue-specific melanoma, non-small-cell lung cancer, and anaplastic thyroid cancer to tissue-agnostic approvals.\n\n## Introduction\n\nThe RAF family proteins are serine/threonine protein kinases that constitute a cornerstone of the mitogen-activated protein kinase (MAPK) pathway which is frequently dysfunctional in many human cancers. Three RAF isoforms (A-RAF, B-RAF, and C-RAF) have been described as important regulators of cell growth, differentiation, and survival. RAF isoforms are activated through binding of small G proteins to the N-terminal of RAF proteins. Activation of RAF leads to downstream phosphorylation of MEK1 and MEK2 and their downstream ERK1 and ERK2 ([Figure 1]).[1], [2], [3]Figure 1**Targeting BRAF pathway: figure shows the BRAF signaling pathway and cancers with the highest frequency of BRAF alterations according to AACR GENIE. Included are only cancers where BRAF was profiled in at least 100 samples.**BRAFi, BRAF inhibitor; MEKi, MEK inhibitor.\n\n## *BRAF* alterations\n\n*BRAF* mutations are the second most common alterations that occur in the MAPK pathway. Their role in cancer development was described in 2002 by Davies et al.;[^4^] and since then, multiple efforts have led to substantial advances in characterizing their impact and improving their targetability.\n\nIn attempt to explore tissue distribution of *BRAF* alterations, we reviewed sequencing data of 153 554 samples from different tumor types in the AACR GENIE database v12.1.[^5^] *BRAF* alterations were found in 9173 samples, accounting for 6% of all profiled samples. Prevalence varied significantly across different tumor types and histologies with the highest frequency of distribution observed in thyroid cancer (41%) ([Figure 1]).\n\n*BRAF* mutations have been functionally categorized into three different classes that have variable levels of *RAS* dependency. Class I mutations, which include V600 E/K/D, are *RAS* independent and hence maintain high level of activity regardless of *RAS* signaling even in their monomeric status. Class II mutations include non-V600 mutations e.g. *G469A*, *K601E*, and *L597Q* as well as fusions and deletions. While also being *RAS*-independent, class II have intermediate monomeric kinase activity and usually require dimerization to function. Class III mutations, including *D594* and *G466*, are *RAS* dependent and need to form dimers for activation. This class is strongly dependent on upstream activation and often occurs with upstream mutations including *RAS*, unlike class I and II which usually show mutual exclusivity due to the downstream inhibition of *RAS* via *ERK*.[6], [7], [8], [9] In our AACR GENIE analysis, class I alterations were the most prevalent being present in 4869 of *BRAF*-altered samples (53%).\n\n## Detection of *BRAF* mutations\n\nThere is a wide variety of technologies that can be used for detection of *BRAF* alterations. For example, immunohistochemistry, PCR-based and sequencing-based technologies have all been validated for identification of *BRAF* mutations.[^10^]^,^[^11^] In clinical trials of *BRAF* inhibitors, the cobas\u00ae 4800 BRAF V600 Mutation Test (Roche, Basel, Switzerland), Therascreen BRAF V600E RGQ polymerase chain reaction (PCR) Kit (QIAGEN, Hilden, Germany), Oncomine Dx Target Test (Thermo Fisher, Waltham, MA), BRAF PCR Assay (Response Genetics, Los Angeles, CA), and THxID\u2122 BRAF assay (bioM\u00e9rieux Clinical Diagnostics, Marcy l'Etoile, France) were used for confirmation of *BRAF* mutation presence in patients receiving targeted treatment options. More recently, interest has grown in detecting *BRAF* alterations in plasma or other body fluids via liquid biopsy technologies. This offers a minimally invasive tool for genetic assessment that can expand beyond baseline testing of targetability to evaluation of clonal evolution and emerging resistance mechanisms over time.[12], [13], [14], [15], [16]\n\n## Current actionable alterations\n\nDifferent *BRAF* alterations have been evaluated for targetability in different tumor types[17], [18], [19], [20",
+          "metrics": {
+            "article_title": "Precision oncology for *BRAF*-mutant cancers with *BRAF* and *MEK* inhibitors: from melanoma to tissue-agnostic therapy",
+            "average_line_len": 403.0785714285714,
+            "figure_count_xml": 3,
+            "has_abstract": true,
+            "has_doi_signal": true,
+            "has_figure_signal": true,
+            "has_reference_signal": true,
+            "has_table_signal": true,
+            "heading_count": 20,
+            "image_ref_count": 0,
+            "link_count": 43,
+            "markdown_bytes": 56623,
+            "nonempty_line_count": 140,
+            "paragraph_count_xml": 59,
+            "quality_score": 5,
+            "reference_count_xml": 87,
+            "replacement_char_count": 0,
+            "section_count_xml": 19,
+            "table_row_count": 0,
+            "table_wrap_count_xml": 2,
+            "word_count": 6554
+          },
+          "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/jats/markdown/PMC9984800.md",
+          "output_sha256": "d4f90989c9ee83320513648928f8a70f75b2b2ff585449ae9f64a66270d07139",
+          "pmcid": "PMC9984800",
+          "source": {
+            "efetch_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=9984800&rettype=xml",
+            "fallback_reason": "PMC OA tgz fallback after: % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\ncurl: (22) The requested URL returned error: 404",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/jats/xml/PMC9984800.nxml",
+            "pmcid": "PMC9984800"
+          },
+          "success": true
+        },
+        {
+          "elapsed_ms": 78,
+          "engine": "roxmltree-minimal",
+          "error": null,
+          "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/jats/xml/PMC9891841.nxml",
+          "kind": "jats",
+          "markdown_sample": "# Relevant Dermatoses Among U.S. Military Service Members: An Operational Review of Management Strategies and Telemedicine Utilization\n\n## Abstract\n\nDespite skin being the largest and most exposed organ of the human body, skin issues can be challenging to diagnose in deployed military service members. Common reasons deployed soldiers seek dermatological evaluation include infections, inflammatory skin conditions, and skin growth. Due to limited access to specialized care in deployed settings, dermatological conditions are undertreated and underdiagnosed. As a result, dermatological conditions are a leading contributor to decreased combat effectiveness among deployed medical forces. To lessen the burden of dermatological diseases, military providers should promptly identify operational skin diseases and alleviate modifiable barriers faced by service members. In a post-pandemic era with novel Severe Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2) and monkeypox infections, the duty to effectively treat operational skin lesions is ever important. The need for military dermatologists continues to rise as the global landscape continues to evolve with unprecedented infections and increased bioterrorism threats. Teledermatology offers many solutions to mitigate the high demand for dermatologists during pandemics. Dermatological consultations account for the highest number of telemedicine visits in the US Military Health System (MHS). As such, increased utilization of teledermatology will reduce infection-related dermatological sequelae and prevent the medical evacuation of service members from military operations. This review collates and categorizes relevant dermatological conditions encountered among deployed personnel. This report outlines the standard of care and modified treatments recommended according to potential barriers faced in operational settings.\n\n## Introduction and background\n\nBackground\n\nDespite skin being the most exposed organ of the human body, skin issues are difficult to identify in military service members in operational settings. The most widespread reasons soldiers seek dermatological consultation and treatment during deployment include warts, infections (fungal and bacterial), acne, eczematous conditions, urticaria, and psoriasis. Such cutaneous conditions are often underdiagnosed, undertreated due to limited access to specialists during military operations, or dismissed due to the subacute nature . Due to restrictions on medication use and eligibility requirements for specific conditions, military personnel with dermatological conditions encounter significant obstacles in the treatment [[1]]. Therefore, it is prudent that military dermatologists are accessible for a consultation to assist in accurate diagnosis. Timely diagnosis improves treatment outcomes, particularly in an operational setting [[1]-[3]].\n\nOperational settings often consist of exposure to harsh environmental conditions, insects, and contaminated surroundings. These adverse factors lead to an increased susceptivity to dermatological disorders. Furthermore, specific geographical locations can increase the risk of various occupational skin diseases. For example, US military personnel stationed in Southeast Asia during World War II experienced an increase in melanoma and nonmelanoma skin cancer [[4]]. In hot and damp locations such as Vietnam, increased incidence of warts, acne, and fungal infections were also observed. In dryer locations, such as Bosnia or Iraq, military personnel experienced increased rates of eczematous conditions [[2]].\n\nA multitude of factors increase the limitations of proper dermatological care in deployed settings. On a macroscopic level, the availability of military dermatologists has decreased since the National Defense Authorization Act of 2017 [[3]]. Furthermore, restrictions on medication use and eligibility requirements prevent military personnel with specific, treatment-resistant dermatological diseases from maintaining mission readiness [[3],[5]]. Such critical considerations make it increasingly prudent to accurately identify and promptly treat occupational skin disease to prevent mission evacuation.\n\nLargely due to occupational skin disease, mission evacuation of service members for healthcare-related reasons has contributed to dwindling numbers of personnel in the past [[6]]. To maintain medical readiness and combat effectiveness, military personnel must be able to perform their duties without hindrance by medical conditions. Due to limited availability of military dermatologists, service members commonly see primary care providers, which can lead to misdiagnosis and ineffective treatment [[1]].\n\nIntroduction\n\nDermatological conditions are common among military service members. In comparison to civilians, active-duty personnel are at an increased risk of infections, wounds, burns, and acne [[7]]. Military service members also have increased exposure to heat, wool, and tropical climate",
+          "metrics": {
+            "article_title": "Relevant Dermatoses Among U.S. Military Service Members: An Operational Review of Management Strategies and Telemedicine Utilization",
+            "average_line_len": 370.47966101694914,
+            "figure_count_xml": 17,
+            "has_abstract": true,
+            "has_doi_signal": true,
+            "has_figure_signal": true,
+            "has_reference_signal": true,
+            "has_table_signal": true,
+            "heading_count": 6,
+            "image_ref_count": 0,
+            "link_count": 1,
+            "markdown_bytes": 219502,
+            "nonempty_line_count": 590,
+            "paragraph_count_xml": 349,
+            "quality_score": 4,
+            "reference_count_xml": 260,
+            "replacement_char_count": 0,
+            "section_count_xml": 3,
+            "table_row_count": 0,
+            "table_wrap_count_xml": 7,
+            "word_count": 29024
+          },
+          "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/jats/markdown/PMC9891841.md",
+          "output_sha256": "af4c23dd8336da59c5c0ca111293f1e182140471a852c50eaa401a5149bb0310",
+          "pmcid": "PMC9891841",
+          "source": {
+            "efetch_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=9891841&rettype=xml",
+            "fallback_reason": "PMC OA tgz fallback after: % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\ncurl: (22) The requested URL returned error: 404",
+            "path": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/jats/xml/PMC9891841.nxml",
+            "pmcid": "PMC9891841"
+          },
+          "success": true
+        }
+      ],
+      "name": "jats_samples",
+      "passed": true
+    },
+    {
+      "evidence": [
+        {
+          "elapsed_ms": 313,
+          "engine": "readability-rust+html2md",
+          "error": null,
+          "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/source/pmc_article_page.html",
+          "kind": "html",
+          "markdown_sample": "Abstract\n----------\n\n*BRAF* activation occurs as part of the mitogen-activated protein kinase (MAPK) cellular signaling pathway which leads to increased cellular proliferation and survival. Mutations in *BRAF* can result in unbridled activation of downstream kinases with subsequent uncontrolled cellular growth that formulate the basis for oncogenesis in multiple tumor types. Targeting *BRAF* by selective inhibitors has been one of the early successes in precision oncology. Agents have been explored either as monotherapy or in combination with *MEK* inhibition in *BRAF* V600-mutant pan-cancers and with *EGFR* inhibition in colorectal cancer. Spectrum of *BRAF* inhibition has evolved from being melanoma-specific to being a pan-cancer target. In this article, we review *BRAF* and *MEK* inhibitor drug development journey from tissue-specific melanoma, non-small-cell lung cancer, and anaplastic thyroid cancer to tissue-agnostic approvals.\n\n**Key words:** BRAF, MEK, cancer, precision oncology, targeted therapy\n\nHighlights\n----------\n\n* \u2022\n\n  *BRAF* alterations lead to unbridled activation of the MAPK pathway which can result in cancer development and progression.\n\n* \u2022\n\n  *BRAF* and *MEK* inhibitors led to paradigm change in management of *BRAF*-mutated melanoma, lung, and anaplastic thyroid cancers.\n\n* \u2022\n\n  *BRAF* plus *MEK* inhibitor combination has shown clinical activity in \\>20 different *BRAF* V600-positive tumor types.\n\n* \u2022\n\n  Dabrafenib and trametinib has received FDA accelerated approval for metastatic solid tumors with *BRAF* V600E mutations.\n\n* \u2022\n\n  The recent tissue-agnostic approval is transformative as it prioritizes mutational status over tissue of origin.\n\nIntroduction\n----------\n\nThe RAF family proteins are serine/threonine protein kinases that constitute a cornerstone of the mitogen-activated protein kinase (MAPK) pathway which is frequently dysfunctional in many human cancers. Three RAF isoforms (A-RAF, B-RAF, and C-RAF) have been described as important regulators of cell growth, differentiation, and survival. RAF isoforms are activated through binding of small G proteins to the N-terminal of RAF proteins. Activation of RAF leads to downstream phosphorylation of MEK1 and MEK2 and their downstream ERK1 and ERK2 ([Figure\u00a01](#fig1)).[1](#bib1), [2](#bib2), [3](#bib3)\n\n### Figure\u00a01. ###\n\n[<img alt=\"Figure&nbsp;1\" height=\"534\" class=\"graphic zoom-in\" width=\"756\" src=\"https://cdn.ncbi.nlm.nih.gov/pmc/blobs/e583/9984800/5ed7d5ad01d1/gr1.jpg\" loading=\"lazy\">](https://www.ncbi.nlm.nih.gov/core/lw/2.0/html/tileshop_pmc/tileshop_pmc_inline.html?title=Click%20on%20image%20to%20zoom&p=PMC3&id=9984800_gr1.jpg)\n\n[Open in a new tab](figure/fig1/)\n\n**Targeting BRAF pathway: figure shows the BRAF signaling pathway and cancers with the highest frequency of BRAF alterations according to AACR GENIE. Included are only cancers where BRAF was profiled in at least 100 samples.**\n\nBRAFi, BRAF inhibitor; MEKi, MEK inhibitor.\n\n*BRAF* alterations\n----------\n\n*BRAF* mutations are the second most common alterations that occur in the MAPK pathway. Their role in cancer development was described in 2002 by Davies et\u00a0al.;[<sup>4</sup>](#bib4) and since then, multiple efforts have led to substantial advances in characterizing their impact and improving their targetability.\n\nIn attempt to explore tissue distribution of *BRAF* alterations, we reviewed sequencing data of 153 554 samples from different tumor types in the AACR GENIE database v12.1.[<sup>5</sup>](#bib5)*BRAF* alterations were found in 9173 samples, accounting for 6% of all profiled samples. Prevalence varied significantly across different tumor types and histologies with the highest frequency of distribution observed in thyroid cancer (41%) ([Figure\u00a01](#fig1)).\n\n*BRAF* mutations have been functionally categorized into three different classes that have variable levels of *RAS* dependency. Class I mutations, which include V600 E/K/D, are *RAS* independent and hence maintain high level of activity regardless of *RAS* signaling even in their monomeric status. Class II mutations include non-V600 mutations e.g. *G469A*, *K601E*, and *L597Q* as well as fusions and deletions. While also being *RAS*-independent, class II have intermediate monomeric kinase activity and usually require dimerization to function. Class III mutations, including *D594* and *G466*, are *RAS* dependent and need to form dimers for activation. This class is strongly dependent on upstream activation and often occurs with upstream mutations including *RAS*, unlike class I and II which usually show mutual exclusivity due to the downstream inhibition of *RAS* via *ERK*.[6](#bib6), [7](#bib7), [8](#bib8), [9](#bib9) In our AACR GENIE analysis, class I alterations were the most prevalent being present in 4869 of *BRAF*-altered samples (53%).\n\nDetection of *BRAF* mutations\n----------\n\nThere is a wide variety of technologies that can be used for\u00a0detection of *BRAF* alterations. For example, immunohistochemistry, P",
+          "metrics": {
+            "article_title": "Precision oncology for  BRAF -mutant cancers with  BRAF  and  MEK  inhibitors: from melanoma to tissue-agnostic therapy",
+            "average_line_len": 345.6923076923077,
+            "base_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+            "extraction_error": null,
+            "extraction_mode": "readability",
+            "has_doi_signal": true,
+            "has_figure_signal": true,
+            "has_reference_signal": true,
+            "has_table_signal": true,
+            "heading_count": 17,
+            "image_ref_count": 0,
+            "link_count": 529,
+            "markdown_bytes": 158367,
+            "nonempty_line_count": 455,
+            "quality_score": 5,
+            "replacement_char_count": 0,
+            "table_row_count": 82,
+            "word_count": 9599
+          },
+          "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/html/markdown/pmc_article_page.md",
+          "output_sha256": "0b72c42e543e195cdd87c207035f753fd7b9662c244eec310d07627dfe22b911",
+          "source": {
+            "id": "pmc_article_page",
+            "pmcid": "PMC9984800",
+            "source_name": "PMC",
+            "title_hint": "PMC article page",
+            "type": "article",
+            "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9984800/",
+            "url_template": "https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/"
+          },
+          "success": true
+        },
+        {
+          "elapsed_ms": 150,
+          "engine": "readability-rust+html2md",
+          "error": null,
+          "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/source/biorxiv_preprint_page.html",
+          "kind": "html",
+          "markdown_sample": "Abstract\n----------\n\nThe efficient coding hypothesis, which proposes that neurons are optimized to maximize information about the environment, has provided a guiding theoretical framework for sensory and systems neuroscience. More recently, a theory known as the Bayesian Brain hypothesis has focused on the brain\u2019s ability to integrate sensory and prior sources of information in order to perform Bayesian inference. Although pieces of a connection between these two hypotheses have appeared in prior work, a general formulation that treats the optimality criterion as an arbitrary functional of the posterior distribution \u2013 and thereby admits both information-theoretic and non-information-theoretic objectives within a single formalism \u2013 has remained largely implicit. Here we make this formulation explicit, developing a Bayesian theory of efficient coding that defines Bayesian efficient codes in terms of four basic ingredients: (1) a stimulus prior distribution; (2) an encoding model; (3) a capacity constraint, specifying a neural resource limit; and (4) a loss functional, quantifying the desirability or undesirability of various posterior distributions. Classic efficient codes arise as the special case in which the loss functional is the posterior entropy, leading to a code that maximizes mutual information, but alternate loss functionals give solutions that differ dramatically from information-maximizing codes. Within this framework we introduce *covtropy*, a novel family of posterior-functional losses parameterized by a single exponent, and use it to show that decorrelation of sensory inputs \u2013 optimal under classic efficient codes in low-noise settings \u2013 can be disadvantageous for objectives that penalize large errors. We then reanalyze Laughlin\u2019s seminal data on contrast coding in the blowfly large monopolar cell, and find that the measured response nonlinearity is better explained by minimizing *L*<sub><em>p</em></sub> reconstruction error with *p* = 1*/*2 than by infomax, overturning a forty-year-old interpretation. Bayesian efficient coding thus enlarges the family of normatively optimal codes and provides a more general framework for understanding the design principles of sensory systems.\n\n**Author summary** Sensory neurons work under tight budgets. They represent a rich, noisy world with limited spikes, limited dynamic range, and limited energy. Two long-standing ideas address this problem. One, called efficient coding, asks *why* neurons encode signals in the ways they do: which signals to amplify, which to filter out. A second, the Bayesian brain hypothesis, asks *how* the brain turns those signals into a percept: how to combine sensory evidence with prior knowledge to form a best guess about the world. We develop a framework that asks both questions at once. An optimal sensory code in our framework is specified by four interlocking ingredients: a prior description of the world, a model of how neurons respond to it, a limit on the resources they can spend, and a rule for what counts as a good internal representation. Classical information-maximizing codes emerge as one special case, one corner of a much larger family of Bayesian efficient codes. Applying this framework to Laughlin\u2019s 1981 blowfly experiment, long held up as the textbook example of information maximization, we find that the fly\u2019s neurons are better explained by minimizing decoding error than by maximizing information.\n\n### Competing Interest Statement ###\n\nI. M. Park is a co-founder of RyvivyR. J. W. Pillow declares no competing interests. RyvivyR had no role in the design, analysis, or writing of this manuscript, and this does not alter our adherence to PLOS Computational Biology policies on sharing data and materials.\n\nFootnotes\n----------\n\n* This revision substantially updates the framing and related-work discussion relative to v4. - Emphasized covtropy as a novel single-parameter family of posterior-functional losses interpolating between infomax, MSE, and mini-max coding. - Cited Schaffner et al. (2023, Nature Human Behaviour), who independently provided a normative justification for the p = 1/2 exponent we identified empirically, grounded in fitness-maximizing two-alternative forced choice. - Spelled out methodological differences from Wang & Stocker (2016) in the H1 analysis. - Added a discussion paragraph documenting the uptake of the BEC framework since 2017, with representative citations across sensory coding, decision-making, and cognition. - Updated competing interests declaration. No equations, figures, or core results were changed. (table was beautified)\n\nFunder Information Declared\n----------\n\nSimons Foundation, https://ror.org/01cmst727, SCGB AWD1004351\n\nU.S. National Science Foundation, IIS-1150186, IIS-1845836\n\nNational Institutes of Health, https://ror.org/01cwqze88, EB-026946, DA-056404\n\nThomas Hartman Center for Parkinson\u2013s Research, 64249",
+          "metrics": {
+            "article_title": "Bayesian efficient coding",
+            "average_line_len": 327.53333333333336,
+            "base_url": "https://www.biorxiv.org/content/10.1101/178418v5",
+            "extraction_error": null,
+            "extraction_mode": "readability",
+            "has_doi_signal": false,
+            "has_figure_signal": true,
+            "has_reference_signal": false,
+            "has_table_signal": true,
+            "heading_count": 1,
+            "image_ref_count": 0,
+            "link_count": 0,
+            "markdown_bytes": 4938,
+            "nonempty_line_count": 15,
+            "quality_score": 4,
+            "replacement_char_count": 0,
+            "table_row_count": 0,
+            "word_count": 700
+          },
+          "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/html/markdown/biorxiv_preprint_page.md",
+          "output_sha256": "99db1aaac9430634cf4aa5cd0efe0f04430c750e0024f85ec7b66663a744760f",
+          "source": {
+            "id": "biorxiv_preprint_page",
+            "source_name": "bioRxiv",
+            "title_hint": "bioRxiv preprint page",
+            "type": "preprint",
+            "url": "https://www.biorxiv.org/content/10.1101/178418v5"
+          },
+          "success": true
+        },
+        {
+          "elapsed_ms": 111,
+          "engine": "readability-rust+html2md",
+          "error": null,
+          "input": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/html/source/nih_news_release.html",
+          "kind": "html",
+          "markdown_sample": "Wednesday, August 21, 2024\n\nNIH-funded study finds long COVID affects adolescents differently than younger children\n==========\n\n[\n\nImage\n\n<img height=\"auto\" sizes=\"(min-width: 1024px) 325px, (min-width: 640px) 50vw, 100vw\" width=\"650\" src=\"/sites/default/files/styles/max_650x650/public/2025-03/53563755340_b314b9da01_c.jpg?itok=3Lg0oxAq\" alt=\"Novel Coronavirus SARS-CoV-2 (Omicron)\" srcset=\"/sites/default/files/styles/max_325x325/public/2025-03/53563755340_b314b9da01_c.jpg?itok=dNnp8FLc 325w, /sites/default/files/styles/max_650x650/public/2025-03/53563755340_b314b9da01_c.jpg?itok=3Lg0oxAq 650w, /sites/default/files/styles/max_1300x1300/public/2025-03/53563755340_b314b9da01_c.jpg?itok=vZgIOQ1F 800w\" loading=\"eager\">\n\nColorized scanning electron micrograph of a cell (pink) infected with the Omicron strain of SARS-CoV-2 virus particles (yellow), isolated from a patient sample. Image captured at the NIAID Integrated Research Facility (IRF) in Fort Detrick, Maryland.\n\nNIAID\n\n](/sites/default/files/2025-03/53563755340_b314b9da01_c.jpg)\n\nScientists investigating long COVID in youth found similar but distinguishable patterns between school-age children (ages 6-11 years) and adolescents (ages 12-17 years) and identified their most common symptoms. The study, supported by the National Institutes of Health (NIH) and published in *JAMA*, comes from research conducted through the [NIH\u2019s Researching COVID to Enhance Recovery (RECOVER) Initiative](https://recovercovid.org/), a wide-reaching effort to understand, diagnose, treat, and prevent long COVID, a condition marked by symptoms and health problems that linger after an infection with SARS-CoV-2, the virus that causes COVID-19.\n\nChildren and adolescents were found to experience prolonged symptoms after SARS-CoV-2 infection in almost every organ system with most having symptoms affecting more than one system.\n\n\u201cMost research characterizing long COVID symptoms is focused on adults, which can lead to the misperception that long COVID in children is rare or that their symptoms are like those of adults,\u201d said David Goff, M.D., Ph.D., division director for the Division of Cardiovascular Sciences at the NIH\u2019s National Heart, Lung, and Blood Institute. \u201cBecause the symptoms can vary from child to child or present in different patterns, without a proper characterization of symptoms across the life span, it\u2019s difficult to know how to optimize care for affected children and adolescents.\u201d\n\nThe observational study included 3,860 children and adolescents with a SARS-CoV-2 infection history at more than 60 sites across the United States between March 2022 and December 2023. A comparison group of 1,516 children and adolescents with no history of a SARS-CoV-2 infection were also included to disentangle whether prolonged symptoms of those who had experienced COVID-19 were related to SARS-CoV-2 itself or more broadly related to the effects of the pandemic.\n\nCaregivers completed a comprehensive symptom survey that asked about 75 prolonged symptoms in all major body systems that occurred at least 90 days after an initial SARS-CoV-2 infection and lasted for at least a month. They also completed a survey asking for their perception of the child\u2019s overall health, physical health, and quality of life. The researchers then employed a commonly used statistical technique to identify which symptoms were best at differentiating participants who did and did not have history of SARS-CoV-2 infection. They identified combinations of symptoms distinct for each age group that together generated a long COVID research index, which indicates the likely condition of long COVID.\n\nResearchers identified 18 prolonged symptoms that were more common in school-age children, including headache (57%), followed by trouble with memory or focusing (44%), trouble sleeping (44%), and stomach pain (43%). Other common symptoms in school-age children not included in the research index included body, muscle, and joint pain; daytime tiredness/sleepiness or low energy; and feeling anxious.\n\nIn adolescents, 17 symptoms were more common, including daytime tiredness/sleepiness or low energy (80%); body, muscle, or joint pain (60%); headaches (55%); and trouble with memory or focusing (47%). Feeling anxious and trouble sleeping were other commonly reported symptoms that were not included in the research index.\n\n\u201cThe symptoms that make up the research index are not the only symptoms a child may have and they\u2019re not the most severe, but they are most predictive in determining who may have long COVID,\u201d said Rachel Gross, M.D., associate professor in the departments of pediatrics and population health at New York University Grossman School of Medicine and lead author on the study.\n\nFourteen symptoms overlapped between the age groups. Comparing previous research on long COVID in adults, the new study found that adults and adolescents had a greater overlap in symptoms, such as loss of or change in smell or taste. Researchers found less ov",
+          "metrics": {
+            "article_title": "NIH-funded study finds long COVID affects adolescents differently than younger children \n",
+            "average_line_len": 272.6764705882353,
+            "base_url": "https://www.nih.gov/news-events/news-releases/nih-funded-study-finds-long-covid-affects-adolescents-differently-younger-children",
+            "extraction_error": null,
+            "extraction_mode": "readability",
+            "has_doi_signal": true,
+            "has_figure_signal": false,
+            "has_reference_signal": false,
+            "has_table_signal": false,
+            "heading_count": 3,
+            "image_ref_count": 0,
+            "link_count": 11,
+            "markdown_bytes": 9336,
+            "nonempty_line_count": 34,
+            "quality_score": 5,
+            "replacement_char_count": 0,
+            "table_row_count": 0,
+            "word_count": 1215
+          },
+          "output": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/html/markdown/nih_news_release.md",
+          "output_sha256": "21c9d0db52161c1e1124eae2fbd2b8ed7fa680c76ddd2fa922d357994048e421",
+          "source": {
+            "id": "nih_news_release",
+            "source_name": "NIH",
+            "title_hint": "NIH biomedical news release",
+            "type": "news",
+            "url": "https://www.nih.gov/news-events/news-releases/nih-funded-study-finds-long-covid-affects-adolescents-differently-younger-children"
+          },
+          "success": true
+        }
+      ],
+      "name": "html_samples",
+      "passed": true
+    },
+    {
+      "evidence": [
+        {
+          "document": "pmc_oa_article_pdf",
+          "document_type": "article",
+          "engine": "unpdf",
+          "figure_handling": 3,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 4,
+          "reference_extraction": 1,
+          "success": true,
+          "table_preservation": 5
+        },
+        {
+          "document": "pmc_oa_article_pdf",
+          "document_type": "article",
+          "engine": "pdf_oxide",
+          "figure_handling": 3,
+          "heading_detection": 4,
+          "overall_readability": 5,
+          "overall_score": 4,
+          "reference_extraction": 1,
+          "success": true,
+          "table_preservation": 5
+        },
+        {
+          "document": "pmc_oa_article_pdf",
+          "document_type": "article",
+          "engine": "pymupdf4llm",
+          "figure_handling": 3,
+          "heading_detection": 5,
+          "overall_readability": 3,
+          "overall_score": 3,
+          "reference_extraction": 1,
+          "success": true,
+          "table_preservation": 5
+        },
+        {
+          "document": "dailymed_keytruda_label",
+          "document_type": "drug",
+          "engine": "unpdf",
+          "figure_handling": 1,
+          "heading_detection": 4,
+          "overall_readability": 5,
+          "overall_score": 2,
+          "reference_extraction": 1,
+          "success": true,
+          "table_preservation": 1
+        },
+        {
+          "document": "dailymed_keytruda_label",
+          "document_type": "drug",
+          "engine": "pdf_oxide",
+          "figure_handling": 1,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 3,
+          "reference_extraction": 1,
+          "success": true,
+          "table_preservation": 3
+        },
+        {
+          "document": "dailymed_keytruda_label",
+          "document_type": "drug",
+          "engine": "pymupdf4llm",
+          "figure_handling": 1,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 3,
+          "reference_extraction": 1,
+          "success": true,
+          "table_preservation": 3
+        },
+        {
+          "document": "cdc_sti_guideline",
+          "document_type": "guideline",
+          "engine": "unpdf",
+          "figure_handling": 1,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 4,
+          "reference_extraction": 3,
+          "success": true,
+          "table_preservation": 5
+        },
+        {
+          "document": "cdc_sti_guideline",
+          "document_type": "guideline",
+          "engine": "pdf-oxide",
+          "figure_handling": null,
+          "heading_detection": null,
+          "overall_readability": null,
+          "overall_score": null,
+          "reference_extraction": null,
+          "success": false,
+          "table_preservation": null
+        },
+        {
+          "document": "cdc_sti_guideline",
+          "document_type": "guideline",
+          "engine": "pymupdf4llm",
+          "figure_handling": 1,
+          "heading_detection": 5,
+          "overall_readability": 5,
+          "overall_score": 3,
+          "reference_extraction": 3,
+          "success": true,
+          "table_preservation": 3
+        }
+      ],
+      "name": "pdf_quality_matrix",
+      "passed": true
+    },
+    {
+      "evidence": [
+        {
+          "app_state": "not_deliberately_prestarted",
+          "argv": [
+            "/snap/bin/obsidian",
+            "--help"
+          ],
+          "command": "help",
+          "exit_code": -11,
+          "stderr": "",
+          "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:40:25 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+          "timed_out": false,
+          "works": false
+        },
+        {
+          "app_state": "not_deliberately_prestarted",
+          "argv": [
+            "/snap/bin/obsidian",
+            "search",
+            "query=pmcid: PMC9984800",
+            "--vault",
+            "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault"
+          ],
+          "command": "search",
+          "exit_code": -11,
+          "stderr": "",
+          "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:40:27 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+          "timed_out": false,
+          "works": false
+        },
+        {
+          "app_state": "not_deliberately_prestarted",
+          "argv": [
+            "/snap/bin/obsidian",
+            "create",
+            "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/cli-created.md",
+            "--content",
+            "CLI probe"
+          ],
+          "command": "create",
+          "exit_code": -11,
+          "stderr": "",
+          "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:40:28 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+          "timed_out": false,
+          "works": false
+        },
+        {
+          "app_state": "not_deliberately_prestarted",
+          "argv": [
+            "/snap/bin/obsidian",
+            "read",
+            "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault/Sources/Bayesian-efficient-coding.md"
+          ],
+          "command": "read",
+          "exit_code": -11,
+          "stderr": "",
+          "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:40:30 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+          "timed_out": false,
+          "works": false
+        },
+        {
+          "app_state": "not_deliberately_prestarted",
+          "argv": [
+            "/snap/bin/obsidian",
+            "tags",
+            "--vault",
+            "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault"
+          ],
+          "command": "tags",
+          "exit_code": -11,
+          "stderr": "",
+          "stdout": "Ignored: Error: ENOENT: no such file or directory, unlink '/home/ian/snap/obsidian/62/.config/obsidian/f68d4fa8c9c5a8c4.json'\n2026-04-19 11:40:32 Loaded main app package /snap/obsidian/62/resources/obsidian.asar\n",
+          "timed_out": false,
+          "works": false
+        }
+      ],
+      "name": "obsidian_cli_capability_matrix",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "new": "obsidian://new?vault=obsidian-vault&name=BioMCP+URI+Test&content=%23+BioMCP+URI+Test",
+        "search": "obsidian://search?vault=obsidian-vault&query=pmcid%3A+PMC9984800"
+      },
+      "name": "uri_scheme_probe",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "approach": "explore_benchmark_reproduced_on_exploit_code",
+        "checks": [
+          {
+            "baseline": 2,
+            "current": 2,
+            "metric": "jats_success_count",
+            "passed": true,
+            "rule": "current must be >= baseline"
+          },
+          {
+            "baseline": 3,
+            "current": 3,
+            "metric": "html_success_count",
+            "passed": true,
+            "rule": "current must be >= baseline"
+          },
+          {
+            "baseline": 5,
+            "current": 5,
+            "metric": "rust_pdf_success_count",
+            "passed": true,
+            "rule": "current must be >= baseline"
+          },
+          {
+            "baseline": 8,
+            "current": 8,
+            "metric": "vault_note_count",
+            "passed": true,
+            "rule": "current must be >= baseline"
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "jats.PMC9984800.success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 5,
+            "current": 5,
+            "metric": "jats.PMC9984800.quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 23,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 43,
+            "metric": "jats.PMC9984800.elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "jats.PMC9891841.success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 4,
+            "current": 4,
+            "metric": "jats.PMC9891841.quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 64,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 78,
+            "metric": "jats.PMC9891841.elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "html.pmc_article_page.success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 5,
+            "current": 5,
+            "metric": "html.pmc_article_page.quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "absolute_delta_ms": 55,
+            "baseline": 258,
+            "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
+            "current": 313,
+            "metric": "html.pmc_article_page.elapsed_ms",
+            "passed": true,
+            "relative_delta_pct": 21.32,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "html.biorxiv_preprint_page.success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 4,
+            "current": 4,
+            "metric": "html.biorxiv_preprint_page.quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 141,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 150,
+            "metric": "html.biorxiv_preprint_page.elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "html.nih_news_release.success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 5,
+            "current": 5,
+            "metric": "html.nih_news_release.quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 104,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 111,
+            "metric": "html.nih_news_release.elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 4,
+            "current": 4,
+            "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 111,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 118,
+            "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 4,
+            "current": 4,
+            "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "absolute_delta_ms": 64,
+            "baseline": 744,
+            "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
+            "current": 808,
+            "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').elapsed_ms",
+            "passed": true,
+            "relative_delta_pct": 8.6,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "pdf.('pmc_oa_article_pdf', 'pymupdf4llm').success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 3,
+            "current": 3,
+            "metric": "pdf.('pmc_oa_article_pdf', 'pymupdf4llm').quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 5435,
+            "current": 5389,
+            "metric": "pdf.('pmc_oa_article_pdf', 'pymupdf4llm').elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03"
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "pdf.('dailymed_keytruda_label', 'unpdf').success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 2,
+            "current": 2,
+            "metric": "pdf.('dailymed_keytruda_label', 'unpdf').quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 11507,
+            "current": 9566,
+            "metric": "pdf.('dailymed_keytruda_label', 'unpdf').elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03"
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "pdf.('dailymed_keytruda_label', 'pdf_oxide').success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 3,
+            "current": 3,
+            "metric": "pdf.('dailymed_keytruda_label', 'pdf_oxide').quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 10004,
+            "current": 8226,
+            "metric": "pdf.('dailymed_keytruda_label', 'pdf_oxide').elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03"
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "pdf.('dailymed_keytruda_label', 'pymupdf4llm').success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 3,
+            "current": 3,
+            "metric": "pdf.('dailymed_keytruda_label', 'pymupdf4llm').quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 3820,
+            "current": 3182,
+            "metric": "pdf.('dailymed_keytruda_label', 'pymupdf4llm').elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03"
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "pdf.('cdc_sti_guideline', 'unpdf').success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 4,
+            "current": 4,
+            "metric": "pdf.('cdc_sti_guideline', 'unpdf').quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "baseline": 3387,
+            "current": 2953,
+            "metric": "pdf.('cdc_sti_guideline', 'unpdf').elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03"
+          },
+          {
+            "baseline": false,
+            "current": false,
+            "metric": "pdf.('cdc_sti_guideline', 'pdf-oxide').success",
+            "passed": true,
+            "rule": "known failed document/engine may remain failed"
+          },
+          {
+            "baseline": true,
+            "current": true,
+            "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').success",
+            "passed": true,
+            "rule": "success must stay equal or improve"
+          },
+          {
+            "baseline": 3,
+            "current": 3,
+            "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').quality_score",
+            "passed": true,
+            "rule": "quality score must stay equal or improve"
+          },
+          {
+            "absolute_delta_ms": 3916,
+            "baseline": 3177,
+            "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
+            "current": 7093,
+            "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').elapsed_ms",
+            "passed": true,
+            "relative_delta_pct": 123.26,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": 7,
+            "current": 8,
+            "metric": "frontmatter_search.doi:",
+            "passed": true,
+            "rule": "structured frontmatter search count must stay equal or improve"
+          },
+          {
+            "baseline": 2,
+            "current": 3,
+            "metric": "frontmatter_search.pmcid: PMC9984800",
+            "passed": true,
+            "rule": "structured frontmatter search count must stay equal or improve"
+          },
+          {
+            "baseline": 3,
+            "current": 3,
+            "metric": "frontmatter_search.tags: source/pdf",
+            "passed": true,
+            "rule": "structured frontmatter search count must stay equal or improve"
+          },
+          {
+            "baseline": 3,
+            "current": 4,
+            "metric": "frontmatter_search.type: article",
+            "passed": true,
+            "rule": "structured frontmatter search count must stay equal or improve"
+          },
+          {
+            "baseline": 1,
+            "current": 1,
+            "metric": "frontmatter_search.type: preprint",
+            "passed": true,
+            "rule": "structured frontmatter search count must stay equal or improve"
+          },
+          {
+            "baseline": 1,
+            "current": 0,
+            "metric": "duplicate_path_mismatches",
+            "passed": true,
+            "rule": "correctness mismatch count must decrease or stay equal"
+          }
+        ],
+        "failures": [],
+        "generated_at": "2026-04-19T11:42:54Z",
+        "passed": true,
+        "regression_rule": {
+          "build_load_time": "not measured separately in explore baseline",
+          "correctness": "mismatch count must decrease or stay equal; checksum changes require mismatch improvement",
+          "latency": "must match/beat or be within 3% tolerance; tiny sub-500ms deltas <=25ms are treated as noise evidence",
+          "rss": "not measured in explore baseline"
+        },
+        "waivers": [
+          {
+            "baseline": 23,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 43,
+            "metric": "jats.PMC9984800.elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": 64,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 78,
+            "metric": "jats.PMC9891841.elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "absolute_delta_ms": 55,
+            "baseline": 258,
+            "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
+            "current": 313,
+            "metric": "html.pmc_article_page.elapsed_ms",
+            "passed": true,
+            "relative_delta_pct": 21.32,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": 141,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 150,
+            "metric": "html.biorxiv_preprint_page.elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": 104,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 111,
+            "metric": "html.nih_news_release.elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": 111,
+            "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
+            "current": 118,
+            "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').elapsed_ms",
+            "passed": true,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "absolute_delta_ms": 64,
+            "baseline": 744,
+            "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
+            "current": 808,
+            "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').elapsed_ms",
+            "passed": true,
+            "relative_delta_pct": 8.6,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "absolute_delta_ms": 3916,
+            "baseline": 3177,
+            "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
+            "current": 7093,
+            "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').elapsed_ms",
+            "passed": true,
+            "relative_delta_pct": 123.26,
+            "rule": "current <= baseline * 1.03",
+            "waived": true
+          },
+          {
+            "baseline": 7,
+            "cause": "Unique note paths preserve records that explore overwrote.",
+            "current": 8,
+            "metric": "frontmatter_search.doi:",
+            "rule": "count increase accepted as correctness improvement"
+          },
+          {
+            "baseline": 2,
+            "cause": "Unique note paths preserve records that explore overwrote.",
+            "current": 3,
+            "metric": "frontmatter_search.pmcid: PMC9984800",
+            "rule": "count increase accepted as correctness improvement"
+          },
+          {
+            "baseline": 3,
+            "cause": "Unique note paths preserve records that explore overwrote.",
+            "current": 4,
+            "metric": "frontmatter_search.type: article",
+            "rule": "count increase accepted as correctness improvement"
+          },
+          {
+            "baseline_duplicate_path_mismatches": 1,
+            "cause": "Extraction quality metrics did not regress and the vault correctness mismatch count improved. HTML diffs are attribute-order changes; the CDC unpdf diff changes heading wrapping while preserving PDF quality score.",
+            "current_duplicate_path_mismatches": 0,
+            "diffs": [
+              {
+                "baseline_sha256": "c7e2683a65be0dcdb28f884bc252651e40b60196195dd770db2536eb743d3d7f",
+                "current_sha256": "0b72c42e543e195cdd87c207035f753fd7b9662c244eec310d07627dfe22b911",
+                "family": "html",
+                "key": "pmc_article_page"
+              },
+              {
+                "baseline_sha256": "bbf5fbcf86996471b79c00311042ae044e1d2e43413146d254f5fb0ba88864b3",
+                "current_sha256": "21c9d0db52161c1e1124eae2fbd2b8ed7fa680c76ddd2fa922d357994048e421",
+                "family": "html",
+                "key": "nih_news_release"
+              },
+              {
+                "baseline_sha256": "b08d834b83f7907c35be2de9d1757e3f5e8758c505c970f6206246574ec83bc3",
+                "current_sha256": "abd78e89e88452da1a3034992ed7afee92f9d61fcee813b9ac3b7327bb988251",
+                "family": "pdf",
+                "key": "('cdc_sti_guideline', 'unpdf')"
+              }
+            ],
+            "metric": "extraction_output_checksums",
+            "passed": true,
+            "rule": "checksum changes require a correctness mismatch-count improvement"
+          }
+        ]
+      },
+      "name": "regression_control_passed",
+      "passed": true
+    }
+  ],
+  "generated_at": "2026-04-19T11:42:54Z",
+  "remaining_gaps": [
+    "Obsidian desktop/CLI remains optional because the local snap wrapper still fails noninteractively.",
+    "PDF remains rough extraction; figure and table fidelity are not publication-grade."
+  ],
+  "success": true
+}

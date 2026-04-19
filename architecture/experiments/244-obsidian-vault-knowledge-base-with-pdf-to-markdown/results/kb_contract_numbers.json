@@ -1,0 +1,69 @@
+{
+  "full_scale": {
+    "frontmatter_search": {
+      "doi:": 8,
+      "pmcid: PMC9984800": 3,
+      "tags: source/pdf": 3,
+      "type: article": 4,
+      "type: preprint": 1
+    },
+    "html_success_count": 3,
+    "jats_success_count": 2,
+    "obsidian_cli_working_commands": [],
+    "pdf_success_count": 8,
+    "pdf_winners_by_document": {
+      "cdc_sti_guideline": {
+        "document": "cdc_sti_guideline",
+        "document_type": "guideline",
+        "engine": "unpdf",
+        "figure_handling": 1,
+        "heading_detection": 5,
+        "overall_readability": 5,
+        "overall_score": 4,
+        "reference_extraction": 3,
+        "success": true,
+        "table_preservation": 5
+      },
+      "dailymed_keytruda_label": {
+        "document": "dailymed_keytruda_label",
+        "document_type": "drug",
+        "engine": "pdf_oxide",
+        "figure_handling": 1,
+        "heading_detection": 5,
+        "overall_readability": 5,
+        "overall_score": 3,
+        "reference_extraction": 1,
+        "success": true,
+        "table_preservation": 3
+      },
+      "pmc_oa_article_pdf": {
+        "document": "pmc_oa_article_pdf",
+        "document_type": "article",
+        "engine": "unpdf",
+        "figure_handling": 3,
+        "heading_detection": 5,
+        "overall_readability": 5,
+        "overall_score": 4,
+        "reference_extraction": 1,
+        "success": true,
+        "table_preservation": 5
+      }
+    },
+    "rust_pdf_success_count": 5,
+    "total_elapsed_ms": 141041,
+    "vault_note_count": 8,
+    "vault_unique_note_files": 8
+  },
+  "generated_at": "2026-04-19T11:42:54Z",
+  "persistent_artifacts": {
+    "contract_numbers": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/results/kb_contract_numbers.json",
+    "full_scale_results": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/results/kb_full_scale_results.json",
+    "regression_control": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/results/kb_regression_control.json",
+    "validation": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/results/kb_validation.json",
+    "vault": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit/obsidian-vault",
+    "work_dir": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/work/exploit"
+  },
+  "regression_passed": true,
+  "source": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/results/kb_full_scale_results.json",
+  "validation_passed": true
+}
