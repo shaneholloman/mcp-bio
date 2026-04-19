@@ -50,11 +50,11 @@
       }
     },
     "rust_pdf_success_count": 5,
-    "total_elapsed_ms": 141041,
+    "total_elapsed_ms": 45674,
     "vault_note_count": 8,
     "vault_unique_note_files": 8
   },
-  "generated_at": "2026-04-19T11:42:54Z",
+  "generated_at": "2026-04-19T12:18:11Z",
   "persistent_artifacts": {
     "contract_numbers": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/results/kb_contract_numbers.json",
     "full_scale_results": "/home/ian/workspace/worktrees/244-spike-obsidian-vault-knowledge-base-with-pdf-to-markdown/architecture/experiments/244-obsidian-vault-knowledge-base-with-pdf-to-markdown/results/kb_full_scale_results.json",

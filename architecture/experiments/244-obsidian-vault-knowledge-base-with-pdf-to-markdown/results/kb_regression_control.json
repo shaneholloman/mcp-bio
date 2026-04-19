@@ -46,7 +46,7 @@
     {
       "baseline": 23,
       "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 43,
+      "current": 24,
       "metric": "jats.PMC9984800.elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03",
@@ -68,12 +68,10 @@
     },
     {
       "baseline": 64,
-      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 78,
+      "current": 65,
       "metric": "jats.PMC9891841.elapsed_ms",
       "passed": true,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
+      "rule": "current <= baseline * 1.03"
     },
     {
       "baseline": true,
@@ -90,15 +88,11 @@
       "rule": "quality score must stay equal or improve"
     },
     {
-      "absolute_delta_ms": 55,
       "baseline": 258,
-      "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
-      "current": 313,
+      "current": 265,
       "metric": "html.pmc_article_page.elapsed_ms",
       "passed": true,
-      "relative_delta_pct": 21.32,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
+      "rule": "current <= baseline * 1.03"
     },
     {
       "baseline": true,
@@ -117,7 +111,7 @@
     {
       "baseline": 141,
       "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 150,
+      "current": 147,
       "metric": "html.biorxiv_preprint_page.elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03",
@@ -140,7 +134,7 @@
     {
       "baseline": 104,
       "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 111,
+      "current": 109,
       "metric": "html.nih_news_release.elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03",
@@ -162,12 +156,10 @@
     },
     {
       "baseline": 111,
-      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 118,
+      "current": 92,
       "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').elapsed_ms",
       "passed": true,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
+      "rule": "current <= baseline * 1.03"
     },
     {
       "baseline": true,
@@ -184,15 +176,11 @@
       "rule": "quality score must stay equal or improve"
     },
     {
-      "absolute_delta_ms": 64,
       "baseline": 744,
-      "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
-      "current": 808,
+      "current": 735,
       "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').elapsed_ms",
       "passed": true,
-      "relative_delta_pct": 8.6,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
+      "rule": "current <= baseline * 1.03"
     },
     {
       "baseline": true,
@@ -210,7 +198,7 @@
     },
     {
       "baseline": 5435,
-      "current": 5389,
+      "current": 4265,
       "metric": "pdf.('pmc_oa_article_pdf', 'pymupdf4llm').elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03"
@@ -231,7 +219,7 @@
     },
     {
       "baseline": 11507,
-      "current": 9566,
+      "current": 8907,
       "metric": "pdf.('dailymed_keytruda_label', 'unpdf').elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03"
@@ -252,7 +240,7 @@
     },
     {
       "baseline": 10004,
-      "current": 8226,
+      "current": 7639,
       "metric": "pdf.('dailymed_keytruda_label', 'pdf_oxide').elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03"
@@ -273,7 +261,7 @@
     },
     {
       "baseline": 3820,
-      "current": 3182,
+      "current": 2043,
       "metric": "pdf.('dailymed_keytruda_label', 'pymupdf4llm').elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03"
@@ -294,7 +282,7 @@
     },
     {
       "baseline": 3387,
-      "current": 2953,
+      "current": 2554,
       "metric": "pdf.('cdc_sti_guideline', 'unpdf').elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03"
@@ -321,15 +309,11 @@
       "rule": "quality score must stay equal or improve"
     },
     {
-      "absolute_delta_ms": 3916,
       "baseline": 3177,
-      "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
-      "current": 7093,
+      "current": 2673,
       "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').elapsed_ms",
       "passed": true,
-      "relative_delta_pct": 123.26,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
+      "rule": "current <= baseline * 1.03"
     },
     {
       "baseline": 7,
@@ -375,7 +359,7 @@
     }
   ],
   "failures": [],
-  "generated_at": "2026-04-19T11:42:54Z",
+  "generated_at": "2026-04-19T12:18:11Z",
   "passed": true,
   "regression_rule": {
     "build_load_time": "not measured separately in explore baseline",
@@ -387,36 +371,16 @@
     {
       "baseline": 23,
       "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 43,
+      "current": 24,
       "metric": "jats.PMC9984800.elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03",
       "waived": true
     },
     {
-      "baseline": 64,
-      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 78,
-      "metric": "jats.PMC9891841.elapsed_ms",
-      "passed": true,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
-    },
-    {
-      "absolute_delta_ms": 55,
-      "baseline": 258,
-      "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
-      "current": 313,
-      "metric": "html.pmc_article_page.elapsed_ms",
-      "passed": true,
-      "relative_delta_pct": 21.32,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
-    },
-    {
       "baseline": 141,
       "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 150,
+      "current": 147,
       "metric": "html.biorxiv_preprint_page.elapsed_ms",
       "passed": true,
       "rule": "current <= baseline * 1.03",
@@ -425,40 +389,9 @@
     {
       "baseline": 104,
       "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 111,
+      "current": 109,
       "metric": "html.nih_news_release.elapsed_ms",
       "passed": true,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
-    },
-    {
-      "baseline": 111,
-      "cause": "measurement noise on sub-500ms operation; absolute delta <=25ms",
-      "current": 118,
-      "metric": "pdf.('pmc_oa_article_pdf', 'unpdf').elapsed_ms",
-      "passed": true,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
-    },
-    {
-      "absolute_delta_ms": 64,
-      "baseline": 744,
-      "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
-      "current": 808,
-      "metric": "pdf.('pmc_oa_article_pdf', 'pdf_oxide').elapsed_ms",
-      "passed": true,
-      "relative_delta_pct": 8.6,
-      "rule": "current <= baseline * 1.03",
-      "waived": true
-    },
-    {
-      "absolute_delta_ms": 3916,
-      "baseline": 3177,
-      "cause": "measurement noise: identical source inputs and unchanged quality/shape metrics; no success or output-quality regression",
-      "current": 7093,
-      "metric": "pdf.('cdc_sti_guideline', 'pymupdf4llm').elapsed_ms",
-      "passed": true,
-      "relative_delta_pct": 123.26,
       "rule": "current <= baseline * 1.03",
       "waived": true
     },
@@ -490,19 +423,19 @@
       "diffs": [
         {
           "baseline_sha256": "c7e2683a65be0dcdb28f884bc252651e40b60196195dd770db2536eb743d3d7f",
-          "current_sha256": "0b72c42e543e195cdd87c207035f753fd7b9662c244eec310d07627dfe22b911",
+          "current_sha256": "1fdd6c9a6da96ff52c13b494187c3fba326ce6ca34b32439af8069543c5cdc60",
           "family": "html",
           "key": "pmc_article_page"
         },
         {
           "baseline_sha256": "bbf5fbcf86996471b79c00311042ae044e1d2e43413146d254f5fb0ba88864b3",
-          "current_sha256": "21c9d0db52161c1e1124eae2fbd2b8ed7fa680c76ddd2fa922d357994048e421",
+          "current_sha256": "7790f7447bf2feee4d933c780e317bdaceed684059d957db5bd1fa69c2b7fb7d",
           "family": "html",
           "key": "nih_news_release"
         },
         {
           "baseline_sha256": "b08d834b83f7907c35be2de9d1757e3f5e8758c505c970f6206246574ec83bc3",
-          "current_sha256": "abd78e89e88452da1a3034992ed7afee92f9d61fcee813b9ac3b7327bb988251",
+          "current_sha256": "00cf7d0289e10ad905c91cb476f8933436d31237c43c1a144ec0d94ff48bf229",
           "family": "pdf",
           "key": "('cdc_sti_guideline', 'unpdf')"
         }
