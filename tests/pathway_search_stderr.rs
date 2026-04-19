@@ -1,7 +1,4 @@
-use std::fs;
-use std::path::PathBuf;
 use std::process::{Command, Output};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -22,34 +19,26 @@ impl CommandResult {
     }
 }
 
-fn unique_temp_dir(label: &str) -> PathBuf {
-    let stamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("system clock should be after unix epoch")
-        .as_nanos();
-    let path = std::env::temp_dir().join(format!("biomcp-{label}-{}-{stamp}", std::process::id()));
-    fs::create_dir_all(&path).expect("temp dir should be created");
-    path
-}
-
 fn run_pathway_search(
     reactome_base: &str,
     kegg_base: &str,
     wikipathways_base: &str,
 ) -> CommandResult {
-    let cache_home = unique_temp_dir("pathway-search-stderr-cache");
+    let cache_home = tempfile::Builder::new()
+        .prefix("biomcp-pathway-search-stderr-cache-")
+        .tempdir()
+        .expect("temp dir should be created");
     let mut command = Command::new(env!("CARGO_BIN_EXE_biomcp"));
     command.args(["search", "pathway", "apoptosis", "--limit", "3"]);
     command.env("BIOMCP_REACTOME_BASE", reactome_base);
     command.env("BIOMCP_KEGG_BASE", kegg_base);
     command.env("BIOMCP_WIKIPATHWAYS_BASE", wikipathways_base);
     command.env("BIOMCP_CACHE_MODE", "off");
-    command.env("XDG_CACHE_HOME", &cache_home);
+    command.env("XDG_CACHE_HOME", cache_home.path());
     command.env_remove("BIOMCP_DISABLE_KEGG");
     command.env_remove("RUST_LOG");
 
     let output = command.output().expect("pathway search command should run");
-    let _ = fs::remove_dir_all(cache_home);
     CommandResult::from_output(output)
 }
 

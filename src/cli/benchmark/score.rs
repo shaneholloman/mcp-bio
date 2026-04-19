@@ -696,20 +696,10 @@ fn now_rfc3339() -> anyhow::Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use crate::test_support::TempDirGuard;
 
-    fn temp_path(prefix: &str, suffix: &str) -> PathBuf {
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("time")
-            .as_nanos();
-        std::env::temp_dir().join(format!(
-            "{}-{}-{}{}",
-            prefix,
-            std::process::id(),
-            nanos,
-            suffix
-        ))
+    fn temp_path(root: &TempDirGuard, name: &str) -> PathBuf {
+        root.path().join(name)
     }
 
     #[test]
@@ -725,8 +715,9 @@ mod tests {
 
     #[test]
     fn score_session_extracts_counts_tokens_errors_and_coverage() {
-        let session_path = temp_path("biomcp-session", ".jsonl");
-        let expected_path = temp_path("biomcp-expected", ".txt");
+        let root = TempDirGuard::new("benchmark-score-session");
+        let session_path = temp_path(&root, "session.jsonl");
+        let expected_path = temp_path(&root, "expected.txt");
 
         let session = [
             r#"{"timestamp":"2026-02-17T12:00:00Z","tool":{"name":"bash","input":{"cmd":"biomcp get gene BRAF"}},"usage":{"input_tokens":10,"output_tokens":4,"cache_read_tokens":2,"cache_write_tokens":1,"cost_usd":0.001}}"#,
@@ -750,9 +741,6 @@ mod tests {
             brief: false,
         })
         .expect("score");
-
-        fs::remove_file(&session_path).expect("cleanup session");
-        fs::remove_file(&expected_path).expect("cleanup expected");
 
         assert_eq!(report.total_tool_calls, 3);
         assert_eq!(report.biomcp_commands, 2);
@@ -810,7 +798,8 @@ mod tests {
 
     #[test]
     fn fails_on_invalid_jsonl_line() {
-        let session_path = temp_path("biomcp-invalid", ".jsonl");
+        let root = TempDirGuard::new("benchmark-score-invalid");
+        let session_path = temp_path(&root, "invalid.jsonl");
         fs::write(&session_path, "{not-json}\n").expect("write");
 
         let err = score_session_file(&ScoreSessionOptions {
@@ -819,8 +808,6 @@ mod tests {
             brief: true,
         })
         .expect_err("invalid json should fail");
-
-        fs::remove_file(&session_path).expect("cleanup");
 
         assert!(err.to_string().contains("invalid JSONL line"));
     }

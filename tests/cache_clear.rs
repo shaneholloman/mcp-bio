@@ -1,7 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 #[cfg(unix)]
 mod pty_helpers;
@@ -22,33 +21,11 @@ impl CommandResult {
     }
 }
 
-struct TempDirGuard {
-    path: PathBuf,
-}
-
-impl TempDirGuard {
-    fn new(label: &str) -> Self {
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system clock should be after unix epoch")
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "biomcp-cache-clear-{label}-{}-{stamp}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&path).expect("temp dir should be created");
-        Self { path }
-    }
-
-    fn path(&self) -> &Path {
-        &self.path
-    }
-}
-
-impl Drop for TempDirGuard {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.path);
-    }
+fn temp_dir(label: &str) -> tempfile::TempDir {
+    tempfile::Builder::new()
+        .prefix(&format!("biomcp-cache-clear-{label}-"))
+        .tempdir()
+        .expect("temp dir should be created")
 }
 
 fn resolved_cache_root(cache_home: &Path) -> PathBuf {
@@ -71,7 +48,7 @@ fn run_biomcp(args: &[&str], cache_home: &Path, config_home: &Path) -> CommandRe
 
 #[test]
 fn cache_clear_without_tty_refuses_with_plain_stderr() {
-    let root = TempDirGuard::new("refusal");
+    let root = temp_dir("refusal");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     fs::create_dir_all(&cache_home).expect("cache home should exist");
@@ -110,7 +87,7 @@ fn cache_clear_without_tty_refuses_with_plain_stderr() {
 
 #[test]
 fn cache_clear_without_tty_refuses_with_plain_stderr_even_under_json() {
-    let root = TempDirGuard::new("json-refusal");
+    let root = temp_dir("json-refusal");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     fs::create_dir_all(&cache_home).expect("cache home should exist");
@@ -138,7 +115,7 @@ fn cache_clear_without_tty_refuses_with_plain_stderr_even_under_json() {
 
 #[test]
 fn cache_clear_yes_deletes_only_http_tree() {
-    let root = TempDirGuard::new("delete-http-only");
+    let root = temp_dir("delete-http-only");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     let cache_root = resolved_cache_root(&cache_home);
@@ -173,7 +150,7 @@ fn cache_clear_yes_deletes_only_http_tree() {
 
 #[test]
 fn cache_clear_yes_json_reports_machine_shape() {
-    let root = TempDirGuard::new("json-shape");
+    let root = temp_dir("json-shape");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     let http_dir = resolved_cache_root(&cache_home).join("http");
@@ -201,7 +178,7 @@ fn cache_clear_yes_json_reports_machine_shape() {
 
 #[test]
 fn cache_clear_yes_missing_path_is_idempotent() {
-    let root = TempDirGuard::new("missing-path");
+    let root = temp_dir("missing-path");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     fs::create_dir_all(&cache_home).expect("cache home should exist");
@@ -230,7 +207,7 @@ fn cache_clear_yes_missing_path_is_idempotent() {
 fn cache_clear_yes_root_symlink_is_unlinked_without_traversal() {
     use std::os::unix::fs::symlink;
 
-    let root = TempDirGuard::new("root-symlink");
+    let root = temp_dir("root-symlink");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     let cache_root = resolved_cache_root(&cache_home);
@@ -271,7 +248,7 @@ fn cache_clear_yes_root_symlink_is_unlinked_without_traversal() {
 #[cfg(unix)]
 #[test]
 fn cache_clear_tty_accepts_after_confirmation() {
-    let root = TempDirGuard::new("tty-accept");
+    let root = temp_dir("tty-accept");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     let http_dir = resolved_cache_root(&cache_home).join("http");
@@ -296,7 +273,7 @@ fn cache_clear_tty_accepts_after_confirmation() {
 #[cfg(unix)]
 #[test]
 fn cache_clear_tty_decline_returns_zero_report_without_deleting() {
-    let root = TempDirGuard::new("tty-decline");
+    let root = temp_dir("tty-decline");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     let http_dir = resolved_cache_root(&cache_home).join("http");
@@ -325,7 +302,7 @@ fn cache_clear_tty_decline_returns_zero_report_without_deleting() {
 
 #[test]
 fn cache_clear_yes_preserves_downloads_sibling() {
-    let root = TempDirGuard::new("preserve-downloads");
+    let root = temp_dir("preserve-downloads");
     let cache_home = root.path().join("cache-home");
     let config_home = root.path().join("config-home");
     let cache_root = resolved_cache_root(&cache_home);

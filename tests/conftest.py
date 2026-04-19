@@ -91,11 +91,9 @@ def _provision_study_fixture(root: Path) -> str:
 
 @pytest.fixture
 def study_fixture_env() -> Iterator[dict[str, str]]:
-    root = Path(tempfile.mkdtemp(prefix="biomcp-study-tests-"))
-    try:
+    with tempfile.TemporaryDirectory(prefix="biomcp-study-tests-") as root_name:
+        root = Path(root_name)
         yield {"BIOMCP_STUDY_DIR": _provision_study_fixture(root)}
-    finally:
-        subprocess.run(["rm", "-rf", str(root)], check=False)
 
 
 @pytest.fixture

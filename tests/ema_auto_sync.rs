@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime};
 
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, Request, ResponseTemplate};
@@ -41,33 +41,11 @@ impl CommandResult {
     }
 }
 
-struct TempDirGuard {
-    path: PathBuf,
-}
-
-impl TempDirGuard {
-    fn new(label: &str) -> Self {
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system clock should be after unix epoch")
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "biomcp-ema-auto-sync-{label}-{}-{stamp}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&path).expect("temp dir should be created");
-        Self { path }
-    }
-
-    fn path(&self) -> &Path {
-        &self.path
-    }
-}
-
-impl Drop for TempDirGuard {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.path);
-    }
+fn temp_dir(label: &str) -> tempfile::TempDir {
+    tempfile::Builder::new()
+        .prefix(&format!("biomcp-ema-auto-sync-{label}-"))
+        .tempdir()
+        .expect("temp dir should be created")
 }
 
 fn default_ema_root(data_home: &Path) -> PathBuf {
@@ -204,8 +182,8 @@ fn assert_keytruda_search(result: &CommandResult) {
 #[tokio::test]
 async fn clean_eu_search_downloads_missing_feeds() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("clean-data-home");
-    let cache_home = TempDirGuard::new("clean-cache-home");
+    let data_home = temp_dir("clean-data-home");
+    let cache_home = temp_dir("clean-cache-home");
     let report_base = format!("{}{EMA_REPORT_PATH}", server.uri());
 
     let result = run_biomcp(
@@ -235,8 +213,8 @@ async fn clean_eu_search_downloads_missing_feeds() {
 #[tokio::test]
 async fn second_run_within_ttl_skips_download_message() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("fresh-data-home");
-    let cache_home = TempDirGuard::new("fresh-cache-home");
+    let data_home = temp_dir("fresh-data-home");
+    let cache_home = temp_dir("fresh-cache-home");
     let report_base = format!("{}{EMA_REPORT_PATH}", server.uri());
 
     let first = run_biomcp(
@@ -270,8 +248,8 @@ async fn second_run_within_ttl_skips_download_message() {
 #[ignore = "http-cache middleware not forwarding stored ETag/Last-Modified as validator headers on stale refresh"]
 async fn stale_single_feed_uses_request_only_for_that_feed() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("stale-data-home");
-    let cache_home = TempDirGuard::new("stale-cache-home");
+    let data_home = temp_dir("stale-data-home");
+    let cache_home = temp_dir("stale-cache-home");
     let report_base = format!("{}{EMA_REPORT_PATH}", server.uri());
 
     let first = run_biomcp(
@@ -320,8 +298,8 @@ async fn stale_single_feed_uses_request_only_for_that_feed() {
 #[tokio::test]
 async fn missing_single_feed_fetches_only_missing_file() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("missing-data-home");
-    let cache_home = TempDirGuard::new("missing-cache-home");
+    let data_home = temp_dir("missing-data-home");
+    let cache_home = temp_dir("missing-cache-home");
     let report_base = format!("{}{EMA_REPORT_PATH}", server.uri());
 
     let first = run_biomcp(
@@ -361,8 +339,8 @@ async fn missing_single_feed_fetches_only_missing_file() {
 #[tokio::test]
 async fn no_cache_forces_reload_of_all_feeds() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("reload-data-home");
-    let cache_home = TempDirGuard::new("reload-cache-home");
+    let data_home = temp_dir("reload-data-home");
+    let cache_home = temp_dir("reload-cache-home");
     let report_base = format!("{}{EMA_REPORT_PATH}", server.uri());
 
     let first = run_biomcp(
@@ -401,8 +379,8 @@ async fn no_cache_forces_reload_of_all_feeds() {
 #[tokio::test]
 async fn ema_sync_forces_reload_of_all_feeds() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("sync-data-home");
-    let cache_home = TempDirGuard::new("sync-cache-home");
+    let data_home = temp_dir("sync-data-home");
+    let cache_home = temp_dir("sync-cache-home");
     let report_base = format!("{}{EMA_REPORT_PATH}", server.uri());
 
     let first = run_biomcp(
@@ -442,9 +420,9 @@ async fn ema_sync_forces_reload_of_all_feeds() {
 #[tokio::test]
 async fn custom_ema_dir_receives_downloaded_files() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("custom-data-home");
-    let cache_home = TempDirGuard::new("custom-cache-home");
-    let custom_root = TempDirGuard::new("custom-ema-root");
+    let data_home = temp_dir("custom-data-home");
+    let cache_home = temp_dir("custom-cache-home");
+    let custom_root = temp_dir("custom-ema-root");
     let report_base = format!("{}{EMA_REPORT_PATH}", server.uri());
     let custom_root_string = custom_root.path().display().to_string();
 
@@ -478,8 +456,8 @@ async fn stale_files_survive_refresh_failure_with_warning() {
     let success_server = mount_success_server().await;
     let failing_server =
         mount_selective_failure_server("medicines-output-medicines_json-report_en.json", 403).await;
-    let data_home = TempDirGuard::new("fallback-data-home");
-    let cache_home = TempDirGuard::new("fallback-cache-home");
+    let data_home = temp_dir("fallback-data-home");
+    let cache_home = temp_dir("fallback-cache-home");
     let success_base = format!("{}{EMA_REPORT_PATH}", success_server.uri());
     let failing_base = format!("{}{EMA_REPORT_PATH}", failing_server.uri());
 
@@ -512,8 +490,8 @@ async fn stale_files_survive_refresh_failure_with_warning() {
 #[tokio::test]
 async fn missing_files_fail_when_refresh_cannot_populate_root() {
     let server = mount_failure_server(403).await;
-    let data_home = TempDirGuard::new("failure-data-home");
-    let cache_home = TempDirGuard::new("failure-cache-home");
+    let data_home = temp_dir("failure-data-home");
+    let cache_home = temp_dir("failure-cache-home");
     let report_base = format!("{}{EMA_REPORT_PATH}", server.uri());
     let ema_root = default_ema_root(data_home.path());
 

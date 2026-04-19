@@ -537,44 +537,36 @@ pub fn install_skills(dir: Option<&str>, force: bool) -> Result<String, BioMcpEr
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::TempDirGuard;
     use serde_json::Value;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     struct TestPaths {
-        root: PathBuf,
+        _guard: TempDirGuard,
         home: PathBuf,
         cwd: PathBuf,
     }
 
     impl TestPaths {
         fn new(name: &str) -> Self {
-            let unique = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("system clock before unix epoch")
-                .as_nanos();
-            let root = std::env::temp_dir().join(format!(
-                "biomcp-skill-test-{name}-{}-{unique}",
-                std::process::id()
-            ));
+            let guard = TempDirGuard::new(&format!("skill-{name}"));
+            let root = guard.path();
             let home = root.join("home");
             let cwd = root.join("cwd");
 
             fs::create_dir_all(&home).expect("create test home dir");
             fs::create_dir_all(&cwd).expect("create test cwd dir");
 
-            Self { root, home, cwd }
+            Self {
+                _guard: guard,
+                home,
+                cwd,
+            }
         }
 
         fn create_file(&self, path: &Path) {
             let parent = path.parent().expect("path has parent");
             fs::create_dir_all(parent).expect("create parent dirs");
             fs::write(path, "# test").expect("write test file");
-        }
-    }
-
-    impl Drop for TestPaths {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.root);
         }
     }
 

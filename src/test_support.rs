@@ -39,36 +39,19 @@ pub(crate) fn set_env_var(name: &'static str, value: Option<&str>) -> EnvVarGuar
 }
 
 pub(crate) struct TempDirGuard {
-    path: std::path::PathBuf,
+    inner: tempfile::TempDir,
 }
 
 impl TempDirGuard {
     pub(crate) fn new(label: &str) -> Self {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "biomcp-test-{label}-{}-{suffix}",
-            std::process::id()
-        ));
-        std::fs::create_dir_all(&path).expect("create temp dir");
-        Self { path }
+        let inner = tempfile::Builder::new()
+            .prefix(&format!("biomcp-test-{label}-"))
+            .tempdir()
+            .expect("create temp dir");
+        Self { inner }
     }
 
     pub(crate) fn path(&self) -> &std::path::Path {
-        &self.path
-    }
-}
-
-impl Drop for TempDirGuard {
-    fn drop(&mut self) {
-        if let Err(err) = std::fs::remove_dir_all(&self.path) {
-            tracing::warn!(
-                path = %self.path.display(),
-                error = %err,
-                "failed to clean up temp dir"
-            );
-        }
+        self.inner.path()
     }
 }

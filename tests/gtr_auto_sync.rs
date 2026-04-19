@@ -2,7 +2,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime};
 
 use flate2::Compression;
 use flate2::write::GzEncoder;
@@ -30,33 +30,11 @@ impl CommandResult {
     }
 }
 
-struct TempDirGuard {
-    path: PathBuf,
-}
-
-impl TempDirGuard {
-    fn new(label: &str) -> Self {
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system clock should be after unix epoch")
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "biomcp-gtr-auto-sync-{label}-{}-{stamp}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&path).expect("temp dir should be created");
-        Self { path }
-    }
-
-    fn path(&self) -> &Path {
-        &self.path
-    }
-}
-
-impl Drop for TempDirGuard {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.path);
-    }
+fn temp_dir(label: &str) -> tempfile::TempDir {
+    tempfile::Builder::new()
+        .prefix(&format!("biomcp-gtr-auto-sync-{label}-"))
+        .tempdir()
+        .expect("temp dir should be created")
 }
 
 fn default_gtr_root(data_home: &Path) -> PathBuf {
@@ -222,8 +200,8 @@ fn assert_brca1_search(result: &CommandResult) {
 #[tokio::test]
 async fn first_use_search_downloads_missing_bundle_into_default_root() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("clean-data-home");
-    let cache_home = TempDirGuard::new("clean-cache-home");
+    let data_home = temp_dir("clean-data-home");
+    let cache_home = temp_dir("clean-cache-home");
     let test_version_url = gtr_test_version_url(&server);
     let condition_gene_url = gtr_condition_gene_url(&server);
 
@@ -258,8 +236,8 @@ async fn first_use_search_downloads_missing_bundle_into_default_root() {
 #[tokio::test]
 async fn second_run_within_ttl_skips_redownload() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("fresh-data-home");
-    let cache_home = TempDirGuard::new("fresh-cache-home");
+    let data_home = temp_dir("fresh-data-home");
+    let cache_home = temp_dir("fresh-cache-home");
     let test_version_url = gtr_test_version_url(&server);
     let condition_gene_url = gtr_condition_gene_url(&server);
 
@@ -301,8 +279,8 @@ async fn second_run_within_ttl_skips_redownload() {
 #[tokio::test]
 async fn stale_bundle_refreshes_on_next_search() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("stale-data-home");
-    let cache_home = TempDirGuard::new("stale-cache-home");
+    let data_home = temp_dir("stale-data-home");
+    let cache_home = temp_dir("stale-cache-home");
     let test_version_url = gtr_test_version_url(&server);
     let condition_gene_url = gtr_condition_gene_url(&server);
 
@@ -347,9 +325,9 @@ async fn stale_bundle_refreshes_on_next_search() {
 #[tokio::test]
 async fn gtr_sync_force_refreshes_and_honors_custom_root() {
     let server = mount_success_server().await;
-    let data_home = TempDirGuard::new("custom-data-home");
-    let cache_home = TempDirGuard::new("custom-cache-home");
-    let custom_root = TempDirGuard::new("custom-gtr-root");
+    let data_home = temp_dir("custom-data-home");
+    let cache_home = temp_dir("custom-cache-home");
+    let custom_root = temp_dir("custom-gtr-root");
     let custom_root_string = custom_root.path().display().to_string();
     let test_version_url = gtr_test_version_url(&server);
     let condition_gene_url = gtr_condition_gene_url(&server);
@@ -422,8 +400,8 @@ async fn gtr_sync_force_refreshes_and_honors_custom_root() {
 async fn stale_local_pair_survives_refresh_failure_with_warning() {
     let success_server = mount_success_server().await;
     let failing_server = mount_download_failure_server().await;
-    let data_home = TempDirGuard::new("fallback-data-home");
-    let cache_home = TempDirGuard::new("fallback-cache-home");
+    let data_home = temp_dir("fallback-data-home");
+    let cache_home = temp_dir("fallback-cache-home");
     let success_test_version_url = gtr_test_version_url(&success_server);
     let success_condition_gene_url = gtr_condition_gene_url(&success_server);
     let failing_test_version_url = gtr_test_version_url(&failing_server);
@@ -470,8 +448,8 @@ async fn stale_local_pair_survives_refresh_failure_with_warning() {
 #[tokio::test]
 async fn gtr_sync_parse_failure_mentions_recovery_paths() {
     let server = mount_parse_failure_server().await;
-    let data_home = TempDirGuard::new("parse-failure-data-home");
-    let cache_home = TempDirGuard::new("parse-failure-cache-home");
+    let data_home = temp_dir("parse-failure-data-home");
+    let cache_home = temp_dir("parse-failure-cache-home");
     let test_version_url = gtr_test_version_url(&server);
     let condition_gene_url = gtr_condition_gene_url(&server);
 
@@ -513,8 +491,8 @@ async fn gtr_sync_parse_failure_mentions_recovery_paths() {
 #[tokio::test]
 async fn gtr_sync_download_failure_mentions_recovery_paths() {
     let server = mount_download_failure_server().await;
-    let data_home = TempDirGuard::new("download-failure-data-home");
-    let cache_home = TempDirGuard::new("download-failure-cache-home");
+    let data_home = temp_dir("download-failure-data-home");
+    let cache_home = temp_dir("download-failure-cache-home");
     let test_version_url = gtr_test_version_url(&server);
     let condition_gene_url = gtr_condition_gene_url(&server);
 

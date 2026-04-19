@@ -1323,25 +1323,17 @@ mod tests {
 
     #[test]
     fn baseline_discovery_picks_highest_semver() {
-        let root = std::env::temp_dir().join(format!(
-            "biomcp-benchmark-discovery-{}",
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("time")
-                .as_nanos()
-        ));
-        let benchmarks_dir = root.join("benchmarks");
+        let root = crate::test_support::TempDirGuard::new("benchmark-discovery");
+        let benchmarks_dir = root.path().join("benchmarks");
         fs::create_dir_all(&benchmarks_dir).expect("mkdir");
         fs::write(benchmarks_dir.join("v0.1.0.json"), "{}").expect("write");
         fs::write(benchmarks_dir.join("v0.3.0.json"), "{}").expect("write");
         fs::write(benchmarks_dir.join("v0.2.5.json"), "{}").expect("write");
 
         let cwd = std::env::current_dir().expect("cwd");
-        std::env::set_current_dir(&root).expect("set cwd");
+        std::env::set_current_dir(root.path()).expect("set cwd");
         let selected = discover_latest_baseline_path();
         std::env::set_current_dir(cwd).expect("restore cwd");
-
-        fs::remove_dir_all(&root).expect("cleanup");
 
         let selected_name = selected
             .as_ref()

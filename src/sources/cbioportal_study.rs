@@ -2143,25 +2143,22 @@ impl TsvReader {
 mod tests {
     use super::*;
 
+    use crate::test_support::TempDirGuard;
     use std::fs;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     struct TestStudyDir {
+        _guard: TempDirGuard,
         root: PathBuf,
     }
 
     impl TestStudyDir {
         fn new(name: &str) -> Self {
-            let unique = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("system clock before unix epoch")
-                .as_nanos();
-            let root = std::env::temp_dir().join(format!(
-                "biomcp-study-source-test-{name}-{}-{unique}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&root).expect("create root");
-            Self { root }
+            let guard = TempDirGuard::new(&format!("study-source-{name}"));
+            let root = guard.path().to_path_buf();
+            Self {
+                _guard: guard,
+                root,
+            }
         }
 
         fn study_path(&self, study_id: &str) -> PathBuf {
@@ -2175,12 +2172,6 @@ mod tests {
                 fs::create_dir_all(parent).expect("create parent");
             }
             fs::write(path, content).expect("write test file");
-        }
-    }
-
-    impl Drop for TestStudyDir {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.root);
         }
     }
 
