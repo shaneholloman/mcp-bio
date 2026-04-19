@@ -2705,6 +2705,59 @@ pub fn search_query_summary(filters: &GeneSearchFilters) -> String {
 mod tests {
     use super::*;
 
+    use std::path::Path;
+
+    use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE};
+    use crate::test_support::{TempDirGuard, env_lock, set_env_var};
+
+    fn test_gene(symbol: &str) -> Gene {
+        Gene {
+            symbol: symbol.to_string(),
+            name: format!("{symbol} gene"),
+            entrez_id: "0".to_string(),
+            ensembl_id: None,
+            location: None,
+            genomic_coordinates: None,
+            omim_id: None,
+            uniprot_id: None,
+            summary: None,
+            gene_type: None,
+            aliases: Vec::new(),
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: None,
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: None,
+            druggability: None,
+            clingen: None,
+            constraint: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+            diagnostics: None,
+            diagnostics_note: None,
+        }
+    }
+
+    fn write_gtr_fixture(root: &Path) {
+        std::fs::write(
+            root.join(GTR_TEST_VERSION_FILE),
+            include_bytes!("../../spec/fixtures/gtr/test_version.gz"),
+        )
+        .expect("write test_version.gz");
+        std::fs::write(
+            root.join(GTR_CONDITION_GENE_FILE),
+            include_str!("../../spec/fixtures/gtr/test_condition_gene.txt"),
+        )
+        .expect("write test_condition_gene.txt");
+    }
+
     #[test]
     fn search_query_summary_includes_new_filters() {
         let summary = search_query_summary(&GeneSearchFilters {
@@ -2839,12 +2892,70 @@ mod tests {
     }
 
     #[test]
+    fn parse_sections_accepts_diagnostics() {
+        let parsed =
+            parse_sections("BRAF", &["diagnostics".to_string()]).expect("diagnostics should parse");
+        assert_eq!(parsed.len(), 1);
+        assert!(parsed.contains(&GeneIncludeType::Diagnostics));
+    }
+
+    #[test]
     fn parse_sections_all_keeps_optional_sections_opt_in() {
         let parsed = parse_sections("BRAF", &["all".to_string()]).expect("all should parse");
         assert_eq!(parsed.len(), 12);
         assert!(!parsed.contains(&GeneIncludeType::Diagnostics));
         assert!(!parsed.contains(&GeneIncludeType::Disgenet));
         assert!(!parsed.contains(&GeneIncludeType::Funding));
+    }
+
+    #[test]
+    fn parse_sections_all_keeps_optional_diagnostics_opt_in() {
+        let parsed = parse_sections("BRAF", &["all".to_string()]).expect("all should parse");
+        assert!(!parsed.contains(&GeneIncludeType::Diagnostics));
+    }
+
+    #[tokio::test]
+    async fn gene_diagnostics_section_populates_from_gtr_fixture() {
+        let _lock = env_lock().lock().await;
+        let root = TempDirGuard::new("gene-diagnostics-gtr");
+        write_gtr_fixture(root.path());
+        let _gtr_env = set_env_var(
+            "BIOMCP_GTR_DIR",
+            Some(root.path().to_str().expect("utf-8 path")),
+        );
+
+        let mut gene = test_gene("BRCA1");
+        add_diagnostics_section(&mut gene).await;
+
+        let rows = gene.diagnostics.as_ref().expect("diagnostics rows");
+        assert!(gene.diagnostics_note.is_none());
+        assert!(rows.iter().any(|row| {
+            row.source == crate::entities::diagnostic::DIAGNOSTIC_SOURCE_GTR
+                && row.accession == "GTR000000001.1"
+                && row.name == "BRCA1 Hereditary Cancer Panel"
+                && row.genes.iter().any(|gene| gene == "BRCA1")
+        }));
+    }
+
+    #[tokio::test]
+    async fn gene_diagnostics_unavailable_sets_note() {
+        let _lock = env_lock().lock().await;
+        let root = TempDirGuard::new("gene-diagnostics-unavailable");
+        let blocking_root = root.path().join("not-a-directory");
+        std::fs::write(&blocking_root, b"blocks create_dir_all").expect("write blocking file");
+        let _gtr_env = set_env_var(
+            "BIOMCP_GTR_DIR",
+            Some(blocking_root.to_str().expect("utf-8 path")),
+        );
+
+        let mut gene = test_gene("BRCA1");
+        add_diagnostics_section(&mut gene).await;
+
+        assert!(gene.diagnostics.is_none());
+        assert_eq!(
+            gene.diagnostics_note.as_deref(),
+            Some(GENE_DIAGNOSTICS_UNAVAILABLE_NOTE)
+        );
     }
 
     #[test]

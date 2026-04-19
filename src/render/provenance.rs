@@ -1439,6 +1439,52 @@ mod tests {
     }
 
     #[test]
+    fn gene_section_sources_include_diagnostics_note_source() {
+        let gene = Gene {
+            symbol: "BRCA1".to_string(),
+            name: "BRCA1 DNA repair associated".to_string(),
+            entrez_id: "672".to_string(),
+            ensembl_id: None,
+            location: None,
+            genomic_coordinates: None,
+            omim_id: None,
+            uniprot_id: None,
+            summary: None,
+            gene_type: None,
+            aliases: Vec::new(),
+            clinical_diseases: Vec::new(),
+            clinical_drugs: Vec::new(),
+            pathways: None,
+            ontology: None,
+            diseases: None,
+            protein: None,
+            go: None,
+            interactions: None,
+            civic: None,
+            expression: None,
+            hpa: None,
+            druggability: None,
+            clingen: None,
+            constraint: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+            diagnostics: None,
+            diagnostics_note: Some(
+                "Diagnostic local data is unavailable. Run `biomcp gtr sync` to enable gene diagnostic pivots."
+                    .to_string(),
+            ),
+        };
+
+        let sources = gene_section_sources(&gene);
+        assert!(sources.iter().any(|source| {
+            source.key == "diagnostics"
+                && source.label == "Diagnostics"
+                && source.sources == vec!["NCBI Genetic Testing Registry".to_string()]
+        }));
+    }
+
+    #[test]
     fn disease_section_sources_include_funding_when_note_present() {
         let disease = Disease {
             id: "MONDO:0007947".to_string(),
@@ -1528,6 +1574,54 @@ mod tests {
                 },
             ]),
             diagnostics_note: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let sources = disease_section_sources(&disease);
+        assert!(sources.iter().any(|source| {
+            source.key == "diagnostics"
+                && source.label == "Diagnostics"
+                && source.sources
+                    == vec![
+                        "NCBI Genetic Testing Registry".to_string(),
+                        "WHO Prequalified IVD".to_string(),
+                    ]
+        }));
+    }
+
+    #[test]
+    fn disease_section_sources_include_diagnostics_note_sources() {
+        let disease = Disease {
+            id: "MONDO:0018076".to_string(),
+            name: "tuberculosis".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+            diagnostics: None,
+            diagnostics_note: Some(
+                "Diagnostic local data is unavailable. Run `biomcp gtr sync` and `biomcp who-ivd sync` to enable disease diagnostic pivots."
+                    .to_string(),
+            ),
             xrefs: std::collections::HashMap::new(),
         };
 

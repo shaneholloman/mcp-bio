@@ -1,6 +1,33 @@
 use super::super::test_support::*;
 use super::*;
 
+use std::path::Path;
+
+use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE};
+use crate::sources::who_ivd::WHO_IVD_CSV_FILE;
+use crate::test_support::TempDirGuard;
+
+fn write_gtr_fixture(root: &Path) {
+    std::fs::write(
+        root.join(GTR_TEST_VERSION_FILE),
+        include_bytes!("../../../../spec/fixtures/gtr/test_version.gz"),
+    )
+    .expect("write test_version.gz");
+    std::fs::write(
+        root.join(GTR_CONDITION_GENE_FILE),
+        include_str!("../../../../spec/fixtures/gtr/test_condition_gene.txt"),
+    )
+    .expect("write test_condition_gene.txt");
+}
+
+fn write_who_ivd_fixture(root: &Path) {
+    std::fs::write(
+        root.join(WHO_IVD_CSV_FILE),
+        include_str!("../../../../spec/fixtures/who-ivd/who_ivd.csv"),
+    )
+    .expect("write who_ivd.csv");
+}
+
 #[test]
 fn funding_query_prefers_free_text_lookup() {
     let disease = test_disease(
@@ -39,6 +66,58 @@ async fn apply_requested_sections_clears_funding_when_not_requested() {
 
     assert!(disease.funding.is_none());
     assert!(disease.funding_note.is_none());
+}
+
+#[tokio::test]
+async fn disease_diagnostics_section_populates_from_who_fixture() {
+    let _lock = lock_env().await;
+    let gtr_root = TempDirGuard::new("disease-diagnostics-gtr");
+    write_gtr_fixture(gtr_root.path());
+    let _gtr_env = set_env_var(
+        "BIOMCP_GTR_DIR",
+        Some(gtr_root.path().to_str().expect("utf-8 path")),
+    );
+    let who_root = TempDirGuard::new("disease-diagnostics-who-ivd");
+    write_who_ivd_fixture(who_root.path());
+    let _who_env = set_env_var(
+        "BIOMCP_WHO_IVD_DIR",
+        Some(who_root.path().to_str().expect("utf-8 path")),
+    );
+
+    let mut disease = test_disease("MONDO:0018076", "tuberculosis");
+    add_diagnostics_section(&mut disease).await;
+
+    let rows = disease.diagnostics.as_ref().expect("diagnostics rows");
+    assert!(disease.diagnostics_note.is_none());
+    assert!(rows.iter().any(|row| {
+        row.source == crate::entities::diagnostic::DIAGNOSTIC_SOURCE_WHO_IVD
+            && row.name == "Loopamp MTBC Detection Kit"
+            && row
+                .conditions
+                .iter()
+                .any(|condition| condition == "Mycobacterium tuberculosis complex (MTBC)")
+    }));
+}
+
+#[tokio::test]
+async fn disease_diagnostics_unavailable_sets_note() {
+    let _lock = lock_env().await;
+    let root = TempDirGuard::new("disease-diagnostics-unavailable");
+    let blocking_root = root.path().join("not-a-directory");
+    std::fs::write(&blocking_root, b"blocks create_dir_all").expect("write blocking file");
+    let _gtr_env = set_env_var(
+        "BIOMCP_GTR_DIR",
+        Some(blocking_root.to_str().expect("utf-8 path")),
+    );
+
+    let mut disease = test_disease("MONDO:0018076", "tuberculosis");
+    add_diagnostics_section(&mut disease).await;
+
+    assert!(disease.diagnostics.is_none());
+    assert_eq!(
+        disease.diagnostics_note.as_deref(),
+        Some(DISEASE_DIAGNOSTICS_UNAVAILABLE_NOTE)
+    );
 }
 
 #[tokio::test]

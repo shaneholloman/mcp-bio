@@ -29,12 +29,27 @@ fn parse_sections_supports_new_disease_sections() {
 }
 
 #[test]
+fn disease_parse_sections_accepts_diagnostics() {
+    let flags = parse_sections(&["diagnostics".to_string()]).expect("diagnostics should parse");
+    assert!(flags.include_diagnostics);
+    assert!(!flags.include_genes);
+    assert!(!flags.include_funding);
+    assert!(!flags.include_disgenet);
+}
+
+#[test]
 fn parse_sections_all_keeps_optional_sections_opt_in() {
     let flags = parse_sections(&["all".to_string()]).expect("sections should parse");
     assert!(flags.include_survival);
     assert!(!flags.include_diagnostics);
     assert!(!flags.include_funding);
     assert!(!flags.include_disgenet);
+}
+
+#[test]
+fn disease_parse_sections_all_keeps_diagnostics_opt_in() {
+    let flags = parse_sections(&["all".to_string()]).expect("sections should parse");
+    assert!(!flags.include_diagnostics);
 }
 
 #[tokio::test]
