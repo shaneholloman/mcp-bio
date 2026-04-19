@@ -20,6 +20,7 @@ import resource
 import subprocess
 import time
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -795,10 +796,20 @@ def extract_articles(
     bench: Bench,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     candidates = candidate_items_from_discovery(discovery, per_source=per_source)
-    session = requests.Session()
-    articles = []
+    grouped: dict[str, list[tuple[int, dict[str, Any]]]] = {}
     for index, item in enumerate(candidates[:max_articles], start=1):
-        articles.append(extract_one(session, item, index, registry, bench))
+        grouped.setdefault(item["source_id"], []).append((index, item))
+
+    def extract_group(group_items: list[tuple[int, dict[str, Any]]]) -> list[dict[str, Any]]:
+        session = requests.Session()
+        return [extract_one(session, item, index, registry, bench) for index, item in group_items]
+
+    articles = []
+    with ThreadPoolExecutor(max_workers=max(1, min(5, len(grouped)))) as executor:
+        futures = [executor.submit(extract_group, group_items) for group_items in grouped.values()]
+        for future in futures:
+            articles.extend(future.result())
+    articles.sort(key=lambda article: article["index"])
     useful = [a for a in articles if a["has_useful_text"]]
     useful_sources = sorted({a["source_id"] for a in useful})
     by_source = []
