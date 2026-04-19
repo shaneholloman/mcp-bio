@@ -1,0 +1,657 @@
+{
+  "approach": "source_native_medlineplus_clinical_features_with_hpo_mapping_fixture",
+  "artifact_paths": {
+    "contract_numbers": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_contract_numbers.json",
+    "full_scale": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_full_scale.json",
+    "regression_control": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_regression_control.json",
+    "results_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results",
+    "validation": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/results/clinical_features_validation.json",
+    "work_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work"
+  },
+  "diseases": [
+    {
+      "attempts": [
+        {
+          "cache_hit": false,
+          "cache_path": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus/uterinefibroid.json",
+          "elapsed_ms": 0.0,
+          "error": "live fetch disabled",
+          "ok": false,
+          "query": "uterine fibroid",
+          "status": null,
+          "topic_count": 0
+        },
+        {
+          "cache_hit": false,
+          "cache_path": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus/uterineleiomyoma.json",
+          "elapsed_ms": 0.0,
+          "error": "live fetch disabled",
+          "ok": false,
+          "query": "uterine leiomyoma",
+          "status": null,
+          "topic_count": 0
+        },
+        {
+          "cache_hit": false,
+          "cache_path": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus/leiomyomaofuterus.json",
+          "elapsed_ms": 0.0,
+          "error": "live fetch disabled",
+          "ok": false,
+          "query": "leiomyoma of uterus",
+          "status": null,
+          "topic_count": 0
+        }
+      ],
+      "biomcp_query": "uterine leiomyoma",
+      "clinical_features": [
+        {
+          "body_system": "reproductive",
+          "evidence_match": "heavy bleeding",
+          "evidence_text": "...Surgery, such as a hysterectomy (removal of the uterus ), may be considered if you are near or past menopause, your fibroids are very large or cause heavy bleeding. If you are having trouble getting pregnant, your provider may discuss infertility treatments. They may also recommend an emotional support group if...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "heavy menstrual bleeding",
+          "mapping_confidence": 0.86,
+          "mapping_method": "reviewed_fixture_exact_or_synonym",
+          "normalized_hpo_id": "HP:0000132",
+          "normalized_hpo_label": "Menorrhagia",
+          "rank": 1,
+          "source": "MedlinePlus",
+          "source_native_id": "uterinefibroids",
+          "source_url": "https://medlineplus.gov/uterinefibroids.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 123.75,
+          "topic_title": "Uterine Fibroids"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "feeling full in the lower abdomen",
+          "evidence_text": "...he type of symptoms may be due to location, size, and number of fibroids . Symptoms may include: Heavy or painful periods or bleeding between periods Feeling \"full\" in the lower abdomen (belly) Urinating (peeing) often Pain during sex Lower back pain Problems getting pregnant, multiple miscarriages, or early labor while pregnant How...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "pelvic pain",
+          "mapping_confidence": 0.95,
+          "mapping_method": "reviewed_fixture_exact",
+          "normalized_hpo_id": "HP:0034267",
+          "normalized_hpo_label": "Pelvic pain",
+          "rank": 2,
+          "source": "MedlinePlus",
+          "source_native_id": "uterinefibroids",
+          "source_url": "https://medlineplus.gov/uterinefibroids.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 123.75,
+          "topic_title": "Uterine Fibroids"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "back pain",
+          "evidence_text": "...lude: Heavy or painful periods or bleeding between periods Feeling \"full\" in the lower abdomen (belly) Urinating (peeing) often Pain during sex Lower back pain Problems getting pregnant, multiple miscarriages, or early labor while pregnant How are uterine fibroids diagnosed? You may not know that you have ut...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "lower back pain",
+          "mapping_confidence": 0.92,
+          "mapping_method": "reviewed_fixture_exact_or_synonym",
+          "normalized_hpo_id": "HP:0003419",
+          "normalized_hpo_label": "Low back pain",
+          "rank": 3,
+          "source": "MedlinePlus",
+          "source_native_id": "uterinefibroids",
+          "source_url": "https://medlineplus.gov/uterinefibroids.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 123.75,
+          "topic_title": "Uterine Fibroids"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "urinating peeing often",
+          "evidence_text": "...size, and number of fibroids . Symptoms may include: Heavy or painful periods or bleeding between periods Feeling \"full\" in the lower abdomen (belly) Urinating (peeing) often Pain during sex Lower back pain Problems getting pregnant, multiple miscarriages, or early labor while pregnant How are uterine fibroids diagnosed? Y...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "urinary frequency",
+          "mapping_confidence": 0.78,
+          "mapping_method": "reviewed_fixture_synonym",
+          "normalized_hpo_id": "HP:0100515",
+          "normalized_hpo_label": "Pollakisuria",
+          "rank": 4,
+          "source": "MedlinePlus",
+          "source_native_id": "uterinefibroids",
+          "source_url": "https://medlineplus.gov/uterinefibroids.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 123.75,
+          "topic_title": "Uterine Fibroids"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "infertility",
+          "evidence_text": "...and size and grow as one tumor or in clusters. Many women with fibroids can get pregnant with no problems. However, some uterine fibroids could cause infertility (not being able to get pregnant), pregnancy loss, or problems with fetal development or delivery. Who is more likely to get uterine fibroids ? If you...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "infertility",
+          "mapping_confidence": 0.9,
+          "mapping_method": "reviewed_fixture_exact",
+          "normalized_hpo_id": "HP:0000789",
+          "normalized_hpo_label": "Infertility",
+          "rank": 5,
+          "source": "MedlinePlus",
+          "source_native_id": "uterinefibroids",
+          "source_url": "https://medlineplus.gov/uterinefibroids.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 123.75,
+          "topic_title": "Uterine Fibroids"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "pain during sex",
+          "evidence_text": "...ids . Symptoms may include: Heavy or painful periods or bleeding between periods Feeling \"full\" in the lower abdomen (belly) Urinating (peeing) often Pain during sex Lower back pain Problems getting pregnant, multiple miscarriages, or early labor while pregnant How are uterine fibroids diagnosed? You may not know...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "dyspareunia",
+          "mapping_confidence": 0.95,
+          "mapping_method": "reviewed_fixture_exact_or_synonym",
+          "normalized_hpo_id": "HP:0030016",
+          "normalized_hpo_label": "Dyspareunia",
+          "rank": 6,
+          "source": "MedlinePlus",
+          "source_native_id": "uterinefibroids",
+          "source_url": "https://medlineplus.gov/uterinefibroids.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 123.75,
+          "topic_title": "Uterine Fibroids"
+        }
+      ],
+      "disease_key": "uterine_fibroid",
+      "fallback_used": true,
+      "feature_checksum": "9db51d8df19b269518c3526bbdb4ed4af1c7f73d84edd18cdec2a0ed06677f4d",
+      "label": "uterine fibroid",
+      "phenotype_coverage": {
+        "clinical_feature_count": 6,
+        "coverage_note": "Clinical features include source-native MedlinePlus terms and confidence-scored HPO mappings; low-confidence mappings should remain auditable rather than replacing the native term.",
+        "curated_hpo_count": 2,
+        "expected_symptom_matched": 6,
+        "expected_symptom_missing": [
+          "fatigue",
+          "constipation"
+        ],
+        "expected_symptom_recall": 0.75,
+        "expected_symptom_total": 8,
+        "feature_label_checksum_input": [
+          {
+            "hpo": "HP:0000132",
+            "label": "heavy menstrual bleeding",
+            "source": "uterinefibroids"
+          },
+          {
+            "hpo": "HP:0034267",
+            "label": "pelvic pain",
+            "source": "uterinefibroids"
+          },
+          {
+            "hpo": "HP:0003419",
+            "label": "lower back pain",
+            "source": "uterinefibroids"
+          },
+          {
+            "hpo": "HP:0100515",
+            "label": "urinary frequency",
+            "source": "uterinefibroids"
+          },
+          {
+            "hpo": "HP:0000789",
+            "label": "infertility",
+            "source": "uterinefibroids"
+          },
+          {
+            "hpo": "HP:0030016",
+            "label": "dyspareunia",
+            "source": "uterinefibroids"
+          }
+        ],
+        "mapped_feature_count": 6,
+        "unmapped_feature_count": 0
+      },
+      "phenotypes": [
+        {
+          "evidence": "PCS",
+          "hpo_id": "HP:0000131",
+          "name": "Uterine leiomyoma",
+          "source": "infores:omim"
+        },
+        {
+          "evidence": "has mode of inheritance",
+          "hpo_id": "HP:0001442",
+          "name": "Typified by somatic mosaicism",
+          "source": "infores:hpo-annotations"
+        }
+      ],
+      "source_mode": "explore_result_fixture",
+      "topic_selection": {
+        "candidate_topic_count": 5,
+        "noise_reduction_count": 4,
+        "related_topic_count": 0,
+        "selected_topic_count": 1,
+        "selection_policy": "direct_pages_only",
+        "topics": [
+          {
+            "selection_reasons": [
+              "exact_title",
+              "title_token_overlap:0.25",
+              "query_in_summary"
+            ],
+            "selection_relation": "direct",
+            "selection_score": 123.75,
+            "source_native_id": "uterinefibroids",
+            "summary": "What are uterine fibroids ? Uterine fibroids are the most common noncancerous (benign) tumors in women of childbearing age. You may have uterine fibroids and not even know it since they often don't cause any symptoms. Fibroids are made of muscle cells and other tissues that grow in and around the wall of the uterus, or womb . They can vary in number and size and grow as one tumor or in clusters. Many women with fibroids can get pregnant with no problems. However, some uterine fibroids could cause infertility (not being able to get pregnant), pregnancy loss, or problems with fetal development or delivery. Who is more likely to get uterine fibroids ? If you're a female and the age when you're usually able to get pregnant and give birth, you could develop fibroids . Some factors may increase your risk of having uterine fibroids . These can include: Age. Women who are older have a higher risk. Race/ethnicity. Black/African American women often have fibroids at a younger age. They're also more likely to have larger fibroids with worse symptoms. Family history. If your mother or sister had uterine fibroids . Other factors. If you started your period before age 10 or have never been pregnant. Certain medical conditions. These include obesity or vitamin D deficiency. Your risk of getting uterine fibroids lowers with each pregnancy and with long-term use of birth control pills or shots. What causes uterine fibroids ? No one knows what causes uterine fibroids . A few things that might play a part in getting uterine fibroids include genetics and growth hormones. Also, other hormones like estrogen and progesterone seem to help fibroids grow. These hormones cause the tissue lining inside the uterus to thicken during each menstrual cycle to prepare for pregnancy. What are the symptoms of uterine fibroids ? Many women with fibroids have no symptoms. If you do, the type of symptoms may be due to location, size, and number of fibroids . Symptoms may include: Heavy or painful periods or bleeding between periods Feeling \"full\" in the lower abdomen (belly) Urinating (peeing) often Pain during sex Lower back pain Problems getting pregnant, multiple miscarriages, or early labor while pregnant How are uterine fibroids diagnosed? You may not know that you have uterine fibroids unless you have symptoms. Or your health care provider may find the fibroids during a pelvic exam, or with imaging tests. Uterine fibroids might be very small, or in extreme cases, they may grow large enough to make it appear like a pregnancy. What are the treatments for uterine fibroids ? If you have no symptoms, you may not even need treatment. If you have symptoms, the treatment for uterine fibroids depends on many factors. These can include: Your symptoms. Your age. Sometimes fibroids shrink during and after menopause due to a drop in hormone levels. The location, type, and size of fibroids . If you are pregnant or want to get pregnant in the future. Treatment may include medicines that can slow or stop fibroid growth. Surgery, such as a hysterectomy (removal of the uterus ), may be considered if you are near or past menopause, your fibroids are very large or cause heavy bleeding. If you are having trouble getting pregnant, your provider may discuss infertility treatments. They may also recommend an emotional support group if you have chronic symptoms or difficulties getting pregnant or maintaining a pregnancy. NIH: National Institute of Child Health and Human Development",
+            "title": "Uterine Fibroids",
+            "url": "https://medlineplus.gov/uterinefibroids.html"
+          }
+        ]
+      },
+      "work_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus"
+    },
+    {
+      "attempts": [
+        {
+          "cache_hit": false,
+          "cache_path": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus/endometriosis.json",
+          "elapsed_ms": 0.0,
+          "error": "live fetch disabled",
+          "ok": false,
+          "query": "endometriosis",
+          "status": null,
+          "topic_count": 0
+        }
+      ],
+      "biomcp_query": "endometriosis",
+      "clinical_features": [
+        {
+          "body_system": "reproductive",
+          "evidence_match": "pelvic pain",
+          "evidence_text": "...Your periods started late in adolescence You breastfeed your babies What are the symptoms of endometriosis ? The main symptoms of endometriosis are: Pelvic pain, which often happens during your period Infertility Other possible symptoms include: Painful menstrual cramps, which may get worse over time Pain dur...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "pelvic pain",
+          "mapping_confidence": 0.95,
+          "mapping_method": "reviewed_fixture_exact",
+          "normalized_hpo_id": "HP:0034267",
+          "normalized_hpo_label": "Pelvic pain",
+          "rank": 1,
+          "source": "MedlinePlus",
+          "source_native_id": "endometriosis",
+          "source_url": "https://medlineplus.gov/endometriosis.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 230.0,
+          "topic_title": "Endometriosis"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "painful menstrual cramps",
+          "evidence_text": "...ometriosis ? The main symptoms of endometriosis are: Pelvic pain, which often happens during your period Infertility Other possible symptoms include: Painful menstrual cramps, which may get worse over time Pain during or after sex Pain in the intestine or lower abdomen Pain with bowel movements (pooping) or urination (peei...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "dysmenorrhea",
+          "mapping_confidence": 0.95,
+          "mapping_method": "reviewed_fixture_exact_or_synonym",
+          "normalized_hpo_id": "HP:0100607",
+          "normalized_hpo_label": "Dysmenorrhea",
+          "rank": 2,
+          "source": "MedlinePlus",
+          "source_native_id": "endometriosis",
+          "source_url": "https://medlineplus.gov/endometriosis.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 230.0,
+          "topic_title": "Endometriosis"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "pain during or after sex",
+          "evidence_text": "...vic pain, which often happens during your period Infertility Other possible symptoms include: Painful menstrual cramps, which may get worse over time Pain during or after sex Pain in the intestine or lower abdomen Pain with bowel movements (pooping) or urination (peeing), usually during your period Heavy periods Spotting o...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "dyspareunia",
+          "mapping_confidence": 0.95,
+          "mapping_method": "reviewed_fixture_exact_or_synonym",
+          "normalized_hpo_id": "HP:0030016",
+          "normalized_hpo_label": "Dyspareunia",
+          "rank": 3,
+          "source": "MedlinePlus",
+          "source_native_id": "endometriosis",
+          "source_url": "https://medlineplus.gov/endometriosis.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 230.0,
+          "topic_title": "Endometriosis"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "infertility",
+          "evidence_text": "...feed your babies What are the symptoms of endometriosis ? The main symptoms of endometriosis are: Pelvic pain, which often happens during your period Infertility Other possible symptoms include: Painful menstrual cramps, which may get worse over time Pain during or after sex Pain in the intestine or lower abdo...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "infertility",
+          "mapping_confidence": 0.9,
+          "mapping_method": "reviewed_fixture_exact",
+          "normalized_hpo_id": "HP:0000789",
+          "normalized_hpo_label": "Infertility",
+          "rank": 4,
+          "source": "MedlinePlus",
+          "source_native_id": "endometriosis",
+          "source_url": "https://medlineplus.gov/endometriosis.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 230.0,
+          "topic_title": "Endometriosis"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "pain with bowel movements",
+          "evidence_text": "...er possible symptoms include: Painful menstrual cramps, which may get worse over time Pain during or after sex Pain in the intestine or lower abdomen Pain with bowel movements (pooping) or urination (peeing), usually during your period Heavy periods Spotting or bleeding between periods Digestive or gastrointestinal symptoms...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "dyschezia",
+          "mapping_confidence": 0.78,
+          "mapping_method": "reviewed_fixture_synonym",
+          "normalized_hpo_id": "HP:6000222",
+          "normalized_hpo_label": "Painful defecation",
+          "rank": 5,
+          "source": "MedlinePlus",
+          "source_native_id": "endometriosis",
+          "source_url": "https://medlineplus.gov/endometriosis.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 230.0,
+          "topic_title": "Endometriosis"
+        },
+        {
+          "body_system": "reproductive",
+          "evidence_match": "lower abdomen",
+          "evidence_text": "...nfertility Other possible symptoms include: Painful menstrual cramps, which may get worse over time Pain during or after sex Pain in the intestine or lower abdomen Pain with bowel movements (pooping) or urination (peeing), usually during your period Heavy periods Spotting or bleeding between periods Digestive or...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "abdominal pain",
+          "mapping_confidence": 0.95,
+          "mapping_method": "reviewed_fixture_exact",
+          "normalized_hpo_id": "HP:0002027",
+          "normalized_hpo_label": "Abdominal pain",
+          "rank": 6,
+          "source": "MedlinePlus",
+          "source_native_id": "endometriosis",
+          "source_url": "https://medlineplus.gov/endometriosis.html",
+          "topic_relation": "direct",
+          "topic_selection_score": 230.0,
+          "topic_title": "Endometriosis"
+        }
+      ],
+      "disease_key": "endometriosis",
+      "fallback_used": true,
+      "feature_checksum": "97894289fd3c418d5d5405f8f6acfae8e003f9a345c0ab248f173b55d1825106",
+      "label": "endometriosis",
+      "phenotype_coverage": {
+        "clinical_feature_count": 6,
+        "coverage_note": "Clinical features include source-native MedlinePlus terms and confidence-scored HPO mappings; low-confidence mappings should remain auditable rather than replacing the native term.",
+        "curated_hpo_count": 0,
+        "expected_symptom_matched": 6,
+        "expected_symptom_missing": [
+          "dysuria"
+        ],
+        "expected_symptom_recall": 0.857,
+        "expected_symptom_total": 7,
+        "feature_label_checksum_input": [
+          {
+            "hpo": "HP:0034267",
+            "label": "pelvic pain",
+            "source": "endometriosis"
+          },
+          {
+            "hpo": "HP:0100607",
+            "label": "dysmenorrhea",
+            "source": "endometriosis"
+          },
+          {
+            "hpo": "HP:0030016",
+            "label": "dyspareunia",
+            "source": "endometriosis"
+          },
+          {
+            "hpo": "HP:0000789",
+            "label": "infertility",
+            "source": "endometriosis"
+          },
+          {
+            "hpo": "HP:6000222",
+            "label": "dyschezia",
+            "source": "endometriosis"
+          },
+          {
+            "hpo": "HP:0002027",
+            "label": "abdominal pain",
+            "source": "endometriosis"
+          }
+        ],
+        "mapped_feature_count": 6,
+        "unmapped_feature_count": 0
+      },
+      "phenotypes": [],
+      "source_mode": "explore_result_fixture",
+      "topic_selection": {
+        "candidate_topic_count": 3,
+        "noise_reduction_count": 2,
+        "related_topic_count": 0,
+        "selected_topic_count": 1,
+        "selection_policy": "direct_pages_only",
+        "topics": [
+          {
+            "selection_reasons": [
+              "exact_title",
+              "exact_url_slug",
+              "title_token_overlap:1.00",
+              "query_in_summary"
+            ],
+            "selection_relation": "direct",
+            "selection_score": 230.0,
+            "source_native_id": "endometriosis",
+            "summary": "What is endometriosis ? The uterus, or womb, is the place where a fetus grows during pregnancy. The uterus is lined with tissue (endometrium). Endometriosis is a disease in which tissue like the lining of the uterus grows in other places in your body. These patches of tissue are called \"implants,\" \"nodules,\" or \"lesions.\" They are most often found: On or under the ovaries On the fallopian tubes, which carry eggs from the ovaries to the uterus Behind the uterus On the tissues that hold the uterus in place On the bowels or bladder In rare cases, the tissue may grow on your lungs or in other parts of your body. What causes endometriosis ? Researchers don't know what causes endometriosis . Who is at risk for endometriosis ? Endometriosis can affect anyone who menstruates. Certain factors can raise or lower your risk of getting it. You are at higher risk if: You have a mother, sister, or daughter with endometriosis Your period started before age 11 Your monthly cycles are short (less than 27 days) Your menstrual cycles are heavy and last more than 7 days You have a lower risk if: You have been pregnant before Your periods started late in adolescence You breastfeed your babies What are the symptoms of endometriosis ? The main symptoms of endometriosis are: Pelvic pain, which often happens during your period Infertility Other possible symptoms include: Painful menstrual cramps, which may get worse over time Pain during or after sex Pain in the intestine or lower abdomen Pain with bowel movements (pooping) or urination (peeing), usually during your period Heavy periods Spotting or bleeding between periods Digestive or gastrointestinal symptoms Fatigue or lack of energy How is endometriosis diagnosed? Surgery is the only way to know for sure that you have endometriosis . First, however, your health care provider will ask about your symptoms and medical history. You will have a pelvic exam and may have some imaging tests. The most common surgery to diagnose endometriosis is a laparoscopy. This is a type of surgery that uses a laparoscope, a thin tube with a camera and light. The surgeon inserts the laparoscope through a small cut in the skin near your belly button. Your provider can make a diagnosis based on how the patches of endometriosis look. They may also do a biopsy to get a tissue sample. What are the treatments for endometriosis ? There is no cure for endometriosis , but there are treatments for the symptoms. Your provider will work with you to decide which treatments would be best for you. Treatments for endometriosis pain include: Pain relievers, including nonsteroidal anti-inflammatory drugs (NSAIDS) such as ibuprofen and a prescription medicine specifically for endometriosis . Providers may sometimes prescribe opioids for severe pain. Hormone therapy, which stops the ovaries from making hormones. This may slow the growth of the endometrial tissue and may stop new areas from growing. Types of hormone therapy include: Birth control pills. Progestin therapy. Gonadotropin-releasing hormone (GnRH) medicines (GnRH agonists and antagonists). These medicines cause a temporary menopause. After your stop taking the medicines, your menstrual periods will start again, and pregnancy is possible. Surgical treatments for severe pain, including procedures to remove the endometriosis patches or cut some nerves in the pelvis. The surgery may be a laparoscopy or major surgery. Treatments for infertility caused by endometriosis include: Laparoscopy to remove the endometriosis patches In vitro fertilization NIH: National Institute of Child Health and Human Development",
+            "title": "Endometriosis",
+            "url": "https://medlineplus.gov/endometriosis.html"
+          }
+        ]
+      },
+      "work_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus"
+    },
+    {
+      "attempts": [
+        {
+          "cache_hit": false,
+          "cache_path": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus/chronicvenousinsufficiency.json",
+          "elapsed_ms": 0.0,
+          "error": "live fetch disabled",
+          "ok": false,
+          "query": "chronic venous insufficiency",
+          "status": null,
+          "topic_count": 0
+        },
+        {
+          "cache_hit": false,
+          "cache_path": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus/venousinsufficiency.json",
+          "elapsed_ms": 0.0,
+          "error": "live fetch disabled",
+          "ok": false,
+          "query": "venous insufficiency",
+          "status": null,
+          "topic_count": 0
+        },
+        {
+          "cache_hit": false,
+          "cache_path": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus/venouslegulcer.json",
+          "elapsed_ms": 0.0,
+          "error": "live fetch disabled",
+          "ok": false,
+          "query": "venous leg ulcer",
+          "status": null,
+          "topic_count": 0
+        }
+      ],
+      "biomcp_query": "chronic venous insufficiency",
+      "clinical_features": [
+        {
+          "body_system": "vascular",
+          "evidence_match": "swelling",
+          "evidence_text": "...icines and disorders that increase your risk for blood clots can also lead to DVTs. Common symptoms are : Warmth and tenderness over the vein Pain or swelling in the part of the body affected Skin redness Treatment includes medicines to ease pain and inflammation, break up clots and keep new clots from form...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "leg swelling",
+          "mapping_confidence": 0.68,
+          "mapping_method": "reviewed_fixture_broader_lower_limb_edema",
+          "normalized_hpo_id": "HP:0010741",
+          "normalized_hpo_label": "Pedal edema",
+          "rank": 1,
+          "source": "MedlinePlus",
+          "source_native_id": "deepveinthrombosis",
+          "source_url": "https://medlineplus.gov/deepveinthrombosis.html",
+          "topic_relation": "related",
+          "topic_selection_score": 0.0,
+          "topic_title": "Deep Vein Thrombosis"
+        },
+        {
+          "body_system": "vascular",
+          "evidence_match": "pain",
+          "evidence_text": "...Some medicines and disorders that increase your risk for blood clots can also lead to DVTs. Common symptoms are : Warmth and tenderness over the vein Pain or swelling in the part of the body affected Skin redness Treatment includes medicines to ease pain and inflammation, break up clots and keep new clo...",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "leg pain",
+          "mapping_confidence": 0.86,
+          "mapping_method": "reviewed_fixture_synonym",
+          "normalized_hpo_id": "HP:0012514",
+          "normalized_hpo_label": "Lower limb pain",
+          "rank": 2,
+          "source": "MedlinePlus",
+          "source_native_id": "deepveinthrombosis",
+          "source_url": "https://medlineplus.gov/deepveinthrombosis.html",
+          "topic_relation": "related",
+          "topic_selection_score": 0.0,
+          "topic_title": "Deep Vein Thrombosis"
+        },
+        {
+          "body_system": "vascular",
+          "evidence_match": "varicose veins",
+          "evidence_text": "...roblems. For example, knee osteoarthritis, common in older people, can cause pain and limited motion. Problems in your veins in your legs can lead to varicose veins or deep vein thrombosis.",
+          "evidence_tier": "clinical_summary",
+          "feature_type": "symptom",
+          "label": "varicose veins",
+          "mapping_confidence": 0.95,
+          "mapping_method": "reviewed_fixture_exact",
+          "normalized_hpo_id": "HP:0002619",
+          "normalized_hpo_label": "Varicose veins",
+          "rank": 3,
+          "source": "MedlinePlus",
+          "source_native_id": "leginjuriesanddisorders",
+          "source_url": "https://medlineplus.gov/leginjuriesanddisorders.html",
+          "topic_relation": "related",
+          "topic_selection_score": 0.0,
+          "topic_title": "Leg Injuries and Disorders"
+        }
+      ],
+      "disease_key": "chronic_venous_insufficiency",
+      "fallback_used": true,
+      "feature_checksum": "8765bf6252d14be68b08593d152c08d39d746c6554995c1e820aa1a638575d11",
+      "label": "chronic venous insufficiency",
+      "phenotype_coverage": {
+        "clinical_feature_count": 3,
+        "coverage_note": "Clinical features include source-native MedlinePlus terms and confidence-scored HPO mappings; low-confidence mappings should remain auditable rather than replacing the native term.",
+        "curated_hpo_count": 0,
+        "expected_symptom_matched": 3,
+        "expected_symptom_missing": [
+          "venous ulcer",
+          "skin discoloration",
+          "stasis dermatitis",
+          "itching",
+          "heaviness"
+        ],
+        "expected_symptom_recall": 0.375,
+        "expected_symptom_total": 8,
+        "feature_label_checksum_input": [
+          {
+            "hpo": "HP:0010741",
+            "label": "leg swelling",
+            "source": "deepveinthrombosis"
+          },
+          {
+            "hpo": "HP:0012514",
+            "label": "leg pain",
+            "source": "deepveinthrombosis"
+          },
+          {
+            "hpo": "HP:0002619",
+            "label": "varicose veins",
+            "source": "leginjuriesanddisorders"
+          }
+        ],
+        "mapped_feature_count": 3,
+        "unmapped_feature_count": 0
+      },
+      "phenotypes": [],
+      "source_mode": "explore_result_fixture",
+      "topic_selection": {
+        "candidate_topic_count": 4,
+        "noise_reduction_count": 1,
+        "related_topic_count": 3,
+        "selected_topic_count": 3,
+        "selection_policy": "top_related_when_no_direct_page",
+        "topics": [
+          {
+            "selection_reasons": [],
+            "selection_relation": "related",
+            "selection_score": 0.0,
+            "source_native_id": "deepveinthrombosis",
+            "summary": "Deep vein thrombosis, or DVT, is a blood clot that forms in a vein deep in the body. Most deep vein clots occur in the lower leg or thigh. If the vein swells, the condition is called thrombophlebitis. A deep vein thrombosis can break loose and cause a serious problem in the lung, called a pulmonary embolism. Sitting still for a long time can make you more likely to get a DVT. Some medicines and disorders that increase your risk for blood clots can also lead to DVTs. Common symptoms are : Warmth and tenderness over the vein Pain or swelling in the part of the body affected Skin redness Treatment includes medicines to ease pain and inflammation, break up clots and keep new clots from forming. Keeping the affected area raised and applying moist heat can also help. If you are taking a long car or plane trip, take a break, walk or stretch your legs and drink plenty of liquids.",
+            "title": "Deep Vein Thrombosis",
+            "url": "https://medlineplus.gov/deepveinthrombosis.html"
+          },
+          {
+            "selection_reasons": [],
+            "selection_relation": "related",
+            "selection_score": 0.0,
+            "source_native_id": "leginjuriesanddisorders",
+            "summary": "Your legs are made up of bones, blood vessels, muscles, and other connective tissue. They are important for motion and standing. Playing sports, running, falling, or having an accident can damage your legs . Common leg injuries include sprains and strains, joint dislocations, and fractures (broken bones). These injuries can affect the entire leg , or just the foot, ankle, knee, or hip. Certain diseases also lead to leg problems. For example, knee osteoarthritis, common in older people, can cause pain and limited motion. Problems in your veins in your legs can lead to varicose veins or deep vein thrombosis.",
+            "title": "Leg Injuries and Disorders",
+            "url": "https://medlineplus.gov/leginjuriesanddisorders.html"
+          },
+          {
+            "selection_reasons": [],
+            "selection_relation": "related",
+            "selection_score": 0.0,
+            "source_native_id": "varicoseveins",
+            "summary": "Varicose veins are swollen, twisted veins that you can see just under the skin. They usually occur in the legs, but also can form in other parts of the body. Hemorrhoids are a type of varicose vein . Your veins have one-way valves that help keep blood flowing toward your heart. If the valves are weak or damaged, blood can back up and pool in your veins . This causes the veins to swell, which can lead to varicose veins . Varicose veins are very common. You are more at risk if you are older, are female, have obesity, don't exercise, or have a family history of varicose veins . They can also be more common in pregnancy. Doctors often diagnose varicose veins from a physical exam. Sometimes you may need additional tests. Exercising, losing weight, elevating your legs when resting, and not crossing them when sitting can help keep varicose veins from getting worse. Wearing loose clothing and avoiding long periods of standing can also help. If varicose veins are painful or you don't like the way they look, your doctor may recommend procedures to remove them. NIH: National Heart, Lung, and Blood Institute",
+            "title": "Varicose Veins",
+            "url": "https://medlineplus.gov/varicoseveins.html"
+          }
+        ]
+      },
+      "work_dir": "/home/ian/workspace/worktrees/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/work/medlineplus"
+    }
+  ],
+  "full_scale_definition": "Full ticket architecture-spike scope: uterine fibroid plus two common HPO-sparse diseases, with direct-page selection, section-aware feature extraction, source-native rows, HPO mapping fixture, regression metrics, and persistent result artifacts.",
+  "generated_at": "2026-04-19T16:17:17+00:00",
+  "metric_definitions": {
+    "expected_symptom_recall": "Lexical recall against the same expected symptom concepts used by explore.",
+    "feature_checksum": "Stable checksum over feature label, mapped HPO ID, and source-native page ID.",
+    "mismatch_count": "Expected symptom concepts not represented by extracted clinical feature labels.",
+    "peak_rss_kb": "Python process peak resident set size reported by resource.getrusage.",
+    "topic_noise_reduction_count": "Candidate MedlinePlus topics minus selected topics after disease-page selection."
+  },
+  "summary": {
+    "clinical_feature_count": 15,
+    "direct_page_diseases": 2,
+    "disease_count": 3,
+    "diseases_per_second": 361.446,
+    "elapsed_ms": 8.3,
+    "expected_symptom_recall": 0.652,
+    "features_per_second": 1807.229,
+    "mapped_feature_count": 15,
+    "mismatch_count": 8,
+    "output_checksum": "f08c35ff31306ff4696bd953eaba4b00aeed9e6746a1228469e1479238e3d34f",
+    "peak_rss_kb": 25324,
+    "total_candidate_topics": 12,
+    "total_expected_symptoms": 23,
+    "total_matched_expected_symptoms": 15,
+    "total_selected_topics": 5,
+    "total_topic_noise_reduction": 7,
+    "unmapped_feature_count": 0
+  }
+}
