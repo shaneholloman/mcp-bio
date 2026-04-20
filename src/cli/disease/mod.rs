@@ -37,7 +37,7 @@ pub struct DiseaseSearchArgs {
 pub struct DiseaseGetArgs {
     /// Disease name (e.g., melanoma) or ID (e.g., MONDO:0005105)
     pub name_or_id: String,
-    /// Sections to include (genes, pathways, phenotypes, diagnostics, variants, models, prevalence, survival, civic, disgenet, funding, clinical_features, all). clinical_features is an accepted opt-in foundation section and is currently empty until extraction support is wired.
+    /// Sections to include (genes, pathways, phenotypes, diagnostics, variants, models, prevalence, survival, civic, disgenet, funding, clinical_features, all). clinical_features is an opt-in MedlinePlus clinical-summary section for configured diseases and remains excluded from all.
     #[arg(trailing_var_arg = true)]
     pub sections: Vec<String>,
 }

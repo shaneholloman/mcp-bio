@@ -41,7 +41,7 @@ fn disease_json_next_commands_parse() {
     assert_eq!(
         next_commands
             .iter()
-            .take(5)
+            .take(6)
             .map(String::as_str)
             .collect::<Vec<_>>(),
         vec![
@@ -49,6 +49,7 @@ fn disease_json_next_commands_parse() {
             "biomcp get disease MONDO:0005105 pathways",
             "biomcp get disease MONDO:0005105 phenotypes",
             "biomcp get disease MONDO:0005105 diagnostics",
+            "biomcp get disease MONDO:0005105 clinical_features",
             "biomcp get disease MONDO:0005105 survival",
         ]
     );

@@ -128,6 +128,35 @@ async fn apply_requested_sections_preserves_clinical_features_when_requested() {
 }
 
 #[tokio::test]
+async fn apply_requested_sections_populates_configured_clinical_features_from_fallback() {
+    let _lock = lock_env().await;
+    let _medline_env = set_env_var("BIOMCP_MEDLINEPLUS_BASE", Some("http://127.0.0.1:9"));
+    let mut disease = test_disease("D007889", "uterine fibroids");
+    disease
+        .xrefs
+        .insert("MESH".to_string(), "MESH:D007889".to_string());
+    let sections = DiseaseSections {
+        include_clinical_features: true,
+        ..DiseaseSections::default()
+    };
+
+    with_no_http_cache(async {
+        apply_requested_sections(&mut disease, sections, Some("uterine leiomyoma"))
+            .await
+            .expect("sections should apply");
+    })
+    .await;
+
+    assert!(disease.clinical_features.iter().any(|row| {
+        row.label == "heavy menstrual bleeding"
+            && row.source == "MedlinePlus"
+            && row.source_native_id == "uterinefibroids"
+            && row.evidence_tier == "clinical_summary"
+            && row.normalized_hpo_id.as_deref() == Some("HP:0000132")
+    }));
+}
+
+#[tokio::test]
 async fn disease_diagnostics_section_populates_from_who_fixture() {
     let _lock = lock_env().await;
     let gtr_root = TempDirGuard::new("disease-diagnostics-gtr");

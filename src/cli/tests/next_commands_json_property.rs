@@ -49,13 +49,16 @@ fn assert_json_next_commands_parse(label: &str, json: &str) {
     }
 }
 
-fn assert_entity_json_next_commands<T: Serialize>(
+fn assert_entity_json_next_commands<T, L>(
     label: &str,
     entity: &T,
-    evidence_urls: Vec<(&'static str, String)>,
+    evidence_urls: Vec<(L, String)>,
     next_commands: Vec<String>,
     section_sources: Vec<crate::render::provenance::SectionSource>,
-) {
+) where
+    T: Serialize,
+    L: AsRef<str>,
+{
     let json =
         crate::render::json::to_entity_json(entity, evidence_urls, next_commands, section_sources)
             .unwrap_or_else(|e| panic!("{label}: failed to render entity json: {e}"));

@@ -337,7 +337,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### MedlinePlus
 
-- BioMCP surfaces: `discover plain-language topics`
+- BioMCP surfaces: `discover plain-language topics; get disease <name_or_id> clinical_features`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: open public search API
@@ -345,7 +345,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Redistribution / reuse summary: content is widely reusable, but preserve attribution and avoid implying MedlinePlus/NLM endorsement
 - Official terms URL: <https://medlineplus.gov/about/using/>
 - Reviewed on: `2026-03-20`
-- Notes: BioMCP uses MedlinePlus only for best-effort plain-language discover context.
+- Notes: BioMCP uses MedlinePlus for best-effort plain-language discover context and opt-in disease clinical-feature summaries for configured diseases.
 
 ### Monarch Initiative
 

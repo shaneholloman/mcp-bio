@@ -254,10 +254,17 @@ fn sections_disease_base_card_surfaces_diagnostics_before_optional_sections() {
     assert_eq!(
         sections
             .iter()
-            .take(5)
+            .take(6)
             .map(String::as_str)
             .collect::<Vec<_>>(),
-        vec!["genes", "pathways", "phenotypes", "diagnostics", "survival"]
+        vec![
+            "genes",
+            "pathways",
+            "phenotypes",
+            "diagnostics",
+            "clinical_features",
+            "survival"
+        ]
     );
 
     let block = format_sections_block("disease", &disease.id, sections);
@@ -276,11 +283,16 @@ fn sections_disease_base_card_surfaces_diagnostics_before_optional_sections() {
     let survival = block
         .find("biomcp get disease MONDO:0005105 survival")
         .expect("survival command");
+    let clinical_features = block
+        .find("biomcp get disease MONDO:0005105 clinical_features")
+        .expect("clinical features command");
     assert!(genes < pathways);
     assert!(pathways < phenotypes);
     assert!(phenotypes < diagnostics);
-    assert!(diagnostics < survival);
+    assert!(diagnostics < clinical_features);
+    assert!(clinical_features < survival);
     assert!(block.contains("diagnostic tests for this condition from GTR and WHO IVD"));
+    assert!(block.contains("MedlinePlus clinical feature summaries"));
     assert!(block.contains("SEER Explorer cancer survival rates"));
     assert!(!block.contains("biomcp get disease MONDO:0005105 variants"));
 }

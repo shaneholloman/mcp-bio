@@ -159,7 +159,7 @@ pub(crate) fn discover_evidence_urls(result: &DiscoverResult) -> Vec<(&'static s
     evidence::discover_evidence_urls(result)
 }
 
-pub(crate) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, String)> {
+pub(crate) fn disease_evidence_urls(disease: &Disease) -> Vec<(String, String)> {
     evidence::disease_evidence_urls(disease)
 }
 

@@ -90,6 +90,19 @@ This phenotype section is source-backed and may be incomplete for the full disea
 No phenotype annotations found for this disease.
 {% endif -%}
 {% endif -%}
+{% if show_clinical_features_section -%}
+## Clinical Features (MedlinePlus)
+
+{% if clinical_features -%}
+| Rank | Feature | HPO | Confidence | Evidence | Source |
+|---|---|---|---|---|---|
+{% for row in clinical_features -%}
+| {{ row.rank }} | {{ row.label }} | {{ row.hpo }} | {{ row.confidence }} | {{ row.evidence }} | {% if row.source_url %}[{{ row.source }}]({{ row.source_url }}){% else %}{{ row.source }}{% endif %} |
+{% endfor -%}
+{% else -%}
+No MedlinePlus clinical features found for this disease.
+{% endif -%}
+{% endif -%}
 {% if show_diagnostics_section -%}
 ## Diagnostics
 

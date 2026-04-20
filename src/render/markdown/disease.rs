@@ -1,6 +1,7 @@
 //! Disease markdown renderers and disease-specific view helpers.
 
 use super::*;
+use crate::entities::disease::DiseaseClinicalFeature;
 
 #[cfg(test)]
 pub(crate) mod tests;
@@ -32,6 +33,17 @@ struct DiseasePhenotypeRenderRow {
     stage_qualifier: Option<String>,
     qualifiers: Vec<String>,
     source: Option<String>,
+    source_url: Option<String>,
+}
+
+#[derive(serde::Serialize)]
+struct DiseaseClinicalFeatureRenderRow {
+    rank: u16,
+    label: String,
+    hpo: String,
+    confidence: String,
+    evidence: String,
+    source: String,
     source_url: Option<String>,
 }
 
@@ -120,6 +132,33 @@ fn disease_phenotype_rows(disease: &Disease) -> Vec<DiseasePhenotypeRenderRow> {
             qualifiers: row.qualifiers.clone(),
             source: row.source.clone(),
             source_url: disease_source_url(disease, row.source.as_deref(), None),
+        })
+        .collect()
+}
+
+fn format_clinical_feature_hpo(row: &DiseaseClinicalFeature) -> String {
+    match (
+        row.normalized_hpo_id.as_deref(),
+        row.normalized_hpo_label.as_deref(),
+    ) {
+        (Some(id), Some(label)) if !label.trim().is_empty() => format!("{id} ({label})"),
+        (Some(id), _) => id.to_string(),
+        _ => "-".to_string(),
+    }
+}
+
+fn disease_clinical_feature_rows(disease: &Disease) -> Vec<DiseaseClinicalFeatureRenderRow> {
+    disease
+        .clinical_features
+        .iter()
+        .map(|row| DiseaseClinicalFeatureRenderRow {
+            rank: row.rank,
+            label: row.label.clone(),
+            hpo: format_clinical_feature_hpo(row),
+            confidence: format!("{:.3}", row.mapping_confidence),
+            evidence: row.evidence_text.clone(),
+            source: row.source.clone(),
+            source_url: row.source_url.clone(),
         })
         .collect()
 }
@@ -245,6 +284,7 @@ pub fn disease_markdown(
     let show_survival_section = include_all || has_requested("survival");
     let show_funding_section = has_requested("funding");
     let show_diagnostics_section = has_requested("diagnostics");
+    let show_clinical_features_section = has_requested("clinical_features");
     let show_civic_section = include_all || has_requested("civic");
     let show_disgenet_section = has_requested("disgenet");
     let disease_label = if disease.name.trim().is_empty() {
@@ -257,6 +297,7 @@ pub fn disease_markdown(
     let top_gene_score_labels = disease_top_gene_score_labels(disease);
     let gene_association_rows = disease_gene_association_rows(disease);
     let phenotype_rows = disease_phenotype_rows(disease);
+    let clinical_features = disease_clinical_feature_rows(disease);
     let model_rows = disease_model_rows(disease);
     let survival_source_line = disease_survival_source_line(disease);
     let survival_summary_rows = disease_survival_summary_rows(disease);
@@ -283,6 +324,7 @@ pub fn disease_markdown(
         recruiting_trial_count => &disease.recruiting_trial_count,
         pathways => &disease.pathways,
         phenotypes => phenotype_rows,
+        clinical_features => clinical_features,
         key_features => &disease.key_features,
         has_definition => disease.definition.is_some(),
         literature_query => disease_literature_query(disease),
@@ -313,6 +355,7 @@ pub fn disease_markdown(
         show_survival_section => show_survival_section,
         show_funding_section => show_funding_section,
         show_diagnostics_section => show_diagnostics_section,
+        show_clinical_features_section => show_clinical_features_section,
         show_civic_section => show_civic_section,
         show_disgenet_section => show_disgenet_section,
         xrefs => xrefs,

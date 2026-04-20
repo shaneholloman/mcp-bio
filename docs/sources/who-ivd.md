@@ -48,13 +48,6 @@ biomcp get diagnostic "<product_code>" conditions
 Expands the WHO-supported `conditions` section only.
 
 ```bash
-biomcp get diagnostic "<product_code>" regulatory
-```
-
-Adds the optional FDA device overlay when OpenFDA matches the WHO product name
-to device 510(k) or PMA records.
-
-```bash
 biomcp who-ivd sync
 ```
 

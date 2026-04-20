@@ -160,43 +160,14 @@ fn disease_markdown_funding_renders_truthful_notes_without_table() {
 
 #[test]
 fn disease_markdown_all_keeps_opt_in_sections_hidden() {
-    let disease = Disease {
-        id: "MONDO:0007947".to_string(),
-        name: "Marfan syndrome".to_string(),
-        definition: None,
-        synonyms: Vec::new(),
-        parents: Vec::new(),
-        associated_genes: Vec::new(),
-        gene_associations: Vec::new(),
-        top_genes: Vec::new(),
-        top_gene_scores: Vec::new(),
-        treatment_landscape: Vec::new(),
-        recruiting_trial_count: None,
-        pathways: Vec::new(),
-        phenotypes: Vec::new(),
-        clinical_features: Vec::new(),
-        key_features: Vec::new(),
-        variants: Vec::new(),
-        top_variant: None,
-        models: Vec::new(),
-        prevalence: Vec::new(),
-        prevalence_note: None,
-        survival: None,
-        survival_note: None,
-        civic: None,
-        disgenet: None,
-        funding: None,
-        funding_note: None,
-        diagnostics: None,
-        diagnostics_note: None,
-        xrefs: std::collections::HashMap::new(),
-    };
+    let disease = disease_with_clinical_features();
 
     let markdown = disease_markdown(&disease, &["all".to_string()]).expect("all markdown");
 
     assert!(!markdown.contains("## Diagnostics"));
     assert!(!markdown.contains("## Funding (NIH Reporter)"));
     assert!(!markdown.contains("## DisGeNET"));
+    assert!(!markdown.contains("## Clinical Features (MedlinePlus)"));
 }
 
 #[test]
