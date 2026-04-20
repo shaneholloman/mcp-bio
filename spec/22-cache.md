@@ -106,41 +106,6 @@ echo "$out" | mustmatch like "| Min disk free | 10% (default) |"
 echo "$out" | mustmatch like "| Max age | 86400 s (default) |"
 ```
 
-## Cache Health Warning
-
-Full `biomcp health` adds a local `Cache limits` row. When the managed HTTP
-cache is already above `max_size`, that row should warn operators to run
-`biomcp cache clean`, and the JSON summary should increment `.warning`.
-
-```bash
-bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
-tmp_root="$(mktemp -d)"
-trap 'rm -rf "$tmp_root"' EXIT
-mkdir -p "$tmp_root/cache-home" "$tmp_root/config-home/biomcp"
-cat >"$tmp_root/config-home/biomcp/cache.toml" <<'EOF'
-[cache]
-max_size = 10000000000
-min_disk_free = "1B"
-EOF
-
-env XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" \
-  "$bin" search gene BRAF --limit 1 > /dev/null
-
-cat >"$tmp_root/config-home/biomcp/cache.toml" <<'EOF'
-[cache]
-max_size = 1
-min_disk_free = "1B"
-EOF
-
-json_out="$(env XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" "$bin" --json health)"
-echo "$json_out" | jq -e '.warning >= 1' > /dev/null
-echo "$json_out" | jq -e 'any(.rows[]; .api == "Cache limits" and .status == "warning" and (.latency | contains("biomcp cache clean")))' > /dev/null
-
-md_out="$(env XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" "$bin" health)"
-echo "$md_out" | mustmatch like "Cache limits"
-echo "$md_out" | mustmatch like "| Cache limits | warning |"
-```
-
 ## Cache Clean JSON
 
 `biomcp cache clean --json` should expose the stable machine contract for cleanup

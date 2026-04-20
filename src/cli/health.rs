@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 
 use bytesize::ByteSize;
-use futures::future::join_all;
+use futures::stream::{self, StreamExt};
 
 use crate::error::BioMcpError;
 
@@ -1160,6 +1160,81 @@ async fn probe_source(client: reqwest::Client, source: &SourceDescriptor) -> Pro
     }
 }
 
+const HEALTH_API_PROBE_CONCURRENCY_LIMIT: usize = 16;
+const HEALTH_API_PROBE_TIMEOUT: Duration = Duration::from_secs(12);
+
+async fn run_buffered_in_order<T, O, F, Fut, I>(
+    items: I,
+    concurrency_limit: usize,
+    runner: F,
+) -> Vec<O>
+where
+    I: IntoIterator<Item = T>,
+    F: FnMut(T) -> Fut,
+    Fut: std::future::Future<Output = O>,
+{
+    assert!(
+        concurrency_limit > 0,
+        "concurrency_limit must be greater than zero"
+    );
+    stream::iter(items)
+        .map(runner)
+        .buffered(concurrency_limit)
+        .collect()
+        .await
+}
+
+fn timeout_key_configured(source: SourceDescriptor) -> Option<bool> {
+    match source.probe {
+        ProbeKind::AuthGet { .. }
+        | ProbeKind::AuthQueryParam { .. }
+        | ProbeKind::AuthPostJson { .. }
+        | ProbeKind::AlphaGenomeConnect { .. } => Some(true),
+        ProbeKind::OptionalAuthGet { env_var, .. } => Some(configured_key(env_var).is_some()),
+        ProbeKind::Get { .. } | ProbeKind::PostJson { .. } | ProbeKind::VaersQuery => None,
+    }
+}
+
+fn timed_out_probe_outcome(source: SourceDescriptor, timeout: Duration) -> ProbeOutcome {
+    outcome(
+        health_row(
+            source.api,
+            "error".into(),
+            format!("{}ms (timeout)", timeout.as_millis()),
+            source.affects,
+            timeout_key_configured(source),
+        ),
+        ProbeClass::Error,
+    )
+}
+
+async fn probe_source_with_timeout_for_test(
+    client: reqwest::Client,
+    source: SourceDescriptor,
+    timeout: Duration,
+) -> ProbeOutcome {
+    match tokio::time::timeout(timeout, probe_source(client, &source)).await {
+        Ok(outcome) => outcome,
+        Err(_) => timed_out_probe_outcome(source, timeout),
+    }
+}
+
+async fn probe_source_with_timeout(
+    client: reqwest::Client,
+    source: SourceDescriptor,
+) -> ProbeOutcome {
+    probe_source_with_timeout_for_test(client, source, HEALTH_API_PROBE_TIMEOUT).await
+}
+
+async fn run_api_probes(client: reqwest::Client) -> Vec<ProbeOutcome> {
+    run_buffered_in_order(
+        health_sources().iter().copied(),
+        HEALTH_API_PROBE_CONCURRENCY_LIMIT,
+        move |source| probe_source_with_timeout(client.clone(), source),
+    )
+    .await
+}
+
 fn health_http_client() -> Result<reqwest::Client, BioMcpError> {
     static HEALTH_HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
@@ -1304,12 +1379,7 @@ fn report_from_outcomes(outcomes: Vec<ProbeOutcome>) -> HealthReport {
 /// Returns an error when the shared HTTP client cannot be created.
 pub async fn check(apis_only: bool) -> Result<HealthReport, BioMcpError> {
     let client = health_http_client()?;
-    let mut outcomes = join_all(
-        health_sources()
-            .iter()
-            .map(|source| probe_source(client.clone(), source)),
-    )
-    .await;
+    let mut outcomes = run_api_probes(client).await;
 
     if !apis_only {
         outcomes.push(check_ema_local_data());
@@ -1414,6 +1484,8 @@ mod tests {
     use std::future::Future;
     use std::io;
     use std::path::{Path, PathBuf};
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::Duration;
 
     use ssri::Integrity;
@@ -1422,12 +1494,13 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     use super::{
-        CVX_LOCAL_DATA_AFFECTS, EMA_LOCAL_DATA_AFFECTS, GTR_LOCAL_DATA_AFFECTS, HealthReport,
-        HealthRow, ProbeClass, ProbeKind, ProbeOutcome, SourceDescriptor,
-        WHO_IVD_LOCAL_DATA_AFFECTS, WHO_LOCAL_DATA_AFFECTS, affects_for_api, check_cache_dir,
-        check_cache_limits_with, cvx_local_data_outcome, ema_local_data_outcome,
-        gtr_local_data_outcome, health_sources, probe_cache_dir, probe_source,
-        report_from_outcomes, who_ivd_local_data_outcome, who_local_data_outcome,
+        CVX_LOCAL_DATA_AFFECTS, EMA_LOCAL_DATA_AFFECTS, GTR_LOCAL_DATA_AFFECTS,
+        HEALTH_API_PROBE_CONCURRENCY_LIMIT, HealthReport, HealthRow, ProbeClass, ProbeKind,
+        ProbeOutcome, SourceDescriptor, WHO_IVD_LOCAL_DATA_AFFECTS, WHO_LOCAL_DATA_AFFECTS,
+        affects_for_api, check_cache_dir, check_cache_limits_with, cvx_local_data_outcome,
+        ema_local_data_outcome, gtr_local_data_outcome, health_sources, probe_cache_dir,
+        probe_source, probe_source_with_timeout_for_test, report_from_outcomes,
+        run_buffered_in_order, who_ivd_local_data_outcome, who_local_data_outcome,
     };
     use crate::cache::{
         CacheBlob, CacheConfigOrigins, CacheEntry, CachePlannerError, CacheSnapshot, ConfigOrigin,
@@ -1571,6 +1644,16 @@ mod tests {
             !digits.is_empty() && digits.chars().all(|ch| ch.is_ascii_digit()),
             "unexpected latency: {value}"
         );
+    }
+
+    fn update_max(target: &AtomicUsize, candidate: usize) {
+        let mut observed = target.load(Ordering::SeqCst);
+        while candidate > observed {
+            match target.compare_exchange(observed, candidate, Ordering::SeqCst, Ordering::SeqCst) {
+                Ok(_) => break,
+                Err(actual) => observed = actual,
+            }
+        }
     }
 
     fn semantic_scholar_source(url: &'static str) -> SourceDescriptor {
@@ -2669,6 +2752,111 @@ mod tests {
         assert_eq!(outcome.row.api, "Cache limits");
         assert_eq!(outcome.row.status, "error");
         assert!(outcome.row.latency.contains("boom"));
+    }
+
+    #[test]
+    fn health_probes_respect_concurrency_limit_and_source_order() {
+        let input: Vec<_> = (0..(HEALTH_API_PROBE_CONCURRENCY_LIMIT + 5)).collect();
+        let in_flight = Arc::new(AtomicUsize::new(0));
+        let max_in_flight = Arc::new(AtomicUsize::new(0));
+
+        let output = block_on(run_buffered_in_order(
+            input.clone(),
+            HEALTH_API_PROBE_CONCURRENCY_LIMIT,
+            {
+                let in_flight = Arc::clone(&in_flight);
+                let max_in_flight = Arc::clone(&max_in_flight);
+                move |index| {
+                    let in_flight = Arc::clone(&in_flight);
+                    let max_in_flight = Arc::clone(&max_in_flight);
+                    async move {
+                        let current = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
+                        update_max(&max_in_flight, current);
+                        tokio::time::sleep(Duration::from_millis(25)).await;
+                        in_flight.fetch_sub(1, Ordering::SeqCst);
+                        index
+                    }
+                }
+            },
+        ));
+
+        assert_eq!(output, input);
+        assert_eq!(
+            max_in_flight.load(Ordering::SeqCst),
+            HEALTH_API_PROBE_CONCURRENCY_LIMIT
+        );
+        assert_eq!(in_flight.load(Ordering::SeqCst), 0);
+    }
+
+    #[test]
+    fn timed_out_probe_returns_error_row_with_timeout_latency() {
+        let _lock = env_lock();
+        let server = block_on(MockServer::start());
+        let slow_url = Box::leak(format!("{}/health", server.uri()).into_boxed_str());
+
+        block_on(async {
+            Mock::given(method("GET"))
+                .and(path("/health"))
+                .respond_with(ResponseTemplate::new(200).set_delay(Duration::from_millis(100)))
+                .expect(2)
+                .mount(&server)
+                .await;
+        });
+
+        let optional_source = SourceDescriptor {
+            api: "Semantic Scholar",
+            affects: Some("Semantic Scholar features"),
+            probe: ProbeKind::OptionalAuthGet {
+                url: slow_url,
+                env_var: "S2_API_KEY",
+                header_name: "x-api-key",
+                header_value_prefix: "",
+                unauthenticated_ok_status: "available (unauthenticated, shared rate limit)",
+                authenticated_ok_status: "configured (authenticated)",
+                unauthenticated_rate_limited_status: Some(
+                    "unavailable (set S2_API_KEY for reliable access)",
+                ),
+            },
+        };
+        let _optional_env = set_env_var("S2_API_KEY", None);
+        let optional_outcome = block_on(probe_source_with_timeout_for_test(
+            reqwest::Client::new(),
+            optional_source,
+            Duration::from_millis(10),
+        ));
+        assert_eq!(optional_outcome.class, ProbeClass::Error);
+        assert_eq!(optional_outcome.row.status, "error");
+        assert!(optional_outcome.row.latency.ends_with("(timeout)"));
+        assert_eq!(
+            optional_outcome.row.affects.as_deref(),
+            Some("Semantic Scholar features")
+        );
+        assert_eq!(optional_outcome.row.key_configured, Some(false));
+
+        let auth_source = SourceDescriptor {
+            api: "OncoKB",
+            affects: Some("variant oncokb command and variant evidence section"),
+            probe: ProbeKind::AuthGet {
+                url: slow_url,
+                env_var: "ONCOKB_TOKEN",
+                header_name: "Authorization",
+                header_value_prefix: "Bearer ",
+            },
+        };
+        let _auth_env = set_env_var("ONCOKB_TOKEN", Some("test-token"));
+        let auth_outcome = block_on(probe_source_with_timeout_for_test(
+            reqwest::Client::new(),
+            auth_source,
+            Duration::from_millis(10),
+        ));
+        assert_eq!(auth_outcome.class, ProbeClass::Error);
+        assert_eq!(auth_outcome.row.status, "error");
+        assert!(auth_outcome.row.latency.ends_with("(timeout)"));
+        assert_eq!(
+            auth_outcome.row.affects.as_deref(),
+            Some("variant oncokb command and variant evidence section")
+        );
+        assert_eq!(auth_outcome.row.key_configured, Some(true));
     }
 
     #[test]
