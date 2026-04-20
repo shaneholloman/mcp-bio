@@ -37,6 +37,11 @@ dev = [
   "pymdown-extensions>=10.0",
 ]
 
+[tool.ruff]
+extend-exclude = [
+  "architecture/experiments/**",
+]
+
 [tool.maturin]
 bindings = "bin"
 manifest-path = "Cargo.toml"

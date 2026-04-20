@@ -1,13 +1,23 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LINT_SCRIPT = REPO_ROOT / "bin" / "lint"
+PYPROJECT_FILE = REPO_ROOT / "pyproject.toml"
+RUFF_GATE_PROBE = (
+    REPO_ROOT
+    / "architecture"
+    / "experiments"
+    / "_ruff_gate_probe"
+    / "unused_import_probe.py"
+)
 
 
 def _copy_lint_fixture(tmp_path: Path) -> Path:
@@ -44,6 +54,13 @@ def _run_lint(
         check=False,
         env=full_env,
     )
+
+
+def _require_ruff() -> str:
+    ruff = shutil.which("ruff")
+    if ruff is None:
+        pytest.skip("ruff not installed")
+    return ruff
 
 
 @pytest.mark.parametrize("relative_path", ["README.md", "docs/install.md"])
@@ -137,3 +154,52 @@ def test_lint_runs_cargo_deny_license_check_when_present(tmp_path: Path) -> None
     assert result.returncode == 0
     assert log_file.read_text(encoding="utf-8") == "check licenses\n"
     assert "[PASS] Rust license lint (cargo deny check licenses)" in result.stdout
+
+
+def test_repo_ruff_excludes_architecture_experiments_probe() -> None:
+    pyproject = tomllib.loads(PYPROJECT_FILE.read_text(encoding="utf-8"))
+    probe = RUFF_GATE_PROBE.read_text(encoding="utf-8")
+
+    assert "architecture/experiments/**" in pyproject["tool"]["ruff"]["extend-exclude"]
+    assert "import os" in probe
+
+
+def test_lint_ignores_experiment_probe_with_repo_ruff_config(tmp_path: Path) -> None:
+    _require_ruff()
+    repo_root = _copy_lint_fixture(tmp_path)
+    _track_files(
+        repo_root,
+        {
+            "pyproject.toml": PYPROJECT_FILE.read_text(encoding="utf-8"),
+            "architecture/experiments/_ruff_gate_probe/unused_import_probe.py": (
+                RUFF_GATE_PROBE.read_text(encoding="utf-8")
+            ),
+        },
+    )
+
+    result = _run_lint(repo_root, env={"PATH": os.environ.get("PATH", "")})
+
+    assert result.returncode == 0
+    assert "[PASS] Python lint (ruff check .)" in result.stdout
+    assert "unused_import_probe.py" not in result.stdout
+
+
+def test_lint_still_fails_for_production_python_with_repo_ruff_config(
+    tmp_path: Path,
+) -> None:
+    _require_ruff()
+    repo_root = _copy_lint_fixture(tmp_path)
+    _track_files(
+        repo_root,
+        {
+            "pyproject.toml": PYPROJECT_FILE.read_text(encoding="utf-8"),
+            "scripts/production_probe.py": "import os\n",
+        },
+    )
+
+    result = _run_lint(repo_root, env={"PATH": os.environ.get("PATH", "")})
+
+    assert result.returncode == 1
+    assert "[FAIL] Python lint (ruff check .)" in result.stdout
+    assert "scripts/production_probe.py" in result.stdout
+    assert "F401" in result.stdout
