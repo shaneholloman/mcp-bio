@@ -43,7 +43,8 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/02-gene.md::Gene DisGeNET Associations" \
 	--deselect "spec/07-disease.md::Disease DisGeNET Associations" \
 	--deselect "spec/19-discover.md" \
-	--deselect "spec/20-alias-fallback.md"
+	--deselect "spec/20-alias-fallback.md" \
+	--deselect "spec/24-diagnostic.md::Local Health Readiness"
 
 SPEC_SERIAL_FILES = spec/05-drug.md spec/13-study.md spec/21-cross-entity-see-also.md
 SPEC_XDIST_ARGS = -n auto --dist loadfile
