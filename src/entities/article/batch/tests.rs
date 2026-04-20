@@ -22,6 +22,7 @@ fn article_batch_item_projection_keeps_requested_id_year_and_top_entities() {
         abstract_text: None,
         full_text_path: None,
         full_text_note: None,
+        full_text_source: None,
         annotations: Some(ArticleAnnotations {
             genes: vec![
                 AnnotationCount {

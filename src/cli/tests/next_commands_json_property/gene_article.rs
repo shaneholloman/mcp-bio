@@ -242,6 +242,7 @@ fn article_json_next_commands_parse() {
         abstract_text: None,
         full_text_path: None,
         full_text_note: None,
+        full_text_source: None,
         annotations: Some(ArticleAnnotations {
             genes: vec![AnnotationCount {
                 text: "serine-threonine protein kinase".to_string(),

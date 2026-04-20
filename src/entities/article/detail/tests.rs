@@ -1,16 +1,43 @@
+use super::super::fulltext::fulltext_cache_key;
 #[allow(unused_imports)]
 use super::super::test_support::*;
 use super::*;
+use flate2::Compression;
+use flate2::write::GzEncoder;
+use std::io::Write;
+use tar::{Builder, Header};
 #[allow(unused_imports)]
 use wiremock::matchers::{body_string_contains, header, method, path, query_param};
 #[allow(unused_imports)]
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
+fn sample_pmc_oa_archive(title: &str, body: &str) -> Vec<u8> {
+    let article_xml = sample_jats_article_xml(title, body).into_bytes();
+    let mut tar_buf = Vec::new();
+    {
+        let mut builder = Builder::new(&mut tar_buf);
+        let mut header = Header::new_gnu();
+        header.set_size(article_xml.len() as u64);
+        header.set_mode(0o644);
+        header.set_cksum();
+        builder
+            .append_data(&mut header, "article.nxml", article_xml.as_slice())
+            .expect("article archive entry");
+        builder.finish().expect("pmc oa archive");
+    }
+
+    let mut gz = GzEncoder::new(Vec::new(), Compression::default());
+    gz.write_all(&tar_buf).expect("pmc oa archive gzip");
+    gz.finish().expect("pmc oa archive bytes")
+}
+
 #[test]
-fn fulltext_cache_key_is_versioned() {
-    let key = fulltext_cache_key("22663011");
-    assert!(key.starts_with("article-fulltext-jats-v2:"));
-    assert!(key.ends_with("22663011"));
+fn fulltext_cache_key_is_kind_aware_and_versioned() {
+    let key = fulltext_cache_key(
+        crate::entities::article::ArticleFulltextKind::JatsXml,
+        "22663011",
+    );
+    assert_eq!(key, "article-fulltext-v3:jats_xml:22663011");
 }
 
 #[tokio::test]
@@ -118,6 +145,14 @@ async fn get_fulltext_prefers_europepmc_before_ncbi_efetch() {
         .expect("fulltext request should succeed");
 
     assert!(article.full_text_note.is_none());
+    assert_eq!(
+        article.full_text_source,
+        Some(crate::entities::article::ArticleFulltextSource {
+            kind: crate::entities::article::ArticleFulltextKind::JatsXml,
+            label: "Europe PMC XML".to_string(),
+            source: "Europe PMC".to_string(),
+        })
+    );
     let path = article.full_text_path.expect("full text path");
     let metadata = std::fs::metadata(path).expect("saved full text metadata");
     assert!(metadata.len() > 0);
@@ -223,6 +258,269 @@ async fn get_fulltext_falls_back_to_ncbi_efetch_before_pmc_oa() {
         .expect("fulltext request should succeed");
 
     assert!(article.full_text_note.is_none());
+    assert_eq!(
+        article.full_text_source,
+        Some(crate::entities::article::ArticleFulltextSource {
+            kind: crate::entities::article::ArticleFulltextKind::JatsXml,
+            label: "NCBI EFetch PMC XML".to_string(),
+            source: "NCBI EFetch".to_string(),
+        })
+    );
+    let path = article.full_text_path.expect("full text path");
+    let metadata = std::fs::metadata(path).expect("saved full text metadata");
+    assert!(metadata.len() > 0);
+}
+
+#[tokio::test]
+async fn get_fulltext_falls_back_to_pmc_oa_before_europepmc_med() {
+    let _guard = lock_env().await;
+    let pubtator = MockServer::start().await;
+    let europepmc = MockServer::start().await;
+    let efetch = MockServer::start().await;
+    let pmc_oa = MockServer::start().await;
+    let s2 = MockServer::start().await;
+    let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+    let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+    let _efetch_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&efetch.uri()));
+    let _pmc_oa_base = set_env_var("BIOMCP_PMC_OA_BASE", Some(&pmc_oa.uri()));
+    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+    let _s2_key = set_env_var("S2_API_KEY", None);
+
+    Mock::given(method("GET"))
+        .and(path("/publications/export/biocjson"))
+        .and(query_param("pmids", "22663013"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "PubTator3": [{
+                "pmid": 22663013,
+                "pmcid": "PMC123458",
+                "passages": [
+                    {"infons": {"type": "title"}, "text": "pmc oa fallback winner"},
+                    {"infons": {"type": "abstract"}, "text": "Abstract text."}
+                ]
+            }]
+        })))
+        .expect(1)
+        .mount(&pubtator)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/search"))
+        .and(query_param("query", "EXT_ID:22663013 AND SRC:MED"))
+        .and(query_param("format", "json"))
+        .and(query_param("page", "1"))
+        .and(query_param("pageSize", "1"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "hitCount": 1,
+            "resultList": {
+                "result": [{
+                    "id": "22663013",
+                    "pmid": "22663013",
+                    "pmcid": "PMC123458",
+                    "title": "pmc oa fallback winner",
+                    "journalTitle": "Journal One",
+                    "firstPublicationDate": "2025-01-01"
+                }]
+            }
+        })))
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/PMC123458/fullTextXML"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/22663013/fullTextXML"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_string(sample_jats_article_xml(
+                "med should not run",
+                "med should not run.",
+            )),
+        )
+        .expect(0)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/efetch.fcgi"))
+        .and(query_param("db", "pmc"))
+        .and(query_param("id", "123458"))
+        .and(query_param("rettype", "xml"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&efetch)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/"))
+        .and(query_param("id", "PMC123458"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(format!(
+            r#"<records><record><link format="tgz" href="{}/archive.tgz"/></record></records>"#,
+            pmc_oa.uri()
+        )))
+        .expect(1)
+        .mount(&pmc_oa)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/archive.tgz"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_bytes(sample_pmc_oa_archive(
+                "pmc oa fallback winner",
+                "PMC OA body text.",
+            )),
+        )
+        .expect(1)
+        .mount(&pmc_oa)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/graph/v1/paper/PMID:22663013"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "paperId": "paper-1",
+            "title": "pmc oa fallback winner"
+        })))
+        .expect(1)
+        .mount(&s2)
+        .await;
+
+    let article = get("22663013", &["fulltext".to_string()])
+        .await
+        .expect("fulltext request should succeed");
+
+    assert!(article.full_text_note.is_none());
+    assert_eq!(
+        article.full_text_source,
+        Some(crate::entities::article::ArticleFulltextSource {
+            kind: crate::entities::article::ArticleFulltextKind::JatsXml,
+            label: "PMC OA Archive XML".to_string(),
+            source: "PMC OA".to_string(),
+        })
+    );
+    let path = article.full_text_path.expect("full text path");
+    let metadata = std::fs::metadata(path).expect("saved full text metadata");
+    assert!(metadata.len() > 0);
+}
+
+#[tokio::test]
+async fn get_fulltext_falls_back_to_europepmc_med_after_pmc_oa() {
+    let _guard = lock_env().await;
+    let pubtator = MockServer::start().await;
+    let europepmc = MockServer::start().await;
+    let efetch = MockServer::start().await;
+    let pmc_oa = MockServer::start().await;
+    let s2 = MockServer::start().await;
+    let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+    let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+    let _efetch_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&efetch.uri()));
+    let _pmc_oa_base = set_env_var("BIOMCP_PMC_OA_BASE", Some(&pmc_oa.uri()));
+    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+    let _s2_key = set_env_var("S2_API_KEY", None);
+
+    Mock::given(method("GET"))
+        .and(path("/publications/export/biocjson"))
+        .and(query_param("pmids", "22663014"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "PubTator3": [{
+                "pmid": 22663014,
+                "pmcid": "PMC123459",
+                "passages": [
+                    {"infons": {"type": "title"}, "text": "med fallback winner"},
+                    {"infons": {"type": "abstract"}, "text": "Abstract text."}
+                ]
+            }]
+        })))
+        .expect(1)
+        .mount(&pubtator)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/search"))
+        .and(query_param("query", "EXT_ID:22663014 AND SRC:MED"))
+        .and(query_param("format", "json"))
+        .and(query_param("page", "1"))
+        .and(query_param("pageSize", "1"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "hitCount": 1,
+            "resultList": {
+                "result": [{
+                    "id": "22663014",
+                    "pmid": "22663014",
+                    "pmcid": "PMC123459",
+                    "title": "med fallback winner",
+                    "journalTitle": "Journal One",
+                    "firstPublicationDate": "2025-01-01"
+                }]
+            }
+        })))
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/PMC123459/fullTextXML"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/22663014/fullTextXML"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_string(sample_jats_article_xml(
+                "med fallback winner",
+                "Europe PMC MED body text.",
+            )),
+        )
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/efetch.fcgi"))
+        .and(query_param("db", "pmc"))
+        .and(query_param("id", "123459"))
+        .and(query_param("rettype", "xml"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&efetch)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/"))
+        .and(query_param("id", "PMC123459"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("<records></records>"))
+        .expect(1)
+        .mount(&pmc_oa)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/graph/v1/paper/PMID:22663014"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "paperId": "paper-1",
+            "title": "med fallback winner"
+        })))
+        .expect(1)
+        .mount(&s2)
+        .await;
+
+    let article = get("22663014", &["fulltext".to_string()])
+        .await
+        .expect("fulltext request should succeed");
+
+    assert!(article.full_text_note.is_none());
+    assert_eq!(
+        article.full_text_source,
+        Some(crate::entities::article::ArticleFulltextSource {
+            kind: crate::entities::article::ArticleFulltextKind::JatsXml,
+            label: "Europe PMC MED XML".to_string(),
+            source: "Europe PMC".to_string(),
+        })
+    );
     let path = article.full_text_path.expect("full text path");
     let metadata = std::fs::metadata(path).expect("saved full text metadata");
     assert!(metadata.len() > 0);

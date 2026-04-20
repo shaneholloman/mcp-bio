@@ -2,19 +2,15 @@
 
 use crate::error::BioMcpError;
 use crate::sources::europepmc::{EuropePmcClient, EuropePmcResult, EuropePmcSearchResponse};
-use crate::sources::ncbi_efetch::NcbiEfetchClient;
-use crate::sources::ncbi_idconv::NcbiIdConverterClient;
-use crate::sources::pmc_oa::PmcOaClient;
 use crate::sources::pubtator::PubTatorClient;
 use crate::sources::semantic_scholar::{SemanticScholarClient, SemanticScholarPaper};
 use crate::transform;
-use crate::utils::download;
 use tracing::warn;
 
 use super::{
     ARTICLE_SECTION_ALL, ARTICLE_SECTION_ANNOTATIONS, ARTICLE_SECTION_FULLTEXT,
     ARTICLE_SECTION_NAMES, ARTICLE_SECTION_TLDR, Article, ArticleSemanticScholar,
-    ArticleSemanticScholarPdf, FULLTEXT_CACHE_VERSION, INVALID_ARTICLE_ID_MSG,
+    ArticleSemanticScholarPdf, INVALID_ARTICLE_ID_MSG, fulltext,
 };
 
 pub(super) fn is_doi(id: &str) -> bool {
@@ -95,19 +91,6 @@ pub(super) fn parse_article_id(id: &str) -> ArticleIdType {
         return ArticleIdType::Pmid(pmid);
     }
     ArticleIdType::Invalid
-}
-
-pub(super) fn fulltext_cache_key(id: &str) -> String {
-    format!("article-fulltext-{FULLTEXT_CACHE_VERSION}:{id}")
-}
-
-async fn render_fulltext_xml(xml: String) -> Result<String, BioMcpError> {
-    tokio::task::spawn_blocking(move || transform::article::extract_text_from_xml(&xml))
-        .await
-        .map_err(|err| BioMcpError::Api {
-            api: "article".to_string(),
-            message: format!("Full text render worker failed: {err}"),
-        })
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -363,9 +346,7 @@ async fn enrich_article_with_semantic_scholar(article: &mut Article) -> Result<(
 pub async fn get(id: &str, sections: &[String]) -> Result<Article, BioMcpError> {
     let id = id.trim();
     let section_flags = parse_sections(sections)?;
-    let full_text = section_flags.include_fulltext;
     let section_only = is_section_only_request(sections, section_flags.include_all);
-    let europe = EuropePmcClient::new()?;
     let mut article = get_article_base(id).await?;
 
     enrich_article_with_semantic_scholar(&mut article).await?;
@@ -377,94 +358,8 @@ pub async fn get(id: &str, sections: &[String]) -> Result<Article, BioMcpError> 
         article.semantic_scholar = None;
     }
 
-    if full_text {
-        let mut full_text_err: Option<BioMcpError> = None;
-        let mut resolved_pmcid = article.pmcid.clone();
-
-        if resolved_pmcid.is_none() {
-            match NcbiIdConverterClient::new() {
-                Ok(ncbi) => {
-                    if let Some(pmid) = article.pmid.as_deref() {
-                        match ncbi.pmid_to_pmcid(pmid).await {
-                            Ok(value) => resolved_pmcid = value,
-                            Err(err) => full_text_err = Some(err),
-                        }
-                    } else if let Some(doi) = article.doi.as_deref() {
-                        match ncbi.doi_to_pmcid(doi).await {
-                            Ok(value) => resolved_pmcid = value,
-                            Err(err) => full_text_err = Some(err),
-                        }
-                    }
-                }
-                Err(err) => full_text_err = Some(err),
-            }
-        }
-
-        if article.pmcid.is_none() {
-            article.pmcid = resolved_pmcid.clone();
-        }
-
-        let mut xml: Option<String> = None;
-        if let Some(pmcid) = resolved_pmcid.as_deref() {
-            match europe.get_full_text_xml("PMC", pmcid).await {
-                Ok(value) => xml = value,
-                Err(err) => full_text_err = Some(err),
-            }
-        }
-        if xml.is_none()
-            && let Some(pmcid) = resolved_pmcid.as_deref()
-        {
-            match NcbiEfetchClient::new() {
-                Ok(ncbi_efetch) => match ncbi_efetch.get_full_text_xml(pmcid).await {
-                    Ok(value) => xml = value,
-                    Err(err) => full_text_err = Some(err),
-                },
-                Err(err) => full_text_err = Some(err),
-            }
-        }
-        if xml.is_none()
-            && let Some(pmcid) = resolved_pmcid.as_deref()
-        {
-            match PmcOaClient::new() {
-                Ok(pmc_oa) => match pmc_oa.get_full_text_xml(pmcid).await {
-                    Ok(value) => xml = value,
-                    Err(err) => full_text_err = Some(err),
-                },
-                Err(err) => full_text_err = Some(err),
-            }
-        }
-        if xml.is_none()
-            && let Some(pmid) = article.pmid.as_deref()
-        {
-            match europe.get_full_text_xml("MED", pmid).await {
-                Ok(value) => xml = value,
-                Err(err) => full_text_err = Some(err),
-            }
-        }
-
-        if let Some(xml) = xml {
-            let text = render_fulltext_xml(xml).await?;
-            let key = article
-                .pmid
-                .as_deref()
-                .or(article.doi.as_deref())
-                .or(article.pmcid.as_deref())
-                .unwrap_or(id);
-            let path = download::save_atomic(&fulltext_cache_key(key), &text).await?;
-            article.full_text_path = Some(path);
-            article.full_text_note = None;
-        } else if let Some(err) = full_text_err {
-            warn!(?err, id, "Full text retrieval failed");
-            article.full_text_note = Some("Full text not available: API error".into());
-        } else if article.pmcid.is_none() {
-            article.full_text_note =
-                Some("Full text not available: Article not in PubMed Central".into());
-        } else {
-            article.full_text_note = Some(
-                "Full text not available: Full text not available from PMC full-text sources"
-                    .into(),
-            );
-        }
+    if section_flags.include_fulltext {
+        fulltext::resolve_fulltext(&mut article, id).await?;
     }
 
     Ok(article)

@@ -227,6 +227,7 @@ fn markdown_detail_outputs_label_article_trial_and_pathway_sources() {
         abstract_text: Some("Abstract text.".to_string()),
         full_text_path: None,
         full_text_note: Some("Saved full text unavailable.".to_string()),
+        full_text_source: None,
         annotations: Some(ArticleAnnotations {
             genes: vec![AnnotationCount {
                 text: "CFTR".to_string(),
@@ -252,7 +253,8 @@ fn markdown_detail_outputs_label_article_trial_and_pathway_sources() {
     assert!(article_markdown.contains("## Authors (PubMed / Europe PMC)"));
     assert!(article_markdown.contains("## Abstract (PubMed / Europe PMC)"));
     assert!(article_markdown.contains("## PubTator Annotations"));
-    assert!(article_markdown.contains("## Full Text (PMC OA)"));
+    assert!(article_markdown.contains("## Full Text"));
+    assert!(!article_markdown.contains("## Full Text (PMC OA)"));
     assert!(article_markdown.contains("## Semantic Scholar"));
 
     let trial = crate::entities::trial::Trial {
