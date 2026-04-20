@@ -27,7 +27,10 @@ fn get_disease_help_includes_when_to_use_guidance() {
     assert!(help.contains("normalized disease card"));
     assert!(help.contains("diagnostics, funding, survival, or clinical_features"));
     assert!(help.contains("MedlinePlus clinical-summary section for configured diseases"));
+    assert!(help.contains("MedlinePlus clinical-summary rows for configured diseases"));
     assert!(help.contains("remains excluded from all"));
+    assert!(!help.contains("currently empty until extraction support is wired"));
+    assert!(!help.contains("accepted MedlinePlus clinical-feature foundation section"));
     assert!(help.contains("tuberculosis diagnostics"));
     assert!(help.contains("melanoma clinical_features"));
     assert!(help.contains("search article -d"));
