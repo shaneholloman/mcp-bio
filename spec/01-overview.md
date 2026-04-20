@@ -5,7 +5,7 @@ BioMCP is a single-binary CLI for querying biomedical sources with one command g
 | Section | Command focus | Why it matters |
 |---|---|---|
 | Version | `biomcp version` | Confirms binary identity and semantic versioning |
-| Health check | `biomcp health --apis-only` | Confirms per-source connectivity and excluded key-gated sources |
+| Health check | `biomcp health` / `biomcp health --apis-only` | Confirms the shipped health inventory, local readiness rows, and API-only omission contract |
 | Command reference | `biomcp list` | Confirms core entities are discoverable |
 | Entity help | `biomcp list gene` | Confirms contextual filter/helper guidance |
 | Article routing | `biomcp list article` | Confirms topic-vs-review-vs-follow-up guidance |
@@ -22,46 +22,79 @@ echo "$out" | mustmatch '/^biomcp [0-9]+\.[0-9]+\.[0-9]+/'
 
 ## Health Check
 
-The API-only health command reports one row per live upstream provider plus
-explicit excluded rows for key-gated sources. Full `biomcp health` adds local
-readiness rows such as EMA local data, WHO Prequalification local data, CDC
-CVX/MVX local data, GTR local data, cache dir, and cache-limit warnings. We
-assert on the API-only table header, the CDC WONDER VAERS row, and the explicit
-status summary here because those are stable formatting markers for the
-upstream inventory contract.
+The retained health proof now covers both shipped surfaces in one place. The
+API-only markdown run keeps the stable inventory markers and proves that every
+local readiness row stays omitted. The full JSON run uses deterministic local
+fixture roots plus temporary cache/config roots so we can assert the complete
+row set, the summary counts, and the unchanged JSON shape without relying on
+ambient machine state.
 
 ```bash
 bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
-out="$(env -u NCI_API_KEY -u ONCOKB_TOKEN -u DISGENET_API_KEY -u ALPHAGENOME_API_KEY -u S2_API_KEY -u UMLS_API_KEY "$bin" health --apis-only)"
-echo "$out" | mustmatch like "| API | Status | Latency |"
-echo "$out" | mustmatch like "| LitSense2 |"
-echo "$out" | mustmatch like "| NIH Reporter |"
-echo "$out" | mustmatch like "| SEER Explorer |"
-echo "$out" | mustmatch like "| CDC WONDER VAERS |"
-echo "$out" | mustmatch not like "EMA local data ("
-echo "$out" | mustmatch not like "WHO Prequalification local data ("
-echo "$out" | mustmatch not like "CDC CVX/MVX local data ("
-echo "$out" | mustmatch not like "GTR local data ("
-echo "$out" | mustmatch not like "Cache dir ("
-echo "$out" | mustmatch not like "Cache limits"
-echo "$out" | mustmatch not like "(key:"
-echo "$out" | mustmatch '/Status: [0-9]+ ok, [0-9]+ error, [0-9]+ excluded/'
 
-json_out="$(env -u NCI_API_KEY -u ONCOKB_TOKEN -u DISGENET_API_KEY -u ALPHAGENOME_API_KEY -u S2_API_KEY -u UMLS_API_KEY "$bin" --json health --apis-only)"
+api_only_out="$(env -u NCI_API_KEY -u ONCOKB_TOKEN -u DISGENET_API_KEY -u ALPHAGENOME_API_KEY -u S2_API_KEY -u UMLS_API_KEY "$bin" health --apis-only)"
+echo "$api_only_out" | mustmatch like "| API | Status | Latency |"
+echo "$api_only_out" | mustmatch like "| LitSense2 |"
+echo "$api_only_out" | mustmatch like "| NIH Reporter |"
+echo "$api_only_out" | mustmatch like "| SEER Explorer |"
+echo "$api_only_out" | mustmatch like "| CDC WONDER VAERS |"
+echo "$api_only_out" | mustmatch not like "EMA local data ("
+echo "$api_only_out" | mustmatch not like "WHO Prequalification local data ("
+echo "$api_only_out" | mustmatch not like "CDC CVX/MVX local data ("
+echo "$api_only_out" | mustmatch not like "GTR local data ("
+echo "$api_only_out" | mustmatch not like "WHO IVD local data ("
+echo "$api_only_out" | mustmatch not like "Cache dir ("
+echo "$api_only_out" | mustmatch not like "Cache limits"
+echo "$api_only_out" | mustmatch not like "(key:"
+echo "$api_only_out" | mustmatch '/Status: [0-9]+ ok, [0-9]+ error, [0-9]+ excluded/'
+
+bash fixtures/setup-ema-spec-fixture.sh "$PWD"
+bash fixtures/setup-cvx-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-pq-spec-fixture.sh "$PWD"
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-ema-env"
+. "$PWD/.cache/spec-cvx-env"
+. "$PWD/.cache/spec-who-pq-env"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+
+tmp_root="$(mktemp -d)"
+trap 'rm -rf "$tmp_root"' EXIT
+mkdir -p "$tmp_root/cache-home" "$tmp_root/config-home"
+
+json_out="$(env -u NCI_API_KEY -u ONCOKB_TOKEN -u DISGENET_API_KEY -u ALPHAGENOME_API_KEY -u S2_API_KEY -u UMLS_API_KEY XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" "$bin" --json health)"
+echo "$json_out" | jq -e 'keys == ["excluded", "healthy", "rows", "total", "warning"]' > /dev/null
+echo "$json_out" | jq -e '.total == 55' > /dev/null
+echo "$json_out" | jq -e '.total == (.rows | length)' > /dev/null
+echo "$json_out" | jq -e '([.rows[].api] | unique | length) == 55' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.status | type) == "string")' > /dev/null
-echo "$json_out" | jq -e 'all(.rows[]; ((.status | contains("(key:")) | not))' > /dev/null
-echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("EMA local data (") | not))' > /dev/null
-echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("WHO Prequalification local data (") | not))' > /dev/null
-echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("CDC CVX/MVX local data (") | not))' > /dev/null
-echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("GTR local data (") | not))' > /dev/null
-echo "$json_out" | jq -e 'all(.rows[]; (.api | startswith("Cache dir (") | not))' > /dev/null
-echo "$json_out" | jq -e 'all(.rows[]; .api != "Cache limits")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "LitSense2")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "NIH Reporter")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "SEER Explorer")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "CDC WONDER VAERS")' > /dev/null
+echo "$json_out" | jq -e --arg ema "$BIOMCP_EMA_DIR" 'any(.rows[]; .api == "EMA local data (\($ema))" and .status == "configured")' > /dev/null
+echo "$json_out" | jq -e --arg cvx "$BIOMCP_CVX_DIR" 'any(.rows[]; .api == "CDC CVX/MVX local data (\($cvx))" and .status == "configured")' > /dev/null
+echo "$json_out" | jq -e --arg who "$BIOMCP_WHO_DIR" 'any(.rows[]; .api == "WHO Prequalification local data (\($who))" and .status == "configured")' > /dev/null
+echo "$json_out" | jq -e --arg gtr "$BIOMCP_GTR_DIR" 'any(.rows[]; .api == "GTR local data (\($gtr))" and .status == "configured")' > /dev/null
+echo "$json_out" | jq -e --arg who_ivd "$BIOMCP_WHO_IVD_DIR" 'any(.rows[]; .api == "WHO IVD local data (\($who_ivd))" and .status == "configured")' > /dev/null
+echo "$json_out" | jq -e --arg cache_dir "$tmp_root/cache-home/biomcp" 'any(.rows[]; .api == "Cache dir (\($cache_dir))" and .status == "ok")' > /dev/null
+echo "$json_out" | jq -e 'any(.rows[]; .api == "Cache limits" and .status == "ok")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "OncoKB" and .status == "excluded (set ONCOKB_TOKEN)" and .key_configured == false)' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "MyGene" and ((has("key_configured")) | not))' > /dev/null
+echo "$json_out" | jq -e '
+  def klass:
+    if (.status == "warning") or (.status | endswith("(stale)")) then "warning"
+    elif (.status == "not configured") or (.status | startswith("excluded (set ")) then "excluded"
+    elif (.status == "error") or (.status | startswith("error ")) then "error"
+    else "healthy"
+    end;
+
+  .total == (.rows | length)
+  and .healthy == ([.rows[] | select(klass == "healthy")] | length)
+  and .warning == ([.rows[] | select(klass == "warning")] | length)
+  and .excluded == ([.rows[] | select(klass == "excluded")] | length)
+' > /dev/null
 ```
 
 ## Command Reference

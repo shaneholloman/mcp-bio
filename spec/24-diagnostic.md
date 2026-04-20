@@ -2,12 +2,11 @@
 
 Diagnostic commands now surface source-native test inventory from both the NCBI
 Genetic Testing Registry (GTR) and the WHO Prequalified IVD CSV. This file
-locks down the operator-facing local-data readiness contract plus the public
-multi-source search/get surfaces for the `diagnostic` entity.
+locks down the public multi-source search/get surfaces for the `diagnostic`
+entity while reusing local fixture data to keep those contracts deterministic.
 
 | Section | Command focus | Why it matters |
 |---|---|---|
-| Local health readiness | `biomcp health` | Confirms both local diagnostic bundles appear as readable readiness rows |
 | Default gene search | `search diagnostic --gene BRCA1` | Confirms gene-first workflows still route through GTR under default `--source all` |
 | Explicit WHO gene validation | `search diagnostic --gene BRCA1 --source who-ivd` | Confirms WHO rejects unsupported gene-only search with a recovery hint |
 | WHO disease search | `search diagnostic --disease HIV --source who-ivd` | Confirms WHO disease search returns source-aware rows from the local CSV |
@@ -19,24 +18,6 @@ multi-source search/get surfaces for the `diagnostic` entity.
 | WHO detail card | `get diagnostic "<who_code>"` | Confirms WHO summary/detail behavior, section limits, and quoted next steps |
 | WHO `all` expansion | `get diagnostic "<who_code>" all` | Confirms WHO `all` expands only to the source-supported section set |
 | WHO JSON follow-ups | `--json get diagnostic "<who_code>" conditions` | Confirms WHO JSON keeps quoted `_meta.next_commands` and source-aware `section_sources` |
-
-## Local Health Readiness
-
-Full `biomcp health` should expose local GTR readiness and local WHO IVD
-readiness separately from the API-only inventory so operators can confirm
-diagnostic prerequisites before debugging search or get output.
-
-```bash
-bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
-bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
-. "$PWD/.cache/spec-gtr-env"
-. "$PWD/.cache/spec-who-ivd-env"
-out="$(biomcp health)"
-echo "$out" | mustmatch like "GTR local data ($BIOMCP_GTR_DIR)"
-echo "$out" | mustmatch like "| GTR local data ($BIOMCP_GTR_DIR) | configured |"
-echo "$out" | mustmatch like "WHO IVD local data ($BIOMCP_WHO_IVD_DIR)"
-echo "$out" | mustmatch like "| WHO IVD local data ($BIOMCP_WHO_IVD_DIR) | configured |"
-```
 
 ## Default Gene Search
 
