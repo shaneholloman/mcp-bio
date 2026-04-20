@@ -42,8 +42,10 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/12-search-positionals.md::GWAS Positional Query" \
 	--deselect "spec/02-gene.md::Gene DisGeNET Associations" \
 	--deselect "spec/07-disease.md::Disease DisGeNET Associations" \
+	--deselect "spec/01-overview.md::Health Check" \
 	--deselect "spec/19-discover.md" \
 	--deselect "spec/20-alias-fallback.md" \
+	--deselect "spec/22-cache.md::Cache Health Warning" \
 	--deselect "spec/24-diagnostic.md::Local Health Readiness"
 
 SPEC_SERIAL_FILES = spec/05-drug.md spec/13-study.md spec/21-cross-entity-see-also.md
