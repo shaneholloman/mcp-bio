@@ -1,115 +1,191 @@
 ## Executive Summary
 
-The disease module is missing the production shape needed to port spike 243: MedlinePlus search is fixed at `retmax=3`, `Disease` has no source-native clinical-feature tier, the disease section surface has no `clinical_features` section, and the spike's disease query/symptom fixtures plus offline fallback do not exist in Rust. The target keeps the working HPO `phenotypes` architecture intact, adds an opt-in MedlinePlus-backed `clinical_features` tier beside it, extends the existing MedlinePlus client without breaking discover/health callers, and ports the spike logic behind a focused disease submodule. The path is three independently shippable build tickets.
+Article fulltext is architecturally stuck in one `detail.rs` JATS/XML waterfall:
+the renderer hardcodes `PMC OA`, the cache key cannot distinguish extractor
+families, the spike's HTML converter is GPL-blocked, and the existing
+Semantic Scholar PDF metadata is never used for recovery. The target keeps the
+current production JATS renderer, extracts fulltext resolution into an
+article-local module, adds truthful source provenance and source-aware cache
+keys, introduces an explicit `--pdf` last-resort path for open-access PDFs, and
+adds a narrow PMC article-page HTML fallback with a permissive converter. The
+path is three independently shippable tickets.
 
 ## Survey Issues Addressed
 
-- **Issue 1: `MedlinePlusClient` retmax is hardcoded at 3**
-  - Fixed by ticket 252 with `MedlinePlusClient::search_n(query, retmax)` while preserving `search(query)` as `retmax=3`.
-- **Issue 2: `Disease` struct has no `clinical_features` field**
-  - Fixed by ticket 252 with `DiseaseClinicalFeature` and `Disease.clinical_features`.
-- **Issue 3: `DiseaseSections`, section constants, and section names are incomplete**
-  - Fixed in layers: ticket 252 adds parser/constants/section flag, ticket 253 wires enrichment, ticket 254 publishes rendering/help/spec surfaces.
-- **Issue 4: No disease configuration mechanism for MedlinePlus queries and symptom patterns**
-  - Fixed by ticket 252 for the embedded config fixture and ticket 253 for config loading/matching.
-- **Issue 5: No MedlinePlus multi-query dedup and explore-fixture fallback**
-  - Fixed by ticket 253 with multi-query `retmax=5`, URL deduplication, topic selection, and offline fixture fallback.
+- **Issue 1: `html2md` is GPL-blocked**
+  - Ticket 255 adds the repo `cargo deny` allowlist gate.
+  - Ticket 257 ships a permissive HTML dependency set and keeps `html2md` out of
+    the production graph.
+- **Issue 2: JATS extractor duplication is a false problem**
+  - Ticket 255 keeps `src/transform/article/jats.rs` as the canonical renderer
+    and builds the resolver around it instead of importing the spike JATS path.
+- **Issue 3: No HTML source exists in the production fulltext pipeline**
+  - Ticket 257 adds one concrete HTML source: the PMCID-derived PMC article
+    page, fetched only after XML misses.
+- **Issue 4: PDF bytes must be fetched from somewhere**
+  - Ticket 256 adds an explicit `--pdf` path that uses
+    `semantic_scholar.open_access_pdf.url` only after XML misses.
+- **Issue 5: Hardcoded `## Full Text (PMC OA)` template label**
+  - Ticket 255 adds `ArticleFulltextSource` and makes markdown/provenance use the
+    actual winning source label.
+- **Issue 6: `FULLTEXT_CACHE_VERSION` is extraction-algorithm-coupled**
+  - Ticket 255 makes the cache key extractor-family-specific so JATS/HTML/PDF
+    outputs cannot collide.
 
 ## Target Architecture
 
-### MedlinePlus Source Extension
+### Article Fulltext Resolver Boundary
 
-- **Current:** `src/sources/medlineplus.rs::MedlinePlusClient::search()` always sends `retmax=3`. Existing callers are `src/entities/discover.rs` and `src/cli/health.rs`.
-- **Target:** Keep `search()` unchanged for existing callers and add `search_n(&self, query: &str, retmax: u8)` for the disease clinical-features path.
-- **Key changes:** `search()` delegates to `search_n(query, 3)`; disease clinical features call `search_n(query, 5)`; focused wiremock tests prove both query contracts.
-- **Invariants:** Discover and health remain behavior-compatible; no duplicate MedlinePlus source client; no new dependencies.
+- **Current:** `src/entities/article/detail.rs` owns article identity
+  resolution, Semantic Scholar enrichment, the XML waterfall, the JATS render
+  worker, the cache key, and fulltext note generation in one function.
+- **Target:** `src/entities/article/fulltext.rs` owns XML/HTML/PDF acquisition,
+  fallback order, bounded fetches, and source-aware cache/provenance. The
+  article facade keeps identity resolution and delegates fulltext work to the
+  new module.
+- **Key changes:** add `ArticleFulltextKind`, `ArticleFulltextSource`, and
+  `Article.full_text_source`; move the current XML waterfall and save/cache
+  logic out of `detail.rs`; make `templates/article.md.j2`,
+  `src/render/markdown/article.rs`, and `src/render/provenance.rs` render the
+  actual source instead of hardcoded `PMC OA`; add repo-root `deny.toml` and
+  `cargo deny check licenses` to the lint gate.
+- **Invariants:** production `src/transform/article/jats.rs` remains the only
+  shipped JATS renderer; XML stays the default fulltext path; `Saved to:` stays
+  the CLI contract; cache keys include the extractor family.
 
-### Disease Model and Section Surface
+### Opt-In PDF Fallback
 
-- **Current:** `src/entities/disease/mod.rs` has `DiseasePhenotype` and `Disease.phenotypes`; `get.rs` parses 11 disease section flags; `clinical_features` is unknown.
-- **Target:** Add `DiseaseClinicalFeature` and `Disease.clinical_features` beside existing phenotypes. Add `clinical_features` as an explicit disease section, excluded from `all`.
-- **Key changes:** Touch `src/entities/disease/mod.rs`, `src/entities/disease/get.rs`, `src/entities/disease/enrichment.rs`, `src/transform/disease.rs`, `src/entities/disease/test_support.rs`, and direct test constructors.
-- **Invariants:** `phenotypes` remains curated HPO/Monarch/HPO data; `clinical_features` remains source-native MedlinePlus data; unsupported or unrequested clinical features serialize as absent/empty rather than fabricated rows.
+- **Current:** `semantic_scholar.open_access_pdf.url` is displayed in the article
+  card but never used for fulltext extraction.
+- **Target:** `biomcp get article <id> fulltext --pdf` enables one explicit
+  last-resort PDF fetch after XML (and later HTML) failure, using the existing
+  Semantic Scholar open-access URL.
+- **Key changes:** add `--pdf` to `src/cli/article/mod.rs`; introduce
+  `ArticleGetOptions { allow_pdf }`; add `src/transform/article/pdf.rs`; fetch
+  PDF bytes from the article fulltext resolver, not `src/sources/semantic_scholar.rs`;
+  use `unpdf` with a 12-page bound; label successful output as `Semantic Scholar PDF`.
+- **Invariants:** default `get article <id> fulltext` does not attempt PDF;
+  `pdf_oxide` stays out of the first production path; PDF is only tried when
+  the user opts in and a PDF URL exists.
 
-### Clinical Features Logic
+### PMC HTML Fallback
 
-- **Current:** The only implementation is the Python spike under `architecture/experiments/243-architecture-hpo-phenotype-enrichment-for-clinical-symptoms/scripts/clinical_features_spike/`.
-- **Target:** Port the spike contract into `src/entities/disease/clinical_features.rs`, depending only on the disease model and `src/sources/medlineplus.rs`.
-- **Key changes:** Implement `normalize_text`, `slugify`, `source_native_id`, `clinical_feature_config_for`, `load_topics_for_disease`, `select_topics`, `extract_features`, `map_feature`, and `add_clinical_features_section`. Add embedded disease config and offline MedlinePlus topic fixtures for the three spike diseases.
-- **Invariants:** Topic selection prefers direct pages; related pages are used only when no direct page exists; URL dedup preserves first-seen order; HPO mapping uses the reviewed 19-entry fixture; regression checksum stays `f08c35ff31306ff4696bd953eaba4b00aeed9e6746a1228469e1479238e3d34f`.
-
-### Rendering, Provenance, and Specs
-
-- **Current:** `src/render/markdown/disease.rs`, `templates/disease.md.j2`, `src/render/provenance.rs`, and `spec/07-disease.md` know about phenotypes but not clinical features.
-- **Target:** Render `## Clinical Features (MedlinePlus)` only when requested, expose MedlinePlus evidence URLs and `_meta.section_sources`, and document the opt-in section in CLI help/list/docs/specs.
-- **Key changes:** Update `src/render/markdown/disease.rs`, `templates/disease.md.j2`, `src/render/markdown/evidence.rs`, `src/render/provenance.rs`, `src/render/markdown/sections.rs`, `src/render/markdown/related.rs`, `src/cli/disease/mod.rs`, `src/cli/list.rs`, `src/cli/list_reference.md`, `docs/user-guide/disease.md`, `docs/reference/data-sources.md`, and `spec/07-disease.md`.
-- **Invariants:** The new section does not displace existing disease pivots; `all` still excludes clinical features; spec assertions stay structural and offline-friendly.
+- **Current:** no production HTML source is wired, and the spike's HTML path
+  depends on GPL `html2md`.
+- **Target:** when XML misses and a PMCID exists, BioMCP derives
+  `https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/`, fetches the PMC article
+  page, and renders it through a permissive HTML stack before the opt-in PDF
+  branch.
+- **Key changes:** add `src/transform/article/html.rs`; ship `readability-rust`
+  plus an audited permissive HTML-to-Markdown converter; add bounded PMC HTML
+  fetch logic in `src/entities/article/fulltext.rs`; commit focused HTML
+  fixtures for PMC plus two non-production spike pages as converter-quality
+  guards.
+- **Invariants:** HTML remains an internal fallback, not a new section name;
+  PMCID-derived PMC pages are the only initial production HTML source; arbitrary
+  publisher/preprint HTML remains out of scope for this migration.
 
 ## Ticket Sequence
 
 | # | ID | Name | Addresses | Dependencies | Priority | Status |
 |---|-----|------|-----------|-------------|----------|--------|
-| 1 | 252 | Add disease clinical feature model and MedlinePlus retmax support | Issues 1, 2, 3, 4 foundation | none | 8 | ready |
-| 2 | 253 | Port disease clinical feature extraction and enrichment | Issues 3, 4, 5 | 252-add-disease-clinical-feature-model-and-medlineplus-retmax-support | 8 | draft |
-| 3 | 254 | Render disease clinical features and publish section contract | Issue 3 blast radius and public contract | 253-port-disease-clinical-feature-extraction-and-enrichment | 5 | draft |
+| 1 | 255 | Add article fulltext resolver boundary and license gate | Issues 1, 2, 5, 6 foundation | none | 8 | ready |
+| 2 | 256 | Add opt-in PDF fallback for article fulltext | Issue 4, plus source-aware CLI/cache/provenance follow-through | 255-add-article-fulltext-resolver-boundary-and-license-gate | 8 | draft |
+| 3 | 257 | Add PMC HTML fallback for article fulltext | Issues 1 and 3 HTML path | 256-add-opt-in-pdf-fallback-for-article-fulltext | 5 | draft |
 
 ## Doc Updates
 
-- Added `architecture/functional/clinical-features-port.md`.
+- Added `architecture/technical/article-fulltext-markdown.md`.
   - Documents the current survey problems.
-  - Defines the target disease model, section surface, MedlinePlus extension, clinical-features module, rendering/provenance contract, dependency/license position, invariants, and build-ticket decomposition.
-- No unrelated architecture, design, or user docs were edited in this blueprint step.
+  - Defines the target article fulltext resolver, JATS/HTML/PDF boundaries,
+    PMCID-derived PMC HTML fallback, explicit PDF policy, license posture,
+    regression fixtures, invariants, and ticket decomposition.
+- Rewrote `.march/blueprint.md` for ticket 250 with the target architecture,
+  actual ticket IDs, statuses, assumptions, and risk framing.
+- No team-specific `planning/biomcp/planning/quality-bar.md`, strategy, or
+  frontier doc exists in this checkout, so alignment was checked against
+  `architecture/functional/overview.md` and
+  `architecture/technical/source-integration.md` instead.
 
 ## Assumptions
 
-- **Assumption:** `clinical_features` should remain opt-in and excluded from `all`.
-  - **Basis:** The survey recommends opt-in, and existing expensive/separately governed sections (`diagnostics`, `funding`, `disgenet`) are excluded from `all`.
-  - **Validation:** Ticket 252 tests parser/`all` behavior; ticket 254 adds public spec assertions.
-  - **Fallback:** If Ian or a lead wants it in `all`, change the `get.rs` all-expansion, update performance expectations, and adjust specs/docs in ticket 254.
+- **Assumption:** The existing production JATS renderer is strictly better than
+  the spike JATS path and should remain canonical.
+  - **Basis:** The survey compared `src/transform/article/jats.rs` and the spike
+    crate and found production has stronger reference and `xref` handling.
+  - **Validation:** Ticket 255 preserves the current JATS test/spec contract
+    while extracting the resolver boundary.
+  - **Fallback:** If the refactor exposes a missing helper, copy only the needed
+    spike logic into production tests or helpers, not a second JATS renderer.
 
-- **Assumption:** The three minimal MedlinePlus topic fixtures are sufficient for checksum parity.
-  - **Basis:** Spike 243's offline mode uses the committed `clinical_summary_medlineplus_probe.json`, and the target needs only the per-disease topic rows for the regression.
-  - **Validation:** Ticket 253 computes the exact spike checksum from the Rust output.
-  - **Fallback:** If subset extraction loses needed fields, copy the full relevant disease payloads from the probe JSON into the test fixtures.
+- **Assumption:** PDF should stay explicit behind `--pdf`.
+  - **Basis:** The spike proved bounded PDF fallback is useful, but it is slower
+    and noisier than XML; the repo's progressive-disclosure contract prefers
+    opt-in expensive sections and modifiers.
+  - **Validation:** Ticket 256 adds the named modifier and proves the default
+    fulltext path remains unchanged.
+  - **Fallback:** If Ian or a lead wants automatic PDF fallback later, make that
+    a follow-up ticket that updates help, specs, latency expectations, and
+    source-order tests explicitly.
 
-- **Assumption:** Runtime MedlinePlus calls of up to three queries with `retmax=5` are acceptable behind an explicit section.
-  - **Basis:** The section is opt-in, existing HTTP cache middleware is already present, and the spike processed the fixture in milliseconds.
-  - **Validation:** Ticket 253 exercises live/cache request shape and keeps offline regression tests network-free.
-  - **Fallback:** If live latency/noise is unacceptable, tighten query caps, rely more heavily on cached/offline fixtures for the initial three diseases, or require an explicit cache mode for specs.
+- **Assumption:** PMCID-derived PMC article pages are the right first HTML source.
+  - **Basis:** The spike already validated a PMC article page fixture, and PMCID
+    is existing article metadata that deterministically maps to one PMC page URL.
+  - **Validation:** Ticket 257 adds the PMC fixture path plus bounded fetch
+    checks and keeps the non-production HTML fixtures green.
+  - **Fallback:** If PMC article pages prove too unstable, keep the HTML module
+    fixture-backed only and leave runtime HTML disabled while a narrower source
+    ticket is designed.
 
-- **Assumption:** A linear lookup over the 19-entry HPO mapping fixture is enough.
-  - **Basis:** The reviewed mapping fixture is tiny and no new crates are needed.
-  - **Validation:** Ticket 253 unit tests known mappings and checksum output.
-  - **Fallback:** If the mapping grows large, switch to a `std::collections::BTreeMap`/`HashMap` built from embedded data, or audit a new perfect-hash dependency in a separate ticket.
+- **Assumption:** `unpdf` is sufficient as the first shipped PDF engine.
+  - **Basis:** The spike results favored `unpdf` on two of the three PDF quality
+    cases and it keeps the initial production dependency surface smaller.
+  - **Validation:** Ticket 256 proves the article-grade PDF fixture and keeps the
+    additional spike PDFs as regression guards.
+  - **Fallback:** If the article-grade fixture or live recovery path fails, add a
+    separate follow-up ticket for `pdf_oxide` or engine arbitration instead of
+    broadening ticket 256.
 
-- **Assumption:** Rust can match the Python checksum serialization exactly with standard crates.
-  - **Basis:** `serde_json`, `sha2`, and ordered map construction are already available; the checksum input shape is small and explicit.
-  - **Validation:** Ticket 253's checksum regression is the proof.
-  - **Fallback:** If direct serialization differs, implement a small test-only checksum encoder that mirrors Python's sorted compact JSON contract.
-
-- **Assumption:** No standalone research ticket is required.
-  - **Basis:** The survey and spike already validate the approach; remaining uncertainty is implementation fidelity, not source feasibility.
-  - **Validation:** Ticket 253 owns algorithm/checksum proof; ticket 254 owns rendering/spec proof.
-  - **Fallback:** If ticket 253 exposes unexpected MedlinePlus or fixture incompatibility, pause ticket 254 and split a focused research/fix ticket from 253.
+- **Assumption:** Adding `cargo deny` to the lint gate is acceptable repo
+  overhead for this migration.
+  - **Basis:** License compliance is a hard blocker for the HTML/PDF crates, and
+    the foundation ticket can land the allowlist before adding new dependencies.
+  - **Validation:** Ticket 255 makes the allowlist executable in the repo lint
+    gate and documents the local tool requirement.
+  - **Fallback:** If local-tool friction is too high, keep `deny.toml` and move
+    the enforcement step to CI while preserving the same allowlist and ticket
+    scopes.
 
 ## Risk Assessment
 
-- Adding a field to `Disease` can break direct struct initializers across tests.
-  Watch for compile failures in `src/render/markdown/*`, `src/render/provenance.rs`, `src/sources/seer.rs`, and CLI next-command tests after ticket 252. Rollback is local to ticket 252 because it has no runtime behavior change.
-- Section wiring has several synchronized surfaces. Missing one of `DISEASE_SECTION_NAMES`, `DiseaseSections`, `parse_sections()`, enrichment cleanup, or renderer suggestions can create a silently unavailable section. Ticket 252 and 254 tests should cover both parser and user-visible paths.
-- Checksum drift is likely if normalization, fixture order, or JSON serialization differs from Python. Ticket 253 must fail fast on checksum mismatch before rendering work starts.
-- Live MedlinePlus results can change or fail. The target keeps specs and checksum tests on committed fixtures, and live failures should degrade to empty/fallback rows for configured diseases rather than failing unrelated disease sections.
-- Users may confuse curated HPO phenotypes with source-native clinical features. Ticket 254 should label the section as MedlinePlus-backed and preserve HPO mapping confidence instead of presenting mappings as authoritative phenotype annotations.
-- If ticket 253 produces noisy rows for chronic venous insufficiency, do not broaden extraction in ticket 254. Roll back or patch ticket 253's selection/extraction fixture logic first.
+- Refactoring the current XML path into `src/entities/article/fulltext.rs` can
+  accidentally change the waterfall order or note text. Ticket 255 should keep
+  focused detail tests on the existing order and saved-file contract before
+  touching HTML/PDF work.
+- `--pdf` adds a named modifier to an article `get` path that currently uses a
+  positional sections list. Ticket 256 must prove the modifier is parsed as a
+  flag, not swallowed as another section token.
+- PDF URLs point at third-party content and can be slow or large. The target
+  keeps PDF opt-in, bounded, and clearly labeled so the default path remains
+  safe.
+- PMC article pages can change shape more often than PMC XML. Ticket 257 should
+  keep committed HTML fixtures and treat non-PMC pages as converter-quality
+  tests rather than production sources.
+- `cargo deny` can fail on local environments that do not yet have `cargo-deny`
+  installed. Ticket 255 should pair the gate with explicit setup docs instead of
+  a silent skip.
 
 Rollback strategy:
 
-- Ticket 252 can be reverted independently because it only adds empty model/config/client surfaces.
-- Ticket 253 can be reverted while leaving ticket 252's inert schema/client extension in place.
-- Ticket 254 can be reverted independently if rendering/specs expose user-facing issues; JSON extraction from ticket 253 remains available for debugging.
+- Ticket 255 can be reverted independently: the old `detail.rs` XML path is
+  fully recoverable and no new extractor dependencies are added yet.
+- Ticket 256 can be reverted while keeping the fulltext resolver boundary,
+  truthful labels, cache keys, and license gate from ticket 255.
+- Ticket 257 can be reverted independently if PMC HTML fallback proves noisy;
+  the explicit PDF path from ticket 256 remains available for users who opt in.
 
 ## Open Questions
 
-- Should unsupported diseases eventually expose a `clinical_features_note` in JSON/markdown, or is an empty opt-in section enough for the initial three-disease port?
-- Does Ian want a repo-wide `deny.toml`/`cargo deny check licenses` gate as a separate quality ticket? The current port does not need new crates, and this blueprint used `cargo metadata` license evidence.
-- After the three-disease port lands, what is the next expansion source of truth for disease configs: manually reviewed JSON additions, a generated fixture pipeline, or a future live HPO/MedlinePlus mapping workflow?
+- None block tickets 255-257. The remaining expansion questions are post-target:
+  whether to add non-PMC HTML sources after the PMC path lands, and whether a
+  second PDF engine ever justifies the extra dependency surface.
