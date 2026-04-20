@@ -1,3 +1,4 @@
+use super::super::fulltext::fulltext_cache_key;
 #[allow(unused_imports)]
 use super::super::test_support::*;
 use super::*;
@@ -7,10 +8,12 @@ use wiremock::matchers::{body_string_contains, header, method, path, query_param
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[test]
-fn fulltext_cache_key_is_versioned() {
-    let key = fulltext_cache_key("22663011");
-    assert!(key.starts_with("article-fulltext-jats-v2:"));
-    assert!(key.ends_with("22663011"));
+fn fulltext_cache_key_is_kind_aware_and_versioned() {
+    let key = fulltext_cache_key(
+        crate::entities::article::ArticleFulltextKind::JatsXml,
+        "22663011",
+    );
+    assert_eq!(key, "article-fulltext-v3:jats_xml:22663011");
 }
 
 #[tokio::test]
@@ -118,6 +121,14 @@ async fn get_fulltext_prefers_europepmc_before_ncbi_efetch() {
         .expect("fulltext request should succeed");
 
     assert!(article.full_text_note.is_none());
+    assert_eq!(
+        article.full_text_source,
+        Some(crate::entities::article::ArticleFulltextSource {
+            kind: crate::entities::article::ArticleFulltextKind::JatsXml,
+            label: "Europe PMC XML".to_string(),
+            source: "Europe PMC".to_string(),
+        })
+    );
     let path = article.full_text_path.expect("full text path");
     let metadata = std::fs::metadata(path).expect("saved full text metadata");
     assert!(metadata.len() > 0);
@@ -223,6 +234,14 @@ async fn get_fulltext_falls_back_to_ncbi_efetch_before_pmc_oa() {
         .expect("fulltext request should succeed");
 
     assert!(article.full_text_note.is_none());
+    assert_eq!(
+        article.full_text_source,
+        Some(crate::entities::article::ArticleFulltextSource {
+            kind: crate::entities::article::ArticleFulltextKind::JatsXml,
+            label: "NCBI EFetch PMC XML".to_string(),
+            source: "NCBI EFetch".to_string(),
+        })
+    );
     let path = article.full_text_path.expect("full text path");
     let metadata = std::fs::metadata(path).expect("saved full text metadata");
     assert!(metadata.len() > 0);

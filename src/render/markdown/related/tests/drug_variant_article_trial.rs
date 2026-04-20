@@ -328,6 +328,7 @@ fn related_article_uses_article_entities_helper_command() {
         abstract_text: None,
         full_text_path: None,
         full_text_note: None,
+        full_text_source: None,
         annotations: Some(ArticleAnnotations {
             genes: vec![
                 AnnotationCount {

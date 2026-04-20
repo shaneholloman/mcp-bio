@@ -47,7 +47,7 @@ These are PubTator normalized entity mentions for standardized extraction of gen
 {% endif -%}
 {% endif -%}
 {% if show_fulltext_section and (full_text_path or full_text_note) -%}
-## Full Text (PMC OA)
+## Full Text{% if full_text_source %} ({{ full_text_source.label }}){% endif %}
 
 {% if full_text_path -%}
 Saved to: {{ full_text_path }}

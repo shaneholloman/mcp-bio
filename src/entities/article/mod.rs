@@ -6,6 +6,7 @@ mod candidates;
 mod detail;
 mod enrichment;
 mod filters;
+mod fulltext;
 mod graph;
 mod planner;
 mod query;
@@ -62,11 +63,28 @@ pub struct Article {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub full_text_note: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub full_text_source: Option<ArticleFulltextSource>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub annotations: Option<ArticleAnnotations>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub semantic_scholar: Option<ArticleSemanticScholar>,
     #[serde(default)]
     pub pubtator_fallback: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ArticleFulltextKind {
+    JatsXml,
+    Html,
+    Pdf,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleFulltextSource {
+    pub kind: ArticleFulltextKind,
+    pub label: String,
+    pub source: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -497,7 +515,6 @@ const FEDERATED_PAGE_SIZE_CAP: usize = if EUROPE_PMC_PAGE_SIZE < PUBTATOR_PAGE_S
     PUBTATOR_PAGE_SIZE
 };
 const MAX_FEDERATED_FETCH_RESULTS: usize = MAX_PAGE_FETCHES * FEDERATED_PAGE_SIZE_CAP;
-const FULLTEXT_CACHE_VERSION: &str = "jats-v2";
 const PUBMED_RESCUE_POSITION_MAX: usize = 0;
 const INVALID_ARTICLE_ID_MSG: &str = "\
 Unsupported identifier format. BioMCP resolves PMID (digits only, e.g., 22663011), \

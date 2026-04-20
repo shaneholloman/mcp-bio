@@ -103,6 +103,35 @@ echo "$search_out" | mustmatch like "WHO Prequalified IVD"
 echo "$search_out" | mustmatch like 'Use `biomcp get diagnostic "ITPW02232- TC40"` for details.'
 ```
 
+## Article Fulltext Source Labels
+
+Resolved article full text should name the actual winning XML source in both
+markdown and JSON output. This proof uses a local fixture server so the Europe
+PMC PMC XML path wins deterministically instead of depending on live upstream
+availability.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-article-fulltext-source-fixture.sh "$PWD"
+. "$PWD/.cache/spec-article-fulltext-source-env"
+article_fulltext_out="$("$bin" get article 22663011 fulltext)"
+echo "$article_fulltext_out" | mustmatch like "## Full Text (Europe PMC XML)"
+echo "$article_fulltext_out" | mustmatch like "Saved to: "
+```
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+bash fixtures/setup-article-fulltext-source-fixture.sh "$PWD"
+. "$PWD/.cache/spec-article-fulltext-source-env"
+article_fulltext_json="$("$bin" get article 22663011 fulltext --json)"
+echo "$article_fulltext_json" | mustmatch like '"full_text_source": {'
+echo "$article_fulltext_json" | mustmatch like '"kind": "jats_xml"'
+echo "$article_fulltext_json" | mustmatch like '"label": "Europe PMC XML"'
+echo "$article_fulltext_json" | mustmatch like '"source": "Europe PMC"'
+echo "$article_fulltext_json" | mustmatch like '"key": "fulltext"'
+echo "$article_fulltext_json" | mustmatch like '"sources": ['
+```
+
 ## JSON section_sources — Gene, Drug, Disease
 
 Core entity types must include a non-empty `_meta.section_sources` array. The

@@ -48,6 +48,7 @@ fn article_markdown_renders_semantic_scholar_section() {
         abstract_text: None,
         full_text_path: None,
         full_text_note: None,
+        full_text_source: None,
         annotations: None,
         semantic_scholar: Some(crate::entities::article::ArticleSemanticScholar {
             paper_id: Some("paper-1".to_string()),
@@ -71,6 +72,38 @@ fn article_markdown_renders_semantic_scholar_section() {
     assert!(markdown.contains("TLDR: A concise summary."));
     assert!(markdown.contains("Influential citations: 4"));
     assert!(markdown.contains("Open-access PDF: https://example.org/paper.pdf"));
+}
+
+#[test]
+fn article_markdown_renders_resolved_fulltext_source_label() {
+    let article = Article {
+        pmid: Some("22663011".to_string()),
+        pmcid: Some("PMC123456".to_string()),
+        doi: Some("10.1000/example".to_string()),
+        title: "Example".to_string(),
+        authors: Vec::new(),
+        journal: Some("Example Journal".to_string()),
+        date: Some("2024-01-01".to_string()),
+        citation_count: Some(12),
+        publication_type: None,
+        open_access: Some(true),
+        abstract_text: None,
+        full_text_path: Some(std::path::PathBuf::from("/tmp/fulltext.md")),
+        full_text_note: None,
+        full_text_source: Some(crate::entities::article::ArticleFulltextSource {
+            kind: crate::entities::article::ArticleFulltextKind::JatsXml,
+            label: "Europe PMC XML".to_string(),
+            source: "Europe PMC".to_string(),
+        }),
+        annotations: None,
+        semantic_scholar: None,
+        pubtator_fallback: false,
+    };
+
+    let markdown =
+        article_markdown(&article, &["fulltext".to_string()]).expect("markdown should render");
+    assert!(markdown.contains("## Full Text (Europe PMC XML)"));
+    assert!(markdown.contains("Saved to: /tmp/fulltext.md"));
 }
 
 #[test]

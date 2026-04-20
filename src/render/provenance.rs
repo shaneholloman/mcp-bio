@@ -793,13 +793,15 @@ pub(crate) fn article_section_sources(article: &Article) -> Vec<SectionSource> {
         "PubTator Annotations",
         ["PubTator3"],
     );
-    push_section(
-        &mut out,
-        article.full_text_path.is_some() || has_opt_text(&article.full_text_note),
-        "fulltext",
-        "Full Text",
-        ["PMC OA"],
-    );
+    if let Some(full_text_source) = article.full_text_source.as_ref() {
+        push_section(
+            &mut out,
+            true,
+            "fulltext",
+            "Full Text",
+            [full_text_source.source.as_str()],
+        );
+    }
     push_section(
         &mut out,
         article.semantic_scholar.is_some(),
@@ -1717,5 +1719,65 @@ mod tests {
                         "WHO Prequalified IVD".to_string(),
                     ]
         }));
+    }
+
+    #[test]
+    fn article_section_sources_uses_resolved_fulltext_provider() {
+        let article = Article {
+            pmid: Some("22663011".to_string()),
+            pmcid: Some("PMC123456".to_string()),
+            doi: Some("10.1000/example".to_string()),
+            title: "Example article".to_string(),
+            authors: Vec::new(),
+            journal: Some("Example Journal".to_string()),
+            date: Some("2024-01-01".to_string()),
+            citation_count: Some(12),
+            publication_type: Some("Journal Article".to_string()),
+            open_access: Some(true),
+            abstract_text: Some("Abstract text.".to_string()),
+            full_text_path: Some(std::path::PathBuf::from("/tmp/fulltext.md")),
+            full_text_note: None,
+            full_text_source: Some(crate::entities::article::ArticleFulltextSource {
+                kind: crate::entities::article::ArticleFulltextKind::JatsXml,
+                label: "Europe PMC XML".to_string(),
+                source: "Europe PMC".to_string(),
+            }),
+            annotations: None,
+            semantic_scholar: None,
+            pubtator_fallback: false,
+        };
+
+        let sources = article_section_sources(&article);
+        assert!(sources.iter().any(|source| {
+            source.key == "fulltext"
+                && source.label == "Full Text"
+                && source.sources == vec!["Europe PMC".to_string()]
+        }));
+    }
+
+    #[test]
+    fn article_section_sources_omits_note_only_fulltext_failures() {
+        let article = Article {
+            pmid: Some("22663011".to_string()),
+            pmcid: Some("PMC123456".to_string()),
+            doi: Some("10.1000/example".to_string()),
+            title: "Example article".to_string(),
+            authors: Vec::new(),
+            journal: Some("Example Journal".to_string()),
+            date: Some("2024-01-01".to_string()),
+            citation_count: Some(12),
+            publication_type: Some("Journal Article".to_string()),
+            open_access: Some(true),
+            abstract_text: Some("Abstract text.".to_string()),
+            full_text_path: None,
+            full_text_note: Some("Full text not available: API error".to_string()),
+            full_text_source: None,
+            annotations: None,
+            semantic_scholar: None,
+            pubtator_fallback: false,
+        };
+
+        let sources = article_section_sources(&article);
+        assert!(!sources.iter().any(|source| source.key == "fulltext"));
     }
 }
