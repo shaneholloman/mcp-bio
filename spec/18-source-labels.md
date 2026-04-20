@@ -124,12 +124,8 @@ bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-article-fulltext-source-fixture.sh "$PWD"
 . "$PWD/.cache/spec-article-fulltext-source-env"
 article_fulltext_json="$("$bin" get article 22663011 fulltext --json)"
-echo "$article_fulltext_json" | mustmatch like '"full_text_source": {'
-echo "$article_fulltext_json" | mustmatch like '"kind": "jats_xml"'
-echo "$article_fulltext_json" | mustmatch like '"label": "Europe PMC XML"'
-echo "$article_fulltext_json" | mustmatch like '"source": "Europe PMC"'
-echo "$article_fulltext_json" | mustmatch like '"key": "fulltext"'
-echo "$article_fulltext_json" | mustmatch like '"sources": ['
+echo "$article_fulltext_json" | mustmatch like '{"full_text_source":{"kind":"jats_xml","label":"Europe PMC XML","source":"Europe PMC"}}'
+echo "$article_fulltext_json" | mustmatch like '{"_meta":{"section_sources":[{"key":"fulltext","label":"Full Text","sources":["Europe PMC"]}]}}'
 ```
 
 ## JSON section_sources — Gene, Drug, Disease
