@@ -125,7 +125,6 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/15-mcp-runtime.md` | `Stdio Tool Identity` | `1.14s` | passed | `1.15s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/14-pathway.md` | `Exact Title Match Ranks First Across Sources` | `1.13s` | passed | `1.14s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/15-mcp-runtime.md` | `Read-only Study Boundary` | `1.14s` | passed | `1.14s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/17-cross-entity-pivots.md` | `Guide page` | `1.01s` | passed | `1.13s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/02-gene.md` | `Getting Gene Details` | `1.05s` | passed | `0.82s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/14-pathway.md` | `WikiPathways Search Presence` | `0.97s` | passed | `0.99s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/16-protein.md` | `Getting Protein Details` | `0.94s` | passed | `0.99s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -220,7 +219,6 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/03-variant.md` | `Long-Form Exact Variant Details` | `0.17s` | passed | `0.16s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/03-variant.md` | `Residue Alias Search with Gene Flag` | `0.15s` | passed | `0.17s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/14-pathway.md` | `Unsupported WikiPathways Events Section` | `0.17s` | passed | `0.17s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/17-cross-entity-pivots.md` | `Docs navigation` | `0.14s` | passed | `0.17s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/17-cross-entity-pivots.md` | `Gene to Drugs` | `0.12s` | passed | `0.16s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/03-variant.md` | `Population Frequencies` | `0.15s` | passed | `0.15s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/22-cache.md` | `Cache Clear Refuses Non-Interactive Destructive Runs` | `0.15s` | passed | `0.13s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -234,12 +232,8 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/22-cache.md` | `Cache Clean Summary` | `0.10s` | passed | `0.08s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/22-cache.md` | `Cache Stats JSON` | `0.09s` | passed | `0.10s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/03-variant.md` | `Population Compact Markdown` | `0.08s` | passed | `0.09s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/17-cross-entity-pivots.md` | `README entry point` | `0.07s` | passed | `0.09s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/17-cross-entity-pivots.md` | `Docs home entry point` | `0.08s` | passed | `0.08s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/17-cross-entity-pivots.md` | `First query entry point` | `0.08s` | passed | `0.07s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/22-cache.md` | `Cache Clear Supports Full-Wipe Automation with --yes` | `0.07s` | passed | `0.08s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Article Batch Invalid Identifier` | `0.06s` | passed | `0.07s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/17-cross-entity-pivots.md` | `Quick reference entry point` | `0.07s` | passed | `0.07s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/17-guide-workflows.md` | `Discoverability Surfaces` | `0.06s` | passed | `0.07s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Article Batch Limit Enforcement` | `0.06s` | passed | `0.06s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Federated Deep Offset Guard` | `0.06s` | passed | `0.06s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
