@@ -66,8 +66,8 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/09-search-all.md` | `Counts-only Mode` | `7.23s` | passed | `4.04s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/09-search-all.md` | `JSON Search All Preserves Article Metadata` | `7.11s` | passed | `4.00s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/09-search-all.md` | `Multi-slot Search` | `6.90s` | passed | `3.01s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/22-cache.md` | `Cache Health Warning` | `6.02s` | passed | `6.51s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/01-overview.md` | `Health Check` | `6.47s` | passed | `5.79s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/22-cache.md` | `Cache Health Warning` | `6.02s` | passed | `60.00s` | timed out | flaky | move to smoke-only | The audited standalone pass stayed fast, but the end-to-end `make spec-pr` verification timed out at the 60s PR budget under parallel load, so this full `biomcp health` warning proof now runs in the smoke lane. |
+| `spec/01-overview.md` | `Health Check` | `6.47s` | passed | `60.00s` | timed out | flaky | move to smoke-only | The audited standalone pass stayed fast, but the end-to-end `make spec-pr` verification timed out at the 60s PR budget under parallel load, so this API-only `biomcp health --apis-only` proof now runs in the smoke lane with the other full-health headings. |
 | `spec/07-disease.md` | `Disease Survival Hodgkin Mapping` | `6.09s` | passed | `5.08s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Article Batch` | `2.97s` | passed | `5.87s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/09-search-all.md` | `Keyword Search` | `4.83s` | passed | `5.51s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -288,5 +288,8 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/12-search-positionals.md::GWAS Positional Query` | GWAS positional search remains a smoke-only live-network proof. |
 | `spec/02-gene.md::Gene DisGeNET Associations` | Optional live DisGeNET association coverage remains smoke-only. |
 | `spec/07-disease.md::Disease DisGeNET Associations` | Optional live DisGeNET association coverage remains smoke-only. |
+| `spec/01-overview.md::Health Check` | The API-only `biomcp health --apis-only` proof exceeded the 60s PR timeout under parallel `make spec-pr`, so the health inventory contract now runs in the smoke lane. |
+| `spec/22-cache.md::Cache Health Warning` | Full `biomcp health` plus cache seeding exceeded the 60s PR timeout under parallel `make spec-pr`, so the warning proof remains covered in the smoke lane. |
+| `spec/24-diagnostic.md::Local Health Readiness` | Full `biomcp health` plus the local diagnostic readiness rows exceeded the 60s PR timeout under parallel `make spec-pr`, so the heading stays smoke-only. |
 | `spec/19-discover.md` | Entire discover file stays smoke-only because its live exploratory fan-out is not part of the stable PR lane. |
 | `spec/20-alias-fallback.md` | Alias-fallback live probes stay smoke-only and continue to run in the nightly suite. |
