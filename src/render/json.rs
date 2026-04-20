@@ -48,12 +48,16 @@ struct DiscoverJsonResponse<'a> {
     _meta: DiscoverMeta,
 }
 
-pub fn to_entity_json<T: Serialize>(
+pub fn to_entity_json<T, L>(
     entity: &T,
-    evidence_urls: Vec<(&str, String)>,
+    evidence_urls: Vec<(L, String)>,
     next_commands: Vec<String>,
     section_sources: Vec<SectionSource>,
-) -> Result<String, BioMcpError> {
+) -> Result<String, BioMcpError>
+where
+    T: Serialize,
+    L: AsRef<str>,
+{
     to_pretty(&to_entity_json_value_with_suggestions(
         entity,
         evidence_urls,
@@ -63,13 +67,17 @@ pub fn to_entity_json<T: Serialize>(
     )?)
 }
 
-pub fn to_entity_json_with_suggestions<T: Serialize>(
+pub fn to_entity_json_with_suggestions<T, L>(
     entity: &T,
-    evidence_urls: Vec<(&str, String)>,
+    evidence_urls: Vec<(L, String)>,
     next_commands: Vec<String>,
     suggestions: Vec<String>,
     section_sources: Vec<SectionSource>,
-) -> Result<String, BioMcpError> {
+) -> Result<String, BioMcpError>
+where
+    T: Serialize,
+    L: AsRef<str>,
+{
     to_pretty(&to_entity_json_value_with_suggestions(
         entity,
         evidence_urls,
@@ -79,12 +87,16 @@ pub fn to_entity_json_with_suggestions<T: Serialize>(
     )?)
 }
 
-pub fn to_entity_json_value<T: Serialize>(
+pub fn to_entity_json_value<T, L>(
     entity: &T,
-    evidence_urls: Vec<(&str, String)>,
+    evidence_urls: Vec<(L, String)>,
     next_commands: Vec<String>,
     section_sources: Vec<SectionSource>,
-) -> Result<serde_json::Value, BioMcpError> {
+) -> Result<serde_json::Value, BioMcpError>
+where
+    T: Serialize,
+    L: AsRef<str>,
+{
     to_entity_json_value_with_suggestions(
         entity,
         evidence_urls,
@@ -94,17 +106,21 @@ pub fn to_entity_json_value<T: Serialize>(
     )
 }
 
-pub fn to_entity_json_value_with_suggestions<T: Serialize>(
+pub fn to_entity_json_value_with_suggestions<T, L>(
     entity: &T,
-    evidence_urls: Vec<(&str, String)>,
+    evidence_urls: Vec<(L, String)>,
     next_commands: Vec<String>,
     suggestions: Option<Vec<String>>,
     section_sources: Vec<SectionSource>,
-) -> Result<serde_json::Value, BioMcpError> {
+) -> Result<serde_json::Value, BioMcpError>
+where
+    T: Serialize,
+    L: AsRef<str>,
+{
     let evidence_urls = evidence_urls
         .into_iter()
         .filter_map(|(label, url)| {
-            let label = label.trim();
+            let label = label.as_ref().trim();
             let url = url.trim();
             if label.is_empty() || url.is_empty() {
                 return None;
@@ -716,7 +732,7 @@ mod tests {
 
         let json = to_entity_json_with_suggestions(
             &DemoEntity { id: "demo-4" },
-            Vec::new(),
+            Vec::<(&str, String)>::new(),
             vec!["biomcp get gene BRAF".to_string()],
             vec![" biomcp search pgx -g BRAF ".to_string(), String::new()],
             Vec::new(),
@@ -739,7 +755,7 @@ mod tests {
 
         let json = to_entity_json_with_suggestions(
             &DemoEntity { id: "demo-5" },
-            Vec::new(),
+            Vec::<(&str, String)>::new(),
             vec!["biomcp get gene BRAF".to_string()],
             vec![String::new(), "   ".to_string()],
             Vec::new(),
@@ -790,7 +806,7 @@ mod tests {
 
         let json = to_entity_json(
             &DemoEntity { id: "demo-3" },
-            Vec::new(),
+            Vec::<(&str, String)>::new(),
             Vec::new(),
             vec![
                 SectionSource {

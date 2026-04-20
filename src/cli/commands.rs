@@ -423,7 +423,7 @@ See also: biomcp list article")]
     Article(article::ArticleGetArgs),
     /// Get disease by name or ID (e.g., MONDO:0005105)
     #[command(after_help = "\
-When to use: use this for the normalized disease card, then add diagnostics, funding, survival, or clinical_features when you need diagnostic tests, NIH grant context, cancer outcomes, or the accepted MedlinePlus clinical-feature foundation section before pivoting to search article -d for broader review literature. The clinical_features section is opt-in and currently empty until extraction support is wired.
+When to use: use this for the normalized disease card, then add diagnostics, funding, survival, or clinical_features when you need diagnostic tests, NIH grant context, cancer outcomes, or MedlinePlus clinical-summary rows for configured diseases. The clinical_features section is opt-in, remains excluded from all, and unsupported diseases omit fabricated rows; pivot to search article -d when you need broader review literature.
 
 EXAMPLES:
   biomcp get disease melanoma

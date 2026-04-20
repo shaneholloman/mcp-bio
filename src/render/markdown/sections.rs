@@ -7,6 +7,7 @@ const DISEASE_DISCOVERY_SECTION_NAMES: &[&str] = &[
     "pathways",
     "phenotypes",
     "diagnostics",
+    "clinical_features",
     "survival",
     "funding",
     "variants",
@@ -120,6 +121,7 @@ pub(super) fn section_description(entity: &str, section: &str) -> &'static str {
         ("disease", "pathways") => "pathways from associated genes",
         ("disease", "phenotypes") => "HPO phenotype annotations",
         ("disease", "diagnostics") => "diagnostic tests for this condition from GTR and WHO IVD",
+        ("disease", "clinical_features") => "MedlinePlus clinical feature summaries",
         ("disease", "variants") => "disease-associated variants",
         ("disease", "models") => "model-organism evidence",
         ("disease", "prevalence") => "prevalence and epidemiology context",
@@ -170,7 +172,7 @@ pub(super) fn sections_for(requested: &[String], available: &[&str]) -> Vec<Stri
 
 fn visible_section_limit(entity: &str) -> usize {
     match entity {
-        "disease" => 5,
+        "disease" => 6,
         "gene" => 4,
         "diagnostic" => 4,
         _ => 3,

@@ -323,6 +323,7 @@ pub const DISEASE_SECTION_NAMES: &[&str] = &[
 ];
 
 mod associations;
+mod clinical_features;
 mod enrichment;
 mod fallback;
 mod get;

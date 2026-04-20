@@ -1,6 +1,6 @@
 ---
-title: "OpenFDA MCP Tool for Safety and Device Regulatory Workflows | BioMCP"
-description: "Use BioMCP to query OpenFDA adverse events, recalls, device reports, labels, approval context, and diagnostic-device regulatory overlays."
+title: "OpenFDA MCP Tool for Drug Safety Workflows | BioMCP"
+description: "Use BioMCP to query OpenFDA adverse events, recalls, device reports, labels, and approval context for drug safety and surveillance workflows."
 ---
 
 # OpenFDA
@@ -59,13 +59,6 @@ biomcp get drug dabrafenib approvals
 ```
 
 Returns U.S. approval and application details from the Drugs@FDA-derived path.
-
-```bash
-biomcp get diagnostic GTR000000001.1 regulatory
-```
-
-Returns the optional FDA device 510(k)/PMA overlay for a diagnostic when the
-source-native diagnostic name matches OpenFDA device records.
 
 ## API access
 

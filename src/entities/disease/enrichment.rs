@@ -507,6 +507,12 @@ pub(super) async fn apply_requested_sections(
     if sections.include_disgenet {
         add_disgenet_section(disease).await?;
     }
+    if sections.include_clinical_features
+        && let Err(err) =
+            super::clinical_features::add_clinical_features_section(disease, requested_lookup).await
+    {
+        warn!("MedlinePlus unavailable for disease clinical features section: {err}");
+    }
 
     if !sections.include_genes && !sections.include_pathways {
         disease.associated_genes.clear();

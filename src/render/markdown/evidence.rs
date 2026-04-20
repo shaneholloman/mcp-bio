@@ -1,5 +1,7 @@
 //! Evidence-link helpers and entity-specific evidence URL builders for markdown outputs.
 
+use std::collections::HashSet;
+
 use super::*;
 
 pub(super) fn source_matches(source: Option<&str>, needle: &str) -> bool {
@@ -88,11 +90,14 @@ pub(super) fn dailymed_search_url(name: &str) -> Option<String> {
     Some(url.into())
 }
 
-pub(super) fn append_evidence_urls(mut body: String, urls: Vec<(&str, String)>) -> String {
+pub(super) fn append_evidence_urls<L>(mut body: String, urls: Vec<(L, String)>) -> String
+where
+    L: AsRef<str>,
+{
     let links = urls
         .into_iter()
         .filter_map(|(label, url)| {
-            let label = label.trim();
+            let label = label.as_ref().trim();
             let url = url.trim();
             if label.is_empty() || url.is_empty() {
                 return None;
@@ -254,11 +259,11 @@ pub(super) fn trial_evidence_urls(trial: &Trial) -> Vec<(&'static str, String)> 
     )]
 }
 
-pub(super) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, String)> {
+pub(super) fn disease_evidence_urls(disease: &Disease) -> Vec<(String, String)> {
     let mut urls = Vec::new();
     if !disease.id.trim().is_empty() {
         urls.push((
-            "Monarch",
+            "Monarch".to_string(),
             format!("https://monarchinitiative.org/{}", disease.id.trim()),
         ));
     }
@@ -268,7 +273,7 @@ pub(super) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, Str
         .any(|row| source_matches(row.source.as_deref(), "orphanet"))
         && let Some(url) = orphanet_disease_url(disease)
     {
-        urls.push(("Orphanet", url));
+        urls.push(("Orphanet".to_string(), url));
     }
     let has_omim_source = disease
         .gene_associations
@@ -279,7 +284,7 @@ pub(super) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, Str
             .iter()
             .any(|row| source_matches(row.source.as_deref(), "omim"));
     if has_omim_source && let Some(url) = omim_disease_url(disease) {
-        urls.push(("OMIM", url));
+        urls.push(("OMIM".to_string(), url));
     }
     if let Some(url) = disease
         .models
@@ -289,7 +294,29 @@ pub(super) fn disease_evidence_urls(disease: &Disease) -> Vec<(&'static str, Str
             mgi_model_url(row.model_id.as_deref()).or_else(|| mgi_model_url(Some(&row.model)))
         })
     {
-        urls.push(("MGI", url));
+        urls.push(("MGI".to_string(), url));
+    }
+    let mut seen_clinical_urls = HashSet::new();
+    for row in &disease.clinical_features {
+        let Some(url) = row
+            .source_url
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+        else {
+            continue;
+        };
+        if !seen_clinical_urls.insert(url.to_string()) {
+            continue;
+        }
+        let label = row
+            .topic_title
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(|title| format!("MedlinePlus: {title}"))
+            .unwrap_or_else(|| "MedlinePlus".to_string());
+        urls.push((label, url.to_string()));
     }
     urls
 }

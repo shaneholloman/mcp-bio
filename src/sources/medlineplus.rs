@@ -26,7 +26,7 @@ impl MedlinePlusClient {
     }
 
     #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
+    pub(crate) fn new_for_test(base: String) -> Result<Self, BioMcpError> {
         Ok(Self {
             client: crate::sources::test_client()?,
             base: Cow::Owned(base),

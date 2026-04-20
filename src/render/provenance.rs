@@ -569,6 +569,24 @@ pub(crate) fn disease_section_sources(disease: &Disease) -> Vec<SectionSource> {
         "Phenotypes",
         ["Monarch Initiative", "HPO"],
     );
+    let clinical_feature_sources = disease
+        .clinical_features
+        .iter()
+        .map(|row| {
+            if row.source.trim().is_empty() {
+                "MedlinePlus".to_string()
+            } else {
+                row.source.clone()
+            }
+        })
+        .collect::<Vec<_>>();
+    push_section(
+        &mut out,
+        !disease.clinical_features.is_empty(),
+        "clinical_features",
+        "Clinical Features",
+        clinical_feature_sources,
+    );
     if let Some(rows) = &disease.diagnostics {
         push_section(
             &mut out,
@@ -1589,6 +1607,66 @@ mod tests {
                         "NCBI Genetic Testing Registry".to_string(),
                         "WHO Prequalified IVD".to_string(),
                     ]
+        }));
+    }
+
+    #[test]
+    fn disease_section_sources_include_clinical_features() {
+        let disease = Disease {
+            id: "MONDO:0004277".to_string(),
+            name: "uterine leiomyoma".to_string(),
+            definition: None,
+            synonyms: Vec::new(),
+            parents: Vec::new(),
+            associated_genes: Vec::new(),
+            gene_associations: Vec::new(),
+            top_genes: Vec::new(),
+            top_gene_scores: Vec::new(),
+            treatment_landscape: Vec::new(),
+            recruiting_trial_count: None,
+            pathways: Vec::new(),
+            phenotypes: Vec::new(),
+            clinical_features: vec![crate::entities::disease::DiseaseClinicalFeature {
+                rank: 1,
+                label: "heavy menstrual bleeding".to_string(),
+                feature_type: "symptom".to_string(),
+                source: "MedlinePlus".to_string(),
+                source_url: Some("https://medlineplus.gov/uterinefibroids.html".to_string()),
+                source_native_id: "uterinefibroids".to_string(),
+                evidence_tier: "clinical_summary".to_string(),
+                evidence_text: "Heavy menstrual bleeding is a common symptom.".to_string(),
+                evidence_match: "heavy menstrual bleeding".to_string(),
+                body_system: Some("reproductive".to_string()),
+                topic_title: Some("Uterine Fibroids".to_string()),
+                topic_relation: Some("direct".to_string()),
+                topic_selection_score: Some(180.0),
+                normalized_hpo_id: Some("HP:0000132".to_string()),
+                normalized_hpo_label: Some("Menorrhagia".to_string()),
+                mapping_confidence: 0.86,
+                mapping_method: "reviewed_fixture_exact_or_synonym".to_string(),
+            }],
+            key_features: Vec::new(),
+            variants: Vec::new(),
+            top_variant: None,
+            models: Vec::new(),
+            prevalence: Vec::new(),
+            prevalence_note: None,
+            survival: None,
+            survival_note: None,
+            civic: None,
+            disgenet: None,
+            funding: None,
+            funding_note: None,
+            diagnostics: None,
+            diagnostics_note: None,
+            xrefs: std::collections::HashMap::new(),
+        };
+
+        let sources = disease_section_sources(&disease);
+        assert!(sources.iter().any(|source| {
+            source.key == "clinical_features"
+                && source.label == "Clinical Features"
+                && source.sources == vec!["MedlinePlus".to_string()]
         }));
     }
 

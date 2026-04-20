@@ -236,6 +236,34 @@ fn disease_markdown_links_source_cells_and_footer_evidence_urls() {
 }
 
 #[test]
+fn disease_markdown_renders_clinical_features_section() {
+    let disease = disease_with_clinical_features();
+
+    let markdown =
+        disease_markdown(&disease, &["clinical_features".to_string()]).expect("markdown");
+
+    assert!(markdown.contains("## Clinical Features (MedlinePlus)"));
+    assert!(markdown.contains("| Rank | Feature | HPO | Confidence | Evidence | Source |"));
+    assert!(markdown.contains("heavy menstrual bleeding"));
+    assert!(markdown.contains("HP:0000132 (Menorrhagia)"));
+    assert!(markdown.contains("0.860"));
+    assert!(markdown.contains("[MedlinePlus](https://medlineplus.gov/uterinefibroids.html)"));
+    assert!(markdown.contains("...heavy menstrual bleeding..."));
+}
+
+#[test]
+fn disease_markdown_clinical_features_empty_state_is_truthful() {
+    let disease = disease_without_clinical_features();
+
+    let markdown =
+        disease_markdown(&disease, &["clinical_features".to_string()]).expect("markdown");
+
+    assert!(markdown.contains("## Clinical Features (MedlinePlus)"));
+    assert!(markdown.contains("No MedlinePlus clinical features found for this disease."));
+    assert!(!markdown.contains("| Rank | Feature | HPO | Confidence | Evidence | Source |"));
+}
+
+#[test]
 fn disease_markdown_preserves_full_definition_text() {
     let full_definition = concat!(
         "A rare hypomyelinating leukodystrophy disorder in which the cause of the disease is ",

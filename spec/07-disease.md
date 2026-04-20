@@ -11,7 +11,7 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 | Non-cancer funding | `get disease "Marfan syndrome" funding` | Confirms funding coverage is not cancer-specific |
 | Funding stays opt-in | `get disease "chronic myeloid leukemia" all` | Confirms `all` still excludes NIH Reporter funding |
 | Diagnostics pivot | `get disease tuberculosis diagnostics` | Confirms local diagnostic-test rows from disease context |
-| Clinical features foundation | `get disease melanoma clinical_features` | Confirms the accepted opt-in MedlinePlus foundation section remains empty until extraction is wired |
+| Disease clinical features | `get disease "uterine leiomyoma" clinical_features` | Confirms configured diseases populate the opt-in MedlinePlus clinical-feature section while unsupported diseases stay non-fabricating |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
 | Disease phenotypes keep gene pivot | `get disease "Duchenne muscular dystrophy" phenotypes` | Confirms phenotype-only output still keeps the existing disease-to-genes pivot |
@@ -149,13 +149,14 @@ out="$("$bin" get disease melanoma)"
 echo "$out" | mustmatch like "# melanoma"
 echo "$out" | mustmatch like "ID: MONDO:0005105"
 echo "$out" | mustmatch like "Genes (Open Targets): CDKN2A (OT"
-echo "$out" | mustmatch like $'More:\n  biomcp get disease MONDO:0005105 genes   - associated genes\n  biomcp get disease MONDO:0005105 pathways   - pathways from associated genes\n  biomcp get disease MONDO:0005105 phenotypes   - HPO phenotype annotations\n  biomcp get disease MONDO:0005105 diagnostics   - diagnostic tests for this condition from GTR and WHO IVD\n  biomcp get disease MONDO:0005105 survival   - SEER Explorer cancer survival rates'
+echo "$out" | mustmatch like $'More:\n  biomcp get disease MONDO:0005105 genes   - associated genes\n  biomcp get disease MONDO:0005105 pathways   - pathways from associated genes\n  biomcp get disease MONDO:0005105 phenotypes   - HPO phenotype annotations\n  biomcp get disease MONDO:0005105 diagnostics   - diagnostic tests for this condition from GTR and WHO IVD\n  biomcp get disease MONDO:0005105 clinical_features   - MedlinePlus clinical feature summaries\n  biomcp get disease MONDO:0005105 survival   - SEER Explorer cancer survival rates'
 json="$("$bin" --json get disease melanoma)"
-echo "$json" | jq -e '._meta.next_commands[:5] == [
+echo "$json" | jq -e '._meta.next_commands[:6] == [
   "biomcp get disease MONDO:0005105 genes",
   "biomcp get disease MONDO:0005105 pathways",
   "biomcp get disease MONDO:0005105 phenotypes",
   "biomcp get disease MONDO:0005105 diagnostics",
+  "biomcp get disease MONDO:0005105 clinical_features",
   "biomcp get disease MONDO:0005105 survival"
 ]' > /dev/null
 echo "$json" | jq -e '._meta.suggestions | any(. == "biomcp search diagnostic --disease \"melanoma\"")' > /dev/null
@@ -259,9 +260,9 @@ echo "$json" | jq -e '.funding_note == null' > /dev/null
 
 ## Disease Funding Stays Opt-In
 
-`funding` and the empty clinical-feature foundation section should stay
-explicit so `get disease <name_or_id> all` does not render NIH Reporter or
-MedlinePlus clinical-feature output the user did not request.
+`funding` and the MedlinePlus clinical-feature section should stay explicit so
+`get disease <name_or_id> all` does not render NIH Reporter or clinical-feature
+output the user did not request.
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
@@ -314,19 +315,38 @@ echo "$json" | jq -e 'has("diagnostics") | not' > /dev/null
 echo "$json" | jq -e 'has("diagnostics_note") | not' > /dev/null
 ```
 
-## Disease Clinical Features Section Contract
+## Disease Clinical Features
 
-The `clinical_features` section is accepted now so callers can target the
-MedlinePlus clinical-feature path before extraction is enabled. Until that
-follow-on work lands, the command succeeds, renders only the requested-section
-header, skips clinical-feature rows, and omits empty JSON fields and follow-up
-suggestions.
+The `clinical_features` section is an opt-in MedlinePlus clinical-summary path
+for reviewed configured diseases. It should render a table for a configured
+disease, expose source-native row provenance in JSON, and keep evidence URLs
+auditable.
+
+```bash
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease "uterine leiomyoma" clinical_features)"
+echo "$out" | mustmatch like "## Clinical Features (MedlinePlus)"
+echo "$out" | mustmatch like "heavy menstrual bleeding"
+json="$("$bin" --json get disease "uterine leiomyoma" clinical_features)"
+echo "$json" | jq -e '.clinical_features | length > 0' > /dev/null
+echo "$json" | jq -e '.clinical_features[0:3] | all(.source == "MedlinePlus" and (.source_native_id | length > 0) and (.evidence_text | length > 0) and .evidence_tier == "clinical_summary")' > /dev/null
+echo "$json" | jq -e '.clinical_features | any(.label == "heavy menstrual bleeding" and .normalized_hpo_id == "HP:0000132")' > /dev/null
+echo "$json" | jq -e 'any(._meta.section_sources[]; .key == "clinical_features" and (.sources | index("MedlinePlus")))' > /dev/null
+echo "$json" | jq -e '._meta.evidence_urls | any(.url | test("^https://medlineplus.gov/"))' > /dev/null
+```
+
+## Disease Clinical Features Unsupported Disease
+
+Unsupported diseases should not fabricate clinical-feature rows. The command
+succeeds, renders a truthful empty state, omits the empty JSON field, and does
+not suggest the already-requested section as a follow-up.
 
 ```bash
 bin="${BIOMCP_BIN:-biomcp}"
 out="$("$bin" get disease melanoma clinical_features)"
 echo "$out" | mustmatch like "# melanoma - clinical_features"
-echo "$out" | mustmatch not like "## Clinical Features (MedlinePlus)"
+echo "$out" | mustmatch like "## Clinical Features (MedlinePlus)"
+echo "$out" | mustmatch like "No MedlinePlus clinical features found for this disease."
 json="$("$bin" --json get disease melanoma clinical_features)"
 echo "$json" | jq -e 'has("clinical_features") | not' > /dev/null
 echo "$json" | jq -e '([._meta.next_commands[]? | select(contains("clinical_features"))] | length) == 0' > /dev/null
