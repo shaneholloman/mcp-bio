@@ -10,13 +10,15 @@ shared target, owned artifacts, and promotion contract, see
 
 - Rust toolchain with `cargo`
 - `cargo-nextest` for repo-local `make test` and `make check`
+- `cargo-deny` for the repo-local license allowlist check in `make check`
 - `uv` for repo-local pytest and spec flows
 - `curl` for `scripts/contract-smoke.sh`
 
-Install `cargo-nextest` with:
+Install the Rust helper tools with:
 
 ```bash
 cargo install cargo-nextest --locked
+cargo install cargo-deny --locked
 ```
 
 ## Build The Shared Target

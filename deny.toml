@@ -1,0 +1,98 @@
+[licenses]
+version = 2
+allow = [
+  "Apache-2.0",
+  "MIT",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "MPL-2.0",
+]
+
+[[licenses.exceptions]]
+name = "constant_time_eq"
+allow = ["CC0-1.0"]
+
+[[licenses.exceptions]]
+name = "webpki-roots"
+allow = ["CDLA-Permissive-2.0"]
+
+[[licenses.exceptions]]
+name = "xxhash-rust"
+allow = ["BSL-1.0"]
+
+[[licenses.exceptions]]
+name = "icu_collections"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "icu_locale_core"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "icu_normalizer"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "icu_normalizer_data"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "icu_properties"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "icu_properties_data"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "icu_provider"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "litemap"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "potential_utf"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "tinystr"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "unicode-ident"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "writeable"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "yoke"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "yoke-derive"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "zerofrom"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "zerofrom-derive"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "zerotrie"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "zerovec"
+allow = ["Unicode-3.0"]
+
+[[licenses.exceptions]]
+name = "zerovec-derive"
+allow = ["Unicode-3.0"]

@@ -27,13 +27,22 @@ def _track_files(repo_root: Path, files: dict[str, str]) -> None:
     subprocess.run(["git", "add", "."], cwd=repo_root, check=True)
 
 
-def _run_lint(repo_root: Path) -> subprocess.CompletedProcess[str]:
+def _write_executable(path: Path, contents: str) -> None:
+    path.write_text(contents, encoding="utf-8")
+    path.chmod(0o755)
+
+
+def _run_lint(
+    repo_root: Path, *, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
+    full_env = None if env is None else {"PATH": "", **env}
     return subprocess.run(
         ["bash", "bin/lint"],
         cwd=repo_root,
         capture_output=True,
         text=True,
         check=False,
+        env=full_env,
     )
 
 
@@ -73,3 +82,58 @@ def test_lint_reports_each_offending_public_doc_line_once(tmp_path: Path) -> Non
     offending_line = "README.md:1:pip install biomcp-python"
     assert result.returncode == 1
     assert result.stdout.count(offending_line) == 1
+
+
+def test_lint_requires_cargo_deny_for_rust_repos(tmp_path: Path) -> None:
+    repo_root = _copy_lint_fixture(tmp_path)
+    _track_files(
+        repo_root,
+        {
+            "Cargo.toml": '[package]\nname = "fixture"\nversion = "0.1.0"\nedition = "2024"\n'
+        },
+    )
+    tool_dir = tmp_path / "tools"
+    tool_dir.mkdir()
+    _write_executable(tool_dir / "cargo", "#!/usr/bin/env bash\nexit 0\n")
+
+    result = _run_lint(
+        repo_root,
+        env={"PATH": f"{tool_dir}:/usr/bin:/bin"},
+    )
+
+    assert result.returncode == 1
+    assert "cargo install cargo-deny --locked" in result.stdout
+    assert "[FAIL] Rust license lint (cargo-deny missing)" in result.stdout
+
+
+def test_lint_runs_cargo_deny_license_check_when_present(tmp_path: Path) -> None:
+    repo_root = _copy_lint_fixture(tmp_path)
+    _track_files(
+        repo_root,
+        {
+            "Cargo.toml": '[package]\nname = "fixture"\nversion = "0.1.0"\nedition = "2024"\n'
+        },
+    )
+    tool_dir = tmp_path / "tools"
+    tool_dir.mkdir()
+    log_file = tmp_path / "cargo-deny.log"
+    _write_executable(
+        tool_dir / "cargo",
+        "#!/usr/bin/env bash\nif [ \"$1\" = \"deny\" ]; then\n  shift\n  exec cargo-deny \"$@\"\nfi\nexit 0\n",
+    )
+    _write_executable(
+        tool_dir / "cargo-deny",
+        "#!/usr/bin/env bash\nprintf '%s\\n' \"$*\" > \"$CARGO_DENY_LOG\"\n",
+    )
+
+    result = _run_lint(
+        repo_root,
+        env={
+            "CARGO_DENY_LOG": str(log_file),
+            "PATH": f"{tool_dir}:/usr/bin:/bin",
+        },
+    )
+
+    assert result.returncode == 0
+    assert log_file.read_text(encoding="utf-8") == "check licenses\n"
+    assert "[PASS] Rust license lint (cargo deny check licenses)" in result.stdout
