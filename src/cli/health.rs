@@ -1372,7 +1372,7 @@ fn report_from_outcomes(outcomes: Vec<ProbeOutcome>) -> HealthReport {
     }
 }
 
-/// Runs connectivity checks for configured upstream APIs and local EMA/CVX/WHO/cache readiness.
+/// Runs connectivity checks for configured upstream APIs and local EMA/CVX/WHO/GTR/WHO IVD/cache readiness.
 ///
 /// # Errors
 ///
@@ -2798,7 +2798,7 @@ mod tests {
             Mock::given(method("GET"))
                 .and(path("/health"))
                 .respond_with(ResponseTemplate::new(200).set_delay(Duration::from_millis(100)))
-                .expect(2)
+                .expect(3)
                 .mount(&server)
                 .await;
         });
@@ -2826,7 +2826,7 @@ mod tests {
         ));
         assert_eq!(optional_outcome.class, ProbeClass::Error);
         assert_eq!(optional_outcome.row.status, "error");
-        assert!(optional_outcome.row.latency.ends_with("(timeout)"));
+        assert_eq!(optional_outcome.row.latency, "10ms (timeout)");
         assert_eq!(
             optional_outcome.row.affects.as_deref(),
             Some("Semantic Scholar features")
@@ -2851,12 +2851,31 @@ mod tests {
         ));
         assert_eq!(auth_outcome.class, ProbeClass::Error);
         assert_eq!(auth_outcome.row.status, "error");
-        assert!(auth_outcome.row.latency.ends_with("(timeout)"));
+        assert_eq!(auth_outcome.row.latency, "10ms (timeout)");
         assert_eq!(
             auth_outcome.row.affects.as_deref(),
             Some("variant oncokb command and variant evidence section")
         );
         assert_eq!(auth_outcome.row.key_configured, Some(true));
+
+        let public_source = SourceDescriptor {
+            api: "MyGene",
+            affects: Some("gene search and gene get"),
+            probe: ProbeKind::Get { url: slow_url },
+        };
+        let public_outcome = block_on(probe_source_with_timeout_for_test(
+            reqwest::Client::new(),
+            public_source,
+            Duration::from_millis(10),
+        ));
+        assert_eq!(public_outcome.class, ProbeClass::Error);
+        assert_eq!(public_outcome.row.status, "error");
+        assert_eq!(public_outcome.row.latency, "10ms (timeout)");
+        assert_eq!(
+            public_outcome.row.affects.as_deref(),
+            Some("gene search and gene get")
+        );
+        assert_eq!(public_outcome.row.key_configured, None);
     }
 
     #[test]

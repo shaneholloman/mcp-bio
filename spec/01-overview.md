@@ -65,7 +65,9 @@ mkdir -p "$tmp_root/cache-home" "$tmp_root/config-home"
 
 json_out="$(env -u NCI_API_KEY -u ONCOKB_TOKEN -u DISGENET_API_KEY -u ALPHAGENOME_API_KEY -u S2_API_KEY -u UMLS_API_KEY XDG_CACHE_HOME="$tmp_root/cache-home" XDG_CONFIG_HOME="$tmp_root/config-home" "$bin" --json health)"
 echo "$json_out" | jq -e 'keys == ["excluded", "healthy", "rows", "total", "warning"]' > /dev/null
+echo "$json_out" | jq -e '.total == 55' > /dev/null
 echo "$json_out" | jq -e '.total == (.rows | length)' > /dev/null
+echo "$json_out" | jq -e '([.rows[].api] | unique | length) == 55' > /dev/null
 echo "$json_out" | jq -e 'all(.rows[]; (.status | type) == "string")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "LitSense2")' > /dev/null
 echo "$json_out" | jq -e 'any(.rows[]; .api == "NIH Reporter")' > /dev/null
