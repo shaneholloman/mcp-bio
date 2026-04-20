@@ -1,102 +1,15 @@
-# Cross-Entity Pivot Guide Contracts
+# Cross-Entity Pivot CLI Contracts
 
-This spec protects the public workflow guide at
-`docs/how-to/cross-entity-pivots.md`. It covers the guide copy newcomers rely
-on, the entry points that should lead them there, and the runnable pivot
-commands that the guide teaches.
+This spec protects the runnable cross-entity workflows exposed by the CLI. It
+covers pivot helpers and sectioned diagnostic pivots that users can execute at
+the terminal, not docs-site copy or navigation.
 
 | Surface | Representative checks | Why it matters |
 |---|---|---|
-| Guide page | Decision section and family headings | Protects the bounded docs slice |
-| Entry points | README, docs home, getting started, quick reference | Keeps newcomer routes connected |
 | Variant pivots | `variant trials`, `variant articles` | Mutation-first investigation flow |
 | Drug pivots | `drug trials`, `drug adverse-events` | Therapy-to-trial and therapy-to-safety flow |
 | Disease pivots | `disease trials`, `disease drugs`, `disease articles`, `get disease ... diagnostics` | Diagnosis-centered pivots |
 | Gene pivots | `gene trials`, `gene drugs`, `gene articles`, `gene pathways`, `get gene ... diagnostics` | Canonical biomarker pivots |
-
-## Guide page
-
-The guide should exist as one dedicated how-to page and explain the helper
-boundary before it starts the family walkthroughs. These checks assert the key
-headings and command examples the ticket requires.
-
-```bash
-root="$(git rev-parse --show-toplevel)"
-out="$(cat "$root/docs/how-to/cross-entity-pivots.md")"
-echo "$out" | mustmatch like "# How to: use cross-entity pivots"
-echo "$out" | mustmatch like "## When to use a pivot helper vs. a fresh search"
-echo "$out" | mustmatch like "you already know the entity you"
-echo "$out" | mustmatch like 'richer downstream filters such as `--status`, `--phase`, or'
-echo "$out" | mustmatch like "Diagnostic pivots from gene and disease"
-echo "$out" | mustmatch like "sections, not new helper subcommands."
-echo "$out" | mustmatch like "## Variant pivots"
-echo "$out" | mustmatch like "## Drug pivots"
-echo "$out" | mustmatch like "## Disease pivots"
-echo "$out" | mustmatch like "## Gene pivots"
-echo "$out" | mustmatch like "biomcp variant trials \"BRAF V600E\" --limit 5"
-echo "$out" | mustmatch like "biomcp drug adverse-events pembrolizumab --limit 5"
-echo "$out" | mustmatch like "biomcp disease articles \"Lynch syndrome\" --limit 5"
-echo "$out" | mustmatch like "biomcp get disease tuberculosis diagnostics"
-echo "$out" | mustmatch like "biomcp gene pathways BRAF --limit 5"
-echo "$out" | mustmatch like "biomcp get gene BRCA1 diagnostics"
-echo "$out" | mustmatch like "## Other pivot helpers"
-```
-
-## Docs navigation
-
-The docs site nav should list the new guide under the existing How-To section
-so the built site exposes it as a first-class task-oriented page.
-
-```bash
-root="$(git rev-parse --show-toplevel)"
-out="$(cat "$root/mkdocs.yml")"
-echo "$out" | mustmatch like "  - How-To:"
-echo "$out" | mustmatch like "      - Cross-Entity Pivots: how-to/cross-entity-pivots.md"
-```
-
-## README entry point
-
-The repository landing page already teaches helper syntax. It should also point
-readers to the dedicated guide rather than leaving the examples unexplained.
-
-```bash
-root="$(git rev-parse --show-toplevel)"
-out="$(cat "$root/README.md")"
-echo "$out" | mustmatch like "See the [cross-entity pivot guide](docs/how-to/cross-entity-pivots.md)"
-```
-
-## Docs home entry point
-
-The docs home page introduces cross-entity helpers early, so it should direct
-newcomers to the guide from that section.
-
-```bash
-root="$(git rev-parse --show-toplevel)"
-out="$(cat "$root/docs/index.md")"
-echo "$out" | mustmatch like "[cross-entity pivot guide](how-to/cross-entity-pivots.md)"
-```
-
-## First query entry point
-
-The getting-started walkthrough should send users from their first successful
-query to the dedicated pivot workflow guide.
-
-```bash
-root="$(git rev-parse --show-toplevel)"
-out="$(cat "$root/docs/getting-started/first-query.md")"
-echo "$out" | mustmatch like "[cross-entity pivot guide](../how-to/cross-entity-pivots.md)"
-```
-
-## Quick reference entry point
-
-The quick reference page is a common lookup surface for command grammar. Its
-related references list should include the dedicated pivot guide.
-
-```bash
-root="$(git rev-parse --show-toplevel)"
-out="$(cat "$root/docs/reference/quick-reference.md")"
-echo "$out" | mustmatch like "[Cross-Entity Pivot Guide](../how-to/cross-entity-pivots.md)"
-```
 
 ## Variant pivots
 
