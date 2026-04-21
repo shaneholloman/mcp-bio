@@ -5,7 +5,7 @@ use super::dispatch::{
     ArticleSearchJsonPage, article_debug_filters, article_query_summary, article_search_json,
     build_article_debug_plan, resolved_article_date_bounds, truncate_article_annotations,
 };
-use crate::cli::{Cli, Commands, PaginationMeta, SearchEntity};
+use crate::cli::{Cli, Commands, GetEntity, PaginationMeta, SearchEntity};
 
 fn render_article_search_long_help() -> String {
     let mut command = Cli::command();
@@ -19,6 +19,21 @@ fn render_article_search_long_help() -> String {
     article
         .write_long_help(&mut help)
         .expect("article help should render");
+    String::from_utf8(help).expect("help should be utf-8")
+}
+
+fn render_article_get_long_help() -> String {
+    let mut command = Cli::command();
+    let get = command
+        .find_subcommand_mut("get")
+        .expect("get subcommand should exist");
+    let article = get
+        .find_subcommand_mut("article")
+        .expect("article subcommand should exist");
+    let mut help = Vec::new();
+    article
+        .write_long_help(&mut help)
+        .expect("help should render");
     String::from_utf8(help).expect("help should be utf-8")
 }
 
@@ -88,6 +103,54 @@ fn article_date_help_advertises_shared_accepted_formats() {
     ));
     assert!(help.contains("`0` uses the default cap."));
     assert!(help.contains("Setting it equal to `--limit` disables capping."));
+}
+
+#[test]
+fn get_article_help_includes_opt_in_pdf_guidance() {
+    let help = render_article_get_long_help();
+
+    assert!(help.contains("--pdf"));
+    assert!(help.contains("Allow Semantic Scholar PDF as a final fulltext fallback"));
+    assert!(help.contains("`--pdf` requires the fulltext section."));
+    assert!(help.contains("biomcp get article 22663011 fulltext --pdf"));
+}
+
+#[test]
+fn article_get_pdf_modifier_parses_before_fulltext() {
+    let cli = Cli::try_parse_from(["biomcp", "get", "article", "22663011", "--pdf", "fulltext"])
+        .expect("article get should accept --pdf before fulltext");
+
+    let Cli {
+        command: Commands::Get {
+            entity: GetEntity::Article(args),
+        },
+        ..
+    } = cli
+    else {
+        panic!("expected article get command");
+    };
+
+    assert_eq!(args.id, "22663011");
+    assert_eq!(args.sections, vec!["fulltext"]);
+}
+
+#[test]
+fn article_get_pdf_modifier_parses_after_fulltext() {
+    let cli = Cli::try_parse_from(["biomcp", "get", "article", "22663011", "fulltext", "--pdf"])
+        .expect("article get should accept --pdf after fulltext");
+
+    let Cli {
+        command: Commands::Get {
+            entity: GetEntity::Article(args),
+        },
+        ..
+    } = cli
+    else {
+        panic!("expected article get command");
+    };
+
+    assert_eq!(args.id, "22663011");
+    assert_eq!(args.sections.first().map(String::as_str), Some("fulltext"));
 }
 
 #[test]

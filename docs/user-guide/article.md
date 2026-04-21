@@ -175,10 +175,23 @@ Full text section:
 biomcp get article 22663011 fulltext
 ```
 
-This prints a local `Saved to:` path for cached full-text Markdown when PMC
-full text is available. The saved Markdown preserves JATS section structure
-and renders the bibliography under `## References` when the source XML
-includes `<ref-list>`.
+This uses the default article full-text ladder: XML first, then PMC HTML when
+the XML path misses for a PMCID-backed article. It never falls back to PDF.
+When full text resolves, BioMCP prints a local `Saved to:` path for cached
+Markdown and surfaces the winning source label (`Europe PMC XML`, `PMC HTML`,
+etc.) in markdown and JSON provenance.
+
+Opt in to the final PDF rung only when you want the last-resort open-access PDF
+path after XML and PMC HTML both miss:
+
+```bash
+biomcp get article 22663011 fulltext --pdf
+```
+
+With `--pdf`, BioMCP can use the Semantic Scholar open-access PDF URL as the
+final fallback and labels the winner as `Semantic Scholar PDF`. `--pdf` is only
+valid with the `fulltext` section; `biomcp get article 22663011 --pdf` is
+rejected instead of silently doing nothing.
 
 Annotation section:
 

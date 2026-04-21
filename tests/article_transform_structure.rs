@@ -28,9 +28,11 @@ fn expected_article_submodule_files(root: &Path) -> Vec<PathBuf> {
         root.join("src/transform/article/annotations/tests.rs"),
         root.join("src/transform/article/federation.rs"),
         root.join("src/transform/article/federation/tests.rs"),
+        root.join("src/transform/article/html.rs"),
         root.join("src/transform/article/jats.rs"),
         root.join("src/transform/article/jats/refs.rs"),
         root.join("src/transform/article/jats/tests.rs"),
+        root.join("src/transform/article/pdf.rs"),
     ];
     files.sort();
     files

@@ -118,6 +118,9 @@ pub struct ArticleSearchArgs {
 pub struct ArticleGetArgs {
     /// PMID (e.g., 22663011), PMCID (e.g., PMC9984800), or DOI (e.g., 10.1056/NEJMoa1203421)
     pub id: String,
+    /// Allow Semantic Scholar PDF as a final fulltext fallback (requires fulltext section)
+    #[arg(long)]
+    pub pdf: bool,
     /// Sections to include (annotations, fulltext, tldr, all)
     #[arg(trailing_var_arg = true)]
     pub sections: Vec<String>,

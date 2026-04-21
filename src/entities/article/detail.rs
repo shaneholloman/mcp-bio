@@ -9,8 +9,8 @@ use tracing::warn;
 
 use super::{
     ARTICLE_SECTION_ALL, ARTICLE_SECTION_ANNOTATIONS, ARTICLE_SECTION_FULLTEXT,
-    ARTICLE_SECTION_NAMES, ARTICLE_SECTION_TLDR, Article, ArticleSemanticScholar,
-    ArticleSemanticScholarPdf, INVALID_ARTICLE_ID_MSG, fulltext,
+    ARTICLE_SECTION_NAMES, ARTICLE_SECTION_TLDR, Article, ArticleGetOptions,
+    ArticleSemanticScholar, ArticleSemanticScholarPdf, INVALID_ARTICLE_ID_MSG, fulltext,
 };
 
 pub(super) fn is_doi(id: &str) -> bool {
@@ -109,7 +109,7 @@ pub(super) fn parse_sections(sections: &[String]) -> Result<ArticleSections, Bio
         if section.is_empty() {
             continue;
         }
-        if section == "--json" || section == "-j" {
+        if section == "--json" || section == "-j" || section == "--pdf" {
             continue;
         }
 
@@ -142,7 +142,7 @@ pub(super) fn is_section_only_request(sections: &[String], include_all: bool) ->
     }
     sections.iter().any(|s| {
         let value = s.trim().to_ascii_lowercase();
-        !value.is_empty() && value != "--json" && value != "-j"
+        !value.is_empty() && value != "--json" && value != "-j" && value != "--pdf"
     })
 }
 
@@ -343,9 +343,19 @@ async fn enrich_article_with_semantic_scholar(article: &mut Article) -> Result<(
     Ok(())
 }
 
-pub async fn get(id: &str, sections: &[String]) -> Result<Article, BioMcpError> {
+pub async fn get(
+    id: &str,
+    sections: &[String],
+    options: ArticleGetOptions,
+) -> Result<Article, BioMcpError> {
     let id = id.trim();
     let section_flags = parse_sections(sections)?;
+    if options.allow_pdf && !section_flags.include_fulltext {
+        return Err(BioMcpError::InvalidArgument(
+            "--pdf requires the fulltext section (example: biomcp get article 22663011 fulltext --pdf)"
+                .into(),
+        ));
+    }
     let section_only = is_section_only_request(sections, section_flags.include_all);
     let mut article = get_article_base(id).await?;
 
@@ -354,12 +364,13 @@ pub async fn get(id: &str, sections: &[String]) -> Result<Article, BioMcpError> 
     if section_only && !section_flags.include_annotations {
         article.annotations = None;
     }
-    if section_only && !section_flags.include_tldr {
-        article.semantic_scholar = None;
-    }
 
     if section_flags.include_fulltext {
-        fulltext::resolve_fulltext(&mut article, id).await?;
+        fulltext::resolve_fulltext(&mut article, id, options).await?;
+    }
+
+    if section_only && !section_flags.include_tldr {
+        article.semantic_scholar = None;
     }
 
     Ok(article)

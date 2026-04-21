@@ -1,13 +1,41 @@
 use super::{ArticleCommand, ArticleGetArgs, ArticleSearchArgs};
 use crate::cli::CommandOutcome;
 
+fn extract_pdf_from_sections(sections: &[String]) -> (Vec<String>, bool) {
+    let mut allow_pdf = false;
+    let cleaned = sections
+        .iter()
+        .filter_map(|raw| {
+            let trimmed = raw.trim();
+            let normalized = trimmed.to_ascii_lowercase();
+            if normalized == "--pdf" {
+                allow_pdf = true;
+                return None;
+            }
+            if trimmed.is_empty() {
+                return None;
+            }
+            Some(trimmed.to_string())
+        })
+        .collect();
+    (cleaned, allow_pdf)
+}
+
 pub(in crate::cli) async fn handle_get(
     args: ArticleGetArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
     let (sections, json_override) = super::super::extract_json_from_sections(&args.sections);
+    let (sections, pdf_from_sections) = extract_pdf_from_sections(&sections);
     let json_output = json || json_override;
-    let article = crate::entities::article::get(&args.id, &sections).await?;
+    let article = crate::entities::article::get(
+        &args.id,
+        &sections,
+        crate::entities::article::ArticleGetOptions {
+            allow_pdf: args.pdf || pdf_from_sections,
+        },
+    )
+    .await?;
     let text = if json_output {
         crate::render::json::to_entity_json(
             &article,
@@ -165,7 +193,12 @@ pub(in crate::cli) async fn handle_command(
         ArticleCommand::Entities { pmid, limit } => {
             let limit = super::super::paged_fetch_limit(limit, 0, 50)?;
             let sections = vec!["annotations".to_string()];
-            let article = crate::entities::article::get(&pmid, &sections).await?;
+            let article = crate::entities::article::get(
+                &pmid,
+                &sections,
+                crate::entities::article::ArticleGetOptions::default(),
+            )
+            .await?;
             let annotations = article
                 .annotations
                 .clone()

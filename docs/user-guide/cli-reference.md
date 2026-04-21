@@ -16,7 +16,9 @@ biomcp search <entity> [filters]
 biomcp get <entity> <id> [section...]
 ```
 
-Section names are positional trailing arguments after `<id>`.
+Section names are positional trailing arguments after `<id>`. `get article`
+also accepts the named `--pdf` modifier, but only together with the `fulltext`
+section.
 
 ## Evidence metadata
 
@@ -295,6 +297,7 @@ biomcp get pgx warfarin annotations
 ```bash
 biomcp get article 22663011
 biomcp get article 22663011 fulltext
+biomcp get article 22663011 fulltext --pdf
 biomcp get article 22663011 tldr
 biomcp article batch 22663011 24200969
 ```
@@ -304,6 +307,10 @@ requests at 1 req/sec for `search article`, `get article`, `get article ... tldr
 `article batch`, and the explicit `article citations|references|recommendations`
 helpers. Without it, those same paths use the shared unauthenticated pool at
 1 req/2sec.
+
+For article full text, the default ladder is XML -> PMC HTML. Add `--pdf` only
+to `get article <id> fulltext` when you want Semantic Scholar open-access PDF
+as the final fallback after XML and HTML miss.
 
 ### Trial
 

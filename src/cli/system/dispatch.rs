@@ -91,9 +91,13 @@ pub(crate) async fn handle_batch(args: BatchArgs, json: bool) -> anyhow::Result<
             }
         }
         "article" => {
-            let futs = parsed_ids
-                .iter()
-                .map(|id| crate::entities::article::get(id, &batch_sections));
+            let futs = parsed_ids.iter().map(|id| {
+                crate::entities::article::get(
+                    id,
+                    &batch_sections,
+                    crate::entities::article::ArticleGetOptions::default(),
+                )
+            });
             let results = try_join_all(futs).await?;
             if json {
                 super::super::render_batch_json(&results, |item| {

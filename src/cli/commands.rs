@@ -417,7 +417,13 @@ See also: biomcp list gene")]
 EXAMPLES:
   biomcp get article 22663011
   biomcp get article 22663011 annotations
+  biomcp get article 22663011 fulltext
+  biomcp get article 22663011 fulltext --pdf
   biomcp get article 22663011 tldr
+
+Full text defaults to the XML -> PMC HTML ladder.
+Add `--pdf` only with `fulltext` to allow Semantic Scholar PDF as the final fallback.
+`--pdf` requires the fulltext section.
 
 See also: biomcp list article")]
     Article(article::ArticleGetArgs),

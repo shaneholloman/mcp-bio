@@ -3,7 +3,9 @@
 mod anchors;
 mod annotations;
 mod federation;
+mod html;
 mod jats;
+mod pdf;
 
 pub use self::anchors::{
     article_search_abstract_snippet, article_search_fallback_title, clean_abstract, clean_title,
@@ -16,7 +18,9 @@ pub use self::federation::{
     from_europepmc_result, from_europepmc_search_result, from_pubmed_esummary_entry,
     from_pubtator_document, from_pubtator_search_result, merge_europepmc_metadata,
 };
+pub use self::html::extract_text_from_html;
 pub use self::jats::extract_text_from_xml;
+pub use self::pdf::extract_text_from_pdf;
 
 fn collapse_whitespace(value: &str) -> String {
     let mut out = String::with_capacity(value.len());
@@ -40,6 +44,7 @@ fn collapse_whitespace(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use crate::entities::article::{Article, ArticleAnnotations, ArticleSearchResult};
+    use crate::error::BioMcpError;
     use crate::sources::europepmc::EuropePmcResult;
     use crate::sources::pubmed::ESummaryEntry;
     use crate::sources::pubtator::{PubTatorDocument, PubTatorSearchResult};
@@ -68,5 +73,9 @@ mod tests {
         let _ = crate::transform::article::extract_annotations
             as fn(&PubTatorDocument) -> Option<ArticleAnnotations>;
         let _ = crate::transform::article::extract_text_from_xml as fn(&str) -> String;
+        let _ = crate::transform::article::extract_text_from_html
+            as fn(&str, &str) -> Result<String, BioMcpError>;
+        let _ = crate::transform::article::extract_text_from_pdf
+            as fn(&[u8], usize) -> Result<String, BioMcpError>;
     }
 }

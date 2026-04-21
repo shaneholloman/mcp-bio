@@ -98,6 +98,9 @@ async-trait = "0.1"
 
 # Command parsing for MCP shell
 shlex = "1"
+readability-rust = "0.1.0"
+htmd = "0.5.4"
+unpdf = "0.4.5"
 
 [features]
 default = []
