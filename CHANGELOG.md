@@ -1,14 +1,13 @@
 # Changelog
 
-## 0.8.21 — 2026-04-16
+## 0.8.22 — 2026-04-21
 
 ### New features
 
-- Added article date-range filtering (`--date-from`/`--date-to` and
-  `--year-min`/`--year-max` aliases) to `search article`. (182)
-- Added EMA regulatory region (`--region eu`) to `search drug` and `get drug`,
-  backed by local EMA human-medicine feeds; data auto-downloads on first use via
-  `biomcp ema sync`. (203)
+- Extended WHO Prequalification drug coverage to include active pharmaceutical
+  ingredients (APIs) alongside finished pharmaceutical products;
+  `search drug --region who --product-type api` filters explicit WHO searches
+  to API rows. (232)
 - Added the CDC CVX/MVX vaccine identity bridge for default and EU/all
   vaccine-brand drug search, backed by local CDC bundle downloads and explicit
   refresh via `biomcp cvx sync`. (233)
@@ -21,9 +20,38 @@
 - Expanded `diagnostic` into a local multi-source surface with WHO Prequalified IVD
   infectious-disease products, source-aware search/get behavior, and explicit
   `biomcp who-ivd sync`. (237)
+- Added FDA 510(k) and PMA regulatory overlays to
+  `get diagnostic <id> regulatory`, rendering source-aware FDA device status
+  when records match and a truthful empty regulatory section when they do not.
+  (238)
 - Added opt-in diagnostic pivots to gene and disease cards with
   `get gene <symbol> diagnostics` and `get disease <name_or_id> diagnostics`,
-  backed by local GTR and WHO IVD diagnostic search.
+  backed by local GTR and WHO IVD diagnostic search. (239)
+- Extended article search follow-up guidance with cross-entity keyword hints:
+  JSON `_meta.next_commands` now includes gene and drug pivots for recognizable
+  keyword patterns, while markdown `See also:` adds `discover` and
+  `get disease` recovery paths for short disease-like phrases. (242)
+- Added opt-in `clinical_features` disease output backed by MedlinePlus
+  clinical summaries, reviewed HPO phenotype mapping, source-native evidence
+  URLs, and unsupported-disease empty states via
+  `get disease <name> clinical_features`. (252, 253)
+
+### Docs
+
+- Added BioASQ-oriented how-to routing rows to `skills/SKILL.md` for
+  gene-disease association, gene localization/protein-function, drug regulatory
+  date, and variant clinical-significance workflows, steering agents to
+  structured-data shortcuts before article search. (240)
+
+## 0.8.21 — 2026-04-16
+
+### New features
+
+- Added article date-range filtering (`--date-from`/`--date-to` and
+  `--year-min`/`--year-max` aliases) to `search article`. (182)
+- Added EMA regulatory region (`--region eu`) to `search drug` and `get drug`,
+  backed by local EMA human-medicine feeds; data auto-downloads on first use via
+  `biomcp ema sync`. (203)
 - Added entity-aware HATEOAS suggestions (`_meta.next_commands`) to article
   search JSON output; gene-anchored and keyword searches return contextually
   appropriate follow-up commands. (195, 202)

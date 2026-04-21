@@ -46,35 +46,55 @@ def _ticket_references(text: str) -> set[int]:
 
 def test_changelog_has_backfilled_releases_and_release_header() -> None:
     changelog = _read("CHANGELOG.md")
-    latest_release_block = _markdown_section_block(changelog, "## 0.8.21 — 2026-04-16")
+    latest_release_block = _markdown_section_block(changelog, "## 0.8.22 — 2026-04-21")
+    previous_release_block = _markdown_section_block(changelog, "## 0.8.21 — 2026-04-16")
     latest_new_features_block = _markdown_subsection_block(
         latest_release_block, "### New features"
     )
+    latest_docs_block = _markdown_subsection_block(latest_release_block, "### Docs")
+    previous_new_features_block = _markdown_subsection_block(
+        previous_release_block, "### New features"
+    )
 
     assert "## [Unreleased]" not in changelog
+    assert "## 0.8.22 — 2026-04-21" in changelog
     assert "## 0.8.21 — 2026-04-16" in changelog
+    assert changelog.index("## 0.8.22 — 2026-04-21") < changelog.index(
+        "## 0.8.21 — 2026-04-16"
+    )
     assert "## 0.8.20 — 2026-03-30" in changelog
     assert "## 0.8.19 — 2026-03-26" in changelog
     assert "## 0.8.18 — 2026-03-25" in changelog
     assert "## 0.9.0" not in changelog
-    assert "article date-range filtering" in latest_release_block
-    assert "Expanded trial search with drug alias union" in latest_release_block
-    assert "counts-only contract" in latest_release_block
-    assert "ClinicalTrials.gov fallback" in latest_release_block
-    assert "Refreshed architecture docs" in latest_release_block
-    assert "daraxonrasib six-commands workflow" in latest_release_block
-    assert "mustmatch" in latest_release_block
-    assert "test_support" in latest_release_block
-    assert "docs-only validation profile" in latest_release_block
-    assert "EMA regulatory region" in latest_new_features_block
-    assert "--region eu" in latest_new_features_block
-    assert "biomcp ema sync" in latest_new_features_block
+
+    assert "article date-range filtering" in previous_release_block
+    assert "Expanded trial search with drug alias union" in previous_release_block
+    assert "counts-only contract" in previous_release_block
+    assert "ClinicalTrials.gov fallback" in previous_release_block
+    assert "Refreshed architecture docs" in previous_release_block
+    assert "daraxonrasib six-commands workflow" in previous_release_block
+    assert "mustmatch" in previous_release_block
+    assert "test_support" in previous_release_block
+    assert "docs-only validation profile" in previous_release_block
+    assert "RustSec" in previous_release_block
+    assert "test-contracts" in previous_release_block
+    assert "EMA regulatory region" in previous_new_features_block
+    assert "--region eu" in previous_new_features_block
+    assert "biomcp ema sync" in previous_new_features_block
+    assert _ticket_references(previous_release_block) == {182, *range(193, 214), 221}
+
+    assert "WHO Prequalification drug coverage" in latest_release_block
+    assert "--product-type api" in latest_release_block
     assert "CDC CVX/MVX vaccine identity bridge" in latest_release_block
     assert "biomcp cvx sync" in latest_new_features_block
+    assert "CDC WONDER VAERS" in latest_release_block
+    assert "--source <faers|vaers|all>" in latest_release_block
     assert "local GTR-backed `diagnostic` entity" in latest_release_block
     assert "WHO Prequalified IVD" in latest_release_block
     assert "biomcp gtr sync" in latest_new_features_block
     assert "biomcp who-ivd sync" in latest_release_block
+    assert "FDA 510(k) and PMA regulatory overlays" in latest_release_block
+    assert "get diagnostic <id> regulatory" in latest_release_block
     assert (
         "Added opt-in diagnostic pivots to gene and disease cards"
         in latest_release_block
@@ -82,9 +102,27 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
     assert "`get gene <symbol> diagnostics`" in latest_release_block
     assert "`get disease <name_or_id> diagnostics`" in latest_release_block
     assert "backed by local GTR and WHO IVD diagnostic search." in latest_release_block
-    assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221, 233, 235, 236, 237}
+    assert "cross-entity keyword hints" in latest_release_block
+    assert "_meta.next_commands" in latest_release_block
+    assert "See also:" in latest_release_block
+    assert "clinical_features" in latest_release_block
+    assert "MedlinePlus" in latest_release_block
+    assert "BioASQ-oriented how-to routing rows" in latest_docs_block
+    assert "skills/SKILL.md" in latest_docs_block
+    assert _ticket_references(latest_release_block) == {
+        232,
+        233,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        242,
+        252,
+        253,
+    }
     assert "pending separate merge" not in latest_release_block
-    assert "0.8.22" not in latest_release_block
 
     expected_releases = [
         ("0.8.20", "2026-03-30"),
