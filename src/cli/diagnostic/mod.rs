@@ -47,7 +47,7 @@ pub struct DiagnosticSearchArgs {
 
 #[derive(Args, Debug)]
 pub struct DiagnosticGetArgs {
-    /// Diagnostic accession or WHO IVD product code (e.g., GTR000000001.1 or "ITPW02232- TC40")
+    /// Diagnostic accession or WHO IVD product code (e.g., GTR000006692.3 or "ITPW02232- TC40")
     pub accession: String,
     /// Sections to include (genes, conditions, methods, regulatory, all)
     #[arg(trailing_var_arg = true)]

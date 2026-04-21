@@ -446,9 +446,9 @@ See also: biomcp list disease")]
     /// Get diagnostic test detail by exact GTR accession or WHO IVD product code
     #[command(after_help = "\
 EXAMPLES:
-  biomcp get diagnostic GTR000000001.1
-  biomcp get diagnostic GTR000000001.1 genes
-  biomcp get diagnostic GTR000000001.1 regulatory
+  biomcp get diagnostic GTR000006692.3
+  biomcp get diagnostic GTR000006692.3 genes
+  biomcp get diagnostic GTR000006692.3 regulatory
   biomcp get diagnostic \"ITPW02232- TC40\"
   biomcp get diagnostic \"ITPW02232- TC40\" conditions
   biomcp get diagnostic \"ITPW02232- TC40\" regulatory

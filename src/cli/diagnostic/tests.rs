@@ -80,8 +80,14 @@ fn get_diagnostic_help_mentions_supported_sections() {
     let help = String::from_utf8(help).expect("help should be utf-8");
 
     assert!(help.contains("genes, conditions, methods, regulatory, all"));
+    assert!(help.contains("biomcp get diagnostic GTR000006692.3"));
+    assert!(help.contains("biomcp get diagnostic GTR000006692.3 genes"));
+    assert!(help.contains("biomcp get diagnostic GTR000006692.3 regulatory"));
+    assert!(help.contains("GTR000006692.3 or \"ITPW02232- TC40\""));
+    assert!(help.contains("biomcp get diagnostic \"ITPW02232- TC40\""));
     assert!(help.contains("biomcp get diagnostic \"ITPW02232- TC40\" conditions"));
-    assert!(help.contains("biomcp get diagnostic GTR000000001.1 regulatory"));
+    assert!(help.contains("biomcp get diagnostic \"ITPW02232- TC40\" regulatory"));
+    assert!(!help.contains("GTR000000001.1"));
 }
 
 #[test]

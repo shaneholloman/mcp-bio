@@ -568,7 +568,7 @@ pub async fn get(accession: &str, sections: &[String]) -> Result<Diagnostic, Bio
     let accession = accession.trim();
     if accession.is_empty() {
         return Err(BioMcpError::InvalidArgument(
-            "Diagnostic accession or WHO IVD product code is required. Example: biomcp get diagnostic GTR000000001.1".into(),
+            "Diagnostic accession or WHO IVD product code is required. Example: biomcp get diagnostic GTR000006692.3".into(),
         ));
     }
 
