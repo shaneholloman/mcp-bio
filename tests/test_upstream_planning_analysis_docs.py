@@ -769,7 +769,7 @@ def test_pull_request_contract_gate_matches_release_validation() -> None:
 
 def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     makefile = _read_repo("Makefile")
-    ticket_270_smoke_node_ids = [
+    ticket_270_smoke_section_ids = [
         "spec/06-article.md::Getting Article Details",
         "spec/06-article.md::Article Batch",
         "spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides",
@@ -778,6 +778,16 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         "spec/09-search-all.md::Distinct Disease And Keyword Stay Separate",
         "spec/17-cross-entity-pivots.md::Gene to Articles",
         "spec/17-cross-entity-pivots.md::Variant pivots",
+    ]
+    ticket_270_smoke_item_ids = [
+        "spec/06-article.md::Getting Article Details (line 469) [bash]",
+        "spec/06-article.md::Article Batch (line 629) [bash]",
+        "spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides (line 317) [bash]",
+        "spec/06-article.md::Article Search Discover Keyword Pivot (line 103) [bash]",
+        "spec/09-search-all.md::Debug Plan (line 97) [bash]",
+        "spec/09-search-all.md::Distinct Disease And Keyword Stay Separate (line 142) [bash]",
+        "spec/17-cross-entity-pivots.md::Gene to Articles (line 134) [bash]",
+        "spec/17-cross-entity-pivots.md::Variant pivots (line 22) [bash]",
     ]
 
     assert (
@@ -793,7 +803,7 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         "Smoke lane: `search article`, `gene articles`, `variant articles`," in makefile
     )
     assert (
-        "To move a heading into the smoke lane, add its exact pytest markdown node ID"
+        "To move a heading into the smoke lane, add its stable section ID"
         in makefile
     )
     assert "SPEC_PR_DESELECT_ARGS = \\" in makefile
@@ -804,7 +814,7 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         "spec/06-article.md::Searching by Keyword",
         "spec/06-article.md::Sort Behavior",
         "spec/07-disease.md::Disease to Articles",
-        *ticket_270_smoke_node_ids,
+        *ticket_270_smoke_section_ids,
     ]:
         assert f'--deselect "{node_id}"' in makefile
     spec_smoke_match = re.search(
@@ -817,7 +827,7 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         re.findall(
             r'^\t"([^"]+)"(?: \\)?$', spec_smoke_match.group(1), flags=re.MULTILINE
         )
-        == ticket_270_smoke_node_ids
+        == ticket_270_smoke_item_ids
     )
     assert (
         "SPEC_SERIAL_FILES = spec/05-drug.md spec/13-study.md "

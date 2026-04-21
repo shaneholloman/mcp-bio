@@ -2,14 +2,14 @@
 
 # Volatile live-network spec headings. These headings fan out across article
 # search backends or have repeated timeout history in GitHub Actions, so they
-# run in the smoke workflow rather than the PR-blocking spec gate.
+# run in the local smoke lane rather than the PR-blocking spec gate.
 #
 # PR gate: repo-local checks plus live-backed headings that have been stable
 # within the current CI timeout budget.
 # Smoke lane: `search article`, `gene articles`, `variant articles`,
 # `disease articles`, or any new heading with repeated provider-latency timeouts.
-# To move a heading into the smoke lane, add its exact pytest markdown node ID
-# below (file path + heading text after `::`).
+# To move a heading into the smoke lane, add its stable section ID to
+# SPEC_PR_DESELECT_ARGS and its executable mustmatch item ID to SPEC_SMOKE_ARGS.
 SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/02-gene.md::Gene to Articles" \
 	--deselect "spec/03-variant.md::Variant to Articles" \
@@ -57,14 +57,14 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/18-source-labels.md::Article Fulltext Source Labels"
 
 SPEC_SMOKE_ARGS = \
-	"spec/06-article.md::Getting Article Details" \
-	"spec/06-article.md::Article Batch" \
-	"spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides" \
-	"spec/06-article.md::Article Search Discover Keyword Pivot" \
-	"spec/09-search-all.md::Debug Plan" \
-	"spec/09-search-all.md::Distinct Disease And Keyword Stay Separate" \
-	"spec/17-cross-entity-pivots.md::Gene to Articles" \
-	"spec/17-cross-entity-pivots.md::Variant pivots"
+	"spec/06-article.md::Getting Article Details (line 469) [bash]" \
+	"spec/06-article.md::Article Batch (line 629) [bash]" \
+	"spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides (line 317) [bash]" \
+	"spec/06-article.md::Article Search Discover Keyword Pivot (line 103) [bash]" \
+	"spec/09-search-all.md::Debug Plan (line 97) [bash]" \
+	"spec/09-search-all.md::Distinct Disease And Keyword Stay Separate (line 142) [bash]" \
+	"spec/17-cross-entity-pivots.md::Gene to Articles (line 134) [bash]" \
+	"spec/17-cross-entity-pivots.md::Variant pivots (line 22) [bash]"
 
 SPEC_SERIAL_FILES = spec/05-drug.md spec/13-study.md spec/21-cross-entity-see-also.md
 SPEC_XDIST_ARGS = -n auto --dist loadfile

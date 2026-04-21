@@ -158,8 +158,9 @@ serially because those files share repo-global local-data fixtures. `make
 spec-smoke` runs the ticket-270 volatile headings serially with the longer 120s
 mustmatch timeout.
 Use `spec/README-timings.md` as the current per-heading audit and the source of
-truth for which headings stay smoke-only via `SPEC_PR_DESELECT_ARGS` and which
-ticket-270 headings are in `SPEC_SMOKE_ARGS`.
+truth for which headings stay smoke-only via `SPEC_PR_DESELECT_ARGS`; the
+ratchet also checks that `SPEC_SMOKE_ARGS` maps the ticket-270 headings to
+executable mustmatch pytest items.
 
 When running repo-local checks through `uv run`, make sure `target/release` is
 ahead of `.venv/bin` on `PATH` or refresh the editable install with

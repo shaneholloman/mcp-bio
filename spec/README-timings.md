@@ -5,7 +5,7 @@
 | Lane | Make target | Run when | Timeout | Scope |
 |---|---|---|---|---|
 | `spec-pr` | `make spec-pr` | every PR and repo-local pre-merge verification | `60s` per heading | Stable PR-blocking live specs after `SPEC_PR_DESELECT_ARGS` exclusions |
-| `spec-smoke` | `make spec-smoke` | targeted local smoke rerun for ticket-270 volatile headings | `120s` per heading | Exactly the eight live-network headings in `SPEC_SMOKE_ARGS` |
+| `spec-smoke` | `make spec-smoke` | targeted local smoke rerun for ticket-270 volatile headings | `120s` per heading | Exactly the eight ticket-270 live-network headings represented by `SPEC_SMOKE_ARGS` |
 | `spec` | `make spec` | scheduled full smoke workflow and manual full smoke reruns | `120s` per heading | Full live spec suite, including every smoke-only heading |
 | `test-contracts` | `make test-contracts` | PR contracts lane and local docs/Python validation | n/a | Rust release build plus Python/docs contract checks |
 

@@ -450,13 +450,14 @@ def test_smoke_lane_sync_passes_when_marker_makefile_and_readme_align(
 ) -> None:
     ratchet = _load_ratchet_module()
     node_id = "spec/example.md::Smoke Section"
+    smoke_item_id = f"{node_id} (line 6) [bash]"
     spec_path = _write_smoke_lane_fixture(
         tmp_path,
         makefile=(
             'SPEC_PR_DESELECT_ARGS = \\\n'
             f'\t--deselect "{node_id}"\n\n'
             'SPEC_SMOKE_ARGS = \\\n'
-            f'\t"{node_id}"\n'
+            f'\t"{smoke_item_id}"\n'
         ),
         readme=(
             "# Spec Lane Audit\n\n"
@@ -487,13 +488,14 @@ def test_smoke_lane_sync_passes_when_marker_makefile_and_readme_align(
 def test_smoke_lane_sync_reports_smoke_target_without_marker(tmp_path: Path) -> None:
     ratchet = _load_ratchet_module()
     node_id = "spec/example.md::Smoke Section"
+    smoke_item_id = f"{node_id} (line 5) [bash]"
     spec_path = _write_smoke_lane_fixture(
         tmp_path,
         makefile=(
             'SPEC_PR_DESELECT_ARGS = \\\n'
             f'\t--deselect "{node_id}"\n\n'
             'SPEC_SMOKE_ARGS = \\\n'
-            f'\t"{node_id}"\n'
+            f'\t"{smoke_item_id}"\n'
         ),
         readme=(
             "# Spec Lane Audit\n\n"
@@ -527,13 +529,14 @@ def test_smoke_lane_sync_reports_marker_missing_readme_inventory(
 ) -> None:
     ratchet = _load_ratchet_module()
     node_id = "spec/example.md::Smoke Section"
+    smoke_item_id = f"{node_id} (line 6) [bash]"
     spec_path = _write_smoke_lane_fixture(
         tmp_path,
         makefile=(
             'SPEC_PR_DESELECT_ARGS = \\\n'
             f'\t--deselect "{node_id}"\n\n'
             'SPEC_SMOKE_ARGS = \\\n'
-            f'\t"{node_id}"\n'
+            f'\t"{smoke_item_id}"\n'
         ),
         readme=(
             "# Spec Lane Audit\n\n"

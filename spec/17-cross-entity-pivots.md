@@ -16,17 +16,14 @@ the terminal, not docs-site copy or navigation.
 
 Variant helpers should preserve the mutation context when crossing into trials
 or articles. The docs only promise stable headings and table shapes.
+Variant-to-article pivots should keep gene and keyword context without
+promising provider-specific subsections or counts.
 
 ```bash
 out="$(biomcp variant trials "BRAF V600E" --limit 3)"
 echo "$out" | mustmatch like "Query: mutation=BRAF V600E"
 echo "$out" | mustmatch like "|NCT ID|Title|Status|Phase|Conditions|"
-```
 
-Variant-to-article pivots should keep gene and keyword context without
-promising provider-specific subsections or counts.
-
-```bash
 out="$(biomcp variant articles "BRAF V600E" --limit 3)"
 echo "$out" | mustmatch like "# Articles: gene=BRAF, keyword=V600E"
 echo "$out" | mustmatch like "| PMID | Title |"

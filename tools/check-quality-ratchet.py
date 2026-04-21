@@ -15,6 +15,7 @@ MUSTMATCH_PIPE_RE = re.compile(r"\|\s*mustmatch\b")
 MUSTMATCH_LINT_SKIP = "<!-- mustmatch-lint: skip -->"
 SMOKE_LANE_MARKER = "<!-- smoke-lane -->"
 DESELECT_RE = re.compile(r'--deselect "([^"]+)"')
+PYTEST_ITEM_SUFFIX_RE = re.compile(r" \(line \d+\) \[[^\]]+\]$")
 LIVE_NETWORK_COMMAND_RES = [
     re.compile(
         r'(?:\bbiomcp|"\$bin"|\$bin|"\$\{bin\}"|\$\{bin\})\s+'
@@ -324,6 +325,13 @@ def parse_quoted_make_variable_ids(makefile_path: Path, variable_name: str) -> s
     return set()
 
 
+def canonical_section_id(node_id: str) -> str:
+    path, separator, item_name = node_id.partition("::")
+    if not separator:
+        return node_id
+    return f"{path}{separator}{PYTEST_ITEM_SUFFIX_RE.sub('', item_name)}"
+
+
 def markdown_section(text: str, heading: str) -> str:
     match = re.search(
         rf"^## {re.escape(heading)}\n(.*?)(?=^## |\Z)",
@@ -372,7 +380,7 @@ def parse_readme_inventory(readme_path: Path) -> tuple[set[str], set[str]]:
     )
     for row in smoke_rows[1:]:
         if row:
-            smoke_ids.add(strip_markdown_code(row[0]))
+            smoke_ids.add(canonical_section_id(strip_markdown_code(row[0])))
 
     return timing_ids, smoke_ids
 
@@ -458,8 +466,13 @@ def is_classified_live_node(node_id: str, classified_live_ids: set[str]) -> bool
 def check_smoke_lane_sync(spec_paths: list[Path], root_dir: Path) -> dict[str, object]:
     makefile_path = root_dir / "Makefile"
     readme_path = root_dir / "spec" / "README-timings.md"
-    deselected_ids = parse_deselected_ids(makefile_path)
+    deselected_ids = {
+        canonical_section_id(node_id) for node_id in parse_deselected_ids(makefile_path)
+    }
     smoke_target_ids = parse_quoted_make_variable_ids(makefile_path, "SPEC_SMOKE_ARGS")
+    smoke_target_section_ids = {
+        canonical_section_id(node_id) for node_id in smoke_target_ids
+    }
     timing_audit_ids, smoke_readme_ids = parse_readme_inventory(readme_path)
     classified_live_ids = timing_audit_ids | smoke_readme_ids
     sections = iter_spec_sections(spec_paths, root_dir)
@@ -489,7 +502,7 @@ def check_smoke_lane_sync(spec_paths: list[Path], root_dir: Path) -> dict[str, o
                         "text": section["text"],
                     }
                 )
-            if node_id not in smoke_target_ids:
+            if node_id not in smoke_target_section_ids:
                 findings.append(
                     {
                         "line": section["line"],
@@ -535,7 +548,8 @@ def check_smoke_lane_sync(spec_paths: list[Path], root_dir: Path) -> dict[str, o
                 }
             )
 
-    for node_id in sorted(smoke_target_ids):
+    for smoke_target_id in sorted(smoke_target_ids):
+        node_id = canonical_section_id(smoke_target_id)
         section = scanned_sections.get(node_id)
         if section is not None and not section["marked"]:
             findings.append(
@@ -544,8 +558,9 @@ def check_smoke_lane_sync(spec_paths: list[Path], root_dir: Path) -> dict[str, o
                     "rule": "smoke-target-not-marked",
                     "section": section["section"],
                     "node_id": node_id,
+                    "smoke_target": smoke_target_id,
                     "message": (
-                        f"'{node_id}' is in SPEC_SMOKE_ARGS but the section lacks "
+                        f"'{smoke_target_id}' is in SPEC_SMOKE_ARGS but the section lacks "
                         f"{SMOKE_LANE_MARKER}"
                     ),
                     "text": section["text"],

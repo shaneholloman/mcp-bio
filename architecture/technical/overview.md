@@ -341,7 +341,9 @@ serially because those files share repo-global local-data fixtures. `make
 spec-smoke` does not use xdist; it runs the targeted smoke node IDs serially
 with a 120s mustmatch timeout.
 Use `spec/README-timings.md` as the current audit record for the PR lane and as
-the smoke-only inventory for `SPEC_PR_DESELECT_ARGS` and `SPEC_SMOKE_ARGS`.
+the smoke-only section inventory for `SPEC_PR_DESELECT_ARGS`; the ratchet
+checks that `SPEC_SMOKE_ARGS` maps those ticket-270 sections to executable
+mustmatch pytest items.
 
 Important: `uv run` may execute a stale `.venv/bin/biomcp`. Either refresh
 with `uv pip install -e .` or ensure `target/release` is ahead of `.venv/bin`
