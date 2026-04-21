@@ -788,6 +788,12 @@ def test_each_source_page_includes_expected_surface_auth_and_official_link() -> 
         for command in spec["exposes"]:
             assert command in source_table, f"{filename} missing source surface {command!r}"
 
+        if filename == "who-ivd.md":
+            assert (
+                "Minimum-length word/phrase boundary match over `Pathogen/Disease/Marker`"
+                in source_table
+            )
+
 
 def test_each_source_page_has_three_to_four_related_doc_links_that_resolve() -> None:
     for filename in SOURCE_PAGE_SPECS:

@@ -191,6 +191,10 @@ async fn disease_diagnostics_section_populates_from_who_fixture() {
                 .iter()
                 .any(|condition| condition == "Mycobacterium tuberculosis complex (MTBC)")
     }));
+    assert!(rows.iter().any(|row| {
+        row.source == crate::entities::diagnostic::DIAGNOSTIC_SOURCE_GTR
+            && row.name.starts_with("Tuberculosis Molecular Panel")
+    }));
 }
 
 #[tokio::test]

@@ -11,6 +11,7 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 | Non-cancer funding | `get disease "Marfan syndrome" funding` | Confirms funding coverage is not cancer-specific |
 | Funding stays opt-in | `get disease "chronic myeloid leukemia" all` | Confirms `all` still excludes NIH Reporter funding |
 | Diagnostics pivot | `get disease tuberculosis diagnostics` | Confirms capped local diagnostic-test rows and paged-search follow-up from disease context |
+| Diagnostics melanoma smoke | `get disease melanoma diagnostics` | Confirms a small uncapped disease diagnostic card stays available with local fixture data |
 | Disease clinical features | `get disease "uterine leiomyoma" clinical_features` | Confirms configured diseases populate the opt-in MedlinePlus clinical-feature section while unsupported diseases stay non-fabricating |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
@@ -329,6 +330,27 @@ fi
 echo "$out" | mustmatch like "Showing first 10 diagnostic matches in this disease card."
 echo "$out" | mustmatch like 'See also: `biomcp search diagnostic'
 echo "$out" | mustmatch like "biomcp search diagnostic --disease tuberculosis --source all --limit 50"
+```
+
+## Disease Diagnostics Melanoma Smoke
+
+Melanoma has a small GTR-backed fixture result set. The disease diagnostic
+card should render that row without a cap note or local-data unavailable note.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease melanoma diagnostics)"
+echo "$out" | mustmatch like "| Accession | Name | Type | Manufacturer / Lab | Source | Genes | Conditions |"
+echo "$out" | mustmatch like "EGFR Melanoma Molecular Assay"
+echo "$out" | mustmatch not like "Diagnostic local data is unavailable"
+echo "$out" | mustmatch like 'See also: `biomcp search diagnostic --disease melanoma --source all --limit 50`'
+json="$("$bin" --json get disease melanoma diagnostics)"
+echo "$json" | jq -e '.diagnostics | length >= 1 and length <= 10' > /dev/null
+echo "$json" | jq -e 'has("diagnostics_note") | not' > /dev/null
 ```
 
 ## Disease Diagnostics Stays Opt-In

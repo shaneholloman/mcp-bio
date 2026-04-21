@@ -215,11 +215,13 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
     readme = _read("README.md")
     docs_index = _read("docs/index.md")
     cli_reference = _read("docs/user-guide/cli-reference.md")
+    disease_guide = _read("docs/user-guide/disease.md")
     functional = _read("architecture/functional/overview.md")
     ux_reference = _read("architecture/ux/cli-reference.md")
     mkdocs = _read("mkdocs.yml")
     diagnostic_guide = _read("docs/user-guide/diagnostic.md")
     diagnostic_arch = _read("architecture/functional/diagnostic.md")
+    cross_entity_guide = _read("docs/how-to/cross-entity-pivots.md")
 
     for text in (readme, docs_index):
         assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO Prequalified IVD local CSV |" in text
@@ -230,6 +232,8 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
     assert "biomcp who-ivd sync" in cli_reference
     assert "GTR local data" in cli_reference
     assert "WHO IVD local data" in cli_reference
+    assert "matches complete disease words or phrases at boundaries" in cli_reference
+    assert "Disease diagnostic cards are capped at" in cli_reference
     assert "13 remote entity commands" in cli_reference
     assert "12 remote entity commands" not in cli_reference
 
@@ -250,12 +254,28 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
     assert diagnostic_guide.startswith("# Diagnostic")
     assert "biomcp search diagnostic --gene BRCA1 --limit 5" in diagnostic_guide
     assert "biomcp search diagnostic --disease HIV --source who-ivd --limit 5" in diagnostic_guide
+    assert "`--disease` is a bounded disease phrase filter" in diagnostic_guide
+    assert "must contain at least three" in diagnostic_guide
+    assert "alphanumeric characters" in diagnostic_guide
+    assert "Disease diagnostic cards show at most 10 rows" in diagnostic_guide
+    assert (
+        "biomcp search diagnostic --disease tuberculosis --source all --limit 50"
+        in diagnostic_guide
+    )
     assert "`Genes` and `Conditions` cells at five displayed values" in diagnostic_guide
     assert "full deduped symbol arrays" in diagnostic_guide
     assert 'biomcp get diagnostic "ITPW02232- TC40"' in diagnostic_guide
     assert "biomcp gtr sync" in diagnostic_guide
     assert "biomcp who-ivd sync" in diagnostic_guide
     assert diagnostic_arch.startswith("# Diagnostic Functional Note")
+    assert "minimum-length" in diagnostic_arch
+    assert "word/phrase boundary match" in diagnostic_arch
+    assert "The disease diagnostic card is capped at 10 rows" in disease_guide
+    assert (
+        "biomcp search diagnostic --disease tuberculosis --source all --limit 50"
+        in disease_guide
+    )
+    assert "It is capped at 10 rows and prints a `See also:` command" in cross_entity_guide
 
 
 def test_streamable_http_demo_script_is_runnable_repo_artifact() -> None:

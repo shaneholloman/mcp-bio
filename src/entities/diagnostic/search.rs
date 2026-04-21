@@ -283,3 +283,52 @@ pub fn search_query_summary(filters: &DiagnosticSearchFilters) -> String {
     }
     parts.join(", ")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn disease_phrase_matches_accepts_word_and_phrase_boundaries() {
+        assert!(disease_phrase_matches(
+            "Mycobacterium tuberculosis complex",
+            "tuberculosis"
+        ));
+        assert!(disease_phrase_matches(
+            "Hereditary breast cancer panel",
+            "breast cancer"
+        ));
+    }
+
+    #[test]
+    fn disease_phrase_matches_rejects_partial_words_and_keeps_scanning() {
+        assert!(!disease_phrase_matches("leukemia", "emia"));
+        assert!(disease_phrase_matches(
+            "preanemia panel; anemia confirmation",
+            "anemia"
+        ));
+    }
+
+    #[test]
+    fn disease_phrase_matches_handles_utf8_boundaries_without_panicking() {
+        assert!(disease_phrase_matches(
+            "β-thalassemia screening",
+            "β-thalassemia"
+        ));
+        assert!(!disease_phrase_matches("préleukemia", "emia"));
+    }
+
+    #[test]
+    fn normalized_filters_reject_short_disease_filter() {
+        let err = NormalizedSearchFilters::from_filters(&DiagnosticSearchFilters {
+            disease: Some("m-a".to_string()),
+            ..DiagnosticSearchFilters::default()
+        })
+        .expect_err("short disease filter should fail before data access");
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid argument: --disease must contain at least 3 alphanumeric characters for diagnostic disease matching"
+        );
+    }
+}
