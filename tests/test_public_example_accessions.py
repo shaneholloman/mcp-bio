@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 RELEASE_BIN = REPO_ROOT / "target" / "release" / "biomcp"
 LIVE_GTR_ACCESSION = "GTR000006692.3"
 FICTIONAL_GTR_ACCESSION = "GTR000000001.1"
+REGULATORY_EMPTY_STATE = "No FDA device 510(k) or PMA records matched this diagnostic."
 PUBLIC_DIAGNOSTIC_EXAMPLE_SURFACES = (
     "README.md",
     "docs/index.md",
@@ -169,3 +170,4 @@ def test_public_gtr_examples_resolve_against_live_gtr_bundle(tmp_path: Path) -> 
                 assert "## Methods" in result.stdout, command
             elif section == "regulatory":
                 assert "## Regulatory (FDA Device)" in result.stdout, command
+                assert REGULATORY_EMPTY_STATE in result.stdout, command
