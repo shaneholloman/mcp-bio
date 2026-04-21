@@ -1,14 +1,15 @@
 # Spec Lane Audit
 
-## Three-Lane Split
+## Spec Lane Split
 
 | Lane | Make target | Run when | Timeout | Scope |
 |---|---|---|---|---|
 | `spec-pr` | `make spec-pr` | every PR and repo-local pre-merge verification | `60s` per heading | Stable PR-blocking live specs after `SPEC_PR_DESELECT_ARGS` exclusions |
-| `spec` | `make spec` | nightly smoke workflow and manual smoke reruns | `120s` per heading | Full live spec suite, including every smoke-only heading |
+| `spec-smoke` | `make spec-smoke` | targeted local smoke rerun for ticket-270 volatile headings | `120s` per heading | Exactly the eight ticket-270 live-network headings represented by `SPEC_SMOKE_ARGS` |
+| `spec` | `make spec` | scheduled full smoke workflow and manual full smoke reruns | `120s` per heading | Full live spec suite, including every smoke-only heading |
 | `test-contracts` | `make test-contracts` | PR contracts lane and local docs/Python validation | n/a | Rust release build plus Python/docs contract checks |
 
-`spec-pr` is the fast blocking lane, `spec` is the full nightly smoke lane, and `test-contracts` covers the Python/docs contract surface. Use this file as the current audit and smoke-only inventory for `SPEC_PR_DESELECT_ARGS`.
+`spec-pr` is the fast blocking lane, `spec-smoke` is the serial local rerun for the eight ticket-270 live-network headings, `spec` remains the full live suite used by the existing scheduled smoke workflow, and `test-contracts` covers the Python/docs contract surface. Use this file as the current audit and smoke-only inventory for `SPEC_PR_DESELECT_ARGS`.
 
 ## Bash Mustmatch Lint Rule
 
@@ -54,13 +55,13 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/07-disease.md` | `Disease Funding Stays Opt-In` | `27.12s` | passed | `17.68s` | passed | medium | keep in spec-pr | The NIH Reporter funding proofs stayed stable and well below the 60s per-heading limit, and the full lane still fits comfortably inside the PR budget. |
 | `spec/02-gene.md` | `Gene Funding Stays Opt-In` | `14.74s` | passed | `14.88s` | passed | medium | keep in spec-pr | The NIH Reporter funding proofs stayed stable and well below the 60s per-heading limit, and the full lane still fits comfortably inside the PR budget. |
 | `spec/18-source-labels.md` | `Markdown Source Labels` | `13.92s` | passed | `12.28s` | passed | medium | keep in spec-pr | Cold and warm timings stayed below 15s, so the suspected fan-out did not justify a trim or smoke-only move. |
-| `spec/09-search-all.md` | `Distinct Disease And Keyword Stay Separate` | `12.27s` | passed | `6.66s` | passed | medium | keep in spec-pr | Medium but stable timing; the heading stayed far below the 60s timeout and the audited lane remained well under the 10-minute target. |
+| `spec/09-search-all.md` | `Distinct Disease And Keyword Stay Separate` | `12.27s` | passed | `6.66s` | passed | medium | move to smoke-only | Issue 182 later showed this live federated search timing out under the 60s PR timeout, so ticket 270 moves it to the serial smoke lane with 120s coverage. |
 | `spec/18-source-labels.md` | `JSON section_sources — Gene, Drug, Disease` | `11.68s` | passed | `11.43s` | passed | medium | keep in spec-pr | The core section_sources proof stayed around 11-12s on both passes, so the representative provenance contract remains cheap enough for PRs. |
-| `spec/06-article.md` | `Article Query Echo Surfaces Explicit Max-Per-Source Overrides` | `11.39s` | passed | `10.29s` | passed | medium | keep in spec-pr | Medium but stable timing; the heading stayed far below the 60s timeout and the audited lane remained well under the 10-minute target. |
+| `spec/06-article.md` | `Article Query Echo Surfaces Explicit Max-Per-Source Overrides` | `11.39s` | passed | `10.29s` | passed | medium | move to smoke-only | Issue 223 reported repeated 60s PR-lane timeouts for this live article fan-out, so ticket 270 moves it to the targeted smoke lane. |
 | `spec/07-disease.md` | `Disease Survival` | `10.97s` | passed | `9.05s` | passed | medium | keep in spec-pr | Medium but stable timing; the heading stayed far below the 60s timeout and the audited lane remained well under the 10-minute target. |
 | `spec/11-evidence-urls.md` | `Repaired Variant, Disease, and Drug Gaps` | `9.84s` | passed | `8.44s` | passed | fast | keep in spec-pr | The repaired-gap regression proof stayed under 10s on both passes, so there was no measured reason to demote it to smoke-only coverage. |
 | `spec/07-disease.md` | `Disease Funding` | `9.20s` | passed | `9.75s` | passed | fast | keep in spec-pr | The NIH Reporter funding proofs stayed stable and well below the 60s per-heading limit, and the full lane still fits comfortably inside the PR budget. |
-| `spec/09-search-all.md` | `Debug Plan` | `9.61s` | passed | `9.12s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/09-search-all.md` | `Debug Plan` | `9.61s` | passed | `9.12s` | passed | fast | move to smoke-only | Issue 182 reported repeated 60s PR-lane timeouts for this multi-call live debug-plan proof, so ticket 270 moves it to the targeted smoke lane. |
 | `spec/11-evidence-urls.md` | `JSON Metadata for Repaired Gaps` | `8.18s` | passed | `8.15s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Keyword Search Can Force Lexical Ranking` | `2.53s` | passed | `7.98s` | passed | flaky | move to smoke-only | Timings stayed low during the audit, but the final end-to-end `make spec-pr` run hit a PubMed `429 Too Many Requests`, so this article-search proof moved to the smoke lane. |
 | `spec/09-search-all.md` | `Counts-only Mode` | `7.23s` | passed | `4.04s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -70,12 +71,12 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/01-overview.md` | `Health Check` | `12.80s` | passed | `8.98s` | passed | medium | keep in spec-pr | Ticket 258 repaired `biomcp health` with bounded ordered fan-out and a health-only per-probe timeout, then consolidated the health contract into this single retained heading. Fresh and warm reruns now stay well below the 60s PR timeout, so the heading returns to the blocking lane. |
 | `spec/24-diagnostic.md` | `Local Health Readiness` | `n/a` | removed | `n/a` | removed | removed | removed in ticket 258 | Deleted in ticket 258 because the consolidated overview health heading now proves the shipped local-readiness rows, while the remaining diagnostic file focuses on source-specific search/get behavior. |
 | `spec/07-disease.md` | `Disease Survival Hodgkin Mapping` | `6.09s` | passed | `5.08s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/06-article.md` | `Article Batch` | `2.97s` | passed | `5.87s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/06-article.md` | `Article Batch` | `2.97s` | passed | `5.87s` | passed | fast | move to smoke-only | Issue 182 reported repeated 60s PR-lane timeouts for this live PubMed batch enrichment proof, so ticket 270 moves it to the targeted smoke lane. |
 | `spec/09-search-all.md` | `Keyword Search` | `4.83s` | passed | `5.51s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/17-cross-entity-pivots.md` | `Disease to Articles` | `5.31s` | passed | `1.24s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Type Filter Uses The Compatible Source Set` | `2.59s` | passed | `5.12s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/07-disease.md` | `Disease Phenotype Key Features` | `4.69s` | passed | `3.37s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/17-cross-entity-pivots.md` | `Gene to Articles` | `1.32s` | passed | `4.52s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/17-cross-entity-pivots.md` | `Gene to Articles` | `1.32s` | passed | `4.52s` | passed | fast | move to smoke-only | Issue 223 reported repeated 60s PR-lane timeouts for this live gene-to-article pivot, so ticket 270 moves it to the targeted smoke lane. |
 | `spec/14-pathway.md` | `Default KEGG Card Stays Concise` | `4.27s` | passed | `4.51s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/12-search-positionals.md` | `Search-all Positional Query` | `4.37s` | passed | `3.72s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/07-disease.md` | `Disease Survival No-Data Note` | `4.01s` | passed | `3.22s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -84,7 +85,7 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/07-disease.md` | `Disease Funding Beyond Cancer` | `3.52s` | passed | `3.62s` | passed | fast | keep in spec-pr | The NIH Reporter funding proofs stayed stable and well below the 60s per-heading limit, and the full lane still fits comfortably inside the PR budget. |
 | `spec/06-article.md` | `Article Date Flag Help Advertises Accepted Formats` | `3.36s` | passed | `2.95s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/07-disease.md` | `Sparse Phenotype Coverage Notes` | `3.31s` | passed | `3.26s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/17-cross-entity-pivots.md` | `Variant pivots` | `3.08s` | passed | `1.78s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/17-cross-entity-pivots.md` | `Variant pivots` | `3.08s` | passed | `1.78s` | passed | fast | move to smoke-only | Ticket 246 review found this live variant article pivot still timing out in `make spec-pr`, so ticket 270 moves it to the targeted smoke lane. |
 | `spec/07-disease.md` | `Disease Search Discover Fallback` | `3.04s` | passed | `2.26s` | passed | fast | move to smoke-only | OLS4-backed discover fallback stayed fast in the audit, but provider latency is reliable enough only for the smoke lane and not for the PR-blocking lane under parallel load. |
 | `spec/09-search-all.md` | `Shared Disease And Keyword Token` | `2.83s` | passed | `3.03s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Article to Entities` | `2.92s` | passed | `1.91s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
@@ -104,7 +105,7 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/02-gene.md` | `Human Protein Atlas Section` | `1.81s` | passed | `1.75s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/14-pathway.md` | `Explicit KEGG Genes Section Still Renders` | `1.81s` | passed | `1.76s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/18-source-labels.md` | `JSON section_sources — Pathway, Protein, PGX, Adverse Event` | `1.73s` | passed | `1.76s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
-| `spec/06-article.md` | `Getting Article Details` | `1.72s` | passed | `0.85s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/06-article.md` | `Getting Article Details` | `1.72s` | passed | `0.85s` | passed | fast | move to smoke-only | Issue 182 reported repeated 60s PR-lane timeouts for this live PubMed/enrichment proof, so ticket 270 moves it to the targeted smoke lane. |
 | `spec/16-protein.md` | `Protein Complexes Section` | `1.68s` | passed | `1.68s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/07-disease.md` | `Disease Genes` | `1.62s` | passed | `1.55s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/07-disease.md` | `Disease Search Discover Fallback Synonym` | `1.62s` | passed | `0.94s` | passed | fast | move to smoke-only | OLS4-backed discover fallback stayed fast in the audit, but provider latency is reliable enough only for the smoke lane and not for the PR-blocking lane under parallel load. |
@@ -237,6 +238,10 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/17-guide-workflows.md` | `Discoverability Surfaces` | `0.06s` | passed | `0.07s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Article Batch Limit Enforcement` | `0.06s` | passed | `0.06s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
 | `spec/06-article.md` | `Federated Deep Offset Guard` | `0.06s` | passed | `0.06s` | passed | fast | keep in spec-pr | Fast and stable on both passes, so the heading stays in the PR-blocking lane. |
+| `spec/06-article.md` | `Search JSON Next Commands` | `n/a` | classified | `n/a` | classified | classified | keep in spec-pr | Existing PR-stable live article JSON proof; ticket 270 ratchet adds this inventory row without fabricating timing data. |
+| `spec/09-search-all.md` | `Counts-only JSON Contract` | `n/a` | classified | `n/a` | classified | classified | keep in spec-pr | Existing PR-stable live search-all JSON proof; ticket 270 ratchet adds this inventory row without fabricating timing data. |
+| `spec/18-source-labels.md` | `JSON section_sources — Diagnostic Regulatory` | `n/a` | classified | `n/a` | classified | classified | keep in spec-pr | Existing PR-stable live diagnostic/source-label proof; ticket 270 ratchet adds this inventory row without fabricating timing data. |
+| `spec/21-cross-entity-see-also.md` | `Article Curated Pivots` | `n/a` | classified | `n/a` | classified | classified | keep in spec-pr | Existing PR-stable live article see-also proof; ticket 270 ratchet adds this inventory row without fabricating timing data. |
 | `spec/06-article.md` | `Article Search Gene Keyword Pivot` | `n/a` | smoke-only | `n/a` | smoke-only | smoke | smoke-only | Live article keyword-pivot test stays in the nightly smoke lane. |
 | `spec/06-article.md` | `Article Search Drug Keyword Pivot` | `n/a` | smoke-only | `n/a` | smoke-only | smoke | smoke-only | Live article keyword-pivot test stays in the nightly smoke lane. |
 | `spec/03-variant.md` | `Searching by c.HGVS` | `0.49s` | passed | `0.49s` | passed | fast | keep in spec-pr | The targeted cold and warm reruns both stayed under a second, so the heading remains a cheap PR-lane proof. |
@@ -263,8 +268,14 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/06-article.md::Keyword Anchors Tokenize In JSON Ranking Metadata` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Article Full Text Saved Markdown` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Large Article Full Text Saved Markdown` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
+| `spec/06-article.md::Article Fulltext HTML Fallback Saved Markdown` | Live fulltext fallback coverage stays smoke-only so the deselect inventory matches the PR lane contract. |
+| `spec/06-article.md::Article Fulltext PDF Fallback Is Opt-In` | Live fulltext fallback coverage stays smoke-only so the deselect inventory matches the PR lane contract. |
 | `spec/06-article.md::Optional-Key Get Article Path` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Article Search JSON Without Semantic Scholar Key` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
+| `spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides` | Issue 223 reported repeated PR-lane timeouts, so ticket 270 moves this live article fan-out to `make spec-smoke`. |
+| `spec/06-article.md::Article Search Discover Keyword Pivot` | Ticket 246 review found this live article discover pivot timing out in `make spec-pr`, so ticket 270 moves it to `make spec-smoke`. |
+| `spec/06-article.md::Getting Article Details` | Issue 182 reported repeated PR-lane timeouts, so ticket 270 moves this live PubMed/enrichment proof to `make spec-smoke`. |
+| `spec/06-article.md::Article Batch` | Issue 182 reported repeated PR-lane timeouts, so ticket 270 moves this live PubMed batch proof to `make spec-smoke`. |
 | `spec/06-article.md::Article Search Gene Keyword Pivot` | Live article keyword-pivot test stays in the nightly smoke lane. |
 | `spec/06-article.md::Article Search Drug Keyword Pivot` | Live article keyword-pivot test stays in the nightly smoke lane. |
 | `spec/06-article.md::Article Debug Plan` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
@@ -273,6 +284,8 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/06-article.md::Semantic Scholar Recommendations (Single Seed)` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Semantic Scholar Recommendations (Multi Seed)` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
 | `spec/06-article.md::Sort Behavior` | Live article-search fan-out and provider-latency surface already classified as smoke-only. |
+| `spec/09-search-all.md::Debug Plan` | Issue 182 reported repeated PR-lane timeouts, so ticket 270 moves this multi-call live search proof to `make spec-smoke`. |
+| `spec/09-search-all.md::Distinct Disease And Keyword Stay Separate` | Issue 182 reported repeated PR-lane timeouts, so ticket 270 moves this live federated search proof to `make spec-smoke`. |
 | `spec/07-disease.md::Disease to Articles` | Entity-to-article live literature pivot stays in the nightly smoke lane. |
 | `spec/07-disease.md::Disease Search Discover Fallback` | OLS4-backed discover fallback stays in the smoke lane because provider latency is acceptable there but not reliable enough for the PR-blocking lane under parallel load. |
 | `spec/07-disease.md::Disease Search Discover Fallback Synonym` | OLS4-backed discover fallback stays in the smoke lane because provider latency is acceptable there but not reliable enough for the PR-blocking lane under parallel load. |
@@ -280,5 +293,8 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/12-search-positionals.md::GWAS Positional Query` | GWAS positional search remains a smoke-only live-network proof. |
 | `spec/02-gene.md::Gene DisGeNET Associations` | Optional live DisGeNET association coverage remains smoke-only. |
 | `spec/07-disease.md::Disease DisGeNET Associations` | Optional live DisGeNET association coverage remains smoke-only. |
+| `spec/17-cross-entity-pivots.md::Gene to Articles` | Issue 223 reported repeated PR-lane timeouts, so ticket 270 moves this live gene-to-article pivot to `make spec-smoke`. |
+| `spec/17-cross-entity-pivots.md::Variant pivots` | Ticket 246 review found this live variant article pivot timing out in `make spec-pr`, so ticket 270 moves it to `make spec-smoke`. |
+| `spec/18-source-labels.md::Article Fulltext Source Labels` | Live fulltext/source-label coverage stays smoke-only so the deselect inventory matches the PR lane contract. |
 | `spec/19-discover.md` | Entire discover file stays smoke-only because its live exploratory fan-out is not part of the stable PR lane. |
 | `spec/20-alias-fallback.md` | Alias-fallback live probes stay smoke-only and continue to run in the nightly suite. |

@@ -89,6 +89,7 @@ echo "$keyword_out" | jq -e '[.sections[] | select(.entity == "article") | .resu
 ```
 
 ## Debug Plan
+<!-- smoke-lane -->
 
 `search all` should expose the executed typed legs and routing markers only when
 explicitly requested.
@@ -133,6 +134,7 @@ echo "$out" | mustmatch not like "--disease cancer --keyword cancer"
 ```
 
 ## Distinct Disease And Keyword Stay Separate
+<!-- smoke-lane -->
 
 Distinct disease and keyword inputs may stay combined on the article leg, but
 they should not be cross-routed into typed trial queries.

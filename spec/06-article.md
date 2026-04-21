@@ -94,6 +94,7 @@ echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp get drug psorale
 ```
 
 ## Article Search Discover Keyword Pivot
+<!-- smoke-lane -->
 
 When keyword search contains a short entity-like phrase that is better handled
 by structured entity resolution, BioMCP should suggest `discover` in the
@@ -308,6 +309,7 @@ echo "$json_out" | jq -e 'all(.results[]; (.date == null) or (.date == "") or ((
 ```
 
 ## Article Query Echo Surfaces Explicit Max-Per-Source Overrides
+<!-- smoke-lane -->
 
 Explicit `--max-per-source` overrides should surface in article query context
 so operators can verify which cap mode the search ran with.
@@ -460,6 +462,7 @@ echo "$strict_out" | mustmatch like "> Note: --type restricts this article searc
 ```
 
 ## Getting Article Details
+<!-- smoke-lane -->
 
 The article detail card should preserve stable bibliographic anchors for reproducible referencing. We assert on PMID and journal markers.
 
@@ -616,6 +619,7 @@ fi
 ```
 
 ## Article Batch
+<!-- smoke-lane -->
 
 `article batch` returns compact numbered cards for known IDs without
 changing single-article output. The markdown contract exposes a stable heading,

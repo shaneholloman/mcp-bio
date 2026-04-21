@@ -30,7 +30,8 @@ cargo install cargo-nextest --locked
 `pytest-xdist` for the parallel-safe bulk with `-n auto --dist loadfile`, while
 `spec/05-drug.md`, `spec/13-study.md`, and
 `spec/21-cross-entity-see-also.md` stay serial because they share repo-global
-local-data fixtures.
+local-data fixtures. `make spec-smoke` runs the ticket-270 smoke headings
+serially with a 120s mustmatch timeout.
 
 ### Timing Method
 

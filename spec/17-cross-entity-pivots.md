@@ -12,20 +12,18 @@ the terminal, not docs-site copy or navigation.
 | Gene pivots | `gene trials`, `gene drugs`, `gene articles`, `gene pathways`, `get gene ... diagnostics` | Canonical biomarker pivots |
 
 ## Variant pivots
+<!-- smoke-lane -->
 
 Variant helpers should preserve the mutation context when crossing into trials
 or articles. The docs only promise stable headings and table shapes.
+Variant-to-article pivots should keep gene and keyword context without
+promising provider-specific subsections or counts.
 
 ```bash
 out="$(biomcp variant trials "BRAF V600E" --limit 3)"
 echo "$out" | mustmatch like "Query: mutation=BRAF V600E"
 echo "$out" | mustmatch like "|NCT ID|Title|Status|Phase|Conditions|"
-```
 
-Variant-to-article pivots should keep gene and keyword context without
-promising provider-specific subsections or counts.
-
-```bash
 out="$(biomcp variant articles "BRAF V600E" --limit 3)"
 echo "$out" | mustmatch like "# Articles: gene=BRAF, keyword=V600E"
 echo "$out" | mustmatch like "| PMID | Title |"
@@ -128,6 +126,7 @@ echo "$out" | mustmatch like "|Name|Mechanism|Target|"
 ```
 
 ## Gene to Articles
+<!-- smoke-lane -->
 
 Gene-to-article pivots should preserve gene context and the article table
 schema.
