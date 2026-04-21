@@ -400,11 +400,58 @@ pub(crate) fn resolve_exact_article_keyword_entity_from_ols_docs(
         }
     }
 
-    if candidates.len() == 1 {
-        candidates.pop().map(|(_, entity)| entity)
-    } else {
-        None
+    match candidates.len() {
+        0 => None,
+        1 => candidates.pop().map(|(_, entity)| entity),
+        _ => choose_preferred_exact_article_keyword_candidate(&candidates),
     }
+}
+
+fn choose_preferred_exact_article_keyword_candidate(
+    candidates: &[((DiscoverType, String), ExactArticleKeywordEntity)],
+) -> Option<ExactArticleKeywordEntity> {
+    let entity_type = candidates.first()?.1.entity_type;
+    if candidates
+        .iter()
+        .any(|(_, entity)| entity.entity_type != entity_type)
+    {
+        return None;
+    }
+
+    let best_rank = candidates
+        .iter()
+        .map(|(_, entity)| exact_article_keyword_primary_id_rank(entity))
+        .min()?;
+    if best_rank == usize::MAX {
+        return None;
+    }
+
+    let mut best = candidates
+        .iter()
+        .filter(|(_, entity)| exact_article_keyword_primary_id_rank(entity) == best_rank)
+        .map(|(_, entity)| entity);
+    let selected = best.next()?;
+    if best.next().is_some() {
+        return None;
+    }
+    Some(selected.clone())
+}
+
+fn exact_article_keyword_primary_id_rank(entity: &ExactArticleKeywordEntity) -> usize {
+    let Some(primary_id) = entity.primary_id.as_deref() else {
+        return usize::MAX;
+    };
+    let (source, _) = split_prefixed_id(primary_id);
+    let preferred = match entity.entity_type {
+        DiscoverType::Gene => &["HGNC", "NCBIGENE"][..],
+        DiscoverType::Drug => &["CHEBI", "RXNORM", "DRON", "MESH", "NCIT"][..],
+        DiscoverType::Disease => &["MONDO", "DOID", "ORDO", "MESH", "NCIT"][..],
+        _ => &[][..],
+    };
+    preferred
+        .iter()
+        .position(|candidate| source.eq_ignore_ascii_case(candidate))
+        .unwrap_or(usize::MAX)
 }
 
 pub(crate) fn classify_alias_fallback(
@@ -2042,12 +2089,29 @@ mod tests {
             )
             .is_none()
         );
+        let preferred_disease = resolve_exact_article_keyword_entity_from_ols_docs(
+            "melanoma",
+            &[
+                ols_doc("doid", "melanoma", "DOID:1909", &[]),
+                ols_doc("mondo", "melanoma", "MONDO:0005105", &[]),
+            ],
+        )
+        .expect("live duplicate disease ontology hits should prefer MONDO");
+        assert_eq!(
+            preferred_disease.primary_id.as_deref(),
+            Some("MONDO:0005105")
+        );
         assert!(
             resolve_exact_article_keyword_entity_from_ols_docs(
-                "melanoma",
+                "skin cancer",
                 &[
-                    ols_doc("mondo", "melanoma", "MONDO:0005105", &[]),
-                    ols_doc("doid", "melanoma", "DOID:1909", &[]),
+                    ols_doc(
+                        "mondo",
+                        "cutaneous melanoma",
+                        "MONDO:0005105",
+                        &["skin cancer"]
+                    ),
+                    ols_doc("mondo", "skin carcinoma", "MONDO:0009999", &["skin cancer"]),
                 ],
             )
             .is_none()
