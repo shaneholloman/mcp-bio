@@ -769,22 +769,56 @@ def test_pull_request_contract_gate_matches_release_validation() -> None:
 
 def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     makefile = _read_repo("Makefile")
+    ticket_270_smoke_node_ids = [
+        "spec/06-article.md::Getting Article Details",
+        "spec/06-article.md::Article Batch",
+        "spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides",
+        "spec/06-article.md::Article Search Discover Keyword Pivot",
+        "spec/09-search-all.md::Debug Plan",
+        "spec/09-search-all.md::Distinct Disease And Keyword Stay Separate",
+        "spec/17-cross-entity-pivots.md::Gene to Articles",
+        "spec/17-cross-entity-pivots.md::Variant pivots",
+    ]
 
-    assert ".PHONY: build test lint check check-quality-ratchet run clean spec spec-pr validate-skills test-contracts install" in makefile
+    assert (
+        ".PHONY: build test lint check check-quality-ratchet run clean spec spec-pr spec-smoke validate-skills test-contracts install"
+        in makefile
+    )
     assert "Volatile live-network spec headings." in makefile
-    assert "PR gate: repo-local checks plus live-backed headings that have been stable" in makefile
-    assert "Smoke lane: `search article`, `gene articles`, `variant articles`," in makefile
-    assert "To move a heading into the smoke lane, add its exact pytest markdown node ID" in makefile
-    assert 'SPEC_PR_DESELECT_ARGS = \\' in makefile
-    for node_id in (
-        'spec/02-gene.md::Gene to Articles',
-        'spec/03-variant.md::Variant to Articles',
-        'spec/06-article.md::Searching by Gene',
-        'spec/06-article.md::Searching by Keyword',
-        'spec/06-article.md::Sort Behavior',
-        'spec/07-disease.md::Disease to Articles',
-    ):
+    assert (
+        "PR gate: repo-local checks plus live-backed headings that have been stable"
+        in makefile
+    )
+    assert (
+        "Smoke lane: `search article`, `gene articles`, `variant articles`," in makefile
+    )
+    assert (
+        "To move a heading into the smoke lane, add its exact pytest markdown node ID"
+        in makefile
+    )
+    assert "SPEC_PR_DESELECT_ARGS = \\" in makefile
+    for node_id in [
+        "spec/02-gene.md::Gene to Articles",
+        "spec/03-variant.md::Variant to Articles",
+        "spec/06-article.md::Searching by Gene",
+        "spec/06-article.md::Searching by Keyword",
+        "spec/06-article.md::Sort Behavior",
+        "spec/07-disease.md::Disease to Articles",
+        *ticket_270_smoke_node_ids,
+    ]:
         assert f'--deselect "{node_id}"' in makefile
+    spec_smoke_match = re.search(
+        r"^SPEC_SMOKE_ARGS = \\\n(.*?)\n\nSPEC_SERIAL_FILES",
+        makefile,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    assert spec_smoke_match is not None
+    assert (
+        re.findall(
+            r'^\t"([^"]+)"(?: \\)?$', spec_smoke_match.group(1), flags=re.MULTILINE
+        )
+        == ticket_270_smoke_node_ids
+    )
     assert (
         "SPEC_SERIAL_FILES = spec/05-drug.md spec/13-study.md "
         "spec/21-cross-entity-see-also.md"
@@ -817,6 +851,16 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         makefile,
         flags=re.MULTILINE,
     )
+    spec_smoke_target = re.search(
+        r"^spec-smoke:\n"
+        r"\tXDG_CACHE_HOME=\"\$\(CURDIR\)/\.cache\" PATH=\"\$\(CURDIR\)/target/release:\$\(PATH\)\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" RUST_LOG=error \\\n"
+        r"\t\tuv run --extra dev sh -c 'PATH=\"\$\(CURDIR\)/target/release:\$\$PATH\" BIOMCP_BIN=\"\$\(CURDIR\)/target/release/biomcp\" pytest \$\(SPEC_SMOKE_ARGS\) --mustmatch-lang bash --mustmatch-timeout 120 -v'$",
+        makefile,
+        flags=re.MULTILINE,
+    )
+    assert spec_smoke_target is not None
+    assert "$(SPEC_XDIST_ARGS)" not in spec_smoke_target.group(0)
+    assert "-n auto" not in spec_smoke_target.group(0)
     assert re.search(
         r"^test-contracts:\n"
         r"\tcargo build --release --locked\n"
@@ -844,7 +888,14 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     assert "cargo install cargo-nextest --locked" in contributing
     assert "`make test` uses `cargo nextest run`." in contributing_ws
     assert "`make spec` and `make spec-pr` use `pytest-xdist`" in contributing_ws
-    assert "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md` stay serial" in contributing_ws
+    assert (
+        "`make spec-smoke` runs the ticket-270 smoke headings serially"
+        in contributing_ws
+    )
+    assert (
+        "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md` stay serial"
+        in contributing_ws
+    )
     assert "beelink" in contributing
     assert "2026-04-13" in contributing
     assert "/usr/bin/time -p" in contributing
@@ -866,13 +917,20 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     assert "`make test` and `make check`" in runbook_ws
     assert "`cargo nextest run`" in runbook_ws
     assert "`make spec-pr`" in runbook_ws
+    assert "`make spec-smoke`" in runbook_ws
     assert "`pytest-xdist`" in runbook_ws
     assert "`-n auto --dist loadfile`" in runbook_ws
-    assert "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`" in runbook_ws
+    assert "ticket-270 volatile headings serially" in runbook_ws
+    assert (
+        "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`"
+        in runbook_ws
+    )
 
     assert "`cargo nextest run`" in technical_gate_section
     assert "`cargo test`" in technical_gate_section
     assert "`pytest-xdist` with `-n auto --dist loadfile`" in technical_spec_section
+    assert "`make spec-smoke`" in technical_spec_section
+    assert "serial targeted local rerun" in technical_spec_section
     assert (
         "`spec/05-drug.md`, `spec/13-study.md`, and `spec/21-cross-entity-see-also.md`"
         in technical_spec_section
@@ -885,7 +943,7 @@ def test_spec_lane_timing_report_is_documented_and_aligned_with_makefile() -> No
     runbook = _read_repo("RUN.md")
     technical = _read_repo("architecture/technical/overview.md")
 
-    three_lane_section = _normalize_ws(_markdown_section(report, "Three-Lane Split"))
+    lane_split_section = _normalize_ws(_markdown_section(report, "Spec Lane Split"))
     audit_method_section = _normalize_ws(_markdown_section(report, "Audit Method"))
     timing_audit_section = _markdown_section(report, "spec-pr Timing Audit")
     smoke_only_section = _markdown_section(
@@ -899,15 +957,20 @@ def test_spec_lane_timing_report_is_documented_and_aligned_with_makefile() -> No
     )
 
     for heading in (
-        "## Three-Lane Split",
+        "## Spec Lane Split",
         "## Audit Method",
         "## spec-pr Timing Audit",
         "## Smoke-Only Headings (SPEC_PR_DESELECT_ARGS)",
     ):
         assert heading in report
 
-    for marker in ("`make spec-pr`", "`make spec`", "`make test-contracts`"):
-        assert marker in three_lane_section
+    for marker in (
+        "`make spec-pr`",
+        "`make spec`",
+        "`make spec-smoke`",
+        "`make test-contracts`",
+    ):
+        assert marker in lane_split_section
     assert "First-pass" in audit_method_section
     assert "Warm-pass" in audit_method_section
     assert (
@@ -950,7 +1013,9 @@ def test_spec_lane_timing_report_is_documented_and_aligned_with_makefile() -> No
             assert warm_pass_result == "skipped"
 
     assert "spec/README-timings.md" in runbook_spec_section
+    assert "`make spec-smoke`" in runbook_spec_section
     assert "spec/README-timings.md" in technical_spec_section
+    assert "`make spec-smoke`" in technical_spec_section
 
 
 def test_parallel_test_dependency_contract_is_declared() -> None:

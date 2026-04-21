@@ -12,6 +12,7 @@ the terminal, not docs-site copy or navigation.
 | Gene pivots | `gene trials`, `gene drugs`, `gene articles`, `gene pathways`, `get gene ... diagnostics` | Canonical biomarker pivots |
 
 ## Variant pivots
+<!-- smoke-lane -->
 
 Variant helpers should preserve the mutation context when crossing into trials
 or articles. The docs only promise stable headings and table shapes.
@@ -128,6 +129,7 @@ echo "$out" | mustmatch like "|Name|Mechanism|Target|"
 ```
 
 ## Gene to Articles
+<!-- smoke-lane -->
 
 Gene-to-article pivots should preserve gene context and the article table
 schema.
