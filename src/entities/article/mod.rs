@@ -87,6 +87,11 @@ pub struct ArticleFulltextSource {
     pub source: String,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ArticleGetOptions {
+    pub allow_pdf: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ArticleSemanticScholar {
     #[serde(skip_serializing_if = "Option::is_none")]

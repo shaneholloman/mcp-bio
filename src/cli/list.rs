@@ -221,7 +221,8 @@ fn list_article() -> String {
 - `get article <id>` - get by PMID/PMCID/DOI
 - `get article <id> tldr` - Semantic Scholar TLDR/influence section (optional auth; shared pool without `S2_API_KEY`)
 - `get article <id> annotations` - PubTator entity mentions
-- `get article <id> fulltext` - download/cache full text
+- `get article <id> fulltext` - download/cache full text via XML -> PMC HTML
+- `get article <id> fulltext --pdf` - allow Semantic Scholar PDF after XML and PMC HTML miss
 - `get article <id> all` - include all article sections
 - `article entities <pmid> --limit <N>` - annotated entities with next commands
 - `article batch <id> [<id>...]` - compact multi-article summary cards
@@ -304,6 +305,9 @@ Worked examples:
 
 - Set `NCBI_API_KEY` to increase throughput for NCBI-backed article enrichment.
 - Set `S2_API_KEY` to send authenticated Semantic Scholar requests at 1 req/sec. Without it, BioMCP uses the shared pool at 1 req/2sec.
+- `get article <id> fulltext` tries XML first, then PMC HTML, and never falls back to PDF.
+- Add `--pdf` only with `fulltext` to extend that ladder with Semantic Scholar PDF as the last resort.
+- `--pdf` requires the `fulltext` section and is rejected for other article requests.
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
 - Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
@@ -1255,6 +1259,16 @@ mod tests {
         assert!(article.contains("search article --source litsense2"));
         assert!(article.contains("keyword-bearing article queries default to hybrid"));
         assert!(article.contains("entity-only queries default to lexical"));
+        assert!(article.contains("get article <id> fulltext --pdf"));
+        assert!(article.contains(
+            "get article <id> fulltext` tries XML first, then PMC HTML, and never falls back to PDF."
+        ));
+        assert!(article.contains(
+            "Add `--pdf` only with `fulltext` to extend that ladder with Semantic Scholar PDF as the last resort."
+        ));
+        assert!(article.contains(
+            "`--pdf` requires the `fulltext` section and is rejected for other article requests."
+        ));
         assert!(
             article.contains("LitSense2-derived semantic signal and falls back to lexical ties")
         );

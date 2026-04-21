@@ -542,6 +542,62 @@ test -f "$path"
 test -s "$path"
 ```
 
+## Article Fulltext HTML Fallback Saved Markdown
+
+When the XML ladder misses for a PMCID-backed article, BioMCP should fall back
+to the PMC article page before giving up. This fixture-backed proof keeps the
+fallback local and still checks the saved-file contract plus the truthful source
+label.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/debug/biomcp}"
+bash fixtures/setup-article-fulltext-source-fixture.sh "$PWD"
+. "$PWD/.cache/spec-article-fulltext-source-env"
+out="$("$bin" get article 22663012 fulltext)"
+echo "$out" | mustmatch like "## Full Text (PMC HTML)"
+path="$(printf '%s\n' "$out" | sed -n 's/^Saved to: //p' | head -n1)"
+test -n "$path"
+test -f "$path"
+saved="$(cat "$path")"
+echo "$saved" | mustmatch like "PMC HTML fallback body text"
+```
+
+## Article Fulltext PDF Fallback Is Opt-In
+
+Semantic Scholar PDF is a last resort only when the user explicitly opts in.
+Without `--pdf`, the same article should report the XML+HTML ladder miss;
+with `--pdf`, it should save markdown and name the PDF winner.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/debug/biomcp}"
+bash fixtures/setup-article-fulltext-source-fixture.sh "$PWD"
+. "$PWD/.cache/spec-article-fulltext-source-env"
+default_out="$("$bin" get article 22663013 fulltext)"
+echo "$default_out" | mustmatch like "XML and HTML sources did not return full text"
+echo "$default_out" | mustmatch not like "Semantic Scholar PDF"
+pdf_out="$("$bin" get article 22663013 fulltext --pdf)"
+echo "$pdf_out" | mustmatch like "## Full Text (Semantic Scholar PDF)"
+pdf_path="$(printf '%s\n' "$pdf_out" | sed -n 's/^Saved to: //p' | head -n1)"
+test -n "$pdf_path"
+test -f "$pdf_path"
+```
+
+## Article Fulltext PDF Modifier Requires Fulltext
+
+The `--pdf` modifier should not become a silent no-op on other article
+requests. BioMCP needs to reject it with a clear invalid-argument message and a
+recovery example.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/debug/biomcp}"
+unset status
+out="$("$bin" get article 22663013 --pdf 2>&1)" || status=$?
+test "${status:-0}" -eq 1
+echo "$out" | mustmatch like "Error: Invalid argument:"
+echo "$out" | mustmatch like "--pdf requires the fulltext section"
+echo "$out" | mustmatch like "biomcp get article 22663011 fulltext --pdf"
+```
+
 ## Article to Entities
 
 `article entities` exposes actionable next-command pivots by entity class. We check top-level heading and genes subsection marker.

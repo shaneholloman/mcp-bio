@@ -105,27 +105,36 @@ echo "$search_out" | mustmatch like 'Use `biomcp get diagnostic "ITPW02232- TC40
 
 ## Article Fulltext Source Labels
 
-Resolved article full text should name the actual winning XML source in both
-markdown and JSON output. This proof uses a local fixture server so the Europe
-PMC PMC XML path wins deterministically instead of depending on live upstream
-availability.
+Resolved article full text should name the actual winning source in both
+markdown and JSON output. This fixture server exposes deterministic XML, HTML,
+and PDF winners so the source label stays truthful across the ladder instead of
+depending on live upstream availability.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-article-fulltext-source-fixture.sh "$PWD"
 . "$PWD/.cache/spec-article-fulltext-source-env"
-article_fulltext_out="$("$bin" get article 22663011 fulltext)"
-echo "$article_fulltext_out" | mustmatch like "## Full Text (Europe PMC XML)"
-echo "$article_fulltext_out" | mustmatch like "Saved to: "
+xml_out="$("$bin" get article 22663011 fulltext)"
+html_out="$("$bin" get article 22663012 fulltext)"
+pdf_out="$("$bin" get article 22663013 fulltext --pdf)"
+echo "$xml_out" | mustmatch like "## Full Text (Europe PMC XML)"
+echo "$html_out" | mustmatch like "## Full Text (PMC HTML)"
+echo "$pdf_out" | mustmatch like "## Full Text (Semantic Scholar PDF)"
 ```
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
 bash fixtures/setup-article-fulltext-source-fixture.sh "$PWD"
 . "$PWD/.cache/spec-article-fulltext-source-env"
-article_fulltext_json="$("$bin" get article 22663011 fulltext --json)"
-echo "$article_fulltext_json" | mustmatch like '{"full_text_source":{"kind":"jats_xml","label":"Europe PMC XML","source":"Europe PMC"}}'
-echo "$article_fulltext_json" | mustmatch like '{"_meta":{"section_sources":[{"key":"fulltext","label":"Full Text","sources":["Europe PMC"]}]}}'
+xml_json="$("$bin" get article 22663011 fulltext --json)"
+html_json="$("$bin" get article 22663012 fulltext --json)"
+pdf_json="$("$bin" get article 22663013 fulltext --pdf --json)"
+echo "$xml_json" | mustmatch like '{"full_text_source":{"kind":"jats_xml","label":"Europe PMC XML","source":"Europe PMC"}}'
+echo "$html_json" | mustmatch like '{"full_text_source":{"kind":"html","label":"PMC HTML","source":"PMC"}}'
+echo "$pdf_json" | mustmatch like '{"full_text_source":{"kind":"pdf","label":"Semantic Scholar PDF","source":"Semantic Scholar"}}'
+echo "$xml_json" | mustmatch like '{"_meta":{"section_sources":[{"key":"fulltext","label":"Full Text","sources":["Europe PMC"]}]}}'
+echo "$html_json" | mustmatch like '{"_meta":{"section_sources":[{"key":"fulltext","label":"Full Text","sources":["PMC"]}]}}'
+echo "$pdf_json" | mustmatch like '{"_meta":{"section_sources":[{"key":"fulltext","label":"Full Text","sources":["Semantic Scholar"]}]}}'
 ```
 
 ## JSON section_sources — Gene, Drug, Disease
