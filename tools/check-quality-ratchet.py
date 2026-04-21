@@ -14,7 +14,6 @@ SHORT_LIKE_RE = re.compile(r'(?:^|\|\s*)mustmatch\s+like\s+("([^"]*)"|\'([^\']*)
 MUSTMATCH_PIPE_RE = re.compile(r"\|\s*mustmatch\b")
 MUSTMATCH_LINT_SKIP = "<!-- mustmatch-lint: skip -->"
 SMOKE_LANE_MARKER = "<!-- smoke-lane -->"
-DESELECT_RE = re.compile(r'--deselect "([^"]+)"')
 PYTEST_ITEM_SUFFIX_RE = re.compile(r" \(line \d+\) \[[^\]]+\]$")
 LIVE_NETWORK_COMMAND_RES = [
     re.compile(
@@ -307,17 +306,17 @@ def read_text_or_empty(path: Path) -> str:
 
 
 def parse_deselected_ids(makefile_path: Path) -> set[str]:
-    return set(DESELECT_RE.findall(read_text_or_empty(makefile_path)))
+    return parse_quoted_make_variable_ids(makefile_path, "SPEC_PR_DESELECT_ARGS")
 
 
 def parse_quoted_make_variable_ids(makefile_path: Path, variable_name: str) -> set[str]:
+    assignment_re = re.compile(rf"^{re.escape(variable_name)}\s*[:+?]?=")
     lines = read_text_or_empty(makefile_path).splitlines()
     for index, line in enumerate(lines):
-        if not line.startswith(f"{variable_name}"):
+        match = assignment_re.match(line)
+        if match is None:
             continue
-        if "=" not in line:
-            return set()
-        value_lines = [line.split("=", 1)[1]]
+        value_lines = [line[match.end() :]]
         while value_lines[-1].rstrip().endswith("\\") and index + 1 < len(lines):
             index += 1
             value_lines.append(lines[index])
@@ -440,13 +439,14 @@ def line_executes_live_command(line: str) -> bool:
     stripped = line.strip()
     if not stripped or stripped.startswith("#"):
         return False
+    if stripped.startswith(("echo ", "printf ", "grep ", "jq ", "mustmatch ")):
+        return False
     if "--help" in stripped:
         return False
     if "|| status" in stripped or "2>&1" in stripped:
         return False
-    if any(token in stripped for token in ("mustmatch", "grep", "jq", "echo ")):
-        return False
-    return any(pattern.search(stripped) for pattern in LIVE_NETWORK_COMMAND_RES)
+    command_segment = stripped.split("|", 1)[0]
+    return any(pattern.search(command_segment) for pattern in LIVE_NETWORK_COMMAND_RES)
 
 
 def section_has_live_network_command(section: dict[str, object]) -> bool:
@@ -466,6 +466,15 @@ def is_classified_live_node(node_id: str, classified_live_ids: set[str]) -> bool
 def check_smoke_lane_sync(spec_paths: list[Path], root_dir: Path) -> dict[str, object]:
     makefile_path = root_dir / "Makefile"
     readme_path = root_dir / "spec" / "README-timings.md"
+    resolved_root = root_dir.resolve()
+    scanned_relative_paths: set[str] = set()
+    for spec_path in spec_paths:
+        try:
+            scanned_relative_paths.add(
+                spec_path.resolve().relative_to(resolved_root).as_posix()
+            )
+        except ValueError:
+            continue
     deselected_ids = {
         canonical_section_id(node_id) for node_id in parse_deselected_ids(makefile_path)
     }
@@ -550,8 +559,27 @@ def check_smoke_lane_sync(spec_paths: list[Path], root_dir: Path) -> dict[str, o
 
     for smoke_target_id in sorted(smoke_target_ids):
         node_id = canonical_section_id(smoke_target_id)
+        smoke_target_path = node_id.partition("::")[0]
+        if smoke_target_path not in scanned_relative_paths:
+            continue
         section = scanned_sections.get(node_id)
-        if section is not None and not section["marked"]:
+        if section is None:
+            _path, _separator, section_name = node_id.partition("::")
+            findings.append(
+                {
+                    "line": 0,
+                    "rule": "smoke-target-not-marked",
+                    "section": section_name or node_id,
+                    "node_id": node_id,
+                    "smoke_target": smoke_target_id,
+                    "message": (
+                        f"'{smoke_target_id}' is in SPEC_SMOKE_ARGS but no matching "
+                        "spec section was scanned"
+                    ),
+                    "text": "",
+                }
+            )
+        elif not section["marked"]:
             findings.append(
                 {
                     "line": section["line"],

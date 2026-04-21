@@ -485,6 +485,49 @@ def test_smoke_lane_sync_passes_when_marker_makefile_and_readme_align(
     assert payload["finding_count"] == 0
 
 
+def test_smoke_lane_sync_ignores_deselects_outside_pr_deselect_variable(
+    tmp_path: Path,
+) -> None:
+    ratchet = _load_ratchet_module()
+    node_id = "spec/example.md::Smoke Section"
+    smoke_item_id = f"{node_id} (line 6) [bash]"
+    spec_path = _write_smoke_lane_fixture(
+        tmp_path,
+        makefile=(
+            'SPEC_PR_DESELECT_ARGS_EXTRA = \\\n'
+            f'\t--deselect "{node_id}"\n\n'
+            "SPEC_PR_DESELECT_ARGS =\n\n"
+            'SPEC_SMOKE_ARGS = \\\n'
+            f'\t"{smoke_item_id}"\n'
+        ),
+        readme=(
+            "# Spec Lane Audit\n\n"
+            "## spec-pr Timing Audit\n\n"
+            "| File | Heading | First-pass Time | First-pass Result | Warm-pass Time | Warm-pass Result | Category | Disposition | Rationale |\n"
+            "|---|---|---|---|---|---|---|---|---|\n\n"
+            "## Smoke-Only Headings (SPEC_PR_DESELECT_ARGS)\n\n"
+            "| Node ID | Reason |\n"
+            "|---|---|\n"
+            f"| `{node_id}` | Ticket fixture smoke lane. |\n"
+        ),
+        spec_body=(
+            "# Smoke Fixture\n\n"
+            "## Smoke Section\n"
+            "<!-- smoke-lane -->\n\n"
+            "```bash\n"
+            "echo 'local section' | mustmatch like 'local section'\n"
+            "```\n"
+        ),
+    )
+
+    payload = ratchet.check_smoke_lane_sync([spec_path], tmp_path)
+
+    assert payload["status"] == "fail"
+    assert {finding["rule"] for finding in payload["findings"]} == {
+        "smoke-lane-not-deselected",
+    }
+
+
 def test_smoke_lane_sync_reports_smoke_target_without_marker(tmp_path: Path) -> None:
     ratchet = _load_ratchet_module()
     node_id = "spec/example.md::Smoke Section"
@@ -522,6 +565,47 @@ def test_smoke_lane_sync_reports_smoke_target_without_marker(tmp_path: Path) -> 
     assert {finding["rule"] for finding in payload["findings"]} == {
         "smoke-target-not-marked",
     }
+
+
+def test_smoke_lane_sync_reports_smoke_target_missing_section(tmp_path: Path) -> None:
+    ratchet = _load_ratchet_module()
+    node_id = "spec/example.md::Missing Section"
+    smoke_item_id = f"{node_id} (line 6) [bash]"
+    spec_path = _write_smoke_lane_fixture(
+        tmp_path,
+        makefile=(
+            'SPEC_PR_DESELECT_ARGS = \\\n'
+            f'\t--deselect "{node_id}"\n\n'
+            'SPEC_SMOKE_ARGS = \\\n'
+            f'\t"{smoke_item_id}"\n'
+        ),
+        readme=(
+            "# Spec Lane Audit\n\n"
+            "## spec-pr Timing Audit\n\n"
+            "| File | Heading | First-pass Time | First-pass Result | Warm-pass Time | Warm-pass Result | Category | Disposition | Rationale |\n"
+            "|---|---|---|---|---|---|---|---|---|\n\n"
+            "## Smoke-Only Headings (SPEC_PR_DESELECT_ARGS)\n\n"
+            "| Node ID | Reason |\n"
+            "|---|---|\n"
+            f"| `{node_id}` | Ticket fixture smoke lane. |\n"
+        ),
+        spec_body=(
+            "# Smoke Fixture\n\n"
+            "## Other Section\n\n"
+            "```bash\n"
+            "echo 'local section' | mustmatch like 'local section'\n"
+            "```\n"
+        ),
+    )
+
+    payload = ratchet.check_smoke_lane_sync([spec_path], tmp_path)
+
+    assert payload["status"] == "fail"
+    findings = payload["findings"]
+    assert len(findings) == 1
+    assert findings[0]["rule"] == "smoke-target-not-marked"
+    assert findings[0]["node_id"] == node_id
+    assert "no matching spec section was scanned" in findings[0]["message"]
 
 
 def test_smoke_lane_sync_reports_marker_missing_readme_inventory(
@@ -563,6 +647,40 @@ def test_smoke_lane_sync_reports_marker_missing_readme_inventory(
     assert {finding["rule"] for finding in payload["findings"]} == {
         "smoke-lane-not-documented",
     }
+
+
+def test_smoke_lane_sync_reports_piped_unclassified_live_network_section(
+    tmp_path: Path,
+) -> None:
+    ratchet = _load_ratchet_module()
+    spec_path = _write_smoke_lane_fixture(
+        tmp_path,
+        makefile="SPEC_PR_DESELECT_ARGS =\n\nSPEC_SMOKE_ARGS =\n",
+        readme=(
+            "# Spec Lane Audit\n\n"
+            "## spec-pr Timing Audit\n\n"
+            "| File | Heading | First-pass Time | First-pass Result | Warm-pass Time | Warm-pass Result | Category | Disposition | Rationale |\n"
+            "|---|---|---|---|---|---|---|---|---|\n\n"
+            "## Smoke-Only Headings (SPEC_PR_DESELECT_ARGS)\n\n"
+            "| Node ID | Reason |\n"
+            "|---|---|\n"
+        ),
+        spec_body=(
+            "# Smoke Fixture\n\n"
+            "## Live Section\n\n"
+            "```bash\n"
+            "biomcp search article -g BRAF --limit 1 | mustmatch like 'Articles'\n"
+            "```\n"
+        ),
+    )
+
+    payload = ratchet.check_smoke_lane_sync([spec_path], tmp_path)
+
+    assert payload["status"] == "fail"
+    findings = payload["findings"]
+    assert len(findings) == 1
+    assert findings[0]["rule"] == "live-network-unclassified"
+    assert findings[0]["node_id"] == "spec/example.md::Live Section"
 
 
 def test_smoke_lane_sync_reports_unclassified_live_network_section(
