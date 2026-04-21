@@ -86,7 +86,7 @@ with the sync command to enable the pivot.
 ## Get a diagnostic record
 
 ```bash
-biomcp get diagnostic GTR000000001.1
+biomcp get diagnostic GTR000006692.3
 biomcp get diagnostic "ITPW02232- TC40"
 ```
 
@@ -104,11 +104,11 @@ Supported public section tokens are `genes`, `conditions`, `methods`,
 `regulatory`, and `all`, but support is resolved per source.
 
 ```bash
-biomcp get diagnostic GTR000000001.1 genes
-biomcp get diagnostic GTR000000001.1 conditions
-biomcp get diagnostic GTR000000001.1 methods
-biomcp get diagnostic GTR000000001.1 regulatory
-biomcp get diagnostic GTR000000001.1 all
+biomcp get diagnostic GTR000006692.3 genes
+biomcp get diagnostic GTR000006692.3 conditions
+biomcp get diagnostic GTR000006692.3 methods
+biomcp get diagnostic GTR000006692.3 regulatory
+biomcp get diagnostic GTR000006692.3 all
 biomcp get diagnostic "ITPW02232- TC40" conditions
 biomcp get diagnostic "ITPW02232- TC40" regulatory
 biomcp get diagnostic "ITPW02232- TC40" all

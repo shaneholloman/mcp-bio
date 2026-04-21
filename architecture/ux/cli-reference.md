@@ -48,7 +48,7 @@ biomcp get gene BRAF all                  # everything
 
 biomcp get variant "BRAF V600E" clinvar population conservation
 biomcp get article 22663011 tldr
-biomcp get diagnostic GTR000000001.1 genes conditions
+biomcp get diagnostic GTR000006692.3 genes conditions
 biomcp get diagnostic "ITPW02232- TC40" conditions
 biomcp get drug pembrolizumab label targets civic approvals
 biomcp get disease "Lynch syndrome" genes phenotypes variants

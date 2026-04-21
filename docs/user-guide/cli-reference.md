@@ -214,7 +214,7 @@ biomcp search diagnostic --disease HIV --source who-ivd --limit 5
 biomcp search diagnostic --disease tuberculosis --source all --limit 5
 biomcp get gene BRCA1 diagnostics
 biomcp get disease tuberculosis diagnostics
-biomcp get diagnostic GTR000000001.1 regulatory
+biomcp get diagnostic GTR000006692.3 regulatory
 biomcp get diagnostic "ITPW02232- TC40" regulatory
 ```
 
@@ -370,8 +370,8 @@ path unless you pass `--region`.
 ### Diagnostic
 
 ```bash
-biomcp get diagnostic GTR000000001.1
-biomcp get diagnostic GTR000000001.1 regulatory
+biomcp get diagnostic GTR000006692.3
+biomcp get diagnostic GTR000006692.3 regulatory
 biomcp get diagnostic "ITPW02232- TC40"
 biomcp get diagnostic "ITPW02232- TC40" conditions
 biomcp get diagnostic "ITPW02232- TC40" regulatory
