@@ -34,7 +34,7 @@ New to BioMCP? Try:
 | Tissue expression or localization of a gene product | `get gene <symbol> hpa` or `get gene <symbol> protein` |
 | Drug safety or adverse events | `drug adverse-events <name>` or `get drug <name> safety` |
 | Review literature that synthesizes a topic | `search article -k "<query>" --type review --limit 5` |
-| Turn a literature question into article filters | `biomcp list article` (known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`; recognizable entity tokens can trigger typed follow-up suggestions on result pages) |
+| Turn a literature question into article filters | `biomcp list article` (known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`; exact whole-keyword entity labels or aliases can trigger typed follow-up suggestions on keyword-only result pages) |
 | Follow one article into related evidence | `article citations <id> --limit 5` or `article recommendations <id> --limit 5` |
 | I know the entities but not the next pivot | `search all --gene BRAF --disease melanoma` |
 | I only have free text and need routing | `discover "<free text>"` (unambiguous gene-plus-topic queries can also surface `search article -g <symbol> -k <topic> --limit 5`) |
@@ -88,7 +88,8 @@ New to BioMCP? Try:
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
 - `search article ... --date-from --date-to --year-min --year-max --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N>`
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
-- Article result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>` follow-ups when keyword text contains a recognizable entity token
+- Keyword-only article result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole keyword exactly matches a gene, drug, or disease vocabulary label or alias
+- Multi-concept keyword phrases and searches that already use `-g`, `-d`, or `--drug` do not get direct entity suggestions
 - Article result pages can also suggest year-refinement follow-ups when visible rows expose publication years and the current search has no explicit date bounds
 - `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification for finished-pharma/API searches; `--product-type <finished_pharma|api|vaccine>` is WHO-only and requires explicit `--region who`; WHO vaccine search is plain name/brand only and rejects structured filters; default WHO search excludes vaccines unless `--product-type vaccine` is explicit; explicit `eu|all` with structured filters errors; `ema` is accepted as an alias for `eu`; omitted `--region` on plain-name vaccine lookups, explicit `eu|all` vaccine lookups, and explicit WHO vaccine name/brand searches can also use the CDC CVX/MVX bridge after MyChem identity misses, while pure `--region us` search does not use the CVX root)
 

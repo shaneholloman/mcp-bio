@@ -6,9 +6,9 @@ Article commands provide literature retrieval and annotation-focused enrichment 
 |---|---|---|
 | Gene search | `search article -g BRAF` | Confirms gene-linked literature lookup |
 | Keyword search | `search article -q "alternative microexon splicing metastasis" --source litsense2` | Confirms source-scoped free-text discovery |
-| Gene keyword pivot | `search article -k "SRY Sox9 miRNA"` | Confirms article search can suggest typed gene pivots from recognizable keyword tokens |
-| Drug keyword pivot | `search article -k "psoralen photobinding DNA"` | Confirms article search can suggest typed drug pivots without false-positive gene hints |
-| Discover keyword pivot | `search article -k "live attenuated vaccines"` | Confirms article search can point short entity-like keyword clauses back to `discover` |
+| Gene keyword pivot | `search article -k BRAF` | Confirms article search can suggest an exact typed gene card from a whole keyword label |
+| Drug keyword pivot | `search article -k imatinib` | Confirms article search can suggest an exact typed drug card from a whole keyword label |
+| Discover keyword pivot | `search article -k melanoma` | Confirms exact disease keywords get typed suggestions while short non-exact clauses can still point to `discover` |
 | PubTator source search | `search article --source pubtator` | Confirms default filtering still allows source-specific PubTator results |
 | Federated source preservation | `--json search article -q ...` | Confirms default filtering still preserves non-EuropePMC matches |
 | Article detail | `get article 22663011` | Confirms canonical article card output |
@@ -45,18 +45,17 @@ echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list article")
 
 ## Article Search Gene Keyword Pivot
 
-When keyword search contains a recognizable gene token, BioMCP should suggest a
-typed gene card and a gene-filtered article pivot without disturbing the
-existing article-detail follow-up order.
+When a keyword-only article search exactly matches a gene vocabulary label or
+alias, BioMCP should suggest the typed gene card. Token matches inside a longer
+phrase are not enough, and typed entity filters suppress the exact suggestion.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" search article -k "SRY Sox9 miRNA" --limit 1)"
+out="$("$bin" search article -k BRAF --limit 1)"
 echo "$out" | mustmatch like "Filters: [query], -k/-q <keyword>"
 printf '%s\n' "$out" | grep -q '^See also:$'
 echo "$out" | mustmatch '/biomcp get article [0-9]+/'
-echo "$out" | mustmatch like "biomcp get gene SRY"
-echo "$out" | mustmatch like 'biomcp search article -g SRY -k "Sox9 miRNA"'
+echo "$out" | mustmatch like "biomcp get gene BRAF"
 
 filters_line="$(printf '%s\n' "$out" | grep -n '^Filters:' | cut -d: -f1 | head -n1)"
 see_line="$(printf '%s\n' "$out" | grep -n '^See also:' | cut -d: -f1 | head -n1)"
@@ -64,50 +63,68 @@ test -n "$filters_line"
 test -n "$see_line"
 test "$see_line" -gt "$filters_line"
 
-json_out="$("$bin" --json search article -k "SRY Sox9 miRNA" --limit 1)"
+json_out="$("$bin" --json search article -k BRAF --limit 1)"
+echo "$json_out" | mustmatch like '"suggestions":'
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get article [0-9]+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list article")' > /dev/null
-echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get gene SRY")' > /dev/null
-echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp search article -g SRY -k \"Sox9 miRNA\"")' > /dev/null
-echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp get gene SRY")' > /dev/null
-echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp search article -g SRY -k \"Sox9 miRNA\"")' > /dev/null
-echo "$json_out" | jq -e '[._meta.suggestions[] | select(. == "biomcp list article")] | length == 0' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get gene BRAF")' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | any(.command == "biomcp get gene BRAF" and (.reason | length > 0) and (.sections | index("protein")) and (.sections | index("diseases")) and (.sections | index("expression")))' > /dev/null
+echo "$json_out" | jq -e '[._meta.suggestions[] | select(.command == "biomcp list article")] | length == 0' > /dev/null
+
+variant_out="$("$bin" --json search article -k "BRAF V600E" --limit 1)"
+echo "$variant_out" | jq -e '[(._meta.suggestions // [])[] | select(.command == "biomcp get gene BRAF")] | length == 0' > /dev/null
+
+typed_out="$("$bin" --json search article -k BRAF -g BRAF --limit 1)"
+echo "$typed_out" | jq -e '[(._meta.suggestions // [])[] | select(.command == "biomcp get gene BRAF")] | length == 0' > /dev/null
 ```
 
 ## Article Search Drug Keyword Pivot
 
-When keyword search contains a recognizable drug token, BioMCP should suggest a
-typed drug card without misclassifying common biomedical acronyms like `DNA` as
-gene pivots.
+When a keyword-only article search exactly matches a drug vocabulary label or
+alias, BioMCP should suggest the typed drug card and expose a structured JSON
+suggestion object. The executable next-command list remains string-shaped.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" search article -k "psoralen photobinding DNA" --limit 1)"
+out="$("$bin" search article -k imatinib --limit 1)"
 printf '%s\n' "$out" | grep -q '^See also:$'
-echo "$out" | mustmatch like "biomcp get drug psoralen"
-echo "$out" | mustmatch not like "biomcp get gene DNA"
+echo "$out" | mustmatch like "biomcp get drug imatinib"
 
-json_out="$("$bin" --json search article -k "psoralen photobinding DNA" --limit 1)"
-echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get drug psoralen")' > /dev/null
-echo "$json_out" | jq -e '[._meta.next_commands[] | select(. == "biomcp get gene DNA")] | length == 0' > /dev/null
-echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp get drug psoralen")' > /dev/null
+json_out="$("$bin" --json search article -k imatinib --limit 1)"
+echo "$json_out" | mustmatch like '"suggestions":'
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get drug imatinib")' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | any(.command == "biomcp get drug imatinib" and (.reason | length > 0) and (.sections | index("label")) and (.sections | index("targets")) and (.sections | index("indications")))' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | type == "array" and all(.[]; type == "string")' > /dev/null
 ```
 
 ## Article Search Discover Keyword Pivot
 <!-- smoke-lane -->
 
-When keyword search contains a short entity-like phrase that is better handled
-by structured entity resolution, BioMCP should suggest `discover` in the
-markdown `See also:` block.
+Exact disease keywords get the same typed suggestion treatment as genes and
+drugs. Short entity-like clauses that are not exact gene, drug, or disease
+matches can still point to `discover`, but they must not invent direct disease
+cards from phrase heuristics.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
-out="$("$bin" search article -k "live attenuated vaccines" --limit 1)"
+out="$("$bin" search article -k melanoma --limit 1)"
 printf '%s\n' "$out" | grep -q '^See also:$'
-echo "$out" | mustmatch like 'biomcp discover "live attenuated vaccines"'
+echo "$out" | mustmatch like "biomcp get disease melanoma"
+
+json_out="$("$bin" --json search article -k melanoma --limit 1)"
+echo "$json_out" | mustmatch like '"suggestions":'
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get disease melanoma")' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | any(.command == "biomcp get disease melanoma" and (.reason | length > 0) and (.sections | index("genes")) and (.sections | index("phenotypes")) and (.sections | index("diagnostics")))' > /dev/null
+
+discover_out="$("$bin" search article -k "live attenuated vaccines" --limit 1)"
+printf '%s\n' "$discover_out" | grep -q '^See also:$'
+echo "$discover_out" | mustmatch like 'biomcp discover "live attenuated vaccines"'
 
 guard_out="$("$bin" search article -k "live attenuated vaccines still in use review" --limit 1)"
 echo "$guard_out" | mustmatch not like 'biomcp discover "live attenuated vaccines still in use review"'
+
+non_exact_out="$("$bin" --json search article -k "lung cancer immunotherapy" --limit 1)"
+echo "$non_exact_out" | jq -e '[(._meta.suggestions // [])[] | select(.command | startswith("biomcp get disease "))] | length == 0' > /dev/null
 ```
 
 ## Searching by Keyword

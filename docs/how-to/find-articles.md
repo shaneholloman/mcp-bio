@@ -23,6 +23,12 @@ Do not guess `-g`, `-d`, or `--drug` when the question is trying to identify
 the entity itself. Keep the first search keyword-only, or start with
 `biomcp discover "<question>"` if you want a typed follow-up command first.
 
+If the whole keyword exactly matches a gene, drug, or disease vocabulary label
+or alias, keyword-only article search may return a typed `get` suggestion in
+`See also`, `_meta.next_commands`, and JSON `_meta.suggestions[]`. Treat that
+as a structured follow-up option, but do not expect direct entity suggestions
+for multi-concept phrases such as `BRAF V600E` or `lung cancer immunotherapy`.
+
 Dataset or method question:
 
 ```bash

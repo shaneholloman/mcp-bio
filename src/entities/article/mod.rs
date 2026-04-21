@@ -25,7 +25,7 @@ pub(crate) use self::planner::{
 };
 #[allow(unused_imports)]
 pub(crate) use self::ranking::{article_effective_ranking_mode, article_relevance_ranking_policy};
-pub use self::search::{search, search_page};
+pub use self::search::{search, search_page, validate_search_page_request};
 
 use std::path::PathBuf;
 

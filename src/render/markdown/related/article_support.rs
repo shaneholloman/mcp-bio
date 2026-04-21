@@ -189,18 +189,6 @@ fn first_article_drug_token(tokens: &[&str]) -> Option<String> {
     })
 }
 
-fn remainder_without_token(tokens: &[&str], remove_index: usize) -> Option<String> {
-    let remainder = tokens
-        .iter()
-        .enumerate()
-        .filter_map(|(index, token)| (index != remove_index).then_some(token.trim()))
-        .filter(|token| !token.is_empty())
-        .collect::<Vec<_>>()
-        .join(" ");
-
-    (!remainder.is_empty()).then_some(remainder)
-}
-
 fn article_keyword_cross_entity_eligible(keyword: &str, tokens: &[&str]) -> bool {
     let keyword = keyword.trim();
     !keyword.is_empty()
@@ -229,45 +217,6 @@ fn article_keyword_looks_like_discover_phrase(tokens: &[&str]) -> bool {
             .is_some_and(|token| ARTICLE_DISCOVER_SUFFIXES.contains(&token.as_str()))
 }
 
-pub(super) fn article_keyword_entity_hints(filters: &ArticleSearchFilters) -> Vec<String> {
-    let keyword = filters
-        .keyword
-        .as_deref()
-        .map(str::trim)
-        .filter(|keyword| !keyword.is_empty());
-    let Some(keyword) = keyword else {
-        return Vec::new();
-    };
-
-    let tokens = article_keyword_tokens(keyword);
-    if tokens.is_empty() {
-        return Vec::new();
-    }
-
-    let mut out = Vec::new();
-
-    if filters.gene.is_none()
-        && let Some((gene, index)) = first_article_gene_token(&tokens)
-    {
-        let gene = quote_arg(gene);
-        out.push(format!("biomcp get gene {gene}"));
-        if let Some(remainder) = remainder_without_token(&tokens, index) {
-            let remainder = shell_quote_arg(&remainder);
-            if !remainder.is_empty() {
-                out.push(format!("biomcp search article -g {gene} -k {remainder}"));
-            }
-        }
-    }
-
-    if filters.drug.is_none()
-        && let Some(drug) = first_article_drug_token(&tokens)
-    {
-        out.push(format!("biomcp get drug {}", quote_arg(&drug)));
-    }
-
-    dedupe_markdown_commands(out)
-}
-
 pub(super) fn article_keyword_cross_entity_markdown_hints(
     filters: &ArticleSearchFilters,
 ) -> Vec<String> {
@@ -292,13 +241,8 @@ pub(super) fn article_keyword_cross_entity_markdown_hints(
     }
 
     let mut out = Vec::new();
-    if filters.disease.is_none() {
-        if article_keyword_looks_like_discover_phrase(&tokens) {
-            out.push(format!("biomcp discover {}", shell_quote_arg(keyword)));
-        }
-        if article_keyword_looks_like_disease_phrase(&tokens) {
-            out.push(format!("biomcp get disease {}", quote_arg(keyword)));
-        }
+    if filters.disease.is_none() && article_keyword_looks_like_discover_phrase(&tokens) {
+        out.push(format!("biomcp discover {}", shell_quote_arg(keyword)));
     }
 
     dedupe_markdown_commands(out)

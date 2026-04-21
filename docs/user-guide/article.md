@@ -56,6 +56,15 @@ Turn a natural-language literature question into two parts:
 - If the question is asking which gene, disease, or drug fits the evidence and you do not know the entity yet, do not guess a typed flag. Start with keyword-only article search or run `biomcp discover "<question>"` first.
 - Use `--type review` for synthesis questions, list-style questions, and dataset surveys.
 
+Keyword-only searches can also return exact entity suggestions. When the whole
+keyword exactly matches a gene, drug, or disease vocabulary label or alias,
+BioMCP can add a typed `get gene`, `get drug`, or `get disease` follow-up in
+`See also`, `_meta.next_commands`, and JSON `_meta.suggestions[]`. The
+structured suggestion object includes `command`, `reason`, and `sections`.
+Multi-concept phrases such as `BRAF V600E` or `lung cancer immunotherapy` do
+not get direct entity suggestions, and searches that already use `-g`, `-d`,
+or `--drug` suppress the exact suggestion.
+
 Known anchor only:
 
 ```bash
@@ -249,8 +258,11 @@ metadata. In relevance mode, ranking metadata now includes the effective mode
 plus normalized lexical, citation, and position components; semantic-aware
 rows expose `ranking.semantic_score` as the LitSense2-derived signal and use
 `0` when LitSense2 did not match. Hybrid rows also include the composite
-score. JSON `article batch` responses are a bare array of compact cards so
-callers can map results back to the original input order.
+score. Keyword-only article searches with an exact gene, drug, or disease
+label/alias match may include `_meta.suggestions[]` objects with `command`,
+`reason`, and `sections`; `_meta.next_commands` remains the executable string
+command list. JSON `article batch` responses are a bare array of compact cards
+so callers can map results back to the original input order.
 
 ## Practical tips
 

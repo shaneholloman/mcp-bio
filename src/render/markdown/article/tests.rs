@@ -295,6 +295,7 @@ fn article_search_markdown_preserves_rank_order_and_shows_rationale() {
                 "Note: --type restricts article search to Europe PMC and PubMed. PubTator3, LitSense2, and Semantic Scholar do not support publication-type filtering.",
             ),
             debug_plan: None,
+            exact_entity_commands: &[],
         },
     )
     .expect("markdown should render");
@@ -554,6 +555,7 @@ fn article_search_markdown_prepends_debug_plan_block() {
             semantic_scholar_enabled: true,
             note: None,
             debug_plan: Some(&debug_plan),
+            exact_entity_commands: &[],
         },
     )
     .expect("markdown should render");
@@ -587,10 +589,11 @@ fn article_search_markdown_renders_related_block_before_pagination() {
         source_local_position: 0,
     }];
     let mut filters = article_filters_for_test(crate::entities::article::ArticleSort::Relevance);
-    filters.keyword = Some("SRY Sox9 miRNA".into());
+    filters.keyword = Some("BRAF".into());
+    let exact_commands = vec!["biomcp get gene BRAF".to_string()];
 
     let markdown = article_search_markdown_with_footer_and_context(
-        "keyword=SRY Sox9 miRNA",
+        "keyword=BRAF",
         &rows,
         "Showing 1-1 of 3 results. Use --offset 1 for more.",
         &filters,
@@ -599,6 +602,7 @@ fn article_search_markdown_renders_related_block_before_pagination() {
             semantic_scholar_enabled: true,
             note: None,
             debug_plan: None,
+            exact_entity_commands: &exact_commands,
         },
     )
     .expect("markdown should render");
@@ -613,7 +617,8 @@ fn article_search_markdown_renders_related_block_before_pagination() {
     assert!(footer_line < filters_line);
     assert!(filters_line < related_line);
     assert!(related_line < pagination_line);
-    assert!(markdown.contains("biomcp get gene SRY"));
+    assert!(markdown.contains("biomcp get gene BRAF"));
+    assert!(!markdown.contains("biomcp search article -g BRAF -k"));
 }
 
 #[test]
@@ -652,6 +657,7 @@ fn article_search_markdown_includes_cross_entity_discover_hint_for_short_keyword
             semantic_scholar_enabled: true,
             note: None,
             debug_plan: None,
+            exact_entity_commands: &[],
         },
     )
     .expect("markdown should render");
@@ -716,6 +722,7 @@ fn article_search_markdown_omits_index_footer_when_no_rows_have_it() {
             semantic_scholar_enabled: true,
             note: None,
             debug_plan: None,
+            exact_entity_commands: &[],
         },
     )
     .expect("markdown should render");

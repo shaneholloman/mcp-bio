@@ -41,6 +41,23 @@
         "next_commands": {
           "type": ["array", "null"],
           "items": { "type": "string" }
+        },
+        "suggestions": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["command", "reason", "sections"],
+            "properties": {
+              "command": { "type": "string" },
+              "reason": { "type": "string" },
+              "sections": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": true
+          }
         }
       },
       "additionalProperties": true

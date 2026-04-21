@@ -2,8 +2,9 @@ use chrono::NaiveDate;
 use clap::{CommandFactory, Parser};
 
 use super::dispatch::{
-    ArticleSearchJsonPage, article_debug_filters, article_query_summary, article_search_json,
-    build_article_debug_plan, resolved_article_date_bounds, truncate_article_annotations,
+    ArticleEntitySuggestion, ArticleSearchJsonPage, article_debug_filters, article_query_summary,
+    article_search_json, build_article_debug_plan, is_exact_article_keyword_lookup_eligible,
+    resolved_article_date_bounds, truncate_article_annotations,
 };
 use crate::cli::{Cli, Commands, GetEntity, PaginationMeta, SearchEntity};
 
@@ -63,7 +64,10 @@ fn search_article_help_includes_query_formulation_guidance() {
         )
     );
     assert!(help.contains(
-        "Result pages can suggest typed `get gene`, `get drug`, or `search article -g ... -k ...` follow-ups when `-k/--keyword` contains a recognizable entity token."
+        "Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole `-k/--keyword` exactly matches a vocabulary label or alias."
+    ));
+    assert!(help.contains(
+        "Multi-concept phrases and searches that already use `-g/--gene`, `-d/--disease`, or `--drug` do not get direct entity suggestions."
     ));
     assert!(help.contains(
         "Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance."
@@ -246,6 +250,28 @@ fn article_year_max_conflicts_with_date_to() {
     );
 }
 
+#[test]
+fn exact_article_keyword_lookup_eligibility_is_keyword_only_and_short() {
+    let mut filters = super::super::related_article_filters();
+    filters.keyword = Some("BRAF".into());
+    assert!(is_exact_article_keyword_lookup_eligible(&filters));
+
+    filters.keyword = Some("non-small cell lung cancer".into());
+    assert!(!is_exact_article_keyword_lookup_eligible(&filters));
+
+    filters.keyword = Some("BRAF".into());
+    filters.gene = Some("BRAF".into());
+    assert!(!is_exact_article_keyword_lookup_eligible(&filters));
+
+    filters.gene = None;
+    filters.disease = Some("melanoma".into());
+    assert!(!is_exact_article_keyword_lookup_eligible(&filters));
+
+    filters.disease = None;
+    filters.drug = Some("imatinib".into());
+    assert!(!is_exact_article_keyword_lookup_eligible(&filters));
+}
+
 #[tokio::test]
 async fn handle_command_rejects_zero_limit_before_backend_lookup() {
     let cli = Cli::try_parse_from(["biomcp", "article", "citations", "22663011", "--limit", "0"])
@@ -328,11 +354,13 @@ fn article_search_json_includes_query_and_ranking_context() {
         &results,
         &filters,
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
-    let suggestions = crate::render::markdown::related_article_search_results(
+    let related = crate::render::markdown::related_article_search_results(
         &results,
         &filters,
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
     let json = article_search_json(
         &query,
@@ -346,7 +374,7 @@ fn article_search_json_includes_query_and_ranking_context() {
             results,
             pagination,
             next_commands,
-            suggestions,
+            suggestions: Vec::new(),
         },
     )
     .expect("article search json should render");
@@ -391,18 +419,19 @@ fn article_search_json_includes_query_and_ranking_context() {
                 .contains(&serde_json::Value::String("biomcp list article".into())))
     );
     assert!(
-        value["_meta"]["suggestions"]
-            .as_array()
-            .is_some_and(|commands| !commands
-                .contains(&serde_json::Value::String("biomcp list article".into())))
+        value
+            .get("_meta")
+            .and_then(|meta| meta.get("suggestions"))
+            .is_none()
     );
+    assert!(!related.contains(&"biomcp list article".to_string()));
 }
 
 #[test]
-fn article_search_json_next_commands_include_entity_hints() {
+fn article_search_json_emits_structured_exact_entity_suggestions() {
     let pagination = PaginationMeta::offset(0, 1, 1, Some(1));
     let mut filters = super::super::related_article_filters();
-    filters.keyword = Some("SRY Sox9 miRNA".into());
+    filters.keyword = Some("BRAF".into());
     let query = article_query_summary(
         &filters,
         crate::entities::article::ArticleSourceFilter::All,
@@ -414,7 +443,7 @@ fn article_search_json_next_commands_include_entity_hints() {
         pmid: "22663011".into(),
         pmcid: Some("PMC9984800".into()),
         doi: Some("10.1056/NEJMoa1203421".into()),
-        title: "SRY article".into(),
+        title: "BRAF article".into(),
         journal: Some("Journal".into()),
         date: Some("2025-01-01".into()),
         first_index_date: None,
@@ -426,20 +455,31 @@ fn article_search_json_next_commands_include_entity_hints() {
         is_retracted: Some(false),
         abstract_snippet: Some("Abstract".into()),
         ranking: None,
-        normalized_title: "sry article".into(),
+        normalized_title: "braf article".into(),
         normalized_abstract: "abstract".into(),
         publication_type: None,
         source_local_position: 0,
     }];
+    let suggestions = vec![ArticleEntitySuggestion {
+        command: "biomcp get gene BRAF".into(),
+        reason: "Exact gene vocabulary match for article keyword \"BRAF\".".into(),
+        sections: vec!["protein".into(), "diseases".into(), "expression".into()],
+    }];
+    let exact_commands = suggestions
+        .iter()
+        .map(|suggestion| suggestion.command.clone())
+        .collect::<Vec<_>>();
     let next_commands = crate::render::markdown::search_next_commands_article(
         &results,
         &filters,
         crate::entities::article::ArticleSourceFilter::All,
+        &exact_commands,
     );
-    let suggestions = crate::render::markdown::related_article_search_results(
+    let related = crate::render::markdown::related_article_search_results(
         &results,
         &filters,
         crate::entities::article::ArticleSourceFilter::All,
+        &exact_commands,
     );
     let json = article_search_json(
         &query,
@@ -465,18 +505,13 @@ fn article_search_json_next_commands_include_entity_hints() {
     );
     assert_eq!(
         value["_meta"]["next_commands"][1],
-        serde_json::Value::String("biomcp get gene SRY".into())
-    );
-    assert_eq!(
-        value["_meta"]["next_commands"][2],
-        serde_json::Value::String("biomcp search article -g SRY -k \"Sox9 miRNA\"".into())
+        serde_json::Value::String("biomcp get gene BRAF".into())
     );
     assert!(
         value["_meta"]["next_commands"]
             .as_array()
             .is_some_and(|commands| commands.contains(&serde_json::Value::String(
-                "biomcp search article -k \"SRY Sox9 miRNA\" --year-min 2025 --year-max 2025 --limit 5"
-                    .into()
+                "biomcp search article -k BRAF --year-min 2025 --year-max 2025 --limit 5".into()
             )))
     );
     assert!(
@@ -486,18 +521,24 @@ fn article_search_json_next_commands_include_entity_hints() {
                 .contains(&serde_json::Value::String("biomcp list article".into())))
     );
     assert_eq!(
-        value["_meta"]["suggestions"][1],
-        serde_json::Value::String("biomcp get gene SRY".into())
+        value["_meta"]["suggestions"][0]["command"],
+        serde_json::Value::String("biomcp get gene BRAF".into())
     );
     assert_eq!(
-        value["_meta"]["suggestions"][2],
-        serde_json::Value::String("biomcp search article -g SRY -k \"Sox9 miRNA\"".into())
+        value["_meta"]["suggestions"][0]["reason"],
+        serde_json::Value::String(
+            "Exact gene vocabulary match for article keyword \"BRAF\".".into()
+        )
     );
+    assert_eq!(
+        value["_meta"]["suggestions"][0]["sections"],
+        serde_json::json!(["protein", "diseases", "expression"])
+    );
+    assert!(related.contains(&"biomcp get gene BRAF".to_string()));
     assert!(
-        value["_meta"]["suggestions"]
-            .as_array()
-            .is_some_and(|commands| !commands
-                .contains(&serde_json::Value::String("biomcp list article".into())))
+        !related
+            .iter()
+            .any(|command| command.contains("search article -g BRAF -k"))
     );
 }
 
@@ -538,11 +579,7 @@ fn article_search_json_next_commands_preserve_source_filter() {
         &results,
         &filters,
         crate::entities::article::ArticleSourceFilter::PubMed,
-    );
-    let suggestions = crate::render::markdown::related_article_search_results(
-        &results,
-        &filters,
-        crate::entities::article::ArticleSourceFilter::PubMed,
+        &[],
     );
     let json = article_search_json(
         &query,
@@ -554,7 +591,7 @@ fn article_search_json_next_commands_preserve_source_filter() {
             results,
             pagination,
             next_commands,
-            suggestions,
+            suggestions: Vec::new(),
         },
     )
     .expect("article search json should render");

@@ -32,6 +32,28 @@ deduplication. Use `--max-per-source <N>` to override that cap, use
 `--max-per-source 0` for the default cap explicitly, and set it equal to
 `--limit` to disable capping.
 
+## Exact entity suggestions from keyword-only search
+
+If the whole normalized keyword exactly matches a gene, drug, or disease
+vocabulary label or exact alias, article search may add a direct typed follow-up
+command. The same command appears in markdown `See also` and in JSON
+`_meta.next_commands`; JSON also includes an article-local
+`_meta.suggestions[]` object with `command`, `reason`, and `sections`.
+
+Examples:
+
+```bash
+biomcp search article -k BRAF --limit 5
+biomcp search article -k imatinib --limit 5
+biomcp search article -k melanoma --limit 5
+```
+
+The exact check is for the whole keyword, not any token inside the phrase.
+`BRAF V600E` does not suggest `biomcp get gene BRAF`, and `lung cancer
+immunotherapy` does not invent a single disease card. Searches that already
+include `-g/--gene`, `-d/--disease`, or `--drug` also suppress these direct
+entity suggestions because the typed anchor was chosen explicitly.
+
 ## When `--keyword` should be combined with typed filters
 
 If the gene, disease, or drug is already known, keep that anchor in a typed

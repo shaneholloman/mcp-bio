@@ -267,7 +267,8 @@ fn list_article() -> String {
 
 Result-page follow-ups:
 
-- Keyword-bearing result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>` follow-ups when `-k/--keyword` contains a recognizable entity token.
+- Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole `-k/--keyword` exactly matches a gene, drug, or disease vocabulary label or alias.
+- Multi-concept keyword phrases and searches that already use `-g/--gene`, `-d/--disease`, or `--drug` do not get direct entity suggestions.
 - Visible dated result pages with no existing date bounds can also suggest year-refinement next commands such as `biomcp search article ... --year-min <YYYY> --year-max <YYYY> --limit 5`.
 
 Entity-only quick start:
@@ -297,7 +298,9 @@ Worked examples:
 - Non-empty `search article --json` responses include `_meta.next_commands`.
 - The first follow-up drills the top result with `biomcp get article <pmid>`.
 - `biomcp list article` is always included so agents can inspect the full filter surface.
-- Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>` when the keyword contains a recognizable entity token.
+- Keyword-only exact entity matches can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp get disease <name>` to `_meta.next_commands`.
+- Article search `_meta.suggestions` is an optional array of objects with `command`, `reason`, and `sections` for these exact entity matches; `_meta.next_commands` remains an array of strings.
+- Multi-concept keyword phrases and typed-filter searches omit direct entity suggestion objects.
 - When no explicit article date bounds are present, visible dated rows can also add a year-refinement next command that rebuilds the current search with `--year-min <YYYY> --year-max <YYYY> --limit 5`.
 - Each result may include `first_index_date` as `YYYY-MM-DD` when the upstream record exposes when it was first indexed. Europe PMC and PubMed provide it today; PubTator3, LitSense2, and Semantic Scholar do not.
 
@@ -1326,7 +1329,10 @@ mod tests {
             )
         );
         assert!(article.contains(
-            "Keyword-bearing result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>`"
+            "Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole `-k/--keyword` exactly matches a gene, drug, or disease vocabulary label or alias."
+        ));
+        assert!(article.contains(
+            "Multi-concept keyword phrases and searches that already use `-g/--gene`, `-d/--disease`, or `--drug` do not get direct entity suggestions."
         ));
         assert!(article.contains(
             "Visible dated result pages with no existing date bounds can also suggest year-refinement next commands"
@@ -1347,7 +1353,10 @@ mod tests {
             "typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed"
         ));
         assert!(article.contains(
-            "Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>`"
+            "Keyword-only exact entity matches can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp get disease <name>` to `_meta.next_commands`."
+        ));
+        assert!(article.contains(
+            "Article search `_meta.suggestions` is an optional array of objects with `command`, `reason`, and `sections`"
         ));
         assert!(article.contains("visible dated rows can also add a year-refinement next command"));
     }
@@ -1356,10 +1365,10 @@ mod tests {
     fn list_article_page_mentions_entity_aware_followups() {
         let article = render(Some("article")).expect("list article should render");
         assert!(article.contains(
-            "Keyword-bearing result pages can suggest typed `get gene`, `get drug`, or `search article -g <symbol> -k <topic>`"
+            "Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups"
         ));
         assert!(article.contains(
-            "Keyword-bearing result pages can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp search article -g <symbol> -k <topic>`"
+            "Article search `_meta.suggestions` is an optional array of objects with `command`, `reason`, and `sections`"
         ));
     }
 

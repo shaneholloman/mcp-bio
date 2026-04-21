@@ -48,59 +48,68 @@ fn article_filters(
 }
 
 #[test]
-fn article_search_related_results_include_primary_article_and_gene_pivots() {
+fn article_search_related_results_include_primary_article_and_exact_commands() {
+    let exact_commands = vec!["biomcp get gene BRAF".to_string()];
+    let related = related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("BRAF"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+        &exact_commands,
+    );
+
+    assert_eq!(related[0], "biomcp get article 22663011");
+    assert_eq!(related[1], "biomcp get gene BRAF");
+}
+
+#[test]
+fn article_search_related_results_do_not_derive_entity_get_from_keyword_tokens() {
     let related = related_article_search_results(
         &[article_search_result("22663011")],
         &article_filters(Some("SRY Sox9 miRNA"), None, None),
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
 
     assert_eq!(related[0], "biomcp get article 22663011");
-    assert_eq!(related[1], "biomcp get gene SRY");
-    assert_eq!(related[2], "biomcp search article -g SRY -k \"Sox9 miRNA\"");
-}
-
-#[test]
-fn article_search_related_results_detect_drug_without_dna_false_positive() {
-    let related = related_article_search_results(
-        &[article_search_result("22663011")],
-        &article_filters(Some("psoralen photobinding DNA"), None, None),
-        crate::entities::article::ArticleSourceFilter::All,
-    );
-
-    assert!(related.contains(&"biomcp get drug psoralen".to_string()));
-    assert!(!related.contains(&"biomcp get gene DNA".to_string()));
-}
-
-#[test]
-fn article_search_related_results_include_structured_drug_hint_for_drug_keyword() {
-    let related = related_article_search_results(
-        &[article_search_result("22663011")],
-        &article_filters(Some("tofacitinib"), None, None),
-        crate::entities::article::ArticleSourceFilter::All,
-    );
-
-    assert!(related.contains(&"biomcp get drug tofacitinib".to_string()));
-}
-
-#[test]
-fn article_search_related_results_skip_redundant_typed_hints() {
-    let with_gene_filter = related_article_search_results(
-        &[article_search_result("22663011")],
-        &article_filters(Some("SRY Sox9 miRNA"), Some("BRAF"), None),
-        crate::entities::article::ArticleSourceFilter::All,
-    );
-    assert!(!with_gene_filter.contains(&"biomcp get gene SRY".to_string()));
+    assert!(!related.iter().any(|command| command == "biomcp get gene SRY"));
     assert!(
-        !with_gene_filter.contains(&"biomcp search article -g SRY -k \"Sox9 miRNA\"".to_string())
+        !related
+            .iter()
+            .any(|command| command == "biomcp search article -g SRY -k \"Sox9 miRNA\"")
+    );
+    assert!(!related.iter().any(|command| command == "biomcp get drug psoralen"));
+}
+
+#[test]
+fn article_search_related_results_include_exact_commands_without_result_rows() {
+    let exact_commands = vec!["biomcp get disease melanoma".to_string()];
+    let related = related_article_search_results(
+        &[],
+        &article_filters(Some("melanoma"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+        &exact_commands,
     );
 
-    let with_drug_filter = related_article_search_results(
-        &[article_search_result("22663011")],
-        &article_filters(Some("psoralen photobinding DNA"), None, Some("psoralen")),
+    assert_eq!(related, exact_commands);
+}
+
+#[test]
+fn article_search_next_commands_adds_list_for_exact_commands_without_result_rows() {
+    let exact_commands = vec!["biomcp get gene BRAF".to_string()];
+    let next = search_next_commands_article(
+        &[],
+        &article_filters(Some("BRAF"), None, None),
         crate::entities::article::ArticleSourceFilter::All,
+        &exact_commands,
     );
-    assert!(!with_drug_filter.contains(&"biomcp get drug psoralen".to_string()));
+
+    assert_eq!(
+        next,
+        vec![
+            "biomcp get gene BRAF".to_string(),
+            "biomcp list article".to_string()
+        ]
+    );
 }
 
 #[test]
@@ -109,6 +118,7 @@ fn article_search_related_results_skip_non_entity_keyword_hints() {
         &[article_search_result("22663011")],
         &article_filters(Some("cell cycle checkpoint"), None, None),
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
 
     assert_eq!(related[0], "biomcp get article 22663011");
@@ -124,22 +134,37 @@ fn markdown_article_search_related_results_include_discover_for_short_vaccine_ph
         &[article_search_result("22663011")],
         &article_filters(Some("live attenuated vaccines"), None, None),
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
 
     assert!(related.contains(&"biomcp discover \"live attenuated vaccines\"".to_string()));
 }
 
 #[test]
-fn markdown_article_search_related_results_include_discover_and_get_disease_for_short_disease_phrase(
+fn markdown_article_search_related_results_include_discover_but_not_heuristic_disease_get(
 ) {
     let related = markdown_related_article_search_results(
         &[article_search_result("22663011")],
         &article_filters(Some("Emanuel syndrome"), None, None),
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
 
     assert!(related.contains(&"biomcp discover \"Emanuel syndrome\"".to_string()));
-    assert!(related.contains(&"biomcp get disease \"Emanuel syndrome\"".to_string()));
+    assert!(!related.contains(&"biomcp get disease \"Emanuel syndrome\"".to_string()));
+}
+
+#[test]
+fn markdown_article_search_related_results_include_exact_disease_command_when_precomputed() {
+    let exact_commands = vec!["biomcp get disease melanoma".to_string()];
+    let related = markdown_related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("melanoma"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+        &exact_commands,
+    );
+
+    assert!(related.contains(&"biomcp get disease melanoma".to_string()));
 }
 
 #[test]
@@ -148,6 +173,7 @@ fn markdown_article_search_related_results_skip_cross_entity_hints_for_long_phra
         &[article_search_result("22663011")],
         &article_filters(Some("live attenuated vaccines still in use review"), None, None),
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
 
     assert!(!related.iter().any(|command| command.starts_with("biomcp discover ")));
@@ -167,6 +193,7 @@ fn article_search_related_results_include_year_refinement_hint_when_unbounded() 
         ],
         &article_filters(Some("BRAF melanoma"), None, None),
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
 
     assert!(related.contains(
@@ -189,6 +216,7 @@ fn article_search_related_results_skip_year_refinement_when_already_bounded() {
         &[article_search_result("22663011")],
         &filters,
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
 
     assert!(!related.iter().any(|command| command.contains("--year-min")));
@@ -203,6 +231,7 @@ fn article_search_related_results_skip_year_refinement_without_visible_years() {
         }],
         &article_filters(Some("BRAF melanoma"), None, None),
         crate::entities::article::ArticleSourceFilter::All,
+        &[],
     );
 
     assert!(!related.iter().any(|command| command.contains("--year-min")));
@@ -217,6 +246,7 @@ fn article_search_related_results_preserve_source_filter_in_year_refinement() {
         }],
         &article_filters(Some("BRAF melanoma"), None, None),
         crate::entities::article::ArticleSourceFilter::PubMed,
+        &[],
     );
 
     assert!(related.contains(
