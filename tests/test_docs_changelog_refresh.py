@@ -75,6 +75,13 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
     assert "WHO Prequalified IVD" in latest_release_block
     assert "biomcp gtr sync" in latest_new_features_block
     assert "biomcp who-ivd sync" in latest_release_block
+    assert (
+        "Added opt-in diagnostic pivots to gene and disease cards"
+        in latest_release_block
+    )
+    assert "`get gene <symbol> diagnostics`" in latest_release_block
+    assert "`get disease <name_or_id> diagnostics`" in latest_release_block
+    assert "backed by local GTR and WHO IVD diagnostic search." in latest_release_block
     assert _ticket_references(latest_release_block) == {182, *range(193, 214), 221, 233, 235, 236, 237}
     assert "pending separate merge" not in latest_release_block
     assert "0.8.22" not in latest_release_block
