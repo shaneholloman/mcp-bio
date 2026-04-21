@@ -8,6 +8,8 @@ use std::fmt::Write as _;
 mod tests;
 
 const DIAGNOSTIC_SEARCH_ROW_LIST_CAP: usize = 5;
+const DIAGNOSTIC_ZERO_RESULT_FILTER_HINT: &str =
+    "Try adjusting or removing diagnostic filters: --gene, --disease, --type, or --manufacturer.";
 
 #[derive(Debug, Serialize)]
 pub(crate) struct DiagnosticSearchRow<'a> {
@@ -148,12 +150,24 @@ pub fn diagnostic_search_markdown_with_footer(
         .first()
         .map(|result| result.accession.as_str())
         .unwrap_or("");
+    let true_zero_result = results.is_empty() && total == Some(0);
+    let recovery_block = if true_zero_result {
+        let related_block = format_related_block(diagnostic_zero_result_recovery_commands());
+        if related_block.is_empty() {
+            DIAGNOSTIC_ZERO_RESULT_FILTER_HINT.to_string()
+        } else {
+            format!("{DIAGNOSTIC_ZERO_RESULT_FILTER_HINT}\n\n{related_block}")
+        }
+    } else {
+        String::new()
+    };
     let body = tmpl.render(context! {
         query => query,
         count => results.len(),
         total => total,
         top_accession => crate::render::markdown::quote_arg(top_accession),
         results => &rendered_results,
+        recovery_block => recovery_block,
         pagination_footer => pagination_footer,
     })?;
     Ok(with_pagination_footer(body, pagination_footer))

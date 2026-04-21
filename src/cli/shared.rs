@@ -358,12 +358,21 @@ pub(super) fn search_json_with_meta<T: serde::Serialize>(
     pagination: PaginationMeta,
     next_commands: Vec<String>,
 ) -> anyhow::Result<String> {
+    search_json_with_meta_and_suggestions(results, pagination, next_commands, None)
+}
+
+pub(super) fn search_json_with_meta_and_suggestions<T: serde::Serialize>(
+    results: Vec<T>,
+    pagination: PaginationMeta,
+    next_commands: Vec<String>,
+    suggestions: Option<Vec<String>>,
+) -> anyhow::Result<String> {
     let count = results.len();
     crate::render::json::to_pretty(&SearchJsonResponseWithMeta {
         pagination,
         count,
         results,
-        _meta: search_meta(next_commands),
+        _meta: search_meta_with_suggestions(next_commands, suggestions),
     })
     .map_err(Into::into)
 }

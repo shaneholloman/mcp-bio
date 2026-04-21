@@ -431,7 +431,9 @@ fn list_diagnostic() -> String {
 
 - Non-empty `search diagnostic --json` responses include `_meta.next_commands`.
 - The first follow-up drills the top result with `biomcp get diagnostic <id>` and quotes WHO product codes that contain spaces.
-- `biomcp list diagnostic` is always included so agents can inspect the full filter surface.
+- Non-empty next commands include `biomcp list diagnostic` so agents can inspect the full filter surface.
+- True zero-result `search diagnostic --json` responses keep `count: 0`, `results: []`, and truthful pagination while adding `_meta.suggestions`.
+- Zero-result suggestions include `biomcp list diagnostic` so agents can inspect source-aware diagnostic filters and local GTR/WHO IVD usage.
 - `get diagnostic --json` keeps section-aware follow-ups and `_meta.section_sources`.
 - `get diagnostic --json ... regulatory` adds a top-level `regulatory` field; omitting the section omits the field, and no FDA match serializes `regulatory: []`.
 
@@ -1007,6 +1009,9 @@ mod tests {
         );
         assert!(out.contains("supported public section tokens are `genes`, `conditions`, `methods`, `regulatory`, and `all`."));
         assert!(out.contains("intentionally excludes `regulatory`"));
+        assert!(out.contains("True zero-result `search diagnostic --json` responses keep"));
+        assert!(out.contains("Zero-result suggestions include `biomcp list diagnostic`"));
+        assert!(out.contains("source-aware diagnostic filters and local GTR/WHO IVD usage"));
         assert!(out.contains("biomcp gtr sync"));
         assert!(out.contains("biomcp who-ivd sync"));
         assert!(out.contains("WHO IVD local data (<resolved_root>)"));

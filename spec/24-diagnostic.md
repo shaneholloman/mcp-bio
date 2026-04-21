@@ -13,6 +13,7 @@ entity while reusing local fixture data to keep those contracts deterministic.
 | Mixed-source search | `search diagnostic --disease tuberculosis --source all` | Confirms merged pages preserve per-row provenance and avoid claiming an exact combined total |
 | GTR conjunctive filters | `search diagnostic --gene EGFR --type molecular --source gtr` | Confirms deterministic GTR filter behavior remains intact |
 | Search JSON follow-ups | `--json search diagnostic --disease HIV --source who-ivd` | Confirms WHO search JSON exposes shell-safe quoted follow-up commands |
+| Diagnostic zero-result recovery | `search diagnostic --disease qzvxxptl --source gtr` | Confirms no-match diagnostic search gives Markdown recovery and JSON suggestions |
 | Gene dedupe and row compactness | `search diagnostic --gene BRAF` and `--gene BRCA1` | Confirms GTR summary rows use canonical gene symbols and cap long gene/condition cells |
 | GTR detail card | `get diagnostic GTR...` | Confirms existing GTR progressive-disclosure behavior remains intact |
 | Diagnostic regulatory overlay | `get diagnostic <id> regulatory` | Confirms the opt-in FDA device block renders and stays outside `all` |
@@ -103,6 +104,40 @@ echo "$json_out" | mustmatch like '"source": "who-ivd"'
 echo "$json_out" | jq -e '.results[0].source == "who-ivd"' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic \"ITPW02232- TC40\"")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list diagnostic")' > /dev/null
+```
+
+## Diagnostic Zero-Result Recovery
+
+A valid diagnostic search can still have no matching tests. In Markdown, that
+empty state should preserve the truthful no-results footer while giving users a
+filter-adjustment hint and a command that explains the diagnostic filter surface.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" search diagnostic --disease qzvxxptl --source gtr --limit 5)"
+echo "$out" | mustmatch like "No diagnostic tests found."
+echo "$out" | mustmatch like "Try adjusting or removing diagnostic filters: --gene, --disease, --type, or --manufacturer."
+echo "$out" | mustmatch like $'See also:\n  biomcp list diagnostic'
+echo "$out" | mustmatch like "Showing 0 of 0 results."
+```
+
+The same no-match search stays successful JSON. Agents should see an empty page,
+truthful pagination, no top-result follow-ups, and a command-shaped suggestion
+they can run to recover.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+bin="${BIOMCP_BIN:-biomcp}"
+json_out="$("$bin" --json search diagnostic --disease qzvxxptl --source gtr --limit 5)"
+echo "$json_out" | jq -e '.count == 0' > /dev/null
+echo "$json_out" | jq -e '.results == []' > /dev/null
+echo "$json_out" | jq -e '.pagination.total == 0' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands == []' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | length > 0' > /dev/null
+echo "$json_out" | jq -e '._meta.suggestions | any(. == "biomcp list diagnostic")' > /dev/null
 ```
 
 ## GTR Conjunctive Filters

@@ -83,3 +83,13 @@ fn search_next_commands_diagnostic_quotes_who_product_code() {
         ]
     );
 }
+
+#[test]
+fn diagnostic_zero_result_recovery_commands_point_to_list_help() {
+    let commands = diagnostic_zero_result_recovery_commands();
+    assert_eq!(commands, vec!["biomcp list diagnostic".to_string()]);
+
+    let rendered = format_related_block(commands);
+    assert!(rendered.contains("biomcp list diagnostic"));
+    assert!(rendered.contains("source-aware diagnostic filters and local GTR/WHO IVD usage"));
+}

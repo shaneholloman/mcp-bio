@@ -328,6 +328,10 @@ pub(crate) fn search_next_commands_diagnostic(results: &[DiagnosticSearchResult]
     related::search_next_commands_diagnostic(results)
 }
 
+pub(crate) fn diagnostic_zero_result_recovery_commands() -> Vec<String> {
+    related::diagnostic_zero_result_recovery_commands()
+}
+
 pub(crate) fn search_next_commands_drug_regions(
     requested_name: Option<&str>,
     us_results: Option<&[DrugSearchResult]>,

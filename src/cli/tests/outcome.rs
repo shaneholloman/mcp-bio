@@ -11,8 +11,8 @@ use super::super::test_support::{
 };
 use super::super::{
     Cli, OutputStream, PaginationMeta, execute, execute_mcp, extract_json_from_sections,
-    resolve_query_input, run_outcome, search_json, search_json_with_meta, search_meta,
-    search_meta_with_suggestions,
+    resolve_query_input, run_outcome, search_json, search_json_with_meta,
+    search_json_with_meta_and_suggestions, search_meta, search_meta_with_suggestions,
 };
 
 #[test]
@@ -144,6 +144,27 @@ fn search_json_with_meta_includes_next_commands() {
     assert_eq!(
         value["_meta"]["next_commands"][1],
         serde_json::Value::String("biomcp list gene".into())
+    );
+}
+
+#[test]
+fn search_json_with_meta_and_suggestions_includes_zero_result_suggestions() {
+    let pagination = PaginationMeta::offset(0, 5, 0, Some(0));
+    let json = search_json_with_meta_and_suggestions::<serde_json::Value>(
+        Vec::new(),
+        pagination,
+        Vec::new(),
+        Some(vec!["biomcp list diagnostic".to_string()]),
+    )
+    .expect("search json with zero-result suggestions");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert_eq!(value["count"], 0);
+    assert_eq!(value["results"], serde_json::json!([]));
+    assert_eq!(value["_meta"]["next_commands"], serde_json::json!([]));
+    assert_eq!(
+        value["_meta"]["suggestions"],
+        serde_json::json!(["biomcp list diagnostic"])
     );
 }
 
