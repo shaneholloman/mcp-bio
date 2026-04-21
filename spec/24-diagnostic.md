@@ -265,7 +265,8 @@ bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
 
 json_out="$(biomcp --json search diagnostic --gene BRAF --limit 1)"
 echo "$json_out" | jq -e '.results | length == 1' > /dev/null
-echo "$json_out" | jq -e '.results[0].genes | index("BRAF") != null' > /dev/null
+echo "$json_out" | jq -e '.results[0].genes == ["BRAF","BRCA1","BRCA2","ATM","PALB2","CHEK2","NBN","CDH1","STK11"]' > /dev/null
+echo "$json_out" | jq -e '.results[0].genes | map(select(. == "BRAF")) | length == 1' > /dev/null
 echo "$json_out" | jq -e '.results[0].genes | all(test(":") | not)' > /dev/null
 echo "$json_out" | mustmatch not like '"BRAF:B-Raf'
 

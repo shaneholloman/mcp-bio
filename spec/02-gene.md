@@ -272,6 +272,8 @@ echo "$out" | mustmatch like "| Accession | Name | Type | Manufacturer / Lab | S
 echo "$out" | mustmatch like "GTR000000001.1"
 echo "$out" | mustmatch like "BRCA1 Hereditary Cancer Panel"
 echo "$out" | mustmatch like "NCBI Genetic Testing Registry"
+echo "$out" | mustmatch like "BRAF, BRCA1, BRCA2, ATM, PALB2, +4 more"
+echo "$out" | mustmatch like "Breast cancer, Ovarian cancer, Hereditary breast ovarian cancer syndrome, Pancreatic cancer, Lynch syndrome, +1 more"
 json="$("$bin" --json get gene BRCA1 diagnostics)"
 echo "$json" | jq -e '.diagnostics | length >= 1' > /dev/null
 echo "$json" | jq -e '.diagnostics[0].source == "gtr"' > /dev/null

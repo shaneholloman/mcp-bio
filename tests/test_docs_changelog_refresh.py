@@ -251,6 +251,7 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
     assert "biomcp search diagnostic --gene BRCA1 --limit 5" in diagnostic_guide
     assert "biomcp search diagnostic --disease HIV --source who-ivd --limit 5" in diagnostic_guide
     assert "`Genes` and `Conditions` cells at five displayed values" in diagnostic_guide
+    assert "full deduped symbol arrays" in diagnostic_guide
     assert 'biomcp get diagnostic "ITPW02232- TC40"' in diagnostic_guide
     assert "biomcp gtr sync" in diagnostic_guide
     assert "biomcp who-ivd sync" in diagnostic_guide

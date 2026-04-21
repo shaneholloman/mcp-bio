@@ -64,7 +64,7 @@ Diagnostic search rows and embedded gene/disease diagnostic tables cap the
 `Genes` and `Conditions` cells at five displayed values and append `+N more`
 when additional values are available. Use `biomcp get diagnostic <id> genes`
 or `biomcp get diagnostic <id> conditions` when you need the full lists; JSON
-search output keeps the full deduped arrays.
+search output keeps the full deduped symbol arrays.
 
 `diagnostics` is intentionally opt-in on gene and disease cards. It is not
 expanded by `biomcp get gene <symbol> all` or
