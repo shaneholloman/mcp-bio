@@ -37,18 +37,43 @@ fn extract_readable_html(html: &str, base_url: &str) -> Result<String, BioMcpErr
 mod tests {
     use super::*;
 
-    const SAMPLE_HTML: &str =
-        include_str!("../../../tests/fixtures/article/fulltext/pmc-html-fallback.html");
+    const PMC_ARTICLE_PAGE: &str =
+        include_str!("../../../tests/fixtures/article/fulltext/html/pmc_article_page.html");
+    const BIORXIV_PREPRINT_PAGE: &str =
+        include_str!("../../../tests/fixtures/article/fulltext/html/biorxiv_preprint_page.html");
+    const NIH_NEWS_RELEASE_PAGE: &str =
+        include_str!("../../../tests/fixtures/article/fulltext/html/nih_news_release.html");
 
     #[test]
-    fn extract_text_from_html_keeps_readable_article_content() {
-        let markdown = extract_text_from_html(
-            SAMPLE_HTML,
-            "https://pmc.ncbi.nlm.nih.gov/articles/PMC123457/",
-        )
-        .expect("fixture HTML should convert");
+    fn extract_text_from_html_keeps_article_signals_across_fixture_family() {
+        let cases: [(&str, &str, &[&str]); 3] = [
+            (
+                PMC_ARTICLE_PAGE,
+                "https://pmc.ncbi.nlm.nih.gov/articles/PMC123457/",
+                &["PMC HTML fallback winner", "PMC HTML fallback body text."],
+            ),
+            (
+                BIORXIV_PREPRINT_PAGE,
+                "https://www.biorxiv.org/content/10.1101/2025.01.01.123456v1",
+                &["Preprint markdown quality guard body."],
+            ),
+            (
+                NIH_NEWS_RELEASE_PAGE,
+                "https://www.nih.gov/news-events/news-releases/nih-quality-guard",
+                &["News release markdown quality guard body."],
+            ),
+        ];
 
-        assert!(markdown.contains("PMC HTML fallback winner"));
-        assert!(markdown.contains("PMC HTML fallback body text."));
+        for (html, base_url, expected) in cases {
+            let markdown =
+                extract_text_from_html(html, base_url).expect("fixture HTML should convert");
+
+            for needle in expected {
+                assert!(
+                    markdown.contains(needle),
+                    "missing HTML fixture signal: {needle}"
+                );
+            }
+        }
     }
 }

@@ -32,7 +32,7 @@ fn sample_pmc_oa_archive(title: &str, body: &str) -> Vec<u8> {
 }
 
 fn sample_pdf_bytes() -> &'static [u8] {
-    include_bytes!("../../../../tests/fixtures/article/fulltext/semantic-scholar-fallback.pdf")
+    include_bytes!("../../../../tests/fixtures/article/fulltext/pdf/pmc_oa_article_pdf.pdf")
 }
 
 #[test]
@@ -665,6 +665,251 @@ async fn get_fulltext_uses_semantic_scholar_pdf_when_opted_in() {
     let path = article.full_text_path.expect("full text path");
     let saved = std::fs::read_to_string(path).expect("saved full text markdown");
     assert!(saved.contains("PDF fallback body text."));
+    assert!(article.semantic_scholar.is_none());
+}
+
+#[tokio::test]
+async fn get_rejects_pdf_without_fulltext_section() {
+    let err = get("22663013", &[], ArticleGetOptions { allow_pdf: true })
+        .await
+        .expect_err("pdf without fulltext should fail");
+
+    assert!(matches!(
+        err,
+        BioMcpError::InvalidArgument(message)
+            if message.contains("--pdf requires the fulltext section")
+    ));
+}
+
+#[tokio::test]
+async fn get_fulltext_does_not_attempt_pdf_without_opt_in() {
+    let _guard = lock_env().await;
+    let pubtator = MockServer::start().await;
+    let europepmc = MockServer::start().await;
+    let efetch = MockServer::start().await;
+    let pmc_oa = MockServer::start().await;
+    let pmc_html = MockServer::start().await;
+    let s2 = MockServer::start().await;
+    let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+    let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+    let _efetch_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&efetch.uri()));
+    let _pmc_oa_base = set_env_var("BIOMCP_PMC_OA_BASE", Some(&pmc_oa.uri()));
+    let _pmc_html_base = set_env_var("BIOMCP_PMC_HTML_BASE", Some(&pmc_html.uri()));
+    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+    let _s2_key = set_env_var("S2_API_KEY", None);
+
+    Mock::given(method("GET"))
+        .and(path("/publications/export/biocjson"))
+        .and(query_param("pmids", "22663013"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "PubTator3": [{
+                "pmid": 22663013,
+                "pmcid": "PMC123458",
+                "passages": [
+                    {"infons": {"type": "title"}, "text": "Open access PDF fallback winner"},
+                    {"infons": {"type": "abstract"}, "text": "Abstract text."}
+                ]
+            }]
+        })))
+        .expect(1)
+        .mount(&pubtator)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/PMC123458/fullTextXML"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/22663013/fullTextXML"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/efetch.fcgi"))
+        .and(query_param("db", "pmc"))
+        .and(query_param("id", "123458"))
+        .and(query_param("rettype", "xml"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&efetch)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/"))
+        .and(query_param("id", "PMC123458"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("<records></records>"))
+        .expect(1)
+        .mount(&pmc_oa)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/articles/PMC123458/"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&pmc_html)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/graph/v1/paper/PMID:22663013"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "paperId": "paper-3",
+            "title": "Open access PDF fallback winner",
+            "openAccessPdf": {
+                "url": format!("{}/pdf/22663013.pdf", s2.uri()),
+                "status": "GREEN",
+                "license": "CC BY"
+            }
+        })))
+        .expect(1)
+        .mount(&s2)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/pdf/22663013.pdf"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "application/pdf")
+                .set_body_bytes(sample_pdf_bytes()),
+        )
+        .expect(0)
+        .mount(&s2)
+        .await;
+
+    let article = get(
+        "22663013",
+        &["fulltext".to_string()],
+        ArticleGetOptions::default(),
+    )
+    .await
+    .expect("default fulltext request should succeed");
+
+    assert_eq!(
+        article.full_text_note.as_deref(),
+        Some("Full text not available: XML and HTML sources did not return full text")
+    );
+    assert!(article.full_text_path.is_none());
+    assert!(article.full_text_source.is_none());
+    assert!(article.semantic_scholar.is_none());
+}
+
+#[tokio::test]
+async fn get_fulltext_treats_non_pdf_payload_as_miss_when_opted_in() {
+    let _guard = lock_env().await;
+    let pubtator = MockServer::start().await;
+    let europepmc = MockServer::start().await;
+    let efetch = MockServer::start().await;
+    let pmc_oa = MockServer::start().await;
+    let pmc_html = MockServer::start().await;
+    let s2 = MockServer::start().await;
+    let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
+    let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+    let _efetch_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&efetch.uri()));
+    let _pmc_oa_base = set_env_var("BIOMCP_PMC_OA_BASE", Some(&pmc_oa.uri()));
+    let _pmc_html_base = set_env_var("BIOMCP_PMC_HTML_BASE", Some(&pmc_html.uri()));
+    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&s2.uri()));
+    let _s2_key = set_env_var("S2_API_KEY", None);
+
+    Mock::given(method("GET"))
+        .and(path("/publications/export/biocjson"))
+        .and(query_param("pmids", "22663013"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "PubTator3": [{
+                "pmid": 22663013,
+                "pmcid": "PMC123458",
+                "passages": [
+                    {"infons": {"type": "title"}, "text": "Open access PDF fallback winner"},
+                    {"infons": {"type": "abstract"}, "text": "Abstract text."}
+                ]
+            }]
+        })))
+        .expect(1)
+        .mount(&pubtator)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/PMC123458/fullTextXML"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/22663013/fullTextXML"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&europepmc)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/efetch.fcgi"))
+        .and(query_param("db", "pmc"))
+        .and(query_param("id", "123458"))
+        .and(query_param("rettype", "xml"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&efetch)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/"))
+        .and(query_param("id", "PMC123458"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("<records></records>"))
+        .expect(1)
+        .mount(&pmc_oa)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/articles/PMC123458/"))
+        .respond_with(ResponseTemplate::new(404))
+        .expect(1)
+        .mount(&pmc_html)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/graph/v1/paper/PMID:22663013"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "paperId": "paper-3",
+            "title": "Open access PDF fallback winner",
+            "openAccessPdf": {
+                "url": format!("{}/pdf/22663013.pdf", s2.uri()),
+                "status": "GREEN",
+                "license": "CC BY"
+            }
+        })))
+        .expect(1)
+        .mount(&s2)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/pdf/22663013.pdf"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/plain")
+                .set_body_string("not a pdf"),
+        )
+        .expect(1)
+        .mount(&s2)
+        .await;
+
+    let article = get(
+        "22663013",
+        &["fulltext".to_string()],
+        ArticleGetOptions { allow_pdf: true },
+    )
+    .await
+    .expect("non-pdf payload should become a ladder miss");
+
+    assert_eq!(
+        article.full_text_note.as_deref(),
+        Some("Full text not available: XML, HTML, and PDF sources did not return full text")
+    );
+    assert!(article.full_text_path.is_none());
+    assert!(article.full_text_source.is_none());
     assert!(article.semantic_scholar.is_none());
 }
 

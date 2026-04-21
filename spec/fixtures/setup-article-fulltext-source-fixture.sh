@@ -38,9 +38,11 @@ import sys
 
 
 FIXTURE_DIR = Path(sys.argv[2])
-HTML_FALLBACK = (FIXTURE_DIR / "pmc-html-fallback.html").read_text(encoding="utf-8")
+HTML_FALLBACK = (
+    FIXTURE_DIR / "html" / "pmc_article_page.html"
+).read_text(encoding="utf-8")
 PDF_FALLBACK = (
-    FIXTURE_DIR / "semantic-scholar-fallback.pdf"
+    FIXTURE_DIR / "pdf" / "pmc_oa_article_pdf.pdf"
 ).read_bytes()
 
 
