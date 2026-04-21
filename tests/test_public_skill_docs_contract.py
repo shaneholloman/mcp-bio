@@ -133,6 +133,39 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "[Predict Effects](../docs/how-to/predict-effects.md)" in skill_file
     assert "[Reproduce Papers](../docs/how-to/reproduce-papers.md)" in skill_file
     assert "[Skill Validation](../docs/how-to/skill-validation.md)" in skill_file
+    how_to_table = skill_file[
+        skill_file.index("## How-to guide reference") : skill_file.index(
+            "## Anti-patterns"
+        )
+    ]
+    expected_bioasq_rows = [
+        (
+            "| Specific variant pathogenicity or clinical-evidence question | "
+            "[Guide Workflows](../docs/how-to/guide-workflows.md) | "
+            "Use the bounded variant-pathogenicity workflow instead of mixing ad hoc "
+            "variant, trial, and article commands |"
+        ),
+        (
+            "| Drug approval, licensing, or regulatory-date question | "
+            "[Guide Workflows](../docs/how-to/guide-workflows.md) | "
+            "Use the structured-first workflow discipline: check `get drug ... "
+            "regulatory` before falling back to articles for approval facts |"
+        ),
+        (
+            "| Gene-disease association for a known gene | "
+            "[Guide Workflows](../docs/how-to/guide-workflows.md) | "
+            "Check `get gene ... diseases` and `search variant --gene ...` for the "
+            "full disease spectrum before searching articles |"
+        ),
+        (
+            "| Gene localization or protein-function question | "
+            "[Guide Workflows](../docs/how-to/guide-workflows.md) | "
+            "Pull `get gene ... protein` and `get gene ... hpa` first because "
+            "UniProt and HPA usually answer localization or function directly |"
+        ),
+    ]
+    for row in expected_bioasq_rows:
+        assert row in how_to_table
     assert (
         "After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls."
         in skill_file
