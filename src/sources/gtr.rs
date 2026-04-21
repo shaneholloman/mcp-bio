@@ -150,6 +150,20 @@ impl GtrClient {
     }
 }
 
+fn gene_symbol(raw: &str) -> Option<&str> {
+    let symbol = raw.split_once(':').map_or(raw, |(symbol, _)| symbol).trim();
+    (!symbol.is_empty()).then_some(symbol)
+}
+
+fn push_merged_gene(out: &mut Vec<String>, seen: &mut HashSet<String>, raw: &str) {
+    let Some(symbol) = gene_symbol(raw) else {
+        return;
+    };
+    if seen.insert(symbol.to_ascii_lowercase()) {
+        out.push(symbol.to_string());
+    }
+}
+
 impl GtrIndex {
     pub(crate) fn record(&self, accession: &str) -> Option<&GtrRecord> {
         self.records_by_id.get(accession)
@@ -160,18 +174,12 @@ impl GtrIndex {
         let mut seen = HashSet::new();
         if let Some(genes) = self.genes_by_id.get(accession) {
             for gene in genes {
-                let key = gene.to_ascii_lowercase();
-                if seen.insert(key) {
-                    out.push(gene.clone());
-                }
+                push_merged_gene(&mut out, &mut seen, gene);
             }
         }
         if let Some(record) = self.records_by_id.get(accession) {
             for gene in &record.genes {
-                let key = gene.to_ascii_lowercase();
-                if seen.insert(key) {
-                    out.push(gene.clone());
-                }
+                push_merged_gene(&mut out, &mut seen, gene);
             }
         }
         out
@@ -862,6 +870,43 @@ GTR000000001.1\tGenomOncology Lab\tGenomOncology Institute\tUSA\t12D3456789\tNY|
             vec!["Cutaneous melanoma".to_string()]
         );
         assert!(index.record("GTR000000001.1").is_some());
+    }
+
+    #[test]
+    fn merged_genes_deduplicates_symbol_colon_description_form() {
+        let mut index = GtrIndex::default();
+        index
+            .genes_by_id
+            .insert("GTR000000003.1".to_string(), vec!["BRAF".to_string()]);
+        index.records_by_id.insert(
+            "GTR000000003.1".to_string(),
+            GtrRecord {
+                accession: "GTR000000003.1".to_string(),
+                lab_test_name: "Broad Hereditary Cancer Panel".to_string(),
+                manufacturer_test_name: String::new(),
+                test_type: "molecular".to_string(),
+                name_of_laboratory: String::new(),
+                name_of_institution: String::new(),
+                clia_number: String::new(),
+                state_licenses: String::new(),
+                facility_country: String::new(),
+                test_curr_stat: "Current".to_string(),
+                test_pub_stat: "Public".to_string(),
+                method_categories: Vec::new(),
+                methods: Vec::new(),
+                genes: vec![
+                    "BRAF:B-Raf proto-oncogene, serine/threonine kinase".to_string(),
+                    "BRAF".to_string(),
+                    "ATM".to_string(),
+                    ":orphan-gene".to_string(),
+                ],
+            },
+        );
+
+        assert_eq!(
+            index.merged_genes("GTR000000003.1"),
+            vec!["BRAF".to_string(), "ATM".to_string()]
+        );
     }
 
     #[test]
