@@ -7,6 +7,8 @@ use std::fmt::Write as _;
 #[cfg(test)]
 mod tests;
 
+const DIAGNOSTIC_SEARCH_ROW_LIST_CAP: usize = 5;
+
 #[derive(Debug, Serialize)]
 pub(crate) struct DiagnosticSearchRow<'a> {
     accession: &'a str,
@@ -17,8 +19,8 @@ pub(crate) struct DiagnosticSearchRow<'a> {
     manufacturer_or_lab: Option<&'a str>,
     source: &'a str,
     source_label: String,
-    genes: &'a [String],
-    conditions: &'a [String],
+    genes_cell: String,
+    conditions_cell: String,
 }
 
 pub fn diagnostic_markdown(
@@ -170,8 +172,28 @@ pub(crate) fn diagnostic_search_rows(
             source: &result.source,
             source_label: crate::entities::diagnostic::diagnostic_source_label(&result.source)
                 .to_string(),
-            genes: &result.genes,
-            conditions: &result.conditions,
+            genes_cell: capped_cell(&result.genes),
+            conditions_cell: capped_cell(&result.conditions),
         })
         .collect()
+}
+
+fn capped_cell(items: &[String]) -> String {
+    if items.is_empty() {
+        return "-".to_string();
+    }
+
+    let shown = items
+        .iter()
+        .take(DIAGNOSTIC_SEARCH_ROW_LIST_CAP)
+        .map(|item| markdown_cell(item))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let overflow = items.len().saturating_sub(DIAGNOSTIC_SEARCH_ROW_LIST_CAP);
+
+    if overflow == 0 {
+        shown
+    } else {
+        format!("{shown}, +{overflow} more")
+    }
 }

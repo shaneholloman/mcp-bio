@@ -7,3 +7,12 @@ GTR000000002.1	gene	EGFR
 GTR000000002.1	condition	Cutaneous melanoma
 GTR000000099.1	gene	RET
 GTR000000099.1	condition	Legacy syndrome
+GTR000000003.1	gene	BRAF
+GTR000000003.1	gene	BRCA1
+GTR000000003.1	gene	BRCA2
+GTR000000003.1	condition	Breast cancer
+GTR000000003.1	condition	Ovarian cancer
+GTR000000003.1	condition	Hereditary breast ovarian cancer syndrome
+GTR000000003.1	condition	Pancreatic cancer
+GTR000000003.1	condition	Lynch syndrome
+GTR000000003.1	condition	Colon cancer

@@ -83,6 +83,63 @@ fn diagnostic_search_markdown_shows_source_column_and_detail_hint() {
 }
 
 #[test]
+fn diagnostic_search_rows_caps_genes_and_conditions_with_overflow_marker() {
+    let result = DiagnosticSearchResult {
+        source: "gtr".to_string(),
+        accession: "GTR000000003.1".to_string(),
+        name: "Broad Hereditary Cancer Panel".to_string(),
+        test_type: Some("molecular".to_string()),
+        manufacturer_or_lab: Some("PanCancer Pro".to_string()),
+        genes: [
+            "BRAF", "BRCA1", "BRCA2", "ATM", "PALB2", "CHEK2", "NBN", "CDH1", "STK11",
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect(),
+        conditions: [
+            "Breast cancer",
+            "Ovarian cancer",
+            "Hereditary breast ovarian cancer syndrome",
+            "Pancreatic cancer",
+            "Lynch syndrome",
+            "Colon cancer",
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect(),
+    };
+
+    let results = vec![result];
+    let rows = diagnostic_search_rows(&results);
+    assert_eq!(
+        rows[0].genes_cell,
+        "BRAF, BRCA1, BRCA2, ATM, PALB2, +4 more"
+    );
+    assert_eq!(
+        rows[0].conditions_cell,
+        "Breast cancer, Ovarian cancer, Hereditary breast ovarian cancer syndrome, Pancreatic cancer, Lynch syndrome, +1 more"
+    );
+}
+
+#[test]
+fn diagnostic_search_rows_escapes_markdown_table_cells() {
+    let result = DiagnosticSearchResult {
+        source: "gtr".to_string(),
+        accession: "GTR000000004.1".to_string(),
+        name: "Escaping Probe".to_string(),
+        test_type: None,
+        manufacturer_or_lab: None,
+        genes: vec!["A|B".to_string()],
+        conditions: vec!["Line\nBreak".to_string()],
+    };
+
+    let results = vec![result];
+    let rows = diagnostic_search_rows(&results);
+    assert_eq!(rows[0].genes_cell, "A\\|B");
+    assert_eq!(rows[0].conditions_cell, "Line Break");
+}
+
+#[test]
 fn diagnostic_markdown_renders_who_summary_fields_and_supported_sections_only() {
     let diagnostic = Diagnostic {
         source: "who-ivd".to_string(),

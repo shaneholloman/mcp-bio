@@ -60,6 +60,12 @@ both local bundles match the condition. Embedded sections show a compact table
 with accession, name, type, manufacturer or lab, public source label, genes,
 and conditions.
 
+Diagnostic search rows and embedded gene/disease diagnostic tables cap the
+`Genes` and `Conditions` cells at five displayed values and append `+N more`
+when additional values are available. Use `biomcp get diagnostic <id> genes`
+or `biomcp get diagnostic <id> conditions` when you need the full lists; JSON
+search output keeps the full deduped symbol arrays.
+
 `diagnostics` is intentionally opt-in on gene and disease cards. It is not
 expanded by `biomcp get gene <symbol> all` or
 `biomcp get disease <name_or_id> all`. When local diagnostic data is

@@ -504,6 +504,44 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn get_diagnostic_genes_returns_full_deduped_broad_panel_list() {
+        let (_lock, _root, _env) = install_gtr_fixture_root("diagnostic-get-broad-panel").await;
+
+        let expanded = get(
+            "GTR000000003.1",
+            &["genes".to_string(), "conditions".to_string()],
+        )
+        .await
+        .expect("expanded broad-panel get");
+
+        assert_eq!(
+            expanded.genes,
+            Some(vec![
+                "BRAF".to_string(),
+                "BRCA1".to_string(),
+                "BRCA2".to_string(),
+                "ATM".to_string(),
+                "PALB2".to_string(),
+                "CHEK2".to_string(),
+                "NBN".to_string(),
+                "CDH1".to_string(),
+                "STK11".to_string(),
+            ])
+        );
+        assert_eq!(
+            expanded.conditions,
+            Some(vec![
+                "Breast cancer".to_string(),
+                "Ovarian cancer".to_string(),
+                "Hereditary breast ovarian cancer syndrome".to_string(),
+                "Pancreatic cancer".to_string(),
+                "Lynch syndrome".to_string(),
+                "Colon cancer".to_string(),
+            ])
+        );
+    }
+
+    #[tokio::test]
     async fn get_who_ivd_keeps_summary_and_resolves_supported_sections() {
         let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
             install_all_fixture_roots("diagnostic-get-who").await;

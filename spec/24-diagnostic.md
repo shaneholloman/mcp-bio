@@ -13,6 +13,7 @@ entity while reusing local fixture data to keep those contracts deterministic.
 | Mixed-source search | `search diagnostic --disease ma --source all` | Confirms merged pages preserve per-row provenance and avoid claiming an exact combined total |
 | GTR conjunctive filters | `search diagnostic --gene EGFR --type molecular --source gtr` | Confirms deterministic GTR filter behavior remains intact |
 | Search JSON follow-ups | `--json search diagnostic --disease HIV --source who-ivd` | Confirms WHO search JSON exposes shell-safe quoted follow-up commands |
+| Gene dedupe and row compactness | `search diagnostic --gene BRAF` and `--gene BRCA1` | Confirms GTR summary rows use canonical gene symbols and cap long gene/condition cells |
 | GTR detail card | `get diagnostic GTR...` | Confirms existing GTR progressive-disclosure behavior remains intact |
 | Diagnostic regulatory overlay | `get diagnostic <id> regulatory` | Confirms the opt-in FDA device block renders and stays outside `all` |
 | WHO detail card | `get diagnostic "<who_code>"` | Confirms WHO summary/detail behavior, section limits, and quoted next steps |
@@ -90,8 +91,6 @@ echo "$out" | mustmatch like "WHO Prequalified IVD"
 
 ## Search JSON Follow-ups
 
-<!-- mustmatch-lint: skip -->
-
 JSON WHO search output should include shell-safe quoted `_meta.next_commands`
 so agents can drill the top WHO result without reparsing markdown.
 
@@ -99,8 +98,9 @@ so agents can drill the top WHO result without reparsing markdown.
 bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-who-ivd-env"
 json_out="$(biomcp --json search diagnostic --disease HIV --source who-ivd --limit 1)"
-echo "$json_out" | jq -e '.[0].source == "who-ivd"' > /dev/null
-echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic \"ITPW02232- TC40\" regulatory")' > /dev/null
+echo "$json_out" | mustmatch like '"source": "who-ivd"'
+echo "$json_out" | jq -e '.results[0].source == "who-ivd"' > /dev/null
+echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp get diagnostic \"ITPW02232- TC40\"")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list diagnostic")' > /dev/null
 ```
 
@@ -250,6 +250,41 @@ echo "$json_out" | jq -e '._meta.section_sources | any(.key == "summary" and (.s
 echo "$json_out" | jq -e '._meta.section_sources | any(.key == "conditions" and (.sources | any(. == "WHO Prequalified IVD")))' > /dev/null
 echo "$json_out" | jq -e '._meta.section_sources | all(.key != "genes")' > /dev/null
 echo "$json_out" | jq -e '._meta.section_sources | all(.key != "methods")' > /dev/null
+```
+
+## Gene Dedupe and Row Compactness
+
+GTR search rows should expose canonical gene symbols, even when the upstream
+bulk file provides both `SYMBOL:description` and bare-symbol forms. Broad-panel
+summary rows stay compact by capping long gene and condition cells while detail
+commands keep the complete lists.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+
+json_out="$(biomcp --json search diagnostic --gene BRAF --limit 1)"
+echo "$json_out" | jq -e '.results | length == 1' > /dev/null
+echo "$json_out" | jq -e '.results[0].genes == ["BRAF","BRCA1","BRCA2","ATM","PALB2","CHEK2","NBN","CDH1","STK11"]' > /dev/null
+echo "$json_out" | jq -e '.results[0].genes | map(select(. == "BRAF")) | length == 1' > /dev/null
+echo "$json_out" | jq -e '.results[0].genes | all(test(":") | not)' > /dev/null
+echo "$json_out" | mustmatch not like '"BRAF:B-Raf'
+
+md_out="$(biomcp search diagnostic --gene BRCA1 --limit 3)"
+echo "$md_out" | mustmatch like "BRAF, BRCA1, BRCA2, ATM, PALB2, +4 more"
+echo "$md_out" | mustmatch like "Breast cancer, Ovarian cancer, Hereditary breast ovarian cancer syndrome, Pancreatic cancer, Lynch syndrome, +1 more"
+size_bytes="$(printf '%s' "$md_out" | wc -c | tr -d ' ')"
+if [ "$size_bytes" -lt 15360 ]; then
+  echo "COMPACT_OK" | mustmatch like "COMPACT_OK"
+else
+  printf 'diagnostic markdown too large: %s bytes\n' "$size_bytes"
+  exit 1
+fi
+
+detail_out="$(biomcp get diagnostic GTR000000003.1 genes conditions)"
+echo "$detail_out" | mustmatch like "BRAF, BRCA1, BRCA2, ATM, PALB2, CHEK2, NBN, CDH1, STK11"
+echo "$detail_out" | mustmatch like "Breast cancer, Ovarian cancer, Hereditary breast ovarian cancer syndrome, Pancreatic cancer, Lynch syndrome, Colon cancer"
+echo "$detail_out" | mustmatch not like "PALB2, +4 more"
 ```
 
 ## Filter Validation

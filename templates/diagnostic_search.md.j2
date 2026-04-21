@@ -8,7 +8,7 @@ Found {{ count }} diagnostic test{% if count != 1 %}s{% endif %}{% if total %} (
 |Accession|Name|Type|Manufacturer / Lab|Source|Genes|Conditions|
 |---|---|---|---|---|---|---|
 {% for row in results -%}
-|{{ row.accession }}|{{ row.name }}|{{ row.test_type or "-" }}|{{ row.manufacturer_or_lab or "-" }}|{{ row.source_label }}|{% if row.genes %}{{ row.genes | join(", ") }}{% else %}-{% endif %}|{% if row.conditions %}{{ row.conditions | join(", ") }}{% else %}-{% endif %}|
+|{{ row.accession }}|{{ row.name }}|{{ row.test_type or "-" }}|{{ row.manufacturer_or_lab or "-" }}|{{ row.source_label }}|{{ row.genes_cell }}|{{ row.conditions_cell }}|
 {% endfor %}
 
 Use `biomcp get diagnostic {{ top_accession }}` for details.

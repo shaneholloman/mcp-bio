@@ -110,7 +110,7 @@ No MedlinePlus clinical features found for this disease.
 | Accession | Name | Type | Manufacturer / Lab | Source | Genes | Conditions |
 |---|---|---|---|---|---|---|
 {% for row in diagnostic_rows -%}
-| {{ row.accession }} | {{ row.name }} | {{ row.test_type or "-" }} | {{ row.manufacturer_or_lab or "-" }} | {{ row.source_label }} | {% if row.genes %}{{ row.genes | join(", ") }}{% else %}-{% endif %} | {% if row.conditions %}{{ row.conditions | join(", ") }}{% else %}-{% endif %} |
+| {{ row.accession }} | {{ row.name }} | {{ row.test_type or "-" }} | {{ row.manufacturer_or_lab or "-" }} | {{ row.source_label }} | {{ row.genes_cell }} | {{ row.conditions_cell }} |
 {% endfor -%}
 {% elif diagnostics_note -%}
 {{ diagnostics_note }}
