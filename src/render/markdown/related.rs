@@ -88,7 +88,7 @@ pub(super) fn related_command_description(command: &str) -> Option<&'static str>
     } else if command == "biomcp study download --list" {
         Some("browse downloadable cancer genomics studies")
     } else if command == "biomcp list diagnostic" {
-        Some("diagnostic filters and local GTR usage")
+        Some("source-aware diagnostic filters and local GTR/WHO IVD usage")
     } else if command.starts_with("biomcp drug adverse-events ") {
         Some("inspect safety reports and adverse-event signal")
     } else {
@@ -443,6 +443,10 @@ pub(super) fn search_next_commands_diagnostic(results: &[DiagnosticSearchResult]
     }
     out.push("biomcp list diagnostic".to_string());
     dedupe_markdown_commands(out)
+}
+
+pub(super) fn diagnostic_zero_result_recovery_commands() -> Vec<String> {
+    vec!["biomcp list diagnostic".to_string()]
 }
 
 fn non_empty_owned(value: &str) -> Option<String> {

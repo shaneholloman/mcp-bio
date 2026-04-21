@@ -2,6 +2,10 @@
 
 {% if count == 0 -%}
 No diagnostic tests found.
+{% if recovery_block %}
+
+{{ recovery_block }}
+{% endif %}
 {% else -%}
 Found {{ count }} diagnostic test{% if count != 1 %}s{% endif %}{% if total %} (of {{ total }} total){% endif %}
 

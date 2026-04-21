@@ -146,6 +146,109 @@ async fn handle_search_rejects_zero_limit_before_gtr_lookup() {
 }
 
 #[tokio::test]
+async fn handle_search_json_includes_suggestions_for_true_zero_result() {
+    let _lock = env_lock().lock().await;
+    let root = TempDirGuard::new("cli-diagnostic");
+    write_gtr_fixture(root.path());
+    let _env = set_env_var(
+        "BIOMCP_GTR_DIR",
+        Some(root.path().to_str().expect("utf-8 path")),
+    );
+
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "--json",
+        "search",
+        "diagnostic",
+        "--disease",
+        "qzvxxptl",
+        "--source",
+        "gtr",
+        "--limit",
+        "5",
+    ])
+    .expect("search diagnostic should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Diagnostic(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected search diagnostic command");
+    };
+
+    let outcome = super::handle_search(args, json)
+        .await
+        .expect("search diagnostic json");
+    let value: serde_json::Value = serde_json::from_str(&outcome.text).expect("valid json");
+
+    assert_eq!(value["count"], 0);
+    assert_eq!(value["results"], serde_json::json!([]));
+    assert_eq!(value["pagination"]["total"], 0);
+    assert_eq!(value["_meta"]["next_commands"], serde_json::json!([]));
+    assert!(
+        value["_meta"]["suggestions"]
+            .as_array()
+            .is_some_and(|commands| commands.iter().any(|cmd| cmd == "biomcp list diagnostic"))
+    );
+}
+
+#[tokio::test]
+async fn handle_search_json_omits_suggestions_for_high_offset_empty_page() {
+    let _lock = env_lock().lock().await;
+    let root = TempDirGuard::new("cli-diagnostic");
+    write_gtr_fixture(root.path());
+    let _env = set_env_var(
+        "BIOMCP_GTR_DIR",
+        Some(root.path().to_str().expect("utf-8 path")),
+    );
+
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "--json",
+        "search",
+        "diagnostic",
+        "--disease",
+        "tuberculosis",
+        "--source",
+        "gtr",
+        "--limit",
+        "5",
+        "--offset",
+        "99",
+    ])
+    .expect("search diagnostic should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Diagnostic(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected search diagnostic command");
+    };
+
+    let outcome = super::handle_search(args, json)
+        .await
+        .expect("search diagnostic json");
+    let value: serde_json::Value = serde_json::from_str(&outcome.text).expect("valid json");
+
+    assert_eq!(value["count"], 0);
+    assert_eq!(value["results"], serde_json::json!([]));
+    assert!(
+        value["pagination"]["total"]
+            .as_u64()
+            .is_some_and(|total| total > 0)
+    );
+    assert!(value.get("_meta").is_none());
+}
+
+#[tokio::test]
 async fn handle_get_honors_trailing_json_flag_after_sections() {
     let _lock = env_lock().lock().await;
     let root = TempDirGuard::new("cli-diagnostic");

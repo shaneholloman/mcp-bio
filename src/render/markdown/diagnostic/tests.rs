@@ -83,6 +83,43 @@ fn diagnostic_search_markdown_shows_source_column_and_detail_hint() {
 }
 
 #[test]
+fn diagnostic_search_markdown_renders_true_zero_result_recovery() {
+    let markdown = diagnostic_search_markdown_with_footer(
+        "disease=qzvxxptl, source=gtr",
+        &[],
+        Some(0),
+        "Showing 0 of 0 results.",
+    )
+    .expect("rendered markdown");
+
+    assert!(markdown.contains("# Diagnostic tests: disease=qzvxxptl, source=gtr"));
+    assert!(markdown.contains("No diagnostic tests found."));
+    assert!(markdown.contains(
+        "Try adjusting or removing diagnostic filters: --gene, --disease, --type, or --manufacturer."
+    ));
+    assert!(markdown.contains("See also:"));
+    assert!(markdown.contains("biomcp list diagnostic"));
+    assert!(markdown.contains("Showing 0 of 0 results."));
+}
+
+#[test]
+fn diagnostic_search_markdown_does_not_render_recovery_for_high_offset_empty_page() {
+    let markdown = diagnostic_search_markdown_with_footer(
+        "disease=tuberculosis, source=gtr, offset=99",
+        &[],
+        Some(10),
+        "Showing 0 of 10 results.",
+    )
+    .expect("rendered markdown");
+
+    assert!(markdown.contains("No diagnostic tests found."));
+    assert!(!markdown.contains("Try adjusting or removing diagnostic filters"));
+    assert!(!markdown.contains("See also:"));
+    assert!(!markdown.contains("biomcp list diagnostic"));
+    assert!(markdown.contains("Showing 0 of 10 results."));
+}
+
+#[test]
 fn diagnostic_search_rows_caps_genes_and_conditions_with_overflow_marker() {
     let result = DiagnosticSearchResult {
         source: "gtr".to_string(),
