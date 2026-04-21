@@ -50,12 +50,17 @@ atomically only after the required headers are validated.
 
 Diagnostic search is filter-only and conjunctive, with source-aware matching:
 
-- GTR: `--gene` exact match over joined gene names, `--disease` substring over
-  joined condition names, `--type` exact equality on GTR test type, and
+- GTR: `--gene` exact match over joined gene names, `--disease` minimum-length
+  word/phrase boundary match over joined condition names, `--type` exact equality on GTR test type, and
   `--manufacturer` substring over manufacturer/lab labels
-- WHO IVD: `--disease` substring over `Pathogen/Disease/Marker`, `--type`
-  exact match over `Assay Format`, and `--manufacturer` substring over
-  `Manufacturer name`
+- WHO IVD: `--disease` minimum-length word/phrase boundary match over
+  `Pathogen/Disease/Marker`, `--type` exact match over `Assay Format`, and
+  `--manufacturer` substring over `Manufacturer name`
+
+Disease filters must contain at least three alphanumeric characters. The
+boundary match applies to the full phrase, so `breast cancer` matches
+`Hereditary breast cancer panel`, while short or partial tokens such as `ma`
+or `emia` do not act as broad substring scans.
 
 Result ordering is deterministic: normalized test name ascending, then
 accession ascending after the source-specific match sets are merged. Pagination

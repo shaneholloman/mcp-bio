@@ -18,7 +18,7 @@ code and quotes follow-up `get diagnostic` commands automatically.
 
 | Command | What BioMCP gets from this source | Integration note |
 |---|---|---|
-| `search diagnostic --disease <name> --source who-ivd` | WHO infectious-disease diagnostic search rows | Case-insensitive substring match over `Pathogen/Disease/Marker` |
+| `search diagnostic --disease <name> --source who-ivd` | WHO infectious-disease diagnostic search rows | Minimum-length word/phrase boundary match over `Pathogen/Disease/Marker` |
 | `search diagnostic --type <assay_format> --source who-ivd` | WHO assay-format filtered search | Exact match over WHO `Assay Format` |
 | `search diagnostic --manufacturer <name> --source who-ivd` | WHO manufacturer search | Case-insensitive substring over `Manufacturer name` |
 | `get diagnostic "<product_code>"` | WHO source-native diagnostic summary card | Product code is the detail identifier |

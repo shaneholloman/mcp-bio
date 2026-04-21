@@ -114,6 +114,12 @@ Diagnostic-test pivot (GTR and WHO IVD tests for the condition):
 biomcp get disease tuberculosis diagnostics
 ```
 
+The disease diagnostic card is capped at 10 rows so it stays terminal-sized.
+When rows exist, BioMCP prints a `See also:` command such as
+`biomcp search diagnostic --disease tuberculosis --source all --limit 50` for
+the broader paged diagnostic search; use `--offset` on `search diagnostic` to
+continue paging.
+
 Funding (NIH Reporter grants for the requested disease phrase, with canonical-name fallback for identifier lookups, over the most recent 5 NIH fiscal years):
 
 ```bash

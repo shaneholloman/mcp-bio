@@ -112,6 +112,14 @@ No MedlinePlus clinical features found for this disease.
 {% for row in diagnostic_rows -%}
 | {{ row.accession }} | {{ row.name }} | {{ row.test_type or "-" }} | {{ row.manufacturer_or_lab or "-" }} | {{ row.source_label }} | {{ row.genes_cell }} | {{ row.conditions_cell }} |
 {% endfor -%}
+{% if diagnostics_note -%}
+
+{{ diagnostics_note }}
+{% endif -%}
+{% if diagnostic_search_command -%}
+
+See also: `{{ diagnostic_search_command }}`
+{% endif -%}
 {% elif diagnostics_note -%}
 {{ diagnostics_note }}
 {% else -%}

@@ -101,6 +101,8 @@ out="$("$bin" get disease tuberculosis diagnostics)"
 echo "$out" | mustmatch like "## Diagnostics"
 echo "$out" | mustmatch like "Loopamp MTBC Detection Kit"
 echo "$out" | mustmatch like "WHO Prequalified IVD"
+echo "$out" | mustmatch like 'See also: `biomcp search diagnostic'
+echo "$out" | mustmatch like "biomcp search diagnostic --disease tuberculosis --source all --limit 50"
 ```
 
 ## Gene to Trials

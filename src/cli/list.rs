@@ -408,8 +408,8 @@ fn list_diagnostic() -> String {
 - `get diagnostic "<who_ivd_product_code>" conditions` - WHO target/marker section
 - `get diagnostic <id> all` - include every section supported by the resolved source
 - `search diagnostic --gene <symbol>` - case-insensitive exact gene match
-- `search diagnostic --disease <name> --source who-ivd` - case-insensitive substring match over WHO pathogen/disease/marker
-- `search diagnostic --disease <name> --source gtr` - case-insensitive substring match over GTR condition names
+- `search diagnostic --disease <name> --source who-ivd` - minimum-length word/phrase match over WHO pathogen/disease/marker
+- `search diagnostic --disease <name> --source gtr` - minimum-length word/phrase match over GTR condition names
 - `search diagnostic --type <test_type> --source <gtr|who-ivd|all>` - case-insensitive exact type filter
 - `search diagnostic --manufacturer <name> --source <gtr|who-ivd|all>` - case-insensitive substring over manufacturer/lab labels
 - `search diagnostic ... --limit <N> --offset <N>` - offset pagination with `1..=50` result limits
@@ -418,8 +418,10 @@ fn list_diagnostic() -> String {
 
 - At least one of `--gene`, `--disease`, `--type`, or `--manufacturer` is required.
 - All provided filters are conjunctive.
+- `--disease` must contain at least 3 alphanumeric characters and matches full words or phrases at boundaries; short noisy tokens are rejected.
 - `--source` accepts `gtr`, `who-ivd`, or `all` (default).
 - Explicit `--source who-ivd --gene ...` is invalid; use `--source gtr` or omit `--source` for gene-first workflows.
+- Use `--limit` and `--offset` to page broader diagnostic result sets beyond capped disease cards.
 - Result ordering is deterministic: normalized test name ascending, then accession ascending.
 - `summary` is always part of `get diagnostic`; supported public section tokens are `genes`, `conditions`, `methods`, `regulatory`, and `all`.
 - Source-aware section support: GTR supports `genes`, `conditions`, `methods`, and `regulatory`; WHO IVD supports `conditions` and `regulatory`.
@@ -526,7 +528,7 @@ fn list_disease() -> String {
 ## When to use this surface
 
 - Use `get disease <name_or_id>` when you want the normalized disease card with genes, pathways, and phenotypes.
-- Use `get disease <name_or_id> diagnostics` when you need diagnostic tests from local GTR and WHO IVD data.
+- Use `get disease <name_or_id> diagnostics` when you need a capped diagnostic-test card from local GTR and WHO IVD data.
 - Use `get disease <name_or_id> funding` when the question is about NIH grant support for a disease.
 - Use `get disease <name_or_id> survival` when the question is specifically about cancer survival outcomes.
 - Use `get disease <name_or_id> phenotypes` for symptom-style questions.
@@ -539,7 +541,7 @@ fn list_disease() -> String {
 - `get disease <name_or_id> genes` - Monarch rows plus additive CIViC/OpenTargets disease-gene associations with merged OpenTargets scores
 - `get disease <name_or_id> pathways` - Reactome pathways from associated genes
 - `get disease <name_or_id> phenotypes` - HPO phenotypes with resolved names
-- `get disease <name_or_id> diagnostics` - diagnostic tests for this condition from GTR and WHO IVD
+- `get disease <name_or_id> diagnostics` - up to 10 diagnostic tests for this condition from GTR and WHO IVD
 - `get disease <name_or_id> variants` - CIViC disease-associated molecular profiles
 - `get disease <name_or_id> models` - Monarch model-organism evidence
 - `get disease <name_or_id> prevalence` - OpenTargets prevalence-like evidence
@@ -558,6 +560,11 @@ fn list_disease() -> String {
 - `search disease -q <query> --onset <period>`
 - `search disease -q <query> --no-fallback` - skip discover recovery and keep the direct zero-result response
 - `search disease ... --limit <N> --offset <N>`
+
+Disease diagnostic cards are capped at 10 rows. When rows exist, the card
+prints a `See also:` command such as
+`biomcp search diagnostic --disease <query> --source all --limit 50`; continue
+with `--offset` on `search diagnostic` for later pages.
 
 ## Helpers
 
@@ -993,6 +1000,11 @@ mod tests {
         assert!(out.contains("search diagnostic --gene <symbol>"));
         assert!(out.contains("get diagnostic <id> regulatory"));
         assert!(out.contains("get diagnostic \"<who_ivd_product_code>\" conditions"));
+        assert!(out.contains("minimum-length word/phrase match over WHO"));
+        assert!(out.contains("must contain at least 3 alphanumeric characters"));
+        assert!(
+            out.contains("Use `--limit` and `--offset` to page broader diagnostic result sets")
+        );
         assert!(out.contains("supported public section tokens are `genes`, `conditions`, `methods`, `regulatory`, and `all`."));
         assert!(out.contains("intentionally excludes `regulatory`"));
         assert!(out.contains("biomcp gtr sync"));
@@ -1195,6 +1207,8 @@ mod tests {
         assert!(out.contains("get disease <name_or_id> funding"));
         assert!(out.contains("get disease <name_or_id> survival"));
         assert!(out.contains("get disease <name_or_id> diagnostics"));
+        assert!(out.contains("Disease diagnostic cards are capped at 10 rows"));
+        assert!(out.contains("biomcp search diagnostic --disease <query> --source all --limit 50"));
         assert!(out.contains("Use `search article -d <disease>` when you need broader review"));
         assert!(out.contains("get disease <name_or_id> disgenet"));
         assert!(out.contains("get disease <name_or_id> clinical_features"));

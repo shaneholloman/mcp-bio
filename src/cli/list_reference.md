@@ -11,7 +11,7 @@ New to BioMCP? Try:
 - `skill install` - install BioMCP skill guidance to your agent
 - `get gene BRAF` - look up a gene
 - `get gene BRCA1 diagnostics` - inspect GTR diagnostic tests for a known gene
-- `get disease tuberculosis diagnostics` - inspect local diagnostic tests for a condition
+- `get disease tuberculosis diagnostics` - inspect up to 10 local diagnostic tests for a condition
 - `search diagnostic --gene BRCA1 --limit 5` - find genetic tests for a known gene
 - `search diagnostic --disease HIV --source who-ivd --limit 5` - find WHO infectious-disease diagnostics
 - `get variant "BRAF V600E"` - annotate a variant
@@ -66,7 +66,7 @@ New to BioMCP? Try:
 - `search trial [filters]` - trial search is filter-only
 - `get <entity> <id> [section...]` - fetch by identifier with optional sections
 - `get gene <symbol> diagnostics` - opt-in diagnostic-test pivot from a gene card
-- `get disease <name_or_id> diagnostics` - opt-in diagnostic-test pivot from a disease card
+- `get disease <name_or_id> diagnostics` - opt-in diagnostic-test pivot from a disease card, capped at 10 rows with a `search diagnostic` follow-up for broader pages
 - `get disease <name_or_id> clinical_features` - opt-in MedlinePlus clinical-summary rows for configured diseases; unsupported diseases omit fabricated rows and `all` still excludes this section
 - `get drug <name> regulatory [--region <us|eu|who|all>]` - region-aware U.S./EU/WHO regulatory context
 - `get drug <name> safety|shortage [--region <us|eu|all>]` - region-aware U.S./EU drug safety and shortage context
@@ -82,7 +82,7 @@ New to BioMCP? Try:
 
 - `search variant ... --review-status --population --revel-min --gerp-min --tumor-site --condition --impact --lof --has --missing --therapy`
 - `search adverse-event ... --source <faers, vaers, all> --date-from --date-to --suspect-only --sex --age-min --age-max --reporter --count`
-- `search diagnostic ... --source <gtr|who-ivd|all> --gene --disease --type --manufacturer`
+- `search diagnostic ... --source <gtr|who-ivd|all> --gene --disease --type --manufacturer` (`--disease` requires at least 3 alphanumeric characters and matches disease words/phrases at boundaries; use `--limit`/`--offset` for broader pages)
 - `search gene ... --region --pathway --go` (use GO IDs like `GO:0004672`; search output includes Coordinates/UniProt/OMIM)
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`

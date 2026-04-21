@@ -163,6 +163,21 @@ fn disease_clinical_feature_rows(disease: &Disease) -> Vec<DiseaseClinicalFeatur
         .collect()
 }
 
+fn disease_diagnostic_search_command(disease: &Disease) -> Option<String> {
+    let query = if disease.name.trim().is_empty() {
+        disease.id.trim()
+    } else {
+        disease.name.trim()
+    };
+    if query.is_empty() {
+        return None;
+    }
+    Some(format!(
+        "biomcp search diagnostic --disease {} --source all --limit 50",
+        shell_quote_arg(query)
+    ))
+}
+
 fn disease_model_rows(disease: &Disease) -> Vec<DiseaseModelAssociationRenderRow> {
     disease
         .models
@@ -306,6 +321,7 @@ pub fn disease_markdown(
     let funding_summary = funding_summary_line(disease.funding.as_ref());
     let diagnostic_rows =
         super::diagnostic::diagnostic_search_rows(disease.diagnostics.as_deref().unwrap_or(&[]));
+    let diagnostic_search_command = disease_diagnostic_search_command(disease);
     let body = tmpl.render(context! {
         section_only => section_only,
         section_header => section_header(disease_label, requested_sections),
@@ -341,6 +357,7 @@ pub fn disease_markdown(
         funding_summary => funding_summary,
         diagnostics_note => &disease.diagnostics_note,
         diagnostic_rows => diagnostic_rows,
+        diagnostic_search_command => diagnostic_search_command,
         survival_source_line => survival_source_line,
         survival_summary_rows => survival_summary_rows,
         survival_history_rows => survival_history_rows,

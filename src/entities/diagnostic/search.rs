@@ -9,6 +9,7 @@ use super::{
 };
 
 const MAX_SEARCH_LIMIT: usize = 50;
+const MIN_DISEASE_MATCH_ALNUM_CHARS: usize = 3;
 const ZERO_FILTER_ERROR: &str =
     "diagnostic search requires at least one of --gene, --disease, --type, or --manufacturer";
 
@@ -39,6 +40,10 @@ impl NormalizedSearchFilters {
             return Err(BioMcpError::InvalidArgument(ZERO_FILTER_ERROR.to_string()));
         }
 
+        if let Some(disease) = normalized.disease.as_deref() {
+            validate_disease_filter(disease)?;
+        }
+
         if matches!(normalized.source, DiagnosticSourceFilter::WhoIvd) && normalized.gene.is_some()
         {
             return Err(BioMcpError::InvalidArgument(
@@ -63,7 +68,7 @@ impl NormalizedSearchFilters {
             && !index
                 .conditions(&record.accession)
                 .iter()
-                .any(|candidate| candidate.to_ascii_lowercase().contains(disease))
+                .any(|candidate| disease_phrase_matches(candidate, disease))
         {
             return false;
         }
@@ -85,7 +90,7 @@ impl NormalizedSearchFilters {
 
     fn matches_who_ivd(&self, record: &WhoIvdRecord) -> bool {
         if let Some(disease) = self.disease.as_deref()
-            && !record.target_marker.to_ascii_lowercase().contains(disease)
+            && !disease_phrase_matches(&record.target_marker, disease)
         {
             return false;
         }
@@ -121,6 +126,36 @@ fn normalized_contains(value: Option<&str>) -> Option<String> {
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(str::to_ascii_lowercase)
+}
+
+fn validate_disease_filter(value: &str) -> Result<(), BioMcpError> {
+    let alnum_count = value.chars().filter(|ch| ch.is_alphanumeric()).count();
+    if alnum_count < MIN_DISEASE_MATCH_ALNUM_CHARS {
+        return Err(BioMcpError::InvalidArgument(format!(
+            "--disease must contain at least {MIN_DISEASE_MATCH_ALNUM_CHARS} alphanumeric characters for diagnostic disease matching"
+        )));
+    }
+    Ok(())
+}
+
+fn disease_phrase_matches(haystack: &str, needle_lower: &str) -> bool {
+    if needle_lower.is_empty() {
+        return false;
+    }
+
+    let lower = haystack.to_ascii_lowercase();
+    lower.match_indices(needle_lower).any(|(pos, matched)| {
+        let before_ok = lower[..pos]
+            .chars()
+            .next_back()
+            .is_none_or(|ch| !ch.is_alphanumeric());
+        let after = pos + matched.len();
+        let after_ok = lower[after..]
+            .chars()
+            .next()
+            .is_none_or(|ch| !ch.is_alphanumeric());
+        before_ok && after_ok
+    })
 }
 
 fn manufacturer_matches(record: &GtrRecord, needle: &str) -> bool {

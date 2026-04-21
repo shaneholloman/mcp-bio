@@ -38,6 +38,12 @@ conjunctive, `--limit` must stay within `1..=50`, and result ordering is
 deterministic: normalized test name ascending, then accession ascending after
 the source-specific match sets are merged.
 
+`--disease` is a bounded disease phrase filter: it must contain at least three
+alphanumeric characters and matches complete words or phrases at boundaries
+against GTR condition names and WHO IVD `Pathogen/Disease/Marker`. Short noisy
+tokens such as `ma` are rejected. Use `--limit` and `--offset` to page larger
+diagnostic result sets.
+
 `--source` accepts `gtr`, `who-ivd`, or `all` (default). GTR remains the
 gene-capable source. WHO IVD supports `--disease`, `--type`, and
 `--manufacturer`, but explicit `--source who-ivd --gene ...` is invalid and
@@ -59,6 +65,11 @@ multi-source diagnostic route, so GTR and WHO IVD rows can appear together when
 both local bundles match the condition. Embedded sections show a compact table
 with accession, name, type, manufacturer or lab, public source label, genes,
 and conditions.
+
+Disease diagnostic cards show at most 10 rows. When rows exist, the card prints
+a `See also:` command for the broader paged search surface, for example
+`biomcp search diagnostic --disease tuberculosis --source all --limit 50`.
+Continue with `--offset` on `search diagnostic` for later pages.
 
 Diagnostic search rows and embedded gene/disease diagnostic tables cap the
 `Genes` and `Conditions` cells at five displayed values and append `+N more`

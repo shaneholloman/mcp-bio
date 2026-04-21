@@ -72,7 +72,9 @@ These helpers keep the disease context intact. Article pivots are best-effort:
 the mix of article sources can vary, so rely on the heading and table shape
 rather than a specific provider subsection. The diagnostics pivot is an opt-in
 `get disease` section that can combine GTR and WHO IVD local rows for the
-resolved condition.
+resolved condition. It is capped at 10 rows and prints a `See also:` command
+for `biomcp search diagnostic --disease <query> --source all --limit 50`; use
+`--offset` on `search diagnostic` for later pages.
 
 ## Gene pivots
 
