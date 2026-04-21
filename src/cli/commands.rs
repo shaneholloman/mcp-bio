@@ -220,6 +220,8 @@ EXAMPLES:
   biomcp search diagnostic --manufacturer InTec --source who-ivd --limit 5
 
 Diagnostic search is filter-only. At least one of --gene, --disease, --type, or --manufacturer is required.
+Disease filters require at least 3 alphanumeric characters and match full words or phrases at boundaries.
+Use --limit and --offset to page broader diagnostic result sets.
 `--source` accepts gtr, who-ivd, or all. WHO IVD is disease/type/manufacturer-oriented; GTR remains the gene-capable source.
 See also: biomcp list diagnostic")]
     Diagnostic(diagnostic::DiagnosticSearchArgs),

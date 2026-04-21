@@ -100,6 +100,7 @@ fn search_diagnostic_help_mentions_source_aware_examples() {
     let help = String::from_utf8(help).expect("help should be utf-8");
 
     assert!(help.contains("biomcp search diagnostic --disease HIV --source who-ivd --limit 5"));
+    assert!(help.contains("Disease filters require at least 3 alphanumeric characters"));
     assert!(
         help.contains(
             "biomcp search diagnostic --gene EGFR --type Clinical --source gtr --limit 5"

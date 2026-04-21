@@ -10,7 +10,8 @@ Disease commands normalize labels to ontology-backed identifiers and provide cro
 | Disease funding | `get disease "chronic myeloid leukemia" funding` | Confirms NIH Reporter funding contract |
 | Non-cancer funding | `get disease "Marfan syndrome" funding` | Confirms funding coverage is not cancer-specific |
 | Funding stays opt-in | `get disease "chronic myeloid leukemia" all` | Confirms `all` still excludes NIH Reporter funding |
-| Diagnostics pivot | `get disease tuberculosis diagnostics` | Confirms local diagnostic-test rows from disease context |
+| Diagnostics pivot | `get disease tuberculosis diagnostics` | Confirms capped local diagnostic-test rows and paged-search follow-up from disease context |
+| Diagnostics melanoma smoke | `get disease melanoma diagnostics` | Confirms a small uncapped disease diagnostic card stays available with local fixture data |
 | Disease clinical features | `get disease "uterine leiomyoma" clinical_features` | Confirms configured diseases populate the opt-in MedlinePlus clinical-feature section while unsupported diseases stay non-fabricating |
 | Disease genes | `get disease melanoma genes` | Confirms association section rendering |
 | Sparse phenotype guidance | `get disease MONDO:0100605 phenotypes` | Confirms truthful completeness note and review follow-up |
@@ -295,10 +296,61 @@ echo "$out" | mustmatch like "| Accession | Name | Type | Manufacturer / Lab | S
 echo "$out" | mustmatch like "Loopamp MTBC Detection Kit"
 echo "$out" | mustmatch like "Mycobacterium tuberculosis complex (MTBC)"
 echo "$out" | mustmatch like "WHO Prequalified IVD"
+echo "$out" | mustmatch like "Tuberculosis Molecular Panel 01"
+echo "$out" | mustmatch like "Showing first 10 diagnostic matches in this disease card."
+echo "$out" | mustmatch like "Use diagnostic search with --limit and --offset for the larger result set."
+echo "$out" | mustmatch like 'See also: `biomcp search diagnostic --disease tuberculosis --source all --limit 50`'
 json="$("$bin" --json get disease tuberculosis diagnostics)"
-echo "$json" | jq -e '.diagnostics | length >= 1' > /dev/null
+echo "$json" | jq -e '.diagnostics | length == 10' > /dev/null
 echo "$json" | jq -e '.diagnostics | any(.source == "who-ivd")' > /dev/null
+echo "$json" | jq -e '.diagnostics_note | contains("Showing first 10 diagnostic matches")' > /dev/null
 echo "$json" | jq -e 'any(._meta.section_sources[]; .key == "diagnostics" and (.sources | index("WHO Prequalified IVD")))' > /dev/null
+```
+
+## Disease Diagnostics Size Ceiling
+
+`get disease tuberculosis diagnostics` on fixture data must stay below the
+40 KB size ceiling, explain the disease-card cap, and expose a `See also`
+navigation line for the broader paged diagnostic search.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease tuberculosis diagnostics)"
+size_bytes="$(printf '%s' "$out" | wc -c | tr -d ' ')"
+if [ "$size_bytes" -lt 40960 ]; then
+  echo "DIAGNOSTICS_SIZE_OK" | mustmatch like "DIAGNOSTICS_SIZE_OK"
+else
+  printf 'tuberculosis diagnostics too large: %s bytes (ceiling 40960)\n' "$size_bytes"
+  exit 1
+fi
+echo "$out" | mustmatch like "Showing first 10 diagnostic matches in this disease card."
+echo "$out" | mustmatch like 'See also: `biomcp search diagnostic'
+echo "$out" | mustmatch like "biomcp search diagnostic --disease tuberculosis --source all --limit 50"
+```
+
+## Disease Diagnostics Melanoma Smoke
+
+Melanoma has a small GTR-backed fixture result set. The disease diagnostic
+card should render that row without a cap note or local-data unavailable note.
+
+```bash
+bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
+bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
+. "$PWD/.cache/spec-gtr-env"
+. "$PWD/.cache/spec-who-ivd-env"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" get disease melanoma diagnostics)"
+echo "$out" | mustmatch like "| Accession | Name | Type | Manufacturer / Lab | Source | Genes | Conditions |"
+echo "$out" | mustmatch like "EGFR Melanoma Molecular Assay"
+echo "$out" | mustmatch not like "Diagnostic local data is unavailable"
+echo "$out" | mustmatch like 'See also: `biomcp search diagnostic --disease melanoma --source all --limit 50`'
+json="$("$bin" --json get disease melanoma diagnostics)"
+echo "$json" | jq -e '.diagnostics | length >= 1 and length <= 10' > /dev/null
+echo "$json" | jq -e 'has("diagnostics_note") | not' > /dev/null
 ```
 
 ## Disease Diagnostics Stays Opt-In

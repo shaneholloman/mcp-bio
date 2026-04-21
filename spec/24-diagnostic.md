@@ -10,7 +10,7 @@ entity while reusing local fixture data to keep those contracts deterministic.
 | Default gene search | `search diagnostic --gene BRCA1` | Confirms gene-first workflows still route through GTR under default `--source all` |
 | Explicit WHO gene validation | `search diagnostic --gene BRCA1 --source who-ivd` | Confirms WHO rejects unsupported gene-only search with a recovery hint |
 | WHO disease search | `search diagnostic --disease HIV --source who-ivd` | Confirms WHO disease search returns source-aware rows from the local CSV |
-| Mixed-source search | `search diagnostic --disease ma --source all` | Confirms merged pages preserve per-row provenance and avoid claiming an exact combined total |
+| Mixed-source search | `search diagnostic --disease tuberculosis --source all` | Confirms merged pages preserve per-row provenance and avoid claiming an exact combined total |
 | GTR conjunctive filters | `search diagnostic --gene EGFR --type molecular --source gtr` | Confirms deterministic GTR filter behavior remains intact |
 | Search JSON follow-ups | `--json search diagnostic --disease HIV --source who-ivd` | Confirms WHO search JSON exposes shell-safe quoted follow-up commands |
 | Gene dedupe and row compactness | `search diagnostic --gene BRAF` and `--gene BRCA1` | Confirms GTR summary rows use canonical gene symbols and cap long gene/condition cells |
@@ -81,9 +81,10 @@ bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
 bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-gtr-env"
 . "$PWD/.cache/spec-who-ivd-env"
-out="$(biomcp search diagnostic --disease ma --source all --limit 10)"
-echo "$out" | mustmatch like "# Diagnostic tests: disease=ma"
-echo "$out" | mustmatch like "Found 2 diagnostic tests"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" search diagnostic --disease tuberculosis --source all --limit 10)"
+echo "$out" | mustmatch like "# Diagnostic tests: disease=tuberculosis"
+echo "$out" | mustmatch like "Found 10 diagnostic tests"
 echo "$out" | mustmatch not like "(of"
 echo "$out" | mustmatch like "NCBI Genetic Testing Registry"
 echo "$out" | mustmatch like "WHO Prequalified IVD"
@@ -297,6 +298,10 @@ bash fixtures/setup-gtr-spec-fixture.sh "$PWD"
 bash fixtures/setup-who-ivd-spec-fixture.sh "$PWD"
 . "$PWD/.cache/spec-gtr-env"
 . "$PWD/.cache/spec-who-ivd-env"
-out="$(biomcp search diagnostic 2>&1 || true)"
+bin="${BIOMCP_BIN:-biomcp}"
+out="$("$bin" search diagnostic 2>&1 || true)"
 echo "$out" | mustmatch like "Error: Invalid argument: diagnostic search requires at least one of --gene, --disease, --type, or --manufacturer"
+
+short_out="$("$bin" search diagnostic --disease ma --source all 2>&1 || true)"
+echo "$short_out" | mustmatch like "Error: Invalid argument: --disease must contain at least 3 alphanumeric characters for diagnostic disease matching"
 ```

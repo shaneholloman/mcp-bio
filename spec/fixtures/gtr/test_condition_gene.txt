@@ -16,3 +16,25 @@ GTR000000003.1	condition	Hereditary breast ovarian cancer syndrome
 GTR000000003.1	condition	Pancreatic cancer
 GTR000000003.1	condition	Lynch syndrome
 GTR000000003.1	condition	Colon cancer
+GTR000000010.1	condition	Tuberculosis
+GTR000000010.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000011.1	condition	Tuberculosis
+GTR000000011.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000012.1	condition	Tuberculosis
+GTR000000012.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000013.1	condition	Tuberculosis
+GTR000000013.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000014.1	condition	Tuberculosis
+GTR000000014.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000015.1	condition	Tuberculosis
+GTR000000015.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000016.1	condition	Tuberculosis
+GTR000000016.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000017.1	condition	Tuberculosis
+GTR000000017.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000018.1	condition	Tuberculosis
+GTR000000018.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000019.1	condition	Tuberculosis
+GTR000000019.1	condition	Mycobacterium tuberculosis complex infection
+GTR000000020.1	condition	Tuberculosis
+GTR000000020.1	condition	Mycobacterium tuberculosis complex infection

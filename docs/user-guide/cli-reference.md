@@ -223,7 +223,10 @@ Diagnostic search is filter-only. At least one of `--gene`, `--disease`,
 conjunctive. `--source` accepts `gtr`, `who-ivd`, or `all` (default). GTR
 remains the gene-capable source; WHO IVD supports `--disease`, `--type`, and
 `--manufacturer`, and explicit `--source who-ivd --gene ...` fails fast with a
-recovery hint. Diagnostic commands auto-sync the local GTR bundle into
+recovery hint. `--disease` requires at least three alphanumeric characters and
+matches complete disease words or phrases at boundaries; use `--limit` and
+`--offset` for broader diagnostic pages. Diagnostic commands auto-sync the
+local GTR bundle into
 `BIOMCP_GTR_DIR` and the WHO IVD CSV into `BIOMCP_WHO_IVD_DIR` on first use,
 falling back to the default platform data directory when those env vars are
 unset.
@@ -282,7 +285,9 @@ biomcp get disease MONDO:0005105 all
 ```
 
 `diagnostics`, `disgenet`, and `funding` stay opt-in and are not included in
-`biomcp get disease <name_or_id> all`.
+`biomcp get disease <name_or_id> all`. Disease diagnostic cards are capped at
+10 rows and print a `search diagnostic --disease <query> --source all --limit
+50` follow-up for broader paged results.
 
 ### PGx
 

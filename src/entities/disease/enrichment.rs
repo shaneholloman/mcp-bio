@@ -337,8 +337,25 @@ async fn add_diagnostics_section(disease: &mut Disease) {
     };
     match crate::entities::diagnostic::search_page(&filters, DIAGNOSTIC_PIVOT_LIMIT, 0).await {
         Ok(page) => {
+            let shown = page.results.len();
+            let capped = match page.total {
+                Some(total) => total > shown,
+                None => shown >= DIAGNOSTIC_PIVOT_LIMIT,
+            };
+            let note = if capped {
+                Some(match page.total {
+                    Some(total) => format!(
+                        "Showing {shown} of {total} diagnostic matches in this disease card. Use diagnostic search with --limit and --offset for the larger result set."
+                    ),
+                    None => format!(
+                        "Showing first {shown} diagnostic matches in this disease card. Use diagnostic search with --limit and --offset for the larger result set."
+                    ),
+                })
+            } else {
+                None
+            };
             disease.diagnostics = Some(page.results);
-            disease.diagnostics_note = None;
+            disease.diagnostics_note = note;
         }
         Err(err) => {
             warn!(query = %query, "Diagnostic local data unavailable for disease diagnostic pivot: {err}");

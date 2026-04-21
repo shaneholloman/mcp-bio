@@ -176,7 +176,13 @@ async fn disease_diagnostics_section_populates_from_who_fixture() {
     add_diagnostics_section(&mut disease).await;
 
     let rows = disease.diagnostics.as_ref().expect("diagnostics rows");
-    assert!(disease.diagnostics_note.is_none());
+    assert_eq!(rows.len(), 10);
+    assert_eq!(
+        disease.diagnostics_note.as_deref(),
+        Some(
+            "Showing first 10 diagnostic matches in this disease card. Use diagnostic search with --limit and --offset for the larger result set."
+        )
+    );
     assert!(rows.iter().any(|row| {
         row.source == crate::entities::diagnostic::DIAGNOSTIC_SOURCE_WHO_IVD
             && row.name == "Loopamp MTBC Detection Kit"
@@ -184,6 +190,10 @@ async fn disease_diagnostics_section_populates_from_who_fixture() {
                 .conditions
                 .iter()
                 .any(|condition| condition == "Mycobacterium tuberculosis complex (MTBC)")
+    }));
+    assert!(rows.iter().any(|row| {
+        row.source == crate::entities::diagnostic::DIAGNOSTIC_SOURCE_GTR
+            && row.name.starts_with("Tuberculosis Molecular Panel")
     }));
 }
 

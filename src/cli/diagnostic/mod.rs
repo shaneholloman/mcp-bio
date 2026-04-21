@@ -28,7 +28,7 @@ pub struct DiagnosticSearchArgs {
     /// Filter by gene symbol
     #[arg(short = 'g', long)]
     pub gene: Option<String>,
-    /// Filter by disease name substring
+    /// Filter by disease phrase (min 3 alphanumeric chars, word-boundary match)
     #[arg(short = 'd', long)]
     pub disease: Option<String>,
     /// Filter by exact diagnostic type

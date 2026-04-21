@@ -78,6 +78,40 @@ fn disease_markdown_renders_opentargets_scores_in_summary_and_genes_table() {
     assert!(genes.contains("| NRAS | associated | CIViC | - |"));
 }
 
+#[test]
+fn disease_markdown_renders_diagnostics_note_then_shell_safe_search_command() {
+    let mut disease = disease_without_clinical_features();
+    disease.id = "MONDO:9999999".to_string();
+    disease.name = "rare disease; subtype".to_string();
+    disease.diagnostics = Some(vec![crate::entities::diagnostic::DiagnosticSearchResult {
+        source: crate::entities::diagnostic::DIAGNOSTIC_SOURCE_GTR.to_string(),
+        accession: "GTR000000777.1".to_string(),
+        name: "Rare Disease Molecular Panel".to_string(),
+        test_type: Some("molecular".to_string()),
+        manufacturer_or_lab: Some("Rare Diagnostics Lab".to_string()),
+        genes: vec!["GENE1".to_string()],
+        conditions: vec!["Rare disease; subtype".to_string()],
+    }]);
+    disease.diagnostics_note = Some(
+        "Showing first 10 diagnostic matches in this disease card. Use diagnostic search with --limit and --offset for the larger result set."
+            .to_string(),
+    );
+
+    let markdown = disease_markdown(&disease, &["diagnostics".to_string()]).expect("markdown");
+    let row_pos = markdown
+        .find("| GTR000000777.1 | Rare Disease Molecular Panel |")
+        .expect("diagnostic row");
+    let note_pos = markdown
+        .find("Showing first 10 diagnostic matches in this disease card.")
+        .expect("diagnostics note");
+    let command = "See also: `biomcp search diagnostic --disease \"rare disease; subtype\" --source all --limit 50`";
+    let command_pos = markdown.find(command).expect("diagnostic search command");
+
+    assert!(row_pos < note_pos);
+    assert!(note_pos < command_pos);
+    assert!(markdown.contains("--source all --limit 50"));
+}
+
 pub(crate) fn proof_disease_markdown_renders_ot_only_gene_association_table() {
     let disease = Disease {
         id: "MONDO:0003864".to_string(),
