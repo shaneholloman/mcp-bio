@@ -16,6 +16,8 @@ REMOVED_ACTIVE_SLUGS = [
     "variant-to-treatment",
     "drug-investigation",
     "gene-function-lookup",
+    "trial-searching",
+    "literature-synthesis",
 ]
 
 
@@ -39,8 +41,8 @@ def _run_text(*args: str) -> str:
     return _run_bytes(*args).decode("utf-8")
 
 
-def _listed_slugs() -> list[str]:
-    listing = _run_text("skill", "list")
+def _listed_slugs(*args: str) -> list[str]:
+    listing = _run_text(*args)
     return re.findall(r"^\d{2} ([a-z0-9-]+) -", listing, flags=re.MULTILINE)
 
 
@@ -71,8 +73,9 @@ def test_skill_prompt_render_install_and_slug_surfaces_match(tmp_path: Path) -> 
     installed_root = agent_root / "skills" / "biomcp"
     assert (installed_root / "SKILL.md").read_bytes() == render_stdout
 
-    slugs = _listed_slugs()
+    slugs = _listed_slugs("skill", "list")
     assert slugs == EXPECTED_SLUGS
+    assert _listed_slugs("list", "skill") == slugs
     for slug in slugs:
         body = _run_text("skill", slug)
         assert body.strip()
@@ -85,7 +88,9 @@ def test_skill_prompt_render_install_and_slug_surfaces_match(tmp_path: Path) -> 
 
     examples_readme = (REPO_ROOT / "examples" / "README.md").read_text(encoding="utf-8")
     listing = _run_text("skill", "list")
+    list_skill_listing = _run_text("list", "skill")
     for removed in REMOVED_ACTIVE_SLUGS:
         assert removed not in listing
+        assert removed not in list_skill_listing
         assert removed not in prompt
         assert removed not in examples_readme

@@ -181,8 +181,11 @@ from pathlib import Path
 
 repo_root = Path.cwd()
 shell = (repo_root / "src/mcp/shell.rs").read_text()
+outcome = (repo_root / "src/cli/outcome.rs").read_text()
+tests = (repo_root / "tests/test_mcp_contract.py").read_text()
 assert "show_overview()" in shell
-assert "render_system_prompt()" in shell
+assert "render_system_prompt()" in outcome
+assert "test_skill_render_matches_help_resource_body" in tests
 assert 'if let Some(slug) = uri.strip_prefix("biomcp://skill/")' in shell
 assert "show_use_case(slug)" in shell
 assert 'with_mime_type("text/markdown")' in shell

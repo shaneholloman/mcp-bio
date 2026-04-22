@@ -86,6 +86,8 @@ echo "$out" | mustmatch like "04 article-follow-up"
 echo "$out" | mustmatch not like "variant-to-treatment"
 echo "$out" | mustmatch not like "drug-investigation"
 echo "$out" | mustmatch not like "gene-function-lookup"
+echo "$out" | mustmatch not like "trial-searching"
+echo "$out" | mustmatch not like "literature-synthesis"
 ```
 
 ## Viewing a Skill by Number

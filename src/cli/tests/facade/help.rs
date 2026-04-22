@@ -19,6 +19,10 @@ fn skill_help_examples_match_installed_surface() {
     assert!(help.contains("render"));
     assert!(!help.contains("biomcp skill 03"));
     assert!(!help.contains("variant-to-treatment"));
+    assert!(!help.contains("drug-investigation"));
+    assert!(!help.contains("gene-function-lookup"));
+    assert!(!help.contains("trial-searching"));
+    assert!(!help.contains("literature-synthesis"));
 }
 
 #[test]

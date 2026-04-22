@@ -29,10 +29,10 @@ biomcp skill <number-or-slug>
 
 | Example folder | What it does |
 |----------------|--------------|
-| [geneagent/](geneagent/README.md) | Replays a gene-set-analysis workflow with prompt, run, and scoring assets. |
-| [genegpt/](genegpt/README.md) | Reproduces a gene-function lookup workflow with captured benchmark harness files. |
-| [pubmed-beyond/](pubmed-beyond/README.md) | Replays a literature-synthesis workflow over BioMCP with benchmark assets. |
-| [trialgpt/](trialgpt/README.md) | Reproduces a patient-matching and trial-search workflow with benchmark assets. |
+| [geneagent/](geneagent/README.md) | Replays a gene set analysis workflow with prompt, run, and scoring assets. |
+| [genegpt/](genegpt/README.md) | Reproduces a gene function lookup workflow with captured benchmark harness files. |
+| [pubmed-beyond/](pubmed-beyond/README.md) | Replays an article follow-up workflow over BioMCP with benchmark assets. |
+| [trialgpt/](trialgpt/README.md) | Reproduces a patient matching and trial search workflow with benchmark assets. |
 
 ## Standalone Examples
 
