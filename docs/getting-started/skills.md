@@ -29,12 +29,15 @@ Use `biomcp skill list` to browse the embedded worked examples and
 ```bash
 biomcp skill list
 biomcp skill article-follow-up
+biomcp skill variant-pathogenicity
 ```
 
-Current builds ship examples for treatment lookup, symptom lookup,
-gene-disease orientation, and article follow-up. The installed `skills/` tree
-also includes worked examples you can read directly in the repo or in an agent
-directory:
+Current builds ship 15 worked examples. The catalog keeps the original
+treatment lookup, symptom lookup, gene-disease orientation, and article
+follow-up examples, plus expanded playbooks such as `variant-pathogenicity`,
+`drug-regulatory`, `trial-recruitment`, `mutation-catalog`, and
+`negative-evidence`. The installed `skills/` tree also includes worked
+examples you can read directly in the repo or in an agent directory:
 
 - [Guide Workflows](../how-to/guide-workflows.md) - variant pathogenicity,
   drug safety, and broad gene-disease investigation

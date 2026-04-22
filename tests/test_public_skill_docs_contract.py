@@ -46,11 +46,22 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "biomcp skill render" in skills
     assert "biomcp skill list" in skills
     assert "biomcp skill article-follow-up" in skills
+    assert "biomcp skill variant-pathogenicity" in skills
     assert "SKILL.md" in skills
     assert "use-cases/" in skills
     assert "jq-examples.md" in skills
     assert "examples/" in skills
     assert "schemas/" in skills
+    assert "Current builds ship examples for treatment lookup, symptom lookup" not in skills
+    assert "Current builds ship 15 worked examples" in skills
+    for slug in (
+        "variant-pathogenicity",
+        "drug-regulatory",
+        "trial-recruitment",
+        "mutation-catalog",
+        "negative-evidence",
+    ):
+        assert slug in skills
     assert "Legacy compatibility note" not in skills
     assert "No skills found" not in skills
 

@@ -1075,6 +1075,7 @@ mod tests {
         assert!(out.contains("# BioMCP Worked Examples"));
         assert!(out.contains("01 treatment-lookup"));
         assert!(out.contains("04 article-follow-up"));
+        assert!(out.contains("15 negative-evidence"));
     }
 
     #[test]

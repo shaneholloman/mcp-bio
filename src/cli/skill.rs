@@ -787,27 +787,125 @@ mod tests {
                 "symptom-phenotype",
                 "gene-disease-orientation",
                 "article-follow-up",
+                "variant-pathogenicity",
+                "drug-regulatory",
+                "gene-function-localization",
+                "mechanism-pathway",
+                "trial-recruitment",
+                "pharmacogene-cumulative",
+                "disease-locus-mapping",
+                "cellular-process-regulation",
+                "mutation-catalog",
+                "syndrome-disambiguation",
+                "negative-evidence",
             ]
         );
 
         let listing = list_use_cases()?;
         assert!(listing.contains("# BioMCP Worked Examples"));
-        assert!(
-            listing.contains("01 treatment-lookup - Pattern: Treatment / approved-drug lookup")
-        );
+        assert!(listing.contains("05 variant-pathogenicity"));
         assert!(listing.contains(
-            "04 article-follow-up - Pattern: Article follow-up via citations and recommendations"
+            "15 negative-evidence - Pattern: Negative evidence and no-association checks"
         ));
 
-        let numbered = show_use_case("01")?;
-        assert!(numbered.contains("# Pattern: Treatment / approved-drug lookup"));
-        assert!(
-            numbered.contains("biomcp search drug --indication \"myasthenia gravis\" --limit 5")
-        );
+        let numbered = show_use_case("05")?;
+        assert!(numbered.contains("# Pattern: Variant pathogenicity evidence"));
 
-        let slugged = show_use_case("article-follow-up")?;
-        assert!(slugged.contains("# Pattern: Article follow-up via citations and recommendations"));
-        assert!(slugged.contains("biomcp article citations 22663011 --limit 5"));
+        let mutation = show_use_case("13")?;
+        assert!(mutation.contains("# Pattern: Mutation catalog for one gene and disease"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn embedded_use_case_anchor_commands_parse() -> Result<(), BioMcpError> {
+        let cases = use_case_index()?
+            .into_iter()
+            .filter(|case| {
+                case.number
+                    .parse::<u32>()
+                    .is_ok_and(|number| (5..=15).contains(&number))
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(cases.len(), 11);
+
+        for case in cases {
+            let content = embedded_text(&case.embedded_path)?;
+            let mut blocks = Vec::new();
+            let mut current = String::new();
+            let mut in_bash_block = false;
+
+            for line in content.lines() {
+                let trimmed = line.trim();
+                if trimmed == "```bash" {
+                    assert!(
+                        !in_bash_block,
+                        "{} should not nest fenced bash blocks",
+                        case.slug
+                    );
+                    in_bash_block = true;
+                    current.clear();
+                    continue;
+                }
+                if trimmed == "```" && in_bash_block {
+                    blocks.push(current.trim_end().to_string());
+                    in_bash_block = false;
+                    continue;
+                }
+                if in_bash_block {
+                    current.push_str(line);
+                    current.push('\n');
+                }
+            }
+
+            assert!(
+                !in_bash_block,
+                "{} has an unterminated fenced bash block",
+                case.slug
+            );
+            assert_eq!(blocks.len(), 1, "{} should have one bash block", case.slug);
+
+            let commands = blocks[0]
+                .lines()
+                .map(str::trim)
+                .filter(|line| !line.is_empty())
+                .collect::<Vec<_>>();
+            assert!(
+                (3..=4).contains(&commands.len()),
+                "{} should have 3-4 anchor commands",
+                case.slug
+            );
+
+            for command in commands {
+                assert!(
+                    command.starts_with("biomcp "),
+                    "{} command should start with biomcp: {command}",
+                    case.slug
+                );
+                for forbidden in [
+                    "|",
+                    ">",
+                    "<",
+                    "2>&1",
+                    "grep",
+                    "cat ",
+                    "jq ",
+                    "/home/ian/workspace/research/",
+                ] {
+                    assert!(
+                        !command.contains(forbidden),
+                        "{} command contains forbidden token {forbidden}: {command}",
+                        case.slug
+                    );
+                }
+
+                let argv = shlex::split(command)
+                    .unwrap_or_else(|| panic!("shlex failed for {}: {command}", case.slug));
+                crate::cli::try_parse_cli(argv).unwrap_or_else(|err| {
+                    panic!("{} command did not parse: {command}: {err}", case.slug)
+                });
+            }
+        }
 
         Ok(())
     }
