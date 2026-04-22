@@ -1157,12 +1157,15 @@ def test_validation_profile_and_hook_contract_docs_are_pinned() -> None:
         ".march/validation-profiles.toml",
     ):
         assert allowed_path in runbook_premerge
+        assert allowed_path in contributing_hook
 
     assert "opt in" in contributing_hook
+    assert "does not install it automatically" in contributing_hook
     assert "`$(git rev-parse --git-path hooks/pre-commit)`" in contributing_hook
     assert "`scripts/pre-commit-reject-march-artifacts.sh`" in contributing_hook
     assert "`cargo fmt --check`" in contributing_hook
     assert "`cargo clippy --lib --tests -- -D warnings`" in contributing_hook
+    assert "staged deletions" in contributing_hook
 
     assert ".march/validation-profiles.toml" in ci_gate_section
     assert "`01-design` and `02-design-review` without a validation profile" in ci_gate_section

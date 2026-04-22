@@ -127,6 +127,23 @@ def test_pre_commit_reject_march_artifacts_allows_staged_bad_path_deletion(
     assert result.stderr == ""
 
 
+def test_pre_commit_reject_march_artifacts_rejects_staged_bad_path_modification(
+    tmp_path: Path,
+) -> None:
+    repo_root = _copy_hook_fixture(tmp_path)
+    _write(repo_root, ".march/verify-log.md", "old tracked artifact\n")
+    _git(repo_root, "add", "-f", ".march/verify-log.md")
+    _git(repo_root, "commit", "-m", "Track old March artifact")
+    _write(repo_root, ".march/verify-log.md", "modified artifact\n")
+    _git(repo_root, "add", "-f", ".march/verify-log.md")
+
+    result = _run_hook_script(repo_root)
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert ".march/verify-log.md" in result.stderr
+
+
 def test_pre_commit_reject_march_artifacts_rejects_rename_into_bad_march_path(
     tmp_path: Path,
 ) -> None:

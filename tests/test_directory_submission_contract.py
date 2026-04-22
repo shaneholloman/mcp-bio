@@ -131,6 +131,13 @@ def test_packaging_workspace_is_ignored_and_bundle_payload_is_filtered() -> None
 
 
 def test_tracked_march_allowlist_is_exhaustive_and_actionable() -> None:
+    assert TRACKED_MARCH_ALLOWLIST == frozenset(
+        {
+            ".march/code-review-log.md",
+            ".march/validation-profiles.toml",
+        }
+    )
+
     tracked_files = [
         ".march/code-review-log.md",
         ".march/validation-profiles.toml",
