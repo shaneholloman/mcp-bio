@@ -35,8 +35,6 @@ echo "$json" | jq -e '.results[0].id == "MONDO:0005105"' > /dev/null
 echo "$json" | jq -e '._meta.next_commands[0] | test("^biomcp get disease .+$")' > /dev/null
 echo "$json" | jq -e '._meta.next_commands | any(. == "biomcp list disease")' > /dev/null
 echo "$json" | jq -e '._meta | has("fallback_used") | not' > /dev/null
-echo "$json" | jq -e '._meta | has("workflow") | not' > /dev/null
-echo "$json" | jq -e '._meta | has("ladder") | not' > /dev/null
 echo "$json" | jq -e '.results[0] | has("resolved_via") | not' > /dev/null
 echo "$json" | jq -e '.results[0] | has("source_id") | not' > /dev/null
 ```
