@@ -298,3 +298,4 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/18-source-labels.md::Article Fulltext Source Labels` | Live fulltext/source-label coverage stays smoke-only so the deselect inventory matches the PR lane contract. |
 | `spec/19-discover.md` | Entire discover file stays smoke-only because its live exploratory fan-out is not part of the stable PR lane. |
 | `spec/20-alias-fallback.md` | Alias-fallback live probes stay smoke-only and continue to run in the nightly suite. |
+| `spec/26-workflow-ladders.md::Article Follow-up` | Live PubMed/PubTator article get aligns with the established smoke-only lane for all article get operations (ticket 282). |
