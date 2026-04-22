@@ -86,11 +86,12 @@ New to BioMCP? Try:
 - `search gene ... --region --pathway --go` (use GO IDs like `GO:0004672`; search output includes Coordinates/UniProt/OMIM)
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
-- `search article ... --date-from --date-to --year-min --year-max --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N>`
+- `search article ... --date-from --date-to --year-min --year-max --journal --source <all, pubtator, europepmc, pubmed, litsense2> --max-per-source <N> --session <token>`
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug` and put mechanisms, phenotypes, outcomes, and datasets in `-k/--keyword`; run `biomcp list article` for worked decomposition examples
 - Keyword-only article result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole keyword exactly matches a gene, drug, or disease vocabulary label or alias
 - Multi-concept keyword phrases and searches that already use `-g`, `-d`, or `--drug` do not get direct entity suggestions
 - Article result pages can also suggest year-refinement follow-ups when visible rows expose publication years and the current search has no explicit date bounds
+- `--session <token>` is a local non-secret caller label for JSON loop-breaker suggestions across consecutive article keyword searches; overlapping same-session searches can suggest prior `article batch`, `discover`, and date narrowing
 - `search drug ... --region <us|eu|who|all>` (omitting `--region` checks U.S., EU, and WHO for plain name/alias lookups; omitted structured filters stay U.S.-only; explicit `who` filters structured U.S. hits through WHO prequalification for finished-pharma/API searches; `--product-type <finished_pharma|api|vaccine>` is WHO-only and requires explicit `--region who`; WHO vaccine search is plain name/brand only and rejects structured filters; default WHO search excludes vaccines unless `--product-type vaccine` is explicit; explicit `eu|all` with structured filters errors; `ema` is accepted as an alias for `eu`; omitted `--region` on plain-name vaccine lookups, explicit `eu|all` vaccine lookups, and explicit WHO vaccine name/brand searches can also use the CDC CVX/MVX bridge after MyChem identity misses, while pure `--region us` search does not use the CVX root)
 
 ## Helpers

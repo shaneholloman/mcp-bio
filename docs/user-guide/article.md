@@ -65,6 +65,15 @@ Multi-concept phrases such as `BRAF V600E` or `lung cancer immunotherapy` do
 not get direct entity suggestions, and searches that already use `-g`, `-d`,
 or `--drug` suppress the exact suggestion.
 
+For agent loops, `--session <token>` lets JSON article search compare the
+current keyword with the previous successful article keyword search for the
+same local token. The token is not a secret; use a short non-identifying label
+such as `lit-review-1`. When post-stopword term overlap is at least 60%,
+BioMCP can add JSON-only `_meta.suggestions[]` fallbacks after exact entity
+suggestions: prior `article batch`, `discover`, and a date-narrowed retry when
+available. Session baselines expire after 10 minutes. Markdown output is
+unchanged.
+
 Known anchor only:
 
 ```bash
@@ -247,6 +256,7 @@ This avoids repeated large payload downloads during iterative workflows.
 ```bash
 biomcp --json get article 22663011
 biomcp --json search article -g BRAF --limit 3
+biomcp --json search article -k "Oncotype DX review" --session lit-review-1 --limit 5
 biomcp --json article batch 22663011 24200969
 ```
 
@@ -260,8 +270,9 @@ rows expose `ranking.semantic_score` as the LitSense2-derived signal and use
 `0` when LitSense2 did not match. Hybrid rows also include the composite
 score. Keyword-only article searches with an exact gene, drug, or disease
 label/alias match may include `_meta.suggestions[]` objects with `command`,
-`reason`, and `sections`; `_meta.next_commands` remains the executable string
-command list. JSON `article batch` responses are a bare array of compact cards
+`reason`, and `sections`; same-session keyword loop-breaker suggestions include
+`command` and `reason` and omit `sections`. `_meta.next_commands` remains the
+executable string command list. JSON `article batch` responses are a bare array of compact cards
 so callers can map results back to the original input order.
 
 ## Practical tips

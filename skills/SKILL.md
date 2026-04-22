@@ -19,6 +19,7 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Vaccine brand-name questions that miss on MyChem often need `biomcp search drug <brand> --region eu`, omitted `--region`, or explicit `biomcp search drug <brand> --region who --product-type vaccine`, which can bridge through CDC CVX/MVX into EMA or WHO vaccine matches.
 - Review-literature questions: `biomcp search article -k "<query>" --type review --limit 5`
 - Keyword-only article searches may return `_meta.suggestions[]` objects when the whole keyword exactly matches a gene, drug, or disease label/alias; use the suggested `get gene`, `get drug`, or `get disease` command when structured data may answer before more article paging.
+- For repeated article keyword searches in one task, use JSON plus `--session <token>` with a short non-secret local label. If the next keyword overlaps the previous same-session keyword, `_meta.suggestions[]` can point to prior `article batch`, `discover`, or date narrowing instead of more reformulation.
 - After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls. Batch up to 20 shortlisted papers in one call.
 - Use `biomcp batch gene <GENE1,GENE2,...>` when you need the same basic card fields, chromosome, or sectioned output for multiple genes.
 - For diseases with weak ontology-name coverage, run `biomcp discover "<disease>"` first, then pass a resolved `MESH:...`, `OMIM:...`, `ICD10CM:...`, `MONDO:...`, or `DOID:...` identifier to `biomcp get disease`.
@@ -83,9 +84,13 @@ matching how-to guide before you improvise the command sequence.
 
 ### Don't keyword-reformulate
 
-Never do more than 3 article searches for one question. If two searches with
-different keywords return similar or empty results, change strategy entirely:
-switch entity, source, or start with `biomcp discover "<free text>"`.
+Never do more than 3 article searches for one question. For iterative keyword
+searches, pass `--json --session <token>` so BioMCP can detect overlap across
+consecutive searches; the token is a local non-secret label, not a user ID. If
+two searches with different keywords return similar or empty results, follow
+the JSON `_meta.suggestions[]` ladder or change strategy entirely: inspect the
+previous result set with `biomcp article batch <id1> <id2> ...`, switch entity
+or source, narrow by year, or start with `biomcp discover "<free text>"`.
 
 ### Trial nicknames don't work in trial search
 
@@ -119,7 +124,7 @@ comma-separated IDs.
 - Treat empty structured regulatory drug results as signal for approved-drug questions, not as a CLI failure.
 - Prefer review articles for synthesis questions and structured sections for direct facts.
 - Use `_meta.next_commands` from JSON mode as the executable follow-up contract.
-- For article search, `_meta.suggestions[]` is structured only for exact keyword entity matches and carries `command`, `reason`, and `sections`; multi-concept phrases and typed-filter searches should not produce direct entity suggestions.
+- For article search, `_meta.suggestions[]` may contain exact keyword entity matches with `command`, `reason`, and `sections`, or session loop-breaker suggestions with `command` and `reason` only. Multi-concept phrases and typed-filter searches should not produce direct entity suggestions.
 
 ## Answer commitment
 

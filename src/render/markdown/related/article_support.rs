@@ -257,7 +257,7 @@ fn article_result_year(result: &ArticleSearchResult) -> Option<u16> {
 
 fn push_article_filter_arg(args: &mut Vec<String>, flag: &str, value: Option<&str>) {
     if let Some(value) = value.map(str::trim).filter(|value| !value.is_empty()) {
-        args.push(format!("{flag} {}", quote_arg(value)));
+        args.push(format!("{flag} {}", shell_quote_arg(value)));
     }
 }
 

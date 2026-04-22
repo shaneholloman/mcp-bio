@@ -69,6 +69,15 @@ fn article_search_json_next_commands_parse() {
 }
 
 #[test]
+fn article_loop_suggestion_commands_parse() {
+    assert_parses("biomcp article batch 22663011 24200969");
+    assert_parses(r#"biomcp discover "Oncotype DX DCIS study""#);
+    assert_parses(
+        r#"biomcp search article -k "Oncotype DX DCIS study" --year-min 2025 --year-max 2025 --limit 5"#,
+    );
+}
+
+#[test]
 fn article_and_discover_next_commands_parse() {
     assert_parses("biomcp get gene BRAF");
     assert_parses("biomcp get drug imatinib");

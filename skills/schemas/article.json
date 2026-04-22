@@ -46,7 +46,7 @@
           "type": ["array", "null"],
           "items": {
             "type": "object",
-            "required": ["command", "reason", "sections"],
+            "required": ["command", "reason"],
             "properties": {
               "command": { "type": "string" },
               "reason": { "type": "string" },

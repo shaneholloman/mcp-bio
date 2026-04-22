@@ -140,6 +140,37 @@ async fn missing_article_filters_is_clean_usage_error() {
 }
 
 #[tokio::test]
+async fn invalid_article_session_token_rejected_before_backend() {
+    let pubtator = MockServer::start().await;
+    let europepmc = MockServer::start().await;
+    let s2 = MockServer::start().await;
+
+    let result = run_article_search(
+        &[
+            "-k",
+            "BRAF",
+            "--session",
+            "../unsafe",
+            "--source",
+            "pubtator",
+            "--limit",
+            "1",
+        ],
+        &pubtator.uri(),
+        &europepmc.uri(),
+        &s2.uri(),
+    );
+
+    assert_clean_usage_error(
+        &result,
+        "Error: Invalid argument: --session must be 1-128 ASCII characters containing only letters, digits, '.', '_', ':', or '-'",
+    );
+    assert_no_backend_requests(&pubtator, "PubTator").await;
+    assert_no_backend_requests(&europepmc, "Europe PMC").await;
+    assert_no_backend_requests(&s2, "Semantic Scholar").await;
+}
+
+#[tokio::test]
 async fn inverted_article_date_range_is_clean_usage_error() {
     let pubtator = MockServer::start().await;
     let europepmc = MockServer::start().await;

@@ -103,7 +103,7 @@ pub(super) fn is_exact_article_keyword_lookup_eligible(
 
 pub(super) fn article_entity_suggestion(
     entity: &crate::entities::discover::ExactArticleKeywordEntity,
-) -> ArticleEntitySuggestion {
+) -> ArticleSuggestion {
     let entity_name = entity.entity_type.cli_name();
     let label = entity.label.trim();
     let quoted_label = crate::render::markdown::shell_quote_arg(label);
@@ -120,7 +120,7 @@ pub(super) fn article_entity_suggestion(
         )
     };
 
-    ArticleEntitySuggestion {
+    ArticleSuggestion {
         command,
         reason,
         sections: article_entity_sections(entity.entity_type),
@@ -158,6 +158,11 @@ pub(in crate::cli) async fn handle_search(
     args: ArticleSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
+    let session_token = args.session.clone();
+    if let Some(token) = session_token.as_deref() {
+        super::session::validate_token(token)?;
+    }
+
     let (date_from, date_to) = resolved_article_date_bounds(&args);
     let disease = super::super::normalize_cli_tokens(args.disease);
     let drug = super::super::normalize_cli_tokens(args.drug);
@@ -256,7 +261,7 @@ pub(in crate::cli) async fn handle_search(
     } else {
         None
     };
-    let suggestions = exact_entity
+    let mut suggestions = exact_entity
         .as_ref()
         .map(article_entity_suggestion)
         .into_iter()
@@ -271,6 +276,29 @@ pub(in crate::cli) async fn handle_search(
         source_filter,
         &exact_entity_commands,
     );
+    if let Some(token) = session_token.as_deref() {
+        let pmids = results
+            .iter()
+            .map(|result| result.pmid.clone())
+            .collect::<Vec<_>>();
+        let session_suggestions = match crate::cache::resolve_cache_config() {
+            Ok(config) => super::session::record_success_and_suggestions(
+                &config.cache_root,
+                super::session::SessionSearch {
+                    token,
+                    keyword: filters.keyword.as_deref(),
+                    pmids: &pmids,
+                    next_commands: &next_commands,
+                    now_epoch_secs: super::session::current_epoch_secs(),
+                },
+            ),
+            Err(err) => {
+                tracing::warn!("Article search session loop-breaker cache root unavailable: {err}");
+                Vec::new()
+            }
+        };
+        suggestions.extend(session_suggestions);
+    }
 
     let text = if json {
         article_search_json(
@@ -517,13 +545,14 @@ pub(super) struct ArticleSearchJsonPage {
     pub results: Vec<crate::entities::article::ArticleSearchResult>,
     pub pagination: crate::cli::PaginationMeta,
     pub next_commands: Vec<String>,
-    pub suggestions: Vec<ArticleEntitySuggestion>,
+    pub suggestions: Vec<ArticleSuggestion>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
-pub(super) struct ArticleEntitySuggestion {
+pub(super) struct ArticleSuggestion {
     pub command: String,
     pub reason: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sections: Vec<String>,
 }
 
@@ -532,20 +561,18 @@ struct ArticleSearchJsonMeta {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     next_commands: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    suggestions: Vec<ArticleEntitySuggestion>,
+    suggestions: Vec<ArticleSuggestion>,
 }
 
 fn article_search_json_meta(
     next_commands: Vec<String>,
-    suggestions: Vec<ArticleEntitySuggestion>,
+    suggestions: Vec<ArticleSuggestion>,
 ) -> Option<ArticleSearchJsonMeta> {
     let next_commands = super::super::normalize_next_commands(next_commands);
     let suggestions = suggestions
         .into_iter()
         .filter(|suggestion| {
-            !suggestion.command.trim().is_empty()
-                && !suggestion.reason.trim().is_empty()
-                && !suggestion.sections.is_empty()
+            !suggestion.command.trim().is_empty() && !suggestion.reason.trim().is_empty()
         })
         .collect::<Vec<_>>();
 
