@@ -168,6 +168,31 @@ async def test_read_resource_returns_markdown_for_every_uri(
                 assert str(content.uri) == uri
                 assert mime_type == "text/markdown"
                 assert content.text.strip()
+                if uri == "biomcp://help":
+                    assert "## Routing rules" in content.text
+                    assert "## How-to reference" in content.text
+                    assert "../docs/" not in content.text
+                    assert ".md)" not in content.text
+
+
+@pytest.mark.asyncio
+async def test_skill_render_matches_help_resource_body(mcp_session_factory) -> None:
+    async with mcp_session_factory() as (session, _initialize_result):
+        render = await session.call_tool(
+            "biomcp",
+            arguments={"command": "biomcp skill render"},
+        )
+        help_resource = await session.read_resource("biomcp://help")
+
+    assert _is_error(render) is False
+    assert render.content
+    assert isinstance(render.content[0], types.TextContent)
+    help_text = next(
+        content.text
+        for content in help_resource.contents
+        if isinstance(content, types.TextResourceContents)
+    )
+    assert render.content[0].text == help_text
 
 
 @pytest.mark.asyncio

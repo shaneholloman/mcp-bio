@@ -126,6 +126,7 @@ EXAMPLES:
     #[command(after_help = "\
 EXAMPLES:
   biomcp skill            # show skill overview
+  biomcp skill render     # print canonical agent prompt
   biomcp skill install    # install skill to your agent config")]
     Skill {
         #[command(subcommand)]

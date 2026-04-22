@@ -57,28 +57,29 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Use `batch <entity> <id1,id2,...> --sections <s1,s2,...>` when you need the same card shape for several entities.
 - Use `enrich <GENE1,GENE2,...>` once you have a real gene set and want pathways or GO-style categories.
 
-## How-to guide reference
+## How-to reference
 
-For question patterns that need more than a one-line routing hint, open the
-matching how-to guide before you improvise the command sequence.
+For question patterns that need more than a one-line routing hint, start with
+the executable command or routing phrase below before you improvise the command
+sequence.
 
-| Question pattern | Start with this guide | Why |
+| Question pattern | Start with | Why |
 |---|---|---|
-| Specific variant pathogenicity or clinical-evidence question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Use the bounded variant-pathogenicity workflow instead of mixing ad hoc variant, trial, and article commands |
-| Specific drug safety or adverse-event question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Start with the drug-safety workflow before widening to literature |
-| Drug approval, licensing, or regulatory-date question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Use the structured-first workflow discipline: check `get drug ... regulatory` before falling back to articles for approval facts |
-| Broad gene-in-disease orientation | [Guide Workflows](../docs/how-to/guide-workflows.md) | Follow the shipped counts-first workflow for gene, drug, trial, and article pivots |
-| Gene-disease association for a known gene | [Guide Workflows](../docs/how-to/guide-workflows.md) | Check `get gene ... diseases` and `search variant --gene ...` for the full disease spectrum before searching articles |
-| Gene localization or protein-function question | [Guide Workflows](../docs/how-to/guide-workflows.md) | Pull `get gene ... protein` and `get gene ... hpa` first because UniProt and HPA usually answer localization or function directly |
-| You know the concept but not the first entity to inspect | [Search All Workflow](../docs/how-to/search-all-workflow.md) | Use `search all` to choose the next typed command intentionally |
-| "Most common" or prevalence question about a disease | [Search All Workflow](../docs/how-to/search-all-workflow.md) | Use `biomcp discover` to resolve the canonical disease entity, then inspect structured disease data before widening to article search |
-| You already know the anchor entity and want the built-in related view | [Cross-Entity Pivots](../docs/how-to/cross-entity-pivots.md) | Move from a known gene, disease, drug, or variant into trials, articles, drugs, or pathways without rebuilding the query |
-| You need literature for a known gene, disease, drug, method, or outcome | [Find Articles](../docs/how-to/find-articles.md) | Translate the question into typed flags plus a focused keyword clause |
-| You need recruiting or completed trials for a disease, drug, or biomarker | [Find Trials](../docs/how-to/find-trials.md) | Start with condition and intervention filters, then add biomarker or geography only when needed |
-| You need to resolve or annotate a variant identifier | [Annotate Variants](../docs/how-to/annotate-variants.md) | Normalize the variant first, then add significance or frequency filters |
-| You need a functional-effect prediction for a variant | [Predict Effects](../docs/how-to/predict-effects.md) | Use `predict` only after you have a resolvable variant identifier |
-| You need to reproduce a paper-style workflow | [Reproduce Papers](../docs/how-to/reproduce-papers.md) | Map the paper task to the closest BioMCP workflow area before copying commands |
-| You need to review whether a workflow run is complete and trustworthy | [Skill Validation](../docs/how-to/skill-validation.md) | Check command fidelity, evidence traceability, and reproducibility before signing off |
+| Specific variant pathogenicity or clinical-evidence question | `biomcp get variant "<variant>"` | Use the bounded variant-pathogenicity workflow instead of mixing ad hoc variant, trial, and article commands |
+| Specific drug safety or adverse-event question | `biomcp drug adverse-events <name>` and `biomcp get drug <name> safety` | Start with the drug-safety workflow before widening to literature |
+| Drug approval, licensing, or regulatory-date question | `biomcp get drug <name> regulatory` | Use the structured-first workflow discipline: check `get drug ... regulatory` before falling back to articles for approval facts |
+| Broad gene-in-disease orientation | `biomcp search all --gene <gene> --disease "<disease>"` | Follow the shipped counts-first workflow for gene, drug, trial, and article pivots |
+| Gene-disease association for a known gene | `biomcp get gene <symbol> diseases` | Check `get gene ... diseases` and `search variant --gene ...` for the full disease spectrum before searching articles |
+| Gene localization or protein-function question | `biomcp get gene <symbol> protein` and `biomcp get gene <symbol> hpa` | Pull `get gene ... protein` and `get gene ... hpa` first because UniProt and HPA usually answer localization or function directly |
+| You know the concept but not the first entity to inspect | `biomcp search all --keyword "<concept>"` | Use `search all` to choose the next typed command intentionally |
+| "Most common" or prevalence question about a disease | `biomcp discover "<disease>"` | Use `biomcp discover` to resolve the canonical disease entity, then inspect structured disease data before widening to article search |
+| You already know the anchor entity and want the built-in related view | Use the matching helper such as `biomcp gene articles <symbol>`, `biomcp drug trials <name>`, or `biomcp disease trials "<disease>"` | Move from a known gene, disease, drug, or variant into trials, articles, drugs, or pathways without rebuilding the query |
+| You need literature for a known gene, disease, drug, method, or outcome | `biomcp search article -k "<query>" --type review --limit 5` | Translate the question into typed flags plus a focused keyword clause |
+| You need recruiting or completed trials for a disease, drug, or biomarker | `biomcp search trial -c "<condition>" --limit 5` | Start with condition and intervention filters, then add biomarker or geography only when needed |
+| You need to resolve or annotate a variant identifier | `biomcp get variant "<variant>"` | Normalize the variant first, then add significance or frequency filters |
+| You need a functional-effect prediction for a variant | `biomcp get variant "<variant>" predict` | Use `predict` only after you have a resolvable variant identifier |
+| You need to reproduce a paper-style workflow | Map the paper task to the closest BioMCP entity command, then use `biomcp article batch <pmid1> <pmid2> ...` for shortlisted papers | Map the paper task to the closest BioMCP workflow area before copying commands |
+| You need to review whether a workflow run is complete and trustworthy | Check command fidelity, evidence traceability, and reproducibility against the commands already run | Check command fidelity, evidence traceability, and reproducibility before signing off |
 
 ## Anti-patterns
 

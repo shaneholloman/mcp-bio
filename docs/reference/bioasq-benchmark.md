@@ -64,6 +64,25 @@ This is not a new benchmark lane. The calibration surface stays in Rust tests
 and benchmark docs because live ranking-order assertions against upstream
 article responses are unstable.
 
+## Skill Prompt Integration
+
+eval runners should call `biomcp skill render` immediately before building the
+system prompt for a measurement run. That command is the canonical
+agent-facing BioMCP prompt surface and avoids pinning a stale `SKILL.md`
+snapshot in benchmark harnesses.
+
+Snapshot-based eval runners should refresh their snapshot before measurement
+with:
+
+```bash
+biomcp skill render > <snapshot-path>
+```
+
+This repository contains BioASQ data preparation and benchmark documentation,
+but it does not contain the external eval CLI startup path. BioMCP therefore
+ships the stable render command and documents the startup/snapshot contract; it
+does not claim that external eval startup code was switched here.
+
 ## Provenance and terms
 
 The public bundle metadata lives in `benchmarks/bioasq/datasets/manifest.json`.

@@ -74,8 +74,8 @@ fn is_allowed_mcp_command(args: &[String]) -> bool {
             }
         }
         "skill" => {
-            // Allow read-only skill commands: list, show, numeric lookup
-            // (e.g. "skill 03"), and slug lookup (e.g. "skill variant-to-treatment").
+            // Allow read-only skill commands: overview, list, render, numeric lookup
+            // (e.g. "skill 03"), and slug lookup (e.g. "skill gene-disease-orientation").
             // Block only mutating commands.
             let sub = args
                 .get(2)
@@ -363,6 +363,11 @@ mod tests {
         assert!(is_allowed_mcp_command(&[
             "biomcp".into(),
             "skill".into(),
+            "render".into()
+        ]));
+        assert!(is_allowed_mcp_command(&[
+            "biomcp".into(),
+            "skill".into(),
             "show".into()
         ]));
         // Numeric and slug skill lookups are read-only
@@ -374,7 +379,7 @@ mod tests {
         assert!(is_allowed_mcp_command(&[
             "biomcp".into(),
             "skill".into(),
-            "variant-to-treatment".into()
+            "gene-disease-orientation".into()
         ]));
         assert!(is_allowed_mcp_command(&[
             "biomcp".into(),

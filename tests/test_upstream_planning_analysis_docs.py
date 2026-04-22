@@ -149,6 +149,7 @@ def test_functional_overview_preserves_readme_surface_and_study_family() -> None
     assert "`gwas` and `phenotype` are search-only" in functional
     assert "BioMCP ships an embedded agent guide plus worked examples" in functional
     assert "`biomcp skill` shows the BioMCP agent guide" in functional
+    assert "`biomcp skill render` prints the canonical agent prompt" in functional
     assert "`biomcp skill install <dir>` installs that guide" in functional
     assert "`biomcp skill list` shows embedded worked examples" in functional
     assert "`biomcp skill <name>` opens an embedded worked example" in functional
@@ -397,7 +398,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "remote `shell`" not in technical
     assert "mirror the CLI command surface" not in technical
     assert "read-only allowlist rather than mirroring the full CLI" in technical_ws
-    assert "read-only `skill` lookups/listing" in technical_ws
+    assert "read-only `skill` lookup/list/render behavior" in technical_ws
     assert (
         "Operator-local or mutating commands such as `cache`, `update`, `serve`, "
         "`serve-http`, and `skill install` stay blocked over MCP."
@@ -420,12 +421,14 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "biomcp search all BRAF" in ux
     assert "positional alias" in ux
     assert "biomcp skill                  → show the embedded BioMCP agent guide" in ux
+    assert "biomcp skill render           → print the canonical agent prompt" in ux
     assert "biomcp skill list             → list embedded worked examples" in ux
     assert "biomcp cache path             → print the managed HTTP cache path (plain text; ignores `--json`)" in ux
     assert "biomcp cache stats            → show HTTP cache statistics (JSON supported)" in ux
     assert "biomcp cache clean            → remove orphan blobs and optionally age- or size-evict the HTTP cache (JSON supported)" in ux
     assert "biomcp cache clear [--yes]    → destructively wipe the managed HTTP cache tree (JSON success; TTY or `--yes` required)" in ux
     assert "Overview: `biomcp skill`" in ux
+    assert "Render: `biomcp skill render`" in ux
     assert "List: `biomcp skill list`" in ux
     assert "Open: `biomcp skill 01` or `biomcp skill article-follow-up`" in ux
     assert "biomcp://skill/<slug>" in ux
@@ -773,6 +776,8 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         "spec/06-article.md::Getting Article Details",
         "spec/06-article.md::Article Batch",
         "spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides",
+        "spec/06-article.md::Article Search Gene Keyword Pivot",
+        "spec/06-article.md::Article Search Drug Keyword Pivot",
         "spec/06-article.md::Article Search Discover Keyword Pivot",
         "spec/09-search-all.md::Debug Plan",
         "spec/09-search-all.md::Distinct Disease And Keyword Stay Separate",
@@ -780,10 +785,12 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         "spec/17-cross-entity-pivots.md::Variant pivots",
     ]
     ticket_270_smoke_item_ids = [
-        "spec/06-article.md::Getting Article Details (line 469) [bash]",
-        "spec/06-article.md::Article Batch (line 629) [bash]",
-        "spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides (line 317) [bash]",
-        "spec/06-article.md::Article Search Discover Keyword Pivot (line 103) [bash]",
+        "spec/06-article.md::Getting Article Details (line 486) [bash]",
+        "spec/06-article.md::Article Batch (line 646) [bash]",
+        "spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides (line 334) [bash]",
+        "spec/06-article.md::Article Search Gene Keyword Pivot (line 52) [bash]",
+        "spec/06-article.md::Article Search Drug Keyword Pivot (line 87) [bash]",
+        "spec/06-article.md::Article Search Discover Keyword Pivot (line 108) [bash]",
         "spec/09-search-all.md::Debug Plan (line 97) [bash]",
         "spec/09-search-all.md::Distinct Disease And Keyword Stay Separate (line 142) [bash]",
         "spec/17-cross-entity-pivots.md::Gene to Articles (line 134) [bash]",

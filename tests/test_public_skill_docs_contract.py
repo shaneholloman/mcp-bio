@@ -29,6 +29,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     blog = _read("docs/blog/biomcp-kuva-charts.md")
     mcp_server = _read("docs/reference/mcp-server.md")
     claude_desktop = _read("docs/getting-started/claude-desktop.md")
+    bioasq_benchmark = _read("docs/reference/bioasq-benchmark.md")
 
     assert "14 guided investigation workflows are built in" not in readme
     assert "biomcp skill install ~/.claude --force" in readme
@@ -42,6 +43,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
 
     assert "# Skills" in skills
     assert "biomcp skill" in skills
+    assert "biomcp skill render" in skills
     assert "biomcp skill list" in skills
     assert "biomcp skill article-follow-up" in skills
     assert "SKILL.md" in skills
@@ -65,6 +67,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
 
     assert "biomcp skill [list|install|<name>]" not in cli_reference
     assert "biomcp skill install [dir]" in cli_reference
+    assert "biomcp skill render" in cli_reference
     assert "biomcp cache path" in cli_reference
     assert "biomcp cache stats" in cli_reference
     assert "biomcp cache clean" in cli_reference
@@ -90,6 +93,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
 
     assert "one markdown resource per embedded skill use-case" in mcp_server
     assert "biomcp://help" in mcp_server
+    assert "biomcp skill render" in mcp_server
     assert "biomcp://skill/<slug>" in mcp_server
     assert "Streamable HTTP" in mcp_server
     assert "`biomcp serve-http`" in mcp_server
@@ -103,6 +107,10 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "`cache clear`" in mcp_server
     assert "reveal workstation-local paths" in mcp_server
 
+    assert "biomcp skill render" in bioasq_benchmark
+    assert "eval runners should call `biomcp skill render`" in bioasq_benchmark
+    assert "biomcp skill render > <snapshot-path>" in bioasq_benchmark
+
     assert "one markdown resource per embedded BioMCP worked example" in claude_desktop
     assert "biomcp://help" in claude_desktop
     assert "biomcp://skill/<slug>" in claude_desktop
@@ -110,7 +118,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "## Routing rules" in skill_file
     assert "## Section reference" in skill_file
     assert "## Cross-entity pivot rules" in skill_file
-    assert "## How-to guide reference" in skill_file
+    assert "## How-to reference" in skill_file
     assert "## Anti-patterns" in skill_file
     assert "## Output and evidence rules" in skill_file
     assert "## Answer commitment" in skill_file
@@ -124,48 +132,41 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "CDC CVX/MVX" in routing_rules
     assert 'biomcp search drug --indication "<disease>"' in skill_file
     assert 'biomcp discover "<free text>"' in skill_file
-    assert "[Guide Workflows](../docs/how-to/guide-workflows.md)" in skill_file
-    assert "[Search All Workflow](../docs/how-to/search-all-workflow.md)" in skill_file
-    assert "[Cross-Entity Pivots](../docs/how-to/cross-entity-pivots.md)" in skill_file
-    assert "[Find Articles](../docs/how-to/find-articles.md)" in skill_file
-    assert "[Find Trials](../docs/how-to/find-trials.md)" in skill_file
-    assert "[Annotate Variants](../docs/how-to/annotate-variants.md)" in skill_file
-    assert "[Predict Effects](../docs/how-to/predict-effects.md)" in skill_file
-    assert "[Reproduce Papers](../docs/how-to/reproduce-papers.md)" in skill_file
-    assert "[Skill Validation](../docs/how-to/skill-validation.md)" in skill_file
+    assert "../docs/" not in skill_file
+    assert ".md)" not in skill_file
     how_to_table = skill_file[
-        skill_file.index("## How-to guide reference") : skill_file.index(
-            "## Anti-patterns"
-        )
+        skill_file.index("## How-to reference") : skill_file.index("## Anti-patterns")
     ]
     expected_bioasq_rows = [
         (
             "| Specific variant pathogenicity or clinical-evidence question | "
-            "[Guide Workflows](../docs/how-to/guide-workflows.md) | "
+            '`biomcp get variant "<variant>"` | '
             "Use the bounded variant-pathogenicity workflow instead of mixing ad hoc "
             "variant, trial, and article commands |"
         ),
         (
             "| Drug approval, licensing, or regulatory-date question | "
-            "[Guide Workflows](../docs/how-to/guide-workflows.md) | "
+            "`biomcp get drug <name> regulatory` | "
             "Use the structured-first workflow discipline: check `get drug ... "
             "regulatory` before falling back to articles for approval facts |"
         ),
         (
             "| Gene-disease association for a known gene | "
-            "[Guide Workflows](../docs/how-to/guide-workflows.md) | "
+            "`biomcp get gene <symbol> diseases` | "
             "Check `get gene ... diseases` and `search variant --gene ...` for the "
             "full disease spectrum before searching articles |"
         ),
         (
             "| Gene localization or protein-function question | "
-            "[Guide Workflows](../docs/how-to/guide-workflows.md) | "
+            "`biomcp get gene <symbol> protein` and `biomcp get gene <symbol> hpa` | "
             "Pull `get gene ... protein` and `get gene ... hpa` first because "
             "UniProt and HPA usually answer localization or function directly |"
         ),
     ]
     for row in expected_bioasq_rows:
         assert row in how_to_table
+    assert "../docs/" not in how_to_table
+    assert ".md)" not in how_to_table
     assert (
         "After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls."
         in skill_file

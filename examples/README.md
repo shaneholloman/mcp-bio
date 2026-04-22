@@ -20,19 +20,19 @@ biomcp skill <number-or-slug>
 
 | Example folder | Canonical skill |
 |----------------|-----------------|
-| [genegpt/](genegpt/README.md) | `09-gene-function-lookup` |
-| [geneagent/](geneagent/README.md) | `10-gene-set-analysis` |
-| [trialgpt/](trialgpt/README.md) | `03-trial-searching` (patient matching section) |
-| [pubmed-beyond/](pubmed-beyond/README.md) | `11-literature-synthesis` |
+| [genegpt/](genegpt/README.md) | `gene-disease-orientation` |
+| [geneagent/](geneagent/README.md) | `gene-disease-orientation` |
+| [trialgpt/](trialgpt/README.md) | `treatment-lookup` |
+| [pubmed-beyond/](pubmed-beyond/README.md) | `article-follow-up` |
 
 ## Example Index
 
 | Example folder | What it does |
 |----------------|--------------|
-| [geneagent/](geneagent/README.md) | Replays a gene-set-analysis workflow with prompt, run, and scoring assets. |
-| [genegpt/](genegpt/README.md) | Reproduces a gene-function lookup workflow with captured benchmark harness files. |
-| [pubmed-beyond/](pubmed-beyond/README.md) | Replays a literature-synthesis workflow over BioMCP with benchmark assets. |
-| [trialgpt/](trialgpt/README.md) | Reproduces a patient-matching and trial-search workflow with benchmark assets. |
+| [geneagent/](geneagent/README.md) | Replays a gene set analysis workflow with prompt, run, and scoring assets. |
+| [genegpt/](genegpt/README.md) | Reproduces a gene function lookup workflow with captured benchmark harness files. |
+| [pubmed-beyond/](pubmed-beyond/README.md) | Replays an article follow-up workflow over BioMCP with benchmark assets. |
+| [trialgpt/](trialgpt/README.md) | Reproduces a patient matching and trial search workflow with benchmark assets. |
 
 ## Standalone Examples
 

@@ -17,6 +17,8 @@ struct EmbeddedSkills;
 pub enum SkillCommand {
     /// List embedded worked examples
     List,
+    /// Render the canonical agent-facing prompt
+    Render,
     /// Show a specific use-case by number or name
     #[command(external_subcommand)]
     Show(Vec<String>),
@@ -57,6 +59,29 @@ fn embedded_text(path: &str) -> Result<String, BioMcpError> {
     let bytes: Cow<'static, [u8]> = asset.data;
     String::from_utf8(bytes.into_owned())
         .map_err(|_| BioMcpError::InvalidArgument("Embedded skill file is not valid UTF-8".into()))
+}
+
+fn canonical_prompt_body() -> Result<String, BioMcpError> {
+    let mut body = embedded_text("SKILL.md")?;
+    while body.ends_with('\n') {
+        body.pop();
+    }
+    Ok(body)
+}
+
+/// Renders the canonical agent-facing BioMCP prompt.
+///
+/// # Errors
+///
+/// Returns an error if the embedded prompt cannot be loaded.
+pub fn render_system_prompt() -> Result<String, BioMcpError> {
+    canonical_prompt_body()
+}
+
+fn canonical_prompt_file_bytes() -> Result<Vec<u8>, BioMcpError> {
+    let mut body = canonical_prompt_body()?;
+    body.push('\n');
+    Ok(body.into_bytes())
 }
 
 fn parse_title_and_description(markdown: &str) -> (String, Option<String>) {
@@ -127,7 +152,7 @@ fn use_case_index() -> Result<Vec<UseCaseMeta>, BioMcpError> {
 ///
 /// Returns an error if the embedded overview document cannot be loaded.
 pub fn show_overview() -> Result<String, BioMcpError> {
-    embedded_text("SKILL.md")
+    canonical_prompt_body()
 }
 
 /// Lists available embedded skill use-cases.
@@ -172,7 +197,7 @@ fn normalize_use_case_key(input: &str) -> String {
         return String::new();
     }
 
-    // Accept "01", "1", "01-variant-to-treatment", or "variant-to-treatment"
+    // Accept "01", "1", "01-treatment-lookup", or "treatment-lookup"
     if trimmed.chars().all(|c| c.is_ascii_digit())
         && let Ok(n) = trimmed.parse::<u32>()
     {
@@ -459,7 +484,12 @@ fn install_to_dir(dir: &Path, force: bool) -> Result<String, BioMcpError> {
         if let Some(p) = out_path.parent() {
             fs::create_dir_all(p)?;
         }
-        fs::write(&out_path, asset.data)?;
+        let bytes = if rel == "SKILL.md" {
+            canonical_prompt_file_bytes()?
+        } else {
+            asset.data.into_owned()
+        };
+        fs::write(&out_path, bytes)?;
     }
 
     // Swap: remove old target (if any), rename staging into place.
@@ -587,7 +617,7 @@ mod tests {
         assert!(overview.contains("## Routing rules"));
         assert!(overview.contains("## Section reference"));
         assert!(overview.contains("## Cross-entity pivot rules"));
-        assert!(overview.contains("## How-to guide reference"));
+        assert!(overview.contains("## How-to reference"));
         assert!(overview.contains("## Anti-patterns"));
         assert!(overview.contains("## Output and evidence rules"));
         assert!(overview.contains("## Answer commitment"));
@@ -596,7 +626,9 @@ mod tests {
         assert!(overview.contains("biomcp who sync"));
         assert!(overview.contains("biomcp cvx sync"));
         assert!(overview.contains("biomcp discover \"<free text>\""));
-        assert!(overview.contains("[Find Articles](../docs/how-to/find-articles.md)"));
+        assert!(overview.contains("biomcp search article -k \"<query>\" --type review --limit 5"));
+        assert!(!overview.contains("../docs/"));
+        assert!(!overview.contains(".md)"));
         assert!(overview.contains("Never do more than 3 article searches for one question."));
         assert!(overview.contains("pass `--json --session <token>`"));
         assert!(
@@ -614,13 +646,12 @@ mod tests {
             )
         );
         assert!(
-            overview.find("## Cross-entity pivot rules")
-                < overview.find("## How-to guide reference")
+            overview.find("## Cross-entity pivot rules") < overview.find("## How-to reference")
         );
         assert!(overview.find("biomcp ema sync") < overview.find("## Section reference"));
         assert!(overview.find("biomcp who sync") < overview.find("## Section reference"));
         assert!(overview.find("biomcp cvx sync") < overview.find("## Section reference"));
-        assert!(overview.find("## How-to guide reference") < overview.find("## Anti-patterns"));
+        assert!(overview.find("## How-to reference") < overview.find("## Anti-patterns"));
         assert!(overview.find("## Anti-patterns") < overview.find("## Output and evidence rules"));
         assert!(
             overview.find("## Output and evidence rules") < overview.find("## Answer commitment")
@@ -630,6 +661,41 @@ mod tests {
                 < overview.find("Run `biomcp skill list` for worked examples")
         );
         assert!(overview.contains("Run `biomcp skill list` for worked examples"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn canonical_prompt_body_matches_overview_and_normalizes_newlines() -> Result<(), BioMcpError> {
+        let body = canonical_prompt_body()?;
+        let rendered = render_system_prompt()?;
+        let file_bytes = canonical_prompt_file_bytes()?;
+
+        assert_eq!(show_overview()?, body);
+        assert_eq!(rendered, body);
+        assert!(!body.ends_with('\n'));
+        assert_eq!(file_bytes, format!("{body}\n").into_bytes());
+        assert!(file_bytes.ends_with(b"\n"));
+        assert!(!file_bytes.ends_with(b"\n\n"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn install_to_dir_writes_canonical_skill_md_and_assets() -> Result<(), BioMcpError> {
+        let paths = TestPaths::new("install-canonical-skill");
+        let target = paths.cwd.join("skills/biomcp");
+
+        install_to_dir(&target, true)?;
+
+        assert_eq!(
+            fs::read(target.join("SKILL.md"))?,
+            canonical_prompt_file_bytes()?
+        );
+        assert!(target.join("use-cases").is_dir());
+        assert!(target.join("jq-examples.md").is_file());
+        assert!(target.join("examples").is_dir());
+        assert!(target.join("schemas").is_dir());
 
         Ok(())
     }
