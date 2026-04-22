@@ -611,7 +611,7 @@ echo "$out" | mustmatch like "# Survival Chart"
 out="$(biomcp chart heatmap)"
 test -n "$out"
 echo "$out" | mustmatch like "Heatmaps render pairwise co-mutation counts as an NxN matrix"
-echo "$out" | mustmatch like "`--palette` is not supported for heatmaps in this release."
+echo "$out" | mustmatch like '`--palette` is not supported for heatmaps in this release.'
 ```
 
 ```bash
