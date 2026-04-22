@@ -63,6 +63,97 @@ pub(super) fn resolved_article_date_bounds(
     (date_from, date_to)
 }
 
+fn article_keyword_token_count(keyword: &str) -> usize {
+    keyword
+        .split(|ch: char| !(ch.is_ascii_alphanumeric() || ch == '_' || ch == '-'))
+        .filter(|token| !token.is_empty())
+        .count()
+}
+
+pub(super) fn is_exact_article_keyword_lookup_eligible(
+    filters: &crate::entities::article::ArticleSearchFilters,
+) -> bool {
+    let Some(keyword) = filters
+        .keyword
+        .as_deref()
+        .map(str::trim)
+        .filter(|keyword| !keyword.is_empty())
+    else {
+        return false;
+    };
+
+    if filters
+        .gene
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+        || filters
+            .disease
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty())
+        || filters
+            .drug
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty())
+    {
+        return false;
+    }
+
+    matches!(article_keyword_token_count(keyword), 1..=3)
+}
+
+pub(super) fn article_entity_suggestion(
+    entity: &crate::entities::discover::ExactArticleKeywordEntity,
+) -> ArticleEntitySuggestion {
+    let entity_name = entity.entity_type.cli_name();
+    let label = entity.label.trim();
+    let quoted_label = crate::render::markdown::shell_quote_arg(label);
+    let command = format!("biomcp get {entity_name} {quoted_label}");
+    let reason = if entity.matched_alias {
+        format!(
+            "Exact {entity_name} alias match for article keyword \"{}\"; suggested canonical {entity_name} \"{}\".",
+            entity.matched_query, entity.label
+        )
+    } else {
+        format!(
+            "Exact {entity_name} vocabulary match for article keyword \"{}\".",
+            entity.matched_query
+        )
+    };
+
+    ArticleEntitySuggestion {
+        command,
+        reason,
+        sections: article_entity_sections(entity.entity_type),
+    }
+}
+
+fn article_entity_sections(entity_type: crate::entities::discover::DiscoverType) -> Vec<String> {
+    let (valid_sections, sections): (&[&str], &[&str]) = match entity_type {
+        crate::entities::discover::DiscoverType::Gene => (
+            crate::entities::gene::GENE_SECTION_NAMES,
+            &["protein", "diseases", "expression"],
+        ),
+        crate::entities::discover::DiscoverType::Drug => (
+            crate::entities::drug::DRUG_SECTION_NAMES,
+            &["label", "targets", "indications"],
+        ),
+        crate::entities::discover::DiscoverType::Disease => (
+            crate::entities::disease::DISEASE_SECTION_NAMES,
+            &["genes", "phenotypes", "diagnostics"],
+        ),
+        _ => (&[], &[]),
+    };
+    debug_assert!(
+        sections
+            .iter()
+            .all(|section| valid_sections.contains(section))
+    );
+    sections
+        .iter()
+        .map(|section| (*section).to_string())
+        .collect()
+}
+
 pub(in crate::cli) async fn handle_search(
     args: ArticleSearchArgs,
     json: bool,
@@ -123,9 +214,31 @@ pub(in crate::cli) async fn handle_search(
         args.offset,
     );
 
-    let page =
-        crate::entities::article::search_page(&filters, args.limit, args.offset, source_filter)
-            .await?;
+    crate::entities::article::validate_search_page_request(&filters, args.limit, source_filter)?;
+    let exact_query = if is_exact_article_keyword_lookup_eligible(&filters) {
+        filters.keyword.clone()
+    } else {
+        None
+    };
+    let search_future =
+        crate::entities::article::search_page(&filters, args.limit, args.offset, source_filter);
+    let (page, exact_entity) = if let Some(query) = exact_query {
+        let exact_future = crate::entities::discover::resolve_exact_article_keyword_entity(&query);
+        let (page, exact_entity) = tokio::join!(search_future, exact_future);
+        let exact_entity = match exact_entity {
+            Ok(entity) => entity,
+            Err(err) => {
+                tracing::warn!(
+                    keyword = %query,
+                    "Exact article keyword entity lookup unavailable: {err}"
+                );
+                None
+            }
+        };
+        (page?, exact_entity)
+    } else {
+        (search_future.await?, None)
+    };
     let results = page.results;
     let pagination =
         super::super::PaginationMeta::offset(args.offset, args.limit, results.len(), page.total);
@@ -143,10 +256,21 @@ pub(in crate::cli) async fn handle_search(
     } else {
         None
     };
-    let suggestions =
-        crate::render::markdown::related_article_search_results(&results, &filters, source_filter);
-    let next_commands =
-        crate::render::markdown::search_next_commands_article(&results, &filters, source_filter);
+    let suggestions = exact_entity
+        .as_ref()
+        .map(article_entity_suggestion)
+        .into_iter()
+        .collect::<Vec<_>>();
+    let exact_entity_commands = suggestions
+        .iter()
+        .map(|suggestion| suggestion.command.clone())
+        .collect::<Vec<_>>();
+    let next_commands = crate::render::markdown::search_next_commands_article(
+        &results,
+        &filters,
+        source_filter,
+        &exact_entity_commands,
+    );
 
     let text = if json {
         article_search_json(
@@ -178,6 +302,7 @@ pub(in crate::cli) async fn handle_search(
                 )
                 .as_deref(),
                 debug_plan: debug_plan.as_ref(),
+                exact_entity_commands: &exact_entity_commands,
             },
         )?
     };
@@ -392,7 +517,42 @@ pub(super) struct ArticleSearchJsonPage {
     pub results: Vec<crate::entities::article::ArticleSearchResult>,
     pub pagination: crate::cli::PaginationMeta,
     pub next_commands: Vec<String>,
-    pub suggestions: Vec<String>,
+    pub suggestions: Vec<ArticleEntitySuggestion>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+pub(super) struct ArticleEntitySuggestion {
+    pub command: String,
+    pub reason: String,
+    pub sections: Vec<String>,
+}
+
+#[derive(serde::Serialize)]
+struct ArticleSearchJsonMeta {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    next_commands: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    suggestions: Vec<ArticleEntitySuggestion>,
+}
+
+fn article_search_json_meta(
+    next_commands: Vec<String>,
+    suggestions: Vec<ArticleEntitySuggestion>,
+) -> Option<ArticleSearchJsonMeta> {
+    let next_commands = super::super::normalize_next_commands(next_commands);
+    let suggestions = suggestions
+        .into_iter()
+        .filter(|suggestion| {
+            !suggestion.command.trim().is_empty()
+                && !suggestion.reason.trim().is_empty()
+                && !suggestion.sections.is_empty()
+        })
+        .collect::<Vec<_>>();
+
+    (!next_commands.is_empty() || !suggestions.is_empty()).then_some(ArticleSearchJsonMeta {
+        next_commands,
+        suggestions,
+    })
 }
 
 pub(super) fn article_search_json(
@@ -418,7 +578,7 @@ pub(super) fn article_search_json(
         #[serde(skip_serializing_if = "Option::is_none")]
         debug_plan: Option<crate::cli::debug_plan::DebugPlan>,
         #[serde(skip_serializing_if = "Option::is_none")]
-        _meta: Option<crate::cli::SearchJsonMeta>,
+        _meta: Option<ArticleSearchJsonMeta>,
     }
 
     let count = page.results.len();
@@ -432,7 +592,7 @@ pub(super) fn article_search_json(
         count,
         results: page.results,
         debug_plan,
-        _meta: crate::cli::search_meta_with_suggestions(page.next_commands, Some(page.suggestions)),
+        _meta: article_search_json_meta(page.next_commands, page.suggestions),
     })
     .map_err(Into::into)
 }

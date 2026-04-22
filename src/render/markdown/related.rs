@@ -318,11 +318,8 @@ pub(super) fn related_article_search_results(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
+    exact_entity_commands: &[String],
 ) -> Vec<String> {
-    if results.is_empty() {
-        return Vec::new();
-    }
-
     let mut out = Vec::new();
     if let Some(pmid) = results
         .first()
@@ -331,7 +328,12 @@ pub(super) fn related_article_search_results(
     {
         out.push(format!("biomcp get article {pmid}"));
     }
-    out.extend(article_support::article_keyword_entity_hints(filters));
+    out.extend(
+        exact_entity_commands
+            .iter()
+            .map(|command| command.trim().to_string())
+            .filter(|command| !command.is_empty()),
+    );
     out.extend(article_support::article_date_refinement_hint(
         results,
         filters,
@@ -344,8 +346,10 @@ pub(super) fn markdown_related_article_search_results(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
+    exact_entity_commands: &[String],
 ) -> Vec<String> {
-    let mut out = related_article_search_results(results, filters, source_filter);
+    let mut out =
+        related_article_search_results(results, filters, source_filter, exact_entity_commands);
     out.extend(article_support::article_keyword_cross_entity_markdown_hints(filters));
     dedupe_markdown_commands(out)
 }
@@ -354,8 +358,10 @@ pub(super) fn search_next_commands_article(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
+    exact_entity_commands: &[String],
 ) -> Vec<String> {
-    let mut out = related_article_search_results(results, filters, source_filter);
+    let mut out =
+        related_article_search_results(results, filters, source_filter, exact_entity_commands);
     if out.is_empty() {
         return out;
     }

@@ -18,6 +18,7 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - EMA and WHO regional drug data are local runtime files that auto-download on first use, CDC CVX/MVX is the companion local vaccine-brand bridge for default/EU vaccine searches plus explicit WHO vaccine search, and GTR is the local diagnostic-test backbone; run `biomcp ema sync`, `biomcp who sync`, `biomcp cvx sync`, or `biomcp gtr sync` to force-refresh before freshness-sensitive local-runtime lookups.
 - Vaccine brand-name questions that miss on MyChem often need `biomcp search drug <brand> --region eu`, omitted `--region`, or explicit `biomcp search drug <brand> --region who --product-type vaccine`, which can bridge through CDC CVX/MVX into EMA or WHO vaccine matches.
 - Review-literature questions: `biomcp search article -k "<query>" --type review --limit 5`
+- Keyword-only article searches may return `_meta.suggestions[]` objects when the whole keyword exactly matches a gene, drug, or disease label/alias; use the suggested `get gene`, `get drug`, or `get disease` command when structured data may answer before more article paging.
 - After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls. Batch up to 20 shortlisted papers in one call.
 - Use `biomcp batch gene <GENE1,GENE2,...>` when you need the same basic card fields, chromosome, or sectioned output for multiple genes.
 - For diseases with weak ontology-name coverage, run `biomcp discover "<disease>"` first, then pass a resolved `MESH:...`, `OMIM:...`, `ICD10CM:...`, `MONDO:...`, or `DOID:...` identifier to `biomcp get disease`.
@@ -118,6 +119,7 @@ comma-separated IDs.
 - Treat empty structured regulatory drug results as signal for approved-drug questions, not as a CLI failure.
 - Prefer review articles for synthesis questions and structured sections for direct facts.
 - Use `_meta.next_commands` from JSON mode as the executable follow-up contract.
+- For article search, `_meta.suggestions[]` is structured only for exact keyword entity matches and carries `command`, `reason`, and `sections`; multi-concept phrases and typed-filter searches should not produce direct entity suggestions.
 
 ## Answer commitment
 

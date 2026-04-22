@@ -23,6 +23,7 @@ pub struct ArticleSearchRenderContext<'a> {
     pub semantic_scholar_enabled: bool,
     pub note: Option<&'a str>,
     pub debug_plan: Option<&'a DebugPlan>,
+    pub exact_entity_commands: &'a [String],
 }
 
 pub fn article_markdown(
@@ -442,6 +443,7 @@ pub fn article_search_markdown_with_footer_and_context(
             results,
             filters,
             context.source_filter,
+            context.exact_entity_commands,
         ),
     );
     let index_date_footer = newest_indexed_footer(results);

@@ -290,16 +290,7 @@ pub async fn search_page(
     offset: usize,
     source: ArticleSourceFilter,
 ) -> Result<SearchPage<ArticleSearchResult>, BioMcpError> {
-    if limit == 0 || limit > MAX_SEARCH_LIMIT {
-        return Err(BioMcpError::InvalidArgument(format!(
-            "--limit must be between 1 and {MAX_SEARCH_LIMIT}"
-        )));
-    }
-    validate_article_source_cap(filters, limit)?;
-    validate_required_search_filters(filters)?;
-    normalized_date_bounds(filters)?;
-    validate_search_filter_values(filters)?;
-    validate_article_ranking_options(filters)?;
+    validate_search_page_request(filters, limit, source)?;
     let plan = plan_backends(filters, source)?;
     if filters.sort == ArticleSort::Relevance {
         return search_relevance_page(filters, limit, offset, plan).await;
@@ -318,6 +309,25 @@ pub async fn search_page(
         }
         BackendPlan::Both => search_federated_page(filters, limit, offset).await,
     }
+}
+
+pub fn validate_search_page_request(
+    filters: &ArticleSearchFilters,
+    limit: usize,
+    source: ArticleSourceFilter,
+) -> Result<(), BioMcpError> {
+    if limit == 0 || limit > MAX_SEARCH_LIMIT {
+        return Err(BioMcpError::InvalidArgument(format!(
+            "--limit must be between 1 and {MAX_SEARCH_LIMIT}"
+        )));
+    }
+    validate_article_source_cap(filters, limit)?;
+    validate_required_search_filters(filters)?;
+    normalized_date_bounds(filters)?;
+    validate_search_filter_values(filters)?;
+    validate_article_ranking_options(filters)?;
+    plan_backends(filters, source)?;
+    Ok(())
 }
 
 #[cfg(test)]

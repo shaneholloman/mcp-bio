@@ -280,28 +280,37 @@ pub(crate) fn related_variant_search_results(
     related::related_variant_search_results(results, gene_filter, condition_filter)
 }
 
+#[cfg(test)]
 pub(crate) fn related_article_search_results(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
+    exact_entity_commands: &[String],
 ) -> Vec<String> {
-    related::related_article_search_results(results, filters, source_filter)
+    related::related_article_search_results(results, filters, source_filter, exact_entity_commands)
 }
 
 pub(crate) fn markdown_related_article_search_results(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
+    exact_entity_commands: &[String],
 ) -> Vec<String> {
-    related::markdown_related_article_search_results(results, filters, source_filter)
+    related::markdown_related_article_search_results(
+        results,
+        filters,
+        source_filter,
+        exact_entity_commands,
+    )
 }
 
 pub(crate) fn search_next_commands_article(
     results: &[ArticleSearchResult],
     filters: &ArticleSearchFilters,
     source_filter: crate::entities::article::ArticleSourceFilter,
+    exact_entity_commands: &[String],
 ) -> Vec<String> {
-    related::search_next_commands_article(results, filters, source_filter)
+    related::search_next_commands_article(results, filters, source_filter, exact_entity_commands)
 }
 
 pub(crate) fn search_next_commands_trial(results: &[TrialSearchResult]) -> Vec<String> {

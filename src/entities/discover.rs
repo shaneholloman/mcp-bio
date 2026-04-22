@@ -148,6 +148,15 @@ pub(crate) enum AliasFallbackDecision {
     None,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ExactArticleKeywordEntity {
+    pub entity_type: DiscoverType,
+    pub label: String,
+    pub primary_id: Option<String>,
+    pub matched_query: String,
+    pub matched_alias: bool,
+}
+
 impl DiscoverType {
     pub(crate) fn label(self) -> &'static str {
         match self {
@@ -302,6 +311,163 @@ pub(crate) async fn resolve_query(
         &medline_topics,
         notes,
     ))
+}
+
+pub(crate) async fn resolve_exact_article_keyword_entity(
+    query: &str,
+) -> Result<Option<ExactArticleKeywordEntity>, BioMcpError> {
+    let query = query.trim();
+    if query.is_empty() {
+        return Ok(None);
+    }
+
+    let client = crate::sources::ols4::OlsClient::new()?;
+    let docs = match tokio::time::timeout(OLS4_TIMEOUT, client.search(query)).await {
+        Ok(result) => result?,
+        Err(_) => {
+            return Err(BioMcpError::Api {
+                api: "ols4".to_string(),
+                message: format!(
+                    "Timed out after {}ms while resolving exact article keyword entity",
+                    OLS4_TIMEOUT.as_millis()
+                ),
+            });
+        }
+    };
+
+    Ok(resolve_exact_article_keyword_entity_from_ols_docs(
+        query, &docs,
+    ))
+}
+
+pub(crate) fn resolve_exact_article_keyword_entity_from_ols_docs(
+    query: &str,
+    docs: &[OlsDoc],
+) -> Option<ExactArticleKeywordEntity> {
+    let query = query.trim();
+    if query.is_empty() {
+        return None;
+    }
+    let normalized_query = normalize_query(query);
+    let mut candidates: Vec<((DiscoverType, String), ExactArticleKeywordEntity)> = Vec::new();
+
+    for doc in docs {
+        let concept = concept_from_ols(doc, query);
+        if concept.match_tier != MatchTier::Exact
+            || concept.confidence != DiscoverConfidence::CanonicalId
+            || !matches!(
+                concept.primary_type,
+                DiscoverType::Gene | DiscoverType::Drug | DiscoverType::Disease
+            )
+        {
+            continue;
+        }
+
+        let key_value = concept
+            .primary_id
+            .as_deref()
+            .map(|id| id.to_ascii_lowercase())
+            .unwrap_or_else(|| normalize_query(&concept.label));
+        if key_value.is_empty() {
+            continue;
+        }
+
+        let matched_alias = normalize_query(&concept.label) != normalized_query
+            && concept
+                .synonyms
+                .iter()
+                .any(|synonym| normalize_query(synonym) == normalized_query);
+        let key = (concept.primary_type, key_value);
+        let entity = ExactArticleKeywordEntity {
+            entity_type: concept.primary_type,
+            label: concept.label,
+            primary_id: concept.primary_id,
+            matched_query: query.to_string(),
+            matched_alias,
+        };
+        if entity
+            .primary_id
+            .as_deref()
+            .is_some_and(|_| exact_article_keyword_primary_id_rank(&entity) == usize::MAX)
+        {
+            continue;
+        }
+
+        if let Some((_, existing)) = candidates
+            .iter_mut()
+            .find(|(existing_key, _)| existing_key == &key)
+        {
+            if !entity.matched_alias {
+                existing.matched_alias = false;
+                existing.label = entity.label;
+                existing.primary_id = entity.primary_id;
+            }
+        } else {
+            candidates.push((key, entity));
+        }
+    }
+
+    match candidates.len() {
+        0 => None,
+        1 => candidates.pop().map(|(_, entity)| entity),
+        _ => choose_preferred_exact_article_keyword_candidate(&candidates),
+    }
+}
+
+fn choose_preferred_exact_article_keyword_candidate(
+    candidates: &[((DiscoverType, String), ExactArticleKeywordEntity)],
+) -> Option<ExactArticleKeywordEntity> {
+    let entity_type = candidates.first()?.1.entity_type;
+    if candidates
+        .iter()
+        .any(|(_, entity)| entity.entity_type != entity_type)
+    {
+        return None;
+    }
+
+    let canonical_label = normalize_query(&candidates.first()?.1.label);
+    if canonical_label.is_empty()
+        || candidates
+            .iter()
+            .any(|(_, entity)| normalize_query(&entity.label) != canonical_label)
+    {
+        return None;
+    }
+
+    let best_rank = candidates
+        .iter()
+        .map(|(_, entity)| exact_article_keyword_primary_id_rank(entity))
+        .min()?;
+    if best_rank == usize::MAX {
+        return None;
+    }
+
+    let mut best = candidates
+        .iter()
+        .filter(|(_, entity)| exact_article_keyword_primary_id_rank(entity) == best_rank)
+        .map(|(_, entity)| entity);
+    let selected = best.next()?;
+    if best.next().is_some() {
+        return None;
+    }
+    Some(selected.clone())
+}
+
+fn exact_article_keyword_primary_id_rank(entity: &ExactArticleKeywordEntity) -> usize {
+    let Some(primary_id) = entity.primary_id.as_deref() else {
+        return usize::MAX;
+    };
+    let (source, _) = split_prefixed_id(primary_id);
+    let preferred = match entity.entity_type {
+        DiscoverType::Gene => &["HGNC", "NCBIGENE"][..],
+        DiscoverType::Drug => &["CHEBI", "RXNORM", "DRON", "MESH", "NCIT"][..],
+        DiscoverType::Disease => &["MONDO", "DOID", "ORDO", "MESH", "NCIT"][..],
+        _ => &[][..],
+    };
+    preferred
+        .iter()
+        .position(|candidate| source.eq_ignore_ascii_case(candidate))
+        .unwrap_or(usize::MAX)
 }
 
 pub(crate) fn classify_alias_fallback(
@@ -1634,11 +1800,16 @@ mod tests {
     use super::{
         AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept, DiscoverConfidence,
         DiscoverIntent, DiscoverResult, DiscoverType, MatchTier, build_result,
-        classify_alias_fallback, concept_from_ols, generate_commands, symptom_disease_lookup_query,
+        classify_alias_fallback, concept_from_ols, generate_commands,
+        resolve_exact_article_keyword_entity, resolve_exact_article_keyword_entity_from_ols_docs,
+        symptom_disease_lookup_query,
     };
     use crate::sources::medlineplus::MedlinePlusTopic;
     use crate::sources::ols4::OlsDoc;
     use crate::sources::umls::{UmlsConcept, UmlsXref};
+    use crate::test_support::{env_lock, set_env_var};
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     fn hgnc_doc(label: &str, obo_id: &str, exact_synonyms: &[&str]) -> OlsDoc {
         OlsDoc {
@@ -1648,6 +1819,27 @@ mod tests {
             ),
             ontology_name: "hgnc".to_string(),
             ontology_prefix: "hgnc".to_string(),
+            short_form: Some(obo_id.to_ascii_lowercase()),
+            obo_id: Some(obo_id.to_string()),
+            label: label.to_string(),
+            description: Vec::new(),
+            exact_synonyms: exact_synonyms
+                .iter()
+                .map(|value| (*value).to_string())
+                .collect(),
+            is_defining_ontology: true,
+            doc_type: Some("class".to_string()),
+        }
+    }
+
+    fn ols_doc(prefix: &str, label: &str, obo_id: &str, exact_synonyms: &[&str]) -> OlsDoc {
+        OlsDoc {
+            iri: format!(
+                "http://example.org/{}",
+                obo_id.replace(':', "/").to_ascii_lowercase()
+            ),
+            ontology_name: prefix.to_ascii_lowercase(),
+            ontology_prefix: prefix.to_ascii_lowercase(),
             short_form: Some(obo_id.to_ascii_lowercase()),
             obo_id: Some(obo_id.to_string()),
             label: label.to_string(),
@@ -1849,6 +2041,155 @@ mod tests {
         assert_eq!(result.concepts[0].label, "EGFR");
         assert_eq!(result.concepts[0].primary_type, DiscoverType::Gene);
         assert_eq!(result.next_commands[0], "biomcp get gene EGFR");
+    }
+
+    #[test]
+    fn exact_article_keyword_resolver_accepts_gene_drug_and_disease_docs() {
+        let gene = resolve_exact_article_keyword_entity_from_ols_docs(
+            "BRAF",
+            &[hgnc_doc("BRAF", "HGNC:1097", &[])],
+        )
+        .expect("BRAF should resolve as an exact gene");
+        assert_eq!(gene.entity_type, DiscoverType::Gene);
+        assert_eq!(gene.label, "BRAF");
+        assert_eq!(gene.primary_id.as_deref(), Some("HGNC:1097"));
+        assert_eq!(gene.matched_query, "BRAF");
+        assert!(!gene.matched_alias);
+
+        let drug = resolve_exact_article_keyword_entity_from_ols_docs(
+            "imatinib",
+            &[ols_doc("chebi", "imatinib", "CHEBI:45783", &[])],
+        )
+        .expect("imatinib should resolve as an exact drug");
+        assert_eq!(drug.entity_type, DiscoverType::Drug);
+        assert_eq!(drug.label, "imatinib");
+        assert_eq!(drug.primary_id.as_deref(), Some("CHEBI:45783"));
+
+        let disease = resolve_exact_article_keyword_entity_from_ols_docs(
+            "melanoma",
+            &[ols_doc("mondo", "melanoma", "MONDO:0005105", &[])],
+        )
+        .expect("melanoma should resolve as an exact disease");
+        assert_eq!(disease.entity_type, DiscoverType::Disease);
+        assert_eq!(disease.label, "melanoma");
+        assert_eq!(disease.primary_id.as_deref(), Some("MONDO:0005105"));
+    }
+
+    #[test]
+    fn exact_article_keyword_resolver_reports_alias_to_canonical_match() {
+        let resolved = resolve_exact_article_keyword_entity_from_ols_docs(
+            "Gleevec",
+            &[ols_doc("chebi", "imatinib", "CHEBI:45783", &["Gleevec"])],
+        )
+        .expect("drug alias should resolve to canonical label");
+
+        assert_eq!(resolved.entity_type, DiscoverType::Drug);
+        assert_eq!(resolved.label, "imatinib");
+        assert_eq!(resolved.matched_query, "Gleevec");
+        assert!(resolved.matched_alias);
+    }
+
+    #[test]
+    fn exact_article_keyword_resolver_rejects_prefix_unsupported_and_ambiguous_matches() {
+        assert!(
+            resolve_exact_article_keyword_entity_from_ols_docs(
+                "BRAF V600E",
+                &[hgnc_doc("BRAF", "HGNC:1097", &[])],
+            )
+            .is_none()
+        );
+        assert!(
+            resolve_exact_article_keyword_entity_from_ols_docs(
+                "seizure",
+                &[ols_doc("hp", "Seizure", "HP:0001250", &[])],
+            )
+            .is_none()
+        );
+        let preferred_disease = resolve_exact_article_keyword_entity_from_ols_docs(
+            "melanoma",
+            &[
+                ols_doc("doid", "melanoma", "DOID:1909", &[]),
+                ols_doc("mondo", "melanoma", "MONDO:0005105", &[]),
+            ],
+        )
+        .expect("live duplicate disease ontology hits should prefer MONDO");
+        assert_eq!(
+            preferred_disease.primary_id.as_deref(),
+            Some("MONDO:0005105")
+        );
+        assert!(
+            resolve_exact_article_keyword_entity_from_ols_docs(
+                "skin cancer",
+                &[
+                    ols_doc(
+                        "mondo",
+                        "cutaneous melanoma",
+                        "MONDO:0005105",
+                        &["skin cancer"]
+                    ),
+                    ols_doc("doid", "skin carcinoma", "DOID:9999", &["skin cancer"]),
+                ],
+            )
+            .is_none()
+        );
+        assert!(
+            resolve_exact_article_keyword_entity_from_ols_docs(
+                "BRAF",
+                &[
+                    hgnc_doc("BRAF", "HGNC:1097", &[]),
+                    ols_doc("mondo", "BRAF", "MONDO:9999999", &[]),
+                ],
+            )
+            .is_none()
+        );
+        let gene = resolve_exact_article_keyword_entity_from_ols_docs(
+            "BRAF",
+            &[
+                hgnc_doc("BRAF", "HGNC:1097", &[]),
+                ols_doc("mondo", "BRAF", "1097", &[]),
+            ],
+        )
+        .expect("unsupported duplicate OLS identifiers should not hide HGNC exact matches");
+        assert_eq!(gene.entity_type, DiscoverType::Gene);
+        assert_eq!(gene.primary_id.as_deref(), Some("HGNC:1097"));
+    }
+
+    #[tokio::test]
+    async fn exact_article_keyword_resolver_uses_ols4_and_canonicalizes_aliases() {
+        let _guard = env_lock().lock().await;
+        let server = MockServer::start().await;
+        let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&server.uri()));
+        Mock::given(method("GET"))
+            .and(path("/api/search"))
+            .and(query_param("q", "Gleevec"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "response": {
+                    "docs": [
+                        {
+                            "iri": "http://example.org/chebi/45783",
+                            "ontology_name": "chebi",
+                            "ontology_prefix": "chebi",
+                            "short_form": "chebi:45783",
+                            "obo_id": "CHEBI:45783",
+                            "label": "imatinib",
+                            "description": [],
+                            "exact_synonyms": ["Gleevec"],
+                            "type": "class"
+                        }
+                    ]
+                }
+            })))
+            .mount(&server)
+            .await;
+
+        let resolved = resolve_exact_article_keyword_entity("Gleevec")
+            .await
+            .expect("resolver should query OLS4")
+            .expect("alias should resolve");
+
+        assert_eq!(resolved.entity_type, DiscoverType::Drug);
+        assert_eq!(resolved.label, "imatinib");
+        assert!(resolved.matched_alias);
     }
 
     #[test]
