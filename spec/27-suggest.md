@@ -34,6 +34,7 @@ echo "$json_out" | jq -e 'keys == ["first_commands","full_skill","matched_skill"
 echo "$json_out" | jq -e '.matched_skill == "drug-regulatory"' > /dev/null
 echo "$json_out" | jq -e '.first_commands | length == 2' > /dev/null
 echo "$json_out" | jq -e '.full_skill == "biomcp skill drug-regulatory"' > /dev/null
+echo "$json_out" | mustmatch like '"matched_skill": "drug-regulatory"'
 ```
 
 ## Variant Evidence Routing
@@ -48,6 +49,7 @@ json_out="$("$bin" --json suggest "Is variant rs113488022 pathogenic in melanoma
 echo "$json_out" | jq -e '.matched_skill == "variant-pathogenicity"' > /dev/null
 echo "$json_out" | jq -e '.first_commands[0] == "biomcp get variant rs113488022 clinvar predictions population"' > /dev/null
 echo "$json_out" | jq -e '.first_commands[1] == "biomcp get variant rs113488022 civic cgi"' > /dev/null
+echo "$json_out" | mustmatch like '"matched_skill": "variant-pathogenicity"'
 ```
 
 ## Shell Quoting
@@ -75,6 +77,7 @@ bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
 "$bin" --json suggest "Are there recruiting trials for melanoma?" | jq -e '.matched_skill == "trial-recruitment"' > /dev/null
 "$bin" --json suggest "How do I distinguish Goldberg-Shprintzen syndrome vs Shprintzen-Goldberg syndrome?" | jq -e '.matched_skill == "syndrome-disambiguation"' > /dev/null
 "$bin" --json suggest "Is Borna disease virus linked to brain tumor?" | jq -e '.matched_skill == "negative-evidence"' > /dev/null
+"$bin" --json suggest "Where is OPA1 localized?" | mustmatch like '"gene-function-localization"'
 ```
 
 ## No Match Stays Successful
@@ -88,6 +91,7 @@ json_out="$("$bin" --json suggest "What is x?")"
 echo "$json_out" | jq -e '.matched_skill == null' > /dev/null
 echo "$json_out" | jq -e '.first_commands == []' > /dev/null
 echo "$json_out" | jq -e '.full_skill == null' > /dev/null
+echo "$json_out" | mustmatch like '"matched_skill": null'
 ```
 
 ## Command Discovery Includes Suggest
@@ -103,7 +107,7 @@ echo "$out" | mustmatch like 'suggest "What drugs treat melanoma?"'
 echo "$out" | mustmatch like '- `suggest <question>`'
 
 detail="$("$bin" list suggest)"
-echo "$detail" | mustmatch like "# suggest"
+echo "$detail" | mustmatch like '`suggest <question>` - route a biomedical question'
 echo "$detail" | mustmatch like "matched_skill"
 echo "$detail" | mustmatch like "first_commands"
 echo "$detail" | mustmatch like "No confident BioMCP skill match"
