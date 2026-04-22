@@ -128,9 +128,9 @@ cap, row, detail, and error contracts here and prove better recall or ordering
 with executable specs before replacing boundary matching.
 
 The top hit is only the first row after source-specific filtering, global merge,
-and deterministic ordering by normalized diagnostic display name, then
-accession. It is not a relevance-ranked best match, exact-disease boost,
-preferred-source result, or confidence-ranked row.
+deterministic ordering by normalized diagnostic display name, accession
+tiebreak, and pagination. It is not a relevance-ranked best match,
+exact-disease boost, preferred-source result, or confidence-ranked row.
 
 Disease diagnostic cards remain summary-sized. The disease pivot has a 10-row
 cap, and `spec/07-disease.md` enforces the 40 KB ceiling for the rendered
@@ -184,18 +184,27 @@ Executable proof is split across the existing specs and focused tests:
   broader diagnostic search without loading the diagnostics section
 - `spec/24-diagnostic.md` proves diagnostic search validation, mixed-source
   pages, zero-result search recovery, compact rows, dedupe, and detail sections
-- `src/entities/diagnostic/mod.rs::search_page_rejects_short_disease_filter`
+- `src/entities/diagnostic/search.rs::disease_phrase_matches_accepts_word_and_phrase_boundaries`,
+  `src/entities/diagnostic/search.rs::disease_phrase_matches_rejects_partial_words_and_keeps_scanning`,
+  `src/entities/diagnostic/search.rs::normalized_filters_reject_short_disease_filter`,
+  `src/entities/diagnostic/mod.rs::search_page_rejects_short_disease_filter`,
   and
   `src/entities/diagnostic/mod.rs::search_page_disease_filter_requires_word_boundary`
   pin the minimum-length boundary-matching filter
+- `src/entities/diagnostic/mod.rs::search_page_applies_conjunctive_filters_and_stable_ordering`
+  pins merged deterministic ordering before pagination
 - `src/entities/diagnostic/mod.rs::search_page_all_source_uses_unknown_total_when_both_sources_match`
   pins mixed-source unknown totals
+- `src/entities/diagnostic/mod.rs::get_diagnostic_genes_returns_full_deduped_broad_panel_list`
+  pins full detail lists behind `get diagnostic`
 - `src/entities/disease/enrichment/tests.rs::disease_diagnostics_section_populates_from_who_fixture`
   and
   `src/entities/disease/enrichment/tests.rs::disease_diagnostics_unavailable_sets_note`
   pin the disease pivot rows and unavailable-data state
 - `src/entities/disease/get/tests.rs::disease_parse_sections_all_keeps_diagnostics_opt_in`
-  pins `all` exclusion
+  and
+  `src/entities/disease/get/tests.rs::parse_sections_all_keeps_optional_sections_opt_in`
+  pin `all` exclusion for diagnostics and adjacent optional sections
 - `src/render/markdown/disease/tests/rendering.rs::disease_markdown_renders_diagnostics_note_then_shell_safe_search_command`
   pins cap-note rendering and shell-safe follow-up commands
 - `src/render/markdown/diagnostic/tests.rs::diagnostic_search_rows_caps_genes_and_conditions_with_overflow_marker`
