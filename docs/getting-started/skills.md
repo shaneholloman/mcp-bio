@@ -71,3 +71,16 @@ Current builds install the full embedded reference tree into
 - `jq-examples.md`
 - `examples/`
 - `schemas/`
+
+The install payload also includes `schemas/workflow-ladder.schema.json` and
+seven `use-cases/<slug>.ladder.json` sidecars for workflow ladders:
+`treatment-lookup`, `article-follow-up`, `variant-pathogenicity`,
+`trial-recruitment`, `mechanism-pathway`, `pharmacogene-cumulative`, and
+`mutation-catalog`. These JSON sidecars are not listed by `biomcp skill list`;
+they are runtime metadata assets paired with the numbered markdown playbooks.
+
+When a first-call JSON response matches a ladder trigger, BioMCP can emit
+`_meta.workflow` plus `_meta.ladder[]`. The ladder commands are static copies of
+the matching playbook's fenced bash block; they are not templated with user
+input. `_meta.next_commands` remains the dynamic one-hop follow-up list for the
+current result.

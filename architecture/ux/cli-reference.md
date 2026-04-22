@@ -255,6 +255,12 @@ from the current output.
 - Structured output carries the same follow-up contract in
   `_meta.next_commands` from `src/render/json.rs` for agent and script
   consumers.
+- Workflow ladders are a separate JSON-only contract: `_meta.workflow` names one
+  sidecar-backed workflow and `_meta.ladder[]` carries the static multi-step
+  worked-example path loaded from `skills/use-cases/<slug>.ladder.json`.
+- Ladder commands are byte-equal to the matching `biomcp skill <slug>` fenced
+  bash commands. They are not templated; runtime code chooses a workflow slug
+  and loads commands from the sidecar.
 - Zero-result disease and drug searches use `discover_try_line()` to emit
   `Try: biomcp discover ...` routing. That is related next-step guidance, but
   it is not the same renderer as the entity-card `See also:` block.
@@ -263,8 +269,9 @@ from the current output.
 - This guidance is data-driven. `related_*()` helpers only emit commands when
   the supporting data or capability exists for the current record and runtime.
 - Proof lives in `spec/11-evidence-urls.md`,
-  `spec/21-cross-entity-see-also.md`, and the parser-level
-  `next_commands_validity` tests in `src/cli/tests/`.
+  `spec/21-cross-entity-see-also.md`, `spec/26-workflow-ladders.md`, the
+  sidecar contract tests in `tests/test_skill_prompt_contract.py`, and the
+  parser-level `next_commands_validity` tests in `src/cli/tests/`.
 
 ## Skills Quick Reference
 

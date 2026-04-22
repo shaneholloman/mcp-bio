@@ -1102,6 +1102,16 @@ async fn fetch_pathways_section(symbol: &str) -> Result<Option<Vec<GenePathway>>
     }
 }
 
+pub async fn has_reactome_pathway_signal(symbol: &str) -> Result<bool, BioMcpError> {
+    let symbol = symbol.trim();
+    if symbol.is_empty() {
+        return Ok(false);
+    }
+
+    let (rows, _) = ReactomeClient::new()?.search_pathways(symbol, 1).await?;
+    Ok(!rows.is_empty())
+}
+
 fn merge_pathways(
     existing: Option<Vec<GenePathway>>,
     additional: Option<Vec<GenePathway>>,

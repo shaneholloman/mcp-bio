@@ -37,16 +37,89 @@ pub(in crate::cli) async fn handle_get(
     )
     .await?;
     let text = if json_output {
-        crate::render::json::to_entity_json(
+        crate::render::json::to_entity_json_with_workflow(
             &article,
             crate::render::markdown::article_evidence_urls(&article),
             crate::render::markdown::related_article(&article),
             crate::render::provenance::article_section_sources(&article),
+            article_follow_up_workflow(&article)?,
         )?
     } else {
         crate::render::markdown::article_markdown(&article, &sections)?
     };
     Ok(CommandOutcome::stdout(text))
+}
+
+fn article_follow_up_workflow(
+    article: &crate::entities::article::Article,
+) -> Result<Option<crate::workflow_ladders::WorkflowMeta>, crate::error::BioMcpError> {
+    let has_pmid = article
+        .pmid
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty());
+    let has_annotations = article.annotations.as_ref().is_some_and(|annotations| {
+        !annotations.genes.is_empty()
+            || !annotations.diseases.is_empty()
+            || !annotations.chemicals.is_empty()
+            || !annotations.mutations.is_empty()
+    });
+
+    (has_pmid && has_annotations)
+        .then(|| {
+            crate::workflow_ladders::meta_for(crate::workflow_ladders::Workflow::ArticleFollowUp)
+        })
+        .transpose()
+}
+
+#[cfg(test)]
+mod workflow_tests {
+    use super::article_follow_up_workflow;
+
+    fn article_with_signal() -> crate::entities::article::Article {
+        crate::entities::article::Article {
+            pmid: Some("12345678".to_string()),
+            pmcid: None,
+            doi: None,
+            title: "BRAF article".to_string(),
+            authors: Vec::new(),
+            journal: None,
+            date: None,
+            citation_count: None,
+            publication_type: None,
+            open_access: None,
+            abstract_text: None,
+            full_text_path: None,
+            full_text_note: None,
+            full_text_source: None,
+            annotations: Some(crate::entities::article::ArticleAnnotations {
+                genes: vec![crate::entities::article::AnnotationCount {
+                    text: "BRAF".to_string(),
+                    count: 1,
+                }],
+                diseases: Vec::new(),
+                chemicals: Vec::new(),
+                mutations: Vec::new(),
+            }),
+            semantic_scholar: None,
+            pubtator_fallback: false,
+        }
+    }
+
+    #[test]
+    fn article_follow_up_requires_pmid_and_annotations() {
+        let workflow = article_follow_up_workflow(&article_with_signal())
+            .expect("workflow sidecar should load")
+            .expect("article should trigger follow-up workflow");
+        assert_eq!(workflow.workflow, "article-follow-up");
+
+        let mut no_pmid = article_with_signal();
+        no_pmid.pmid = None;
+        assert!(
+            article_follow_up_workflow(&no_pmid)
+                .expect("workflow check should not fail")
+                .is_none()
+        );
+    }
 }
 
 pub(super) fn resolved_article_date_bounds(

@@ -7,7 +7,7 @@ avoid volatile upstream values.
 | Section | Command focus | Why it matters |
 |---|---|---|
 | Markdown cards | `get <entity>` | Confirms evidence footer links + `See also:` block |
-| JSON metadata | `get <entity> --json` | Confirms `_meta.evidence_urls` + `_meta.next_commands` |
+| JSON metadata | `get <entity> --json` | Confirms `_meta.evidence_urls` + `_meta.next_commands`; workflow ladders are optional additive `_meta.workflow` + `_meta.ladder[]` fields |
 | Trial locations JSON | `get trial ... locations --json` | Confirms `location_pagination` and `_meta` coexist |
 
 ## Markdown Evidence Links

@@ -509,6 +509,7 @@ fn drug_search_json_single_region_keeps_selected_bucket_and_who_fields() {
         Some("trastuzumab"),
         0,
         5,
+        None,
     )
     .expect("WHO search json");
 
@@ -577,6 +578,7 @@ fn drug_search_json_single_region_keeps_api_identifier_when_present() {
         Some("artesunate"),
         0,
         5,
+        None,
     )
     .expect("WHO API search json");
 
@@ -623,6 +625,7 @@ fn drug_search_json_single_region_omits_get_follow_up_for_vaccine_results() {
         Some("BCG"),
         0,
         5,
+        None,
     )
     .expect("WHO vaccine search json");
 
@@ -648,6 +651,7 @@ fn drug_search_json_single_region_keeps_empty_selected_bucket_and_omits_meta() {
         Some("keytruda"),
         0,
         5,
+        None,
     )
     .expect("empty EU search json");
 
@@ -667,6 +671,43 @@ fn drug_search_json_single_region_keeps_empty_selected_bucket_and_omits_meta() {
     assert!(value.get("count").is_none());
     assert!(value.get("results").is_none());
     assert!(value.get("query").is_none());
+}
+
+#[test]
+fn drug_search_json_preserves_region_envelope_with_workflow_meta() {
+    let workflow =
+        crate::workflow_ladders::meta_for(crate::workflow_ladders::Workflow::TreatmentLookup)
+            .expect("workflow metadata");
+    let json = drug_search_json(
+        crate::entities::drug::DrugSearchPageWithRegion::Us(crate::entities::SearchPage::offset(
+            vec![crate::entities::drug::DrugSearchResult {
+                name: "pyridostigmine".to_string(),
+                drugbank_id: None,
+                drug_type: None,
+                mechanism: None,
+                target: None,
+            }],
+            Some(1),
+        )),
+        None,
+        0,
+        5,
+        Some(workflow),
+    )
+    .expect("US search json");
+
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid json");
+    assert_eq!(value["region"], "us");
+    assert_eq!(value["regions"]["us"]["count"], 1);
+    assert_eq!(value["_meta"]["workflow"], "treatment-lookup");
+    assert_eq!(
+        value["_meta"]["ladder"][0]["command"],
+        "biomcp search drug --indication \"myasthenia gravis\" --limit 5"
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get drug pyridostigmine".into())
+    );
 }
 
 #[test]
@@ -717,6 +758,7 @@ fn drug_search_json_all_region_uses_unified_regions_envelope() {
         Some("keytruda"),
         0,
         5,
+        None,
     )
     .expect("all-region drug search json");
 
@@ -770,6 +812,7 @@ fn drug_search_json_all_region_keeps_empty_buckets() {
         Some("keytruda"),
         0,
         5,
+        None,
     )
     .expect("all-region empty bucket json");
 

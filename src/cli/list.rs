@@ -504,6 +504,7 @@ fn list_drug() -> String {
 - Omitted `--region` on plain name/alias lookup and explicit `--region all` expose `regions.us`, `regions.eu`, and `regions.who`.
 - Each region bucket keeps `pagination`, `count`, and `results`.
 - Non-empty `search drug --json` responses include `_meta.next_commands`.
+- Structured indication searches with matching results can also include `_meta.workflow` and `_meta.ladder[]` for the `treatment-lookup` workflow.
 - Non-vaccine searches keep `biomcp get drug <name>` as the preferred follow-up; WHO vaccine-only results stay search-only and omit broken `get drug` guidance.
 - `biomcp list drug` is always included so agents can inspect the full filter surface.
 - `biomcp --json drug adverse-events <name>` keeps the FAERS `summary` / `results` / `count` fields, adds `faers_not_found`, and includes `trial_adverse_events` only when the ClinicalTrials.gov fallback returns posted trial adverse-event terms.
@@ -583,6 +584,7 @@ with `--offset` on `search diagnostic` for later pages.
 ## JSON Output
 
 - Non-empty `search disease --json` responses include `_meta.next_commands`.
+- Disease search JSON emits at most one workflow ladder; `mutation-catalog` wins over `trial-recruitment` when both bounded probes match.
 - The first follow-up drills the top result with `biomcp get disease <id>`.
 - `biomcp list disease` is always included so agents can inspect the full filter surface.
 "#

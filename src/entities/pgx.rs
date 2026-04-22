@@ -487,6 +487,32 @@ pub async fn search_page(
     Ok(SearchPage::offset(out, total))
 }
 
+pub async fn distinct_cpic_gene_count_for_drug(
+    drug: &str,
+    threshold: usize,
+) -> Result<usize, BioMcpError> {
+    let drug = drug.trim();
+    if drug.is_empty() || threshold == 0 {
+        return Ok(0);
+    }
+
+    let cpic = CpicClient::new()?;
+    let fetch_limit = threshold.saturating_mul(10).clamp(threshold, 200);
+    let page = cpic.pairs_by_drug_page(drug, fetch_limit, 0).await?;
+    let mut genes = HashSet::new();
+    for row in page.rows {
+        let gene = row.genesymbol.trim().to_ascii_uppercase();
+        if gene.is_empty() {
+            continue;
+        }
+        genes.insert(gene);
+        if genes.len() >= threshold {
+            break;
+        }
+    }
+    Ok(genes.len())
+}
+
 pub fn search_query_summary(filters: &PgxSearchFilters) -> String {
     let mut parts = Vec::new();
     if let Some(gene) = filters

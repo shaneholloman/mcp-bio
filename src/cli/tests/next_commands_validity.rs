@@ -10,6 +10,16 @@ fn assert_parses(cmd: &str) {
 }
 
 #[test]
+fn workflow_ladder_sidecar_commands_parse() {
+    for workflow in crate::workflow_ladders::Workflow::ALL {
+        let ladder = crate::workflow_ladders::load(workflow).expect("sidecar should load");
+        for step in ladder.ladder {
+            assert_parses(&step.command);
+        }
+    }
+}
+
+#[test]
 fn gene_next_commands_parse() {
     assert_parses("biomcp get gene BRAF diagnostics");
     assert_parses("biomcp get gene BRAF funding");

@@ -1,6 +1,6 @@
 # Disease Queries
 
-Disease commands normalize labels to ontology-backed identifiers and provide cross-entity pivots. This file validates melanoma-centric workflows plus representative canonical disease-gene paths for one cancer and one non-cancer disease. Assertions focus on stable schema and identifier markers rather than dynamic counts.
+Disease commands normalize labels to ontology-backed identifiers and provide cross-entity pivots. JSON disease search can also emit one sidecar-backed workflow ladder; `mutation-catalog` has priority over `trial-recruitment` when both bounded probes match. This file validates melanoma-centric workflows plus representative canonical disease-gene paths for one cancer and one non-cancer disease. Assertions focus on stable schema and identifier markers rather than dynamic counts.
 
 | Section | Command focus | Why it matters |
 |---|---|---|
@@ -35,6 +35,8 @@ echo "$json" | jq -e '.results[0].id == "MONDO:0005105"' > /dev/null
 echo "$json" | jq -e '._meta.next_commands[0] | test("^biomcp get disease .+$")' > /dev/null
 echo "$json" | jq -e '._meta.next_commands | any(. == "biomcp list disease")' > /dev/null
 echo "$json" | jq -e '._meta | has("fallback_used") | not' > /dev/null
+echo "$json" | jq -e '._meta | has("workflow") | not' > /dev/null
+echo "$json" | jq -e '._meta | has("ladder") | not' > /dev/null
 echo "$json" | jq -e '.results[0] | has("resolved_via") | not' > /dev/null
 echo "$json" | jq -e '.results[0] | has("source_id") | not' > /dev/null
 ```

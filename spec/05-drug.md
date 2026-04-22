@@ -133,6 +133,8 @@ echo "$json_out" | jq -e 'has("count") | not' > /dev/null
 echo "$json_out" | jq -e 'has("results") | not' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get drug .+$")' > /dev/null
 echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list drug")' > /dev/null
+echo "$json_out" | jq -e '._meta | has("workflow") | not' > /dev/null
+echo "$json_out" | jq -e '._meta | has("ladder") | not' > /dev/null
 ```
 
 ## Brand Name Get Fallback
@@ -318,6 +320,7 @@ echo "$out" | mustmatch like "get drug <name> shortage [--region <us|eu|all>]"
 echo "$out" | mustmatch like "get drug <name> all [--region <us|eu|who|all>]"
 echo "$out" | mustmatch like "search drug <query> --region who --product-type <finished_pharma|api|vaccine>"
 echo "$out" | mustmatch like 'top-level `region`, top-level `regions`, and optional top-level `_meta`'
+echo "$out" | mustmatch like 'Structured indication searches with matching results can also include `_meta.workflow` and `_meta.ladder[]` for the `treatment-lookup` workflow.'
 echo "$out" | mustmatch like 'Single-region searches expose one bucket under `regions.us`, `regions.eu`, or `regions.who`.'
 echo "$out" | mustmatch like 'Omitted `--region` on plain name/alias lookup and explicit `--region all` expose `regions.us`, `regions.eu`, and `regions.who`.'
 echo "$out" | mustmatch like 'Each region bucket keeps `pagination`, `count`, and `results`.'

@@ -93,7 +93,7 @@ fn disease_search_json_includes_fallback_meta_and_provenance() {
         source_id: Some("MESH:D001139".into()),
     }];
     let next_commands = crate::render::markdown::search_next_commands_disease(&results);
-    let json = disease_search_json(results, pagination, true, next_commands)
+    let json = disease_search_json(results, pagination, true, next_commands, None)
         .expect("disease search json should render");
 
     let value: serde_json::Value =
@@ -122,7 +122,7 @@ fn disease_search_json_includes_next_commands_for_direct_hits() {
         source_id: None,
     }];
     let next_commands = crate::render::markdown::search_next_commands_disease(&results);
-    let json = disease_search_json(results, pagination, false, next_commands)
+    let json = disease_search_json(results, pagination, false, next_commands, None)
         .expect("disease search json should render");
 
     let value: serde_json::Value =
@@ -138,4 +138,35 @@ fn disease_search_json_includes_next_commands_for_direct_hits() {
     assert!(value["_meta"].get("fallback_used").is_none());
     assert!(value["results"][0].get("resolved_via").is_none());
     assert!(value["results"][0].get("source_id").is_none());
+}
+
+#[test]
+fn disease_search_json_preserves_fallback_with_workflow_meta() {
+    let pagination = PaginationMeta::offset(0, 10, 1, Some(1));
+    let results = vec![crate::entities::disease::DiseaseSearchResult {
+        id: "MONDO:0000115".into(),
+        name: "Arnold-Chiari malformation".into(),
+        synonyms_preview: Some("Chiari malformation".into()),
+        resolved_via: Some("MESH crosswalk".into()),
+        source_id: Some("MESH:D001139".into()),
+    }];
+    let next_commands = crate::render::markdown::search_next_commands_disease(&results);
+    let workflow =
+        crate::workflow_ladders::meta_for(crate::workflow_ladders::Workflow::MutationCatalog)
+            .expect("workflow metadata");
+    let json = disease_search_json(results, pagination, true, next_commands, Some(workflow))
+        .expect("disease search json should render");
+
+    let value: serde_json::Value =
+        serde_json::from_str(&json).expect("json should parse successfully");
+    assert_eq!(value["_meta"]["fallback_used"], true);
+    assert_eq!(value["_meta"]["workflow"], "mutation-catalog");
+    assert_eq!(
+        value["_meta"]["ladder"][0]["command"],
+        serde_json::Value::String("biomcp get gene PLN".into())
+    );
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        serde_json::Value::String("biomcp get disease MONDO:0000115".into())
+    );
 }

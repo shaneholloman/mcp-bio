@@ -5,6 +5,7 @@ use crate::entities::variant::{VariantGuidance, VariantGuidanceKind};
 use crate::error::BioMcpError;
 use crate::render::markdown::discover_evidence_urls;
 use crate::render::provenance::SectionSource;
+use crate::workflow_ladders::{WorkflowLadderStep, WorkflowMeta};
 
 pub fn to_pretty<T: Serialize>(value: &T) -> Result<String, BioMcpError> {
     Ok(serde_json::to_string_pretty(value)?)
@@ -23,6 +24,10 @@ struct EntityMeta {
     #[serde(skip_serializing_if = "Option::is_none")]
     suggestions: Option<Vec<String>>,
     section_sources: Vec<SectionSource>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workflow: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    ladder: Vec<WorkflowLadderStep>,
 }
 
 #[derive(Serialize)]
@@ -58,12 +63,13 @@ where
     T: Serialize,
     L: AsRef<str>,
 {
-    to_pretty(&to_entity_json_value_with_suggestions(
+    to_pretty(&to_entity_json_value_with_suggestions_and_workflow(
         entity,
         evidence_urls,
         next_commands,
         None,
         section_sources,
+        None,
     )?)
 }
 
@@ -78,12 +84,55 @@ where
     T: Serialize,
     L: AsRef<str>,
 {
-    to_pretty(&to_entity_json_value_with_suggestions(
+    to_pretty(&to_entity_json_value_with_suggestions_and_workflow(
         entity,
         evidence_urls,
         next_commands,
         Some(suggestions),
         section_sources,
+        None,
+    )?)
+}
+
+pub fn to_entity_json_with_workflow<T, L>(
+    entity: &T,
+    evidence_urls: Vec<(L, String)>,
+    next_commands: Vec<String>,
+    section_sources: Vec<SectionSource>,
+    workflow: Option<WorkflowMeta>,
+) -> Result<String, BioMcpError>
+where
+    T: Serialize,
+    L: AsRef<str>,
+{
+    to_pretty(&to_entity_json_value_with_workflow(
+        entity,
+        evidence_urls,
+        next_commands,
+        section_sources,
+        workflow,
+    )?)
+}
+
+pub fn to_entity_json_with_suggestions_and_workflow<T, L>(
+    entity: &T,
+    evidence_urls: Vec<(L, String)>,
+    next_commands: Vec<String>,
+    suggestions: Vec<String>,
+    section_sources: Vec<SectionSource>,
+    workflow: Option<WorkflowMeta>,
+) -> Result<String, BioMcpError>
+where
+    T: Serialize,
+    L: AsRef<str>,
+{
+    to_pretty(&to_entity_json_value_with_suggestions_and_workflow(
+        entity,
+        evidence_urls,
+        next_commands,
+        Some(suggestions),
+        section_sources,
+        workflow,
     )?)
 }
 
@@ -97,21 +146,44 @@ where
     T: Serialize,
     L: AsRef<str>,
 {
-    to_entity_json_value_with_suggestions(
+    to_entity_json_value_with_suggestions_and_workflow(
         entity,
         evidence_urls,
         next_commands,
         None,
         section_sources,
+        None,
     )
 }
 
-pub fn to_entity_json_value_with_suggestions<T, L>(
+pub fn to_entity_json_value_with_workflow<T, L>(
+    entity: &T,
+    evidence_urls: Vec<(L, String)>,
+    next_commands: Vec<String>,
+    section_sources: Vec<SectionSource>,
+    workflow: Option<WorkflowMeta>,
+) -> Result<serde_json::Value, BioMcpError>
+where
+    T: Serialize,
+    L: AsRef<str>,
+{
+    to_entity_json_value_with_suggestions_and_workflow(
+        entity,
+        evidence_urls,
+        next_commands,
+        None,
+        section_sources,
+        workflow,
+    )
+}
+
+pub fn to_entity_json_value_with_suggestions_and_workflow<T, L>(
     entity: &T,
     evidence_urls: Vec<(L, String)>,
     next_commands: Vec<String>,
     suggestions: Option<Vec<String>>,
     section_sources: Vec<SectionSource>,
+    workflow: Option<WorkflowMeta>,
 ) -> Result<serde_json::Value, BioMcpError>
 where
     T: Serialize,
@@ -147,6 +219,9 @@ where
         .into_iter()
         .filter_map(SectionSource::normalized)
         .collect::<Vec<_>>();
+    let (workflow, ladder) = workflow
+        .map(|meta| (Some(meta.workflow), meta.ladder))
+        .unwrap_or_else(|| (None, Vec::new()));
 
     Ok(serde_json::to_value(EntityJsonResponse {
         entity,
@@ -155,6 +230,8 @@ where
             next_commands,
             suggestions,
             section_sources,
+            workflow,
+            ladder,
         },
     })?)
 }
@@ -420,7 +497,8 @@ fn match_tier_name(match_tier: crate::entities::discover::MatchTier) -> &'static
 mod tests {
     use super::{
         to_alias_suggestion_json, to_discover_json, to_entity_json, to_entity_json_value,
-        to_entity_json_with_suggestions, to_pretty, to_variant_guidance_json,
+        to_entity_json_value_with_workflow, to_entity_json_with_suggestions, to_pretty,
+        to_variant_guidance_json,
     };
     use crate::entities::discover::{
         AliasCanonicalMatch, AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept,
@@ -767,6 +845,38 @@ mod tests {
             value["_meta"]["suggestions"].as_array().map(Vec::len),
             Some(0)
         );
+    }
+
+    #[test]
+    fn to_entity_json_with_workflow_adds_ladder_without_losing_existing_meta() {
+        #[derive(Serialize)]
+        struct DemoEntity<'a> {
+            id: &'a str,
+        }
+
+        let workflow = crate::workflow_ladders::WorkflowMeta {
+            workflow: "treatment-lookup".to_string(),
+            ladder: vec![crate::workflow_ladders::WorkflowLadderStep {
+                step: 1,
+                command: "biomcp search drug --indication \"myasthenia gravis\" --limit 5"
+                    .to_string(),
+                what_it_gives: "Structured drug candidates.".to_string(),
+            }],
+        };
+
+        let value = to_entity_json_value_with_workflow(
+            &DemoEntity { id: "demo-6" },
+            vec![("Source", "https://example.test".to_string())],
+            vec!["biomcp list drug".to_string()],
+            Vec::new(),
+            Some(workflow),
+        )
+        .expect("entity json");
+
+        assert_eq!(value["_meta"]["workflow"], "treatment-lookup");
+        assert_eq!(value["_meta"]["ladder"][0]["step"], 1);
+        assert_eq!(value["_meta"]["next_commands"][0], "biomcp list drug");
+        assert_eq!(value["_meta"]["evidence_urls"][0]["label"], "Source");
     }
 
     #[test]

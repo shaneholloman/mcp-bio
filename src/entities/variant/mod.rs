@@ -11,7 +11,7 @@ mod search;
 #[cfg(test)]
 mod test_support;
 
-pub use self::get::{VARIANT_SECTION_NAMES, get, oncokb};
+pub use self::get::{VARIANT_SECTION_NAMES, get, get_with_workflow_signals, oncokb};
 #[allow(unused_imports)]
 pub use self::gwas::{gwas_search_query_summary, search_gwas, search_gwas_page};
 pub use self::resolution::{
