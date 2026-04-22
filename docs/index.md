@@ -116,18 +116,21 @@ search all [slot filters]    → counts-first cross-entity orientation
 
 ## Entities and sources
 
+The 13-row table below is the public entity surface; individual rows may use
+live APIs, local runtime data, or hybrid source overlays.
+
 | Entity | Upstream providers used by BioMCP | Example |
 |--------|-----------------------------------|---------|
 | gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen, NIH Reporter, DisGeNET | `biomcp get gene ERBB2 funding` |
 | variant | MyVariant.info, ClinVar, gnomAD fields via MyVariant, CIViC, Cancer Genome Interpreter, OncoKB, cBioPortal, GWAS Catalog, AlphaGenome | `biomcp get variant "BRAF V600E" clinvar` |
 | article | PubMed, PubTator3, Europe PMC, PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` recommended) | `biomcp search article -g BRAF --limit 5` |
 | trial | ClinicalTrials.gov API v2, NCI CTS API | `biomcp search trial -c melanoma -s recruiting` |
-| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO Prequalified IVD local CSV | `biomcp get diagnostic GTR000006692.3 regulatory` |
-| drug | MyChem.info, EMA local batch, WHO Prequalification local exports, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
-| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter, DisGeNET | `biomcp get disease "chronic myeloid leukemia" funding` |
+| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO IVD local CSV + optional OpenFDA device overlay | `biomcp get diagnostic GTR000006692.3 regulatory` |
+| drug | MyChem.info, EMA local batch, WHO Prequalification local exports, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA labels/shortages/approvals/FAERS/MAUDE/recalls, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
+| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter, DisGeNET, MedlinePlus `clinical_features`, GTR/WHO IVD diagnostics pivot | `biomcp get disease "chronic myeloid leukemia" funding` |
 | pathway | Reactome, KEGG, WikiPathways, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |
 | protein | UniProt, InterPro, STRING, ComplexPortal, PDB, AlphaFold | `biomcp get protein P15056 complexes` |
-| adverse-event | OpenFDA FAERS, CDC WONDER VAERS, MAUDE, Recalls | `biomcp search adverse-event --drug pembrolizumab` |
+| adverse-event | OpenFDA FAERS/MAUDE/recalls plus CDC WONDER VAERS aggregate vaccine search | `biomcp search adverse-event --drug pembrolizumab` |
 | pgx | CPIC, PharmGKB | `biomcp get pgx CYP2D6 recommendations` |
 | gwas | GWAS Catalog | `biomcp search gwas --trait "type 2 diabetes"` |
 | phenotype | Monarch Initiative (HPO semantic similarity) | `biomcp search phenotype "HP:0001250"` |
@@ -204,8 +207,9 @@ catalog. Read it with `biomcp skill`, install it with
 ## Local study analytics
 
 `study` is BioMCP's local analysis family for downloaded cBioPortal-style datasets.
-The 13 remote entity commands handle live API-backed discovery and detail; `study`
-commands cover local query, cohort, survival, compare, and co-occurrence workflows.
+The public entity surface handles API-backed, local-runtime, and hybrid
+discovery/detail; `study` commands cover local query, cohort, survival,
+compare, and co-occurrence workflows.
 
 ```bash
 export BIOMCP_STUDY_DIR="$HOME/.local/share/biomcp/studies"

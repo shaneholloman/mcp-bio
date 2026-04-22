@@ -284,6 +284,7 @@ biomcp get gene BRAF all
 biomcp get disease melanoma
 biomcp get disease MONDO:0005105 genes phenotypes
 biomcp get disease tuberculosis diagnostics
+biomcp get disease "uterine leiomyoma" clinical_features
 biomcp get disease MONDO:0005105 variants models
 biomcp get disease MONDO:0005105 pathways prevalence civic survival
 biomcp get disease "chronic myeloid leukemia" funding
@@ -291,10 +292,11 @@ biomcp get disease "chronic myeloid leukemia" survival
 biomcp get disease MONDO:0005105 all
 ```
 
-`diagnostics`, `disgenet`, and `funding` stay opt-in and are not included in
-`biomcp get disease <name_or_id> all`. Disease diagnostic cards are capped at
-10 rows and print a `search diagnostic --disease <query> --source all --limit
-50` follow-up for broader paged results.
+`clinical_features`, `diagnostics`, `disgenet`, and `funding` stay opt-in and
+are not included in `biomcp get disease <name_or_id> all`.
+Disease diagnostic cards are capped at 10 rows and print a
+`search diagnostic --disease <query> --source all --limit 50` follow-up for
+broader paged results.
 
 ### PGx
 
@@ -486,9 +488,9 @@ biomcp chart violin
 ## Local study analytics
 
 `study` is BioMCP's local cBioPortal analytics family for downloaded
-cBioPortal-style datasets. Unlike the 13 remote entity commands, `study`
-operates on files in your local study root instead of querying remote APIs for
-each request.
+cBioPortal-style datasets.
+Unlike the public entity surface, `study` operates on files in your local study
+root instead of querying remote APIs for each request.
 
 Use `BIOMCP_STUDY_DIR` when you want an explicit study root for reproducible
 downloads and examples; if it is unset, BioMCP falls back to its default study
@@ -497,7 +499,7 @@ root. `biomcp study download --list` shows downloadable IDs, and
 
 | Use this | When |
 |----------|------|
-| `biomcp search/get/<entity>` | You want live API-backed discovery or detail across the 13 remote entity commands |
+| `biomcp search/get/<entity>` | You want discovery or detail across the public entity surface |
 | `biomcp study download` | You need to fetch a cBioPortal-style study dataset into your local study root |
 | `biomcp study ...` analytics commands | You already have local study files and want cohort, query, survival, compare, or co-occurrence analysis |
 

@@ -30,21 +30,21 @@ queries, no knowledge of upstream API idiosyncrasies required.
 
 ## Entity Surface
 
-BioMCP exposes 13 remote entity commands. Most support both `search` and `get`
-commands; `gwas` and `phenotype` are search-only and do not expose `get`.
+BioMCP exposes a public entity surface. Most entities support both `search` and
+`get` commands; `gwas` and `phenotype` are search-only and do not expose `get`.
 
 | Entity | Key Sources | Representative Command |
 |--------|-------------|----------------------|
-| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen, gnomAD, CIViC, NIH Reporter | `biomcp get gene ERBB2 funding` |
+| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, ClinGen, gnomAD, CIViC, NIH Reporter, GTR-backed diagnostics pivot | `biomcp get gene ERBB2 funding` |
 | variant | MyVariant.info, ClinVar, gnomAD, CIViC, OncoKB, cBioPortal, GWAS Catalog, AlphaGenome | `biomcp get variant "BRAF V600E" clinvar` |
 | article | PubMed, PubTator3, Europe PMC, LitSense2 (keyword-gated), PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` recommended) | `biomcp search article -g BRAF --limit 5` |
 | trial | ClinicalTrials.gov, NCI CTS API | `biomcp search trial -c melanoma -s recruiting` |
-| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO Prequalified IVD local CSV | `biomcp search diagnostic --gene BRCA1 --limit 5` |
-| drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
-| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter | `biomcp get disease "chronic myeloid leukemia" funding` |
+| diagnostic | NCBI Genetic Testing Registry local bulk exports, WHO IVD local CSV, optional OpenFDA device 510(k)/PMA overlay | `biomcp search diagnostic --gene BRCA1 --limit 5` |
+| drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, ChEMBL, OpenTargets, Drugs@FDA, OpenFDA labels/shortages/approvals/FAERS/MAUDE/recalls, CIViC | `biomcp get drug trastuzumab regulatory --region who` |
+| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, Reactome, CIViC, SEER Explorer, NIH Reporter, MedlinePlus `clinical_features`, GTR/WHO IVD diagnostics pivot | `biomcp get disease "chronic myeloid leukemia" funding` |
 | pathway | Reactome, KEGG, WikiPathways, g:Profiler, Enrichr-backed enrichment sections | `biomcp get pathway hsa05200 genes` |
 | protein | UniProt, InterPro, STRING, ComplexPortal, PDB, AlphaFold | `biomcp get protein P15056 domains` |
-| adverse-event | OpenFDA (FAERS, MAUDE, Recalls) | `biomcp search adverse-event -d pembrolizumab` |
+| adverse-event | OpenFDA FAERS/MAUDE/recalls, CDC WONDER VAERS aggregate vaccine search | `biomcp search adverse-event -d pembrolizumab` |
 | pgx | CPIC, PharmGKB | `biomcp get pgx CYP2D6 recommendations` |
 | gwas | GWAS Catalog | `biomcp search gwas --trait "type 2 diabetes"` |
 | phenotype | Monarch Initiative (HPO) | `biomcp search phenotype "HP:0001250"` |
@@ -58,8 +58,8 @@ transport details live in the technical architecture docs.
 ## Study Command Family
 
 `study` is a separate local analytics surface for downloaded cBioPortal-style
-datasets. It complements the remote read-only entities above rather than
-expanding the public README entity table.
+datasets. It complements the entity command surface above rather than expanding
+the public README entity table.
 
 Primary command family:
 
