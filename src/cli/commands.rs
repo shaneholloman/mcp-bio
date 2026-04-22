@@ -304,6 +304,7 @@ SESSION LOOP BREAKER:
 QUERY FORMULATION:
   - Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`.
   - Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts.
+  - PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally; query echoes and non-PubMed sources keep the original wording.
   - Unknown-entity questions should stay keyword-first or start with `discover`.
   - Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole `-k/--keyword` exactly matches a vocabulary label or alias.
   - Multi-concept phrases and searches that already use `-g/--gene`, `-d/--disease`, or `--drug` do not get direct entity suggestions.

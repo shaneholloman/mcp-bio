@@ -509,6 +509,7 @@ def test_article_guide_documents_federated_search_and_source_flag() -> None:
     assert "deduplicated by PMID" in article_guide
     assert "Semantic Scholar" in article_guide
     assert "S2_API_KEY" in article_guide
+    assert "PubMed ESearch cleans bounded filler words" in article_guide
     assert "--source pubtator" in article_guide
     assert "--source europepmc" in article_guide
 

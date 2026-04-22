@@ -29,6 +29,7 @@ SOURCE_PAGE_SPECS = {
             "PMC OA",
             "NCBI ID Converter",
             "Semantic Scholar",
+            "question-format unfielded article terms",
         ],
         "exposes": [
             "search article",

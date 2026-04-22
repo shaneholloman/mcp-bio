@@ -85,6 +85,13 @@ front door. `--source` remains
 `all|pubtator|europepmc|pubmed|litsense2` in v1; the CLI does not expose a
 user-facing `--source semanticscholar` mode.
 
+Article filters remain raw as the shared contract for planning, ranking,
+rendering, JSON metadata, and session loop-breaker state. At the provider
+boundary, direct and compatible federated PubMed ESearch cleans bounded
+question-format filler words from unfielded gene, disease, drug, and keyword
+clauses. PubTator3, Europe PMC, LitSense2, and Semantic Scholar receive their
+existing query inputs.
+
 After fetch, article results deduplicate across PMID, PMCID, and DOI where
 possible, then re-rank locally. Before local ranking, the PMID-eligible
 deduplicated pool caps each federated source's contribution after

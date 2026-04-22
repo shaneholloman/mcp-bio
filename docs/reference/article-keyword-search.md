@@ -119,6 +119,13 @@ before you search, use `biomcp discover "<question>"`.
 `--keyword` (`-k`) is treated as escaped free text and no longer auto-quotes
 whitespace-containing values.
 
+PubMed-specific behavior: direct `--source pubmed` searches and the compatible
+federated PubMed leg clean bounded question-format filler words from
+unfielded gene, disease, drug, and keyword terms before PubMed ESearch.
+Markdown and JSON query echoes keep the original wording, and PubTator3,
+Europe PMC, LitSense2, and Semantic Scholar keep their existing query
+behavior.
+
 This allows multi-word keyword retrieval such as:
 
 ```bash
