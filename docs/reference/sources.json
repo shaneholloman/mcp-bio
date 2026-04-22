@@ -280,7 +280,7 @@
     "tier": 1,
     "integration_mode": "direct_api",
     "via": null,
-    "bioMcp_surfaces": ["search article", "get article <pmid>"],
+    "bioMcp_surfaces": ["search article", "get article <pmid>", "get article <id> fulltext"],
     "bioMcp_auth": "none",
     "env_var": null,
     "provider_access": "open public API",
@@ -289,7 +289,7 @@
     "terms_url": "https://europepmc.org/RestfulWebService",
     "key_url": null,
     "reviewed_on": "2026-03-20",
-    "notes": "BioMCP uses Europe PMC for search and bibliographic metadata. Open-access reuse depends on the publication license attached to each record."
+    "notes": "BioMCP uses Europe PMC for search, bibliographic metadata, and article full-text XML lookups. Open-access reuse depends on the publication license attached to each record."
   },
   {
     "id": "gnomad",
@@ -564,7 +564,7 @@
     "terms_url": "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
     "key_url": "https://www.ncbi.nlm.nih.gov/account/settings/",
     "reviewed_on": "2026-04-10",
-    "notes": "BioMCP uses PMC `efetch` as a full-text fallback when Europe PMC does not serve the article. `NCBI_API_KEY` raises the baseline NCBI E-utilities budget but is not required."
+    "notes": "BioMCP uses PMC `efetch` as one XML full-text fallback when Europe PMC does not serve the article; PMC OA and PMC article HTML are separate later fallback surfaces. `NCBI_API_KEY` raises the baseline NCBI E-utilities budget but is not required."
   },
   {
     "id": "gtr",
@@ -751,7 +751,7 @@
     "terms_url": "https://pmc.ncbi.nlm.nih.gov/tools/openftlist/",
     "key_url": "https://www.ncbi.nlm.nih.gov/account/settings/",
     "reviewed_on": "2026-03-20",
-    "notes": "BioMCP queries PMC OA on demand and does not ship the article corpus. Returned full text is still governed by article-level licenses."
+    "notes": "BioMCP queries PMC OA on demand as one XML full-text rung and does not ship the article corpus. PMC article HTML is a separate derived fallback, and returned full text is still governed by article-level licenses."
   },
   {
     "id": "pubtator3",
@@ -785,7 +785,7 @@
     "terms_url": "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
     "key_url": "https://www.ncbi.nlm.nih.gov/account/settings/",
     "reviewed_on": "2026-04-10",
-    "notes": "BioMCP uses PubMed as a first-class article search source while keeping separate rows for PubTator3 annotations, PMC OA full text, and other NCBI article helpers."
+    "notes": "BioMCP uses PubMed as a first-class article search source while keeping separate rows for PubTator3 annotations, NCBI E-utilities/PMC OA XML full text, NCBI ID Converter bridging, and Semantic Scholar PDF metadata; PMC article HTML is documented as a PMC web fallback in the data-source matrix."
   },
   {
     "id": "quickgo",
@@ -827,7 +827,7 @@
     "tier": 2,
     "integration_mode": "direct_api",
     "via": null,
-    "bioMcp_surfaces": ["search article", "get article <id> tldr", "article citations <id>", "article references <id>", "article recommendations <id>"],
+    "bioMcp_surfaces": ["search article", "get article <id> tldr", "get article <id> fulltext --pdf", "article citations <id>", "article references <id>", "article recommendations <id>"],
     "bioMcp_auth": "optional_env",
     "env_var": "S2_API_KEY",
     "provider_access": "Unauthenticated access is available on the shared pool; authenticated access uses the provider-issued API key and remains governed by the API license agreement",
@@ -836,7 +836,7 @@
     "terms_url": "https://www.semanticscholar.org/product/api/license",
     "key_url": "https://www.semanticscholar.org/product/api",
     "reviewed_on": "2026-03-20",
-    "notes": "BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability."
+    "notes": "BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability. For `get article <id> fulltext --pdf`, BioMCP uses Semantic Scholar `openAccessPdf` metadata, then fetches the third-party PDF URL only after explicit PDF opt-in; the PDF's article-level reuse terms remain separate."
   },
   {
     "id": "seer-explorer",

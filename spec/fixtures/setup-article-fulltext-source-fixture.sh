@@ -16,8 +16,7 @@ if [ -f "$env_file" ]; then
   . "$env_file"
   if [ -n "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" ] \
     && kill -0 "$BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID" 2>/dev/null; then
-    printf '%s\n' "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_ROOT:-$cache_dir}"
-    exit 0
+    kill "$BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID" 2>/dev/null || true
   fi
   if [ -n "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_ROOT:-}" ] \
     && [ -d "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_ROOT:-}" ]; then
@@ -28,16 +27,21 @@ fi
 fixture_root="$(mktemp -d "$cache_dir/spec-article-fulltext-source.XXXXXX")"
 ready_file="$fixture_root/base-url"
 server_log="$fixture_root/server.log"
+request_log="$fixture_root/request-log.txt"
+: > "$request_log"
 
-python3 - "$ready_file" "$repo_root/tests/fixtures/article/fulltext" <<'PY' >"$server_log" 2>&1 &
+python3 - "$ready_file" "$repo_root/tests/fixtures/article/fulltext" "$request_log" <<'PY' >"$server_log" 2>&1 &
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 import json
 import sys
+import threading
 
 
 FIXTURE_DIR = Path(sys.argv[2])
+REQUEST_LOG = Path(sys.argv[3])
+REQUEST_LOG_LOCK = threading.Lock()
 HTML_FALLBACK = (
     FIXTURE_DIR / "html" / "pmc_article_page.html"
 ).read_text(encoding="utf-8")
@@ -68,7 +72,19 @@ ARTICLES = {
         "abstract": "Abstract text.",
         "paper_id": "paper-3",
     },
+    "22663014": {
+        "pmcid": None,
+        "title": "Resolver order miss",
+        "abstract": "Abstract text.",
+        "paper_id": "paper-4",
+    },
 }
+
+
+def append_request_log(line):
+    with REQUEST_LOG_LOCK:
+        with REQUEST_LOG.open("a", encoding="utf-8") as handle:
+            handle.write(f"{line}\n")
 
 
 def send_json(handler, status, payload):
@@ -99,35 +115,35 @@ def send_bytes(handler, status, body, content_type):
 
 def pubtator_payload(pmid):
     article = ARTICLES[pmid]
+    record = {
+        "pmid": int(pmid),
+        "passages": [
+            {"infons": {"type": "title"}, "text": article["title"]},
+            {"infons": {"type": "abstract"}, "text": article["abstract"]},
+        ],
+    }
+    if article["pmcid"]:
+        record["pmcid"] = article["pmcid"]
     return {
-        "PubTator3": [
-            {
-                "pmid": int(pmid),
-                "pmcid": article["pmcid"],
-                "passages": [
-                    {"infons": {"type": "title"}, "text": article["title"]},
-                    {"infons": {"type": "abstract"}, "text": article["abstract"]},
-                ],
-            }
-        ]
+        "PubTator3": [record]
     }
 
 
 def europepmc_search_payload(pmid):
     article = ARTICLES[pmid]
+    result = {
+        "id": pmid,
+        "pmid": pmid,
+        "title": article["title"],
+        "journalTitle": "Journal One",
+        "firstPublicationDate": "2025-01-01",
+    }
+    if article["pmcid"]:
+        result["pmcid"] = article["pmcid"]
     return {
         "hitCount": 1,
         "resultList": {
-            "result": [
-                {
-                    "id": pmid,
-                    "pmid": pmid,
-                    "pmcid": article["pmcid"],
-                    "title": article["title"],
-                    "journalTitle": "Journal One",
-                    "firstPublicationDate": "2025-01-01",
-                }
-            ]
+            "result": [result]
         },
     }
 
@@ -156,12 +172,36 @@ class Handler(BaseHTTPRequestHandler):
                     send_json(self, 200, europepmc_search_payload(pmid))
                     return
 
+        if (
+            decoded_path == "/"
+            and query.get("idtype") == ["pmid"]
+            and query.get("ids") == ["22663014"]
+        ):
+            append_request_log("fulltext:identity:ncbi-idconv")
+            send_json(self, 200, {"records": [{"pmid": 22663014, "pmcid": "PMC123459"}]})
+            return
+
         if decoded_path == "/PMC123456/fullTextXML":
             send_text(self, 200, ARTICLE_XML, "application/xml")
             return
 
+        if decoded_path == "/PMC123459/fullTextXML":
+            append_request_log("fulltext:xml:europepmc-pmc")
+            send_text(self, 404, "not found", "text/plain")
+            return
+
+        if decoded_path == "/22663014/fullTextXML":
+            append_request_log("fulltext:xml:europepmc-med")
+            send_text(self, 404, "not found", "text/plain")
+            return
+
         if decoded_path in {"/PMC123457/fullTextXML", "/PMC123458/fullTextXML", "/22663012/fullTextXML", "/22663013/fullTextXML"}:
             send_text(self, 404, "not found", "text/plain")
+            return
+
+        if decoded_path == "/" and query.get("id") == ["PMC123459"]:
+            append_request_log("fulltext:xml:pmc-oa-archive")
+            send_text(self, 200, "<records></records>", "application/xml")
             return
 
         if decoded_path == "/" and query.get("id") in (["PMC123457"], ["PMC123458"]):
@@ -173,6 +213,11 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if decoded_path == "/articles/PMC123458/":
+            send_text(self, 404, "not found", "text/plain")
+            return
+
+        if decoded_path == "/articles/PMC123459/":
+            append_request_log("fulltext:html:pmc")
             send_text(self, 404, "not found", "text/plain")
             return
 
@@ -192,6 +237,12 @@ class Handler(BaseHTTPRequestHandler):
                     "status": "GREEN",
                     "license": "CC BY",
                 }
+            if pmid == "22663014":
+                payload["openAccessPdf"] = {
+                    "url": f"http://127.0.0.1:{self.server.server_port}/pdf/22663014.pdf",
+                    "status": "GREEN",
+                    "license": "CC BY",
+                }
             send_json(self, 200, payload)
             return
 
@@ -199,7 +250,14 @@ class Handler(BaseHTTPRequestHandler):
             send_bytes(self, 200, PDF_FALLBACK, "application/pdf")
             return
 
+        if decoded_path == "/pdf/22663014.pdf":
+            append_request_log("fulltext:pdf:semantic-scholar")
+            send_text(self, 404, "not found", "text/plain")
+            return
+
         if decoded_path == "/efetch.fcgi":
+            if query.get("id") == ["123459"]:
+                append_request_log("fulltext:xml:ncbi-efetch-pmc")
             send_text(self, 404, "not found", "text/plain")
             return
 
@@ -235,11 +293,13 @@ printf 'export BIOMCP_EUROPEPMC_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'export BIOMCP_PUBMED_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'export BIOMCP_PMC_OA_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'export BIOMCP_PMC_HTML_BASE=%q\n' "$base_url" >>"$env_file"
+printf 'export BIOMCP_NCBI_IDCONV_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'export BIOMCP_S2_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'unset NCBI_API_KEY\n' >>"$env_file"
 printf 'unset S2_API_KEY\n' >>"$env_file"
 printf 'export BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID=%q\n' "$server_pid" >>"$env_file"
 printf 'export BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_ROOT=%q\n' "$fixture_root" >>"$env_file"
 printf 'export BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_READY_FILE=%q\n' "$ready_file" >>"$env_file"
+printf 'export BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_REQUEST_LOG=%q\n' "$request_log" >>"$env_file"
 
 printf '%s\n' "$fixture_root"

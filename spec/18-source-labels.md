@@ -137,6 +137,35 @@ echo "$html_json" | mustmatch like '{"_meta":{"section_sources":[{"key":"fulltex
 echo "$pdf_json" | mustmatch like '{"_meta":{"section_sources":[{"key":"fulltext","label":"Full Text","sources":["Semantic Scholar"]}]}}'
 ```
 
+## Article Fulltext Resolver Order
+
+BioMCP may first bridge PMID or DOI identifiers to PMCID, then tries fulltext
+sources in a fixed order. The Semantic Scholar PDF rung is attempted only when
+the caller explicitly opts in with `--pdf`.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+mkdir -p "$PWD/.cache"
+fixture_workspace="$(mktemp -d "$PWD/.cache/article-fulltext-order.XXXXXX")"
+trap 'rm -rf "$fixture_workspace"' EXIT
+bash fixtures/setup-article-fulltext-source-fixture.sh "$fixture_workspace"
+. "$fixture_workspace/.cache/spec-article-fulltext-source-env"
+: > "$BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_REQUEST_LOG"
+out="$("$bin" get article 22663014 fulltext --pdf)"
+echo "$out" | mustmatch like "XML, HTML, and PDF sources did not return full text"
+cat > "$fixture_workspace/expected-order.txt" <<'EOF'
+fulltext:identity:ncbi-idconv
+fulltext:xml:europepmc-pmc
+fulltext:xml:ncbi-efetch-pmc
+fulltext:xml:pmc-oa-archive
+fulltext:xml:europepmc-med
+fulltext:html:pmc
+fulltext:pdf:semantic-scholar
+EOF
+grep '^fulltext:' "$BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_REQUEST_LOG" > "$fixture_workspace/actual-order.txt"
+diff -u "$fixture_workspace/expected-order.txt" "$fixture_workspace/actual-order.txt"
+```
+
 ## JSON section_sources — Gene, Drug, Disease
 
 Core entity types must include a non-empty `_meta.section_sources` array. The

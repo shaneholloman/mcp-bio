@@ -265,7 +265,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### Europe PMC
 
-- BioMCP surfaces: `search article; get article <pmid>`
+- BioMCP surfaces: `search article; get article <pmid>; get article <id> fulltext`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: open public API
@@ -273,7 +273,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Redistribution / reuse summary: metadata is broadly reusable, but full text and PDFs remain governed by article-level licenses
 - Official terms URL: <https://europepmc.org/RestfulWebService>
 - Reviewed on: `2026-03-20`
-- Notes: BioMCP uses Europe PMC for search and bibliographic metadata. Open-access reuse depends on the publication license attached to each record.
+- Notes: BioMCP uses Europe PMC for search, bibliographic metadata, and article full-text XML lookups. Open-access reuse depends on the publication license attached to each record.
 
 ### g:Profiler
 
@@ -431,7 +431,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.ncbi.nlm.nih.gov/books/NBK25501/>
 - API key / account URL: <https://www.ncbi.nlm.nih.gov/account/settings/>
 - Reviewed on: `2026-04-10`
-- Notes: BioMCP uses PMC `efetch` as a full-text fallback when Europe PMC does not serve the article. `NCBI_API_KEY` raises the baseline NCBI E-utilities budget but is not required.
+- Notes: BioMCP uses PMC `efetch` as one XML full-text fallback when Europe PMC does not serve the article; PMC OA and PMC article HTML are separate later fallback surfaces. `NCBI_API_KEY` raises the baseline NCBI E-utilities budget but is not required.
 
 ### NIH Reporter
 
@@ -493,7 +493,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://pmc.ncbi.nlm.nih.gov/tools/openftlist/>
 - API key / account URL: <https://www.ncbi.nlm.nih.gov/account/settings/>
 - Reviewed on: `2026-03-20`
-- Notes: BioMCP queries PMC OA on demand and does not ship the article corpus. Returned full text is still governed by article-level licenses.
+- Notes: BioMCP queries PMC OA on demand as one XML full-text rung and does not ship the article corpus. PMC article HTML is a separate derived fallback, and returned full text is still governed by article-level licenses.
 
 ### PubMed
 
@@ -506,7 +506,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.ncbi.nlm.nih.gov/books/NBK25501/>
 - API key / account URL: <https://www.ncbi.nlm.nih.gov/account/settings/>
 - Reviewed on: `2026-04-10`
-- Notes: BioMCP uses PubMed as a first-class article search source while keeping separate rows for PubTator3 annotations, PMC OA full text, and other NCBI article helpers.
+- Notes: BioMCP uses PubMed as a first-class article search source while keeping separate rows for PubTator3 annotations, NCBI E-utilities/PMC OA XML full text, NCBI ID Converter bridging, and Semantic Scholar PDF metadata; PMC article HTML is documented as a PMC web fallback in the data-source matrix.
 
 ### PubTator3
 
@@ -649,7 +649,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### Semantic Scholar
 
-- BioMCP surfaces: `search article; get article <id> tldr; article citations <id>; article references <id>; article recommendations <id>`
+- BioMCP surfaces: `search article; get article <id> tldr; get article <id> fulltext --pdf; article citations <id>; article references <id>; article recommendations <id>`
 - Integration mode: `direct_api`
 - BioMCP auth: `optional_env` via `S2_API_KEY`
 - Provider access / registration: unauthenticated access is available on the shared pool; authenticated access uses the provider-issued API key and remains governed by the API license agreement
@@ -658,7 +658,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.semanticscholar.org/product/api/license>
 - API key / account URL: <https://www.semanticscholar.org/product/api>
 - Reviewed on: `2026-03-20`
-- Notes: BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability.
+- Notes: BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability. For `get article <id> fulltext --pdf`, BioMCP uses Semantic Scholar `openAccessPdf` metadata, then fetches the third-party PDF URL only after explicit PDF opt-in; the PDF's article-level reuse terms remain separate.
 
 ### UMLS
 
@@ -859,7 +859,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ## Source notes
 
-- `PubMed`, `PubTator3`, `Europe PMC`, `LitSense2`, `NCBI E-utilities`, `PMC OA`, and `NCBI ID Converter` are separate direct inventory rows inside BioMCP's article stack because search, annotation, identifier, and full-text responsibilities come from different NCBI/EMBL service surfaces.
+- `PubMed`, `PubTator3`, `Europe PMC`, `LitSense2`, `NCBI E-utilities`, `PMC OA`, `NCBI ID Converter`, and `Semantic Scholar` are separate direct inventory rows inside BioMCP's article stack because search, annotation, identifier, PDF metadata, and full-text responsibilities come from different NCBI/EMBL/AI2 service surfaces. PMC article HTML is documented as a PMC web fallback in the data-source matrix rather than as a separate source-client row.
 - `OpenFDA FAERS`, `OpenFDA label`, `OpenFDA shortage`, and `Drugs@FDA` are user-facing provenance labels that resolve back to the `OpenFDA` direct row plus the `Drugs@FDA` indirect row.
 - `AlphaFold DB` and `PDB` are indirect-only because BioMCP currently surfaces those structure IDs via `UniProt` cross-references rather than maintaining standalone source clients.
 - `COSMIC` is indirect-only provenance through `MyVariant.info`. Direct COSMIC integration is not part of BioMCP's supported source surface because the provider's licensing model creates unacceptable redistribution and deployment risk for an MIT-licensed open tool.

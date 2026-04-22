@@ -11,9 +11,10 @@ In BioMCP, PubMed is both a direct article-search source and part of the
 default compatible article federation. `search article --source pubmed` uses
 BioMCP's PubMed ESearch/ESummary loop directly, while the default `--source
 all` route combines PubTator3, Europe PMC, and PubMed when the selected
-filters are PubMed-compatible. Full-text resolution uses Europe PMC, NCBI E-utilities, PMC OA, and the NCBI ID Converter. Semantic Scholar TLDR, citation, reference, and
-recommendation helpers belong on the [Semantic Scholar](semantic-scholar.md)
-page because they come from a different provider surface.
+filters are PubMed-compatible. Full-text resolution uses Europe PMC, NCBI E-utilities, PMC OA, NCBI ID Converter, PMC HTML, and opt-in Semantic Scholar PDF metadata; full text and PDFs remain governed by article-level licenses.
+Semantic Scholar TLDR, citation, reference, and recommendation helpers belong
+on the [Semantic Scholar](semantic-scholar.md) page because they come from a
+different provider surface.
 
 ## What BioMCP exposes
 
@@ -22,7 +23,7 @@ page because they come from a different provider surface.
 | `search article` | PMID-ranked literature search results with typed filters | Direct `--source pubmed` route plus default compatible federation with PubTator3 and Europe PMC |
 | `get article <id>` | Article summary card with identifiers, journal, and abstract context | Uses Europe PMC metadata with BioMCP normalization |
 | `get article <id> annotations` | PubTator entity annotations for a paper | PubTator3-only section |
-| `get article <id> fulltext` | Open-access full-text handoff with saved Markdown path and rendered references when available | Uses Europe PMC, NCBI E-utilities, PMC OA, and NCBI ID Converter fallbacks |
+| `get article <id> fulltext` | Open-access full-text handoff with saved Markdown path and rendered references when available | Uses Europe PMC, NCBI E-utilities, PMC OA, PMC HTML, and opt-in Semantic Scholar PDF fallbacks; NCBI ID Converter bridges PMID/DOI identifiers to PMCID before the PMCID-dependent source attempts |
 | `article entities <pmid>` | Entity-grouped follow-up view for a PMID | Derived from PubTator3 annotation output |
 
 ## Example commands
@@ -55,7 +56,9 @@ Returns an entity-grouped follow-up view with separate genes, diseases, and drug
 biomcp get article 27083046 fulltext
 ```
 
-Returns a full-text section when Europe PMC, NCBI E-utilities, or PMC OA can supply PMC XML, prints a `Saved to:` cache path, and includes rendered references when JATS bibliography data is available.
+Returns a full-text section with a `Saved to:` cache path.
+XML, PMC HTML, or explicitly opted-in PDF sources can resolve, and JATS
+bibliography data can render references. Semantic Scholar PDF is attempted only when the caller passes `--pdf`.
 
 ## API access
 
@@ -70,3 +73,4 @@ Optional `NCBI_API_KEY` for higher NCBI throughput. Set it through the [API Keys
 - [Article](../user-guide/article.md)
 - [How to find articles](../how-to/find-articles.md)
 - [API Keys](../getting-started/api-keys.md)
+- [Source Licensing and Terms](../reference/source-licensing.md)

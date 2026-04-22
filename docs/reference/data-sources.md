@@ -23,7 +23,7 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 | Article search & metadata | PubTator3 + Europe PMC + PubMed + LitSense2 + optional Semantic Scholar | `https://www.ncbi.nlm.nih.gov/research/pubtator3-api`, `https://www.ebi.ac.uk/europepmc/webservices/rest`, `https://eutils.ncbi.nlm.nih.gov/entrez/eutils`, `https://www.ncbi.nlm.nih.gov/research/litsense2-api/api`, `https://api.semanticscholar.org` | Optional (`S2_API_KEY`) | Federated search with identifier-aware merge, per-source capping after deduplication and before ranking, plus lexical, semantic, or weighted hybrid relevance ranking |
 | Article enrichment and graph helpers | Semantic Scholar | `https://api.semanticscholar.org` | Optional (`S2_API_KEY`) | Search-leg metadata, TLDR, influential citations, citation/reference graph, recommendations |
 | Article annotations | PubTator3 | `https://www.ncbi.nlm.nih.gov/research/pubtator3-api` | No | Entity annotations |
-| Article full-text resolution | PMC OA + NCBI ID Converter | `https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi`, `https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles` | No | Full-text and PMID/PMCID/DOI bridging |
+| Article full-text resolution | Europe PMC + NCBI E-utilities + PMC OA + NCBI ID Converter + PMC HTML + opt-in Semantic Scholar PDF metadata | `https://www.ebi.ac.uk/europepmc/webservices/rest`, `https://eutils.ncbi.nlm.nih.gov/entrez/eutils`, `https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi`, `https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles`, `https://pmc.ncbi.nlm.nih.gov/articles`, `https://api.semanticscholar.org` | Optional (`NCBI_API_KEY`, `S2_API_KEY`) | NCBI ID Converter bridges identifiers; XML/HTML/PDF content rungs save Markdown when available |
 | Drug | MyChem.info | `https://mychem.info/v1` | No | Drug metadata, targets, synonyms, and default U.S. search/get normalization |
 | Drug EU regional context | EMA website JSON batch (local human-medicines download) | `https://www.ema.europa.eu/en/about-us/about-website/download-website-data-json-data-format` | No | Supports canonical `search/get drug --region eu|all` for regulatory, safety, and shortage, accepts `ema` as an input alias for `eu`, and auto-downloads into `BIOMCP_EMA_DIR` or the platform data directory on first use; `biomcp ema sync` force-refreshes the local files and omitting `--region` on `get drug <name> regulatory` checks U.S. and EU regulatory data |
 | Drug WHO regional context | WHO finished-pharmaceutical-products CSV + WHO active-pharmaceutical-ingredients CSV + WHO vaccine CSV (local downloads) | `https://extranet.who.int/prequal/medicines/prequalified/finished-pharmaceutical-products/export?page&_format=csv`, `https://extranet.who.int/prequal/medicines/prequalified/active-pharmaceutical-ingredients/export?page&_format=csv`, `https://extranet.who.int/prequal/vaccines/prequalified/export` | No | Supports `search/get drug --region who|all`, WHO-filtered structured `search drug --region who` for finished-pharma/API, and WHO-only `--product-type <finished_pharma|api|vaccine>` filters; WHO vaccine support is explicit search-only; auto-downloads all three files into `BIOMCP_WHO_DIR` or the platform data directory on first use and `biomcp who sync` force-refreshes the local exports |
@@ -74,7 +74,7 @@ BioMCP only requires API keys for a subset of sources.
 | Source | Environment variable | Required when |
 |--------|----------------------|---------------|
 | AlphaGenome | `ALPHAGENOME_API_KEY` | Running `get variant <id> predict` |
-| Semantic Scholar | `S2_API_KEY` | Optional authenticated requests for `search article`, `get article`, `article batch`, TLDR, and citation/reference/recommendation helpers |
+| Semantic Scholar | `S2_API_KEY` | Optional authenticated requests for `search article`, `get article`, `article batch`, TLDR, citation/reference/recommendation helpers, and `get article <id> fulltext --pdf` metadata enrichment |
 | NCI CTS API | `NCI_API_KEY` | Trial operations with `--source nci` |
 | OncoKB | `ONCOKB_TOKEN` | Running `variant oncokb <id>` |
 | DisGeNET | `DISGENET_API_KEY` | Running `get gene <symbol> disgenet` or `get disease <name_or_id> disgenet` |
@@ -119,8 +119,13 @@ Article workflows compose multiple APIs for different tasks:
 1. PubTator3 + Europe PMC + PubMed for federated search, with LitSense2 added for keyword-bearing queries and an optional Semantic Scholar leg when the filter set is compatible (parallel fan-out, identifier-aware merge across PMID/PMCID/DOI, per-source capping after deduplication and before ranking, local lexical/semantic/hybrid relevance ranking)
 2. Europe PMC for bibliographic metadata
 3. PubTator3 for entity annotations
-4. Semantic Scholar for the optional search leg, TLDR, citation graph, influential citation counts, and recommendations
-5. NCBI ID converter + PMC OA for full-text resolution where available
+4. Semantic Scholar for the optional search leg, TLDR, citation graph, influential citation counts, recommendations, and `openAccessPdf` metadata for the explicit `--pdf` fallback
+5. NCBI ID Converter bridges PMID or DOI to PMCID before PMCID-dependent full-text rungs when the base article lacks PMCID
+6. Europe PMC PMC XML, NCBI EFetch PMC XML, PMC OA Archive XML, Europe PMC MED XML, PMC HTML, and opt-in Semantic Scholar PDF form the full-text content ladder where available
+
+NCBI ID Converter bridges PMID or DOI to PMCID before PMCID-dependent full-text rungs.
+Semantic Scholar supplies `openAccessPdf` metadata for the explicit `--pdf` fallback;
+BioMCP fetches that third-party PDF URL only after the caller opts in.
 
 This means metadata, annotations, and full text may have different availability
 for the same PMID.
