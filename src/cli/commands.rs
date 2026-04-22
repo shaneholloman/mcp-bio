@@ -265,6 +265,7 @@ EXAMPLES:
   biomcp search article -k \"Hirschsprung disease ganglion cells\" --ranking-mode hybrid --weight-semantic 0.5 --weight-lexical 0.2 --limit 5
   biomcp search article -g BRAF --source pubmed --limit 5
   biomcp search article -g BRAF --debug-plan --limit 5
+  biomcp --json search article -k \"Oncotype DX review\" --session lit-review-1 --limit 5
 
 RANKING:
   - `--sort relevance` accepts `--ranking-mode lexical|semantic|hybrid`.
@@ -279,6 +280,12 @@ CAPPING:
   - `0` uses the default cap.
   - Setting it equal to `--limit` disables capping.
   - Rows count against their primary source after deduplication.
+
+SESSION LOOP BREAKER:
+  - `--session <TOKEN>` is an optional local caller label for consecutive article keyword searches.
+  - Tokens are not secrets; use a short non-identifying label such as `lit-review-1`.
+  - In JSON mode, overlapping same-session keyword searches can add `_meta.suggestions[]` fallbacks: prior `article batch`, `discover`, then a date-narrowed retry when available.
+  - Markdown output is unchanged.
 
 QUERY FORMULATION:
   - Known gene/disease/drug anchors belong in `-g/--gene`, `-d/--disease`, or `--drug`.

@@ -103,6 +103,9 @@ pub struct ArticleSearchArgs {
     /// Cap each federated source's contribution after deduplication and before ranking (default: 40% of --limit on federated pools with at least three surviving primary sources; 0 uses the default cap; equal to --limit disables capping)
     #[arg(long = "max-per-source", value_name = "N")]
     pub max_per_source: Option<usize>,
+    /// Local caller label for JSON loop-breaker suggestions across consecutive article keyword searches
+    #[arg(long = "session", value_name = "TOKEN")]
+    pub session: Option<String>,
     /// Maximum results (default: 10)
     #[arg(short, long, default_value = "10")]
     pub limit: usize,
@@ -214,6 +217,7 @@ See also: biomcp list article")]
 }
 
 mod dispatch;
+mod session;
 pub(super) use self::dispatch::{handle_command, handle_get, handle_search};
 
 #[cfg(test)]

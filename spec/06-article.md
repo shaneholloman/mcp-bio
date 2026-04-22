@@ -870,3 +870,23 @@ out="$(biomcp search article -k melanoma --limit 50 --offset 1201 2>&1)" || stat
 test "$status" -ne 0
 echo "$out" | mustmatch like "--offset + --limit must be <= 1250"
 ```
+
+## Article Search Session Help
+
+Article search has an optional caller-chosen session label for agents that
+issue repeated keyword searches for one task. The label is local state, not a
+secret. JSON loop-breaker suggestions can omit `sections`; exact entity
+suggestions still include them.
+
+```bash
+bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
+help_out="$("$bin" search article --help)"
+echo "$help_out" | mustmatch like "--session <TOKEN>"
+echo "$help_out" | mustmatch like "Local caller label for JSON loop-breaker suggestions"
+
+list_out="$("$bin" list article)"
+echo "$list_out" | mustmatch like "search article --session <token>"
+echo "$list_out" | mustmatch like 'Use a short non-identifying token such as `lit-review-1`'
+echo "$list_out" | mustmatch like 'Exact entity suggestions include `sections`; loop-breaker suggestions from `--session` omit `sections`.'
+echo "$list_out" | mustmatch like 'prior `biomcp article batch ...`, `biomcp discover <topic>`, then a date-narrowed'
+```

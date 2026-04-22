@@ -54,6 +54,43 @@ immunotherapy` does not invent a single disease card. Searches that already
 include `-g/--gene`, `-d/--disease`, or `--drug` also suppress these direct
 entity suggestions because the typed anchor was chosen explicitly.
 
+## Session loop-breaker suggestions
+
+Use `--session <token>` when a caller may issue multiple keyword-only article
+searches for one task and wants JSON guidance if the wording starts to loop.
+The token is a local correlation label, not an authentication token or secret.
+Use short non-identifying labels such as `lit-review-1`; do not include PHI,
+credentials, email addresses, or user identifiers.
+
+Example:
+
+```bash
+biomcp --json search article -k "Oncotype DX review" --session lit-review-1 --limit 5
+biomcp --json search article -k "Oncotype DX DCIS" --session lit-review-1 --limit 5
+```
+
+BioMCP compares consecutive successful article keyword searches with the same
+session token. It lowercases the keyword, removes common search filler words,
+and triggers when the post-stopword term-set Jaccard overlap is at least 60%.
+The session baseline expires after 10 minutes and stores only the last keyword
+terms plus up to 20 PMIDs from the previous result page under the local cache
+root.
+
+Loop-breaker guidance appears only in JSON `_meta.suggestions[]`; default
+markdown output is unchanged. Exact entity suggestions keep `sections`.
+Loop-breaker suggestions omit `sections` and are ordered by fallback strategy:
+
+1. `biomcp article batch ...` for the previous search's top PMIDs, when any
+   were available.
+2. `biomcp discover "<topic>"` to map the current topic to structured
+   biomedical entities.
+3. A date-narrowed `biomcp search article ... --year-min ... --year-max ...`
+   retry derived from the current result page when such a retry is available.
+
+Calls without `--session`, first calls in a new session, disjoint keyword
+changes, expired session state, or keywords that normalize to no meaningful
+terms do not emit loop-breaker suggestions.
+
 ## When `--keyword` should be combined with typed filters
 
 If the gene, disease, or drug is already known, keep that anchor in a typed

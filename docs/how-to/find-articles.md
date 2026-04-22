@@ -45,6 +45,24 @@ If the first page reveals the gene, disease, or drug that actually anchors the
 question, rerun with that typed flag before you spend time paginating a noisy
 keyword-only result set.
 
+## Avoid keyword reformulation loops
+
+When an agent is iterating on one literature task, pass a short local
+`--session` label and request JSON. If the next keyword search overlaps the
+previous same-session keyword by at least 60% after BioMCP removes common
+search filler words, JSON `_meta.suggestions[]` can point to a better fallback:
+inspect the prior hits with `article batch`, map the topic with `discover`, or
+narrow by publication year when the current page supports that retry.
+
+```bash
+biomcp --json search article -k "Oncotype DX review" --session lit-review-1 --limit 5
+biomcp --json search article -k "Oncotype DX DCIS" --session lit-review-1 --limit 5
+```
+
+Treat `--session` as a non-secret local correlation label. Do not put PHI,
+credentials, email addresses, or user identifiers in it. Markdown article
+search output does not show loop-breaker suggestions.
+
 ## Start from a known anchor
 
 ```bash

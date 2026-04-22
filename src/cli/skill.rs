@@ -598,6 +598,10 @@ mod tests {
         assert!(overview.contains("biomcp discover \"<free text>\""));
         assert!(overview.contains("[Find Articles](../docs/how-to/find-articles.md)"));
         assert!(overview.contains("Never do more than 3 article searches for one question."));
+        assert!(overview.contains("pass `--json --session <token>`"));
+        assert!(
+            overview.contains("session loop-breaker suggestions with `command` and `reason` only")
+        );
         assert!(overview.contains("ClinicalTrials.gov usually does not index nicknames"));
         assert!(overview.contains("add `--drug <name>` to `search article`"));
         assert!(

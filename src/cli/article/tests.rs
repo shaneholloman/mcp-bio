@@ -2,14 +2,14 @@ use chrono::NaiveDate;
 use clap::{CommandFactory, Parser};
 
 use super::dispatch::{
-    ArticleEntitySuggestion, ArticleSearchJsonPage, article_debug_filters,
-    article_entity_suggestion, article_query_summary, article_search_json,
-    build_article_debug_plan, is_exact_article_keyword_lookup_eligible,
-    resolved_article_date_bounds, truncate_article_annotations,
+    ArticleSearchJsonPage, ArticleSuggestion, article_debug_filters, article_entity_suggestion,
+    article_query_summary, article_search_json, build_article_debug_plan,
+    is_exact_article_keyword_lookup_eligible, resolved_article_date_bounds,
+    truncate_article_annotations,
 };
 use crate::cli::{Cli, Commands, GetEntity, PaginationMeta, SearchEntity};
 use crate::entities::discover::{DiscoverType, ExactArticleKeywordEntity};
-use crate::test_support::{env_lock, set_env_var};
+use crate::test_support::{TempDirGuard, env_lock, set_env_var};
 use wiremock::matchers::{body_string_contains, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -112,6 +112,46 @@ fn article_date_help_advertises_shared_accepted_formats() {
     ));
     assert!(help.contains("`0` uses the default cap."));
     assert!(help.contains("Setting it equal to `--limit` disables capping."));
+}
+
+#[test]
+fn article_session_flag_parses_and_help_documents_json_loop_breaker() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "--json",
+        "search",
+        "article",
+        "-k",
+        "Oncotype DX review",
+        "--session",
+        "lit-review-1",
+        "--limit",
+        "5",
+    ])
+    .expect("article session flag should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Article(args),
+        },
+        json,
+        ..
+    } = cli
+    else {
+        panic!("expected article search command");
+    };
+
+    assert!(json);
+    assert_eq!(args.session.as_deref(), Some("lit-review-1"));
+
+    let help = render_article_search_long_help();
+    assert!(help.contains("--session <TOKEN>"));
+    assert!(help.contains("Local caller label for JSON loop-breaker suggestions"));
+    assert!(help.contains("SESSION LOOP BREAKER:"));
+    assert!(help.contains("Tokens are not secrets"));
+    assert!(help.contains(
+        "biomcp --json search article -k \"Oncotype DX review\" --session lit-review-1 --limit 5"
+    ));
 }
 
 #[test]
@@ -657,7 +697,7 @@ fn article_search_json_emits_structured_exact_entity_suggestions() {
         publication_type: None,
         source_local_position: 0,
     }];
-    let suggestions = vec![ArticleEntitySuggestion {
+    let suggestions = vec![ArticleSuggestion {
         command: "biomcp get gene BRAF".into(),
         reason: "Exact gene vocabulary match for article keyword \"BRAF\".".into(),
         sections: vec!["protein".into(), "diseases".into(), "expression".into()],
@@ -737,6 +777,180 @@ fn article_search_json_emits_structured_exact_entity_suggestions() {
             .iter()
             .any(|command| command.contains("search article -g BRAF -k"))
     );
+}
+
+#[test]
+fn article_search_json_allows_loop_suggestions_without_sections() {
+    let pagination = PaginationMeta::offset(0, 1, 0, Some(0));
+    let mut filters = super::super::related_article_filters();
+    filters.keyword = Some("Oncotype DX DCIS study".into());
+    let suggestions = vec![ArticleSuggestion {
+        command: "biomcp discover \"Oncotype DX DCIS study\"".into(),
+        reason: "Map the topic to structured biomedical entities before searching again.".into(),
+        sections: Vec::new(),
+    }];
+    let json = article_search_json(
+        "keyword=\"Oncotype DX DCIS study\"",
+        &filters,
+        false,
+        None,
+        None,
+        ArticleSearchJsonPage {
+            results: Vec::new(),
+            pagination,
+            next_commands: Vec::new(),
+            suggestions,
+        },
+    )
+    .expect("article search json should render");
+
+    let value: serde_json::Value =
+        serde_json::from_str(&json).expect("json should parse successfully");
+    assert_eq!(
+        value["_meta"]["suggestions"][0]["command"],
+        serde_json::Value::String("biomcp discover \"Oncotype DX DCIS study\"".into())
+    );
+    assert_eq!(
+        value["_meta"]["suggestions"][0]["reason"],
+        serde_json::Value::String(
+            "Map the topic to structured biomedical entities before searching again.".into()
+        )
+    );
+    assert!(
+        value["_meta"]["suggestions"][0]
+            .as_object()
+            .is_some_and(|suggestion| !suggestion.contains_key("sections"))
+    );
+}
+
+#[tokio::test]
+async fn handle_search_json_appends_session_loop_suggestions_after_successful_overlap() {
+    let _guard = env_lock().lock().await;
+    let europepmc = MockServer::start().await;
+    let cache_root = TempDirGuard::new("article-session-loop-dispatch");
+    let cache_root_string = cache_root.path().to_string_lossy().into_owned();
+    let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
+    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&cache_root_string));
+    let _s2_key = set_env_var("S2_API_KEY", None);
+
+    Mock::given(method("GET"))
+        .and(path("/search"))
+        .and(query_param("page", "1"))
+        .and(query_param("format", "json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "hitCount": 1,
+            "resultList": {
+                "result": [{
+                    "id": "EP-1",
+                    "pmid": "22663011",
+                    "title": "Oncotype DX article",
+                    "journalTitle": "Journal",
+                    "firstPublicationDate": "2025-01-01",
+                    "citedByCount": 25,
+                    "pubType": "journal article"
+                }]
+            }
+        })))
+        .expect(2)
+        .mount(&europepmc)
+        .await;
+
+    let first = Cli::try_parse_from([
+        "biomcp",
+        "--json",
+        "search",
+        "article",
+        "-k",
+        "Oncotype DX review paper",
+        "--source",
+        "europepmc",
+        "--sort",
+        "date",
+        "--session",
+        "lit-review-1",
+        "--limit",
+        "1",
+    ])
+    .expect("first article search should parse");
+    let second = Cli::try_parse_from([
+        "biomcp",
+        "--json",
+        "search",
+        "article",
+        "-k",
+        "Oncotype DX DCIS study",
+        "--source",
+        "europepmc",
+        "--sort",
+        "date",
+        "--session",
+        "lit-review-1",
+        "--limit",
+        "1",
+    ])
+    .expect("second article search should parse");
+
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::Article(first_args),
+        },
+        json,
+        ..
+    } = first
+    else {
+        panic!("expected first article search command");
+    };
+    let first_outcome = super::handle_search(first_args, json)
+        .await
+        .expect("first article search should succeed");
+    let first_value: serde_json::Value =
+        serde_json::from_str(&first_outcome.text).expect("first json should parse");
+    assert!(
+        first_value
+            .get("_meta")
+            .and_then(|meta| meta.get("suggestions"))
+            .is_none()
+    );
+
+    let Cli {
+        command:
+            Commands::Search {
+                entity: SearchEntity::Article(second_args),
+            },
+        json,
+        ..
+    } = second
+    else {
+        panic!("expected second article search command");
+    };
+    let second_outcome = super::handle_search(second_args, json)
+        .await
+        .expect("second article search should succeed");
+    let second_value: serde_json::Value =
+        serde_json::from_str(&second_outcome.text).expect("second json should parse");
+    let suggestions = second_value["_meta"]["suggestions"]
+        .as_array()
+        .expect("overlap should emit suggestions");
+    let commands = suggestions
+        .iter()
+        .filter_map(|suggestion| {
+            suggestion
+                .get("command")
+                .and_then(serde_json::Value::as_str)
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(commands[0], "biomcp article batch 22663011");
+    assert_eq!(commands[1], "biomcp discover \"Oncotype DX DCIS study\"");
+    assert!(
+        commands[2].contains("--year-min 2025 --year-max 2025"),
+        "date retry should come from the current result page: {commands:#?}"
+    );
+    assert!(suggestions.iter().all(|suggestion| {
+        suggestion
+            .as_object()
+            .is_some_and(|object| !object.contains_key("sections"))
+    }));
 }
 
 #[test]

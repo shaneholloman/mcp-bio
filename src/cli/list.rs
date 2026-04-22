@@ -253,6 +253,7 @@ fn list_article() -> String {
 - `search article --weight-position <float>`
 - `search article --source <all, pubtator, europepmc, pubmed, litsense2>`
 - `search article --max-per-source <N>`
+- `search article --session <token>` - local caller label for JSON loop-breaker suggestions across consecutive article keyword searches
 - `search article --debug-plan` - include executed planner/routing metadata in markdown or JSON
 - `search article ... --limit <N> --offset <N>`
 
@@ -270,6 +271,7 @@ Result-page follow-ups:
 - Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole `-k/--keyword` exactly matches a gene, drug, or disease vocabulary label or alias.
 - Multi-concept keyword phrases and searches that already use `-g/--gene`, `-d/--disease`, or `--drug` do not get direct entity suggestions.
 - Visible dated result pages with no existing date bounds can also suggest year-refinement next commands such as `biomcp search article ... --year-min <YYYY> --year-max <YYYY> --limit 5`.
+- With `--json --session <token>`, consecutive keyword searches in the same local session can add loop-breaker `_meta.suggestions[]` after 60% post-stopword term overlap. Use a short non-identifying token such as `lit-review-1`; do not put credentials, PHI, or user identifiers in it.
 
 Entity-only quick start:
 
@@ -299,8 +301,9 @@ Worked examples:
 - The first follow-up drills the top result with `biomcp get article <pmid>`.
 - `biomcp list article` is always included so agents can inspect the full filter surface.
 - Keyword-only exact entity matches can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp get disease <name>` to `_meta.next_commands`.
-- Article search `_meta.suggestions` is an optional array of objects with `command`, `reason`, and `sections` for these exact entity matches; `_meta.next_commands` remains an array of strings.
+- Article search `_meta.suggestions` is an optional array of objects with `command` and `reason`. Exact entity suggestions include `sections`; loop-breaker suggestions from `--session` omit `sections`.
 - Multi-concept keyword phrases and typed-filter searches omit direct entity suggestion objects.
+- Loop-breaker suggestions, when emitted, are ordered as prior `biomcp article batch ...`, `biomcp discover <topic>`, then a date-narrowed `biomcp search article ... --year-min ... --year-max ...` retry when available.
 - When no explicit article date bounds are present, visible dated rows can also add a year-refinement next command that rebuilds the current search with `--year-min <YYYY> --year-max <YYYY> --limit 5`.
 - Each result may include `first_index_date` as `YYYY-MM-DD` when the upstream record exposes when it was first indexed. Europe PMC and PubMed provide it today; PubTator3, LitSense2, and Semantic Scholar do not.
 
@@ -1278,7 +1281,10 @@ mod tests {
         assert!(article.contains("--weight-position <float>"));
         assert!(article.contains("--source <all, pubtator, europepmc, pubmed, litsense2>"));
         assert!(article.contains("--max-per-source <N>"));
+        assert!(article.contains("--session <token>"));
         assert!(article.contains("search article --source litsense2"));
+        assert!(article.contains("60% post-stopword term overlap"));
+        assert!(article.contains("Use a short non-identifying token such as `lit-review-1`"));
         assert!(article.contains("keyword-bearing article queries default to hybrid"));
         assert!(article.contains("entity-only queries default to lexical"));
         assert!(article.contains("get article <id> fulltext --pdf"));
@@ -1356,8 +1362,12 @@ mod tests {
             "Keyword-only exact entity matches can also add `biomcp get gene <symbol>`, `biomcp get drug <name>`, or `biomcp get disease <name>` to `_meta.next_commands`."
         ));
         assert!(article.contains(
-            "Article search `_meta.suggestions` is an optional array of objects with `command`, `reason`, and `sections`"
+            "Article search `_meta.suggestions` is an optional array of objects with `command` and `reason`."
         ));
+        assert!(article.contains(
+            "Exact entity suggestions include `sections`; loop-breaker suggestions from `--session` omit `sections`."
+        ));
+        assert!(article.contains("prior `biomcp article batch ...`, `biomcp discover <topic>`"));
         assert!(article.contains("visible dated rows can also add a year-refinement next command"));
     }
 
@@ -1368,7 +1378,10 @@ mod tests {
             "Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups"
         ));
         assert!(article.contains(
-            "Article search `_meta.suggestions` is an optional array of objects with `command`, `reason`, and `sections`"
+            "Article search `_meta.suggestions` is an optional array of objects with `command` and `reason`."
+        ));
+        assert!(article.contains(
+            "Exact entity suggestions include `sections`; loop-breaker suggestions from `--session` omit `sections`."
         ));
     }
 
