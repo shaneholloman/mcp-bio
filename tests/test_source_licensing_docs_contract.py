@@ -184,11 +184,17 @@ def test_source_licensing_reference_matches_inventory_and_required_sections() ->
 
 def test_article_fulltext_source_inventory_matches_resolver_contract() -> None:
     licensing = _read("docs/reference/source-licensing.md")
+    ncbi_eutilities = _inventory_item("NCBI E-utilities")
+    pmc_oa = _inventory_item("PMC OA")
+    pubmed = _inventory_item("PubMed")
     europe_pmc = _inventory_item("Europe PMC")
     semantic_scholar = _inventory_item("Semantic Scholar")
 
     assert "get article <id> fulltext" in europe_pmc["bioMcp_surfaces"]
     assert "get article <id> fulltext --pdf" in semantic_scholar["bioMcp_surfaces"]
+    assert "PMC article HTML" in ncbi_eutilities["notes"]
+    assert "PMC article HTML is a separate derived fallback" in pmc_oa["notes"]
+    assert "PMC article HTML is documented as a PMC web fallback" in pubmed["notes"]
     assert "openAccessPdf" in semantic_scholar["notes"]
     assert "explicit PDF opt-in" in semantic_scholar["notes"]
     assert "third-party PDF URL" in semantic_scholar["notes"]
@@ -200,8 +206,11 @@ def test_article_fulltext_source_inventory_matches_resolver_contract() -> None:
     semantic_scholar_section = _markdown_section_block(
         licensing, "### Semantic Scholar\n", "\n### UMLS"
     )
+    source_notes = licensing.split("## Source notes\n", 1)[1]
     assert "get article <id> fulltext" in europe_pmc_section
     assert "get article <id> fulltext --pdf" in semantic_scholar_section
+    assert "PMC article HTML" in source_notes
+    assert "PMC web fallback" in source_notes
     assert "openAccessPdf" in semantic_scholar_section
     assert "explicit PDF opt-in" in semantic_scholar_section
     assert "third-party PDF URL" in semantic_scholar_section
