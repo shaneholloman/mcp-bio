@@ -678,6 +678,7 @@ fn drug_search_json_preserves_region_envelope_with_workflow_meta() {
     let workflow =
         crate::workflow_ladders::meta_for(crate::workflow_ladders::Workflow::TreatmentLookup)
             .expect("workflow metadata");
+    let expected_first_ladder_command = workflow.ladder[0].command.clone();
     let json = drug_search_json(
         crate::entities::drug::DrugSearchPageWithRegion::Us(crate::entities::SearchPage::offset(
             vec![crate::entities::drug::DrugSearchResult {
@@ -702,7 +703,7 @@ fn drug_search_json_preserves_region_envelope_with_workflow_meta() {
     assert_eq!(value["_meta"]["workflow"], "treatment-lookup");
     assert_eq!(
         value["_meta"]["ladder"][0]["command"],
-        "biomcp search drug --indication \"myasthenia gravis\" --limit 5"
+        expected_first_ladder_command
     );
     assert_eq!(
         value["_meta"]["next_commands"][0],

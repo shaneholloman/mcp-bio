@@ -479,7 +479,7 @@ async fn drug_pharmacogene_workflow(
     let has_signal = match crate::workflow_ladders::probe_workflow(
         crate::workflow_ladders::Workflow::PharmacogeneCumulative,
         Box::pin(async {
-            let primary_count = crate::entities::pgx::distinct_cpic_gene_count_for_drug(
+            let primary_count = crate::entities::pgx::distinct_actionable_cpic_gene_count_for_drug(
                 &drug.name,
                 CPIC_GENE_THRESHOLD,
             )
@@ -493,11 +493,12 @@ async fn drug_pharmacogene_workflow(
                 return Ok(false);
             }
 
-            let requested_count = crate::entities::pgx::distinct_cpic_gene_count_for_drug(
-                requested,
-                CPIC_GENE_THRESHOLD,
-            )
-            .await?;
+            let requested_count =
+                crate::entities::pgx::distinct_actionable_cpic_gene_count_for_drug(
+                    requested,
+                    CPIC_GENE_THRESHOLD,
+                )
+                .await?;
             Ok(requested_count >= CPIC_GENE_THRESHOLD)
         }),
     )

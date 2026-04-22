@@ -497,8 +497,8 @@ fn match_tier_name(match_tier: crate::entities::discover::MatchTier) -> &'static
 mod tests {
     use super::{
         to_alias_suggestion_json, to_discover_json, to_entity_json, to_entity_json_value,
-        to_entity_json_value_with_workflow, to_entity_json_with_suggestions, to_pretty,
-        to_variant_guidance_json,
+        to_entity_json_value_with_suggestions_and_workflow, to_entity_json_with_suggestions,
+        to_pretty, to_variant_guidance_json,
     };
     use crate::entities::discover::{
         AliasCanonicalMatch, AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept,
@@ -855,28 +855,34 @@ mod tests {
         }
 
         let workflow = crate::workflow_ladders::WorkflowMeta {
-            workflow: "treatment-lookup".to_string(),
+            workflow: "demo-workflow".to_string(),
             ladder: vec![crate::workflow_ladders::WorkflowLadderStep {
                 step: 1,
-                command: "biomcp search drug --indication \"myasthenia gravis\" --limit 5"
-                    .to_string(),
-                what_it_gives: "Structured drug candidates.".to_string(),
+                command: "biomcp demo workflow-step".to_string(),
+                what_it_gives: "A deterministic demo step.".to_string(),
             }],
         };
 
-        let value = to_entity_json_value_with_workflow(
+        let value = to_entity_json_value_with_suggestions_and_workflow(
             &DemoEntity { id: "demo-6" },
             vec![("Source", "https://example.test".to_string())],
             vec!["biomcp list drug".to_string()],
-            Vec::new(),
+            Some(vec!["biomcp get drug demo".to_string()]),
+            vec![crate::render::provenance::SectionSource {
+                key: "demo".to_string(),
+                label: "Demo".to_string(),
+                sources: vec!["UnitTest".to_string()],
+            }],
             Some(workflow),
         )
         .expect("entity json");
 
-        assert_eq!(value["_meta"]["workflow"], "treatment-lookup");
+        assert_eq!(value["_meta"]["workflow"], "demo-workflow");
         assert_eq!(value["_meta"]["ladder"][0]["step"], 1);
         assert_eq!(value["_meta"]["next_commands"][0], "biomcp list drug");
+        assert_eq!(value["_meta"]["suggestions"][0], "biomcp get drug demo");
         assert_eq!(value["_meta"]["evidence_urls"][0]["label"], "Source");
+        assert_eq!(value["_meta"]["section_sources"][0]["key"], "demo");
     }
 
     #[test]

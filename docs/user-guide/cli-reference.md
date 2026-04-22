@@ -59,7 +59,7 @@ biomcp get drug aspirin --json
 ```
 
 The warfarin response can emit `pharmacogene-cumulative`; aspirin omits that
-workflow ladder when the pharmacogene threshold is not met.
+workflow ladder when the actionable CPIC A/B pharmacogene threshold is not met.
 
 ## Top-level commands
 

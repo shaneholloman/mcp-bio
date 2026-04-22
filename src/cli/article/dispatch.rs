@@ -119,6 +119,19 @@ mod workflow_tests {
                 .expect("workflow check should not fail")
                 .is_none()
         );
+
+        let mut no_annotations = article_with_signal();
+        no_annotations.annotations = Some(crate::entities::article::ArticleAnnotations {
+            genes: Vec::new(),
+            diseases: Vec::new(),
+            chemicals: Vec::new(),
+            mutations: Vec::new(),
+        });
+        assert!(
+            article_follow_up_workflow(&no_annotations)
+                .expect("workflow check should not fail")
+                .is_none()
+        );
     }
 }
 

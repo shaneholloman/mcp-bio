@@ -95,7 +95,15 @@ pub(crate) async fn probe_workflow(
     workflow: Workflow,
     probe: WorkflowProbeFuture<'_>,
 ) -> Result<WorkflowProbeOutcome, BioMcpError> {
-    match timeout(WORKFLOW_PROBE_TIMEOUT, probe).await {
+    probe_workflow_with_timeout(workflow, probe, WORKFLOW_PROBE_TIMEOUT).await
+}
+
+async fn probe_workflow_with_timeout(
+    workflow: Workflow,
+    probe: WorkflowProbeFuture<'_>,
+    timeout_duration: std::time::Duration,
+) -> Result<WorkflowProbeOutcome, BioMcpError> {
+    match timeout(timeout_duration, probe).await {
         Ok(Ok(true)) => Ok(WorkflowProbeOutcome::Triggered(meta_for(workflow)?)),
         Ok(Ok(false)) => Ok(WorkflowProbeOutcome::NotTriggered),
         Ok(Err(err)) => {
@@ -109,7 +117,7 @@ pub(crate) async fn probe_workflow(
         Err(_) => {
             debug!(
                 workflow = workflow.slug(),
-                timeout_ms = WORKFLOW_PROBE_TIMEOUT.as_millis(),
+                timeout_ms = timeout_duration.as_millis(),
                 "workflow ladder probe timed out; omitting workflow metadata"
             );
             Ok(WorkflowProbeOutcome::Unavailable)
@@ -168,7 +176,10 @@ fn validate_ladder(slug: &str, ladder: &WorkflowLadder) -> Result<(), BioMcpErro
 
 #[cfg(test)]
 mod tests {
-    use super::{Workflow, load, meta_for};
+    use std::time::Duration;
+
+    use super::{Workflow, WorkflowProbeOutcome, load, meta_for, probe_workflow_with_timeout};
+    use crate::error::BioMcpError;
 
     #[test]
     fn every_workflow_ladder_loads_and_validates() {
@@ -184,9 +195,40 @@ mod tests {
     fn workflow_meta_discards_sidecar_only_fields() {
         let meta = meta_for(Workflow::PharmacogeneCumulative).expect("workflow metadata");
         assert_eq!(meta.workflow, "pharmacogene-cumulative");
-        assert_eq!(
-            meta.ladder[0].command,
-            "biomcp search pgx -d warfarin --limit 10"
-        );
+        assert_eq!(meta.ladder.len(), 4);
+        assert!(meta.ladder[0].command.starts_with("biomcp "));
+    }
+
+    #[tokio::test]
+    async fn probe_workflow_omits_metadata_on_probe_error() {
+        let outcome = probe_workflow_with_timeout(
+            Workflow::TreatmentLookup,
+            Box::pin(async {
+                Err(BioMcpError::InvalidArgument(
+                    "synthetic probe failure".to_string(),
+                ))
+            }),
+            Duration::from_secs(1),
+        )
+        .await
+        .expect("probe errors should degrade");
+
+        assert!(matches!(outcome, WorkflowProbeOutcome::Unavailable));
+    }
+
+    #[tokio::test]
+    async fn probe_workflow_omits_metadata_on_timeout() {
+        let outcome = probe_workflow_with_timeout(
+            Workflow::TreatmentLookup,
+            Box::pin(async {
+                tokio::time::sleep(Duration::from_millis(50)).await;
+                Ok(true)
+            }),
+            Duration::from_millis(1),
+        )
+        .await
+        .expect("probe timeouts should degrade");
+
+        assert!(matches!(outcome, WorkflowProbeOutcome::Unavailable));
     }
 }

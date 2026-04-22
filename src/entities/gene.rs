@@ -2719,6 +2719,8 @@ mod tests {
 
     use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE};
     use crate::test_support::{TempDirGuard, env_lock, set_env_var};
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     fn test_gene(symbol: &str) -> Gene {
         Gene {
@@ -3005,6 +3007,40 @@ mod tests {
         assert_eq!(merged.len(), 2);
         assert_eq!(merged[0].source, "KEGG");
         assert_eq!(merged[1].source, "Reactome");
+    }
+
+    #[tokio::test]
+    async fn reactome_workflow_signal_uses_limit_one_probe() {
+        let _lock = env_lock().lock().await;
+        let reactome = MockServer::start().await;
+        let _reactome_base = set_env_var("BIOMCP_REACTOME_BASE", Some(&reactome.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/search/query"))
+            .and(query_param("query", "ABL1"))
+            .and(query_param("species", "Homo sapiens"))
+            .and(query_param("pageSize", "1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "results": [{
+                    "entries": [
+                        {"stId": "R-HSA-1", "name": "ABL1 pathway"}
+                    ]
+                }]
+            })))
+            .expect(1)
+            .mount(&reactome)
+            .await;
+
+        assert!(
+            has_reactome_pathway_signal("ABL1")
+                .await
+                .expect("reactome signal")
+        );
+        assert!(
+            !has_reactome_pathway_signal("   ")
+                .await
+                .expect("empty gene should not probe")
+        );
     }
 
     #[test]

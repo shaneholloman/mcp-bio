@@ -154,6 +154,7 @@ fn disease_search_json_preserves_fallback_with_workflow_meta() {
     let workflow =
         crate::workflow_ladders::meta_for(crate::workflow_ladders::Workflow::MutationCatalog)
             .expect("workflow metadata");
+    let expected_first_ladder_command = workflow.ladder[0].command.clone();
     let json = disease_search_json(results, pagination, true, next_commands, Some(workflow))
         .expect("disease search json should render");
 
@@ -163,7 +164,7 @@ fn disease_search_json_preserves_fallback_with_workflow_meta() {
     assert_eq!(value["_meta"]["workflow"], "mutation-catalog");
     assert_eq!(
         value["_meta"]["ladder"][0]["command"],
-        serde_json::Value::String("biomcp get gene PLN".into())
+        serde_json::Value::String(expected_first_ladder_command)
     );
     assert_eq!(
         value["_meta"]["next_commands"][0],

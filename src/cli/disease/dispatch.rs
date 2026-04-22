@@ -106,7 +106,15 @@ async fn disease_search_workflow(
 async fn disease_has_pathogenic_variant_catalog(
     disease_name: &str,
 ) -> Result<bool, crate::error::BioMcpError> {
-    let filters = crate::entities::variant::VariantSearchFilters {
+    let filters = pathogenic_variant_catalog_filters(disease_name);
+    let page = crate::entities::variant::search_page(&filters, 3, 0).await?;
+    Ok(page.results.len() >= 3 || page.total.unwrap_or(page.results.len()) >= 3)
+}
+
+fn pathogenic_variant_catalog_filters(
+    disease_name: &str,
+) -> crate::entities::variant::VariantSearchFilters {
+    crate::entities::variant::VariantSearchFilters {
         gene: None,
         hgvsp: None,
         hgvsc: None,
@@ -127,22 +135,45 @@ async fn disease_has_pathogenic_variant_catalog(
         has: None,
         missing: None,
         therapy: None,
-    };
-    let page = crate::entities::variant::search_page(&filters, 3, 0).await?;
-    Ok(page.results.len() >= 3 || page.total.unwrap_or(page.results.len()) >= 3)
+    }
 }
 
 async fn disease_has_recruiting_trials(
     disease_name: &str,
 ) -> Result<bool, crate::error::BioMcpError> {
-    let filters = crate::entities::trial::TrialSearchFilters {
+    let filters = recruiting_trial_filters(disease_name);
+    let page = crate::entities::trial::search_page(&filters, 1, 0, None).await?;
+    Ok(!page.results.is_empty() || page.total.unwrap_or(0) > 0)
+}
+
+fn recruiting_trial_filters(disease_name: &str) -> crate::entities::trial::TrialSearchFilters {
+    crate::entities::trial::TrialSearchFilters {
         condition: Some(disease_name.to_string()),
         status: Some("recruiting".to_string()),
         source: crate::entities::trial::TrialSource::ClinicalTrialsGov,
         ..Default::default()
-    };
-    let page = crate::entities::trial::search_page(&filters, 1, 0, None).await?;
-    Ok(!page.results.is_empty() || page.total.unwrap_or(0) > 0)
+    }
+}
+
+#[cfg(test)]
+mod workflow_tests {
+    use super::{pathogenic_variant_catalog_filters, recruiting_trial_filters};
+
+    #[test]
+    fn disease_workflow_probe_filters_use_top_result_name_and_bounded_queries() {
+        let variant_filters = pathogenic_variant_catalog_filters("tuberculosis");
+        assert_eq!(variant_filters.condition.as_deref(), Some("tuberculosis"));
+        assert_eq!(variant_filters.significance.as_deref(), Some("pathogenic"));
+        assert!(variant_filters.gene.is_none());
+
+        let trial_filters = recruiting_trial_filters("tuberculosis");
+        assert_eq!(trial_filters.condition.as_deref(), Some("tuberculosis"));
+        assert_eq!(trial_filters.status.as_deref(), Some("recruiting"));
+        assert!(matches!(
+            trial_filters.source,
+            crate::entities::trial::TrialSource::ClinicalTrialsGov
+        ));
+    }
 }
 
 pub(in crate::cli) async fn handle_command(

@@ -487,7 +487,7 @@ pub async fn search_page(
     Ok(SearchPage::offset(out, total))
 }
 
-pub async fn distinct_cpic_gene_count_for_drug(
+pub async fn distinct_actionable_cpic_gene_count_for_drug(
     drug: &str,
     threshold: usize,
 ) -> Result<usize, BioMcpError> {
@@ -501,6 +501,9 @@ pub async fn distinct_cpic_gene_count_for_drug(
     let page = cpic.pairs_by_drug_page(drug, fetch_limit, 0).await?;
     let mut genes = HashSet::new();
     for row in page.rows {
+        if cpic_level_rank(row.cpiclevel.as_deref()) > 1 {
+            continue;
+        }
         let gene = row.genesymbol.trim().to_ascii_uppercase();
         if gene.is_empty() {
             continue;
@@ -847,6 +850,9 @@ fn cpic_level_rank(level: Option<&str>) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::{env_lock, set_env_var};
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[test]
     fn parse_sections_supports_all() {
@@ -886,5 +892,41 @@ mod tests {
     fn normalize_cpic_level_rejects_invalid_value() {
         let err = normalize_cpic_level("Z").expect_err("Z should fail");
         assert!(err.to_string().contains("A, B, C, D"));
+    }
+
+    #[tokio::test]
+    async fn distinct_actionable_cpic_gene_count_for_drug_counts_unique_genes_to_threshold() {
+        let _lock = env_lock().lock().await;
+        let cpic = MockServer::start().await;
+        let _cpic_base = set_env_var("BIOMCP_CPIC_BASE", Some(&cpic.uri()));
+
+        Mock::given(method("GET"))
+            .and(path("/pair_view"))
+            .and(query_param("drugname", "ilike.*warfarin*"))
+            .and(query_param("limit", "30"))
+            .and(query_param("offset", "0"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {"genesymbol": "CYP2C9", "drugname": "warfarin", "cpiclevel": "A"},
+                {"genesymbol": "cyp2c9", "drugname": "warfarin", "cpiclevel": "A"},
+                {"genesymbol": "G6PD", "drugname": "warfarin", "cpiclevel": "C"},
+                {"genesymbol": "VKORC1", "drugname": "warfarin", "cpiclevel": "B"},
+                {"genesymbol": "", "drugname": "warfarin", "cpiclevel": "A"},
+                {"genesymbol": "CYP4F2", "drugname": "warfarin", "cpiclevel": "A"}
+            ])))
+            .expect(1)
+            .mount(&cpic)
+            .await;
+
+        let count = distinct_actionable_cpic_gene_count_for_drug(" warfarin ", 3)
+            .await
+            .expect("cpic count");
+
+        assert_eq!(count, 3);
+        assert_eq!(
+            distinct_actionable_cpic_gene_count_for_drug("   ", 3)
+                .await
+                .expect("blank drug"),
+            0
+        );
     }
 }

@@ -13,6 +13,7 @@ use super::super::{
     Cli, OutputStream, PaginationMeta, execute, execute_mcp, extract_json_from_sections,
     resolve_query_input, run_outcome, search_json, search_json_with_meta,
     search_json_with_meta_and_suggestions, search_meta, search_meta_with_suggestions,
+    search_meta_with_workflow,
 };
 
 #[test]
@@ -113,6 +114,28 @@ fn search_meta_with_suggestions_keeps_empty_suggestions_array() {
 
     let value = serde_json::to_value(meta).expect("meta json");
     assert_eq!(value["suggestions"].as_array().map(Vec::len), Some(0));
+}
+
+#[test]
+fn search_meta_with_workflow_keeps_meta_without_next_commands() {
+    let meta = search_meta_with_workflow(
+        Vec::new(),
+        None,
+        Some(crate::workflow_ladders::WorkflowMeta {
+            workflow: "demo-workflow".to_string(),
+            ladder: vec![crate::workflow_ladders::WorkflowLadderStep {
+                step: 1,
+                command: "biomcp demo workflow-step".to_string(),
+                what_it_gives: "A deterministic demo step.".to_string(),
+            }],
+        }),
+    )
+    .expect("workflow metadata should force _meta");
+
+    let value = serde_json::to_value(meta).expect("meta json");
+    assert_eq!(value["next_commands"], serde_json::json!([]));
+    assert_eq!(value["workflow"], "demo-workflow");
+    assert_eq!(value["ladder"][0]["step"], 1);
 }
 
 #[test]

@@ -288,3 +288,24 @@ def test_installed_output_schemas_allow_workflow_ladder_meta() -> None:
             "command",
             "what_it_gives",
         ]
+
+
+def test_rust_sources_do_not_embed_workflow_ladder_commands() -> None:
+    commands: list[str] = []
+    for sidecar_path in sorted((REPO_ROOT / "skills" / "use-cases").glob("*.ladder.json")):
+        sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+        commands.extend(step["command"] for step in sidecar["ladder"])
+
+    offenders: list[str] = []
+    for rust_path in sorted((REPO_ROOT / "src").rglob("*.rs")):
+        relative = rust_path.relative_to(REPO_ROOT)
+        if rust_path.name == "tests.rs" or "tests" in rust_path.parts:
+            continue
+        if str(relative) in {"src/cli/article/mod.rs", "src/cli/commands.rs"}:
+            continue
+        text = rust_path.read_text(encoding="utf-8")
+        for command in commands:
+            if command in text:
+                offenders.append(f"{relative} embeds {command!r}")
+
+    assert offenders == []
