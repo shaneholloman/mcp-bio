@@ -55,7 +55,8 @@ SPEC_PR_DESELECT_ARGS = \
 	--deselect "spec/06-article.md::Article Fulltext HTML Fallback Saved Markdown" \
 	--deselect "spec/06-article.md::Article Fulltext PDF Fallback Is Opt-In" \
 	--deselect "spec/18-source-labels.md::Article Fulltext Source Labels" \
-	--deselect "spec/26-workflow-ladders.md::Article Follow-up"
+	--deselect "spec/26-workflow-ladders.md::Article Follow-up" \
+	--deselect "spec/26-workflow-ladders.md::Mechanism Pathway"
 
 SPEC_SMOKE_ARGS = \
 	"spec/06-article.md::Getting Article Details (line 486) [bash]" \

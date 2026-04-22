@@ -299,3 +299,4 @@ The audited lane fit the PR budget before any repair: no heading crossed the 60s
 | `spec/19-discover.md` | Entire discover file stays smoke-only because its live exploratory fan-out is not part of the stable PR lane. |
 | `spec/20-alias-fallback.md` | Alias-fallback live probes stay smoke-only and continue to run in the nightly suite. |
 | `spec/26-workflow-ladders.md::Article Follow-up` | Live PubMed/PubTator article get aligns with the established smoke-only lane for all article get operations (ticket 282). |
+| `spec/26-workflow-ladders.md::Mechanism Pathway` | Live Reactome pathway probe can be slow under parallel load; smoke-only so the PR lane stays reliable (ticket 282). |
