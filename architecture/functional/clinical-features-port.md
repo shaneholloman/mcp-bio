@@ -44,13 +44,13 @@ the same source and provenance contract instead of inventing rows.
    candidate topics, and falls back to embedded reviewed topics when needed.
 5. Feature extraction emits only reviewed configured rows, attaches evidence
    and source URLs, and writes rows to the disease card.
-6. unsupported diseases leave the section empty rather than fabricating
+6. Unsupported diseases leave the section empty rather than fabricating
    symptoms or labels from the disease name.
 
 ## Output Contract
 
-Clinical-feature rows are source-native MedlinePlus evidence rows. The JSON and
-markdown contracts expose the same fields:
+Clinical-feature rows are source-native MedlinePlus evidence rows. JSON exposes
+the full row contract:
 
 - rank/order for stable display
 - feature label or name
@@ -60,17 +60,18 @@ markdown contracts expose the same fields:
 - normalized HPO ID and HPO label when reviewed mapping exists
 - HPO mapping method and confidence when available
 
-Markdown renders a `Clinical Features (MedlinePlus)` table only when the
-section is requested. JSON preserves requested rows under `clinical_features`
-and includes evidence URLs in the shared provenance metadata. When rows are
-present, `_meta.section_sources` includes the `clinical_features` section with
-the MedlinePlus source label.
+Markdown renders stable display columns for rank, feature, HPO mapping,
+confidence, evidence, and linked source only when the section is requested.
+JSON preserves requested rows under `clinical_features` and includes evidence
+URLs in the shared provenance metadata. When rows are present,
+`_meta.section_sources` includes the `clinical_features` section with the
+MedlinePlus source label.
 
 ## Failure Behavior
 
 The section degrades by truthful omission:
 
-- unsupported diseases produce a requested-section empty state and do not
+- Unsupported diseases produce a requested-section empty state and do not
   fabricate clinical features.
 - Live MedlinePlus failures can still use the embedded fallback for reviewed
   configured diseases.

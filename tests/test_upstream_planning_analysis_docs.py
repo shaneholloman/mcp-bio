@@ -225,11 +225,13 @@ def test_clinical_features_architecture_doc_is_current_state() -> None:
         "target-state",
         "does not yet expose clinical features",
         "current implementation gaps",
+        "backlog",
         "build ticket",
         "ticket a:",
         "ticket b:",
         "ticket c:",
         "decomposition",
+        "json and markdown contracts expose the same fields",
     ):
         assert stale_phrase not in clinical_lower
 
@@ -243,9 +245,11 @@ def test_clinical_features_architecture_doc_is_current_state() -> None:
     assert "MedlinePlus Search" in clinical
     assert "reviewed configured diseases" in clinical_ws
     assert "embedded fallback" in clinical_ws
+    assert "JSON exposes the full row contract" in clinical_ws
+    assert "Markdown renders stable display columns" in clinical_ws
     assert "explicit opt-in" in clinical_ws
     assert "`all` excludes `clinical_features`" in clinical_ws
-    assert "unsupported diseases" in clinical_ws
+    assert "Unsupported diseases" in clinical_ws
     assert "evidence URLs" in clinical_ws
     assert "HPO mapping" in clinical_ws
     assert "`_meta.section_sources`" in clinical

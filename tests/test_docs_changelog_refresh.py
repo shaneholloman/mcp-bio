@@ -231,6 +231,7 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
             "| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO IVD local CSV + optional OpenFDA device overlay |"
             in text
         )
+        assert "GTR-backed diagnostics pivot" in text
         assert "MedlinePlus `clinical_features`" in text
         assert "GTR/WHO IVD diagnostics pivot" in text
         assert "OpenFDA FAERS/MAUDE/recalls plus CDC WONDER VAERS aggregate vaccine search" in text
