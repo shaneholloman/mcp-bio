@@ -87,6 +87,7 @@ async def test_biomcp_description_matches_list_contract(
     article_markers = [
         "Turn a literature question into article filters",
         "known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`",
+        "PubMed ESearch cleans question-format terms provider-locally",
     ]
     article_details = [
         "## Query formulation",

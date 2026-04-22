@@ -69,6 +69,42 @@ async fn search_pubmed_page_sends_standalone_not_retraction_term() {
 }
 
 #[tokio::test]
+async fn search_pubmed_page_cleans_question_keyword_before_esearch() {
+    let _guard = lock_env().await;
+    let server = MockServer::start().await;
+    let _pubmed_base = set_env_var("BIOMCP_PUBMED_BASE", Some(&server.uri()));
+    let mut filters = empty_filters();
+    filters.keyword = Some("What drug treatment can cause a spinal epidural hematoma?".into());
+
+    Mock::given(method("GET"))
+        .and(path("/esearch.fcgi"))
+        .and(query_param("db", "pubmed"))
+        .and(query_param("retmode", "json"))
+        .and(query_param("retstart", "0"))
+        .and(query_param("retmax", "100"))
+        .and(query_param(
+            "term",
+            "drug treatment spinal epidural hematoma",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "esearchresult": {
+                "count": "0",
+                "idlist": []
+            }
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let page = search_pubmed_page(&filters, 1, 0)
+        .await
+        .expect("pubmed page should use cleaned question keyword");
+
+    assert!(page.results.is_empty());
+    assert_eq!(page.total, Some(0));
+}
+
+#[tokio::test]
 async fn search_pubmed_page_refills_across_batches_after_filtering() {
     let _guard = lock_env().await;
     let server = MockServer::start().await;

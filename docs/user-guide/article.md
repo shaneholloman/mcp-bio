@@ -54,6 +54,7 @@ Turn a natural-language literature question into two parts:
 - Put a known gene, disease, or drug in `-g/--gene`, `-d/--disease`, or `--drug`.
 - Put mechanisms, phenotypes, outcomes, datasets, and other free-text concepts in `-k/--keyword`.
 - If the question is asking which gene, disease, or drug fits the evidence and you do not know the entity yet, do not guess a typed flag. Start with keyword-only article search or run `biomcp discover "<question>"` first.
+- Question-format article terms are acceptable: PubMed ESearch cleans bounded filler words from unfielded gene, disease, drug, and keyword terms provider-locally, while query echoes and non-PubMed sources keep the original wording.
 - Use `--type review` for synthesis questions, list-style questions, and dataset surveys.
 
 Keyword-only searches can also return exact entity suggestions. When the whole

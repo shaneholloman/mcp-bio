@@ -163,6 +163,39 @@ pub(super) fn build_search_query(filters: &ArticleSearchFilters) -> Result<Strin
     Ok(terms.join(" AND "))
 }
 
+const PUBMED_STOPWORDS: &[&str] = &[
+    "what", "which", "how", "are", "is", "do", "does", "can", "could", "list", "be", "thought",
+    "cause", "the", "a", "an", "in", "of", "for", "to", "with", "by", "on", "or", "and",
+];
+
+fn strip_pubmed_stopwords(value: &str) -> String {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+
+    let mut retained = Vec::new();
+    for token in trimmed.split(|ch: char| ch.is_ascii_whitespace() || ch == '/') {
+        let token = token.trim().trim_end_matches(['?', '.']);
+        if token.is_empty() {
+            continue;
+        }
+        if PUBMED_STOPWORDS
+            .iter()
+            .any(|stopword| token.eq_ignore_ascii_case(stopword))
+        {
+            continue;
+        }
+        retained.push(token);
+    }
+
+    if retained.is_empty() {
+        return trimmed.to_string();
+    }
+
+    retained.join(" ")
+}
+
 pub(super) fn build_pubmed_search_term(
     filters: &ArticleSearchFilters,
 ) -> Result<String, BioMcpError> {
@@ -177,7 +210,7 @@ pub(super) fn build_pubmed_search_term(
         filters.keyword.as_deref(),
     ] {
         if let Some(value) = value.map(str::trim).filter(|value| !value.is_empty()) {
-            clauses.push(value.to_string());
+            clauses.push(strip_pubmed_stopwords(value));
         }
     }
 

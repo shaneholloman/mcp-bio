@@ -80,6 +80,9 @@ fn search_article_help_includes_query_formulation_guidance() {
     assert!(help.contains(
         "Use `-k/--keyword` for mechanisms, phenotypes, datasets, outcomes, and other free-text concepts."
     ));
+    assert!(help.contains(
+        "PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally; query echoes and non-PubMed sources keep the original wording."
+    ));
     assert!(
         help.contains(
             "Unknown-entity questions should stay keyword-first or start with `discover`."

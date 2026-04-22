@@ -382,6 +382,13 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "`--source` remains `all|pubtator|europepmc|pubmed|litsense2` in v1"
         in article_validation_section
     )
+    assert "Article filters remain raw as the shared contract" in article_validation_section
+    assert "PubMed ESearch cleans bounded question-format filler words" in (
+        article_validation_section
+    )
+    assert "PubTator3, Europe PMC, LitSense2, and Semantic Scholar receive their existing query inputs" in (
+        article_validation_section
+    )
     assert (
         "deduplicate across PMID, PMCID, and DOI where possible, then re-rank locally"
         in article_validation_section
@@ -438,6 +445,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     )
     assert "LitSense2-derived semantic signal" in article_guide_ws
     assert "Rows without LitSense2 provenance contribute `ranking.semantic_score = 0`" in article_guide_ws
+    assert "PubMed ESearch cleans bounded filler words" in article_guide_ws
     assert "## Query formulation" in article_guide
     assert (
         "Put a known gene, disease, or drug in `-g/--gene`, `-d/--disease`, or `--drug`."
@@ -450,6 +458,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "MeSH/title/abstract" not in find_articles_ws
     assert "LitSense2-derived semantic signal" in find_articles_ws
     assert "semantic=0" in find_articles_ws
+    assert "Direct PubMed search and the compatible federated PubMed leg apply the same question-format cleanup" in find_articles_ws
     assert "Do not guess `-g`, `-d`, or `--drug` when the question is trying to identify the entity itself." in find_articles_ws
     assert 'biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5' in find_articles_ws
     assert "MeSH/title/abstract" not in article_keyword_reference_ws
@@ -459,11 +468,16 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     )
     assert "LitSense2-derived semantic signal" in article_keyword_reference_ws
     assert "semantic=0" in article_keyword_reference_ws
+    assert "PubMed-specific behavior" in article_keyword_reference_ws
+    assert "PubTator3, Europe PMC, LitSense2, and Semantic Scholar keep their existing query behavior" in article_keyword_reference_ws
     assert "do not guess a disease or drug name just to fill `-d` or `--drug`" in article_keyword_reference_ws
     assert "Turn a literature question into article filters" in cli_list_reference_ws
     assert (
         "known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`"
         in cli_list_reference_ws
+    )
+    assert "PubMed ESearch cleans question-format terms provider-locally" in (
+        cli_list_reference_ws
     )
     assert "LitSense2-derived semantic signal" in cli_list_reference_ws
     assert "semantic=0" in cli_list_reference_ws

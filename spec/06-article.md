@@ -359,6 +359,9 @@ echo "$json_out" | jq -e '(.results | length) > 0 and all(.results[]; .ranking.m
 
 Explicit PubMed routing should expose the source in the rendered query context
 and preserve the standard article table contract for stable smoke queries.
+Question-format unfielded terms are cleaned only at the PubMed ESearch
+provider boundary, so the provider can find content terms while JSON still
+echoes the raw keyword the caller supplied.
 
 ```bash
 bin="${BIOMCP_BIN:-$(git rev-parse --show-toplevel)/target/release/biomcp}"
@@ -370,6 +373,11 @@ printf '%s\n' "$out" | grep -F -- '--source <all|pubtator|europepmc|pubmed|litse
 
 json_out="$(env -u S2_API_KEY "$bin" --json search article -k 'GDNF RET Hirschsprung 1996' --source pubmed --limit 5)"
 echo "$json_out" | jq -e 'any(.results[]; .pmid == "8896569" and .source == "pubmed" and .matched_sources == ["pubmed"] and (.citation_count // 0) > 0 and ((.abstract_snippet // "") | length > 0))' >/dev/null
+
+nl_json="$("$bin" --json search article --keyword "What is the incidence of cystic fibrosis?" --limit 5 --source pubmed)"
+echo "$nl_json" | jq -e '.count >= 1' > /dev/null
+echo "$nl_json" | jq -e '.query | contains("keyword=What is the incidence of cystic fibrosis?")' > /dev/null
+echo "$nl_json" | jq -e 'all(.results[]; .source == "pubmed")' > /dev/null
 ```
 
 ## First Index Date in Article Search

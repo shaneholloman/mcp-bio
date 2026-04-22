@@ -92,6 +92,68 @@ fn build_free_text_article_query_preserves_mixed_semantic_anchors() {
 }
 
 #[test]
+fn strip_pubmed_stopwords_cleans_question_patterns() {
+    let cases = [
+        (
+            "What drug treatment can cause a spinal epidural hematoma?",
+            "drug treatment spinal epidural hematoma",
+        ),
+        (
+            "What is the incidence of cystic fibrosis in the caucasian population?",
+            "incidence cystic fibrosis caucasian population",
+        ),
+        (
+            "Which are the genes thought to be regulated by EWS/FLI?",
+            "genes regulated EWS FLI",
+        ),
+        ("How does BRAF regulate melanoma.", "BRAF regulate melanoma"),
+        (
+            "List the drugs for cystic fibrosis.",
+            "drugs cystic fibrosis",
+        ),
+        ("Can TP53 and MDM2 be regulated?", "TP53 MDM2 regulated"),
+        ("What DOES iPSC model CFTR?", "iPSC model CFTR"),
+        ("BRAF melanoma", "BRAF melanoma"),
+        ("AND or the?", "AND or the?"),
+    ];
+
+    for (raw, expected) in cases {
+        assert_eq!(strip_pubmed_stopwords(raw), expected, "raw={raw:?}");
+    }
+}
+
+#[test]
+fn build_pubmed_search_term_cleans_unfielded_clauses_only() {
+    let mut filters = empty_filters();
+    filters.gene = Some("Which are the genes thought to be regulated by EWS/FLI?".into());
+    filters.disease =
+        Some("What is the incidence of cystic fibrosis in the caucasian population?".into());
+    filters.drug = Some("What drug treatment can cause a spinal epidural hematoma?".into());
+    filters.keyword = Some("How does BRAF regulate melanoma.".into());
+    filters.author = Some("Alice Smith".into());
+    filters.journal = Some("Nature Reviews".into());
+    filters.article_type = Some("review".into());
+    filters.exclude_retracted = true;
+
+    let term = build_pubmed_search_term(&filters).expect("pubmed term should build");
+
+    assert_eq!(
+        term,
+        "genes regulated EWS FLI AND incidence cystic fibrosis caucasian population AND drug treatment spinal epidural hematoma AND BRAF regulate melanoma AND \"Alice Smith\"[author] AND \"Nature Reviews\"[journal] AND review[pt] NOT retracted publication[pt]"
+    );
+}
+
+#[test]
+fn build_pubmed_search_term_falls_back_for_all_stopword_unfielded_clause() {
+    let mut filters = empty_filters();
+    filters.keyword = Some("AND or the?".into());
+
+    let term = build_pubmed_search_term(&filters).expect("pubmed term should build");
+
+    assert_eq!(term, "AND or the?");
+}
+
+#[test]
 fn build_pubmed_esearch_params_reuses_article_type_aliases() {
     let mut filters = empty_filters();
     filters.gene = Some("BRAF".into());

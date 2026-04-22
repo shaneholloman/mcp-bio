@@ -307,6 +307,7 @@ Routing note:
 
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
 - Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
+- Direct and compatible federated PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally; query echoes and non-PubMed sources keep the original wording.
 - Cap each federated source's contribution after deduplication and before ranking.
 - Default: 40% of `--limit` on federated pools with at least three surviving primary sources.
 - `0` uses the default cap; setting it equal to `--limit` disables capping.
@@ -342,6 +343,7 @@ Worked examples:
 - `--pdf` requires the `fulltext` section and is rejected for other article requests.
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
 - Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
+- Direct and compatible federated PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally; query echoes and non-PubMed sources keep the original wording.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
 - `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.
 - `search article --type ...` on `--source all` uses Europe PMC + PubMed when PubMed-compatible filters are selected, and collapses to Europe PMC-only when `--open-access` or `--no-preprints` makes PubMed ineligible.
@@ -1327,6 +1329,9 @@ mod tests {
         assert!(article.contains("--max-per-source <N>"));
         assert!(article.contains("--session <token>"));
         assert!(article.contains("search article --source litsense2"));
+        assert!(article.contains(
+            "Direct and compatible federated PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally"
+        ));
         assert!(article.contains("60% post-stopword term overlap"));
         assert!(article.contains("Use a short non-identifying token such as `lit-review-1`"));
         assert!(article.contains("keyword-bearing article queries default to hybrid"));

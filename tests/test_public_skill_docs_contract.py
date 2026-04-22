@@ -231,6 +231,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "PMC-only note" in article_guide
     assert "LitSense2-derived semantic signal" in article_guide
     assert "Rows without LitSense2 provenance contribute `ranking.semantic_score = 0`" in article_guide
+    assert "PubMed ESearch cleans bounded filler words" in article_guide
     assert "MeSH/title/abstract" not in article_guide
     assert (
         "Put a known gene, disease, or drug in `-g/--gene`, `-d/--disease`, or `--drug`."
@@ -252,6 +253,7 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "Europe PMC-only with an explicit note" in find_articles
     assert "LitSense2-derived" in find_articles
     assert "semantic=0" in find_articles
+    assert "question-format cleanup before ESearch" in find_articles
     assert "MeSH/title/abstract" not in find_articles
     assert "Do not guess `-g`, `-d`, or `--drug`" in find_articles
     assert 'biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5' in find_articles
@@ -259,6 +261,8 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "On the default `--source all` route, adding `-k/--keyword` also brings LitSense2" in keyword_reference
     assert "LitSense2-derived semantic signal" in keyword_reference
     assert "semantic=0" in keyword_reference
+    assert "PubMed-specific behavior" in keyword_reference
+    assert "Semantic Scholar keep their existing query" in keyword_reference
     assert "do not guess a disease or drug name" in keyword_reference
     assert (
         'biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5'

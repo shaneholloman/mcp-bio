@@ -22,6 +22,10 @@ biomcp search article -k '"cafe-au-lait spots" neurofibromas disease' --type rev
 Do not guess `-g`, `-d`, or `--drug` when the question is trying to identify
 the entity itself. Keep the first search keyword-only, or start with
 `biomcp discover "<question>"` if you want a typed follow-up command first.
+Question-format terms can stay in the article filters: PubMed ESearch cleans
+bounded filler words from unfielded gene, disease, drug, and keyword terms
+provider-locally, while query echoes and non-PubMed sources keep the original
+wording.
 
 If the whole keyword exactly matches a gene, drug, or disease vocabulary label
 or alias, keyword-only article search may return a typed `get` suggestion in
@@ -88,6 +92,10 @@ deduplication. Use `--max-per-source <N>` to override that cap, use
 ```bash
 biomcp search article -g BRAF --source pubmed --limit 5
 ```
+
+Direct PubMed search and the compatible federated PubMed leg apply the same
+question-format cleanup before ESearch, so a keyword question can still echo
+as written while PubMed receives content terms.
 
 ## Add disease context
 
