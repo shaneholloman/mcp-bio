@@ -395,9 +395,20 @@ mod tests {
         let previous = terms(&["dx", "oncotype"]);
         let overlapping = terms(&["dcis", "dx", "oncotype"]);
         let disjoint = terms(&["mtor", "signaling"]);
+        let exact_threshold_previous = terms(&["a", "b", "c"]);
+        let exact_threshold_current = terms(&["a", "b", "c", "d", "e"]);
+        let below_threshold_current = terms(&["a", "b", "d", "e", "f"]);
 
         assert!(overlap_score(&previous, &overlapping) >= 0.60);
         assert!(overlap_score(&previous, &disjoint) < 0.60);
+        assert_eq!(
+            overlap_score(&exact_threshold_previous, &exact_threshold_current),
+            0.60
+        );
+        assert!(
+            overlap_score(&exact_threshold_previous, &below_threshold_current) < 0.60,
+            "overlap below the threshold must not trigger"
+        );
         assert_eq!(overlap_score(&BTreeSet::new(), &overlapping), 0.0);
     }
 
@@ -506,6 +517,147 @@ mod tests {
     }
 
     #[test]
+    fn empty_normalized_keyword_resets_baseline_without_loop_suggestions() {
+        let root = crate::test_support::TempDirGuard::new("article-session-empty-keyword");
+        let pmids = strings(&["22663011"]);
+        let next_commands = strings(&[
+            "biomcp search article -k \"Oncotype DX DCIS study\" --year-min 2025 --year-max 2025 --limit 5",
+        ]);
+
+        assert!(
+            record_success_and_suggestions(
+                root.path(),
+                search(
+                    "lit-review-1",
+                    Some("Oncotype DX review paper"),
+                    &pmids,
+                    &[],
+                    1_000,
+                ),
+            )
+            .is_empty()
+        );
+        assert!(
+            record_success_and_suggestions(
+                root.path(),
+                search(
+                    "lit-review-1",
+                    Some("the and review articles literature"),
+                    &pmids,
+                    &[],
+                    1_030,
+                ),
+            )
+            .is_empty(),
+            "post-stopword-empty searches should emit no suggestions"
+        );
+        assert!(
+            record_success_and_suggestions(
+                root.path(),
+                search(
+                    "lit-review-1",
+                    Some("Oncotype DX DCIS study"),
+                    &pmids,
+                    &next_commands,
+                    1_060,
+                ),
+            )
+            .is_empty(),
+            "empty baseline should prevent a later overlap trigger"
+        );
+    }
+
+    #[test]
+    fn unavailable_loop_ladder_rungs_are_omitted() {
+        let root = crate::test_support::TempDirGuard::new("article-session-omit-rungs");
+        let no_pmids = Vec::new();
+        let current_pmids = strings(&["39073865"]);
+        let next_commands = strings(&["biomcp get article 39073865", "biomcp list article"]);
+
+        assert!(
+            record_success_and_suggestions(
+                root.path(),
+                search(
+                    "lit-review-1",
+                    Some("Oncotype DX review paper"),
+                    &no_pmids,
+                    &[],
+                    1_000,
+                ),
+            )
+            .is_empty()
+        );
+
+        let suggestions = record_success_and_suggestions(
+            root.path(),
+            search(
+                "lit-review-1",
+                Some("Oncotype DX DCIS study"),
+                &current_pmids,
+                &next_commands,
+                1_030,
+            ),
+        );
+        let commands = suggestions
+            .iter()
+            .map(|suggestion| suggestion.command.as_str())
+            .collect::<Vec<_>>();
+        assert_eq!(commands, vec!["biomcp discover \"Oncotype DX DCIS study\""]);
+    }
+
+    #[test]
+    fn lock_contention_fails_open_without_rewriting_existing_baseline() {
+        let root = crate::test_support::TempDirGuard::new("article-session-lock-contention");
+        let pmids = strings(&["22663011"]);
+        assert!(
+            record_success_and_suggestions(
+                root.path(),
+                search(
+                    "lit-review-1",
+                    Some("Oncotype DX review paper"),
+                    &pmids,
+                    &[],
+                    1_000,
+                ),
+            )
+            .is_empty()
+        );
+
+        let lock = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(lock_path(root.path()))
+            .expect("open lock");
+        lock.lock_exclusive().expect("hold session store lock");
+
+        let suggestions = record_success_and_suggestions(
+            root.path(),
+            search(
+                "lit-review-1",
+                Some("Oncotype DX DCIS study"),
+                &pmids,
+                &[],
+                1_030,
+            ),
+        );
+        assert!(
+            suggestions.is_empty(),
+            "store lock contention should fail open"
+        );
+        lock.unlock().expect("release session store lock");
+
+        let contents =
+            std::fs::read_to_string(store_path(root.path())).expect("store should still exist");
+        let value: serde_json::Value = serde_json::from_str(&contents).expect("store should parse");
+        assert_eq!(
+            value["sessions"]["lit-review-1"]["keyword"],
+            serde_json::Value::String("Oncotype DX review paper".into())
+        );
+    }
+
+    #[test]
     fn malformed_store_recovers_as_empty_and_writes_valid_json() {
         let root = crate::test_support::TempDirGuard::new("article-session-malformed");
         let path = store_path(root.path());
@@ -543,7 +695,13 @@ mod tests {
             assert!(
                 record_success_and_suggestions(
                     root.path(),
-                    search(&token, Some("Oncotype DX review paper"), &pmids, &[], 1_000),
+                    search(
+                        &token,
+                        Some("Oncotype DX review paper"),
+                        &pmids,
+                        &[],
+                        1_000 + index / 4,
+                    ),
                 )
                 .is_empty()
             );
@@ -557,6 +715,8 @@ mod tests {
             .expect("sessions should be an object");
         assert_eq!(sessions.len(), 1_024);
         assert!(!sessions.contains_key("loop-0000"));
+        assert!(!sessions.contains_key("loop-0005"));
+        assert!(sessions.contains_key("loop-0006"));
         assert!(sessions.contains_key("loop-1029"));
     }
 }

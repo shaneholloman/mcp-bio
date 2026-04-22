@@ -101,36 +101,40 @@ pub(super) fn shell_quote_arg(value: &str) -> String {
         return String::new();
     }
 
-    let quoted = quote_arg(trimmed);
-    if quoted != trimmed {
-        return quoted;
-    }
-
-    if trimmed.chars().any(|ch| {
-        matches!(
-            ch,
-            '"' | '\''
-                | '\\'
-                | '$'
-                | '`'
-                | '|'
-                | '&'
-                | ';'
-                | '<'
-                | '>'
-                | '('
-                | ')'
-                | '['
-                | ']'
-                | '{'
-                | '}'
-                | '*'
-                | '?'
-                | '!'
-                | '#'
-        )
-    }) {
-        return format!("\"{}\"", trimmed.replace('\\', "\\\\").replace('"', "\\\""));
+    let needs_quotes = trimmed.chars().any(|ch| {
+        ch.is_whitespace()
+            || matches!(
+                ch,
+                '"' | '\''
+                    | '\\'
+                    | '$'
+                    | '`'
+                    | '|'
+                    | '&'
+                    | ';'
+                    | '<'
+                    | '>'
+                    | '('
+                    | ')'
+                    | '['
+                    | ']'
+                    | '{'
+                    | '}'
+                    | '*'
+                    | '?'
+                    | '!'
+                    | '#'
+            )
+    });
+    if needs_quotes {
+        let escaped = trimmed.chars().fold(String::new(), |mut out, ch| {
+            if matches!(ch, '\\' | '"' | '$' | '`') {
+                out.push('\\');
+            }
+            out.push(ch);
+            out
+        });
+        return format!("\"{escaped}\"");
     }
 
     trimmed.to_string()
