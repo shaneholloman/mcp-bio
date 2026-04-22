@@ -11,7 +11,98 @@ EXPECTED_SLUGS = [
     "symptom-phenotype",
     "gene-disease-orientation",
     "article-follow-up",
+    "variant-pathogenicity",
+    "drug-regulatory",
+    "gene-function-localization",
+    "mechanism-pathway",
+    "trial-recruitment",
+    "pharmacogene-cumulative",
+    "disease-locus-mapping",
+    "cellular-process-regulation",
+    "mutation-catalog",
+    "syndrome-disambiguation",
+    "negative-evidence",
 ]
+NEW_PLAYBOOK_SLUGS = EXPECTED_SLUGS[4:]
+EXPECTED_PLAYBOOK_MARKERS = {
+    "variant-pathogenicity": [
+        "# Pattern: Variant pathogenicity evidence",
+        'biomcp get variant "BRAF V600E" clinvar predictions population',
+        'biomcp get variant "BRAF V600E" civic cgi',
+        'biomcp variant trials "BRAF V600E" --limit 5',
+        'biomcp variant articles "BRAF V600E" --limit 5',
+    ],
+    "drug-regulatory": [
+        "# Pattern: Drug regulatory and approval evidence",
+        'biomcp search drug "Gliolan" --region eu --limit 5',
+        'biomcp get drug "5-aminolevulinic acid" regulatory --region eu',
+        'biomcp get drug "5-aminolevulinic acid" approvals',
+        'biomcp search article --drug "5-aminolevulinic acid" -k glioma --type review --limit 5',
+    ],
+    "gene-function-localization": [
+        "# Pattern: Gene function and localization",
+        "biomcp get gene OPA1 protein hpa",
+        "biomcp get gene OPA1 ontology",
+        "biomcp gene pathways OPA1 --limit 5",
+        'biomcp search article -g OPA1 -k "mitochondrial intermembrane space localization" --type review --limit 5',
+    ],
+    "mechanism-pathway": [
+        "# Pattern: Mechanism and pathway orientation",
+        "biomcp search drug imatinib --limit 5",
+        "biomcp get drug imatinib targets regulatory",
+        "biomcp get gene ABL1 pathways protein",
+        'biomcp search article --drug imatinib -g ABL1 -d "chronic myeloid leukemia" --type review --limit 5',
+    ],
+    "trial-recruitment": [
+        "# Pattern: Trial recruitment check",
+        'biomcp search disease "tick-borne encephalitis" --limit 5',
+        "biomcp get disease MONDO:0017572",
+        'biomcp search trial -c "tick-borne encephalitis" --status recruiting --limit 5',
+        'biomcp search article -d "tick-borne encephalitis" --type review --limit 5',
+    ],
+    "pharmacogene-cumulative": [
+        "# Pattern: Pharmacogene cumulative evidence",
+        "biomcp search pgx -d warfarin --limit 10",
+        "biomcp get pgx warfarin recommendations annotations",
+        'biomcp search article --drug warfarin -k "CYP2C9 VKORC1 dose response" --limit 10',
+        "biomcp article batch 17048007 19794411 19958090",
+    ],
+    "disease-locus-mapping": [
+        "# Pattern: Disease locus and chromosome mapping",
+        'biomcp search article -k "Arnold Chiari syndrome chromosome" --type review --limit 10',
+        "biomcp article batch 39309470 17103432 12210325",
+        'biomcp search article -k "\\"Arnold Chiari\\" deletion duplication trisomy chromosome" --limit 10',
+        "biomcp article batch 12522795 15742475 29410707",
+    ],
+    "cellular-process-regulation": [
+        "# Pattern: Cellular process regulation",
+        "biomcp get gene NANOG",
+        "biomcp get gene NANOG ontology",
+        "biomcp gene pathways NANOG --limit 5",
+        'biomcp search article -g NANOG -k "cell cycle G1 S transition" --limit 5',
+    ],
+    "mutation-catalog": [
+        "# Pattern: Mutation catalog for one gene and disease",
+        "biomcp get gene PLN",
+        "biomcp search variant -g PLN --limit 10",
+        "biomcp search variant -g PLN --hgvsp L39X --limit 5",
+        "biomcp search article -g PLN -d cardiomyopathy --type review --limit 10",
+    ],
+    "syndrome-disambiguation": [
+        "# Pattern: Syndrome name disambiguation",
+        'biomcp search disease "Goldberg-Shprintzen syndrome" --limit 5',
+        "biomcp get disease MONDO:0012280 phenotypes",
+        'biomcp search disease "Shprintzen-Goldberg syndrome" --limit 5',
+        'biomcp search article -k "\\"Goldberg-Shprintzen\\" \\"Shprintzen-Goldberg\\"" --type review --limit 5',
+    ],
+    "negative-evidence": [
+        "# Pattern: Negative evidence and no-association checks",
+        'biomcp search article -k "\\"Borna disease virus\\" \\"brain tumor\\"" --type review --limit 5',
+        'biomcp search disease "Borna disease" --limit 5',
+        'biomcp search article -k "\\"Borna disease virus\\" glioma association" --limit 5',
+        'biomcp search article -k "\\"Notch\\" CADASIL Pick prion neurodegenerative" --type review --limit 5',
+    ],
+}
 REMOVED_ACTIVE_SLUGS = [
     "variant-to-treatment",
     "drug-investigation",
@@ -46,6 +137,22 @@ def _listed_slugs(*args: str) -> list[str]:
     return re.findall(r"^\d{2} ([a-z0-9-]+) -", listing, flags=re.MULTILINE)
 
 
+def _use_case_path(slug: str) -> Path:
+    matches = sorted((REPO_ROOT / "skills" / "use-cases").glob(f"[0-9][0-9]-{slug}.md"))
+    assert len(matches) == 1, f"expected one use-case file for {slug}, found {matches}"
+    return matches[0]
+
+
+def _read_use_case(slug: str) -> str:
+    return _use_case_path(slug).read_text(encoding="utf-8")
+
+
+def _bash_block(markdown: str) -> str:
+    assert markdown.count("```bash") == 1
+    assert markdown.count("```") == 2
+    return markdown.split("```bash\n", 1)[1].split("\n```", 1)[0]
+
+
 def test_skill_prompt_render_install_and_slug_surfaces_match(tmp_path: Path) -> None:
     overview_stdout = _run_bytes("skill")
     render_stdout = _run_bytes("skill", "render")
@@ -77,14 +184,39 @@ def test_skill_prompt_render_install_and_slug_surfaces_match(tmp_path: Path) -> 
     assert slugs == EXPECTED_SLUGS
     assert _listed_slugs("list", "skill") == slugs
     for slug in slugs:
+        expected = _read_use_case(slug) + "\n"
         body = _run_text("skill", slug)
-        assert body.strip()
-        assert body.startswith("# ")
+        assert body == expected
 
     installed_use_case_slugs = [
         path.stem[3:] for path in sorted((installed_root / "use-cases").glob("[0-9][0-9]-*.md"))
     ]
     assert installed_use_case_slugs == slugs
+
+    assert _run_text("skill", "05") == _read_use_case("variant-pathogenicity") + "\n"
+    assert _run_text("skill", "mutation", "catalog") == _read_use_case("mutation-catalog") + "\n"
+
+    for slug, markers in EXPECTED_PLAYBOOK_MARKERS.items():
+        body = _read_use_case(slug)
+        for marker in markers:
+            assert marker in body
+
+    for slug in NEW_PLAYBOOK_SLUGS:
+        body = _read_use_case(slug)
+        physical_lines = body.splitlines()
+        assert 15 <= len(physical_lines) <= 30
+
+        lines_after_h1 = body.splitlines()[1:]
+        first_description = next(line.strip() for line in lines_after_h1 if line.strip())
+        assert first_description.startswith("Use this when")
+
+        commands = [line.strip() for line in _bash_block(body).splitlines() if line.strip()]
+        assert 3 <= len(commands) <= 4
+        for command in commands:
+            assert command.startswith("biomcp ")
+
+        interpretation_bullets = re.findall(r"^- ", body, flags=re.MULTILINE)
+        assert 3 <= len(interpretation_bullets) <= 5
 
     examples_readme = (REPO_ROOT / "examples" / "README.md").read_text(encoding="utf-8")
     listing = _run_text("skill", "list")

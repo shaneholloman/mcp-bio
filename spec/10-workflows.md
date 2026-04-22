@@ -11,7 +11,7 @@ catalog listing, opening numbered or slugged examples, and install byte parity.
 | Install parity | `biomcp skill install <dir> --force` | Confirms installed `SKILL.md` is byte-identical to redirected render stdout |
 | List worked examples | `biomcp skill list` | Confirms the embedded catalog is populated |
 | Open numeric example | `biomcp skill 01` | Confirms numbered use-cases still resolve |
-| Open slug example | `biomcp skill article-follow-up` | Confirms slug lookups open the expected markdown |
+| Open slug example | `biomcp skill variant-pathogenicity` | Confirms slug lookups open the expected markdown |
 
 ## Skill Overview
 
@@ -83,6 +83,17 @@ echo "$out" | mustmatch like "01 treatment-lookup"
 echo "$out" | mustmatch like "02 symptom-phenotype"
 echo "$out" | mustmatch like "03 gene-disease-orientation"
 echo "$out" | mustmatch like "04 article-follow-up"
+echo "$out" | mustmatch like "05 variant-pathogenicity"
+echo "$out" | mustmatch like "06 drug-regulatory"
+echo "$out" | mustmatch like "07 gene-function-localization"
+echo "$out" | mustmatch like "08 mechanism-pathway"
+echo "$out" | mustmatch like "09 trial-recruitment"
+echo "$out" | mustmatch like "10 pharmacogene-cumulative"
+echo "$out" | mustmatch like "11 disease-locus-mapping"
+echo "$out" | mustmatch like "12 cellular-process-regulation"
+echo "$out" | mustmatch like "13 mutation-catalog"
+echo "$out" | mustmatch like "14 syndrome-disambiguation"
+echo "$out" | mustmatch like "15 negative-evidence"
 echo "$out" | mustmatch not like "variant-to-treatment"
 echo "$out" | mustmatch not like "drug-investigation"
 echo "$out" | mustmatch not like "gene-function-lookup"
@@ -100,16 +111,21 @@ out="$(biomcp skill 01)"
 echo "$out" | mustmatch like "# Pattern: Treatment / approved-drug lookup"
 echo "$out" | mustmatch like 'biomcp search drug --indication "myasthenia gravis" --limit 5'
 echo "$out" | mustmatch like "biomcp get drug pyridostigmine"
+
+out="$(biomcp skill 05)"
+echo "$out" | mustmatch like "# Pattern: Variant pathogenicity evidence"
+echo "$out" | mustmatch like 'biomcp get variant "BRAF V600E" clinvar predictions population'
+echo "$out" | mustmatch like 'biomcp variant trials "BRAF V600E" --limit 5'
 ```
 
 ## Viewing a Skill by Slug
 
 Slug addressing should open the matching worked example and preserve the
-citation/recommendation workflow commands.
+variant evidence workflow commands.
 
 ```bash
-out="$(biomcp skill article-follow-up)"
-echo "$out" | mustmatch like "# Pattern: Article follow-up via citations and recommendations"
-echo "$out" | mustmatch like "biomcp article citations 22663011 --limit 5"
-echo "$out" | mustmatch like "biomcp article recommendations 22663011 --limit 5"
+out="$(biomcp skill variant-pathogenicity)"
+echo "$out" | mustmatch like "# Pattern: Variant pathogenicity evidence"
+echo "$out" | mustmatch like 'biomcp get variant "BRAF V600E" civic cgi'
+echo "$out" | mustmatch like 'biomcp variant articles "BRAF V600E" --limit 5'
 ```
