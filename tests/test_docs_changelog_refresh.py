@@ -290,6 +290,58 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
     assert diagnostic_arch.startswith("# Diagnostic Functional Note")
     assert "minimum-length" in diagnostic_arch
     assert "word/phrase boundary match" in diagnostic_arch
+    assert "## Disease Diagnostic Pivot Contract" in diagnostic_arch
+    diagnostic_pivot_contract = _markdown_section_block(
+        diagnostic_arch, "## Disease Diagnostic Pivot Contract"
+    )
+    diagnostic_pivot_contract_text = re.sub(r"\s+", " ", diagnostic_pivot_contract)
+    for expected in (
+        "`get disease <name_or_id> diagnostics`",
+        "opt-in only",
+        "excluded from `all`",
+        "`disease_query_value()`",
+        "`source=All`",
+        "`limit=10`",
+        "`offset=0`",
+        "at least three alphanumeric characters",
+        "word/phrase boundary matching",
+        "No MONDO/OLS traversal",
+        "synonym expansion",
+        "The top hit is only the first row",
+        "deterministic ordering",
+        "normalized diagnostic display name",
+        "accession",
+        "10-row cap",
+        "40 KB ceiling",
+        "`DiagnosticSearchResult`",
+        "`Genes` and `Conditions`",
+        "five values",
+        "JSON keeps the full arrays",
+        "`get diagnostic <id>`",
+        "true no-match",
+        "`diagnostics = Some(Vec::new())`",
+        "`diagnostics = None`",
+        "local diagnostic data unavailable",
+        "source-level dedupe",
+        "no cross-source diagnostic-row dedupe",
+        "read-only",
+        "MCP-safe",
+        "shell-quoted",
+        "`search diagnostic --disease ... --source all --limit 50`",
+        "`spec/07-disease.md`",
+        "`spec/17-cross-entity-pivots.md`",
+        "`spec/21-cross-entity-see-also.md`",
+        "`spec/24-diagnostic.md`",
+        "`src/entities/diagnostic/mod.rs::search_page_rejects_short_disease_filter`",
+        "`src/entities/diagnostic/mod.rs::search_page_disease_filter_requires_word_boundary`",
+        "`src/entities/diagnostic/mod.rs::search_page_all_source_uses_unknown_total_when_both_sources_match`",
+        "`src/entities/disease/enrichment/tests.rs::disease_diagnostics_section_populates_from_who_fixture`",
+        "`src/entities/disease/enrichment/tests.rs::disease_diagnostics_unavailable_sets_note`",
+        "`src/entities/disease/get/tests.rs::disease_parse_sections_all_keeps_diagnostics_opt_in`",
+        "`src/render/markdown/disease/tests/rendering.rs::disease_markdown_renders_diagnostics_note_then_shell_safe_search_command`",
+        "`src/render/markdown/diagnostic/tests.rs::diagnostic_search_rows_caps_genes_and_conditions_with_overflow_marker`",
+    ):
+        assert expected in diagnostic_pivot_contract_text
     assert "The disease diagnostic card is capped at 10 rows" in disease_guide
     assert (
         "biomcp search diagnostic --disease tuberculosis --source all --limit 50"
