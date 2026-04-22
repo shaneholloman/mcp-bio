@@ -398,6 +398,9 @@ pub async fn run(cli: Cli) -> anyhow::Result<String> {
                 Some(crate::cli::skill::SkillCommand::List) => {
                     Ok(crate::cli::skill::list_use_cases()?)
                 }
+                Some(crate::cli::skill::SkillCommand::Render) => {
+                    Ok(crate::cli::skill::render_system_prompt()?)
+                }
                 Some(crate::cli::skill::SkillCommand::Install { dir, force }) => {
                     Ok(crate::cli::skill::install_skills(dir.as_deref(), force)?)
                 }

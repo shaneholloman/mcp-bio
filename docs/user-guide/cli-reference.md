@@ -56,6 +56,7 @@ biomcp study survival --study <id> --gene <symbol> [--endpoint <os|dfs|pfs|dss>]
 biomcp study compare --study <id> --gene <symbol> --type <expression|mutations> --target <symbol>
 biomcp study co-occurrence --study <id> --genes <g1,g2,...>
 biomcp skill
+biomcp skill render
 biomcp skill install [dir]
 biomcp skill list                 # list embedded worked examples
 biomcp mcp

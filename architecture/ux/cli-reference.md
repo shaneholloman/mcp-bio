@@ -23,6 +23,7 @@ biomcp version                → show version and build info
 biomcp update [--check]       → self-update or check for updates
 biomcp list [entity]          → show entities, commands, and filters
 biomcp skill                  → show the embedded BioMCP agent guide
+biomcp skill render           → print the canonical agent prompt
 biomcp skill install <dir>    → install the BioMCP guide into an agent directory
 biomcp skill list             → list embedded worked examples
 biomcp cache path             → print the managed HTTP cache path (plain text; ignores `--json`)
@@ -266,6 +267,8 @@ from the current output.
 ## Skills Quick Reference
 
 Overview: `biomcp skill` (prints the embedded `SKILL.md` guide)
+
+Render: `biomcp skill render`
 
 Install: `biomcp skill install ~/.claude --force`
 

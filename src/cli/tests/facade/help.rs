@@ -13,8 +13,10 @@ fn skill_help_examples_match_installed_surface() {
     let help = String::from_utf8(help).expect("help should be utf-8");
 
     assert!(help.contains("biomcp skill            # show skill overview"));
+    assert!(help.contains("biomcp skill render     # print canonical agent prompt"));
     assert!(help.contains("biomcp skill install    # install skill to your agent config"));
     assert!(help.contains("Commands:\n  list"));
+    assert!(help.contains("render"));
     assert!(!help.contains("biomcp skill 03"));
     assert!(!help.contains("variant-to-treatment"));
 }

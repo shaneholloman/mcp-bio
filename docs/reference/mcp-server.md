@@ -116,10 +116,10 @@ assert 'annotations(title = "BioMCP", read_only_hint = true)' in shell
 
 ## Read-only Allowlist
 
-The MCP `biomcp` tool accepts read-only CLI commands, including `discover`
-and the exact `study download --list` catalog lookup. Mutating commands
-remain blocked. Cache-family commands such as `cache path`, `cache stats`,
-`cache clean`, and `cache clear` are also rejected because they reveal workstation-local paths and filesystem context.
+The MCP `biomcp` tool accepts read-only CLI commands, including `discover`,
+`biomcp skill render`, and the exact `study download --list` catalog lookup.
+Mutating commands remain blocked. Cache-family commands such as `cache path`,
+`cache stats`, `cache clean`, and `cache clear` are also rejected because they reveal workstation-local paths and filesystem context.
 In particular, `study download <study_id>` and `gtr sync` are rejected because installation
 performs network and filesystem writes into the local study directory;
 operators should run study installs and local-runtime refresh commands directly via the CLI, outside MCP.
@@ -134,6 +134,7 @@ assert '"discover" => true' in shell or '| "discover" => true' in shell
 assert '"study" => {' in shell
 assert '"download" => args.len() == 4 && args[3] == "--list"' in shell
 assert "discover/skill" in shell or "discover/skill)." in shell
+assert '"render".into()' in shell
 assert 'assert "study download --list" in description' in tests
 assert 'test_mutating_study_download_is_rejected_in_mcp_mode' in tests
 assert 'test_gtr_sync_is_rejected_in_mcp_mode' in tests
@@ -145,7 +146,9 @@ assert '"workstation-local filesystem paths" in result.content[0].text' in tests
 
 ## Resource Catalog
 
-Current builds always publish the help resource and one markdown resource per embedded skill use-case:
+Current builds always publish the help resource and one markdown resource per embedded skill use-case. The help resource is the canonical prompt body, the
+same in-memory text returned by `biomcp skill render` over MCP. It does not
+contain repo-relative prompt links.
 
 | URI | Name | Notes |
 |-----|------|-------|
@@ -168,6 +171,7 @@ assert list(use_cases_dir.glob("*.md"))
 ## Resource Read Mapping
 
 - `biomcp://help` maps to `show_overview()`.
+- `biomcp skill render` maps to the same canonical prompt body.
 - `biomcp://skill/<slug>` maps to `show_use_case(<slug>)` when an embedded
   worked example exists.
 - All successful reads return `text/markdown`.
@@ -178,6 +182,7 @@ from pathlib import Path
 repo_root = Path.cwd()
 shell = (repo_root / "src/mcp/shell.rs").read_text()
 assert "show_overview()" in shell
+assert "render_system_prompt()" in shell
 assert 'if let Some(slug) = uri.strip_prefix("biomcp://skill/")' in shell
 assert "show_use_case(slug)" in shell
 assert 'with_mime_type("text/markdown")' in shell

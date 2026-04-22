@@ -74,14 +74,17 @@ What it adds:
 ## Skills Surface
 
 BioMCP ships an embedded agent guide plus worked examples. `biomcp skill`
-prints the embedded `skills/SKILL.md` overview, `biomcp skill list` shows
-embedded worked examples, and `biomcp skill <name>` opens an embedded worked
-example by number or slug. `biomcp skill install <dir>` exports that guide,
-the `use-cases/` catalog, and supporting references into an agent directory.
+prints the embedded `skills/SKILL.md` overview, `biomcp skill render` prints
+the same canonical agent prompt for script and eval consumers,
+`biomcp skill list` shows embedded worked examples, and `biomcp skill <name>`
+opens an embedded worked example by number or slug. `biomcp skill install
+<dir>` exports that guide, the `use-cases/` catalog, and supporting references
+into an agent directory.
 
 The current runtime contract is:
 
 - `biomcp skill` shows the BioMCP agent guide
+- `biomcp skill render` prints the canonical agent prompt
 - `biomcp skill list` shows embedded worked examples
 - `biomcp skill <name>` opens an embedded worked example
 - `biomcp skill install <dir>` installs that guide into `skills/biomcp/`

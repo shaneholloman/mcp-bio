@@ -201,6 +201,11 @@ async def test_streamable_http_lists_and_reads_help_and_skill_resources(
                     assert str(content.uri) == uri
                     assert _mime_type(content) == "text/markdown"
                     assert content.text.strip()
+                    if uri == "biomcp://help":
+                        assert "## Routing rules" in content.text
+                        assert "## How-to reference" in content.text
+                        assert "../docs/" not in content.text
+                        assert ".md)" not in content.text
 
 
 @pytest.mark.asyncio

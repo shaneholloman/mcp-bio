@@ -5,6 +5,7 @@ examples for agent workflows. The current workflow is:
 
 ```bash
 biomcp skill
+biomcp skill render
 biomcp skill list
 biomcp skill article-follow-up
 biomcp skill install ~/.claude
@@ -15,6 +16,10 @@ biomcp skill install ~/.claude
 `biomcp skill` prints the embedded `skills/SKILL.md` overview. Start there if
 you want the current BioMCP workflow guidance without installing anything into
 an agent directory.
+
+`biomcp skill render` prints the same canonical agent-facing prompt for
+scripts and eval runners. Redirected output from `biomcp skill render` is the
+same content installed as `SKILL.md`.
 
 ## Learn the workflows
 
