@@ -5,6 +5,11 @@ typed BioMCP surfaces directly from normal output. Agents learn the right next
 call from output context, not from proactively reading help — so every card and
 empty-state must surface the structured path directly.
 
+Workflow ladders are intentionally separate from these one-hop hints. When a
+first-call JSON response emits `_meta.workflow` and `_meta.ladder[]`, those
+fields identify a static multi-step playbook path; `_meta.next_commands` still
+describes dynamic next commands for the current result.
+
 | Section | Command focus | Why it matters |
 |---|---|---|
 | Drug to PGx | `get drug warfarin` | Teaches the structured PGx surface from a drug card |

@@ -1,11 +1,23 @@
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 from pathlib import Path
 
+import jsonschema
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RELEASE_BIN = REPO_ROOT / "target" / "release" / "biomcp"
+LADDER_WORKFLOW_SLUGS = [
+    "treatment-lookup",
+    "article-follow-up",
+    "variant-pathogenicity",
+    "trial-recruitment",
+    "mechanism-pathway",
+    "pharmacogene-cumulative",
+    "mutation-catalog",
+]
 EXPECTED_SLUGS = [
     "treatment-lookup",
     "symptom-phenotype",
@@ -153,6 +165,10 @@ def _bash_block(markdown: str) -> str:
     return markdown.split("```bash\n", 1)[1].split("\n```", 1)[0]
 
 
+def _bash_commands(markdown: str) -> list[str]:
+    return [line.strip() for line in _bash_block(markdown).splitlines() if line.strip()]
+
+
 def test_skill_prompt_render_install_and_slug_surfaces_match(tmp_path: Path) -> None:
     overview_stdout = _run_bytes("skill")
     render_stdout = _run_bytes("skill", "render")
@@ -226,3 +242,70 @@ def test_skill_prompt_render_install_and_slug_surfaces_match(tmp_path: Path) -> 
         assert removed not in list_skill_listing
         assert removed not in prompt
         assert removed not in examples_readme
+
+
+def test_workflow_ladder_sidecars_match_schema_and_playbooks() -> None:
+    schema_path = REPO_ROOT / "skills" / "schemas" / "workflow-ladder.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sidecars = sorted((REPO_ROOT / "skills" / "use-cases").glob("*.ladder.json"))
+
+    assert [path.stem.removesuffix(".ladder") for path in sidecars] == sorted(
+        LADDER_WORKFLOW_SLUGS
+    )
+
+    for path in sidecars:
+        slug = path.stem.removesuffix(".ladder")
+        sidecar = json.loads(path.read_text(encoding="utf-8"))
+        jsonschema.validate(sidecar, schema)
+
+        assert sidecar["workflow"] == slug
+        assert path.name == f"{sidecar['workflow']}.ladder.json"
+        assert sidecar["playbook"] == f"biomcp skill {slug}"
+
+        playbook = _use_case_path(slug)
+        assert playbook.name.endswith(f"-{slug}.md")
+        playbook_commands = _bash_commands(playbook.read_text(encoding="utf-8"))
+        ladder = sidecar["ladder"]
+        assert isinstance(ladder, list)
+        assert [step["step"] for step in ladder] == list(range(1, len(ladder) + 1))
+        assert [step["command"] for step in ladder] == playbook_commands
+
+        for step in ladder:
+            assert step["what_it_gives"].strip()
+            assert not re.search(r"<[^>]+>", step["command"])
+
+
+def test_installed_output_schemas_allow_workflow_ladder_meta() -> None:
+    for schema_path in sorted((REPO_ROOT / "skills" / "schemas").glob("*.json")):
+        if schema_path.name == "workflow-ladder.schema.json":
+            continue
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        meta_properties = schema["properties"]["_meta"]["properties"]
+        assert "workflow" in meta_properties
+        assert "ladder" in meta_properties
+        assert meta_properties["ladder"]["items"]["required"] == [
+            "step",
+            "command",
+            "what_it_gives",
+        ]
+
+
+def test_rust_sources_do_not_embed_workflow_ladder_commands() -> None:
+    commands: list[str] = []
+    for sidecar_path in sorted((REPO_ROOT / "skills" / "use-cases").glob("*.ladder.json")):
+        sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+        commands.extend(step["command"] for step in sidecar["ladder"])
+
+    offenders: list[str] = []
+    for rust_path in sorted((REPO_ROOT / "src").rglob("*.rs")):
+        relative = rust_path.relative_to(REPO_ROOT)
+        if rust_path.name == "tests.rs" or "tests" in rust_path.parts:
+            continue
+        if str(relative) in {"src/cli/article/mod.rs", "src/cli/commands.rs"}:
+            continue
+        text = rust_path.read_text(encoding="utf-8")
+        for command in commands:
+            if command in text:
+                offenders.append(f"{relative} embeds {command!r}")
+
+    assert offenders == []

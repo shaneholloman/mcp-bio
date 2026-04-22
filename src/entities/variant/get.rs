@@ -47,6 +47,11 @@ pub const VARIANT_SECTION_NAMES: &[&str] = &[
 
 const OPTIONAL_ENRICHMENT_TIMEOUT: Duration = Duration::from_secs(8);
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct VariantWorkflowSignals {
+    pub has_clinvar_signal: bool,
+}
+
 #[derive(Debug, Clone, Copy, Default)]
 struct VariantSections {
     include_prediction: bool,
@@ -517,16 +522,40 @@ fn strip_clinvar_details(variant: &mut Variant) {
 }
 
 pub async fn get(id: &str, sections: &[String]) -> Result<Variant, BioMcpError> {
+    Ok(get_with_workflow_signals(id, sections).await?.0)
+}
+
+fn has_clinvar_workflow_signal(variant: &Variant) -> bool {
+    variant
+        .clinvar_id
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+        || variant
+            .significance
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty())
+        || !variant.conditions.is_empty()
+        || !variant.clinvar_conditions.is_empty()
+        || variant.clinvar_condition_reports.is_some()
+}
+
+pub async fn get_with_workflow_signals(
+    id: &str,
+    sections: &[String],
+) -> Result<(Variant, VariantWorkflowSignals), BioMcpError> {
     let section_flags = parse_sections(sections)?;
     if is_gwas_only_request(&section_flags)
         && let VariantIdFormat::RsId(rsid) = parse_variant_id(id)?
     {
         let mut variant = gwas_only_variant_stub(&rsid);
         add_gwas_section(&mut variant, id).await?;
-        return Ok(variant);
+        return Ok((variant, VariantWorkflowSignals::default()));
     }
 
     let mut variant = get_base(id).await?;
+    let signals = VariantWorkflowSignals {
+        has_clinvar_signal: has_clinvar_workflow_signal(&variant),
+    };
 
     if !section_flags.include_clinvar {
         strip_clinvar_details(&mut variant);
@@ -570,7 +599,7 @@ pub async fn get(id: &str, sections: &[String]) -> Result<Variant, BioMcpError> 
         add_gwas_section(&mut variant, id).await?;
     }
 
-    Ok(variant)
+    Ok((variant, signals))
 }
 
 #[cfg(test)]

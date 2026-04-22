@@ -64,11 +64,21 @@ pub(crate) async fn handle_search(
     )
     .await?;
     if json {
+        let workflow = (filters
+            .indication
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty())
+            && drug_search_page_has_results(&page_with_region))
+        .then(|| {
+            crate::workflow_ladders::meta_for(crate::workflow_ladders::Workflow::TreatmentLookup)
+        })
+        .transpose()?;
         return drug_search_json(
             page_with_region,
             filters.query.as_deref(),
             args.offset,
             args.limit,
+            workflow,
         )
         .map(CommandOutcome::stdout);
     }
@@ -425,11 +435,13 @@ pub(super) async fn render_drug_card_outcome(
     {
         Ok(drug) => {
             let text = if json_output {
-                crate::render::json::to_entity_json(
+                let workflow = drug_pharmacogene_workflow(&drug, name).await?;
+                crate::render::json::to_entity_json_with_workflow(
                     &drug,
                     crate::render::markdown::drug_evidence_urls(&drug),
                     crate::render::markdown::related_drug(&drug),
                     crate::render::provenance::drug_section_sources(&drug),
+                    workflow,
                 )?
             } else {
                 crate::render::markdown::drug_markdown_with_region(
@@ -456,6 +468,48 @@ pub(super) async fn render_drug_card_outcome(
         }
         Err(err) => Err(err.into()),
     }
+}
+
+async fn drug_pharmacogene_workflow(
+    drug: &crate::entities::drug::Drug,
+    requested_name: &str,
+) -> Result<Option<crate::workflow_ladders::WorkflowMeta>, crate::error::BioMcpError> {
+    const CPIC_GENE_THRESHOLD: usize = 3;
+
+    let has_signal = match crate::workflow_ladders::probe_workflow(
+        crate::workflow_ladders::Workflow::PharmacogeneCumulative,
+        Box::pin(async {
+            let primary_count = crate::entities::pgx::distinct_actionable_cpic_gene_count_for_drug(
+                &drug.name,
+                CPIC_GENE_THRESHOLD,
+            )
+            .await?;
+            if primary_count >= CPIC_GENE_THRESHOLD {
+                return Ok(true);
+            }
+
+            let requested = requested_name.trim();
+            if requested.is_empty() || requested.eq_ignore_ascii_case(drug.name.trim()) {
+                return Ok(false);
+            }
+
+            let requested_count =
+                crate::entities::pgx::distinct_actionable_cpic_gene_count_for_drug(
+                    requested,
+                    CPIC_GENE_THRESHOLD,
+                )
+                .await?;
+            Ok(requested_count >= CPIC_GENE_THRESHOLD)
+        }),
+    )
+    .await?
+    {
+        crate::workflow_ladders::WorkflowProbeOutcome::Triggered(meta) => Some(meta),
+        crate::workflow_ladders::WorkflowProbeOutcome::NotTriggered
+        | crate::workflow_ladders::WorkflowProbeOutcome::Unavailable => None,
+    };
+
+    Ok(has_signal)
 }
 
 #[derive(serde::Serialize)]
@@ -496,11 +550,25 @@ pub(super) fn bucket_from_page<T: serde::Serialize>(
     }
 }
 
+fn drug_search_page_has_results(
+    page_with_region: &crate::entities::drug::DrugSearchPageWithRegion,
+) -> bool {
+    match page_with_region {
+        crate::entities::drug::DrugSearchPageWithRegion::Us(page) => !page.results.is_empty(),
+        crate::entities::drug::DrugSearchPageWithRegion::Eu(page) => !page.results.is_empty(),
+        crate::entities::drug::DrugSearchPageWithRegion::Who(page) => !page.results.is_empty(),
+        crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
+            !us.results.is_empty() || !eu.results.is_empty() || !who.results.is_empty()
+        }
+    }
+}
+
 pub(super) fn drug_search_json(
     page_with_region: crate::entities::drug::DrugSearchPageWithRegion,
     requested_name: Option<&str>,
     offset: usize,
     limit: usize,
+    workflow: Option<crate::workflow_ladders::WorkflowMeta>,
 ) -> anyhow::Result<String> {
     let response = match page_with_region {
         crate::entities::drug::DrugSearchPageWithRegion::Us(page) => {
@@ -516,7 +584,7 @@ pub(super) fn drug_search_json(
                     us: Some(bucket_from_page(page, offset, limit)),
                     ..Default::default()
                 },
-                _meta: crate::cli::search_meta(next_commands),
+                _meta: crate::cli::search_meta_with_workflow(next_commands, None, workflow.clone()),
             }
         }
         crate::entities::drug::DrugSearchPageWithRegion::Eu(page) => {
@@ -532,7 +600,7 @@ pub(super) fn drug_search_json(
                     eu: Some(bucket_from_page(page, offset, limit)),
                     ..Default::default()
                 },
-                _meta: crate::cli::search_meta(next_commands),
+                _meta: crate::cli::search_meta_with_workflow(next_commands, None, workflow.clone()),
             }
         }
         crate::entities::drug::DrugSearchPageWithRegion::Who(page) => {
@@ -548,7 +616,7 @@ pub(super) fn drug_search_json(
                     who: Some(bucket_from_page(page, offset, limit)),
                     ..Default::default()
                 },
-                _meta: crate::cli::search_meta(next_commands),
+                _meta: crate::cli::search_meta_with_workflow(next_commands, None, workflow.clone()),
             }
         }
         crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
@@ -565,7 +633,7 @@ pub(super) fn drug_search_json(
                     eu: Some(bucket_from_page(eu, offset, limit)),
                     who: Some(bucket_from_page(who, offset, limit)),
                 },
-                _meta: crate::cli::search_meta(next_commands),
+                _meta: crate::cli::search_meta_with_workflow(next_commands, None, workflow),
             }
         }
     };

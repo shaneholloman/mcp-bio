@@ -54,7 +54,8 @@ pub(in crate::cli) async fn handle_search(
         super::super::PaginationMeta::offset(args.offset, args.limit, results.len(), page.total);
     let text = if json {
         let next_commands = crate::render::markdown::search_next_commands_disease(&results);
-        disease_search_json(results, pagination, fallback_used, next_commands)?
+        let workflow = disease_search_workflow(results.first()).await?;
+        disease_search_json(results, pagination, fallback_used, next_commands, workflow)?
     } else {
         let footer = super::super::pagination_footer_offset(&pagination);
         crate::render::markdown::disease_search_markdown_with_footer(
@@ -66,6 +67,113 @@ pub(in crate::cli) async fn handle_search(
         )?
     };
     Ok(CommandOutcome::stdout(text))
+}
+
+async fn disease_search_workflow(
+    top_result: Option<&crate::entities::disease::DiseaseSearchResult>,
+) -> Result<Option<crate::workflow_ladders::WorkflowMeta>, crate::error::BioMcpError> {
+    let Some(top_result) = top_result else {
+        return Ok(None);
+    };
+    let disease_name = top_result.name.trim();
+    if disease_name.is_empty() {
+        return Ok(None);
+    }
+
+    match crate::workflow_ladders::probe_workflow(
+        crate::workflow_ladders::Workflow::MutationCatalog,
+        Box::pin(disease_has_pathogenic_variant_catalog(disease_name)),
+    )
+    .await?
+    {
+        crate::workflow_ladders::WorkflowProbeOutcome::Triggered(meta) => return Ok(Some(meta)),
+        crate::workflow_ladders::WorkflowProbeOutcome::Unavailable => return Ok(None),
+        crate::workflow_ladders::WorkflowProbeOutcome::NotTriggered => {}
+    }
+
+    match crate::workflow_ladders::probe_workflow(
+        crate::workflow_ladders::Workflow::TrialRecruitment,
+        Box::pin(disease_has_recruiting_trials(disease_name)),
+    )
+    .await?
+    {
+        crate::workflow_ladders::WorkflowProbeOutcome::Triggered(meta) => Ok(Some(meta)),
+        crate::workflow_ladders::WorkflowProbeOutcome::NotTriggered
+        | crate::workflow_ladders::WorkflowProbeOutcome::Unavailable => Ok(None),
+    }
+}
+
+async fn disease_has_pathogenic_variant_catalog(
+    disease_name: &str,
+) -> Result<bool, crate::error::BioMcpError> {
+    let filters = pathogenic_variant_catalog_filters(disease_name);
+    let page = crate::entities::variant::search_page(&filters, 3, 0).await?;
+    Ok(page.results.len() >= 3 || page.total.unwrap_or(page.results.len()) >= 3)
+}
+
+fn pathogenic_variant_catalog_filters(
+    disease_name: &str,
+) -> crate::entities::variant::VariantSearchFilters {
+    crate::entities::variant::VariantSearchFilters {
+        gene: None,
+        hgvsp: None,
+        hgvsc: None,
+        rsid: None,
+        protein_alias: None,
+        significance: Some("pathogenic".to_string()),
+        max_frequency: None,
+        min_cadd: None,
+        consequence: None,
+        review_status: None,
+        population: None,
+        revel_min: None,
+        gerp_min: None,
+        tumor_site: None,
+        condition: Some(disease_name.to_string()),
+        impact: None,
+        lof: false,
+        has: None,
+        missing: None,
+        therapy: None,
+    }
+}
+
+async fn disease_has_recruiting_trials(
+    disease_name: &str,
+) -> Result<bool, crate::error::BioMcpError> {
+    let filters = recruiting_trial_filters(disease_name);
+    let page = crate::entities::trial::search_page(&filters, 1, 0, None).await?;
+    Ok(!page.results.is_empty() || page.total.unwrap_or(0) > 0)
+}
+
+fn recruiting_trial_filters(disease_name: &str) -> crate::entities::trial::TrialSearchFilters {
+    crate::entities::trial::TrialSearchFilters {
+        condition: Some(disease_name.to_string()),
+        status: Some("recruiting".to_string()),
+        source: crate::entities::trial::TrialSource::ClinicalTrialsGov,
+        ..Default::default()
+    }
+}
+
+#[cfg(test)]
+mod workflow_tests {
+    use super::{pathogenic_variant_catalog_filters, recruiting_trial_filters};
+
+    #[test]
+    fn disease_workflow_probe_filters_use_top_result_name_and_bounded_queries() {
+        let variant_filters = pathogenic_variant_catalog_filters("tuberculosis");
+        assert_eq!(variant_filters.condition.as_deref(), Some("tuberculosis"));
+        assert_eq!(variant_filters.significance.as_deref(), Some("pathogenic"));
+        assert!(variant_filters.gene.is_none());
+
+        let trial_filters = recruiting_trial_filters("tuberculosis");
+        assert_eq!(trial_filters.condition.as_deref(), Some("tuberculosis"));
+        assert_eq!(trial_filters.status.as_deref(), Some("recruiting"));
+        assert!(matches!(
+            trial_filters.source,
+            crate::entities::trial::TrialSource::ClinicalTrialsGov
+        ));
+    }
 }
 
 pub(in crate::cli) async fn handle_command(
@@ -206,6 +314,10 @@ pub(super) struct DiseaseSearchMeta {
     next_commands: Vec<String>,
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     fallback_used: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workflow: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    ladder: Vec<crate::workflow_ladders::WorkflowLadderStep>,
 }
 
 #[derive(serde::Serialize)]
@@ -222,11 +334,16 @@ pub(super) fn disease_search_json(
     pagination: crate::cli::PaginationMeta,
     fallback_used: bool,
     next_commands: Vec<String>,
+    workflow: Option<crate::workflow_ladders::WorkflowMeta>,
 ) -> anyhow::Result<String> {
     let count = results.len();
-    let meta = crate::cli::search_meta(next_commands).map(|meta| DiseaseSearchMeta {
-        next_commands: meta.next_commands,
-        fallback_used,
+    let meta = crate::cli::search_meta_with_workflow(next_commands, None, workflow).map(|meta| {
+        DiseaseSearchMeta {
+            next_commands: meta.next_commands,
+            fallback_used,
+            workflow: meta.workflow,
+            ladder: meta.ladder,
+        }
     });
     crate::render::json::to_pretty(&DiseaseSearchJsonResponse {
         pagination,

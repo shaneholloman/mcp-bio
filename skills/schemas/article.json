@@ -42,6 +42,20 @@
           "type": ["array", "null"],
           "items": { "type": "string" }
         },
+        "workflow": { "type": ["string", "null"] },
+        "ladder": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "properties": {
+              "step": { "type": "integer" },
+              "command": { "type": "string" },
+              "what_it_gives": { "type": "string" }
+            },
+            "required": ["step", "command", "what_it_gives"],
+            "additionalProperties": true
+          }
+        },
         "suggestions": {
           "type": ["array", "null"],
           "items": {

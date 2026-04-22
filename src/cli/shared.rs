@@ -305,6 +305,10 @@ pub(super) struct SearchJsonMeta {
     pub(super) next_commands: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(super) suggestions: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(super) workflow: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(super) ladder: Vec<crate::workflow_ladders::WorkflowLadderStep>,
 }
 
 #[derive(serde::Serialize)]
@@ -345,12 +349,27 @@ pub(super) fn search_meta_with_suggestions(
     next_commands: Vec<String>,
     suggestions: Option<Vec<String>>,
 ) -> Option<SearchJsonMeta> {
+    search_meta_with_workflow(next_commands, suggestions, None)
+}
+
+pub(super) fn search_meta_with_workflow(
+    next_commands: Vec<String>,
+    suggestions: Option<Vec<String>>,
+    workflow: Option<crate::workflow_ladders::WorkflowMeta>,
+) -> Option<SearchJsonMeta> {
     let next_commands = normalize_next_commands(next_commands);
     let suggestions = suggestions.map(normalize_next_commands);
-    (!next_commands.is_empty() || suggestions.is_some()).then_some(SearchJsonMeta {
-        next_commands,
-        suggestions,
-    })
+    let (workflow, ladder) = workflow
+        .map(|meta| (Some(meta.workflow), meta.ladder))
+        .unwrap_or_else(|| (None, Vec::new()));
+    (!next_commands.is_empty() || suggestions.is_some() || workflow.is_some()).then_some(
+        SearchJsonMeta {
+            next_commands,
+            suggestions,
+            workflow,
+            ladder,
+        },
+    )
 }
 
 pub(super) fn search_json_with_meta<T: serde::Serialize>(

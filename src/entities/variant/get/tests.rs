@@ -52,6 +52,19 @@ fn gwas_only_variant_stub_keeps_requested_rsid() {
 }
 
 #[test]
+fn workflow_signal_detects_clinvar_metadata_before_section_stripping() {
+    let mut variant = gwas_only_variant_stub("rs397507459");
+    assert!(!has_clinvar_workflow_signal(&variant));
+
+    variant.significance = Some("Pathogenic".to_string());
+    assert!(has_clinvar_workflow_signal(&variant));
+
+    variant.significance = None;
+    variant.conditions.push("Noonan syndrome".to_string());
+    assert!(has_clinvar_workflow_signal(&variant));
+}
+
+#[test]
 fn civic_molecular_profile_name_prefers_gene_and_hgvs_p() {
     let variant = Variant {
         gene: "BRAF".into(),

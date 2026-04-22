@@ -9,6 +9,7 @@ catalog listing, opening numbered or slugged examples, and install byte parity.
 | Skill overview | `biomcp skill` | Confirms the overview is routing-first and concise |
 | Canonical render | `biomcp skill render` | Confirms the scriptable prompt surface matches the overview |
 | Install parity | `biomcp skill install <dir> --force` | Confirms installed `SKILL.md` is byte-identical to redirected render stdout |
+| Workflow ladder sidecars | `biomcp skill install <dir> --force` | Confirms schema and sidecar assets install with the skill tree |
 | List worked examples | `biomcp skill list` | Confirms the embedded catalog is populated |
 | Open numeric example | `biomcp skill 01` | Confirms numbered use-cases still resolve |
 | Open slug example | `biomcp skill variant-pathogenicity` | Confirms slug lookups open the expected markdown |
@@ -70,6 +71,24 @@ biomcp skill install "$agent" --force
 cmp "$tmp/rendered.md" "$agent/skills/biomcp/SKILL.md"
 test -d "$agent/skills/biomcp/use-cases"
 cat "$agent/skills/biomcp/SKILL.md" | mustmatch like "## How-to reference"
+```
+
+## Workflow Ladder Sidecars Install
+
+Sidecar-backed ladders are installed as data assets next to the markdown
+playbooks. They must not appear in the human-facing skill catalog, but agents
+can inspect them on disk after `biomcp skill install`.
+
+```bash
+tmp="$(mktemp -d)"
+agent="$tmp/agent"
+biomcp skill install "$agent" --force
+test -f "$agent/skills/biomcp/schemas/workflow-ladder.schema.json"
+for slug in treatment-lookup article-follow-up variant-pathogenicity trial-recruitment mechanism-pathway pharmacogene-cumulative mutation-catalog; do
+  test -f "$agent/skills/biomcp/use-cases/$slug.ladder.json"
+done
+out="$(biomcp skill list)"
+echo "$out" | mustmatch not like ".ladder.json"
 ```
 
 ## Listing Skills

@@ -20,6 +20,7 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 - Review-literature questions: `biomcp search article -k "<query>" --type review --limit 5`
 - Keyword-only article searches may return `_meta.suggestions[]` objects when the whole keyword exactly matches a gene, drug, or disease label/alias; use the suggested `get gene`, `get drug`, or `get disease` command when structured data may answer before more article paging.
 - For repeated article keyword searches in one task, use JSON plus `--session <token>` with a short non-secret local label. If the next keyword overlaps the previous same-session keyword, `_meta.suggestions[]` can point to prior `article batch`, `discover`, or date narrowing instead of more reformulation.
+- Some first-call JSON responses include `_meta.workflow` and `_meta.ladder[]`; these are static sidecar-backed multi-step ladders. Treat `_meta.next_commands` as dynamic one-hop follow-ups and `_meta.ladder[]` as the worked-example path for the named workflow.
 - After `search article`, default to `biomcp article batch <id1> <id2> ...` instead of repeated `get article` calls. Batch up to 20 shortlisted papers in one call.
 - Use `biomcp batch gene <GENE1,GENE2,...>` when you need the same basic card fields, chromosome, or sectioned output for multiple genes.
 - For diseases with weak ontology-name coverage, run `biomcp discover "<disease>"` first, then pass a resolved `MESH:...`, `OMIM:...`, `ICD10CM:...`, `MONDO:...`, or `DOID:...` identifier to `biomcp get disease`.

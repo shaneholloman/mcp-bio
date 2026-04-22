@@ -1,17 +1,11 @@
-use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fs;
 use std::io::{self, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
 use clap::Subcommand;
-use rust_embed::RustEmbed;
 
 use crate::error::BioMcpError;
-
-#[derive(RustEmbed)]
-#[folder = "skills/"]
-struct EmbeddedSkills;
 
 #[derive(Subcommand, Debug)]
 pub enum SkillCommand {
@@ -48,17 +42,17 @@ pub(crate) struct UseCaseRef {
 }
 
 fn embedded_text(path: &str) -> Result<String, BioMcpError> {
-    let Some(asset) = EmbeddedSkills::get(path) else {
-        return Err(BioMcpError::NotFound {
+    match crate::skill_assets::text(path) {
+        Ok(text) => Ok(text),
+        Err(BioMcpError::NotFound { .. }) => Err(BioMcpError::NotFound {
             entity: "skill".into(),
             id: path.to_string(),
             suggestion: "Try: biomcp skill".into(),
-        });
-    };
-
-    let bytes: Cow<'static, [u8]> = asset.data;
-    String::from_utf8(bytes.into_owned())
-        .map_err(|_| BioMcpError::InvalidArgument("Embedded skill file is not valid UTF-8".into()))
+        }),
+        Err(_) => Err(BioMcpError::InvalidArgument(
+            "Embedded skill file is not valid UTF-8".into(),
+        )),
+    }
 }
 
 fn canonical_prompt_body() -> Result<String, BioMcpError> {
@@ -111,7 +105,7 @@ fn parse_title_and_description(markdown: &str) -> (String, Option<String>) {
 fn use_case_index() -> Result<Vec<UseCaseMeta>, BioMcpError> {
     let mut out: Vec<UseCaseMeta> = Vec::new();
 
-    for file in EmbeddedSkills::iter() {
+    for file in crate::skill_assets::iter() {
         let path = file.as_ref();
         if !path.starts_with("use-cases/") || !path.ends_with(".md") {
             continue;
@@ -474,9 +468,9 @@ fn install_to_dir(dir: &Path, force: bool) -> Result<String, BioMcpError> {
     }
     fs::create_dir(&staging)?;
 
-    for file in EmbeddedSkills::iter() {
+    for file in crate::skill_assets::iter() {
         let rel = file.as_ref();
-        let Some(asset) = EmbeddedSkills::get(rel) else {
+        let Ok(asset) = crate::skill_assets::bytes(rel) else {
             continue;
         };
 
@@ -487,7 +481,7 @@ fn install_to_dir(dir: &Path, force: bool) -> Result<String, BioMcpError> {
         let bytes = if rel == "SKILL.md" {
             canonical_prompt_file_bytes()?
         } else {
-            asset.data.into_owned()
+            asset.into_owned()
         };
         fs::write(&out_path, bytes)?;
     }

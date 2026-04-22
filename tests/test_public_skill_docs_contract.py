@@ -52,6 +52,10 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "jq-examples.md" in skills
     assert "examples/" in skills
     assert "schemas/" in skills
+    assert "workflow-ladder.schema.json" in skills
+    assert "use-cases/<slug>.ladder.json" in skills
+    assert "_meta.workflow" in skills
+    assert "_meta.ladder[]" in skills
     assert "Current builds ship examples for treatment lookup, symptom lookup" not in skills
     assert "Current builds ship 15 worked examples" in skills
     for slug in (
@@ -101,6 +105,10 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     )
     assert "Streamable HTTP" in cli_reference
     assert "/mcp" in cli_reference
+    assert "## Workflow ladder metadata" in cli_reference
+    assert "_meta.workflow" in cli_reference
+    assert "_meta.ladder[]" in cli_reference
+    assert "biomcp get drug aspirin --json" in cli_reference
 
     assert "one markdown resource per embedded skill use-case" in mcp_server
     assert "biomcp://help" in mcp_server
@@ -117,6 +125,9 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "`cache clean`" in mcp_server
     assert "`cache clear`" in mcp_server
     assert "reveal workstation-local paths" in mcp_server
+    assert "Workflow ladders do not add MCP resources" in mcp_server
+    assert "_meta.workflow" in mcp_server
+    assert "_meta.ladder[]" in mcp_server
 
     assert "biomcp skill render" in bioasq_benchmark
     assert "eval runners should call `biomcp skill render`" in bioasq_benchmark
@@ -197,6 +208,8 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "Never do more than 3 article searches for one question." in skill_file
     assert "ClinicalTrials.gov usually does not index nicknames" in skill_file
     assert "add `--drug <name>` to `search article`" in skill_file
+    assert "_meta.workflow" in skill_file
+    assert "_meta.ladder[]" in skill_file
     assert "`biomcp article batch <pmid1> <pmid2> ...` uses spaces between PMIDs." in skill_file
     assert "Only add more commands if a needed claim is still unsupported." in skill_file
     assert "If one command already answers the question, stop searching and answer." in skill_file

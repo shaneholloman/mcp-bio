@@ -100,6 +100,13 @@ Alias fallback is the main exception to the usual CLI stderr contract: failed
  text content with `_meta.alias_resolution` and `_meta.next_commands` so agents
  can apply their own retry policy without parsing markdown.
 
+Workflow ladders do not add MCP resources. MCP callers that execute BioMCP
+commands with `--json` receive the same CLI JSON contract, so first-call
+responses can include `_meta.workflow` and `_meta.ladder[]` when a sidecar-backed
+ladder trigger matches. `_meta.next_commands` remains the dynamic one-hop
+follow-up list; `_meta.ladder[]` is the static multi-step worked example loaded
+from the installed `skills/biomcp/use-cases/<slug>.ladder.json` sidecar.
+
 ```python
 from pathlib import Path
 

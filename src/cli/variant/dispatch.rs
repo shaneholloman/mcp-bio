@@ -528,14 +528,23 @@ async fn render_variant_card_outcome(
         return variant_guidance_outcome(&guidance, json_output || guidance_as_json);
     }
 
-    match crate::entities::variant::get(id, sections).await {
-        Ok(variant) => {
+    match crate::entities::variant::get_with_workflow_signals(id, sections).await {
+        Ok((variant, signals)) => {
             let text = if json_output {
-                crate::render::json::to_entity_json(
+                let workflow = signals
+                    .has_clinvar_signal
+                    .then(|| {
+                        crate::workflow_ladders::meta_for(
+                            crate::workflow_ladders::Workflow::VariantPathogenicity,
+                        )
+                    })
+                    .transpose()?;
+                crate::render::json::to_entity_json_with_workflow(
                     &variant,
                     crate::render::markdown::variant_evidence_urls(&variant),
                     crate::render::markdown::related_variant(&variant),
                     crate::render::provenance::variant_section_sources(&variant),
+                    workflow,
                 )?
             } else {
                 crate::render::markdown::variant_markdown(&variant, sections)?

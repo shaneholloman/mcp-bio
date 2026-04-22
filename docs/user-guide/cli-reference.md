@@ -27,6 +27,40 @@ In JSON mode, links are exposed under `_meta.evidence_urls` and can include
 Ensembl, OMIM, NCBI Gene, and UniProt URLs. Section-level provenance is exposed
 under `_meta.section_sources`.
 
+## Workflow ladder metadata
+
+Some first-call JSON responses include sidecar-backed workflow ladder metadata:
+
+```json
+"_meta": {
+  "workflow": "pharmacogene-cumulative",
+  "ladder": [
+    {
+      "step": 1,
+      "command": "biomcp search pgx -d warfarin --limit 10",
+      "what_it_gives": "CPIC drug-gene rows for known pharmacogenes."
+    }
+  ]
+}
+```
+
+`_meta.next_commands` remains the dynamic one-hop HATEOAS follow-up list for the
+current response. `_meta.workflow` and `_meta.ladder[]` are static, named
+multi-step worked-example paths loaded from installed sidecar JSON files. The
+ladder commands are byte-equal to the matching `biomcp skill <slug>` playbook
+command block and do not interpolate the user's query.
+
+Examples:
+
+```bash
+biomcp search drug --indication "myasthenia gravis" --limit 5 --json
+biomcp get drug warfarin --json
+biomcp get drug aspirin --json
+```
+
+The warfarin response can emit `pharmacogene-cumulative`; aspirin omits that
+workflow ladder when the actionable CPIC A/B pharmacogene threshold is not met.
+
 ## Top-level commands
 
 ```text
@@ -201,7 +235,8 @@ biomcp search drug --indication malaria --region who --limit 5
 ```
 
 Drug search JSON is region-aware: the top-level object exposes `region`,
-`regions`, and optional `_meta.next_commands`. Single-region searches use
+`regions`, and optional `_meta` metadata such as `next_commands`, `workflow`,
+and `ladder`. Single-region searches use
 `regions.us.results`, `regions.eu.results`, or `regions.who.results`; omitted
 `--region` on a plain name lookup and explicit `--region all` expose all three
 region buckets, each with `pagination`, `count`, and `results`.

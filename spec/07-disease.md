@@ -1,6 +1,6 @@
 # Disease Queries
 
-Disease commands normalize labels to ontology-backed identifiers and provide cross-entity pivots. This file validates melanoma-centric workflows plus representative canonical disease-gene paths for one cancer and one non-cancer disease. Assertions focus on stable schema and identifier markers rather than dynamic counts.
+Disease commands normalize labels to ontology-backed identifiers and provide cross-entity pivots. JSON disease search can also emit one sidecar-backed workflow ladder; `mutation-catalog` has priority over `trial-recruitment` when both bounded probes match. This file validates melanoma-centric workflows plus representative canonical disease-gene paths for one cancer and one non-cancer disease. Assertions focus on stable schema and identifier markers rather than dynamic counts.
 
 | Section | Command focus | Why it matters |
 |---|---|---|
