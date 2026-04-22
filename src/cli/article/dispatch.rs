@@ -101,7 +101,7 @@ pub(super) fn is_exact_article_keyword_lookup_eligible(
     matches!(article_keyword_token_count(keyword), 1..=3)
 }
 
-fn article_entity_suggestion(
+pub(super) fn article_entity_suggestion(
     entity: &crate::entities::discover::ExactArticleKeywordEntity,
 ) -> ArticleEntitySuggestion {
     let entity_name = entity.entity_type.cli_name();

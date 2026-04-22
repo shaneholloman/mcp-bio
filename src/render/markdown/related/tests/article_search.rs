@@ -81,6 +81,24 @@ fn article_search_related_results_do_not_derive_entity_get_from_keyword_tokens()
 }
 
 #[test]
+fn article_search_related_results_do_not_emit_braf_v600e_gene_get_without_exact_command() {
+    let related = related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("BRAF V600E"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+        &[],
+    );
+
+    assert_eq!(related[0], "biomcp get article 22663011");
+    assert!(!related.iter().any(|command| command == "biomcp get gene BRAF"));
+    assert!(
+        !related
+            .iter()
+            .any(|command| command.starts_with("biomcp search article -g BRAF"))
+    );
+}
+
+#[test]
 fn article_search_related_results_include_exact_commands_without_result_rows() {
     let exact_commands = vec!["biomcp get disease melanoma".to_string()];
     let related = related_article_search_results(
@@ -152,6 +170,22 @@ fn markdown_article_search_related_results_include_discover_but_not_heuristic_di
 
     assert!(related.contains(&"biomcp discover \"Emanuel syndrome\"".to_string()));
     assert!(!related.contains(&"biomcp get disease \"Emanuel syndrome\"".to_string()));
+}
+
+#[test]
+fn markdown_article_search_related_results_do_not_emit_lung_cancer_immunotherapy_disease_get() {
+    let related = markdown_related_article_search_results(
+        &[article_search_result("22663011")],
+        &article_filters(Some("lung cancer immunotherapy"), None, None),
+        crate::entities::article::ArticleSourceFilter::All,
+        &[],
+    );
+
+    assert!(
+        !related
+            .iter()
+            .any(|command| command.starts_with("biomcp get disease "))
+    );
 }
 
 #[test]

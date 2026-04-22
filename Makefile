@@ -60,6 +60,8 @@ SPEC_SMOKE_ARGS = \
 	"spec/06-article.md::Getting Article Details (line 486) [bash]" \
 	"spec/06-article.md::Article Batch (line 646) [bash]" \
 	"spec/06-article.md::Article Query Echo Surfaces Explicit Max-Per-Source Overrides (line 334) [bash]" \
+	"spec/06-article.md::Article Search Gene Keyword Pivot (line 52) [bash]" \
+	"spec/06-article.md::Article Search Drug Keyword Pivot (line 87) [bash]" \
 	"spec/06-article.md::Article Search Discover Keyword Pivot (line 108) [bash]" \
 	"spec/09-search-all.md::Debug Plan (line 97) [bash]" \
 	"spec/09-search-all.md::Distinct Disease And Keyword Stay Separate (line 142) [bash]" \

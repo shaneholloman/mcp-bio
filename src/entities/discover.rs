@@ -385,6 +385,13 @@ pub(crate) fn resolve_exact_article_keyword_entity_from_ols_docs(
             matched_query: query.to_string(),
             matched_alias,
         };
+        if entity
+            .primary_id
+            .as_deref()
+            .is_some_and(|_| exact_article_keyword_primary_id_rank(&entity) == usize::MAX)
+        {
+            continue;
+        }
 
         if let Some((_, existing)) = candidates
             .iter_mut()
@@ -414,6 +421,15 @@ fn choose_preferred_exact_article_keyword_candidate(
     if candidates
         .iter()
         .any(|(_, entity)| entity.entity_type != entity_type)
+    {
+        return None;
+    }
+
+    let canonical_label = normalize_query(&candidates.first()?.1.label);
+    if canonical_label.is_empty()
+        || candidates
+            .iter()
+            .any(|(_, entity)| normalize_query(&entity.label) != canonical_label)
     {
         return None;
     }
@@ -2111,7 +2127,7 @@ mod tests {
                         "MONDO:0005105",
                         &["skin cancer"]
                     ),
-                    ols_doc("mondo", "skin carcinoma", "MONDO:0009999", &["skin cancer"]),
+                    ols_doc("doid", "skin carcinoma", "DOID:9999", &["skin cancer"]),
                 ],
             )
             .is_none()
@@ -2126,6 +2142,16 @@ mod tests {
             )
             .is_none()
         );
+        let gene = resolve_exact_article_keyword_entity_from_ols_docs(
+            "BRAF",
+            &[
+                hgnc_doc("BRAF", "HGNC:1097", &[]),
+                ols_doc("mondo", "BRAF", "1097", &[]),
+            ],
+        )
+        .expect("unsupported duplicate OLS identifiers should not hide HGNC exact matches");
+        assert_eq!(gene.entity_type, DiscoverType::Gene);
+        assert_eq!(gene.primary_id.as_deref(), Some("HGNC:1097"));
     }
 
     #[tokio::test]
