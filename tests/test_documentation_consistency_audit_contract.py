@@ -199,6 +199,8 @@ def test_landing_copy_and_public_env_inventory_follow_consistency_contract() -> 
     assert article_sentence in _normalize_whitespace(docs_index)
     assert study_sentence in _normalize_whitespace(readme)
     assert study_sentence in _normalize_whitespace(docs_index)
+    assert "suggest <question>" in readme
+    assert "suggest <question>" in docs_index
     assert "discover <query>" in readme
     assert "Before Anthropic directory approval" not in readme
     assert "Anthropic Directory" in readme

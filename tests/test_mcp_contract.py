@@ -48,6 +48,7 @@ async def test_initialize_advertises_tools_and_resources(
         assert "15 sources" not in initialize_result.instructions
         assert "15 biomedical sources" not in initialize_result.instructions
         assert "biomcp skill list" not in initialize_result.instructions
+        assert 'biomcp suggest "<question>"' in initialize_result.instructions
         assert "biomcp skill" in initialize_result.instructions
 
 
@@ -80,6 +81,7 @@ async def test_biomcp_description_matches_list_contract(
         "search <entity> [query|filters]",
         "search trial [filters]",
         "get <entity> <id> [section...]",
+        'suggest "What drugs treat melanoma?"',
         'search phenotype "seizure, developmental delay"',
     ]
     article_markers = [
@@ -425,3 +427,18 @@ async def test_discover_command_is_allowed_via_mcp(
     assert result.content
     assert isinstance(result.content[0], types.TextContent)
     assert "BRCA1" in result.content[0].text
+
+
+@pytest.mark.asyncio
+async def test_biomcp_suggest_is_allowed_in_mcp_mode(mcp_session_factory) -> None:
+    async with mcp_session_factory() as (session, _initialize_result):
+        result = await session.call_tool(
+            "biomcp",
+            arguments={"command": 'biomcp suggest "What drugs treat melanoma?"'},
+        )
+
+    assert _is_error(result) is False
+    assert result.content
+    assert isinstance(result.content[0], types.TextContent)
+    assert "treatment-lookup" in result.content[0].text
+    assert "biomcp skill treatment-lookup" in result.content[0].text

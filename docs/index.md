@@ -77,6 +77,7 @@ Install to first result in under 30 seconds:
 ```bash
 uv tool install biomcp-cli
 biomcp health --apis-only
+biomcp suggest "What drugs treat melanoma?"
 biomcp discover "chest pain"
 biomcp list gene
 biomcp search all --gene BRAF --disease melanoma  # unified cross-entity discovery
@@ -87,7 +88,8 @@ biomcp get gene BRAF pathways hpa
 
 ```text
 search <entity> [filters]    → discovery
-discover <query>            → concept resolution before entity selection
+suggest <question>           → playbook routing for how-to questions
+discover <query>             → concept resolution before entity selection
 get <entity> <id> [sections] → focused detail
 <entity> <helper> <id>       → cross-entity pivots
 enrich <GENE1,GENE2,...>     → gene-set enrichment
@@ -102,6 +104,8 @@ search all [slot filters]    → counts-first cross-entity orientation
   Scholar leg when your filters support it.
 - **Resolve messy queries:** `biomcp discover` turns aliases, brands, symptoms,
   and pathway names into the right entity before you commit to a typed command.
+- **Choose the workflow:** `biomcp suggest "<question>"` returns the matching
+  worked-example playbook and two starter commands.
 - **Pivot across entities:** move from a known gene, variant, drug, disease,
   pathway, protein, or article into trials, articles, drugs, pathways,
   structures, or article graph helpers without rebuilding context.

@@ -4,6 +4,7 @@ BioMCP ships one embedded guide plus supporting reference files and worked
 examples for agent workflows. The current workflow is:
 
 ```bash
+biomcp suggest "What drugs treat melanoma?"
 biomcp skill
 biomcp skill render
 biomcp skill list
@@ -12,6 +13,11 @@ biomcp skill install ~/.claude
 ```
 
 ## Read the overview
+
+`biomcp suggest "<question>"` is the quickest way to choose the matching
+worked-example playbook when you only know the biomedical question. It returns
+the playbook slug, two starter commands, and the `biomcp skill <slug>` command
+for the full workflow.
 
 `biomcp skill` prints the embedded `skills/SKILL.md` overview. Start there if
 you want the current BioMCP workflow guidance without installing anything into

@@ -81,6 +81,10 @@ opens an embedded worked example by number or slug. `biomcp skill install
 <dir>` exports that guide, the `use-cases/` catalog, and supporting references
 into an agent directory.
 
+`biomcp suggest "<question>"` is the question-to-playbook entry point. It is an
+offline router that returns one embedded worked-example slug, two starter
+commands, and the `biomcp skill <slug>` command for the full workflow.
+
 The current runtime contract is:
 
 - `biomcp skill` shows the BioMCP agent guide
@@ -88,6 +92,8 @@ The current runtime contract is:
 - `biomcp skill list` shows embedded worked examples
 - `biomcp skill <name>` opens an embedded worked example
 - `biomcp skill install <dir>` installs that guide into `skills/biomcp/`
+- `biomcp suggest "<question>"` selects an embedded worked example for a
+  biomedical question
 - MCP resource listing includes `biomcp://help` plus `biomcp://skill/<slug>`
   for each embedded worked example
 
@@ -100,6 +106,7 @@ system: overview first, then executable examples on demand.
 search <entity> [filters]    → discovery across a source type
 get <entity> <id> [sections] → focused detail with progressive disclosure
 <entity> <helper> <id>       → cross-entity pivot
+suggest <question>           → offline question-to-playbook routing
 discover <query>            → free-text concept resolution into typed follow-up commands
 enrich <GENE1,GENE2,...>     → gene-set enrichment
 batch <entity> <id1,id2,...> → parallel gets

@@ -130,6 +130,41 @@ fn top_level_help_lists_cache_command() {
 }
 
 #[test]
+fn top_level_help_lists_suggest_command() {
+    let mut command = crate::cli::build_cli();
+    let mut help = Vec::new();
+    command
+        .write_long_help(&mut help)
+        .expect("top-level help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(
+        help.lines()
+            .any(|line| line.trim_start().starts_with("suggest")),
+        "top-level help should list suggest: {help}"
+    );
+}
+
+#[test]
+fn suggest_help_documents_examples_json_and_no_match() {
+    let mut command = Cli::command();
+    let suggest = command
+        .find_subcommand_mut("suggest")
+        .expect("suggest subcommand should exist");
+    let mut help = Vec::new();
+    suggest
+        .write_long_help(&mut help)
+        .expect("suggest help should render");
+    let help = String::from_utf8(help).expect("help should be utf-8");
+
+    assert!(help.contains("biomcp suggest \"What drugs treat melanoma?\""));
+    assert!(help.contains("biomcp --json suggest \"When was imatinib approved?\""));
+    assert!(help.contains("biomcp suggest \"What is x?\""));
+    assert!(help.contains("No confident BioMCP skill match"));
+    assert!(help.contains("See also: biomcp list suggest"));
+}
+
+#[test]
 fn top_level_help_mentions_cache_path_json_exception() {
     let mut command = crate::cli::build_cli();
     let mut help = Vec::new();

@@ -140,6 +140,7 @@ async def test_streamable_http_supports_initialize_list_tools_and_tool_call(
             assert "15 sources" not in initialize_result.instructions
             assert "15 biomedical sources" not in initialize_result.instructions
             assert "biomcp skill list" not in initialize_result.instructions
+            assert 'biomcp suggest "<question>"' in initialize_result.instructions
             assert "biomcp skill" in initialize_result.instructions
 
             tools_result = await session.list_tools()

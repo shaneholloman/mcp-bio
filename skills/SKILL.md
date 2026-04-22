@@ -5,6 +5,9 @@ description: Search and retrieve biomedical data - genes, variants, clinical tri
 
 # BioMCP CLI
 
+If you don't know how to start, run `biomcp suggest "<question>"` first, then
+open the returned `biomcp skill <slug>` playbook for the full workflow.
+
 ## Routing rules
 
 - Start with the narrowest command that matches the question.

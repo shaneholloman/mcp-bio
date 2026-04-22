@@ -1,0 +1,68 @@
+from __future__ import annotations
+
+import json
+import subprocess
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+RELEASE_BIN = REPO_ROOT / "target" / "release" / "biomcp"
+
+
+def _run_text(*args: str) -> str:
+    assert RELEASE_BIN.exists(), f"missing release binary: {RELEASE_BIN}"
+    result = subprocess.run(
+        [str(RELEASE_BIN), *args],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout
+
+
+def _run_json(*args: str) -> dict[str, object]:
+    return json.loads(_run_text("--json", *args))
+
+
+def test_suggest_markdown_routes_treatment_question() -> None:
+    out = _run_text("suggest", "What drugs treat melanoma?")
+
+    assert "# BioMCP Suggestion" in out
+    assert "matched_skill: `treatment-lookup`" in out
+    assert "biomcp search drug --indication melanoma --limit 5" in out
+    assert "biomcp search article -d melanoma --type review --limit 5" in out
+    assert "biomcp skill treatment-lookup" in out
+
+
+def test_suggest_json_routes_ticket_examples() -> None:
+    variant = _run_json("suggest", "Is variant rs113488022 pathogenic in melanoma?")
+    assert set(variant) == {"matched_skill", "summary", "first_commands", "full_skill"}
+    assert variant["matched_skill"] == "variant-pathogenicity"
+    assert variant["first_commands"] == [
+        "biomcp get variant rs113488022 clinvar predictions population",
+        "biomcp get variant rs113488022 civic cgi",
+    ]
+    assert variant["full_skill"] == "biomcp skill variant-pathogenicity"
+
+    regulatory = _run_json("suggest", "When was imatinib approved?")
+    assert regulatory["matched_skill"] == "drug-regulatory"
+    assert len(regulatory["first_commands"]) == 2
+
+
+def test_suggest_more_question_shapes_and_no_match() -> None:
+    cases = {
+        "What pharmacogenes affect warfarin dosing?": "pharmacogene-cumulative",
+        "Are there recruiting trials for melanoma?": "trial-recruitment",
+        "How do I distinguish Goldberg-Shprintzen syndrome vs Shprintzen-Goldberg syndrome?": "syndrome-disambiguation",
+        "Is Borna disease virus linked to brain tumor?": "negative-evidence",
+    }
+    for question, slug in cases.items():
+        assert _run_json("suggest", question)["matched_skill"] == slug
+
+    no_match = _run_json("suggest", "What is x?")
+    assert no_match == {
+        "matched_skill": None,
+        "summary": "No confident BioMCP skill match.",
+        "first_commands": [],
+        "full_skill": None,
+    }

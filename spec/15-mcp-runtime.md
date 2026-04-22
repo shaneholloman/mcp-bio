@@ -67,6 +67,23 @@ echo "$out" | mustmatch like '"name":"biomcp"'
 echo "$out" | mustmatch not like '"name":"shell"'
 ```
 
+## Suggest Is Read-only Over MCP
+
+`biomcp suggest` is offline question-to-playbook routing, so MCP callers should
+be able to use it as the first move before fetching live biomedical data.
+
+```bash
+bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
+out="$( (printf '%s\n%s\n%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"spec","version":"0.1"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"biomcp","arguments":{"command":"biomcp suggest \"What drugs treat melanoma?\""}}}'; \
+  sleep 1) | "$bin" serve 2>/dev/null)"
+echo "$out" | mustmatch like '"isError":false'
+echo "$out" | mustmatch like "treatment-lookup"
+echo "$out" | mustmatch like "biomcp skill treatment-lookup"
+```
+
 ## Read-only Study Boundary
 
 The stdio MCP server must reject mutating study installs before any

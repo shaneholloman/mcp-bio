@@ -608,6 +608,7 @@ mod tests {
     -> Result<(), BioMcpError> {
         let overview = show_overview()?;
 
+        assert!(overview.contains("biomcp suggest \"<question>\""));
         assert!(overview.contains("## Routing rules"));
         assert!(overview.contains("## Section reference"));
         assert!(overview.contains("## Cross-entity pivot rules"));
@@ -642,6 +643,7 @@ mod tests {
         assert!(
             overview.find("## Cross-entity pivot rules") < overview.find("## How-to reference")
         );
+        assert!(overview.find("biomcp suggest \"<question>\"") < overview.find("## Routing rules"));
         assert!(overview.find("biomcp ema sync") < overview.find("## Section reference"));
         assert!(overview.find("biomcp who sync") < overview.find("## Section reference"));
         assert!(overview.find("biomcp cvx sync") < overview.find("## Section reference"));
