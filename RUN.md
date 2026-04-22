@@ -99,9 +99,12 @@ make spec-pr
 make test-contracts
 ```
 
-The installed pre-commit hook is the fast local gate. It enforces
-`cargo fmt --check` and `cargo clippy --lib --tests -- -D warnings`. It does
-not run `cargo nextest run`, `make check`, `make spec-pr`, or
+The installed pre-commit hook is the fast local gate. It should run
+`scripts/pre-commit-reject-march-artifacts.sh` before `cargo fmt --check` and
+`cargo clippy --lib --tests -- -D warnings`. The March helper rejects staged
+non-deletion `.march/*` paths outside the exhaustive allowlist:
+`.march/code-review-log.md` and `.march/validation-profiles.toml`. The hook
+does not run `cargo nextest run`, `make check`, `make spec-pr`, or
 `make test-contracts`.
 
 Use `make check` for the full Rust lint/test/quality-ratchet lane; its `test`

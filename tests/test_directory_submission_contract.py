@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 import json
 import os
 import re
@@ -16,6 +17,12 @@ REQUIRED_EXAMPLE_MARKERS = (
     "**Expected output:**",
 )
 SPEC_BARE_PYTHON_PATTERN = re.compile(r"(?<![A-Za-z0-9_])python(?=(?: |$|-))")
+TRACKED_MARCH_ALLOWLIST = frozenset(
+    {
+        ".march/code-review-log.md",
+        ".march/validation-profiles.toml",
+    }
+)
 
 
 def _read(path: str) -> str:
@@ -33,6 +40,27 @@ def _markdown_section_block(text: str, heading: str, next_heading: str) -> str:
     if end == -1:
         return remainder
     return remainder[:end]
+
+
+def _unexpected_tracked_march_paths(tracked_files: Iterable[str]) -> list[str]:
+    return sorted(
+        path
+        for path in tracked_files
+        if path.startswith(".march/") and path not in TRACKED_MARCH_ALLOWLIST
+    )
+
+
+def _format_unexpected_tracked_march_paths(paths: Sequence[str]) -> str:
+    lines = [
+        "Unexpected tracked .march artifacts detected.",
+        "Offending paths:",
+        *(f"- {path}" for path in paths),
+        "Allowed tracked .march paths:",
+        *(f"- {path}" for path in sorted(TRACKED_MARCH_ALLOWLIST)),
+        "Remove non-allowlisted artifacts from the index with:",
+        "git rm --cached -- <path>",
+    ]
+    return "\n".join(lines)
 
 
 def test_manifest_matches_directory_bundle_contract() -> None:
@@ -102,11 +130,29 @@ def test_packaging_workspace_is_ignored_and_bundle_payload_is_filtered() -> None
         assert removed_entry not in mcpbignore
 
 
-def test_repo_cleanup_removes_local_artifacts_and_deleted_dirs_from_git() -> None:
-    allowed_repo_owned_local_paths = {
+def test_tracked_march_allowlist_is_exhaustive_and_actionable() -> None:
+    tracked_files = [
         ".march/code-review-log.md",
         ".march/validation-profiles.toml",
-    }
+        ".march/verify-log.md",
+        ".march/blueprint.md",
+        ".claude/settings.local.json",
+    ]
+
+    unexpected_paths = _unexpected_tracked_march_paths(tracked_files)
+
+    assert unexpected_paths == [".march/blueprint.md", ".march/verify-log.md"]
+
+    message = _format_unexpected_tracked_march_paths(unexpected_paths)
+    for path in unexpected_paths:
+        assert path in message
+    for path in TRACKED_MARCH_ALLOWLIST:
+        assert path in message
+    assert "git rm --cached -- <path>" in message
+    assert ".claude/settings.local.json" not in unexpected_paths
+
+
+def test_repo_cleanup_removes_local_artifacts_and_deleted_dirs_from_git() -> None:
     tracked_files = subprocess.run(
         ["git", "ls-files"],
         cwd=REPO_ROOT,
@@ -115,11 +161,13 @@ def test_repo_cleanup_removes_local_artifacts_and_deleted_dirs_from_git() -> Non
         text=True,
     ).stdout.splitlines()
 
+    unexpected_march_paths = _unexpected_tracked_march_paths(tracked_files)
+    assert not unexpected_march_paths, _format_unexpected_tracked_march_paths(
+        unexpected_march_paths
+    )
+
     assert not [
-        path
-        for path in tracked_files
-        if path.startswith((".march/", ".claude/", ".agents/"))
-        and path not in allowed_repo_owned_local_paths
+        path for path in tracked_files if path.startswith((".claude/", ".agents/"))
     ]
 
     assert not (REPO_ROOT / "presentations").exists()
@@ -147,9 +195,13 @@ def test_specs_do_not_depend_on_bare_python_alias() -> None:
     bare_python_refs: list[str] = []
 
     for path in sorted((REPO_ROOT / "spec").glob("*.md")):
-        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        for line_no, line in enumerate(
+            path.read_text(encoding="utf-8").splitlines(), start=1
+        ):
             if SPEC_BARE_PYTHON_PATTERN.search(line):
-                bare_python_refs.append(f"{path.relative_to(REPO_ROOT)}:{line_no}: {line.strip()}")
+                bare_python_refs.append(
+                    f"{path.relative_to(REPO_ROOT)}:{line_no}: {line.strip()}"
+                )
 
     assert not bare_python_refs, "\n".join(bare_python_refs)
 
@@ -186,7 +238,9 @@ def test_study_chart_dimensions_spec_runs_as_a_targeted_heading() -> None:
 
 def test_examples_tree_has_linked_index_and_readmes() -> None:
     examples_index = _read("examples/README.md")
-    example_dirs = sorted(path for path in (REPO_ROOT / "examples").iterdir() if path.is_dir())
+    example_dirs = sorted(
+        path for path in (REPO_ROOT / "examples").iterdir() if path.is_dir()
+    )
 
     assert "| [geneagent/](geneagent/README.md) |" in examples_index
     assert "| [genegpt/](genegpt/README.md) |" in examples_index
@@ -251,7 +305,9 @@ def test_readme_is_directory_review_complete() -> None:
     positions = [readme.index(section) for section in required_sections]
     assert positions == sorted(positions)
 
-    installation = _markdown_section_block(readme, "## Installation", "\n## Quick start")
+    installation = _markdown_section_block(
+        readme, "## Installation", "\n## Quick start"
+    )
     assert "### Claude Desktop extension (.mcpb)" in installation
     assert "Anthropic Directory" in installation
 
@@ -272,7 +328,9 @@ def test_readme_is_directory_review_complete() -> None:
         configuration.lower()
     )
 
-    examples = _markdown_section_block(readme, "## Usage Examples", "\n## Privacy Policy")
+    examples = _markdown_section_block(
+        readme, "## Usage Examples", "\n## Privacy Policy"
+    )
     assert examples.count("**User prompt:**") >= 4
     assert examples.count("**Expected tool call:**") >= 4
     assert examples.count("**Expected behavior:**") >= 4
@@ -299,9 +357,7 @@ def test_readme_is_directory_review_complete() -> None:
         assert call in examples
 
     example_blocks = [
-        block.strip()
-        for block in re.split(r"(?m)^### ", examples)
-        if block.strip()
+        block.strip() for block in re.split(r"(?m)^### ", examples) if block.strip()
     ]
     complete_examples = [
         block

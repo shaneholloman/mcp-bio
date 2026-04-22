@@ -304,6 +304,13 @@ validation tiers. The shared build flow currently maps `kickoff` to
 profile, runs `focused` for `03-code` and `04-code-review`, and runs
 `full-blocking` for `05-verify`.
 
+The exhaustive tracked and staged `.march/*` allowlist is
+`.march/code-review-log.md` and `.march/validation-profiles.toml`.
+`.march/` remains ignored by `.gitignore`; allowlisted tracked files are rare
+explicit index exceptions, not ignore-rule negations. The Python cleanup
+contract rejects every other tracked `.march/*` path, and the pre-commit helper
+rejects staged non-deletion `.march/*` paths outside the same allowlist.
+
 | Profile | Command | Current build-flow use |
 |---|---|---|
 | `preflight` | `cargo check --all-targets` | `kickoff` |

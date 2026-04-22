@@ -1131,11 +1131,19 @@ def test_runtime_contract_docs_and_scripts_align_on_release_target() -> None:
 
 def test_validation_profile_and_hook_contract_docs_are_pinned() -> None:
     runbook = _read_repo("RUN.md")
+    contributing = _read_repo("CONTRIBUTING.md")
     technical = _read_repo("architecture/technical/overview.md")
     runbook_premerge = _normalize_ws(_markdown_section(runbook, "Pre-Merge Checks"))
+    contributing_hook = _normalize_ws(
+        _markdown_section(contributing, "Local Pre-Commit Hook", level=3)
+    )
     ci_gate_section = _normalize_ws(_markdown_section(technical, "1. CI and Repo Gates", level=3))
+    march_profiles = _normalize_ws(
+        _markdown_section(technical, "March Validation Profiles", level=4)
+    )
 
     assert "pre-commit hook" in runbook_premerge
+    assert "`scripts/pre-commit-reject-march-artifacts.sh`" in runbook_premerge
     assert "`cargo fmt --check`" in runbook_premerge
     assert "`cargo clippy --lib --tests -- -D warnings`" in runbook_premerge
     assert "does not run" in runbook_premerge
@@ -1144,9 +1152,27 @@ def test_validation_profile_and_hook_contract_docs_are_pinned() -> None:
     assert "`make spec-pr`" in runbook_premerge
     assert "`make test-contracts`" in runbook_premerge
     assert "git commit --no-verify" in runbook_premerge
+    for allowed_path in (
+        ".march/code-review-log.md",
+        ".march/validation-profiles.toml",
+    ):
+        assert allowed_path in runbook_premerge
+
+    assert "opt in" in contributing_hook
+    assert "`$(git rev-parse --git-path hooks/pre-commit)`" in contributing_hook
+    assert "`scripts/pre-commit-reject-march-artifacts.sh`" in contributing_hook
+    assert "`cargo fmt --check`" in contributing_hook
+    assert "`cargo clippy --lib --tests -- -D warnings`" in contributing_hook
 
     assert ".march/validation-profiles.toml" in ci_gate_section
     assert "`01-design` and `02-design-review` without a validation profile" in ci_gate_section
+    assert ".march/validation-profiles.toml" in march_profiles
+    assert ".march/code-review-log.md" in march_profiles
+    assert ".march/verify-log.md" not in march_profiles
+    assert ".march/blueprint.md" not in march_profiles
+    assert "`.march/` remains ignored by `.gitignore`" in march_profiles
+    assert "Python cleanup contract" in march_profiles
+    assert "pre-commit helper" in march_profiles
     for row in (
         "| `preflight` | `cargo check --all-targets` | `kickoff` |",
         "| `baseline` | `cargo check --all-targets` | declared, not assigned |",

@@ -33,6 +33,36 @@ cargo install cargo-nextest --locked
 local-data fixtures. `make spec-smoke` runs the ticket-270 smoke headings
 serially with a 120s mustmatch timeout.
 
+### Local Pre-Commit Hook
+
+Developers who opt in to the repo-local pre-commit hook should install it at
+`$(git rev-parse --git-path hooks/pre-commit)`. The hook is local Git state;
+the repo does not install it automatically.
+
+Use this shape so `scripts/pre-commit-reject-march-artifacts.sh` runs before
+`cargo fmt --check` and `cargo clippy --lib --tests -- -D warnings`:
+
+```bash
+hook_path="$(git rev-parse --git-path hooks/pre-commit)"
+mkdir -p "$(dirname "$hook_path")"
+cat >"$hook_path" <<'HOOK'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+scripts/pre-commit-reject-march-artifacts.sh
+cargo fmt --check
+cargo clippy --lib --tests -- -D warnings
+HOOK
+chmod +x "$hook_path"
+```
+
+The helper allows only `.march/code-review-log.md` and
+`.march/validation-profiles.toml` under `.march/`, and it permits staged
+deletions so cleanup commits can remove old March artifacts from tracking.
+
 ### Timing Method
 
 Measured on beelink on 2026-04-13 with `/usr/bin/time -p` using warm-cache
