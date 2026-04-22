@@ -154,6 +154,8 @@ def test_functional_overview_preserves_readme_surface_and_study_family() -> None
     assert "`biomcp skill list` shows embedded worked examples" in functional
     assert "`biomcp skill <name>` opens an embedded worked example" in functional
     assert "`biomcp://skill/<slug>`" in functional
+    assert "suggest <question>" in functional
+    assert "offline question-to-playbook routing" in functional
     assert "discover <query>" in functional
     assert "free-text concept resolution into typed follow-up commands" in functional
     assert "search all [slot filters]" in functional
@@ -555,6 +557,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "remote `shell`" not in technical
     assert "mirror the CLI command surface" not in technical
     assert "read-only allowlist rather than mirroring the full CLI" in technical_ws
+    assert "suggest" in technical_ws
     assert "read-only `skill` lookup/list/render behavior" in technical_ws
     assert (
         "Operator-local or mutating commands such as `cache`, `update`, `serve`, "
@@ -563,6 +566,8 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     )
 
     assert "`search all` Contract" in ux
+    assert "biomcp suggest <question>" in ux
+    assert 'biomcp suggest "<question>"   → select a worked-example playbook and two starter commands' in ux
     assert "biomcp discover <query>" in ux
     assert "## See Also and Next Commands" in ux
     assert "`_meta.next_commands`" in ux

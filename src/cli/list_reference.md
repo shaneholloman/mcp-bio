@@ -9,6 +9,7 @@ One command grammar covers all entities.
 New to BioMCP? Try:
 
 - `skill install` - install BioMCP skill guidance to your agent
+- `suggest "What drugs treat melanoma?"` - choose the worked-example playbook for a question
 - `get gene BRAF` - look up a gene
 - `get gene BRCA1 diagnostics` - inspect GTR diagnostic tests for a known gene
 - `get disease tuberculosis diagnostics` - inspect up to 10 local diagnostic tests for a condition
@@ -23,6 +24,7 @@ New to BioMCP? Try:
 
 | You want to know... | Start with |
 |---|---|
+| I have a biomedical question and need the right playbook | `suggest "<question>"` |
 | How much NIH funded a disease or gene | `get disease <name_or_id> funding` or `get gene <symbol> funding` |
 | What drugs treat a disease | `search drug --indication "<disease>" --limit 5` |
 | What diagnostic test exists for a gene or disease | `get gene <symbol> diagnostics`, `get disease <name_or_id> diagnostics`, or `search diagnostic --gene <symbol> --limit 5` |
@@ -61,6 +63,7 @@ New to BioMCP? Try:
 ## Patterns
 
 - `search <entity> [query|filters]` - find entities
+- `suggest <question>` - route a biomedical question to one worked-example playbook and two starter commands
 - `discover <query>` - resolve free-text concepts into typed follow-up commands
 - `search all [slot filters]` - curated multi-entity orientation (`--gene/--variant/--disease/--drug/--keyword`)
 - `search trial [filters]` - trial search is filter-only

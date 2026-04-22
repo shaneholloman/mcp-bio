@@ -107,6 +107,7 @@ out="$("$bin" list)"
 echo "$out" | mustmatch like "# BioMCP Command Reference"
 echo "$out" | mustmatch like "## When to Use What"
 echo "$out" | mustmatch like "search drug --indication \"<disease>\""
+echo "$out" | mustmatch like 'suggest "What drugs treat melanoma?"'
 echo "$out" | mustmatch like "discover \"<free text>\""
 echo "$out" | mustmatch like "search all --gene BRAF --disease melanoma"
 echo "$out" | mustmatch like "- diagnostic"
@@ -121,6 +122,7 @@ echo "$out" | mustmatch like '- `cache stats` - show HTTP cache statistics (tota
 echo "$out" | mustmatch like '- `cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]` - remove orphan blobs and optionally age- or size-evict the HTTP cache; supports `--json` for machine-readable output'
 echo "$out" | mustmatch like '- `cache clear [--yes]` - destructively wipe `<resolved cache_root>/http`; never touches `downloads/`; supports `--json` on success and requires a TTY unless `--yes` is passed'
 echo "$out" | mustmatch like '- `discover <query>`'
+echo "$out" | mustmatch like '- `suggest <question>`'
 echo "$out" | mustmatch like '- `cvx sync`'
 echo "$out" | mustmatch like '- `ema sync`'
 echo "$out" | mustmatch like '- `gtr sync`'

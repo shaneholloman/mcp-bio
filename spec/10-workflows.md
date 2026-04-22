@@ -23,6 +23,7 @@ instead of inlining every workflow.
 ```bash
 out="$(biomcp skill)"
 echo "$out" | mustmatch like "## Routing rules"
+echo "$out" | mustmatch like 'If you don'"'"'t know how to start, run `biomcp suggest "<question>"` first'
 echo "$out" | mustmatch like "## Section reference"
 echo "$out" | mustmatch like "## Cross-entity pivot rules"
 echo "$out" | mustmatch like "## How-to reference"
@@ -53,6 +54,7 @@ biomcp skill > "$tmp/overview.md"
 biomcp skill render > "$tmp/render.md"
 cmp "$tmp/overview.md" "$tmp/render.md"
 cat "$tmp/render.md" | mustmatch like "## Routing rules"
+cat "$tmp/render.md" | mustmatch like 'biomcp suggest "<question>"'
 cat "$tmp/render.md" | mustmatch like "## How-to reference"
 cat "$tmp/render.md" | mustmatch not like "../docs/"
 cat "$tmp/render.md" | mustmatch not like ".md)"
@@ -71,6 +73,7 @@ biomcp skill install "$agent" --force
 cmp "$tmp/rendered.md" "$agent/skills/biomcp/SKILL.md"
 test -d "$agent/skills/biomcp/use-cases"
 cat "$agent/skills/biomcp/SKILL.md" | mustmatch like "## How-to reference"
+cat "$agent/skills/biomcp/SKILL.md" | mustmatch like 'biomcp suggest "<question>"'
 ```
 
 ## Workflow Ladder Sidecars Install

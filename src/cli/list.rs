@@ -21,12 +21,13 @@ pub fn render(entity: Option<&str>) -> Result<String, BioMcpError> {
             "study" => Ok(list_study()),
             "adverse-event" | "adverse_event" | "adverseevent" => Ok(list_adverse_event()),
             "search-all" | "search_all" | "searchall" => Ok(list_search_all()),
+            "suggest" => Ok(list_suggest()),
             "discover" => Ok(list_discover()),
             "batch" => Ok(list_batch()),
             "enrich" => Ok(list_enrich()),
             "skill" | "skills" => Ok(crate::cli::skill::list_use_cases()?),
             other => Err(BioMcpError::InvalidArgument(format!(
-                "Unknown entity: {other}\n\nValid entities:\n- gene\n- variant\n- article\n- trial\n- diagnostic\n- drug\n- disease\n- phenotype\n- pgx\n- gwas\n- pathway\n- protein\n- study\n- adverse-event\n- search-all\n- discover\n- batch\n- enrich\n- skill"
+                "Unknown entity: {other}\n\nValid entities:\n- gene\n- variant\n- article\n- trial\n- diagnostic\n- drug\n- disease\n- phenotype\n- pgx\n- gwas\n- pathway\n- protein\n- study\n- adverse-event\n- search-all\n- suggest\n- discover\n- batch\n- enrich\n- skill"
             ))),
         },
     }
@@ -64,6 +65,31 @@ fn list_discover() -> String {
 - Unambiguous gene-plus-topic queries can also surface `biomcp search article -g <symbol> -k <topic> --limit 5` when the remaining topic is meaningful.
 - If no biomedical entities resolve, discover suggests `biomcp search article -k <query> --type review --limit 5`.
 - If only low-confidence concepts resolve, discover adds a broader-results article-search hint.
+"#
+    .to_string()
+}
+
+fn list_suggest() -> String {
+    r#"# suggest
+
+## Commands
+
+- `suggest <question>` - route a biomedical question to one shipped BioMCP worked-example playbook
+- `--json suggest <question>` - emit the four-field response for agents
+
+## Output fields
+
+- `matched_skill` - playbook slug, or no match
+- `summary` - short routing explanation
+- `first_commands` - exactly two starter commands on match; none on no-match
+- `full_skill` - `biomcp skill <slug>` for the full playbook, or none
+
+## When to use this surface
+
+- Use `suggest` when you know the biomedical question but not the first command sequence.
+- Matched responses are offline and deterministic; they do not call upstream APIs.
+- No-match stays successful and reports `No confident BioMCP skill match`.
+- Use `discover "<question>"` when you need entity resolution rather than playbook selection.
 "#
     .to_string()
 }
@@ -977,11 +1003,13 @@ mod tests {
         assert!(out.contains("## When to Use What"));
         assert_eq!(out.matches("## When to Use What").count(), 1);
         assert!(out.contains("search all --gene BRAF --disease melanoma"));
+        assert!(out.contains("suggest \"What drugs treat melanoma?\""));
         assert!(out.contains("discover \"<free text>\""));
         assert!(out.contains("article citations <id>"));
         assert!(out.contains("enrich <GENE1,GENE2,...>"));
         assert!(out.contains("Turn a literature question into article filters"));
         assert!(out.contains("`skill install` - install BioMCP skill guidance to your agent"));
+        assert!(out.contains("`suggest <question>`"));
         assert!(out.contains("`discover <query>`"));
         assert!(out.contains("`cache path`"));
         assert!(out.contains("`cache stats`"));
@@ -1001,6 +1029,19 @@ mod tests {
         assert!(out.contains("gene-plus-topic queries"));
         assert!(out.contains("biomcp search article -g <symbol> -k <topic> --limit 5"));
         assert!(out.contains("biomcp search article -k <query> --type review --limit 5"));
+    }
+
+    #[test]
+    fn list_suggest_page_exists() {
+        let out = render(Some("suggest")).expect("list suggest should render");
+        assert!(out.contains("# suggest"));
+        assert!(out.contains("suggest <question>"));
+        assert!(out.contains("--json suggest <question>"));
+        assert!(out.contains("matched_skill"));
+        assert!(out.contains("first_commands"));
+        assert!(out.contains("full_skill"));
+        assert!(out.contains("No confident BioMCP skill match"));
+        assert!(out.contains("discover \"<question>\""));
     }
 
     #[test]
@@ -1461,6 +1502,7 @@ mod tests {
         assert!(msg.contains("- enrich"));
         assert!(msg.contains("- batch"));
         assert!(msg.contains("- study"));
+        assert!(msg.contains("- suggest"));
         assert!(msg.contains("- discover"));
     }
 }

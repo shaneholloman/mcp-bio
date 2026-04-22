@@ -125,8 +125,9 @@ assert 'annotations(title = "BioMCP", read_only_hint = true)' in shell
 
 ## Read-only Allowlist
 
-The MCP `biomcp` tool accepts read-only CLI commands, including `discover`,
-`biomcp skill render`, and the exact `study download --list` catalog lookup.
+The MCP `biomcp` tool accepts read-only CLI commands, including `suggest`,
+`discover`, `biomcp skill render`, and the exact `study download --list`
+catalog lookup.
 Mutating commands remain blocked. Cache-family commands such as `cache path`,
 `cache stats`, `cache clean`, and `cache clear` are also rejected because they reveal workstation-local paths and filesystem context.
 In particular, `study download <study_id>` is rejected because installation
@@ -141,11 +142,13 @@ from pathlib import Path
 repo_root = Path.cwd()
 shell = (repo_root / "src/mcp/shell.rs").read_text()
 tests = (repo_root / "tests/test_mcp_contract.py").read_text()
+assert '"suggest" => true' in shell or '| "suggest" => true' in shell
 assert '"discover" => true' in shell or '| "discover" => true' in shell
 assert '"study" => {' in shell
 assert '"download" => args.len() == 4 && args[3] == "--list"' in shell
-assert "discover/skill" in shell or "discover/skill)." in shell
+assert "suggest/discover/skill" in shell or "suggest/discover/skill)." in shell
 assert '"render".into()' in shell
+assert 'test_biomcp_suggest_is_allowed_in_mcp_mode' in tests
 assert 'assert "study download --list" in description' in tests
 assert 'test_mutating_study_download_is_rejected_in_mcp_mode' in tests
 assert 'test_gtr_sync_is_rejected_in_mcp_mode' in tests
