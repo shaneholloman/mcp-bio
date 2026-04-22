@@ -163,6 +163,11 @@ def test_functional_overview_preserves_readme_surface_and_study_family() -> None
 
 def test_functional_overview_repaired_source_rows_match_current_contract() -> None:
     functional = _read_repo("architecture/functional/overview.md")
+    functional_ws = _normalize_ws(functional)
+
+    assert "13 remote entity commands" not in functional
+    assert "all 13 remote entity commands" not in functional
+    assert "public entity surface" in functional_ws
 
     assert (
         "| article | PubMed, PubTator3, Europe PMC, LitSense2 (keyword-gated), "
@@ -171,9 +176,35 @@ def test_functional_overview_repaired_source_rows_match_current_contract() -> No
         in functional
     )
     assert (
+        "| gene | MyGene.info, UniProt, Reactome, QuickGO, STRING, GTEx, Human "
+        "Protein Atlas, DGIdb, ClinGen, gnomAD, CIViC, NIH Reporter, GTR-backed "
+        "diagnostics pivot | `biomcp get gene ERBB2 funding` |"
+        in functional
+    )
+    assert (
+        "| diagnostic | NCBI Genetic Testing Registry local bulk exports, WHO IVD "
+        "local CSV, optional OpenFDA device 510(k)/PMA overlay | "
+        "`biomcp search diagnostic --gene BRCA1 --limit 5` |"
+        in functional
+    )
+    assert (
         "| drug | MyChem.info, EMA local batch, WHO Prequalification local CSV, "
-        "ChEMBL, OpenTargets, Drugs@FDA, OpenFDA, CIViC | `biomcp get drug "
-        "trastuzumab regulatory --region who` |"
+        "ChEMBL, OpenTargets, Drugs@FDA, OpenFDA labels/shortages/approvals/"
+        "FAERS/MAUDE/recalls, CIViC | `biomcp get drug trastuzumab regulatory "
+        "--region who` |"
+        in functional
+    )
+    assert (
+        "| disease | MyDisease.info, Monarch Initiative, MONDO, OpenTargets, "
+        "Reactome, CIViC, SEER Explorer, NIH Reporter, MedlinePlus "
+        "`clinical_features`, GTR/WHO IVD diagnostics pivot | `biomcp get "
+        "disease \"chronic myeloid leukemia\" funding` |"
+        in functional
+    )
+    assert (
+        "| adverse-event | OpenFDA FAERS/MAUDE/recalls, CDC WONDER VAERS "
+        "aggregate vaccine search | `biomcp search adverse-event -d "
+        "pembrolizumab` |"
         in functional
     )
     assert (
@@ -181,6 +212,48 @@ def test_functional_overview_repaired_source_rows_match_current_contract() -> No
         "enrichment sections | `biomcp get pathway hsa05200 genes` |"
         in functional
     )
+
+
+def test_clinical_features_architecture_doc_is_current_state() -> None:
+    clinical = _read_repo("architecture/functional/clinical-features-port.md")
+    clinical_ws = _normalize_ws(clinical)
+    clinical_lower = clinical_ws.lower()
+
+    assert clinical.startswith("# Disease Clinical Features Architecture")
+    for stale_phrase in (
+        "target state",
+        "target-state",
+        "does not yet expose clinical features",
+        "current implementation gaps",
+        "backlog",
+        "build ticket",
+        "ticket a:",
+        "ticket b:",
+        "ticket c:",
+        "decomposition",
+        "json and markdown contracts expose the same fields",
+    ):
+        assert stale_phrase not in clinical_lower
+
+    assert "## Current Surface" in clinical
+    assert "## Source Selection" in clinical
+    assert "## Runtime Flow" in clinical
+    assert "## Output Contract" in clinical
+    assert "## Failure Behavior" in clinical
+    assert "## Verification" in clinical
+    assert "`get disease <name_or_id> clinical_features`" in clinical
+    assert "MedlinePlus Search" in clinical
+    assert "reviewed configured diseases" in clinical_ws
+    assert "embedded fallback" in clinical_ws
+    assert "JSON exposes the full row contract" in clinical_ws
+    assert "Markdown renders stable display columns" in clinical_ws
+    assert "explicit opt-in" in clinical_ws
+    assert "`all` excludes `clinical_features`" in clinical_ws
+    assert "Unsupported diseases" in clinical_ws
+    assert "evidence URLs" in clinical_ws
+    assert "HPO mapping" in clinical_ws
+    assert "`_meta.section_sources`" in clinical
+    assert "HPO/Monarch phenotypes remain separate" in clinical_ws
 
 
 def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> None:
@@ -453,7 +526,15 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "`src/render/markdown.rs`" not in ux
     assert "`src/cli/tests/`" in ux
     assert "`next_commands_validity` tests in `src/cli/mod.rs`" not in ux
-    assert "Opt-in sections such as `disgenet` and `funding` still require explicit naming." in ux_ws
+    assert "13 remote entity commands" not in ux
+    assert "all 13 remote entity commands" not in ux
+    assert "entity command surface" in ux_ws
+    assert "biomcp get disease \"uterine leiomyoma\" clinical_features" in ux
+    assert (
+        "Opt-in sections such as `clinical_features`, `diagnostics`, `disgenet`, "
+        "and `funding` still require explicit naming."
+        in ux_ws
+    )
 
 
 def test_technical_overview_repaired_gate_and_health_copy_match_contract() -> None:
@@ -468,9 +549,10 @@ def test_technical_overview_repaired_gate_and_health_copy_match_contract() -> No
         in technical_ws
     )
     assert (
-        "`--apis-only` omits the EMA local-data row, the WHO local-data row, "
-        "the cache-writability row, and the cache-limits row because none of "
-        "these are upstream API checks."
+        "`--apis-only` omits the EMA local-data row, the WHO Prequalification "
+        "local-data row, the CDC CVX/MVX local-data row, the GTR local-data "
+        "row, the WHO IVD local-data row, the cache-writability row, and the "
+        "cache-limits row because none of these are upstream API checks."
         in technical_ws
     )
 
@@ -562,18 +644,27 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert "`docs/user-guide/cli-reference.md`" in section_first_section
     assert "default `get` output stays concise" in section_first_section
     assert "## Local Runtime Sources and File-Backed Assets" in source_integration
-    assert (
-        "EMA, WHO Prequalification, and CDC CVX/MVX are the canonical local runtime drug sources"
-        in local_runtime_section
-    )
+    assert "EMA, WHO Prequalification, CDC CVX/MVX, GTR, and WHO IVD are local runtime sources." in local_runtime_section
     assert "`BIOMCP_EMA_DIR` first, then the platform data directory" in local_runtime_section
     assert "`BIOMCP_WHO_DIR` first, then the platform data directory" in local_runtime_section
     assert "`BIOMCP_CVX_DIR` first, then the platform data directory" in local_runtime_section
+    assert "`BIOMCP_GTR_DIR` first, then the platform data directory" in local_runtime_section
+    assert "`BIOMCP_WHO_IVD_DIR` first, then the platform data directory" in local_runtime_section
     assert (
-        "`biomcp health` includes the EMA, WHO, and CDC local-data readiness rows"
+        "`biomcp health` includes the EMA, WHO Prequalification, CDC CVX/MVX, GTR, and WHO IVD local-data readiness rows"
         in local_runtime_section
     )
     assert "`biomcp health --apis-only` excludes those rows" in local_runtime_section
+    for expected_row in (
+        "| EMA | `BIOMCP_EMA_DIR` | `medicines.json`, `post_authorisation.json`, `referrals.json`, `psusas.json`, `dhpcs.json`, `shortages.json` | 72 hours | `biomcp ema sync` | full health row; omitted from `--apis-only` | `docs/reference/source-licensing.md` / `docs/reference/sources.json` |",
+        "| WHO Prequalification | `BIOMCP_WHO_DIR` | `who_pq.csv`, `who_api.csv`, `who_vaccines.csv` | 72 hours | `biomcp who sync` | full health row; omitted from `--apis-only` | `docs/reference/source-licensing.md` / `docs/reference/sources.json` |",
+        "| CDC CVX/MVX | `BIOMCP_CVX_DIR` | `cvx.txt`, `TRADENAME.txt`, `mvx.txt` | 30 days | `biomcp cvx sync` | full health row; omitted from `--apis-only` | `docs/reference/source-licensing.md` / `docs/reference/sources.json` |",
+        "| GTR | `BIOMCP_GTR_DIR` | `test_version.gz`, `test_condition_gene.txt` | 7 days | `biomcp gtr sync` | full health row; omitted from `--apis-only` | `docs/reference/source-licensing.md` / `docs/reference/sources.json` |",
+        "| WHO IVD | `BIOMCP_WHO_IVD_DIR` | `who_ivd.csv` | 72 hours | `biomcp who-ivd sync` | full health row; omitted from `--apis-only` | `docs/reference/source-licensing.md` / `docs/reference/sources.json` |",
+    ):
+        assert expected_row in source_integration
+    assert "first-use auto-download" in local_runtime_section
+    assert "canonical provider terms" in local_runtime_section
     assert (
         "`configured`, `configured (stale)`, `available (default path)`, "
         "`available (default path, stale)`, `not configured`, and "
@@ -581,6 +672,7 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
         in local_runtime_section
     )
     assert "`docs/user-guide/drug.md`" in local_runtime_section
+    assert "`docs/user-guide/diagnostic.md`" in local_runtime_section
     assert "30-day refresh window" in local_runtime_section
     assert "BioASQ is the canonical file-backed non-runtime asset" in local_runtime_section
     assert (
@@ -602,6 +694,8 @@ def test_source_integration_architecture_doc_captures_repo_contract() -> None:
     assert 'std::env::var("BIOMCP_EMA_DIR")' in ema_source
     assert "EMA local data" in health
     assert "CDC CVX/MVX local data" in health
+    assert "GTR local data" in health
+    assert "WHO IVD local data" in health
     assert "available (default path)" in health
     assert "not configured" in health
     assert "error (missing:" in health

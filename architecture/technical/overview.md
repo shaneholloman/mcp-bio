@@ -365,9 +365,10 @@ inventory ledger.
 - It shows per-source connectivity for readiness-significant sources.
 - Key-gated sources appear as `excluded` rows when the required environment
   variable is absent.
-- `--apis-only` omits the EMA local-data row, the WHO local-data row, the
-  cache-writability row, and the cache-limits row because none of these are
-  upstream API checks.
+- `--apis-only` omits the EMA local-data row, the WHO Prequalification
+  local-data row, the CDC CVX/MVX local-data row, the GTR local-data row, the
+  WHO IVD local-data row, the cache-writability row, and the cache-limits row
+  because none of these are upstream API checks.
 - Partial upstream failures remain visible in the rendered report.
 - Current CLI behavior is report-first: the command exits `0` when the report
   renders, even if some upstream rows are failing.

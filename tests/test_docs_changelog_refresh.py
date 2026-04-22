@@ -224,9 +224,18 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
     cross_entity_guide = _read("docs/how-to/cross-entity-pivots.md")
 
     for text in (readme, docs_index):
-        assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO Prequalified IVD local CSV |" in text
-        assert "13 remote entity commands" in text
+        assert "13 remote entity commands" not in text
+        assert "all 13 remote entity commands" not in text
         assert "12 remote entity commands" not in text
+        assert (
+            "| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO IVD local CSV + optional OpenFDA device overlay |"
+            in text
+        )
+        assert "GTR-backed diagnostics pivot" in text
+        assert "MedlinePlus `clinical_features`" in text
+        assert "GTR/WHO IVD diagnostics pivot" in text
+        assert "OpenFDA FAERS/MAUDE/recalls plus CDC WONDER VAERS aggregate vaccine search" in text
+        assert "public entity surface" in text
 
     assert "biomcp gtr sync" in cli_reference
     assert "biomcp who-ivd sync" in cli_reference
@@ -234,17 +243,28 @@ def test_diagnostic_docs_and_count_language_are_current() -> None:
     assert "WHO IVD local data" in cli_reference
     assert "matches complete disease words or phrases at boundaries" in cli_reference
     assert "Disease diagnostic cards are capped at" in cli_reference
-    assert "13 remote entity commands" in cli_reference
+    assert "biomcp get disease \"uterine leiomyoma\" clinical_features" in cli_reference
+    assert "`clinical_features`, `diagnostics`, `disgenet`, and `funding` stay opt-in" in cli_reference
+    assert "13 remote entity commands" not in cli_reference
+    assert "all 13 remote entity commands" not in cli_reference
     assert "12 remote entity commands" not in cli_reference
 
-    assert "13 remote entity commands" in functional
+    assert "13 remote entity commands" not in functional
+    assert "all 13 remote entity commands" not in functional
     assert "12 entity types" not in functional
     assert "15+ biomedical databases" not in functional
-    assert "| diagnostic | NCBI Genetic Testing Registry local bulk bundle + WHO Prequalified IVD local CSV |" in functional
+    assert (
+        "| diagnostic | NCBI Genetic Testing Registry local bulk exports, WHO IVD local CSV, optional OpenFDA device 510(k)/PMA overlay |"
+        in functional
+    )
+    assert "MedlinePlus `clinical_features`" in functional
+    assert "CDC WONDER VAERS aggregate vaccine search" in functional
 
     assert "biomcp gtr sync" in ux_reference
     assert "biomcp who-ivd sync" in ux_reference
-    assert "all 13 remote entity commands" in ux_reference
+    assert "biomcp get disease \"uterine leiomyoma\" clinical_features" in ux_reference
+    assert "all 13 remote entity commands" not in ux_reference
+    assert "13 remote entity commands" not in ux_reference
     assert "all 12 entity types" not in ux_reference
 
     assert "Diagnostic: user-guide/diagnostic.md" in mkdocs
@@ -495,7 +515,8 @@ def test_public_docs_surface_local_study_analytics() -> None:
 
     assert "plus local study analytics" in readme
     assert "## Local study analytics" in readme
-    assert "13 remote entity commands" in readme
+    assert "13 remote entity commands" not in readme
+    assert "public entity surface handles API-backed, local-runtime, and hybrid" in readme
     assert "study download" in readme
 
     assert "## Study commands" in quick_reference
@@ -508,7 +529,8 @@ def test_public_docs_surface_local_study_analytics() -> None:
     assert "BIOMCP_STUDY_DIR" in cli_reference
     assert "local cBioPortal analytics family for downloaded" in cli_reference
     assert "cBioPortal-style datasets" in cli_reference
-    assert "13 remote entity commands" in cli_reference
+    assert "13 remote entity commands" not in cli_reference
+    assert "Unlike the public entity surface, `study` operates on files" in cli_reference
     assert "data_mutations.txt" in cli_reference
     assert "data_clinical_patient.txt" in cli_reference
     for command in study_commands:
