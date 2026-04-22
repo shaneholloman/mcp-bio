@@ -44,6 +44,7 @@ echo "$json_out" | jq -e '._meta.next_commands | any(. == "biomcp list article")
 ```
 
 ## Article Search Gene Keyword Pivot
+<!-- smoke-lane -->
 
 When a keyword-only article search exactly matches a gene vocabulary label or
 alias, BioMCP should suggest the typed gene card. Token matches inside a longer
@@ -79,6 +80,7 @@ echo "$typed_out" | jq -e '[(._meta.suggestions // [])[] | select(.command == "b
 ```
 
 ## Article Search Drug Keyword Pivot
+<!-- smoke-lane -->
 
 When a keyword-only article search exactly matches a drug vocabulary label or
 alias, BioMCP should suggest the typed drug card and expose a structured JSON
