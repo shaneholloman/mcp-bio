@@ -50,6 +50,19 @@ echo "$json_out" | jq -e '.first_commands[0] == "biomcp get variant rs113488022 
 echo "$json_out" | jq -e '.first_commands[1] == "biomcp get variant rs113488022 civic cgi"' > /dev/null
 ```
 
+## Shell Quoting
+
+User-derived anchors are rendered as command strings, not executed by
+`suggest`. Multiword or shell-significant anchors should be quoted in every
+starter command so agents can copy the command safely.
+
+```bash
+bin="$(git rev-parse --show-toplevel)/target/release/biomcp"
+out="$("$bin" suggest "What drugs treat lung cancer; rm -rf /?")"
+echo "$out" | mustmatch like 'biomcp search drug --indication "lung cancer; rm -rf /" --limit 5'
+echo "$out" | mustmatch like 'biomcp search article -d "lung cancer; rm -rf /" --type review --limit 5'
+```
+
 ## More Shipped Question Shapes
 
 The router covers the shipped worked-example catalog with conservative phrase

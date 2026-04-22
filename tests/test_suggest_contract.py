@@ -46,7 +46,13 @@ def test_suggest_json_routes_ticket_examples() -> None:
 
     regulatory = _run_json("suggest", "When was imatinib approved?")
     assert regulatory["matched_skill"] == "drug-regulatory"
-    assert len(regulatory["first_commands"]) == 2
+    assert regulatory["first_commands"] == [
+        "biomcp get drug imatinib regulatory",
+        "biomcp get drug imatinib approvals",
+    ]
+
+    regional = _run_json("suggest", "When was imatinib approved by FDA?")
+    assert regional["first_commands"][0] == "biomcp get drug imatinib regulatory --region us"
 
 
 def test_suggest_more_question_shapes_and_no_match() -> None:
@@ -58,6 +64,21 @@ def test_suggest_more_question_shapes_and_no_match() -> None:
     }
     for question, slug in cases.items():
         assert _run_json("suggest", question)["matched_skill"] == slug
+
+    intervention = _run_json("suggest", "Are there recruiting trials with imatinib?")
+    assert intervention["first_commands"] == [
+        "biomcp search trial -i imatinib --status recruiting --limit 5",
+        "biomcp search article --drug imatinib --type review --limit 5",
+    ]
+
+    symptom = _run_json("suggest", "symptoms include seizure and developmental delay")
+    assert symptom["first_commands"] == [
+        'biomcp discover "seizure and developmental delay"',
+        'biomcp search phenotype "seizure and developmental delay" --limit 5',
+    ]
+
+    quoted = _run_text("suggest", "What drugs treat lung cancer; rm -rf /?")
+    assert 'biomcp search drug --indication "lung cancer; rm -rf /" --limit 5' in quoted
 
     no_match = _run_json("suggest", "What is x?")
     assert no_match == {

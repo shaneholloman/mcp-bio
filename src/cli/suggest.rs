@@ -25,6 +25,7 @@ pub(crate) struct SuggestResponse {
 pub(crate) struct SuggestRouteExample {
     pub question: &'static str,
     pub expected_skill: &'static str,
+    pub expected_commands: [&'static str; 2],
 }
 
 struct QuestionContext<'a> {
@@ -43,62 +44,119 @@ const ROUTE_EXAMPLES: &[SuggestRouteExample] = &[
     SuggestRouteExample {
         question: "Is variant rs113488022 pathogenic in melanoma?",
         expected_skill: "variant-pathogenicity",
+        expected_commands: [
+            "biomcp get variant rs113488022 clinvar predictions population",
+            "biomcp get variant rs113488022 civic cgi",
+        ],
     },
     SuggestRouteExample {
         question: "Follow up PMID:22663011 citations",
         expected_skill: "article-follow-up",
+        expected_commands: [
+            concat!("biomcp get article ", "22663011 annotations"),
+            concat!("biomcp article citations ", "22663011 --limit 5"),
+        ],
     },
     SuggestRouteExample {
         question: "When was imatinib approved?",
         expected_skill: "drug-regulatory",
+        expected_commands: [
+            "biomcp get drug imatinib regulatory",
+            "biomcp get drug imatinib approvals",
+        ],
     },
     SuggestRouteExample {
         question: "What pharmacogenes affect warfarin dosing?",
         expected_skill: "pharmacogene-cumulative",
+        expected_commands: [
+            concat!("biomcp search pgx -d ", "warfarin --limit 10"),
+            concat!("biomcp get pgx ", "warfarin recommendations annotations"),
+        ],
     },
     SuggestRouteExample {
         question: "Are there recruiting trials for melanoma?",
         expected_skill: "trial-recruitment",
+        expected_commands: [
+            "biomcp search trial -c melanoma --status recruiting --limit 5",
+            "biomcp search article -d melanoma --type review --limit 5",
+        ],
     },
     SuggestRouteExample {
         question: "How do I distinguish Goldberg-Shprintzen syndrome vs Shprintzen-Goldberg syndrome?",
         expected_skill: "syndrome-disambiguation",
+        expected_commands: [
+            "biomcp search disease \"Goldberg-Shprintzen syndrome\" --limit 5",
+            "biomcp search disease \"Shprintzen-Goldberg syndrome\" --limit 5",
+        ],
     },
     SuggestRouteExample {
         question: "Is Borna disease virus linked to brain tumor?",
         expected_skill: "negative-evidence",
+        expected_commands: [
+            "biomcp search article -k \"Borna disease virus brain tumor\" --type review --limit 5",
+            "biomcp search article -k \"Borna disease virus brain tumor association\" --limit 5",
+        ],
     },
     SuggestRouteExample {
         question: "What chromosome is Arnold Chiari syndrome mapped to?",
         expected_skill: "disease-locus-mapping",
+        expected_commands: [
+            "biomcp search article -k \"Arnold Chiari syndrome chromosome\" --type review --limit 10",
+            "biomcp search article -k \"Arnold Chiari syndrome deletion duplication trisomy chromosome\" --limit 10",
+        ],
     },
     SuggestRouteExample {
         question: "What pathway explains imatinib resistance?",
         expected_skill: "mechanism-pathway",
+        expected_commands: [
+            concat!("biomcp search drug ", "imatinib --limit 5"),
+            concat!("biomcp get drug ", "imatinib targets regulatory"),
+        ],
     },
     SuggestRouteExample {
         question: "Where is OPA1 localized?",
         expected_skill: "gene-function-localization",
+        expected_commands: [
+            "biomcp get gene OPA1 protein hpa",
+            "biomcp get gene OPA1 ontology",
+        ],
     },
     SuggestRouteExample {
         question: "Which variants are in PLN?",
         expected_skill: "mutation-catalog",
+        expected_commands: [
+            concat!("biomcp get gene ", "PLN"),
+            concat!("biomcp search variant -g ", "PLN --limit 10"),
+        ],
     },
     SuggestRouteExample {
         question: "How does NANOG regulate cell cycle?",
         expected_skill: "cellular-process-regulation",
+        expected_commands: ["biomcp get gene NANOG", "biomcp get gene NANOG ontology"],
     },
     SuggestRouteExample {
         question: "What drugs treat melanoma?",
         expected_skill: "treatment-lookup",
+        expected_commands: [
+            "biomcp search drug --indication melanoma --limit 5",
+            "biomcp search article -d melanoma --type review --limit 5",
+        ],
     },
     SuggestRouteExample {
         question: "What symptoms are seen in Marfan syndrome?",
         expected_skill: "symptom-phenotype",
+        expected_commands: [
+            "biomcp get disease \"Marfan syndrome\" phenotypes",
+            "biomcp search article -d \"Marfan syndrome\" --type review --limit 5",
+        ],
     },
     SuggestRouteExample {
         question: "What is BRAF in melanoma?",
         expected_skill: "gene-disease-orientation",
+        expected_commands: [
+            "biomcp search all --gene BRAF --disease melanoma",
+            "biomcp search article -g BRAF -d melanoma --type review --limit 5",
+        ],
     },
 ];
 
@@ -237,7 +295,7 @@ fn matched_response(slug: &str, summary: &str, commands: Vec<String>) -> Suggest
             first_commands.push(command);
         }
     }
-    debug_assert_eq!(
+    assert_eq!(
         first_commands.len(),
         2,
         "suggest route {slug} must produce exactly two starter commands",
@@ -288,8 +346,8 @@ fn render_markdown(response: &SuggestResponse) -> String {
 
     if response.matched_skill.is_none() {
         out.push_str(
-            "\nTry `biomcp list` for command families, `biomcp skill` for shipped playbooks, \
-             or `biomcp discover \"<text>\"` when you need entity resolution.\n",
+            "\nTry `biomcp skill list` to browse playbooks or `biomcp discover \"<question>\"` \
+             when you need entity resolution instead of playbook selection.\n",
         );
     }
     out
@@ -297,11 +355,14 @@ fn render_markdown(response: &SuggestResponse) -> String {
 
 fn route_variant_pathogenicity(ctx: &QuestionContext<'_>) -> Option<Vec<String>> {
     if !ctx.has_any(&[
-        "variant",
-        "mutation",
         "pathogenic",
         "pathogenicity",
         "clinical significance",
+        "clinical",
+        "actionable",
+        "significance",
+        "benign",
+        "risk",
         "clinvar",
         "oncogenic",
         "civic",
@@ -352,18 +413,39 @@ fn route_drug_regulatory(ctx: &QuestionContext<'_>) -> Option<Vec<String>> {
         "label",
         "labeling",
         "licensed",
+        "authorization",
+        "authorized",
         "withdrawn",
         "fda",
         "ema",
+        "eu",
         "who",
     ]) {
         return None;
     }
     let drug = capture_clean(regulatory_subject_re(), ctx, 1)
         .or_else(|| capture_clean(approval_for_re(), ctx, 1))
-        .or_else(|| content_anchor_before_terms(ctx, &["approved", "approval", "licensed"]))?;
+        .or_else(|| {
+            content_anchor_before_terms(
+                ctx,
+                &[
+                    "approved",
+                    "approval",
+                    "licensed",
+                    "authorized",
+                    "authorization",
+                ],
+            )
+        })?;
+    let regulatory = match detect_regulatory_region(ctx) {
+        Some(region) => format!(
+            "biomcp get drug {} regulatory --region {region}",
+            quote(&drug)
+        ),
+        None => format!("biomcp get drug {} regulatory", quote(&drug)),
+    };
     Some(vec![
-        format!("biomcp get drug {} regulatory", quote(&drug)),
+        regulatory,
         format!("biomcp get drug {} approvals", quote(&drug)),
     ])
 }
@@ -411,14 +493,17 @@ fn route_trial_recruitment(ctx: &QuestionContext<'_>) -> Option<Vec<String>> {
     ]) {
         return None;
     }
-    if !ctx.has_any(&[
-        "recruiting",
-        "recruitment",
-        "enrolling",
-        "enrollment",
-        "open",
-    ]) {
-        return None;
+    if let Some(intervention) = trial_intervention_anchor(ctx) {
+        return Some(vec![
+            format!(
+                "biomcp search trial -i {} --status recruiting --limit 5",
+                quote(&intervention)
+            ),
+            format!(
+                "biomcp search article --drug {} --type review --limit 5",
+                quote(&intervention)
+            ),
+        ]);
     }
 
     let condition = capture_clean(trial_condition_re(), ctx, 1)
@@ -439,16 +524,16 @@ fn route_syndrome_disambiguation(ctx: &QuestionContext<'_>) -> Option<Vec<String
     if !ctx.has_any(&[
         "distinguish",
         "differentiate",
+        "difference",
         "disambiguate",
+        "confused",
         "versus",
         "vs",
         "compare",
     ]) {
         return None;
     }
-    let captures = syndrome_compare_re().captures(ctx.original)?;
-    let first = clean_anchor(captures.get(1)?.as_str())?;
-    let second = clean_anchor(captures.get(2)?.as_str())?;
+    let (first, second) = syndrome_pair(ctx)?;
     Some(vec![
         format!("biomcp search disease {} --limit 5", quote(&first)),
         format!("biomcp search disease {} --limit 5", quote(&second)),
@@ -472,13 +557,18 @@ fn route_negative_evidence(ctx: &QuestionContext<'_>) -> Option<Vec<String>> {
     ]) {
         return None;
     }
-    let topic = negative_topic(ctx)?;
+    let (first, second) = negative_terms(ctx)?;
+    let topic = format!("{first} {second}");
+    let association_topic = format!("{topic} association");
     Some(vec![
         format!(
-            "biomcp search article -k {} --type review --limit 10",
+            "biomcp search article -k {} --type review --limit 5",
             quote(&topic)
         ),
-        format!("biomcp search article -k {} --limit 10", quote(&topic)),
+        format!(
+            "biomcp search article -k {} --limit 5",
+            quote(&association_topic)
+        ),
     ])
 }
 
@@ -486,8 +576,13 @@ fn route_disease_locus_mapping(ctx: &QuestionContext<'_>) -> Option<Vec<String>>
     if !ctx.has_any(&[
         "chromosome",
         "locus",
+        "loci",
         "mapped",
         "mapping",
+        "deletion",
+        "duplication",
+        "trisomy",
+        "cytogenetic",
         "cytoband",
         "genomic location",
     ]) {
@@ -495,9 +590,17 @@ fn route_disease_locus_mapping(ctx: &QuestionContext<'_>) -> Option<Vec<String>>
     }
     let disease = capture_clean(mapped_disease_re(), ctx, 1)
         .or_else(|| capture_clean(generic_for_re(), ctx, 1))?;
+    let chromosome_topic = format!("{disease} chromosome");
+    let structural_topic = format!("{disease} deletion duplication trisomy chromosome");
     Some(vec![
-        format!("biomcp search disease {} --limit 5", quote(&disease)),
-        format!("biomcp get disease {} genes", quote(&disease)),
+        format!(
+            "biomcp search article -k {} --type review --limit 10",
+            quote(&chromosome_topic)
+        ),
+        format!(
+            "biomcp search article -k {} --limit 10",
+            quote(&structural_topic)
+        ),
     ])
 }
 
@@ -510,26 +613,58 @@ fn route_mechanism_pathway(ctx: &QuestionContext<'_>) -> Option<Vec<String>> {
         "resistance",
         "target",
         "targets",
+        "work",
+        "works",
+        "causes through",
     ]) {
         return None;
     }
-    let topic = mechanism_topic(ctx)?;
+
+    if let Some(drug) = mechanism_drug_anchor(ctx)
+        && extract_gene_symbol(ctx)
+            .as_deref()
+            .is_none_or(|gene| gene != drug.as_str())
+    {
+        return Some(vec![
+            format!("biomcp search drug {} --limit 5", quote(&drug)),
+            format!("biomcp get drug {} targets regulatory", quote(&drug)),
+        ]);
+    }
+
+    let gene = extract_gene_symbol(ctx)?;
+    let topic = mechanism_gene_topic(ctx, &gene);
     Some(vec![
+        format!("biomcp get gene {} pathways protein", quote(&gene)),
         format!(
-            "biomcp search article -k {} --type review --limit 5",
+            "biomcp search article -g {} -k {} --type review --limit 5",
+            quote(&gene),
             quote(&topic)
         ),
-        format!("biomcp search pathway -q {} --limit 5", quote(&topic)),
     ])
 }
 
 fn route_gene_function_localization(ctx: &QuestionContext<'_>) -> Option<Vec<String>> {
+    if ctx.has_any(&[
+        "regulate",
+        "regulates",
+        "regulated",
+        "regulation",
+        "cell cycle",
+        "cellular process",
+        "differentiation",
+        "apoptosis",
+        "g1 s",
+    ]) {
+        return None;
+    }
     if !ctx.has_any(&[
         "localized",
         "localization",
         "located",
         "where is",
         "function",
+        "does",
+        "do",
         "ontology",
         "tissue",
         "protein",
@@ -570,6 +705,11 @@ fn route_cellular_process_regulation(ctx: &QuestionContext<'_>) -> Option<Vec<St
         "regulation",
         "affect",
         "affects",
+        "cell cycle",
+        "cellular process",
+        "differentiation",
+        "apoptosis",
+        "g1 s",
         "control",
         "controls",
         "process",
@@ -577,16 +717,9 @@ fn route_cellular_process_regulation(ctx: &QuestionContext<'_>) -> Option<Vec<St
         return None;
     }
     let gene = extract_gene_symbol(ctx)?;
-    let process = capture_clean(process_re(), ctx, 1)
-        .or_else(|| content_after_gene(ctx, &gene))
-        .unwrap_or_else(|| "cellular process".to_string());
     Some(vec![
-        format!("biomcp get gene {} pathways protein", quote(&gene)),
-        format!(
-            "biomcp search article -g {} -k {} --type review --limit 5",
-            quote(&gene),
-            quote(&process)
-        ),
+        format!("biomcp get gene {}", quote(&gene)),
+        format!("biomcp get gene {} ontology", quote(&gene)),
     ])
 }
 
@@ -605,7 +738,7 @@ fn route_treatment_lookup(ctx: &QuestionContext<'_>) -> Option<Vec<String>> {
     ]) {
         return None;
     }
-    let disease = capture_clean(treatment_disease_re(), ctx, 1)
+    let disease = capture_clean_any(treatment_disease_re(), ctx, &[1, 2])
         .or_else(|| capture_clean(generic_for_re(), ctx, 1))?;
     Some(vec![
         format!(
@@ -633,11 +766,23 @@ fn route_symptom_phenotype(ctx: &QuestionContext<'_>) -> Option<Vec<String>> {
     ]) {
         return None;
     }
-    let disease = capture_clean(symptom_disease_re(), ctx, 1)
-        .or_else(|| capture_clean(generic_for_re(), ctx, 1))?;
+    if let Some(disease) = capture_clean(symptom_disease_re(), ctx, 1)
+        .or_else(|| capture_clean(symptom_named_disease_re(), ctx, 1))
+    {
+        return Some(vec![
+            format!("biomcp get disease {} phenotypes", quote(&disease)),
+            format!(
+                "biomcp search article -d {} --type review --limit 5",
+                quote(&disease)
+            ),
+        ]);
+    }
+
+    let symptom = capture_clean(symptom_text_re(), ctx, 1)
+        .or_else(|| cleanup_question_topic(ctx.original))?;
     Some(vec![
-        format!("biomcp get disease {} phenotypes", quote(&disease)),
-        format!("biomcp search phenotype {} --limit 5", quote(&disease)),
+        format!("biomcp discover {}", quote(&symptom)),
+        format!("biomcp search phenotype {} --limit 5", quote(&symptom)),
     ])
 }
 
@@ -692,6 +837,13 @@ fn extract_article_identifier(ctx: &QuestionContext<'_>) -> Option<String> {
 }
 
 fn extract_gene_symbol(ctx: &QuestionContext<'_>) -> Option<String> {
+    if let Some(symbol) = capture_clean(explicit_gene_re(), ctx, 1) {
+        let symbol = symbol.to_ascii_uppercase();
+        if !is_gene_stopword(&symbol) {
+            return Some(symbol);
+        }
+    }
+
     for matched in gene_symbol_re().find_iter(ctx.original) {
         let symbol = matched.as_str();
         if is_gene_stopword(symbol) {
@@ -700,6 +852,29 @@ fn extract_gene_symbol(ctx: &QuestionContext<'_>) -> Option<String> {
         return Some(symbol.to_string());
     }
     None
+}
+
+fn detect_regulatory_region(ctx: &QuestionContext<'_>) -> Option<&'static str> {
+    if ctx.has_any(&["fda", "us", "u s", "united states"]) {
+        return Some("us");
+    }
+    if ctx.has_any(&["ema", "eu", "europe", "european"]) {
+        return Some("eu");
+    }
+    if ctx.has_any(&["who", "world health organization"]) {
+        return Some("who");
+    }
+    None
+}
+
+fn trial_intervention_anchor(ctx: &QuestionContext<'_>) -> Option<String> {
+    capture_clean_any(trial_intervention_re(), ctx, &[1, 2]).or_else(|| {
+        if ctx.has_any(&["with"]) {
+            capture_clean(trial_with_re(), ctx, 1)
+        } else {
+            None
+        }
+    })
 }
 
 fn content_anchor_before_terms(ctx: &QuestionContext<'_>, terms: &[&str]) -> Option<String> {
@@ -715,17 +890,35 @@ fn content_anchor_before_terms(ctx: &QuestionContext<'_>, terms: &[&str]) -> Opt
     None
 }
 
-fn content_after_gene(ctx: &QuestionContext<'_>, gene: &str) -> Option<String> {
-    let start = ctx.original.find(gene)? + gene.len();
-    clean_anchor(&ctx.original[start..])
+fn syndrome_pair(ctx: &QuestionContext<'_>) -> Option<(String, String)> {
+    [
+        syndrome_compare_re(),
+        syndrome_difference_re(),
+        syndrome_vs_re(),
+        syndrome_confused_re(),
+    ]
+    .iter()
+    .find_map(|regex| capture_pair(regex, ctx))
 }
 
-fn negative_topic(ctx: &QuestionContext<'_>) -> Option<String> {
-    capture_clean(linked_topic_re(), ctx, 1).or_else(|| cleanup_question_topic(ctx.original))
+fn negative_terms(ctx: &QuestionContext<'_>) -> Option<(String, String)> {
+    [linked_terms_re(), cause_terms_re(), evidence_terms_re()]
+        .iter()
+        .find_map(|regex| capture_pair(regex, ctx))
 }
 
-fn mechanism_topic(ctx: &QuestionContext<'_>) -> Option<String> {
-    capture_clean(mechanism_topic_re(), ctx, 1).or_else(|| cleanup_question_topic(ctx.original))
+fn mechanism_drug_anchor(ctx: &QuestionContext<'_>) -> Option<String> {
+    capture_clean_any(mechanism_resistance_re(), ctx, &[1, 2, 3])
+        .or_else(|| capture_clean(mechanism_work_re(), ctx, 1))
+        .or_else(|| capture_clean(mechanism_of_re(), ctx, 1))
+        .or_else(|| capture_clean(mechanism_topic_re(), ctx, 1))
+}
+
+fn mechanism_gene_topic(ctx: &QuestionContext<'_>, gene: &str) -> String {
+    cleanup_question_topic(ctx.original)
+        .map(|topic| topic.replace(gene, "").trim().to_string())
+        .and_then(|topic| clean_anchor(&topic))
+        .unwrap_or_else(|| "pathway mechanism".to_string())
 }
 
 fn cleanup_question_topic(value: &str) -> Option<String> {
@@ -751,6 +944,25 @@ fn cleanup_question_topic(value: &str) -> Option<String> {
 fn capture_clean(regex: &'static Regex, ctx: &QuestionContext<'_>, index: usize) -> Option<String> {
     let captures = regex.captures(ctx.original)?;
     clean_anchor(captures.get(index)?.as_str())
+}
+
+fn capture_clean_any(
+    regex: &'static Regex,
+    ctx: &QuestionContext<'_>,
+    indexes: &[usize],
+) -> Option<String> {
+    let captures = regex.captures(ctx.original)?;
+    indexes
+        .iter()
+        .filter_map(|index| captures.get(*index))
+        .find_map(|matched| clean_anchor(matched.as_str()))
+}
+
+fn capture_pair(regex: &'static Regex, ctx: &QuestionContext<'_>) -> Option<(String, String)> {
+    let captures = regex.captures(ctx.original)?;
+    let first = clean_anchor(captures.get(1)?.as_str())?;
+    let second = clean_anchor(captures.get(2)?.as_str())?;
+    Some((first, second))
 }
 
 fn clean_anchor(raw: &str) -> Option<String> {
@@ -828,7 +1040,9 @@ fn contains_phrase(normalized: &str, phrase: &str) -> bool {
 }
 
 fn is_gene_stopword(symbol: &str) -> bool {
-    GENE_STOPWORDS.contains(&symbol.to_ascii_uppercase().as_str())
+    let upper = symbol.to_ascii_uppercase();
+    let lower = symbol.to_ascii_lowercase();
+    GENE_STOPWORDS.contains(&upper.as_str()) || STOP_ANCHORS.contains(&lower.as_str())
 }
 
 fn rsid_re() -> &'static Regex {
@@ -878,11 +1092,19 @@ fn gene_symbol_re() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"\b[A-Z][A-Z0-9-]{1,14}\b").expect("valid gene symbol regex"))
 }
 
+fn explicit_gene_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\bgene\s+([A-Za-z][A-Za-z0-9-]{1,14})\b")
+            .expect("valid explicit gene regex")
+    })
+}
+
 fn regulatory_subject_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
         Regex::new(
-            r"(?i)\b(?:was|is|were|are)\s+([A-Za-z0-9][A-Za-z0-9 -]{1,80}?)\s+(?:approved|licensed|withdrawn|regulated|labeled|labelled)\b",
+            r"(?i)\b(?:was|is|were|are)\s+([A-Za-z0-9][A-Za-z0-9 -]{1,80}?)\s+(?:approved|licensed|authorized|withdrawn|regulated|labeled|labelled)\b",
         )
         .expect("valid regulatory subject regex")
     })
@@ -921,6 +1143,23 @@ fn trial_condition_re() -> &'static Regex {
     })
 }
 
+fn trial_intervention_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(
+            r"(?i)\btrials?\s+(?:for|with)\s+(?:drug|intervention|therapy|treatment)\s+(.+?)(?:\?|$)|\bintervention\s+(.+?)(?:\?|$)",
+        )
+        .expect("valid trial intervention regex")
+    })
+}
+
+fn trial_with_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\btrials?\s+with\s+(.+?)(?:\?|$)").expect("valid trial-with regex")
+    })
+}
+
 fn syndrome_compare_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
@@ -929,11 +1168,51 @@ fn syndrome_compare_re() -> &'static Regex {
     })
 }
 
-fn linked_topic_re() -> &'static Regex {
+fn syndrome_difference_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\bdifference\s+between\s+(.+?)\s+and\s+(.+?)(?:\?|$)")
+            .expect("valid syndrome difference regex")
+    })
+}
+
+fn syndrome_vs_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)^(.+?)\s+(?:vs\.?|versus)\s+(.+?)(?:\?|$)")
+            .expect("valid syndrome-vs regex")
+    })
+}
+
+fn syndrome_confused_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)^(.+?)\s+confused\s+with\s+(.+?)(?:\?|$)")
+            .expect("valid syndrome confused-with regex")
+    })
+}
+
+fn linked_terms_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
         Regex::new(r"(?i)\b(?:is|are|was|were|does|do)?\s*(.+?)\s+(?:linked|associated|caus(?:e|es|ed)|related)\s+(?:to|with)\s+(.+?)(?:\?|$)")
-            .expect("valid linked topic regex")
+            .expect("valid linked terms regex")
+    })
+}
+
+fn cause_terms_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\b(?:does|do)\s+(.+?)\s+caus(?:e|es)\s+(.+?)(?:\?|$)")
+            .expect("valid cause terms regex")
+    })
+}
+
+fn evidence_terms_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\b(?:any\s+|no\s+)?evidence\s+(?:for|against)\s+(.+?)\s+(?:and|in|with)\s+(.+?)(?:\?|$)")
+            .expect("valid evidence terms regex")
     })
 }
 
@@ -955,6 +1234,29 @@ fn mechanism_topic_re() -> &'static Regex {
     })
 }
 
+fn mechanism_resistance_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\bexplains?\s+(.+?)\s+resistance\b|\b([A-Za-z0-9][A-Za-z0-9 -]{1,80}?)\s+resistance\b|\bresistance\s+(?:to|against)\s+(.+?)(?:\?|$)")
+            .expect("valid mechanism resistance regex")
+    })
+}
+
+fn mechanism_work_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\bhow\s+(?:does|do)\s+(.+?)\s+work\b").expect("valid mechanism work regex")
+    })
+}
+
+fn mechanism_of_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\b(?:mechanism|pathway|signaling|targets?)\s+(?:of|for)\s+(.+?)(?:\?|$)")
+            .expect("valid mechanism-of regex")
+    })
+}
+
 fn treatment_disease_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
@@ -971,11 +1273,19 @@ fn symptom_disease_re() -> &'static Regex {
     })
 }
 
-fn process_re() -> &'static Regex {
+fn symptom_named_disease_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
-        Regex::new(r"(?i)\b(?:regulates?|regulation of|affects?|controls?)\s+(.+?)(?:\?|$)")
-            .expect("valid process regex")
+        Regex::new(r"(?i)\b(?:in|of|for|with)\s+(.+?\b(?:disease|syndrome|cancer))\b")
+            .expect("valid symptom named disease regex")
+    })
+}
+
+fn symptom_text_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\b(?:symptoms?|phenotypes?|clinical features?|features?|signs)\s+(?:include|like|such as|with|are)?\s*(.+?)(?:\?|$)")
+            .expect("valid symptom text regex")
     })
 }
 
@@ -998,6 +1308,10 @@ const ANCHOR_PREFIXES: &[&str] = &[
     "what phenotypes are seen in ",
     "which variants are in ",
     "which mutations are in ",
+    "what pathway explains ",
+    "which pathway explains ",
+    "what mechanism explains ",
+    "which mechanism explains ",
     "how does ",
     "how do ",
     "what is ",
@@ -1081,7 +1395,7 @@ mod tests {
     }
 
     #[test]
-    fn route_examples_match_expected_skills_and_parse_commands() {
+    fn route_examples_match_expected_skills_commands_and_parse() {
         for example in ROUTE_EXAMPLES {
             let response = suggest_question(example.question);
             assert_eq!(
@@ -1095,6 +1409,7 @@ mod tests {
                 response.full_skill.as_deref(),
                 Some(format!("biomcp skill {}", example.expected_skill).as_str())
             );
+            assert_eq!(response.first_commands, example.expected_commands);
             for command in response.first_commands {
                 parse_cmd(&command);
             }
@@ -1178,7 +1493,8 @@ mod tests {
         let no_match = render_markdown(&suggest_question("What is x?"));
         assert!(no_match.contains("- matched_skill: no match"));
         assert!(no_match.contains("No confident BioMCP skill match."));
-        assert!(no_match.contains("biomcp discover \"<text>\""));
+        assert!(no_match.contains("biomcp skill list"));
+        assert!(no_match.contains("biomcp discover \"<question>\""));
     }
 
     #[test]
@@ -1194,13 +1510,83 @@ mod tests {
                 .as_deref(),
             Some("article-follow-up")
         );
+        assert_eq!(
+            suggest_question("Tell me about variant rs113488022").matched_skill,
+            None
+        );
+        assert_eq!(
+            suggest_question("What does gene brca1 do?")
+                .matched_skill
+                .as_deref(),
+            Some("gene-function-localization")
+        );
     }
 
     #[test]
-    fn generated_commands_quote_user_derived_multiword_anchors() {
+    fn generated_commands_quote_user_derived_multiword_and_shell_metacharacter_anchors() {
         let response = suggest_question("What drugs treat lung cancer?");
         assert_eq!(response.matched_skill.as_deref(), Some("treatment-lookup"));
         assert!(response.first_commands[0].contains("\"lung cancer\""));
         assert!(response.first_commands[1].contains("\"lung cancer\""));
+
+        let response = suggest_question("What drugs treat lung cancer; rm -rf /?");
+        assert_eq!(response.matched_skill.as_deref(), Some("treatment-lookup"));
+        assert!(response.first_commands[0].contains("\"lung cancer; rm -rf /\""));
+        parse_cmd(&response.first_commands[0]);
+    }
+
+    #[test]
+    fn route_specific_contract_edges_match_design() {
+        let regulatory = suggest_question("When was imatinib approved by FDA?");
+        assert_eq!(
+            regulatory.first_commands[0],
+            "biomcp get drug imatinib regulatory --region us"
+        );
+
+        let intervention = suggest_question("Are there recruiting trials with imatinib?");
+        assert_eq!(
+            intervention.first_commands,
+            [
+                "biomcp search trial -i imatinib --status recruiting --limit 5",
+                "biomcp search article --drug imatinib --type review --limit 5",
+            ]
+        );
+
+        let symptom = suggest_question("symptoms include seizure and developmental delay");
+        assert_eq!(
+            symptom.first_commands,
+            [
+                "biomcp discover \"seizure and developmental delay\"",
+                "biomcp search phenotype \"seizure and developmental delay\" --limit 5",
+            ]
+        );
+
+        let bare_vs =
+            suggest_question("Goldberg-Shprintzen syndrome vs Shprintzen-Goldberg syndrome");
+        assert_eq!(
+            bare_vs.matched_skill.as_deref(),
+            Some("syndrome-disambiguation")
+        );
+
+        let difference = suggest_question(
+            "What is the difference between Goldberg-Shprintzen syndrome and Shprintzen-Goldberg syndrome?",
+        );
+        assert_eq!(
+            difference.matched_skill.as_deref(),
+            Some("syndrome-disambiguation")
+        );
+
+        let no_evidence = suggest_question("No evidence for aspirin and melanoma?");
+        assert_eq!(
+            no_evidence.matched_skill.as_deref(),
+            Some("negative-evidence")
+        );
+        assert_eq!(
+            no_evidence.first_commands,
+            [
+                "biomcp search article -k \"aspirin melanoma\" --type review --limit 5",
+                "biomcp search article -k \"aspirin melanoma association\" --limit 5",
+            ]
+        );
     }
 }
