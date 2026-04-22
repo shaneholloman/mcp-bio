@@ -97,6 +97,13 @@ def _source_inventory() -> list[dict[str, object]]:
     return data
 
 
+def _inventory_item(name: str) -> dict[str, object]:
+    for item in _source_inventory():
+        if item["name"] == name:
+            return item
+    raise AssertionError(f"missing inventory item {name!r}")
+
+
 def test_sources_inventory_is_complete_and_schema_conformant() -> None:
     source_mod = _read("src/sources/mod.rs")
     discovered_modules = re.findall(r"pub\(crate\) mod ([a-z0-9_]+);", source_mod)
@@ -173,6 +180,32 @@ def test_source_licensing_reference_matches_inventory_and_required_sections() ->
 
     for name in EXPECTED_NAMES:
         assert name in licensing, f"missing source row or note for {name}"
+
+
+def test_article_fulltext_source_inventory_matches_resolver_contract() -> None:
+    licensing = _read("docs/reference/source-licensing.md")
+    europe_pmc = _inventory_item("Europe PMC")
+    semantic_scholar = _inventory_item("Semantic Scholar")
+
+    assert "get article <id> fulltext" in europe_pmc["bioMcp_surfaces"]
+    assert "get article <id> fulltext --pdf" in semantic_scholar["bioMcp_surfaces"]
+    assert "openAccessPdf" in semantic_scholar["notes"]
+    assert "explicit PDF opt-in" in semantic_scholar["notes"]
+    assert "third-party PDF URL" in semantic_scholar["notes"]
+    assert "article-level reuse terms remain separate" in semantic_scholar["notes"]
+
+    europe_pmc_section = _markdown_section_block(
+        licensing, "### Europe PMC\n", "\n### g:Profiler"
+    )
+    semantic_scholar_section = _markdown_section_block(
+        licensing, "### Semantic Scholar\n", "\n### UMLS"
+    )
+    assert "get article <id> fulltext" in europe_pmc_section
+    assert "get article <id> fulltext --pdf" in semantic_scholar_section
+    assert "openAccessPdf" in semantic_scholar_section
+    assert "explicit PDF opt-in" in semantic_scholar_section
+    assert "third-party PDF URL" in semantic_scholar_section
+    assert "article-level reuse terms remain separate" in semantic_scholar_section
 
 
 def test_readme_and_docs_index_have_consistent_licensing_section() -> None:

@@ -280,7 +280,7 @@
     "tier": 1,
     "integration_mode": "direct_api",
     "via": null,
-    "bioMcp_surfaces": ["search article", "get article <pmid>"],
+    "bioMcp_surfaces": ["search article", "get article <pmid>", "get article <id> fulltext"],
     "bioMcp_auth": "none",
     "env_var": null,
     "provider_access": "open public API",
@@ -289,7 +289,7 @@
     "terms_url": "https://europepmc.org/RestfulWebService",
     "key_url": null,
     "reviewed_on": "2026-03-20",
-    "notes": "BioMCP uses Europe PMC for search and bibliographic metadata. Open-access reuse depends on the publication license attached to each record."
+    "notes": "BioMCP uses Europe PMC for search, bibliographic metadata, and article full-text XML lookups. Open-access reuse depends on the publication license attached to each record."
   },
   {
     "id": "gnomad",
@@ -827,7 +827,7 @@
     "tier": 2,
     "integration_mode": "direct_api",
     "via": null,
-    "bioMcp_surfaces": ["search article", "get article <id> tldr", "article citations <id>", "article references <id>", "article recommendations <id>"],
+    "bioMcp_surfaces": ["search article", "get article <id> tldr", "get article <id> fulltext --pdf", "article citations <id>", "article references <id>", "article recommendations <id>"],
     "bioMcp_auth": "optional_env",
     "env_var": "S2_API_KEY",
     "provider_access": "Unauthenticated access is available on the shared pool; authenticated access uses the provider-issued API key and remains governed by the API license agreement",
@@ -836,7 +836,7 @@
     "terms_url": "https://www.semanticscholar.org/product/api/license",
     "key_url": "https://www.semanticscholar.org/product/api",
     "reviewed_on": "2026-03-20",
-    "notes": "BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability."
+    "notes": "BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability. For `get article <id> fulltext --pdf`, BioMCP uses Semantic Scholar `openAccessPdf` metadata, then fetches the third-party PDF URL only after explicit PDF opt-in; the PDF's article-level reuse terms remain separate."
   },
   {
     "id": "seer-explorer",

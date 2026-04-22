@@ -265,7 +265,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### Europe PMC
 
-- BioMCP surfaces: `search article; get article <pmid>`
+- BioMCP surfaces: `search article; get article <pmid>; get article <id> fulltext`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: open public API
@@ -273,7 +273,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Redistribution / reuse summary: metadata is broadly reusable, but full text and PDFs remain governed by article-level licenses
 - Official terms URL: <https://europepmc.org/RestfulWebService>
 - Reviewed on: `2026-03-20`
-- Notes: BioMCP uses Europe PMC for search and bibliographic metadata. Open-access reuse depends on the publication license attached to each record.
+- Notes: BioMCP uses Europe PMC for search, bibliographic metadata, and article full-text XML lookups. Open-access reuse depends on the publication license attached to each record.
 
 ### g:Profiler
 
@@ -649,7 +649,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### Semantic Scholar
 
-- BioMCP surfaces: `search article; get article <id> tldr; article citations <id>; article references <id>; article recommendations <id>`
+- BioMCP surfaces: `search article; get article <id> tldr; get article <id> fulltext --pdf; article citations <id>; article references <id>; article recommendations <id>`
 - Integration mode: `direct_api`
 - BioMCP auth: `optional_env` via `S2_API_KEY`
 - Provider access / registration: unauthenticated access is available on the shared pool; authenticated access uses the provider-issued API key and remains governed by the API license agreement
@@ -658,7 +658,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.semanticscholar.org/product/api/license>
 - API key / account URL: <https://www.semanticscholar.org/product/api>
 - Reviewed on: `2026-03-20`
-- Notes: BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability.
+- Notes: BioMCP can call Semantic Scholar without `S2_API_KEY`, but uses a more conservative shared-pool rate limit and recommends the key for dedicated quota and reliability. For `get article <id> fulltext --pdf`, BioMCP uses Semantic Scholar `openAccessPdf` metadata, then fetches the third-party PDF URL only after explicit PDF opt-in; the PDF's article-level reuse terms remain separate.
 
 ### UMLS
 

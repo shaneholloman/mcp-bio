@@ -795,6 +795,32 @@ def test_each_source_page_includes_expected_surface_auth_and_official_link() -> 
             )
 
 
+def test_pubmed_source_page_fulltext_contract_matches_current_ladder() -> None:
+    page = _read_source_page("pubmed.md")
+    source_table = _source_table_block(page)
+    examples = _markdown_section_block(page, "## Example commands\n", "\n## API access")
+
+    for phrase in (
+        "Europe PMC",
+        "NCBI E-utilities",
+        "NCBI ID Converter",
+        "PMC OA",
+        "PMC HTML",
+        "opt-in Semantic Scholar PDF",
+    ):
+        assert phrase in source_table
+
+    assert (
+        "NCBI ID Converter bridges PMID/DOI identifiers to PMCID before the "
+        "PMCID-dependent source attempts"
+    ) in page
+    assert "Semantic Scholar PDF is attempted only when the caller passes `--pdf`" in page
+    assert "biomcp get article 27083046 fulltext" in examples
+    assert "`--pdf`" in examples
+    assert "`Saved to:`" in examples
+    assert "full text and PDFs remain governed by article-level licenses" in page
+
+
 def test_each_source_page_has_three_to_four_related_doc_links_that_resolve() -> None:
     for filename in SOURCE_PAGE_SPECS:
         page = _read_source_page(filename)

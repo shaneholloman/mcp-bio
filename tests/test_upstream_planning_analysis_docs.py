@@ -256,6 +256,82 @@ def test_clinical_features_architecture_doc_is_current_state() -> None:
     assert "HPO/Monarch phenotypes remain separate" in clinical_ws
 
 
+def test_article_fulltext_architecture_doc_is_current_state() -> None:
+    article = _read_repo("architecture/functional/article-fulltext.md")
+    article_ws = _normalize_ws(article)
+    article_lower = article_ws.lower()
+
+    assert article.startswith("# Article Fulltext Architecture")
+    for stale_phrase in (
+        "target state",
+        "target-state",
+        "backlog",
+        "build ticket",
+        "ticket a",
+        "ticket b",
+        "decomposition",
+        "does not yet",
+    ):
+        assert stale_phrase not in article_lower
+
+    for heading in (
+        "## Current Surface",
+        "## Identity Bridge and Resolver Order",
+        "## Eligibility, Format, and License Gates",
+        "## Saved Artifact Contract",
+        "## Failure Visibility",
+        "## Module Ownership",
+        "## Verification",
+    ):
+        assert heading in article
+
+    for phrase in (
+        "`docs/user-guide/article.md`",
+        "`docs/reference/source-licensing.md`",
+        "`get article <id> fulltext`",
+        "`get article <id> fulltext --pdf`",
+        "NCBI ID Converter is an identity bridge",
+        "Europe PMC PMC XML",
+        "NCBI EFetch PMC XML",
+        "PMC OA Archive XML",
+        "Europe PMC MED XML",
+        "PMC HTML",
+        "Semantic Scholar PDF",
+        "`full_text_path`",
+        "`full_text_note`",
+        "`full_text_source.kind`",
+        "`jats_xml`",
+        "`html`",
+        "`pdf`",
+        "`full_text_source.label`",
+        "`full_text_source.source`",
+        "`_meta.section_sources`",
+        "`Saved to:`",
+        "BioMCP does not enforce article-level reuse licenses at runtime",
+        "There is no public per-leg trace",
+        "XML API errors are recorded internally",
+        "HTML and PDF fetch, conversion, or content-type failures are misses",
+        "Semantic Scholar enrichment failure is swallowed as a warning",
+        "`src/entities/article/detail.rs`",
+        "`src/entities/article/fulltext.rs`",
+        "`src/sources/europepmc.rs`",
+        "`src/sources/ncbi_efetch.rs`",
+        "`src/sources/pmc_oa.rs`",
+        "`src/sources/ncbi_idconv.rs`",
+        "`src/sources/semantic_scholar.rs`",
+        "`src/transform/article.rs`",
+        "`src/transform/article/jats.rs`",
+        "`src/transform/article/html.rs`",
+        "`src/transform/article/pdf.rs`",
+        "`src/render/markdown/article.rs`",
+        "`templates/article.md.j2`",
+        "`src/render/provenance.rs`",
+        "`src/utils/download.rs`",
+        "`spec/18-source-labels.md::Article Fulltext Resolver Order`",
+    ):
+        assert phrase in article_ws
+
+
 def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> None:
     technical = _read_repo("architecture/technical/overview.md")
     ux = _read_repo("architecture/ux/cli-reference.md")
@@ -308,6 +384,14 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "deduplicate across PMID, PMCID, and DOI where possible, then re-rank locally"
         in article_validation_section
     )
+
+    assert (
+        "| Article full-text resolution | Europe PMC + NCBI E-utilities + PMC OA + NCBI ID Converter + PMC HTML + opt-in Semantic Scholar PDF metadata |"
+        in data_sources
+    )
+    assert "Optional (`NCBI_API_KEY`, `S2_API_KEY`)" in data_sources
+    assert "NCBI ID Converter bridges PMID or DOI to PMCID before PMCID-dependent full-text rungs" in data_sources_ws
+    assert "Semantic Scholar supplies `openAccessPdf` metadata for the explicit `--pdf` fallback" in data_sources_ws
     assert (
         "`search article` rejects missing filters, invalid date values, inverted date ranges, "
         "and unsupported `--type` values before backend calls"
@@ -1127,6 +1211,15 @@ def test_spec_lane_timing_report_is_documented_and_aligned_with_makefile() -> No
     assert "`make spec-smoke`" in runbook_spec_section
     assert "spec/README-timings.md" in technical_spec_section
     assert "`make spec-smoke`" in technical_spec_section
+    assert any(
+        row[0] == "`spec/18-source-labels.md`"
+        and row[1] == "`Article Fulltext Resolver Order`"
+        and row[7] == "keep in spec-pr"
+        for row in timing_audit_rows[1:]
+    )
+    assert "`spec/18-source-labels.md::Article Fulltext Resolver Order`" not in (
+        row[0] for row in smoke_only_rows[1:]
+    )
 
 
 def test_parallel_test_dependency_contract_is_declared() -> None:
