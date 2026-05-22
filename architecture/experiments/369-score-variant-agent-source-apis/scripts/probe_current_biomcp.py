@@ -107,7 +107,7 @@ def main() -> None:
     if not Path(args.bin).exists():
         raise SystemExit(f"BioMCP binary not found at {args.bin}; run cargo build --bin biomcp or set BIOMCP_BIN")
     probe_list = probes()
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         results = list(executor.map(lambda probe: run_probe(args.bin, probe), probe_list))
     output = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
