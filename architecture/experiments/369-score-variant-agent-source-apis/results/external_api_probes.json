@@ -1,0 +1,557 @@
+{
+  "generated_at": "2026-05-22T18:34:25Z",
+  "probe_count": 18,
+  "results": [
+    {
+      "bytes_read": 2138,
+      "content_type": "application/json",
+      "elapsed_ms": 484.03,
+      "error": null,
+      "group": "normalization",
+      "label": "MITF transcript HGVS",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "mutalyzer",
+      "status": 200,
+      "summary": {
+        "messages": null,
+        "normalized_description": "NM_000248.3:c.135del",
+        "payload_type": "dict",
+        "protein_descriptions": "NM_000248.3(NP_000239.1):p.(Asn46ThrfsTer4)",
+        "top_keys": [
+          "corrected_description",
+          "corrected_model",
+          "gene_id",
+          "infos",
+          "input_description",
+          "input_model",
+          "normalized_description",
+          "normalized_model",
+          "protein",
+          "rna",
+          "selector_short"
+        ]
+      },
+      "url": "https://mutalyzer.nl/api/normalize/NM_000248.3%3Ac.135del"
+    },
+    {
+      "bytes_read": 3786,
+      "content_type": "application/json",
+      "elapsed_ms": 529.86,
+      "error": null,
+      "group": "normalization",
+      "label": "MITF transcript HGVS",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "variantvalidator",
+      "status": 200,
+      "summary": {
+        "payload_type": "dict",
+        "primary_assembly_loci": true,
+        "protein": null,
+        "record_key": "NM_000248.3:c.135del",
+        "top_keys": [
+          "NM_000248.3:c.135del",
+          "flag",
+          "metadata"
+        ],
+        "validation_warnings": [
+          "TranscriptVersionWarning: A more recent version of the selected reference sequence NM_000248.3 is available for genome build GRCh38 (NM_000248.4)"
+        ]
+      },
+      "url": "https://rest.variantvalidator.org/VariantValidator/variantvalidator/GRCh38/NM_000248.3%3Ac.135del/all?content-type=application%2Fjson"
+    },
+    {
+      "bytes_read": 3707,
+      "content_type": "application/json",
+      "elapsed_ms": 603.89,
+      "error": null,
+      "group": "normalization",
+      "label": "ERBB2 transcript HGVS",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "variantvalidator",
+      "status": 200,
+      "summary": {
+        "payload_type": "dict",
+        "primary_assembly_loci": true,
+        "protein": null,
+        "record_key": "NM_004448.2:c.829G>T",
+        "top_keys": [
+          "NM_004448.2:c.829G>T",
+          "flag",
+          "metadata"
+        ],
+        "validation_warnings": [
+          "TranscriptVersionWarning: A more recent version of the selected reference sequence NM_004448.2 is available for genome build GRCh38 (NM_004448.4)"
+        ]
+      },
+      "url": "https://rest.variantvalidator.org/VariantValidator/variantvalidator/GRCh38/NM_004448.2%3Ac.829G%3ET/all?content-type=application%2Fjson"
+    },
+    {
+      "bytes_read": 294,
+      "content_type": "application/json; charset=utf-8",
+      "elapsed_ms": 195.73,
+      "error": null,
+      "group": "normalization",
+      "label": "MYD88 SPDI canonical",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "ncbi_spdi",
+      "status": 200,
+      "summary": {
+        "data": {
+          "deleted_sequence": "T",
+          "inserted_sequence": "G",
+          "position": 38182031,
+          "seq_id": "NC_000003.12",
+          "warnings": [
+            {
+              "message": "Disambiguation exception: The reference sequence for 'NC_000003.12' at position '38182031' ('T'), is not equal to variant's asserted reference ('C')",
+              "reason": "Other"
+            }
+          ]
+        },
+        "payload_type": "dict",
+        "top_keys": [
+          "data"
+        ],
+        "warnings": [
+          {
+            "message": "Disambiguation exception: The reference sequence for 'NC_000003.12' at position '38182031' ('T'), is not equal to variant's asserted reference ('C')",
+            "reason": "Other"
+          }
+        ]
+      },
+      "url": "https://api.ncbi.nlm.nih.gov/variation/v0/spdi/NC_000003.12:38182031:C:G/canonical_representative"
+    },
+    {
+      "bytes_read": 37298,
+      "content_type": "application/json",
+      "elapsed_ms": 204.39,
+      "error": null,
+      "group": "normalization",
+      "label": "MITF transcript HGVS",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "clingen_allele_registry",
+      "status": 200,
+      "summary": {
+        "caid": "_:CA",
+        "community_standard_title": "NM_001354604.2(MITF):c.456del (p.Asn153ThrfsTer4)",
+        "external_records_count": 0,
+        "payload_type": "dict",
+        "top_keys": [
+          "@context",
+          "@id",
+          "communityStandardTitle",
+          "genomicAlleles",
+          "transcriptAlleles",
+          "type"
+        ]
+      },
+      "url": "https://reg.clinicalgenome.org/allele?hgvs=NM_000248.3%3Ac.135del"
+    },
+    {
+      "bytes_read": 10354,
+      "content_type": "application/json; charset=UTF-8",
+      "elapsed_ms": 310.79,
+      "error": null,
+      "group": "normalization",
+      "label": "MYD88 S219C",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "myvariant",
+      "status": 200,
+      "summary": {
+        "has_clinvar": false,
+        "has_gnomad": false,
+        "payload_type": "dict",
+        "top_id": "chr3:g.38182032C>G",
+        "top_keys": [
+          "hits",
+          "max_score",
+          "took",
+          "total"
+        ],
+        "top_rsid": "rs1701052715",
+        "total": 1
+      },
+      "url": "https://myvariant.info/v1/query?q=dbnsfp.genename:MYD88%20AND%20dbnsfp.hgvsp:%22p.S219C%22&size=1&fields=_id,dbsnp,clinvar,gnomad,gnomad_exome,dbnsfp"
+    },
+    {
+      "bytes_read": 9352,
+      "content_type": "application/json; charset=UTF-8",
+      "elapsed_ms": 336.43,
+      "error": null,
+      "group": "normalization",
+      "label": "KLHL6 rs148924291",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "myvariant",
+      "status": 200,
+      "summary": {
+        "has_clinvar": false,
+        "has_gnomad": true,
+        "payload_type": "dict",
+        "top_id": "chr3:g.183273248A>G",
+        "top_keys": [
+          "hits",
+          "max_score",
+          "took",
+          "total"
+        ],
+        "top_rsid": "rs148924291",
+        "total": 1
+      },
+      "url": "https://myvariant.info/v1/query?q=dbsnp.rsid:rs148924291&size=1&fields=_id,dbsnp,clinvar,gnomad,gnomad_exome,dbnsfp"
+    },
+    {
+      "bytes_read": 117,
+      "content_type": "application/json",
+      "elapsed_ms": 489.45,
+      "error": "HTTP 400: Bad Request",
+      "group": "normalization",
+      "label": "MITF transcript HGVS",
+      "method": "GET",
+      "ok": false,
+      "parse_error": null,
+      "service": "ensembl_vep",
+      "status": 400,
+      "summary": {
+        "error": "Unable to parse HGVS notation 'NM_000248.3:c.135del': Could not get a Transcript object for 'NM_000248.3'",
+        "payload_type": "dict",
+        "top_keys": [
+          "error"
+        ]
+      },
+      "url": "https://rest.ensembl.org/vep/human/hgvs/NM_000248.3%3Ac.135del?content-type=application/json"
+    },
+    {
+      "bytes_read": 68,
+      "content_type": "application/json; charset=utf-8",
+      "elapsed_ms": 183.91,
+      "error": null,
+      "group": "population",
+      "label": "MYD88 exact allele",
+      "method": "POST",
+      "ok": true,
+      "parse_error": null,
+      "service": "gnomad",
+      "status": 200,
+      "summary": {
+        "errors": [
+          {
+            "message": "Variant not found"
+          }
+        ],
+        "exome_ac": null,
+        "genome_ac": null,
+        "has_variant": false,
+        "payload_type": "dict",
+        "top_keys": [
+          "data",
+          "errors"
+        ],
+        "variant_id": null
+      },
+      "url": "https://gnomad.broadinstitute.org/api"
+    },
+    {
+      "bytes_read": 516,
+      "content_type": "application/json; charset=UTF-8",
+      "elapsed_ms": 257.77,
+      "error": null,
+      "group": "literature",
+      "label": "MYD88 S219C",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "pubmed",
+      "status": 200,
+      "summary": {
+        "count": "7",
+        "first_pmid": "36053490",
+        "first_title": null,
+        "payload_type": "dict",
+        "top_keys": [
+          "esearchresult",
+          "header"
+        ]
+      },
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=3&term=MYD88%20S219C"
+    },
+    {
+      "bytes_read": 2785,
+      "content_type": "application/json;charset=UTF-8",
+      "elapsed_ms": 600.83,
+      "error": null,
+      "group": "literature",
+      "label": "MYD88 S219C",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "europepmc",
+      "status": 200,
+      "summary": {
+        "count": 49,
+        "first_pmid": "39558954",
+        "first_title": "Review of BCL2 inhibitors for the treatment of Waldenstr\u00f6m's macroglobulinaemia and non-IgM lymphoplasmacytic lymphoma.",
+        "payload_type": "dict",
+        "top_keys": [
+          "hitCount",
+          "nextCursorMark",
+          "nextPageUrl",
+          "request",
+          "resultList",
+          "version"
+        ]
+      },
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=MYD88%20S219C&format=json&pageSize=3"
+    },
+    {
+      "bytes_read": 27309,
+      "content_type": "application/json",
+      "elapsed_ms": 142.47,
+      "error": null,
+      "group": "literature",
+      "label": "PMID 36053490 annotations",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "pubtator3",
+      "status": 200,
+      "summary": {
+        "count": null,
+        "first_pmid": null,
+        "first_title": null,
+        "payload_type": "dict",
+        "top_keys": [
+          "PubTator3"
+        ]
+      },
+      "url": "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmids=36053490"
+    },
+    {
+      "bytes_read": 43070,
+      "content_type": "application/json",
+      "elapsed_ms": 2968.25,
+      "error": null,
+      "group": "literature",
+      "label": "KLHL6 L65P sentence",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "litsense2",
+      "status": 200,
+      "summary": {
+        "count": 100,
+        "first_pmid": 29695787,
+        "first_title": null,
+        "payload_type": "list"
+      },
+      "url": "https://www.ncbi.nlm.nih.gov/research/litsense2-api/api/sentences/?query=KLHL6%20L65P&rerank=true"
+    },
+    {
+      "bytes_read": 632,
+      "content_type": "application/json",
+      "elapsed_ms": 182.59,
+      "error": null,
+      "group": "literature",
+      "label": "PMID 29967253",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "semantic_scholar",
+      "status": 200,
+      "summary": {
+        "count": null,
+        "first_pmid": null,
+        "first_title": null,
+        "payload_type": "dict",
+        "top_keys": [
+          "citationCount",
+          "externalIds",
+          "isOpenAccess",
+          "openAccessPdf",
+          "paperId",
+          "title",
+          "venue",
+          "year"
+        ]
+      },
+      "url": "https://api.semanticscholar.org/graph/v1/paper/PMID:29967253?fields=paperId,externalIds,title,venue,year,isOpenAccess,openAccessPdf,citationCount"
+    },
+    {
+      "bytes_read": 3525,
+      "content_type": "application/json",
+      "elapsed_ms": 97.28,
+      "error": null,
+      "group": "article_metadata",
+      "label": "ASCO DOI e24316",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "crossref",
+      "status": 200,
+      "summary": {
+        "best_oa_location": null,
+        "doi": "10.1200/jco.2018.36.15_suppl.e24316",
+        "is_oa": null,
+        "landing_page": "https://doi.org/10.1200/jco.2018.36.15_suppl.e24316",
+        "oa_status": null,
+        "payload_type": "dict",
+        "title": "In vitro functional analysis of <i>HER2</i> variants in lung cancers to evaluate their oncogenic activity and predict response to HER2-targeted therapy.",
+        "top_keys": [
+          "message",
+          "message-type",
+          "message-version",
+          "status"
+        ]
+      },
+      "url": "https://api.crossref.org/works/10.1200/JCO.2018.36.15_suppl.e24316"
+    },
+    {
+      "bytes_read": 18303,
+      "content_type": "application/json",
+      "elapsed_ms": 176.59,
+      "error": null,
+      "group": "article_metadata",
+      "label": "ASCO DOI e24316",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "openalex",
+      "status": 200,
+      "summary": {
+        "best_oa_location": null,
+        "doi": "https://doi.org/10.1200/jco.2018.36.15_suppl.e24316",
+        "is_oa": null,
+        "landing_page": "https://doi.org/10.1200/jco.2018.36.15_suppl.e24316",
+        "oa_status": "closed",
+        "payload_type": "dict",
+        "title": "In vitro functional analysis of <i>HER2</i> variants in lung cancers to evaluate their oncogenic activity and predict response to HER2-targeted therapy.",
+        "top_keys": [
+          "abstract_inverted_index",
+          "apc_list",
+          "apc_paid",
+          "authorships",
+          "awards",
+          "best_oa_location",
+          "biblio",
+          "citation_normalized_percentile",
+          "cited_by_count",
+          "cited_by_percentile_year",
+          "concepts",
+          "content_urls",
+          "corresponding_author_ids",
+          "corresponding_institution_ids",
+          "countries_distinct_count",
+          "counts_by_year",
+          "created_date",
+          "display_name",
+          "doi",
+          "funders"
+        ]
+      },
+      "url": "https://api.openalex.org/works/https://doi.org/10.1200/JCO.2018.36.15_suppl.e24316"
+    },
+    {
+      "bytes_read": 2742,
+      "content_type": "application/json",
+      "elapsed_ms": 150.97,
+      "error": null,
+      "group": "access",
+      "label": "CCR DOI 29967253",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "unpaywall",
+      "status": 200,
+      "summary": {
+        "best_oa_location": null,
+        "doi": "10.1158/1078-0432.ccr-18-0991",
+        "is_oa": false,
+        "landing_page": null,
+        "oa_status": "closed",
+        "payload_type": "dict",
+        "title": "High-Throughput Functional Evaluation of Variants of Unknown Significance in\n                    <i>ERBB2</i>",
+        "top_keys": [
+          "best_oa_location",
+          "data_standard",
+          "doi",
+          "doi_url",
+          "first_oa_location",
+          "genre",
+          "has_repository_copy",
+          "is_oa",
+          "is_paratext",
+          "journal_is_in_doaj",
+          "journal_is_oa",
+          "journal_issn_l",
+          "journal_issns",
+          "journal_name",
+          "oa_locations",
+          "oa_locations_embargoed",
+          "oa_status",
+          "published_date",
+          "publisher",
+          "title"
+        ]
+      },
+      "url": "https://api.unpaywall.org/v2/10.1158/1078-0432.CCR-18-0991?email=team@biomcp.local"
+    },
+    {
+      "bytes_read": 30934,
+      "content_type": "application/json",
+      "elapsed_ms": 157.76,
+      "error": null,
+      "group": "access",
+      "label": "CCR DOI 29967253",
+      "method": "GET",
+      "ok": true,
+      "parse_error": null,
+      "service": "openalex",
+      "status": 200,
+      "summary": {
+        "best_oa_location": null,
+        "doi": "https://doi.org/10.1158/1078-0432.ccr-18-0991",
+        "is_oa": null,
+        "landing_page": "https://doi.org/10.1158/1078-0432.ccr-18-0991",
+        "oa_status": "closed",
+        "payload_type": "dict",
+        "title": "High-Throughput Functional Evaluation of Variants of Unknown Significance in <i>ERBB2</i>",
+        "top_keys": [
+          "abstract_inverted_index",
+          "apc_list",
+          "apc_paid",
+          "authorships",
+          "awards",
+          "best_oa_location",
+          "biblio",
+          "citation_normalized_percentile",
+          "cited_by_count",
+          "cited_by_percentile_year",
+          "concepts",
+          "content_urls",
+          "corresponding_author_ids",
+          "corresponding_institution_ids",
+          "countries_distinct_count",
+          "counts_by_year",
+          "created_date",
+          "display_name",
+          "doi",
+          "funders"
+        ]
+      },
+      "url": "https://api.openalex.org/works/https://doi.org/10.1158/1078-0432.CCR-18-0991"
+    }
+  ]
+}
