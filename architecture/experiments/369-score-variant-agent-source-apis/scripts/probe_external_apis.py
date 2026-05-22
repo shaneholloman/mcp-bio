@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 import urllib.error
 from concurrent.futures import ThreadPoolExecutor
@@ -142,6 +143,8 @@ def request_probe(probe: Probe) -> dict[str, Any]:
     headers = {"user-agent": USER_AGENT, "accept": "application/json"}
     if probe.headers:
         headers.update(probe.headers)
+    if probe.service == "semantic_scholar" and (api_key := os.environ.get("S2_API_KEY")):
+        headers["x-api-key"] = api_key
     data = None
     if probe.body is not None:
         data = json.dumps(probe.body).encode("utf-8")
