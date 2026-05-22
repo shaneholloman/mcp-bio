@@ -358,6 +358,12 @@ pub(super) fn resolver_queries(name_or_id: &str) -> Vec<String> {
     if matches!(lower.as_str(), "hodgkin lymphoma" | "hodgkins lymphoma") {
         push_query("hodgkin disease".to_string());
     }
+    if matches!(
+        lower.as_str(),
+        "arnold chiari syndrome" | "arnold-chiari syndrome"
+    ) {
+        push_query("arnold-chiari malformation".to_string());
+    }
     queries
 }
 

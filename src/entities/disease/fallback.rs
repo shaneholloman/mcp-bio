@@ -403,20 +403,24 @@ pub(crate) async fn fallback_search_page(
         return Ok(None);
     }
 
-    let discover = match crate::entities::discover::resolve_query(
-        query,
-        crate::entities::discover::DiscoverMode::AliasFallback,
-    )
-    .await
-    {
-        Ok(result) => result,
-        Err(err) => {
-            warn!("Disease search discover fallback unavailable: {err}");
-            return Ok(None);
-        }
-    };
+    let mut concepts = Vec::new();
+    for resolved_query in resolver_queries(query) {
+        let discover = match crate::entities::discover::resolve_query(
+            &resolved_query,
+            crate::entities::discover::DiscoverMode::AliasFallback,
+        )
+        .await
+        {
+            Ok(result) => result,
+            Err(err) => {
+                warn!("Disease search discover fallback unavailable for {resolved_query}: {err}");
+                continue;
+            }
+        };
+        concepts.extend(discover.concepts);
+    }
 
-    let candidates = rank_disease_fallback_candidates(query, &discover.concepts);
+    let candidates = rank_disease_fallback_candidates(query, &concepts);
     if candidates.is_empty() {
         return Ok(None);
     }
