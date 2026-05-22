@@ -15,6 +15,7 @@ import argparse
 import json
 import time
 import urllib.error
+from concurrent.futures import ThreadPoolExecutor
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
@@ -218,7 +219,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    results = [request_probe(probe) for probe in probes()]
+    probe_list = probes()
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        results = list(executor.map(request_probe, probe_list))
     output = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "probe_count": len(results),
