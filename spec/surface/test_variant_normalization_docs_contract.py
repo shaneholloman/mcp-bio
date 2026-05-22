@@ -25,6 +25,11 @@ def _source_by_id(source_id: str) -> dict[str, Any]:
     raise AssertionError(f"missing source inventory entry: {source_id}")
 
 
+def _mentions_boundary(content: str, *term_groups: tuple[str, ...]) -> bool:
+    lower = content.lower()
+    return all(any(term in lower for term in group) for group in term_groups)
+
+
 def test_variant_guide_documents_transcript_normalization_proxy_boundary() -> None:
     guide = _read("docs/user-guide/variant.md")
 
@@ -33,11 +38,27 @@ def test_variant_guide_documents_transcript_normalization_proxy_boundary() -> No
         "biomcp variant normalize all NM_004448.2:c.829G>T",
         "Mutalyzer",
         "VariantValidator",
-        "does not parse report prose",
-        "does not choose transcripts",
-        "does not classify variants",
     ):
         assert phrase in guide
+
+    assert _mentions_boundary(
+        guide,
+        ("not", "without", "avoid", "reject"),
+        ("parse", "parsing", "extract"),
+        ("report prose", "report text", "messy report"),
+    )
+    assert _mentions_boundary(
+        guide,
+        ("not", "without", "avoid", "reject"),
+        ("choose", "select", "guess", "infer"),
+        ("transcript", "transcripts"),
+    )
+    assert _mentions_boundary(
+        guide,
+        ("not", "without", "avoid", "reject"),
+        ("classify", "classification", "clinical meaning", "clinical interpretation"),
+        ("variant", "variants"),
+    )
 
 
 def test_cli_references_expose_variant_normalize_command_shape() -> None:

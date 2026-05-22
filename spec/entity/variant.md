@@ -112,8 +112,8 @@ returned notation and warnings.
 
 ```bash
 json_out="$(../../tools/biomcp-ci --json variant normalize all 'NM_000248.3:c.135del')"
-echo "$json_out" | mustmatch like '"service": "mutalyzer"'
-echo "$json_out" | mustmatch like '"service": "variantvalidator"'
+echo "$json_out" | mustmatch like 'mutalyzer'
+echo "$json_out" | mustmatch like 'variantvalidator'
 echo "$json_out" | jq -e '.input == "NM_000248.3:c.135del"' >/dev/null
 echo "$json_out" | jq -e '[.services[].service] | index("mutalyzer") and index("variantvalidator")' >/dev/null
 echo "$json_out" | jq -e '.services[] | select(.service == "mutalyzer") | .status == "success" and .normalized_description == "NM_000248.3:c.135del" and (.protein.description | contains("Asn46ThrfsTer4"))' >/dev/null
@@ -128,8 +128,8 @@ outputs.
 
 ```bash
 json_out="$(../../tools/biomcp-ci --json variant normalize all 'NM_004448.2:c.829G>T')"
-echo "$json_out" | mustmatch like '"service": "mutalyzer"'
-echo "$json_out" | mustmatch like '"service": "variantvalidator"'
+echo "$json_out" | mustmatch like 'mutalyzer'
+echo "$json_out" | mustmatch like 'variantvalidator'
 echo "$json_out" | jq -e '.input == "NM_004448.2:c.829G>T"' >/dev/null
 echo "$json_out" | jq -e '.services[] | select(.service == "mutalyzer") | .status == "success" and .normalized_description == "NM_004448.2:c.829G>T" and (.protein.description | contains("Asp277Tyr"))' >/dev/null
 echo "$json_out" | jq -e '.services[] | select(.service == "variantvalidator") | .status == "success" and (.warnings[] | contains("TranscriptVersionWarning")) and (.genomic_descriptions[] | contains("NC_000017.11:g.39710409G>T"))' >/dev/null
