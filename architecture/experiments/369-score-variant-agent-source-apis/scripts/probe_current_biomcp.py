@@ -16,6 +16,7 @@ import json
 import os
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -105,7 +106,9 @@ def main() -> None:
     args = parser.parse_args()
     if not Path(args.bin).exists():
         raise SystemExit(f"BioMCP binary not found at {args.bin}; run cargo build --bin biomcp or set BIOMCP_BIN")
-    results = [run_probe(args.bin, probe) for probe in probes()]
+    probe_list = probes()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        results = list(executor.map(lambda probe: run_probe(args.bin, probe), probe_list))
     output = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "binary": args.bin,
