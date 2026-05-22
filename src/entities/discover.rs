@@ -323,13 +323,28 @@ pub(crate) async fn resolve_query(
         }
     };
 
-    let mut ols_docs = ols_docs.map_err(|err| match err {
-        BioMcpError::Api { api, message } if api == "ols4" => BioMcpError::Api {
-            api,
-            message: format!("discover requires OLS4: {message}"),
-        },
-        other => other,
-    })?;
+    let mut notes = Vec::new();
+    let mut ols_docs = match ols_docs {
+        Ok(docs) => docs,
+        Err(err)
+            if mode == DiscoverMode::Command
+                && looks_relational_general_query(&normalize_query(query)) =>
+        {
+            notes.push(format!(
+                "OLS4 unavailable ({err}); showing relational-query guidance."
+            ));
+            Vec::new()
+        }
+        Err(err) => {
+            return Err(match err {
+                BioMcpError::Api { api, message } if api == "ols4" => BioMcpError::Api {
+                    api,
+                    message: format!("discover requires OLS4: {message}"),
+                },
+                other => other,
+            });
+        }
+    };
     if !is_disease_symptom_request(query)
         && !ols_docs.iter().any(|doc| {
             ols_doc_identifier(doc)
@@ -360,7 +375,6 @@ pub(crate) async fn resolve_query(
             doc_type: Some("class".to_string()),
         });
     }
-    let mut notes = Vec::new();
     if let Some(note) = umls_note
         && !note.trim().is_empty()
     {
