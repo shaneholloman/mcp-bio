@@ -1,0 +1,1211 @@
+{
+  "approaches": {
+    "contract_first_existing_seams": {
+      "plan_seam_inventory": [
+        {
+          "debug_plan_mentions": 5,
+          "direct_entity_calls": 10,
+          "direct_source_calls": 0,
+          "enums": [
+            "Anchor"
+          ],
+          "filter_struct_mentions": 4,
+          "functions_with_plan_name": [
+            "build_dispatch_plan_prepared",
+            "build_result_plan"
+          ],
+          "path": "src/cli/search_all/plan.rs",
+          "structs": [
+            "VariantContext",
+            "PreparedInput"
+          ]
+        },
+        {
+          "debug_plan_mentions": 0,
+          "direct_entity_calls": 0,
+          "direct_source_calls": 0,
+          "enums": [
+            "BackendPlan"
+          ],
+          "filter_struct_mentions": 22,
+          "functions_with_plan_name": [
+            "plan_backends",
+            "summarize_debug_plan"
+          ],
+          "path": "src/entities/article/planner.rs",
+          "structs": [
+            "ArticleSearchDebugSummary"
+          ]
+        },
+        {
+          "debug_plan_mentions": 3,
+          "direct_entity_calls": 1,
+          "direct_source_calls": 0,
+          "enums": [],
+          "filter_struct_mentions": 0,
+          "functions_with_plan_name": [],
+          "path": "src/cli/debug_plan.rs",
+          "structs": [
+            "DebugPlan",
+            "DebugPlanLeg"
+          ]
+        },
+        {
+          "debug_plan_mentions": 5,
+          "direct_entity_calls": 53,
+          "direct_source_calls": 0,
+          "enums": [],
+          "filter_struct_mentions": 12,
+          "functions_with_plan_name": [
+            "build_article_debug_plan"
+          ],
+          "path": "src/cli/article/dispatch.rs",
+          "structs": [
+            "ArticleEntitiesResponse",
+            "ArticleSearchJsonPage",
+            "ArticleSuggestion",
+            "ArticleSearchJsonMeta",
+            "ArticleSearchResponse"
+          ]
+        },
+        {
+          "debug_plan_mentions": 0,
+          "direct_entity_calls": 29,
+          "direct_source_calls": 0,
+          "enums": [],
+          "filter_struct_mentions": 16,
+          "functions_with_plan_name": [],
+          "path": "src/cli/disease/dispatch.rs",
+          "structs": [
+            "SearchResponse",
+            "SearchResponse",
+            "SearchResponse",
+            "DiseaseSearchMeta",
+            "DiseaseSearchJsonResponse"
+          ]
+        },
+        {
+          "debug_plan_mentions": 0,
+          "direct_entity_calls": 45,
+          "direct_source_calls": 0,
+          "enums": [
+            "VariantSearchPlan"
+          ],
+          "filter_struct_mentions": 6,
+          "functions_with_plan_name": [],
+          "path": "src/cli/variant/dispatch.rs",
+          "structs": [
+            "SearchResponse",
+            "SearchResponse",
+            "ResolvedVariantQuery",
+            "VariantSearchRequest"
+          ]
+        }
+      ],
+      "representative_sections": [
+        {
+          "has_fixture_setup": false,
+          "heading": "Disease Normalization & Search",
+          "line": 8,
+          "path": "spec/entity/disease.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "disease_crosswalk",
+            "live_public_api",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Synonym Rescue",
+          "line": 20,
+          "path": "spec/entity/disease.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "command_to_request_plan",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "ols4_discover",
+            "disease_crosswalk",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Canonical Disease Card",
+          "line": 31,
+          "path": "spec/entity/disease.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "disease_crosswalk",
+            "article_sources",
+            "live_public_api",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Genes & Diagnostics",
+          "line": 44,
+          "path": "spec/entity/disease.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "disease_crosswalk",
+            "live_public_api",
+            "render_json_envelope",
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Clinical Features",
+          "line": 57,
+          "path": "spec/entity/disease.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "disease_crosswalk",
+            "live_public_api",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "NIH Funding Context",
+          "line": 73,
+          "path": "spec/entity/disease.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "disease_crosswalk",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "JSON Pivots",
+          "line": 85,
+          "path": "spec/entity/disease.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow"
+          ],
+          "tags": [
+            "disease_crosswalk",
+            "render_json_envelope",
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Alias-Like Free Text Still Resolves to Typed Follow-Ups",
+          "line": 9,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "ols4_discover",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Disease-Specific Symptom Phrases Stay Clinically Modest",
+          "line": 21,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "fixture_response_mapping",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "ols4_discover",
+            "disease_crosswalk",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "HPO-Backed Symptom Phrases Should Bridge into Phenotype Search",
+          "line": 37,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow"
+          ],
+          "tags": [
+            "ols4_discover",
+            "disease_crosswalk",
+            "render_json_envelope",
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Relational Queries Redirect Instead of Surfacing Weak Collocation Noise",
+          "line": 49,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "ols4_discover",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "No-Match Discover Queries Fall Back to Article Search",
+          "line": 81,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "ols4_discover",
+            "article_sources",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Suggest Keeps the Playbook and No-Match Contracts",
+          "line": 92,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "command_to_request_plan",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "render_json_envelope",
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Suggest Decomposition Keeps the First-Move Router Review-Sized",
+          "line": 107,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Skill Still Opens the Longer Guide",
+          "line": 122,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "command_to_request_plan",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "ols4_discover",
+            "article_sources",
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Skill Decomposition Keeps Catalog and Install Ownership Separate",
+          "line": 148,
+          "path": "spec/surface/discover.md",
+          "proof_types": [
+            "render_json_envelope"
+          ],
+          "tags": [
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Gene Search",
+          "line": 7,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "source_request_construction",
+            "render_json_envelope",
+            "cross_entity_workflow",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "article_sources",
+            "live_public_api",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Keyword Search",
+          "line": 19,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "article_sources",
+            "live_public_api",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Search Table & Source Ranking",
+          "line": 30,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow"
+          ],
+          "tags": [
+            "article_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "PubTator Annotations",
+          "line": 42,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "article_sources",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": true,
+          "heading": "Full-Text HTML Fallback",
+          "line": 54,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "source_request_construction",
+            "fixture_response_mapping",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "article_sources",
+            "fixture_backed",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": true,
+          "heading": "PDF Fallback Is Opt-In",
+          "line": 71,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "source_request_construction",
+            "fixture_response_mapping",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "article_sources",
+            "fixture_backed",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Semantic Scholar Degrades Truthfully Without a Key",
+          "line": 90,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "command_to_request_plan",
+            "source_request_construction",
+            "fixture_response_mapping",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "article_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Semantic Scholar Source Status Appears in Debug Plans",
+          "line": 104,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "command_to_request_plan",
+            "source_request_construction",
+            "fixture_response_mapping",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "article_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Authenticated Source Status Is Redacted",
+          "line": 116,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "command_to_request_plan",
+            "source_request_construction",
+            "fixture_response_mapping",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "article_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": true,
+          "heading": "Markdown Notes Semantic Scholar Unavailability",
+          "line": 131,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "source_request_construction",
+            "fixture_response_mapping",
+            "render_json_envelope",
+            "cross_entity_workflow",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "article_sources",
+            "fixture_backed",
+            "live_public_api",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Entity Follow-Up",
+          "line": 144,
+          "path": "spec/entity/article.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow"
+          ],
+          "tags": [
+            "article_sources"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Gene-Scoped Variant Search",
+          "line": 7,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "variant_sources",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Search Table Contract",
+          "line": 19,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow"
+          ],
+          "tags": [
+            "render_json_envelope",
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Protein-Filter Narrowing",
+          "line": 31,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "command_to_request_plan",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "variant_sources",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Residue-Alias Search",
+          "line": 42,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "disease_crosswalk",
+            "live_public_api"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Clinical Significance",
+          "line": 53,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "disease_crosswalk",
+            "variant_sources",
+            "live_public_api",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Population Frequency",
+          "line": 70,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "variant_sources",
+            "live_public_api",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": true
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Variant Follow-Ups",
+          "line": 81,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "cross_entity_workflow"
+          ],
+          "tags": [
+            "article_sources",
+            "variant_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "ID Normalization",
+          "line": 93,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "variant_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Transcript HGVS Normalization Proxies",
+          "line": 106,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "source_request_construction",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "variant_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "ERBB2 Transcript HGVS Canary",
+          "line": 123,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "variant_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Unsupported Normalization Inputs",
+          "line": 138,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope"
+          ],
+          "tags": [
+            "variant_sources",
+            "render_json_envelope"
+          ],
+          "uses_live_cli_wrapper": false
+        },
+        {
+          "has_fixture_setup": false,
+          "heading": "Normalization Command Discoverability",
+          "line": 155,
+          "path": "spec/entity/variant.md",
+          "proof_types": [
+            "cli_parsing_routing",
+            "render_json_envelope",
+            "live_smoke_canary"
+          ],
+          "tags": [
+            "variant_sources",
+            "live_public_api",
+            "render_json_envelope",
+            "help_list_contract"
+          ],
+          "uses_live_cli_wrapper": true
+        }
+      ],
+      "source_contract_inventory": [
+        {
+          "apply_cache_mode": 1,
+          "body_assertions": 0,
+          "env_base": 1,
+          "header_assertions": 0,
+          "mock_given": 1,
+          "new_for_test": 2,
+          "path": "src/sources/ols4.rs",
+          "plain_tests": 0,
+          "query_param_assertions": 5,
+          "tokio_tests": 1,
+          "wiremock_tests": 2
+        },
+        {
+          "apply_cache_mode": 1,
+          "body_assertions": 0,
+          "env_base": 1,
+          "header_assertions": 0,
+          "mock_given": 5,
+          "new_for_test": 8,
+          "path": "src/sources/mydisease.rs",
+          "plain_tests": 1,
+          "query_param_assertions": 18,
+          "tokio_tests": 7,
+          "wiremock_tests": 2
+        },
+        {
+          "apply_cache_mode": 1,
+          "body_assertions": 0,
+          "env_base": 1,
+          "header_assertions": 0,
+          "mock_given": 4,
+          "new_for_test": 8,
+          "path": "src/sources/myvariant.rs",
+          "plain_tests": 8,
+          "query_param_assertions": 17,
+          "tokio_tests": 7,
+          "wiremock_tests": 2
+        },
+        {
+          "apply_cache_mode": 1,
+          "body_assertions": 0,
+          "env_base": 1,
+          "header_assertions": 0,
+          "mock_given": 14,
+          "new_for_test": 17,
+          "path": "src/sources/pubmed.rs",
+          "plain_tests": 0,
+          "query_param_assertions": 34,
+          "tokio_tests": 16,
+          "wiremock_tests": 2
+        },
+        {
+          "apply_cache_mode": 1,
+          "body_assertions": 0,
+          "env_base": 1,
+          "header_assertions": 0,
+          "mock_given": 6,
+          "new_for_test": 6,
+          "path": "src/sources/europepmc.rs",
+          "plain_tests": 1,
+          "query_param_assertions": 10,
+          "tokio_tests": 6,
+          "wiremock_tests": 2
+        },
+        {
+          "apply_cache_mode": 1,
+          "body_assertions": 7,
+          "env_base": 1,
+          "header_assertions": 8,
+          "mock_given": 10,
+          "new_for_test": 13,
+          "path": "src/sources/semantic_scholar.rs",
+          "plain_tests": 2,
+          "query_param_assertions": 17,
+          "tokio_tests": 10,
+          "wiremock_tests": 4
+        }
+      ]
+    },
+    "minimal_request_plan_seam": {
+      "candidate_existing_seams": [
+        {
+          "debug_plan_mentions": 5,
+          "direct_entity_calls": 10,
+          "direct_source_calls": 0,
+          "enums": [
+            "Anchor"
+          ],
+          "filter_struct_mentions": 4,
+          "functions_with_plan_name": [
+            "build_dispatch_plan_prepared",
+            "build_result_plan"
+          ],
+          "path": "src/cli/search_all/plan.rs",
+          "structs": [
+            "VariantContext",
+            "PreparedInput"
+          ]
+        },
+        {
+          "debug_plan_mentions": 0,
+          "direct_entity_calls": 0,
+          "direct_source_calls": 0,
+          "enums": [
+            "BackendPlan"
+          ],
+          "filter_struct_mentions": 22,
+          "functions_with_plan_name": [
+            "plan_backends",
+            "summarize_debug_plan"
+          ],
+          "path": "src/entities/article/planner.rs",
+          "structs": [
+            "ArticleSearchDebugSummary"
+          ]
+        },
+        {
+          "debug_plan_mentions": 3,
+          "direct_entity_calls": 1,
+          "direct_source_calls": 0,
+          "enums": [],
+          "filter_struct_mentions": 0,
+          "functions_with_plan_name": [],
+          "path": "src/cli/debug_plan.rs",
+          "structs": [
+            "DebugPlan",
+            "DebugPlanLeg"
+          ]
+        },
+        {
+          "debug_plan_mentions": 5,
+          "direct_entity_calls": 53,
+          "direct_source_calls": 0,
+          "enums": [],
+          "filter_struct_mentions": 12,
+          "functions_with_plan_name": [
+            "build_article_debug_plan"
+          ],
+          "path": "src/cli/article/dispatch.rs",
+          "structs": [
+            "ArticleEntitiesResponse",
+            "ArticleSearchJsonPage",
+            "ArticleSuggestion",
+            "ArticleSearchJsonMeta",
+            "ArticleSearchResponse"
+          ]
+        },
+        {
+          "debug_plan_mentions": 0,
+          "direct_entity_calls": 29,
+          "direct_source_calls": 0,
+          "enums": [],
+          "filter_struct_mentions": 16,
+          "functions_with_plan_name": [],
+          "path": "src/cli/disease/dispatch.rs",
+          "structs": [
+            "SearchResponse",
+            "SearchResponse",
+            "SearchResponse",
+            "DiseaseSearchMeta",
+            "DiseaseSearchJsonResponse"
+          ]
+        },
+        {
+          "debug_plan_mentions": 0,
+          "direct_entity_calls": 45,
+          "direct_source_calls": 0,
+          "enums": [
+            "VariantSearchPlan"
+          ],
+          "filter_struct_mentions": 6,
+          "functions_with_plan_name": [],
+          "path": "src/cli/variant/dispatch.rs",
+          "structs": [
+            "SearchResponse",
+            "SearchResponse",
+            "ResolvedVariantQuery",
+            "VariantSearchRequest"
+          ]
+        }
+      ],
+      "recommended_boundaries": {
+        "cli": "clap args -> RequestCommand / typed filters; no network",
+        "entity": "RequestCommand -> source request plan(s) and renderer model orchestration",
+        "render": "entity model -> markdown/JSON envelope, no upstream calls",
+        "source": "SourceRequestPlan -> HTTP method/url/query/headers/body/cache/auth + fixture response mapping"
+      }
+    },
+    "status_quo_live_partitioning": {
+      "make_targets": {
+        "spec": "cargo build --release --locked && $(MAKE) sync-python-dev && bash spec/fixtures/setup-study-spec-fixture.sh \"$(CURDIR)\" && bash spec/fixtures/setup-ddinter-spec-fixture.sh \"$(CURDIR)\" && . \"$(CURDIR)/.cache/spec-study-env\"; . \"$(CURDIR)/.cache/spec-ddinter-env\"; PATH=\"$(CURDIR)/target/release:$(PATH)\" BIOMCP_BIN=\"$(CURDIR)/target/release/biomcp\" \\ && uv run --no-sync sh -c 'PATH=\"$(CURDIR)/target/release:$$PATH\" BIOMCP_BIN=\"$(CURDIR)/target/release/biomcp\" pytest spec/entity/ spec/surface/ --mustmatch-lang bash --mustmatch-timeout 120 -v $(SPEC_XDIST_ARGS) --deselect spec/entity/protein.md --deselect spec/entity/disease.md --deselect spec/surface/discover.md' && . \"$(CURDIR)/.cache/spec-study-env\"; . \"$(CURDIR)/.cache/spec-ddinter-env\"; PATH=\"$(CURDIR)/target/release:$(PATH)\" BIOMCP_BIN=\"$(CURDIR)/target/release/biomcp\" \\ && uv run --no-sync sh -c 'PATH=\"$(CURDIR)/target/release:$$PATH\" BIOMCP_BIN=\"$(CURDIR)/target/release/biomcp\" pytest spec/entity/protein.md spec/entity/disease.md spec/surface/discover.md --mustmatch-lang bash --mustmatch-timeout 120 -v'",
+        "spec-pr": "cargo build --release --locked && $(MAKE) sync-python-dev && bash spec/fixtures/setup-study-spec-fixture.sh \"$(CURDIR)\" && bash spec/fixtures/setup-ddinter-spec-fixture.sh \"$(CURDIR)\" && . \"$(CURDIR)/.cache/spec-study-env\"; . \"$(CURDIR)/.cache/spec-ddinter-env\"; PATH=\"$(CURDIR)/target/release:$(PATH)\" BIOMCP_BIN=\"$(CURDIR)/target/release/biomcp\" \\ && uv run --no-sync sh -c 'PATH=\"$(CURDIR)/target/release:$$PATH\" BIOMCP_BIN=\"$(CURDIR)/target/release/biomcp\" pytest spec/entity/ spec/surface/ --mustmatch-lang bash --mustmatch-timeout 180 -v $(SPEC_XDIST_ARGS) --deselect spec/entity/protein.md --deselect spec/entity/disease.md --deselect spec/surface/discover.md' && . \"$(CURDIR)/.cache/spec-study-env\"; . \"$(CURDIR)/.cache/spec-ddinter-env\"; PATH=\"$(CURDIR)/target/release:$(PATH)\" BIOMCP_BIN=\"$(CURDIR)/target/release/biomcp\" \\ && uv run --no-sync sh -c 'PATH=\"$(CURDIR)/target/release:$$PATH\" BIOMCP_BIN=\"$(CURDIR)/target/release/biomcp\" pytest spec/entity/protein.md spec/entity/disease.md spec/surface/discover.md --mustmatch-lang bash --mustmatch-timeout 180 -v'",
+        "test-contracts": "cargo build --release --locked && $(MAKE) sync-python-dev && uv run --no-sync pytest tests/ -v --mcp-cmd \"./target/release/biomcp serve\" && uv run --no-sync mkdocs build --strict"
+      },
+      "march_preflight_evidence": [
+        {
+          "attempts": [
+            {
+              "attempt": 1,
+              "classification": "infra_failure",
+              "returncode": 2
+            },
+            {
+              "attempt": 2,
+              "classification": "infra_failure",
+              "returncode": 2
+            },
+            {
+              "attempt": 3,
+              "classification": "infra_failure",
+              "returncode": 2
+            }
+          ],
+          "classification": "infra_failure",
+          "command": "make spec-pr",
+          "failed_sections": [
+            "spec/entity/disease.md::Synonym Rescue (line 25) [bash]",
+            "spec/surface/discover.md::MEF2 relational query (line 70) [bash]"
+          ],
+          "ok": false,
+          "output_mentions": {
+            "mef2_failure": true,
+            "ols4_timeout": true,
+            "synonym_rescue_failure": true
+          },
+          "passed_timings": [
+            {
+              "passed": 127,
+              "seconds": 88.31
+            }
+          ],
+          "path": "/home/ian/workspace/.march-runtime/runs/biomcp/370-add-transcript-hgvs-normalization-proxies/20260522T164159405114/preflight-check.json",
+          "profile": "spec-only",
+          "timestamp": "2026-05-22T17:09:07"
+        },
+        {
+          "attempts": [
+            {
+              "attempt": 1,
+              "classification": "infra_failure",
+              "returncode": 2
+            },
+            {
+              "attempt": 2,
+              "classification": "infra_failure",
+              "returncode": 2
+            },
+            {
+              "attempt": 3,
+              "classification": "infra_failure",
+              "returncode": 2
+            }
+          ],
+          "classification": "infra_failure",
+          "command": "make spec-pr",
+          "failed_sections": [
+            "spec/entity/disease.md::Synonym Rescue (line 25) [bash]"
+          ],
+          "ok": false,
+          "output_mentions": {
+            "mef2_failure": true,
+            "ols4_timeout": false,
+            "synonym_rescue_failure": true
+          },
+          "passed_timings": [
+            {
+              "passed": 127,
+              "seconds": 130.41
+            }
+          ],
+          "path": "/home/ian/workspace/.march-runtime/runs/biomcp/370-add-transcript-hgvs-normalization-proxies/20260522T171624295758/preflight-check.json",
+          "profile": "spec-only",
+          "timestamp": "2026-05-22T17:49:57"
+        },
+        {
+          "attempts": [
+            {
+              "attempt": 1,
+              "classification": "green",
+              "returncode": 0
+            }
+          ],
+          "classification": "green",
+          "command": "make spec-pr",
+          "failed_sections": [],
+          "ok": true,
+          "output_mentions": {
+            "mef2_failure": false,
+            "ols4_timeout": false,
+            "synonym_rescue_failure": false
+          },
+          "passed_timings": [
+            {
+              "passed": 127,
+              "seconds": 179.32
+            },
+            {
+              "passed": 22,
+              "seconds": 49.2
+            }
+          ],
+          "path": "/home/ian/workspace/.march-runtime/runs/biomcp/370-add-transcript-hgvs-normalization-proxies/20260522T182504159757/preflight-check.json",
+          "profile": "spec-only",
+          "timestamp": "2026-05-22T18:35:04"
+        }
+      ],
+      "profiles": {
+        "baseline": {
+          "command": "cargo check --all-targets",
+          "observed_comment": "observed cargo check --all-targets ~25s cold / ~2s warm (beelink 2026-04-18)"
+        },
+        "focused": {
+          "command": "cargo test --lib && cargo clippy --lib --tests -- -D warnings",
+          "observed_comment": "observed cargo test --lib ~43s + cargo clippy ~5s = ~48s (beelink 2026-04-18)"
+        },
+        "full-blocking": {
+          "command": "make release-gate",
+          "observed_comment": "observed make release-gate ~7m45s warm (`make check` ~5m44s + `make spec-pr` ~2m01s, beelink 2026-04-23)"
+        },
+        "full-contracts": {
+          "command": "make release-gate",
+          "observed_comment": "observed make release-gate ~7m45s warm (`make check` ~5m44s + `make spec-pr` ~2m01s, beelink 2026-04-23)"
+        },
+        "preflight": {
+          "command": "cargo check --all-targets",
+          "observed_comment": "observed cargo check --all-targets ~25s cold / ~2s warm (beelink 2026-04-18)"
+        },
+        "spec-only": {
+          "command": "make spec-pr",
+          "observed_comment": "observed make spec-pr 56.16s warm (beelink 2026-04-24)"
+        }
+      }
+    }
+  },
+  "proposed_profiles": [
+    {
+      "command_shape": "cargo check --all-targets + deterministic contract inventory subset",
+      "evidence": "Current preflight cargo check passed in 44.45s cold; no live upstream needed.",
+      "live_network": false,
+      "name": "kickoff",
+      "proves": [
+        "compilation",
+        "CLI command/filter/request-plan contracts",
+        "source request construction for touched area"
+      ]
+    },
+    {
+      "command_shape": "cargo test --lib for touched modules + clippy; optionally targeted wiremock source tests",
+      "evidence": "Representative source files already expose 40 wiremock Mock::given contracts.",
+      "live_network": false,
+      "name": "focused",
+      "proves": [
+        "unit behavior",
+        "source request/status mapping",
+        "renderer envelope for touched code"
+      ]
+    },
+    {
+      "command_shape": "fixture-backed executable specs and static surface contracts only",
+      "evidence": "Representative specs have 3 fixture-backed sections but 19 live non-fixture sections to split/move.",
+      "live_network": false,
+      "name": "spec-only",
+      "proves": [
+        "CLI help/list",
+        "fixture-backed response/rendering",
+        "JSON envelope shape"
+      ]
+    },
+    {
+      "command_shape": "make check + deterministic spec-only; no broad live canaries by default",
+      "evidence": "Ticket 370 succeeded only after unrelated live/spec issues were resolved; keep broad checks out of kickoff.",
+      "live_network": "minimal/controlled",
+      "name": "verify/full-blocking",
+      "proves": [
+        "repo health",
+        "contract completeness",
+        "quality ratchets"
+      ]
+    },
+    {
+      "command_shape": "small serialized opt-in live smoke for OLS4/discover, disease crosswalk, article source status, variant normalization",
+      "evidence": "Known failures are OLS4/discover/disease crosswalk; keep as explicit release/operator signal.",
+      "live_network": true,
+      "name": "release-live-smoke",
+      "proves": [
+        "public upstream availability",
+        "cache/keyless operator path",
+        "release confidence"
+      ]
+    }
+  ],
+  "repo_root": "/home/ian/workspace/worktrees/371-reset-biomcp-test-strategy-around-request-contracts",
+  "script": "architecture/experiments/reset-biomcp-test-strategy-around-request-contracts/scripts/analyze_test_strategy.py",
+  "summary": {
+    "fixture_backed_sections": 3,
+    "live_nonfixture_sections": 19,
+    "march_failed_sections": [
+      "spec/entity/disease.md::Synonym Rescue (line 25) [bash]",
+      "spec/surface/discover.md::MEF2 relational query (line 70) [bash]",
+      "spec/entity/disease.md::Synonym Rescue (line 25) [bash]"
+    ],
+    "march_preflight_failures": 2,
+    "march_preflight_runs": 3,
+    "plan_files_with_plan_functions": [
+      "src/cli/search_all/plan.rs",
+      "src/entities/article/planner.rs",
+      "src/cli/article/dispatch.rs"
+    ],
+    "proof_type_counts": {
+      "cli_parsing_routing": 38,
+      "command_to_request_plan": 7,
+      "cross_entity_workflow": 11,
+      "fixture_response_mapping": 7,
+      "live_smoke_canary": 22,
+      "render_json_envelope": 39,
+      "source_request_construction": 8
+    },
+    "representative_spec_sections": 39,
+    "source_contract_totals": {
+      "apply_cache_mode": 6,
+      "body_assertions": 7,
+      "env_base": 6,
+      "header_assertions": 8,
+      "mock_given": 40,
+      "new_for_test": 54,
+      "plain_tests": 12,
+      "query_param_assertions": 101,
+      "tokio_tests": 47,
+      "wiremock_tests": 14
+    },
+    "tag_counts": {
+      "article_sources": 15,
+      "disease_crosswalk": 11,
+      "fixture_backed": 3,
+      "help_list_contract": 9,
+      "live_public_api": 22,
+      "ols4_discover": 7,
+      "render_json_envelope": 23,
+      "variant_sources": 10
+    }
+  }
+}
