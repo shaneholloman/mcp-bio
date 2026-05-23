@@ -229,6 +229,137 @@ def test_ticket_372_quarantines_known_routine_gate_blockers() -> None:
     assert "performance lane" in timings
 
 
+def _assert_contains_all(text: str, fragments: tuple[str, ...], context: str) -> None:
+    missing = [fragment for fragment in fragments if fragment not in text]
+    assert not missing, f"{context} is missing required request-plan contract fragments: {missing}"
+
+
+def test_ticket_374_ols4_search_request_plan_contract_is_source_local() -> None:
+    source = _read_repo("src/sources/ols4.rs")
+
+    assert re.search(r"struct\s+OlsSearchRequestPlan\b", source), (
+        "OLS4 search must expose a source-local OlsSearchRequestPlan so routine specs can assert "
+        "the /api/search request shape before reqwest execution instead of depending on live OLS4"
+    )
+
+    plan_builder = _rust_function_block("src/sources/ols4.rs", "search_request_plan")
+    search_executor = _rust_function_block("src/sources/ols4.rs", "search")
+
+    _assert_contains_all(
+        source,
+        (
+            "OlsSearchRequestPlan",
+            "search_request_plan",
+            "method",
+            "path",
+            "query_params",
+            "source_label",
+            "cache_mode",
+            "status_expectation",
+        ),
+        "src/sources/ols4.rs",
+    )
+    _assert_contains_all(
+        plan_builder,
+        (
+            "GET",
+            "/api/search",
+            "q",
+            "rows",
+            "groupField",
+            "ontology",
+            "ols4",
+        ),
+        "OlsClient::search_request_plan",
+    )
+    assert "search_request_plan(" in search_executor.split(".send()", 1)[0], (
+        "OlsClient::search must build and consume the request plan before sending the HTTP request, "
+        "otherwise tests can still only observe the request after network execution"
+    )
+
+
+def test_ticket_374_mydisease_request_plan_contracts_are_source_local() -> None:
+    source = _read_repo("src/sources/mydisease.rs")
+
+    for struct_name in (
+        "MyDiseaseQueryRequestPlan",
+        "MyDiseaseXrefLookupRequestPlan",
+        "MyDiseaseGetRequestPlan",
+    ):
+        assert re.search(rf"struct\s+{struct_name}\b", source), (
+            f"MyDisease must expose source-local {struct_name} so disease search/crosswalk/get "
+            "request shapes are test-visible before live execution"
+        )
+
+    builders = {
+        "query_request_plan": ("/query", "q", "size", "from", "fields", "MYDISEASE_SEARCH_FIELDS"),
+        "lookup_disease_by_xref_request_plan": (
+            "/query",
+            "xref_kind",
+            "mesh",
+            "omim",
+            "icd10cm",
+            "MYDISEASE_SEARCH_FIELDS",
+        ),
+        "get_request_plan": ("/disease/", "id", "fields", "MYDISEASE_GET_FIELDS", "NotFound"),
+    }
+    for fn_name, fragments in builders.items():
+        block = _rust_function_block("src/sources/mydisease.rs", fn_name)
+        _assert_contains_all(
+            block,
+            ("GET", "method", "path", "query_params", "cache_mode", "status_expectation", *fragments),
+            f"MyDiseaseClient::{fn_name}",
+        )
+
+    for executor, builder_name in (
+        ("query", "query_request_plan("),
+        ("lookup_disease_by_xref", "lookup_disease_by_xref_request_plan("),
+        ("get", "get_request_plan("),
+    ):
+        block = _rust_function_block("src/sources/mydisease.rs", executor)
+        assert builder_name in block.split(".send()", 1)[0], (
+            f"MyDiseaseClient::{executor} must build and consume {builder_name} before sending "
+            "the HTTP request so source contracts do not depend on observing wiremock traffic"
+        )
+
+
+def test_ticket_374_quarantined_disease_discover_holes_have_deterministic_replacements() -> None:
+    disease_replacement = _rust_function_block(
+        "src/entities/disease/fallback/tests.rs",
+        "synonym_rescue_uses_ols4_and_mydisease_request_plans_without_live_network",
+    )
+    discover_replacement = _rust_function_block(
+        "src/entities/discover.rs",
+        "mef2_relational_query_uses_ols4_request_plan_fixture_without_live_network",
+    )
+
+    _assert_contains_all(
+        disease_replacement,
+        ("OlsSearchRequestPlan", "MyDiseaseXrefLookupRequestPlan", "Arnold", "MESH"),
+        "disease synonym-rescue deterministic replacement",
+    )
+    _assert_contains_all(
+        discover_replacement,
+        ("OlsSearchRequestPlan", "genes regulated by MEF2 in the heart", "search all --keyword"),
+        "discover MEF2 deterministic replacement",
+    )
+
+    for path, level, heading in (
+        ("spec/entity/disease.md", 2, "Synonym Rescue"),
+        ("spec/surface/discover.md", 3, "MEF2 relational query"),
+    ):
+        section = _markdown_heading_body(path, level, heading)
+        section_lower = section.lower()
+        assert "quarantined" not in section_lower, (
+            f"{path}::{heading} must stop describing the behavior as quarantined once the "
+            "ticket-374 deterministic replacement tests exist"
+        )
+        assert any(fragment in section_lower for fragment in ("fixture", "request-plan", "live-smoke")), (
+            f"{path}::{heading} must document whether the restored coverage is fixture/request-plan "
+            "backed or deliberately release/live-smoke-only"
+        )
+
+
 def test_protein_complexes_spec_lane_leaves_the_parallel_xdist_pool() -> None:
     spec_target = _make_target_block("spec")
     spec_pr_target = _make_target_block("spec-pr")
