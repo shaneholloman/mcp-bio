@@ -146,11 +146,24 @@ impl PubMedClient {
         )
     }
 
+    fn apply_planned_ncbi_auth(
+        &self,
+        req: reqwest_middleware::RequestBuilder,
+        auth_mode: &str,
+    ) -> reqwest_middleware::RequestBuilder {
+        match auth_mode {
+            "authenticated" => crate::sources::append_ncbi_api_key(req, self.api_key.as_deref()),
+            "keyless" => req,
+            _ => req,
+        }
+    }
+
     async fn get_json<T: serde::de::DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
+        cache_mode: &str,
     ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode_with_auth(req, self.api_key.is_some())
+        let resp = crate::sources::apply_cache_mode_with_auth(req, cache_mode == "auth")
             .send()
             .await?;
         let status = resp.status();
@@ -244,8 +257,8 @@ impl PubMedClient {
         let plan = self.esearch_request_plan(params)?;
         let url = self.endpoint(plan.path);
         let req = self.client.get(&url).query(&plan.query_params);
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
-        let response: ESearchEnvelope = self.get_json(req).await?;
+        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
+        let response: ESearchEnvelope = self.get_json(req, plan.cache_mode).await?;
         let count = response
             .esearchresult
             .count
@@ -313,8 +326,8 @@ impl PubMedClient {
         let requested_set = requested_ids.iter().copied().collect::<HashSet<_>>();
         let url = self.endpoint(plan.path);
         let req = self.client.get(&url).query(&plan.query_params);
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
-        let response: ESummaryEnvelope = self.get_json(req).await?;
+        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
+        let response: ESummaryEnvelope = self.get_json(req, plan.cache_mode).await?;
 
         let uids = response
             .result
