@@ -36,6 +36,7 @@ DIRECT_SOURCE_MODULES = {
     "litsense2": "LitSense2",
     "medlineplus": "MedlinePlus",
     "monarch": "Monarch Initiative",
+    "mutalyzer": "Mutalyzer",
     "mychem": "MyChem.info",
     "mydisease": "MyDisease.info",
     "mygene": "MyGene.info",
@@ -60,6 +61,7 @@ DIRECT_SOURCE_MODULES = {
     "string": "STRING",
     "umls": "UMLS",
     "uniprot": "UniProt",
+    "variantvalidator": "VariantValidator",
     "wikipathways": "WikiPathways",
 }
 

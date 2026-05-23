@@ -128,6 +128,27 @@ See also: biomcp list variant")]
         /// Variant identifier (rsID, HGVS, or "GENE CHANGE")
         id: String,
     },
+    /// Normalize explicit transcript HGVS with Mutalyzer and/or VariantValidator
+    #[command(after_help = "\
+EXAMPLES:
+  biomcp variant normalize all NM_000248.3:c.135del
+  biomcp variant normalize mutalyzer NM_000248.3:c.135del
+  biomcp variant normalize variantvalidator NM_004448.2:c.829G>T
+
+SERVICES:
+  all
+  mutalyzer
+  variantvalidator
+
+Note: This proxy accepts explicit transcript HGVS input and does not parse reports, choose transcripts, classify variants, or assign clinical meaning.
+See also: biomcp list variant")]
+    Normalize {
+        /// Service selector: all, mutalyzer, or variantvalidator
+        service: String,
+        /// Transcript HGVS, e.g. NM_000248.3:c.135del
+        #[arg(value_name = "transcript_hgvs")]
+        variant: String,
+    },
     #[command(external_subcommand)]
     External(Vec<String>),
 }

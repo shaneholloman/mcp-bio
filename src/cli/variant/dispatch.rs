@@ -174,6 +174,14 @@ pub(crate) async fn handle_command(
                 crate::render::markdown::variant_oncokb_markdown(&result)
             }
         }
+        VariantCommand::Normalize { service, variant } => {
+            let result = crate::entities::variant::normalize_variant(&service, &variant).await?;
+            if json {
+                crate::render::json::to_pretty(&result)?
+            } else {
+                crate::render::markdown::variant_normalization_markdown(&result)
+            }
+        }
         VariantCommand::External(args) => {
             let id = args.join(" ");
             let variant =

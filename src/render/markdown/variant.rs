@@ -214,6 +214,50 @@ pub fn gwas_search_markdown_with_footer(
     Ok(with_pagination_footer(body, pagination_footer))
 }
 
+pub fn variant_normalization_markdown(result: &VariantNormalizationResponse) -> String {
+    let mut out = String::new();
+    out.push_str("# Variant normalization\n\n");
+    out.push_str(&format!("Input: {}\n\n", result.input));
+
+    for service in &result.services {
+        out.push_str(&format!("## {}\n\n", service.service));
+        out.push_str(&format!("Status: {}\n", service.status.as_str()));
+        if let Some(value) = service.input_description.as_deref() {
+            out.push_str(&format!("Input description: {value}\n"));
+        }
+        if let Some(value) = service.normalized_description.as_deref() {
+            out.push_str(&format!("Normalized description: {value}\n"));
+        }
+        if let Some(value) = service.corrected_description.as_deref() {
+            out.push_str(&format!("Corrected description: {value}\n"));
+        }
+        if let Some(value) = service.transcript_description.as_deref() {
+            out.push_str(&format!("Transcript description: {value}\n"));
+        }
+        if !service.genomic_descriptions.is_empty() {
+            out.push_str("Genomic descriptions:\n");
+            for value in &service.genomic_descriptions {
+                out.push_str(&format!("- {value}\n"));
+            }
+        }
+        if let Some(protein) = &service.protein {
+            out.push_str(&format!("Protein: {protein}\n"));
+        }
+        if !service.warnings.is_empty() {
+            out.push_str("Warnings:\n");
+            for warning in &service.warnings {
+                out.push_str(&format!("- {warning}\n"));
+            }
+        }
+        if let Some(message) = service.message.as_deref() {
+            out.push_str(&format!("Message: {message}\n"));
+        }
+        out.push('\n');
+    }
+
+    out
+}
+
 pub fn variant_oncokb_markdown(result: &VariantOncoKbResult) -> String {
     let mut out = String::new();
     out.push_str("# OncoKB\n\n");

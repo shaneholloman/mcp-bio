@@ -83,6 +83,7 @@ pub(super) fn list_variant() -> String {
 - `get variant <id> cbioportal` - cBioPortal frequency enrichment (on-demand)
 - `get variant <id> gwas` - GWAS trait associations
 - `get variant <id> all` - include all sections
+- `variant normalize <service> <transcript_hgvs>` - normalize explicit transcript HGVS with Mutalyzer and/or VariantValidator
 
 ## Search filters
 
@@ -120,6 +121,11 @@ Supported formats:
 - rsID: `rs113488022`
 - HGVS genomic: `chr7:g.140453136A>T`
 - Gene + protein: `BRAF V600E`, `BRAF p.Val600Glu`
+
+Transcript normalization examples:
+- `variant normalize all NM_000248.3:c.135del`
+- `variant normalize mutalyzer NM_000248.3:c.135del`
+- `variant normalize variantvalidator NM_004448.2:c.829G>T`
 
 ## Helpers
 
