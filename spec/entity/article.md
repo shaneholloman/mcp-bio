@@ -30,6 +30,19 @@ cargo test --lib ticket_376_article_source_status_contracts -- --list \
   | mustmatch like 'ticket_376_article_source_status_contracts'
 ```
 
+## Deterministic Renderer Envelope Contracts
+
+Ticket 377 moves routine article renderer/envelope proof into fixture-result
+contracts. The deterministic tests should cover article JSON `_meta.next_commands`,
+`_meta.source_status`, source degradation guidance, and markdown result-table
+anchors without live PubMed, Europe PMC, PubTator, LitSense2, or Semantic Scholar
+calls.
+
+```bash
+cargo test --lib ticket_377_article_renderer_envelope_contracts -- --list \
+  | mustmatch like 'ticket_377_article_renderer_envelope_contracts'
+```
+
 ## Gene Search
 
 Gene-linked article search should still read like a literature intake surface:

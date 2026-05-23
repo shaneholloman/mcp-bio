@@ -13,6 +13,18 @@ filters, pagination, resolver queries, fetch sizing, and DOID preference; the
 fallback seam separately records MESH skip, alias-fallback discover mode, and
 crosswalk resolution intent.
 
+## Deterministic Renderer Envelope Contracts
+
+Ticket 377 moves routine disease renderer/envelope proof into fixture-result
+contracts. The deterministic tests should cover disease JSON `_meta.next_commands`,
+source provenance, markdown table/card anchors, and follow-up guidance without
+making live MyDisease, OLS4, Open Targets, GTR, or trial calls.
+
+```bash
+cargo test --lib ticket_377_disease_renderer_envelope_contracts -- --list \
+  | mustmatch like 'ticket_377_disease_renderer_envelope_contracts'
+```
+
 ## Disease Normalization & Search
 
 Direct disease search should still surface the canonical melanoma row with its

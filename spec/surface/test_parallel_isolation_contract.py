@@ -904,6 +904,127 @@ def test_ticket_376_article_variant_specs_document_deterministic_or_live_smoke_c
         )
 
 
+def test_ticket_377_renderer_envelope_fixture_contracts_exist() -> None:
+    failures: list[str] = []
+
+    def check(label: str, assertion) -> None:
+        try:
+            assertion()
+        except AssertionError as exc:
+            failures.append(f"{label}: {exc}")
+
+    contracts = (
+        (
+            "Disease renderer/envelope fixture contract",
+            (
+                "src/render/json.rs",
+                "src/render/markdown/disease/tests.rs",
+                "src/render/provenance.rs",
+            ),
+            (
+                "ticket_377_disease_renderer_envelope_contracts",
+                "to_entity_json",
+                "disease_next_commands",
+                "disease_section_sources",
+                "disease_markdown",
+                "_meta",
+                "next_commands",
+                "section_sources",
+                "| Gene |",
+            ),
+        ),
+        (
+            "Discover renderer/envelope fixture contract",
+            (
+                "src/render/json.rs",
+                "src/render/markdown/discovery/tests.rs",
+            ),
+            (
+                "ticket_377_discover_renderer_envelope_contracts",
+                "to_discover_json",
+                "render_discover",
+                "_meta",
+                "next_commands",
+                "discovery_sources",
+                "section_sources",
+                "## Concepts",
+                "## Suggested Commands",
+            ),
+        ),
+        (
+            "Article renderer/envelope fixture contract",
+            (
+                "src/cli/article/tests/json.rs",
+                "src/render/markdown/article/tests.rs",
+            ),
+            (
+                "ticket_377_article_renderer_envelope_contracts",
+                "article_search_json",
+                "ArticleSourceStatus",
+                "ArticleSourceAvailability::Degraded",
+                "_meta",
+                "source_status",
+                "next_commands",
+                "article_search_markdown_with_footer_and_context",
+                "Semantic Scholar source status",
+            ),
+        ),
+        (
+            "Variant renderer/envelope fixture contract",
+            (
+                "src/cli/variant/tests.rs",
+                "src/render/markdown/variant/tests.rs",
+                "src/entities/variant/normalization.rs",
+            ),
+            (
+                "ticket_377_variant_renderer_envelope_contracts",
+                "search_json_with_meta",
+                "search_next_commands_variant",
+                "_meta",
+                "next_commands",
+                "variant_search_markdown_with_context",
+                "VariantNormalizationResponse",
+                "variant_normalization_markdown",
+                "VariantNormalizationStatus::InvalidInput",
+            ),
+        ),
+    )
+
+    for label, paths, fragments in contracts:
+        check(
+            label,
+            lambda paths=paths, fragments=fragments, label=label: _assert_any_test_block_contains(
+                paths,
+                fragments,
+                label,
+            ),
+        )
+
+    assert not failures, (
+        "ticket 377 renderer/envelope deterministic replacement failures:\n" + "\n".join(failures)
+    )
+
+
+def test_ticket_377_renderer_envelope_specs_document_deterministic_coverage() -> None:
+    contracts = (
+        ("spec/entity/disease.md", "ticket_377_disease_renderer_envelope_contracts"),
+        ("spec/surface/discover.md", "ticket_377_discover_renderer_envelope_contracts"),
+        ("spec/entity/article.md", "ticket_377_article_renderer_envelope_contracts"),
+        ("spec/entity/variant.md", "ticket_377_variant_renderer_envelope_contracts"),
+    )
+    for path, marker in contracts:
+        section = _markdown_heading_body(path, 2, "Deterministic Renderer Envelope Contracts")
+        lower = section.lower()
+        assert "ticket 377" in lower, f"{path} must document the ticket-377 renderer/envelope contract"
+        assert "fixture" in lower or "deterministic" in lower, (
+            f"{path} must classify renderer/envelope coverage as fixture-backed or deterministic"
+        )
+        assert "without" in lower and "live" in lower and "calls" in lower, (
+            f"{path} must state the contract runs without live source calls"
+        )
+        assert marker in section, f"{path} must expose the executable cargo marker {marker}"
+
+
 def test_protein_complexes_spec_lane_leaves_the_parallel_xdist_pool() -> None:
     spec_target = _make_target_block("spec")
     spec_pr_target = _make_target_block("spec-pr")

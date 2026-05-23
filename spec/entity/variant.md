@@ -23,6 +23,19 @@ cargo test --lib ticket_376_variant_normalization_contracts -- --list \
   | mustmatch like 'ticket_376_variant_normalization_contracts'
 ```
 
+## Deterministic Renderer Envelope Contracts
+
+Ticket 377 moves routine variant renderer/envelope proof into fixture-result
+contracts. The deterministic tests should cover variant search JSON
+`_meta.next_commands`, markdown related anchors, and normalization JSON/markdown
+per-service status, warnings, and genomic-description rendering without live
+MyVariant, Mutalyzer, or VariantValidator calls.
+
+```bash
+cargo test --lib ticket_377_variant_renderer_envelope_contracts -- --list \
+  | mustmatch like 'ticket_377_variant_renderer_envelope_contracts'
+```
+
 ## Gene-Scoped Variant Search
 
 Gene-first search should still return the canonical variant identity columns and

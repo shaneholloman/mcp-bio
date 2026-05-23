@@ -14,6 +14,19 @@ query, command-versus-alias-fallback mode, OLS4 lookup query, and whether
 MedlinePlus/cache behavior is enabled, so routine tests can prove routing intent
 without depending on a live ontology service.
 
+## Deterministic Renderer Envelope Contracts
+
+Ticket 377 moves routine discover renderer/envelope proof into fixture-result
+contracts. The deterministic tests should cover discover JSON `_meta.next_commands`,
+source provenance, discovery source labels, markdown Concepts/Suggested Commands
+anchors, and truthful degraded guidance without live OLS4, UMLS, or MedlinePlus
+calls.
+
+```bash
+cargo test --lib ticket_377_discover_renderer_envelope_contracts -- --list \
+  | mustmatch like 'ticket_377_discover_renderer_envelope_contracts'
+```
+
 ## Alias-Like Free Text Still Resolves to Typed Follow-Ups
 
 When the query is a familiar alias rather than a canonical gene symbol,
