@@ -52,20 +52,14 @@ echo "$out" | mustmatch like "biomcp drug trials pembrolizumab"
 
 ## Ambiguous Research-Code Fallback
 
-Research codes with ambiguous drug discovery signal should not render the code
-as a sparse drug card. They should fall back to the same alias-guidance surface
-used for disambiguation.
+Quarantined from routine `make spec-pr` by ticket 380. The former live
+`MK-7684` assertion depended on ambiguous upstream drug discovery behavior and
+blocked unrelated March work when the runtime returned not-found search guidance
+instead of alias-disambiguation text.
 
-```bash
-out="$(../../tools/biomcp-ci get drug MK-7684 2>&1 || true)"
-echo "$out" | mustmatch like "BioMCP could not map 'MK-7684' to a single drug."
-echo "$out" | mustmatch like "biomcp discover MK-7684"
-echo "$out" | mustmatch like "biomcp search drug -q MK-7684"
-echo "$out" | mustmatch like "Possible matches:"
-echo "$out" | mustmatch like "Vibostolimab (Drug, NCIT:C140041)"
-echo "$out" | mustmatch like "Vibostolimab/Pembrolizumab MK-7684A (Drug, NCIT:C176841)"
-echo "$out" | mustmatch not like "# mk-7684"
-```
+Keep this heading as the restoration anchor. Bring the behavior back only as a
+fixture-backed alias/disambiguation contract or as an explicit release/live-smoke
+canary after the ticket 371 request-contract reset reaches drug/alias surfaces.
 
 ## Structured Drug Interactions
 

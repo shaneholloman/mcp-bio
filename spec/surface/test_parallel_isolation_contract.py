@@ -209,6 +209,12 @@ def test_ticket_372_quarantines_known_routine_gate_blockers() -> None:
             "All-Section Warm Budget",
             ("ticket 371", "benchmark/ratchet", "explicit performance"),
         ),
+        (
+            "spec/entity/drug.md",
+            2,
+            "Ambiguous Research-Code Fallback",
+            ("ticket 380", "fixture-backed", "release/live-smoke", "drug/alias"),
+        ),
     )
 
     for path, level, heading, required_fragments in quarantined_sections:
