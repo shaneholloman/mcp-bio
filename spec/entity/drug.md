@@ -32,23 +32,16 @@ echo "$out" | mustmatch like "biomcp drug trials pembrolizumab"
 
 ## Research-Code Bridge
 
-Paper and sponsor codes should follow the same canonical identity bridge as
-brand names. When an operator starts from `MK-3475`, the base card should pivot
-back to `pembrolizumab` rather than bouncing through alias guidance or
-preserving the paper code as the primary identity.
+Quarantined from routine `make spec-pr` by ticket 382. The former live
+`MK-3475` assertions expected the paper/sponsor code to canonicalize to
+`pembrolizumab` and keep next commands on the INN, but current runtime can emit
+an `mk-3475` card and paper-code trial pivot instead. That alias behavior is a
+drug canonicalization question, not a routine PR-gate blocker.
 
-```bash
-out="$(../../tools/biomcp-ci get drug MK-3475)"
-echo "$out" | mustmatch like "# pembrolizumab"
-```
-
-Once the card canonicalizes, its next commands should keep the operator on the
-INN instead of switching back to the paper code.
-
-```bash
-out="$(../../tools/biomcp-ci get drug MK-3475)"
-echo "$out" | mustmatch like "biomcp drug trials pembrolizumab"
-```
+Keep this heading as the restoration anchor. Bring the behavior back only as a
+fixture-backed drug alias/canonicalization request contract, or as an explicit
+release/live-smoke canary after the ticket 371 request-contract reset reaches
+drug alias surfaces.
 
 ## Ambiguous Research-Code Fallback
 

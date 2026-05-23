@@ -212,6 +212,12 @@ def test_ticket_372_quarantines_known_routine_gate_blockers() -> None:
         (
             "spec/entity/drug.md",
             2,
+            "Research-Code Bridge",
+            ("ticket 382", "fixture-backed", "release/live-smoke", "drug alias"),
+        ),
+        (
+            "spec/entity/drug.md",
+            2,
             "Ambiguous Research-Code Fallback",
             ("ticket 380", "fixture-backed", "release/live-smoke", "drug/alias"),
         ),
