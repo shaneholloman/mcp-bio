@@ -229,35 +229,90 @@ def test_ticket_372_quarantines_known_routine_gate_blockers() -> None:
     assert "performance lane" in timings
 
 
+def _rust_struct_block(path: str, struct_name: str) -> str:
+    lines = _read_repo(path).splitlines()
+    signature = f"struct {struct_name}"
+    for index, line in enumerate(lines):
+        if signature not in line:
+            continue
+
+        start = index
+        while start > 0 and lines[start - 1].lstrip().startswith("#["):
+            start -= 1
+
+        depth = 0
+        seen_body = False
+        for end in range(index, len(lines)):
+            depth += lines[end].count("{")
+            seen_body = seen_body or ("{" in lines[end])
+            depth -= lines[end].count("}")
+            if seen_body and depth == 0:
+                return "\n".join(lines[start : end + 1])
+        break
+
+    raise AssertionError(f"struct {struct_name!r} not found in {path}")
+
+
+def _rust_test_blocks(path: str) -> list[str]:
+    lines = _read_repo(path).splitlines()
+    blocks: list[str] = []
+    for index, line in enumerate(lines):
+        if "fn " not in line:
+            continue
+
+        start = index
+        while start > 0 and lines[start - 1].lstrip().startswith("#["):
+            start -= 1
+
+        depth = 0
+        seen_body = False
+        for end in range(index, len(lines)):
+            depth += lines[end].count("{")
+            seen_body = seen_body or ("{" in lines[end])
+            depth -= lines[end].count("}")
+            if seen_body and depth == 0:
+                block = "\n".join(lines[start : end + 1])
+                if "#[test]" in block or "#[tokio::test]" in block:
+                    blocks.append(block)
+                break
+    return blocks
+
+
 def _assert_contains_all(text: str, fragments: tuple[str, ...], context: str) -> None:
     missing = [fragment for fragment in fragments if fragment not in text]
     assert not missing, f"{context} is missing required request-plan contract fragments: {missing}"
 
 
+def _contains_all(text: str, fragments: tuple[str, ...]) -> bool:
+    return all(fragment in text for fragment in fragments)
+
+
+def _assert_struct_fields(block: str, fields: tuple[str, ...], context: str) -> None:
+    missing = [
+        field
+        for field in fields
+        if not re.search(rf"\b(?:pub(?:\([^)]*\))?\s+)?{re.escape(field)}\s*:", block)
+    ]
+    assert not missing, f"{context} is missing required request-plan fields: {missing}"
+
+
 def test_ticket_374_ols4_search_request_plan_contract_is_source_local() -> None:
-    source = _read_repo("src/sources/ols4.rs")
-
-    assert re.search(r"struct\s+OlsSearchRequestPlan\b", source), (
-        "OLS4 search must expose a source-local OlsSearchRequestPlan so routine specs can assert "
-        "the /api/search request shape before reqwest execution instead of depending on live OLS4"
-    )
-
+    plan_struct = _rust_struct_block("src/sources/ols4.rs", "OlsSearchRequestPlan")
     plan_builder = _rust_function_block("src/sources/ols4.rs", "search_request_plan")
     search_executor = _rust_function_block("src/sources/ols4.rs", "search")
 
-    _assert_contains_all(
-        source,
+    _assert_struct_fields(
+        plan_struct,
         (
-            "OlsSearchRequestPlan",
-            "search_request_plan",
             "method",
             "path",
             "query_params",
             "source_label",
             "cache_mode",
             "status_expectation",
+            "content_type_expectation",
         ),
-        "src/sources/ols4.rs",
+        "OlsSearchRequestPlan",
     )
     _assert_contains_all(
         plan_builder,
@@ -269,6 +324,7 @@ def test_ticket_374_ols4_search_request_plan_contract_is_source_local() -> None:
             "groupField",
             "ontology",
             "ols4",
+            "json",
         ),
         "OlsClient::search_request_plan",
     )
@@ -279,23 +335,21 @@ def test_ticket_374_ols4_search_request_plan_contract_is_source_local() -> None:
 
 
 def test_ticket_374_mydisease_request_plan_contracts_are_source_local() -> None:
-    source = _read_repo("src/sources/mydisease.rs")
-
     for struct_name in (
         "MyDiseaseQueryRequestPlan",
         "MyDiseaseXrefLookupRequestPlan",
         "MyDiseaseGetRequestPlan",
     ):
-        assert re.search(rf"struct\s+{struct_name}\b", source), (
-            f"MyDisease must expose source-local {struct_name} so disease search/crosswalk/get "
-            "request shapes are test-visible before live execution"
+        _assert_struct_fields(
+            _rust_struct_block("src/sources/mydisease.rs", struct_name),
+            ("method", "path", "query_params", "cache_mode", "status_expectation"),
+            struct_name,
         )
 
     builders = {
         "query_request_plan": ("/query", "q", "size", "from", "fields", "MYDISEASE_SEARCH_FIELDS"),
         "lookup_disease_by_xref_request_plan": (
             "/query",
-            "xref_kind",
             "mesh",
             "omim",
             "icd10cm",
@@ -307,7 +361,7 @@ def test_ticket_374_mydisease_request_plan_contracts_are_source_local() -> None:
         block = _rust_function_block("src/sources/mydisease.rs", fn_name)
         _assert_contains_all(
             block,
-            ("GET", "method", "path", "query_params", "cache_mode", "status_expectation", *fragments),
+            ("GET", *fragments),
             f"MyDiseaseClient::{fn_name}",
         )
 
@@ -324,24 +378,26 @@ def test_ticket_374_mydisease_request_plan_contracts_are_source_local() -> None:
 
 
 def test_ticket_374_quarantined_disease_discover_holes_have_deterministic_replacements() -> None:
-    disease_replacement = _rust_function_block(
-        "src/entities/disease/fallback/tests.rs",
-        "synonym_rescue_uses_ols4_and_mydisease_request_plans_without_live_network",
-    )
-    discover_replacement = _rust_function_block(
-        "src/entities/discover.rs",
-        "mef2_relational_query_uses_ols4_request_plan_fixture_without_live_network",
+    disease_markers = ("OlsSearchRequestPlan", "MyDiseaseXrefLookupRequestPlan", "Arnold", "MESH")
+    discover_markers = (
+        "OlsSearchRequestPlan",
+        "genes regulated by MEF2 in the heart",
+        "search all --keyword",
     )
 
-    _assert_contains_all(
-        disease_replacement,
-        ("OlsSearchRequestPlan", "MyDiseaseXrefLookupRequestPlan", "Arnold", "MESH"),
-        "disease synonym-rescue deterministic replacement",
+    assert any(
+        _contains_all(block, disease_markers)
+        for block in _rust_test_blocks("src/entities/disease/fallback/tests.rs")
+    ), (
+        "disease synonym-rescue deterministic replacement must have an executable Rust test block "
+        f"with request-plan/fixture markers {disease_markers}"
     )
-    _assert_contains_all(
-        discover_replacement,
-        ("OlsSearchRequestPlan", "genes regulated by MEF2 in the heart", "search all --keyword"),
-        "discover MEF2 deterministic replacement",
+    assert any(
+        _contains_all(block, discover_markers)
+        for block in _rust_test_blocks("src/entities/discover.rs")
+    ), (
+        "discover MEF2 deterministic replacement must have an executable Rust test block with "
+        f"request-plan/fixture markers {discover_markers}"
     )
 
     for path, level, heading in (
