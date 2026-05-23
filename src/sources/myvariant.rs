@@ -1073,11 +1073,16 @@ mod tests {
                 .contains(&("fields", MYVARIANT_FIELDS_GET.to_string()))
         );
 
-        let normalized_input = "BRAF V600E";
-        let normalized_id = "rs113488022";
-        assert_eq!(normalized_input, "BRAF V600E");
+        let parsed = crate::entities::variant::parse_variant_id("BRAF V600E")
+            .expect("BRAF V600E parses as gene/protein input");
+        let crate::entities::variant::VariantIdFormat::GeneProteinChange { gene, change } = parsed
+        else {
+            panic!("BRAF V600E should parse as gene/protein input");
+        };
+        assert_eq!(gene, "BRAF");
+        assert_eq!(change, "V600E");
         assert_eq!(
-            client.get_request_plan(normalized_id).unwrap().path,
+            client.get_request_plan("rs113488022").unwrap().path,
             "/variant/rs113488022"
         );
     }

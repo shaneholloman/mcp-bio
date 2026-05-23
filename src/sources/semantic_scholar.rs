@@ -537,9 +537,11 @@ mod tests {
         assert_eq!(keyless_plan.auth_mode, SemanticScholarAuthMode::SharedPool);
         assert!(keyless_plan.cache_mode.contains("shared_pool"));
         assert!(keyless_plan.status_expectation.contains("unavailable"));
-        let keyless = "keyless";
-        let unavailable = "unavailable";
-        assert_eq!((keyless, unavailable), ("keyless", "unavailable"));
+        assert!(
+            keyless_plan
+                .query_params
+                .contains(&("query", "BRAF".to_string()))
+        );
 
         let authenticated = SemanticScholarClient::new_for_test(
             "http://example.test".into(),

@@ -211,8 +211,20 @@ mod tests {
             .search_request_plan("passages/", "BRAF")
             .expect("passage plan");
         assert_eq!(passage.path, "/passages/");
-        let hydration_contract = "PubMedESummaryRequestPlan";
-        assert_eq!(hydration_contract, "PubMedESummaryRequestPlan");
+
+        let ids = vec!["22663011".to_string()];
+        let hydration: crate::sources::pubmed::PubMedESummaryRequestPlan =
+            crate::sources::pubmed::PubMedClient::new()
+                .expect("pubmed client")
+                .esummary_request_plan(&ids)
+                .expect("hydration plan")
+                .expect("PubMedESummaryRequestPlan");
+        assert_eq!(hydration.path, "/esummary.fcgi");
+        assert!(
+            hydration
+                .query_params
+                .contains(&("id", "22663011".to_string()))
+        );
     }
 
     #[tokio::test]
