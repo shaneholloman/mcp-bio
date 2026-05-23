@@ -276,6 +276,11 @@ impl MyDiseaseClient {
                 "Disease ID is too long.".into(),
             ));
         }
+        if id.contains(['/', '\\', '?', '#']) {
+            return Err(BioMcpError::InvalidArgument(
+                "Disease ID must not contain path or query separators.".into(),
+            ));
+        }
 
         Ok(MyDiseaseGetRequestPlan {
             method: "GET",
@@ -289,9 +294,7 @@ impl MyDiseaseClient {
     pub async fn get(&self, id: &str) -> Result<MyDiseaseHit, BioMcpError> {
         let plan = self.get_request_plan(id)?;
         let url = self.endpoint(&plan.path);
-        let resp = self
-            .client
-            .get(&url)
+        let resp = crate::sources::apply_cache_mode(self.client.get(&url))
             .query(&plan.query_params)
             .send()
             .await?;
