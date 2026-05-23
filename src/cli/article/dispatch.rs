@@ -179,15 +179,21 @@ fn article_entity_sections(entity_type: crate::entities::discover::DiscoverType)
         .collect()
 }
 
-pub(in crate::cli) async fn handle_search(
-    args: ArticleSearchArgs,
-    json: bool,
-) -> anyhow::Result<CommandOutcome> {
-    let session_token = args.session.clone();
-    if let Some(token) = session_token.as_deref() {
-        super::session::validate_token(token)?;
-    }
+#[derive(Debug, Clone)]
+pub(super) struct ArticleSearchRequest {
+    pub(super) filters: crate::entities::article::ArticleSearchFilters,
+    pub(super) source_filter: crate::entities::article::ArticleSourceFilter,
+    pub(super) limit: usize,
+    pub(super) offset: usize,
+    pub(super) sort: crate::entities::article::ArticleSort,
+    pub(super) ranking: crate::entities::article::ArticleRankingOptions,
+    pub(super) backend_plan: crate::entities::article::BackendPlan,
+    pub(super) exact_keyword_lookup: Option<String>,
+}
 
+pub(super) fn article_search_request(
+    args: ArticleSearchArgs,
+) -> Result<ArticleSearchRequest, crate::error::BioMcpError> {
     let (date_from, date_to) = resolved_article_date_bounds(&args);
     let disease = super::super::normalize_cli_tokens(args.disease);
     let drug = super::super::normalize_cli_tokens(args.drug);
@@ -200,7 +206,6 @@ pub(in crate::cli) async fn handle_search(
     let journal = super::super::normalize_cli_tokens(args.journal);
     let sort = crate::entities::article::ArticleSort::from_flag(&args.sort)?;
     let source_filter = crate::entities::article::ArticleSourceFilter::from_flag(&args.source)?;
-    let exclude_retracted = args.exclude_retracted || !args.include_retracted;
     let ranking = crate::entities::article::ArticleRankingOptions::from_inputs(
         args.ranking_mode.as_deref(),
         args.weight_semantic,
@@ -213,10 +218,10 @@ pub(in crate::cli) async fn handle_search(
         .as_deref()
         .map(str::trim)
         .is_some_and(|value| !value.is_empty())
-        && disease.as_deref().map(str::trim).is_none_or(str::is_empty)
-        && drug.as_deref().map(str::trim).is_none_or(str::is_empty)
-        && author.as_deref().map(str::trim).is_none_or(str::is_empty)
-        && keyword.as_deref().map(str::trim).is_none_or(str::is_empty);
+        && disease.is_none()
+        && drug.is_none()
+        && author.is_none()
+        && keyword.is_none();
     let filters = crate::entities::article::ArticleSearchFilters {
         gene: args.gene,
         gene_anchored,
@@ -230,30 +235,52 @@ pub(in crate::cli) async fn handle_search(
         journal,
         open_access: args.open_access,
         no_preprints: args.no_preprints,
-        exclude_retracted,
+        exclude_retracted: args.exclude_retracted || !args.include_retracted,
         max_per_source: args.max_per_source,
         sort,
         ranking,
     };
 
-    let query = article_query_summary(
-        &filters,
-        source_filter,
-        args.include_retracted,
-        args.limit,
-        args.offset,
-    );
-
     crate::entities::article::validate_search_page_request(&filters, args.limit, source_filter)?;
-    let exact_query = if is_exact_article_keyword_lookup_eligible(&filters) {
-        filters.keyword.clone()
-    } else {
-        None
-    };
+    let backend_plan = crate::entities::article::plan_backends(&filters, source_filter)?;
+    let exact_keyword_lookup = is_exact_article_keyword_lookup_eligible(&filters)
+        .then(|| filters.keyword.clone())
+        .flatten();
+
+    Ok(ArticleSearchRequest {
+        sort,
+        ranking: filters.ranking.clone(),
+        filters,
+        source_filter,
+        limit: args.limit,
+        offset: args.offset,
+        backend_plan,
+        exact_keyword_lookup,
+    })
+}
+
+pub(in crate::cli) async fn handle_search(
+    args: ArticleSearchArgs,
+    json: bool,
+) -> anyhow::Result<CommandOutcome> {
+    let session_token = args.session.clone();
+    if let Some(token) = session_token.as_deref() {
+        super::session::validate_token(token)?;
+    }
+    let include_retracted = args.include_retracted;
+    let debug_plan_requested = args.debug_plan;
+    let request: ArticleSearchRequest = article_search_request(args)?;
+    let filters = &request.filters;
+    let source_filter = request.source_filter;
+    let limit = request.limit;
+    let offset = request.offset;
+
+    let query = article_query_summary(filters, source_filter, include_retracted, limit, offset);
+
     let search_future =
-        crate::entities::article::search_page(&filters, args.limit, args.offset, source_filter);
-    let (page, exact_entity) = if let Some(query) = exact_query {
-        let exact_future = crate::entities::discover::resolve_exact_article_keyword_entity(&query);
+        crate::entities::article::search_page(filters, limit, offset, source_filter);
+    let (page, exact_entity) = if let Some(query) = request.exact_keyword_lookup.as_deref() {
+        let exact_future = crate::entities::discover::resolve_exact_article_keyword_entity(query);
         let (page, exact_entity) = tokio::join!(search_future, exact_future);
         let exact_entity = match exact_entity {
             Ok(entity) => entity,
@@ -271,16 +298,16 @@ pub(in crate::cli) async fn handle_search(
     };
     let source_status = page.source_status;
     let results = page.results;
-    let pagination =
-        super::super::PaginationMeta::offset(args.offset, args.limit, results.len(), page.total);
+    let pagination = super::super::PaginationMeta::offset(offset, limit, results.len(), page.total);
+    let _ = (request.sort, &request.ranking);
     let semantic_scholar_enabled =
-        crate::entities::article::semantic_scholar_search_enabled(&filters, source_filter);
-    let debug_plan = if args.debug_plan {
+        request.backend_plan == crate::entities::article::BackendPlan::Both;
+    let debug_plan = if debug_plan_requested {
         Some(build_article_debug_plan(
             &query,
-            &filters,
+            filters,
             source_filter,
-            args.limit,
+            limit,
             &results,
             &pagination,
             &source_status,
@@ -299,7 +326,7 @@ pub(in crate::cli) async fn handle_search(
         .collect::<Vec<_>>();
     let next_commands = crate::render::markdown::search_next_commands_article(
         &results,
-        &filters,
+        filters,
         source_filter,
         &exact_entity_commands,
     );
@@ -327,12 +354,14 @@ pub(in crate::cli) async fn handle_search(
         suggestions.extend(session_suggestions);
     }
 
+    let article_type_note =
+        crate::entities::article::article_type_limitation_note(filters, source_filter);
     let text = if json {
         article_search_json(
             &query,
-            &filters,
+            filters,
             semantic_scholar_enabled,
-            crate::entities::article::article_type_limitation_note(&filters, source_filter),
+            article_type_note,
             debug_plan,
             ArticleSearchJsonPage {
                 results,
@@ -348,15 +377,11 @@ pub(in crate::cli) async fn handle_search(
             &query,
             &results,
             &footer,
-            &filters,
+            filters,
             crate::render::markdown::ArticleSearchRenderContext {
                 source_filter,
                 semantic_scholar_enabled,
-                note: crate::entities::article::article_type_limitation_note(
-                    &filters,
-                    source_filter,
-                )
-                .as_deref(),
+                note: article_type_note.as_deref(),
                 debug_plan: debug_plan.as_ref(),
                 exact_entity_commands: &exact_entity_commands,
                 source_status: &source_status,

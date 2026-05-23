@@ -2,6 +2,52 @@ use super::super::test_support::*;
 use super::*;
 
 #[test]
+fn disease_fallback_request_records_mesh_skip_before_discover() {
+    let filters = DiseaseSearchFilters {
+        query: Some(" Arnold Chiari syndrome ".into()),
+        source: Some(" mesh ".into()),
+        ..Default::default()
+    };
+
+    let request = DiseaseFallbackRequest::new(&filters, 2, 1).expect("request");
+
+    assert_eq!(request.query, "Arnold Chiari syndrome");
+    assert_eq!(request.limit, 2);
+    assert_eq!(request.offset, 1);
+    assert_eq!(request.skip_reason.as_deref(), Some("source=mesh"));
+    assert_eq!(
+        request.discover_mode,
+        crate::entities::discover::DiscoverMode::AliasFallback
+    );
+    assert!(!request.prefer_doid);
+}
+
+#[test]
+fn disease_fallback_request_records_alias_queries_and_doid_preference() {
+    let filters = DiseaseSearchFilters {
+        query: Some(" chronic myeloid leukemia ".into()),
+        source: Some(" doid ".into()),
+        ..Default::default()
+    };
+
+    let request = DiseaseFallbackRequest::new(&filters, 1, 0).expect("request");
+
+    assert_eq!(request.query, "chronic myeloid leukemia");
+    assert!(request.skip_reason.is_none());
+    assert_eq!(
+        request.discover_mode,
+        crate::entities::discover::DiscoverMode::AliasFallback
+    );
+    assert!(
+        request
+            .resolver_queries
+            .iter()
+            .any(|value| value == "chronic myeloid leukemia")
+    );
+    assert!(request.prefer_doid);
+}
+
+#[test]
 fn fallback_candidates_rank_specific_crosswalkable_disease_ahead_of_generic_rows() {
     let candidates = rank_disease_fallback_candidates(
         "Arnold Chiari syndrome",

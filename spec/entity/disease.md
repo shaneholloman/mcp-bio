@@ -5,6 +5,14 @@ ontology IDs while still keeping treatment and diagnostic pivots close at hand.
 These batch-A canaries focus on MONDO grounding, synonym rescue, section gating,
 and executable follow-up guidance.
 
+## Disease Request Planning Happens Before MyDisease Calls
+
+Disease search first records normalized command intent in request seams before
+MyDisease or discover fallback clients execute. The search seam carries query,
+filters, pagination, resolver queries, fetch sizing, and DOID preference; the
+fallback seam separately records MESH skip, alias-fallback discover mode, and
+crosswalk resolution intent.
+
 ## Disease Normalization & Search
 
 Direct disease search should still surface the canonical melanoma row with its
@@ -21,11 +29,12 @@ echo "$out" | mustmatch like "| ID | Name | Synonyms |"
 
 Ticket 371 identified this live OLS4/MyDisease path as a request-contract risk;
 routine coverage for the Arnold/Chiari synonym rescue path is now restored
-through Rust fixture/request-plan tests. The fallback ranking is fixture-backed,
-OLS4 search construction is asserted by `OlsSearchRequestPlan`, and MyDisease
-MESH crosswalk construction is asserted by `MyDiseaseXrefLookupRequestPlan`. Any
-live OLS4/MyDisease upstream probe belongs in a release/live-smoke lane, not
-routine `make spec-pr`.
+through Rust fixture/request-command/request-plan tests. Disease search and
+fallback request seams preserve fallback intent before execution, fallback
+ranking is fixture-backed, OLS4 search construction is asserted by
+`OlsSearchRequestPlan`, and MyDisease MESH crosswalk construction is asserted by
+`MyDiseaseXrefLookupRequestPlan`. Any live OLS4/MyDisease upstream probe belongs
+in a release/live-smoke lane, not routine `make spec-pr`.
 
 ## Canonical Disease Card
 

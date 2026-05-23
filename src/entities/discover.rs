@@ -136,6 +136,33 @@ pub(crate) enum DiscoverMode {
     AliasFallback,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct DiscoverRequest {
+    pub(crate) query: String,
+    pub(crate) mode: DiscoverMode,
+    pub(crate) ols_query: String,
+    pub(crate) medlineplus_enabled: bool,
+    pub(crate) no_cache: bool,
+}
+
+impl DiscoverRequest {
+    fn new(query: &str, mode: DiscoverMode) -> Result<Self, BioMcpError> {
+        let query = query.trim();
+        if query.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "Free-text query is required. Example: biomcp discover BRCA1".into(),
+            ));
+        }
+        Ok(Self {
+            query: query.to_string(),
+            mode,
+            ols_query: symptom_disease_lookup_query(query),
+            medlineplus_enabled: mode == DiscoverMode::Command,
+            no_cache: mode == DiscoverMode::AliasFallback,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct GeneralDiscoverScore {
     overlap_count: usize,
@@ -241,23 +268,20 @@ pub(crate) async fn resolve_query(
     query: &str,
     mode: DiscoverMode,
 ) -> Result<DiscoverResult, BioMcpError> {
-    let query = query.trim();
-    if query.is_empty() {
-        return Err(BioMcpError::InvalidArgument(
-            "Free-text query is required. Example: biomcp discover BRCA1".into(),
-        ));
-    }
+    let request = DiscoverRequest::new(query, mode)?;
+    let query = request.query.as_str();
+    let mode = request.mode;
 
     let ols_client = crate::sources::ols4::OlsClient::new()?;
     let umls_client = crate::sources::umls::UmlsClient::new()?;
-    let medline_client = match mode {
-        DiscoverMode::Command => Some(crate::sources::medlineplus::MedlinePlusClient::new()?),
-        DiscoverMode::AliasFallback => None,
+    let medline_client = if request.medlineplus_enabled {
+        Some(crate::sources::medlineplus::MedlinePlusClient::new()?)
+    } else {
+        None
     };
 
-    let ols_query = symptom_disease_lookup_query(query);
     let ols_future = async {
-        match tokio::time::timeout(OLS4_TIMEOUT, ols_client.search(&ols_query)).await {
+        match tokio::time::timeout(OLS4_TIMEOUT, ols_client.search(&request.ols_query)).await {
             Ok(result) => result,
             Err(_) => Err(BioMcpError::Api {
                 api: "ols4".to_string(),
@@ -313,10 +337,10 @@ pub(crate) async fn resolve_query(
         }
     };
 
-    let (ols_docs, (umls_rows, umls_note), medline_topics) = match mode {
-        DiscoverMode::Command => tokio::join!(ols_future, umls_future, medline_future),
-        DiscoverMode::AliasFallback => {
-            crate::sources::with_no_cache(true, async {
+    let (ols_docs, (umls_rows, umls_note), medline_topics) = match request.no_cache {
+        false => tokio::join!(ols_future, umls_future, medline_future),
+        true => {
+            crate::sources::with_no_cache(request.no_cache, async {
                 tokio::join!(ols_future, umls_future, medline_future)
             })
             .await
@@ -2062,9 +2086,9 @@ fn alias_candidates(result: &DiscoverResult) -> Vec<AliasCandidateSummary> {
 mod tests {
     use super::{
         AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept, DiscoverConfidence,
-        DiscoverIntent, DiscoverResult, DiscoverType, MatchTier, build_result,
-        classify_alias_fallback, concept_from_ols, generate_commands, normalize_primary_id,
-        ols_doc_identifier, resolve_exact_article_keyword_entity,
+        DiscoverIntent, DiscoverMode, DiscoverRequest, DiscoverResult, DiscoverType, MatchTier,
+        build_result, classify_alias_fallback, concept_from_ols, generate_commands,
+        normalize_primary_id, ols_doc_identifier, resolve_exact_article_keyword_entity,
         resolve_exact_article_keyword_entity_from_ols_docs, symptom_disease_lookup_query,
     };
     use crate::sources::medlineplus::MedlinePlusTopic;
@@ -2073,6 +2097,30 @@ mod tests {
     use crate::test_support::{env_lock, set_env_var};
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn discover_request_records_command_intent_before_clients() {
+        let request = DiscoverRequest::new(" symptoms of Marfan syndrome ", DiscoverMode::Command)
+            .expect("request");
+
+        assert_eq!(request.query, "symptoms of Marfan syndrome");
+        assert_eq!(request.mode, DiscoverMode::Command);
+        assert_eq!(request.ols_query, "Marfan syndrome");
+        assert!(request.medlineplus_enabled);
+        assert!(!request.no_cache);
+    }
+
+    #[test]
+    fn discover_request_records_alias_fallback_no_cache_intent() {
+        let request =
+            DiscoverRequest::new("Gleevec", DiscoverMode::AliasFallback).expect("request");
+
+        assert_eq!(request.query, "Gleevec");
+        assert_eq!(request.mode, DiscoverMode::AliasFallback);
+        assert_eq!(request.ols_query, "Gleevec");
+        assert!(!request.medlineplus_enabled);
+        assert!(request.no_cache);
+    }
 
     #[test]
     fn ols_doc_identifier_falls_back_to_short_form_when_obo_id_is_empty() {

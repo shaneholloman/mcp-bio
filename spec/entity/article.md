@@ -4,6 +4,14 @@ Article workflows mix typed biomedical anchors with broader keyword discovery.
 These canaries keep the blocking lane honest about search structure, annotation
 paths, and fulltext fallback behavior without depending on optional API keys.
 
+## Article Request Planning Happens Before Federated Search
+
+Article search normalizes CLI flags into a request-command seam before any
+federated article backend executes. The request records filters, source, sort,
+ranking, exact-keyword lookup intent, and the pre-execution `BackendPlan`, so
+tests can prove routing decisions without depending on live PubMed, Europe PMC,
+PubTator, LitSense2, or Semantic Scholar responses.
+
 ## Gene Search
 
 Gene-linked article search should still read like a literature intake surface:

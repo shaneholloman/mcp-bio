@@ -7,6 +7,93 @@ use super::resolution::{rerank_disease_search_hits, resolver_queries};
 
 pub(super) const MAX_DISEASE_SEARCH_LIMIT: usize = 50;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct DiseaseSearchRequest {
+    pub(crate) query: String,
+    pub(crate) source: Option<String>,
+    pub(crate) inheritance: Option<String>,
+    pub(crate) phenotype: Option<String>,
+    pub(crate) onset: Option<String>,
+    pub(crate) limit: usize,
+    pub(crate) offset: usize,
+    pub(crate) fetch_size: usize,
+    pub(crate) resolver_queries: Vec<String>,
+    pub(crate) prefer_doid: bool,
+}
+
+impl DiseaseSearchRequest {
+    fn new(
+        filters: &DiseaseSearchFilters,
+        limit: usize,
+        offset: usize,
+    ) -> Result<Self, BioMcpError> {
+        if limit == 0 || limit > MAX_DISEASE_SEARCH_LIMIT {
+            return Err(BioMcpError::InvalidArgument(format!(
+                "--limit must be between 1 and {MAX_DISEASE_SEARCH_LIMIT}"
+            )));
+        }
+
+        let query = filters
+            .query
+            .as_deref()
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .ok_or_else(|| {
+                BioMcpError::InvalidArgument(
+                    "Query is required. Example: biomcp search disease -q melanoma".into(),
+                )
+            })?
+            .to_string();
+        let source = filters
+            .source
+            .as_deref()
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .map(str::to_string);
+        let inheritance = filters
+            .inheritance
+            .as_deref()
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .map(str::to_string);
+        let phenotype = filters
+            .phenotype
+            .as_deref()
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .map(str::to_string);
+        let onset = filters
+            .onset
+            .as_deref()
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .map(str::to_string);
+        let needed = limit.saturating_add(offset).max(limit);
+        let fetch_size = if needed >= 50 {
+            needed
+        } else {
+            (needed.saturating_mul(5)).clamp(needed, 50)
+        };
+        let resolver_queries = resolver_queries(&query);
+        let prefer_doid = source
+            .as_deref()
+            .is_some_and(|s| s.eq_ignore_ascii_case("doid"));
+
+        Ok(Self {
+            query,
+            source,
+            inheritance,
+            phenotype,
+            onset,
+            limit,
+            offset,
+            fetch_size,
+            resolver_queries,
+            prefer_doid,
+        })
+    }
+}
+
 fn inheritance_matches(hit: &crate::sources::mydisease::MyDiseaseHit, expected: &str) -> bool {
     let needle = expected.trim().to_ascii_lowercase();
     if needle.is_empty() {
@@ -79,64 +166,21 @@ pub async fn search_page(
     limit: usize,
     offset: usize,
 ) -> Result<SearchPage<DiseaseSearchResult>, BioMcpError> {
-    if limit == 0 || limit > MAX_DISEASE_SEARCH_LIMIT {
-        return Err(BioMcpError::InvalidArgument(format!(
-            "--limit must be between 1 and {MAX_DISEASE_SEARCH_LIMIT}"
-        )));
-    }
-
-    let query = filters
-        .query
-        .as_deref()
-        .map(str::trim)
-        .filter(|v| !v.is_empty())
-        .ok_or_else(|| {
-            BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp search disease -q melanoma".into(),
-            )
-        })?;
-
-    let inheritance = filters
-        .inheritance
-        .as_deref()
-        .map(str::trim)
-        .filter(|v| !v.is_empty());
-    let phenotype = filters
-        .phenotype
-        .as_deref()
-        .map(str::trim)
-        .filter(|v| !v.is_empty());
-    let onset = filters
-        .onset
-        .as_deref()
-        .map(str::trim)
-        .filter(|v| !v.is_empty());
+    let request = DiseaseSearchRequest::new(filters, limit, offset)?;
 
     let client = MyDiseaseClient::new()?;
-    let needed = limit.saturating_add(offset).max(limit);
-    let fetch_size = if needed >= 50 {
-        needed
-    } else {
-        (needed.saturating_mul(5)).clamp(needed, 50)
-    };
-    let prefer_doid = filters
-        .source
-        .as_deref()
-        .map(str::trim)
-        .is_some_and(|s| s.eq_ignore_ascii_case("doid"));
-
     let mut merged_total = 0usize;
     let mut query_hits = Vec::new();
-    for (query_idx, resolved_query) in resolver_queries(query).into_iter().enumerate() {
+    for (query_idx, resolved_query) in request.resolver_queries.iter().enumerate() {
         let resp = client
             .query(
-                &resolved_query,
-                fetch_size,
+                resolved_query,
+                request.fetch_size,
                 0,
-                filters.source.as_deref(),
-                inheritance,
-                phenotype,
-                onset,
+                request.source.as_deref(),
+                request.inheritance.as_deref(),
+                request.phenotype.as_deref(),
+                request.onset.as_deref(),
             )
             .await?;
         merged_total = merged_total.max(resp.total);
@@ -144,23 +188,34 @@ pub async fn search_page(
             .hits
             .into_iter()
             .filter(|hit| {
-                inheritance.is_none_or(|value| inheritance_matches(hit, value))
-                    && phenotype.is_none_or(|value| phenotype_matches(hit, value))
-                    && onset.is_none_or(|value| onset_matches(hit, value))
+                request
+                    .inheritance
+                    .as_deref()
+                    .is_none_or(|value| inheritance_matches(hit, value))
+                    && request
+                        .phenotype
+                        .as_deref()
+                        .is_none_or(|value| phenotype_matches(hit, value))
+                    && request
+                        .onset
+                        .as_deref()
+                        .is_none_or(|value| onset_matches(hit, value))
             })
             .collect::<Vec<_>>();
         query_hits.push((query_idx, hits));
     }
 
-    let ranked_hits = rerank_disease_search_hits(query, query_hits);
+    let ranked_hits = rerank_disease_search_hits(&request.query, query_hits);
     let total = Some(merged_total.max(ranked_hits.len()));
     let results = ranked_hits
         .into_iter()
-        .skip(offset)
-        .take(limit)
+        .skip(request.offset)
+        .take(request.limit)
         .map(|hit| {
             let mut row = transform::disease::from_mydisease_search_hit(&hit);
-            if prefer_doid && let Some(doid) = transform::disease::doid_from_mydisease_hit(&hit) {
+            if request.prefer_doid
+                && let Some(doid) = transform::disease::doid_from_mydisease_hit(&hit)
+            {
                 row.id = doid;
             }
             row

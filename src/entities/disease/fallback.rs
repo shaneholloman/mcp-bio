@@ -10,6 +10,59 @@ use super::resolution::{
 use super::search::MAX_DISEASE_SEARCH_LIMIT;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct DiseaseFallbackRequest {
+    pub(crate) query: String,
+    pub(crate) limit: usize,
+    pub(crate) offset: usize,
+    pub(crate) resolver_queries: Vec<String>,
+    pub(crate) skip_reason: Option<String>,
+    pub(crate) discover_mode: crate::entities::discover::DiscoverMode,
+    pub(crate) prefer_doid: bool,
+}
+
+impl DiseaseFallbackRequest {
+    fn new(
+        filters: &DiseaseSearchFilters,
+        limit: usize,
+        offset: usize,
+    ) -> Result<Self, BioMcpError> {
+        if limit == 0 || limit > MAX_DISEASE_SEARCH_LIMIT {
+            return Err(BioMcpError::InvalidArgument(format!(
+                "--limit must be between 1 and {MAX_DISEASE_SEARCH_LIMIT}"
+            )));
+        }
+
+        let query = filters
+            .query
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| {
+                BioMcpError::InvalidArgument(
+                    "Query is required. Example: biomcp search disease -q melanoma".into(),
+                )
+            })?
+            .to_string();
+        let source = filters.source.as_deref().map(str::trim);
+        let skip_reason = source
+            .is_some_and(|source| source.eq_ignore_ascii_case("mesh"))
+            .then(|| "source=mesh".to_string());
+        let prefer_doid = source.is_some_and(|source| source.eq_ignore_ascii_case("doid"));
+        let resolver_queries = resolver_queries(&query);
+
+        Ok(Self {
+            query,
+            limit,
+            offset,
+            resolver_queries,
+            skip_reason,
+            discover_mode: crate::entities::discover::DiscoverMode::AliasFallback,
+            prefer_doid,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct RankedDiseaseFallbackCandidate {
     label: String,
     synonyms: Vec<String>,
@@ -377,64 +430,45 @@ pub(crate) async fn fallback_search_page(
     limit: usize,
     offset: usize,
 ) -> Result<Option<SearchPage<DiseaseSearchResult>>, BioMcpError> {
-    if limit == 0 || limit > MAX_DISEASE_SEARCH_LIMIT {
-        return Err(BioMcpError::InvalidArgument(format!(
-            "--limit must be between 1 and {MAX_DISEASE_SEARCH_LIMIT}"
-        )));
-    }
+    let request = DiseaseFallbackRequest::new(filters, limit, offset)?;
 
-    let query = filters
-        .query
-        .as_deref()
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .ok_or_else(|| {
-            BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp search disease -q melanoma".into(),
-            )
-        })?;
-
-    if filters
-        .source
-        .as_deref()
-        .map(str::trim)
-        .is_some_and(|source| source.eq_ignore_ascii_case("mesh"))
-    {
+    if request.skip_reason.is_some() {
         return Ok(None);
     }
 
     let mut concepts = Vec::new();
-    for resolved_query in resolver_queries(query) {
-        let discover = match crate::entities::discover::resolve_query(
-            &resolved_query,
-            crate::entities::discover::DiscoverMode::AliasFallback,
-        )
-        .await
-        {
-            Ok(result) => result,
-            Err(err) => {
-                warn!("Disease search discover fallback unavailable for {resolved_query}: {err}");
-                continue;
-            }
-        };
+    for resolved_query in &request.resolver_queries {
+        let discover =
+            match crate::entities::discover::resolve_query(resolved_query, request.discover_mode)
+                .await
+            {
+                Ok(result) => result,
+                Err(err) => {
+                    warn!(
+                        "Disease search discover fallback unavailable for {resolved_query}: {err}"
+                    );
+                    continue;
+                }
+            };
         concepts.extend(discover.concepts);
     }
 
-    let candidates = rank_disease_fallback_candidates(query, &concepts);
+    let candidates = rank_disease_fallback_candidates(&request.query, &concepts);
     if candidates.is_empty() {
         return Ok(None);
     }
 
-    let prefer_doid = filters
-        .source
-        .as_deref()
-        .map(str::trim)
-        .is_some_and(|source| source.eq_ignore_ascii_case("doid"));
     let client = MyDiseaseClient::new()?;
-    collect_fallback_search_page(query, limit, offset, candidates, |source_id| {
-        let client = client.clone();
-        async move { resolve_fallback_row(&client, prefer_doid, &source_id).await }
-    })
+    collect_fallback_search_page(
+        &request.query,
+        request.limit,
+        request.offset,
+        candidates,
+        |source_id| {
+            let client = client.clone();
+            async move { resolve_fallback_row(&client, request.prefer_doid, &source_id).await }
+        },
+    )
     .await
 }
 
