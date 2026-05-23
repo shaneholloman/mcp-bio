@@ -586,6 +586,328 @@ def test_ticket_374_quarantined_disease_discover_holes_have_deterministic_replac
         )
 
 
+def _assert_plan_contract(
+    path: str,
+    struct_name: str,
+    builder_name: str,
+    executor_name: str,
+    fields: tuple[str, ...],
+    builder_fragments: tuple[str, ...],
+    consumption_fragments: tuple[str, ...],
+    context: str,
+) -> None:
+    plan_struct = _rust_struct_block(path, struct_name)
+    plan_builder = _rust_function_block(path, builder_name)
+    executor = _rust_function_block(path, executor_name)
+
+    _assert_struct_fields(plan_struct, fields, struct_name)
+    _assert_contains_all(plan_builder, builder_fragments, f"{context} builder")
+
+    send_markers = (".send()", "send_json(", "get_json(")
+    marker = next((candidate for candidate in send_markers if candidate in executor), None)
+    assert marker is not None, f"{context} executor must still send through the source client"
+    before_send = executor.split(marker, 1)[0]
+    _assert_contains_all(
+        before_send,
+        (builder_name, *consumption_fragments),
+        f"{context} executor consumption",
+    )
+
+
+def _assert_any_test_block_contains(paths: tuple[str, ...], fragments: tuple[str, ...], context: str) -> None:
+    matching_blocks = [
+        block
+        for path in paths
+        for block in _rust_test_blocks(path)
+        if _contains_all(block, fragments)
+    ]
+    assert matching_blocks, (
+        f"{context} needs an executable deterministic Rust test block containing fixture/request-plan "
+        f"markers {fragments}"
+    )
+
+
+def test_ticket_376_article_source_request_plans_are_source_local_and_consumed() -> None:
+    failures: list[str] = []
+
+    def check(label: str, assertion) -> None:
+        try:
+            assertion()
+        except AssertionError as exc:
+            failures.append(f"{label}: {exc}")
+
+    common_fields = ("method", "path", "query_params", "cache_mode", "status_expectation")
+    json_fields = (*common_fields, "content_type_expectation")
+
+    article_contracts = (
+        (
+            "src/sources/pubmed.rs",
+            "PubMedESearchRequestPlan",
+            "esearch_request_plan",
+            "esearch",
+            (*json_fields, "auth_mode"),
+            ("GET", "/esearch.fcgi", "db", "pubmed", "retmode", "json", "term", "retstart", "retmax"),
+            ("plan.path", "plan.query_params"),
+            "PubMed ESearch request plan",
+        ),
+        (
+            "src/sources/pubmed.rs",
+            "PubMedESummaryRequestPlan",
+            "esummary_request_plan",
+            "esummary",
+            (*json_fields, "auth_mode"),
+            ("GET", "/esummary.fcgi", "db", "pubmed", "retmode", "json", "id"),
+            ("plan.path", "plan.query_params"),
+            "PubMed ESummary request plan",
+        ),
+        (
+            "src/sources/europepmc.rs",
+            "EuropePmcSearchRequestPlan",
+            "search_query_request_plan",
+            "search_query_with_sort",
+            json_fields,
+            ("GET", "/search", "query", "format", "json", "page", "pageSize"),
+            ("plan.path", "plan.query_params"),
+            "Europe PMC search request plan",
+        ),
+        (
+            "src/sources/pubtator.rs",
+            "PubTatorSearchRequestPlan",
+            "search_request_plan",
+            "search",
+            (*json_fields, "auth_mode"),
+            ("GET", "/search/", "text", "page", "size"),
+            ("plan.path", "plan.query_params"),
+            "PubTator search request plan",
+        ),
+        (
+            "src/sources/pubtator.rs",
+            "PubTatorExportRequestPlan",
+            "export_biocjson_request_plan",
+            "export_biocjson",
+            (*json_fields, "auth_mode"),
+            ("GET", "/publications/export/biocjson", "pmids"),
+            ("plan.path", "plan.query_params"),
+            "PubTator export request plan",
+        ),
+        (
+            "src/sources/pubtator.rs",
+            "PubTatorAutocompleteRequestPlan",
+            "entity_autocomplete_request_plan",
+            "entity_autocomplete",
+            (*json_fields, "auth_mode"),
+            ("GET", "/entity/autocomplete/", "query"),
+            ("plan.path", "plan.query_params"),
+            "PubTator autocomplete request plan",
+        ),
+        (
+            "src/sources/litsense2.rs",
+            "LitSense2SearchRequestPlan",
+            "search_request_plan",
+            "search",
+            json_fields,
+            ("GET", "/sentences/", "/passages/", "query", "rerank", "true"),
+            ("plan.path", "plan.query_params"),
+            "LitSense2 search request plan",
+        ),
+        (
+            "src/sources/semantic_scholar.rs",
+            "SemanticScholarPaperSearchRequestPlan",
+            "paper_search_request_plan",
+            "paper_search",
+            (*json_fields, "auth_mode"),
+            ("GET", "graph/v1/paper/search", "query", "fields", "limit"),
+            ("plan.path", "plan.query_params", "plan.auth_mode"),
+            "Semantic Scholar paper search request plan",
+        ),
+    )
+
+    for path, struct_name, builder_name, executor_name, fields, builder_fragments, consumption_fragments, context in article_contracts:
+        check(
+            context,
+            lambda path=path, struct_name=struct_name, builder_name=builder_name, executor_name=executor_name, fields=fields, builder_fragments=builder_fragments, consumption_fragments=consumption_fragments, context=context: _assert_plan_contract(
+                path,
+                struct_name,
+                builder_name,
+                executor_name,
+                fields,
+                builder_fragments,
+                consumption_fragments,
+                context,
+            ),
+        )
+
+    assert not failures, "ticket 376 article request-plan contract failures:\n" + "\n".join(failures)
+
+
+def test_ticket_376_article_source_fixture_contracts_replace_routine_live_canaries() -> None:
+    failures: list[str] = []
+
+    def check(label: str, assertion) -> None:
+        try:
+            assertion()
+        except AssertionError as exc:
+            failures.append(f"{label}: {exc}")
+
+    article_paths = (
+        "src/sources/pubmed.rs",
+        "src/sources/europepmc.rs",
+        "src/sources/pubtator.rs",
+        "src/sources/litsense2.rs",
+        "src/sources/semantic_scholar.rs",
+        "src/entities/article/backends.rs",
+    )
+    for label, fragments in (
+        ("PubMed article source fixture", ("PubMedESearchRequestPlan", "PubMedESummaryRequestPlan", "BRAF")),
+        ("Europe PMC article source fixture", ("EuropePmcSearchRequestPlan", "alternative microexon", "pageSize")),
+        ("PubTator article source fixture", ("PubTatorSearchRequestPlan", "PubTatorExportRequestPlan", "annotations")),
+        ("LitSense2 article source fixture", ("LitSense2SearchRequestPlan", "rerank", "PubMedESummaryRequestPlan")),
+        (
+            "Semantic Scholar keyless/auth degradation fixture",
+            ("SemanticScholarPaperSearchRequestPlan", "auth_mode", "keyless", "unavailable"),
+        ),
+    ):
+        check(label, lambda fragments=fragments, label=label: _assert_any_test_block_contains(article_paths, fragments, label))
+
+    assert not failures, "ticket 376 article deterministic replacement failures:\n" + "\n".join(failures)
+
+
+def test_ticket_376_variant_source_request_plans_are_source_local_and_consumed() -> None:
+    failures: list[str] = []
+
+    def check(label: str, assertion) -> None:
+        try:
+            assertion()
+        except AssertionError as exc:
+            failures.append(f"{label}: {exc}")
+
+    common_fields = ("method", "path", "query_params", "cache_mode", "status_expectation")
+    json_fields = (*common_fields, "content_type_expectation")
+    variant_contracts = (
+        (
+            "src/sources/myvariant.rs",
+            "MyVariantQueryRequestPlan",
+            "query_request_plan",
+            "query_with_fields",
+            json_fields,
+            ("GET", "/query", "q", "size", "from", "fields"),
+            ("plan.path", "plan.query_params"),
+            "MyVariant query request plan",
+        ),
+        (
+            "src/sources/myvariant.rs",
+            "MyVariantSearchRequestPlan",
+            "search_request_plan",
+            "search",
+            json_fields,
+            ("GET", "/query", "dbnsfp.genename", "size", "from", "fields", "MYVARIANT_FIELDS_SEARCH"),
+            ("plan.path", "plan.query_params"),
+            "MyVariant search request plan",
+        ),
+        (
+            "src/sources/myvariant.rs",
+            "MyVariantGetRequestPlan",
+            "get_request_plan",
+            "get",
+            json_fields,
+            ("GET", "/variant/", "fields", "MYVARIANT_FIELDS_GET", "NotFound"),
+            ("plan.path", "plan.query_params"),
+            "MyVariant get request plan",
+        ),
+        (
+            "src/sources/mutalyzer.rs",
+            "MutalyzerNormalizeRequestPlan",
+            "normalize_request_plan",
+            "normalize",
+            json_fields,
+            ("GET", "/normalize/", "description", "invalid_input", "not_found", "service_error"),
+            ("plan.path",),
+            "Mutalyzer normalization request plan",
+        ),
+        (
+            "src/sources/variantvalidator.rs",
+            "VariantValidatorNormalizeRequestPlan",
+            "normalize_request_plan",
+            "normalize",
+            json_fields,
+            ("GET", "/VariantValidator/variantvalidator/GRCh38/", "content-type", "application/json"),
+            ("plan.path", "plan.query_params"),
+            "VariantValidator normalization request plan",
+        ),
+    )
+
+    for path, struct_name, builder_name, executor_name, fields, builder_fragments, consumption_fragments, context in variant_contracts:
+        check(
+            context,
+            lambda path=path, struct_name=struct_name, builder_name=builder_name, executor_name=executor_name, fields=fields, builder_fragments=builder_fragments, consumption_fragments=consumption_fragments, context=context: _assert_plan_contract(
+                path,
+                struct_name,
+                builder_name,
+                executor_name,
+                fields,
+                builder_fragments,
+                consumption_fragments,
+                context,
+            ),
+        )
+
+    assert not failures, "ticket 376 variant request-plan contract failures:\n" + "\n".join(failures)
+
+
+def test_ticket_376_variant_fixture_contracts_replace_routine_live_canaries() -> None:
+    failures: list[str] = []
+
+    def check(label: str, assertion) -> None:
+        try:
+            assertion()
+        except AssertionError as exc:
+            failures.append(f"{label}: {exc}")
+
+    variant_paths = (
+        "src/sources/myvariant.rs",
+        "src/sources/mutalyzer.rs",
+        "src/sources/variantvalidator.rs",
+        "src/entities/variant/search/mod.rs",
+        "src/entities/variant/normalization.rs",
+    )
+    for label, fragments in (
+        ("MyVariant search fixture", ("MyVariantSearchRequestPlan", "BRAF", "p.Val600Glu")),
+        ("MyVariant get fixture", ("MyVariantGetRequestPlan", "rs113488022", "NotFound")),
+        ("MyVariant ID normalization fixture", ("MyVariantGetRequestPlan", "BRAF V600E", "rs113488022")),
+        ("Mutalyzer normalization fixture", ("MutalyzerNormalizeRequestPlan", "NM_000248.3:c.135del", "invalid_input")),
+        (
+            "VariantValidator normalization fixture",
+            ("VariantValidatorNormalizeRequestPlan", "TranscriptVersionWarning", "NC_000003.12:g.69937923del"),
+        ),
+    ):
+        check(label, lambda fragments=fragments, label=label: _assert_any_test_block_contains(variant_paths, fragments, label))
+
+    assert not failures, "ticket 376 variant deterministic replacement failures:\n" + "\n".join(failures)
+
+
+def test_ticket_376_article_variant_specs_document_deterministic_or_live_smoke_coverage() -> None:
+    article_intro = _read_repo("spec/entity/article.md")
+    variant_intro = _read_repo("spec/entity/variant.md")
+    for path, section in (
+        ("spec/entity/article.md", article_intro),
+        ("spec/entity/variant.md", variant_intro),
+    ):
+        lower = section.lower()
+        assert "ticket 376" in lower, f"{path} must document the ticket-376 routine coverage conversion"
+        assert "request-plan" in lower or "fixture-backed" in lower, (
+            f"{path} must name deterministic request-plan or fixture-backed replacement coverage"
+        )
+        assert "release/live-smoke" in lower, (
+            f"{path} must classify irreducible public-upstream checks as release/live-smoke-only"
+        )
+
+    for heading in ("Full-Text HTML Fallback", "PDF Fallback Is Opt-In"):
+        section = _markdown_heading_body("spec/entity/article.md", 2, heading)
+        assert "setup-article-fulltext-source-fixture.sh" in section, (
+            f"spec/entity/article.md::{heading} must preserve the existing fixture-backed fulltext pattern"
+        )
+
+
 def test_protein_complexes_spec_lane_leaves_the_parallel_xdist_pool() -> None:
     spec_target = _make_target_block("spec")
     spec_pr_target = _make_target_block("spec-pr")
