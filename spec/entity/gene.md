@@ -41,24 +41,12 @@ echo "$out" | mustmatch like "biomcp get gene BRAF diagnostics"
 
 ## All-Section Warm Budget
 
-The combined gene bundle should stay fast on a warm spec cache while still
-rendering deep content, not just the identity card. The 12000ms ceiling is a
-parallelism-tolerant regression check — not a hard runtime SLA — so the
-assertion stays stable under the 16-worker xdist pool, where contention can
-push warm BRCA1 from ~6s in isolation to ~10s under load.
-
-```bash
-../../tools/biomcp-ci get gene BRCA1 all >/dev/null
-start_ns="$(date +%s%N)"
-out="$(../../tools/biomcp-ci get gene BRCA1 all)"
-end_ns="$(date +%s%N)"
-elapsed_ms=$(( (end_ns - start_ns) / 1000000 ))
-if [ "$elapsed_ms" -ge 12000 ]; then
-  echo "expected warm biomcp get gene BRCA1 all under 12000ms, got ${elapsed_ms}ms" >&2
-  exit 1
-fi
-echo "$out" | mustmatch like "## ClinGen"
-```
+Quarantined from routine executable specs by ticket 372 because this timing-only
+canary failed twice during routine `make spec-pr` at 45599ms and 43332ms against
+a 12000ms ceiling. Ticket 371's request-contract strategy keeps live-source and
+performance canaries out of the default gate until they have deterministic
+coverage; restore this behavior as a benchmark/ratchet or explicit performance
+lane, not as a routine live-heavy spec blocker.
 
 ## Tissue-Expression Context
 

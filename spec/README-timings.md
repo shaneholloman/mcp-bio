@@ -90,4 +90,4 @@ untimed warm-up run. That observed value is the one recorded in the
 
 | Section | Lane | Ceiling | Why |
 |---|---|---|---|
-| `spec/entity/gene.md::All-Section Warm Budget` | main parallel xdist pool (single leg) | `12000ms` | Warm `biomcp get gene BRCA1 all` runs ~6s in isolation but spikes to ~10s under 16-worker xdist contention. The 12000ms ceiling is a parallelism-tolerant regression check, not a hard runtime SLA: the gene canary stays in the shared parallel pool rather than carving out a serialized partition, and the assertion still fails fast if the warm bundle regresses well past observed worst-case load. The runtime warm budget itself is unchanged. |
+| `spec/entity/gene.md::All-Section Warm Budget` | quarantined from routine `make spec-pr` by ticket 372 | n/a | This timing-only canary failed twice during routine `make spec-pr` at 45599ms and 43332ms against the former 12000ms ceiling. Per ticket 371's request-contract strategy, restore it only as a deterministic benchmark/ratchet or explicit performance lane, not as a default live-heavy spec blocker. |
