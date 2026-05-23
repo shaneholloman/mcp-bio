@@ -12,6 +12,24 @@ ranking, exact-keyword lookup intent, and the pre-execution `BackendPlan`, so
 tests can prove routing decisions without depending on live PubMed, Europe PMC,
 PubTator, LitSense2, or Semantic Scholar responses.
 
+## Deterministic Source Contracts
+
+Ticket 376 moves routine article-source proof from public upstream canaries to
+source-local request-plan and fixture-backed contracts. Any irreducible public
+availability check belongs in an explicit release/live-smoke lane; routine specs
+must instead prove PubMed, Europe PMC, PubTator, LitSense2, and Semantic Scholar
+request shape, status mapping, and redacted auth behavior locally.
+
+```bash
+cargo test --lib ticket_376_article_source_contracts -- --list \
+  | mustmatch like 'ticket_376_article_source_contracts'
+```
+
+```bash
+cargo test --lib ticket_376_article_source_status_contracts -- --list \
+  | mustmatch like 'ticket_376_article_source_status_contracts'
+```
+
 ## Gene Search
 
 Gene-linked article search should still read like a literature intake surface:

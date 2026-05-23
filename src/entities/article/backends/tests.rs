@@ -1,6 +1,7 @@
 #[allow(unused_imports)]
 use super::super::test_support::*;
 use super::*;
+use crate::sources::semantic_scholar::SemanticScholarAuthMode;
 #[allow(unused_imports)]
 use wiremock::matchers::{body_string_contains, header, method, path, query_param};
 #[allow(unused_imports)]
@@ -424,6 +425,53 @@ async fn semantic_scholar_candidates_keep_unknown_retraction_rows() {
     assert_eq!(rows.rows.len(), 1);
     assert_eq!(rows.rows[0].source, ArticleSource::SemanticScholar);
     assert_eq!(rows.rows[0].is_retracted, None);
+}
+
+#[tokio::test]
+async fn ticket_376_article_source_status_contracts_semantic_scholar_unavailable_status_without_key()
+ {
+    let _guard = lock_env().await;
+    let server = MockServer::start().await;
+    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&server.uri()));
+    let _s2_key = set_env_var("S2_API_KEY", None);
+
+    Mock::given(method("GET"))
+        .and(path("/graph/v1/paper/search"))
+        .and(query_param("query", "braf melanoma"))
+        .and(query_param("limit", "3"))
+        .respond_with(ResponseTemplate::new(429).set_body_string("shared-pool limit"))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let outcome = search_semantic_scholar_candidates(
+        &ArticleSearchFilters {
+            keyword: Some("braf melanoma".into()),
+            exclude_retracted: true,
+            ..empty_filters()
+        },
+        3,
+    )
+    .await
+    .expect("semantic scholar source failure should degrade into source status");
+
+    assert!(outcome.rows.is_empty());
+    assert_eq!(outcome.status.source, ArticleSource::SemanticScholar);
+    assert_eq!(
+        outcome.status.auth_mode,
+        Some(SemanticScholarAuthMode::SharedPool)
+    );
+    assert_eq!(
+        outcome.status.status,
+        Some(ArticleSourceAvailability::Unavailable)
+    );
+    assert!(
+        outcome
+            .status
+            .message
+            .as_deref()
+            .is_some_and(|message| message.contains("unavailable"))
+    );
 }
 
 #[test]

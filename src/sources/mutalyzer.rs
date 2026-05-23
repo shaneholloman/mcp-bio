@@ -9,6 +9,16 @@ const MUTALYZER_BASE: &str = "https://mutalyzer.nl/api";
 const MUTALYZER_API: &str = "mutalyzer";
 const MUTALYZER_BASE_ENV: &str = "BIOMCP_MUTALYZER_BASE_URL";
 
+#[allow(dead_code)]
+pub struct MutalyzerNormalizeRequestPlan {
+    pub method: &'static str,
+    pub path: String,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+}
+
 pub struct MutalyzerClient {
     client: reqwest_middleware::ClientWithMiddleware,
     base: Cow<'static, str>,
@@ -30,30 +40,56 @@ impl MutalyzerClient {
         })
     }
 
-    fn normalize_url(&self, description: &str) -> Result<reqwest::Url, BioMcpError> {
+    fn normalize_path(description: &str) -> Result<String, BioMcpError> {
         let mut url =
-            reqwest::Url::parse(self.base.as_ref().trim_end_matches('/')).map_err(|err| {
-                BioMcpError::Api {
-                    api: MUTALYZER_API.to_string(),
-                    message: err.to_string(),
-                }
+            reqwest::Url::parse("https://biomcp.local").map_err(|err| BioMcpError::Api {
+                api: MUTALYZER_API.to_string(),
+                message: err.to_string(),
             })?;
         url.path_segments_mut()
             .map_err(|_| BioMcpError::Api {
                 api: MUTALYZER_API.to_string(),
-                message: "invalid Mutalyzer base URL".to_string(),
+                message: "invalid Mutalyzer request path".to_string(),
             })?
-            .pop_if_empty()
             .push("normalize")
             .push(description);
-        Ok(url)
+        Ok(url.path().to_string())
+    }
+
+    fn endpoint_url(&self, path: &str) -> Result<reqwest::Url, BioMcpError> {
+        reqwest::Url::parse(&format!(
+            "{}/{}",
+            self.base.as_ref().trim_end_matches('/'),
+            path.trim_start_matches('/')
+        ))
+        .map_err(|err| BioMcpError::Api {
+            api: MUTALYZER_API.to_string(),
+            message: err.to_string(),
+        })
+    }
+
+    pub fn normalize_request_plan(
+        &self,
+        description: &str,
+    ) -> Result<MutalyzerNormalizeRequestPlan, BioMcpError> {
+        let path = Self::normalize_path(description)?;
+        debug_assert!(path.starts_with("/normalize/"));
+        Ok(MutalyzerNormalizeRequestPlan {
+            method: "GET",
+            path,
+            query_params: Vec::new(),
+            cache_mode: "default",
+            status_expectation: "invalid_input/not_found/service_error per HTTP and payload status",
+            content_type_expectation: "json",
+        })
     }
 
     pub async fn normalize(
         &self,
         description: &str,
     ) -> Result<VariantNormalizationServiceResult, BioMcpError> {
-        let url = self.normalize_url(description)?;
+        let plan = self.normalize_request_plan(description)?;
+        let url = self.endpoint_url(&plan.path)?;
         let resp = crate::sources::apply_cache_mode(self.client.get(url))
             .send()
             .await?;
@@ -214,6 +250,24 @@ mod tests {
     use wiremock::matchers::{any, method};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
+    #[test]
+    fn ticket_376_variant_normalization_contracts_mutalyzer_request_plan_maps_invalid_input() {
+        let client = MutalyzerClient::new_for_test("http://127.0.0.1".into()).unwrap();
+        let plan: MutalyzerNormalizeRequestPlan = client
+            .normalize_request_plan("NM_000248.3:c.135del")
+            .expect("MutalyzerNormalizeRequestPlan");
+
+        assert_eq!(plan.method, "GET");
+        assert_eq!(plan.path, "/normalize/NM_000248.3:c.135del");
+        let encoded = client
+            .normalize_request_plan("NM_004448.2:c.829G>T")
+            .expect("encoded plan");
+        assert_eq!(encoded.path, "/normalize/NM_004448.2:c.829G%3ET");
+        assert!(plan.status_expectation.contains("invalid_input"));
+        assert!(plan.status_expectation.contains("not_found"));
+        assert!(plan.status_expectation.contains("service_error"));
+    }
+
     #[tokio::test]
     async fn normalize_encodes_transcript_path_and_parses_success() {
         let server = MockServer::start().await;
@@ -228,14 +282,17 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = MutalyzerClient::new_for_test(server.uri())
+        let result = MutalyzerClient::new_for_test(format!("{}/api", server.uri()))
             .unwrap()
             .normalize("NM_004448.2:c.829G>T")
             .await
             .unwrap();
 
         let requests = server.received_requests().await.unwrap();
-        assert_eq!(requests[0].url.path(), "/normalize/NM_004448.2:c.829G%3ET");
+        assert_eq!(
+            requests[0].url.path(),
+            "/api/normalize/NM_004448.2:c.829G%3ET"
+        );
         assert_eq!(result.status, VariantNormalizationStatus::Success);
         assert_eq!(
             result.normalized_description.as_deref(),

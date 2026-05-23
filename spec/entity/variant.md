@@ -4,6 +4,25 @@ Variant workflows need to balance exact identity with search-time normalization.
 These canaries keep the stable column contracts, normalization rules, and
 opt-in clinical sections without depending on brittle row counts.
 
+## Deterministic Source Contracts
+
+Ticket 376 moves routine variant-source proof from live/cache-backed MyVariant
+and normalization-service canaries to source-local request-plan and
+fixture-backed contracts. Any irreducible public availability check belongs in
+an explicit release/live-smoke lane; routine specs must instead prove MyVariant
+search/get request shape, identifier normalization, and Mutalyzer/
+VariantValidator status mapping locally.
+
+```bash
+cargo test --lib ticket_376_variant_source_contracts -- --list \
+  | mustmatch like 'ticket_376_variant_source_contracts'
+```
+
+```bash
+cargo test --lib ticket_376_variant_normalization_contracts -- --list \
+  | mustmatch like 'ticket_376_variant_normalization_contracts'
+```
+
 ## Gene-Scoped Variant Search
 
 Gene-first search should still return the canonical variant identity columns and

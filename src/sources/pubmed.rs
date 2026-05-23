@@ -28,6 +28,28 @@ pub(crate) struct PubMedESearchParams {
     pub date_to: Option<String>,
 }
 
+#[allow(dead_code)]
+pub struct PubMedESearchRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+    pub auth_mode: &'static str,
+}
+
+#[allow(dead_code)]
+pub struct PubMedESummaryRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+    pub auth_mode: &'static str,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct PubMedESearchResponse {
     pub count: u64,
@@ -124,11 +146,24 @@ impl PubMedClient {
         )
     }
 
+    fn apply_planned_ncbi_auth(
+        &self,
+        req: reqwest_middleware::RequestBuilder,
+        auth_mode: &str,
+    ) -> reqwest_middleware::RequestBuilder {
+        match auth_mode {
+            "authenticated" => crate::sources::append_ncbi_api_key(req, self.api_key.as_deref()),
+            "keyless" => req,
+            _ => req,
+        }
+    }
+
     async fn get_json<T: serde::de::DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
+        cache_mode: &str,
     ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode_with_auth(req, self.api_key.is_some())
+        let resp = crate::sources::apply_cache_mode_with_auth(req, cache_mode == "auth")
             .send()
             .await?;
         let status = resp.status();
@@ -148,10 +183,10 @@ impl PubMedClient {
         })
     }
 
-    pub async fn esearch(
+    pub fn esearch_request_plan(
         &self,
         params: &PubMedESearchParams,
-    ) -> Result<PubMedESearchResponse, BioMcpError> {
+    ) -> Result<PubMedESearchRequestPlan, BioMcpError> {
         let term = params.term.trim();
         if term.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -169,19 +204,15 @@ impl PubMedClient {
             ));
         }
 
-        let url = self.endpoint("esearch.fcgi");
-        let retstart = params.retstart.to_string();
-        let retmax = params.retmax.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("db", "pubmed"),
-            ("retmode", "json"),
-            ("term", term),
-            ("retstart", retstart.as_str()),
-            ("retmax", retmax.as_str()),
-        ]);
-
+        let mut query_params = vec![
+            ("db", "pubmed".to_string()),
+            ("retmode", "json".to_string()),
+            ("term", term.to_string()),
+            ("retstart", params.retstart.to_string()),
+            ("retmax", params.retmax.to_string()),
+        ];
         if params.date_from.is_some() || params.date_to.is_some() {
-            req = req.query(&[("datetype", "pdat")]);
+            query_params.push(("datetype", "pdat".to_string()));
         }
         if let Some(date_from) = params
             .date_from
@@ -189,8 +220,7 @@ impl PubMedClient {
             .map(str::trim)
             .filter(|value| !value.is_empty())
         {
-            let mindate = format_pubmed_date(date_from);
-            req = req.query(&[("mindate", mindate.as_str())]);
+            query_params.push(("mindate", format_pubmed_date(date_from)));
         }
         if let Some(date_to) = params
             .date_to
@@ -198,12 +228,37 @@ impl PubMedClient {
             .map(str::trim)
             .filter(|value| !value.is_empty())
         {
-            let maxdate = format_pubmed_date(date_to);
-            req = req.query(&[("maxdate", maxdate.as_str())]);
+            query_params.push(("maxdate", format_pubmed_date(date_to)));
         }
 
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
-        let response: ESearchEnvelope = self.get_json(req).await?;
+        Ok(PubMedESearchRequestPlan {
+            method: "GET",
+            path: "/esearch.fcgi",
+            query_params,
+            cache_mode: if self.api_key.is_some() {
+                "auth"
+            } else {
+                "default"
+            },
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+            auth_mode: if self.api_key.is_some() {
+                "authenticated"
+            } else {
+                "keyless"
+            },
+        })
+    }
+
+    pub async fn esearch(
+        &self,
+        params: &PubMedESearchParams,
+    ) -> Result<PubMedESearchResponse, BioMcpError> {
+        let plan = self.esearch_request_plan(params)?;
+        let url = self.endpoint(plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
+        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
+        let response: ESearchEnvelope = self.get_json(req, plan.cache_mode).await?;
         let count = response
             .esearchresult
             .count
@@ -223,9 +278,12 @@ impl PubMedClient {
         })
     }
 
-    pub async fn esummary(&self, ids: &[String]) -> Result<Vec<ESummaryEntry>, BioMcpError> {
+    pub fn esummary_request_plan(
+        &self,
+        ids: &[String],
+    ) -> Result<Option<PubMedESummaryRequestPlan>, BioMcpError> {
         if ids.is_empty() {
-            return Ok(Vec::new());
+            return Ok(None);
         }
 
         let requested_ids = ids.iter().map(|id| id.trim()).collect::<Vec<_>>();
@@ -236,16 +294,40 @@ impl PubMedClient {
             )));
         }
 
+        Ok(Some(PubMedESummaryRequestPlan {
+            method: "GET",
+            path: "/esummary.fcgi",
+            query_params: vec![
+                ("db", "pubmed".to_string()),
+                ("retmode", "json".to_string()),
+                ("id", requested_ids.join(",")),
+            ],
+            cache_mode: if self.api_key.is_some() {
+                "auth"
+            } else {
+                "default"
+            },
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+            auth_mode: if self.api_key.is_some() {
+                "authenticated"
+            } else {
+                "keyless"
+            },
+        }))
+    }
+
+    pub async fn esummary(&self, ids: &[String]) -> Result<Vec<ESummaryEntry>, BioMcpError> {
+        let Some(plan) = self.esummary_request_plan(ids)? else {
+            return Ok(Vec::new());
+        };
+
+        let requested_ids = ids.iter().map(|id| id.trim()).collect::<Vec<_>>();
         let requested_set = requested_ids.iter().copied().collect::<HashSet<_>>();
-        let url = self.endpoint("esummary.fcgi");
-        let id_param = requested_ids.join(",");
-        let req = self.client.get(&url).query(&[
-            ("db", "pubmed"),
-            ("retmode", "json"),
-            ("id", id_param.as_str()),
-        ]);
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
-        let response: ESummaryEnvelope = self.get_json(req).await?;
+        let url = self.endpoint(plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
+        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
+        let response: ESummaryEnvelope = self.get_json(req, plan.cache_mode).await?;
 
         let uids = response
             .result
@@ -361,6 +443,52 @@ mod tests {
     use super::*;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn ticket_376_article_source_contracts_pubmed_request_plans_cover_braf() {
+        let client =
+            PubMedClient::new_for_test("http://127.0.0.1".into(), Some("super-secret-ncbi".into()))
+                .expect("client");
+
+        let esearch: PubMedESearchRequestPlan = client
+            .esearch_request_plan(&PubMedESearchParams {
+                term: " BRAF melanoma ".into(),
+                retstart: 0,
+                retmax: 20,
+                date_from: Some("2020-01-01".into()),
+                date_to: None,
+            })
+            .expect("PubMedESearchRequestPlan");
+        assert_eq!(esearch.method, "GET");
+        assert_eq!(esearch.path, "/esearch.fcgi");
+        assert!(
+            esearch
+                .query_params
+                .contains(&("term", "BRAF melanoma".to_string()))
+        );
+        assert!(esearch.query_params.contains(&("retmax", "20".to_string())));
+        assert_eq!(esearch.auth_mode, "authenticated");
+        assert!(
+            !esearch
+                .query_params
+                .iter()
+                .any(|(_, value)| value.contains("super-secret"))
+        );
+
+        let ids = vec!["123".to_string(), "456".to_string()];
+        let esummary: PubMedESummaryRequestPlan = client
+            .esummary_request_plan(&ids)
+            .expect("plan")
+            .expect("PubMedESummaryRequestPlan");
+        assert_eq!(esummary.method, "GET");
+        assert_eq!(esummary.path, "/esummary.fcgi");
+        assert!(
+            esummary
+                .query_params
+                .contains(&("id", "123,456".to_string()))
+        );
+        assert_eq!(esummary.content_type_expectation, "json");
+    }
 
     #[tokio::test]
     async fn esearch_sets_required_query_params() {

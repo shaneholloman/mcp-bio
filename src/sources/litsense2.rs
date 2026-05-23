@@ -11,6 +11,16 @@ const LITSENSE2_BASE: &str = "https://www.ncbi.nlm.nih.gov/research/litsense2-ap
 const LITSENSE2_API: &str = "litsense2";
 const LITSENSE2_BASE_ENV: &str = "BIOMCP_LITSENSE2_BASE";
 
+#[allow(dead_code)]
+pub struct LitSense2SearchRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+}
+
 #[derive(Clone)]
 pub struct LitSense2Client {
     client: ClientWithMiddleware,
@@ -78,11 +88,11 @@ impl LitSense2Client {
         })
     }
 
-    async fn search(
+    pub fn search_request_plan(
         &self,
         path: &str,
         query: &str,
-    ) -> Result<Vec<LitSense2SearchHit>, BioMcpError> {
+    ) -> Result<LitSense2SearchRequestPlan, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -94,12 +104,34 @@ impl LitSense2Client {
                 "LitSense2 query is too long".into(),
             ));
         }
+        let path = match path.trim_start_matches('/') {
+            "sentences/" => "/sentences/",
+            "passages/" => "/passages/",
+            _ => {
+                return Err(BioMcpError::InvalidArgument(
+                    "LitSense2 path must be /sentences/ or /passages/".into(),
+                ));
+            }
+        };
 
-        let url = self.endpoint_url(path)?;
-        let req = self
-            .client
-            .get(url)
-            .query(&[("query", query), ("rerank", "true")]);
+        Ok(LitSense2SearchRequestPlan {
+            method: "GET",
+            path,
+            query_params: vec![("query", query.to_string()), ("rerank", "true".to_string())],
+            cache_mode: "default",
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+        })
+    }
+
+    async fn search(
+        &self,
+        path: &str,
+        query: &str,
+    ) -> Result<Vec<LitSense2SearchHit>, BioMcpError> {
+        let plan = self.search_request_plan(path, query)?;
+        let url = self.endpoint_url(plan.path)?;
+        let req = self.client.get(url).query(&plan.query_params);
         self.send_json(req).await
     }
 
@@ -155,6 +187,45 @@ mod tests {
     use super::*;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn ticket_376_article_source_contracts_litsense2_request_plan_covers_hydration_path() {
+        let client = LitSense2Client::new_for_test("http://127.0.0.1".into()).expect("client");
+        let sentence: LitSense2SearchRequestPlan = client
+            .search_request_plan("sentences/", "BRAF")
+            .expect("LitSense2SearchRequestPlan");
+        assert_eq!(sentence.method, "GET");
+        assert_eq!(sentence.path, "/sentences/");
+        assert!(
+            sentence
+                .query_params
+                .contains(&("query", "BRAF".to_string()))
+        );
+        assert!(
+            sentence
+                .query_params
+                .contains(&("rerank", "true".to_string()))
+        );
+
+        let passage = client
+            .search_request_plan("passages/", "BRAF")
+            .expect("passage plan");
+        assert_eq!(passage.path, "/passages/");
+
+        let ids = vec!["22663011".to_string()];
+        let hydration: crate::sources::pubmed::PubMedESummaryRequestPlan =
+            crate::sources::pubmed::PubMedClient::new()
+                .expect("pubmed client")
+                .esummary_request_plan(&ids)
+                .expect("hydration plan")
+                .expect("PubMedESummaryRequestPlan");
+        assert_eq!(hydration.path, "/esummary.fcgi");
+        assert!(
+            hydration
+                .query_params
+                .contains(&("id", "22663011".to_string()))
+        );
+    }
 
     #[tokio::test]
     async fn sentence_search_sends_query_and_parses_results() {

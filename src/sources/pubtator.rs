@@ -9,6 +9,39 @@ const PUBTATOR_BASE: &str = "https://www.ncbi.nlm.nih.gov/research/pubtator3-api
 const PUBTATOR_API: &str = "pubtator3";
 const PUBTATOR_BASE_ENV: &str = "BIOMCP_PUBTATOR_BASE";
 
+#[allow(dead_code)]
+pub struct PubTatorSearchRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+    pub auth_mode: &'static str,
+}
+
+#[allow(dead_code)]
+pub struct PubTatorExportRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+    pub auth_mode: &'static str,
+}
+
+#[allow(dead_code)]
+pub struct PubTatorAutocompleteRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+    pub auth_mode: &'static str,
+}
+
 #[derive(Clone)]
 pub struct PubTatorClient {
     client: reqwest_middleware::ClientWithMiddleware,
@@ -55,11 +88,24 @@ impl PubTatorClient {
         )
     }
 
+    fn apply_planned_ncbi_auth(
+        &self,
+        req: reqwest_middleware::RequestBuilder,
+        auth_mode: &str,
+    ) -> reqwest_middleware::RequestBuilder {
+        match auth_mode {
+            "authenticated" => crate::sources::append_ncbi_api_key(req, self.api_key.as_deref()),
+            "keyless" => req,
+            _ => req,
+        }
+    }
+
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
+        cache_mode: &str,
     ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode_with_auth(req, self.api_key.is_some())
+        let resp = crate::sources::apply_cache_mode_with_auth(req, cache_mode == "auth")
             .send()
             .await?;
         let status = resp.status();
@@ -79,18 +125,38 @@ impl PubTatorClient {
         })
     }
 
-    pub async fn export_biocjson(&self, pmid: u32) -> Result<PubTatorExportResponse, BioMcpError> {
-        let url = self.endpoint("publications/export/biocjson");
-        let pmids = pmid.to_string();
-        let req = self.client.get(&url).query(&[("pmids", pmids.as_str())]);
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
-        self.get_json(req).await
+    pub fn export_biocjson_request_plan(&self, pmid: u32) -> PubTatorExportRequestPlan {
+        PubTatorExportRequestPlan {
+            method: "GET",
+            path: "/publications/export/biocjson",
+            query_params: vec![("pmids", pmid.to_string())],
+            cache_mode: if self.api_key.is_some() {
+                "auth"
+            } else {
+                "default"
+            },
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+            auth_mode: if self.api_key.is_some() {
+                "authenticated"
+            } else {
+                "keyless"
+            },
+        }
     }
 
-    pub async fn entity_autocomplete(
+    pub async fn export_biocjson(&self, pmid: u32) -> Result<PubTatorExportResponse, BioMcpError> {
+        let plan = self.export_biocjson_request_plan(pmid);
+        let url = self.endpoint(plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
+        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
+        self.get_json(req, plan.cache_mode).await
+    }
+
+    pub fn entity_autocomplete_request_plan(
         &self,
         query: &str,
-    ) -> Result<Vec<PubTatorAutocompleteResult>, BioMcpError> {
+    ) -> Result<PubTatorAutocompleteRequestPlan, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -103,19 +169,43 @@ impl PubTatorClient {
             ));
         }
 
-        let url = self.endpoint("entity/autocomplete/");
-        let req = self.client.get(&url).query(&[("query", query)]);
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
-        self.get_json(req).await
+        Ok(PubTatorAutocompleteRequestPlan {
+            method: "GET",
+            path: "/entity/autocomplete/",
+            query_params: vec![("query", query.to_string())],
+            cache_mode: if self.api_key.is_some() {
+                "auth"
+            } else {
+                "default"
+            },
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+            auth_mode: if self.api_key.is_some() {
+                "authenticated"
+            } else {
+                "keyless"
+            },
+        })
     }
 
-    pub async fn search(
+    pub async fn entity_autocomplete(
+        &self,
+        query: &str,
+    ) -> Result<Vec<PubTatorAutocompleteResult>, BioMcpError> {
+        let plan = self.entity_autocomplete_request_plan(query)?;
+        let url = self.endpoint(plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
+        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
+        self.get_json(req, plan.cache_mode).await
+    }
+
+    pub fn search_request_plan(
         &self,
         text: &str,
         page: usize,
         size: usize,
         sort: Option<&str>,
-    ) -> Result<PubTatorSearchResponse, BioMcpError> {
+    ) -> Result<PubTatorSearchRequestPlan, BioMcpError> {
         let text = text.trim();
         if text.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -138,19 +228,45 @@ impl PubTatorClient {
             ));
         }
 
-        let url = self.endpoint("search/");
-        let page = page.to_string();
-        let size = size.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("text", text),
-            ("page", page.as_str()),
-            ("size", size.as_str()),
-        ]);
+        let mut query_params = vec![
+            ("text", text.to_string()),
+            ("page", page.to_string()),
+            ("size", size.to_string()),
+        ];
         if let Some(sort) = sort.map(str::trim).filter(|value| !value.is_empty()) {
-            req = req.query(&[("sort", sort)]);
+            query_params.push(("sort", sort.to_string()));
         }
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
-        self.get_json(req).await
+        Ok(PubTatorSearchRequestPlan {
+            method: "GET",
+            path: "/search/",
+            query_params,
+            cache_mode: if self.api_key.is_some() {
+                "auth"
+            } else {
+                "default"
+            },
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+            auth_mode: if self.api_key.is_some() {
+                "authenticated"
+            } else {
+                "keyless"
+            },
+        })
+    }
+
+    pub async fn search(
+        &self,
+        text: &str,
+        page: usize,
+        size: usize,
+        sort: Option<&str>,
+    ) -> Result<PubTatorSearchResponse, BioMcpError> {
+        let plan = self.search_request_plan(text, page, size, sort)?;
+        let url = self.endpoint(plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
+        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
+        self.get_json(req, plan.cache_mode).await
     }
 }
 
@@ -263,6 +379,48 @@ mod tests {
     use super::*;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn ticket_376_article_source_contracts_pubtator_request_plans_cover_annotations() {
+        let client =
+            PubTatorClient::new_for_test("http://127.0.0.1".into(), Some("secret-ncbi-key".into()))
+                .expect("client");
+
+        let search: PubTatorSearchRequestPlan = client
+            .search_request_plan("BRAF annotations", 1, 10, Some("date"))
+            .expect("PubTatorSearchRequestPlan");
+        assert_eq!(search.path, "/search/");
+        assert!(
+            search
+                .query_params
+                .contains(&("text", "BRAF annotations".to_string()))
+        );
+        assert_eq!(search.auth_mode, "authenticated");
+
+        let export: PubTatorExportRequestPlan = client.export_biocjson_request_plan(12345);
+        assert_eq!(export.path, "/publications/export/biocjson");
+        assert!(
+            export
+                .query_params
+                .contains(&("pmids", "12345".to_string()))
+        );
+
+        let autocomplete: PubTatorAutocompleteRequestPlan = client
+            .entity_autocomplete_request_plan("BRAF")
+            .expect("PubTatorAutocompleteRequestPlan");
+        assert_eq!(autocomplete.path, "/entity/autocomplete/");
+        assert!(
+            autocomplete
+                .query_params
+                .contains(&("query", "BRAF".to_string()))
+        );
+        assert!(
+            !search
+                .query_params
+                .iter()
+                .any(|(_, value)| value.contains("secret-ncbi"))
+        );
+    }
 
     #[tokio::test]
     async fn export_biocjson_sets_pmids_query_param() {

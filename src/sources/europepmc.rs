@@ -18,6 +18,16 @@ pub enum EuropePmcSort {
     Relevance,
 }
 
+#[allow(dead_code)]
+pub struct EuropePmcSearchRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+}
+
 #[derive(Clone)]
 pub struct EuropePmcClient {
     client: reqwest_middleware::ClientWithMiddleware,
@@ -138,13 +148,13 @@ impl EuropePmcClient {
             .await
     }
 
-    pub async fn search_query_with_sort(
+    pub fn search_query_request_plan(
         &self,
         query: &str,
         page: usize,
         page_size: usize,
         sort: EuropePmcSort,
-    ) -> Result<EuropePmcSearchResponse, BioMcpError> {
+    ) -> Result<EuropePmcSearchRequestPlan, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -167,20 +177,37 @@ impl EuropePmcClient {
             ));
         }
 
-        let url = self.endpoint("search");
-        let page = page.to_string();
-        let page_size = page_size.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("query", query),
-            ("format", "json"),
-            ("page", page.as_str()),
-            ("pageSize", page_size.as_str()),
-        ]);
-        req = match sort {
-            EuropePmcSort::Date => req.query(&[("sort", "P_PDATE_D desc")]),
-            EuropePmcSort::Citations => req.query(&[("sort", "CITED desc")]),
-            EuropePmcSort::Relevance => req,
-        };
+        let mut query_params = vec![
+            ("query", query.to_string()),
+            ("format", "json".to_string()),
+            ("page", page.to_string()),
+            ("pageSize", page_size.to_string()),
+        ];
+        match sort {
+            EuropePmcSort::Date => query_params.push(("sort", "P_PDATE_D desc".to_string())),
+            EuropePmcSort::Citations => query_params.push(("sort", "CITED desc".to_string())),
+            EuropePmcSort::Relevance => {}
+        }
+        Ok(EuropePmcSearchRequestPlan {
+            method: "GET",
+            path: "/search",
+            query_params,
+            cache_mode: "default",
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+        })
+    }
+
+    pub async fn search_query_with_sort(
+        &self,
+        query: &str,
+        page: usize,
+        page_size: usize,
+        sort: EuropePmcSort,
+    ) -> Result<EuropePmcSearchResponse, BioMcpError> {
+        let plan = self.search_query_request_plan(query, page, page_size, sort)?;
+        let url = self.endpoint(plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
         self.get_json(req).await
     }
 
@@ -282,6 +309,28 @@ mod tests {
 
     async fn env_lock_async() -> tokio::sync::MutexGuard<'static, ()> {
         crate::test_support::env_lock().lock().await
+    }
+
+    #[test]
+    fn ticket_376_article_source_contracts_europepmc_request_plan_covers_keyword_shape() {
+        let client = EuropePmcClient::new_for_test("http://127.0.0.1".into()).unwrap();
+        let plan: EuropePmcSearchRequestPlan = client
+            .search_query_request_plan("alternative microexon", 2, 25, EuropePmcSort::Date)
+            .expect("EuropePmcSearchRequestPlan");
+
+        assert_eq!(plan.method, "GET");
+        assert_eq!(plan.path, "/search");
+        assert!(
+            plan.query_params
+                .contains(&("query", "alternative microexon".to_string()))
+        );
+        assert!(plan.query_params.contains(&("page", "2".to_string())));
+        assert!(plan.query_params.contains(&("pageSize", "25".to_string())));
+        assert!(
+            plan.query_params
+                .contains(&("sort", "P_PDATE_D desc".to_string()))
+        );
+        assert_eq!(plan.content_type_expectation, "json");
     }
 
     #[tokio::test]
