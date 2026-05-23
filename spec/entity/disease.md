@@ -19,11 +19,13 @@ echo "$out" | mustmatch like "| ID | Name | Synonyms |"
 
 ## Synonym Rescue
 
-Quarantined from routine executable specs by ticket 372 because ticket 371's
-request-contract strategy identified this live OLS4/MyDisease path as a recent
-unrelated March blocker. Restore this behavior as a fixture-backed
-request-contract or explicit release/live-smoke canary, not as a routine
-`make spec-pr` live-source dependency.
+Ticket 371 identified this live OLS4/MyDisease path as a request-contract risk;
+routine coverage for the Arnold/Chiari synonym rescue path is now restored
+through Rust fixture/request-plan tests. The fallback ranking is fixture-backed,
+OLS4 search construction is asserted by `OlsSearchRequestPlan`, and MyDisease
+MESH crosswalk construction is asserted by `MyDiseaseXrefLookupRequestPlan`. Any
+live OLS4/MyDisease upstream probe belongs in a release/live-smoke lane, not
+routine `make spec-pr`.
 
 ## Canonical Disease Card
 

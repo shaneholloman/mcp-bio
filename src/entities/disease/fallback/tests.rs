@@ -32,6 +32,68 @@ fn fallback_candidates_rank_specific_crosswalkable_disease_ahead_of_generic_rows
     );
 }
 
+#[tokio::test]
+async fn arnold_synonym_rescue_resolves_mesh_crosswalk_through_fixture_plan() {
+    let server = MockServer::start().await;
+    let mydisease_client =
+        crate::sources::mydisease::MyDiseaseClient::new_for_test(format!("{}/v1", server.uri()))
+            .expect("mydisease client");
+    let ols_client = crate::sources::ols4::OlsClient::new_for_test("http://127.0.0.1/ols4".into())
+        .expect("ols client");
+    let ols_plan: crate::sources::ols4::OlsSearchRequestPlan =
+        ols_client.search_request_plan("Arnold Chiari syndrome");
+    let xref_plan: crate::sources::mydisease::MyDiseaseXrefLookupRequestPlan = mydisease_client
+        .lookup_disease_by_xref_request_plan("MESH", "D001139", 5)
+        .expect("MESH xref request plan");
+
+    assert_eq!(ols_plan.path, Some("/api/search"));
+    assert_eq!(xref_plan.path, "/query");
+    assert!(xref_plan.query_params[0].1.contains("D001139"));
+
+    Mock::given(method("GET"))
+        .and(path("/v1/query"))
+        .and(query_param("q", xref_plan.query_params[0].1.clone()))
+        .and(query_param("size", "5"))
+        .and(query_param("from", "0"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "total": 1,
+            "hits": [{
+                "_id": "MONDO:0000115",
+                "disease_ontology": {
+                    "name": "Arnold-Chiari malformation",
+                    "synonyms": ["Arnold Chiari syndrome"]
+                }
+            }]
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let candidates = rank_disease_fallback_candidates(
+        "Arnold Chiari syndrome",
+        &[test_discover_disease_concept(
+            "Arnold-Chiari malformation",
+            Some("MESH:D001139"),
+            &["Arnold Chiari syndrome"],
+            &[("MESH", "D001139")],
+            crate::entities::discover::MatchTier::Contains,
+            crate::entities::discover::DiscoverConfidence::CanonicalId,
+        )],
+    );
+    let page =
+        collect_fallback_search_page("Arnold Chiari syndrome", 1, 0, candidates, |source_id| {
+            let client = mydisease_client.clone();
+            async move { resolve_fallback_row(&client, false, &source_id).await }
+        })
+        .await
+        .expect("fallback page should build")
+        .expect("synonym-rescue row should resolve through MESH crosswalk fixture");
+
+    assert_eq!(page.results[0].id, "MONDO:0000115");
+    assert_eq!(page.results[0].name, "Arnold-Chiari malformation");
+    assert_eq!(page.results[0].source_id.as_deref(), Some("MESH:D001139"));
+}
+
 #[test]
 fn fallback_candidate_source_ids_prefer_primary_then_ranked_xrefs() {
     let candidate = rank_disease_fallback_candidates(

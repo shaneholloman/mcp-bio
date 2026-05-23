@@ -12,6 +12,33 @@ const MYDISEASE_BASE_ENV: &str = "BIOMCP_MYDISEASE_BASE";
 const MYDISEASE_SEARCH_FIELDS: &str = "_id,mondo.name,mondo.synonym,disease_ontology.name,disease_ontology.synonyms,hpo.inheritance.hpo_id,hpo.inheritance.hpo_name,hpo.phenotype_related_to_disease.hpo_id,hpo.clinical_course.hpo_name";
 const MYDISEASE_GET_FIELDS: &str = "_id,mondo.name,mondo.definition,mondo.parents,mondo.synonym,mondo.xrefs,disease_ontology.name,disease_ontology.doid,disease_ontology.def,disease_ontology.parents,disease_ontology.synonyms,disease_ontology.xrefs,umls.mesh,umls.nci,umls.snomed,umls.icd10am,disgenet.genes_related_to_disease,hpo.phenotype_related_to_disease.hpo_id,hpo.phenotype_related_to_disease.evidence,hpo.phenotype_related_to_disease.hp_freq,hpo.inheritance.hpo_id";
 
+#[allow(dead_code)]
+pub struct MyDiseaseQueryRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+}
+
+#[allow(dead_code)]
+pub struct MyDiseaseXrefLookupRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+}
+
+#[allow(dead_code)]
+pub struct MyDiseaseGetRequestPlan {
+    pub method: &'static str,
+    pub path: String,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
 enum OneOrMany<T> {
@@ -83,7 +110,7 @@ impl MyDiseaseClient {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn query(
+    pub fn query_request_plan(
         &self,
         q: &str,
         size: usize,
@@ -92,7 +119,7 @@ impl MyDiseaseClient {
         inheritance: Option<&str>,
         phenotype: Option<&str>,
         onset: Option<&str>,
-    ) -> Result<MyDiseaseQueryResponse, BioMcpError> {
+    ) -> Result<MyDiseaseQueryRequestPlan, BioMcpError> {
         let q = q.trim();
         if q.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -104,7 +131,6 @@ impl MyDiseaseClient {
         }
         crate::sources::validate_biothings_result_window("MyDisease search", size, offset)?;
 
-        let url = self.endpoint("query");
         let size = size.to_string();
         let from = offset.to_string();
         let escaped = crate::utils::query::escape_lucene_value(q);
@@ -145,21 +171,44 @@ impl MyDiseaseClient {
             let escaped = crate::utils::query::escape_lucene_value(onset);
             scoped_query = format!("{scoped_query} AND hpo.clinical_course.hpo_name:*{escaped}*");
         }
-        self.get_json(self.client.get(&url).query(&[
-            ("q", scoped_query.as_str()),
-            ("size", size.as_str()),
-            ("from", from.as_str()),
-            ("fields", MYDISEASE_SEARCH_FIELDS),
-        ]))
-        .await
+        Ok(MyDiseaseQueryRequestPlan {
+            method: "GET",
+            path: "/query",
+            query_params: vec![
+                ("q", scoped_query),
+                ("size", size),
+                ("from", from),
+                ("fields", MYDISEASE_SEARCH_FIELDS.to_string()),
+            ],
+            cache_mode: "default",
+            status_expectation: "non-2xx => Api",
+        })
     }
 
-    pub async fn lookup_disease_by_xref(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn query(
+        &self,
+        q: &str,
+        size: usize,
+        offset: usize,
+        source: Option<&str>,
+        inheritance: Option<&str>,
+        phenotype: Option<&str>,
+        onset: Option<&str>,
+    ) -> Result<MyDiseaseQueryResponse, BioMcpError> {
+        let plan =
+            self.query_request_plan(q, size, offset, source, inheritance, phenotype, onset)?;
+        let url = self.endpoint(plan.path);
+        self.get_json(self.client.get(&url).query(&plan.query_params))
+            .await
+    }
+
+    pub fn lookup_disease_by_xref_request_plan(
         &self,
         kind: &str,
         value: &str,
         size: usize,
-    ) -> Result<MyDiseaseQueryResponse, BioMcpError> {
+    ) -> Result<MyDiseaseXrefLookupRequestPlan, BioMcpError> {
         let value = value.trim();
         if value.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -189,18 +238,33 @@ impl MyDiseaseClient {
             }
         };
 
-        let url = self.endpoint("query");
-        let size = size.to_string();
-        self.get_json(self.client.get(&url).query(&[
-            ("q", query.as_str()),
-            ("size", size.as_str()),
-            ("from", "0"),
-            ("fields", MYDISEASE_SEARCH_FIELDS),
-        ]))
-        .await
+        Ok(MyDiseaseXrefLookupRequestPlan {
+            method: "GET",
+            path: "/query",
+            query_params: vec![
+                ("q", query),
+                ("size", size.to_string()),
+                ("from", "0".to_string()),
+                ("fields", MYDISEASE_SEARCH_FIELDS.to_string()),
+            ],
+            cache_mode: "default",
+            status_expectation: "non-2xx => Api",
+        })
     }
 
-    pub async fn get(&self, id: &str) -> Result<MyDiseaseHit, BioMcpError> {
+    pub async fn lookup_disease_by_xref(
+        &self,
+        kind: &str,
+        value: &str,
+        size: usize,
+    ) -> Result<MyDiseaseQueryResponse, BioMcpError> {
+        let plan = self.lookup_disease_by_xref_request_plan(kind, value, size)?;
+        let url = self.endpoint(plan.path);
+        self.get_json(self.client.get(&url).query(&plan.query_params))
+            .await
+    }
+
+    pub fn get_request_plan(&self, id: &str) -> Result<MyDiseaseGetRequestPlan, BioMcpError> {
         let id = id.trim();
         if id.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -212,20 +276,34 @@ impl MyDiseaseClient {
                 "Disease ID is too long.".into(),
             ));
         }
+        if id.contains(['/', '\\', '?', '#']) {
+            return Err(BioMcpError::InvalidArgument(
+                "Disease ID must not contain path or query separators.".into(),
+            ));
+        }
 
-        let url = self.endpoint(&format!("disease/{id}"));
-        let resp = self
-            .client
-            .get(&url)
-            .query(&[("fields", MYDISEASE_GET_FIELDS)])
+        Ok(MyDiseaseGetRequestPlan {
+            method: "GET",
+            path: format!("/disease/{id}"),
+            query_params: vec![("fields", MYDISEASE_GET_FIELDS.to_string())],
+            cache_mode: "default",
+            status_expectation: "404 => NotFound; other non-2xx => Api",
+        })
+    }
+
+    pub async fn get(&self, id: &str) -> Result<MyDiseaseHit, BioMcpError> {
+        let plan = self.get_request_plan(id)?;
+        let url = self.endpoint(&plan.path);
+        let resp = crate::sources::apply_cache_mode(self.client.get(&url))
+            .query(&plan.query_params)
             .send()
             .await?;
 
         if resp.status() == reqwest::StatusCode::NOT_FOUND {
             return Err(BioMcpError::NotFound {
                 entity: "disease".into(),
-                id: id.into(),
-                suggestion: format!("Try searching: biomcp search disease -q \"{id}\""),
+                id: id.trim().into(),
+                suggestion: format!("Try searching: biomcp search disease -q \"{}\"", id.trim()),
             });
         }
 
@@ -303,6 +381,151 @@ mod tests {
     use super::*;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn query_request_plan_exposes_search_shape() {
+        let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
+        let plan = client
+            .query_request_plan(
+                " melanoma ",
+                10,
+                2,
+                Some("mesh"),
+                Some("dominant"),
+                Some("HP:0001250"),
+                Some("adult"),
+            )
+            .unwrap();
+
+        assert_eq!(plan.method, "GET");
+        assert_eq!(plan.path, "/query");
+        assert_eq!(plan.cache_mode, "default");
+        assert_eq!(plan.status_expectation, "non-2xx => Api");
+        assert_eq!(plan.query_params[1], ("size", "10".to_string()));
+        assert_eq!(plan.query_params[2], ("from", "2".to_string()));
+        assert_eq!(
+            plan.query_params[3],
+            ("fields", MYDISEASE_SEARCH_FIELDS.to_string())
+        );
+        let query = &plan.query_params[0].1;
+        assert!(query.contains("disease_ontology.name:melanoma"));
+        assert!(query.contains("umls.mesh:*"));
+        assert!(query.contains("hpo.inheritance.hpo_name:*dominant*"));
+        assert!(query.contains("hpo.phenotype_related_to_disease.hpo_id:*HP\\:0001250*"));
+        assert!(query.contains("hpo.clinical_course.hpo_name:*adult*"));
+    }
+
+    #[test]
+    fn query_request_plan_exposes_id_lookup_shape() {
+        let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
+        let plan = client
+            .query_request_plan("MONDO:0005105", 1, 0, None, None, None, None)
+            .unwrap();
+
+        assert_eq!(
+            plan.query_params[0],
+            (
+                "q",
+                "(_id:\"MONDO\\:0005105\" OR disease_ontology.doid:\"MONDO\\:0005105\")"
+                    .to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn xref_request_plan_exposes_crosswalk_shape() {
+        let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
+        let mesh_plan = client
+            .lookup_disease_by_xref_request_plan("mesh", "D008545", 5)
+            .unwrap();
+        let omim_plan = client
+            .lookup_disease_by_xref_request_plan("omim", "154700", 5)
+            .unwrap();
+        let icd10_plan = client
+            .lookup_disease_by_xref_request_plan("icd10cm", "Q07.0", 5)
+            .unwrap();
+
+        assert_eq!(icd10_plan.method, "GET");
+        assert_eq!(icd10_plan.path, "/query");
+        assert_eq!(icd10_plan.cache_mode, "default");
+        assert_eq!(icd10_plan.status_expectation, "non-2xx => Api");
+        assert_eq!(icd10_plan.query_params[1], ("size", "5".to_string()));
+        assert_eq!(icd10_plan.query_params[2], ("from", "0".to_string()));
+        assert_eq!(
+            icd10_plan.query_params[3],
+            ("fields", MYDISEASE_SEARCH_FIELDS.to_string())
+        );
+        assert_eq!(
+            mesh_plan.query_params[0],
+            (
+                "q",
+                "(mondo.xrefs.mesh:\"D008545\" OR disease_ontology.xrefs.mesh:\"D008545\" OR umls.mesh:\"D008545\")".to_string()
+            )
+        );
+        assert_eq!(
+            omim_plan.query_params[0],
+            (
+                "q",
+                "(mondo.xrefs.omim:\"154700\" OR disease_ontology.xrefs.omim:\"154700\")"
+                    .to_string()
+            )
+        );
+        assert_eq!(
+            icd10_plan.query_params[0],
+            (
+                "q",
+                "(mondo.xrefs.icd10:\"Q07.0\" OR mondo.xrefs.icd10:\"ICD10:Q07.0\" OR disease_ontology.xrefs.icd10:\"Q07.0\" OR disease_ontology.xrefs.icd10:\"ICD10:Q07.0\" OR umls.icd10am:\"Q07.0\" OR umls.icd10am:\"ICD10:Q07.0\")".to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn get_request_plan_exposes_path_fields_and_not_found_status() {
+        let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
+        let plan = client.get_request_plan(" MONDO:0005105 ").unwrap();
+
+        assert_eq!(plan.method, "GET");
+        assert_eq!(plan.path, "/disease/MONDO:0005105");
+        assert_eq!(
+            plan.query_params,
+            vec![("fields", MYDISEASE_GET_FIELDS.to_string())]
+        );
+        assert_eq!(plan.cache_mode, "default");
+        assert_eq!(
+            plan.status_expectation,
+            "404 => NotFound; other non-2xx => Api"
+        );
+    }
+
+    #[test]
+    fn request_plans_preserve_validation_before_network() {
+        let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
+
+        assert!(matches!(
+            client.query_request_plan(" ", 10, 0, None, None, None, None),
+            Err(BioMcpError::InvalidArgument(_))
+        ));
+        assert!(matches!(
+            client.lookup_disease_by_xref_request_plan("mesh", " ", 5),
+            Err(BioMcpError::InvalidArgument(_))
+        ));
+        assert!(matches!(
+            client.get_request_plan(" "),
+            Err(BioMcpError::InvalidArgument(_))
+        ));
+        assert!(matches!(
+            client.query_request_plan("melanoma", 40, 9_980, None, None, None, None),
+            Err(BioMcpError::InvalidArgument(_))
+        ));
+        assert!(matches!(
+            client.lookup_disease_by_xref_request_plan("mesh", "D008545", 10_001),
+            Err(BioMcpError::InvalidArgument(_))
+        ));
+        assert!(matches!(
+            client.get_request_plan(&"x".repeat(129)),
+            Err(BioMcpError::InvalidArgument(_))
+        ));
+    }
 
     #[tokio::test]
     async fn query_sets_fields_and_size() {

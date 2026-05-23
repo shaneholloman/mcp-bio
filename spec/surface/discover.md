@@ -67,11 +67,12 @@ fi
 
 ### MEF2 relational query
 
-Quarantined from routine executable specs by ticket 372 because ticket 371's
-request-contract strategy identified this live OLS4 discover path as a recent
-unrelated March blocker. Restore this behavior as a fixture-backed router
-contract or explicit release/live-smoke canary, not as a routine `make spec-pr`
-live-source dependency.
+Ticket 371 identified this live OLS4 discover path as a request-contract risk;
+routine coverage for the MEF2 relational redirect is now restored through a Rust
+fixture-backed request-plan test. OLS4 search construction is asserted by
+`OlsSearchRequestPlan`, and fixture hits prove the router redirects to
+`search all --keyword` when only weak general hits remain. Any live OLS4 upstream
+probe belongs in a release/live-smoke lane, not routine `make spec-pr`.
 
 ## No-Match Discover Queries Fall Back to Article Search
 
