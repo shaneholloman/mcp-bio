@@ -886,12 +886,8 @@ def test_ticket_376_variant_fixture_contracts_replace_routine_live_canaries() ->
 
 
 def test_ticket_376_article_variant_specs_document_deterministic_or_live_smoke_coverage() -> None:
-    article_intro = _read_repo("spec/entity/article.md")
-    variant_intro = _read_repo("spec/entity/variant.md")
-    for path, section in (
-        ("spec/entity/article.md", article_intro),
-        ("spec/entity/variant.md", variant_intro),
-    ):
+    for path in ("spec/entity/article.md", "spec/entity/variant.md"):
+        section = _markdown_heading_body(path, 2, "Deterministic Source Contracts")
         lower = section.lower()
         assert "ticket 376" in lower, f"{path} must document the ticket-376 routine coverage conversion"
         assert "request-plan" in lower or "fixture-backed" in lower, (
