@@ -49,6 +49,12 @@ up for redesign in this document:
 
 ## Target architecture
 
+### Request-contract reset overlay
+
+Ticket 373 extends the spec-v2 target with a request-contract testing reset. The current v2 corpus still contains a single active canary lane and several live/cache-backed sections; the target is to keep the entity/surface layout but make routine specs fixture-backed/static by default. Live public-upstream checks move to an explicit release/live-smoke lane only after CLI request seams, source request plans, fixture response/status mapping, and renderer/envelope contracts exist for the affected behavior.
+
+See [Request-contract test architecture target](request-contract-test-architecture.md) for the concrete seams and migration order. Until those follow-up tickets land, the current serialized OLS4 disease/discover partition remains the implemented contract and FAQ #14 ratchet.
+
 ### Layout and ownership
 
 | Path | Owns | Must not own |
@@ -71,6 +77,7 @@ The new corpus enforces these invariants:
    corpus shape.**
 6. **Every migrated ticket leaves `make check` healthy and the active spec lane
    executable.**
+7. **Live upstream behavior is not routine proof once a deterministic replacement exists.** Source request shape, fixture response/status mapping, entity orchestration, and renderer/envelope output belong in routine gates; public upstream availability belongs in an explicit release/live-smoke lane.
 
 ## Per-file outlines
 

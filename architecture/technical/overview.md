@@ -297,6 +297,8 @@ install or rebuild the maturin-backed current project before pytest or mkdocs.
 
 ## Verification Approach
 
+Ticket 373 adds a target-state overlay for the request-contract testing reset: routine validation should prove BioMCP-owned CLI intent, source request plans, fixture response/status mapping, entity orchestration, and renderer/envelope contracts without depending on public upstream availability. The current gate topology below remains the implemented state until follow-up build tickets land. The target boundaries, profile split, and migration invariants are documented in [Request-contract test architecture target](request-contract-test-architecture.md).
+
 BioMCP has six distinct verification and operator-inspection surfaces.
 
 ### 1. CI and Repo Gates
@@ -352,6 +354,8 @@ exists so follow-on spec-v2 rewrite slices can target the blocking canary lane
 directly. `full-contracts` remains a compatibility alias of the same command
 now that `make check` already runs `make test-contracts`; the shared build flow
 still does not assign it today.
+
+Target state: preserve these profile names for March compatibility, but move live public-upstream proof into an explicit release/live-smoke target/profile after deterministic replacements exist. `spec-only` should become fixture-backed/static by default, and `full-blocking`/`full-contracts` should compose `make check` with deterministic executable contracts rather than broad live canaries. The implementation details and required ratchets are in [Request-contract test architecture target](request-contract-test-architecture.md#validation-profile-target).
 
 ### 2. Spec Suite (`spec/`)
 
