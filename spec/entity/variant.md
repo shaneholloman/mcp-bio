@@ -102,3 +102,66 @@ test -n "$rsid"
 printf '%s\n' "$rsid" | mustmatch "$protein"
 printf '%s\n' "$rsid" | mustmatch '/^chr7:g\.\d+[ACGT]>[ACGT]$/'
 ```
+
+## Transcript HGVS Normalization Proxies
+
+Transcript HGVS strings are not exact MyVariant IDs, but agents often already
+have a source-shaped transcript candidate from a report or another database. The
+normalization proxy keeps that input separate from each upstream service's
+returned notation and warnings.
+
+<!-- mustmatch-lint: skip -->
+
+```bash
+json_out="$(../../tools/biomcp-ci --json variant normalize all 'NM_000248.3:c.135del')"
+echo "$json_out" | jq -e '.input == "NM_000248.3:c.135del"' >/dev/null
+echo "$json_out" | jq -e '[.services[].service] | index("mutalyzer") and index("variantvalidator")' >/dev/null
+echo "$json_out" | jq -e '.services[] | select(.service == "mutalyzer") | .status == "success" and .normalized_description == "NM_000248.3:c.135del" and (.protein.description | contains("Asn46ThrfsTer4"))' >/dev/null
+echo "$json_out" | jq -e '.services[] | select(.service == "variantvalidator") | .status == "success" and (.warnings[] | contains("TranscriptVersionWarning")) and (.genomic_descriptions[] | contains("NC_000003.12:g.69937923del"))' >/dev/null
+```
+
+## ERBB2 Transcript HGVS Canary
+
+The proxy must handle transcript strings with substitution notation and shell
+metacharacters such as `>` without losing source warnings or conflating service
+outputs.
+
+<!-- mustmatch-lint: skip -->
+
+```bash
+json_out="$(../../tools/biomcp-ci --json variant normalize all 'NM_004448.2:c.829G>T')"
+echo "$json_out" | jq -e '.input == "NM_004448.2:c.829G>T"' >/dev/null
+echo "$json_out" | jq -e '.services[] | select(.service == "mutalyzer") | .status == "success" and .normalized_description == "NM_004448.2:c.829G>T" and (.protein.description | contains("Asp277Tyr"))' >/dev/null
+echo "$json_out" | jq -e '.services[] | select(.service == "variantvalidator") | .status == "success" and (.warnings[] | contains("TranscriptVersionWarning")) and (.genomic_descriptions[] | contains("NC_000017.11:g.39710409G>T"))' >/dev/null
+```
+
+## Unsupported Normalization Inputs
+
+BioMCP should not guess transcripts or convert gene-protein shorthand into a
+transcript HGVS query. Unsupported input gets a typed guardrail so an agent can
+choose a better source-shaped string.
+
+```bash
+set +e
+out="$(../../tools/biomcp-ci --json variant normalize all 'BRAF V600E' 2>&1)"
+rc=$?
+set -e
+test "$rc" -ne 0
+echo "$out" | mustmatch like 'unsupported_notation'
+echo "$out" | mustmatch like 'BRAF V600E'
+echo "$out" | mustmatch like 'transcript HGVS'
+```
+
+## Normalization Command Discoverability
+
+The explicit proxy command should be visible from help and structured list
+output so agents can find it without trying hidden `get variant` rewrites.
+
+```bash
+help="$(../../tools/biomcp-ci variant normalize --help)"
+echo "$help" | mustmatch like 'all, mutalyzer, or variantvalidator'
+echo "$help" | mustmatch like 'NM_000248.3:c.135del'
+
+list_json="$(../../tools/biomcp-ci --json list variant)"
+echo "$list_json" | jq -e '.commands | any(. == "variant normalize <service> <transcript_hgvs>")' >/dev/null
+```

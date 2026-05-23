@@ -524,6 +524,9 @@ See also: `docs/reference/mcp-server.md`.
 biomcp variant trials "BRAF V600E"
 biomcp variant articles "BRAF V600E"
 biomcp variant oncokb "BRAF V600E"
+biomcp variant normalize <service> <transcript_hgvs>
+biomcp variant normalize all NM_000248.3:c.135del
+biomcp variant normalize all NM_004448.2:c.829G>T
 biomcp drug interactions warfarin
 biomcp drug adverse-events pembrolizumab
 biomcp drug trials pembrolizumab

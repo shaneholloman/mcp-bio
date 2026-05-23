@@ -51,6 +51,9 @@
   `biomcp drug interactions <name>`, `get drug <name> interactions`, local
   bundle health, source-scoped empty wording, and `biomcp ddinter sync`.
   (303)
+- Added explicit transcript-HGVS normalization via
+  `biomcp variant normalize <service> <transcript_hgvs>`, backed by Mutalyzer
+  and VariantValidator with service-labelled JSON statuses and warnings. (370)
 
 ### Docs
 

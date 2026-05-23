@@ -68,6 +68,26 @@ and detail cards also show `Legacy Name`, and JSON output includes
 Shorthand such as `PTPN22 620W` or `R620W` is not treated as an exact variant
 ID. Use `biomcp search variant` for those inputs.
 
+## Normalize transcript HGVS
+
+Use the explicit normalization proxy when you already have a transcript HGVS
+string and want source-labelled output from Mutalyzer and VariantValidator:
+
+```bash
+biomcp variant normalize all NM_000248.3:c.135del
+biomcp variant normalize all NM_004448.2:c.829G>T
+biomcp variant normalize mutalyzer NM_000248.3:c.135del
+biomcp variant normalize variantvalidator NM_004448.2:c.829G>T
+```
+
+JSON output preserves the submitted `input`, one result per service, each
+service `status`, source-returned transcript/normalized/genomic/protein fields,
+and warnings such as VariantValidator `TranscriptVersionWarning`.
+
+This helper does not parse messy report prose, does not choose, select, guess,
+or infer transcripts, and does not classify variants or provide clinical
+interpretation/clinical meaning.
+
 ## Request variant sections
 
 Prediction section:

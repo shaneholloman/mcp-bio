@@ -13,6 +13,8 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 | Gene sections | UniProt, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, OpenTargets, ClinGen, gnomAD GraphQL API | `https://rest.uniprot.org`, `https://www.ebi.ac.uk/QuickGO/services`, `https://string-db.org/api`, `https://gtexportal.org/api/v2`, `https://www.proteinatlas.org`, `https://dgidb.org/api/graphql`, `https://api.platform.opentargets.org/api/v4/graphql`, `https://search.clinicalgenome.org`, `https://gnomad.broadinstitute.org/api` | No | Protein summary, GO terms, interactions, GTEx RNA tissue expression, HPA protein tissue expression and subcellular localization, combined DGIdb/OpenTargets druggability, gene-disease validity, and gnomAD v4 GRCh38 gene constraint |
 | Gene `disgenet` section | DisGeNET REST API | `https://api.disgenet.com/api/v1` | Yes (`DISGENET_API_KEY`) | Ranked scored gene-disease associations with PMIDs, clinical-trial counts, evidence index, and evidence level |
 | Variant | MyVariant.info | `https://myvariant.info/v1` | No | rsID/HGVS lookup, ClinVar and population annotations |
+| Variant normalization | Mutalyzer | `variant normalize` / `https://mutalyzer.nl/api` | No | Calls `GET /normalize/{description}` for explicit transcript HGVS and preserves normalized/corrected/protein fields plus source warnings/status |
+| Variant normalization | VariantValidator | `variant normalize` / `https://rest.variantvalidator.org` | No | Calls `GET /VariantValidator/variantvalidator/{genome_build}/{variant_description}/{select_transcripts}` for explicit transcript HGVS and preserves `TranscriptVersionWarning`, GRCh38 genomic descriptions, and source status |
 | Variant population section | MyVariant.info (gnomAD fields) | `https://myvariant.info/v1` | No | Uses cached gnomAD AF/subpopulation fields from MyVariant payload |
 | Variant GWAS section and GWAS search | GWAS Catalog REST API | `https://www.ebi.ac.uk/gwas/rest/api` | No | rsID, gene, and trait association retrieval |
 | Variant OncoKB helper | OncoKB | `https://www.oncokb.org/api/v1` | Yes (`ONCOKB_TOKEN`) | Accessed via explicit `variant oncokb <id>` command |
@@ -99,6 +101,7 @@ and practical ceilings observed in command behavior.
 | CDC WONDER VAERS | Automated queries should run one at a time; CDC recommends about 2 minutes between repeated data-mining requests | Keep VAERS queries targeted, prefer fixture-frozen contract tests over live loops, and use `biomcp health --apis-only` for readiness checks |
 | Gene search | `--limit` must be 1-50 | Start with small limits, then increase |
 | Variant search | `--limit` must be 1-50 | Use `--gene` + `--consequence` to reduce noise |
+| VariantValidator `variant normalize` | Single explicit transcript HGVS per command; upstream docs mention 2 requests / second | Use `all`, `mutalyzer`, or `variantvalidator`; BioMCP does not batch, parse report prose, choose transcripts, or classify clinical meaning |
 | PGx (CPIC) | Rate-limited to 1 request / 250ms | Keep result limits focused around target gene/drug |
 | PGx annotations (PharmGKB) | Rate-limited to 1 request / 500ms | Treat as enrichment; core PGx data remains from CPIC |
 | GWAS search (`search gwas`) | `--limit` must be 1-50 | Prefer specific gene or trait queries to avoid broad result sets |

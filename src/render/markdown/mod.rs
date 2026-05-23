@@ -81,8 +81,8 @@ pub use self::trial::{trial_markdown, trial_search_markdown, trial_search_markdo
 #[allow(unused_imports)]
 pub use self::variant::{
     gwas_search_markdown, gwas_search_markdown_with_footer, phenotype_search_markdown,
-    phenotype_search_markdown_with_footer, variant_markdown, variant_oncokb_markdown,
-    variant_search_markdown, variant_search_markdown_with_context,
+    phenotype_search_markdown_with_footer, variant_markdown, variant_normalization_markdown,
+    variant_oncokb_markdown, variant_search_markdown, variant_search_markdown_with_context,
     variant_search_markdown_with_footer,
 };
 use std::collections::HashSet;
@@ -128,8 +128,8 @@ use crate::entities::study::{
 };
 use crate::entities::trial::{Trial, TrialSearchResult};
 use crate::entities::variant::{
-    Variant, VariantGwasAssociation, VariantOncoKbResult, VariantPrediction, VariantSearchResult,
-    gnomad_variant_slug,
+    Variant, VariantGwasAssociation, VariantNormalizationResponse, VariantOncoKbResult,
+    VariantPrediction, VariantSearchResult, gnomad_variant_slug,
 };
 use crate::error::BioMcpError;
 use crate::sources::nih_reporter::{NihReporterFundingSection, NihReporterGrant};

@@ -59,6 +59,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | LitSense2 | 1 | direct_api | none | NCBI/NLM public-domain literature service | query results are broadly reusable, but preserve article-level provenance and record rights separately | <https://www.ncbi.nlm.nih.gov/research/litsense2-api/> |
 | MedlinePlus | 1 | direct_api | none | NLM public-information service with trademark and endorsement guidance | content is widely reusable, but preserve attribution and avoid implying MedlinePlus/NLM endorsement | <https://medlineplus.gov/about/using/> |
 | Monarch Initiative | 1 | direct_api | none | open integrated knowledge graph; underlying source licenses still matter | results can be queried openly, but downstream reuse should respect the original sources folded into Monarch | <https://monarchinitiative.org/> |
+| Mutalyzer | 1 | direct_api | none | public Mutalyzer normalization service; provider terms apply to returned validation output | preserve Mutalyzer source identity and returned HGVS/protein fields when reusing results | <https://mutalyzer.nl/> |
 | MyChem.info | 1 | direct_api | none | BioThings aggregation service; upstream source terms continue to apply | do not assume aggregator responses are relicensed; preserve source provenance for downstream reuse | <https://docs.mychem.info/en/latest/> |
 | MyDisease.info | 1 | direct_api | none | BioThings aggregation service; source ontologies and datasets keep their own terms | treat payloads as aggregated source data rather than a new umbrella license | <https://docs.mydisease.info/en/latest/> |
 | MyGene.info | 1 | direct_api | none | BioThings aggregation service; source-specific terms remain attached to underlying records | reuse should preserve provenance back to NCBI Gene, UniProt, and other upstream sources | <https://docs.mygene.info/en/latest/> |
@@ -82,6 +83,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | STRING | 1 | direct_api | none | CC BY 4.0 | reuse is allowed with attribution to STRING and the original publication/resource | <https://string-db.org/cgi/access?footer_active_subpage=licensing> |
 | UMLS | 2 | direct_api | required_env | custom UMLS Metathesaurus license and terminology-specific appendices | do not assume unrestricted redistribution; some embedded vocabularies add their own restrictions or affiliate licenses | <https://www.nlm.nih.gov/databases/umls.html> |
 | UniProt | 1 | direct_api | none | CC BY 4.0 | reuse is allowed with attribution; linked cross-references can have their own terms | <https://www.uniprot.org/help/license> |
+| VariantValidator | 1 | direct_api | none | public VariantValidator service; provider terms apply to returned validation output | preserve VariantValidator source identity, warnings, and genomic descriptions when reusing results | <https://variantvalidator.org/> |
 | WHO Prequalification | 1 | direct_api | none | WHO content generally requires attribution; commercial reuse may require permission and third-party materials can carry separate rights | preserve WHO attribution, review commercial-use conditions, and check third-party material rights before republishing | <https://www.who.int/about/policies/publishing/copyright> |
 | WikiPathways | 1 | direct_api | none | CC0 | pathway content is dedicated to the public domain; attribution is still good scholarly practice | <https://classic.wikipathways.org/index.php/WikiPathways:License_Terms> |
 | AlphaFold DB | 1 | indirect_only | not_applicable | AlphaFold DB structural predictions are published for broad open use | reuse is generally open, but preserve model/source provenance and article citations | <https://alphafold.ebi.ac.uk/faq> |
@@ -360,6 +362,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Reviewed on: `2026-03-20`
 - Notes: BioMCP uses Monarch as an aggregator for disease, phenotype, and model-organism relationships rather than as the legal source of every embedded assertion.
 
+### Mutalyzer
+
+- BioMCP surfaces: `variant normalize`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: open public API
+- License / terms summary: public Mutalyzer normalization service; provider terms apply to returned validation output
+- Redistribution / reuse summary: preserve Mutalyzer source identity and returned HGVS/protein fields when reusing results
+- Official terms URL: <https://mutalyzer.nl/>
+- Reviewed on: `2026-05-22`
+- Notes: BioMCP calls `GET /normalize/{description}` for explicit transcript HGVS and preserves source warnings/status without classifying variants.
+
 ### MyChem.info
 
 - BioMCP surfaces: `search drug; get drug <name>`
@@ -581,6 +595,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Official terms URL: <https://www.uniprot.org/help/license>
 - Reviewed on: `2026-03-20`
 - Notes: BioMCP also surfaces UniProt cross-references to PDB and AlphaFold DB rather than mirroring those datasets directly.
+
+### VariantValidator
+
+- BioMCP surfaces: `variant normalize`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: open public API
+- License / terms summary: public VariantValidator service; provider terms apply to returned validation output
+- Redistribution / reuse summary: preserve VariantValidator source identity, warnings, and genomic descriptions when reusing results
+- Official terms URL: <https://variantvalidator.org/>
+- Reviewed on: `2026-05-22`
+- Notes: BioMCP calls `/VariantValidator/variantvalidator/{genome_build}/{variant_description}/{select_transcripts}` for explicit transcript HGVS and preserves `TranscriptVersionWarning` messages without choosing transcripts.
 
 ### WikiPathways
 

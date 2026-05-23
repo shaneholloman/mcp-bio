@@ -107,6 +107,7 @@ EXPECTED_RELEASE_TICKETS = {
         365,
         366,
         367,
+        370,
     }
 }
 EXPECTED_RELEASE_MARKERS = {
