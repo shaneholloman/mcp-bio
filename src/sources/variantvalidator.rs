@@ -9,6 +9,16 @@ const VARIANTVALIDATOR_BASE: &str = "https://rest.variantvalidator.org";
 const VARIANTVALIDATOR_API: &str = "variantvalidator";
 const VARIANTVALIDATOR_BASE_ENV: &str = "BIOMCP_VARIANTVALIDATOR_BASE_URL";
 
+#[allow(dead_code)]
+pub struct VariantValidatorNormalizeRequestPlan {
+    pub method: &'static str,
+    pub path: String,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+}
+
 pub struct VariantValidatorClient {
     client: reqwest_middleware::ClientWithMiddleware,
     base: Cow<'static, str>,
@@ -54,11 +64,54 @@ impl VariantValidatorClient {
         Ok(url)
     }
 
+    fn endpoint_url(&self, path: &str) -> Result<reqwest::Url, BioMcpError> {
+        reqwest::Url::parse(&format!(
+            "{}{}",
+            self.base.as_ref().trim_end_matches('/'),
+            path
+        ))
+        .map_err(|err| BioMcpError::Api {
+            api: VARIANTVALIDATOR_API.to_string(),
+            message: err.to_string(),
+        })
+    }
+
+    pub fn normalize_request_plan(
+        &self,
+        description: &str,
+    ) -> Result<VariantValidatorNormalizeRequestPlan, BioMcpError> {
+        let url = self.normalize_url(description)?;
+        debug_assert!(
+            url.path()
+                .starts_with("/VariantValidator/variantvalidator/GRCh38/")
+        );
+        Ok(VariantValidatorNormalizeRequestPlan {
+            method: "GET",
+            path: url.path().to_string(),
+            query_params: url
+                .query_pairs()
+                .map(|(name, value)| match name.as_ref() {
+                    "content-type" => ("content-type", value.into_owned()),
+                    _ => ("", value.into_owned()),
+                })
+                .collect(),
+            cache_mode: "default",
+            status_expectation: "400/422 invalid_input; 404 not_found; other non-2xx service_error",
+            content_type_expectation: "application/json",
+        })
+    }
+
     pub async fn normalize(
         &self,
         description: &str,
     ) -> Result<VariantNormalizationServiceResult, BioMcpError> {
-        let url = self.normalize_url(description)?;
+        let plan = self.normalize_request_plan(description)?;
+        let mut url = self.endpoint_url(&plan.path)?;
+        url.query_pairs_mut().extend_pairs(
+            plan.query_params
+                .iter()
+                .map(|(name, value)| (*name, value.as_str())),
+        );
         let resp = crate::sources::apply_cache_mode(self.client.get(url))
             .send()
             .await?;
@@ -222,6 +275,48 @@ mod tests {
     use super::*;
     use wiremock::matchers::{any, method, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn ticket_376_variant_normalization_contracts_variantvalidator_request_plan_and_mapping() {
+        let client = VariantValidatorClient::new_for_test("http://127.0.0.1".into()).unwrap();
+        let plan: VariantValidatorNormalizeRequestPlan = client
+            .normalize_request_plan("NM_000248.3:c.135del")
+            .expect("VariantValidatorNormalizeRequestPlan");
+        assert_eq!(plan.method, "GET");
+        assert_eq!(
+            plan.path,
+            "/VariantValidator/variantvalidator/GRCh38/NM_000248.3:c.135del/all"
+        );
+        assert!(
+            plan.query_params
+                .contains(&("content-type", "application/json".to_string()))
+        );
+
+        let value = serde_json::json!({
+            "NM_000248.3:c.135del": {
+                "submitted_variant": "NM_000248.3:c.135del",
+                "hgvs_transcript_variant": "NM_000248.3:c.135del",
+                "primary_assembly_loci": {
+                    "grch38": {"hgvs_genomic_description": "NC_000003.12:g.69937923del"}
+                },
+                "validation_warnings": ["TranscriptVersionWarning: transcript updated"]
+            }
+        });
+        let result = result_from_value(&value);
+        assert_eq!(result.status, VariantNormalizationStatus::Success);
+        assert!(
+            result
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("TranscriptVersionWarning"))
+        );
+        assert!(
+            result
+                .genomic_descriptions
+                .iter()
+                .any(|value| value == "NC_000003.12:g.69937923del")
+        );
+    }
 
     #[tokio::test]
     async fn normalize_encodes_transcript_path_and_extracts_warnings() {

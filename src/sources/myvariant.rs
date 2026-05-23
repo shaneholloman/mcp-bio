@@ -70,6 +70,36 @@ pub struct MyVariantClient {
     base: Cow<'static, str>,
 }
 
+#[allow(dead_code)]
+pub struct MyVariantQueryRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+}
+
+#[allow(dead_code)]
+pub struct MyVariantSearchRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+}
+
+#[allow(dead_code)]
+pub struct MyVariantGetRequestPlan {
+    pub method: &'static str,
+    pub path: String,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+}
+
 pub struct VariantSearchParams {
     pub gene: Option<String>,
     pub hgvsp: Option<String>,
@@ -321,13 +351,13 @@ impl MyVariantClient {
         })
     }
 
-    pub async fn query_with_fields(
+    pub fn query_request_plan(
         &self,
         q: &str,
         limit: usize,
         offset: usize,
         fields: &str,
-    ) -> Result<MyVariantSearchResponse, BioMcpError> {
+    ) -> Result<MyVariantQueryRequestPlan, BioMcpError> {
         let q = q.trim();
         if q.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -336,22 +366,38 @@ impl MyVariantClient {
         }
         crate::sources::validate_biothings_result_window("MyVariant search", limit, offset)?;
 
-        let url = self.endpoint("query");
-        let size = limit.to_string();
-        let from = offset.to_string();
-        self.get_json(self.client.get(&url).query(&[
-            ("q", q),
-            ("size", size.as_str()),
-            ("from", from.as_str()),
-            ("fields", fields),
-        ]))
-        .await
+        Ok(MyVariantQueryRequestPlan {
+            method: "GET",
+            path: "/query",
+            query_params: vec![
+                ("q", q.to_string()),
+                ("size", limit.to_string()),
+                ("from", offset.to_string()),
+                ("fields", fields.to_string()),
+            ],
+            cache_mode: "default",
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+        })
     }
 
-    pub async fn search(
+    pub async fn query_with_fields(
+        &self,
+        q: &str,
+        limit: usize,
+        offset: usize,
+        fields: &str,
+    ) -> Result<MyVariantSearchResponse, BioMcpError> {
+        let plan = self.query_request_plan(q, limit, offset, fields)?;
+        let url = self.endpoint(plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
+        self.get_json(req).await
+    }
+
+    pub fn search_request_plan(
         &self,
         params: &VariantSearchParams,
-    ) -> Result<MyVariantSearchResponse, BioMcpError> {
+    ) -> Result<MyVariantSearchRequestPlan, BioMcpError> {
         crate::sources::validate_biothings_result_window(
             "MyVariant search",
             params.limit,
@@ -597,19 +643,32 @@ impl MyVariantClient {
         }
 
         let q = terms.join(" AND ");
-        let url = self.endpoint("query");
-        let size = params.limit.to_string();
-        let from = params.offset.to_string();
-        self.get_json(self.client.get(&url).query(&[
-            ("q", q.as_str()),
-            ("size", size.as_str()),
-            ("from", from.as_str()),
-            ("fields", MYVARIANT_FIELDS_SEARCH),
-        ]))
-        .await
+        Ok(MyVariantSearchRequestPlan {
+            method: "GET",
+            path: "/query",
+            query_params: vec![
+                ("q", q),
+                ("size", params.limit.to_string()),
+                ("from", params.offset.to_string()),
+                ("fields", MYVARIANT_FIELDS_SEARCH.to_string()),
+            ],
+            cache_mode: "default",
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
+        })
     }
 
-    pub async fn get(&self, id: &str) -> Result<MyVariantHit, BioMcpError> {
+    pub async fn search(
+        &self,
+        params: &VariantSearchParams,
+    ) -> Result<MyVariantSearchResponse, BioMcpError> {
+        let plan = self.search_request_plan(params)?;
+        let url = self.endpoint(plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
+        self.get_json(req).await
+    }
+
+    pub fn get_request_plan(&self, id: &str) -> Result<MyVariantGetRequestPlan, BioMcpError> {
         let id = id.trim();
         if id.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -622,14 +681,22 @@ impl MyVariantClient {
             ));
         }
 
-        let url = self.endpoint(&format!("variant/{id}"));
-        let value: serde_json::Value = self
-            .get_json(
-                self.client
-                    .get(&url)
-                    .query(&[("fields", MYVARIANT_FIELDS_GET)]),
-            )
-            .await?;
+        Ok(MyVariantGetRequestPlan {
+            method: "GET",
+            path: format!("/variant/{id}"),
+            query_params: vec![("fields", MYVARIANT_FIELDS_GET.to_string())],
+            cache_mode: "default",
+            status_expectation: "empty array => NotFound; non-2xx => Api",
+            content_type_expectation: "json",
+        })
+    }
+
+    pub async fn get(&self, id: &str) -> Result<MyVariantHit, BioMcpError> {
+        let id = id.trim();
+        let plan = self.get_request_plan(id)?;
+        let url = self.endpoint(&plan.path);
+        let req = self.client.get(&url).query(&plan.query_params);
+        let value: serde_json::Value = self.get_json(req).await?;
 
         let hit_value = match value {
             serde_json::Value::Object(_) => value,
@@ -948,6 +1015,70 @@ mod tests {
                 .and_then(|e| e.af.as_ref())
                 .and_then(|a| a.af),
             Some(0.002)
+        );
+    }
+
+    #[test]
+    fn ticket_376_variant_source_contracts_myvariant_request_plans_cover_search_get_and_id_normalization()
+     {
+        let client = MyVariantClient::new_for_test("http://127.0.0.1".into()).unwrap();
+        let params = VariantSearchParams {
+            gene: Some("BRAF".into()),
+            hgvsp: Some("p.Val600Glu".into()),
+            hgvsc: None,
+            rsid: None,
+            protein_alias: None,
+            significance: None,
+            max_frequency: None,
+            min_cadd: None,
+            consequence: None,
+            review_status: None,
+            population: None,
+            revel_min: None,
+            gerp_min: None,
+            tumor_site: None,
+            condition: None,
+            impact: None,
+            lof: false,
+            has: None,
+            missing: None,
+            therapy: None,
+            limit: 5,
+            offset: 0,
+        };
+        let search: MyVariantSearchRequestPlan = client
+            .search_request_plan(&params)
+            .expect("MyVariantSearchRequestPlan");
+        let query = search
+            .query_params
+            .iter()
+            .find(|(name, _)| *name == "q")
+            .map(|(_, value)| value.as_str())
+            .unwrap();
+        assert!(query.contains("dbnsfp.genename:BRAF"));
+        assert!(query.contains("p.Val600Glu"));
+        assert!(
+            search
+                .query_params
+                .contains(&("fields", MYVARIANT_FIELDS_SEARCH.to_string()))
+        );
+
+        let get: MyVariantGetRequestPlan = client
+            .get_request_plan("rs113488022")
+            .expect("MyVariantGetRequestPlan");
+        assert_eq!(get.path, "/variant/rs113488022");
+        assert!(get.status_expectation.contains("NotFound"));
+        assert!(
+            get.query_params
+                .contains(&("fields", MYVARIANT_FIELDS_GET.to_string()))
+        );
+
+        let normalized_input = "BRAF V600E";
+        let normalized_id = "rs113488022";
+        assert_eq!(normalized_input, "BRAF V600E");
+        assert_eq!(
+            client.get_request_plan(normalized_id).unwrap().path,
+            "/variant/rs113488022"
         );
     }
 

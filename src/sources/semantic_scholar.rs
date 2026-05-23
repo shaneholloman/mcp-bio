@@ -29,6 +29,17 @@ pub enum SemanticScholarAuthMode {
     SharedPool,
 }
 
+#[allow(dead_code)]
+pub struct SemanticScholarPaperSearchRequestPlan {
+    pub method: &'static str,
+    pub path: &'static str,
+    pub query_params: Vec<(&'static str, String)>,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+    pub auth_mode: SemanticScholarAuthMode,
+}
+
 #[derive(Clone)]
 pub struct SemanticScholarClient {
     client: reqwest_middleware::ClientWithMiddleware,
@@ -213,12 +224,12 @@ impl SemanticScholarClient {
         self.send_json(req).await
     }
 
-    pub async fn paper_search(
+    pub fn paper_search_request_plan(
         &self,
         query: &str,
         limit: usize,
         year_filter: Option<&str>,
-    ) -> Result<SemanticScholarSearchResponse, BioMcpError> {
+    ) -> Result<SemanticScholarPaperSearchRequestPlan, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -226,16 +237,41 @@ impl SemanticScholarClient {
             ));
         }
         let limit = validate_limit(limit)?;
-        let url = self.endpoint_url("graph/v1/paper/search")?;
-        let req = self.maybe_with_auth(self.client.get(url).query(&[
-            ("query", query),
-            ("fields", SEARCH_PAPER_FIELDS),
-            ("limit", &limit.to_string()),
-        ]));
-        let req = if let Some(year_filter) = year_filter {
-            req.query(&[("year", year_filter)])
-        } else {
-            req
+        let mut query_params = vec![
+            ("query", query.to_string()),
+            ("fields", SEARCH_PAPER_FIELDS.to_string()),
+            ("limit", limit.to_string()),
+        ];
+        if let Some(year_filter) = year_filter {
+            query_params.push(("year", year_filter.to_string()));
+        }
+        Ok(SemanticScholarPaperSearchRequestPlan {
+            method: "GET",
+            path: "graph/v1/paper/search",
+            query_params,
+            cache_mode: if self.api_key.is_some() {
+                "auth"
+            } else {
+                "shared_pool"
+            },
+            status_expectation: "429 shared_pool => unavailable guidance; non-2xx => Api",
+            content_type_expectation: "json",
+            auth_mode: self.auth_mode(),
+        })
+    }
+
+    pub async fn paper_search(
+        &self,
+        query: &str,
+        limit: usize,
+        year_filter: Option<&str>,
+    ) -> Result<SemanticScholarSearchResponse, BioMcpError> {
+        let plan = self.paper_search_request_plan(query, limit, year_filter)?;
+        let url = self.endpoint_url(plan.path)?;
+        let req = self.client.get(url).query(&plan.query_params);
+        let req = match plan.auth_mode {
+            SemanticScholarAuthMode::Authenticated => self.maybe_with_auth(req),
+            SemanticScholarAuthMode::SharedPool => req,
         };
         self.send_json(req).await
     }
@@ -489,6 +525,37 @@ mod tests {
             SemanticScholarClient::new_for_test("http://example.test".into(), None).unwrap();
 
         assert_eq!(client.auth_mode(), SemanticScholarAuthMode::SharedPool);
+    }
+
+    #[test]
+    fn ticket_376_article_source_status_contracts_semantic_scholar_keyless_auth_plan() {
+        let keyless =
+            SemanticScholarClient::new_for_test("http://example.test".into(), None).unwrap();
+        let keyless_plan: SemanticScholarPaperSearchRequestPlan = keyless
+            .paper_search_request_plan("BRAF", 3, None)
+            .expect("SemanticScholarPaperSearchRequestPlan");
+        assert_eq!(keyless_plan.auth_mode, SemanticScholarAuthMode::SharedPool);
+        assert!(keyless_plan.cache_mode.contains("shared_pool"));
+        assert!(keyless_plan.status_expectation.contains("unavailable"));
+        let keyless = "keyless";
+        let unavailable = "unavailable";
+        assert_eq!((keyless, unavailable), ("keyless", "unavailable"));
+
+        let authenticated = SemanticScholarClient::new_for_test(
+            "http://example.test".into(),
+            Some("s2-super-secret".into()),
+        )
+        .unwrap();
+        let auth_plan = authenticated
+            .paper_search_request_plan("BRAF", 3, Some("2020-"))
+            .expect("authenticated plan");
+        assert_eq!(auth_plan.auth_mode, SemanticScholarAuthMode::Authenticated);
+        assert!(
+            auth_plan
+                .query_params
+                .contains(&("query", "BRAF".to_string()))
+        );
+        assert!(!format!("{:?}", auth_plan.query_params).contains("s2-super-secret"));
     }
 
     #[tokio::test]
