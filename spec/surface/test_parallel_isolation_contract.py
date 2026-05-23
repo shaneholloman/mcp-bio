@@ -627,6 +627,29 @@ def _assert_any_test_block_contains(paths: tuple[str, ...], fragments: tuple[str
     )
 
 
+def _assert_ticket_test_blocks_cover(
+    paths: tuple[str, ...],
+    marker: str,
+    fragments: tuple[str, ...],
+    context: str,
+) -> None:
+    matching_blocks = [
+        block
+        for path in paths
+        for block in _rust_test_blocks(path)
+        if marker in block
+    ]
+    assert matching_blocks, (
+        f"{context} needs executable deterministic Rust test block(s) named with {marker!r}"
+    )
+    combined = "\n".join(matching_blocks)
+    missing = [fragment for fragment in fragments if fragment not in combined]
+    assert not missing, (
+        f"{context} ticket-marked Rust test blocks are missing renderer/envelope behavior fragments: "
+        f"{missing}"
+    )
+
+
 def test_ticket_376_article_source_request_plans_are_source_local_and_consumed() -> None:
     failures: list[str] = []
 
@@ -966,7 +989,7 @@ def test_ticket_377_renderer_envelope_fixture_contracts_exist() -> None:
                 "source_status",
                 "next_commands",
                 "article_search_markdown_with_footer_and_context",
-                "Semantic Scholar source status",
+                "Semantic Scholar",
             ),
         ),
         (
@@ -993,8 +1016,9 @@ def test_ticket_377_renderer_envelope_fixture_contracts_exist() -> None:
     for label, paths, fragments in contracts:
         check(
             label,
-            lambda paths=paths, fragments=fragments, label=label: _assert_any_test_block_contains(
+            lambda paths=paths, fragments=fragments, label=label: _assert_ticket_test_blocks_cover(
                 paths,
+                fragments[0],
                 fragments,
                 label,
             ),
