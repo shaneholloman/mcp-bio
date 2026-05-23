@@ -6,6 +6,14 @@ routed prompts, `suggest` picks a worked-example playbook, and `skill` opens the
 longer guide behind that playbook. The canaries here keep that first-move
 surface focused on real routing behavior instead of incidental copy.
 
+## Discover Request Planning Happens Before Source Calls
+
+`discover` normalizes free text into a request-command seam before OLS4,
+UMLS, or MedlinePlus clients are constructed. That seam records the trimmed
+query, command-versus-alias-fallback mode, OLS4 lookup query, and whether
+MedlinePlus/cache behavior is enabled, so routine tests can prove routing intent
+without depending on a live ontology service.
+
 ## Alias-Like Free Text Still Resolves to Typed Follow-Ups
 
 When the query is a familiar alias rather than a canonical gene symbol,
@@ -68,11 +76,13 @@ fi
 ### MEF2 relational query
 
 Ticket 371 identified this live OLS4 discover path as a request-contract risk;
-routine coverage for the MEF2 relational redirect is now restored through a Rust
-fixture-backed request-plan test. OLS4 search construction is asserted by
-`OlsSearchRequestPlan`, and fixture hits prove the router redirects to
-`search all --keyword` when only weak general hits remain. Any live OLS4 upstream
-probe belongs in a release/live-smoke lane, not routine `make spec-pr`.
+routine coverage for the MEF2 relational redirect is now restored through Rust
+fixture-backed request-command and request-plan tests. The `DiscoverRequest`
+seam records command-mode routing before clients are constructed,
+`OlsSearchRequestPlan` asserts OLS4 search construction, and fixture hits prove
+the router redirects to `search all --keyword` when only weak general hits
+remain. Any live OLS4 upstream probe belongs in a release/live-smoke lane, not
+routine `make spec-pr`.
 
 ## No-Match Discover Queries Fall Back to Article Search
 

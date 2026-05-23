@@ -302,6 +302,164 @@ def _assert_struct_fields(block: str, fields: tuple[str, ...], context: str) -> 
     assert not missing, f"{context} is missing required request-plan fields: {missing}"
 
 
+def _assert_request_used_before_marker(
+    path: str,
+    fn_name: str,
+    request_name: str,
+    marker: str,
+    context: str,
+) -> None:
+    block = _rust_function_block(path, fn_name)
+    assert marker in block, f"{context} must still execute through {marker!r}"
+    before_marker = block.split(marker, 1)[0]
+    assert request_name in before_marker, (
+        f"{context} must build and consume {request_name} before {marker!r}, otherwise the "
+        "request-command seam cannot prove user intent before network execution"
+    )
+
+
+def test_ticket_375_request_command_seams_capture_user_intent_before_network_execution() -> None:
+    failures: list[str] = []
+
+    def check(label: str, assertion) -> None:
+        try:
+            assertion()
+        except AssertionError as exc:
+            failures.append(f"{label}: {exc}")
+
+    check(
+        "DiscoverRequest struct fields",
+        lambda: _assert_struct_fields(
+            _rust_struct_block("src/entities/discover.rs", "DiscoverRequest"),
+            ("query", "mode", "ols_query", "medlineplus_enabled", "no_cache"),
+            "DiscoverRequest",
+        ),
+    )
+    check(
+        "discover request consumed before OLS4 client construction",
+        lambda: _assert_request_used_before_marker(
+            "src/entities/discover.rs",
+            "resolve_query",
+            "DiscoverRequest",
+            "OlsClient::new()",
+            "discover resolve_query",
+        ),
+    )
+
+    check(
+        "DiseaseSearchRequest struct fields",
+        lambda: _assert_struct_fields(
+            _rust_struct_block("src/entities/disease/search.rs", "DiseaseSearchRequest"),
+            (
+                "query",
+                "source",
+                "inheritance",
+                "phenotype",
+                "onset",
+                "limit",
+                "offset",
+                "fetch_size",
+                "resolver_queries",
+                "prefer_doid",
+            ),
+            "DiseaseSearchRequest",
+        ),
+    )
+    check(
+        "disease search request consumed before MyDisease client construction",
+        lambda: _assert_request_used_before_marker(
+            "src/entities/disease/search.rs",
+            "search_page",
+            "DiseaseSearchRequest",
+            "MyDiseaseClient::new()",
+            "disease search_page",
+        ),
+    )
+
+    check(
+        "DiseaseFallbackRequest struct fields",
+        lambda: _assert_struct_fields(
+            _rust_struct_block("src/entities/disease/fallback.rs", "DiseaseFallbackRequest"),
+            (
+                "query",
+                "limit",
+                "offset",
+                "resolver_queries",
+                "skip_reason",
+                "discover_mode",
+                "prefer_doid",
+            ),
+            "DiseaseFallbackRequest",
+        ),
+    )
+    check(
+        "disease fallback request consumed before discover alias fallback execution",
+        lambda: _assert_request_used_before_marker(
+            "src/entities/disease/fallback.rs",
+            "fallback_search_page",
+            "DiseaseFallbackRequest",
+            "discover::resolve_query",
+            "disease fallback_search_page",
+        ),
+    )
+    check(
+        "disease fallback request consumed before MyDisease client construction",
+        lambda: _assert_request_used_before_marker(
+            "src/entities/disease/fallback.rs",
+            "fallback_search_page",
+            "DiseaseFallbackRequest",
+            "MyDiseaseClient::new()",
+            "disease fallback_search_page",
+        ),
+    )
+    check(
+        "disease CLI still owns no-fallback gating",
+        lambda: _assert_contains_all(
+            _rust_function_block("src/cli/disease/dispatch.rs", "handle_search"),
+            ("!args.no_fallback", "fallback_search_page"),
+            "disease CLI fallback gate",
+        ),
+    )
+
+    check(
+        "ArticleSearchRequest struct fields",
+        lambda: _assert_struct_fields(
+            _rust_struct_block("src/cli/article/dispatch.rs", "ArticleSearchRequest"),
+            (
+                "filters",
+                "source_filter",
+                "limit",
+                "offset",
+                "sort",
+                "ranking",
+                "backend_plan",
+                "exact_keyword_lookup",
+            ),
+            "ArticleSearchRequest",
+        ),
+    )
+    check(
+        "article request consumed before article search execution",
+        lambda: _assert_request_used_before_marker(
+            "src/cli/article/dispatch.rs",
+            "handle_search",
+            "ArticleSearchRequest",
+            "entities::article::search_page",
+            "article handle_search",
+        ),
+    )
+    check(
+        "article request reuses BackendPlan planner",
+        lambda: _assert_contains_all(
+            _read_repo("src/cli/article/dispatch.rs"),
+            ("ArticleSearchRequest", "plan_backends("),
+            "article request-command seam",
+        ),
+    )
+
+    assert not failures, "ticket 375 request-command seam contract failures:\n" + "\n".join(failures)
+
+
 def test_ticket_374_ols4_search_request_plan_contract_is_source_local() -> None:
     plan_struct = _rust_struct_block("src/sources/ols4.rs", "OlsSearchRequestPlan")
     plan_builder = _rust_function_block("src/sources/ols4.rs", "search_request_plan")
