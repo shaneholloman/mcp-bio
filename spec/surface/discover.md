@@ -67,16 +67,11 @@ fi
 
 ### MEF2 relational query
 
-```bash
-out="$(../../tools/biomcp-ci discover "genes regulated by MEF2 in the heart")"
-echo "$out" | mustmatch like "# Discover: genes regulated by MEF2 in the heart"
-echo "$out" | mustmatch like '`discover` resolves single entities. For relational questions, try: biomcp search all --keyword "genes regulated by MEF2 in the heart"'
-echo "$out" | mustmatch like '`biomcp search all --keyword "genes regulated by MEF2 in the heart"`'
-if echo "$out" | grep -Eq "RalA downstream regulated genes|Metastatic Carcinoma in the Heart"; then
-  echo "$out"
-  exit 1
-fi
-```
+Quarantined from routine executable specs by ticket 372 because ticket 371's
+request-contract strategy identified this live OLS4 discover path as a recent
+unrelated March blocker. Restore this behavior as a fixture-backed router
+contract or explicit release/live-smoke canary, not as a routine `make spec-pr`
+live-source dependency.
 
 ## No-Match Discover Queries Fall Back to Article Search
 

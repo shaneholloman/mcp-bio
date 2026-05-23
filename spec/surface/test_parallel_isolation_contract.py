@@ -59,6 +59,25 @@ def _markdown_h2_headings(path: str) -> set[str]:
     return set(re.findall(r"^##\s+(.+?)\s*$", _read_repo(path), flags=re.MULTILINE))
 
 
+def _markdown_heading_body(path: str, level: int, heading: str) -> str:
+    text = _read_repo(path)
+    marker = f"{'#' * level} {heading}"
+    match = re.search(rf"^{re.escape(marker)}\s*$", text, flags=re.MULTILINE)
+    assert match is not None, f"missing heading {marker!r} in {path}"
+    end_match = re.search(rf"^#{{1,{level}}}\s+", text[match.end() :], flags=re.MULTILINE)
+    end = len(text) if end_match is None else match.end() + end_match.start()
+    return text[match.end() : end]
+
+
+def _non_skipped_bash_blocks(markdown: str) -> list[str]:
+    blocks: list[str] = []
+    for match in re.finditer(r"^```bash([^`\n]*)\n(.*?)^```", markdown, flags=re.MULTILINE | re.DOTALL):
+        fence_tokens = match.group(1).split()
+        if "skip" not in fence_tokens:
+            blocks.append(match.group(2))
+    return blocks
+
+
 def _assert_make_target_serializes_spec_path(target_name: str, block: str, path: str) -> None:
     assert "$(SPEC_XDIST_ARGS)" in block, f"{target_name} should keep its main parallel xdist leg"
     assert f"--deselect {path}" in block, (
@@ -168,6 +187,46 @@ def test_diagnostic_regulatory_contract_uses_private_openfda_cache() -> None:
         "parallelism cannot replay a different PMA/510(k) response into this alias-dedupe "
         "assertion"
     )
+
+
+def test_ticket_372_quarantines_known_routine_gate_blockers() -> None:
+    quarantined_sections = (
+        (
+            "spec/entity/disease.md",
+            2,
+            "Synonym Rescue",
+            ("ticket 371", "fixture-backed", "release/live-smoke"),
+        ),
+        (
+            "spec/surface/discover.md",
+            3,
+            "MEF2 relational query",
+            ("ticket 371", "fixture-backed", "release/live-smoke"),
+        ),
+        (
+            "spec/entity/gene.md",
+            2,
+            "All-Section Warm Budget",
+            ("ticket 371", "benchmark/ratchet", "explicit performance"),
+        ),
+    )
+
+    for path, level, heading, required_fragments in quarantined_sections:
+        section = _markdown_heading_body(path, level, heading)
+        assert not _non_skipped_bash_blocks(section), (
+            f"{path}::{heading} must stay out of routine executable specs until it has "
+            "deterministic request-contract coverage, a benchmark/ratchet, or an explicit "
+            "release/live-smoke/performance lane"
+        )
+        section_lower = section.lower()
+        for fragment in required_fragments:
+            assert fragment in section_lower
+
+    timings = _read_repo("spec/README-timings.md").lower()
+    assert "spec/entity/gene.md::all-section warm budget" in timings
+    assert "quarantined from routine `make spec-pr` by ticket 372" in timings
+    assert "benchmark/ratchet" in timings
+    assert "performance lane" in timings
 
 
 def test_protein_complexes_spec_lane_leaves_the_parallel_xdist_pool() -> None:

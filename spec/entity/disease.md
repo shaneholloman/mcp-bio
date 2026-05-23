@@ -19,14 +19,11 @@ echo "$out" | mustmatch like "| ID | Name | Synonyms |"
 
 ## Synonym Rescue
 
-Common synonym phrasing should resolve through the discover-plus-crosswalk path
-instead of falling back to a dead-end “no diseases found” message.
-
-```bash
-out="$(../../tools/biomcp-ci search disease 'Arnold Chiari syndrome' --limit 3)"
-echo "$out" | mustmatch like "Resolved via discover + crosswalk"
-echo "$out" | mustmatch like "MONDO:0000115"
-```
+Quarantined from routine executable specs by ticket 372 because ticket 371's
+request-contract strategy identified this live OLS4/MyDisease path as a recent
+unrelated March blocker. Restore this behavior as a fixture-backed
+request-contract or explicit release/live-smoke canary, not as a routine
+`make spec-pr` live-source dependency.
 
 ## Canonical Disease Card
 
