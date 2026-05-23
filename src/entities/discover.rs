@@ -2732,6 +2732,15 @@ mod tests {
     #[test]
     fn relational_mef2_query_redirects_when_only_weak_general_hits_remain() {
         let query = "genes regulated by MEF2 in the heart";
+        let ols_client =
+            crate::sources::ols4::OlsClient::new_for_test("http://127.0.0.1/ols4".into())
+                .expect("ols client");
+        let ols_plan: crate::sources::ols4::OlsSearchRequestPlan =
+            ols_client.search_request_plan(query);
+
+        assert_eq!(ols_plan.path, Some("/api/search"));
+        assert_eq!(ols_plan.query_params[0], ("q", query.to_string()));
+
         let result = build_result(
             query,
             &[

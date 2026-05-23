@@ -9,6 +9,18 @@ const OLS4_API: &str = "ols4";
 const OLS4_BASE_ENV: &str = "BIOMCP_OLS4_BASE";
 const OLS4_ONTOLOGIES: &str = "hgnc,mesh,mondo,doid,hp,go,chebi,dron,ncit,ordo,wikipathways,so";
 
+#[allow(dead_code)]
+pub struct OlsSearchRequestPlan {
+    pub method: &'static str,
+    pub path: Option<&'static str>,
+    pub query_params: Vec<(&'static str, String)>,
+    pub source_label: &'static str,
+    pub base_url: String,
+    pub cache_mode: &'static str,
+    pub status_expectation: &'static str,
+    pub content_type_expectation: &'static str,
+}
+
 pub struct OlsClient {
     client: reqwest_middleware::ClientWithMiddleware,
     base: Cow<'static, str>,
@@ -23,7 +35,7 @@ impl OlsClient {
     }
 
     #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
+    pub(crate) fn new_for_test(base: String) -> Result<Self, BioMcpError> {
         Ok(Self {
             client: crate::sources::test_client()?,
             base: Cow::Owned(base),
@@ -38,19 +50,37 @@ impl OlsClient {
         )
     }
 
-    pub async fn search(&self, query: &str) -> Result<Vec<OlsDoc>, BioMcpError> {
+    pub fn search_request_plan(&self, query: &str) -> OlsSearchRequestPlan {
         let query = query.trim();
-        if query.is_empty() {
-            return Ok(Vec::new());
+        OlsSearchRequestPlan {
+            method: "GET",
+            path: (!query.is_empty()).then_some("/api/search"),
+            query_params: if query.is_empty() {
+                Vec::new()
+            } else {
+                vec![
+                    ("q", query.to_string()),
+                    ("rows", "10".to_string()),
+                    ("groupField", "iri".to_string()),
+                    ("ontology", OLS4_ONTOLOGIES.to_string()),
+                ]
+            },
+            source_label: "ols4",
+            base_url: self.base.to_string(),
+            cache_mode: "default",
+            status_expectation: "non-2xx => Api",
+            content_type_expectation: "json",
         }
+    }
 
-        let resp = crate::sources::apply_cache_mode(self.client.get(self.endpoint("api/search")))
-            .query(&[
-                ("q", query),
-                ("rows", "10"),
-                ("groupField", "iri"),
-                ("ontology", OLS4_ONTOLOGIES),
-            ])
+    pub async fn search(&self, query: &str) -> Result<Vec<OlsDoc>, BioMcpError> {
+        let plan = self.search_request_plan(query);
+        let Some(path) = plan.path else {
+            return Ok(Vec::new());
+        };
+
+        let resp = crate::sources::apply_cache_mode(self.client.get(self.endpoint(path)))
+            .query(&plan.query_params)
             .send()
             .await?;
         let status = resp.status();
@@ -117,7 +147,40 @@ mod tests {
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    use super::OlsClient;
+    use super::{OLS4_ONTOLOGIES, OlsClient};
+
+    #[test]
+    fn search_request_plan_exposes_canonical_query_contract() {
+        let client = OlsClient::new_for_test("http://127.0.0.1/base".into()).expect("client");
+        let plan = client.search_request_plan(" ERBB1 ");
+
+        assert_eq!(plan.method, "GET");
+        assert_eq!(plan.path, Some("/api/search"));
+        assert_eq!(plan.source_label, "ols4");
+        assert_eq!(plan.base_url, "http://127.0.0.1/base");
+        assert_eq!(plan.cache_mode, "default");
+        assert_eq!(plan.status_expectation, "non-2xx => Api");
+        assert_eq!(plan.content_type_expectation, "json");
+        assert_eq!(
+            plan.query_params,
+            vec![
+                ("q", "ERBB1".to_string()),
+                ("rows", "10".to_string()),
+                ("groupField", "iri".to_string()),
+                ("ontology", OLS4_ONTOLOGIES.to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn search_request_plan_keeps_empty_query_as_no_request() {
+        let client = OlsClient::new_for_test("http://127.0.0.1".into()).expect("client");
+        let plan = client.search_request_plan("   ");
+
+        assert_eq!(plan.method, "GET");
+        assert_eq!(plan.path, None);
+        assert!(plan.query_params.is_empty());
+    }
 
     #[tokio::test]
     async fn search_uses_required_query_contract() {

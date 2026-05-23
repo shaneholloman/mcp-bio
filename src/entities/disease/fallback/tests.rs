@@ -3,6 +3,21 @@ use super::*;
 
 #[test]
 fn fallback_candidates_rank_specific_crosswalkable_disease_ahead_of_generic_rows() {
+    let ols_client = crate::sources::ols4::OlsClient::new_for_test("http://127.0.0.1/ols4".into())
+        .expect("ols client");
+    let ols_plan: crate::sources::ols4::OlsSearchRequestPlan =
+        ols_client.search_request_plan("Arnold Chiari syndrome");
+    let mydisease_client =
+        crate::sources::mydisease::MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into())
+            .expect("mydisease client");
+    let xref_plan: crate::sources::mydisease::MyDiseaseXrefLookupRequestPlan = mydisease_client
+        .lookup_disease_by_xref_request_plan("MESH", "D001139", 5)
+        .expect("MESH xref request plan");
+
+    assert_eq!(ols_plan.path, Some("/api/search"));
+    assert_eq!(xref_plan.path, "/query");
+    assert!(xref_plan.query_params[0].1.contains("D001139"));
+
     let candidates = rank_disease_fallback_candidates(
         "Arnold Chiari syndrome",
         &[
