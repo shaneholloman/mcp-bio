@@ -413,23 +413,67 @@ mod tests {
     }
 
     #[test]
-    fn xref_request_plan_exposes_crosswalk_shape() {
+    fn query_request_plan_exposes_id_lookup_shape() {
         let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
         let plan = client
+            .query_request_plan("MONDO:0005105", 1, 0, None, None, None, None)
+            .unwrap();
+
+        assert_eq!(
+            plan.query_params[0],
+            (
+                "q",
+                "(_id:\"MONDO\\:0005105\" OR disease_ontology.doid:\"MONDO\\:0005105\")"
+                    .to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn xref_request_plan_exposes_crosswalk_shape() {
+        let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
+        let mesh_plan = client
+            .lookup_disease_by_xref_request_plan("mesh", "D008545", 5)
+            .unwrap();
+        let omim_plan = client
+            .lookup_disease_by_xref_request_plan("omim", "154700", 5)
+            .unwrap();
+        let icd10_plan = client
             .lookup_disease_by_xref_request_plan("icd10cm", "Q07.0", 5)
             .unwrap();
 
-        assert_eq!(plan.method, "GET");
-        assert_eq!(plan.path, "/query");
-        assert_eq!(plan.cache_mode, "default");
-        assert_eq!(plan.status_expectation, "non-2xx => Api");
-        assert_eq!(plan.query_params[1], ("size", "5".to_string()));
-        assert_eq!(plan.query_params[2], ("from", "0".to_string()));
+        assert_eq!(icd10_plan.method, "GET");
+        assert_eq!(icd10_plan.path, "/query");
+        assert_eq!(icd10_plan.cache_mode, "default");
+        assert_eq!(icd10_plan.status_expectation, "non-2xx => Api");
+        assert_eq!(icd10_plan.query_params[1], ("size", "5".to_string()));
+        assert_eq!(icd10_plan.query_params[2], ("from", "0".to_string()));
         assert_eq!(
-            plan.query_params[3],
+            icd10_plan.query_params[3],
             ("fields", MYDISEASE_SEARCH_FIELDS.to_string())
         );
-        assert!(plan.query_params[0].1.contains("ICD10:Q07.0"));
+        assert_eq!(
+            mesh_plan.query_params[0],
+            (
+                "q",
+                "(mondo.xrefs.mesh:\"D008545\" OR disease_ontology.xrefs.mesh:\"D008545\" OR umls.mesh:\"D008545\")".to_string()
+            )
+        );
+        assert_eq!(
+            omim_plan.query_params[0],
+            (
+                "q",
+                "(mondo.xrefs.omim:\"154700\" OR disease_ontology.xrefs.omim:\"154700\")"
+                    .to_string()
+            )
+        );
+        assert_eq!(
+            icd10_plan.query_params[0],
+            (
+                "q",
+                "(mondo.xrefs.icd10:\"Q07.0\" OR mondo.xrefs.icd10:\"ICD10:Q07.0\" OR disease_ontology.xrefs.icd10:\"Q07.0\" OR disease_ontology.xrefs.icd10:\"ICD10:Q07.0\" OR umls.icd10am:\"Q07.0\" OR umls.icd10am:\"ICD10:Q07.0\")".to_string()
+            )
+        );
     }
 
     #[test]
@@ -468,6 +512,14 @@ mod tests {
         ));
         assert!(matches!(
             client.query_request_plan("melanoma", 40, 9_980, None, None, None, None),
+            Err(BioMcpError::InvalidArgument(_))
+        ));
+        assert!(matches!(
+            client.lookup_disease_by_xref_request_plan("mesh", "D008545", 10_001),
+            Err(BioMcpError::InvalidArgument(_))
+        ));
+        assert!(matches!(
+            client.get_request_plan(&"x".repeat(129)),
             Err(BioMcpError::InvalidArgument(_))
         ));
     }
