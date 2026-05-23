@@ -69,6 +69,14 @@ PROOF_PATTERNS = {
     "live_smoke_canary": re.compile(r"tools/biomcp-ci (search|get|discover|variant normalize)", re.I),
 }
 
+STRUCT_RE = re.compile(r"(?:pub\([^)]*\)\s+|pub\s+)?struct\s+(\w+)")
+ENUM_RE = re.compile(r"(?:pub\([^)]*\)\s+|pub\s+)?enum\s+(\w+)")
+PLAN_FN_RE = re.compile(r"fn\s+(\w*plan\w*)", re.I)
+DIRECT_ENTITY_CALL_RE = re.compile(r"crate::entities::[a-z_]+::")
+DIRECT_SOURCE_CALL_RE = re.compile(r"crate::sources::[a-z_]+::")
+FAILED_SECTION_RE = re.compile(r"FAILED\s+((?:spec/)[^\n]+?)(?:\s+-|\n)")
+PASSED_TIMINGS_RE = re.compile(r"=+\s*(\d+) passed in ([0-9.]+)s")
+
 @dataclass
 class SpecSection:
     path: str
@@ -179,13 +187,13 @@ def plan_seam_inventory() -> list[dict[str, Any]]:
         rows.append(
             {
                 "path": rel(path),
-                "structs": re.findall(r"(?:pub\([^)]*\)\s+|pub\s+)?struct\s+(\w+)", text),
-                "enums": re.findall(r"(?:pub\([^)]*\)\s+|pub\s+)?enum\s+(\w+)", text),
-                "functions_with_plan_name": sorted(set(re.findall(r"fn\s+(\w*plan\w*)", text, flags=re.I))),
+                "structs": STRUCT_RE.findall(text),
+                "enums": ENUM_RE.findall(text),
+                "functions_with_plan_name": sorted(set(PLAN_FN_RE.findall(text))),
                 "filter_struct_mentions": text.count("Filters") + text.count("SearchFilters"),
                 "debug_plan_mentions": text.count("DebugPlan"),
-                "direct_entity_calls": len(re.findall(r"crate::entities::[a-z_]+::", text)),
-                "direct_source_calls": len(re.findall(r"crate::sources::[a-z_]+::", text)),
+                "direct_entity_calls": len(DIRECT_ENTITY_CALL_RE.findall(text)),
+                "direct_source_calls": len(DIRECT_SOURCE_CALL_RE.findall(text)),
             }
         )
     return rows
@@ -203,10 +211,10 @@ def march_preflight_evidence() -> list[dict[str, Any]]:
         ]
         failed.extend(
             match.strip()
-            for match in re.findall(r"FAILED\s+((?:spec/)[^\n]+?)(?:\s+-|\n)", output)
+            for match in FAILED_SECTION_RE.findall(output)
             if match.strip() not in failed
         )
-        passed_timings = re.findall(r"=+\s*(\d+) passed in ([0-9.]+)s", output)
+        passed_timings = PASSED_TIMINGS_RE.findall(output)
         rows.append(
             {
                 "path": str(path),
