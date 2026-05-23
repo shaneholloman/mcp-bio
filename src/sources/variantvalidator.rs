@@ -40,35 +40,30 @@ impl VariantValidatorClient {
         })
     }
 
-    fn normalize_url(&self, description: &str) -> Result<reqwest::Url, BioMcpError> {
+    fn normalize_path(description: &str) -> Result<String, BioMcpError> {
         let mut url =
-            reqwest::Url::parse(self.base.as_ref().trim_end_matches('/')).map_err(|err| {
-                BioMcpError::Api {
-                    api: VARIANTVALIDATOR_API.to_string(),
-                    message: err.to_string(),
-                }
+            reqwest::Url::parse("https://biomcp.local").map_err(|err| BioMcpError::Api {
+                api: VARIANTVALIDATOR_API.to_string(),
+                message: err.to_string(),
             })?;
         url.path_segments_mut()
             .map_err(|_| BioMcpError::Api {
                 api: VARIANTVALIDATOR_API.to_string(),
-                message: "invalid VariantValidator base URL".to_string(),
+                message: "invalid VariantValidator request path".to_string(),
             })?
-            .pop_if_empty()
             .push("VariantValidator")
             .push("variantvalidator")
             .push("GRCh38")
             .push(description)
             .push("all");
-        url.query_pairs_mut()
-            .append_pair("content-type", "application/json");
-        Ok(url)
+        Ok(url.path().to_string())
     }
 
     fn endpoint_url(&self, path: &str) -> Result<reqwest::Url, BioMcpError> {
         reqwest::Url::parse(&format!(
-            "{}{}",
+            "{}/{}",
             self.base.as_ref().trim_end_matches('/'),
-            path
+            path.trim_start_matches('/')
         ))
         .map_err(|err| BioMcpError::Api {
             api: VARIANTVALIDATOR_API.to_string(),
@@ -80,21 +75,12 @@ impl VariantValidatorClient {
         &self,
         description: &str,
     ) -> Result<VariantValidatorNormalizeRequestPlan, BioMcpError> {
-        let url = self.normalize_url(description)?;
-        debug_assert!(
-            url.path()
-                .starts_with("/VariantValidator/variantvalidator/GRCh38/")
-        );
+        let path = Self::normalize_path(description)?;
+        debug_assert!(path.starts_with("/VariantValidator/variantvalidator/GRCh38/"));
         Ok(VariantValidatorNormalizeRequestPlan {
             method: "GET",
-            path: url.path().to_string(),
-            query_params: url
-                .query_pairs()
-                .map(|(name, value)| match name.as_ref() {
-                    "content-type" => ("content-type", value.into_owned()),
-                    _ => ("", value.into_owned()),
-                })
-                .collect(),
+            path,
+            query_params: vec![("content-type", "application/json".to_string())],
             cache_mode: "default",
             status_expectation: "400/422 invalid_input; 404 not_found; other non-2xx service_error",
             content_type_expectation: "application/json",
@@ -291,6 +277,13 @@ mod tests {
             plan.query_params
                 .contains(&("content-type", "application/json".to_string()))
         );
+        let encoded = client
+            .normalize_request_plan("NM_004448.2:c.829G>T")
+            .expect("encoded plan");
+        assert_eq!(
+            encoded.path,
+            "/VariantValidator/variantvalidator/GRCh38/NM_004448.2:c.829G%3ET/all"
+        );
 
         let value = serde_json::json!({
             "NM_000248.3:c.135del": {
@@ -339,7 +332,7 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = VariantValidatorClient::new_for_test(server.uri())
+        let result = VariantValidatorClient::new_for_test(format!("{}/api", server.uri()))
             .unwrap()
             .normalize("NM_004448.2:c.829G>T")
             .await
@@ -348,7 +341,7 @@ mod tests {
         let requests = server.received_requests().await.unwrap();
         assert_eq!(
             requests[0].url.path(),
-            "/VariantValidator/variantvalidator/GRCh38/NM_004448.2:c.829G%3ET/all"
+            "/api/VariantValidator/variantvalidator/GRCh38/NM_004448.2:c.829G%3ET/all"
         );
         assert_eq!(result.status, VariantNormalizationStatus::Success);
         assert!(result.warnings[0].contains("TranscriptVersionWarning"));
