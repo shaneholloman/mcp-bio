@@ -1,10 +1,89 @@
 //! Article CLI filter, ranking, and debug tests.
 
 use super::super::dispatch::{
-    article_debug_filters, article_query_summary, build_article_debug_plan,
+    article_debug_filters, article_query_summary, article_search_request, build_article_debug_plan,
     truncate_article_annotations,
 };
 use crate::cli::PaginationMeta;
+
+fn default_article_search_args() -> super::super::ArticleSearchArgs {
+    super::super::ArticleSearchArgs {
+        gene: None,
+        disease: Vec::new(),
+        drug: Vec::new(),
+        author: Vec::new(),
+        keyword: Vec::new(),
+        positional_query: None,
+        date_from: None,
+        date_to: None,
+        year_min: None,
+        year_max: None,
+        article_type: None,
+        journal: Vec::new(),
+        open_access: false,
+        no_preprints: false,
+        exclude_retracted: false,
+        include_retracted: false,
+        sort: "relevance".into(),
+        ranking_mode: None,
+        weight_semantic: None,
+        weight_lexical: None,
+        weight_citations: None,
+        weight_position: None,
+        source: "all".into(),
+        max_per_source: None,
+        session: None,
+        limit: 10,
+        offset: 0,
+        debug_plan: false,
+    }
+}
+
+#[test]
+fn article_search_request_records_normalized_cli_intent_and_backend_plan() {
+    let mut args = default_article_search_args();
+    args.gene = Some("BRAF".into());
+    args.disease = vec!["melanoma".into()];
+    args.keyword = vec!["targeted therapy".into()];
+    args.source = "pubmed".into();
+    args.sort = "date".into();
+    args.limit = 5;
+    args.offset = 2;
+    args.session = Some("caller-token".into());
+
+    let request = article_search_request(args).expect("request");
+
+    assert_eq!(request.filters.gene.as_deref(), Some("BRAF"));
+    assert_eq!(request.filters.disease.as_deref(), Some("melanoma"));
+    assert_eq!(request.filters.keyword.as_deref(), Some("targeted therapy"));
+    assert_eq!(
+        request.source_filter,
+        crate::entities::article::ArticleSourceFilter::PubMed
+    );
+    assert_eq!(request.limit, 5);
+    assert_eq!(request.offset, 2);
+    assert_eq!(request.sort, crate::entities::article::ArticleSort::Date);
+    assert_eq!(request.filters.sort, request.sort);
+    assert_eq!(
+        request.backend_plan,
+        crate::entities::article::BackendPlan::PubMedOnly
+    );
+    assert!(request.exact_keyword_lookup.is_none());
+}
+
+#[test]
+fn article_search_request_records_exact_keyword_lookup_intent() {
+    let mut args = default_article_search_args();
+    args.keyword = vec!["Gleevec".into()];
+
+    let request = article_search_request(args).expect("request");
+
+    assert_eq!(request.exact_keyword_lookup.as_deref(), Some("Gleevec"));
+    assert_eq!(
+        request.backend_plan,
+        crate::entities::article::BackendPlan::Both
+    );
+}
 
 #[test]
 fn build_article_debug_plan_includes_article_type_limitation_note() {

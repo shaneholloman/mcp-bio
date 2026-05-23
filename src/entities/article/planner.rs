@@ -6,7 +6,7 @@ use super::filters::{has_article_type_filter, has_keyword_query};
 use super::{ArticleSearchFilters, ArticleSearchResult, ArticleSource, ArticleSourceFilter};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum BackendPlan {
+pub(crate) enum BackendPlan {
     EuropeOnly,
     PubTatorOnly,
     PubMedOnly,
@@ -73,7 +73,7 @@ fn litsense2_source_filter_error(filters: &ArticleSearchFilters) -> BioMcpError 
     unreachable!("litsense2_source_filter_error called with compatible filters");
 }
 
-pub(super) fn plan_backends(
+pub(crate) fn plan_backends(
     filters: &ArticleSearchFilters,
     source: ArticleSourceFilter,
 ) -> Result<BackendPlan, BioMcpError> {

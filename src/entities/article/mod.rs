@@ -20,8 +20,8 @@ pub use self::detail::get;
 pub use self::graph::{citations, recommendations, references};
 #[allow(unused_imports)]
 pub(crate) use self::planner::{
-    ArticleSearchDebugSummary, article_type_limitation_note, litsense2_search_enabled,
-    semantic_scholar_search_enabled, summarize_debug_plan,
+    ArticleSearchDebugSummary, BackendPlan, article_type_limitation_note, litsense2_search_enabled,
+    plan_backends, semantic_scholar_search_enabled, summarize_debug_plan,
 };
 #[allow(unused_imports)]
 pub(crate) use self::ranking::{article_effective_ranking_mode, article_relevance_ranking_policy};
