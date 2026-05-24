@@ -236,8 +236,12 @@ def contract_numbers(by_family: dict[str, dict[str, Any]]) -> dict[str, Any]:
 
 
 def compare(baseline: dict[str, Any], current: dict[str, Any]) -> list[dict[str, Any]]:
-    base_rows = {(r["case"], r["source"]): r for r in source_case_rows(baseline)}
-    cur_rows = {(r["case"], r["source"]): r for r in source_case_rows(current)}
+    return compare_rows(source_case_rows(baseline), source_case_rows(current))
+
+
+def compare_rows(baseline_rows: list[dict[str, Any]], current_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    base_rows = {(r["case"], r["source"]): r for r in baseline_rows}
+    cur_rows = {(r["case"], r["source"]): r for r in current_rows}
     out: list[dict[str, Any]] = []
     for key in sorted(set(base_rows) | set(cur_rows)):
         b = base_rows.get(key)
@@ -314,7 +318,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.baseline or args.comparison:
         if not (args.baseline and args.comparison):
             parser.error("--baseline and --comparison must be provided together")
-        comparison = compare(load_json(args.baseline), data)
+        baseline_data = load_json(args.baseline)
+        comparison = compare_rows(source_case_rows(baseline_data), summary["source_case_rows"])
         write_csv(args.comparison, comparison)
 
     print(f"wrote {args.out}")
