@@ -51,9 +51,9 @@ up for redesign in this document:
 
 ### Request-contract reset overlay
 
-Ticket 373 extends the spec-v2 target with a request-contract testing reset. The current v2 corpus still contains a single active canary lane and several live/cache-backed sections; the target is to keep the entity/surface layout but make routine specs fixture-backed/static by default. Live public-upstream checks move to an explicit release/live-smoke lane only after CLI request seams, source request plans, fixture response/status mapping, and renderer/envelope contracts exist for the affected behavior.
+Ticket 373 extends the spec-v2 target with a request-contract testing reset. The v2 corpus still contains full canary targets and several live/cache-backed sections for explicit debugging/operator confidence, while routine specs are now fixture-backed/static by default through `make spec-contracts`. Ticket 378 moved public-upstream checks out of ordinary March proof and into the explicit `make release-live-smoke` lane after the CLI request seams, source request plans, fixture response/status mapping, and renderer/envelope contracts landed for the affected behavior.
 
-See [Request-contract test architecture target](request-contract-test-architecture.md) for the concrete seams and migration order. Until those follow-up tickets land, the current serialized OLS4 disease/discover partition remains the implemented contract and FAQ #14 ratchet.
+See [Request-contract test architecture target](request-contract-test-architecture.md) for the concrete seams and migration order. The serialized OLS4 disease/discover partition remains executable for the legacy `make spec`/`make spec-pr` canary targets, while routine proof no longer depends on that partition and FAQ #14 is covered by the deterministic routine/live-smoke split.
 
 ### Layout and ownership
 
