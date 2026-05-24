@@ -1,0 +1,959 @@
+{
+  "articles": [
+    {
+      "input": {
+        "doi": null,
+        "pmcid": null,
+        "pmid": "27083046",
+        "slug": "jats_verified_pmid",
+        "title_query": "Synaptotagmin-1 C2B domain interacts simultaneously",
+        "why": "Known BioMCP JATS verification article from prior art."
+      },
+      "resolved_ids": {
+        "doi": "10.7554/elife.14211",
+        "pmcid": "PMC4878868",
+        "pmid": "27083046"
+      },
+      "sources": {
+        "current_europe_pmc_fullTextXML_by_pmcid": {
+          "abstract_chars": 852,
+          "bytes": 206254,
+          "content_type": "application/xml",
+          "elapsed_ms": 792,
+          "error": null,
+          "format": "jats_xml",
+          "has_abstract": true,
+          "has_title": true,
+          "ok": true,
+          "paragraph_count": 212,
+          "parse_ok": true,
+          "reference_count": 48,
+          "section_count": 21,
+          "section_title_count": 43,
+          "status": 200,
+          "table_count": 0,
+          "title_sample": "Synaptotagmin-1 C2B domain interacts simultaneously with SNAREs and membranes to promote membrane fusion",
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4878868/fullTextXML"
+        },
+        "current_europe_pmc_fullTextXML_by_pmid": {
+          "bytes": 0,
+          "content_type": null,
+          "elapsed_ms": 442,
+          "error": "",
+          "format": "jats_xml",
+          "ok": false,
+          "parse_ok": false,
+          "status": 404,
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/27083046/fullTextXML"
+        },
+        "europe_pmc_core_search": {
+          "bytes": 6683,
+          "content_type": "application/json;charset=UTF-8",
+          "elapsed_ms": 408,
+          "error": null,
+          "found": true,
+          "ok": true,
+          "query": "EXT_ID:27083046 AND SRC:MED",
+          "result": {
+            "doi": "10.7554/elife.14211",
+            "fullTextIdList": {
+              "fullTextId": [
+                "PMC4878868"
+              ]
+            },
+            "fullTextUrlList": {
+              "fullTextUrl": [
+                {
+                  "availability": "Subscription required",
+                  "availabilityCode": "S",
+                  "documentStyle": "doi",
+                  "site": "DOI",
+                  "url": "https://doi.org/10.7554/eLife.14211"
+                },
+                {
+                  "availability": "Open access",
+                  "availabilityCode": "OA",
+                  "documentStyle": "html",
+                  "site": "Europe_PMC",
+                  "url": "https://europepmc.org/articles/PMC4878868"
+                },
+                {
+                  "availability": "Open access",
+                  "availabilityCode": "OA",
+                  "documentStyle": "pdf",
+                  "site": "Europe_PMC",
+                  "url": "https://europepmc.org/articles/PMC4878868?pdf=render"
+                }
+              ]
+            },
+            "hasTextMinedTerms": "Y",
+            "isOpenAccess": "Y",
+            "license": "cc by",
+            "pmcid": "PMC4878868",
+            "pmid": "27083046",
+            "title": "Synaptotagmin-1 C2B domain interacts simultaneously with SNAREs and membranes to promote membrane fusion."
+          },
+          "status": 200,
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A27083046+AND+SRC%3AMED&format=json&resultType=core&pageSize=1"
+        },
+        "ncbi_bioc_pmc_by_pmcid": {
+          "annotation_count": 0,
+          "bytes": 182357,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 265,
+          "error": null,
+          "format": "ncbi_bioc_json",
+          "has_abstract": true,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": true,
+          "has_references": true,
+          "has_tables": false,
+          "has_title": true,
+          "licenses": [
+            "CC BY",
+            "This article is distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use and redistribution provided that the original author and source are credited."
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 298,
+          "passage_types": {
+            "abstract": 7,
+            "abstract_title_1": 1,
+            "fig_caption": 29,
+            "fig_title_caption": 15,
+            "footnote": 4,
+            "front": 1,
+            "paragraph": 167,
+            "ref": 48,
+            "title": 3,
+            "title_1": 8,
+            "title_2": 15
+          },
+          "section_type_count": 12,
+          "status": 200,
+          "text_chars": 104931,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/PMC4878868/unicode"
+        },
+        "ncbi_bioc_pmc_by_pmid": {
+          "annotation_count": 0,
+          "bytes": 182357,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 202,
+          "error": null,
+          "format": "ncbi_bioc_json",
+          "has_abstract": true,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": true,
+          "has_references": true,
+          "has_tables": false,
+          "has_title": true,
+          "licenses": [
+            "CC BY",
+            "This article is distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use and redistribution provided that the original author and source are credited."
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 298,
+          "passage_types": {
+            "abstract": 7,
+            "abstract_title_1": 1,
+            "fig_caption": 29,
+            "fig_title_caption": 15,
+            "footnote": 4,
+            "front": 1,
+            "paragraph": 167,
+            "ref": 48,
+            "title": 3,
+            "title_1": 8,
+            "title_2": 15
+          },
+          "section_type_count": 12,
+          "status": 200,
+          "text_chars": 104931,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/27083046/unicode"
+        },
+        "pmc_oa_manifest": {
+          "bytes": 430,
+          "content_type": "text/xml; charset=utf-8",
+          "elapsed_ms": 97,
+          "error": null,
+          "format": "pmc_oa_manifest_xml",
+          "has_license_field": true,
+          "has_pdf": false,
+          "has_tgz": true,
+          "link_formats": [
+            "tgz"
+          ],
+          "links": [
+            {
+              "format": "tgz",
+              "href": "ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_package/95/b2/PMC4878868.tar.gz",
+              "updated": "2023-07-21 02:25:21"
+            }
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "record_attrs": {
+            "citation": "eLife.; 5:e14211",
+            "id": "PMC4878868",
+            "license": "CC BY",
+            "retracted": "no"
+          },
+          "record_found": true,
+          "status": 200,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC4878868"
+        },
+        "pubtator3_biocjson_by_pmcid": {
+          "annotation_count": 0,
+          "bytes": 35,
+          "content_type": "application/json",
+          "document_count": 0,
+          "elapsed_ms": 97,
+          "error": "[\"pmids is a mandatory parameter.\"]",
+          "format": "pubtator3_biocjson_pmcids",
+          "has_abstract": false,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": false,
+          "has_references": false,
+          "has_tables": false,
+          "has_title": false,
+          "licenses": [],
+          "ok": false,
+          "parse_ok": false,
+          "passage_count": 0,
+          "passage_types": {},
+          "section_type_count": 0,
+          "status": 400,
+          "text_chars": 0,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmcids=PMC4878868"
+        },
+        "pubtator3_biocjson_by_pmid": {
+          "annotation_count": 10,
+          "bytes": 4785,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 103,
+          "error": null,
+          "format": "pubtator3_biocjson_pmids",
+          "has_abstract": true,
+          "has_entity_annotations": true,
+          "has_fulltext_signal": false,
+          "has_references": false,
+          "has_tables": false,
+          "has_title": true,
+          "licenses": [],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 2,
+          "passage_types": {
+            "abstract": 1,
+            "title": 1
+          },
+          "section_type_count": 2,
+          "status": 200,
+          "text_chars": 917,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmids=27083046"
+        }
+      }
+    },
+    {
+      "input": {
+        "doi": null,
+        "pmcid": "PMC1790863",
+        "pmid": "17299597",
+        "slug": "ncbi_bioc_sample",
+        "title_query": "Effects of acupuncture on rates of pregnancy",
+        "why": "Official NCBI BioC PMC sample ID, should be in PMC OA BioC."
+      },
+      "resolved_ids": {
+        "doi": "10.1371/journal.pone.0000217",
+        "pmcid": "PMC1790863",
+        "pmid": "17299597"
+      },
+      "sources": {
+        "current_europe_pmc_fullTextXML_by_pmcid": {
+          "abstract_chars": 1246,
+          "bytes": 93402,
+          "content_type": "application/xml",
+          "elapsed_ms": 696,
+          "error": null,
+          "format": "jats_xml",
+          "has_abstract": true,
+          "has_title": true,
+          "ok": true,
+          "paragraph_count": 75,
+          "parse_ok": true,
+          "reference_count": 33,
+          "section_count": 29,
+          "section_title_count": 31,
+          "status": 200,
+          "table_count": 0,
+          "title_sample": "Quantifying Organismal Complexity using a Population Genetic Approach",
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC1790863/fullTextXML"
+        },
+        "current_europe_pmc_fullTextXML_by_pmid": {
+          "bytes": 0,
+          "content_type": null,
+          "elapsed_ms": 451,
+          "error": "",
+          "format": "jats_xml",
+          "ok": false,
+          "parse_ok": false,
+          "status": 404,
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/17299597/fullTextXML"
+        },
+        "europe_pmc_core_search": {
+          "bytes": 6057,
+          "content_type": "application/json;charset=UTF-8",
+          "elapsed_ms": 410,
+          "error": null,
+          "found": true,
+          "ok": true,
+          "query": "EXT_ID:17299597 AND SRC:MED",
+          "result": {
+            "doi": "10.1371/journal.pone.0000217",
+            "fullTextIdList": {
+              "fullTextId": [
+                "PMC1790863"
+              ]
+            },
+            "fullTextUrlList": {
+              "fullTextUrl": [
+                {
+                  "availability": "Open access",
+                  "availabilityCode": "OA",
+                  "documentStyle": "pdf",
+                  "site": "Unpaywall",
+                  "url": "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0000217&type=printable"
+                },
+                {
+                  "availability": "Subscription required",
+                  "availabilityCode": "S",
+                  "documentStyle": "doi",
+                  "site": "DOI",
+                  "url": "https://doi.org/10.1371/journal.pone.0000217"
+                },
+                {
+                  "availability": "Open access",
+                  "availabilityCode": "OA",
+                  "documentStyle": "html",
+                  "site": "Europe_PMC",
+                  "url": "https://europepmc.org/articles/PMC1790863"
+                },
+                {
+                  "availability": "Open access",
+                  "availabilityCode": "OA",
+                  "documentStyle": "pdf",
+                  "site": "Europe_PMC",
+                  "url": "https://europepmc.org/articles/PMC1790863?pdf=render"
+                }
+              ]
+            },
+            "hasTextMinedTerms": "Y",
+            "isOpenAccess": "Y",
+            "license": "cc by",
+            "pmcid": "PMC1790863",
+            "pmid": "17299597",
+            "title": "Quantifying organismal complexity using a population genetic approach."
+          },
+          "status": 200,
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A17299597+AND+SRC%3AMED&format=json&resultType=core&pageSize=1"
+        },
+        "ncbi_bioc_pmc_by_pmcid": {
+          "annotation_count": 0,
+          "bytes": 71513,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 166,
+          "error": null,
+          "format": "ncbi_bioc_json",
+          "has_abstract": true,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": true,
+          "has_references": true,
+          "has_tables": false,
+          "has_title": true,
+          "licenses": [
+            "CC BY",
+            "This is an open-access article distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are properly credited."
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 121,
+          "passage_types": {
+            "abstract": 3,
+            "abstract_title_1": 3,
+            "fig_caption": 3,
+            "fig_title_caption": 3,
+            "footnote": 2,
+            "front": 1,
+            "paragraph": 51,
+            "ref": 33,
+            "title": 1,
+            "title_1": 4,
+            "title_2": 15,
+            "title_3": 2
+          },
+          "section_type_count": 8,
+          "status": 200,
+          "text_chars": 41300,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/PMC1790863/unicode"
+        },
+        "ncbi_bioc_pmc_by_pmid": {
+          "annotation_count": 0,
+          "bytes": 71513,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 165,
+          "error": null,
+          "format": "ncbi_bioc_json",
+          "has_abstract": true,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": true,
+          "has_references": true,
+          "has_tables": false,
+          "has_title": true,
+          "licenses": [
+            "CC BY",
+            "This is an open-access article distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are properly credited."
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 121,
+          "passage_types": {
+            "abstract": 3,
+            "abstract_title_1": 3,
+            "fig_caption": 3,
+            "fig_title_caption": 3,
+            "footnote": 2,
+            "front": 1,
+            "paragraph": 51,
+            "ref": 33,
+            "title": 1,
+            "title_1": 4,
+            "title_2": 15,
+            "title_3": 2
+          },
+          "section_type_count": 8,
+          "status": 200,
+          "text_chars": 41300,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/17299597/unicode"
+        },
+        "pmc_oa_manifest": {
+          "bytes": 446,
+          "content_type": "text/xml; charset=utf-8",
+          "elapsed_ms": 99,
+          "error": null,
+          "format": "pmc_oa_manifest_xml",
+          "has_license_field": true,
+          "has_pdf": false,
+          "has_tgz": true,
+          "link_formats": [
+            "tgz"
+          ],
+          "links": [
+            {
+              "format": "tgz",
+              "href": "ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_package/00/00/PMC1790863.tar.gz",
+              "updated": "2018-02-13 15:09:49"
+            }
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "record_attrs": {
+            "citation": "PLoS One. 2007 Feb 14; 2(2):e217",
+            "id": "PMC1790863",
+            "license": "CC BY",
+            "retracted": "no"
+          },
+          "record_found": true,
+          "status": 200,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC1790863"
+        },
+        "pubtator3_biocjson_by_pmcid": {
+          "annotation_count": 0,
+          "bytes": 35,
+          "content_type": "application/json",
+          "document_count": 0,
+          "elapsed_ms": 97,
+          "error": "[\"pmids is a mandatory parameter.\"]",
+          "format": "pubtator3_biocjson_pmcids",
+          "has_abstract": false,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": false,
+          "has_references": false,
+          "has_tables": false,
+          "has_title": false,
+          "licenses": [],
+          "ok": false,
+          "parse_ok": false,
+          "passage_count": 0,
+          "passage_types": {},
+          "section_type_count": 0,
+          "status": 400,
+          "text_chars": 0,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmcids=PMC1790863"
+        },
+        "pubtator3_biocjson_by_pmid": {
+          "annotation_count": 2,
+          "bytes": 2496,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 107,
+          "error": null,
+          "format": "pubtator3_biocjson_pmids",
+          "has_abstract": true,
+          "has_entity_annotations": true,
+          "has_fulltext_signal": false,
+          "has_references": false,
+          "has_tables": false,
+          "has_title": true,
+          "licenses": [],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 2,
+          "passage_types": {
+            "abstract": 1,
+            "title": 1
+          },
+          "section_type_count": 2,
+          "status": 200,
+          "text_chars": 1316,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmids=17299597"
+        }
+      }
+    },
+    {
+      "input": {
+        "doi": null,
+        "pmcid": null,
+        "pmid": "22663011",
+        "slug": "non_pmc_control",
+        "title_query": "Chronic myeloid leukemia imatinib resistance",
+        "why": "Prior PDF-fallback control: no PMCID in BioMCP verification."
+      },
+      "resolved_ids": {
+        "doi": "10.1056/nejmoa1203421",
+        "pmcid": null,
+        "pmid": "22663011"
+      },
+      "sources": {
+        "current_europe_pmc_fullTextXML_by_pmid": {
+          "bytes": 0,
+          "content_type": null,
+          "elapsed_ms": 440,
+          "error": "",
+          "format": "jats_xml",
+          "ok": false,
+          "parse_ok": false,
+          "status": 404,
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/22663011/fullTextXML"
+        },
+        "europe_pmc_core_search": {
+          "bytes": 19462,
+          "content_type": "application/json;charset=UTF-8",
+          "elapsed_ms": 443,
+          "error": null,
+          "found": true,
+          "ok": true,
+          "query": "EXT_ID:22663011 AND SRC:MED",
+          "result": {
+            "doi": "10.1056/nejmoa1203421",
+            "fullTextIdList": null,
+            "fullTextUrlList": {
+              "fullTextUrl": [
+                {
+                  "availability": "Subscription required",
+                  "availabilityCode": "S",
+                  "documentStyle": "doi",
+                  "site": "DOI",
+                  "url": "https://doi.org/10.1056/NEJMoa1203421"
+                }
+              ]
+            },
+            "hasTextMinedTerms": "Y",
+            "isOpenAccess": "N",
+            "license": null,
+            "pmcid": null,
+            "pmid": "22663011",
+            "title": "Improved survival with MEK inhibition in BRAF-mutated melanoma."
+          },
+          "status": 200,
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A22663011+AND+SRC%3AMED&format=json&resultType=core&pageSize=1"
+        },
+        "ncbi_bioc_pmc_by_pmid": {
+          "annotation_count": 0,
+          "bytes": 6148,
+          "content_type": "text/html",
+          "document_count": 0,
+          "elapsed_ms": 108,
+          "error": null,
+          "format": "ncbi_bioc_json",
+          "has_abstract": false,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": false,
+          "has_references": false,
+          "has_tables": false,
+          "has_title": false,
+          "licenses": [],
+          "ok": true,
+          "parse_ok": false,
+          "passage_count": 0,
+          "passage_types": {},
+          "section_type_count": 0,
+          "status": 200,
+          "text_chars": 0,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/22663011/unicode"
+        },
+        "pubtator3_biocjson_by_pmid": {
+          "annotation_count": 40,
+          "bytes": 27805,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 130,
+          "error": null,
+          "format": "pubtator3_biocjson_pmids",
+          "has_abstract": true,
+          "has_entity_annotations": true,
+          "has_fulltext_signal": false,
+          "has_references": false,
+          "has_tables": false,
+          "has_title": true,
+          "licenses": [],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 2,
+          "passage_types": {
+            "abstract": 1,
+            "title": 1
+          },
+          "section_type_count": 2,
+          "status": 200,
+          "text_chars": 2062,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmids=22663011"
+        }
+      }
+    },
+    {
+      "input": {
+        "doi": null,
+        "pmcid": null,
+        "pmid": null,
+        "slug": "title_lookup_only",
+        "title_query": "BRAF V600E melanoma vemurafenib resistance",
+        "why": "Title-derived/lexical Europe PMC lookup path rather than supplied identifier."
+      },
+      "resolved_ids": {
+        "doi": "10.1186/s43556-026-00425-4",
+        "pmcid": "PMC12976322",
+        "pmid": "41807883"
+      },
+      "sources": {
+        "current_europe_pmc_fullTextXML_by_pmcid": {
+          "abstract_chars": 1855,
+          "bytes": 552765,
+          "content_type": "application/xml",
+          "elapsed_ms": 1010,
+          "error": null,
+          "format": "jats_xml",
+          "has_abstract": true,
+          "has_title": true,
+          "ok": true,
+          "paragraph_count": 145,
+          "parse_ok": true,
+          "reference_count": 404,
+          "section_count": 41,
+          "section_title_count": 39,
+          "status": 200,
+          "table_count": 3,
+          "title_sample": "BRAF inhibitor resistance in melanoma: from resistance mechanisms to therapeutic innovations",
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12976322/fullTextXML"
+        },
+        "current_europe_pmc_fullTextXML_by_pmid": {
+          "bytes": 0,
+          "content_type": null,
+          "elapsed_ms": 480,
+          "error": "",
+          "format": "jats_xml",
+          "ok": false,
+          "parse_ok": false,
+          "status": 404,
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/41807883/fullTextXML"
+        },
+        "europe_pmc_core_search": {
+          "bytes": 9666,
+          "content_type": "application/json;charset=UTF-8",
+          "elapsed_ms": 524,
+          "error": null,
+          "found": true,
+          "ok": true,
+          "query": "BRAF V600E melanoma vemurafenib resistance",
+          "result": {
+            "doi": "10.1186/s43556-026-00425-4",
+            "fullTextIdList": {
+              "fullTextId": [
+                "PMC12976322"
+              ]
+            },
+            "fullTextUrlList": {
+              "fullTextUrl": [
+                {
+                  "availability": "Subscription required",
+                  "availabilityCode": "S",
+                  "documentStyle": "doi",
+                  "site": "DOI",
+                  "url": "https://doi.org/10.1186/s43556-026-00425-4"
+                },
+                {
+                  "availability": "Open access",
+                  "availabilityCode": "OA",
+                  "documentStyle": "html",
+                  "site": "Europe_PMC",
+                  "url": "https://europepmc.org/articles/PMC12976322"
+                },
+                {
+                  "availability": "Open access",
+                  "availabilityCode": "OA",
+                  "documentStyle": "pdf",
+                  "site": "Europe_PMC",
+                  "url": "https://europepmc.org/articles/PMC12976322?pdf=render"
+                }
+              ]
+            },
+            "hasTextMinedTerms": "Y",
+            "isOpenAccess": "Y",
+            "license": "cc by",
+            "pmcid": "PMC12976322",
+            "pmid": "41807883",
+            "title": "BRAF inhibitor resistance in melanoma: from resistance mechanisms to therapeutic innovations."
+          },
+          "status": 200,
+          "truncated": false,
+          "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=BRAF+V600E+melanoma+vemurafenib+resistance&format=json&resultType=core&pageSize=1"
+        },
+        "ncbi_bioc_pmc_by_pmcid": {
+          "annotation_count": 0,
+          "bytes": 515906,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 297,
+          "error": null,
+          "format": "ncbi_bioc_json",
+          "has_abstract": true,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": true,
+          "has_references": true,
+          "has_tables": true,
+          "has_title": true,
+          "licenses": [
+            "CC BY",
+            "Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons licence, and indicate if changes were made. The images or other third party material in this article are included in the article's Creative Commons licence, unless indicated otherwise in a credit line to the material. If material is not included in the article's Creative Commons licence and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder. To view a copy of this licence, visit http://creativecommons.org/licenses/by/4.0/."
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 516,
+          "passage_types": {
+            "abstract": 1,
+            "fig_caption": 4,
+            "footnote": 2,
+            "front": 1,
+            "paragraph": 64,
+            "ref": 404,
+            "table": 3,
+            "table_caption": 3,
+            "title": 8,
+            "title_1": 6,
+            "title_2": 15,
+            "title_3": 5
+          },
+          "section_type_count": 11,
+          "status": 200,
+          "text_chars": 149834,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/PMC12976322/unicode"
+        },
+        "ncbi_bioc_pmc_by_pmid": {
+          "annotation_count": 0,
+          "bytes": 515906,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 290,
+          "error": null,
+          "format": "ncbi_bioc_json",
+          "has_abstract": true,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": true,
+          "has_references": true,
+          "has_tables": true,
+          "has_title": true,
+          "licenses": [
+            "CC BY",
+            "Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons licence, and indicate if changes were made. The images or other third party material in this article are included in the article's Creative Commons licence, unless indicated otherwise in a credit line to the material. If material is not included in the article's Creative Commons licence and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder. To view a copy of this licence, visit http://creativecommons.org/licenses/by/4.0/."
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 516,
+          "passage_types": {
+            "abstract": 1,
+            "fig_caption": 4,
+            "footnote": 2,
+            "front": 1,
+            "paragraph": 64,
+            "ref": 404,
+            "table": 3,
+            "table_caption": 3,
+            "title": 8,
+            "title_1": 6,
+            "title_2": 15,
+            "title_3": 5
+          },
+          "section_type_count": 11,
+          "status": 200,
+          "text_chars": 149834,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/41807883/unicode"
+        },
+        "pmc_oa_manifest": {
+          "bytes": 447,
+          "content_type": "text/xml; charset=utf-8",
+          "elapsed_ms": 98,
+          "error": null,
+          "format": "pmc_oa_manifest_xml",
+          "has_license_field": true,
+          "has_pdf": false,
+          "has_tgz": true,
+          "link_formats": [
+            "tgz"
+          ],
+          "links": [
+            {
+              "format": "tgz",
+              "href": "ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_package/71/8d/PMC12976322.tar.gz",
+              "updated": "2026-03-12 14:25:13"
+            }
+          ],
+          "ok": true,
+          "parse_ok": true,
+          "record_attrs": {
+            "citation": "Mol Biomed. 2026 Mar 11; 7:27",
+            "id": "PMC12976322",
+            "license": "CC BY",
+            "retracted": "no"
+          },
+          "record_found": true,
+          "status": 200,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC12976322"
+        },
+        "pubtator3_biocjson_by_pmcid": {
+          "annotation_count": 0,
+          "bytes": 35,
+          "content_type": "application/json",
+          "document_count": 0,
+          "elapsed_ms": 95,
+          "error": "[\"pmids is a mandatory parameter.\"]",
+          "format": "pubtator3_biocjson_pmcids",
+          "has_abstract": false,
+          "has_entity_annotations": false,
+          "has_fulltext_signal": false,
+          "has_references": false,
+          "has_tables": false,
+          "has_title": false,
+          "licenses": [],
+          "ok": false,
+          "parse_ok": false,
+          "passage_count": 0,
+          "passage_types": {},
+          "section_type_count": 0,
+          "status": 400,
+          "text_chars": 0,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmcids=PMC12976322"
+        },
+        "pubtator3_biocjson_by_pmid": {
+          "annotation_count": 12,
+          "bytes": 8512,
+          "content_type": "application/json",
+          "document_count": 1,
+          "elapsed_ms": 96,
+          "error": null,
+          "format": "pubtator3_biocjson_pmids",
+          "has_abstract": true,
+          "has_entity_annotations": true,
+          "has_fulltext_signal": false,
+          "has_references": false,
+          "has_tables": false,
+          "has_title": true,
+          "licenses": [],
+          "ok": true,
+          "parse_ok": true,
+          "passage_count": 2,
+          "passage_types": {
+            "abstract": 1,
+            "title": 1
+          },
+          "section_type_count": 2,
+          "status": 200,
+          "text_chars": 1851,
+          "truncated": false,
+          "url": "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/export/biocjson?pmids=41807883"
+        }
+      }
+    }
+  ],
+  "generated_at": "2026-05-24T11:07:03Z",
+  "note": "Live-source spike probe; do not use as routine gate.",
+  "s2orc_dataset_fit": {
+    "bioMCP_runtime_fit": "poor: bulk dataset/API-key download rather than per-article fetch rung",
+    "bytes": 23474,
+    "content_type": "application/json",
+    "elapsed_ms": 257,
+    "error": null,
+    "format": "semantic_scholar_datasets_metadata",
+    "matching_datasets": [
+      {
+        "README": "Semantic Scholar Academic Graph Datasets\n\nThe \"s2orc\" dataset contains parsed full-body text from selected papers.\n\nA subset of this data was previously released (in a different format) as S2ORC https://github.com/allenai/s2orc\n\nThe body text is parsed from PDF documents using Grobid, documented at https://grobid.readthedocs.io.\nIts output is converted from XML into a single string with a set of annotation spans.\n\nSCHEMA\n - externalIds: IDs of this paper in different catalogs\n - content:\n   - source:\n\t   - pdfUrls: URLs to the PDF\n\t   - oaInfo: license/url/status information from Unpaywall\n   - text: Full body text as a single string\n   - annotations: Annotated spans of the full body text\n\n\nLICENSE\nThis collection is licensed under ODC-BY. (https://opendatacommons.org/licenses/by/1.0/)\n\nBy downloading this data you acknowledge that you have read and agreed to all the terms in this license.\n\nATTRIBUTION\nWhen using this data in a product or service, or including data in a redistribution, please cite the following paper:\n\n@inproceedings{lo-wang-2020-s2orc,\n    title = \"{S}2{ORC}: The Semantic Scholar Open Research Corpus\",\n    author = \"Lo, Kyle  and Wang, Lucy Lu  and Neumann, Mark  and Kinney, Rodney  and Weld, Daniel\",\n    booktitle = \"Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics\",\n    month = jul,\n    year = \"2020\",\n    address = \"Online\",\n    publisher = \"Association for Computational Linguistics\",\n    url = \"https://www.aclweb.org/anthology/2020.acl-main.447\",\n    doi = \"10.18653/v1/2020.acl-main.447\",\n    pages = \"4969--4983\"\n}\n",
+        "description": "Full-body paper text parsed from open-access PDFs. Identifies structural elements such as paragraphs, sections, and bibliography entries.\n10M records in 30 4GB files.",
+        "name": "s2orc"
+      },
+      {
+        "README": "Semantic Scholar Academic Graph Datasets\n\nThe \"s2orc_v2\" dataset contains parsed full-body text from selected papers.\nIt is a replacement for the \"s2orc\" dataset.\n\nThe body text is parsed from PDF documents using Grobid, documented at https://grobid.readthedocs.io.\nIts output is converted from XML into a \"body\" string and a \"bibliography\" string, with a set of annotation spans for each.\n\nSee https://github.com/allenai/s2orc for more details\n\nSCHEMA\n - openaccessinfo:\n   - externalIds: IDs of this paper in different catalogs\n   - license: License information from Unpaywall, linked by DOI or PubMed Central ID\n   - url: URL to the paper, if available\n   - status: Open-access status of the paper, if available\n   - disclaimer: Human readable description of the copyright status of the paper\n - title\n - authors\n - body:\n   - text: Full body text as a single string\n   - annotations: Annotated spans of the full body text\n - bibliography:\n   - text: Full body text as a single string\n   - annotations: Annotated spans of the full body text\n\n\nLICENSE\nThis collection is licensed under ODC-BY. (https://opendatacommons.org/licenses/by/1.0/)\n\nBy downloading this data you acknowledge that you have read and agreed to all the terms in this license.\n\nATTRIBUTION\nWhen using this data in a product or service, or including data in a redistribution, please cite the following paper:\n\nBibTex format:\n@misc{https://doi.org/10.48550/arxiv.2301.10140,\n  title = {The Semantic Scholar Open Data Platform},\n  author = {Kinney, Rodney and Anastasiades, Chloe and Authur, Russell and Beltagy, Iz and Bragg, Jonathan and Buraczynski, Alexandra and Cachola, Isabel and Candra, Stefan and Chandrasekhar, Yoganand and Cohan, Arman and Crawford, Miles and Downey, Doug and Dunkelberger, Jason and Etzioni, Oren and Evans, Rob and Feldman, Sergey and Gorney, Joseph and Graham, David and Hu, Fangzhou and Huff, Regan and King, Daniel and Kohlmeier, Sebastian and Kuehl, Bailey and Langan, Michael and Lin, Daniel and Liu, Haokun and Lo, Kyle and Lochner, Jaron and MacMillan, Kelsey and Murray, Tyler and Newell, Chris and Rao, Smita and Rohatgi, Shaurya and Sayre, Paul and Shen, Zejiang and Singh, Amanpreet and Soldaini, Luca and Subramanian, Shivashankar and Tanaka, Amber and Wade, Alex D. and Wagner, Linda and Wang, Lucy Lu and Wilhelm, Chris and Wu, Caroline and Yang, Jiangjiang and Zamarron, Angele and Van Zuylen, Madeleine and Weld, Daniel S.},\n  publisher = {arXiv},\n  year = {2023},\n  doi = {10.48550/ARXIV.2301.10140},\n  url = {https://arxiv.org/abs/2301.10140},\n}",
+        "description": "Full-body paper text parsed from open-access PDFs. Identifies structural elements such as sentences and paragraphs, and bibliographic references.\n16M records in 30 6GB files.",
+        "name": "s2orc_v2"
+      }
+    ],
+    "ok": true,
+    "on_demand_fulltext_endpoint": false,
+    "parse_ok": true,
+    "release_id": "2026-05-21",
+    "requires_dataset_download": true,
+    "status": 200,
+    "truncated": false,
+    "url": "https://api.semanticscholar.org/datasets/v1/release/latest",
+    "vault_batch_fit": "possible if license and storage policy accepted"
+  }
+}
