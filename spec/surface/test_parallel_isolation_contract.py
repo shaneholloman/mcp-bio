@@ -1298,26 +1298,40 @@ def test_ticket_379_disease_discover_specs_prune_redundant_live_blocks() -> None
     _assert_no_redundant_live_block_failures(failures)
 
 
+def _mustmatch_count_prose_lines(section: str, required_terms: tuple[str, ...]) -> list[str]:
+    failures: list[str] = []
+    for line in section.splitlines():
+        stripped = line.strip()
+        normalized = stripped.lower()
+        if "mustmatch" not in normalized or "showing" not in normalized:
+            continue
+        if not all(term in normalized for term in required_terms):
+            continue
+        if any(token in stripped for token in ("[0-9]", "\\d")):
+            failures.append(stripped)
+    return failures
+
+
 def test_ticket_379_target_specs_drop_count_prose_trivia() -> None:
     forbidden = (
         (
             "spec/entity/disease.md",
             2,
             "Genes & Diagnostics",
-            "Showing [0-9]+ of [0-9]+ diagnostic matches",
+            ("diagnostic",),
         ),
         (
             "spec/entity/disease.md",
             2,
             "NIH Funding Context",
-            "Showing top [0-9]+ unique grants from [0-9]+ matching NIH project-year records",
+            ("grant",),
         ),
     )
     failures = []
-    for path, level, heading, fragment in forbidden:
+    for path, level, heading, required_terms in forbidden:
         section = _markdown_heading_body(path, level, heading)
-        if fragment in section:
-            failures.append(f"{path}::{heading} still pins count/prose fragment {fragment!r}")
+        for line in _mustmatch_count_prose_lines(section, required_terms):
+            failures.append(f"{path}::{heading} still pins numeric count/prose assertion {line!r}")
 
     assert not failures, (
         "ticket 379 should relax count/prose pins that fail on upstream total drift or copy edits "
