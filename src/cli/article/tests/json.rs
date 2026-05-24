@@ -662,3 +662,36 @@ fn article_search_json_next_commands_preserve_source_filter() {
             )))
     );
 }
+
+#[test]
+fn ticket_377_article_renderer_envelope_contracts_json_meta() {
+    let json = article_search_json(
+        "BRAF melanoma",
+        &super::super::super::related_article_filters(),
+        true,
+        None,
+        None,
+        ArticleSearchJsonPage {
+            results: Vec::new(),
+            pagination: PaginationMeta::offset(0, 1, 0, Some(0)),
+            next_commands: vec!["biomcp get article 22663011".to_string()],
+            suggestions: Vec::new(),
+            source_status: vec![crate::entities::article::ArticleSourceStatus {
+                source: crate::entities::article::ArticleSource::SemanticScholar,
+                enabled: true,
+                auth_mode: Some(
+                    crate::sources::semantic_scholar::SemanticScholarAuthMode::SharedPool,
+                ),
+                status: Some(crate::entities::article::ArticleSourceAvailability::Degraded),
+                message: Some("Semantic Scholar shared-pool degraded".to_string()),
+            }],
+        },
+    )
+    .expect("article_search_json");
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid article JSON");
+    assert_eq!(
+        value["_meta"]["next_commands"][0],
+        "biomcp get article 22663011"
+    );
+    assert_eq!(value["_meta"]["source_status"][0]["status"], "degraded");
+}

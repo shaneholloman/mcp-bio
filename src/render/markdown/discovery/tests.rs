@@ -67,6 +67,52 @@ fn search_all_markdown_counts_only_keeps_links_without_row_headers() {
 }
 
 #[test]
+fn ticket_377_discover_renderer_envelope_contracts() {
+    let result = crate::entities::discover::DiscoverResult {
+        query: "BRAF".to_string(),
+        normalized_query: "braf".to_string(),
+        concepts: vec![crate::entities::discover::DiscoverConcept {
+            label: "BRAF".to_string(),
+            primary_id: Some("HGNC:1097".to_string()),
+            primary_type: DiscoverType::Gene,
+            synonyms: vec!["B-raf".to_string()],
+            xrefs: vec![crate::entities::discover::ConceptXref {
+                source: "NCBI Gene".to_string(),
+                id: "673".to_string(),
+            }],
+            sources: vec![crate::entities::discover::ConceptSource {
+                source: "OLS4".to_string(),
+                id: "HGNC:1097".to_string(),
+                label: "BRAF".to_string(),
+                source_type: "HGNC".to_string(),
+            }],
+            match_tier: crate::entities::discover::MatchTier::Exact,
+            confidence: crate::entities::discover::DiscoverConfidence::CanonicalId,
+        }],
+        plain_language: None,
+        next_commands: vec!["biomcp get gene BRAF".to_string()],
+        notes: vec!["UMLS enrichment unavailable (set UMLS_API_KEY)".to_string()],
+        ambiguous: false,
+        intent: crate::entities::discover::DiscoverIntent::GeneFunction,
+    };
+
+    let json = crate::render::json::to_discover_json(&result).expect("discover JSON");
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid discover JSON");
+    assert_eq!(value["_meta"]["next_commands"][0], "biomcp get gene BRAF");
+    assert_eq!(value["_meta"]["discovery_sources"][0], "OLS4");
+    assert_eq!(
+        value["_meta"]["section_sources"][0]["key"],
+        "structured_concepts"
+    );
+
+    let markdown = render_discover(&result).expect("render_discover");
+    assert!(markdown.contains("## Concepts"));
+    assert!(markdown.contains("Sources: OLS4 (HGNC)"));
+    assert!(markdown.contains("## Suggested Commands"));
+    assert!(markdown.contains("UMLS enrichment unavailable"));
+}
+
+#[test]
 fn render_discover_renders_grouped_concepts_and_plain_language() {
     let result = crate::entities::discover::DiscoverResult {
         query: "BRCA1".to_string(),

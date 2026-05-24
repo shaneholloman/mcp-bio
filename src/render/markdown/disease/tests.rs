@@ -65,5 +65,66 @@ fn disease_without_clinical_features() -> Disease {
     disease
 }
 
+#[test]
+fn ticket_377_disease_renderer_envelope_contracts() {
+    let mut disease = disease_without_clinical_features();
+    disease.associated_genes = vec!["BRAF".to_string()];
+    disease.gene_associations = vec![crate::entities::disease::DiseaseGeneAssociation {
+        gene: "BRAF".to_string(),
+        relationship: Some("associated".to_string()),
+        source: Some("OpenTargets".to_string()),
+        opentargets_score: Some(crate::entities::disease::DiseaseAssociationScoreSummary {
+            overall_score: 0.912,
+            gwas_score: None,
+            rare_variant_score: None,
+            somatic_mutation_score: Some(0.876),
+        }),
+    }];
+    disease.top_genes = vec!["BRAF".to_string()];
+
+    let next_commands = crate::render::markdown::disease_next_commands(&disease, &[]);
+    let section_sources = crate::render::provenance::disease_section_sources(&disease);
+    let json = crate::render::json::to_entity_json_with_suggestions(
+        &disease,
+        vec![(
+            "MONDO",
+            "https://monarchinitiative.org/MONDO:0005105".to_string(),
+        )],
+        next_commands,
+        vec!["biomcp search article -d melanoma".to_string()],
+        section_sources,
+    )
+    .expect("disease JSON renderer envelope");
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid disease JSON");
+
+    assert_eq!(value["_meta"]["evidence_urls"][0]["label"], "MONDO");
+    assert!(
+        value["_meta"]["next_commands"]
+            .as_array()
+            .is_some_and(|commands| {
+                commands.iter().any(|command| {
+                    command.as_str() == Some("biomcp get disease MONDO:0005105 genes")
+                })
+            })
+    );
+    assert_eq!(
+        value["_meta"]["suggestions"][0],
+        "biomcp search article -d melanoma"
+    );
+    assert!(
+        value["_meta"]["section_sources"]
+            .as_array()
+            .is_some_and(|sources| {
+                sources.iter().any(|source| {
+                    source["key"] == "associated_genes" && source["sources"][1] == "Open Targets"
+                })
+            })
+    );
+
+    let markdown = disease_markdown(&disease, &["genes".to_string()]).expect("disease_markdown");
+    assert!(markdown.contains("| Gene | Relationship | Source | OpenTargets |"));
+    assert!(markdown.contains("| BRAF | associated | OpenTargets |"));
+}
+
 include!("tests/rendering.rs");
 include!("tests/extended.rs");
