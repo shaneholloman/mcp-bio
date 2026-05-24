@@ -26,18 +26,21 @@ Install `cargo-nextest` before running repo-local Rust verification:
 cargo install cargo-nextest --locked
 ```
 
-`make test` uses `cargo nextest run`. `make spec` and `make spec-pr` both run
-the active canary tree under `spec/entity/` and `spec/surface/` with
-`pytest-xdist` (`-n auto --dist loadfile`); there is no separate `spec-smoke`
-lane in the bootstrap spec-v2 contract. The executable docs themselves call
+`make test` uses `cargo nextest run`. `make spec-contracts` is the
+deterministic routine executable-contract lane used by March `spec-only` and
+`make release-gate`; it runs validation-lane docs/static surface contracts
+without live smoke. `make release-live-smoke` is the explicit opt-in live
+public-upstream confidence lane. `make spec` and `make spec-pr` remain available
+for the active canary tree under `spec/entity/` and `spec/surface/` with
+`pytest-xdist` (`-n auto --dist loadfile`). The executable docs themselves call
 `tools/biomcp-ci`, which owns release-binary resolution, the repo-owned
 `.cache/biomcp-specs/` cache/XDG roots, optional-key stripping, and warm-hit
 `BIOMCP_CACHE_MODE=infinite` replay when CI sets `BIOMCP_SPEC_CACHE_HIT=1`.
 `make check` now runs `lint`, `test`, `test-contracts`, and
 `check-quality-ratchet`, so the canonical local gate already includes the
-Python/docs contract lane. `make release-gate` is the single
-release-readiness command; it runs `make check` and then `make spec-pr`. Use
-`make test-contracts` to rerun just the release-critical Python/docs lane.
+Python/docs contract lane. `make release-gate` is the single routine
+release-readiness command; it runs `make check` and then `make spec-contracts`.
+Use `make test-contracts` to rerun just the release-critical Python/docs lane.
 
 ### Local Pre-Commit Hook
 
@@ -76,11 +79,13 @@ steady-state runs. Each command was run once untimed to warm build artifacts and
 the repo-owned spec cache under `.cache/biomcp-specs/`, then once with timing
 enabled. The `make spec-pr` row was refreshed on 2026-04-24 after the spec-v2
 canary cutover. `make release-gate` is a thin wrapper over `make check` and
-`make spec-pr`, so its warm timing tracks the current sum of those warmed
-component lanes.
+`make spec-contracts`, so its warm timing tracks the current sum of those warmed
+routine component lanes.
 
 | Command | Observed warm-cache | Notes |
 |---|---|---|
 | `make check` | `344.11s` | now includes `make test-contracts` |
-| `make spec-pr` | `56.16s` | stable PR-blocking canary lane (refreshed 2026-04-24) |
-| `make release-gate` | `400.27s` | current warm sum of `make check` and refreshed `make spec-pr` |
+| `make spec-contracts` | `386.98s` | deterministic routine lane, including release rebuild and 48 spec assertions (2026-05-23) |
+| `make spec-pr` | `56.16s` | full canary lane (refreshed 2026-04-24) |
+| `make release-live-smoke` | `operator-run` | opt-in live public-upstream smoke; not part of routine gates |
+| `make release-gate` | `763.21s` | observed `make check` plus `make spec-contracts` routine gate (2026-05-23) |

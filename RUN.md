@@ -94,7 +94,9 @@ Owned routes:
 Run the heavier local ticket proofs explicitly:
 
 ```bash
-make release-gate       # full release-readiness: check + spec-pr
+make release-gate       # full routine release-readiness: check + spec-contracts
+make spec-contracts     # deterministic executable contracts for routine proof
+make release-live-smoke # opt-in live public-upstream confidence
 make test-contracts     # rerun just Python/docs contract lane
 ```
 
@@ -103,20 +105,22 @@ The installed pre-commit hook is the fast local gate. It should run
 `cargo clippy --lib --tests -- -D warnings`. The March helper rejects staged
 non-deletion `.march/*` paths outside the exhaustive allowlist:
 `.march/code-review-log.md` and `.march/validation-profiles.toml`. The hook
-does not run `cargo nextest run`, `make check`, `make spec-pr`, or
-`make release-gate`, or `make test-contracts`.
+does not run `cargo nextest run`, `make check`, `make spec-contracts`,
+`make spec-pr`, `make release-gate`, or `make test-contracts`.
 
 Use `make check` for the canonical local gate; it runs the full Rust
 lint/test/security/quality-ratchet lane and now includes `make test-contracts`,
 so landing-copy, Python, and strict-docs regressions fail the same local gate.
 Its `lint` phase runs both `cargo deny check licenses` and
 `cargo deny check advisories`, and its `test` phase shells out to
-`cargo nextest run`. Use `make release-gate` for the single release-readiness
-signal; it runs `make check` followed by `make spec-pr`. Use `make spec-pr` for
-the single PR-blocking executable-spec lane by itself; it runs the active
-canary tree under `spec/entity/` and `spec/surface/` with `pytest-xdist`
-(`-n auto --dist loadfile`) and the longer mustmatch timeout. `make spec` runs
-the same tree with the shorter local timeout for repo-local canary reruns.
+`cargo nextest run`. Use `make release-gate` for the single routine
+release-readiness signal; it runs `make check` followed by deterministic
+`make spec-contracts`. Use `make release-live-smoke` only as an explicit opt-in
+live public-upstream confidence lane. `make spec-pr` remains available for the
+full executable-spec canary corpus by itself; it runs the active canary tree
+under `spec/entity/` and `spec/surface/` with `pytest-xdist` (`-n auto --dist
+loadfile`) and the longer mustmatch timeout. `make spec` runs the same tree
+with the shorter local timeout for repo-local canary reruns.
 
 The executable docs do not hand-roll env setup inside bash blocks anymore.
 `tools/biomcp-ci` is the only spec runner seam: it resolves the repo root from
@@ -161,9 +165,17 @@ See `docs/reference/mcp-server.md` for the documented MCP surface.
 ## Spec Suite
 
 ```bash
+make spec-contracts
+make release-live-smoke  # opt-in live public-upstream confidence
 make spec
 make spec-pr
 ```
+
+`make spec-contracts` is the deterministic routine lane used by March
+`spec-only` and `release-gate`; it keeps validation-lane docs/static surface
+contracts executable without running live smoke. `make release-live-smoke` is
+the explicit opt-in live lane for discover/OLS4, disease, article source-status,
+and variant-normalization confidence through `tools/biomcp-ci`.
 
 `make spec` and `make spec-pr` both run the active spec-v2 canary tree:
 `spec/entity/` plus `spec/surface/`. The current active canaries are
@@ -177,9 +189,9 @@ make spec-pr
 `tools/biomcp-ci`, which owns release-binary resolution, repo-owned cache
 roots, optional-key stripping, and warm-cache replay on CI cache hits.
 
-Use `spec/README-timings.md` as the current canary-lane audit/reference for the
-active corpus, the wrapper/cache contract, and warm-cache expectations for the
-blocking lane.
+Use `spec/README-timings.md` as the current validation-lane audit/reference for
+the deterministic routine lane, the opt-in live smoke lane, the active canary
+corpus, the wrapper/cache contract, and warm-cache expectations.
 
 When running repo-local Python/docs/spec checks through `uv`, use
 `uv sync --extra dev --no-install-project` followed by `uv run --no-sync ...`.

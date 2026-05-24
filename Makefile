@@ -1,4 +1,4 @@
-.PHONY: build test lint check check-quality-ratchet release-gate run clean spec spec-pr validate-skills test-contracts install sync-python-dev
+.PHONY: build test lint check check-quality-ratchet release-gate run clean spec spec-pr spec-contracts release-live-smoke validate-skills test-contracts install sync-python-dev
 
 SPEC_XDIST_ARGS = -n auto --dist loadfile
 
@@ -22,7 +22,7 @@ lint:
 
 check: lint test test-contracts check-quality-ratchet
 
-release-gate: check spec-pr
+release-gate: check spec-contracts
 
 check-quality-ratchet:
 	@bash tools/check-quality-ratchet.sh
@@ -59,6 +59,20 @@ spec-pr:
 		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/entity/ spec/surface/ --mustmatch-lang bash --mustmatch-timeout 180 -v $(SPEC_XDIST_ARGS) --deselect spec/entity/protein.md --deselect spec/entity/disease.md --deselect spec/surface/discover.md'
 	. "$(CURDIR)/.cache/spec-study-env"; . "$(CURDIR)/.cache/spec-ddinter-env"; PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" \
 		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/entity/protein.md spec/entity/disease.md spec/surface/discover.md --mustmatch-lang bash --mustmatch-timeout 180 -v'
+
+spec-contracts:
+	cargo build --release --locked
+	$(MAKE) sync-python-dev
+	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" \
+		uv run --no-sync sh -c 'PATH="$$PWD/target/release:$$PATH" BIOMCP_BIN="$$PWD/target/release/biomcp" pytest spec/surface/cli.md spec/surface/test_parallel_isolation_contract.py --mustmatch-lang bash --mustmatch-timeout 180 -v'
+
+release-live-smoke:
+	cargo build --release --locked
+	$(MAKE) sync-python-dev
+	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci discover ERBB1
+	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci search disease melanoma --limit 3
+	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci search article -g BRAF --limit 3
+	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci variant normalize all 'NM_000248.3:c.135del'
 
 validate-skills:
 	$(MAKE) sync-python-dev
