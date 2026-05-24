@@ -50,7 +50,33 @@ PDF_FALLBACK = (
 ).read_bytes()
 
 
-ARTICLE_XML = """<article><front><article-meta><title-group><article-title>Europe full text winner</article-title></title-group><abstract><p>Abstract text.</p></abstract></article-meta></front><body><p>Europe PMC body text.</p></body></article>"""
+ARTICLE_XML = """<article>
+  <front>
+    <article-meta>
+      <title-group><article-title>Europe full text winner</article-title></title-group>
+      <abstract><p>Abstract text.</p></abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Fixture results</title>
+      <p>Europe PMC body text.</p>
+      <table-wrap>
+        <label>Table 1</label>
+        <caption><p>Fixture quality table.</p></caption>
+        <table>
+          <tr><th>Signal</th><th>Value</th></tr>
+          <tr><td>full text</td><td>present</td></tr>
+        </table>
+      </table-wrap>
+    </sec>
+  </body>
+  <back>
+    <ref-list>
+      <ref id="R1"><mixed-citation>Fixture reference.</mixed-citation></ref>
+    </ref-list>
+  </back>
+</article>"""
 
 
 ARTICLES = {
@@ -140,6 +166,21 @@ def europepmc_search_payload(pmid):
     }
     if article["pmcid"]:
         result["pmcid"] = article["pmcid"]
+        result["isOpenAccess"] = "Y"
+        result["fullTextIdList"] = {"fullTextId": [article["pmcid"]]}
+        result["fullTextUrlList"] = {
+            "fullTextUrl": [
+                {
+                    "availability": "Open access",
+                    "availabilityCode": "OA",
+                    "documentStyle": "html",
+                    "site": "Europe PMC",
+                    "url": f"https://europepmc.org/articles/{article['pmcid']}",
+                }
+            ]
+        }
+    if pmid == "22663011":
+        result["license"] = "CC BY"
     return {
         "hitCount": 1,
         "resultList": {

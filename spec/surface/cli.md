@@ -363,6 +363,100 @@ echo "$benchmark_structure_out" | mustmatch like "benchmark_internal_harness_con
 test "$benchmark_structure_status" -eq 0
 ```
 
+## Article Fulltext JSON Manifests Carry Provenance
+
+Article fulltext still uses the existing `get article <id> fulltext` command, but
+agents that request JSON need enough manifest detail to decide whether the saved
+Markdown is structured, reusable, and source-native. The deterministic fixture
+keeps this contract out of live article services.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+jats_json="$(../../tools/biomcp-ci --json get article 22663011 fulltext)"
+echo "$jats_json" | mustmatch like '"full_text_source"'
+ARTICLE_JSON="$jats_json" uv run --no-sync python3 - <<'PY'
+import json, os
+doc = json.loads(os.environ["ARTICLE_JSON"])
+manifest = doc.get("full_text_manifest") or {}
+assert manifest.get("source_kind") == "jats_xml", "missing JATS full_text_manifest source_kind"
+assert manifest.get("source_identifier") == "PMC123456"
+provider = manifest.get("provider") or {}
+assert provider.get("label") == "Europe PMC XML"
+assert provider.get("source") == "Europe PMC"
+quality = manifest.get("quality") or {}
+assert quality.get("has_sections") is True
+assert quality.get("has_tables") is True
+assert quality.get("has_references") is True
+assert quality.get("has_fulltext_signal") is True
+assert quality.get("has_entity_annotations") is False
+reuse = manifest.get("reuse") or {}
+assert reuse.get("license_present") is True
+assert "CC BY" in str(reuse.get("license", ""))
+PY
+```
+
+PMC HTML fallback is still a useful saved artifact, but the manifest must not
+pretend reuse is safe when the fixture has no article-level license. The warning
+contract is semantic: a consumer must see that license/reuse is unknown without
+depending on exact advisory wording.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+html_json="$(../../tools/biomcp-ci --json get article 22663012 fulltext)"
+echo "$html_json" | mustmatch like '"full_text_source"'
+ARTICLE_JSON="$html_json" uv run --no-sync python3 - <<'PY'
+import json, os
+doc = json.loads(os.environ["ARTICLE_JSON"])
+manifest = doc.get("full_text_manifest") or {}
+assert manifest.get("source_kind") == "pmc_html", "missing PMC HTML full_text_manifest source_kind"
+assert manifest.get("source_identifier") == "PMC123457"
+provider = manifest.get("provider") or {}
+assert provider.get("label") == "PMC HTML"
+assert provider.get("source") == "PMC"
+quality = manifest.get("quality") or {}
+assert quality.get("has_fulltext_signal") is True
+assert quality.get("has_entity_annotations") is False
+reuse = manifest.get("reuse") or {}
+assert reuse.get("license_present") is False
+assert not reuse.get("license")
+warning = str(reuse.get("reuse_warning", "")).lower()
+assert "license" in warning or "reuse" in warning
+PY
+```
+
+PDF remains an explicit last-resort fallback. When the user opts into that rung,
+the JSON manifest must make the PDF fallback and its Semantic Scholar license
+visible so downstream ingestion can distinguish it from source-native full text.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+pdf_json="$(../../tools/biomcp-ci --json get article 22663013 fulltext --pdf)"
+echo "$pdf_json" | mustmatch like '"full_text_source"'
+ARTICLE_JSON="$pdf_json" uv run --no-sync python3 - <<'PY'
+import json, os
+doc = json.loads(os.environ["ARTICLE_JSON"])
+manifest = doc.get("full_text_manifest") or {}
+assert manifest.get("source_kind") == "pdf", "missing PDF full_text_manifest source_kind"
+assert "/pdf/22663013.pdf" in str(manifest.get("source_identifier", ""))
+provider = manifest.get("provider") or {}
+assert provider.get("label") == "Semantic Scholar PDF"
+assert provider.get("source") == "Semantic Scholar"
+quality = manifest.get("quality") or {}
+assert quality.get("has_fulltext_signal") is True
+provenance = manifest.get("provenance") or {}
+assert provenance.get("pdf_fallback_used") is True
+reuse = manifest.get("reuse") or {}
+assert reuse.get("license_present") is True
+assert "CC BY" in str(reuse.get("license", ""))
+PY
+```
+
 ## Validation Lanes Stay Split
 
 Routine validation should be deterministic by default: March `spec-only` and
