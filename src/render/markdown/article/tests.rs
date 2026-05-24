@@ -319,6 +319,59 @@ fn article_search_markdown_preserves_rank_order_and_shows_rationale() {
 }
 
 #[test]
+fn ticket_377_article_renderer_envelope_contracts_markdown_status() {
+    let rows = vec![ArticleSearchResult {
+        pmid: "22663011".into(),
+        title: "BRAF melanoma fixture".into(),
+        pmcid: None,
+        doi: None,
+        journal: None,
+        date: Some("2012-06-30".into()),
+        first_index_date: None,
+        citation_count: Some(42),
+        influential_citation_count: None,
+        source: ArticleSource::PubMed,
+        matched_sources: vec![ArticleSource::PubMed, ArticleSource::SemanticScholar],
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: None,
+        ranking: None,
+        normalized_title: "braf melanoma fixture".into(),
+        normalized_abstract: String::new(),
+        publication_type: None,
+        source_local_position: 0,
+    }];
+    let source_status = vec![crate::entities::article::ArticleSourceStatus {
+        source: ArticleSource::SemanticScholar,
+        enabled: true,
+        auth_mode: Some(crate::sources::semantic_scholar::SemanticScholarAuthMode::SharedPool),
+        status: Some(crate::entities::article::ArticleSourceAvailability::Degraded),
+        message: None,
+    }];
+    let markdown = article_search_markdown_with_footer_and_context(
+        "BRAF melanoma",
+        &rows,
+        "",
+        &article_filters_for_test(ArticleSort::Relevance),
+        ArticleSearchRenderContext {
+            source_filter: crate::entities::article::ArticleSourceFilter::All,
+            semantic_scholar_enabled: true,
+            note: None,
+            debug_plan: None,
+            exact_entity_commands: &[],
+            source_status: &source_status,
+        },
+    )
+    .expect("article_search_markdown_with_footer_and_context");
+    assert!(markdown.contains("| PMID | Title | Source(s) | Date | Why | Cit. |"));
+    assert!(markdown.lines().any(|line| {
+        line.contains("Semantic Scholar")
+            && line.contains("degraded")
+            && line.contains("shared_pool")
+    }));
+}
+
+#[test]
 fn article_ranking_why_tier1_mixed_shows_title_plus_abstract() {
     let row = ArticleSearchResult {
         pmid: "1".into(),

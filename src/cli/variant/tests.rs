@@ -526,3 +526,80 @@ async fn variant_search_shorthand_json_returns_variant_guidance_metadata() {
     );
     assert_eq!(value["_meta"]["next_commands"][1], "biomcp discover R620W");
 }
+
+#[test]
+fn ticket_377_variant_renderer_envelope_contracts() {
+    let results = vec![crate::entities::variant::VariantSearchResult {
+        id: "rs113488022".to_string(),
+        gene: "BRAF".to_string(),
+        hgvs_p: Some("p.V600E".to_string()),
+        legacy_name: Some("BRAF V600E".to_string()),
+        significance: Some("Pathogenic".to_string()),
+        clinvar_stars: Some(3),
+        gnomad_af: None,
+        revel: Some(0.92),
+        gerp: Some(5.1),
+    }];
+    let next_commands = crate::render::markdown::search_next_commands_variant(
+        &results,
+        Some("BRAF"),
+        Some("melanoma"),
+    );
+    let json = super::super::search_json_with_meta(
+        results.clone(),
+        crate::cli::PaginationMeta::offset(0, 1, 1, Some(1)),
+        next_commands,
+    )
+    .expect("variant search_json_with_meta");
+    let value: serde_json::Value = serde_json::from_str(&json).expect("valid variant JSON");
+    assert!(
+        value["_meta"]["next_commands"]
+            .as_array()
+            .is_some_and(|commands| {
+                commands
+                    .iter()
+                    .any(|command| command.as_str() == Some("biomcp get variant rs113488022"))
+            })
+    );
+
+    let markdown = crate::render::markdown::variant_search_markdown_with_context(
+        "gene=BRAF, condition=melanoma",
+        &results,
+        "",
+        Some("BRAF"),
+        Some("melanoma"),
+    )
+    .expect("variant markdown");
+    assert!(markdown.contains("See also:"));
+    assert!(markdown.contains("biomcp search disease --query melanoma"));
+
+    let normalization = crate::entities::variant::VariantNormalizationResponse {
+        input: "NM_004333.6:c.1799T>A".to_string(),
+        services: vec![
+            crate::entities::variant::VariantNormalizationServiceResult {
+                service: "mutalyzer".to_string(),
+                status: crate::entities::variant::VariantNormalizationStatus::InvalidInput,
+                input_description: Some("NM_004333.6:c.1799T>A".to_string()),
+                normalized_description: None,
+                corrected_description: None,
+                transcript_description: None,
+                protein: None,
+                genomic_descriptions: vec!["NC_000007.14:g.140753336A>T".to_string()],
+                warnings: vec!["fixture warning from normalization service".to_string()],
+                message: Some("Invalid transcript HGVS".to_string()),
+            },
+        ],
+    };
+    let normalization_json = serde_json::to_value(&normalization).expect("normalization JSON");
+    assert_eq!(normalization_json["services"][0]["status"], "invalid_input");
+    assert_eq!(
+        normalization_json["services"][0]["warnings"][0],
+        "fixture warning from normalization service"
+    );
+
+    let normalization_markdown =
+        crate::render::markdown::variant_normalization_markdown(&normalization);
+    assert!(normalization_markdown.contains("Status: invalid_input"));
+    assert!(normalization_markdown.contains("NC_000007.14:g.140753336A>T"));
+    assert!(normalization_markdown.contains("fixture warning from normalization service"));
+}
