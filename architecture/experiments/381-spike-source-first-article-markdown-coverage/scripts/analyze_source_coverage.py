@@ -109,7 +109,8 @@ def source_case_rows(data: dict[str, Any]) -> list[dict[str, Any]]:
                 "failure": source.get("error") or ("" if source.get("ok") else str(source.get("status") or "")),
             }
             for key in COUNT_KEYS:
-                row[key] = count_value(source, key)
+                value = source.get(key)
+                row[key] = value if isinstance(value, int) else 0
             rows.append(row)
     s2 = data.get("s2orc_dataset_fit") or {}
     if s2:
