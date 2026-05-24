@@ -91,6 +91,11 @@ def source_case_rows(data: dict[str, Any]) -> list[dict[str, Any]]:
         case = article["input"]["slug"]
         ids = article.get("resolved_ids", {})
         for source_name, source in sorted(article.get("sources", {}).items()):
+            quality = []
+            for key in QUALITY_KEYS:
+                value = source.get(key)
+                if value is True or (isinstance(value, int) and value > 0):
+                    quality.append(key)
             row = {
                 "case": case,
                 "pmid": ids.get("pmid") or "",
@@ -104,7 +109,7 @@ def source_case_rows(data: dict[str, Any]) -> list[dict[str, Any]]:
                 "parse_ok": bool(source.get("parse_ok", source.get("found", False))),
                 "elapsed_ms": source.get("elapsed_ms") if source.get("elapsed_ms") is not None else "",
                 "bytes": source.get("bytes") if source.get("bytes") is not None else 0,
-                "quality_bits": ";".join(quality_bits(source)),
+                "quality_bits": ";".join(quality),
                 "license": license_value(source),
                 "failure": source.get("error") or ("" if source.get("ok") else str(source.get("status") or "")),
             }
