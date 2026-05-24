@@ -362,3 +362,35 @@ echo "$benchmark_structure_out" | mustmatch like "benchmark_internal_harness_spl
 echo "$benchmark_structure_out" | mustmatch like "benchmark_internal_harness_contract_pins_runtime_and_docs"
 test "$benchmark_structure_status" -eq 0
 ```
+
+## Validation Lanes Stay Split
+
+Routine validation should be deterministic by default: March `spec-only` and
+release-gate proof use fixture-backed/static executable contracts. Public
+upstream confidence remains available, but only through an explicit live-smoke
+lane that keeps using the BioMCP spec wrapper.
+
+```bash
+out="$(make -C ../.. -n spec-contracts 2>&1 || true)"
+echo "$out" | mustmatch like "pytest spec/entity/ spec/surface/"
+echo "$out" | mustmatch not like "release-live-smoke"
+```
+
+The live lane is intentionally named and opt-in so operators can run upstream
+checks without making unrelated ordinary tickets depend on public service
+availability.
+
+```bash
+out="$(make -C ../.. -n release-live-smoke 2>&1 || true)"
+echo "$out" | mustmatch like "tools/biomcp-ci discover"
+echo "$out" | mustmatch like "tools/biomcp-ci search disease"
+```
+
+The smoke matrix should include article source-status and variant-normalization
+confidence through the same wrapper instead of a second cache or replay system.
+
+```bash
+out="$(make -C ../.. -n release-live-smoke 2>&1 || true)"
+echo "$out" | mustmatch like "tools/biomcp-ci search article"
+echo "$out" | mustmatch like "tools/biomcp-ci variant normalize"
+```
