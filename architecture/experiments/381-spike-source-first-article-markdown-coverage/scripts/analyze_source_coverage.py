@@ -96,6 +96,16 @@ def source_case_rows(data: dict[str, Any]) -> list[dict[str, Any]]:
                 value = source.get(key)
                 if value is True or (isinstance(value, int) and value > 0):
                     quality.append(key)
+            licenses = source.get("licenses")
+            if isinstance(licenses, list) and licenses:
+                license_text = str(licenses[0])
+            else:
+                record_attrs = source.get("record_attrs")
+                if isinstance(record_attrs, dict):
+                    license_text = str(record_attrs.get("license") or record_attrs.get("license-type") or "")
+                else:
+                    result = source.get("result")
+                    license_text = str(result.get("license") or "") if isinstance(result, dict) else ""
             row = {
                 "case": case,
                 "pmid": ids.get("pmid") or "",
@@ -110,7 +120,7 @@ def source_case_rows(data: dict[str, Any]) -> list[dict[str, Any]]:
                 "elapsed_ms": source.get("elapsed_ms") if source.get("elapsed_ms") is not None else "",
                 "bytes": source.get("bytes") if source.get("bytes") is not None else 0,
                 "quality_bits": ";".join(quality),
-                "license": license_value(source),
+                "license": license_text,
                 "failure": source.get("error") or ("" if source.get("ok") else str(source.get("status") or "")),
             }
             for key in COUNT_KEYS:
