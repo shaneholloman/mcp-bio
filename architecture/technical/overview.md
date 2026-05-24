@@ -254,10 +254,11 @@ rebuild path, not a second source of release truth.
      `uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"`,
      `uv run --no-sync mkdocs build --strict`), and `spec-stable`
      (release build, spec-cache metadata/restore, then `make spec-pr`).
-   - The bootstrap spec-v2 contract keeps one blocking canary lane instead of a
-     second smoke workflow. `spec-stable` restores `.cache/biomcp-specs/`,
-     exports `BIOMCP_SPEC_CACHE_HIT=1` only on cache hits, and relies on
-     `tools/biomcp-ci` to flip warm-cache replay on for the canary docs.
+   - Routine release proof uses deterministic `make spec-contracts`; opt-in
+     live confidence uses `make release-live-smoke`. `spec-stable` restores
+     `.cache/biomcp-specs/`, exports `BIOMCP_SPEC_CACHE_HIT=1` only on cache
+     hits, and relies on `tools/biomcp-ci` to flip warm-cache replay on for the
+     canary docs.
    - Release validation runs the Rust checks again, builds the release binary,
      syncs Python dev dependencies with `uv sync --extra dev --no-install-project`,
      then runs `uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"`
@@ -297,7 +298,7 @@ install or rebuild the maturin-backed current project before pytest or mkdocs.
 
 ## Verification Approach
 
-Ticket 373 adds a target-state overlay for the request-contract testing reset: routine validation should prove BioMCP-owned CLI intent, source request plans, fixture response/status mapping, entity orchestration, and renderer/envelope contracts without depending on public upstream availability. The current gate topology below remains the implemented state until follow-up build tickets land. The target boundaries, profile split, and migration invariants are documented in [Request-contract test architecture target](request-contract-test-architecture.md).
+Ticket 373 added the request-contract testing reset: routine validation now proves BioMCP-owned CLI intent, source request plans, fixture response/status mapping, entity orchestration, and renderer/envelope contracts without depending on public upstream availability. The target boundaries, profile split, and migration invariants are documented in [Request-contract test architecture target](request-contract-test-architecture.md).
 
 BioMCP has six distinct verification and operator-inspection surfaces.
 
@@ -316,8 +317,9 @@ BioMCP has six distinct verification and operator-inspection surfaces.
 - Docs-site validation and Python contract tests now run under `make check`
   through `make test-contracts`; CI still keeps that lane in the separate
   `contracts` job for parallelism.
-- `make release-gate` is the single local release-blocking signal; it runs
-  `make check` and `make spec-pr`.
+- `make release-gate` is the single local routine release-blocking signal; it
+  runs `make check` and deterministic `make spec-contracts`. Live public-upstream
+  confidence is opt-in through `make release-live-smoke`.
 - The grounding implementation surfaces for this split are `Makefile`,
   `.github/workflows/ci.yml`, and `.github/workflows/contracts.yml`.
 
@@ -327,9 +329,9 @@ BioMCP has six distinct verification and operator-inspection surfaces.
 validation tiers. The shared build flow currently maps `kickoff` to
 `preflight`, leaves `01-design` and `02-design-review` without a validation
 profile, runs `focused` for `03-code` and `04-code-review`, and runs
-`full-blocking` for `05-verify`. `spec-only` is declared for the follow-on
-spec-v2 rewrite slices that need the blocking canary lane directly without
-re-running the full release gate.
+`full-blocking` for `05-verify`. `spec-only` is declared for slices that need
+the deterministic routine executable-contract lane directly without re-running
+the full release gate.
 
 The exhaustive tracked and staged `.march/*` allowlist is
 `.march/code-review-log.md` and `.march/validation-profiles.toml`.
@@ -343,19 +345,18 @@ rejects staged non-deletion `.march/*` paths outside the same allowlist.
 | `preflight` | `cargo check --all-targets` | `kickoff` |
 | `baseline` | `cargo check --all-targets` | declared, not assigned |
 | `focused` | `cargo test --lib && cargo clippy --lib --tests -- -D warnings` | `03-code`, `04-code-review` |
-| `spec-only` | `make spec-pr` | declared for follow-on spec-v2 rewrite slices |
+| `spec-only` | `make spec-contracts` | deterministic routine executable contracts |
 | `full-blocking` | `make release-gate` | `05-verify` |
 | `full-contracts` | `make release-gate` | declared, not assigned |
 
 `full-blocking` deliberately uses `make release-gate`, which expands to `make
-check` plus `make spec-pr`; the canary spec lane is one of the required release
-proofs, but it is no longer modeled as a PR-vs-smoke split. `spec-only`
-exists so follow-on spec-v2 rewrite slices can target the blocking canary lane
-directly. `full-contracts` remains a compatibility alias of the same command
-now that `make check` already runs `make test-contracts`; the shared build flow
-still does not assign it today.
-
-Target state: preserve these profile names for March compatibility, but move live public-upstream proof into an explicit release/live-smoke target/profile after deterministic replacements exist. `spec-only` should become fixture-backed/static by default, and `full-blocking`/`full-contracts` should compose `make check` with deterministic executable contracts rather than broad live canaries. The implementation details and required ratchets are in [Request-contract test architecture target](request-contract-test-architecture.md#validation-profile-target).
+check` plus deterministic `make spec-contracts`; ordinary March verification no
+longer depends on public upstream availability. `spec-only` exists so follow-on
+slices can target the same fixture-backed/static routine lane directly.
+`full-contracts` remains a compatibility alias of the same command now that
+`make check` already runs `make test-contracts`; the shared build flow still
+does not assign it today. Live public-upstream proof moved to the explicit
+opt-in `make release-live-smoke` operator lane.
 
 ### 2. Spec Suite (`spec/`)
 
@@ -363,6 +364,12 @@ BDD executable documentation written as `mustmatch` spec files. The suite
 exercises CLI output at the command level using stable structural markers
 (headers, table columns, query echoes) rather than brittle upstream data
 values.
+
+Routine local and March validation runs `make spec-contracts`, a deterministic
+fixture-backed/static lane over validation docs and surface contracts. Live
+public-upstream confidence is explicit and opt-in through `make
+release-live-smoke`, which uses `tools/biomcp-ci` for discover/OLS4, disease,
+article source-status, and variant-normalization smoke commands.
 
 PR CI runs `make spec-pr` via the `spec-stable` job in
 `.github/workflows/ci.yml`. That job builds the release binary first, reads
@@ -375,8 +382,10 @@ blocks themselves then call `tools/biomcp-ci`, which keeps cache/XDG state
 under `.cache/biomcp-specs/`, defaults `RUST_LOG=error`, unsets optional auth
 keys, and flips `BIOMCP_CACHE_MODE=infinite` only for those warm CI replays.
 
-Run locally with `make spec` for the shorter canary rerun or `make spec-pr` for
-the blocking timeout/profile.
+Run locally with `make spec-contracts` for the routine deterministic lane,
+`make release-live-smoke` for opt-in live public-upstream confidence, `make
+spec` for the shorter canary rerun, or `make spec-pr` for the full canary
+corpus.
 
 Repo-local `make spec` and `make spec-pr` use `pytest-xdist` with
 `-n auto --dist loadfile` over only `spec/entity/` and `spec/surface/`, except
@@ -394,13 +403,14 @@ executable-spec corpus is `spec/entity/gene.md`,
 `spec/entity/pathway.md`, `spec/entity/study.md`, `spec/entity/pgx.md`,
 `spec/entity/phenotype.md`, `spec/entity/diagnostic.md`,
 `spec/entity/vaers.md`, `spec/surface/cli.md`, `spec/surface/mcp.md`, and
-`spec/surface/discover.md`. There is no separate `spec-smoke` target and no
-broad serial rerun lane in the active v2 canary; the explicit serialized
-partition is limited to the protein ComplexPortal canary and the OLS4-heavy
-disease/discover canaries.
+`spec/surface/discover.md`. The active v2 canary's explicit serialized partition
+is limited to the protein ComplexPortal canary and the OLS4-heavy disease/discover
+canaries; routine deterministic proof does not run that serialized OLS4 live
+carve-out, and public OLS4 confidence belongs to `make release-live-smoke`.
 
-Use `spec/README-timings.md` as the current canary-lane audit/reference for the
-active files, wrapper/cache contract, and measured warm-cache expectations.
+Use `spec/README-timings.md` as the current validation-lane audit/reference for
+the deterministic routine lane, opt-in live smoke lane, active files,
+wrapper/cache contract, and measured warm-cache expectations.
 
 Important: repo-local Python/spec commands should use
 `uv sync --extra dev --no-install-project` followed by `uv run --no-sync ...`.
