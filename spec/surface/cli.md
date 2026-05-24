@@ -391,6 +391,8 @@ assert quality.get("has_tables") is True
 assert quality.get("has_references") is True
 assert quality.get("has_fulltext_signal") is True
 assert quality.get("has_entity_annotations") is False
+provenance = manifest.get("provenance") or {}
+assert provenance.get("open_access") is True
 reuse = manifest.get("reuse") or {}
 assert reuse.get("license_present") is True
 assert "CC BY" in str(reuse.get("license", ""))
@@ -420,6 +422,8 @@ assert provider.get("source") == "PMC"
 quality = manifest.get("quality") or {}
 assert quality.get("has_fulltext_signal") is True
 assert quality.get("has_entity_annotations") is False
+provenance = manifest.get("provenance") or {}
+assert provenance.get("open_access") is True
 reuse = manifest.get("reuse") or {}
 assert reuse.get("license_present") is False
 assert not reuse.get("license")
