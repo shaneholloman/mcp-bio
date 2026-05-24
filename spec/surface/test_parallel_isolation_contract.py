@@ -1098,6 +1098,9 @@ def test_ticket_378_profiles_route_routine_specs_to_deterministic_contracts() ->
     profiles = tomllib.loads(_read_repo(".march/validation-profiles.toml"))["profile"]
     commands = {name: body["command"] for name, body in profiles.items()}
     makefile = _read_repo("Makefile")
+    release_gate_match = re.search(r"^release-gate:\s*(?P<deps>.*)$", makefile, flags=re.MULTILINE)
+    assert release_gate_match is not None, "missing Makefile target release-gate"
+    release_gate_deps = set(release_gate_match.group("deps").split())
 
     assert commands["spec-only"] == "make spec-contracts", (
         "March spec-only must run deterministic fixture-backed/static specs by default, not the "
@@ -1105,9 +1108,12 @@ def test_ticket_378_profiles_route_routine_specs_to_deterministic_contracts() ->
     )
     assert commands["full-blocking"] == "make release-gate"
     assert commands["full-contracts"] == "make release-gate"
-    assert re.search(r"^release-gate:\s+check spec-contracts$", makefile, flags=re.MULTILINE), (
+    assert {"check", "spec-contracts"}.issubset(release_gate_deps), (
         "release-gate must compose make check with deterministic spec-contracts so ordinary verify "
         "does not depend on public upstream availability"
+    )
+    assert "spec-pr" not in release_gate_deps, (
+        "release-gate must not keep the old live/cache-backed spec-pr lane as routine proof"
     )
 
 
@@ -1154,10 +1160,26 @@ def test_ticket_378_routine_lane_no_longer_depends_on_serialized_ols4_carveout()
     timings = _read_repo("spec/README-timings.md").lower()
     technical_overview = _read_repo("architecture/technical/overview.md").lower()
 
+    assert "spec/surface/cli.md" in spec_contracts, (
+        "spec-contracts must keep the executable CLI validation-lane documentation in routine proof"
+    )
+    assert "test_parallel_isolation_contract.py" in spec_contracts, (
+        "spec-contracts must run the deterministic surface contract tests that replace live canaries"
+    )
+    assert "pytest spec/entity/ spec/surface/" not in spec_contracts, (
+        "spec-contracts must not broad-collect the old live/cache-backed entity and surface corpus"
+    )
+
     for path in ("spec/entity/disease.md", "spec/surface/discover.md"):
         assert f"--deselect {path}" not in spec_contracts, (
             "spec-contracts must not preserve the old OLS4 disease/discover serialized live "
             "carve-out as routine proof"
+        )
+
+    for command in re.findall(r"pytest[^\n]+", spec_contracts):
+        assert not ("spec/entity/disease.md" in command and "spec/surface/discover.md" in command), (
+            "spec-contracts must not reintroduce the old serialized OLS4 disease/discover "
+            "rerun command as routine proof"
         )
 
     assert "ols4" in timings and "release-live-smoke" in timings, (

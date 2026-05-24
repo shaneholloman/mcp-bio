@@ -372,7 +372,9 @@ lane that keeps using the BioMCP spec wrapper.
 
 ```bash
 out="$(make -C ../.. -n spec-contracts 2>&1 || true)"
-echo "$out" | mustmatch like "pytest spec/entity/ spec/surface/"
+echo "$out" | mustmatch like "spec/surface/cli.md"
+echo "$out" | mustmatch like "test_parallel_isolation_contract.py"
+echo "$out" | mustmatch not like "pytest spec/entity/ spec/surface/"
 echo "$out" | mustmatch not like "release-live-smoke"
 ```
 
