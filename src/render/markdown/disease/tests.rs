@@ -116,7 +116,10 @@ fn ticket_377_disease_renderer_envelope_contracts() {
             .as_array()
             .is_some_and(|sources| {
                 sources.iter().any(|source| {
-                    source["key"] == "associated_genes" && source["sources"][1] == "Open Targets"
+                    source["key"] == "associated_genes"
+                        && source["sources"].as_array().is_some_and(|labels| {
+                            labels.iter().any(|label| label == "Open Targets")
+                        })
                 })
             })
     );
