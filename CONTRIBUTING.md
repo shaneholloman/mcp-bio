@@ -88,4 +88,4 @@ routine component lanes.
 | `make spec-contracts` | `386.98s` | deterministic routine lane, including release rebuild and 48 spec assertions (2026-05-23) |
 | `make spec-pr` | `56.16s` | full canary lane (refreshed 2026-04-24) |
 | `make release-live-smoke` | `operator-run` | opt-in live public-upstream smoke; not part of routine gates |
-| `make release-gate` | `pending` | refresh after first warm sum of `make check` and `make spec-contracts` |
+| `make release-gate` | `763.21s` | observed `make check` plus `make spec-contracts` routine gate (2026-05-23) |

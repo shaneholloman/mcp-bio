@@ -21,10 +21,10 @@ command = "cargo test --lib && cargo clippy --lib --tests -- -D warnings"
 [profile.spec-only]
 command = "make spec-contracts"
 
-# observed make release-gate components green; combined timing pending check + spec-contracts refresh (beelink 2026-05-23)
+# observed make release-gate 763.21s with check + spec-contracts (beelink 2026-05-23)
 [profile.full-blocking]
 command = "make release-gate"
 
-# observed make release-gate components green; combined timing pending check + spec-contracts refresh (beelink 2026-05-23)
+# observed make release-gate 763.21s with check + spec-contracts (beelink 2026-05-23)
 [profile.full-contracts]
 command = "make release-gate"

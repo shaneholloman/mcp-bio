@@ -1250,18 +1250,17 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     assert "thin wrapper over `make check` and `make spec-contracts`" in contributing_ws
     assert "| Command | Observed warm-cache | Notes |" in contributing
     assert "".join(("T", "BD")) not in contributing
-    for command in ("make check", "make spec-pr"):
+    for command in ("make check", "make spec-contracts", "make spec-pr", "make release-gate"):
         assert re.search(
             rf"^\| `{re.escape(command)}` \| `\d+\.\d+s` \| .+ \|$",
             contributing,
             flags=re.MULTILINE,
         )
-    for command in ("make spec-contracts", "make release-live-smoke", "make release-gate"):
-        assert re.search(
-            rf"^\| `{re.escape(command)}` \| `[^`]+` \| .+ \|$",
-            contributing,
-            flags=re.MULTILINE,
-        )
+    assert re.search(
+        r"^\| `make release-live-smoke` \| `operator-run` \| .+ \|$",
+        contributing,
+        flags=re.MULTILINE,
+    )
 
     assert "cargo-nextest" in runbook
     assert "`make check`" in runbook_ws
