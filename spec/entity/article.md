@@ -48,47 +48,20 @@ cargo test --lib ticket_377_article_renderer_envelope_contracts -- --list \
 Gene-linked article search should still read like a literature intake surface:
 clear heading, ranking note, and a PMID-first table.
 
-```bash
-out="$(../../tools/biomcp-ci search article -g BRAF --limit 3)"
-echo "$out" | mustmatch like "# Articles: gene=BRAF"
-echo "$out" | mustmatch like "Ranking: calibrated PubMed rescue + lexical directness"
-echo "$out" | mustmatch like "| PMID | Title |"
-```
-
 ## Keyword Search
 
 Keyword search is a different planning path from typed gene search. The query
 echo and source-aware table should make that distinction visible.
-
-```bash
-out="$(../../tools/biomcp-ci search article -q 'alternative microexon splicing metastasis' --source litsense2 --limit 1)"
-echo "$out" | mustmatch like "keyword=alternative microexon splicing metastasis"
-echo "$out" | mustmatch like "| PMID | Title | Source(s) | Date | Why | Cit. |"
-```
 
 ## Search Table & Source Ranking
 
 The JSON contract should preserve the top article follow-up and keep per-result
 source identity plus ranking metadata available to automation.
 
-```bash
-json_out="$(../../tools/biomcp-ci --json search article -g BRAF --limit 3)"
-echo "$json_out" | mustmatch like '"matched_sources": ['
-echo "$json_out" | jq -e '._meta.next_commands[0] | test("^biomcp get article .+$")' >/dev/null
-echo "$json_out" | jq -e 'all(.results[]; (.matched_sources | type) == "array" and (.ranking.mode | type == "string"))' >/dev/null
-```
-
 ## PubTator Annotations
 
 Annotations remain a first-class deepen path. The section should keep the
 PubTator heading and explain that the extracted entities are normalized.
-
-```bash
-out="$(../../tools/biomcp-ci get article 22663011 annotations)"
-echo "$out" | mustmatch like "## PubTator Annotations"
-echo "$out" | mustmatch like "normalized entity mentions"
-echo "$out" | mustmatch '/Genes: [A-Z0-9]/'
-```
 
 ## Full-Text HTML Fallback
 
@@ -132,25 +105,11 @@ The blocking lane is intentionally keyless. Article search should stay usable
 and explicit about the no-key path rather than hard-failing or pretending the
 keyed data plane ran.
 
-```bash
-json_out="$(../../tools/biomcp-ci --json search article -g BRAF --limit 3 2>/dev/null)"
-echo "$json_out" | mustmatch like '"semantic_scholar_enabled": true'
-echo "$json_out" | mustmatch like '"ranking": {'
-echo "$json_out" | jq -e 'any(._meta.source_status[]?; .source == "semanticscholar" and .enabled == true and .auth_mode == "shared_pool" and (.status == "ok" or .status == "degraded" or .status == "unavailable"))' >/dev/null
-echo "$json_out" | jq -e 'all(.results[]; .ranking.mode == "lexical")' >/dev/null
-```
-
 ## Semantic Scholar Source Status Appears in Debug Plans
 
 Debug plans are for operators and benchmark agents who need to explain the
 route BioMCP used. The Semantic Scholar leg should carry the same redacted
 auth and availability state there, without requiring stderr parsing.
-
-```bash
-json_out="$(../../tools/biomcp-ci --json search article -g BRAF --limit 1 --debug-plan 2>/dev/null)"
-echo "$json_out" | mustmatch like '"debug_plan": {'
-echo "$json_out" | jq -e 'any(.debug_plan.legs[]?.source_status[]?; .source == "semanticscholar" and .auth_mode == "shared_pool" and (.status == "ok" or .status == "degraded" or .status == "unavailable"))' >/dev/null
-```
 
 ## Authenticated Source Status Is Redacted
 
@@ -158,36 +117,13 @@ When an operator provides `S2_API_KEY`, article search should identify the
 authenticated mode but never echo the key, a prefix, or any secret-derived
 string in JSON metadata.
 
-```bash
-secret_value="spec-secret-do-not-print-365"
-biomcp_bin="${BIOMCP_BIN:-../../target/release/biomcp}"
-json_out="$(S2_API_KEY="$secret_value" RUST_LOG=error "$biomcp_bin" --json search article -g BRAF --limit 1 2>/dev/null)"
-echo "$json_out" | mustmatch not like "$secret_value"
-echo "$json_out" | mustmatch not like "spec-secret"
-echo "$json_out" | jq -e --arg secret "$secret_value" --arg prefix "spec-secret" '(tostring | contains($secret) | not) and (tostring | contains($prefix) | not) and any(._meta.source_status[]?; .source == "semanticscholar" and .enabled == true and .auth_mode == "authenticated" and (.status == "ok" or .status == "degraded" or .status == "unavailable"))' >/dev/null
-```
-
 ## Markdown Notes Semantic Scholar Unavailability
 
 Markdown should stay quiet on healthy paths, but a failed Semantic Scholar leg is
 operator-relevant. When the source is unavailable, the page should still render
 primary article rows and include one concise source-status note.
 
-```bash
-out="$(BIOMCP_S2_BASE=http://127.0.0.1:9 ../../tools/biomcp-ci search article -g BRAF --limit 1 2>/dev/null)"
-echo "$out" | mustmatch like "# Articles: gene=BRAF"
-echo "$out" | mustmatch like "Semantic Scholar source status:"
-echo "$out" | mustmatch like "unavailable"
-```
-
 ## Entity Follow-Up
 
 `article entities` is the compact follow-up in this bootstrap slice. It should
 still expose the gene subsection and typed follow-up commands.
-
-```bash
-out="$(../../tools/biomcp-ci article entities 22663011)"
-echo "$out" | mustmatch like "# Entities in PMID 22663011"
-echo "$out" | mustmatch like "## Genes ("
-echo "$out" | mustmatch like '`biomcp search gene -q BRAF`'
-```

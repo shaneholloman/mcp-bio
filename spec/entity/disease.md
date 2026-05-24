@@ -30,13 +30,6 @@ cargo test --lib ticket_377_disease_renderer_envelope_contracts -- --list \
 Direct disease search should still surface the canonical melanoma row with its
 MONDO identifier visible in the result table.
 
-```bash
-out="$(../../tools/biomcp-ci search disease melanoma --limit 3)"
-echo "$out" | mustmatch like "# Diseases: melanoma"
-echo "$out" | mustmatch like "| MONDO:0005105 | melanoma |"
-echo "$out" | mustmatch like "| ID | Name | Synonyms |"
-```
-
 ## Synonym Rescue
 
 Ticket 371 identified this live OLS4/MyDisease path as a request-contract risk;
@@ -66,14 +59,6 @@ echo "$out" | mustmatch like 'biomcp search drug --indication "melanoma"'
 `genes` and `diagnostics` stay opt-in sections, but when requested they should
 render as explicit tables and admit that the diagnostic list is truncated.
 
-```bash
-out="$(../../tools/biomcp-ci get disease 'Lynch syndrome' genes diagnostics)"
-echo "$out" | mustmatch like "## Associated Genes"
-echo "$out" | mustmatch like "| Gene | Relationship | Source | OpenTargets |"
-echo "$out" | mustmatch like "## Diagnostics"
-echo "$out" | mustmatch '/Showing [0-9]+ of [0-9]+ diagnostic matches/'
-```
-
 ## Clinical Features
 
 Clinical features are a separate opt-in MedlinePlus section for reviewed
@@ -99,17 +84,9 @@ bounded instead of implying the first page is the whole research landscape.
 out="$(../../tools/biomcp-ci get disease 'Marfan syndrome' funding)"
 echo "$out" | mustmatch like "## Funding (NIH Reporter)"
 echo "$out" | mustmatch like "| Project | PI | Organization | FY | Amount |"
-echo "$out" | mustmatch '/Showing top [0-9]+ unique grants from [0-9]+ matching NIH project-year records/'
 ```
 
 ## JSON Pivots
 
 The JSON card should keep the same executable disease follow-ups that the
 markdown card teaches to humans.
-
-```bash
-json_out="$(../../tools/biomcp-ci --json get disease melanoma)"
-echo "$json_out" | mustmatch like '"next_commands": ['
-echo "$json_out" | jq -e '._meta.next_commands | index("biomcp search trial -c \"melanoma\"")' >/dev/null
-echo "$json_out" | jq -e '._meta.suggestions | index("biomcp search diagnostic --disease \"melanoma\"")' >/dev/null
-```

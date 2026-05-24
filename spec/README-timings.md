@@ -12,6 +12,11 @@
 
 Routine validation now uses the deterministic `make spec-contracts` lane, and
 public upstream confidence is live and opt-in through `make release-live-smoke`.
+Ticket 379 pruned representative live public-upstream assertions from
+`spec/entity/article.md`, `spec/entity/variant.md`, `spec/entity/disease.md`,
+and `spec/surface/discover.md`: deterministic request, source, fixture, and
+renderer contracts own routine proof, while `release-live-smoke` owns the small
+operator live matrix.
 Legacy canary targets remain available for corpus debugging: upstream-heavy
 canaries leave the main xdist pool and rerun in a serialized leg:
 `spec/entity/protein.md` for the ComplexPortal canary plus
