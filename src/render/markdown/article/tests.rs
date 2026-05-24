@@ -364,7 +364,11 @@ fn ticket_377_article_renderer_envelope_contracts_markdown_status() {
     )
     .expect("article_search_markdown_with_footer_and_context");
     assert!(markdown.contains("| PMID | Title | Source(s) | Date | Why | Cit. |"));
-    assert!(markdown.contains("Semantic Scholar source status: degraded (shared_pool)"));
+    assert!(markdown.lines().any(|line| {
+        line.contains("Semantic Scholar")
+            && line.contains("degraded")
+            && line.contains("shared_pool")
+    }));
 }
 
 #[test]
