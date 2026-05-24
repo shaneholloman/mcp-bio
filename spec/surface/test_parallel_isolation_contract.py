@@ -79,6 +79,32 @@ def _non_skipped_bash_blocks(markdown: str) -> list[str]:
     return blocks
 
 
+def _bash_blocks(markdown: str) -> list[str]:
+    return [
+        match.group(2)
+        for match in re.finditer(
+            r"^```bash([^`\n]*)\n(.*?)^```",
+            markdown,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+    ]
+
+
+def _non_fixture_biomcp_invocations(markdown: str) -> list[str]:
+    invocations: list[str] = []
+    for block in _bash_blocks(markdown):
+        if "setup-article-fulltext-source-fixture.sh" in block:
+            continue
+        for line in block.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            live_tokens = ("../../tools/biomcp-ci", "BIOMCP_BIN", '"$biomcp_bin"')
+            if any(token in stripped for token in live_tokens):
+                invocations.append(stripped)
+    return invocations
+
+
 def _assert_make_target_serializes_spec_path(target_name: str, block: str, path: str) -> None:
     assert "$(SPEC_XDIST_ARGS)" in block, f"{target_name} should keep its main parallel xdist leg"
     assert f"--deselect {path}" in block, (
@@ -1188,3 +1214,146 @@ def test_ticket_378_routine_lane_no_longer_depends_on_serialized_ols4_carveout()
     assert "ols4" in technical_overview and "release-live-smoke" in technical_overview, (
         "architecture/technical/overview.md must move public OLS4 confidence to the explicit live-smoke lane"
     )
+
+
+def _redundant_live_block_failures(path: str, level: int, headings: tuple[str, ...]) -> list[str]:
+    failures: list[str] = []
+    for heading in headings:
+        section = _markdown_heading_body(path, level, heading)
+        invocations = _non_fixture_biomcp_invocations(section)
+        if invocations:
+            failures.append(f"{path}::{heading}: {invocations}")
+    return failures
+
+
+def _assert_no_redundant_live_block_failures(failures: list[str]) -> None:
+    assert not failures, (
+        "ticket 379 requires representative sections whose request/source/renderer contracts "
+        "already exist to stop executing live public-upstream BioMCP commands. Prune the block, "
+        "replace it with deterministic fixture/cargo proof, or classify live confidence in "
+        "release-live-smoke instead:\n" + "\n".join(failures)
+    )
+
+
+def test_ticket_379_article_variant_source_specs_prune_redundant_live_blocks() -> None:
+    failures = _redundant_live_block_failures(
+        "spec/entity/article.md",
+        2,
+        (
+            "Gene Search",
+            "Keyword Search",
+            "Search Table & Source Ranking",
+            "PubTator Annotations",
+            "Semantic Scholar Degrades Truthfully Without a Key",
+            "Semantic Scholar Source Status Appears in Debug Plans",
+            "Authenticated Source Status Is Redacted",
+            "Markdown Notes Semantic Scholar Unavailability",
+            "Entity Follow-Up",
+        ),
+    )
+    failures.extend(
+        _redundant_live_block_failures(
+            "spec/entity/variant.md",
+            2,
+            (
+                "Gene-Scoped Variant Search",
+                "Search Table Contract",
+                "Protein-Filter Narrowing",
+                "Residue-Alias Search",
+                "Clinical Significance",
+                "Population Frequency",
+                "Variant Follow-Ups",
+                "ID Normalization",
+                "Transcript HGVS Normalization Proxies",
+                "ERBB2 Transcript HGVS Canary",
+            ),
+        )
+    )
+    _assert_no_redundant_live_block_failures(failures)
+
+
+def test_ticket_379_disease_discover_specs_prune_redundant_live_blocks() -> None:
+    failures = _redundant_live_block_failures(
+        "spec/entity/disease.md",
+        2,
+        (
+            "Disease Normalization & Search",
+            "Genes & Diagnostics",
+            "JSON Pivots",
+        ),
+    )
+    failures.extend(
+        _redundant_live_block_failures(
+            "spec/surface/discover.md",
+            2,
+            (
+                "Alias-Like Free Text Still Resolves to Typed Follow-Ups",
+                "Disease-Specific Symptom Phrases Stay Clinically Modest",
+                "HPO-Backed Symptom Phrases Should Bridge into Phenotype Search",
+                "Relational Queries Redirect Instead of Surfacing Weak Collocation Noise",
+                "No-Match Discover Queries Fall Back to Article Search",
+            ),
+        )
+    )
+    _assert_no_redundant_live_block_failures(failures)
+
+
+def _mustmatch_count_prose_lines(section: str, required_terms: tuple[str, ...]) -> list[str]:
+    failures: list[str] = []
+    for line in section.splitlines():
+        stripped = line.strip()
+        normalized = stripped.lower()
+        if "mustmatch" not in normalized or "showing" not in normalized:
+            continue
+        if not all(term in normalized for term in required_terms):
+            continue
+        if any(token in stripped for token in ("[0-9]", "\\d")):
+            failures.append(stripped)
+    return failures
+
+
+def test_ticket_379_target_specs_drop_count_prose_trivia() -> None:
+    forbidden = (
+        (
+            "spec/entity/disease.md",
+            2,
+            "Genes & Diagnostics",
+            ("diagnostic",),
+        ),
+        (
+            "spec/entity/disease.md",
+            2,
+            "NIH Funding Context",
+            ("grant",),
+        ),
+    )
+    failures = []
+    for path, level, heading, required_terms in forbidden:
+        section = _markdown_heading_body(path, level, heading)
+        for line in _mustmatch_count_prose_lines(section, required_terms):
+            failures.append(f"{path}::{heading} still pins numeric count/prose assertion {line!r}")
+
+    assert not failures, (
+        "ticket 379 should relax count/prose pins that fail on upstream total drift or copy edits "
+        "rather than BioMCP behavior regressions:\n" + "\n".join(failures)
+    )
+
+
+def test_ticket_379_timing_docs_record_pruned_ownership() -> None:
+    timings = re.sub(r"\s+", " ", _read_repo("spec/README-timings.md").lower())
+
+    for fragment in (
+        "ticket 379",
+        "prun",
+        "spec/entity/article.md",
+        "spec/entity/variant.md",
+        "spec/entity/disease.md",
+        "spec/surface/discover.md",
+        "deterministic",
+        "release-live-smoke",
+    ):
+        assert fragment in timings, (
+            "spec/README-timings.md must record the ticket-379 pruning decision, including the "
+            "representative target specs, deterministic replacement ownership, and explicit "
+            f"release-live-smoke ownership; missing {fragment!r}"
+        )

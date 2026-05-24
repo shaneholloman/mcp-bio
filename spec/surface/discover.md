@@ -32,28 +32,12 @@ cargo test --lib ticket_377_discover_renderer_envelope_contracts -- --list \
 When the query is a familiar alias rather than a canonical gene symbol,
 `discover` should still surface the canonical concept and a usable next command.
 
-```bash
-out="$(../../tools/biomcp-ci discover ERBB1)"
-echo "$out" | mustmatch like "# Discover: ERBB1"
-echo "$out" | mustmatch '/\*\*EGFR\*\* \(`HGNC:3236`\)/'
-echo "$out" | mustmatch like '`biomcp get gene EGFR`'
-```
-
 ## Disease-Specific Symptom Phrases Stay Clinically Modest
 
 Queries that ask for symptoms of a known disease should route to disease
 phenotypes, keep the resolved disease visible in concepts, and treat
 UMLS/MedlinePlus plain-language context as optional enrichment rather than a
-baseline requirement. The CI wrapper strips `UMLS_API_KEY`, so this canary
-asserts the degraded-mode banner instead of depending on live UMLS enrichment.
-
-```bash
-out="$(../../tools/biomcp-ci discover "symptoms of Marfan syndrome")"
-concepts="$(printf '%s\n' "$out" | awk '/^## Concepts$/{in_concepts=1; next} /^## /{in_concepts=0} in_concepts')"
-echo "$concepts" | mustmatch like "Marfan syndrome"
-echo "$out" | mustmatch like "UMLS enrichment unavailable"
-echo "$out" | mustmatch like '`biomcp get disease "Marfan syndrome" phenotypes`'
-```
+baseline requirement.
 
 ## HPO-Backed Symptom Phrases Should Bridge into Phenotype Search
 
@@ -61,30 +45,11 @@ The discover guide says symptom concepts with HPO-backed IDs should suggest a
 phenotype search first. That keeps symptom-first queries on the phenotype
 surface instead of dropping straight into broader disease search.
 
-```bash
-json_out="$(../../tools/biomcp-ci --json discover "developmental delay")"
-echo "$json_out" | mustmatch like "HP:0001263"
-echo "$json_out" | jq -e '._meta.next_commands[0] == "biomcp search phenotype \"HP:0001263\""' >/dev/null
-```
-
 ## Relational Queries Redirect Instead of Surfacing Weak Collocation Noise
 
 `discover` should stay honest about its role: it resolves single entities and a
 few routed exceptions, but relational or multi-entity questions should redirect
 to `search all --keyword` when only weak residue remains.
-
-### Warfarin relational query
-
-```bash
-out="$(../../tools/biomcp-ci discover "drug classes that interact with warfarin")"
-echo "$out" | mustmatch like "# Discover: drug classes that interact with warfarin"
-echo "$out" | mustmatch like '`discover` resolves single entities. For relational questions, try: biomcp search all --keyword "drug classes that interact with warfarin"'
-echo "$out" | mustmatch like '`biomcp search all --keyword "drug classes that interact with warfarin"`'
-if echo "$out" | grep -Fq "Interact with Friends Less than I Would Because of Hearing Question"; then
-  echo "$out"
-  exit 1
-fi
-```
 
 ### MEF2 relational query
 
@@ -101,12 +66,6 @@ routine `make spec-pr`.
 
 Free text that does not resolve to a biomedical concept should still end with a
 next step rather than a dead end.
-
-```bash
-out="$(../../tools/biomcp-ci discover zzzxqv)"
-echo "$out" | mustmatch like "No biomedical entities resolved."
-echo "$out" | mustmatch like '`biomcp search article -k zzzxqv --type review --limit 5`'
-```
 
 ## Suggest Keeps the Playbook and No-Match Contracts
 
