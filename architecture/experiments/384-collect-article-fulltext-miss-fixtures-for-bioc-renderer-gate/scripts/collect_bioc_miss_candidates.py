@@ -383,9 +383,10 @@ def resolve_from_search(result: dict[str, Any], approach: str, index: int, why: 
 def collect_cases(*, search_limit: int | None = None) -> list[dict[str, Any]]:
     cases = [dict(case) for case in PRIOR_ART_CASES]
     seen = {(case.get("pmid"), case.get("pmcid")) for case in cases}
-    for search in SEARCH_APPROACHES:
-        limit = search_limit if search_limit is not None else int(search["limit"])
-        results = europe_search(search["query"], limit)
+    searches = [dict(search, limit=search_limit if search_limit is not None else int(search["limit"])) for search in SEARCH_APPROACHES]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(searches) or 1) as executor:
+        search_results = list(executor.map(lambda search: europe_search(search["query"], int(search["limit"])), searches))
+    for search, results in zip(searches, search_results):
         added = 0
         for result in results:
             key = (result.get("pmid"), result.get("pmcid"))
