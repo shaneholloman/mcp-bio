@@ -378,11 +378,12 @@ def resolve_from_search(result: dict[str, Any], approach: str, index: int, why: 
     }
 
 
-def collect_cases() -> list[dict[str, Any]]:
+def collect_cases(*, search_limit: int | None = None) -> list[dict[str, Any]]:
     cases = [dict(case) for case in PRIOR_ART_CASES]
     seen = {(case.get("pmid"), case.get("pmcid")) for case in cases}
     for search in SEARCH_APPROACHES:
-        results = europe_search(search["query"], search["limit"])
+        limit = search_limit if search_limit is not None else int(search["limit"])
+        results = europe_search(search["query"], limit)
         added = 0
         for result in results:
             key = (result.get("pmid"), result.get("pmcid"))
@@ -394,6 +395,37 @@ def collect_cases() -> list[dict[str, Any]]:
             cases.append(item)
             added += 1
     return cases
+
+
+def load_cases_from_probe(path: Path) -> list[dict[str, Any]]:
+    """Load a prior compact result as a fixed regression-control case set."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    cases: list[dict[str, Any]] = []
+    for item in data.get("cases", []):
+        if not isinstance(item, dict):
+            continue
+        case = {
+            "case": item.get("case"),
+            "approach": item.get("approach"),
+            "pmid": item.get("pmid"),
+            "pmcid": item.get("pmcid"),
+            "doi": item.get("doi"),
+            "why": item.get("why"),
+            "title": item.get("title"),
+            "europe_pmc_metadata": item.get("europe_pmc_metadata"),
+        }
+        cases.append({key: value for key, value in case.items() if value is not None})
+    return cases
+
+
+def effective_approaches(*, search_limit: int | None = None) -> list[dict[str, Any]]:
+    approaches = []
+    for search in SEARCH_APPROACHES:
+        item = dict(search)
+        if search_limit is not None:
+            item["limit"] = search_limit
+        approaches.append(item)
+    return approaches
 
 
 def pmcid_digits(pmcid: str) -> str:
@@ -516,17 +548,25 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True, help="Detailed compact JSON result path")
     parser.add_argument("--matrix", type=Path, required=True, help="Compact CSV matrix path")
+    parser.add_argument("--cases-from", type=Path, help="Re-measure the fixed case set from an earlier probe JSON")
+    parser.add_argument("--search-limit", type=int, help="Override the per-approach Europe PMC search limit for new candidate collection")
+    parser.add_argument("--run-label", default="explore-scale", help="Human-readable run label stored in the JSON")
     args = parser.parse_args(argv)
 
-    raw_cases = collect_cases()
+    if args.cases_from and args.search_limit is not None:
+        parser.error("--cases-from and --search-limit are mutually exclusive")
+    raw_cases = load_cases_from_probe(args.cases_from) if args.cases_from else collect_cases(search_limit=args.search_limit)
     measured = [measure_case(case) for case in raw_cases]
     wins = [case for case in measured if case["classification"]["material_bioc_win"]]
     results = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "run_label": args.run_label,
         "note": "Live-source spike probe; compact metadata/excerpts only, not routine gate fixtures.",
         "case_count": len(measured),
         "material_bioc_win_count": len(wins),
-        "approaches": SEARCH_APPROACHES,
+        "cases_from": str(args.cases_from) if args.cases_from else None,
+        "search_limit_override": args.search_limit,
+        "approaches": effective_approaches(search_limit=args.search_limit),
         "prior_art_cases": PRIOR_ART_CASES,
         "cases": strip_bodies(measured),
     }
