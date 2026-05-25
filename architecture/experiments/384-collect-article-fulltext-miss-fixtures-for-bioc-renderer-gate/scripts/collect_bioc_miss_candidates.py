@@ -30,7 +30,7 @@ USER_AGENT = "biomcp-ticket-384-bioc-miss-fixtures/0.1"
 TIMEOUT = 25
 MAX_BODY = 2_000_000
 EXCERPT_CHARS = 500
-CASE_WORKERS = 4
+CASE_WORKERS = 8
 
 EUROPE_BASE = "https://www.ebi.ac.uk/europepmc/webservices/rest"
 EFETCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
