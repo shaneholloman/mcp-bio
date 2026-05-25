@@ -23,6 +23,9 @@ fn article_batch_item_projection_keeps_requested_id_year_and_top_entities() {
         full_text_path: None,
         full_text_note: None,
         full_text_source: None,
+        full_text_manifest: None,
+        europepmc_license: None,
+        europepmc_retracted: None,
         annotations: Some(ArticleAnnotations {
             genes: vec![
                 AnnotationCount {

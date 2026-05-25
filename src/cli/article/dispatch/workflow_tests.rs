@@ -18,6 +18,9 @@ fn article_with_signal() -> crate::entities::article::Article {
         full_text_path: None,
         full_text_note: None,
         full_text_source: None,
+        full_text_manifest: None,
+        europepmc_license: None,
+        europepmc_retracted: None,
         annotations: Some(crate::entities::article::ArticleAnnotations {
             genes: vec![crate::entities::article::AnnotationCount {
                 text: "BRAF".to_string(),

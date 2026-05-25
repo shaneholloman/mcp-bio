@@ -243,6 +243,9 @@ fn article_json_next_commands_parse() {
         full_text_path: None,
         full_text_note: None,
         full_text_source: None,
+        full_text_manifest: None,
+        europepmc_license: None,
+        europepmc_retracted: None,
         annotations: Some(ArticleAnnotations {
             genes: vec![AnnotationCount {
                 text: "serine-threonine protein kinase".to_string(),

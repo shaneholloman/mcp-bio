@@ -15,6 +15,16 @@ const MAX_TGZ_BYTES: usize = 64 * 1024 * 1024;
 const MAX_ARCHIVE_ENTRY_BYTES: u64 = 8 * 1024 * 1024;
 
 static TGZ_HREF_RE: OnceLock<Regex> = OnceLock::new();
+static LICENSE_ATTR_RE: OnceLock<Regex> = OnceLock::new();
+static RETRACTED_ATTR_RE: OnceLock<Regex> = OnceLock::new();
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PmcOaArchiveManifest {
+    pub tgz_url: String,
+    pub package_url: String,
+    pub license: Option<String>,
+    pub retracted: Option<bool>,
+}
 
 #[derive(Clone)]
 pub struct PmcOaClient {
@@ -64,7 +74,10 @@ impl PmcOaClient {
         Ok(String::from_utf8_lossy(&bytes).to_string())
     }
 
-    async fn oa_tgz_url(&self, pmcid: &str) -> Result<Option<String>, BioMcpError> {
+    async fn oa_archive_manifest(
+        &self,
+        pmcid: &str,
+    ) -> Result<Option<PmcOaArchiveManifest>, BioMcpError> {
         let pmcid = pmcid.trim();
         if pmcid.is_empty() {
             return Ok(None);
@@ -106,17 +119,37 @@ impl PmcOaClient {
             raw_href.to_string()
         };
 
-        Ok(Some(href))
+        let license = LICENSE_ATTR_RE
+            .get_or_init(|| Regex::new(r#"\blicense="([^"]+)""#).expect("valid license regex"))
+            .captures(&xml)
+            .and_then(|caps| caps.get(1))
+            .map(|m| m.as_str().trim().to_string())
+            .filter(|s| !s.is_empty());
+        let retracted = RETRACTED_ATTR_RE
+            .get_or_init(|| Regex::new(r#"\bretracted="([^"]+)""#).expect("valid retracted regex"))
+            .captures(&xml)
+            .and_then(|caps| caps.get(1))
+            .and_then(|value| parse_boolish(value.as_str()));
+
+        Ok(Some(PmcOaArchiveManifest {
+            tgz_url: href.clone(),
+            package_url: href,
+            license,
+            retracted,
+        }))
     }
 
-    pub async fn get_full_text_xml(&self, pmcid: &str) -> Result<Option<String>, BioMcpError> {
-        let Some(tgz_url) = self.oa_tgz_url(pmcid).await? else {
+    pub async fn get_full_text_xml_with_manifest(
+        &self,
+        pmcid: &str,
+    ) -> Result<Option<(String, PmcOaArchiveManifest)>, BioMcpError> {
+        let Some(manifest) = self.oa_archive_manifest(pmcid).await? else {
             return Ok(None);
         };
 
         let resp = self
             .client
-            .get(&tgz_url)
+            .get(&manifest.tgz_url)
             .with_extension(CacheMode::NoStore)
             .send()
             .await?;
@@ -139,7 +172,15 @@ impl PmcOaClient {
                 message: format!("Task join error: {err}"),
             })??;
 
-        Ok(xml)
+        Ok(xml.map(|xml| (xml, manifest)))
+    }
+}
+
+fn parse_boolish(value: &str) -> Option<bool> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "y" | "yes" | "true" | "1" => Some(true),
+        "n" | "no" | "false" | "0" => Some(false),
+        _ => None,
     }
 }
 
@@ -208,8 +249,11 @@ mod tests {
             .await;
 
         let client = PmcOaClient::new_for_test(server.uri(), None).unwrap();
-        let href = client.oa_tgz_url("PMC123").await.unwrap().unwrap();
-        assert_eq!(href, "https://ftp.ncbi.nlm.nih.gov/pub/pmc/file.tar.gz");
+        let manifest = client.oa_archive_manifest("PMC123").await.unwrap().unwrap();
+        assert_eq!(
+            manifest.tgz_url,
+            "https://ftp.ncbi.nlm.nih.gov/pub/pmc/file.tar.gz"
+        );
     }
 
     #[tokio::test]
@@ -227,8 +271,11 @@ mod tests {
             .await;
 
         let client = PmcOaClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let href = client.oa_tgz_url("PMC123").await.unwrap().unwrap();
-        assert_eq!(href, "https://ftp.ncbi.nlm.nih.gov/pub/pmc/file.tar.gz");
+        let manifest = client.oa_archive_manifest("PMC123").await.unwrap().unwrap();
+        assert_eq!(
+            manifest.tgz_url,
+            "https://ftp.ncbi.nlm.nih.gov/pub/pmc/file.tar.gz"
+        );
     }
 
     #[tokio::test]
@@ -287,11 +334,15 @@ mod tests {
             .await;
 
         let client = PmcOaClient::new_for_test(server.uri(), None).unwrap();
-        let xml = client
-            .get_full_text_xml("PMC123")
+        let (xml, manifest) = client
+            .get_full_text_xml_with_manifest("PMC123")
             .await
             .expect("large archive should succeed")
             .expect("nxml should be extracted");
+        assert_eq!(
+            manifest.package_url,
+            format!("{}/archive.tgz", server.uri())
+        );
         assert!(xml.contains("large-ok"));
     }
 

@@ -1,57 +1,59 @@
-# Code Review Log — ticket 379 prune brittle live assertions
+# Code Review Log — ticket 383 Add article fulltext provenance and quality flags
 
 ## Critique Summary
 
-Reviewed `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, `.march/spec-red-check.json`, `.march/code-log.md`, and the full diff against `main`, including the uncommitted implementation edits in the target spec files.
+Reviewed `.march/ticket.md`, `.march/design-draft.md`, `.march/design-final.md`, `.march/code-log.md`, the full diff against `main`, and the changed Rust/docs/spec surfaces.
 
 ### Design Completeness Audit
 
-Every design-final implementation item has a matching code/spec-corpus change:
+Initial implementation covered the primary manifest contract: `Article.full_text_manifest`, JATS/HTML/PDF resolver population, Europe PMC license/open-access threading, JATS quality flags, deterministic fixture/spec assertions, and docs updates.
 
-- `spec/entity/article.md` prunes non-fixture live BioMCP blocks from the nine named article headings while preserving the fulltext fixture sections.
-- `spec/entity/variant.md` prunes live MyVariant/normalization blocks from the ten named variant headings and removes stale `mustmatch-lint` skip comments left by that pruning.
-- `spec/entity/disease.md` prunes live blocks from `Disease Normalization & Search`, `Genes & Diagnostics`, and `JSON Pivots`; the diagnostics count/prose pin is gone.
-- `spec/entity/disease.md::NIH Funding Context` keeps section/table anchors but removes the numeric `Showing top ... grants ...` assertion.
-- `spec/surface/discover.md` prunes live discover blocks from the five named headings, keeps suggest/skill coverage outside the target list, and removes stale prose/subheading collateral from the pruned canary.
-- `spec/README-timings.md` records ticket 379, all four target paths, deterministic request/source/fixture/renderer ownership, and explicit `release-live-smoke` ownership.
-
-No runtime code, CLI surface, validation-profile routing, or unrelated spec files were changed.
+One design-completeness defect was found and fixed: `design-final.md` required PMC OA archive/package provenance when that rung wins, and required retraction provenance only when backed by reliable source fields. The implementation did not expose PMC OA archive manifest metadata and emitted `retracted: false` even when no publication-type/retraction field was present.
 
 ### Test-Design Traceability
 
-Forward traceability passed. Each design-final proof-matrix entry has a landed assertion in `spec/surface/test_parallel_isolation_contract.py`:
+Forward traceability passed. Every proof-matrix row has a landed assertion/support change:
 
-1. Article/variant redundant live public-upstream pruning → `test_ticket_379_article_variant_source_specs_prune_redundant_live_blocks`.
-2. Disease/discover redundant live public-upstream pruning → `test_ticket_379_disease_discover_specs_prune_redundant_live_blocks`.
-3. Disease diagnostics/funding numeric count/prose pruning → `test_ticket_379_target_specs_drop_count_prose_trivia`.
-4. Timing/lane ownership docs → `test_ticket_379_timing_docs_record_pruned_ownership`.
+- JATS/XML manifest assertions in `spec/surface/cli.md` and `spec/entity/article.md`.
+- PMC HTML unknown-license manifest assertions in both spec files.
+- Explicit PDF fallback manifest assertions in both spec files.
+- Fixture support for JATS sections/tables/references, Europe PMC OA/license metadata, unknown-license HTML, and Semantic Scholar PDF license.
+- Existing saved-file/PDF opt-in assertions remain in `spec/entity/article.md`.
 
-Reverse traceability also passed. The only new shipped-contract assertions are the four ticket-379 design assertions above. Removed or relaxed assertions are the design-named live public-upstream blocks or the explicit disease count/prose pins. The deleted Warfarin subheading and UMLS degraded-banner sentence are mechanical stale-doc cleanup after their live canary blocks were pruned, not independent behavioral contract changes.
+Reverse traceability passed. The only new shipped-contract assertions are the design-approved manifest assertions and fixture support. No shipped-contract assertions were removed, relaxed, or invented by the code step.
 
 ### Edit Discipline Audit
 
-Minimal implementation size for this ticket is the named live bash-block removals, the disease count/prose-pin removals, stale skip/comment cleanup caused by those removals, and one timing ownership note. The actual implementation diff is limited to the named files and contains no runtime, profile, helper-module, or unrelated formatting churn. No over-edit defects found.
+Estimated minimal size was the additive manifest structs, resolver metadata threading, JATS quality helper, source metadata deserialization, fixture/spec additions, and docs. Actual changes stayed on the design-named surfaces. The review repair added only the missing PMC OA/retraction provenance threading and a PMCID trim on the new manifest identifier. No over-edit defect remains.
 
 ### Quality Checks
 
-- **Implementation quality:** Changes stay in the spec-corpus layer as designed. New Python helpers follow adjacent style and reuse existing markdown section readers.
-- **Test quality:** Ticket-379 assertions are structural/semantic lane-ownership checks; they avoid line numbers, exact prose pins, and incidental counts.
-- **Performance:** Static markdown inspection only; no new subprocess or network calls in routine proof.
-- **Data completeness:** Replacement ownership is documented and existing deterministic source/renderer contract references remain in the target docs.
-- **Security:** No new untrusted input flow, shell construction, secret exposure, or auth behavior changes. Existing deterministic tests cover Semantic Scholar auth redaction.
-- **Duplication:** Searched for existing bash-block helpers. `_bash_blocks` is intentionally separate from `_non_skipped_bash_blocks` because ticket 379 must inspect skipped bash fences too.
+- **Implementation quality:** Follows existing resolver/source-client conventions and preserves resolver order and legacy `full_text_source` fields.
+- **Test quality:** Specs assert user-observable JSON contract through deterministic fixtures, not implementation internals.
+- **Performance:** JATS quality extraction is one cheap parse; HTML/PDF stay conservative; no new routine live calls or heavyweight dependencies.
+- **Data completeness:** Fixed PMC OA package provenance and reliable-only retraction provenance. License/reuse unknowns remain explicit.
+- **Security:** Manifest serializes trimmed upstream identifiers/licenses/URLs as data only; no API keys, headers, fixture temp roots, or secret-derived values are emitted.
+- **Duplication:** Searched manifest/quality/reuse/package/provenance terms; no pre-existing article fulltext manifest helper existed.
 
 ## Repairs Applied
 
-None. No defects were found, so no review commit was created.
+- Added `PmcOaArchiveManifest` and `get_full_text_xml_with_manifest` so PMC OA archive winners can carry package URL, optional OA license, and optional OA retraction metadata into `full_text_manifest.provenance`/`reuse`.
+- Threaded PMC OA manifest metadata through the XML winner path without changing resolver order.
+- Changed Europe PMC detail retraction threading to `None` when no publication-type/retraction evidence exists, avoiding an overconfident `retracted: false` manifest field.
+- Trimmed the HTML PMCID manifest identifier before serialization.
+- Split the previously uncommitted code implementation into `build: add article fulltext manifest implementation`, leaving the review repair as a separate commit as required.
 
 ## Validation Rerun
 
-- `PATH="$PWD/target/release:$PATH" BIOMCP_BIN="$PWD/target/release/biomcp" uv run --no-sync pytest spec/surface/test_parallel_isolation_contract.py -k 'ticket_379' -v` — 4 passed, 22 deselected
-- `make spec-contracts` — 52 passed
-- `git diff --check` — passed
-- `cargo test --lib` — 2007 passed
-- `cargo clippy --lib --tests -- -D warnings` — passed
+- `cargo check --all-targets` — passed.
+- `cargo test -p biomcp-cli sources::pmc_oa::tests -- --nocapture` — 4 passed.
+- `make spec-contracts` — 55 passed.
+- `PATH="$PWD/target/release:$PATH" BIOMCP_BIN="$PWD/target/release/biomcp" uv run --no-sync pytest spec/entity/article.md --mustmatch-lang bash --mustmatch-timeout 180 -v` — 8 passed.
+- `cargo test --lib && cargo clippy --lib --tests -- -D warnings` — 2007 tests passed; clippy passed.
+- `make check` — passed (`cargo nextest`: 2086 passed, 1 skipped; `pytest tests/`: 251 passed; `mkdocs build --strict`: passed).
+- `git diff --check` — passed.
+
+Note: one `make spec-contracts` attempt timed out after I had manually started the article fixture without its normal test-block cleanup trap, leaving the fixture lock held. I killed that manual fixture process and reran the lane successfully.
 
 ## Residual Concerns
 
@@ -61,4 +63,5 @@ None requiring a follow-up issue.
 
 | # | Category | Lintable | Description |
 |---|----------|----------|-------------|
-| 1 | None found | no | No defects found. |
+| 1 | stale-doc | no | Design/docs promised PMC OA package/retraction provenance when available, but runtime discarded the OA archive manifest after extracting XML. Fixed by exposing and threading `PmcOaArchiveManifest` into `full_text_manifest`. |
+| 2 | stale-doc | no | Design said `provenance.retracted` is populated only from reliable source fields, but runtime emitted `retracted: false` even when Europe PMC supplied no publication-type/retraction field. Fixed by keeping detail retraction provenance absent unless source evidence exists. |

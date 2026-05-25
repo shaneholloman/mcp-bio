@@ -198,7 +198,11 @@ This uses the default article full-text ladder: XML first, then PMC HTML when
 the XML path misses for a PMCID-backed article. It never falls back to PDF.
 When full text resolves, BioMCP prints a local `Saved to:` path for cached
 Markdown and surfaces the winning source label (`Europe PMC XML`, `PMC HTML`,
-etc.) in markdown and JSON provenance.
+etc.) in markdown and JSON provenance. JSON fulltext responses also include
+`full_text_manifest`, an additive artifact manifest with the normalized source
+family (`jats_xml`, `pmc_html`, or `pdf`), provider label/source, concrete
+source identifier, quality flags, known license/reuse state, and provenance
+facts such as open-access and explicit PDF fallback status.
 
 Opt in to the final PDF rung only when you want the last-resort open-access PDF
 path after XML and PMC HTML both miss:
@@ -263,8 +267,13 @@ biomcp --json article batch 22663011 24200969
 
 JSON article responses include `_meta.next_commands` and `_meta.section_sources`,
 so article workflows can promote the next likely pivots and preserve section
-provenance without scraping markdown. JSON `search article` responses also echo
-`query`, `sort`, `semantic_scholar_enabled`, and row-level ranking/provenance
+provenance without scraping markdown. For `get article <id> fulltext --json`,
+`full_text_manifest.quality` reports whether saved Markdown has sections,
+tables, references, fulltext signal, and fulltext entity annotations;
+`full_text_manifest.reuse` separates known licenses from an explicit unknown
+license/reuse warning; and `full_text_manifest.provenance` carries available
+open-access, retraction, package, and PDF-fallback facts. JSON `search article`
+responses also echo `query`, `sort`, `semantic_scholar_enabled`, and row-level ranking/provenance
 metadata. In relevance mode, ranking metadata now includes the effective mode
 plus normalized lexical, citation, and position components; semantic-aware
 rows expose `ranking.semantic_score` as the LitSense2-derived signal and use

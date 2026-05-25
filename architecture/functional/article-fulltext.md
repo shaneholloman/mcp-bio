@@ -57,8 +57,10 @@ not become user-facing hard errors while a later eligible rung can still win.
 
 BioMCP does not enforce article-level reuse licenses at runtime. Users must
 review provider terms and the returned article license context before reusing or
-redistributing downloaded full text, saved Markdown, or PDFs. The durable terms
-inventory lives in `docs/reference/source-licensing.md`.
+redistributing downloaded full text, saved Markdown, or PDFs. JSON fulltext
+manifests report `reuse.license_present`, a trimmed `reuse.license` when known,
+and a warning when license/reuse status is unknown. The durable terms inventory
+lives in `docs/reference/source-licensing.md`.
 
 ## Saved Artifact Contract
 
@@ -72,16 +74,30 @@ The stable output fields are:
   `PMC HTML`, or `Semantic Scholar PDF`.
 - `full_text_source.source`: JSON provenance source, one of `Europe PMC`,
   `NCBI EFetch`, `PMC OA`, `PMC`, or `Semantic Scholar`.
+- `full_text_manifest`: additive JSON-only manifest emitted when a source wins.
+  It includes:
+  - `source_kind`: normalized artifact family (`jats_xml`, `pmc_html`, `pdf`).
+  - `provider.label` and `provider.source`: same stable labels as the winning
+    `full_text_source`.
+  - `source_identifier`: the concrete PMCID, PMID, package/PDF URL, or other
+    source identifier used by the winner.
+  - `quality`: booleans for sections, tables, references, non-empty fulltext
+    signal, and fulltext entity annotations. Current HTML/PDF paths do not
+    claim section/table/reference or entity-annotation structure.
+  - `reuse`: known license state, optional license text, and an unknown-license
+    warning when BioMCP has no article/PDF license fact.
+  - `provenance`: available open-access/retraction facts, package URL when
+    available, and `pdf_fallback_used` for explicit PDF winners.
 
-Markdown prints `Saved to:` and does not inline full text in the article card.
-JSON `_meta.section_sources` includes a `fulltext` row only when
-`full_text_source` exists. Note-only misses do not publish a `fulltext`
+Markdown prints `Saved to:` and does not inline full text or manifest prose in
+the article card. JSON `_meta.section_sources` includes a `fulltext` row only
+when `full_text_source` exists. Note-only misses do not publish a `fulltext`
 provenance row.
 
 ## Failure Visibility
 
 A winning source is visible through the Markdown heading label,
-`full_text_source`, and `_meta.section_sources`.
+`full_text_source`, `full_text_manifest`, and `_meta.section_sources`.
 
 There is no public per-leg trace in Markdown or JSON. XML API errors are
 recorded internally and may collapse into `Full text not available: API error`

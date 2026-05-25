@@ -296,6 +296,11 @@ pub struct EuropePmcResult {
     pub pub_type_list: Option<serde_json::Value>,
     #[serde(rename = "isOpenAccess")]
     pub is_open_access: Option<serde_json::Value>,
+    pub license: Option<String>,
+    #[serde(rename = "fullTextIdList")]
+    pub full_text_id_list: Option<serde_json::Value>,
+    #[serde(rename = "fullTextUrlList")]
+    pub full_text_url_list: Option<serde_json::Value>,
     #[serde(rename = "abstractText")]
     pub abstract_text: Option<String>,
 }

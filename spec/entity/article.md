@@ -99,6 +99,103 @@ test -n "$pdf_path"
 test -f "$pdf_path"
 ```
 
+## Fulltext Provenance, Reuse, and Quality Metadata
+
+Saved fulltext Markdown is evidence material, so the JSON response must carry a
+machine-readable manifest for the artifact. The manifest identifies the source,
+records whether the representation has useful structure, and separates known
+license context from unknown reuse state.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+jats_json="$(../../tools/biomcp-ci --json get article 22663011 fulltext)"
+echo "$jats_json" | mustmatch like '"full_text_source"'
+ARTICLE_JSON="$jats_json" uv run --no-sync python3 - <<'PY'
+import json, os
+doc = json.loads(os.environ["ARTICLE_JSON"])
+manifest = doc.get("full_text_manifest") or {}
+assert manifest.get("source_kind") == "jats_xml", "missing JATS full_text_manifest source_kind"
+assert manifest.get("source_identifier") == "PMC123456"
+provider = manifest.get("provider") or {}
+assert provider.get("label") == "Europe PMC XML"
+assert provider.get("source") == "Europe PMC"
+quality = manifest.get("quality") or {}
+assert quality.get("has_sections") is True
+assert quality.get("has_tables") is True
+assert quality.get("has_references") is True
+assert quality.get("has_fulltext_signal") is True
+assert quality.get("has_entity_annotations") is False
+provenance = manifest.get("provenance") or {}
+assert provenance.get("open_access") is True
+reuse = manifest.get("reuse") or {}
+assert reuse.get("license_present") is True
+assert "CC BY" in str(reuse.get("license", ""))
+PY
+```
+
+PMC HTML fallback can still provide useful readable Markdown, but it is weaker
+than source XML and can lack article-level license context. Unknown reuse state
+must stay explicit instead of serializing as a safe or blank license.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+html_json="$(../../tools/biomcp-ci --json get article 22663012 fulltext)"
+echo "$html_json" | mustmatch like '"full_text_source"'
+ARTICLE_JSON="$html_json" uv run --no-sync python3 - <<'PY'
+import json, os
+doc = json.loads(os.environ["ARTICLE_JSON"])
+manifest = doc.get("full_text_manifest") or {}
+assert manifest.get("source_kind") == "pmc_html", "missing PMC HTML full_text_manifest source_kind"
+assert manifest.get("source_identifier") == "PMC123457"
+provider = manifest.get("provider") or {}
+assert provider.get("label") == "PMC HTML"
+assert provider.get("source") == "PMC"
+quality = manifest.get("quality") or {}
+assert quality.get("has_fulltext_signal") is True
+assert quality.get("has_entity_annotations") is False
+provenance = manifest.get("provenance") or {}
+assert provenance.get("open_access") is True
+reuse = manifest.get("reuse") or {}
+assert reuse.get("license_present") is False
+assert not reuse.get("license")
+warning = str(reuse.get("reuse_warning", "")).lower()
+assert "license" in warning or "reuse" in warning
+PY
+```
+
+PDF remains an opt-in fallback. The manifest must mark PDF-derived fulltext so an
+agent can decide whether PDF conversion is adequate for evidence ingestion and
+can carry any license fact returned by Semantic Scholar.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+pdf_json="$(../../tools/biomcp-ci --json get article 22663013 fulltext --pdf)"
+echo "$pdf_json" | mustmatch like '"full_text_source"'
+ARTICLE_JSON="$pdf_json" uv run --no-sync python3 - <<'PY'
+import json, os
+doc = json.loads(os.environ["ARTICLE_JSON"])
+manifest = doc.get("full_text_manifest") or {}
+assert manifest.get("source_kind") == "pdf", "missing PDF full_text_manifest source_kind"
+assert "/pdf/22663013.pdf" in str(manifest.get("source_identifier", ""))
+provider = manifest.get("provider") or {}
+assert provider.get("label") == "Semantic Scholar PDF"
+assert provider.get("source") == "Semantic Scholar"
+quality = manifest.get("quality") or {}
+assert quality.get("has_fulltext_signal") is True
+provenance = manifest.get("provenance") or {}
+assert provenance.get("pdf_fallback_used") is True
+reuse = manifest.get("reuse") or {}
+assert reuse.get("license_present") is True
+assert "CC BY" in str(reuse.get("license", ""))
+PY
+```
+
 ## Semantic Scholar Degrades Truthfully Without a Key
 
 The blocking lane is intentionally keyless. Article search should stay usable
