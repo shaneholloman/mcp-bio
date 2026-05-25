@@ -13,6 +13,7 @@ archives.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import csv
 import json
 import re
@@ -435,17 +436,28 @@ def pmcid_digits(pmcid: str) -> str:
 def measure_case(case: dict[str, Any]) -> dict[str, Any]:
     pmid = case.get("pmid")
     pmcid = case.get("pmcid")
-    sources: dict[str, Any] = {}
+    source_tasks: list[tuple[str, Any]] = []
     if pmcid:
-        sources["europe_pmc_fullTextXML_by_pmcid"] = summarize_jats(fetch(f"{EUROPE_BASE}/{urllib.parse.quote(pmcid)}/fullTextXML", accept="application/xml"), source_kind="jats_xml")
-        sources["ncbi_efetch_pmc_xml"] = summarize_jats(fetch(EFETCH, params={"db": "pmc", "id": pmcid_digits(pmcid), "rettype": "xml"}, accept="application/xml"), source_kind="jats_xml")
-        sources["pmc_oa_manifest"] = summarize_pmc_oa(fetch(PMC_OA, params={"id": pmcid}, accept="application/xml"))
-        sources["pmc_html"] = summarize_html(fetch(f"{PMC_ARTICLE}/{urllib.parse.quote(pmcid)}/", accept="text/html", max_body=512_000))
-        sources["ncbi_bioc_by_pmcid"] = summarize_bioc(fetch(f"{NCBI_BIOC}/BioC_json/{urllib.parse.quote(pmcid)}/unicode", accept="application/json"), source_kind="ncbi_bioc_json")
+        pmcid_text = str(pmcid)
+        source_tasks.extend([
+            ("europe_pmc_fullTextXML_by_pmcid", lambda pmcid_text=pmcid_text: summarize_jats(fetch(f"{EUROPE_BASE}/{urllib.parse.quote(pmcid_text)}/fullTextXML", accept="application/xml"), source_kind="jats_xml")),
+            ("ncbi_efetch_pmc_xml", lambda pmcid_text=pmcid_text: summarize_jats(fetch(EFETCH, params={"db": "pmc", "id": pmcid_digits(pmcid_text), "rettype": "xml"}, accept="application/xml"), source_kind="jats_xml")),
+            ("pmc_oa_manifest", lambda pmcid_text=pmcid_text: summarize_pmc_oa(fetch(PMC_OA, params={"id": pmcid_text}, accept="application/xml"))),
+            ("pmc_html", lambda pmcid_text=pmcid_text: summarize_html(fetch(f"{PMC_ARTICLE}/{urllib.parse.quote(pmcid_text)}/", accept="text/html", max_body=512_000))),
+            ("ncbi_bioc_by_pmcid", lambda pmcid_text=pmcid_text: summarize_bioc(fetch(f"{NCBI_BIOC}/BioC_json/{urllib.parse.quote(pmcid_text)}/unicode", accept="application/json"), source_kind="ncbi_bioc_json")),
+        ])
     if pmid:
-        sources["europe_pmc_fullTextXML_by_pmid"] = summarize_jats(fetch(f"{EUROPE_BASE}/{urllib.parse.quote(str(pmid))}/fullTextXML", accept="application/xml"), source_kind="jats_xml")
-        sources["ncbi_bioc_by_pmid"] = summarize_bioc(fetch(f"{NCBI_BIOC}/BioC_json/{urllib.parse.quote(str(pmid))}/unicode", accept="application/json"), source_kind="ncbi_bioc_json")
-        sources["pubtator3_biocjson_by_pmid"] = summarize_bioc(fetch(f"{PUBTATOR3}/publications/export/biocjson", params={"pmids": str(pmid)}, accept="application/json"), source_kind="pubtator3_bioc_json")
+        pmid_text = str(pmid)
+        source_tasks.extend([
+            ("europe_pmc_fullTextXML_by_pmid", lambda pmid_text=pmid_text: summarize_jats(fetch(f"{EUROPE_BASE}/{urllib.parse.quote(pmid_text)}/fullTextXML", accept="application/xml"), source_kind="jats_xml")),
+            ("ncbi_bioc_by_pmid", lambda pmid_text=pmid_text: summarize_bioc(fetch(f"{NCBI_BIOC}/BioC_json/{urllib.parse.quote(pmid_text)}/unicode", accept="application/json"), source_kind="ncbi_bioc_json")),
+            ("pubtator3_biocjson_by_pmid", lambda pmid_text=pmid_text: summarize_bioc(fetch(f"{PUBTATOR3}/publications/export/biocjson", params={"pmids": pmid_text}, accept="application/json"), source_kind="pubtator3_bioc_json")),
+        ])
+    sources: dict[str, Any] = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(source_tasks) or 1) as executor:
+        future_by_name = {name: executor.submit(task) for name, task in source_tasks}
+        for name, _ in source_tasks:
+            sources[name] = future_by_name[name].result()
     return case | {"sources": sources, "classification": classify_sources(sources)}
 
 
