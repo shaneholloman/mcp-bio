@@ -19,7 +19,7 @@ pub use self::federation::{
     from_pubtator_document, from_pubtator_search_result, merge_europepmc_metadata,
 };
 pub use self::html::extract_text_from_html;
-pub use self::jats::extract_text_from_xml;
+pub use self::jats::{extract_text_from_xml, jats_quality_flags};
 pub use self::pdf::extract_text_from_pdf;
 
 fn collapse_whitespace(value: &str) -> String {
@@ -73,6 +73,8 @@ mod tests {
         let _ = crate::transform::article::extract_annotations
             as fn(&PubTatorDocument) -> Option<ArticleAnnotations>;
         let _ = crate::transform::article::extract_text_from_xml as fn(&str) -> String;
+        let _ = crate::transform::article::jats_quality_flags
+            as fn(&str) -> crate::entities::article::ArticleFulltextQuality;
         let _ = crate::transform::article::extract_text_from_html
             as fn(&str, &str) -> Result<String, BioMcpError>;
         let _ = crate::transform::article::extract_text_from_pdf

@@ -12,7 +12,11 @@ use crate::sources::pmc_oa::PmcOaClient;
 use crate::transform;
 use crate::utils::download;
 
-use super::{Article, ArticleFulltextKind, ArticleFulltextSource, ArticleGetOptions};
+use super::{
+    Article, ArticleFulltextKind, ArticleFulltextManifest, ArticleFulltextManifestKind,
+    ArticleFulltextProvenance, ArticleFulltextProvider, ArticleFulltextQuality,
+    ArticleFulltextReuse, ArticleFulltextSource, ArticleGetOptions,
+};
 
 const FULLTEXT_CACHE_VERSION: &str = "v3";
 const ARTICLE_FULLTEXT_API: &str = "article";
@@ -78,6 +82,55 @@ fn pdf_source_metadata() -> ArticleFulltextSource {
         kind: ArticleFulltextKind::Pdf,
         label: "Semantic Scholar PDF".to_string(),
         source: "Semantic Scholar".to_string(),
+    }
+}
+
+fn manifest_provider(source: &ArticleFulltextSource) -> ArticleFulltextProvider {
+    ArticleFulltextProvider {
+        label: source.label.clone(),
+        source: source.source.clone(),
+    }
+}
+
+fn clean_manifest_string(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
+}
+
+fn manifest_reuse(license: Option<String>) -> ArticleFulltextReuse {
+    match license {
+        Some(license) => ArticleFulltextReuse {
+            license_present: true,
+            license: Some(license),
+            reuse_warning: None,
+        },
+        None => ArticleFulltextReuse {
+            license_present: false,
+            license: None,
+            reuse_warning: Some(
+                "License/reuse status is unknown; verify rights before reuse.".to_string(),
+            ),
+        },
+    }
+}
+
+fn manifest_provenance(article: &Article, pdf_fallback_used: bool) -> ArticleFulltextProvenance {
+    ArticleFulltextProvenance {
+        open_access: article.open_access,
+        retracted: article.europepmc_retracted,
+        package_url: None,
+        pdf_fallback_used,
+    }
+}
+
+fn manifest_quality(fulltext_signal: bool) -> ArticleFulltextQuality {
+    ArticleFulltextQuality {
+        has_fulltext_signal: fulltext_signal,
+        ..ArticleFulltextQuality::default()
     }
 }
 
@@ -322,6 +375,7 @@ async fn save_resolved_fulltext(
     kind: ArticleFulltextKind,
     text: String,
     source: ArticleFulltextSource,
+    manifest: ArticleFulltextManifest,
 ) -> Result<(), BioMcpError> {
     let path = download::save_atomic(
         &fulltext_cache_key(kind, first_cache_identifier(article, requested_id)),
@@ -331,6 +385,7 @@ async fn save_resolved_fulltext(
     article.full_text_path = Some(path);
     article.full_text_note = None;
     article.full_text_source = Some(source);
+    article.full_text_manifest = Some(manifest);
     Ok(())
 }
 
@@ -367,6 +422,7 @@ pub(super) async fn resolve_fulltext(
     article.full_text_path = None;
     article.full_text_note = None;
     article.full_text_source = None;
+    article.full_text_manifest = None;
 
     if resolved_pmcid.is_none() {
         match NcbiIdConverterClient::new() {
@@ -437,13 +493,31 @@ pub(super) async fn resolve_fulltext(
     }
 
     if let Some((xml, winner)) = resolved_xml {
+        let mut quality = transform::article::jats_quality_flags(&xml);
         let text = render_fulltext_xml(xml).await?;
+        quality.has_fulltext_signal = !text.trim().is_empty();
+        let source = xml_source_metadata(winner);
+        let source_identifier = match winner {
+            XmlWaterfallWinner::EuropePmcMed => article.pmid.as_deref(),
+            _ => resolved_pmcid.as_deref(),
+        }
+        .and_then(clean_manifest_string)
+        .unwrap_or_else(|| requested_id.trim().to_string());
+        let manifest = ArticleFulltextManifest {
+            source_kind: ArticleFulltextManifestKind::JatsXml,
+            provider: manifest_provider(&source),
+            source_identifier,
+            quality,
+            reuse: manifest_reuse(article.europepmc_license.clone()),
+            provenance: manifest_provenance(article, false),
+        };
         return save_resolved_fulltext(
             article,
             requested_id,
             ArticleFulltextKind::JatsXml,
             text,
-            xml_source_metadata(winner),
+            source,
+            manifest,
         )
         .await;
     }
@@ -452,12 +526,22 @@ pub(super) async fn resolve_fulltext(
         state.tried_html = true;
         match try_resolve_html(pmcid, requested_id).await {
             FulltextStepOutcome::Resolved(text) => {
+                let source = html_source_metadata();
+                let manifest = ArticleFulltextManifest {
+                    source_kind: ArticleFulltextManifestKind::PmcHtml,
+                    provider: manifest_provider(&source),
+                    source_identifier: pmcid.to_string(),
+                    quality: manifest_quality(!text.trim().is_empty()),
+                    reuse: manifest_reuse(article.europepmc_license.clone()),
+                    provenance: manifest_provenance(article, false),
+                };
                 return save_resolved_fulltext(
                     article,
                     requested_id,
                     ArticleFulltextKind::Html,
                     text,
-                    html_source_metadata(),
+                    source,
+                    manifest,
                 )
                 .await;
             }
@@ -478,12 +562,28 @@ pub(super) async fn resolve_fulltext(
         state.tried_pdf = true;
         match try_resolve_pdf(pdf_url, requested_id).await {
             FulltextStepOutcome::Resolved(text) => {
+                let source = pdf_source_metadata();
+                let license = article
+                    .semantic_scholar
+                    .as_ref()
+                    .and_then(|value| value.open_access_pdf.as_ref())
+                    .and_then(|value| value.license.as_deref())
+                    .and_then(clean_manifest_string);
+                let manifest = ArticleFulltextManifest {
+                    source_kind: ArticleFulltextManifestKind::Pdf,
+                    provider: manifest_provider(&source),
+                    source_identifier: pdf_url.to_string(),
+                    quality: manifest_quality(!text.trim().is_empty()),
+                    reuse: manifest_reuse(license),
+                    provenance: manifest_provenance(article, true),
+                };
                 return save_resolved_fulltext(
                     article,
                     requested_id,
                     ArticleFulltextKind::Pdf,
                     text,
-                    pdf_source_metadata(),
+                    source,
+                    manifest,
                 )
                 .await;
             }
@@ -584,6 +684,9 @@ mod tests {
             full_text_path: None,
             full_text_note: None,
             full_text_source: None,
+            full_text_manifest: None,
+            europepmc_license: None,
+            europepmc_retracted: None,
             annotations: None,
             semantic_scholar: None,
             pubtator_fallback: false,

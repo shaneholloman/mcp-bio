@@ -57,6 +57,9 @@ pub fn from_pubtator_document(doc: &PubTatorDocument) -> Article {
         full_text_path: None,
         full_text_note: None,
         full_text_source: None,
+        full_text_manifest: None,
+        europepmc_license: None,
+        europepmc_retracted: None,
         annotations: None,
         semantic_scholar: None,
         pubtator_fallback: false,
@@ -223,6 +226,13 @@ pub fn from_europepmc_result(hit: &EuropePmcResult) -> Article {
         full_text_path: None,
         full_text_note: None,
         full_text_source: None,
+        full_text_manifest: None,
+        europepmc_license: hit
+            .license
+            .as_ref()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty()),
+        europepmc_retracted: Some(is_retracted_publication(hit)),
         annotations: None,
         semantic_scholar: None,
         pubtator_fallback: false,
@@ -254,6 +264,12 @@ pub fn merge_europepmc_metadata(article: &mut Article, hit: &EuropePmcResult) {
     article.citation_count = parse_citation_count(hit.cited_by_count.as_ref());
     article.publication_type = parse_publication_type(hit);
     article.open_access = parse_open_access(hit.is_open_access.as_ref());
+    article.europepmc_license = hit
+        .license
+        .as_ref()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    article.europepmc_retracted = Some(is_retracted_publication(hit));
     if article.abstract_text.is_none() {
         article.abstract_text = hit
             .abstract_text

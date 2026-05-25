@@ -5,6 +5,8 @@ use std::sync::OnceLock;
 use regex::Regex;
 use roxmltree::{Document, Node, NodeType};
 
+use crate::entities::article::ArticleFulltextQuality;
+
 use super::collapse_whitespace;
 
 mod refs;
@@ -13,6 +15,39 @@ use self::refs::render_references;
 
 pub fn extract_text_from_xml(xml: &str) -> String {
     try_extract_jats_markdown(xml).unwrap_or_else(|| strip_xml_tags_fallback(xml))
+}
+
+pub fn jats_quality_flags(xml: &str) -> ArticleFulltextQuality {
+    parse_jats_quality_flags(xml).unwrap_or_else(|| {
+        let sanitized = strip_doctype_declaration(xml);
+        if sanitized.as_str() == xml {
+            ArticleFulltextQuality::default()
+        } else {
+            parse_jats_quality_flags(&sanitized).unwrap_or_default()
+        }
+    })
+}
+
+fn parse_jats_quality_flags(xml: &str) -> Option<ArticleFulltextQuality> {
+    let doc = Document::parse(xml).ok()?;
+    let root = doc.root_element();
+    if root.tag_name().name() != "article" || !has_jats_content_anchor(root) {
+        return None;
+    }
+
+    Some(ArticleFulltextQuality {
+        has_sections: root
+            .descendants()
+            .any(|node| node.is_element() && node.has_tag_name("sec")),
+        has_tables: root.descendants().any(|node| {
+            node.is_element() && matches!(node.tag_name().name(), "table" | "table-wrap")
+        }),
+        has_references: root
+            .descendants()
+            .any(|node| node.is_element() && node.has_tag_name("ref-list")),
+        has_fulltext_signal: false,
+        has_entity_annotations: false,
+    })
 }
 
 fn try_extract_jats_markdown(xml: &str) -> Option<String> {

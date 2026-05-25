@@ -36,6 +36,10 @@ use crate::error::BioMcpError;
 use crate::sources::europepmc::EuropePmcSort;
 use crate::sources::semantic_scholar::SemanticScholarAuthMode;
 
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Article {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -66,6 +70,12 @@ pub struct Article {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub full_text_source: Option<ArticleFulltextSource>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub full_text_manifest: Option<ArticleFulltextManifest>,
+    #[serde(skip)]
+    pub europepmc_license: Option<String>,
+    #[serde(skip)]
+    pub europepmc_retracted: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub annotations: Option<ArticleAnnotations>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub semantic_scholar: Option<ArticleSemanticScholar>,
@@ -86,6 +96,60 @@ pub struct ArticleFulltextSource {
     pub kind: ArticleFulltextKind,
     pub label: String,
     pub source: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ArticleFulltextManifestKind {
+    JatsXml,
+    PmcHtml,
+    Pdf,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleFulltextManifest {
+    pub source_kind: ArticleFulltextManifestKind,
+    pub provider: ArticleFulltextProvider,
+    pub source_identifier: String,
+    pub quality: ArticleFulltextQuality,
+    pub reuse: ArticleFulltextReuse,
+    pub provenance: ArticleFulltextProvenance,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleFulltextProvider {
+    pub label: String,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleFulltextQuality {
+    pub has_sections: bool,
+    pub has_tables: bool,
+    pub has_references: bool,
+    pub has_fulltext_signal: bool,
+    pub has_entity_annotations: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleFulltextReuse {
+    pub license_present: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub license: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reuse_warning: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleFulltextProvenance {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub open_access: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retracted: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub package_url: Option<String>,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub pdf_fallback_used: bool,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
