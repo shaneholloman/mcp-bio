@@ -161,10 +161,20 @@ fn parse_publication_type(hit: &EuropePmcResult) -> Option<String> {
         .find_map(|v| normalize_publication_type(&v))
 }
 
+fn retraction_status(hit: &EuropePmcResult) -> Option<bool> {
+    let types = publication_types(hit);
+    if types.is_empty() {
+        return None;
+    }
+    Some(
+        types
+            .into_iter()
+            .any(|value| value.to_ascii_lowercase().contains("retracted publication")),
+    )
+}
+
 fn is_retracted_publication(hit: &EuropePmcResult) -> bool {
-    publication_types(hit)
-        .into_iter()
-        .any(|value| value.to_ascii_lowercase().contains("retracted publication"))
+    retraction_status(hit).unwrap_or(false)
 }
 
 fn parse_open_access(value: Option<&serde_json::Value>) -> Option<bool> {
@@ -232,7 +242,7 @@ pub fn from_europepmc_result(hit: &EuropePmcResult) -> Article {
             .as_ref()
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty()),
-        europepmc_retracted: Some(is_retracted_publication(hit)),
+        europepmc_retracted: retraction_status(hit),
         annotations: None,
         semantic_scholar: None,
         pubtator_fallback: false,
@@ -269,7 +279,7 @@ pub fn merge_europepmc_metadata(article: &mut Article, hit: &EuropePmcResult) {
         .as_ref()
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty());
-    article.europepmc_retracted = Some(is_retracted_publication(hit));
+    article.europepmc_retracted = retraction_status(hit);
     if article.abstract_text.is_none() {
         article.abstract_text = hit
             .abstract_text

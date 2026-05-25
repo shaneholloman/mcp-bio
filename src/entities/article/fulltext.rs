@@ -8,7 +8,7 @@ use crate::error::BioMcpError;
 use crate::sources::europepmc::EuropePmcClient;
 use crate::sources::ncbi_efetch::NcbiEfetchClient;
 use crate::sources::ncbi_idconv::NcbiIdConverterClient;
-use crate::sources::pmc_oa::PmcOaClient;
+use crate::sources::pmc_oa::{PmcOaArchiveManifest, PmcOaClient};
 use crate::transform;
 use crate::utils::download;
 
@@ -118,11 +118,16 @@ fn manifest_reuse(license: Option<String>) -> ArticleFulltextReuse {
     }
 }
 
-fn manifest_provenance(article: &Article, pdf_fallback_used: bool) -> ArticleFulltextProvenance {
+fn manifest_provenance(
+    article: &Article,
+    pdf_fallback_used: bool,
+    package_url: Option<String>,
+    retracted: Option<bool>,
+) -> ArticleFulltextProvenance {
     ArticleFulltextProvenance {
         open_access: article.open_access,
-        retracted: article.europepmc_retracted,
-        package_url: None,
+        retracted: retracted.or(article.europepmc_retracted),
+        package_url,
         pdf_fallback_used,
     }
 }
@@ -417,7 +422,7 @@ pub(super) async fn resolve_fulltext(
     let europe = EuropePmcClient::new()?;
     let mut state = FulltextAttemptState::default();
     let mut resolved_pmcid = article.pmcid.clone();
-    let mut resolved_xml: Option<(String, XmlWaterfallWinner)> = None;
+    let mut resolved_xml: Option<(String, XmlWaterfallWinner, Option<PmcOaArchiveManifest>)> = None;
 
     article.full_text_path = None;
     article.full_text_note = None;
@@ -450,7 +455,7 @@ pub(super) async fn resolve_fulltext(
     if let Some(pmcid) = resolved_pmcid.as_deref() {
         state.tried_xml = true;
         match europe.get_full_text_xml("PMC", pmcid).await {
-            Ok(Some(value)) => resolved_xml = Some((value, XmlWaterfallWinner::EuropePmcPmc)),
+            Ok(Some(value)) => resolved_xml = Some((value, XmlWaterfallWinner::EuropePmcPmc, None)),
             Ok(None) => {}
             Err(err) => record_hard_error(&mut state, err),
         }
@@ -461,7 +466,9 @@ pub(super) async fn resolve_fulltext(
         state.tried_xml = true;
         match NcbiEfetchClient::new() {
             Ok(ncbi_efetch) => match ncbi_efetch.get_full_text_xml(pmcid).await {
-                Ok(Some(value)) => resolved_xml = Some((value, XmlWaterfallWinner::NcbiEfetchPmc)),
+                Ok(Some(value)) => {
+                    resolved_xml = Some((value, XmlWaterfallWinner::NcbiEfetchPmc, None))
+                }
                 Ok(None) => {}
                 Err(err) => record_hard_error(&mut state, err),
             },
@@ -473,8 +480,10 @@ pub(super) async fn resolve_fulltext(
     {
         state.tried_xml = true;
         match PmcOaClient::new() {
-            Ok(pmc_oa) => match pmc_oa.get_full_text_xml(pmcid).await {
-                Ok(Some(value)) => resolved_xml = Some((value, XmlWaterfallWinner::PmcOaArchive)),
+            Ok(pmc_oa) => match pmc_oa.get_full_text_xml_with_manifest(pmcid).await {
+                Ok(Some((value, manifest))) => {
+                    resolved_xml = Some((value, XmlWaterfallWinner::PmcOaArchive, Some(manifest)));
+                }
                 Ok(None) => {}
                 Err(err) => record_hard_error(&mut state, err),
             },
@@ -486,13 +495,13 @@ pub(super) async fn resolve_fulltext(
     {
         state.tried_xml = true;
         match europe.get_full_text_xml("MED", pmid).await {
-            Ok(Some(value)) => resolved_xml = Some((value, XmlWaterfallWinner::EuropePmcMed)),
+            Ok(Some(value)) => resolved_xml = Some((value, XmlWaterfallWinner::EuropePmcMed, None)),
             Ok(None) => {}
             Err(err) => record_hard_error(&mut state, err),
         }
     }
 
-    if let Some((xml, winner)) = resolved_xml {
+    if let Some((xml, winner, oa_manifest)) = resolved_xml {
         let mut quality = transform::article::jats_quality_flags(&xml);
         let text = render_fulltext_xml(xml).await?;
         quality.has_fulltext_signal = !text.trim().is_empty();
@@ -503,13 +512,22 @@ pub(super) async fn resolve_fulltext(
         }
         .and_then(clean_manifest_string)
         .unwrap_or_else(|| requested_id.trim().to_string());
+        let package_url = oa_manifest
+            .as_ref()
+            .map(|manifest| manifest.package_url.clone());
+        let oa_retracted = oa_manifest.as_ref().and_then(|manifest| manifest.retracted);
+        let license = article.europepmc_license.clone().or_else(|| {
+            oa_manifest
+                .as_ref()
+                .and_then(|manifest| manifest.license.clone())
+        });
         let manifest = ArticleFulltextManifest {
             source_kind: ArticleFulltextManifestKind::JatsXml,
             provider: manifest_provider(&source),
             source_identifier,
             quality,
-            reuse: manifest_reuse(article.europepmc_license.clone()),
-            provenance: manifest_provenance(article, false),
+            reuse: manifest_reuse(license),
+            provenance: manifest_provenance(article, false, package_url, oa_retracted),
         };
         return save_resolved_fulltext(
             article,
@@ -530,10 +548,11 @@ pub(super) async fn resolve_fulltext(
                 let manifest = ArticleFulltextManifest {
                     source_kind: ArticleFulltextManifestKind::PmcHtml,
                     provider: manifest_provider(&source),
-                    source_identifier: pmcid.to_string(),
+                    source_identifier: clean_manifest_string(pmcid)
+                        .unwrap_or_else(|| requested_id.trim().to_string()),
                     quality: manifest_quality(!text.trim().is_empty()),
                     reuse: manifest_reuse(article.europepmc_license.clone()),
-                    provenance: manifest_provenance(article, false),
+                    provenance: manifest_provenance(article, false, None, None),
                 };
                 return save_resolved_fulltext(
                     article,
@@ -575,7 +594,7 @@ pub(super) async fn resolve_fulltext(
                     source_identifier: pdf_url.to_string(),
                     quality: manifest_quality(!text.trim().is_empty()),
                     reuse: manifest_reuse(license),
-                    provenance: manifest_provenance(article, true),
+                    provenance: manifest_provenance(article, true, None, None),
                 };
                 return save_resolved_fulltext(
                     article,
