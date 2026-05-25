@@ -30,6 +30,7 @@ USER_AGENT = "biomcp-ticket-384-bioc-miss-fixtures/0.1"
 TIMEOUT = 25
 MAX_BODY = 2_000_000
 EXCERPT_CHARS = 500
+CASE_WORKERS = 4
 
 EUROPE_BASE = "https://www.ebi.ac.uk/europepmc/webservices/rest"
 EFETCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
@@ -568,7 +569,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cases_from and args.search_limit is not None:
         parser.error("--cases-from and --search-limit are mutually exclusive")
     raw_cases = load_cases_from_probe(args.cases_from) if args.cases_from else collect_cases(search_limit=args.search_limit)
-    measured = [measure_case(case) for case in raw_cases]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(CASE_WORKERS, len(raw_cases)) or 1) as executor:
+        measured = list(executor.map(measure_case, raw_cases))
     wins = [case for case in measured if case["classification"]["material_bioc_win"]]
     results = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
