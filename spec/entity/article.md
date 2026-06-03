@@ -99,6 +99,76 @@ test -n "$pdf_path"
 test -f "$pdf_path"
 ```
 
+## JATS Converter Keeps Evidence-Carrying Floats, Supplements, and Complex Table Markers
+
+Saved Markdown should surface evidence-bearing JATS content that is already
+present in the XML. Figures in the body and floats group, declared supplement
+files, and unflattened merged-cell tables must be visible to an agent reading
+the saved article.
+
+```bash
+uv run --no-sync python3 - <<'PY' | mustmatch like "> **Figure 1.** Inline figure caption preserves n=10 cell counts.
+> **Figure 2.** Floats-group figure reports measurement bar is 70 μm.
+Supplementary Data S1
+Measurement traces for the treatment cohort.
+traces-s1.csv
+**Table 2.** Merged treatment table.
+*[complex table omitted: 2×3, merged cells]*
+callout (Figure 2)
+B-RAF^V600E^. PLX4032"
+import os
+import pathlib
+import shlex
+import shutil
+import signal
+import subprocess
+
+repo = pathlib.Path("../..").resolve()
+subprocess.run(
+    ["bash", "../fixtures/setup-article-fulltext-source-fixture.sh", str(repo)],
+    check=True,
+    stdout=subprocess.DEVNULL,
+)
+
+env = os.environ.copy()
+for line in (repo / ".cache/spec-article-fulltext-source-env").read_text().splitlines():
+    parts = shlex.split(line)
+    if not parts:
+        continue
+    if parts[0] == "export":
+        key, value = parts[1].split("=", 1)
+        env[key] = value
+    elif parts[0] == "unset":
+        env.pop(parts[1], None)
+cache = repo / ".cache/spec-article-fulltext-jats-cache"
+shutil.rmtree(cache, ignore_errors=True)
+env["BIOMCP_CACHE_DIR"] = str(cache)
+env["BIOMCP_CACHE_MODE"] = "off"
+binary = env.get("BIOMCP_BIN") or str(repo / "target/release/biomcp")
+
+try:
+    result = subprocess.run(
+        [binary, "get", "article", "22663011", "fulltext"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    saved_path = None
+    for line in result.stdout.splitlines():
+        if line.startswith("Saved to: "):
+            saved_path = pathlib.Path(line.removeprefix("Saved to: "))
+            break
+    if saved_path is None:
+        raise SystemExit(result.stdout)
+    print(saved_path.read_text(encoding="utf-8"))
+finally:
+    pid = env.get("BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID")
+    if pid:
+        os.kill(int(pid), signal.SIGTERM)
+PY
+```
+
 ## Fulltext Provenance, Reuse, and Quality Metadata
 
 Saved fulltext Markdown is evidence material, so the JSON response must carry a
