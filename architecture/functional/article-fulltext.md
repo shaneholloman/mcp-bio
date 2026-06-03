@@ -94,6 +94,20 @@ the article card. JSON `_meta.section_sources` includes a `fulltext` row only
 when `full_text_source` exists. Note-only misses do not publish a `fulltext`
 provenance row.
 
+## JATS Markdown Coverage
+
+The JATS converter renders section text, inline body figures, root-level
+`floats-group` figures and tables after the body, regular tables, references,
+and supplementary-material label/caption/filename metadata. Float rendering
+keeps document order and deduplicates root floats by `id` when the same figure
+or table was already rendered from the body.
+
+Supplementary-material filenames and links are display-only facts from the XML;
+BioMCP does not fetch or inline supplement bytes in this converter path. Tables
+with `rowspan` or `colspan` keep their caption and render an explicit
+`*[complex table omitted: N×M, merged cells]*` marker instead of silently
+dropping the grid; full span flattening remains out of scope.
+
 ## Failure Visibility
 
 A winning source is visible through the Markdown heading label,
