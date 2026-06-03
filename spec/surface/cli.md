@@ -169,12 +169,15 @@ The quoted form below is the copy-paste contract, not presentation polish.
 
 ```bash
 set -e
-discover_disease_cmd="$(../../tools/biomcp-ci discover "Graves'" | grep 'biomcp search disease -q' | head -1 | tr -d '`' | sed 's/^- //')"
+discover_get_disease_cmd="$(../../tools/biomcp-ci discover "Graves'" | grep 'biomcp get disease' | head -1 | tr -d '`' | sed 's/^- //')"
+discover_trials_cmd="$(../../tools/biomcp-ci discover "Graves'" | grep 'biomcp disease trials' | head -1 | tr -d '`' | sed 's/^- //')"
 discover_article_cmd="$(../../tools/biomcp-ci discover "Graves'" | grep 'biomcp search article -k' | head -1 | tr -d '`' | sed 's/^- //')"
-discover_disease_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(" ".join(shlex.split(sys.argv[1])))' "$discover_disease_cmd")"
+discover_get_disease_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(" ".join(shlex.split(sys.argv[1])))' "$discover_get_disease_cmd")"
+discover_trials_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(" ".join(shlex.split(sys.argv[1])))' "$discover_trials_cmd")"
 discover_article_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(" ".join(shlex.split(sys.argv[1])))' "$discover_article_cmd")"
-echo "$discover_disease_argv" | mustmatch like "search disease -q Graves'"
-echo "$discover_article_argv" | mustmatch like "search article -k Graves'"
+echo "$discover_get_disease_argv" | mustmatch like "get disease Graves' disease"
+echo "$discover_trials_argv" | mustmatch like "disease trials Graves' disease"
+echo "$discover_article_argv" | mustmatch like "search article -k Graves' disease"
 ```
 
 Cross-entity orientation needs the same contract in its counts-only follow-up
