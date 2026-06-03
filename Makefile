@@ -64,7 +64,7 @@ spec-contracts:
 	cargo build --release --locked
 	$(MAKE) sync-python-dev
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" \
-		uv run --no-sync sh -c 'PATH="$$PWD/target/release:$$PATH" BIOMCP_BIN="$$PWD/target/release/biomcp" pytest spec/surface/cli.md spec/surface/test_parallel_isolation_contract.py --mustmatch-lang bash --mustmatch-timeout 180 -v'
+		uv run --no-sync sh -c 'PATH="$$PWD/target/release:$$PATH" BIOMCP_BIN="$$PWD/target/release/biomcp" pytest spec/entity/article.md spec/surface/cli.md spec/surface/test_parallel_isolation_contract.py --mustmatch-lang bash --mustmatch-timeout 180 -v'
 
 release-live-smoke:
 	cargo build --release --locked
