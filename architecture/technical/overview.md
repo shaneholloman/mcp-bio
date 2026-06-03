@@ -369,7 +369,7 @@ Routine local and March validation runs `make spec-contracts`, a deterministic
 fixture-backed/static lane over validation docs and surface contracts. Live
 public-upstream confidence is explicit and opt-in through `make
 release-live-smoke`, which uses `tools/biomcp-ci` for discover/OLS4, disease,
-article source-status, and variant-normalization smoke commands.
+article source-status, variant-normalization, and pathway smoke commands.
 
 PR CI runs `make spec-pr` via the `spec-stable` job in
 `.github/workflows/ci.yml`. That job builds the release binary first, reads
@@ -384,29 +384,31 @@ keys, and flips `BIOMCP_CACHE_MODE=infinite` only for those warm CI replays.
 
 Run locally with `make spec-contracts` for the routine deterministic lane,
 `make release-live-smoke` for opt-in live public-upstream confidence, `make
-spec` for the shorter canary rerun, or `make spec-pr` for the full canary
-corpus.
+spec` for the shorter canary rerun, or `make spec-pr` for the canary corpus
+that is not live-smoke-only.
 
 Repo-local `make spec` and `make spec-pr` use `pytest-xdist` with
 `-n auto --dist loadfile` over only `spec/entity/` and `spec/surface/`, except
 that upstream-heavy canaries leave the shared worker pool and rerun in an
-existing serial leg. That serialized partition includes `spec/entity/protein.md`
-for the ComplexPortal canary plus `spec/entity/disease.md` and
-`spec/surface/discover.md` for OLS4-heavy disease/discover headings. The
-protein ComplexPortal section is fixture-backed rather than a live upstream
-canary; live ComplexPortal availability belongs to `biomcp health`/operator
-inspection. FAQ #14 is absorbed by the serial OLS4 parallel-isolation contract;
-there is no OLS4 fixture server in this topology. The current active
-executable-spec corpus is `spec/entity/gene.md`,
+existing serial leg, and `spec/entity/pathway.md` leaves routine canaries
+entirely for `make release-live-smoke`. That serialized partition includes
+`spec/entity/protein.md` for the ComplexPortal canary plus
+`spec/entity/disease.md` and `spec/surface/discover.md` for OLS4-heavy
+disease/discover headings. The protein ComplexPortal section is fixture-backed
+rather than a live upstream canary; live ComplexPortal availability belongs to
+`biomcp health`/operator inspection. FAQ #14 is absorbed by the serial OLS4
+parallel-isolation contract; there is no OLS4 fixture server in this topology.
+The current routine executable-spec corpus is `spec/entity/gene.md`,
 `spec/entity/variant.md`, `spec/entity/article.md`, `spec/entity/trial.md`,
 `spec/entity/drug.md`, `spec/entity/disease.md`, `spec/entity/protein.md`,
-`spec/entity/pathway.md`, `spec/entity/study.md`, `spec/entity/pgx.md`,
-`spec/entity/phenotype.md`, `spec/entity/diagnostic.md`,
-`spec/entity/vaers.md`, `spec/surface/cli.md`, `spec/surface/mcp.md`, and
-`spec/surface/discover.md`. The active v2 canary's explicit serialized partition
-is limited to the protein ComplexPortal canary and the OLS4-heavy disease/discover
-canaries; routine deterministic proof does not run that serialized OLS4 live
-carve-out, and public OLS4 confidence belongs to `make release-live-smoke`.
+`spec/entity/study.md`, `spec/entity/pgx.md`, `spec/entity/phenotype.md`,
+`spec/entity/diagnostic.md`, `spec/entity/vaers.md`, `spec/surface/cli.md`,
+`spec/surface/mcp.md`, and `spec/surface/discover.md`; `spec/entity/pathway.md`
+runs only in the explicit live-smoke lane. The active v2 canary's explicit
+serialized partition is limited to the protein ComplexPortal canary and the
+OLS4-heavy disease/discover canaries; routine deterministic proof does not run
+that serialized OLS4 live carve-out, and public OLS4/pathway confidence belongs
+to `make release-live-smoke`.
 
 Use `spec/README-timings.md` as the current validation-lane audit/reference for
 the deterministic routine lane, opt-in live smoke lane, active files,

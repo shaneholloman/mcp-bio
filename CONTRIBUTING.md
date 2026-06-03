@@ -30,8 +30,9 @@ cargo install cargo-nextest --locked
 deterministic routine executable-contract lane used by March `spec-only` and
 `make release-gate`; it runs validation-lane docs/static surface contracts
 without live smoke. `make release-live-smoke` is the explicit opt-in live
-public-upstream confidence lane. `make spec` and `make spec-pr` remain available
-for the active canary tree under `spec/entity/` and `spec/surface/` with
+public-upstream confidence lane and owns the pathway live assertions. `make
+spec` and `make spec-pr` remain available for the active canary tree under
+`spec/entity/` and `spec/surface/`, excluding the pathway live-smoke spec, with
 `pytest-xdist` (`-n auto --dist loadfile`). The executable docs themselves call
 `tools/biomcp-ci`, which owns release-binary resolution, the repo-owned
 `.cache/biomcp-specs/` cache/XDG roots, optional-key stripping, and warm-hit

@@ -39,24 +39,24 @@ install:
 	install -m 755 target/release/biomcp "$(HOME)/.local/bin/biomcp"
 
 spec:
-# Keep upstream-heavy canaries in their serialized spec partition.
+# Keep live/upstream-heavy canaries out of the main xdist partition.
 	cargo build --release --locked
 	$(MAKE) sync-python-dev
 	bash spec/fixtures/setup-study-spec-fixture.sh "$(CURDIR)"
 	bash spec/fixtures/setup-ddinter-spec-fixture.sh "$(CURDIR)"
 	. "$(CURDIR)/.cache/spec-study-env"; . "$(CURDIR)/.cache/spec-ddinter-env"; PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" \
-		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/entity/ spec/surface/ --mustmatch-lang bash --mustmatch-timeout 120 -v $(SPEC_XDIST_ARGS) --deselect spec/entity/protein.md --deselect spec/entity/disease.md --deselect spec/surface/discover.md'
+		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/entity/ spec/surface/ --mustmatch-lang bash --mustmatch-timeout 120 -v $(SPEC_XDIST_ARGS) --deselect spec/entity/protein.md --deselect spec/entity/disease.md --deselect spec/surface/discover.md --deselect spec/entity/pathway.md'
 	. "$(CURDIR)/.cache/spec-study-env"; . "$(CURDIR)/.cache/spec-ddinter-env"; PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" \
 		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/entity/protein.md spec/entity/disease.md spec/surface/discover.md --mustmatch-lang bash --mustmatch-timeout 120 -v'
 
 spec-pr:
-# Keep upstream-heavy canaries in their serialized spec partition.
+# Keep live/upstream-heavy canaries out of the main xdist partition.
 	cargo build --release --locked
 	$(MAKE) sync-python-dev
 	bash spec/fixtures/setup-study-spec-fixture.sh "$(CURDIR)"
 	bash spec/fixtures/setup-ddinter-spec-fixture.sh "$(CURDIR)"
 	. "$(CURDIR)/.cache/spec-study-env"; . "$(CURDIR)/.cache/spec-ddinter-env"; PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" \
-		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/entity/ spec/surface/ --mustmatch-lang bash --mustmatch-timeout 180 -v $(SPEC_XDIST_ARGS) --deselect spec/entity/protein.md --deselect spec/entity/disease.md --deselect spec/surface/discover.md'
+		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/entity/ spec/surface/ --mustmatch-lang bash --mustmatch-timeout 180 -v $(SPEC_XDIST_ARGS) --deselect spec/entity/protein.md --deselect spec/entity/disease.md --deselect spec/surface/discover.md --deselect spec/entity/pathway.md'
 	. "$(CURDIR)/.cache/spec-study-env"; . "$(CURDIR)/.cache/spec-ddinter-env"; PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" \
 		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest spec/entity/protein.md spec/entity/disease.md spec/surface/discover.md --mustmatch-lang bash --mustmatch-timeout 180 -v'
 
@@ -73,6 +73,8 @@ release-live-smoke:
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci search disease melanoma --limit 3
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci search article -g BRAF --limit 3
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci variant normalize all 'NM_000248.3:c.135del'
+	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" \
+		uv run --no-sync sh -c 'PATH="$$PWD/target/release:$$PATH" BIOMCP_BIN="$$PWD/target/release/biomcp" pytest spec/entity/pathway.md --mustmatch-lang bash --mustmatch-timeout 180 -v'
 
 validate-skills:
 	$(MAKE) sync-python-dev

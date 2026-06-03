@@ -116,9 +116,10 @@ Its `lint` phase runs both `cargo deny check licenses` and
 `cargo nextest run`. Use `make release-gate` for the single routine
 release-readiness signal; it runs `make check` followed by deterministic
 `make spec-contracts`. Use `make release-live-smoke` only as an explicit opt-in
-live public-upstream confidence lane. `make spec-pr` remains available for the
-full executable-spec canary corpus by itself; it runs the active canary tree
-under `spec/entity/` and `spec/surface/` with `pytest-xdist` (`-n auto --dist
+live public-upstream confidence lane; it owns the pathway live assertions.
+`make spec-pr` remains available for the executable-spec canary corpus by
+itself; it runs the active canary tree under `spec/entity/` and `spec/surface/`,
+except the pathway live-smoke spec, with `pytest-xdist` (`-n auto --dist
 loadfile`) and the longer mustmatch timeout. `make spec` runs the same tree
 with the shorter local timeout for repo-local canary reruns.
 
@@ -175,17 +176,17 @@ make spec-pr
 `spec-only` and `release-gate`; it keeps validation-lane docs/static surface
 contracts executable without running live smoke. `make release-live-smoke` is
 the explicit opt-in live lane for discover/OLS4, disease, article source-status,
-and variant-normalization confidence through `tools/biomcp-ci`.
+variant-normalization, and pathway confidence through `tools/biomcp-ci`.
 
 `make spec` and `make spec-pr` both run the active spec-v2 canary tree:
-`spec/entity/` plus `spec/surface/`. The current active canaries are
-`spec/entity/gene.md`, `spec/entity/variant.md`, `spec/entity/article.md`,
-`spec/entity/trial.md`, `spec/entity/drug.md`, `spec/entity/disease.md`,
-`spec/entity/protein.md`, `spec/entity/pathway.md`, `spec/entity/study.md`,
-`spec/entity/pgx.md`, `spec/entity/phenotype.md`,
-`spec/entity/diagnostic.md`, `spec/entity/vaers.md`,
-`spec/surface/cli.md`, `spec/surface/mcp.md`, and
-`spec/surface/discover.md`. Every bash block in that tree should call
+`spec/entity/` plus `spec/surface/`, except the live-smoke-only pathway spec.
+The current routine canaries are `spec/entity/gene.md`,
+`spec/entity/variant.md`, `spec/entity/article.md`, `spec/entity/trial.md`,
+`spec/entity/drug.md`, `spec/entity/disease.md`, `spec/entity/protein.md`,
+`spec/entity/study.md`, `spec/entity/pgx.md`, `spec/entity/phenotype.md`,
+`spec/entity/diagnostic.md`, `spec/entity/vaers.md`, `spec/surface/cli.md`,
+`spec/surface/mcp.md`, and `spec/surface/discover.md`; `spec/entity/pathway.md`
+runs only in `make release-live-smoke`. Every bash block in that tree should call
 `tools/biomcp-ci`, which owns release-binary resolution, repo-owned cache
 roots, optional-key stripping, and warm-cache replay on CI cache hits.
 
