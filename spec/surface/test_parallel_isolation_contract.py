@@ -117,6 +117,20 @@ def _assert_make_target_serializes_spec_path(target_name: str, block: str, path:
     )
 
 
+def _assert_make_target_excludes_spec_path(target_name: str, block: str, path: str) -> None:
+    assert "$(SPEC_XDIST_ARGS)" in block, f"{target_name} should keep its main parallel xdist leg"
+    assert f"--deselect {path}" in block, (
+        f"Makefile target {target_name} must remove {path} from the main parallel xdist pool"
+    )
+    spec_commands = re.findall(r"pytest[^\n]*", block)
+    for command in spec_commands:
+        command_without_deselects = re.sub(r"--deselect\s+\S+", "", command)
+        assert path not in command_without_deselects, (
+            f"{target_name} must not execute {path} in routine canary legs; "
+            "route it through the explicit live-smoke lane instead"
+        )
+
+
 def _has_base_url_probe(text: str) -> bool:
     return bool(
         re.search(r"curl[^\n]*\$(?:\{base_url\}|base_url)", text)
@@ -1159,6 +1173,26 @@ def test_ticket_378_release_live_smoke_is_explicit_and_wrapped() -> None:
             "release-live-smoke must use tools/biomcp-ci for the ticket's OLS4/discover, "
             "disease crosswalk, article source-status, and variant normalization matrix"
         )
+
+
+def test_ticket_390_pathway_spec_quarantines_to_live_smoke() -> None:
+    spec_target = _make_target_block("spec")
+    spec_pr_target = _make_target_block("spec-pr")
+    release_live_smoke = _make_target_block("release-live-smoke")
+
+    for target_name, block in (("spec", spec_target), ("spec-pr", spec_pr_target)):
+        _assert_make_target_excludes_spec_path(target_name, block, "spec/entity/pathway.md")
+
+    assert "$(SPEC_XDIST_ARGS)" not in release_live_smoke, (
+        "release-live-smoke must stay an explicit live lane, not another routine parallel shard"
+    )
+    assert "spec/entity/pathway.md" in release_live_smoke, (
+        "release-live-smoke must keep the live pathway assertions available on demand after "
+        "removing them from routine make spec/spec-pr"
+    )
+    assert "--mustmatch-lang bash" in release_live_smoke, (
+        "release-live-smoke must execute pathway.md through the mustmatch bash spec runner"
+    )
 
 
 def test_ticket_378_docs_describe_routine_and_live_lanes() -> None:
