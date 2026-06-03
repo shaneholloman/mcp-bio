@@ -99,6 +99,49 @@ test -n "$pdf_path"
 test -f "$pdf_path"
 ```
 
+## JATS Converter Keeps Evidence-Carrying Floats, Supplements, and Complex Table Markers
+
+Saved Markdown should surface evidence-bearing JATS content that is already
+present in the XML. Figures in the body and floats group, declared supplement
+files, and unflattened merged-cell tables must be visible to an agent reading
+the saved article.
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch like "Europe PMC body text with callout (Figure 2) and B-RAF^V600E^. PLX4032 boundary text."
+```
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch like "> **Figure 1.** Inline figure caption preserves n=10 cell counts."
+```
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch like "> **Figure 2.** Floats-group figure reports measurement bar is 70 μm."
+```
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch like "Supplementary Data S1"
+```
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch like "Measurement traces for the treatment cohort."
+```
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch like "traces-s1.csv"
+```
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch like "**Table 2.** Merged treatment table."
+```
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch like "*[complex table omitted: 2×3, merged cells]*"
+```
+
+```bash
+bash ../fixtures/render-article-fulltext-jats-markdown.sh ../.. | mustmatch not like "((Figure 2))"
+```
+
 ## Fulltext Provenance, Reuse, and Quality Metadata
 
 Saved fulltext Markdown is evidence material, so the JSON response must carry a

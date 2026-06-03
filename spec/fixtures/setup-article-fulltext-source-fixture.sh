@@ -50,7 +50,7 @@ PDF_FALLBACK = (
 ).read_bytes()
 
 
-ARTICLE_XML = """<article>
+ARTICLE_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
   <front>
     <article-meta>
       <title-group><article-title>Europe full text winner</article-title></title-group>
@@ -60,8 +60,12 @@ ARTICLE_XML = """<article>
   <body>
     <sec>
       <title>Fixture results</title>
-      <p>Europe PMC body text.</p>
-      <table-wrap>
+      <p>Europe PMC body text with callout (<xref ref-type="fig" rid="fig2">Figure 2</xref>) and B-RAF<sup>V600E</sup>.PLX4032 boundary text.</p>
+      <fig id="fig1">
+        <label>Figure 1</label>
+        <caption><p>Inline figure caption preserves n=10 cell counts.</p></caption>
+      </fig>
+      <table-wrap id="t1">
         <label>Table 1</label>
         <caption><p>Fixture quality table.</p></caption>
         <table>
@@ -69,8 +73,27 @@ ARTICLE_XML = """<article>
           <tr><td>full text</td><td>present</td></tr>
         </table>
       </table-wrap>
+      <table-wrap id="t2">
+        <label>Table 2</label>
+        <caption><p>Merged treatment table.</p></caption>
+        <table>
+          <tr><th rowspan="2">Cohort</th><th>Baseline</th><th>Week 8</th></tr>
+          <tr><td>10</td><td>4</td></tr>
+        </table>
+      </table-wrap>
+      <supplementary-material id="s1" xlink:href="traces-s1.csv">
+        <label>Supplementary Data S1</label>
+        <caption><p>Measurement traces for the treatment cohort.</p></caption>
+        <media xlink:href="traces-s1.csv" />
+      </supplementary-material>
     </sec>
   </body>
+  <floats-group>
+    <fig id="fig2">
+      <label>Figure 2</label>
+      <caption><p>Floats-group figure reports measurement bar is 70 μm.</p></caption>
+    </fig>
+  </floats-group>
   <back>
     <ref-list>
       <ref id="R1"><mixed-citation>Fixture reference.</mixed-citation></ref>

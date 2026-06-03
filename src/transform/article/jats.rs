@@ -1,6 +1,6 @@
 //! JATS full-text extraction and markdown rendering helpers.
 
-use std::sync::OnceLock;
+use std::{collections::HashSet, sync::OnceLock};
 
 use regex::Regex;
 use roxmltree::{Document, Node, NodeType};
@@ -71,8 +71,10 @@ fn parse_and_render_jats(xml: &str) -> Option<String> {
     }
 
     let mut blocks = Vec::new();
+    let mut state = RenderState::default();
     convert_front(root, &mut blocks);
-    convert_body(root, &mut blocks);
+    convert_body(root, &mut blocks, &mut state);
+    convert_floats_group(root, &mut blocks, &mut state);
     if let Some(references) = render_references(root) {
         blocks.push(references);
     }
@@ -83,6 +85,11 @@ fn parse_and_render_jats(xml: &str) -> Option<String> {
     } else {
         Some(rendered)
     }
+}
+
+#[derive(Default)]
+struct RenderState {
+    rendered_float_ids: HashSet<String>,
 }
 
 fn strip_doctype_declaration(xml: &str) -> String {
@@ -96,6 +103,17 @@ fn has_jats_content_anchor(root: Node<'_, '_>) -> bool {
     root.descendants().any(|node| {
         node.is_element() && matches!(node.tag_name().name(), "body" | "abstract" | "ref-list")
     })
+}
+
+fn should_skip_rendered_float(node: Node<'_, '_>, state: &RenderState) -> bool {
+    node.attribute("id")
+        .is_some_and(|id| state.rendered_float_ids.contains(id))
+}
+
+fn remember_float_id(node: Node<'_, '_>, state: &mut RenderState) {
+    if let Some(id) = node.attribute("id").filter(|id| !id.is_empty()) {
+        state.rendered_float_ids.insert(id.to_string());
+    }
 }
 
 fn convert_front(root: Node<'_, '_>, blocks: &mut Vec<String>) {
@@ -117,18 +135,60 @@ fn convert_front(root: Node<'_, '_>, blocks: &mut Vec<String>) {
         .find(|node| node.is_element() && node.has_tag_name("abstract"))
     {
         blocks.push("## Abstract".into());
-        append_content_blocks(abstract_node, 2, blocks);
+        let mut state = RenderState::default();
+        append_content_blocks(abstract_node, 2, blocks, &mut state);
     }
 }
 
-fn convert_body(root: Node<'_, '_>, blocks: &mut Vec<String>) {
+fn convert_body(root: Node<'_, '_>, blocks: &mut Vec<String>, state: &mut RenderState) {
     let Some(body) = find_child(root, "body") else {
         return;
     };
-    append_content_blocks(body, 2, blocks);
+    append_content_blocks(body, 2, blocks, state);
 }
 
-fn append_content_blocks(node: Node<'_, '_>, heading_level: usize, blocks: &mut Vec<String>) {
+fn convert_floats_group(root: Node<'_, '_>, blocks: &mut Vec<String>, state: &mut RenderState) {
+    let Some(floats_group) = find_child(root, "floats-group") else {
+        return;
+    };
+
+    for child in floats_group.children().filter(|child| child.is_element()) {
+        match child.tag_name().name() {
+            "fig" => {
+                if should_skip_rendered_float(child, state) {
+                    continue;
+                }
+                if let Some(figure) = convert_figure(child) {
+                    remember_float_id(child, state);
+                    blocks.push(figure);
+                }
+            }
+            "table-wrap" => {
+                if should_skip_rendered_float(child, state) {
+                    continue;
+                }
+                let table_blocks = convert_table_wrap(child);
+                if !table_blocks.is_empty() {
+                    remember_float_id(child, state);
+                    blocks.extend(table_blocks);
+                }
+            }
+            "supplementary-material" => {
+                if let Some(supplement) = convert_supplementary_material(child) {
+                    blocks.push(supplement);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn append_content_blocks(
+    node: Node<'_, '_>,
+    heading_level: usize,
+    blocks: &mut Vec<String>,
+    state: &mut RenderState,
+) {
     for child in node.children().filter(|child| child.is_element()) {
         match child.tag_name().name() {
             "title" | "label" => {}
@@ -137,13 +197,25 @@ fn append_content_blocks(node: Node<'_, '_>, heading_level: usize, blocks: &mut 
                     blocks.push(paragraph);
                 }
             }
-            "sec" => convert_section(child, heading_level, blocks),
+            "sec" => convert_section(child, heading_level, blocks, state),
             "fig" => {
                 if let Some(figure) = convert_figure(child) {
+                    remember_float_id(child, state);
                     blocks.push(figure);
                 }
             }
-            "table-wrap" => blocks.extend(convert_table_wrap(child)),
+            "table-wrap" => {
+                let table_blocks = convert_table_wrap(child);
+                if !table_blocks.is_empty() {
+                    remember_float_id(child, state);
+                    blocks.extend(table_blocks);
+                }
+            }
+            "supplementary-material" => {
+                if let Some(supplement) = convert_supplementary_material(child) {
+                    blocks.push(supplement);
+                }
+            }
             "list" => {
                 if let Some(list) = convert_list(child) {
                     blocks.push(list);
@@ -154,7 +226,12 @@ fn append_content_blocks(node: Node<'_, '_>, heading_level: usize, blocks: &mut 
     }
 }
 
-fn convert_section(section: Node<'_, '_>, heading_level: usize, blocks: &mut Vec<String>) {
+fn convert_section(
+    section: Node<'_, '_>,
+    heading_level: usize,
+    blocks: &mut Vec<String>,
+    state: &mut RenderState,
+) {
     if let Some(title) = find_child(section, "title")
         .map(inline_text)
         .filter(|value| !value.is_empty())
@@ -162,7 +239,7 @@ fn convert_section(section: Node<'_, '_>, heading_level: usize, blocks: &mut Vec
         let level = heading_level.clamp(2, 6);
         blocks.push(format!("{} {}", "#".repeat(level), title));
     }
-    append_content_blocks(section, heading_level + 1, blocks);
+    append_content_blocks(section, heading_level + 1, blocks, state);
 }
 
 fn convert_paragraph(node: Node<'_, '_>) -> Option<String> {
@@ -218,8 +295,63 @@ fn convert_table_wrap(node: Node<'_, '_>) -> Vec<String> {
 
     if let Some(markdown) = convert_regular_table(table) {
         blocks.push(markdown);
+    } else if let Some((rows, cols)) = complex_table_dimensions(table) {
+        blocks.push(format!(
+            "*[complex table omitted: {rows}×{cols}, merged cells]*"
+        ));
     }
     blocks
+}
+
+fn convert_supplementary_material(node: Node<'_, '_>) -> Option<String> {
+    const XLINK_NS: &str = "http://www.w3.org/1999/xlink";
+
+    let label = find_child(node, "label").map(inline_text);
+    let caption = find_child(node, "caption").and_then(caption_text);
+    let mut parts = Vec::new();
+
+    if let Some(label) = label.filter(|value| !value.is_empty()) {
+        let suffix = if label.ends_with('.') { "" } else { "." };
+        parts.push(format!("**{label}{suffix}**"));
+    }
+    if let Some(caption) = caption.filter(|value| !value.is_empty()) {
+        parts.push(caption);
+    }
+
+    let mut files = Vec::new();
+    if let Some(href) = node
+        .attribute((XLINK_NS, "href"))
+        .or_else(|| node.attribute("href"))
+    {
+        push_unique_filename(&mut files, href);
+    }
+    for media in node
+        .descendants()
+        .filter(|child| child.is_element() && child.has_tag_name("media"))
+    {
+        if let Some(href) = media
+            .attribute((XLINK_NS, "href"))
+            .or_else(|| media.attribute("href"))
+        {
+            push_unique_filename(&mut files, href);
+        }
+    }
+    if !files.is_empty() {
+        parts.push(format!("File: {}", files.join(", ")));
+    }
+
+    if parts.is_empty() {
+        None
+    } else {
+        Some(parts.join(" "))
+    }
+}
+
+fn push_unique_filename(files: &mut Vec<String>, value: &str) {
+    let filename = value.trim();
+    if !filename.is_empty() && !files.iter().any(|existing| existing == filename) {
+        files.push(filename.to_string());
+    }
 }
 
 fn convert_regular_table(table: Node<'_, '_>) -> Option<String> {
@@ -258,6 +390,43 @@ fn convert_regular_table(table: Node<'_, '_>) -> Option<String> {
         lines.push(format!("| {} |", row.join(" | ")));
     }
     Some(lines.join("\n"))
+}
+
+fn complex_table_dimensions(table: Node<'_, '_>) -> Option<(usize, usize)> {
+    let mut has_merged_cells = false;
+    let mut row_count = 0;
+    let mut max_cols = 0;
+
+    for row in table
+        .descendants()
+        .filter(|node| node.is_element() && node.has_tag_name("tr"))
+    {
+        let mut cols = 0;
+        for cell in row.children().filter(|child| child.is_element()) {
+            let tag = cell.tag_name().name();
+            if !matches!(tag, "th" | "td") {
+                continue;
+            }
+            if cell.attribute("rowspan").is_some() || cell.attribute("colspan").is_some() {
+                has_merged_cells = true;
+            }
+            cols += cell
+                .attribute("colspan")
+                .and_then(|value| value.parse::<usize>().ok())
+                .filter(|value| *value > 0)
+                .unwrap_or(1);
+        }
+        if cols > 0 {
+            row_count += 1;
+            max_cols = max_cols.max(cols);
+        }
+    }
+
+    if has_merged_cells && row_count > 0 && max_cols > 0 {
+        Some((row_count, max_cols))
+    } else {
+        None
+    }
 }
 
 fn convert_list(node: Node<'_, '_>) -> Option<String> {
@@ -387,9 +556,21 @@ fn append_inline_node(node: Node<'_, '_>, out: &mut String) {
                 append_inline_node(child, out);
             }
         }
-        NodeType::Text => out.push_str(node.text().unwrap_or_default()),
+        NodeType::Text => append_inline_text(node.text().unwrap_or_default(), out),
         _ => {}
     }
+}
+
+fn append_inline_text(text: &str, out: &mut String) {
+    if (out.ends_with('^') || out.ends_with('~'))
+        && let Some(rest) = text.strip_prefix('.')
+        && rest.chars().next().is_some_and(char::is_alphanumeric)
+    {
+        out.push_str(". ");
+        out.push_str(rest);
+        return;
+    }
+    out.push_str(text);
 }
 
 fn append_wrapped_inline(node: Node<'_, '_>, marker: &str, out: &mut String) {
@@ -413,6 +594,9 @@ fn append_xref(node: Node<'_, '_>, out: &mut String) {
             out.push_str(&text);
             out.push(']');
         }
+        Some("fig") | Some("table") if xref_has_source_parentheses(node, out) => {
+            out.push_str(&text);
+        }
         Some("fig") | Some("table") => {
             out.push('(');
             out.push_str(&text);
@@ -420,6 +604,14 @@ fn append_xref(node: Node<'_, '_>, out: &mut String) {
         }
         _ => out.push_str(&text),
     }
+}
+
+fn xref_has_source_parentheses(node: Node<'_, '_>, out: &str) -> bool {
+    out.ends_with('(')
+        && node
+            .next_sibling()
+            .and_then(|sibling| sibling.text())
+            .is_some_and(|text| text.starts_with(')'))
 }
 
 fn append_ext_link(node: Node<'_, '_>, out: &mut String) {

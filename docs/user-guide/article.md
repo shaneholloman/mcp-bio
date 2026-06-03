@@ -198,11 +198,14 @@ This uses the default article full-text ladder: XML first, then PMC HTML when
 the XML path misses for a PMCID-backed article. It never falls back to PDF.
 When full text resolves, BioMCP prints a local `Saved to:` path for cached
 Markdown and surfaces the winning source label (`Europe PMC XML`, `PMC HTML`,
-etc.) in markdown and JSON provenance. JSON fulltext responses also include
-`full_text_manifest`, an additive artifact manifest with the normalized source
-family (`jats_xml`, `pmc_html`, or `pdf`), provider label/source, concrete
-source identifier, quality flags, known license/reuse state, and provenance
-facts such as open-access and explicit PDF fallback status.
+etc.) in markdown and JSON provenance. For XML/JATS winners, the saved Markdown
+keeps section text, tables, references, figure captions, supplementary-material
+metadata, and explicit markers for complex merged-cell tables that are not yet
+flattened. JSON fulltext responses also include `full_text_manifest`, an
+additive artifact manifest with the normalized source family (`jats_xml`,
+`pmc_html`, or `pdf`), provider label/source, concrete source identifier,
+quality flags, known license/reuse state, and provenance facts such as
+open-access and explicit PDF fallback status.
 
 Opt in to the final PDF rung only when you want the last-resort open-access PDF
 path after XML and PMC HTML both miss:

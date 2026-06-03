@@ -213,7 +213,7 @@ fn extract_text_from_jats_merges_multiple_ref_lists() {
 }
 
 #[test]
-fn extract_text_from_jats_omits_irregular_tables() {
+fn extract_text_from_jats_marks_complex_tables() {
     let xml = r#"
 <article>
   <front>
@@ -239,7 +239,91 @@ fn extract_text_from_jats_omits_irregular_tables() {
     let out = extract_text_from_xml(xml);
     assert!(out.contains("Table 7"));
     assert!(out.contains("Irregular measurements"));
+    assert!(out.contains("*[complex table omitted: 2×2, merged cells]*"));
     assert!(!out.contains("| Marker | Value |"));
+}
+
+#[test]
+fn extract_text_from_jats_renders_floats_group_after_body_before_references() {
+    let xml = r#"
+<article>
+  <front><article-meta><title-group><article-title>Float order</article-title></title-group></article-meta></front>
+  <body>
+    <sec>
+      <title>Results</title>
+      <p>Body text.</p>
+      <fig id="fig1"><label>Figure 1</label><caption><p>Body figure.</p></caption></fig>
+    </sec>
+  </body>
+  <floats-group>
+    <fig id="fig1"><label>Figure 1</label><caption><p>Duplicate body figure.</p></caption></fig>
+    <fig id="fig2"><label>Figure 2</label><caption><p>Floats figure.</p></caption></fig>
+  </floats-group>
+  <back><ref-list><ref><mixed-citation>Reference one.</mixed-citation></ref></ref-list></back>
+</article>
+"#;
+
+    let out = extract_text_from_xml(xml);
+    assert_eq!(out.matches("> **Figure 1.**").count(), 1);
+    assert!(out.contains("> **Figure 1.** Body figure."));
+    assert!(!out.contains("Duplicate body figure"));
+    let figure = out
+        .find("> **Figure 2.** Floats figure.")
+        .expect("float figure");
+    let references = out.find("## References").expect("references");
+    assert!(figure < references);
+}
+
+#[test]
+fn extract_text_from_jats_renders_supplementary_material_metadata() {
+    let xml = r#"
+<article xmlns:xlink="http://www.w3.org/1999/xlink">
+  <body>
+    <supplementary-material id="s1" xlink:href="traces-s1.csv">
+      <label>Supplementary Data S1</label>
+      <caption><p>Measurement traces for the treatment cohort.</p></caption>
+      <media xlink:href="traces-s1.csv" />
+    </supplementary-material>
+  </body>
+</article>
+"#;
+
+    let out = extract_text_from_xml(xml);
+    assert!(out.contains("**Supplementary Data S1.**"));
+    assert!(out.contains("Measurement traces for the treatment cohort."));
+    assert!(out.contains("File: traces-s1.csv"));
+    assert_eq!(out.matches("traces-s1.csv").count(), 1);
+}
+
+#[test]
+fn extract_text_from_jats_suppresses_source_parenthesized_xref_and_preserves_boundary_spacing() {
+    let xml = r#"
+<article>
+  <body>
+    <p>Europe PMC body text with callout (<xref ref-type="fig" rid="fig2">Figure 2</xref>) and B-RAF<sup>V600E</sup>.PLX4032 boundary text.</p>
+  </body>
+</article>
+"#;
+
+    let out = extract_text_from_xml(xml);
+    assert!(out.contains(
+        "Europe PMC body text with callout (Figure 2) and B-RAF^V600E^. PLX4032 boundary text."
+    ));
+    assert!(!out.contains("((Figure 2))"));
+}
+
+#[test]
+fn extract_text_from_jats_wraps_unparenthesized_figure_xrefs() {
+    let xml = r#"
+<article>
+  <body>
+    <p>See <xref ref-type="fig" rid="fig2">Figure 2</xref> for details.</p>
+  </body>
+</article>
+"#;
+
+    let out = extract_text_from_xml(xml);
+    assert!(out.contains("See (Figure 2) for details."));
 }
 
 #[test]

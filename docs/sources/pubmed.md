@@ -61,8 +61,9 @@ biomcp get article 27083046 fulltext
 ```
 
 Returns a full-text section with a `Saved to:` cache path.
-XML, PMC HTML, or explicitly opted-in PDF sources can resolve, and JATS
-bibliography data can render references. Semantic Scholar PDF is attempted only when the caller passes `--pdf`.
+XML, PMC HTML, or explicitly opted-in PDF sources can resolve. JATS Markdown can
+render references, figure captions, supplementary-material metadata, and complex-table
+omission markers. Semantic Scholar PDF is attempted only when the caller passes `--pdf`.
 
 ## API access
 
