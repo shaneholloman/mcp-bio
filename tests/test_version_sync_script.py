@@ -228,7 +228,7 @@ def test_manifest_and_citation_versions_match_repo_metadata() -> None:
     assert _read_citation_version(REPO_ROOT / "CITATION.cff") == pyproject["project"]["version"]
 
 
-def test_uv_lock_matches_release_version_and_mustmatch_floor() -> None:
+def test_uv_lock_matches_release_version_and_intentional_mustmatch_pin() -> None:
     uv_lock = (REPO_ROOT / "uv.lock").read_text(encoding="utf-8")
 
     root_match = UV_LOCK_ROOT_VERSION_PATTERN.search(uv_lock)
@@ -238,4 +238,5 @@ def test_uv_lock_matches_release_version_and_mustmatch_floor() -> None:
     assert mustmatch_match is not None, "missing mustmatch package entry in uv.lock"
     assert root_match.group(2) == "0.8.22"
     assert mustmatch_match.group(1) == "0.0.4"
-    assert '{ name = "mustmatch", marker = "extra == \'dev\'", specifier = ">=0.0.4" }' in uv_lock
+    # Ticket 393 restores the floor after the mustmatch binary cutover.
+    assert '{ name = "mustmatch", marker = "extra == \'dev\'", specifier = "==0.0.4" }' in uv_lock

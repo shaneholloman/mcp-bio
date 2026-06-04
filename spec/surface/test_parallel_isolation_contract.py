@@ -1200,9 +1200,8 @@ def test_ticket_378_profiles_route_routine_specs_to_deterministic_contracts() ->
     )
     assert commands["full-blocking"] == "make release-gate"
     assert commands["full-contracts"] == "make release-gate"
-    assert {"check", "spec-contracts"}.issubset(release_gate_deps), (
-        "release-gate must compose make check with deterministic spec-contracts so ordinary verify "
-        "does not depend on public upstream availability"
+    assert {"lint", "test", "spec"}.issubset(release_gate_deps), (
+        "release-gate must compose the standard lint, test, and spec gates directly"
     )
     assert "spec-pr" not in release_gate_deps and "verify" not in release_gate_deps, (
         "release-gate must not keep live/cache-backed lanes as routine proof"

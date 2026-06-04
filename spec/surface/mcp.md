@@ -82,8 +82,8 @@ echo "$root" | mustmatch like '"mcp":"/mcp"'
 ## Remote Workflow Calls Keep BioMCP Text
 
 The remote tool should execute normal BioMCP workflows, not collapse them into
-an MCP-specific summary. The streamable-HTTP demo is a compact proof that the
-server still returns ordinary BioMCP text over the transport.
+an MCP-specific summary. This routine proof owns a fixture-backed local command
+so the public streamable-HTTP demo can remain a live operator walkthrough.
 
 ```bash
 port=39088
@@ -97,11 +97,27 @@ for _ in $(seq 1 40); do
   sleep 0.25
 done
 curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
-out="$(uv run --no-sync python3 ../../examples/streamable-http/streamable_http_client.py "http://127.0.0.1:$port")"
-echo "$out" | mustmatch like "Connecting to http://127.0.0.1:$port/mcp"
+out="$(uv run --no-sync python3 - "$port" <<'PY'
+import asyncio
+import sys
+from datetime import timedelta
+from mcp import ClientSession, types
+from mcp.client.streamable_http import streamable_http_client
+
+async def main(port: str) -> None:
+    async with streamable_http_client(f"http://127.0.0.1:{port}/mcp", terminate_on_close=False) as (read_stream, write_stream, _):
+        async with ClientSession(read_stream, write_stream, read_timeout_seconds=timedelta(seconds=30)) as session:
+            await session.initialize()
+            command = "biomcp study query --study msk_impact_2017 --gene TP53 --type mutations"
+            result = await session.call_tool("biomcp", arguments={"command": command})
+            print(f"Command: {command}")
+            print(next(c.text for c in result.content if isinstance(c, types.TextContent)))
+
+asyncio.run(main(sys.argv[1]))
+PY
+)"
 echo "$out" | mustmatch like 'Command: biomcp study query --study msk_impact_2017 --gene TP53 --type mutations'
 echo "$out" | mustmatch like "# Study Mutation Frequency: TP53 (msk_impact_2017)"
-echo "$out" | mustmatch like 'Command: biomcp study cohort --study msk_impact_2017 --gene TP53'
 ```
 
 ## Read-Only Boundaries and Charted Calls Stay Visible
@@ -147,4 +163,114 @@ echo "$out" | mustmatch like "CLI-only over MCP"
 echo "$out" | mustmatch like "workstation-local filesystem paths"
 echo "$out" | mustmatch like "# Study Mutation Frequency: TP53 (msk_impact_2017)"
 echo "$out" | mustmatch like "IMAGE: image/svg+xml"
+```
+
+## Repository Test Gate Runs Both Runtime Layers
+
+`make test` is the gate March uses for focused and baseline validation. It must
+run the Rust unit suite and the Python CLI/MCP/docs contract lane so neither
+runtime layer can report a silent green.
+
+```bash
+out="$(make -C ../.. -n test 2>&1)"
+echo "$out" | mustmatch like "cargo nextest run"
+echo "$out" | mustmatch like 'uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"'
+echo "$out" | mustmatch like "uv run --no-sync mkdocs build --strict"
+```
+
+## Repository Lint Keeps The Quality Ratchet
+
+Dropping `make check` must not orphan the quality-ratchet policy that used to run
+through that target. The standard `make lint` gate should continue to run the
+repo lint script and the ratchet script.
+
+```bash
+make -C ../.. -n lint 2>&1 | mustmatch like "./bin/lint
+tools/check-quality-ratchet.sh"
+```
+
+## Repository Release Gate Uses The Three Standard Gates
+
+The routine release gate should compose the workspace-standard commands
+directly. Keeping the dependency line visible prevents an obsolete shim or narrow
+spec subset from replacing the standard `lint`, `test`, and `spec` gates.
+
+```bash
+awk '/^release-gate:/{print}' ../../Makefile | mustmatch like "release-gate: lint test spec"
+```
+
+## Repository Make Check Is Not A Public Target
+
+BioMCP should not keep a compatibility `check` target now that March validates by
+make-target convention. Operators should use the standard gates directly.
+
+```bash
+awk '/^check:/{print}' ../../Makefile | mustmatch not like "check:"
+```
+
+## Root Agent Guide Declares The Contract
+
+A dispatched agent starts at the repository root. The root guide must declare
+the executable contract path, the three gates, and the hybrid Rust/Python skill
+rail without requiring the agent to infer them from stale docs.
+
+```bash
+cat ../../AGENTS.md 2>/dev/null | mustmatch like "spec/*.md
+make lint
+make test
+make spec
+rust-standards
+python-standards
+cli-design
+mustmatch
+testing-mindset"
+```
+
+## Runtime Artifacts Stay Ignored
+
+March runtime state belongs outside git. The ignore rules should keep the local
+`.march-runtime/` tree from appearing as a trackable repository path.
+
+```bash
+cat ../../.gitignore | mustmatch like ".march-runtime/"
+```
+
+## Public Streamable HTTP Demo Keeps The BRAF Workflow
+
+The shipped Streamable HTTP demo is the public live walkthrough. It should keep
+the documented discovery, variant evidence, and melanoma trial commands rather
+than shrinking to the offline study fixture used by routine specs.
+
+```bash
+uv run --no-sync python3 - <<'PY' | mustmatch like 'biomcp search all --gene BRAF --disease melanoma --counts-only
+biomcp get variant "BRAF V600E" clinvar
+biomcp search trial -c melanoma --mutation "BRAF V600E" --limit 5'
+import ast
+from pathlib import Path
+
+module = ast.parse(Path("../../examples/streamable-http/streamable_http_client.py").read_text())
+for node in module.body:
+    if isinstance(node, ast.Assign) and any(getattr(target, "id", None) == "WORKFLOW" for target in node.targets):
+        print("\n".join(ast.literal_eval(node.value)))
+        break
+PY
+```
+
+## MCP Surface Spec Owns Its Offline Workflow
+
+Routine MCP proof should not execute the public demo script. The spec owns its
+fixture-backed local command so the demo can remain a live operator walkthrough.
+
+```bash
+sed '/Read-Only Boundaries and Charted Calls Stay Visible/q' ../../spec/surface/mcp.md | mustmatch not like 'examples/streamable-http/streamable_http_client.py'
+```
+
+## Version Sync Contract Names The Intentional Mustmatch Pin
+
+The repository is intentionally pinned to the pytest-plugin mustmatch release
+until the binary cutover ticket unpins it. The version-sync contract should name
+that exact lockfile requirement instead of a stale dependency floor.
+
+```bash
+grep -F 'specifier = "==0.0.4"' ../../tests/test_version_sync_script.py | mustmatch like 'specifier = "==0.0.4"'
 ```

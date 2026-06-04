@@ -587,11 +587,8 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "`check` (`cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test`)"
         in technical_ws
     )
-    assert "`make check` is the canonical local gate" in technical_ws
-    assert (
-        "that means `lint`, `test`, `test-contracts`, and `check-quality-ratchet`"
-        in technical_ws
-    )
+    assert "The canonical local gates are `make lint`, `make test`, and `make spec`" in technical_ws
+    assert "`make lint` runs the repo lint script plus the quality ratchet" in technical_ws
     assert "`cargo deny check licenses` plus `cargo deny check advisories`" in technical_ws
     assert "`version-sync` (`bash scripts/check-version-sync.sh`)" in technical
     assert "`climb-hygiene` (`bash scripts/check-no-climb-tracked.sh`)" in technical
@@ -615,14 +612,14 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "Contract smoke checks run in `.github/workflows/contracts.yml`" in technical_ws
     )
     assert (
-        "Docs-site validation and Python contract tests now run under `make check` through `make test-contracts`; CI still keeps that lane in the separate `contracts` job for parallelism."
+        "Docs-site validation and Python contract tests now run under `make test`; CI still keeps that lane in the separate `contracts` job for parallelism."
         in technical_ws
     )
     assert (
-        "`make release-gate` is the single local routine release-blocking signal; it runs `make check` and deterministic `make spec-contracts`."
+        "`make release-gate` is the single local routine release-blocking signal; it runs `make lint`, `make test`, and `make spec` directly."
         in technical_ws
     )
-    assert "Live public-upstream confidence is opt-in through `make release-live-smoke`" in technical_ws
+    assert "Live public-upstream confidence is opt-in through `make verify`" in technical_ws
     assert (
         "The semver tag is the canonical release/version authority."
         in release_pipeline_section
@@ -767,10 +764,8 @@ def test_technical_overview_repaired_gate_and_health_copy_match_contract() -> No
         in technical
     )
     assert (
-        "`make check` is the canonical local gate. In the current `Makefile`, "
-        "that means `lint`, `test`, `test-contracts`, and `check-quality-ratchet`; the `lint` stage "
-        "runs `cargo deny check licenses` plus `cargo deny check advisories`, and "
-        "still rejects deprecated install strings in `README.md` and `docs/`."
+        "The canonical local gates are `make lint`, `make test`, and `make spec`. "
+        "In the current `Makefile`, `make lint` runs the repo lint script plus the quality ratchet"
         in technical_ws
     )
     assert (
@@ -1159,7 +1154,7 @@ def test_pull_request_contract_gate_matches_release_validation() -> None:
 def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     makefile = _read_repo("Makefile")
     assert (
-        ".PHONY: build test lint check check-quality-ratchet release-gate run clean spec spec-pr spec-contracts release-live-smoke validate-skills test-contracts install sync-python-dev"
+        ".PHONY: build test lint check-quality-ratchet release-gate run clean spec spec-pr spec-contracts verify release-live-smoke validate-skills test-contracts install sync-python-dev"
         in makefile
     )
     assert "SPEC_PR_DESELECT_ARGS" not in makefile
@@ -1171,13 +1166,15 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     assert "XDG_CONFIG_HOME" not in makefile
     assert "BIOMCP_CACHE_DIR" not in makefile
     assert "RUST_LOG=error" not in makefile
-    assert re.search(r"^test:\n\tcargo nextest run$", makefile, flags=re.MULTILINE)
     assert re.search(
-        r"^check: lint test test-contracts check-quality-ratchet$",
+        r"^test:\n"
+        r"\tcargo nextest run\n"
+        r"\t\$\(MAKE\) test-contracts$",
         makefile,
         flags=re.MULTILINE,
     )
-    assert re.search(r"^release-gate: check spec-contracts$", makefile, flags=re.MULTILINE)
+    assert not re.search(r"^check:", makefile, flags=re.MULTILINE)
+    assert re.search(r"^release-gate: lint test spec$", makefile, flags=re.MULTILINE)
     assert re.search(r"^spec-contracts:\n", makefile, flags=re.MULTILINE)
     assert re.search(r"^release-live-smoke:\n", makefile, flags=re.MULTILINE)
     assert re.search(
@@ -1189,13 +1186,13 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         flags=re.MULTILINE,
     )
     assert re.search(
-        r"pytest spec/entity/ spec/surface/[^\n]*--mustmatch-timeout 120[^\n]*\$\(SPEC_XDIST_ARGS\)",
+        r"pytest \$\(SPEC_ROUTINE_PATHS\)[^\n]*--mustmatch-timeout 120[^\n]*\$\(SPEC_XDIST_ARGS\)",
         makefile,
-    ), "spec: must run main corpus with 120s timeout under SPEC_XDIST_ARGS"
+    ), "spec: must run routine corpus with 120s timeout under SPEC_XDIST_ARGS"
     assert re.search(
-        r"pytest spec/entity/ spec/surface/[^\n]*--mustmatch-timeout 180[^\n]*\$\(SPEC_XDIST_ARGS\)",
+        r"pytest \$\(SPEC_ROUTINE_PATHS\)[^\n]*--mustmatch-timeout 180[^\n]*\$\(SPEC_XDIST_ARGS\)",
         makefile,
-    ), "spec-pr: must run main corpus with 180s timeout under SPEC_XDIST_ARGS"
+    ), "spec-pr: must run routine corpus with 180s timeout under SPEC_XDIST_ARGS"
     assert re.search(
         r"^sync-python-dev:\n"
         r"\tuv sync --extra dev --no-install-project$",
@@ -1230,13 +1227,13 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     )
 
     assert "cargo install cargo-nextest --locked" in contributing
-    assert "`make test` uses `cargo nextest run`." in contributing_ws
-    assert "`make check` now runs `lint`, `test`, `test-contracts`, and `check-quality-ratchet`" in contributing_ws
+    assert "`make test` uses `cargo nextest run` plus the Python/docs contract lane" in contributing_ws
+    assert "Use `make lint`, `make test`, and `make spec` as the canonical local gates" in contributing_ws
     assert "`make release-gate` is the single routine release-readiness command" in contributing_ws
-    assert "`make spec-contracts` is the deterministic routine executable-contract lane" in contributing_ws
-    assert "`make release-live-smoke` is the explicit opt-in live public-upstream confidence lane" in contributing_ws
+    assert "`make spec-contracts` is a deterministic legacy subset kept for profile compatibility" in contributing_ws
+    assert "`make verify` is the explicit opt-in live public-upstream confidence lane" in contributing_ws
     assert (
-        "`make spec` and `make spec-pr` remain available for the active canary tree under `spec/entity/` and `spec/surface/`"
+        "`make spec-pr` remains available for the same offline `SPEC_ROUTINE_PATHS` as `make spec`"
         in contributing_ws
     )
     assert "`tools/biomcp-ci`" in contributing_ws
@@ -1247,55 +1244,57 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     assert "2026-04-23" in contributing
     assert "/usr/bin/time -p" in contributing
     assert "warm-cache steady-state" in contributing_ws
-    assert "thin wrapper over `make check` and `make spec-contracts`" in contributing_ws
+    assert "`make release-gate` composes `lint test spec` directly" in contributing_ws
     assert "| Command | Observed warm-cache | Notes |" in contributing
     assert "".join(("T", "BD")) not in contributing
-    for command in ("make check", "make spec-contracts", "make spec-pr", "make release-gate"):
+    assert re.search(
+        r"^\| `make spec-contracts` \| `\d+\.\d+s` \| .+ \|$",
+        contributing,
+        flags=re.MULTILINE,
+    )
+    for command in ("make lint", "make test", "make release-gate"):
         assert re.search(
-            rf"^\| `{re.escape(command)}` \| `\d+\.\d+s` \| .+ \|$",
+            rf"^\| `{re.escape(command)}` \| refresh pending \| .+ \|$",
             contributing,
             flags=re.MULTILINE,
         )
     assert re.search(
-        r"^\| `make release-live-smoke` \| `operator-run` \| .+ \|$",
+        r"^\| `make verify` \| `operator-run` \| .+ \|$",
         contributing,
         flags=re.MULTILINE,
     )
 
     assert "cargo-nextest" in runbook
-    assert "`make check`" in runbook_ws
+    assert "`make lint`" in runbook_ws
+    assert "`make test`" in runbook_ws
     assert "`make release-gate`" in runbook_ws
     assert "`cargo nextest run`" in runbook_ws
     assert "`make spec-pr`" in runbook_ws
     assert "`make spec`" in runbook_ws
     assert "`pytest-xdist`" in runbook_ws
     assert "single routine release-readiness signal" in runbook_ws
-    assert "`make check` followed by deterministic `make spec-contracts`" in runbook_ws
-    assert "`make release-live-smoke` only as an explicit opt-in live public-upstream confidence lane" in runbook_ws
+    assert "it runs `lint test spec` directly" in runbook_ws
+    assert "`make release-live-smoke` is a compatibility alias for that operator lane" in runbook_ws
     assert "`-n auto --dist loadfile`" in runbook_ws
     assert "`tools/biomcp-ci`" in runbook_ws
     assert "`.cache/biomcp-specs/`" in runbook_ws
     assert "`BIOMCP_SPEC_CACHE_HIT=1`" in runbook_ws
     assert "`make spec-smoke`" not in runbook_ws
 
-    assert "`make check` now includes the release-critical Python/docs contract lane" in readme_source
-    assert "`make release-gate` is the full routine release-readiness command" in readme_source
-    assert "`make release-live-smoke` only for opt-in live public-upstream confidence" in readme_source
+    assert "run the standard gates directly: `make lint`, `make test`, and `make spec`" in readme_source
+    assert "`make release-gate` composes `lint test spec`" in readme_source
+    assert "There is no supported `make check` command" in readme_source
     assert "`cargo nextest run`" in technical_gate_section
     assert "`cargo test`" in technical_gate_section
     assert "`make release-gate`" in technical_gate_section
     assert "`pytest-xdist` with `-n auto --dist loadfile`" in technical_spec_section
-    assert "`spec/entity/` and `spec/surface/`" in technical_spec_section
-    assert "`spec/entity/gene.md`" in technical_spec_section
-    assert "`spec/entity/variant.md`" in technical_spec_section
+    assert "explicit `SPEC_ROUTINE_PATHS`" in technical_spec_section
     assert "`spec/entity/article.md`" in technical_spec_section
-    assert "`spec/entity/trial.md`" in technical_spec_section
-    assert "`spec/entity/drug.md`" in technical_spec_section
-    assert "`spec/entity/disease.md`" in technical_spec_section
-    assert "`spec/entity/protein.md`" in technical_spec_section
-    assert "`spec/surface/cli.md`" in technical_spec_section
+    assert "`spec/entity/study.md`" in technical_spec_section
+    assert "`spec/entity/variant.md`" in technical_spec_section
     assert "`spec/surface/mcp.md`" in technical_spec_section
-    assert "`spec/surface/discover.md`" in technical_spec_section
+    assert "deterministic `spec/surface/test_*.py` contracts" in technical_spec_section
+    assert "plus gene, drug, diagnostic, trial, PGx, VAERS, and CLI/discover surfaces" in technical_spec_section
     assert "`tools/biomcp-ci`" in technical_spec_section
     assert "`make spec-smoke`" not in technical_spec_section
 
@@ -1365,7 +1364,7 @@ def test_spec_lane_timing_report_is_documented_and_aligned_with_makefile() -> No
     assert "`make spec-smoke`" not in technical_spec_section
     assert "SPEC_PR_DESELECT_ARGS" not in report
     assert "SPEC_SMOKE_ARGS" not in report
-    assert "pytest spec/entity/ spec/surface/" in makefile
+    assert "pytest $(SPEC_ROUTINE_PATHS)" in makefile
 
 
 def test_parallel_test_dependency_contract_is_declared() -> None:
@@ -1441,7 +1440,7 @@ def test_runtime_contract_docs_and_scripts_align_on_release_target() -> None:
     assert (
         "`make test-contracts` runs `cargo build --release --locked`, "
         '`uv sync --extra dev --no-install-project`, `uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"`, '
-        "and `uv run --no-sync mkdocs build --strict` - the same steps that PR CI `contracts` requires."
+        "and `uv run --no-sync mkdocs build --strict` - the same Python/docs steps that `make test` and PR CI `contracts` require."
         in runbook
     )
     assert "docs/user-guide/cli-reference.md" in runbook
@@ -1499,11 +1498,13 @@ def test_validation_profile_and_hook_contract_docs_are_pinned() -> None:
     assert "`cargo clippy --lib --tests -- -D warnings`" in runbook_premerge
     assert (
         "`cargo-deny` for the repo-local license and advisory policy checks in "
-        "`make check`" in runbook_prerequisites
+        "`make lint`" in runbook_prerequisites
     )
     assert "does not run" in runbook_premerge
     assert "`cargo nextest run`" in runbook_premerge
-    assert "`make check`" in runbook_premerge
+    assert "`make lint`" in runbook_premerge
+    assert "`make test`" in runbook_premerge
+    assert "`make spec`" in runbook_premerge
     assert "`cargo deny check licenses`" in runbook_premerge
     assert "`cargo deny check advisories`" in runbook_premerge
     assert "`make spec-pr`" in runbook_premerge
@@ -1547,14 +1548,14 @@ def test_validation_profile_and_hook_contract_docs_are_pinned() -> None:
     ):
         assert row in ci_gate_section
     assert (
-        "`full-blocking` deliberately uses `make release-gate`, which expands to `make check` plus deterministic `make spec-contracts`"
+        "`full-blocking` deliberately uses `make release-gate`, which expands to `make lint`, `make test`, and `make spec`"
         in ci_gate_section
     )
     assert (
-        "`spec-only` exists so follow-on slices can target the same fixture-backed/static routine lane directly"
+        "`spec-only` exists so follow-on slices can target the legacy fixture-backed/static subset directly"
         in ci_gate_section
     )
     assert (
-        "`full-contracts` remains a compatibility alias of the same command now that `make check` already runs `make test-contracts`; the shared build flow still does not assign it today."
+        "`full-contracts` remains a compatibility alias of the same command; the shared build flow still does not assign it today."
         in ci_gate_section
     )

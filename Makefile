@@ -1,4 +1,4 @@
-.PHONY: build test lint check check-quality-ratchet release-gate run clean spec spec-pr spec-contracts verify release-live-smoke validate-skills test-contracts install sync-python-dev
+.PHONY: build test lint check-quality-ratchet release-gate run clean spec spec-pr spec-contracts verify release-live-smoke validate-skills test-contracts install sync-python-dev
 
 SPEC_XDIST_ARGS = -n auto --dist loadfile
 SPEC_ROUTINE_PATHS = \
@@ -36,6 +36,7 @@ build:
 
 test:
 	cargo nextest run
+	$(MAKE) test-contracts
 
 test-contracts:
 	cargo build --release --locked
@@ -45,10 +46,9 @@ test-contracts:
 
 lint:
 	./bin/lint
+	tools/check-quality-ratchet.sh
 
-check: lint test test-contracts check-quality-ratchet
-
-release-gate: check spec-contracts
+release-gate: lint test spec
 
 check-quality-ratchet:
 	@bash tools/check-quality-ratchet.sh
