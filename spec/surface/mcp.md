@@ -148,3 +148,104 @@ echo "$out" | mustmatch like "workstation-local filesystem paths"
 echo "$out" | mustmatch like "# Study Mutation Frequency: TP53 (msk_impact_2017)"
 echo "$out" | mustmatch like "IMAGE: image/svg+xml"
 ```
+
+## Repository Test Gate Runs Both Runtime Layers
+
+`make test` is the gate March uses for focused and baseline validation. It must
+run the Rust unit suite and the Python CLI/MCP/docs contract lane so neither
+runtime layer can report a silent green.
+
+```bash
+make -C ../.. -n test 2>&1 | mustmatch like "cargo nextest run
+uv run --no-sync pytest tests/ -v --mcp-cmd \"./target/release/biomcp serve\"
+uv run --no-sync mkdocs build --strict"
+```
+
+## Repository Lint Keeps The Quality Ratchet
+
+Dropping `make check` must not orphan the quality-ratchet policy that used to run
+through that target. The standard `make lint` gate should continue to run the
+repo lint script and the ratchet script.
+
+```bash
+make -C ../.. -n lint 2>&1 | mustmatch like "./bin/lint
+tools/check-quality-ratchet.sh"
+```
+
+## Repository Release Gate Uses The Three Standard Gates
+
+The routine release gate should compose the workspace-standard commands
+directly. Keeping the dependency line visible prevents an obsolete shim or narrow
+spec subset from replacing the standard `lint`, `test`, and `spec` gates.
+
+```bash
+awk '/^release-gate:/{print}' ../../Makefile | mustmatch like "release-gate: lint test spec"
+```
+
+## Repository Make Check Is Not A Public Target
+
+BioMCP should not keep a compatibility `check` target now that March validates by
+make-target convention. Operators should use the standard gates directly.
+
+```bash
+awk '/^check:/{print}' ../../Makefile | mustmatch not like "check:"
+```
+
+## Root Agent Guide Declares The Contract
+
+A dispatched agent starts at the repository root. The root guide must declare
+the executable contract path, the three gates, and the hybrid Rust/Python skill
+rail without requiring the agent to infer them from stale docs.
+
+```bash
+cat ../../AGENTS.md 2>/dev/null | mustmatch like "spec/*.md
+make lint
+make test
+make spec
+rust-standards
+python-standards
+cli-design
+mustmatch
+testing-mindset"
+```
+
+## Runtime Artifacts Stay Ignored
+
+March runtime state belongs outside git. The ignore rules should keep the local
+`.march-runtime/` tree from appearing as a trackable repository path.
+
+```bash
+cat ../../.gitignore | mustmatch like ".march-runtime/"
+```
+
+## Public Streamable HTTP Demo Keeps The BRAF Workflow
+
+The shipped Streamable HTTP demo is the public live walkthrough. It should keep
+the documented discovery, variant evidence, and melanoma trial commands rather
+than shrinking to the offline study fixture used by routine specs.
+
+```bash
+grep -E 'BRAF|melanoma|clinvar|search trial' ../../examples/streamable-http/streamable_http_client.py | mustmatch like 'biomcp search all --gene BRAF --disease melanoma --counts-only
+biomcp get variant "BRAF V600E" clinvar
+biomcp search trial -c melanoma --mutation "BRAF V600E" --limit 5'
+```
+
+## MCP Surface Spec Owns Its Offline Workflow
+
+Routine MCP proof should not execute the public demo script. The spec owns its
+fixture-backed local command so the demo can remain a live operator walkthrough.
+
+```bash
+grep -F 'biomcp study query --study msk_impact_2017 --gene TP53 --type mutations' ../../spec/surface/mcp.md | mustmatch like 'biomcp study query --study msk_impact_2017 --gene TP53 --type mutations'
+awk '/^## Remote Workflow Calls Keep BioMCP Text/{keep=1} /^## Read-Only Boundaries and Charted Calls Stay Visible/{keep=0} keep{print}' ../../spec/surface/mcp.md | mustmatch not like 'examples/streamable-http/streamable_http_client.py'
+```
+
+## Version Sync Contract Names The Intentional Mustmatch Pin
+
+The repository is intentionally pinned to the pytest-plugin mustmatch release
+until the binary cutover ticket unpins it. The version-sync contract should name
+that exact lockfile requirement instead of a stale dependency floor.
+
+```bash
+grep -F 'specifier = "==0.0.4"' ../../tests/test_version_sync_script.py | mustmatch like 'specifier = "==0.0.4"'
+```
