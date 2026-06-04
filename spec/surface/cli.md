@@ -472,15 +472,15 @@ manifest and raw byte retrieval handle so downstream agents can find the assets
 without guessing PMC OA URLs.
 
 ```bash
-../../target/release/biomcp get article --help | mustmatch like "assets
+../../tools/biomcp-ci get article --help | mustmatch like "assets
 asset <name>
 raw bytes"
 ```
 
 ```bash
-../../target/release/biomcp list article | mustmatch like "get article <id> assets
+../../tools/biomcp-ci list article | mustmatch like "get article <id> assets
 get article <id> asset <name>
-no conversion"
+raw bytes"
 ```
 
 ```bash

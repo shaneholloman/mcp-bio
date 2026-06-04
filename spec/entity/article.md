@@ -256,11 +256,17 @@ import json, re, sys
 doc = json.load(sys.stdin)
 assets = {row.get("filename"): row for row in doc.get("assets") or []}
 fig = assets.get("figure-floats.png") or {}
+inline_fig = assets.get("figure-inline.png") or {}
 supp = assets.get("traces-s1.csv") or {}
+other = assets.get("readme.txt") or {}
 assert fig.get("kind") == "figure-image"
+assert inline_fig.get("kind") == "figure-image"
 assert supp.get("kind") == "supplementary-file"
+assert other.get("kind") == "other"
 assert isinstance(fig.get("size_bytes"), int) and fig["size_bytes"] > 0
 assert re.fullmatch(r"[0-9a-f]{64}", str(fig.get("sha256", "")))
+assert supp.get("size_bytes") == len(b"time,value\n0,1\n")
+assert supp.get("sha256") == "7e31a103261f1075aa93cfa4da9d83479724c9fa9ed0aff644e26795a5038841"
 provider = fig.get("provider") or {}
 assert provider.get("label") == "PMC OA Archive"
 assert provider.get("source") == "PMC OA"
@@ -273,6 +279,9 @@ assert "oa-assets-22663011.tgz" in str(provenance.get("package_url", ""))
 jats = fig.get("jats") or {}
 assert jats.get("label") == "Figure 2"
 assert "measurement bar" in str(jats.get("caption", ""))
+supp_jats = supp.get("jats") or {}
+assert supp_jats.get("label") == "Supplementary Data S1"
+assert "Measurement traces" in str(supp_jats.get("caption", ""))
 assert supp.get("handle") == "biomcp get article 22663011 asset traces-s1.csv"
 commands = (doc.get("_meta") or {}).get("next_commands") or []
 assert "biomcp get article 22663011 asset traces-s1.csv" in commands
@@ -323,14 +332,17 @@ print("article fulltext not_included ok")
 ' | mustmatch like "article fulltext not_included ok"
 ```
 
-Markdown carries a one-line pointer instead of embedding the JSON manifest.
+Markdown carries the retrieval command as a pointer instead of embedding the
+JSON manifest or listing individual package members.
 
 ```bash
 bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
-../../tools/biomcp-ci get article 22663011 fulltext | mustmatch like "Assets not included in Markdown:
-biomcp --json get article 22663011 assets"
+markdown="$(../../tools/biomcp-ci get article 22663011 fulltext)"
+echo "$markdown" | mustmatch like "biomcp --json get article 22663011 assets"
+echo "$markdown" | mustmatch not like "figure-floats.png
+traces-s1.csv"
 ```
 
 ## Semantic Scholar Degrades Truthfully Without a Key
