@@ -236,8 +236,7 @@ Routine MCP proof should not execute the public demo script. The spec owns its
 fixture-backed local command so the demo can remain a live operator walkthrough.
 
 ```bash
-grep -F 'biomcp study query --study msk_impact_2017 --gene TP53 --type mutations' ../../spec/surface/mcp.md | mustmatch like 'biomcp study query --study msk_impact_2017 --gene TP53 --type mutations'
-awk '/^## Remote Workflow Calls Keep BioMCP Text/{keep=1} /^## Read-Only Boundaries and Charted Calls Stay Visible/{keep=0} keep{print}' ../../spec/surface/mcp.md | mustmatch not like 'examples/streamable-http/streamable_http_client.py'
+sed '/Read-Only Boundaries and Charted Calls Stay Visible/q' ../../spec/surface/mcp.md | mustmatch not like 'examples/streamable-http/streamable_http_client.py'
 ```
 
 ## Version Sync Contract Names The Intentional Mustmatch Pin
