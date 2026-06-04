@@ -8,9 +8,10 @@ use crate::transform;
 use tracing::warn;
 
 use super::{
-    ARTICLE_SECTION_ALL, ARTICLE_SECTION_ANNOTATIONS, ARTICLE_SECTION_FULLTEXT,
-    ARTICLE_SECTION_NAMES, ARTICLE_SECTION_TLDR, Article, ArticleGetOptions,
-    ArticleSemanticScholar, ArticleSemanticScholarPdf, INVALID_ARTICLE_ID_MSG, fulltext,
+    ARTICLE_SECTION_ALL, ARTICLE_SECTION_ANNOTATIONS, ARTICLE_SECTION_ASSET,
+    ARTICLE_SECTION_ASSETS, ARTICLE_SECTION_FULLTEXT, ARTICLE_SECTION_NAMES, ARTICLE_SECTION_TLDR,
+    Article, ArticleGetOptions, ArticleSemanticScholar, ArticleSemanticScholarPdf,
+    INVALID_ARTICLE_ID_MSG, fulltext,
 };
 
 pub(super) fn is_doi(id: &str) -> bool {
@@ -93,19 +94,24 @@ pub(super) fn parse_article_id(id: &str) -> ArticleIdType {
     ArticleIdType::Invalid
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Default)]
 pub(super) struct ArticleSections {
     pub(super) include_annotations: bool,
     pub(super) include_fulltext: bool,
     pub(super) include_tldr: bool,
     pub(super) include_all: bool,
+    pub(super) include_assets: bool,
+    pub(super) asset_name: Option<String>,
 }
 
 pub(super) fn parse_sections(sections: &[String]) -> Result<ArticleSections, BioMcpError> {
     let mut out = ArticleSections::default();
+    let mut index = 0;
 
-    for raw in sections {
+    while index < sections.len() {
+        let raw = &sections[index];
         let section = raw.trim().to_ascii_lowercase();
+        index += 1;
         if section.is_empty() {
             continue;
         }
@@ -117,6 +123,21 @@ pub(super) fn parse_sections(sections: &[String]) -> Result<ArticleSections, Bio
             ARTICLE_SECTION_ANNOTATIONS => out.include_annotations = true,
             ARTICLE_SECTION_FULLTEXT => out.include_fulltext = true,
             ARTICLE_SECTION_TLDR => out.include_tldr = true,
+            ARTICLE_SECTION_ASSETS => out.include_assets = true,
+            ARTICLE_SECTION_ASSET => {
+                let Some(name) = sections
+                    .get(index)
+                    .map(|value| value.trim())
+                    .filter(|value| !value.is_empty())
+                else {
+                    return Err(BioMcpError::InvalidArgument(
+                        "asset requires a package filename (example: biomcp get article 22663011 asset traces-s1.csv)"
+                            .into(),
+                    ));
+                };
+                out.asset_name = Some(name.to_string());
+                index += 1;
+            }
             ARTICLE_SECTION_ALL => out.include_all = true,
             _ => {
                 return Err(BioMcpError::InvalidArgument(format!(
@@ -317,7 +338,7 @@ pub(super) async fn get_article_base_with_clients(
     }
 }
 
-async fn get_article_base(id: &str) -> Result<Article, BioMcpError> {
+pub(super) async fn get_article_base(id: &str) -> Result<Article, BioMcpError> {
     let pubtator = PubTatorClient::new()?;
     let europe = EuropePmcClient::new()?;
     get_article_base_with_clients(id, &pubtator, &europe).await
@@ -367,6 +388,9 @@ pub async fn get(
 
     if section_flags.include_fulltext {
         fulltext::resolve_fulltext(&mut article, id, options).await?;
+        if options.include_asset_summary {
+            super::assets::attach_not_included(&mut article, id).await;
+        }
     }
 
     if section_only && !section_flags.include_tldr {

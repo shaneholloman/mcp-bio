@@ -462,9 +462,17 @@ EXAMPLES:
   biomcp get article 22663011 annotations
   biomcp get article 22663011 fulltext
   biomcp get article 22663011 fulltext --pdf
+  biomcp --json get article 22663011 assets
+  biomcp get article 22663011 asset traces-s1.csv
   biomcp get article 22663011 tldr
 
 Full text defaults to the XML -> PMC HTML ladder.
+Use `assets` for the JSON-only OA package asset manifest.
+Use `asset <name>` to return one OA package member as raw bytes with no conversion.
+Asset keywords:
+assets
+asset <name>
+raw bytes
 Add `--pdf` only with `fulltext` to allow Semantic Scholar PDF as the final fallback.
 `--pdf` requires the fulltext section.
 

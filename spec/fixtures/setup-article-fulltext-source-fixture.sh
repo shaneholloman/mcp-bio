@@ -34,8 +34,10 @@ python3 - "$ready_file" "$repo_root/tests/fixtures/article/fulltext" "$request_l
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
+import io
 import json
 import sys
+import tarfile
 import threading
 
 
@@ -64,6 +66,7 @@ ARTICLE_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
       <fig id="fig1">
         <label>Figure 1</label>
         <caption><p>Inline figure caption preserves n=10 cell counts.</p></caption>
+        <graphic xlink:href="figure-inline.png" />
       </fig>
       <table-wrap id="t1">
         <label>Table 1</label>
@@ -92,6 +95,7 @@ ARTICLE_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
     <fig id="fig2">
       <label>Figure 2</label>
       <caption><p>Floats-group figure reports measurement bar is 70 μm.</p></caption>
+      <graphic xlink:href="figure-floats.png" />
     </fig>
   </floats-group>
   <back>
@@ -100,6 +104,27 @@ ARTICLE_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
     </ref-list>
   </back>
 </article>"""
+
+
+def make_oa_assets_tgz():
+    entries = {
+        "article.nxml": ARTICLE_XML.encode("utf-8"),
+        "figure-inline.png": b"fixture-inline-figure-bytes\n",
+        "figure-floats.png": b"fixture-floats-figure-bytes\n",
+        "traces-s1.csv": b"time,value\n0,1\n",
+        "readme.txt": b"package sidecar\n",
+    }
+    out = io.BytesIO()
+    with tarfile.open(fileobj=out, mode="w:gz") as archive:
+        for name, body in entries.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(body)
+            info.mode = 0o644
+            archive.addfile(info, io.BytesIO(body))
+    return out.getvalue()
+
+
+OA_ASSETS_TGZ = make_oa_assets_tgz()
 
 
 ARTICLES = {
@@ -261,6 +286,14 @@ class Handler(BaseHTTPRequestHandler):
 
         if decoded_path in {"/PMC123457/fullTextXML", "/PMC123458/fullTextXML", "/22663012/fullTextXML", "/22663013/fullTextXML"}:
             send_text(self, 404, "not found", "text/plain")
+            return
+
+        if decoded_path == "/" and query.get("id") == ["PMC123456"]:
+            send_text(self, 200, f"""<records><record license=\"CC BY\" retracted=\"no\"><link format=\"tgz\" href=\"http://127.0.0.1:{self.server.server_port}/oa-assets-22663011.tgz\" /></record></records>""", "application/xml")
+            return
+
+        if decoded_path == "/oa-assets-22663011.tgz":
+            send_bytes(self, 200, OA_ASSETS_TGZ, "application/gzip")
             return
 
         if decoded_path == "/" and query.get("id") == ["PMC123459"]:

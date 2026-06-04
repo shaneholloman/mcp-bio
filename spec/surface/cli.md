@@ -464,6 +464,44 @@ assert "CC BY" in str(reuse.get("license", ""))
 PY
 ```
 
+## Article Asset Surface Stays Discoverable
+
+Article asset access is a public article surface, not an internal fulltext side
+effect. Help, list output, and user-facing docs should teach both the JSON-only
+manifest and raw byte retrieval handle so downstream agents can find the assets
+without guessing PMC OA URLs.
+
+```bash
+../../tools/biomcp-ci get article --help | mustmatch like "assets
+asset <name>
+raw bytes"
+```
+
+```bash
+../../tools/biomcp-ci list article | mustmatch like "get article <id> assets
+get article <id> asset <name>
+raw bytes"
+```
+
+```bash
+uv run --no-sync python3 -c '
+from pathlib import Path
+root = Path("../..")
+paths = [
+    "architecture/functional/article-fulltext.md",
+    "architecture/ux/cli-reference.md",
+    "docs/user-guide/cli-reference.md",
+    "docs/user-guide/article.md",
+]
+for rel in paths:
+    text = (root / rel).read_text(encoding="utf-8")
+    assert "get article <id> assets" in text or "get article 22663011 assets" in text, rel
+    assert "get article <id> asset <name>" in text or "get article 22663011 asset traces-s1.csv" in text, rel
+    assert "no conversion" in text.lower() or "without conversion" in text.lower() or "raw bytes" in text.lower(), rel
+print("article asset docs aligned")
+' | mustmatch like "article asset docs aligned"
+```
+
 ## Validation Lanes Stay Split
 
 Routine validation should be deterministic by default: March `spec-only` and

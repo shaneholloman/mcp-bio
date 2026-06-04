@@ -239,6 +239,112 @@ assert "CC BY" in str(reuse.get("license", ""))
 PY
 ```
 
+## OA Package Assets Manifest
+
+Article assets are resolved from the canonical PMC OA package on demand, even
+when another XML rung supplied the saved full text. The JSON-only manifest keeps
+byte-level grounding and retrieval handles for downstream converters without
+parsing or inlining the assets.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci --json get article 22663011 assets | uv run --no-sync python3 -c '
+import json, re, sys
+
+doc = json.load(sys.stdin)
+assets = {row.get("filename"): row for row in doc.get("assets") or []}
+fig = assets.get("figure-floats.png") or {}
+inline_fig = assets.get("figure-inline.png") or {}
+supp = assets.get("traces-s1.csv") or {}
+other = assets.get("readme.txt") or {}
+assert fig.get("kind") == "figure-image"
+assert inline_fig.get("kind") == "figure-image"
+assert supp.get("kind") == "supplementary-file"
+assert other.get("kind") == "other"
+assert isinstance(fig.get("size_bytes"), int) and fig["size_bytes"] > 0
+assert re.fullmatch(r"[0-9a-f]{64}", str(fig.get("sha256", "")))
+assert supp.get("size_bytes") == len(b"time,value\n0,1\n")
+assert supp.get("sha256") == "7e31a103261f1075aa93cfa4da9d83479724c9fa9ed0aff644e26795a5038841"
+provider = fig.get("provider") or {}
+assert provider.get("label") == "PMC OA Archive"
+assert provider.get("source") == "PMC OA"
+reuse = fig.get("reuse") or {}
+assert reuse.get("license_present") is True
+assert "CC BY" in str(reuse.get("license", ""))
+provenance = fig.get("provenance") or {}
+assert provenance.get("retracted") is False
+assert "oa-assets-22663011.tgz" in str(provenance.get("package_url", ""))
+jats = fig.get("jats") or {}
+assert jats.get("label") == "Figure 2"
+assert "measurement bar" in str(jats.get("caption", ""))
+supp_jats = supp.get("jats") or {}
+assert supp_jats.get("label") == "Supplementary Data S1"
+assert "Measurement traces" in str(supp_jats.get("caption", ""))
+assert supp.get("handle") == "biomcp get article 22663011 asset traces-s1.csv"
+commands = (doc.get("_meta") or {}).get("next_commands") or []
+assert "biomcp get article 22663011 asset traces-s1.csv" in commands
+print("article assets manifest ok")
+' | mustmatch like "article assets manifest ok"
+```
+
+## OA Package Asset Retrieval Returns Bytes
+
+The retrieval handle returns the selected archive member bytes as-is. BioMCP is
+the canonical fetcher here; conversion of CSV, XLSX, DOC, PDF, or image assets
+belongs downstream.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci get article 22663011 asset traces-s1.csv | mustmatch like "time,value
+0,1"
+```
+
+## Fulltext Reports Assets Not Included
+
+Full text Markdown remains text-first, but JSON must tell agents which evidence
+bytes were not inlined and how to retrieve them. The summary is structured so a
+consumer can branch without scraping prose.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci --json get article 22663011 fulltext | uv run --no-sync python3 -c '
+import json, sys
+
+doc = json.load(sys.stdin)
+not_included = doc.get("not_included") or {}
+figures = not_included.get("figure_images") or {}
+supplements = not_included.get("supplementary_files") or {}
+complex_tables = not_included.get("complex_tables") or {}
+assert figures.get("count") == 2
+assert supplements.get("count") == 1
+assert complex_tables.get("count") == 1
+assert figures.get("retrieve_with") == "biomcp --json get article 22663011 assets"
+commands = (doc.get("_meta") or {}).get("next_commands") or []
+assert "biomcp --json get article 22663011 assets" in commands
+assert "biomcp get article 22663011 asset traces-s1.csv" in commands
+print("article fulltext not_included ok")
+' | mustmatch like "article fulltext not_included ok"
+```
+
+Markdown carries the retrieval command as a pointer instead of embedding the
+JSON manifest or listing individual package members.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+markdown="$(../../tools/biomcp-ci get article 22663011 fulltext)"
+echo "$markdown" | mustmatch like "biomcp --json get article 22663011 assets"
+echo "$markdown" | mustmatch not like "figure-floats.png
+traces-s1.csv"
+```
+
 ## Semantic Scholar Degrades Truthfully Without a Key
 
 The blocking lane is intentionally keyless. Article search should stay usable

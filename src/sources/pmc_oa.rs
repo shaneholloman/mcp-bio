@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::path::{Component, Path, PathBuf};
 use std::sync::OnceLock;
 
 use http_cache_reqwest::CacheMode;
@@ -24,6 +25,19 @@ pub struct PmcOaArchiveManifest {
     pub package_url: String,
     pub license: Option<String>,
     pub retracted: Option<bool>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PmcOaArchiveEntry {
+    pub filename: String,
+    pub bytes: Vec<u8>,
+    pub is_xml: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PmcOaArchivePackage {
+    pub manifest: PmcOaArchiveManifest,
+    pub entries: Vec<PmcOaArchiveEntry>,
 }
 
 #[derive(Clone)]
@@ -139,14 +153,7 @@ impl PmcOaClient {
         }))
     }
 
-    pub async fn get_full_text_xml_with_manifest(
-        &self,
-        pmcid: &str,
-    ) -> Result<Option<(String, PmcOaArchiveManifest)>, BioMcpError> {
-        let Some(manifest) = self.oa_archive_manifest(pmcid).await? else {
-            return Ok(None);
-        };
-
+    async fn archive_bytes(&self, manifest: &PmcOaArchiveManifest) -> Result<Vec<u8>, BioMcpError> {
         let resp = self
             .client
             .get(&manifest.tgz_url)
@@ -163,8 +170,18 @@ impl PmcOaClient {
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
+        Ok(bytes.to_vec())
+    }
 
-        let bytes = bytes.to_vec();
+    pub async fn get_full_text_xml_with_manifest(
+        &self,
+        pmcid: &str,
+    ) -> Result<Option<(String, PmcOaArchiveManifest)>, BioMcpError> {
+        let Some(manifest) = self.oa_archive_manifest(pmcid).await? else {
+            return Ok(None);
+        };
+
+        let bytes = self.archive_bytes(&manifest).await?;
         let xml = tokio::task::spawn_blocking(move || extract_first_nxml(&bytes))
             .await
             .map_err(|err| BioMcpError::Api {
@@ -173,6 +190,23 @@ impl PmcOaClient {
             })??;
 
         Ok(xml.map(|xml| (xml, manifest)))
+    }
+
+    pub async fn get_archive_package(
+        &self,
+        pmcid: &str,
+    ) -> Result<Option<PmcOaArchivePackage>, BioMcpError> {
+        let Some(manifest) = self.oa_archive_manifest(pmcid).await? else {
+            return Ok(None);
+        };
+        let bytes = self.archive_bytes(&manifest).await?;
+        let entries = tokio::task::spawn_blocking(move || extract_archive_entries(&bytes))
+            .await
+            .map_err(|err| BioMcpError::Api {
+                api: PMC_OA_API.to_string(),
+                message: format!("Task join error: {err}"),
+            })??;
+        Ok(Some(PmcOaArchivePackage { manifest, entries }))
     }
 }
 
@@ -184,7 +218,37 @@ fn parse_boolish(value: &str) -> Option<bool> {
     }
 }
 
-fn extract_first_nxml(tgz_bytes: &[u8]) -> Result<Option<String>, BioMcpError> {
+fn is_xml_name(filename: &str) -> bool {
+    let lower = filename.to_ascii_lowercase();
+    lower.ends_with(".nxml") || lower.ends_with(".xml")
+}
+
+fn safe_archive_name(path: &Path) -> Option<String> {
+    let raw = path.to_str()?.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    let normalized = raw.replace('\\', "/");
+    let mut out = PathBuf::new();
+    for component in Path::new(&normalized).components() {
+        match component {
+            Component::Normal(part) => {
+                if part.to_str().is_some_and(|value| value.ends_with(':')) {
+                    return None;
+                }
+                out.push(part);
+            }
+            Component::CurDir => {}
+            Component::Prefix(_) | Component::RootDir | Component::ParentDir => return None,
+        }
+    }
+    out.to_str()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
+}
+
+fn extract_archive_entries(tgz_bytes: &[u8]) -> Result<Vec<PmcOaArchiveEntry>, BioMcpError> {
     use std::io::Read;
 
     if tgz_bytes.len() > MAX_TGZ_BYTES {
@@ -197,32 +261,41 @@ fn extract_first_nxml(tgz_bytes: &[u8]) -> Result<Option<String>, BioMcpError> {
     let gz = flate2::read::GzDecoder::new(tgz_bytes);
     let mut archive = tar::Archive::new(gz);
     let entries = archive.entries()?;
+    let mut out = Vec::new();
 
     for entry in entries {
         let entry = entry?;
-        if entry.size() > MAX_ARCHIVE_ENTRY_BYTES {
+        if !entry.header().entry_type().is_file() || entry.size() > MAX_ARCHIVE_ENTRY_BYTES {
             continue;
         }
         let path = entry.path()?;
-        let Some(file_name) = path.file_name().and_then(|v| v.to_str()) else {
+        let Some(filename) = safe_archive_name(&path) else {
             continue;
         };
-        if !(file_name.ends_with(".nxml") || file_name.ends_with(".xml")) {
-            continue;
-        }
 
-        let mut out: Vec<u8> = Vec::new();
+        let mut bytes = Vec::new();
         let mut reader = entry.take(MAX_ARCHIVE_ENTRY_BYTES + 1);
-        reader.read_to_end(&mut out)?;
-        if out.len() as u64 > MAX_ARCHIVE_ENTRY_BYTES {
+        reader.read_to_end(&mut bytes)?;
+        if bytes.len() as u64 > MAX_ARCHIVE_ENTRY_BYTES || bytes.is_empty() {
             continue;
         }
-        if out.is_empty() {
-            continue;
-        }
-        return Ok(Some(String::from_utf8_lossy(&out).to_string()));
+        let is_xml = is_xml_name(&filename);
+        out.push(PmcOaArchiveEntry {
+            filename,
+            bytes,
+            is_xml,
+        });
     }
 
+    Ok(out)
+}
+
+fn extract_first_nxml(tgz_bytes: &[u8]) -> Result<Option<String>, BioMcpError> {
+    for entry in extract_archive_entries(tgz_bytes)? {
+        if entry.is_xml {
+            return Ok(Some(String::from_utf8_lossy(&entry.bytes).to_string()));
+        }
+    }
     Ok(None)
 }
 
@@ -235,6 +308,27 @@ mod tests {
     use tar::{Builder, Header};
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    fn tgz_with_entries(entries: &[(&str, &[u8])]) -> Vec<u8> {
+        let mut tar_buf = Vec::new();
+        {
+            let mut builder = Builder::new(&mut tar_buf);
+            for (name, body) in entries {
+                let mut header = Header::new_gnu();
+                header.set_size(body.len() as u64);
+                header.set_mode(0o644);
+                header.set_cksum();
+                builder
+                    .append_data(&mut header, *name, *body)
+                    .expect("archive entry should append");
+            }
+            builder.finish().expect("tar should finish");
+        }
+
+        let mut gz = GzEncoder::new(Vec::new(), Compression::default());
+        gz.write_all(&tar_buf).expect("gzip should write tar");
+        gz.finish().expect("gzip should finish")
+    }
 
     #[tokio::test]
     async fn oa_tgz_url_rewrites_ftp_to_https() {
@@ -348,25 +442,90 @@ mod tests {
 
     #[test]
     fn extract_first_nxml_reads_xml_entry() {
-        let mut tar_buf = Vec::new();
-        {
-            let mut builder = Builder::new(&mut tar_buf);
-            let contents = b"<article><body>ok</body></article>";
-            let mut header = Header::new_gnu();
-            header.set_size(contents.len() as u64);
-            header.set_mode(0o644);
-            header.set_cksum();
-            builder
-                .append_data(&mut header, "sample.nxml", &contents[..])
-                .unwrap();
-            builder.finish().unwrap();
-        }
-
-        let mut gz = GzEncoder::new(Vec::new(), Compression::default());
-        gz.write_all(&tar_buf).unwrap();
-        let tgz = gz.finish().unwrap();
+        let tgz = tgz_with_entries(&[("sample.nxml", b"<article><body>ok</body></article>")]);
 
         let xml = extract_first_nxml(&tgz).unwrap().unwrap();
         assert!(xml.contains("<article>"));
+    }
+
+    #[tokio::test]
+    async fn get_archive_package_enumerates_non_xml_and_preserves_binary_bytes() {
+        let server = MockServer::start().await;
+        let image_bytes = b"\x89PNG\r\n\x1a\n\0\xfffixture";
+        let tgz = tgz_with_entries(&[
+            ("article.nxml", b"<article><body>ok</body></article>"),
+            ("figures/panel.png", image_bytes),
+            ("supplement/traces.csv", b"time,value\n0,1\n"),
+        ]);
+
+        Mock::given(method("GET"))
+            .and(path("/"))
+            .and(query_param("id", "PMC123"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(format!(
+                r#"<records><record license="CC BY" retracted="no"><link format="tgz" href="{}/archive.tgz"/></record></records>"#,
+                server.uri()
+            )))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/archive.tgz"))
+            .respond_with(ResponseTemplate::new(200).set_body_bytes(tgz))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = PmcOaClient::new_for_test(server.uri(), None).unwrap();
+        let package = client
+            .get_archive_package("PMC123")
+            .await
+            .expect("package request should succeed")
+            .expect("package should exist");
+        assert_eq!(package.manifest.license.as_deref(), Some("CC BY"));
+        assert_eq!(package.manifest.retracted, Some(false));
+        let image = package
+            .entries
+            .iter()
+            .find(|entry| entry.filename == "figures/panel.png")
+            .expect("image entry should be listed");
+        assert!(!image.is_xml);
+        assert_eq!(image.bytes, image_bytes);
+        assert!(
+            package
+                .entries
+                .iter()
+                .any(|entry| entry.filename == "article.nxml" && entry.is_xml)
+        );
+    }
+
+    #[test]
+    fn extract_archive_entries_rejects_unsafe_empty_and_oversized_members() {
+        assert_eq!(
+            safe_archive_name(Path::new("safe\\readme.txt")).as_deref(),
+            Some("safe/readme.txt")
+        );
+        assert!(safe_archive_name(Path::new("../secret.csv")).is_none());
+        assert!(safe_archive_name(Path::new("..\\secret.csv")).is_none());
+        assert!(safe_archive_name(Path::new("/absolute.csv")).is_none());
+        assert!(safe_archive_name(Path::new("C:\\absolute.csv")).is_none());
+
+        let oversized = vec![b'x'; MAX_ARCHIVE_ENTRY_BYTES as usize + 1];
+        let tgz = tgz_with_entries(&[
+            ("article.nxml", &b"<article/>"[..]),
+            ("safe/readme.txt", b"ok"),
+            ("empty.bin", b""),
+            ("huge.bin", oversized.as_slice()),
+        ]);
+
+        let entries = extract_archive_entries(&tgz).expect("archive should parse");
+        let names = entries
+            .iter()
+            .map(|entry| entry.filename.as_str())
+            .collect::<Vec<_>>();
+        assert!(names.contains(&"article.nxml"));
+        assert!(names.contains(&"safe/readme.txt"));
+        assert!(!names.contains(&"empty.bin"));
+        assert!(!names.contains(&"huge.bin"));
     }
 }

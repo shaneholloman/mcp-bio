@@ -124,7 +124,7 @@ pub struct ArticleGetArgs {
     /// Allow Semantic Scholar PDF as a final fulltext fallback (requires fulltext section)
     #[arg(long)]
     pub pdf: bool,
-    /// Sections to include (annotations, fulltext, tldr, all)
+    /// Sections to include (annotations, fulltext, tldr, assets, asset <name>, all)
     #[arg(trailing_var_arg = true)]
     pub sections: Vec<String>,
 }
@@ -216,8 +216,10 @@ See also: biomcp list article")]
     },
 }
 
+mod assets;
 mod dispatch;
 mod session;
+mod workflow;
 pub(super) use self::dispatch::{handle_command, handle_get, handle_search};
 
 #[cfg(test)]

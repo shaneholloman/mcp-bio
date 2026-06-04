@@ -12,6 +12,12 @@ only through explicit opt-in with `get article <id> fulltext --pdf`. The section
 accepts the same article identifiers as the base article card: PMID, PMCID, and
 DOI.
 
+Article assets are a separate on-demand surface. `get article <id> assets`
+resolves the canonical PMC OA package and emits a JSON-only manifest;
+`get article <id> asset <name>` returns one package member as raw bytes without
+conversion. BioMCP lists and serves bytes only; CSV, XLSX, DOC, PDF, and image
+parsing remains downstream.
+
 Full text is saved as a local Markdown artifact. BioMCP prints a source-labeled
 fulltext heading and `Saved to:` path, but it does not inline the full article
 body in the article card.
@@ -90,7 +96,11 @@ The stable output fields are:
     available, and `pdf_fallback_used` for explicit PDF winners.
 
 Markdown prints `Saved to:` and does not inline full text or manifest prose in
-the article card. JSON `_meta.section_sources` includes a `fulltext` row only
+the article card. When OA package assets are available but not inlined, Markdown
+points to `biomcp --json get article <id> assets`. JSON fulltext responses add a
+structured `not_included` summary for figure images, supplementary files, and
+complex tables plus asset retrieval next commands.
+JSON `_meta.section_sources` includes a `fulltext` row only
 when `full_text_source` exists. Note-only misses do not publish a `fulltext`
 provenance row.
 
@@ -127,6 +137,9 @@ PDF ineligible without a PDF-specific public note.
 - `src/entities/article/fulltext.rs`: identity bridge, content ladder,
   eligibility policy, fulltext source labels, cache key, and saved artifact
   assignment.
+- `src/entities/article/assets.rs`: PMC OA package asset policy, manifest
+  classification, hashes, JATS caption matching, omitted-coverage summary, and
+  raw byte retrieval handles.
 - `src/sources/europepmc.rs`, `src/sources/ncbi_efetch.rs`,
   `src/sources/pmc_oa.rs`, and `src/sources/ncbi_idconv.rs`: upstream
   transport for direct source APIs.

@@ -271,6 +271,7 @@ pub enum OutputStream {
 #[derive(Debug, Clone)]
 pub struct CommandOutcome {
     pub text: String,
+    pub bytes: Option<Vec<u8>>,
     pub stream: OutputStream,
     pub exit_code: u8,
 }
@@ -279,6 +280,16 @@ impl CommandOutcome {
     pub(crate) fn stdout(text: String) -> Self {
         Self {
             text,
+            bytes: None,
+            stream: OutputStream::Stdout,
+            exit_code: 0,
+        }
+    }
+
+    pub(crate) fn stdout_bytes(bytes: Vec<u8>) -> Self {
+        Self {
+            text: String::new(),
+            bytes: Some(bytes),
             stream: OutputStream::Stdout,
             exit_code: 0,
         }
@@ -287,6 +298,7 @@ impl CommandOutcome {
     pub(crate) fn stdout_with_exit(text: String, exit_code: u8) -> Self {
         Self {
             text,
+            bytes: None,
             stream: OutputStream::Stdout,
             exit_code,
         }
@@ -295,6 +307,7 @@ impl CommandOutcome {
     pub(crate) fn stderr_with_exit(text: String, exit_code: u8) -> Self {
         Self {
             text,
+            bytes: None,
             stream: OutputStream::Stderr,
             exit_code,
         }

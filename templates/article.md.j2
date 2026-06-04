@@ -51,6 +51,10 @@ These are PubTator normalized entity mentions for standardized extraction of gen
 
 {% if full_text_path -%}
 Saved to: {{ full_text_path }}
+{% if not_included -%}
+
+Assets not inlined; retrieve the JSON manifest with `{{ not_included.figure_images.retrieve_with }}`.
+{% endif -%}
 {% else -%}
 {{ full_text_note }}
 {% endif -%}
