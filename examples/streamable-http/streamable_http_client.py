@@ -19,9 +19,8 @@ from mcp.client.streamable_http import streamable_http_client
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8080"
 WORKFLOW = [
-    "biomcp search all --gene BRAF --disease melanoma --counts-only",
-    'biomcp get variant "BRAF V600E" clinvar',
-    'biomcp search trial -c melanoma --mutation "BRAF V600E" --limit 5',
+    "biomcp study query --study msk_impact_2017 --gene TP53 --type mutations",
+    "biomcp study cohort --study msk_impact_2017 --gene TP53",
 ]
 
 

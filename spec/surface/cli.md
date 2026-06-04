@@ -504,17 +504,17 @@ print("article asset docs aligned")
 
 ## Validation Lanes Stay Split
 
-Routine validation should be deterministic by default: March `spec-only` and
-release-gate proof use fixture-backed/static executable contracts. Public
-upstream confidence remains available, but only through an explicit live-smoke
-lane that keeps using the BioMCP spec wrapper.
+Routine validation should be deterministic by default: `make spec` and March
+`spec-only` run offline/local executable contracts. Public upstream confidence
+remains available, but only through the explicit operator-run `make verify` lane
+that keeps using the BioMCP spec wrapper.
 
 ```bash
-out="$(make -C ../.. -n spec-contracts 2>&1 || true)"
-echo "$out" | mustmatch like "spec/surface/cli.md"
+out="$(make -C ../.. -n spec 2>&1 || true)"
+echo "$out" | mustmatch like "spec/surface/mcp.md"
 echo "$out" | mustmatch like "test_parallel_isolation_contract.py"
-echo "$out" | mustmatch not like "pytest spec/entity/ spec/surface/"
-echo "$out" | mustmatch not like "release-live-smoke"
+echo "$out" | mustmatch not like "spec/entity/phenotype.md"
+echo "$out" | mustmatch not like "spec/surface/cli.md"
 ```
 
 The live lane is intentionally named and opt-in so operators can run upstream
@@ -522,16 +522,19 @@ checks without making unrelated ordinary tickets depend on public service
 availability.
 
 ```bash
-out="$(make -C ../.. -n release-live-smoke 2>&1 || true)"
+out="$(make -C ../.. -n verify 2>&1 || true)"
 echo "$out" | mustmatch like "tools/biomcp-ci discover"
 echo "$out" | mustmatch like "tools/biomcp-ci search disease"
+echo "$out" | mustmatch like "spec/entity/phenotype.md"
+echo "$out" | mustmatch like "spec/surface/discover.md"
 ```
 
 The smoke matrix should include article source-status and variant-normalization
 confidence through the same wrapper instead of a second cache or replay system.
 
 ```bash
-out="$(make -C ../.. -n release-live-smoke 2>&1 || true)"
+out="$(make -C ../.. -n verify 2>&1 || true)"
 echo "$out" | mustmatch like "tools/biomcp-ci search article"
 echo "$out" | mustmatch like "tools/biomcp-ci variant normalize"
+echo "$out" | mustmatch like "spec/entity/pathway.md"
 ```

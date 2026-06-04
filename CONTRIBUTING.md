@@ -26,14 +26,14 @@ Install `cargo-nextest` before running repo-local Rust verification:
 cargo install cargo-nextest --locked
 ```
 
-`make test` uses `cargo nextest run`. `make spec-contracts` is the
-deterministic routine executable-contract lane used by March `spec-only` and
-`make release-gate`; it runs validation-lane docs/static surface contracts
-without live smoke. `make release-live-smoke` is the explicit opt-in live
-public-upstream confidence lane and owns the pathway live assertions. `make
-spec` and `make spec-pr` remain available for the active canary tree under
-`spec/entity/` and `spec/surface/`, excluding the pathway live-smoke spec, with
-`pytest-xdist` (`-n auto --dist loadfile`). The executable docs themselves call
+`make test` uses `cargo nextest run`. `make spec` is the offline deterministic
+routine executable-spec gate. `make spec-contracts` is the deterministic routine
+executable-contract lane used by March `spec-only` and `make release-gate`; it
+runs local/fixture-backed contracts without live smoke. `make verify` is the
+explicit opt-in live public-upstream confidence lane; `make release-live-smoke`
+remains a compatibility alias. `make spec-pr` remains available for the same
+offline `SPEC_ROUTINE_PATHS` as `make spec`, with `pytest-xdist` (`-n auto --dist
+loadfile`). The executable docs themselves call
 `tools/biomcp-ci`, which owns release-binary resolution, the repo-owned
 `.cache/biomcp-specs/` cache/XDG roots, optional-key stripping, and warm-hit
 `BIOMCP_CACHE_MODE=infinite` replay when CI sets `BIOMCP_SPEC_CACHE_HIT=1`.
@@ -86,7 +86,7 @@ routine component lanes.
 | Command | Observed warm-cache | Notes |
 |---|---|---|
 | `make check` | `344.11s` | now includes `make test-contracts` |
-| `make spec-contracts` | `386.98s` | deterministic routine lane, including release rebuild and 48 spec assertions (2026-05-23) |
-| `make spec-pr` | `56.16s` | full canary lane (refreshed 2026-04-24) |
-| `make release-live-smoke` | `operator-run` | opt-in live public-upstream smoke; not part of routine gates |
+| `make spec-contracts` | `386.98s` | deterministic routine lane, including release rebuild and 48 spec assertions (2026-05-23; pre-ticket-395 membership) |
+| `make spec` / `make spec-pr` | refresh pending | offline deterministic routine spec lane after ticket 395 |
+| `make verify` | `operator-run` | opt-in live public-upstream smoke; not part of routine gates |
 | `make release-gate` | `763.21s` | observed `make check` plus `make spec-contracts` routine gate (2026-05-23) |

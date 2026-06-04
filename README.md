@@ -102,10 +102,11 @@ make install
 ```
 
 For repo-local verification, `make check` now includes the release-critical
-Python/docs contract lane (`make test-contracts`), and `make release-gate` is
-the full routine release-readiness command (`make check` plus deterministic
-`make spec-contracts`). Use `make release-live-smoke` only for opt-in live
-public-upstream confidence.
+Python/docs contract lane (`make test-contracts`), `make spec` is the offline
+routine executable-spec gate, and `make release-gate` is the full routine
+release-readiness command (`make check` plus deterministic `make spec-contracts`).
+Use `make verify` only for opt-in live public-upstream confidence; `make
+release-live-smoke` remains a compatibility alias.
 
 ## Quick start
 
