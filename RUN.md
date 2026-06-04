@@ -95,8 +95,9 @@ Run the heavier local ticket proofs explicitly:
 
 ```bash
 make release-gate       # full routine release-readiness: check + spec-contracts
+make spec               # offline deterministic routine spec gate
 make spec-contracts     # deterministic executable contracts for routine proof
-make release-live-smoke # opt-in live public-upstream confidence
+make verify             # opt-in live public-upstream confidence
 make test-contracts     # rerun just Python/docs contract lane
 ```
 
@@ -115,13 +116,13 @@ Its `lint` phase runs both `cargo deny check licenses` and
 `cargo deny check advisories`, and its `test` phase shells out to
 `cargo nextest run`. Use `make release-gate` for the single routine
 release-readiness signal; it runs `make check` followed by deterministic
-`make spec-contracts`. Use `make release-live-smoke` only as an explicit opt-in
-live public-upstream confidence lane; it owns the pathway live assertions.
-`make spec-pr` remains available for the executable-spec canary corpus by
-itself; it runs the active canary tree under `spec/entity/` and `spec/surface/`,
-except the pathway live-smoke spec, with `pytest-xdist` (`-n auto --dist
-loadfile`) and the longer mustmatch timeout. `make spec` runs the same tree
-with the shorter local timeout for repo-local canary reruns.
+`make spec-contracts`. Use `make verify` only as an explicit opt-in live
+public-upstream confidence lane; `make release-live-smoke` is a compatibility
+alias for that operator lane. `make spec-pr` remains available for the
+offline executable-spec corpus by itself; it runs explicit local/fixture-backed
+`SPEC_ROUTINE_PATHS` with `pytest-xdist` (`-n auto --dist loadfile`) and the
+longer mustmatch timeout. `make spec` runs the same offline path set with the
+shorter local timeout and should pass with external network blocked.
 
 The executable docs do not hand-roll env setup inside bash blocks anymore.
 `tools/biomcp-ci` is the only spec runner seam: it resolves the repo root from
@@ -166,33 +167,35 @@ See `docs/reference/mcp-server.md` for the documented MCP surface.
 ## Spec Suite
 
 ```bash
+make spec               # offline deterministic routine spec gate
 make spec-contracts
-make release-live-smoke  # opt-in live public-upstream confidence
-make spec
+make verify             # opt-in live public-upstream confidence
+make release-live-smoke # compatibility alias for make verify
 make spec-pr
 ```
 
-`make spec-contracts` is the deterministic routine lane used by March
-`spec-only` and `release-gate`; it keeps validation-lane docs/static surface
-contracts executable without running live smoke. `make release-live-smoke` is
-the explicit opt-in live lane for discover/OLS4, disease, article source-status,
-variant-normalization, and pathway confidence through `tools/biomcp-ci`.
+`make spec` is the offline deterministic routine spec gate. `make
+spec-contracts` is the deterministic subset used by March `spec-only` and
+`release-gate`; it keeps local/fixture-backed contracts executable without
+running live smoke. `make verify` is the explicit opt-in live lane for
+discover/OLS4, disease, article source-status, variant-normalization,
+phenotype, protein, pathway, and the other public-upstream specs through
+`tools/biomcp-ci`; `make release-live-smoke` delegates to `make verify` for old
+operator muscle memory.
 
-`make spec` and `make spec-pr` both run the active spec-v2 canary tree:
-`spec/entity/` plus `spec/surface/`, except the live-smoke-only pathway spec.
-The current routine canaries are `spec/entity/gene.md`,
-`spec/entity/variant.md`, `spec/entity/article.md`, `spec/entity/trial.md`,
-`spec/entity/drug.md`, `spec/entity/disease.md`, `spec/entity/protein.md`,
-`spec/entity/study.md`, `spec/entity/pgx.md`, `spec/entity/phenotype.md`,
-`spec/entity/diagnostic.md`, `spec/entity/vaers.md`, `spec/surface/cli.md`,
-`spec/surface/mcp.md`, and `spec/surface/discover.md`; `spec/entity/pathway.md`
-runs only in `make release-live-smoke`. Every bash block in that tree should call
-`tools/biomcp-ci`, which owns release-binary resolution, repo-owned cache
-roots, optional-key stripping, and warm-cache replay on CI cache hits.
+`make spec` and `make spec-pr` both run explicit `SPEC_ROUTINE_PATHS` only:
+`spec/entity/article.md`, `spec/entity/study.md`, `spec/entity/variant.md`,
+`spec/surface/mcp.md`, and deterministic `spec/surface/test_*.py` contracts.
+Live-upstream specs such as `spec/entity/phenotype.md`, `spec/entity/protein.md`,
+`spec/entity/disease.md`, `spec/surface/discover.md`, `spec/entity/pathway.md`,
+and `spec/surface/cli.md` run only in `make verify`. Every bash block in those
+lanes should call `tools/biomcp-ci`, which owns release-binary resolution,
+repo-owned cache roots, optional-key stripping, and warm-cache replay on CI
+cache hits.
 
 Use `spec/README-timings.md` as the current validation-lane audit/reference for
-the deterministic routine lane, the opt-in live smoke lane, the active canary
-corpus, the wrapper/cache contract, and warm-cache expectations.
+the offline deterministic routine lane, the opt-in live verify lane, the active
+canary corpus, the wrapper/cache contract, and warm-cache expectations.
 
 When running repo-local Python/docs/spec checks through `uv`, use
 `uv sync --extra dev --no-install-project` followed by `uv run --no-sync ...`.

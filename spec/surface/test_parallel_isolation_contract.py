@@ -1090,48 +1090,101 @@ def test_ticket_377_renderer_envelope_specs_document_deterministic_coverage() ->
         assert marker in section, f"{path} must expose the executable cargo marker {marker}"
 
 
-def test_protein_complexes_spec_lane_leaves_the_parallel_xdist_pool() -> None:
-    spec_target = _make_target_block("spec")
-    spec_pr_target = _make_target_block("spec-pr")
-    timings = _read_repo("spec/README-timings.md")
-    technical_overview = _read_repo("architecture/technical/overview.md")
+ROUTINE_SPEC_PATHS = (
+    "spec/entity/article.md",
+    "spec/entity/study.md",
+    "spec/entity/variant.md",
+    "spec/surface/mcp.md",
+    "spec/surface/test_architecture_docs_parity_contract.py",
+    "spec/surface/test_biomcp_ci_path_contract.py",
+    "spec/surface/test_complexportal_fixture_contract.py",
+    "spec/surface/test_parallel_isolation_contract.py",
+    "spec/surface/test_search_all_cli_structure.py",
+    "spec/surface/test_semantic_scholar_retry_after_contract.py",
+    "spec/surface/test_trial_help_contract.py",
+    "spec/surface/test_variant_normalization_docs_contract.py",
+)
 
-    for target_name, block in (("spec", spec_target), ("spec-pr", spec_pr_target)):
-        _assert_make_target_serializes_spec_path(target_name, block, "spec/entity/protein.md")
+LIVE_SPEC_PATHS = (
+    "spec/entity/diagnostic.md",
+    "spec/entity/disease.md",
+    "spec/entity/drug.md",
+    "spec/entity/gene.md",
+    "spec/entity/pathway.md",
+    "spec/entity/pgx.md",
+    "spec/entity/phenotype.md",
+    "spec/entity/protein.md",
+    "spec/entity/trial.md",
+    "spec/entity/vaers.md",
+    "spec/surface/cli.md",
+    "spec/surface/discover.md",
+)
 
-    assert re.search(r"protein.*serial", timings, flags=re.IGNORECASE | re.DOTALL), (
-        "spec/README-timings.md must document that the protein complexes canary runs in a "
-        "serialized spec partition so the lane topology matches reality"
-    )
-    assert re.search(r"protein.*serial", technical_overview, flags=re.IGNORECASE | re.DOTALL), (
-        "architecture/technical/overview.md must describe the serialized protein carve-out so the "
-        "repo architecture matches the actual spec lane"
-    )
+
+def _make_variable_paths(name: str) -> set[str]:
+    makefile = _read_repo("Makefile")
+    match = re.search(rf"(?ms)^{re.escape(name)} = \\\n(?P<body>.*?)(?=^[A-Z0-9_]+\s*=|^[A-Za-z0-9_.-]+:|\Z)", makefile)
+    assert match is not None, f"missing Makefile variable {name}"
+    return set(re.findall(r"spec/\S+", match.group("body")))
 
 
-def test_ols4_disease_discover_spec_lane_leaves_the_parallel_xdist_pool() -> None:
-    spec_target = _make_target_block("spec")
-    spec_pr_target = _make_target_block("spec-pr")
-    timings = _read_repo("spec/README-timings.md")
-    technical_overview = _read_repo("architecture/technical/overview.md")
+def test_ticket_395_routine_and_live_spec_variables_are_disjoint_and_complete() -> None:
+    routine = _make_variable_paths("SPEC_ROUTINE_PATHS")
+    live = _make_variable_paths("SPEC_LIVE_PATHS")
+    spec_files = {str(path.relative_to(REPO_ROOT)) for path in (REPO_ROOT / "spec/entity").glob("*.md")}
+    spec_files |= {str(path.relative_to(REPO_ROOT)) for path in (REPO_ROOT / "spec/surface").glob("*.md")}
+    spec_files |= {str(path.relative_to(REPO_ROOT)) for path in (REPO_ROOT / "spec/surface").glob("test_*.py")}
 
-    for path, expected_headings in OLS4_HEAVY_SPEC_HEADINGS.items():
-        headings = _markdown_h2_headings(path)
-        missing = set(expected_headings) - headings
-        assert not missing, f"{path} is missing OLS4-heavy heading contract entries: {sorted(missing)}"
+    assert routine == set(ROUTINE_SPEC_PATHS)
+    assert live == set(LIVE_SPEC_PATHS)
+    assert not routine & live, "routine and live spec lanes must be disjoint"
+    assert routine | live == spec_files, "every entity/surface spec must be explicitly routed"
 
-    for target_name, block in (("spec", spec_target), ("spec-pr", spec_pr_target)):
-        for path in OLS4_HEAVY_SPEC_HEADINGS:
-            _assert_make_target_serializes_spec_path(target_name, block, path)
 
-    assert re.search(r"OLS4.*serial", timings, flags=re.IGNORECASE | re.DOTALL), (
-        "spec/README-timings.md must document that OLS4-heavy disease/discover canaries run "
-        "in the serialized spec partition or are otherwise fixture-backed"
-    )
-    assert re.search(r"disease.*discover.*serial", technical_overview, flags=re.IGNORECASE | re.DOTALL), (
-        "architecture/technical/overview.md must describe the serialized OLS4 disease/discover "
-        "carve-out so the repo architecture matches the actual spec lane"
-    )
+
+def test_ticket_395_make_spec_and_spec_pr_run_only_routine_paths() -> None:
+    for target_name in ("spec", "spec-pr"):
+        block = _make_target_block(target_name)
+        assert "$(SPEC_XDIST_ARGS)" in block, f"{target_name} should keep parallel loadfile execution"
+        assert "$(SPEC_ROUTINE_PATHS)" in block, f"{target_name} must run the offline routine path set"
+        assert "$(SPEC_LIVE_PATHS)" not in block, f"{target_name} must not run live upstream paths"
+        assert "--deselect" not in block, f"{target_name} must not hide live specs behind deselect/rerun carve-outs"
+        for path in LIVE_SPEC_PATHS:
+            assert path not in block, f"{target_name} must not name live spec {path}"
+
+
+
+def test_ticket_395_verify_owns_live_specs_and_release_live_smoke_delegates() -> None:
+    verify = _make_target_block("verify")
+    release_live_smoke = _make_target_block("release-live-smoke")
+
+    assert "$(SPEC_XDIST_ARGS)" not in verify, "verify is an operator lane, not a routine xdist shard"
+    assert "$(SPEC_LIVE_PATHS)" in verify, "verify must run the explicit live spec set"
+    for fragment in (
+        "tools/biomcp-ci discover",
+        "tools/biomcp-ci search disease",
+        "tools/biomcp-ci search article",
+        "tools/biomcp-ci variant normalize",
+    ):
+        assert fragment in verify, "verify must keep the small wrapped live smoke commands"
+    assert "$(MAKE) verify" in release_live_smoke, "release-live-smoke should remain a compatibility alias"
+
+
+
+def test_ticket_395_mcp_spec_uses_bounded_ready_probe_instead_of_fixed_sleep() -> None:
+    mcp = _read_repo("spec/surface/mcp.md")
+    for heading in (
+        "Probe Routes Stay Lightweight",
+        "Remote Workflow Calls Keep BioMCP Text",
+        "Read-Only Boundaries and Charted Calls Stay Visible",
+    ):
+        section = _markdown_heading_body("spec/surface/mcp.md", 2, heading)
+        assert "curl -fsS" in section and "/readyz" in section and "/health" in section, (
+            f"{heading} must poll readyz with health fallback before connecting"
+        )
+        assert "for _ in $(seq 1 40)" in section, f"{heading} must use a bounded readiness loop"
+    assert "sleep 2" not in mcp, "serve-http specs must not use fixed sleeps before connecting"
+
 
 
 def test_ticket_378_profiles_route_routine_specs_to_deterministic_contracts() -> None:
@@ -1143,8 +1196,7 @@ def test_ticket_378_profiles_route_routine_specs_to_deterministic_contracts() ->
     release_gate_deps = set(release_gate_match.group("deps").split())
 
     assert commands["spec-only"] == "make spec-contracts", (
-        "March spec-only must run deterministic fixture-backed/static specs by default, not the "
-        "old live/cache-backed spec-pr canary lane"
+        "March spec-only must run deterministic fixture-backed/static specs by default, not live specs"
     )
     assert commands["full-blocking"] == "make release-gate"
     assert commands["full-contracts"] == "make release-gate"
@@ -1152,46 +1204,8 @@ def test_ticket_378_profiles_route_routine_specs_to_deterministic_contracts() ->
         "release-gate must compose make check with deterministic spec-contracts so ordinary verify "
         "does not depend on public upstream availability"
     )
-    assert "spec-pr" not in release_gate_deps, (
-        "release-gate must not keep the old live/cache-backed spec-pr lane as routine proof"
-    )
-
-
-def test_ticket_378_release_live_smoke_is_explicit_and_wrapped() -> None:
-    block = _make_target_block("release-live-smoke")
-
-    assert "$(SPEC_XDIST_ARGS)" not in block, (
-        "release-live-smoke is an operator confidence lane, not a parallel routine spec shard"
-    )
-    for fragment in (
-        "tools/biomcp-ci discover",
-        "tools/biomcp-ci search disease",
-        "tools/biomcp-ci search article",
-        "tools/biomcp-ci variant normalize",
-    ):
-        assert fragment in block, (
-            "release-live-smoke must use tools/biomcp-ci for the ticket's OLS4/discover, "
-            "disease crosswalk, article source-status, and variant normalization matrix"
-        )
-
-
-def test_ticket_390_pathway_spec_quarantines_to_live_smoke() -> None:
-    spec_target = _make_target_block("spec")
-    spec_pr_target = _make_target_block("spec-pr")
-    release_live_smoke = _make_target_block("release-live-smoke")
-
-    for target_name, block in (("spec", spec_target), ("spec-pr", spec_pr_target)):
-        _assert_make_target_excludes_spec_path(target_name, block, "spec/entity/pathway.md")
-
-    assert "$(SPEC_XDIST_ARGS)" not in release_live_smoke, (
-        "release-live-smoke must stay an explicit live lane, not another routine parallel shard"
-    )
-    assert "spec/entity/pathway.md" in release_live_smoke, (
-        "release-live-smoke must keep the live pathway assertions available on demand after "
-        "removing them from routine make spec/spec-pr"
-    )
-    assert "--mustmatch-lang bash" in release_live_smoke, (
-        "release-live-smoke must execute pathway.md through the mustmatch bash spec runner"
+    assert "spec-pr" not in release_gate_deps and "verify" not in release_gate_deps, (
+        "release-gate must not keep live/cache-backed lanes as routine proof"
     )
 
 
@@ -1205,9 +1219,11 @@ def test_ticket_378_docs_describe_routine_and_live_lanes() -> None:
 
     for path, text in docs.items():
         normalized = re.sub(r"\s+", " ", text.lower())
-        assert "make spec-contracts" in normalized, f"{path} must name the routine deterministic spec lane"
-        assert "release-live-smoke" in normalized, f"{path} must name the explicit live-smoke lane"
-        assert "deterministic" in normalized, f"{path} must classify routine validation as deterministic"
+        assert "make spec" in normalized, f"{path} must name the routine make spec lane"
+        assert "make verify" in normalized, f"{path} must name the explicit live verify lane"
+        assert "deterministic" in normalized and "offline" in normalized, (
+            f"{path} must classify routine validation as offline/deterministic"
+        )
         assert "live" in normalized and "opt-in" in normalized, (
             f"{path} must describe public-upstream smoke as an opt-in live lane"
         )
@@ -1215,38 +1231,35 @@ def test_ticket_378_docs_describe_routine_and_live_lanes() -> None:
         assert "no separate `spec-smoke` lane" not in normalized
 
 
-def test_ticket_378_routine_lane_no_longer_depends_on_serialized_ols4_carveout() -> None:
+def test_ticket_378_routine_lane_no_longer_depends_on_serialized_live_carveouts() -> None:
     spec_contracts = _make_target_block("spec-contracts")
     timings = _read_repo("spec/README-timings.md").lower()
     technical_overview = _read_repo("architecture/technical/overview.md").lower()
 
-    assert "spec/surface/cli.md" in spec_contracts, (
-        "spec-contracts must keep the executable CLI validation-lane documentation in routine proof"
+    assert "spec/surface/mcp.md" in spec_contracts, (
+        "spec-contracts should keep local MCP transport proof in routine validation"
     )
     assert "test_parallel_isolation_contract.py" in spec_contracts, (
         "spec-contracts must run the deterministic surface contract tests that replace live canaries"
     )
+    assert "spec/surface/cli.md" not in spec_contracts, (
+        "spec-contracts must not keep live CLI/discover/health probes in routine proof"
+    )
     assert "pytest spec/entity/ spec/surface/" not in spec_contracts, (
         "spec-contracts must not broad-collect the old live/cache-backed entity and surface corpus"
     )
-
-    for path in ("spec/entity/disease.md", "spec/surface/discover.md"):
-        assert f"--deselect {path}" not in spec_contracts, (
-            "spec-contracts must not preserve the old OLS4 disease/discover serialized live "
-            "carve-out as routine proof"
-        )
-
-    for command in re.findall(r"pytest[^\n]+", spec_contracts):
-        assert not ("spec/entity/disease.md" in command and "spec/surface/discover.md" in command), (
-            "spec-contracts must not reintroduce the old serialized OLS4 disease/discover "
-            "rerun command as routine proof"
-        )
-
-    assert "ols4" in timings and "release-live-smoke" in timings, (
-        "spec/README-timings.md must move public OLS4 confidence to the explicit live-smoke lane"
+    assert "--deselect" not in spec_contracts, (
+        "spec-contracts must not preserve serialized live carve-outs as routine proof"
     )
-    assert "ols4" in technical_overview and "release-live-smoke" in technical_overview, (
-        "architecture/technical/overview.md must move public OLS4 confidence to the explicit live-smoke lane"
+
+    for path in LIVE_SPEC_PATHS:
+        assert path not in spec_contracts, f"spec-contracts must not run live spec {path}"
+
+    assert "ols4" in timings and "make verify" in timings, (
+        "spec/README-timings.md must move public OLS4 confidence to the explicit verify lane"
+    )
+    assert "ols4" in technical_overview and "make verify" in technical_overview, (
+        "architecture/technical/overview.md must move public OLS4 confidence to the explicit verify lane"
     )
 
 

@@ -4,34 +4,31 @@
 
 | Target | Run when | Timeout | Scope | Cache contract |
 |---|---|---|---|---|
-| `make spec-contracts` | March `spec-only`, `release-gate`, and routine pre-merge proof | `180s` per heading | deterministic validation-lane docs and static surface contracts, including `spec/surface/cli.md` and `spec/surface/test_parallel_isolation_contract.py` | uses the release binary selected by `PATH` and `BIOMCP_BIN`; no live-smoke commands run in this lane |
-| `make release-live-smoke` | explicit opt-in operator confidence before releases | n/a | small live public-upstream matrix for discover/OLS4, disease, article source status, variant normalization, and the pathway assertions | every command goes through `tools/biomcp-ci`, which owns cache/XDG roots and optional-key stripping |
-| `make spec-pr` | PR CI canary and repo-local debugging of the executable corpus that is not live-smoke-only | `180s` per heading | the active v2 corpus under `spec/entity/` and `spec/surface/`, excluding the pathway live-smoke spec | CI restores `.cache/biomcp-specs/`; cache hits export `BIOMCP_SPEC_CACHE_HIT=1`, which makes `tools/biomcp-ci` replay the warm HTTP cache with `BIOMCP_CACHE_MODE=infinite` |
-| `make spec` | repo-local canary reruns and spec debugging | `120s` per heading | the same non-pathway canary tree as `make spec-pr` | uses the same wrapper/cache root, but cold local runs leave `BIOMCP_CACHE_MODE` unset so the cache can refill |
+| `make spec-contracts` | March `spec-only`, `release-gate`, and routine pre-merge proof | `180s` per heading | offline deterministic executable contracts, including local MCP transport proof and `spec/surface/test_parallel_isolation_contract.py` | uses the release binary selected by `PATH` and `BIOMCP_BIN`; no live-smoke commands run in this lane |
+| `make verify` | explicit opt-in operator confidence before releases or upstream checks | n/a | live public-upstream matrix for discover/OLS4, disease, article source status, variant normalization, phenotype, protein, pathway, and other live entity/surface specs | every command goes through `tools/biomcp-ci`, which owns cache/XDG roots and optional-key stripping |
+| `make release-live-smoke` | compatibility alias for operators that still use the old live-lane name | n/a | delegates to `make verify` | not part of routine gates |
+| `make spec-pr` | PR CI canary and repo-local debugging of the offline executable corpus | `180s` per heading | explicit `SPEC_ROUTINE_PATHS` only: local/fixture-backed specs and static surface contracts | CI restores `.cache/biomcp-specs/`; cache hits export `BIOMCP_SPEC_CACHE_HIT=1`, which makes `tools/biomcp-ci` replay the warm HTTP cache with `BIOMCP_CACHE_MODE=infinite` |
+| `make spec` | repo-local routine spec gate and spec debugging | `120s` per heading | the same offline `SPEC_ROUTINE_PATHS` set as `make spec-pr` | uses the same wrapper/cache root; it should pass with external network blocked while local mock servers remain reachable |
 | `make test-contracts` | PR contracts lane and local docs/Python validation | n/a | Rust release build plus Python/docs contract checks | independent of the executable-spec wrapper |
 
-Routine validation now uses the deterministic `make spec-contracts` lane, and
-public upstream confidence is live and opt-in through `make release-live-smoke`.
+Routine validation now uses offline/deterministic lanes: `make spec` and
+`make spec-pr` run only explicit `SPEC_ROUTINE_PATHS`, and `make spec-contracts`
+keeps the March/release-gate subset deterministic. Public upstream confidence is
+live and opt-in through `make verify` (`make release-live-smoke` remains a
+compatibility alias). Ticket 395 moves every live public-upstream spec out of
+routine collection: phenotype/Monarch, protein/UniProt and ComplexPortal,
+disease/discover OLS4 paths, pathway Reactome/WikiPathways/KEGG, plus the other
+entity/surface specs that still exercise public APIs. Deterministic request,
+source, fixture, renderer, local study, variant guardrail, and local MCP
+contracts own routine proof, while `make verify` owns the operator live matrix.
 Ticket 379 pruned representative live public-upstream assertions from
 `spec/entity/article.md`, `spec/entity/variant.md`, `spec/entity/disease.md`,
 and `spec/surface/discover.md`: deterministic request, source, fixture, and
-renderer contracts own routine proof, while `release-live-smoke` owns the small
-operator live matrix.
-Legacy canary targets remain available for corpus debugging: upstream-heavy
-canaries leave the main xdist pool and rerun in a serialized leg:
-`spec/entity/protein.md` for the ComplexPortal canary plus
-`spec/entity/disease.md` and `spec/surface/discover.md` for OLS4-heavy
-disease/discover headings such as synonym rescue, alias routing, and symptom
-mapping. `spec/entity/pathway.md` is live-source-dependent across KEGG,
-Reactome, and WikiPathways, so ticket 390 removes it from routine `make spec`
-and `make spec-pr` and runs it only through `release-live-smoke`. The protein
-ComplexPortal section is fixture-backed rather than a live upstream canary; live
-ComplexPortal availability belongs to `biomcp health`/operator inspection,
-while OLS4 public confidence belongs to `release-live-smoke`. FAQ #14 is
-absorbed by the serial OLS4 parallel-isolation contract rather than by a new
-OLS4 fixture server. The
-executable docs themselves call `tools/biomcp-ci`; `make spec` and `make
-spec-pr` choose timeout plus that upstream-heavy partitioning. The spec targets
+renderer contracts own routine proof, while `make verify` owns live confidence
+and `make release-live-smoke` remains the compatibility name for that operator
+lane.
+The executable docs themselves call `tools/biomcp-ci`; `make spec` and
+`make spec-pr` choose timeout over the same offline path set. The spec targets
 install Python dev dependencies with
 `uv sync --extra dev --no-install-project`, then invoke pytest with
 `uv run --no-sync ...` so uv does not install or rebuild the maturin-backed
@@ -81,9 +78,9 @@ comment immediately after the `##` heading.
 - Measure in the current worktree after `cargo build --release --locked`.
 - Keep Python setup project-free: `uv sync --extra dev --no-install-project`,
   then `uv run --no-sync ...` for pytest/spec commands.
-- Run `make spec-contracts` for routine deterministic timing. Run `make spec-pr`
-  cold once to populate `.cache/biomcp-specs/`, then rerun warm without clearing
-  that cache root when measuring the legacy canary lane.
+- Run `make spec` and `make spec-contracts` for routine offline/deterministic
+  timing. Run `make verify` only when intentionally measuring live upstream
+  confidence.
 - `tools/biomcp-ci` owns `BIOMCP_CACHE_DIR`, `XDG_CACHE_HOME`,
   `XDG_CONFIG_HOME`, optional-key stripping, and the `BIOMCP_SPEC_CACHE_HIT=1`
   to `BIOMCP_CACHE_MODE=infinite` warm-hit replay switch.
@@ -96,11 +93,12 @@ comment immediately after the `##` heading.
 
 ## Warm Timing Record
 
-Warm `make spec-pr` measured `56.16s` on beelink on `2026-04-24` after one
-untimed warm-up run. `make spec-contracts` measured `386.98s` on beelink on
-`2026-05-23` in the code-step worktree, including the release rebuild and the
-48 deterministic routine spec assertions; that value is recorded in the
-`spec-only` validation-profile comment.
+Warm timing records before ticket 395 included the old live/cache-backed
+`make spec-pr` corpus. After ticket 395, `make spec`/`make spec-pr` are offline
+routine lanes and `make verify` is the operator-run live lane. The prior
+`make spec-contracts` measurement (`386.98s` on beelink on `2026-05-23`) remains
+recorded in the `spec-only` validation-profile comment until the next timing
+refresh.
 
 ## Per-Section Warm Ceilings
 

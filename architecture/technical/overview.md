@@ -255,7 +255,8 @@ rebuild path, not a second source of release truth.
      `uv run --no-sync mkdocs build --strict`), and `spec-stable`
      (release build, spec-cache metadata/restore, then `make spec-pr`).
    - Routine release proof uses deterministic `make spec-contracts`; opt-in
-     live confidence uses `make release-live-smoke`. `spec-stable` restores
+     live confidence uses `make verify` (`make release-live-smoke` aliases it).
+     `spec-stable` restores
      `.cache/biomcp-specs/`, exports `BIOMCP_SPEC_CACHE_HIT=1` only on cache
      hits, and relies on `tools/biomcp-ci` to flip warm-cache replay on for the
      canary docs.
@@ -319,7 +320,7 @@ BioMCP has six distinct verification and operator-inspection surfaces.
   `contracts` job for parallelism.
 - `make release-gate` is the single local routine release-blocking signal; it
   runs `make check` and deterministic `make spec-contracts`. Live public-upstream
-  confidence is opt-in through `make release-live-smoke`.
+  confidence is opt-in through `make verify` (`make release-live-smoke` aliases it).
 - The grounding implementation surfaces for this split are `Makefile`,
   `.github/workflows/ci.yml`, and `.github/workflows/contracts.yml`.
 
@@ -356,7 +357,8 @@ slices can target the same fixture-backed/static routine lane directly.
 `full-contracts` remains a compatibility alias of the same command now that
 `make check` already runs `make test-contracts`; the shared build flow still
 does not assign it today. Live public-upstream proof moved to the explicit
-opt-in `make release-live-smoke` operator lane.
+opt-in `make verify` operator lane, with `make release-live-smoke` kept as an
+alias.
 
 ### 2. Spec Suite (`spec/`)
 
@@ -365,11 +367,13 @@ exercises CLI output at the command level using stable structural markers
 (headers, table columns, query echoes) rather than brittle upstream data
 values.
 
-Routine local and March validation runs `make spec-contracts`, a deterministic
-fixture-backed/static lane over validation docs and surface contracts. Live
-public-upstream confidence is explicit and opt-in through `make
-release-live-smoke`, which uses `tools/biomcp-ci` for discover/OLS4, disease,
-article source-status, variant-normalization, and pathway smoke commands.
+Routine local validation runs offline/deterministic spec lanes: `make spec`
+for the routine executable-spec gate and `make spec-contracts` for the
+March/release-gate subset. Live public-upstream confidence is explicit and
+opt-in through `make verify` (with `make release-live-smoke` as a compatibility
+alias), which uses `tools/biomcp-ci` for discover/OLS4, disease, article
+source-status, variant-normalization, phenotype, protein, pathway, and other
+live smoke commands.
 
 PR CI runs `make spec-pr` via the `spec-stable` job in
 `.github/workflows/ci.yml`. That job builds the release binary first, reads
@@ -382,36 +386,24 @@ blocks themselves then call `tools/biomcp-ci`, which keeps cache/XDG state
 under `.cache/biomcp-specs/`, defaults `RUST_LOG=error`, unsets optional auth
 keys, and flips `BIOMCP_CACHE_MODE=infinite` only for those warm CI replays.
 
-Run locally with `make spec-contracts` for the routine deterministic lane,
-`make release-live-smoke` for opt-in live public-upstream confidence, `make
-spec` for the shorter canary rerun, or `make spec-pr` for the canary corpus
-that is not live-smoke-only.
+Run locally with `make spec` for the offline routine executable-spec gate,
+`make spec-contracts` for the March/release-gate deterministic subset,
+`make verify` for opt-in live public-upstream confidence, or `make spec-pr` for
+the same offline corpus with the longer PR timeout.
 
 Repo-local `make spec` and `make spec-pr` use `pytest-xdist` with
-`-n auto --dist loadfile` over only `spec/entity/` and `spec/surface/`, except
-that upstream-heavy canaries leave the shared worker pool and rerun in an
-existing serial leg, and `spec/entity/pathway.md` leaves routine canaries
-entirely for `make release-live-smoke`. That serialized partition includes
-`spec/entity/protein.md` for the ComplexPortal canary plus
-`spec/entity/disease.md` and `spec/surface/discover.md` for OLS4-heavy
-disease/discover headings. The protein ComplexPortal section is fixture-backed
-rather than a live upstream canary; live ComplexPortal availability belongs to
-`biomcp health`/operator inspection. FAQ #14 is absorbed by the serial OLS4
-parallel-isolation contract; there is no OLS4 fixture server in this topology.
-The current routine executable-spec corpus is `spec/entity/gene.md`,
-`spec/entity/variant.md`, `spec/entity/article.md`, `spec/entity/trial.md`,
-`spec/entity/drug.md`, `spec/entity/disease.md`, `spec/entity/protein.md`,
-`spec/entity/study.md`, `spec/entity/pgx.md`, `spec/entity/phenotype.md`,
-`spec/entity/diagnostic.md`, `spec/entity/vaers.md`, `spec/surface/cli.md`,
-`spec/surface/mcp.md`, and `spec/surface/discover.md`; `spec/entity/pathway.md`
-runs only in the explicit live-smoke lane. The active v2 canary's explicit
-serialized partition is limited to the protein ComplexPortal canary and the
-OLS4-heavy disease/discover canaries; routine deterministic proof does not run
-that serialized OLS4 live carve-out, and public OLS4/pathway confidence belongs
-to `make release-live-smoke`.
+`-n auto --dist loadfile` over explicit `SPEC_ROUTINE_PATHS` only: local or
+fixture-backed specs such as `spec/entity/article.md`, `spec/entity/study.md`,
+`spec/entity/variant.md`, `spec/surface/mcp.md`, and deterministic
+`spec/surface/test_*.py` contracts. Live-upstream specs leave routine canaries
+entirely for `make verify`: phenotype/Monarch, protein/UniProt and
+ComplexPortal, disease/discover OLS4 paths, pathway Reactome/WikiPathways/KEGG,
+plus gene, drug, diagnostic, trial, PGx, VAERS, and CLI/discover surfaces that
+still exercise public APIs. There is no serialized live rerun leg in `make spec`
+or `make spec-pr`; public OLS4/pathway confidence belongs to `make verify`.
 
 Use `spec/README-timings.md` as the current validation-lane audit/reference for
-the deterministic routine lane, opt-in live smoke lane, active files,
+the offline deterministic routine lane, opt-in live verify lane, active files,
 wrapper/cache contract, and measured warm-cache expectations.
 
 Important: repo-local Python/spec commands should use

@@ -65,7 +65,13 @@ port=39087
 ../../tools/biomcp-ci serve-http --host 127.0.0.1 --port "$port" >/tmp/biomcp-mcp-routes.log 2>&1 &
 pid=$!
 trap 'kill "$pid" 2>/dev/null || true' EXIT
-sleep 2
+for _ in $(seq 1 40); do
+  if curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null; then
+    break
+  fi
+  sleep 0.25
+done
+curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
 curl -fsS "http://127.0.0.1:$port/health" | mustmatch like '"status":"ok"'
 curl -fsS "http://127.0.0.1:$port/readyz" | mustmatch like '"status":"ok"'
 root="$(curl -fsS "http://127.0.0.1:$port/")"
@@ -84,11 +90,18 @@ port=39088
 ../../tools/biomcp-ci serve-http --host 127.0.0.1 --port "$port" >/tmp/biomcp-mcp-demo.log 2>&1 &
 pid=$!
 trap 'kill "$pid" 2>/dev/null || true' EXIT
-sleep 2
-out="$(uv run --quiet --script ../../examples/streamable-http/streamable_http_client.py "http://127.0.0.1:$port")"
+for _ in $(seq 1 40); do
+  if curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null; then
+    break
+  fi
+  sleep 0.25
+done
+curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
+out="$(uv run --no-sync python3 ../../examples/streamable-http/streamable_http_client.py "http://127.0.0.1:$port")"
 echo "$out" | mustmatch like "Connecting to http://127.0.0.1:$port/mcp"
-echo "$out" | mustmatch like 'Command: biomcp search all --gene BRAF --disease melanoma --counts-only'
-echo "$out" | mustmatch like "Query: condition=melanoma, mutation=BRAF V600E"
+echo "$out" | mustmatch like 'Command: biomcp study query --study msk_impact_2017 --gene TP53 --type mutations'
+echo "$out" | mustmatch like "# Study Mutation Frequency: TP53 (msk_impact_2017)"
+echo "$out" | mustmatch like 'Command: biomcp study cohort --study msk_impact_2017 --gene TP53'
 ```
 
 ## Read-Only Boundaries and Charted Calls Stay Visible
@@ -100,7 +113,13 @@ ordinary study text plus inline SVG for chart-safe read-only calls.
 port=39089
 ../../tools/biomcp-ci serve-http --host 127.0.0.1 --port "$port" >/tmp/biomcp-mcp-boundary.log 2>&1 &
 pid=$!; trap 'kill "$pid" 2>/dev/null || true' EXIT
-for _ in $(seq 1 40); do curl -fsS "http://127.0.0.1:$port/health" >/dev/null && break; sleep 0.25; done
+for _ in $(seq 1 40); do
+  if curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null; then
+    break
+  fi
+  sleep 0.25
+done
+curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
 out="$(uv run --no-sync python3 - "$port" <<'PY'
 import asyncio
 import sys
