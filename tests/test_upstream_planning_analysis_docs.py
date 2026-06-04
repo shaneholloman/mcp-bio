@@ -1168,11 +1168,8 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     assert "RUST_LOG=error" not in makefile
     assert re.search(
         r"^test:\n"
-        r"\tcargo build --release --locked\n"
-        r"\t\$\(MAKE\) sync-python-dev\n"
         r"\tcargo nextest run\n"
-        r'\tuv run --no-sync pytest tests/ -v --mcp-cmd "\./target/release/biomcp serve"\n'
-        r"\tuv run --no-sync mkdocs build --strict$",
+        r"\t\$\(MAKE\) test-contracts$",
         makefile,
         flags=re.MULTILINE,
     )

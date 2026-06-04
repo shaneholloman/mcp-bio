@@ -35,11 +35,8 @@ build:
 	cargo build --release
 
 test:
-	cargo build --release --locked
-	$(MAKE) sync-python-dev
 	cargo nextest run
-	uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"
-	uv run --no-sync mkdocs build --strict
+	$(MAKE) test-contracts
 
 test-contracts:
 	cargo build --release --locked

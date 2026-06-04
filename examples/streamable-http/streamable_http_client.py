@@ -23,11 +23,6 @@ WORKFLOW = [
     'biomcp get variant "BRAF V600E" clinvar',
     'biomcp search trial -c melanoma --mutation "BRAF V600E" --limit 5',
 ]
-WORKFLOW_CONTRACT_TEXT = """
-biomcp search all --gene BRAF --disease melanoma --counts-only
-biomcp get variant "BRAF V600E" clinvar
-biomcp search trial -c melanoma --mutation "BRAF V600E" --limit 5
-""".strip()
 
 
 def resolve_base_url(argv: list[str]) -> str:

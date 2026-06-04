@@ -172,9 +172,10 @@ run the Rust unit suite and the Python CLI/MCP/docs contract lane so neither
 runtime layer can report a silent green.
 
 ```bash
-make -C ../.. -n test 2>&1 | mustmatch like "cargo nextest run
-uv run --no-sync pytest tests/ -v --mcp-cmd \"./target/release/biomcp serve\"
-uv run --no-sync mkdocs build --strict"
+out="$(make -C ../.. -n test 2>&1)"
+echo "$out" | mustmatch like "cargo nextest run"
+echo "$out" | mustmatch like 'uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"'
+echo "$out" | mustmatch like "uv run --no-sync mkdocs build --strict"
 ```
 
 ## Repository Lint Keeps The Quality Ratchet
@@ -241,9 +242,18 @@ the documented discovery, variant evidence, and melanoma trial commands rather
 than shrinking to the offline study fixture used by routine specs.
 
 ```bash
-grep -E 'BRAF|melanoma|clinvar|search trial' ../../examples/streamable-http/streamable_http_client.py | mustmatch like 'biomcp search all --gene BRAF --disease melanoma --counts-only
+uv run --no-sync python3 - <<'PY' | mustmatch like 'biomcp search all --gene BRAF --disease melanoma --counts-only
 biomcp get variant "BRAF V600E" clinvar
 biomcp search trial -c melanoma --mutation "BRAF V600E" --limit 5'
+import ast
+from pathlib import Path
+
+module = ast.parse(Path("../../examples/streamable-http/streamable_http_client.py").read_text())
+for node in module.body:
+    if isinstance(node, ast.Assign) and any(getattr(target, "id", None) == "WORKFLOW" for target in node.targets):
+        print("\n".join(ast.literal_eval(node.value)))
+        break
+PY
 ```
 
 ## MCP Surface Spec Owns Its Offline Workflow
