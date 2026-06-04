@@ -381,6 +381,8 @@ biomcp get pgx warfarin annotations
 biomcp get article 22663011
 biomcp get article 22663011 fulltext
 biomcp get article 22663011 fulltext --pdf
+biomcp --json get article 22663011 assets
+biomcp get article 22663011 asset traces-s1.csv
 biomcp get article 22663011 tldr
 biomcp article batch 22663011 24200969
 ```
@@ -393,7 +395,9 @@ helpers. Without it, those same paths use the shared unauthenticated pool at
 
 For article full text, the default ladder is XML -> PMC HTML. Add `--pdf` only
 to `get article <id> fulltext` when you want Semantic Scholar open-access PDF
-as the final fallback after XML and HTML miss.
+as the final fallback after XML and HTML miss. Use `get article <id> assets`
+for the JSON OA package manifest and `get article <id> asset <name>` to stream
+one asset as raw bytes with no conversion.
 
 ### Trial
 

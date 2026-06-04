@@ -1,5 +1,6 @@
 //! Article entity models and workflows exposed through the stable article facade.
 
+mod assets;
 mod backends;
 mod batch;
 mod candidates;
@@ -15,6 +16,7 @@ mod search;
 #[cfg(test)]
 mod test_support;
 
+pub use self::assets::{article_asset_bytes, article_assets_manifest};
 pub use self::batch::get_batch_compact;
 pub use self::detail::get;
 pub use self::graph::{citations, recommendations, references};
@@ -71,6 +73,8 @@ pub struct Article {
     pub full_text_source: Option<ArticleFulltextSource>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub full_text_manifest: Option<ArticleFulltextManifest>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_included: Option<ArticleNotIncluded>,
     #[serde(skip)]
     pub europepmc_license: Option<String>,
     #[serde(skip)]
@@ -152,9 +156,69 @@ pub struct ArticleFulltextProvenance {
     pub pdf_fallback_used: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleAssetsManifest {
+    pub article_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pmid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pmcid: Option<String>,
+    pub provider: ArticleFulltextProvider,
+    pub provenance: ArticleFulltextProvenance,
+    pub assets: Vec<ArticleAssetEntry>,
+    #[serde(skip)]
+    pub not_included: Option<ArticleNotIncluded>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleAssetEntry {
+    pub filename: String,
+    pub kind: String,
+    pub size_bytes: usize,
+    pub sha256: String,
+    pub provider: ArticleFulltextProvider,
+    pub reuse: ArticleFulltextReuse,
+    pub provenance: ArticleFulltextProvenance,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jats: Option<ArticleAssetJats>,
+    pub handle: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleAssetJats {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub caption: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_id: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleNotIncluded {
+    pub figure_images: ArticleAssetCoverage,
+    pub supplementary_files: ArticleAssetCoverage,
+    pub complex_tables: ArticleOmittedCoverage,
+    #[serde(skip)]
+    pub next_commands: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleAssetCoverage {
+    pub count: usize,
+    pub retrieve_with: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleOmittedCoverage {
+    pub count: usize,
+    pub retrieve_with: String,
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ArticleGetOptions {
     pub allow_pdf: bool,
+    pub include_asset_summary: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -592,12 +656,16 @@ pub struct ArticleSearchFilters {
 const ARTICLE_SECTION_ANNOTATIONS: &str = "annotations";
 const ARTICLE_SECTION_FULLTEXT: &str = "fulltext";
 const ARTICLE_SECTION_TLDR: &str = "tldr";
+const ARTICLE_SECTION_ASSETS: &str = "assets";
+const ARTICLE_SECTION_ASSET: &str = "asset";
 const ARTICLE_SECTION_ALL: &str = "all";
 
 pub const ARTICLE_SECTION_NAMES: &[&str] = &[
     ARTICLE_SECTION_ANNOTATIONS,
     ARTICLE_SECTION_FULLTEXT,
     ARTICLE_SECTION_TLDR,
+    ARTICLE_SECTION_ASSETS,
+    ARTICLE_SECTION_ASSET,
     ARTICLE_SECTION_ALL,
 ];
 

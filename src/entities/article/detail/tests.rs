@@ -648,7 +648,10 @@ async fn get_fulltext_uses_semantic_scholar_pdf_when_opted_in() {
     let article = get(
         "22663013",
         &["fulltext".to_string()],
-        ArticleGetOptions { allow_pdf: true },
+        ArticleGetOptions {
+            allow_pdf: true,
+            ..ArticleGetOptions::default()
+        },
     )
     .await
     .expect("PDF fallback request should succeed");
@@ -670,9 +673,16 @@ async fn get_fulltext_uses_semantic_scholar_pdf_when_opted_in() {
 
 #[tokio::test]
 async fn get_rejects_pdf_without_fulltext_section() {
-    let err = get("22663013", &[], ArticleGetOptions { allow_pdf: true })
-        .await
-        .expect_err("pdf without fulltext should fail");
+    let err = get(
+        "22663013",
+        &[],
+        ArticleGetOptions {
+            allow_pdf: true,
+            ..ArticleGetOptions::default()
+        },
+    )
+    .await
+    .expect_err("pdf without fulltext should fail");
 
     assert!(matches!(
         err,
@@ -899,7 +909,10 @@ async fn get_fulltext_treats_non_pdf_payload_as_miss_when_opted_in() {
     let article = get(
         "22663013",
         &["fulltext".to_string()],
-        ArticleGetOptions { allow_pdf: true },
+        ArticleGetOptions {
+            allow_pdf: true,
+            ..ArticleGetOptions::default()
+        },
     )
     .await
     .expect("non-pdf payload should become a ladder miss");

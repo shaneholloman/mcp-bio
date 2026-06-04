@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use tracing_subscriber::EnvFilter;
 
 fn init_tracing() {
@@ -45,7 +47,13 @@ async fn main() -> std::process::ExitCode {
         _ => match biomcp_cli::cli::run_outcome(cli).await {
             Ok(output) => {
                 match output.stream {
-                    biomcp_cli::cli::OutputStream::Stdout => println!("{}", output.text),
+                    biomcp_cli::cli::OutputStream::Stdout => {
+                        if let Some(bytes) = output.bytes {
+                            let _ = std::io::stdout().write_all(&bytes);
+                        } else {
+                            println!("{}", output.text);
+                        }
+                    }
                     biomcp_cli::cli::OutputStream::Stderr => eprintln!("{}", output.text),
                 }
                 std::process::ExitCode::from(output.exit_code)

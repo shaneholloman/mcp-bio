@@ -6,6 +6,9 @@ use super::{Cli, CliOutput, CommandOutcome, Commands, GetEntity, SearchEntity, S
 
 fn outcome_to_string(outcome: CommandOutcome) -> anyhow::Result<String> {
     if outcome.exit_code == 0 {
+        if let Some(bytes) = outcome.bytes {
+            return Ok(String::from_utf8_lossy(&bytes).to_string());
+        }
         Ok(outcome.text)
     } else {
         anyhow::bail!("{}", outcome.text)
@@ -524,6 +527,14 @@ async fn run_outcome_inner(
             })
             .await
         }
+        Commands::Get {
+            entity: GetEntity::Article(args),
+        } => {
+            crate::sources::with_no_cache(no_cache, async move {
+                super::article::handle_get(args, json).await
+            })
+            .await
+        }
         Commands::Gene {
             cmd: super::GeneCommand::Definition { symbol },
         } => {
@@ -623,7 +634,10 @@ pub async fn execute_mcp(mut args: Vec<String>) -> anyhow::Result<CliOutput> {
     if !is_charted_mcp_study_command(&cli)? {
         let outcome = Box::pin(run_outcome_inner(cli, true)).await?;
         return Ok(CliOutput {
-            text: outcome.text,
+            text: outcome
+                .bytes
+                .map(|bytes| String::from_utf8_lossy(&bytes).to_string())
+                .unwrap_or(outcome.text),
             svg: None,
         });
     }

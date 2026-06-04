@@ -205,7 +205,20 @@ flattened. JSON fulltext responses also include `full_text_manifest`, an
 additive artifact manifest with the normalized source family (`jats_xml`,
 `pmc_html`, or `pdf`), provider label/source, concrete source identifier,
 quality flags, known license/reuse state, and provenance facts such as
-open-access and explicit PDF fallback status.
+open-access and explicit PDF fallback status. JSON fulltext also reports
+`not_included` counts and points to the OA package asset manifest when figure
+images, supplementary files, or complex tables are not inlined.
+
+OA package assets:
+
+```bash
+biomcp --json get article 22663011 assets
+biomcp get article 22663011 asset traces-s1.csv
+```
+
+`get article <id> assets` returns a JSON-only manifest for the canonical PMC OA
+package. `get article <id> asset <name>` returns the selected member as raw bytes
+with no conversion; downstream tools parse CSV, XLSX, DOC, PDF, or images.
 
 Opt in to the final PDF rung only when you want the last-resort open-access PDF
 path after XML and PMC HTML both miss:

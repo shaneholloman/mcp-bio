@@ -330,6 +330,7 @@ fn related_article_uses_article_entities_helper_command() {
         full_text_note: None,
         full_text_source: None,
         full_text_manifest: None,
+            not_included: None,
         europepmc_license: None,
         europepmc_retracted: None,
         annotations: Some(ArticleAnnotations {

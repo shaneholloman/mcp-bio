@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::path::{Component, Path, PathBuf};
 use std::sync::OnceLock;
 
 use http_cache_reqwest::CacheMode;
@@ -24,6 +25,19 @@ pub struct PmcOaArchiveManifest {
     pub package_url: String,
     pub license: Option<String>,
     pub retracted: Option<bool>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PmcOaArchiveEntry {
+    pub filename: String,
+    pub bytes: Vec<u8>,
+    pub is_xml: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PmcOaArchivePackage {
+    pub manifest: PmcOaArchiveManifest,
+    pub entries: Vec<PmcOaArchiveEntry>,
 }
 
 #[derive(Clone)]
@@ -139,14 +153,7 @@ impl PmcOaClient {
         }))
     }
 
-    pub async fn get_full_text_xml_with_manifest(
-        &self,
-        pmcid: &str,
-    ) -> Result<Option<(String, PmcOaArchiveManifest)>, BioMcpError> {
-        let Some(manifest) = self.oa_archive_manifest(pmcid).await? else {
-            return Ok(None);
-        };
-
+    async fn archive_bytes(&self, manifest: &PmcOaArchiveManifest) -> Result<Vec<u8>, BioMcpError> {
         let resp = self
             .client
             .get(&manifest.tgz_url)
@@ -163,8 +170,18 @@ impl PmcOaClient {
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
+        Ok(bytes.to_vec())
+    }
 
-        let bytes = bytes.to_vec();
+    pub async fn get_full_text_xml_with_manifest(
+        &self,
+        pmcid: &str,
+    ) -> Result<Option<(String, PmcOaArchiveManifest)>, BioMcpError> {
+        let Some(manifest) = self.oa_archive_manifest(pmcid).await? else {
+            return Ok(None);
+        };
+
+        let bytes = self.archive_bytes(&manifest).await?;
         let xml = tokio::task::spawn_blocking(move || extract_first_nxml(&bytes))
             .await
             .map_err(|err| BioMcpError::Api {
@@ -173,6 +190,23 @@ impl PmcOaClient {
             })??;
 
         Ok(xml.map(|xml| (xml, manifest)))
+    }
+
+    pub async fn get_archive_package(
+        &self,
+        pmcid: &str,
+    ) -> Result<Option<PmcOaArchivePackage>, BioMcpError> {
+        let Some(manifest) = self.oa_archive_manifest(pmcid).await? else {
+            return Ok(None);
+        };
+        let bytes = self.archive_bytes(&manifest).await?;
+        let entries = tokio::task::spawn_blocking(move || extract_archive_entries(&bytes))
+            .await
+            .map_err(|err| BioMcpError::Api {
+                api: PMC_OA_API.to_string(),
+                message: format!("Task join error: {err}"),
+            })??;
+        Ok(Some(PmcOaArchivePackage { manifest, entries }))
     }
 }
 
@@ -184,7 +218,27 @@ fn parse_boolish(value: &str) -> Option<bool> {
     }
 }
 
-fn extract_first_nxml(tgz_bytes: &[u8]) -> Result<Option<String>, BioMcpError> {
+fn is_xml_name(filename: &str) -> bool {
+    let lower = filename.to_ascii_lowercase();
+    lower.ends_with(".nxml") || lower.ends_with(".xml")
+}
+
+fn safe_archive_name(path: &Path) -> Option<String> {
+    let mut out = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::Normal(part) => out.push(part),
+            Component::CurDir => {}
+            Component::Prefix(_) | Component::RootDir | Component::ParentDir => return None,
+        }
+    }
+    out.to_str()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(|value| value.replace('\\', "/"))
+}
+
+fn extract_archive_entries(tgz_bytes: &[u8]) -> Result<Vec<PmcOaArchiveEntry>, BioMcpError> {
     use std::io::Read;
 
     if tgz_bytes.len() > MAX_TGZ_BYTES {
@@ -197,32 +251,41 @@ fn extract_first_nxml(tgz_bytes: &[u8]) -> Result<Option<String>, BioMcpError> {
     let gz = flate2::read::GzDecoder::new(tgz_bytes);
     let mut archive = tar::Archive::new(gz);
     let entries = archive.entries()?;
+    let mut out = Vec::new();
 
     for entry in entries {
         let entry = entry?;
-        if entry.size() > MAX_ARCHIVE_ENTRY_BYTES {
+        if !entry.header().entry_type().is_file() || entry.size() > MAX_ARCHIVE_ENTRY_BYTES {
             continue;
         }
         let path = entry.path()?;
-        let Some(file_name) = path.file_name().and_then(|v| v.to_str()) else {
+        let Some(filename) = safe_archive_name(&path) else {
             continue;
         };
-        if !(file_name.ends_with(".nxml") || file_name.ends_with(".xml")) {
-            continue;
-        }
 
-        let mut out: Vec<u8> = Vec::new();
+        let mut bytes = Vec::new();
         let mut reader = entry.take(MAX_ARCHIVE_ENTRY_BYTES + 1);
-        reader.read_to_end(&mut out)?;
-        if out.len() as u64 > MAX_ARCHIVE_ENTRY_BYTES {
+        reader.read_to_end(&mut bytes)?;
+        if bytes.len() as u64 > MAX_ARCHIVE_ENTRY_BYTES || bytes.is_empty() {
             continue;
         }
-        if out.is_empty() {
-            continue;
-        }
-        return Ok(Some(String::from_utf8_lossy(&out).to_string()));
+        let is_xml = is_xml_name(&filename);
+        out.push(PmcOaArchiveEntry {
+            filename,
+            bytes,
+            is_xml,
+        });
     }
 
+    Ok(out)
+}
+
+fn extract_first_nxml(tgz_bytes: &[u8]) -> Result<Option<String>, BioMcpError> {
+    for entry in extract_archive_entries(tgz_bytes)? {
+        if entry.is_xml {
+            return Ok(Some(String::from_utf8_lossy(&entry.bytes).to_string()));
+        }
+    }
     Ok(None)
 }
 

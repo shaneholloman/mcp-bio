@@ -61,6 +61,7 @@ pub fn article_markdown(
         full_text_path => &article.full_text_path,
         full_text_note => &article.full_text_note,
         full_text_source => &article.full_text_source,
+        not_included => &article.not_included,
         annotations => &article.annotations,
         semantic_scholar => &article.semantic_scholar,
         pubtator_fallback => article.pubtator_fallback,

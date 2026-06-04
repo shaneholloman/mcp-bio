@@ -1,3 +1,4 @@
+use super::workflow::article_follow_up_workflow;
 use super::{ArticleCommand, ArticleGetArgs, ArticleSearchArgs};
 use crate::cli::CommandOutcome;
 
@@ -28,19 +29,30 @@ pub(in crate::cli) async fn handle_get(
     let (sections, json_override) = super::super::extract_json_from_sections(&args.sections);
     let (sections, pdf_from_sections) = extract_pdf_from_sections(&sections);
     let json_output = json || json_override;
+
+    if let Some(outcome) = super::assets::handle_asset_get(&args.id, &sections, json_output).await?
+    {
+        return Ok(outcome);
+    }
+
     let article = crate::entities::article::get(
         &args.id,
         &sections,
         crate::entities::article::ArticleGetOptions {
             allow_pdf: args.pdf || pdf_from_sections,
+            include_asset_summary: true,
         },
     )
     .await?;
     let text = if json_output {
+        let mut next_commands = crate::render::markdown::related_article(&article);
+        if let Some(not_included) = article.not_included.as_ref() {
+            next_commands.extend(not_included.next_commands.clone());
+        }
         crate::render::json::to_entity_json_with_workflow(
             &article,
             crate::render::markdown::article_evidence_urls(&article),
-            crate::render::markdown::related_article(&article),
+            next_commands,
             crate::render::provenance::article_section_sources(&article),
             article_follow_up_workflow(&article)?,
         )?
@@ -48,27 +60,6 @@ pub(in crate::cli) async fn handle_get(
         crate::render::markdown::article_markdown(&article, &sections)?
     };
     Ok(CommandOutcome::stdout(text))
-}
-
-fn article_follow_up_workflow(
-    article: &crate::entities::article::Article,
-) -> Result<Option<crate::workflow_ladders::WorkflowMeta>, crate::error::BioMcpError> {
-    let has_pmid = article
-        .pmid
-        .as_deref()
-        .is_some_and(|value| !value.trim().is_empty());
-    let has_annotations = article.annotations.as_ref().is_some_and(|annotations| {
-        !annotations.genes.is_empty()
-            || !annotations.diseases.is_empty()
-            || !annotations.chemicals.is_empty()
-            || !annotations.mutations.is_empty()
-    });
-
-    (has_pmid && has_annotations)
-        .then(|| {
-            crate::workflow_ladders::meta_for(crate::workflow_ladders::Workflow::ArticleFollowUp)
-        })
-        .transpose()
 }
 
 #[cfg(test)]

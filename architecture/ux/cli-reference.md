@@ -58,6 +58,8 @@ biomcp get gene BRAF all                  # everything
 
 biomcp get variant "BRAF V600E" clinvar population conservation
 biomcp get article 22663011 tldr
+biomcp --json get article 22663011 assets
+biomcp get article 22663011 asset traces-s1.csv
 biomcp get diagnostic GTR000006692.3 genes conditions
 biomcp get diagnostic "ITPW02232- TC40" conditions
 biomcp get drug pembrolizumab label targets civic approvals
@@ -68,7 +70,9 @@ biomcp get trial NCT02576665 eligibility locations outcomes
 
 The pattern is consistent across the entity command surface: no-section gives
 a summary, named sections are additive, and `all` gives the standard default
-surface rather than every opt-in section. Opt-in sections such as
+surface rather than every opt-in section. Article `assets` is JSON-only, while
+`asset <name>` streams raw bytes with no conversion for downstream parsers.
+Opt-in sections such as
 `clinical_features`, `diagnostics`, `disgenet`, and `funding` still require
 explicit naming.
 
