@@ -36,6 +36,13 @@ pub(super) async fn handle_asset_get(
     )))
 }
 
+pub(super) fn article_asset_route(sections: &[String]) -> bool {
+    sections.iter().any(|section| {
+        let normalized = section.trim().to_ascii_lowercase();
+        normalized == "asset" || normalized == "assets"
+    })
+}
+
 fn article_assets_request(sections: &[String]) -> bool {
     sections
         .iter()

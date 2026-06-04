@@ -29,6 +29,13 @@ pub(in crate::cli) async fn handle_get(
     let (sections, json_override) = super::super::extract_json_from_sections(&args.sections);
     let (sections, pdf_from_sections) = extract_pdf_from_sections(&sections);
     let json_output = json || json_override;
+    if super::assets::article_asset_route(&sections) && (args.pdf || pdf_from_sections) {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "--pdf requires the fulltext section (example: biomcp get article 22663011 fulltext --pdf)"
+                .into(),
+        )
+        .into());
+    }
 
     if let Some(outcome) = super::assets::handle_asset_get(&args.id, &sections, json_output).await?
     {

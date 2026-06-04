@@ -253,7 +253,10 @@ fn not_included_from_manifest(manifest: &ArticleAssetsManifest) -> ArticleNotInc
         .iter()
         .filter(|asset| asset.kind == "supplementary-file")
         .count();
-    let retrieve_with = format!("biomcp --json get article {} assets", manifest.article_id);
+    let retrieve_with = format!(
+        "biomcp --json get article {} assets",
+        crate::render::markdown::shell_quote_arg(&manifest.article_id)
+    );
     let mut next_commands = vec![retrieve_with.clone()];
     if let Some(handle) = manifest
         .assets
@@ -393,4 +396,110 @@ fn child_text(node: Node<'_, '_>, child_name: &str) -> Option<String> {
         .collect::<Vec<_>>()
         .join(" ");
     (!text.is_empty()).then_some(text)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_article() -> Article {
+        Article {
+            pmid: Some("22663011".to_string()),
+            pmcid: Some("PMC123456".to_string()),
+            doi: None,
+            title: "Fixture article".to_string(),
+            authors: Vec::new(),
+            journal: None,
+            date: None,
+            citation_count: None,
+            publication_type: None,
+            open_access: Some(true),
+            abstract_text: None,
+            full_text_path: None,
+            full_text_note: None,
+            full_text_source: None,
+            full_text_manifest: None,
+            not_included: None,
+            europepmc_license: None,
+            europepmc_retracted: None,
+            annotations: None,
+            semantic_scholar: None,
+            pubtator_fallback: false,
+        }
+    }
+
+    #[test]
+    fn build_manifest_hashes_binary_bytes_and_quotes_retrieval_commands() {
+        let binary = vec![0, 0xff, b'P', b'N', b'G', b'\n'];
+        let csv = b"time,value\n0,1\n".to_vec();
+        let jats_xml = br#"
+<article xmlns:xlink="http://www.w3.org/1999/xlink">
+  <body>
+    <fig id="f1">
+      <label>Figure 1</label>
+      <caption><p>Binary panel.</p></caption>
+      <graphic xlink:href="fig 1.png" />
+    </fig>
+    <supplementary-material id="s1" xlink:href="traces-s1.csv">
+      <label>Supplement S1</label>
+      <caption><p>Trace data.</p></caption>
+    </supplementary-material>
+    <table-wrap><table><tr><td rowspan="2">x</td></tr></table></table-wrap>
+  </body>
+</article>
+"#;
+        let package = PmcOaArchivePackage {
+            manifest: PmcOaArchiveManifest {
+                package_url: "https://example.test/archive.tgz".to_string(),
+                tgz_url: "https://example.test/archive.tgz".to_string(),
+                license: Some("CC BY".to_string()),
+                retracted: Some(false),
+            },
+            entries: vec![
+                PmcOaArchiveEntry {
+                    filename: "article.nxml".to_string(),
+                    bytes: jats_xml.to_vec(),
+                    is_xml: true,
+                },
+                PmcOaArchiveEntry {
+                    filename: "fig 1.png".to_string(),
+                    bytes: binary.clone(),
+                    is_xml: false,
+                },
+                PmcOaArchiveEntry {
+                    filename: "traces-s1.csv".to_string(),
+                    bytes: csv.clone(),
+                    is_xml: false,
+                },
+            ],
+        };
+
+        let manifest =
+            build_assets_manifest("10.1000/foo bar", &sample_article(), "PMC123456", package);
+        let fig = manifest
+            .assets
+            .iter()
+            .find(|asset| asset.filename == "fig 1.png")
+            .expect("figure asset should be listed");
+        assert_eq!(fig.kind, "figure-image");
+        assert_eq!(fig.size_bytes, binary.len());
+        assert_eq!(fig.sha256, sha256_hex(&binary));
+        assert_eq!(
+            fig.handle,
+            "biomcp get article \"10.1000/foo bar\" asset \"fig 1.png\""
+        );
+        assert_eq!(
+            fig.jats.as_ref().and_then(|jats| jats.label.as_deref()),
+            Some("Figure 1")
+        );
+
+        let not_included = manifest.not_included.expect("coverage summary");
+        assert_eq!(not_included.figure_images.count, 1);
+        assert_eq!(not_included.supplementary_files.count, 1);
+        assert_eq!(not_included.complex_tables.count, 1);
+        assert_eq!(
+            not_included.figure_images.retrieve_with,
+            "biomcp --json get article \"10.1000/foo bar\" assets"
+        );
+    }
 }
