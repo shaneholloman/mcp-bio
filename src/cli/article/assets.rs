@@ -9,7 +9,7 @@ pub(super) async fn handle_asset_get(
         let bytes = crate::entities::article::article_asset_bytes(id, &asset_name).await?;
         return Ok(Some(CommandOutcome::stdout_bytes(bytes)));
     }
-    if !article_assets_request(sections) {
+    if !article_assets_request(sections)? {
         return Ok(None);
     }
     if !json_output {
@@ -43,10 +43,20 @@ pub(super) fn article_asset_route(sections: &[String]) -> bool {
     })
 }
 
-fn article_assets_request(sections: &[String]) -> bool {
-    sections
+fn article_assets_request(sections: &[String]) -> Result<bool, crate::error::BioMcpError> {
+    let has_assets = sections
         .iter()
-        .any(|section| section.trim().eq_ignore_ascii_case("assets"))
+        .any(|section| section.trim().eq_ignore_ascii_case("assets"));
+    if !has_assets {
+        return Ok(false);
+    }
+    if sections.len() != 1 {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "assets is a standalone JSON-only article section; do not combine it with other sections"
+                .into(),
+        ));
+    }
+    Ok(true)
 }
 
 fn article_asset_request(sections: &[String]) -> Result<Option<String>, crate::error::BioMcpError> {
@@ -57,6 +67,21 @@ fn article_asset_request(sections: &[String]) -> Result<Option<String>, crate::e
     else {
         return Ok(None);
     };
+    if sections
+        .iter()
+        .any(|section| section.trim().eq_ignore_ascii_case("assets"))
+    {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "asset <name> is a standalone raw-byte retrieval form; do not combine it with assets"
+                .into(),
+        ));
+    }
+    if index + 2 != sections.len() {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "asset requires exactly one package filename (example: biomcp get article 22663011 asset traces-s1.csv)"
+                .into(),
+        ));
+    }
     sections
         .get(index + 1)
         .map(|value| value.trim())
@@ -64,7 +89,7 @@ fn article_asset_request(sections: &[String]) -> Result<Option<String>, crate::e
         .map(|value| Ok(Some(value.to_string())))
         .unwrap_or_else(|| {
             Err(crate::error::BioMcpError::InvalidArgument(
-                "asset requires a package filename (example: biomcp get article 22663011 asset traces-s1.csv)"
+                "asset requires exactly one package filename (example: biomcp get article 22663011 asset traces-s1.csv)"
                     .into(),
             ))
         })
