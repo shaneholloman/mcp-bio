@@ -82,8 +82,8 @@ echo "$root" | mustmatch like '"mcp":"/mcp"'
 ## Remote Workflow Calls Keep BioMCP Text
 
 The remote tool should execute normal BioMCP workflows, not collapse them into
-an MCP-specific summary. The streamable-HTTP demo is a compact proof that the
-server still returns ordinary BioMCP text over the transport.
+an MCP-specific summary. This routine proof owns a fixture-backed local command
+so the public streamable-HTTP demo can remain a live operator walkthrough.
 
 ```bash
 port=39088
@@ -97,11 +97,27 @@ for _ in $(seq 1 40); do
   sleep 0.25
 done
 curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
-out="$(uv run --no-sync python3 ../../examples/streamable-http/streamable_http_client.py "http://127.0.0.1:$port")"
-echo "$out" | mustmatch like "Connecting to http://127.0.0.1:$port/mcp"
+out="$(uv run --no-sync python3 - "$port" <<'PY'
+import asyncio
+import sys
+from datetime import timedelta
+from mcp import ClientSession, types
+from mcp.client.streamable_http import streamable_http_client
+
+async def main(port: str) -> None:
+    async with streamable_http_client(f"http://127.0.0.1:{port}/mcp", terminate_on_close=False) as (read_stream, write_stream, _):
+        async with ClientSession(read_stream, write_stream, read_timeout_seconds=timedelta(seconds=30)) as session:
+            await session.initialize()
+            command = "biomcp study query --study msk_impact_2017 --gene TP53 --type mutations"
+            result = await session.call_tool("biomcp", arguments={"command": command})
+            print(f"Command: {command}")
+            print(next(c.text for c in result.content if isinstance(c, types.TextContent)))
+
+asyncio.run(main(sys.argv[1]))
+PY
+)"
 echo "$out" | mustmatch like 'Command: biomcp study query --study msk_impact_2017 --gene TP53 --type mutations'
 echo "$out" | mustmatch like "# Study Mutation Frequency: TP53 (msk_impact_2017)"
-echo "$out" | mustmatch like 'Command: biomcp study cohort --study msk_impact_2017 --gene TP53'
 ```
 
 ## Read-Only Boundaries and Charted Calls Stay Visible

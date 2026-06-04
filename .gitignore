@@ -13,6 +13,7 @@ site/
 .climb-test-vault/
 .march/*
 !.march/validation-profiles.toml
+.march-runtime/
 .claude/
 .agents/
 /planning/

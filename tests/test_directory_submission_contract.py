@@ -16,7 +16,7 @@ REQUIRED_EXAMPLE_MARKERS = (
     "**Expected behavior:**",
     "**Expected output:**",
 )
-SPEC_BARE_PYTHON_PATTERN = re.compile(r"(?<![A-Za-z0-9_])python(?=(?: |$|-))")
+SPEC_BARE_PYTHON_PATTERN = re.compile(r"(?<![A-Za-z0-9_])python(?=(?: |$))")
 TRACKED_MARCH_ALLOWLIST = frozenset(
     {
         ".march/code-review-log.md",

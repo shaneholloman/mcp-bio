@@ -26,22 +26,21 @@ Install `cargo-nextest` before running repo-local Rust verification:
 cargo install cargo-nextest --locked
 ```
 
-`make test` uses `cargo nextest run`. `make spec` is the offline deterministic
-routine executable-spec gate. `make spec-contracts` is the deterministic routine
-executable-contract lane used by March `spec-only` and `make release-gate`; it
-runs local/fixture-backed contracts without live smoke. `make verify` is the
-explicit opt-in live public-upstream confidence lane; `make release-live-smoke`
-remains a compatibility alias. `make spec-pr` remains available for the same
-offline `SPEC_ROUTINE_PATHS` as `make spec`, with `pytest-xdist` (`-n auto --dist
-loadfile`). The executable docs themselves call
+`make test` uses `cargo nextest run` plus the Python/docs contract lane.
+`make lint` runs the repo lint script and the quality ratchet. `make spec` is
+the offline deterministic routine executable-spec gate. `make spec-contracts`
+is a deterministic legacy subset kept for profile compatibility. `make verify`
+is the explicit opt-in live public-upstream confidence lane; `make
+release-live-smoke` remains a compatibility alias. `make spec-pr` remains
+available for the same offline `SPEC_ROUTINE_PATHS` as `make spec`, with
+`pytest-xdist` (`-n auto --dist loadfile`). The executable docs themselves call
 `tools/biomcp-ci`, which owns release-binary resolution, the repo-owned
 `.cache/biomcp-specs/` cache/XDG roots, optional-key stripping, and warm-hit
 `BIOMCP_CACHE_MODE=infinite` replay when CI sets `BIOMCP_SPEC_CACHE_HIT=1`.
-`make check` now runs `lint`, `test`, `test-contracts`, and
-`check-quality-ratchet`, so the canonical local gate already includes the
-Python/docs contract lane. `make release-gate` is the single routine
-release-readiness command; it runs `make check` and then `make spec-contracts`.
-Use `make test-contracts` to rerun just the release-critical Python/docs lane.
+Use `make lint`, `make test`, and `make spec` as the canonical local gates;
+there is no supported `make check` command. `make release-gate` is the single
+routine release-readiness command; it runs `lint test spec` directly. Use
+`make test-contracts` to rerun just the release-critical Python/docs lane.
 
 ### Local Pre-Commit Hook
 
@@ -79,14 +78,14 @@ Measured on beelink on 2026-04-23 with `/usr/bin/time -p` using warm-cache
 steady-state runs. Each command was run once untimed to warm build artifacts and
 the repo-owned spec cache under `.cache/biomcp-specs/`, then once with timing
 enabled. The `make spec-pr` row was refreshed on 2026-04-24 after the spec-v2
-canary cutover. `make release-gate` is a thin wrapper over `make check` and
-`make spec-contracts`, so its warm timing tracks the current sum of those warmed
-routine component lanes.
+canary cutover. `make release-gate` composes `lint test spec` directly, so its
+warm timing tracks the current sum of those warmed routine component lanes.
 
 | Command | Observed warm-cache | Notes |
 |---|---|---|
-| `make check` | `344.11s` | now includes `make test-contracts` |
-| `make spec-contracts` | `386.98s` | deterministic routine lane, including release rebuild and 48 spec assertions (2026-05-23; pre-ticket-395 membership) |
+| `make lint` | refresh pending | includes the quality ratchet |
+| `make test` | refresh pending | Rust nextest plus Python/docs contract lane |
+| `make spec-contracts` | `386.98s` | legacy deterministic subset, including release rebuild and 48 spec assertions (2026-05-23; pre-ticket-395 membership) |
 | `make spec` / `make spec-pr` | refresh pending | offline deterministic routine spec lane after ticket 395 |
 | `make verify` | `operator-run` | opt-in live public-upstream smoke; not part of routine gates |
-| `make release-gate` | `763.21s` | observed `make check` plus `make spec-contracts` routine gate (2026-05-23) |
+| `make release-gate` | refresh pending | lint + test + spec routine gate |

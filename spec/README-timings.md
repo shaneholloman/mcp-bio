@@ -4,7 +4,7 @@
 
 | Target | Run when | Timeout | Scope | Cache contract |
 |---|---|---|---|---|
-| `make spec-contracts` | March `spec-only`, `release-gate`, and routine pre-merge proof | `180s` per heading | offline deterministic executable contracts, including local MCP transport proof and `spec/surface/test_parallel_isolation_contract.py` | uses the release binary selected by `PATH` and `BIOMCP_BIN`; no live-smoke commands run in this lane |
+| `make spec-contracts` | legacy profile-compatible deterministic subset | `180s` per heading | offline deterministic executable contracts, including local MCP transport proof and `spec/surface/test_parallel_isolation_contract.py` | uses the release binary selected by `PATH` and `BIOMCP_BIN`; no live-smoke commands run in this lane |
 | `make verify` | explicit opt-in operator confidence before releases or upstream checks | n/a | live public-upstream matrix for discover/OLS4, disease, article source status, variant normalization, phenotype, protein, pathway, and other live entity/surface specs | every command goes through `tools/biomcp-ci`, which owns cache/XDG roots and optional-key stripping |
 | `make release-live-smoke` | compatibility alias for operators that still use the old live-lane name | n/a | delegates to `make verify` | not part of routine gates |
 | `make spec-pr` | PR CI canary and repo-local debugging of the offline executable corpus | `180s` per heading | explicit `SPEC_ROUTINE_PATHS` only: local/fixture-backed specs and static surface contracts | CI restores `.cache/biomcp-specs/`; cache hits export `BIOMCP_SPEC_CACHE_HIT=1`, which makes `tools/biomcp-ci` replay the warm HTTP cache with `BIOMCP_CACHE_MODE=infinite` |
@@ -13,7 +13,7 @@
 
 Routine validation now uses offline/deterministic lanes: `make spec` and
 `make spec-pr` run only explicit `SPEC_ROUTINE_PATHS`, and `make spec-contracts`
-keeps the March/release-gate subset deterministic. Public upstream confidence is
+keeps a legacy deterministic subset available for profile compatibility. Public upstream confidence is
 live and opt-in through `make verify` (`make release-live-smoke` remains a
 compatibility alias). Ticket 395 moves every live public-upstream spec out of
 routine collection: phenotype/Monarch, protein/UniProt and ComplexPortal,

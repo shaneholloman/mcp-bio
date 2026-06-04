@@ -254,8 +254,9 @@ rebuild path, not a second source of release truth.
      `uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"`,
      `uv run --no-sync mkdocs build --strict`), and `spec-stable`
      (release build, spec-cache metadata/restore, then `make spec-pr`).
-   - Routine release proof uses deterministic `make spec-contracts`; opt-in
-     live confidence uses `make verify` (`make release-live-smoke` aliases it).
+   - Routine release proof uses `make release-gate`, which composes `make lint`,
+     `make test`, and `make spec`; opt-in live confidence uses `make verify`
+     (`make release-live-smoke` aliases it).
      `spec-stable` restores
      `.cache/biomcp-specs/`, exports `BIOMCP_SPEC_CACHE_HIT=1` only on cache
      hits, and relies on `tools/biomcp-ci` to flip warm-cache replay on for the
@@ -305,34 +306,33 @@ BioMCP has six distinct verification and operator-inspection surfaces.
 
 ### 1. CI and Repo Gates
 
-- `make check` is the canonical local gate. In the current `Makefile`, that
-  means `lint`, `test`, `test-contracts`, and `check-quality-ratchet`; the
-  `lint` stage runs `cargo deny check licenses` plus `cargo deny check
-  advisories`, and still rejects deprecated install strings in `README.md` and
-  `docs/`.
-- Repo-local `test` now maps to `cargo nextest run`; the CI `check` job still
-  uses the raw `cargo fmt --check`, `cargo clippy -- -D warnings`, and
-  `cargo test` sequence directly.
+- The canonical local gates are `make lint`, `make test`, and `make spec`.
+  In the current `Makefile`, `make lint` runs the repo lint script plus the
+  quality ratchet; the lint script runs `cargo deny check licenses` plus
+  `cargo deny check advisories`, and still rejects deprecated install strings
+  in `README.md` and `docs/`.
+- Repo-local `make test` runs `cargo nextest run` plus the Python/docs contract
+  lane; the CI `check` job still uses the raw `cargo fmt --check`,
+  `cargo clippy -- -D warnings`, and `cargo test` sequence directly.
 - CI in `.github/workflows/ci.yml` runs the broader repo baseline in parallel:
   `check`, `version-sync`, `climb-hygiene`, `contracts`, and `spec-stable`.
-- Docs-site validation and Python contract tests now run under `make check`
-  through `make test-contracts`; CI still keeps that lane in the separate
-  `contracts` job for parallelism.
+- Docs-site validation and Python contract tests now run under `make test`;
+  CI still keeps that lane in the separate `contracts` job for parallelism.
 - `make release-gate` is the single local routine release-blocking signal; it
-  runs `make check` and deterministic `make spec-contracts`. Live public-upstream
+  runs `make lint`, `make test`, and `make spec` directly. Live public-upstream
   confidence is opt-in through `make verify` (`make release-live-smoke` aliases it).
 - The grounding implementation surfaces for this split are `Makefile`,
   `.github/workflows/ci.yml`, and `.github/workflows/contracts.yml`.
 
 #### March Validation Profiles
 
-`.march/validation-profiles.toml` is the source of record for BioMCP's March
-validation tiers. The shared build flow currently maps `kickoff` to
-`preflight`, leaves `01-design` and `02-design-review` without a validation
-profile, runs `focused` for `03-code` and `04-code-review`, and runs
-`full-blocking` for `05-verify`. `spec-only` is declared for slices that need
-the deterministic routine executable-contract lane directly without re-running
-the full release gate.
+`.march/validation-profiles.toml` is retained for legacy/profile compatibility,
+not as the current gate source of truth. The standard repo gates are `make
+lint`, `make test`, and `make spec`. The shared build flow currently maps
+`kickoff` to `preflight`, leaves `01-design` and `02-design-review` without a
+validation profile, runs `focused` for `03-code` and `04-code-review`, and runs
+`full-blocking` for `05-verify`. `spec-only` is declared for slices that need a
+legacy deterministic subset directly without re-running the full release gate.
 
 The exhaustive tracked and staged `.march/*` allowlist is
 `.march/code-review-log.md` and `.march/validation-profiles.toml`.
@@ -351,12 +351,11 @@ rejects staged non-deletion `.march/*` paths outside the same allowlist.
 | `full-contracts` | `make release-gate` | declared, not assigned |
 
 `full-blocking` deliberately uses `make release-gate`, which expands to `make
-check` plus deterministic `make spec-contracts`; ordinary March verification no
-longer depends on public upstream availability. `spec-only` exists so follow-on
-slices can target the same fixture-backed/static routine lane directly.
-`full-contracts` remains a compatibility alias of the same command now that
-`make check` already runs `make test-contracts`; the shared build flow still
-does not assign it today. Live public-upstream proof moved to the explicit
+lint`, `make test`, and `make spec`; ordinary March verification no longer
+depends on public upstream availability. `spec-only` exists so follow-on slices
+can target the legacy fixture-backed/static subset directly.
+`full-contracts` remains a compatibility alias of the same command; the shared
+build flow still does not assign it today. Live public-upstream proof moved to the explicit
 opt-in `make verify` operator lane, with `make release-live-smoke` kept as an
 alias.
 
@@ -367,9 +366,8 @@ exercises CLI output at the command level using stable structural markers
 (headers, table columns, query echoes) rather than brittle upstream data
 values.
 
-Routine local validation runs offline/deterministic spec lanes: `make spec`
-for the routine executable-spec gate and `make spec-contracts` for the
-March/release-gate subset. Live public-upstream confidence is explicit and
+Routine local validation runs `make spec` for the routine executable-spec gate.
+`make spec-contracts` remains available as a legacy deterministic subset. Live public-upstream confidence is explicit and
 opt-in through `make verify` (with `make release-live-smoke` as a compatibility
 alias), which uses `tools/biomcp-ci` for discover/OLS4, disease, article
 source-status, variant-normalization, phenotype, protein, pathway, and other
@@ -387,8 +385,8 @@ under `.cache/biomcp-specs/`, defaults `RUST_LOG=error`, unsets optional auth
 keys, and flips `BIOMCP_CACHE_MODE=infinite` only for those warm CI replays.
 
 Run locally with `make spec` for the offline routine executable-spec gate,
-`make spec-contracts` for the March/release-gate deterministic subset,
-`make verify` for opt-in live public-upstream confidence, or `make spec-pr` for
+`make spec-contracts` for the legacy deterministic subset, `make verify` for
+opt-in live public-upstream confidence, or `make spec-pr` for
 the same offline corpus with the longer PR timeout.
 
 Repo-local `make spec` and `make spec-pr` use `pytest-xdist` with
