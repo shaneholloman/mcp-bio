@@ -12,7 +12,9 @@ use crate::sources::medlineplus::MedlinePlusTopic;
 use crate::sources::ols4::OlsDoc;
 use crate::sources::umls::{UmlsConcept, UmlsXref};
 
-const OLS4_TIMEOUT: Duration = Duration::from_millis(4000);
+// OLS4 is discover's primary, non-degradable source; use a slower failure window
+// to absorb rare upstream latency spikes, accepting a longer wait if OLS4 is down.
+const OLS4_TIMEOUT: Duration = Duration::from_millis(8000);
 const UMLS_TIMEOUT: Duration = Duration::from_millis(2500);
 const MEDLINEPLUS_TIMEOUT: Duration = Duration::from_millis(800);
 const GENERAL_DISCOVER_MAX_SURVIVORS: usize = 5;
@@ -2087,7 +2089,7 @@ mod tests {
     use super::{
         AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept, DiscoverConfidence,
         DiscoverIntent, DiscoverMode, DiscoverRequest, DiscoverResult, DiscoverType, MatchTier,
-        build_result, classify_alias_fallback, concept_from_ols, generate_commands,
+        OLS4_TIMEOUT, build_result, classify_alias_fallback, concept_from_ols, generate_commands,
         normalize_primary_id, ols_doc_identifier, resolve_exact_article_keyword_entity,
         resolve_exact_article_keyword_entity_from_ols_docs, symptom_disease_lookup_query,
     };
@@ -2120,6 +2122,11 @@ mod tests {
         assert_eq!(request.ols_query, "Gleevec");
         assert!(!request.medlineplus_enabled);
         assert!(request.no_cache);
+    }
+
+    #[test]
+    fn ols4_timeout_absorbs_slow_primary_discover_blips() {
+        assert_eq!(OLS4_TIMEOUT.as_millis(), 8000);
     }
 
     #[test]
