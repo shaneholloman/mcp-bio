@@ -106,6 +106,8 @@ case "$mode" in
   spec)
     timeout_args=(--timeout 120)
     paths=("${SPEC_ROUTINE_PATHS[@]}")
+    run_python=1
+    mustmatch_path_dir="$(mustmatch_dir)"
     sync_python_dev
     run_study_fixture
     run_ddinter_fixture
@@ -113,6 +115,8 @@ case "$mode" in
   spec-pr)
     timeout_args=(--timeout 180)
     paths=("${SPEC_ROUTINE_PATHS[@]}")
+    run_python=1
+    mustmatch_path_dir="$(mustmatch_dir)"
     sync_python_dev
     run_study_fixture
     run_ddinter_fixture
@@ -121,12 +125,14 @@ case "$mode" in
     timeout_args=(--timeout 180)
     paths=(spec/entity/article.md spec/surface/mcp.md spec/surface/test_parallel_isolation_contract.py)
     run_python=1
+    mustmatch_path_dir="$(mustmatch_dir)"
     sync_python_dev
     run_study_fixture
     ;;
   verify)
     timeout_args=(--timeout 180)
     paths=("${SPEC_LIVE_PATHS[@]}")
+    mustmatch_path_dir="$(mustmatch_dir)"
     ;;
   *)
     usage
@@ -135,7 +141,7 @@ case "$mode" in
 esac
 
 export BIOMCP_BIN="$ROOT/target/release/biomcp"
-export PATH="$(mustmatch_dir):$ROOT/target/release:$PATH"
+export PATH="$mustmatch_path_dir:$ROOT/target/release:$PATH"
 
 partition_paths "${paths[@]}"
 run_markdown_specs

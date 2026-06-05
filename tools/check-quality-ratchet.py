@@ -369,8 +369,6 @@ def make_missing_bash_mustmatch_findings(spec_path: Path) -> list[dict[str, obje
 def lint_spec_file(spec_path: Path) -> dict[str, object]:
     payload = run_json_command(
         [
-            sys.executable,
-            "-m",
             "mustmatch",
             "lint",
             str(spec_path),

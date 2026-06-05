@@ -394,7 +394,7 @@ Repo-local `make spec` and `make spec-pr` use `scripts/run-specs.sh` to run
 `SPEC_ROUTINE_PATHS` only: local or fixture-backed specs such as
 `spec/entity/article.md`, `spec/entity/study.md`, `spec/entity/variant.md`, and
 `spec/surface/mcp.md`. The deterministic `spec/surface/test_*.py` contracts stay on
-plain pytest legs such as `make test` or the `spec-contracts` profile. Live-upstream specs leave routine canaries
+plain pytest legs inside `scripts/run-specs.sh`, with `spec-contracts` retaining the lane subset. Live-upstream specs leave routine canaries
 entirely for `make verify`: phenotype/Monarch, protein/UniProt and
 ComplexPortal, disease/discover OLS4 paths, pathway Reactome/WikiPathways/KEGG,
 plus gene, drug, diagnostic, trial, PGx, VAERS, and CLI/discover surfaces that

@@ -185,10 +185,12 @@ phenotype, protein, pathway, and the other public-upstream specs through
 `tools/biomcp-ci`; `make release-live-smoke` delegates to `make verify` for old
 operator muscle memory.
 
-`make spec` and `make spec-pr` both run the Markdown subset of explicit
-`SPEC_ROUTINE_PATHS` only: `spec/entity/article.md`, `spec/entity/study.md`,
-`spec/entity/variant.md`, and `spec/surface/mcp.md`. `make spec-contracts`
-keeps its deterministic Python static-contract coverage on a plain pytest leg.
+`make spec` and `make spec-pr` both run explicit `SPEC_ROUTINE_PATHS`: the
+Markdown subset (`spec/entity/article.md`, `spec/entity/study.md`,
+`spec/entity/variant.md`, and `spec/surface/mcp.md`) through `mustmatch test`,
+and deterministic `spec/surface/test_*.py` contracts through a separate plain
+pytest leg. `make spec-contracts` keeps its deterministic Python static-contract
+coverage on the same kind of plain pytest leg.
 Live-upstream specs such as `spec/entity/phenotype.md`, `spec/entity/protein.md`,
 `spec/entity/disease.md`, `spec/surface/discover.md`, `spec/entity/pathway.md`,
 and `spec/surface/cli.md` run only in `make verify`. Every bash block in those

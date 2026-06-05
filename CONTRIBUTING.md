@@ -33,7 +33,8 @@ is a deterministic legacy subset kept for profile compatibility. `make verify`
 is the explicit opt-in live public-upstream confidence lane; `make
 release-live-smoke` remains a compatibility alias. `make spec-pr` remains
 available for the same offline `SPEC_ROUTINE_PATHS` as `make spec`, through
-`scripts/run-specs.sh` and `mustmatch test --lang bash`. The executable docs themselves call
+`scripts/run-specs.sh`: Markdown uses `mustmatch test --lang bash`, while
+`spec/surface/test_*.py` contracts use a separate plain pytest leg. The executable docs themselves call
 `tools/biomcp-ci`, which owns release-binary resolution, the repo-owned
 `.cache/biomcp-specs/` cache/XDG roots, optional-key stripping, and warm-hit
 `BIOMCP_CACHE_MODE=infinite` replay when CI sets `BIOMCP_SPEC_CACHE_HIT=1`.
