@@ -76,7 +76,6 @@ dev = [
     { name = "jsonschema" },
     { name = "mcp" },
     { name = "mkdocs-material" },
-    { name = "mustmatch" },
     { name = "pymdown-extensions" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -89,7 +88,6 @@ requires-dist = [
     { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.26" },
     { name = "mcp", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.5" },
-    { name = "mustmatch", marker = "extra == 'dev'", specifier = "==0.0.4" },
     { name = "pymdown-extensions", marker = "extra == 'dev'", specifier = ">=10.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
@@ -690,19 +688,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/79/9b/9b4c96d6593b2a541e1cb8b34899a6d021d208bb357042823d4d2cabdbe7/mkdocs_material_extensions-1.3.1.tar.gz", hash = "sha256:10c9511cea88f568257f960358a467d12b970e1f7b2c0e5fb2bb48cab1928443", size = 11847, upload-time = "2023-11-22T19:09:45.208Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/54/662a4743aa81d9582ee9339d4ffa3c8fd40a4965e033d77b9da9774d3960/mkdocs_material_extensions-1.3.1-py3-none-any.whl", hash = "sha256:adff8b62700b25cb77b53358dad940f3ef973dd6db797907c49e3c2ef3ab4e31", size = 8728, upload-time = "2023-11-22T19:09:43.465Z" },
-]
-
-[[package]]
-name = "mustmatch"
-version = "0.0.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fa/13/52e91142b85603bc63e0e827fb7069134376bf0b5eb9338782be8dc64c9c/mustmatch-0.0.4.tar.gz", hash = "sha256:0ac7ced91853d7f62a335a53d8aa67a1f030ea768f87dd048b8aa0de3d97ae42", size = 28906, upload-time = "2026-03-30T16:01:46.196Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/e6/c58e8dde547b4f22cb23b128236f4fc66bfa14b090e6c8817b1a83cd92ac/mustmatch-0.0.4-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:e79201859fea188fe91ea58c20a3f5f501eeb886db9ba7d757390827cf4bd2af", size = 1124108, upload-time = "2026-03-30T16:01:33.28Z" },
-    { url = "https://files.pythonhosted.org/packages/f4/d4/3e2d510af15f7c93a4016ca05a84b3361348ef742573f68b3c070e28ebb4/mustmatch-0.0.4-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:ecc503d8591d9d4b230b3622f7b3fd6b226b285c6f2ea3bc8e3a62f95056555b", size = 1062872, upload-time = "2026-03-30T16:01:34.687Z" },
-    { url = "https://files.pythonhosted.org/packages/60/49/714896f65f02ce30bc352765c52383e491939d2c81fce620cfa6e37fe129/mustmatch-0.0.4-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5c03a2f23e16378d47f81e9cb7cbed94bda2450aa19d090f2ce17c5d5469b448", size = 1197676, upload-time = "2026-03-30T16:01:36.24Z" },
-    { url = "https://files.pythonhosted.org/packages/03/4e/ec1c2fea570cbe8436a95f142e12587e007033abc085e05ba8069a971882/mustmatch-0.0.4-cp310-abi3-win_amd64.whl", hash = "sha256:249de695f448a4e42840d595ba8951832cbcf126d68f71a11021f3ca24c0ab23", size = 960701, upload-time = "2026-03-30T16:01:37.655Z" },
-    { url = "https://files.pythonhosted.org/packages/e1/fd/03270f7aecd96a691184d6f845520dc75286506f37be63563bc3b499f380/mustmatch-0.0.4-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:35d01e2e6baa012eeed3d5ef2f467c60a0d34d906ed68756972e7443605eca76", size = 1193026, upload-time = "2026-03-30T16:01:40.653Z" },
 ]
 
 [[package]]

@@ -120,13 +120,15 @@ Python, and strict-docs regressions fail the same local test gate. Use
 `make verify` only as an explicit opt-in live public-upstream confidence lane;
 `make release-live-smoke` is a compatibility alias for that operator lane.
 `make spec-pr` remains available for the offline executable-spec corpus by
-itself; it runs explicit local/fixture-backed `SPEC_ROUTINE_PATHS` with
-`pytest-xdist` (`-n auto --dist loadfile`) and the longer mustmatch timeout.
+itself; it runs explicit local/fixture-backed `SPEC_ROUTINE_PATHS` through
+`scripts/run-specs.sh` with `mustmatch test` and `--lang bash` plus the longer timeout.
 `make spec` runs the same offline path set with the shorter local timeout and
 should pass with external network blocked.
 
 The executable docs do not hand-roll env setup inside bash blocks anymore.
-`tools/biomcp-ci` is the only spec runner seam: it resolves the repo root from
+`scripts/run-specs.sh` owns fixture standup, binary-runner routing, and the
+standalone mustmatch PATH guard. `tools/biomcp-ci` remains the command wrapper:
+it resolves the repo root from
 its own path, points `BIOMCP_CACHE_DIR` and `XDG_*` under
 `.cache/biomcp-specs/`, defaults `RUST_LOG=error`, unsets optional auth keys,
 and only forces `BIOMCP_CACHE_MODE=infinite` when CI restored a warm cache and
@@ -137,7 +139,7 @@ to rerun just the Python/docs contract lane. Repo-root Ruff still runs through
 scratch experiment scripts do not block the production Python lint gate. Use
 `git commit --no-verify` to skip the hook for a one-off commit.
 
-`make test-contracts` runs `cargo build --release --locked`, `uv sync --extra dev --no-install-project`, `uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"`, and `uv run --no-sync mkdocs build --strict` - the same Python/docs steps that `make test` and PR CI `contracts` require. The `--no-install-project`/`--no-sync` split is intentional: Python/docs/spec lanes install only Python dev tooling and exercise the already-built `target/release/biomcp` binary instead of rebuilding the maturin package into `.venv`. `make test-contracts` remains the direct rerun command when only the Python/docs contract lane needs another pass.
+`make test-contracts` runs `cargo build --release --locked`, `uv sync --extra dev --no-install-project`, `uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"`, and `uv run --no-sync mkdocs build --strict` - the same Python/docs steps that `make test` and PR CI `contracts` require. The `--no-install-project`/`--no-sync` split is intentional: Python/docs lanes install only Python dev tooling and exercise the already-built `target/release/biomcp` binary instead of rebuilding the maturin package into `.venv`. `make test-contracts` remains the direct rerun command when only the Python/docs contract lane needs another pass.
 
 ## Smoke Checks
 
@@ -183,15 +185,17 @@ phenotype, protein, pathway, and the other public-upstream specs through
 `tools/biomcp-ci`; `make release-live-smoke` delegates to `make verify` for old
 operator muscle memory.
 
-`make spec` and `make spec-pr` both run explicit `SPEC_ROUTINE_PATHS` only:
-`spec/entity/article.md`, `spec/entity/study.md`, `spec/entity/variant.md`,
-`spec/surface/mcp.md`, and deterministic `spec/surface/test_*.py` contracts.
+`make spec` and `make spec-pr` both run the Markdown subset of explicit
+`SPEC_ROUTINE_PATHS` only: `spec/entity/article.md`, `spec/entity/study.md`,
+`spec/entity/variant.md`, and `spec/surface/mcp.md`. `make spec-contracts`
+keeps its deterministic Python static-contract coverage on a plain pytest leg.
 Live-upstream specs such as `spec/entity/phenotype.md`, `spec/entity/protein.md`,
 `spec/entity/disease.md`, `spec/surface/discover.md`, `spec/entity/pathway.md`,
 and `spec/surface/cli.md` run only in `make verify`. Every bash block in those
 lanes should call `tools/biomcp-ci`, which owns release-binary resolution,
 repo-owned cache roots, optional-key stripping, and warm-cache replay on CI
-cache hits.
+cache hits; `scripts/run-specs.sh` invokes the Markdown files with the
+standalone `mustmatch test` binary.
 
 Use `spec/README-timings.md` as the current validation-lane audit/reference for
 the offline deterministic routine lane, the opt-in live verify lane, the active

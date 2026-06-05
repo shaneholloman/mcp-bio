@@ -1161,7 +1161,7 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     assert "SPEC_SMOKE_ARGS" not in makefile
     assert "SPEC_SERIAL_FILES" not in makefile
     assert "spec-smoke:" not in makefile
-    assert "SPEC_XDIST_ARGS = -n auto --dist loadfile" in makefile
+    assert "SPEC_XDIST_ARGS" not in makefile
     assert "XDG_CACHE_HOME" not in makefile
     assert "XDG_CONFIG_HOME" not in makefile
     assert "BIOMCP_CACHE_DIR" not in makefile
@@ -1186,13 +1186,19 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         flags=re.MULTILINE,
     )
     assert re.search(
-        r"pytest \$\(SPEC_ROUTINE_PATHS\)[^\n]*--mustmatch-timeout 120[^\n]*\$\(SPEC_XDIST_ARGS\)",
+        r"^spec:\n"
+        r"\tcargo build --release --locked\n"
+        r"\tbash scripts/run-specs\.sh spec$",
         makefile,
-    ), "spec: must run routine corpus with 120s timeout under SPEC_XDIST_ARGS"
+        flags=re.MULTILINE,
+    ), "spec: must run through scripts/run-specs.sh"
     assert re.search(
-        r"pytest \$\(SPEC_ROUTINE_PATHS\)[^\n]*--mustmatch-timeout 180[^\n]*\$\(SPEC_XDIST_ARGS\)",
+        r"^spec-pr:\n"
+        r"\tcargo build --release --locked\n"
+        r"\tbash scripts/run-specs\.sh spec-pr$",
         makefile,
-    ), "spec-pr: must run routine corpus with 180s timeout under SPEC_XDIST_ARGS"
+        flags=re.MULTILINE,
+    ), "spec-pr: must run through scripts/run-specs.sh"
     assert re.search(
         r"^sync-python-dev:\n"
         r"\tuv sync --extra dev --no-install-project$",
@@ -1271,11 +1277,11 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     assert "`cargo nextest run`" in runbook_ws
     assert "`make spec-pr`" in runbook_ws
     assert "`make spec`" in runbook_ws
-    assert "`pytest-xdist`" in runbook_ws
+    assert "`mustmatch test`" in runbook_ws
     assert "single routine release-readiness signal" in runbook_ws
     assert "it runs `lint test spec` directly" in runbook_ws
     assert "`make release-live-smoke` is a compatibility alias for that operator lane" in runbook_ws
-    assert "`-n auto --dist loadfile`" in runbook_ws
+    assert "`--lang bash`" in runbook_ws
     assert "`tools/biomcp-ci`" in runbook_ws
     assert "`.cache/biomcp-specs/`" in runbook_ws
     assert "`BIOMCP_SPEC_CACHE_HIT=1`" in runbook_ws
@@ -1287,7 +1293,7 @@ def test_repo_local_parallel_test_contract_is_documented() -> None:
     assert "`cargo nextest run`" in technical_gate_section
     assert "`cargo test`" in technical_gate_section
     assert "`make release-gate`" in technical_gate_section
-    assert "`pytest-xdist` with `-n auto --dist loadfile`" in technical_spec_section
+    assert "`mustmatch test` with `--lang bash`" in technical_spec_section
     assert "explicit `SPEC_ROUTINE_PATHS`" in technical_spec_section
     assert "`spec/entity/article.md`" in technical_spec_section
     assert "`spec/entity/study.md`" in technical_spec_section
@@ -1364,21 +1370,19 @@ def test_spec_lane_timing_report_is_documented_and_aligned_with_makefile() -> No
     assert "`make spec-smoke`" not in technical_spec_section
     assert "SPEC_PR_DESELECT_ARGS" not in report
     assert "SPEC_SMOKE_ARGS" not in report
-    assert "pytest $(SPEC_ROUTINE_PATHS)" in makefile
+    assert "bash scripts/run-specs.sh spec" in makefile
 
 
-def test_parallel_test_dependency_contract_is_declared() -> None:
+def test_mustmatch_binary_is_not_a_python_dependency() -> None:
     pyproject = tomllib.loads(_read_repo("pyproject.toml"))
     uv_lock = _read_repo("uv.lock")
 
-    import xdist
-
     dev_dependencies = pyproject["project"]["optional-dependencies"]["dev"]
 
-    assert "pytest-xdist" in dev_dependencies
-    assert '{ name = "pytest-xdist", marker = "extra == \'dev\'" }' in uv_lock
-    assert 'name = "pytest-xdist"' in uv_lock
-    assert xdist.__file__ is not None
+    assert all(not dependency.startswith("mustmatch") for dependency in dev_dependencies)
+    assert 'name = "mustmatch"' not in uv_lock
+    assert "mustmatch" + "==0.0.4" not in uv_lock
+    assert 'specifier = "==0.0.4"' not in uv_lock
 
 
 def test_runtime_contract_docs_and_scripts_align_on_release_target() -> None:

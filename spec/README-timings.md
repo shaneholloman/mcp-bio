@@ -28,12 +28,11 @@ renderer contracts own routine proof, while `make verify` owns live confidence
 and `make release-live-smoke` remains the compatibility name for that operator
 lane.
 The executable docs themselves call `tools/biomcp-ci`; `make spec` and
-`make spec-pr` choose timeout over the same offline path set. The spec targets
-install Python dev dependencies with
-`uv sync --extra dev --no-install-project`, then invoke pytest with
-`uv run --no-sync ...` so uv does not install or rebuild the maturin-backed
-current project. The binary under test remains `target/release/biomcp` via
-`PATH` and `BIOMCP_BIN`.
+`make spec-pr` choose timeout over the same offline path set. `scripts/run-specs.sh`
+sets up the local fixtures, keeps `target/release/biomcp` on `PATH` and in
+`BIOMCP_BIN`, and runs Markdown specs with the standalone `mustmatch test`
+binary. Python static contracts remain on plain pytest legs rather than the
+Markdown runner.
 
 ## Active Corpus
 
@@ -62,10 +61,9 @@ Every `##` spec section with at least one non-skipped `bash` block must include
 at least one `| mustmatch` line unless the section explicitly opts out with
 `<!-- mustmatch-lint: skip -->`.
 
-This rule exists because the mustmatch pytest plugin silently does not collect
-bash blocks that never pipe to `mustmatch`. A section that only uses `jq -e` or
-other exit-code checks can disappear from pytest output instead of passing,
-failing, or skipping.
+This rule exists because executable Markdown only runs bash blocks that pipe to
+`mustmatch`. A section that only uses `jq -e` or other exit-code checks can be
+reported as skipped instead of proving the intended user-visible behavior.
 
 Prefer adding a meaningful `mustmatch` assertion on user-visible output or a
 stable JSON anchor even when the section also uses `jq -e` for structured
