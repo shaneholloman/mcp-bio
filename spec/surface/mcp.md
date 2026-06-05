@@ -297,3 +297,27 @@ sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../t
 sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like "mustmatch-lang"
 sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like "mustmatch-timeout"
 ```
+
+## Spec Corpus Uses Robust Mustmatch Blocks
+
+BioMCP's executable specs should read like durable documentation rather than a
+shell script that captures one command and checks fragments of it later. The
+corpus should use named blocks when one run needs separate expectations, use
+line-oriented ellipsis for volatile gaps, and avoid pinning local paths, build
+dates, and exact volatile counts.
+
+```bash
+rg -n 'echo "[[:punct:]][[:alnum:]_]*" [|] mustmatch' ../../spec --glob '*.md' | mustmatch ""
+```
+
+```bash
+rg -l 'run[[:space:]]id=|expect[=]' ../../spec --glob '*.md' | mustmatch like "spec/"
+```
+
+```bash
+rg -l '^[[:space:]]*[.][.][.]|[.][.][.]$' ../../spec --glob '*.md' | mustmatch like "spec/"
+```
+
+```bash
+rg -n 'Saved[[:space:]]to:|date=\[-0-9|get[(]"count"[)] == [[:digit:]]|Total: \[0-9' ../../spec --glob '*.md' | mustmatch ""
+```
