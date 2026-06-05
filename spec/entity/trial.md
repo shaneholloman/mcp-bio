@@ -33,8 +33,7 @@ The fast count path cannot fully apply age filtering upstream, so BioMCP should
 stay explicit that the returned total is approximate.
 
 ```bash
-../../tools/biomcp-ci search trial --age 0.5 --count-only | mustmatch like 'Total: ...'
-../../tools/biomcp-ci search trial --age 0.5 --count-only | mustmatch like '(approximate, age post-filtered)'
+../../tools/biomcp-ci search trial --age 0.5 --count-only | mustmatch '/^Total: .* [(]approximate, age post-filtered[)]$/'
 ```
 
 ## Trial Detail & Eligibility

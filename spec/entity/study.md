@@ -14,7 +14,9 @@ disk.
 ```bash
 ../../tools/biomcp-ci study list | mustmatch like '# Study Datasets
 ...
-| Study ID | Name | Cancer Type | Samples | Available Data |'
+| Study ID | Name | Cancer Type | Samples | Available Data |
+...
+| msk_impact_2017 | MSK-IMPACT 2017 | mixed | ...'
 ```
 
 ## Gene-Frequency Summary

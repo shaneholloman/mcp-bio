@@ -72,6 +72,8 @@ and still keep the saved-file contract on stdout.
 bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+rm -rf ../../.cache/biomcp-specs/downloads
+mkdir -p ../../.cache/biomcp-specs/downloads
 ../../tools/biomcp-ci get article 22663012 fulltext | mustmatch like '## Full Text (PMC HTML)
 ...'
 rg -l 'PMC HTML fallback body text' ../../.cache/biomcp-specs/downloads >/dev/null
@@ -88,8 +90,11 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 ../../tools/biomcp-ci get article 22663013 fulltext | mustmatch like "XML and HTML sources did not return full text"
 ../../tools/biomcp-ci get article 22663013 fulltext | mustmatch not like "Semantic Scholar PDF"
+rm -rf ../../.cache/biomcp-specs/downloads
+mkdir -p ../../.cache/biomcp-specs/downloads
 ../../tools/biomcp-ci get article 22663013 fulltext --pdf | mustmatch like '## Full Text (Semantic Scholar PDF)
 ...'
+test "$(find ../../.cache/biomcp-specs/downloads -maxdepth 1 -type f -name '*.txt' | wc -l)" -ge 1
 ```
 
 ## JATS Converter Keeps Evidence-Carrying Floats, Supplements, and Complex Table Markers
