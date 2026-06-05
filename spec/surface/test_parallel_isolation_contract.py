@@ -105,32 +105,6 @@ def _non_fixture_biomcp_invocations(markdown: str) -> list[str]:
     return invocations
 
 
-def _assert_make_target_serializes_spec_path(target_name: str, block: str, path: str) -> None:
-    assert "$(SPEC_XDIST_ARGS)" in block, f"{target_name} should keep its main parallel xdist leg"
-    assert f"--deselect {path}" in block, (
-        f"Makefile target {target_name} must remove {path} from the main parallel xdist pool "
-        "before rerunning it in a serialized or fixture-backed leg"
-    )
-    spec_commands = re.findall(r"pytest[^\n]*", block)
-    assert any(path in command and "$(SPEC_XDIST_ARGS)" not in command for command in spec_commands), (
-        f"{target_name} must run {path} outside the main $(SPEC_XDIST_ARGS) pool"
-    )
-
-
-def _assert_make_target_excludes_spec_path(target_name: str, block: str, path: str) -> None:
-    assert "$(SPEC_XDIST_ARGS)" in block, f"{target_name} should keep its main parallel xdist leg"
-    assert f"--deselect {path}" in block, (
-        f"Makefile target {target_name} must remove {path} from the main parallel xdist pool"
-    )
-    spec_commands = re.findall(r"pytest[^\n]*", block)
-    for command in spec_commands:
-        command_without_deselects = re.sub(r"--deselect\s+\S+", "", command)
-        assert path not in command_without_deselects, (
-            f"{target_name} must not execute {path} in routine canary legs; "
-            "route it through the explicit live-smoke lane instead"
-        )
-
-
 def _has_base_url_probe(text: str) -> bool:
     return bool(
         re.search(r"curl[^\n]*\$(?:\{base_url\}|base_url)", text)
@@ -1145,10 +1119,10 @@ def test_ticket_395_routine_and_live_spec_variables_are_disjoint_and_complete() 
 def test_ticket_395_make_spec_and_spec_pr_run_only_routine_paths() -> None:
     for target_name in ("spec", "spec-pr"):
         block = _make_target_block(target_name)
-        assert "$(SPEC_XDIST_ARGS)" in block, f"{target_name} should keep parallel loadfile execution"
-        assert "$(SPEC_ROUTINE_PATHS)" in block, f"{target_name} must run the offline routine path set"
+        assert "scripts/run-specs.sh" in block, f"{target_name} must use the shared binary runner seam"
         assert "$(SPEC_LIVE_PATHS)" not in block, f"{target_name} must not run live upstream paths"
         assert "--deselect" not in block, f"{target_name} must not hide live specs behind deselect/rerun carve-outs"
+        assert "--mustmatch-" not in block, f"{target_name} must not invoke the deleted pytest plugin"
         for path in LIVE_SPEC_PATHS:
             assert path not in block, f"{target_name} must not name live spec {path}"
 
@@ -1158,8 +1132,8 @@ def test_ticket_395_verify_owns_live_specs_and_release_live_smoke_delegates() ->
     verify = _make_target_block("verify")
     release_live_smoke = _make_target_block("release-live-smoke")
 
-    assert "$(SPEC_XDIST_ARGS)" not in verify, "verify is an operator lane, not a routine xdist shard"
-    assert "$(SPEC_LIVE_PATHS)" in verify, "verify must run the explicit live spec set"
+    assert "--mustmatch-" not in verify, "verify must not invoke the deleted pytest plugin"
+    assert "scripts/run-specs.sh" in verify, "verify must run live specs through the shared runner"
     for fragment in (
         "tools/biomcp-ci discover",
         "tools/biomcp-ci search disease",
@@ -1232,13 +1206,15 @@ def test_ticket_378_docs_describe_routine_and_live_lanes() -> None:
 
 def test_ticket_378_routine_lane_no_longer_depends_on_serialized_live_carveouts() -> None:
     spec_contracts = _make_target_block("spec-contracts")
+    runner = _read_repo("scripts/run-specs.sh")
+    spec_contracts_surface = spec_contracts + "\n" + runner
     timings = _read_repo("spec/README-timings.md").lower()
     technical_overview = _read_repo("architecture/technical/overview.md").lower()
 
-    assert "spec/surface/mcp.md" in spec_contracts, (
+    assert "spec/surface/mcp.md" in spec_contracts_surface, (
         "spec-contracts should keep local MCP transport proof in routine validation"
     )
-    assert "test_parallel_isolation_contract.py" in spec_contracts, (
+    assert "test_parallel_isolation_contract.py" in spec_contracts_surface, (
         "spec-contracts must run the deterministic surface contract tests that replace live canaries"
     )
     assert "spec/surface/cli.md" not in spec_contracts, (
@@ -1252,7 +1228,7 @@ def test_ticket_378_routine_lane_no_longer_depends_on_serialized_live_carveouts(
     )
 
     for path in LIVE_SPEC_PATHS:
-        assert path not in spec_contracts, f"spec-contracts must not run live spec {path}"
+        assert path not in spec_contracts, f"spec-contracts must not name live spec {path} directly"
 
     assert "ols4" in timings and "make verify" in timings, (
         "spec/README-timings.md must move public OLS4 confidence to the explicit verify lane"

@@ -12,9 +12,9 @@ contracts exercise the shipped CLI/MCP surface.
   spec/*.md
   ```
 
-  Run them with `make spec`. This repo still uses the legacy pytest/mustmatch
-  plugin until the spec-runner migration lands; standup belongs in the Makefile
-  or helper scripts such as `scripts/run-specs.sh`, not in ad hoc docs.
+  Run them with `make spec`. The spec gates use the standalone `mustmatch test`
+  binary through `scripts/run-specs.sh`; standup belongs in that helper script,
+  not in ad hoc docs.
 - Unit/static layers run with `make test`: Rust nextest first, then the Python
   CLI/MCP/docs contract lane.
 

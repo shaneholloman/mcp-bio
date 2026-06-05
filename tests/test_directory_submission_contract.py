@@ -213,35 +213,28 @@ def test_specs_do_not_depend_on_bare_python_alias() -> None:
     assert not bare_python_refs, "\n".join(bare_python_refs)
 
 
-def test_gene_canary_runs_as_a_targeted_heading() -> None:
+def test_mustmatch_binary_runs_markdown_specs(tmp_path: Path) -> None:
+    spec = tmp_path / "binary-runner.md"
+    spec.write_text(
+        "# Binary runner smoke\n\n"
+        "## Local assertion\n\n"
+        "```bash\n"
+        "echo 'binary runner ok' | mustmatch like 'binary runner ok'\n"
+        "```\n",
+        encoding="utf-8",
+    )
     env = dict(os.environ)
     env["PATH"] = f"{REPO_ROOT / 'target' / 'release'}:{env['PATH']}"
     env["BIOMCP_BIN"] = str(REPO_ROOT / "target" / "release" / "biomcp")
-    spec_root = REPO_ROOT / "spec"
 
-    try:
-        subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                "spec/entity/gene.md",
-                "--mustmatch-lang",
-                "bash",
-                "--mustmatch-timeout",
-                "60",
-                "-k",
-                "Symbol and Based",
-                "-v",
-            ],
-            cwd=REPO_ROOT,
-            env=env,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    finally:
-        subprocess.run(["rm", "-rf", str(spec_root / ".cache")], check=False)
+    subprocess.run(
+        ["mustmatch", "test", str(spec), "--lang", "bash", "--timeout", "60"],
+        cwd=REPO_ROOT,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
 
 def test_examples_tree_has_linked_index_and_readmes() -> None:

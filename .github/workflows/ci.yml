@@ -71,8 +71,8 @@ jobs:
       - run: uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"
       - run: uv run --no-sync mkdocs build --strict
 
-  # Stable PR-blocking executable spec gate. Volatile live-network headings
-  # now run through the single cache-warmed canary wrapper and corpus.
+  # Stable PR-blocking executable spec gate. Volatile live-network specs
+  # stay out of this routine lane and run only through make verify.
   spec-stable:
     runs-on: ubuntu-latest
     steps:

@@ -265,12 +265,35 @@ fixture-backed local command so the demo can remain a live operator walkthrough.
 sed '/Read-Only Boundaries and Charted Calls Stay Visible/q' ../../spec/surface/mcp.md | mustmatch not like 'examples/streamable-http/streamable_http_client.py'
 ```
 
-## Version Sync Contract Names The Intentional Mustmatch Pin
+## Spec Gates Use The Mustmatch Binary Runner
 
-The repository is intentionally pinned to the pytest-plugin mustmatch release
-until the binary cutover ticket unpins it. The version-sync contract should name
-that exact lockfile requirement instead of a stale dependency floor.
+The executable spec gates should enter through the shared runner script and that
+script should use the standalone `mustmatch test` binary. This keeps the routine
+and live lane split visible while preventing the deleted pytest plugin from
+remaining the real runner.
 
 ```bash
-grep -F 'specifier = "==0.0.4"' ../../tests/test_version_sync_script.py | mustmatch like 'specifier = "==0.0.4"'
+make -C ../.. -n spec 2>&1 | mustmatch like "scripts/run-specs.sh"
+make -C ../.. -n spec-pr 2>&1 | mustmatch like "scripts/run-specs.sh"
+make -C ../.. -n spec-contracts 2>&1 | mustmatch like "scripts/run-specs.sh"
+make -C ../.. -n verify 2>&1 | mustmatch like "scripts/run-specs.sh"
+find ../../scripts -maxdepth 1 -name run-specs.sh -type f -exec sed -n '1,240p' {} \; | mustmatch like "mustmatch test
+--lang bash
+--timeout 120
+--timeout 180
+SPEC_ROUTINE_PATHS
+SPEC_LIVE_PATHS"
+```
+
+## Mustmatch Is No Longer A Python Dev Dependency
+
+The binary cutover makes mustmatch a tool on `PATH`, not a Python package in the
+repo development environment. The gate and dependency files should not retain
+pytest-plugin flags or the temporary `0.0.4` pin.
+
+```bash
+sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like "mustmatch==0.0.4"
+sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like 'specifier = "==0.0.4"'
+sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like "mustmatch-lang"
+sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like "mustmatch-timeout"
 ```

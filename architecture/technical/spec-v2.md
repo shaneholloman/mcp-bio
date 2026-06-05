@@ -484,11 +484,11 @@ worst-case count instead of the aspirational "~80" average.
   startup, one cached BioMCP call, and `mustmatch` overhead.
 - **10s cold** is intentionally conservative: it budgets one live upstream fanout
   plus parse/render time per block.
-- `pytest-xdist -n auto --dist loadfile` only reduces elapsed wall-clock from
-  these serial bounds; it is not required to make the warm budget work.
+- The standalone `mustmatch test` runner is single-threaded, so these serial
+  bounds are the routine budget rather than a fallback behind pytest sharding.
 
 That keeps the **warm gate under five minutes** and the **cold miss path under
-fifteen minutes** even before parallelism helps.
+fifteen minutes** without parallelism.
 
 ## Migration sequence
 

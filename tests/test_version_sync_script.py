@@ -16,10 +16,6 @@ LOCK_ROOT_VERSION_PATTERN = re.compile(
 UV_LOCK_ROOT_VERSION_PATTERN = re.compile(
     r'(name = "biomcp-cli"\nversion = ")([^"]+)(")', re.MULTILINE
 )
-UV_LOCK_MUSTMATCH_PATTERN = re.compile(
-    r'name = "mustmatch"\nversion = "([^"]+)"',
-    re.MULTILINE,
-)
 
 
 def _copy_version_sync_fixture(tmp_path: Path) -> Path:
@@ -228,15 +224,13 @@ def test_manifest_and_citation_versions_match_repo_metadata() -> None:
     assert _read_citation_version(REPO_ROOT / "CITATION.cff") == pyproject["project"]["version"]
 
 
-def test_uv_lock_matches_release_version_and_intentional_mustmatch_pin() -> None:
+def test_uv_lock_matches_release_version_and_excludes_mustmatch_package() -> None:
     uv_lock = (REPO_ROOT / "uv.lock").read_text(encoding="utf-8")
 
     root_match = UV_LOCK_ROOT_VERSION_PATTERN.search(uv_lock)
-    mustmatch_match = UV_LOCK_MUSTMATCH_PATTERN.search(uv_lock)
 
     assert root_match is not None, "missing biomcp-cli package entry in uv.lock"
-    assert mustmatch_match is not None, "missing mustmatch package entry in uv.lock"
     assert root_match.group(2) == "0.8.22"
-    assert mustmatch_match.group(1) == "0.0.4"
-    # Ticket 393 restores the floor after the mustmatch binary cutover.
-    assert '{ name = "mustmatch", marker = "extra == \'dev\'", specifier = "==0.0.4" }' in uv_lock
+    assert 'name = "mustmatch"' not in uv_lock
+    assert "mustmatch" + "==0.0.4" not in uv_lock
+    assert 'specifier = "==0.0.4"' not in uv_lock

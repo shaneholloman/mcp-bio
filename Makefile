@@ -1,6 +1,5 @@
 .PHONY: build test lint check-quality-ratchet release-gate run clean spec spec-pr spec-contracts verify release-live-smoke validate-skills test-contracts install sync-python-dev
 
-SPEC_XDIST_ARGS = -n auto --dist loadfile
 SPEC_ROUTINE_PATHS = \
 	spec/entity/article.md \
 	spec/entity/study.md \
@@ -66,36 +65,23 @@ install:
 
 spec:
 	cargo build --release --locked
-	$(MAKE) sync-python-dev
-	bash spec/fixtures/setup-study-spec-fixture.sh "$(CURDIR)"
-	bash spec/fixtures/setup-ddinter-spec-fixture.sh "$(CURDIR)"
-	. "$(CURDIR)/.cache/spec-study-env"; . "$(CURDIR)/.cache/spec-ddinter-env"; PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" \
-		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest $(SPEC_ROUTINE_PATHS) --mustmatch-lang bash --mustmatch-timeout 120 -v $(SPEC_XDIST_ARGS)'
+	bash scripts/run-specs.sh spec
 
 spec-pr:
 	cargo build --release --locked
-	$(MAKE) sync-python-dev
-	bash spec/fixtures/setup-study-spec-fixture.sh "$(CURDIR)"
-	bash spec/fixtures/setup-ddinter-spec-fixture.sh "$(CURDIR)"
-	. "$(CURDIR)/.cache/spec-study-env"; . "$(CURDIR)/.cache/spec-ddinter-env"; PATH="$(CURDIR)/target/release:$(PATH)" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" \
-		uv run --no-sync sh -c 'PATH="$(CURDIR)/target/release:$$PATH" BIOMCP_BIN="$(CURDIR)/target/release/biomcp" pytest $(SPEC_ROUTINE_PATHS) --mustmatch-lang bash --mustmatch-timeout 180 -v $(SPEC_XDIST_ARGS)'
+	bash scripts/run-specs.sh spec-pr
 
 spec-contracts:
 	cargo build --release --locked
-	$(MAKE) sync-python-dev
-	bash spec/fixtures/setup-study-spec-fixture.sh "$(CURDIR)"
-	. "$(CURDIR)/.cache/spec-study-env"; PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" \
-		uv run --no-sync sh -c 'PATH="$$PWD/target/release:$$PATH" BIOMCP_BIN="$$PWD/target/release/biomcp" pytest spec/entity/article.md spec/surface/mcp.md spec/surface/test_parallel_isolation_contract.py --mustmatch-lang bash --mustmatch-timeout 180 -v'
+	bash scripts/run-specs.sh spec-contracts
 
 verify:
 	cargo build --release --locked
-	$(MAKE) sync-python-dev
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci discover ERBB1
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci search disease melanoma --limit 3
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci search article -g BRAF --limit 3
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci variant normalize all 'NM_000248.3:c.135del'
-	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" \
-		uv run --no-sync sh -c 'PATH="$$PWD/target/release:$$PATH" BIOMCP_BIN="$$PWD/target/release/biomcp" pytest $(SPEC_LIVE_PATHS) --mustmatch-lang bash --mustmatch-timeout 180 -v'
+	bash scripts/run-specs.sh verify
 
 release-live-smoke:
 	$(MAKE) verify
