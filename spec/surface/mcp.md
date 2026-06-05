@@ -311,13 +311,17 @@ rg -n 'echo "[[:punct:]][[:alnum:]_]*" [|] mustmatch' ../../spec --glob '*.md' |
 ```
 
 ```bash
-rg -l 'run[[:space:]]id=|expect[=]' ../../spec --glob '*.md' | mustmatch like "spec/"
+rg -n '^```bash[[:space:]][^`]*run[[:space:]]+id=' ../../spec --glob '*.md' | mustmatch like '```bash'
 ```
 
 ```bash
-rg -l '^[[:space:]]*[.][.][.]|[.][.][.]$' ../../spec --glob '*.md' | mustmatch like "spec/"
+rg -n '^```[[:alnum:]_-]+[[:space:]][^`]*expect=' ../../spec --glob '*.md' | mustmatch like 'expect='
 ```
 
 ```bash
-rg -n 'Saved[[:space:]]to:|date=\[-0-9|get[(]"count"[)] == [[:digit:]]|Total: \[0-9' ../../spec --glob '*.md' | mustmatch ""
+rg -l -U '```(bash|sh)[^\n]*\n(?s:[^`]*[|][[:space:]]*mustmatch[^`]*[.][.][.][^`]*)```|```[[:alnum:]_-]+[^\n]*expect=[^\n]*\n(?s:[^`]*[.][.][.][^`]*)```' ../../spec --glob '*.md' | mustmatch like "spec/"
+```
+
+```bash
+rg -n 'Saved[[:space:]]to:|date=\[-0-9|Total: \[0-9' ../../spec --glob '*.md' | mustmatch ""
 ```
