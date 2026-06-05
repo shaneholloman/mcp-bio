@@ -510,11 +510,11 @@ remains available, but only through the explicit operator-run `make verify` lane
 that keeps using the BioMCP spec wrapper.
 
 ```bash
-out="$(make -C ../.. -n spec 2>&1 || true)"
-printf '%s\n' "$out" | mustmatch like "spec/surface/mcp.md"
-printf '%s\n' "$out" | mustmatch like "test_parallel_isolation_contract.py"
-printf '%s\n' "$out" | mustmatch not like "spec/entity/phenotype.md"
-printf '%s\n' "$out" | mustmatch not like "spec/surface/cli.md"
+make -C ../.. -n spec 2>&1 | mustmatch like "scripts/run-specs.sh spec"
+awk '/SPEC_ROUTINE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch like "spec/surface/mcp.md
+test_parallel_isolation_contract.py"
+awk '/SPEC_ROUTINE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch not like "spec/entity/phenotype.md
+spec/surface/cli.md"
 ```
 
 The live lane is intentionally named and opt-in so operators can run upstream
@@ -522,19 +522,17 @@ checks without making unrelated ordinary tickets depend on public service
 availability.
 
 ```bash
-out="$(make -C ../.. -n verify 2>&1 || true)"
-printf '%s\n' "$out" | mustmatch like "tools/biomcp-ci discover"
-printf '%s\n' "$out" | mustmatch like "tools/biomcp-ci search disease"
-printf '%s\n' "$out" | mustmatch like "spec/entity/phenotype.md"
-printf '%s\n' "$out" | mustmatch like "spec/surface/discover.md"
+make -C ../.. -n verify 2>&1 | mustmatch like "tools/biomcp-ci discover
+scripts/run-specs.sh verify"
+awk '/SPEC_LIVE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch like "spec/entity/phenotype.md
+spec/surface/discover.md"
 ```
 
 The smoke matrix should include article source-status and variant-normalization
 confidence through the same wrapper instead of a second cache or replay system.
 
 ```bash
-out="$(make -C ../.. -n verify 2>&1 || true)"
-printf '%s\n' "$out" | mustmatch like "tools/biomcp-ci search article"
-printf '%s\n' "$out" | mustmatch like "tools/biomcp-ci variant normalize"
-printf '%s\n' "$out" | mustmatch like "spec/entity/pathway.md"
+make -C ../.. -n verify 2>&1 | mustmatch like "tools/biomcp-ci search article
+tools/biomcp-ci variant normalize"
+awk '/SPEC_LIVE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch like "spec/entity/pathway.md"
 ```

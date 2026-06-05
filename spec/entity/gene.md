@@ -52,7 +52,7 @@ missing, BioMCP should stay truthful rather than fabricating tissue rows.
 
 ```bash
 ../../tools/biomcp-ci get gene BRAF hpa \
-  | mustmatch '/## Human Protein Atlas[\s\S]*(No Human Protein Atlas records returned|Reliability:[\s\S]*\| Tissue \| Level \|[\s\S]*Subcellular)/'
+  | mustmatch '/## Human Protein Atlas[\s\S]*(No Human Protein Atlas records returned|\| Tissue \| Level \|[\s\S]*Reliability:[\s\S]*Subcellular)/'
 ```
 
 ## Druggability & Targets

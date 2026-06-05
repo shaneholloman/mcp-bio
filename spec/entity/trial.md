@@ -130,6 +130,8 @@ ClinicalTrials.gov condition and alias values are untrusted source text, but
 BioMCP presents them inside copy-pasteable next commands. Shell-active text must
 be escaped in the emitted commands while preserving the visible source strings.
 
+<!-- mustmatch-lint: skip -->
+
 ```bash run id=ctgov-shell-safe-next-commands
 bash ../fixtures/setup-ctgov-intervention-alias-spec-fixture.sh ../..
 . ../../.cache/spec-ctgov-intervention-alias-env

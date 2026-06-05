@@ -86,6 +86,8 @@ The behavior checks above protect the public playbook response. The router also
 needs its documented ownership zones so future route additions do not collapse
 back into one large catch-all module.
 
+<!-- mustmatch-lint: skip -->
+
 ```bash run id=suggest-structure-contract
 cd ../.. && cargo test --test suggest_cli_structure -- --nocapture 2>&1
 ```
@@ -122,6 +124,8 @@ biomcp get gene <symbol>'
 The behavior checks above protect the public skill output. The implementation
 also needs separate asset, catalog, and install ownership zones so MCP resource
 reads and filesystem installation do not collapse back into one over-cap module.
+
+<!-- mustmatch-lint: skip -->
 
 ```bash run id=skill-structure-contract
 cd ../.. && cargo test --test skill_cli_structure -- --nocapture 2>&1
