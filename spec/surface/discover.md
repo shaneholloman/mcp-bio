@@ -74,12 +74,10 @@ should point to the concrete playbook, and no-match should stay successful with
 the same four-field JSON shape.
 
 ```bash
-out="$(../../tools/biomcp-ci suggest "What drugs treat melanoma?")"
-echo "$out" | mustmatch like 'matched_skill: `treatment-lookup`'
-echo "$out" | mustmatch like '`biomcp skill treatment-lookup`'
-json_out="$(../../tools/biomcp-ci --json suggest "What is x?")"
-echo "$json_out" | mustmatch like '"matched_skill": null'
-echo "$json_out" | jq -e '.first_commands == [] and .full_skill == null' >/dev/null
+../../tools/biomcp-ci suggest "What drugs treat melanoma?" | mustmatch like 'matched_skill: `treatment-lookup`
+`biomcp skill treatment-lookup`'
+../../tools/biomcp-ci --json suggest "What is x?" | mustmatch like '"matched_skill": null'
+../../tools/biomcp-ci --json suggest "What is x?" | jq -e '.first_commands == [] and .full_skill == null' >/dev/null
 ```
 
 ## Suggest Decomposition Keeps the First-Move Router Review-Sized
@@ -88,13 +86,12 @@ The behavior checks above protect the public playbook response. The router also
 needs its documented ownership zones so future route additions do not collapse
 back into one large catch-all module.
 
-```bash
-set +e
-structure_out="$(cd ../.. && cargo test --test suggest_cli_structure -- --nocapture 2>&1)"
-structure_status=$?
-set -e
-echo "$structure_out" | mustmatch like "suggest_split_files_exist_with_doc_headers"
-test "$structure_status" -eq 0
+```bash run id=suggest-structure-contract
+cd ../.. && cargo test --test suggest_cli_structure -- --nocapture 2>&1
+```
+
+```text expect=suggest-structure-contract contains
+suggest_split_files_exist_with_doc_headers
 ```
 
 ## Skill Still Opens the Longer Guide
@@ -105,22 +102,19 @@ should also carry the stricter discover framing and the relational-query
 counter-examples so installed `SKILL.md` matches the canonical prompt.
 
 ```bash
-overview="$(../../tools/biomcp-ci skill)"
-echo "$overview" | mustmatch like 'biomcp suggest "<question>"'
-list="$(../../tools/biomcp-ci skill list)"
-echo "$list" | mustmatch like "# BioMCP Worked Examples"
-echo "$list" | mustmatch like "treatment-lookup"
-render="$(../../tools/biomcp-ci skill render)"
-echo "$render" | mustmatch like "## Routing rules"
-echo "$render" | mustmatch like "## How-to reference"
-echo "$render" | mustmatch like "single-entity free-text lookup only"
-echo "$render" | mustmatch like "biomcp discover BRCA1"
-echo "$render" | mustmatch like "biomcp discover dabigatran"
-echo "$render" | mustmatch like "### Don't use \`discover\` for relational or list questions"
-echo "$render" | mustmatch like '"drug classes that interact with warfarin"'
-echo "$render" | mustmatch like 'biomcp search article -k "drug classes that interact with warfarin" --type review --limit 5'
-echo "$render" | mustmatch like '"genes regulated by MEF2 in the heart"'
-echo "$render" | mustmatch like "biomcp get gene <symbol>"
+../../tools/biomcp-ci skill | mustmatch like 'biomcp suggest "<question>"'
+../../tools/biomcp-ci skill list | mustmatch like '# BioMCP Worked Examples
+treatment-lookup'
+../../tools/biomcp-ci skill render | mustmatch like '## Routing rules
+## How-to reference
+single-entity free-text lookup only
+biomcp discover BRCA1
+biomcp discover dabigatran
+### Don'"'"'t use `discover` for relational or list questions
+"drug classes that interact with warfarin"
+biomcp search article -k "drug classes that interact with warfarin" --type review --limit 5
+"genes regulated by MEF2 in the heart"
+biomcp get gene <symbol>'
 ```
 
 ## Skill Decomposition Keeps Catalog and Install Ownership Separate
@@ -129,11 +123,10 @@ The behavior checks above protect the public skill output. The implementation
 also needs separate asset, catalog, and install ownership zones so MCP resource
 reads and filesystem installation do not collapse back into one over-cap module.
 
-```bash
-set +e
-structure_out="$(cd ../.. && cargo test --test skill_cli_structure -- --nocapture 2>&1)"
-structure_status=$?
-set -e
-echo "$structure_out" | mustmatch like "skill_split_files_exist_with_doc_headers"
-test "$structure_status" -eq 0
+```bash run id=skill-structure-contract
+cd ../.. && cargo test --test skill_cli_structure -- --nocapture 2>&1
+```
+
+```text expect=skill-structure-contract contains
+skill_split_files_exist_with_doc_headers
 ```
