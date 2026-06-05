@@ -74,6 +74,10 @@ source_if_present() {
   fi
 }
 
+sync_python_dev() {
+  uv sync --extra dev --no-install-project
+}
+
 run_study_fixture() {
   bash spec/fixtures/setup-study-spec-fixture.sh "$ROOT"
   source_if_present "$ROOT/.cache/spec-study-env"
@@ -92,7 +96,6 @@ run_markdown_specs() {
 
 run_python_contracts() {
   if ((${#PY_PATHS[@]})); then
-    uv sync --extra dev --no-install-project
     uv run --no-sync pytest "${PY_PATHS[@]}" -v
   fi
 }
@@ -103,12 +106,14 @@ case "$mode" in
   spec)
     timeout_args=(--timeout 120)
     paths=("${SPEC_ROUTINE_PATHS[@]}")
+    sync_python_dev
     run_study_fixture
     run_ddinter_fixture
     ;;
   spec-pr)
     timeout_args=(--timeout 180)
     paths=("${SPEC_ROUTINE_PATHS[@]}")
+    sync_python_dev
     run_study_fixture
     run_ddinter_fixture
     ;;
@@ -116,6 +121,7 @@ case "$mode" in
     timeout_args=(--timeout 180)
     paths=(spec/entity/article.md spec/surface/mcp.md spec/surface/test_parallel_isolation_contract.py)
     run_python=1
+    sync_python_dev
     run_study_fixture
     ;;
   verify)

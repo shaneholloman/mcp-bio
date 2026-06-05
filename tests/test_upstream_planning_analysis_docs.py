@@ -1153,6 +1153,7 @@ def test_pull_request_contract_gate_matches_release_validation() -> None:
 
 def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     makefile = _read_repo("Makefile")
+    runner = _read_repo("scripts/run-specs.sh")
     assert (
         ".PHONY: build test lint check-quality-ratchet release-gate run clean spec spec-pr spec-contracts verify release-live-smoke validate-skills test-contracts install sync-python-dev"
         in makefile
@@ -1205,6 +1206,13 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         makefile,
         flags=re.MULTILINE,
     )
+    assert "uv sync --extra dev --no-install-project" in runner
+    for mode in ("spec", "spec-pr", "spec-contracts"):
+        mode_block = re.search(rf"  {re.escape(mode)}\)\n(?P<body>.*?)\n    ;;", runner, flags=re.DOTALL)
+        assert mode_block is not None, f"runner must define {mode} mode"
+        assert "sync_python_dev" in mode_block.group("body"), (
+            f"{mode} must sync Python dev dependencies before running Markdown specs"
+        )
     assert re.search(
         r"^test-contracts:\n"
         r"\tcargo build --release --locked\n"
