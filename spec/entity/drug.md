@@ -12,11 +12,10 @@ Plain-name search should still show the same drug family across the U.S., EU,
 and WHO views so operators can compare regulatory coverage in one place.
 
 ```bash
-out="$(../../tools/biomcp-ci search drug trastuzumab --limit 3)"
-echo "$out" | mustmatch like "## US (MyChem.info / OpenFDA)"
-echo "$out" | mustmatch like "## EU (EMA)"
-echo "$out" | mustmatch like "## WHO (WHO Prequalification)"
-echo "$out" | mustmatch '/\|Trastuzumab\|Biotherapeutic Product\|[^|]+\|[^|]+\|[^|]+\|BT-ON[0-9]+\|/'
+../../tools/biomcp-ci search drug trastuzumab --limit 3 | mustmatch like '## US (MyChem.info / OpenFDA)
+## EU (EMA)
+## WHO (WHO Prequalification)'
+../../tools/biomcp-ci search drug trastuzumab --limit 3 | mustmatch '/\|Trastuzumab\|Biotherapeutic Product\|[^|]+\|[^|]+\|[^|]+\|BT-ON[0-9]+\|/'
 ```
 
 ## Brand-Name Bridge
@@ -25,9 +24,8 @@ Brand-name `get` requests should land on the canonical generic identity, not a
 brand-local card that keeps all downstream commands on the alias spelling.
 
 ```bash
-out="$(../../tools/biomcp-ci get drug Keytruda)"
-echo "$out" | mustmatch like "# pembrolizumab"
-echo "$out" | mustmatch like "biomcp drug trials pembrolizumab"
+../../tools/biomcp-ci get drug Keytruda | mustmatch like '# pembrolizumab
+biomcp drug trials pembrolizumab'
 ```
 
 ## Research-Code Bridge
@@ -61,12 +59,11 @@ surface a dedicated DDInter-backed report instead of asking the operator to
 infer partner classes from a generic drug card.
 
 ```bash
-out="$(../../tools/biomcp-ci drug interactions warfarin)"
-echo "$out" | mustmatch like "# warfarin"
-echo "$out" | mustmatch like "## Interacting Drug Classes"
-echo "$out" | mustmatch like "anti-infectives"
-echo "$out" | mustmatch like "antiplatelets"
-echo "$out" | mustmatch like "| statins |"
+../../tools/biomcp-ci drug interactions warfarin | mustmatch like '# warfarin
+## Interacting Drug Classes
+anti-infectives
+antiplatelets
+| statins |'
 ```
 
 ## Oncology Interaction Class Rollups
@@ -75,10 +72,9 @@ The same helper should stay useful for oncology drugs, where class-level
 grouping is often more actionable than a long flat list of partner rows.
 
 ```bash
-out="$(../../tools/biomcp-ci drug interactions imatinib)"
-echo "$out" | mustmatch like "# imatinib"
-echo "$out" | mustmatch like "## Interacting Drug Classes"
-echo "$out" | mustmatch like "| CYP3A4 |"
+../../tools/biomcp-ci drug interactions imatinib | mustmatch like '# imatinib
+## Interacting Drug Classes
+| CYP3A4 |'
 ```
 
 ## Indication Structured Search
@@ -87,10 +83,9 @@ A structured indication miss is still informative. BioMCP should say that the
 regulatory evidence is absent and point the user toward broader literature.
 
 ```bash
-out="$(../../tools/biomcp-ci search drug --indication 'Marfan syndrome' --limit 3)"
-echo "$out" | mustmatch like "This absence is informative"
-echo "$out" | mustmatch like 'biomcp search article -k "Marfan syndrome treatment" --type review --limit 5'
-echo "$out" | mustmatch like 'Try: biomcp discover "Marfan syndrome"'
+../../tools/biomcp-ci search drug --indication 'Marfan syndrome' --limit 3 | mustmatch like 'This absence is informative
+biomcp search article -k "Marfan syndrome treatment" --type review --limit 5
+Try: biomcp discover "Marfan syndrome"'
 ```
 
 ## WHO Regulatory Detail
@@ -99,10 +94,9 @@ WHO prequalification should stay readable as a regional table with the stable
 columns operators need for procurement and regulatory review.
 
 ```bash
-out="$(../../tools/biomcp-ci get drug trastuzumab regulatory --region who)"
-echo "$out" | mustmatch like "## Regulatory (WHO Prequalification)"
-echo "$out" | mustmatch like "| WHO ID | Type | Presentation / INN |"
-echo "$out" | mustmatch like "Samsung Bioepis NL B.V."
+../../tools/biomcp-ci get drug trastuzumab regulatory --region who | mustmatch like '## Regulatory (WHO Prequalification)
+| WHO ID | Type | Presentation / INN |
+Samsung Bioepis NL B.V.'
 ```
 
 ## Section Parity for Interaction Detail
@@ -112,10 +106,9 @@ contract as the helper instead of falling back to a separate low-fidelity
 interaction section.
 
 ```bash
-out="$(../../tools/biomcp-ci get drug warfarin interactions)"
-echo "$out" | mustmatch like "## Interactions (DDInter)"
-echo "$out" | mustmatch like "## Interacting Drug Classes"
-echo "$out" | mustmatch like "anti-infectives"
+../../tools/biomcp-ci get drug warfarin interactions | mustmatch like '## Interactions (DDInter)
+## Interacting Drug Classes
+anti-infectives'
 ```
 
 ## Targets & Trial Pivots
@@ -124,11 +117,10 @@ Regional regulatory detail should not crowd out targetability or the related
 trial/adverse-event pivots that a clinician uses from the same card.
 
 ```bash
-out="$(../../tools/biomcp-ci get drug pembrolizumab targets regulatory --region eu)"
-echo "$out" | mustmatch like "## Regulatory (EU - EMA)"
-echo "$out" | mustmatch like "## Targets (ChEMBL / Open Targets)"
-echo "$out" | mustmatch '/PDCD1\nMore:/'
-echo "$out" | mustmatch like "biomcp drug trials pembrolizumab"
+../../tools/biomcp-ci get drug pembrolizumab targets regulatory --region eu | mustmatch like '## Regulatory (EU - EMA)
+## Targets (ChEMBL / Open Targets)
+biomcp drug trials pembrolizumab'
+../../tools/biomcp-ci get drug pembrolizumab targets regulatory --region eu | mustmatch '/PDCD1\nMore:/'
 ```
 
 ## Truthful Source-Empty Interaction State
@@ -138,7 +130,6 @@ turn a missing DDInter row into a claim that the anchor drug has no clinical
 interactions.
 
 ```bash
-out="$(../../tools/biomcp-ci drug interactions daraxonrasib)"
-echo "$out" | mustmatch like "current DDInter download bundle has no matching rows"
-echo "$out" | mustmatch not like "no clinical interactions"
+../../tools/biomcp-ci drug interactions daraxonrasib | mustmatch like 'current DDInter download bundle has no matching rows'
+../../tools/biomcp-ci drug interactions daraxonrasib | mustmatch not like 'no clinical interactions'
 ```

@@ -101,9 +101,9 @@ out="$(../../tools/biomcp-ci --json variant normalize all 'BRAF V600E' 2>&1)"
 rc=$?
 set -e
 test "$rc" -ne 0
-echo "$out" | mustmatch like 'unsupported_notation'
-echo "$out" | mustmatch like 'BRAF V600E'
-echo "$out" | mustmatch like 'transcript HGVS'
+printf '%s\n' "$out" | mustmatch like 'unsupported_notation
+BRAF V600E
+transcript HGVS'
 ```
 
 ## Normalization Command Discoverability
@@ -112,10 +112,7 @@ The explicit proxy command should be visible from help and structured list
 output so agents can find it without trying hidden `get variant` rewrites.
 
 ```bash
-help="$(../../tools/biomcp-ci variant normalize --help)"
-echo "$help" | mustmatch like 'all, mutalyzer, or variantvalidator'
-echo "$help" | mustmatch like 'NM_000248.3:c.135del'
-
-list_json="$(../../tools/biomcp-ci --json list variant)"
-echo "$list_json" | jq -e '.commands | any(. == "variant normalize <service> <transcript_hgvs>")' >/dev/null
+../../tools/biomcp-ci variant normalize --help | mustmatch like 'all, mutalyzer, or variantvalidator
+NM_000248.3:c.135del'
+../../tools/biomcp-ci --json list variant | jq -e '.commands | any(. == "variant normalize <service> <transcript_hgvs>")' >/dev/null
 ```

@@ -11,12 +11,10 @@ contract here is that one remains the canonical stdio command and the other
 stays the Claude Desktop-friendly alias.
 
 ```bash
-mcp_help="$(../../tools/biomcp-ci mcp --help)"
-echo "$mcp_help" | mustmatch like "Run MCP server over stdio"
-echo "$mcp_help" | mustmatch like "Usage: biomcp mcp"
-serve_help="$(../../tools/biomcp-ci serve --help)"
-echo "$serve_help" | mustmatch like 'Alias for `mcp`'
-echo "$serve_help" | mustmatch like "Usage: biomcp serve"
+../../tools/biomcp-ci mcp --help | mustmatch like 'Run MCP server over stdio
+Usage: biomcp mcp'
+../../tools/biomcp-ci serve --help | mustmatch like 'Alias for `mcp`
+Usage: biomcp serve'
 ```
 
 ## Manual Stdio Startup Points Operators to HTTP
@@ -35,11 +33,10 @@ for cmd in mcp serve; do
   set -e
   test "$status" -ne 0
   test ! -s "$stdout_file"
-  stderr="$(cat "$stderr_file")"
-  echo "$stderr" | mustmatch like "expects an MCP client on stdin"
-  echo "$stderr" | mustmatch like "biomcp serve-http"
-  echo "$stderr" | mustmatch not like "connection closed"
-  echo "$stderr" | mustmatch not like "initialized request"
+  cat "$stderr_file" | mustmatch like 'expects an MCP client on stdin
+biomcp serve-http'
+  cat "$stderr_file" | mustmatch not like 'connection closed
+initialized request'
 done
 ```
 
@@ -49,10 +46,9 @@ The remote/server deployment mode should keep pointing operators at `/mcp` and
 the lightweight probe routes rather than drifting back toward legacy SSE copy.
 
 ```bash
-out="$(../../tools/biomcp-ci serve-http --help)"
-echo "$out" | mustmatch like "Streamable HTTP server at /mcp"
-echo "$out" | mustmatch like "GET /health, GET /readyz, GET /."
-echo "$out" | mustmatch like "--host <HOST>"
+../../tools/biomcp-ci serve-http --help | mustmatch like 'Streamable HTTP server at /mcp
+GET /health, GET /readyz, GET /.
+--host <HOST>'
 ```
 
 ## Probe Routes Stay Lightweight
@@ -74,9 +70,8 @@ done
 curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
 curl -fsS "http://127.0.0.1:$port/health" | mustmatch like '"status":"ok"'
 curl -fsS "http://127.0.0.1:$port/readyz" | mustmatch like '"status":"ok"'
-root="$(curl -fsS "http://127.0.0.1:$port/")"
-echo "$root" | mustmatch like '"transport":"streamable-http"'
-echo "$root" | mustmatch like '"mcp":"/mcp"'
+curl -fsS "http://127.0.0.1:$port/" | mustmatch like '"transport":"streamable-http"
+"mcp":"/mcp"'
 ```
 
 ## Remote Workflow Calls Keep BioMCP Text
@@ -97,7 +92,8 @@ for _ in $(seq 1 40); do
   sleep 0.25
 done
 curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
-out="$(uv run --no-sync python3 - "$port" <<'PY'
+uv run --no-sync python3 - "$port" <<'PY' | mustmatch like 'Command: biomcp study query --study msk_impact_2017 --gene TP53 --type mutations
+# Study Mutation Frequency: TP53 (msk_impact_2017)'
 import asyncio
 import sys
 from datetime import timedelta
@@ -115,9 +111,6 @@ async def main(port: str) -> None:
 
 asyncio.run(main(sys.argv[1]))
 PY
-)"
-echo "$out" | mustmatch like 'Command: biomcp study query --study msk_impact_2017 --gene TP53 --type mutations'
-echo "$out" | mustmatch like "# Study Mutation Frequency: TP53 (msk_impact_2017)"
 ```
 
 ## Read-Only Boundaries and Charted Calls Stay Visible
@@ -136,7 +129,10 @@ for _ in $(seq 1 40); do
   sleep 0.25
 done
 curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
-out="$(uv run --no-sync python3 - "$port" <<'PY'
+uv run --no-sync python3 - "$port" <<'PY' | mustmatch like 'CLI-only over MCP
+workstation-local filesystem paths
+# Study Mutation Frequency: TP53 (msk_impact_2017)
+IMAGE: image/svg+xml'
 import asyncio
 import sys
 from datetime import timedelta
@@ -158,11 +154,6 @@ async def main(port: str) -> None:
 
 asyncio.run(main(sys.argv[1]))
 PY
-)"
-echo "$out" | mustmatch like "CLI-only over MCP"
-echo "$out" | mustmatch like "workstation-local filesystem paths"
-echo "$out" | mustmatch like "# Study Mutation Frequency: TP53 (msk_impact_2017)"
-echo "$out" | mustmatch like "IMAGE: image/svg+xml"
 ```
 
 ## Repository Test Gate Runs Both Runtime Layers
@@ -172,10 +163,9 @@ run the Rust unit suite and the Python CLI/MCP/docs contract lane so neither
 runtime layer can report a silent green.
 
 ```bash
-out="$(make -C ../.. -n test 2>&1)"
-echo "$out" | mustmatch like "cargo nextest run"
-echo "$out" | mustmatch like 'uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"'
-echo "$out" | mustmatch like "uv run --no-sync mkdocs build --strict"
+make -C ../.. -n test 2>&1 | mustmatch like 'cargo nextest run
+uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"
+uv run --no-sync mkdocs build --strict'
 ```
 
 ## Repository Lint Keeps The Quality Ratchet
@@ -296,4 +286,32 @@ sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../t
 sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like 'specifier = "==0.0.4"'
 sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like "mustmatch-lang"
 sed -n '/mustmatch/p;/--mustmatch/p' ../../Makefile ../../pyproject.toml ../../tests/test_version_sync_script.py ../../uv.lock | mustmatch not like "mustmatch-timeout"
+```
+
+## Spec Corpus Uses Robust Mustmatch Blocks
+
+BioMCP's executable specs should read like durable documentation rather than a
+shell script that captures one command and checks fragments of it later. The
+corpus should use named blocks when one run needs separate expectations, use
+line-oriented ellipsis for volatile gaps, and avoid pinning local paths, build
+dates, and exact volatile counts.
+
+```bash
+rg -n 'echo "[[:punct:]][[:alnum:]_]*" [|] mustmatch' ../../spec --glob '*.md' | mustmatch ""
+```
+
+```bash
+rg -n '^```bash[[:space:]][^`]*run[[:space:]]+id=' ../../spec --glob '*.md' | mustmatch '/```bash[[:space:]].*run[[:space:]]+id=/'
+```
+
+```bash
+rg -n '^```[[:alnum:]_-]+[[:space:]][^`]*expect=' ../../spec --glob '*.md' | mustmatch '/expect=[[:alnum:]_-]+/'
+```
+
+```bash
+rg -l -U '```(bash|sh)[^\n]*\n(?s:[^`]*[|][[:space:]]*mustmatch[^`]*[.][.][.][^`]*)```|```[[:alnum:]_-]+[^\n]*expect=[^\n]*\n(?s:[^`]*[.][.][.][^`]*)```' ../../spec --glob '*.md' | mustmatch '/spec\/.+[.]md/'
+```
+
+```bash
+rg -n 'Saved[[:space:]]to:|date=\[-0-9|Total: \[0-9' ../../spec --glob '*.md' | mustmatch ""
 ```

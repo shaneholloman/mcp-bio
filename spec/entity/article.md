@@ -72,12 +72,11 @@ and still keep the saved-file contract on stdout.
 bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
-out="$(../../tools/biomcp-ci get article 22663012 fulltext)"
-echo "$out" | mustmatch like "## Full Text (PMC HTML)"
-path="$(printf '%s\n' "$out" | sed -n 's/^Saved to: //p' | head -n1)"
-test -n "$path"
-saved="$(cat "$path")"
-echo "$saved" | mustmatch like "PMC HTML fallback body text"
+rm -rf ../../.cache/biomcp-specs/downloads
+mkdir -p ../../.cache/biomcp-specs/downloads
+../../tools/biomcp-ci get article 22663012 fulltext | mustmatch like '## Full Text (PMC HTML)
+...'
+rg -l 'PMC HTML fallback body text' ../../.cache/biomcp-specs/downloads >/dev/null
 ```
 
 ## PDF Fallback Is Opt-In
@@ -89,14 +88,13 @@ fixture-backed article should fail cleanly without `--pdf` and succeed with it.
 bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
-default_out="$(../../tools/biomcp-ci get article 22663013 fulltext)"
-echo "$default_out" | mustmatch like "XML and HTML sources did not return full text"
-echo "$default_out" | mustmatch not like "Semantic Scholar PDF"
-pdf_out="$(../../tools/biomcp-ci get article 22663013 fulltext --pdf)"
-echo "$pdf_out" | mustmatch like "## Full Text (Semantic Scholar PDF)"
-pdf_path="$(printf '%s\n' "$pdf_out" | sed -n 's/^Saved to: //p' | head -n1)"
-test -n "$pdf_path"
-test -f "$pdf_path"
+../../tools/biomcp-ci get article 22663013 fulltext | mustmatch like "XML and HTML sources did not return full text"
+../../tools/biomcp-ci get article 22663013 fulltext | mustmatch not like "Semantic Scholar PDF"
+rm -rf ../../.cache/biomcp-specs/downloads
+mkdir -p ../../.cache/biomcp-specs/downloads
+../../tools/biomcp-ci get article 22663013 fulltext --pdf | mustmatch like '## Full Text (Semantic Scholar PDF)
+...'
+test "$(find ../../.cache/biomcp-specs/downloads -maxdepth 1 -type f -name '*.txt' | wc -l)" -ge 1
 ```
 
 ## JATS Converter Keeps Evidence-Carrying Floats, Supplements, and Complex Table Markers
@@ -154,7 +152,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 jats_json="$(../../tools/biomcp-ci --json get article 22663011 fulltext)"
-echo "$jats_json" | mustmatch like '"full_text_source"'
+printf '%s\n' "$jats_json" | mustmatch like '"full_text_source"'
 ARTICLE_JSON="$jats_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
@@ -187,7 +185,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 html_json="$(../../tools/biomcp-ci --json get article 22663012 fulltext)"
-echo "$html_json" | mustmatch like '"full_text_source"'
+printf '%s\n' "$html_json" | mustmatch like '"full_text_source"'
 ARTICLE_JSON="$html_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
@@ -219,7 +217,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 pdf_json="$(../../tools/biomcp-ci --json get article 22663013 fulltext --pdf)"
-echo "$pdf_json" | mustmatch like '"full_text_source"'
+printf '%s\n' "$pdf_json" | mustmatch like '"full_text_source"'
 ARTICLE_JSON="$pdf_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
@@ -339,9 +337,8 @@ JSON manifest or listing individual package members.
 bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
-markdown="$(../../tools/biomcp-ci get article 22663011 fulltext)"
-echo "$markdown" | mustmatch like "biomcp --json get article 22663011 assets"
-echo "$markdown" | mustmatch not like "figure-floats.png
+../../tools/biomcp-ci get article 22663011 fulltext | mustmatch like "biomcp --json get article 22663011 assets"
+../../tools/biomcp-ci get article 22663011 fulltext | mustmatch not like "figure-floats.png
 traces-s1.csv"
 ```
 

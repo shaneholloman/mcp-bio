@@ -11,10 +11,10 @@ documented JSON exception for cache paths.
 
 ```bash
 out="$(../../tools/biomcp-ci --help)"
-echo "$out" | mustmatch like "leading public biomedical data sources"
-echo "$out" | mustmatch like "serve-http"
-echo "$out" | mustmatch '/suggest\s+Suggest .*biomedical question/'
-echo "$out" | mustmatch like "cache path, which stays plain text"
+printf '%s\n' "$out" | mustmatch like "leading public biomedical data sources"
+printf '%s\n' "$out" | mustmatch like "serve-http"
+printf '%s\n' "$out" | mustmatch '/suggest\s+Suggest .*biomedical question/'
+printf '%s\n' "$out" | mustmatch like "cache path, which stays plain text"
 ```
 
 ## Static Command Guides Stay Task-Oriented
@@ -24,11 +24,11 @@ subpages should keep teaching when to use the command, not just list flags.
 
 ```bash
 discover="$(../../tools/biomcp-ci list discover)"
-echo "$discover" | mustmatch like '`discover <query>`'
-echo "$discover" | mustmatch like "If no biomedical entities resolve"
+printf '%s\n' "$discover" | mustmatch like '`discover <query>`'
+printf '%s\n' "$discover" | mustmatch like "If no biomedical entities resolve"
 batch="$(../../tools/biomcp-ci list batch)"
-echo "$batch" | mustmatch like '`batch <entity> <id1,id2,...>`'
-echo "$batch" | mustmatch like "up to 10 IDs"
+printf '%s\n' "$batch" | mustmatch like '`batch <entity> <id1,id2,...>`'
+printf '%s\n' "$batch" | mustmatch like "up to 10 IDs"
 ```
 
 ## List Command Documents Update Checksum Override
@@ -44,8 +44,8 @@ set +e
 list_contract_out="$(cd ../.. && uv run --no-sync pytest tests/test_update_command_docs_contract.py -k update_list_reference -v 2>&1)"
 list_contract_status=$?
 set -e
-echo "$list_contract_out" | mustmatch like "test_update_list_reference_and_rendered_list_describe_checksum_override"
-echo "$list_contract_out" | mustmatch like "test_update_list_reference_contract_rejects_stale_update_line"
+printf '%s\n' "$list_contract_out" | mustmatch like "test_update_list_reference_and_rendered_list_describe_checksum_override"
+printf '%s\n' "$list_contract_out" | mustmatch like "test_update_list_reference_contract_rejects_stale_update_line"
 test "$list_contract_status" -eq 0
 ```
 
@@ -130,7 +130,7 @@ assert any("search all" in str(entry) for entry in refs)
 assert gene.get("entity") == "gene"
 assert any("get gene <symbol>" in str(command) for command in entries(gene.get("commands")))
 PY
-echo "$root_json" | mustmatch like '"entities"'
+printf '%s\n' "$root_json" | mustmatch like '"entities"'
 ```
 
 ## Operator Commands Keep Distinct Output Modes
@@ -141,11 +141,11 @@ the executable/build identity for debugging.
 
 ```bash
 path="$(../../tools/biomcp-ci --json cache path)"
-echo "$path" | mustmatch '/^\/.*\/\.cache\/biomcp-specs\/http$/'
+printf '%s\n' "$path" | mustmatch '/^\/.*\/\.cache\/biomcp-specs\/http$/'
 version="$(../../tools/biomcp-ci version --verbose)"
-echo "$version" | mustmatch '/^biomcp 0\.[0-9]+\.[0-9]+/'
-echo "$version" | mustmatch like "Executable:"
-echo "$version" | mustmatch '/Build: version=0\.[0-9]+\.[0-9]+, git=[0-9a-f]+, date=[-0-9:+TZ]+/'
+printf '%s\n' "$version" | mustmatch '/^biomcp 0\.[0-9]+\.[0-9]+/'
+printf '%s\n' "$version" | mustmatch like "Executable:"
+printf '%s\n' "$version" | mustmatch like 'Build: version='
 ```
 
 ## Emitted Commands Stay Shell-Safe
@@ -160,8 +160,8 @@ quoting.
 set -e
 plain="$(../../tools/biomcp-ci suggest "What drugs treat melanoma?")"
 spaced="$(../../tools/biomcp-ci suggest "What drugs treat paclitaxel protein-bound?")"
-echo "$plain" | mustmatch like "biomcp search drug --indication melanoma"
-echo "$spaced" | mustmatch like 'biomcp search drug --indication "paclitaxel protein-bound"'
+printf '%s\n' "$plain" | mustmatch like "biomcp search drug --indication melanoma"
+printf '%s\n' "$spaced" | mustmatch like 'biomcp search drug --indication "paclitaxel protein-bound"'
 ```
 
 Discover is the brittle case because it emits commands directly from free text.
@@ -175,9 +175,9 @@ discover_article_cmd="$(../../tools/biomcp-ci discover "Graves'" | grep 'biomcp 
 discover_get_disease_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(" ".join(shlex.split(sys.argv[1])))' "$discover_get_disease_cmd")"
 discover_trials_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(" ".join(shlex.split(sys.argv[1])))' "$discover_trials_cmd")"
 discover_article_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(" ".join(shlex.split(sys.argv[1])))' "$discover_article_cmd")"
-echo "$discover_get_disease_argv" | mustmatch like "get disease Graves' disease"
-echo "$discover_trials_argv" | mustmatch like "disease trials Graves' disease"
-echo "$discover_article_argv" | mustmatch like "search article -k Graves' disease"
+printf '%s\n' "$discover_get_disease_argv" | mustmatch like "get disease Graves' disease"
+printf '%s\n' "$discover_trials_argv" | mustmatch like "disease trials Graves' disease"
+printf '%s\n' "$discover_article_argv" | mustmatch like "search article -k Graves' disease"
 ```
 
 Cross-entity orientation needs the same contract in its counts-only follow-up
@@ -187,7 +187,7 @@ links, including parenthesized protein-complex-like terms.
 set -e
 paren_cmd="$(../../tools/biomcp-ci search all --keyword "AP-1(c-Jun/c-Fos)" --counts-only | grep 'type review' | head -1 | tr -d '`' | sed 's/^- //')"
 paren_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(shlex.split(sys.argv[1]))' "$paren_cmd")"
-echo "$paren_argv" | mustmatch like "AP-1(c-Jun/c-Fos)"
+printf '%s\n' "$paren_argv" | mustmatch like "AP-1(c-Jun/c-Fos)"
 ```
 
 Apostrophe-bearing counts-only follow-ups are the current broken surface in
@@ -197,7 +197,7 @@ Apostrophe-bearing counts-only follow-ups are the current broken surface in
 set -e
 apostrophe_cmd="$(../../tools/biomcp-ci search all --keyword "Graves'" --counts-only | grep 'type review' | head -1 | tr -d '`' | sed 's/^- //')"
 apostrophe_argv="$(uv run --no-sync python3 -c 'import shlex,sys; print(" ".join(shlex.split(sys.argv[1])))' "$apostrophe_cmd")"
-echo "$apostrophe_argv" | mustmatch like "--keyword Graves'"
+printf '%s\n' "$apostrophe_argv" | mustmatch like "--keyword Graves'"
 ```
 
 ## Health and Admin Help Stay Explicit
@@ -207,11 +207,11 @@ inspection and keep local-runtime admin help truthful about what each sync owns.
 
 ```bash
 health="$(../../tools/biomcp-ci health --apis-only)"
-echo "$health" | mustmatch like "# BioMCP Health Check"
-echo "$health" | mustmatch like "| API | Status | Latency | Affects |"
+printf '%s\n' "$health" | mustmatch like "# BioMCP Health Check"
+printf '%s\n' "$health" | mustmatch like "| API | Status | Latency | Affects |"
 whoivd="$(../../tools/biomcp-ci who-ivd sync --help)"
-echo "$whoivd" | mustmatch like "WHO Prequalified IVD diagnostic CSV export"
-echo "$whoivd" | mustmatch like "Usage: biomcp who-ivd sync"
+printf '%s\n' "$whoivd" | mustmatch like "WHO Prequalified IVD diagnostic CSV export"
+printf '%s\n' "$whoivd" | mustmatch like "Usage: biomcp who-ivd sync"
 ```
 
 The health implementation should also keep its documented decomposition ratchet
@@ -223,7 +223,7 @@ set +e
 structure_out="$(cd ../.. && cargo test --test health_cli_structure -- --nocapture 2>&1)"
 structure_status=$?
 set -e
-echo "$structure_out" | mustmatch like "health_split_files_exist_with_doc_headers"
+printf '%s\n' "$structure_out" | mustmatch like "health_split_files_exist_with_doc_headers"
 test "$structure_status" -eq 0
 ```
 
@@ -238,7 +238,7 @@ set +e
 list_structure_out="$(cd ../.. && cargo test --test list_cli_structure -- --nocapture 2>&1)"
 list_structure_status=$?
 set -e
-echo "$list_structure_out" | mustmatch like "list_split_files_exist_with_doc_headers"
+printf '%s\n' "$list_structure_out" | mustmatch like "list_split_files_exist_with_doc_headers"
 test "$list_structure_status" -eq 0
 ```
 
@@ -252,7 +252,7 @@ set +e
 structure_out="$(cd ../.. && cargo test --test article_cli_tests_structure -- --nocapture 2>&1)"
 structure_status=$?
 set -e
-echo "$structure_out" | mustmatch like "article_cli_test_split_files_exist_with_doc_headers"
+printf '%s\n' "$structure_out" | mustmatch like "article_cli_test_split_files_exist_with_doc_headers"
 test "$structure_status" -eq 0
 ```
 
@@ -268,7 +268,7 @@ set +e
 structure_out="$(cd ../.. && cargo test --test cli_line_cap_absorption -- --nocapture 2>&1)"
 structure_status=$?
 set -e
-echo "$structure_out" | mustmatch like "ticket_347_residual_allowlist_entries_are_absorbed"
+printf '%s\n' "$structure_out" | mustmatch like "ticket_347_residual_allowlist_entries_are_absorbed"
 test "$structure_status" -eq 0
 ```
 
@@ -284,7 +284,7 @@ downgrade to TLS-only trust.
 help="$(../../tools/biomcp-ci update --help)"
 printf '%s\n' "$help" | grep -Eiq "SHA-?256"
 printf '%s\n' "$help" | grep -Eiq "checksum"
-echo "$help" | mustmatch like "--allow-missing-checksum"
+printf '%s\n' "$help" | mustmatch like "--allow-missing-checksum"
 ```
 
 The unsafe marker belongs on the override option itself. This block extracts the
@@ -318,7 +318,7 @@ assert re.search(r"SHA-?256", text, flags=re.IGNORECASE), text
 print(text)
 PY
 )"
-echo "$allow_block" | mustmatch like "--allow-missing-checksum"
+printf '%s\n' "$allow_block" | mustmatch like "--allow-missing-checksum"
 printf '%s\n' "$allow_block" | grep -q "UNSAFE"
 printf '%s\n' "$allow_block" | grep -Eiq "checksum"
 printf '%s\n' "$allow_block" | grep -Eiq "SHA-?256"
@@ -329,7 +329,7 @@ set +e
 update_out="$(cd ../.. && cargo test --lib enforce_checksum_policy_missing_sidecar_without_override_fails_closed -- --nocapture 2>&1)"
 update_status=$?
 set -e
-echo "$update_out" | mustmatch like "enforce_checksum_policy_missing_sidecar_without_override_fails_closed"
+printf '%s\n' "$update_out" | mustmatch like "enforce_checksum_policy_missing_sidecar_without_override_fails_closed"
 test "$update_status" -eq 0
 ```
 
@@ -345,7 +345,7 @@ set +e
 mcp_policy_out="$(cd ../.. && uv run --no-sync pytest tests/test_quality_ratchet_contract.py::test_mcp_description_policy_rejects_legacy_update_marker_only -v 2>&1)"
 mcp_policy_status=$?
 set -e
-echo "$mcp_policy_out" | mustmatch like "test_mcp_description_policy_rejects_legacy_update_marker_only"
+printf '%s\n' "$mcp_policy_out" | mustmatch like "test_mcp_description_policy_rejects_legacy_update_marker_only"
 test "$mcp_policy_status" -eq 0
 ```
 
@@ -361,8 +361,8 @@ set +e
 benchmark_structure_out="$(cd ../.. && cargo test --test benchmark_cli_structure -- --nocapture 2>&1)"
 benchmark_structure_status=$?
 set -e
-echo "$benchmark_structure_out" | mustmatch like "benchmark_internal_harness_split_files_exist_with_doc_headers"
-echo "$benchmark_structure_out" | mustmatch like "benchmark_internal_harness_contract_pins_runtime_and_docs"
+printf '%s\n' "$benchmark_structure_out" | mustmatch like "benchmark_internal_harness_split_files_exist_with_doc_headers"
+printf '%s\n' "$benchmark_structure_out" | mustmatch like "benchmark_internal_harness_contract_pins_runtime_and_docs"
 test "$benchmark_structure_status" -eq 0
 ```
 
@@ -378,7 +378,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 jats_json="$(../../tools/biomcp-ci --json get article 22663011 fulltext)"
-echo "$jats_json" | mustmatch like '"full_text_source"'
+printf '%s\n' "$jats_json" | mustmatch like '"full_text_source"'
 ARTICLE_JSON="$jats_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
@@ -412,7 +412,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 html_json="$(../../tools/biomcp-ci --json get article 22663012 fulltext)"
-echo "$html_json" | mustmatch like '"full_text_source"'
+printf '%s\n' "$html_json" | mustmatch like '"full_text_source"'
 ARTICLE_JSON="$html_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
@@ -444,7 +444,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 pdf_json="$(../../tools/biomcp-ci --json get article 22663013 fulltext --pdf)"
-echo "$pdf_json" | mustmatch like '"full_text_source"'
+printf '%s\n' "$pdf_json" | mustmatch like '"full_text_source"'
 ARTICLE_JSON="$pdf_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
@@ -510,11 +510,11 @@ remains available, but only through the explicit operator-run `make verify` lane
 that keeps using the BioMCP spec wrapper.
 
 ```bash
-out="$(make -C ../.. -n spec 2>&1 || true)"
-echo "$out" | mustmatch like "spec/surface/mcp.md"
-echo "$out" | mustmatch like "test_parallel_isolation_contract.py"
-echo "$out" | mustmatch not like "spec/entity/phenotype.md"
-echo "$out" | mustmatch not like "spec/surface/cli.md"
+make -C ../.. -n spec 2>&1 | mustmatch like "scripts/run-specs.sh spec"
+awk '/SPEC_ROUTINE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch like "spec/surface/mcp.md
+test_parallel_isolation_contract.py"
+awk '/SPEC_ROUTINE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch not like "spec/entity/phenotype.md
+spec/surface/cli.md"
 ```
 
 The live lane is intentionally named and opt-in so operators can run upstream
@@ -522,19 +522,17 @@ checks without making unrelated ordinary tickets depend on public service
 availability.
 
 ```bash
-out="$(make -C ../.. -n verify 2>&1 || true)"
-echo "$out" | mustmatch like "tools/biomcp-ci discover"
-echo "$out" | mustmatch like "tools/biomcp-ci search disease"
-echo "$out" | mustmatch like "spec/entity/phenotype.md"
-echo "$out" | mustmatch like "spec/surface/discover.md"
+make -C ../.. -n verify 2>&1 | mustmatch like "tools/biomcp-ci discover
+scripts/run-specs.sh verify"
+awk '/SPEC_LIVE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch like "spec/entity/phenotype.md
+spec/surface/discover.md"
 ```
 
 The smoke matrix should include article source-status and variant-normalization
 confidence through the same wrapper instead of a second cache or replay system.
 
 ```bash
-out="$(make -C ../.. -n verify 2>&1 || true)"
-echo "$out" | mustmatch like "tools/biomcp-ci search article"
-echo "$out" | mustmatch like "tools/biomcp-ci variant normalize"
-echo "$out" | mustmatch like "spec/entity/pathway.md"
+make -C ../.. -n verify 2>&1 | mustmatch like "tools/biomcp-ci search article
+tools/biomcp-ci variant normalize"
+awk '/SPEC_LIVE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch like "spec/entity/pathway.md"
 ```

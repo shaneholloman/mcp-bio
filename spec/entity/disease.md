@@ -47,11 +47,10 @@ The default card should expose the persistent ID, top cross-entity summaries,
 and the executable next steps for trials, articles, diagnostics, and drugs.
 
 ```bash
-out="$(../../tools/biomcp-ci get disease melanoma)"
-echo "$out" | mustmatch like "ID: MONDO:0005105"
-echo "$out" | mustmatch like "Recruiting Trials (ClinicalTrials.gov):"
-echo "$out" | mustmatch like 'biomcp search trial -c "melanoma"'
-echo "$out" | mustmatch like 'biomcp search drug --indication "melanoma"'
+../../tools/biomcp-ci get disease melanoma | mustmatch like 'ID: MONDO:0005105
+Recruiting Trials (ClinicalTrials.gov):
+biomcp search trial -c "melanoma"
+biomcp search drug --indication "melanoma"'
 ```
 
 ## Genes & Diagnostics
@@ -67,12 +66,11 @@ with reviewed HPO mappings instead of falling back to the broader phenotype
 section or a blank table.
 
 ```bash
-out="$(../../tools/biomcp-ci get disease "uterine leiomyoma" clinical_features)"
-echo "$out" | mustmatch like "## Clinical Features (MedlinePlus)"
-echo "$out" | mustmatch like "| Rank | Feature | HPO | Confidence | Evidence | Source |"
-echo "$out" | mustmatch like "heavy menstrual bleeding"
-echo "$out" | mustmatch like "HP:0000132 (Menorrhagia)"
-echo "$out" | mustmatch like "[MedlinePlus](https://medlineplus.gov/uterinefibroids.html)"
+../../tools/biomcp-ci get disease "uterine leiomyoma" clinical_features | mustmatch like '## Clinical Features (MedlinePlus)
+| Rank | Feature | HPO | Confidence | Evidence | Source |
+heavy menstrual bleeding
+HP:0000132 (Menorrhagia)
+[MedlinePlus](https://medlineplus.gov/uterinefibroids.html)'
 ```
 
 ## NIH Funding Context
@@ -81,9 +79,8 @@ Funding belongs in its own section. The card should keep that view truthful and
 bounded instead of implying the first page is the whole research landscape.
 
 ```bash
-out="$(../../tools/biomcp-ci get disease 'Marfan syndrome' funding)"
-echo "$out" | mustmatch like "## Funding (NIH Reporter)"
-echo "$out" | mustmatch like "| Project | PI | Organization | FY | Amount |"
+../../tools/biomcp-ci get disease 'Marfan syndrome' funding | mustmatch like '## Funding (NIH Reporter)
+| Project | PI | Organization | FY | Amount |'
 ```
 
 ## JSON Pivots
