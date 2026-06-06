@@ -467,8 +467,8 @@ EXAMPLES:
   biomcp get article 22663011 tldr
 
 Full text defaults to the XML -> PMC HTML ladder.
-Use `assets` for the JSON-only OA package asset manifest.
-Use `asset <name>` to return one OA package member as raw bytes with no conversion.
+Use `assets` for the JSON-only article asset manifest (PMC OA first, Figshare fallback).
+Use `asset <name>` to return one provider asset as raw bytes with no conversion.
 Asset keywords:
 assets
 asset <name>

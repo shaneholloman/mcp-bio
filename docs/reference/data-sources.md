@@ -128,13 +128,14 @@ Article workflows compose multiple APIs for different tasks:
 1. PubTator3 + Europe PMC + PubMed for federated search, with LitSense2 added for keyword-bearing queries and an optional Semantic Scholar leg when the filter set is compatible (parallel fan-out, identifier-aware merge across PMID/PMCID/DOI, per-source capping after deduplication and before ranking, local lexical/semantic/hybrid relevance ranking)
 2. Europe PMC for bibliographic metadata
 3. PubTator3 for entity annotations
-4. Semantic Scholar for the optional search leg, TLDR, citation graph, influential citation counts, recommendations, and `openAccessPdf` metadata for the explicit `--pdf` fallback
-5. NCBI ID Converter bridges PMID or DOI to PMCID before PMCID-dependent full-text rungs when the base article lacks PMCID
+4. Semantic Scholar for the optional search leg, TLDR, citation graph, influential citation counts, recommendations, `openAccessPdf` metadata for the explicit `--pdf` fallback, and supported Figshare article-asset discovery
+5. NCBI ID Converter bridges PMID or DOI to PMCID before PMCID-dependent full-text rungs and PMC OA asset rungs when the base article lacks PMCID
 6. Europe PMC PMC XML, NCBI EFetch PMC XML, PMC OA Archive XML, Europe PMC MED XML, PMC HTML, and opt-in Semantic Scholar PDF form the full-text content ladder where available
+7. PMC OA Archive remains the preferred article-asset source; when unavailable, Figshare can provide raw article assets after Semantic Scholar points at a supported Figshare/AACR Figshare article URL
 
-NCBI ID Converter bridges PMID or DOI to PMCID before PMCID-dependent full-text rungs.
-Semantic Scholar supplies `openAccessPdf` metadata for the explicit `--pdf` fallback;
-BioMCP fetches that third-party PDF URL only after the caller opts in.
+NCBI ID Converter bridges PMID or DOI to PMCID before PMCID-dependent full-text rungs and asset rungs.
+Semantic Scholar supplies `openAccessPdf` metadata for the explicit `--pdf` fallback and for supported Figshare asset discovery;
+BioMCP fetches third-party PDF URLs only after the caller opts in, while Figshare asset retrieval re-resolves bytes through the Figshare API `download_url`.
 
 This means metadata, annotations, and full text may have different availability
 for the same PMID.

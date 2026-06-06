@@ -13,10 +13,13 @@ accepts the same article identifiers as the base article card: PMID, PMCID, and
 DOI.
 
 Article assets are a separate on-demand surface. `get article <id> assets`
-resolves the canonical PMC OA package and emits a JSON-only manifest;
-`get article <id> asset <name>` returns one package member as raw bytes without
-conversion. BioMCP lists and serves bytes only; CSV, XLSX, DOC, PDF, and image
-parsing remains downstream.
+tries the canonical PMC OA package first and emits a JSON-only manifest. When no
+PMC OA package is available and Semantic Scholar enrichment points at a supported
+Figshare/AACR Figshare article URL, BioMCP resolves the Figshare article through
+the Figshare API and emits a provider-labelled Figshare asset manifest instead.
+`get article <id> asset <name>` re-resolves the same provider metadata and
+returns the selected asset bytes without conversion. BioMCP lists and serves
+bytes only; CSV, XLSX, DOC, PDF, and image parsing remains downstream.
 
 Full text is saved as a local Markdown artifact. BioMCP prints a source-labeled
 fulltext heading and `Saved to:` path, but it does not inline the full article
@@ -99,7 +102,9 @@ Markdown prints `Saved to:` and does not inline full text or manifest prose in
 the article card. When OA package assets are available but not inlined, Markdown
 points to `biomcp --json get article <id> assets`. JSON fulltext responses add a
 structured `not_included` summary for figure images, supplementary files, and
-complex tables plus asset retrieval next commands.
+complex tables plus asset retrieval next commands. Non-PMC Figshare assets stay
+on the explicit asset surface; they are not parsed into full text or treated as
+the `fulltext --pdf` article-body fallback.
 JSON `_meta.section_sources` includes a `fulltext` row only
 when `full_text_source` exists. Note-only misses do not publish a `fulltext`
 provenance row.
@@ -137,12 +142,14 @@ PDF ineligible without a PDF-specific public note.
 - `src/entities/article/fulltext.rs`: identity bridge, content ladder,
   eligibility policy, fulltext source labels, cache key, and saved artifact
   assignment.
-- `src/entities/article/assets.rs`: PMC OA package asset policy, manifest
-  classification, hashes, JATS caption matching, omitted-coverage summary, and
-  raw byte retrieval handles.
+- `src/entities/article/assets.rs`: PMC OA-first asset policy, Figshare fallback
+  manifest construction, asset classification, hashes, JATS caption matching for
+  PMC packages, omitted-coverage summary, and raw byte retrieval handles.
 - `src/sources/europepmc.rs`, `src/sources/ncbi_efetch.rs`,
   `src/sources/pmc_oa.rs`, and `src/sources/ncbi_idconv.rs`: upstream
   transport for direct source APIs.
+- `src/sources/figshare.rs`: Figshare/AACR Figshare URL parsing, article API
+  metadata normalization, safe file filtering, and bounded file-byte downloads.
 - `src/sources/semantic_scholar.rs`: metadata enrichment that may expose
   `openAccessPdf`. Arbitrary PDF byte fetching remains article fulltext
   policy, not a Semantic Scholar source-client method.
@@ -161,7 +168,8 @@ The current contract is covered by:
   `src/entities/article/fulltext.rs`, `src/render/provenance.rs`, and
   `src/render/markdown/article/tests.rs`.
 - The bootstrap canary in `spec/entity/article.md` proves the saved-artifact
-  contract, the PMC HTML fallback path, the named `--pdf` opt-in, and the
-  keyless article-search degradation markers that stay in the blocking lane.
+  contract, the PMC HTML fallback path, PMC OA and Figshare asset byte surfaces,
+  the named `--pdf` opt-in, and the keyless article-search degradation markers
+  that stay in the blocking lane.
 - Resolver-order and provenance-label details stay pinned by the focused Rust
   tests above until the follow-on v2 surface rewrites land.

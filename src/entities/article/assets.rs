@@ -4,6 +4,9 @@ use roxmltree::Node;
 use sha2::{Digest, Sha256};
 
 use crate::error::BioMcpError;
+use crate::sources::figshare::{
+    FigshareArticle, FigshareClient, FigshareFile, parse_figshare_article_url,
+};
 use crate::sources::ncbi_idconv::NcbiIdConverterClient;
 use crate::sources::pmc_oa::{
     PmcOaArchiveEntry, PmcOaArchiveManifest, PmcOaArchivePackage, PmcOaClient,
@@ -15,8 +18,10 @@ use super::{
     ArticleOmittedCoverage,
 };
 
-const PROVIDER_LABEL: &str = "PMC OA Archive";
-const PROVIDER_SOURCE: &str = "PMC OA";
+const PMC_PROVIDER_LABEL: &str = "PMC OA Archive";
+const PMC_PROVIDER_SOURCE: &str = "PMC OA";
+const FIGSHARE_PROVIDER_LABEL: &str = "Figshare";
+const FIGSHARE_PROVIDER_SOURCE: &str = "Figshare";
 
 #[derive(Clone, Debug, Default)]
 struct JatsAssetFacts {
@@ -35,58 +40,93 @@ struct JatsFacts {
 pub async fn article_assets_manifest(
     requested_id: &str,
 ) -> Result<ArticleAssetsManifest, BioMcpError> {
-    let article = super::detail::get_article_base(requested_id).await?;
-    let pmcid = resolve_article_pmcid(&article, requested_id).await?;
-    let package = fetch_package(&pmcid).await?;
-    Ok(build_assets_manifest(
-        requested_id,
-        &article,
-        &pmcid,
-        package,
-    ))
+    let mut article = super::detail::get_article_base(requested_id).await?;
+    if let Some((pmcid, package)) = try_pmc_package(&article, requested_id).await {
+        return Ok(build_assets_manifest(
+            requested_id,
+            &article,
+            &pmcid,
+            package,
+        ));
+    }
+    if let Some(manifest) = figshare_assets_manifest(requested_id, &mut article).await? {
+        return Ok(manifest);
+    }
+    Err(no_supported_asset_source(requested_id))
 }
 
 pub async fn article_asset_bytes(
     requested_id: &str,
     filename: &str,
 ) -> Result<Vec<u8>, BioMcpError> {
-    let article = super::detail::get_article_base(requested_id).await?;
-    let pmcid = resolve_article_pmcid(&article, requested_id).await?;
-    let package = fetch_package(&pmcid).await?;
+    let mut article = super::detail::get_article_base(requested_id).await?;
     let wanted = filename.trim();
-    package
-        .entries
-        .into_iter()
-        .find(|entry| !entry.is_xml && entry.filename == wanted)
-        .map(|entry| entry.bytes)
-        .ok_or_else(|| BioMcpError::NotFound {
-            entity: "article asset".to_string(),
-            id: wanted.to_string(),
-            suggestion: format!("List assets: biomcp --json get article {requested_id} assets"),
-        })
+    if let Some((_, package)) = try_pmc_package(&article, requested_id).await {
+        return package
+            .entries
+            .into_iter()
+            .find(|entry| !entry.is_xml && entry.filename == wanted)
+            .map(|entry| entry.bytes)
+            .ok_or_else(|| article_asset_not_found(requested_id, wanted));
+    }
+    if let Some(bytes) = figshare_asset_bytes(&mut article, wanted).await? {
+        return Ok(bytes);
+    }
+    Err(article_asset_not_found(requested_id, wanted))
 }
 
 pub(super) async fn attach_not_included(article: &mut Article, requested_id: &str) {
+    let Some((pmcid, package)) = try_pmc_package(article, requested_id).await else {
+        return;
+    };
+    let manifest = build_assets_manifest(requested_id, article, &pmcid, package);
+    article.not_included = manifest.not_included;
+}
+
+async fn try_pmc_package(
+    article: &Article,
+    requested_id: &str,
+) -> Option<(String, PmcOaArchivePackage)> {
     let pmcid = match resolve_article_pmcid(article, requested_id).await {
         Ok(pmcid) => pmcid,
         Err(err) => {
-            tracing::warn!(?err, requested_id, "Article asset coverage unavailable");
-            return;
+            tracing::warn!(
+                ?err,
+                requested_id,
+                "Article PMC OA asset coverage unavailable"
+            );
+            return None;
         }
     };
-    let package = match fetch_package(&pmcid).await {
-        Ok(package) => package,
+    match fetch_package(&pmcid).await {
+        Ok(package) => Some((pmcid, package)),
         Err(err) => {
             tracing::warn!(
                 ?err,
                 requested_id,
                 "PMC OA package unavailable for asset coverage"
             );
-            return;
+            None
         }
-    };
-    let manifest = build_assets_manifest(requested_id, article, &pmcid, package);
-    article.not_included = manifest.not_included;
+    }
+}
+
+fn article_asset_not_found(requested_id: &str, wanted: &str) -> BioMcpError {
+    BioMcpError::NotFound {
+        entity: "article asset".to_string(),
+        id: wanted.to_string(),
+        suggestion: format!("List assets: biomcp --json get article {requested_id} assets"),
+    }
+}
+
+fn no_supported_asset_source(requested_id: &str) -> BioMcpError {
+    BioMcpError::NotFound {
+        entity: "article asset source".to_string(),
+        id: requested_id.to_string(),
+        suggestion:
+            "No supported article asset source found: no PMC OA package or supported Figshare asset URL."
+                .to_string(),
+    }
 }
 
 async fn fetch_package(pmcid: &str) -> Result<PmcOaArchivePackage, BioMcpError> {
@@ -133,6 +173,155 @@ async fn resolve_article_pmcid(
     })
 }
 
+async fn figshare_article(article: &mut Article) -> Result<Option<FigshareArticle>, BioMcpError> {
+    super::detail::enrich_article_with_semantic_scholar(article).await?;
+    let Some(url) = article
+        .semantic_scholar
+        .as_ref()
+        .and_then(|semantic| semantic.open_access_pdf.as_ref())
+        .map(|pdf| pdf.url.trim())
+        .filter(|url| !url.is_empty())
+    else {
+        return Ok(None);
+    };
+    let Some(reference) = parse_figshare_article_url(url) else {
+        return Ok(None);
+    };
+    FigshareClient::new()?.article(&reference).await.map(Some)
+}
+
+async fn figshare_assets_manifest(
+    requested_id: &str,
+    article: &mut Article,
+) -> Result<Option<ArticleAssetsManifest>, BioMcpError> {
+    let Some(figshare) = figshare_article(article).await? else {
+        return Ok(None);
+    };
+    let provider = figshare_provider();
+    let reuse = figshare_reuse(&figshare);
+    let provenance = figshare_provenance(&figshare, article);
+    let client = FigshareClient::new()?;
+    let mut assets = Vec::new();
+    for file in &figshare.files {
+        match client.download_file(file).await {
+            Ok(bytes) => assets.push(figshare_asset_entry(
+                requested_id,
+                file,
+                &bytes,
+                &provider,
+                &reuse,
+                &provenance,
+            )),
+            Err(err) => {
+                tracing::warn!(?err, filename = %file.filename, "Figshare asset unavailable")
+            }
+        }
+    }
+    if assets.is_empty() {
+        return Ok(None);
+    }
+    let mut manifest = ArticleAssetsManifest {
+        article_id: requested_id.trim().to_string(),
+        pmid: article.pmid.clone(),
+        pmcid: None,
+        provider,
+        provenance,
+        assets,
+        not_included: None,
+    };
+    manifest.not_included = Some(not_included_from_manifest(&manifest));
+    Ok(Some(manifest))
+}
+
+async fn figshare_asset_bytes(
+    article: &mut Article,
+    wanted: &str,
+) -> Result<Option<Vec<u8>>, BioMcpError> {
+    let Some(figshare) = figshare_article(article).await? else {
+        return Ok(None);
+    };
+    let Some(file) = figshare.files.iter().find(|file| file.filename == wanted) else {
+        return Ok(None);
+    };
+    FigshareClient::new()?.download_file(file).await.map(Some)
+}
+
+fn figshare_provider() -> ArticleFulltextProvider {
+    ArticleFulltextProvider {
+        label: FIGSHARE_PROVIDER_LABEL.to_string(),
+        source: FIGSHARE_PROVIDER_SOURCE.to_string(),
+    }
+}
+
+fn figshare_reuse(article: &FigshareArticle) -> ArticleFulltextReuse {
+    let license = article
+        .license
+        .as_ref()
+        .and_then(|license| license.name.clone().or_else(|| license.url.clone()));
+    match license {
+        Some(license) => ArticleFulltextReuse {
+            license_present: true,
+            license: Some(license),
+            reuse_warning: None,
+        },
+        None => ArticleFulltextReuse {
+            license_present: false,
+            license: None,
+            reuse_warning: Some(
+                "License/reuse status is unknown; verify rights before reuse.".to_string(),
+            ),
+        },
+    }
+}
+
+fn figshare_provenance(figshare: &FigshareArticle, article: &Article) -> ArticleFulltextProvenance {
+    ArticleFulltextProvenance {
+        open_access: article.open_access,
+        retracted: None,
+        package_url: figshare
+            .public_url
+            .clone()
+            .or_else(|| figshare.api_url.clone()),
+        pdf_fallback_used: false,
+    }
+}
+
+fn figshare_asset_entry(
+    requested_id: &str,
+    file: &FigshareFile,
+    bytes: &[u8],
+    provider: &ArticleFulltextProvider,
+    reuse: &ArticleFulltextReuse,
+    provenance: &ArticleFulltextProvenance,
+) -> ArticleAssetEntry {
+    ArticleAssetEntry {
+        filename: file.filename.clone(),
+        kind: figshare_kind(file).to_string(),
+        size_bytes: bytes.len(),
+        sha256: sha256_hex(bytes),
+        provider: provider.clone(),
+        reuse: reuse.clone(),
+        provenance: provenance.clone(),
+        jats: None,
+        handle: format!(
+            "biomcp get article {} asset {}",
+            crate::render::markdown::shell_quote_arg(requested_id.trim()),
+            crate::render::markdown::shell_quote_arg(&file.filename)
+        ),
+    }
+}
+
+fn figshare_kind(file: &FigshareFile) -> &'static str {
+    if file
+        .mimetype
+        .as_deref()
+        .is_some_and(|mimetype| mimetype.to_ascii_lowercase().starts_with("image/"))
+    {
+        return "figure-image";
+    }
+    filename_kind(&file.filename)
+}
+
 fn build_assets_manifest(
     requested_id: &str,
     article: &Article,
@@ -166,8 +355,8 @@ fn build_assets_manifest(
 
 fn provider() -> ArticleFulltextProvider {
     ArticleFulltextProvider {
-        label: PROVIDER_LABEL.to_string(),
-        source: PROVIDER_SOURCE.to_string(),
+        label: PMC_PROVIDER_LABEL.to_string(),
+        source: PMC_PROVIDER_SOURCE.to_string(),
     }
 }
 

@@ -25,6 +25,7 @@ DIRECT_SOURCE_MODULES = {
     "who_ivd": "WHO Prequalified IVD",
     "enrichr": "Enrichr",
     "europepmc": "Europe PMC",
+    "figshare": "Figshare",
     "gnomad": "gnomAD",
     "gprofiler": "g:Profiler",
     "gtex": "GTEx",

@@ -301,6 +301,69 @@ trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true
 0,1"
 ```
 
+## Non-PMC Figshare Assets Manifest
+
+When an article has no PMC OA package but Semantic Scholar points at a supported
+AACR/Figshare article, the same asset manifest surface should return a
+provider-labelled Figshare manifest. The handle remains a BioMCP command, not a
+transient provider URL, so downstream tools can retrieve bytes through one stable
+article-asset grammar.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci --json get article 22663015 assets | uv run --no-sync python3 -c '
+import json, re, sys
+
+raw = sys.stdin.read()
+try:
+    doc = json.loads(raw)
+except Exception:
+    print("figshare article assets manifest missing")
+    raise SystemExit(0)
+
+assets = {row.get("filename"): row for row in doc.get("assets") or []}
+supp = assets.get("figshare-supplement.pdf") or {}
+provider = doc.get("provider") or {}
+asset_provider = supp.get("provider") or {}
+reuse = supp.get("reuse") or {}
+provenance = supp.get("provenance") or {}
+commands = (doc.get("_meta") or {}).get("next_commands") or []
+
+ok = True
+ok = ok and ("pmcid" not in doc or doc.get("pmcid") in (None, ""))
+ok = ok and provider.get("label") == "Figshare"
+ok = ok and provider.get("source") == "Figshare"
+ok = ok and supp.get("kind") == "supplementary-file"
+ok = ok and isinstance(supp.get("size_bytes"), int) and supp.get("size_bytes") > 0
+ok = ok and re.fullmatch(r"[0-9a-f]{64}", str(supp.get("sha256", ""))) is not None
+ok = ok and asset_provider.get("label") == "Figshare"
+ok = ok and asset_provider.get("source") == "Figshare"
+ok = ok and reuse.get("license_present") is True
+ok = ok and "CC BY" in str(reuse.get("license", ""))
+ok = ok and "figshare" in str(provenance.get("package_url", "")).lower()
+ok = ok and supp.get("handle") == "biomcp get article 22663015 asset figshare-supplement.pdf"
+ok = ok and "biomcp get article 22663015 asset figshare-supplement.pdf" in commands
+
+print("figshare article assets manifest ok" if ok else "figshare article assets manifest missing")
+' | mustmatch like "figshare article assets manifest ok"
+```
+
+## Non-PMC Figshare Asset Retrieval Returns Bytes
+
+The Figshare asset handle should re-resolve provider metadata and stream the
+current file bytes without conversion. A supplemental PDF remains an asset, not a
+fulltext substitute or parsed text source.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci get article 22663015 asset figshare-supplement.pdf | mustmatch like "%PDF-1.4
+Figshare supplemental fixture bytes"
+```
+
 ## Fulltext Reports Assets Not Included
 
 Full text Markdown remains text-first, but JSON must tell agents which evidence

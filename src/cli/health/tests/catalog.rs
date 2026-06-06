@@ -27,6 +27,7 @@ fn health_inventory_includes_all_expected_sources() {
             "DisGeNET",
             "AlphaGenome",
             "Semantic Scholar",
+            "Figshare",
             "CPIC",
             "PharmGKB",
             "Monarch",
@@ -114,5 +115,9 @@ fn markdown_shows_new_affects_mappings() {
     assert_eq!(
         affects_for_api("g:Profiler"),
         Some("gene enrichment (biomcp enrich)")
+    );
+    assert_eq!(
+        affects_for_api("Figshare"),
+        Some("non-PMC article asset fallback")
     );
 }

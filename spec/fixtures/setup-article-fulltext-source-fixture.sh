@@ -50,6 +50,7 @@ HTML_FALLBACK = (
 PDF_FALLBACK = (
     FIXTURE_DIR / "pdf" / "pmc_oa_article_pdf.pdf"
 ).read_bytes()
+FIGSHARE_SUPPLEMENT = b"%PDF-1.4\nFigshare supplemental fixture bytes\n%%EOF\n"
 
 
 ARTICLE_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -152,6 +153,12 @@ ARTICLES = {
         "abstract": "Abstract text.",
         "paper_id": "paper-4",
     },
+    "22663015": {
+        "pmcid": None,
+        "title": "Figshare asset fallback winner",
+        "abstract": "Abstract text.",
+        "paper_id": "paper-5",
+    },
 }
 
 
@@ -229,6 +236,8 @@ def europepmc_search_payload(pmid):
         }
     if pmid == "22663011":
         result["license"] = "CC BY"
+    if pmid == "22663015":
+        result["doi"] = "10.1158/fixture.figshare"
     return {
         "hitCount": 1,
         "resultList": {
@@ -268,6 +277,22 @@ class Handler(BaseHTTPRequestHandler):
         ):
             append_request_log("fulltext:identity:ncbi-idconv")
             send_json(self, 200, {"records": [{"pmid": 22663014, "pmcid": "PMC123459"}]})
+            return
+
+        if (
+            decoded_path == "/"
+            and query.get("idtype") == ["pmid"]
+            and query.get("ids") == ["22663015"]
+        ):
+            send_json(self, 200, {"records": [{"pmid": 22663015}]})
+            return
+
+        if (
+            decoded_path == "/"
+            and query.get("idtype") == ["doi"]
+            and query.get("ids") == ["10.1158/fixture.figshare"]
+        ):
+            send_json(self, 200, {"records": [{"doi": "10.1158/fixture.figshare"}]})
             return
 
         if decoded_path == "/PMC123456/fullTextXML":
@@ -340,7 +365,40 @@ class Handler(BaseHTTPRequestHandler):
                     "status": "GREEN",
                     "license": "CC BY",
                 }
+            if pmid == "22663015":
+                payload["openAccessPdf"] = {
+                    "url": "https://aacr.figshare.com/articles/journal_contribution/Fixture_Figshare_supplement/22474820?file=39926318",
+                    "status": "GREEN",
+                    "license": "CC BY 4.0",
+                }
             send_json(self, 200, payload)
+            return
+
+        if decoded_path == "/v2/articles/22474820":
+            send_json(self, 200, {
+                "id": 22474820,
+                "doi": "10.1158/fixture.figshare",
+                "url_public_html": "https://aacr.figshare.com/articles/journal_contribution/Fixture_Figshare_supplement/22474820",
+                "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474820",
+                "license": {
+                    "name": "CC BY 4.0",
+                    "url": "https://creativecommons.org/licenses/by/4.0/",
+                },
+                "files": [
+                    {
+                        "id": 39926318,
+                        "name": "figshare-supplement.pdf",
+                        "size": len(FIGSHARE_SUPPLEMENT),
+                        "md5": "0123456789abcdef0123456789abcdef",
+                        "mimetype": "application/pdf",
+                        "download_url": f"http://127.0.0.1:{self.server.server_port}/figshare/files/39926318/figshare-supplement.pdf",
+                    }
+                ],
+            })
+            return
+
+        if decoded_path == "/figshare/files/39926318/figshare-supplement.pdf":
+            send_bytes(self, 200, FIGSHARE_SUPPLEMENT, "application/pdf")
             return
 
         if decoded_path == "/pdf/22663013.pdf":
@@ -392,6 +450,7 @@ printf 'export BIOMCP_PMC_OA_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'export BIOMCP_PMC_HTML_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'export BIOMCP_NCBI_IDCONV_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'export BIOMCP_S2_BASE=%q\n' "$base_url" >>"$env_file"
+printf 'export BIOMCP_FIGSHARE_BASE=%q\n' "$base_url" >>"$env_file"
 printf 'unset NCBI_API_KEY\n' >>"$env_file"
 printf 'unset S2_API_KEY\n' >>"$env_file"
 printf 'export BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID=%q\n' "$server_pid" >>"$env_file"

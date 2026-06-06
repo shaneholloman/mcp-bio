@@ -47,6 +47,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | EMA | 1 | direct_api | none | EMA website material may be reused with source attribution; third-party content can carry separate rights | EMA-published website data is generally reusable with attribution, but embedded third-party materials may need separate permission | <https://www.ema.europa.eu/en/about-us/about-website/legal-notice> |
 | Enrichr | 1 | direct_api | none | open web/API service with citation expectations for Enrichr and its libraries | reuse of results should preserve attribution to Enrichr and the underlying enrichment libraries | <https://maayanlab.cloud/Enrichr/> |
 | Europe PMC | 1 | direct_api | none | open literature metadata service; article and full-text licenses vary by record | metadata is broadly reusable, but full text and PDFs remain governed by article-level licenses | <https://europepmc.org/RestfulWebService> |
+| Figshare | 1 | direct_api | none | public repository API; each article/file carries its own license metadata | reuse downloaded article assets according to the Figshare item license and preserve Figshare/article provenance | <https://figshare.com/terms> |
 | gnomAD | 3 | direct_api | none | Broad Institute data policies with attribution and service-specific conditions | querying is open, but users should review the gnomAD policies before bulk reuse or republishing | <https://gnomad.broadinstitute.org/policies> |
 | g:Profiler | 1 | direct_api | none | open enrichment service with provider citation expectations | results are queryable and reusable, but cite g:Profiler and any underlying databases you depend on | <https://biit.cs.ut.ee/gprofiler/help.cgi> |
 | GTEx | 1 | direct_api | none | NIH-hosted public-access expression resource | public summary/expression views are broadly reusable; controlled-access data remains outside BioMCP's scope | <https://gtexportal.org/home/documentationPage> |
@@ -278,6 +279,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Reviewed on: `2026-03-20`
 - Notes: BioMCP uses Europe PMC for search, bibliographic metadata, and article full-text XML lookups. Open-access reuse depends on the publication license attached to each record.
 
+### Figshare
+
+- BioMCP surfaces: `get article <id> assets; get article <id> asset <name>`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: open public API
+- License / terms summary: public repository API; each article/file carries its own license metadata
+- Redistribution / reuse summary: reuse downloaded article assets according to the Figshare item license and preserve Figshare/article provenance
+- Official terms URL: <https://figshare.com/terms>
+- Reviewed on: `2026-06-06`
+- Notes: BioMCP uses Figshare only as an article-asset fallback after PMC OA assets are unavailable and Semantic Scholar discovery points at a supported Figshare/AACR Figshare article URL. BioMCP downloads bytes from the Figshare API `download_url` and does not parse supplement contents.
+
 ### g:Profiler
 
 - BioMCP surfaces: `enrich <GENE1,GENE2,...>`
@@ -499,16 +512,16 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### PMC OA
 
-- BioMCP surfaces: `get article <id> fulltext`
+- BioMCP surfaces: `get article <id> fulltext; get article <id> assets; get article <id> asset <name>`
 - Integration mode: `direct_api`
 - BioMCP auth: `optional_env` via `NCBI_API_KEY`
 - Provider access / registration: open public utility for the PMC Open Access subset
 - License / terms summary: open-access subset only; article licenses vary within PMC OA
-- Redistribution / reuse summary: full text is reusable only according to each article's specific PMC Open Access license
+- Redistribution / reuse summary: full text and assets are reusable only according to each article's specific PMC Open Access license
 - Official terms URL: <https://pmc.ncbi.nlm.nih.gov/tools/openftlist/>
 - API key / account URL: <https://www.ncbi.nlm.nih.gov/account/settings/>
 - Reviewed on: `2026-03-20`
-- Notes: BioMCP queries PMC OA on demand as one XML full-text rung and does not ship the article corpus. PMC article HTML is a separate derived fallback, and returned full text is still governed by article-level licenses.
+- Notes: BioMCP queries PMC OA on demand as one XML full-text rung and as the preferred article-asset provider; it does not ship the article corpus. PMC article HTML is a separate derived fallback, and returned full text/assets are still governed by article-level licenses.
 
 ### PubMed
 
@@ -898,7 +911,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ## Source notes
 
-- `PubMed`, `PubTator3`, `Europe PMC`, `LitSense2`, `NCBI E-utilities`, `PMC OA`, `NCBI ID Converter`, and `Semantic Scholar` are separate direct inventory rows inside BioMCP's article stack because search, annotation, identifier, PDF metadata, and full-text responsibilities come from different NCBI/EMBL/AI2 service surfaces. PMC article HTML is documented as a PMC web fallback in the data-source matrix rather than as a separate source-client row.
+- `PubMed`, `PubTator3`, `Europe PMC`, `LitSense2`, `NCBI E-utilities`, `PMC OA`, `NCBI ID Converter`, `Semantic Scholar`, and `Figshare` are separate direct inventory rows inside BioMCP's article stack because search, annotation, identifier, PDF metadata, full-text, and asset-byte responsibilities come from different NCBI/EMBL/AI2/Figshare service surfaces. PMC article HTML is documented as a PMC web fallback in the data-source matrix rather than as a separate source-client row.
 - `OpenFDA FAERS`, `OpenFDA label`, `OpenFDA shortage`, and `Drugs@FDA` are user-facing provenance labels that resolve back to the `OpenFDA` direct row plus the `Drugs@FDA` indirect row.
 - `AlphaFold DB` and `PDB` are indirect-only because BioMCP currently surfaces those structure IDs via `UniProt` cross-references rather than maintaining standalone source clients.
 - `COSMIC` is indirect-only provenance through `MyVariant.info`. Direct COSMIC integration is not part of BioMCP's supported source surface because the provider's licensing model creates unacceptable redistribution and deployment risk for an MIT-licensed open tool.

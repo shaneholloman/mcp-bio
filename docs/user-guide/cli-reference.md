@@ -396,8 +396,9 @@ helpers. Without it, those same paths use the shared unauthenticated pool at
 For article full text, the default ladder is XML -> PMC HTML. Add `--pdf` only
 to `get article <id> fulltext` when you want Semantic Scholar open-access PDF
 as the final fallback after XML and HTML miss. Use `get article <id> assets`
-for the JSON OA package manifest and `get article <id> asset <name>` to stream
-one asset as raw bytes with no conversion.
+for the JSON article-asset manifest (PMC OA first, Figshare fallback when
+Semantic Scholar points at supported Figshare metadata) and `get article <id>
+asset <name>` to stream one asset as raw bytes with no conversion.
 
 ### Trial
 
