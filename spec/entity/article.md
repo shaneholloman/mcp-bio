@@ -313,7 +313,7 @@ article-asset grammar.
 bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
-../../tools/biomcp-ci --json get article 22663015 assets 2>&1 | uv run --no-sync python3 -c '
+../../tools/biomcp-ci --json get article 22663015 assets | uv run --no-sync python3 -c '
 import json, re, sys
 
 raw = sys.stdin.read()
