@@ -70,7 +70,8 @@ biomcp get trial NCT02576665 eligibility locations outcomes
 
 The pattern is consistent across the entity command surface: no-section gives
 a summary, named sections are additive, and `all` gives the standard default
-surface rather than every opt-in section. Article `assets` is JSON-only, while
+surface rather than every opt-in section. Article `assets` is JSON-only and provider-labelled (PMC OA first, Figshare
+fallback when Semantic Scholar points at supported Figshare metadata), while
 `asset <name>` streams raw bytes with no conversion for downstream parsers.
 Opt-in sections such as
 `clinical_features`, `diagnostics`, `disgenet`, and `funding` still require

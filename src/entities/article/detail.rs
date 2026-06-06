@@ -344,7 +344,9 @@ pub(super) async fn get_article_base(id: &str) -> Result<Article, BioMcpError> {
     get_article_base_with_clients(id, &pubtator, &europe).await
 }
 
-async fn enrich_article_with_semantic_scholar(article: &mut Article) -> Result<(), BioMcpError> {
+pub(super) async fn enrich_article_with_semantic_scholar(
+    article: &mut Article,
+) -> Result<(), BioMcpError> {
     let client = SemanticScholarClient::new()?;
 
     let lookup_id = article

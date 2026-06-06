@@ -200,6 +200,13 @@ pub(in crate::cli::health) const HEALTH_SOURCES: &[SourceDescriptor] = &[
         },
     },
     SourceDescriptor {
+        api: "Figshare",
+        affects: Some("non-PMC article asset fallback"),
+        probe: ProbeKind::Get {
+            url: "https://api.figshare.com/v2/articles/22474820",
+        },
+    },
+    SourceDescriptor {
         api: "CPIC",
         affects: Some("pgx recommendations and annotations"),
         probe: ProbeKind::Get {
