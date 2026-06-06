@@ -167,12 +167,18 @@ pub fn parse_figshare_article_url(raw: &str) -> Option<FigshareArticleRef> {
         .path_segments()
         .map(|segments| segments.collect::<Vec<_>>())
         .unwrap_or_default();
+    let file_path_index = segments.iter().position(|segment| *segment == "files");
     let article_id = if host == "api.figshare.com" {
         segments.windows(2).find_map(|window| {
             (window[0] == "articles")
                 .then(|| parse_u64(window[1]))
                 .flatten()
         })?
+    } else if let Some(index) = file_path_index {
+        segments[..index]
+            .iter()
+            .rev()
+            .find_map(|segment| parse_u64(segment))?
     } else {
         segments
             .iter()
@@ -285,6 +291,17 @@ mod tests {
     fn parses_aacr_public_article_url_with_file_id() {
         let parsed = parse_figshare_article_url(
             "https://aacr.figshare.com/articles/journal_contribution/Foo/22474820?file=39926318",
+        )
+        .unwrap();
+
+        assert_eq!(parsed.article_id, 22474820);
+        assert_eq!(parsed.file_id, Some(39926318));
+    }
+
+    #[test]
+    fn parses_public_article_url_with_file_path_id() {
+        let parsed = parse_figshare_article_url(
+            "https://figshare.com/articles/dataset/Foo/22474820/files/39926318",
         )
         .unwrap();
 

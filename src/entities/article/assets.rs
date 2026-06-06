@@ -220,7 +220,6 @@ async fn figshare_assets_manifest(
     if assets.is_empty() {
         return Ok(None);
     }
-    assets.sort_by(|a, b| a.filename.cmp(&b.filename));
     let mut manifest = ArticleAssetsManifest {
         article_id: requested_id.trim().to_string(),
         pmid: article.pmid.clone(),
