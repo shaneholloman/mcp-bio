@@ -41,6 +41,35 @@ def _render_list() -> str:
     return result.stdout
 
 
+def _render_update_help() -> str:
+    binary = _release_bin()
+    assert binary.exists(), f"missing release binary for update help contract: {binary}"
+    result = subprocess.run(
+        [str(binary), "update", "--help"],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout
+
+
+def _option_stanza(help_text: str, option: str) -> str:
+    lines = help_text.splitlines()
+    for index, line in enumerate(lines):
+        if option not in line:
+            continue
+        stanza = [line]
+        for following in lines[index + 1 :]:
+            stripped = following.strip()
+            if stripped.startswith("-"):
+                break
+            if stripped:
+                stanza.append(following)
+        return "\n".join(stanza)
+    raise AssertionError(f"update help must include {option}")
+
+
 def _update_ops_lines(text: str) -> list[str]:
     return [
         line.strip()
@@ -73,6 +102,14 @@ def _assert_update_reference_contract(label: str, text: str) -> str:
         "--allow-missing-checksum, checksum/SHA256 verification, and unsafe "
         f"override wording; saw:\n{joined}"
     )
+
+
+def test_update_help_allow_missing_checksum_option_stanza_marks_unsafe_checksum_override() -> None:
+    stanza = _option_stanza(_render_update_help(), "--allow-missing-checksum")
+
+    assert "UNSAFE" in stanza
+    assert "checksum" in stanza.lower()
+    assert re.search(r"SHA-?256", stanza, flags=re.IGNORECASE), stanza
 
 
 def test_update_list_reference_and_rendered_list_describe_checksum_override() -> None:

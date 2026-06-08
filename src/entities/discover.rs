@@ -2125,6 +2125,30 @@ mod tests {
     }
 
     #[test]
+    fn ticket_400_request_command_discover_fields_drive_resolve_boundaries() {
+        let request = DiscoverRequest::new(" symptoms of Marfan syndrome ", DiscoverMode::Command)
+            .expect("request");
+        let ols_client =
+            crate::sources::ols4::OlsClient::new_for_test("http://127.0.0.1/ols4".into())
+                .expect("ols client");
+        let ols_plan = ols_client.search_request_plan(&request.ols_query);
+
+        assert!(request.medlineplus_enabled);
+        assert!(!request.no_cache);
+        assert_eq!(ols_plan.path, Some("/api/search"));
+        assert!(
+            ols_plan
+                .query_params
+                .contains(&("q", "Marfan syndrome".to_string()))
+        );
+
+        let fallback =
+            DiscoverRequest::new("Gleevec", DiscoverMode::AliasFallback).expect("fallback request");
+        assert!(!fallback.medlineplus_enabled);
+        assert!(fallback.no_cache);
+    }
+
+    #[test]
     fn ols4_timeout_absorbs_slow_primary_discover_blips() {
         assert_eq!(OLS4_TIMEOUT.as_millis(), 8000);
     }

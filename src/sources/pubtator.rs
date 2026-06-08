@@ -423,6 +423,58 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn ticket_400_pubtator_auth_and_cache_modes_are_consumed_from_request_plans() {
+        let keyed_server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/search/"))
+            .and(query_param("text", "melanoma"))
+            .and(query_param("page", "1"))
+            .and(query_param("size", "25"))
+            .and(query_param("sort", "date"))
+            .and(query_param("api_key", "ticket-400-key"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "results": [],
+                "count": 0,
+                "total_pages": 0,
+                "current": 1,
+                "page_size": 25
+            })))
+            .expect(1)
+            .mount(&keyed_server)
+            .await;
+        let keyed = PubTatorClient::new_for_test(keyed_server.uri(), Some("ticket-400-key".into()))
+            .expect("keyed client");
+        let keyed_plan = keyed
+            .search_request_plan("melanoma", 1, 25, Some("date"))
+            .expect("keyed search plan");
+        assert_eq!(keyed_plan.path, "/search/");
+        assert_eq!(keyed_plan.cache_mode, "auth");
+        assert_eq!(keyed_plan.auth_mode, "authenticated");
+        assert!(
+            keyed_plan
+                .query_params
+                .contains(&("text", "melanoma".to_string()))
+        );
+        let keyed_response = keyed
+            .search("melanoma", 1, 25, Some("date"))
+            .await
+            .expect("keyed search");
+        assert_eq!(keyed_response.count, Some(0));
+
+        let keyless =
+            PubTatorClient::new_for_test("http://127.0.0.1".into(), None).expect("keyless client");
+        let keyless_plan = keyless.export_biocjson_request_plan(22663011);
+        assert_eq!(keyless_plan.path, "/publications/export/biocjson");
+        assert_eq!(keyless_plan.cache_mode, "default");
+        assert_eq!(keyless_plan.auth_mode, "keyless");
+        assert!(
+            keyless_plan
+                .query_params
+                .contains(&("pmids", "22663011".to_string()))
+        );
+    }
+
+    #[tokio::test]
     async fn export_biocjson_sets_pmids_query_param() {
         let server = MockServer::start().await;
         Mock::given(method("GET"))
