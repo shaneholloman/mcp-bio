@@ -310,6 +310,39 @@ def _assert_contains_all(text: str, fragments: tuple[str, ...], context: str) ->
     assert not missing, f"{context} is missing required request-plan contract fragments: {missing}"
 
 
+def _python_function_block(path: str, fn_name: str) -> str:
+    text = _read_repo(path)
+    match = re.search(
+        rf"(?ms)^def {re.escape(fn_name)}\([^\n]*\):\n(.*?)(?=^def |^class |\Z)",
+        text,
+    )
+    assert match is not None, f"function {fn_name!r} not found in {path}"
+    return match.group(0)
+
+
+def _assert_python_function_contains(
+    path: str,
+    fn_name: str,
+    fragments: tuple[str, ...],
+    context: str,
+) -> None:
+    _assert_contains_all(_python_function_block(path, fn_name), fragments, context)
+
+
+def _assert_rust_test_contains(
+    path: str,
+    fn_name: str,
+    fragments: tuple[str, ...],
+    context: str,
+) -> str:
+    block = _rust_function_block(path, fn_name)
+    assert "#[test]" in block or "#[tokio::test]" in block, (
+        f"{context} must be an executable Rust test block"
+    )
+    _assert_contains_all(block, fragments, context)
+    return block
+
+
 def _contains_all(text: str, fragments: tuple[str, ...]) -> bool:
     return all(fragment in text for fragment in fragments)
 
@@ -776,6 +809,241 @@ def test_ticket_376_article_source_request_plans_are_source_local_and_consumed()
         )
 
     assert not failures, "ticket 376 article request-plan contract failures:\n" + "\n".join(failures)
+
+
+def test_ticket_400_update_help_option_stanza_ratchet_exists() -> None:
+    _assert_python_function_contains(
+        "tests/test_update_command_docs_contract.py",
+        "test_update_help_allow_missing_checksum_option_stanza_marks_unsafe_checksum_override",
+        (
+            "update",
+            "--help",
+            "Options:",
+            "--allow-missing-checksum",
+            "UNSAFE",
+            "checksum",
+            "SHA",
+        ),
+        "ticket 400 update help option-stanza ratchet",
+    )
+
+
+def test_ticket_400_mydisease_get_request_plan_rejects_path_query_separators_without_network() -> None:
+    block = _assert_rust_test_contains(
+        "src/sources/mydisease.rs",
+        "get_request_plan_rejects_path_and_query_separators_before_network",
+        (
+            "get_request_plan",
+            "MONDO:0005105/../../query",
+            "MONDO:0005105",
+            "?fields=all",
+            "#fragment",
+            "BioMcpError::InvalidArgument",
+            "/disease/MONDO:0005105",
+            "MYDISEASE_GET_FIELDS",
+        ),
+        "ticket 400 MyDisease separator no-network ratchet",
+    )
+    assert "MockServer" not in block, (
+        "MyDisease separator rejection is a request-plan boundary and must stay no-network"
+    )
+
+
+def test_ticket_400_request_command_seams_consume_request_fields_at_execution_boundaries() -> None:
+    failures: list[str] = []
+
+    def check(label: str, assertion) -> None:
+        try:
+            assertion()
+        except AssertionError as exc:
+            failures.append(f"{label}: {exc}")
+
+    for path, fn_name, fragments, context in (
+        (
+            "src/entities/discover.rs",
+            "resolve_query",
+            (
+                "let request = DiscoverRequest::new",
+                "request.ols_query",
+                "request.medlineplus_enabled",
+                "request.no_cache",
+                "let query = request.query.as_str()",
+                "let mode = request.mode",
+            ),
+            "discover request-field consumption",
+        ),
+        (
+            "src/entities/disease/search.rs",
+            "search_page",
+            (
+                "let request = DiseaseSearchRequest::new",
+                "request.resolver_queries",
+                "request.fetch_size",
+                "request.source.as_deref()",
+                "request.inheritance.as_deref()",
+                "request.phenotype.as_deref()",
+                "request.onset.as_deref()",
+                "request.offset",
+                "request.limit",
+                "request.prefer_doid",
+            ),
+            "disease search request-field consumption",
+        ),
+        (
+            "src/entities/disease/fallback.rs",
+            "fallback_search_page",
+            (
+                "let request = DiseaseFallbackRequest::new",
+                "request.skip_reason",
+                "request.resolver_queries",
+                "request.discover_mode",
+                "request.query",
+                "request.limit",
+                "request.offset",
+                "request.prefer_doid",
+            ),
+            "disease fallback request-field consumption",
+        ),
+        (
+            "src/cli/article/dispatch.rs",
+            "handle_search",
+            (
+                "let request: ArticleSearchRequest = article_search_request",
+                "request.filters",
+                "request.source_filter",
+                "request.limit",
+                "request.offset",
+                "request.exact_keyword_lookup",
+                "request.backend_plan",
+                "request.sort",
+                "request.ranking",
+            ),
+            "article request-field consumption",
+        ),
+    ):
+        check(
+            context,
+            lambda path=path, fn_name=fn_name, fragments=fragments, context=context: _assert_contains_all(
+                _rust_function_block(path, fn_name),
+                fragments,
+                context,
+            ),
+        )
+
+    for path, fn_name, fragments, context in (
+        (
+            "src/entities/discover.rs",
+            "ticket_400_discover_request_fields_drive_resolve_boundaries",
+            ("DiscoverRequest::new", "request.ols_query", "request.medlineplus_enabled", "request.no_cache"),
+            "discover executable request-field ratchet",
+        ),
+        (
+            "src/entities/disease/search.rs",
+            "ticket_400_disease_search_request_fields_drive_source_query_and_pagination",
+            ("DiseaseSearchRequest::new", "request.resolver_queries", "request.fetch_size", "request.limit", "request.offset", "request.prefer_doid"),
+            "disease search executable request-field ratchet",
+        ),
+        (
+            "src/entities/disease/fallback/tests.rs",
+            "ticket_400_disease_fallback_request_fields_drive_discover_and_crosswalk_boundaries",
+            ("DiseaseFallbackRequest", "request.resolver_queries", "request.discover_mode", "request.prefer_doid"),
+            "disease fallback executable request-field ratchet",
+        ),
+        (
+            "src/cli/article/dispatch.rs",
+            "ticket_400_article_search_request_fields_drive_execution_boundaries",
+            ("ArticleSearchRequest", "request.exact_keyword_lookup", "request.backend_plan", "request.sort", "request.ranking"),
+            "article executable request-field ratchet",
+        ),
+    ):
+        check(
+            context,
+            lambda path=path, fn_name=fn_name, fragments=fragments, context=context: _assert_rust_test_contains(
+                path,
+                fn_name,
+                fragments,
+                context,
+            ),
+        )
+
+    assert not failures, "ticket 400 request-command seam contract failures:\n" + "\n".join(failures)
+
+
+def test_ticket_400_secret_aware_article_request_plans_consume_auth_and_cache_modes() -> None:
+    failures: list[str] = []
+
+    def check(label: str, assertion) -> None:
+        try:
+            assertion()
+        except AssertionError as exc:
+            failures.append(f"{label}: {exc}")
+
+    for path, fn_name, fragments, context in (
+        (
+            "src/sources/pubmed.rs",
+            "esearch",
+            ("plan.path", "plan.query_params", "plan.auth_mode", "plan.cache_mode"),
+            "PubMed ESearch planned auth/cache consumption",
+        ),
+        (
+            "src/sources/pubmed.rs",
+            "esummary",
+            ("plan.path", "plan.query_params", "plan.auth_mode", "plan.cache_mode"),
+            "PubMed ESummary planned auth/cache consumption",
+        ),
+        (
+            "src/sources/pubtator.rs",
+            "search",
+            ("plan.path", "plan.query_params", "plan.auth_mode", "plan.cache_mode"),
+            "PubTator search planned auth/cache consumption",
+        ),
+        (
+            "src/sources/pubtator.rs",
+            "export_biocjson",
+            ("plan.path", "plan.query_params", "plan.auth_mode", "plan.cache_mode"),
+            "PubTator export planned auth/cache consumption",
+        ),
+        (
+            "src/sources/pubtator.rs",
+            "entity_autocomplete",
+            ("plan.path", "plan.query_params", "plan.auth_mode", "plan.cache_mode"),
+            "PubTator autocomplete planned auth/cache consumption",
+        ),
+    ):
+        check(
+            context,
+            lambda path=path, fn_name=fn_name, fragments=fragments, context=context: _assert_contains_all(
+                _rust_function_block(path, fn_name),
+                fragments,
+                context,
+            ),
+        )
+
+    for path, fn_name, fragments, context in (
+        (
+            "src/sources/pubmed.rs",
+            "ticket_400_pubmed_auth_and_cache_modes_are_consumed_from_request_plans",
+            ("auth_mode", "cache_mode", "authenticated", "keyless", "api_key"),
+            "PubMed executable auth/cache ratchet",
+        ),
+        (
+            "src/sources/pubtator.rs",
+            "ticket_400_pubtator_auth_and_cache_modes_are_consumed_from_request_plans",
+            ("auth_mode", "cache_mode", "authenticated", "keyless", "api_key"),
+            "PubTator executable auth/cache ratchet",
+        ),
+    ):
+        check(
+            context,
+            lambda path=path, fn_name=fn_name, fragments=fragments, context=context: _assert_rust_test_contains(
+                path,
+                fn_name,
+                fragments,
+                context,
+            ),
+        )
+
+    assert not failures, "ticket 400 secret-aware request-plan contract failures:\n" + "\n".join(failures)
 
 
 def test_ticket_376_article_source_fixture_contracts_replace_routine_live_canaries() -> None:
