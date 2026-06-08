@@ -12,6 +12,7 @@ Python docs contract runs the rendered CLI help and extracts the actual option
 block.
 
 ```bash
+set -o pipefail
 cd ../.. && uv run --no-sync pytest tests/test_update_command_docs_contract.py::test_update_help_allow_missing_checksum_option_stanza_marks_unsafe_checksum_override -v | mustmatch like "test_update_help_allow_missing_checksum_option_stanza_marks_unsafe_checksum_override"
 ```
 
@@ -22,6 +23,7 @@ prove that slash, backslash, query, and fragment separators are rejected while a
 valid ontology ID still plans the `/disease/{id}` request shape.
 
 ```bash
+set -o pipefail
 cd ../.. && cargo test --lib ticket_400_mydisease_get_rejects_path_query_separators_before_network -- --nocapture | mustmatch like "ticket_400_mydisease_get_rejects_path_query_separators_before_network"
 ```
 
@@ -33,6 +35,7 @@ article dispatch consume the request fields that carry user intent into source
 or backend calls.
 
 ```bash
+set -o pipefail
 cd ../.. && cargo test --lib ticket_400_request_command -- --nocapture | mustmatch like "ticket_400_request_command_discover_fields_drive_resolve_boundaries
 ticket_400_request_command_disease_search_fields_drive_source_query_and_pagination
 ticket_400_request_command_disease_fallback_fields_drive_discover_and_crosswalk_boundaries
@@ -46,6 +49,7 @@ the executor boundary. These tests use synthetic keys and keyless clients so the
 routine gate proves keyed behavior without requiring real credentials.
 
 ```bash
+set -o pipefail
 cd ../.. && cargo test --lib ticket_400_pub -- --nocapture | mustmatch like "ticket_400_pubmed_auth_and_cache_modes_are_consumed_from_request_plans
 ticket_400_pubtator_auth_and_cache_modes_are_consumed_from_request_plans"
 ```

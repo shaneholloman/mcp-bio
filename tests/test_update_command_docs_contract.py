@@ -56,8 +56,14 @@ def _render_update_help() -> str:
 
 def _option_stanza(help_text: str, option: str) -> str:
     lines = help_text.splitlines()
-    for index, line in enumerate(lines):
-        if option not in line:
+    options_start = next(
+        (index for index, line in enumerate(lines) if line.strip() == "Options:"),
+        None,
+    )
+    assert options_start is not None, "update help must include an Options: section"
+
+    for index, line in enumerate(lines[options_start + 1 :], options_start + 1):
+        if not line.strip().startswith(option):
             continue
         stanza = [line]
         for following in lines[index + 1 :]:
@@ -101,6 +107,24 @@ def _assert_update_reference_contract(label: str, text: str) -> str:
         f"{label} update Ops line must document --check, "
         "--allow-missing-checksum, checksum/SHA256 verification, and unsafe "
         f"override wording; saw:\n{joined}"
+    )
+
+
+def test_update_help_option_stanza_selector_ignores_long_help_mentions() -> None:
+    help_text = """Update help mentions --allow-missing-checksum UNSAFE checksum SHA256.
+
+Usage: biomcp update [OPTIONS]
+
+Options:
+      --allow-missing-checksum
+          option-stanza marker
+
+      --json
+          Output as JSON
+"""
+
+    assert "option-stanza marker" in _option_stanza(
+        help_text, "--allow-missing-checksum"
     )
 
 
