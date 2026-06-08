@@ -131,6 +131,7 @@ done
 curl -fsS "http://127.0.0.1:$port/readyz" >/dev/null || curl -fsS "http://127.0.0.1:$port/health" >/dev/null
 uv run --no-sync python3 - "$port" <<'PY' | mustmatch like 'CLI-only over MCP
 workstation-local filesystem paths
+BioMCP allows read-only commands only
 # Study Mutation Frequency: TP53 (msk_impact_2017)
 IMAGE: image/svg+xml'
 import asyncio
@@ -147,8 +148,10 @@ async def main(port: str) -> None:
         async with ClientSession(read_stream, write_stream, read_timeout_seconds=timedelta(seconds=30)) as session:
             await session.initialize()
             reject = await session.call_tool("biomcp", arguments={"command": "biomcp cache path"})
+            unknown_skill = await session.call_tool("biomcp", arguments={"command": "biomcp skill sync"})
             chart = await session.call_tool("biomcp", arguments={"command": "biomcp study query --study msk_impact_2017 --gene TP53 --type mutations --chart bar"})
             print(next(c.text for c in reject.content if isinstance(c, types.TextContent)))
+            print(next(c.text for c in unknown_skill.content if isinstance(c, types.TextContent)))
             print(next(c.text.splitlines()[0] for c in chart.content if isinstance(c, types.TextContent)))
             print(f"IMAGE: {next(mime_type(c) for c in chart.content if isinstance(c, types.ImageContent))}")
 

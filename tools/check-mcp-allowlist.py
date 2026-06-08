@@ -34,7 +34,7 @@ EXPECTED_STUDY_SUBCOMMANDS = {
     "survival",
     "top-mutated",
 }
-EXPECTED_SKILL_BLOCKED_SUBCOMMANDS = {"install"}
+EXPECTED_SKILL_ALLOWED_SUBCOMMANDS = {"list", "render"}
 EXPECTED_DESCRIPTION_BLOCKED_TERMS = {
     "`ema sync`",
     "`gtr sync`",
@@ -125,12 +125,16 @@ def parse_study_policy(shell_text: str) -> tuple[set[str], bool]:
     return allowed, download_ok
 
 
-def parse_skill_policy(shell_text: str) -> set[str]:
+def parse_skill_policy(shell_text: str) -> tuple[set[str], bool]:
     skill_body = extract_braced_block(shell_text, '"skill" =>')
     match = re.search(r"matches!\(sub\.as_str\(\),\s*(?P<body>.*?)\)", skill_body, flags=re.DOTALL)
     if match is None:
         raise ValueError("failed to parse skill policy")
-    return set(re.findall(r'"([^"]+)"', match.group("body")))
+    allowed = set(re.findall(r'"([^"]+)"', match.group("body")))
+    lookup_is_known_skill = "crate::cli::skill::show_use_case(&sub).is_ok()" in skill_body
+    arity_is_exact = "args.len() != 3" in skill_body or "args.len() == 3" in skill_body
+    denies_by_default = "!matches!(sub.as_str()" not in skill_body
+    return allowed, lookup_is_known_skill and arity_is_exact and denies_by_default
 
 
 def check_description_policy(build_text: str) -> bool:
@@ -158,7 +162,7 @@ def make_payload(cli_file: Path, shell_file: Path, build_file: Path) -> dict[str
         cli_families = parse_cli_families_with_fallback(cli_file)
         allowed_families = parse_allowed_families(shell_text)
         study_allowed, study_download_ok = parse_study_policy(shell_text)
-        skill_blocked = parse_skill_policy(shell_text)
+        skill_allowed, skill_lookup_policy_ok = parse_skill_policy(shell_text)
         description_policy_ok = check_description_policy(build_text)
     except Exception as exc:  # noqa: BLE001
         errors.append(str(exc))
@@ -166,7 +170,8 @@ def make_payload(cli_file: Path, shell_file: Path, build_file: Path) -> dict[str
         allowed_families = []
         study_allowed = set()
         study_download_ok = False
-        skill_blocked = set()
+        skill_allowed = set()
+        skill_lookup_policy_ok = False
         description_policy_ok = False
 
     cli_family_set = set(cli_families)
@@ -174,7 +179,9 @@ def make_payload(cli_file: Path, shell_file: Path, build_file: Path) -> dict[str
     unclassified = sorted(cli_family_set - allowed_family_set - BLOCKED_FAMILIES - SPECIAL_FAMILIES)
     stale_allowlist = sorted(allowed_family_set - cli_family_set)
     study_policy_ok = study_allowed == EXPECTED_STUDY_SUBCOMMANDS and study_download_ok
-    skill_policy_ok = skill_blocked == EXPECTED_SKILL_BLOCKED_SUBCOMMANDS
+    skill_policy_ok = (
+        skill_allowed == EXPECTED_SKILL_ALLOWED_SUBCOMMANDS and skill_lookup_policy_ok
+    )
 
     if errors:
         status = "error"
