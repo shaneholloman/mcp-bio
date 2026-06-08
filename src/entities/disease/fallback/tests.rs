@@ -47,6 +47,96 @@ fn disease_fallback_request_records_alias_queries_and_doid_preference() {
     assert!(request.prefer_doid);
 }
 
+#[tokio::test]
+async fn ticket_400_request_command_disease_fallback_fields_drive_discover_and_crosswalk_boundaries()
+ {
+    let filters = DiseaseSearchFilters {
+        query: Some(" Arnold Chiari syndrome ".into()),
+        source: Some(" doid ".into()),
+        ..Default::default()
+    };
+    let request = DiseaseFallbackRequest::new(&filters, 1, 1).expect("request");
+    let ols_client = crate::sources::ols4::OlsClient::new_for_test("http://127.0.0.1/ols4".into())
+        .expect("ols client");
+    let discover_plan = ols_client.search_request_plan(&request.resolver_queries[0]);
+    let mydisease_client =
+        crate::sources::mydisease::MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into())
+            .expect("mydisease client");
+    let crosswalk_plan = mydisease_client
+        .lookup_disease_by_xref_request_plan("MESH", "D001139", 5)
+        .expect("crosswalk plan");
+
+    assert_eq!(
+        request.discover_mode,
+        crate::entities::discover::DiscoverMode::AliasFallback
+    );
+    assert!(request.prefer_doid);
+    assert_eq!(discover_plan.path, Some("/api/search"));
+    assert!(
+        discover_plan
+            .query_params
+            .contains(&("q", "Arnold Chiari syndrome".to_string()))
+    );
+    assert_eq!(crosswalk_plan.path, "/query");
+    assert!(crosswalk_plan.query_params[0].1.contains("D001139"));
+
+    let candidates = vec![
+        RankedDiseaseFallbackCandidate {
+            label: "first Arnold Chiari syndrome".into(),
+            synonyms: vec!["Arnold Chiari syndrome".into()],
+            match_tier: crate::entities::discover::MatchTier::Exact,
+            confidence: crate::entities::discover::DiscoverConfidence::CanonicalId,
+            source_ids: vec![DiseaseFallbackId::Crosswalk(
+                DiseaseXrefKind::Mesh,
+                "D001139".into(),
+            )],
+            original_index: 0,
+        },
+        RankedDiseaseFallbackCandidate {
+            label: "second Arnold Chiari syndrome".into(),
+            synonyms: vec!["Arnold Chiari syndrome".into()],
+            match_tier: crate::entities::discover::MatchTier::Exact,
+            confidence: crate::entities::discover::DiscoverConfidence::CanonicalId,
+            source_ids: vec![DiseaseFallbackId::Crosswalk(
+                DiseaseXrefKind::Omim,
+                "207950".into(),
+            )],
+            original_index: 1,
+        },
+    ];
+    let page = collect_fallback_search_page(
+        &request.query,
+        request.limit,
+        request.offset,
+        candidates,
+        |source_id| async move {
+            let name = match source_id {
+                DiseaseFallbackId::Crosswalk(DiseaseXrefKind::Mesh, _) => {
+                    "first Arnold Chiari syndrome"
+                }
+                DiseaseFallbackId::Crosswalk(DiseaseXrefKind::Omim, _) => {
+                    "second Arnold Chiari syndrome"
+                }
+                DiseaseFallbackId::Crosswalk(DiseaseXrefKind::Icd10Cm, _)
+                | DiseaseFallbackId::CanonicalOntology(_) => "other",
+            };
+            Ok(Some(DiseaseSearchResult {
+                id: name.replace(' ', "-"),
+                name: name.into(),
+                synonyms_preview: None,
+                resolved_via: None,
+                source_id: None,
+            }))
+        },
+    )
+    .await
+    .expect("fallback collection")
+    .expect("page");
+
+    assert_eq!(page.results.len(), 1);
+    assert_eq!(page.results[0].name, "second Arnold Chiari syndrome");
+}
+
 #[test]
 fn fallback_candidates_rank_specific_crosswalkable_disease_ahead_of_generic_rows() {
     let candidates = rank_disease_fallback_candidates(

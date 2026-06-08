@@ -86,6 +86,52 @@ fn article_search_request_records_exact_keyword_lookup_intent() {
 }
 
 #[test]
+fn ticket_400_request_command_article_fields_drive_execution_boundaries() {
+    let mut args = default_article_search_args();
+    args.keyword = vec!["Gleevec".into()];
+    args.source = "all".into();
+    args.sort = "relevance".into();
+    args.ranking_mode = Some("hybrid".into());
+    args.weight_semantic = Some(0.4);
+    args.weight_lexical = Some(0.3);
+    args.weight_citations = Some(0.2);
+    args.weight_position = Some(0.1);
+    args.limit = 7;
+    args.offset = 3;
+
+    let request = article_search_request(args).expect("request");
+    let summary = article_query_summary(
+        &request.filters,
+        request.source_filter,
+        false,
+        request.limit,
+        request.offset,
+    );
+    let debug_filters =
+        article_debug_filters(&request.filters, request.source_filter, request.limit);
+
+    assert_eq!(request.exact_keyword_lookup.as_deref(), Some("Gleevec"));
+    assert_eq!(
+        request.backend_plan,
+        crate::entities::article::BackendPlan::Both
+    );
+    assert_eq!(
+        request.sort,
+        crate::entities::article::ArticleSort::Relevance
+    );
+    assert_eq!(request.filters.sort, request.sort);
+    assert!(summary.contains("keyword=Gleevec"));
+    assert!(summary.contains("sort=relevance"));
+    assert!(summary.contains("ranking_mode=hybrid"));
+    assert!(debug_filters.iter().any(|entry| entry == "source=all"));
+    assert!(
+        debug_filters
+            .iter()
+            .any(|entry| entry == "ranking_mode=hybrid")
+    );
+}
+
+#[test]
 fn build_article_debug_plan_includes_article_type_limitation_note() {
     let filters = crate::entities::article::ArticleSearchFilters {
         gene: Some("BRAF".into()),

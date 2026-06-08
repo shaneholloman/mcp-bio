@@ -491,6 +491,61 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn ticket_400_pubmed_auth_and_cache_modes_are_consumed_from_request_plans() {
+        let keyed_server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/esearch.fcgi"))
+            .and(query_param("db", "pubmed"))
+            .and(query_param("term", "BRAF"))
+            .and(query_param("retstart", "0"))
+            .and(query_param("retmax", "10"))
+            .and(query_param("retmode", "json"))
+            .and(query_param("api_key", "ticket-400-key"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "esearchresult": {"count": "1", "idlist": ["123"]}
+            })))
+            .expect(1)
+            .mount(&keyed_server)
+            .await;
+        let keyed = PubMedClient::new_for_test(keyed_server.uri(), Some("ticket-400-key".into()))
+            .expect("keyed client");
+        let params = PubMedESearchParams {
+            term: "BRAF".into(),
+            retstart: 0,
+            retmax: 10,
+            date_from: None,
+            date_to: None,
+        };
+        let keyed_plan = keyed.esearch_request_plan(&params).expect("keyed plan");
+        assert_eq!(keyed_plan.path, "/esearch.fcgi");
+        assert_eq!(keyed_plan.cache_mode, "auth");
+        assert_eq!(keyed_plan.auth_mode, "authenticated");
+        assert!(
+            keyed_plan
+                .query_params
+                .contains(&("term", "BRAF".to_string()))
+        );
+        let keyed_response = keyed.esearch(&params).await.expect("keyed esearch");
+        assert_eq!(keyed_response.idlist, vec!["123".to_string()]);
+
+        let keyless =
+            PubMedClient::new_for_test("http://127.0.0.1".into(), None).expect("keyless client");
+        let ids = vec!["123".to_string(), "456".to_string()];
+        let keyless_plan = keyless
+            .esummary_request_plan(&ids)
+            .expect("keyless plan")
+            .expect("summary plan");
+        assert_eq!(keyless_plan.path, "/esummary.fcgi");
+        assert_eq!(keyless_plan.cache_mode, "default");
+        assert_eq!(keyless_plan.auth_mode, "keyless");
+        assert!(
+            keyless_plan
+                .query_params
+                .contains(&("id", "123,456".to_string()))
+        );
+    }
+
+    #[tokio::test]
     async fn esearch_sets_required_query_params() {
         let server = MockServer::start().await;
         Mock::given(method("GET"))

@@ -9,6 +9,7 @@ SPEC_ROUTINE_PATHS=(
   spec/entity/study.md
   spec/entity/variant.md
   spec/surface/mcp.md
+  spec/surface/request-plan-ratchets.md
   spec/surface/test_architecture_docs_parity_contract.py
   spec/surface/test_biomcp_ci_path_contract.py
   spec/surface/test_complexportal_fixture_contract.py

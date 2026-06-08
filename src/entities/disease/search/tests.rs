@@ -30,6 +30,46 @@ fn disease_search_request_records_normalized_filters_and_fetch_plan() {
 }
 
 #[test]
+fn ticket_400_request_command_disease_search_fields_drive_source_query_and_pagination() {
+    let filters = DiseaseSearchFilters {
+        query: Some(" chronic myeloid leukemia ".into()),
+        source: Some(" doid ".into()),
+        inheritance: Some(" autosomal dominant ".into()),
+        phenotype: Some(" HP:0001250 ".into()),
+        onset: Some(" childhood ".into()),
+    };
+    let request = DiseaseSearchRequest::new(&filters, 3, 2).expect("request");
+    let client =
+        crate::sources::mydisease::MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into())
+            .expect("mydisease client");
+    let plan = client
+        .query_request_plan(
+            &request.resolver_queries[0],
+            request.fetch_size,
+            0,
+            request.source.as_deref(),
+            request.inheritance.as_deref(),
+            request.phenotype.as_deref(),
+            request.onset.as_deref(),
+        )
+        .expect("source query plan");
+
+    assert_eq!(request.limit, 3);
+    assert_eq!(request.offset, 2);
+    assert_eq!(plan.path, "/query");
+    assert!(plan.query_params.contains(&("size", "25".to_string())));
+    assert!(plan.query_params.contains(&("from", "0".to_string())));
+    assert!(plan.query_params.iter().any(|(key, value)| {
+        *key == "q"
+            && value.contains("chronic myeloid leukemia")
+            && value.contains("disease_ontology.doid:*")
+            && value.contains("hpo.inheritance.hpo_name:*autosomal dominant*")
+            && value.contains("hpo.phenotype_related_to_disease.hpo_id:*HP\\:0001250*")
+            && value.contains("hpo.clinical_course.hpo_name:*childhood*")
+    }));
+}
+
+#[test]
 fn disease_search_request_preserves_limit_and_query_validation() {
     let filters = DiseaseSearchFilters::default();
     let err = DiseaseSearchRequest::new(&filters, 0, 0).expect_err("limit should fail");

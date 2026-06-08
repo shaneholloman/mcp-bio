@@ -498,6 +498,30 @@ mod tests {
     }
 
     #[test]
+    fn ticket_400_mydisease_get_rejects_path_query_separators_before_network() {
+        let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
+
+        for id in [
+            "MONDO:0005105/extra",
+            "MONDO:0005105\\extra",
+            "MONDO:0005105?fields=_id",
+            "MONDO:0005105#fragment",
+        ] {
+            assert!(matches!(
+                client.get_request_plan(id),
+                Err(BioMcpError::InvalidArgument(_))
+            ));
+        }
+
+        let plan = client.get_request_plan("MONDO:0005105").unwrap();
+        assert_eq!(plan.path, "/disease/MONDO:0005105");
+        assert_eq!(
+            plan.query_params,
+            vec![("fields", MYDISEASE_GET_FIELDS.to_string())]
+        );
+    }
+
+    #[test]
     fn request_plans_preserve_validation_before_network() {
         let client = MyDiseaseClient::new_for_test("http://127.0.0.1/v1".into()).unwrap();
 
