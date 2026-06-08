@@ -202,6 +202,50 @@ async def test_skill_render_matches_help_resource_body(mcp_session_factory) -> N
 
 
 @pytest.mark.asyncio
+async def test_skill_list_is_allowed_in_mcp_mode(mcp_session_factory) -> None:
+    async with mcp_session_factory() as (session, _initialize_result):
+        result = await session.call_tool(
+            "biomcp",
+            arguments={"command": "biomcp skill list"},
+        )
+
+    assert _is_error(result) is False
+    assert result.content
+    assert isinstance(result.content[0], types.TextContent)
+    assert "# BioMCP Worked Examples" in result.content[0].text
+
+
+@pytest.mark.asyncio
+async def test_unknown_skill_subcommand_is_rejected_in_mcp_mode(
+    mcp_session_factory,
+) -> None:
+    async with mcp_session_factory() as (session, _initialize_result):
+        result = await session.call_tool(
+            "biomcp",
+            arguments={"command": "biomcp skill sync"},
+        )
+
+    assert _is_error(result) is True
+    assert result.content
+    assert isinstance(result.content[0], types.TextContent)
+    assert "BioMCP allows read-only commands only" in result.content[0].text
+
+
+@pytest.mark.asyncio
+async def test_skill_install_is_rejected_in_mcp_mode(mcp_session_factory) -> None:
+    async with mcp_session_factory() as (session, _initialize_result):
+        result = await session.call_tool(
+            "biomcp",
+            arguments={"command": "biomcp skill install /tmp/biomcp-skills"},
+        )
+
+    assert _is_error(result) is True
+    assert result.content
+    assert isinstance(result.content[0], types.TextContent)
+    assert "BioMCP allows read-only commands only" in result.content[0].text
+
+
+@pytest.mark.asyncio
 async def test_invalid_resource_uri_returns_mcp_error(
     mcp_session_factory,
 ) -> None:

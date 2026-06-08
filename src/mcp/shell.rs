@@ -75,14 +75,14 @@ fn is_allowed_mcp_command(args: &[String]) -> bool {
             }
         }
         "skill" => {
-            // Allow read-only skill commands: overview, list, render, numeric lookup
-            // (e.g. "skill 03"), and slug lookup (e.g. "skill gene-disease-orientation").
-            // Block only mutating commands.
-            let sub = args
-                .get(2)
-                .map(|s| s.trim().to_ascii_lowercase())
-                .unwrap_or_else(|| "list".to_string());
-            !matches!(sub.as_str(), "install")
+            let Some(sub) = args.get(2).map(|s| s.trim().to_ascii_lowercase()) else {
+                return true;
+            };
+            if args.len() != 3 {
+                return false;
+            }
+            matches!(sub.as_str(), "list" | "render")
+                || crate::cli::skill::show_use_case(&sub).is_ok()
         }
         _ => false,
     }
@@ -369,12 +369,8 @@ mod tests {
             "skill".into(),
             "render".into()
         ]));
-        assert!(is_allowed_mcp_command(&[
-            "biomcp".into(),
-            "skill".into(),
-            "show".into()
-        ]));
-        // Numeric and slug skill lookups are read-only
+        assert!(is_allowed_mcp_command(&["biomcp".into(), "skill".into()]));
+        // Numeric and slug skill lookups are read-only when they name embedded skills.
         assert!(is_allowed_mcp_command(&[
             "biomcp".into(),
             "skill".into(),
@@ -384,6 +380,11 @@ mod tests {
             "biomcp".into(),
             "skill".into(),
             "gene-disease-orientation".into()
+        ]));
+        assert!(is_allowed_mcp_command(&[
+            "biomcp".into(),
+            "skill".into(),
+            "03-gene-disease-orientation".into()
         ]));
         assert!(is_allowed_mcp_command(&[
             "biomcp".into(),
@@ -484,6 +485,22 @@ mod tests {
             "biomcp".into(),
             "skill".into(),
             "install".into()
+        ]));
+        assert!(!is_allowed_mcp_command(&[
+            "biomcp".into(),
+            "skill".into(),
+            "sync".into()
+        ]));
+        assert!(!is_allowed_mcp_command(&[
+            "biomcp".into(),
+            "skill".into(),
+            "not-a-real-skill".into()
+        ]));
+        assert!(!is_allowed_mcp_command(&[
+            "biomcp".into(),
+            "skill".into(),
+            "render".into(),
+            "extra".into()
         ]));
         assert!(!is_allowed_mcp_command(&[
             "biomcp".into(),

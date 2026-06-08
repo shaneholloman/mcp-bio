@@ -196,6 +196,18 @@ def _break_study_download_guard(shell_file: Path) -> None:
     shell_file.write_text(updated, encoding="utf-8")
 
 
+def _break_skill_positive_policy(shell_file: Path) -> None:
+    content = shell_file.read_text(encoding="utf-8")
+    updated = content.replace(
+        '            matches!(sub.as_str(), "list" | "render")\n'
+        '                || crate::cli::skill::show_use_case(&sub).is_ok()\n',
+        '            !matches!(sub.as_str(), "install")\n',
+        1,
+    )
+    assert updated != content
+    shell_file.write_text(updated, encoding="utf-8")
+
+
 def _remove_description_filter_term(build_file: Path) -> None:
     content = build_file.read_text(encoding="utf-8")
     updated = content.replace('    "`skill install`",\n', "", 1)
@@ -300,6 +312,27 @@ def test_mcp_allowlist_audit_reports_study_policy_drift(tmp_path: Path) -> None:
     payload = _load_json(result.stdout)
     assert payload["status"] == "fail"
     assert payload["study_policy_ok"] is False
+
+
+def test_mcp_allowlist_audit_reports_skill_policy_drift(tmp_path: Path) -> None:
+    fixture_root = _copy_mcp_fixture(tmp_path)
+    _break_skill_positive_policy(fixture_root / "src/mcp/shell.rs")
+
+    result = _run_python_script(
+        MCP_SCRIPT,
+        "--cli-file",
+        str(fixture_root / "src/cli/mod.rs"),
+        "--shell-file",
+        str(fixture_root / "src/mcp/shell.rs"),
+        "--build-file",
+        str(fixture_root / "build.rs"),
+        "--json",
+    )
+
+    assert result.returncode == 1
+    payload = _load_json(result.stdout)
+    assert payload["status"] == "fail"
+    assert payload["skill_policy_ok"] is False
 
 
 def test_mcp_allowlist_audit_reports_description_policy_drift(tmp_path: Path) -> None:

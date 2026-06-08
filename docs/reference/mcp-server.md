@@ -131,9 +131,11 @@ assert 'annotations(title = "BioMCP", read_only_hint = true)' in shell
 ## Read-only Allowlist
 
 The MCP `biomcp` tool accepts read-only CLI commands, including `suggest`,
-`discover`, `biomcp skill render`, and the exact `study download --list`
+`discover`, `biomcp skill list`, `biomcp skill render`, existing embedded
+`biomcp skill <number-or-slug>` lookups, and the exact `study download --list`
 catalog lookup.
-Mutating commands remain blocked. Cache-family commands such as `cache path`,
+Mutating or unknown `skill` subcommands remain blocked unless they are added to
+the positive MCP skill allowlist. Cache-family commands such as `cache path`,
 `cache stats`, `cache clean`, and `cache clear` are also rejected because they reveal workstation-local paths and filesystem context.
 In particular, `study download <study_id>` is rejected because installation
 performs network and filesystem writes into the local study directory, while
@@ -152,8 +154,13 @@ assert '"discover" => true' in shell or '| "discover" => true' in shell
 assert '"study" => {' in shell
 assert '"download" => args.len() == 4 && args[3] == "--list"' in shell
 assert "suggest/discover/skill" in shell or "suggest/discover/skill)." in shell
-assert '"render".into()' in shell
+assert 'matches!(sub.as_str(), "list" | "render")' in shell
+assert "show_use_case(&sub).is_ok()" in shell
+assert "!matches!(sub.as_str()" not in shell
 assert 'test_biomcp_suggest_is_allowed_in_mcp_mode' in tests
+assert 'test_skill_list_is_allowed_in_mcp_mode' in tests
+assert 'test_unknown_skill_subcommand_is_rejected_in_mcp_mode' in tests
+assert 'test_skill_install_is_rejected_in_mcp_mode' in tests
 assert 'assert "study download --list" in description' in tests
 assert 'test_mutating_study_download_is_rejected_in_mcp_mode' in tests
 assert 'test_gtr_sync_is_rejected_in_mcp_mode' in tests
