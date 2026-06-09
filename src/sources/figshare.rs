@@ -174,6 +174,13 @@ pub fn parse_figshare_article_url(raw: &str) -> Option<FigshareArticleRef> {
                 .then(|| parse_u64(window[1]))
                 .flatten()
         })?
+    } else if let Some(article_path_index) =
+        segments.iter().position(|segment| *segment == "articles")
+    {
+        let end = file_path_index.unwrap_or(segments.len());
+        segments[article_path_index + 1..end]
+            .iter()
+            .find_map(|segment| parse_u64(segment))?
     } else if let Some(index) = file_path_index {
         segments[..index]
             .iter()
@@ -191,7 +198,7 @@ pub fn parse_figshare_article_url(raw: &str) -> Option<FigshareArticleRef> {
         .or_else(|| {
             segments.windows(2).find_map(|window| {
                 (window[0] == "files")
-                    .then(|| parse_u64(window[1]))
+                    .then(|| parse_u64_prefix(window[1]))
                     .flatten()
             })
         });
@@ -204,6 +211,18 @@ pub fn parse_figshare_article_url(raw: &str) -> Option<FigshareArticleRef> {
 
 fn parse_u64(value: &str) -> Option<u64> {
     value.trim().parse::<u64>().ok()
+}
+
+fn parse_u64_prefix(value: &str) -> Option<u64> {
+    let value = value.trim();
+    let end = value
+        .find(|ch: char| !ch.is_ascii_digit())
+        .unwrap_or(value.len());
+    if end == 0 {
+        None
+    } else {
+        value[..end].parse::<u64>().ok()
+    }
 }
 
 fn normalize_article(
@@ -307,6 +326,26 @@ mod tests {
 
         assert_eq!(parsed.article_id, 22474820);
         assert_eq!(parsed.file_id, Some(39926318));
+    }
+
+    #[test]
+    fn parses_versioned_public_article_url_with_file_path_id() {
+        let parsed = parse_figshare_article_url(
+            "https://aacr.figshare.com/articles/journal_contribution/Foo/22474820/1/files/39926318.pdf",
+        )
+        .unwrap();
+
+        assert_eq!(parsed.article_id, 22474820);
+        assert_eq!(parsed.file_id, Some(39926318));
+    }
+
+    #[test]
+    fn parses_api_article_url() {
+        let parsed =
+            parse_figshare_article_url("https://api.figshare.com/v2/articles/22474820").unwrap();
+
+        assert_eq!(parsed.article_id, 22474820);
+        assert_eq!(parsed.file_id, None);
     }
 
     #[test]
