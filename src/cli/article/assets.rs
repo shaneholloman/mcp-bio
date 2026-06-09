@@ -105,3 +105,41 @@ fn manifest_next_commands(
     commands.extend(manifest.assets.iter().map(|asset| asset.handle.clone()));
     commands
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sections(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| (*value).to_string()).collect()
+    }
+
+    #[test]
+    fn assets_is_standalone_json_only_route() {
+        assert!(article_asset_route(&sections(&["assets"])));
+        assert!(article_assets_request(&sections(&["assets"])).unwrap());
+
+        let err = article_assets_request(&sections(&["assets", "fulltext"])).unwrap_err();
+        assert!(err.to_string().contains("standalone JSON-only"));
+    }
+
+    #[test]
+    fn asset_requires_exactly_one_filename_and_no_assets_section() {
+        assert_eq!(
+            article_asset_request(&sections(&["asset", "supplement.pdf"]))
+                .unwrap()
+                .as_deref(),
+            Some("supplement.pdf")
+        );
+
+        for bad in [
+            sections(&["asset"]),
+            sections(&["asset", "supplement.pdf", "fulltext"]),
+            sections(&["asset", "supplement.pdf", "assets"]),
+            sections(&["asset", " "]),
+        ] {
+            let err = article_asset_request(&bad).unwrap_err();
+            assert!(err.to_string().contains("asset"));
+        }
+    }
+}

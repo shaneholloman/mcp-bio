@@ -17,8 +17,11 @@ tries the canonical PMC OA package first and emits a JSON-only manifest. When no
 PMC OA package is available and Semantic Scholar enrichment points at a supported
 Figshare/AACR Figshare article URL, BioMCP resolves the Figshare article through
 the Figshare API and emits a provider-labelled Figshare asset manifest instead.
-`get article <id> asset <name>` re-resolves the same provider metadata and
-returns the selected asset bytes without conversion. BioMCP lists and serves
+That manifest uses the same Figshare collection resolver as raw-byte retrieval:
+it starts from the linked record, adds same-paper sibling records found by
+DOI/title, filters out wrong-paper candidates, and keeps handles as BioMCP
+commands. `get article <id> asset <name>` re-resolves the same provider metadata
+and returns the selected asset bytes without conversion. BioMCP lists and serves
 bytes only; CSV, XLSX, DOC, PDF, and image parsing remains downstream.
 
 Full text is saved as a local Markdown artifact. BioMCP prints a source-labeled
@@ -142,14 +145,16 @@ PDF ineligible without a PDF-specific public note.
 - `src/entities/article/fulltext.rs`: identity bridge, content ladder,
   eligibility policy, fulltext source labels, cache key, and saved artifact
   assignment.
-- `src/entities/article/assets.rs`: PMC OA-first asset policy, Figshare fallback
-  manifest construction, asset classification, hashes, JATS caption matching for
-  PMC packages, omitted-coverage summary, and raw byte retrieval handles.
+- `src/entities/article/assets.rs`: PMC OA-first asset policy, shared Figshare
+  collection resolution for manifests and raw byte retrieval, asset
+  classification, hashes, JATS caption matching for PMC packages,
+  omitted-coverage summary, and raw byte retrieval handles.
 - `src/sources/europepmc.rs`, `src/sources/ncbi_efetch.rs`,
   `src/sources/pmc_oa.rs`, and `src/sources/ncbi_idconv.rs`: upstream
   transport for direct source APIs.
-- `src/sources/figshare.rs`: Figshare/AACR Figshare URL parsing, article API
-  metadata normalization, safe file filtering, and bounded file-byte downloads.
+- `src/sources/figshare.rs`: Figshare/AACR Figshare URL parsing, article search
+  and article API metadata normalization, safe file filtering, and bounded
+  file-byte downloads including `202 Accepted` cold-storage staging retries.
 - `src/sources/semantic_scholar.rs`: metadata enrichment that may expose
   `openAccessPdf`. Arbitrary PDF byte fetching remains article fulltext
   policy, not a Semantic Scholar source-client method.

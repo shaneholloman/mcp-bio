@@ -212,17 +212,20 @@ images, supplementary files, or complex tables are not inlined.
 Article assets:
 
 ```bash
-biomcp --json get article 22663011 assets
-biomcp get article 22663011 asset traces-s1.csv
+biomcp --json get article <id> assets
+biomcp get article <id> asset <filename>
 ```
 
 `get article <id> assets` returns a JSON-only provider-labelled manifest. BioMCP
 prefers the canonical PMC OA package; if none is available and Semantic Scholar
 enrichment points at supported Figshare/AACR Figshare metadata, it resolves the
-Figshare API and lists those public files instead. `get article <id> asset
-<name>` returns the selected member as raw bytes with no conversion; downstream
-tools parse CSV, XLSX, DOC, PDF, or images. Figshare supplement PDFs remain
-assets, not full-text article substitutes.
+Figshare API and lists those public files instead. Figshare manifests can include
+same-paper sibling records discovered by DOI/title, while excluding records that
+do not match the paper. `get article <id> asset <name>` returns the selected
+member as raw bytes with no conversion; downstream tools parse CSV, XLSX, DOC,
+PDF, or images. Manifest handles remain BioMCP commands, not provider download
+URLs. Figshare supplement PDFs and tables remain assets, not full-text article
+substitutes.
 
 Opt in to the final PDF rung only when you want the last-resort open-access PDF
 path after XML and PMC HTML both miss:

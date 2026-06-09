@@ -1,9 +1,10 @@
 use std::borrow::Cow;
 use std::path::{Component, Path, PathBuf};
+use std::time::Duration;
 
 use http_cache_reqwest::CacheMode;
-use reqwest::Url;
-use serde::Deserialize;
+use reqwest::{StatusCode, Url, header::CONTENT_TYPE};
+use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
 
@@ -11,6 +12,9 @@ const FIGSHARE_BASE: &str = "https://api.figshare.com";
 const FIGSHARE_BASE_ENV: &str = "BIOMCP_FIGSHARE_BASE";
 const FIGSHARE_API: &str = "figshare";
 const MAX_FIGSHARE_FILE_BYTES: usize = crate::sources::DEFAULT_MAX_BODY_BYTES;
+const FIGSHARE_SEARCH_PAGE_SIZE: usize = 100;
+const FIGSHARE_DOWNLOAD_ACCEPTED_RETRIES: usize = 3;
+const FIGSHARE_DOWNLOAD_ACCEPTED_BACKOFF_MS: u64 = 100;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FigshareArticleRef {
@@ -21,6 +25,8 @@ pub struct FigshareArticleRef {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FigshareArticle {
     pub article_id: u64,
+    pub title: Option<String>,
+    pub doi: Option<String>,
     pub api_url: Option<String>,
     pub public_url: Option<String>,
     pub license: Option<FigshareLicense>,
@@ -31,6 +37,15 @@ pub struct FigshareArticle {
 pub struct FigshareLicense {
     pub name: Option<String>,
     pub url: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FigshareArticleSearchResult {
+    pub article_id: u64,
+    pub title: Option<String>,
+    pub doi: Option<String>,
+    pub api_url: Option<String>,
+    pub public_url: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -52,6 +67,8 @@ pub struct FigshareClient {
 #[derive(Debug, Deserialize)]
 struct FigshareArticleResponse {
     id: Option<u64>,
+    title: Option<String>,
+    doi: Option<String>,
     url_api: Option<String>,
     url_public_html: Option<String>,
     license: Option<FigshareLicenseResponse>,
@@ -73,6 +90,21 @@ struct FigshareFileResponse {
     md5: Option<String>,
     mimetype: Option<String>,
     download_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct FigshareArticleSearchResponse {
+    id: Option<u64>,
+    title: Option<String>,
+    doi: Option<String>,
+    url_api: Option<String>,
+    url_public_html: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct FigshareArticleSearchRequest<'a> {
+    search_for: &'a str,
+    page_size: usize,
 }
 
 impl FigshareClient {
@@ -115,9 +147,10 @@ impl FigshareClient {
             .send()
             .await?;
         let status = resp.status();
+        let content_type = resp.headers().get(CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, FIGSHARE_API).await?;
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
             return Err(BioMcpError::Api {
                 api: FIGSHARE_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
@@ -131,28 +164,88 @@ impl FigshareClient {
         Ok(normalize_article(raw, reference))
     }
 
-    pub async fn download_file(&self, file: &FigshareFile) -> Result<Vec<u8>, BioMcpError> {
+    pub async fn search_articles(
+        &self,
+        search_for: &str,
+    ) -> Result<Vec<FigshareArticleSearchResult>, BioMcpError> {
+        let search_for = search_for.trim();
+        if search_for.is_empty() {
+            return Ok(Vec::new());
+        }
+        let url = self.endpoint_url("v2/articles/search")?;
+        let body = FigshareArticleSearchRequest {
+            search_for,
+            page_size: FIGSHARE_SEARCH_PAGE_SIZE,
+        };
         let resp = self
             .client
-            .get(&file.download_url)
+            .post(url)
+            .json(&body)
             .with_extension(CacheMode::NoStore)
             .send()
             .await?;
         let status = resp.status();
-        let bytes = crate::sources::read_limited_body_with_limit(
-            resp,
-            FIGSHARE_API,
-            MAX_FIGSHARE_FILE_BYTES,
-        )
-        .await?;
+        let content_type = resp.headers().get(CONTENT_TYPE).cloned();
+        let bytes = crate::sources::read_limited_body(resp, FIGSHARE_API).await?;
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
             return Err(BioMcpError::Api {
                 api: FIGSHARE_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
-        Ok(bytes)
+        let raw: Vec<FigshareArticleSearchResponse> =
+            serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+                api: FIGSHARE_API.to_string(),
+                source,
+            })?;
+        Ok(raw
+            .into_iter()
+            .filter_map(normalize_search_result)
+            .collect())
+    }
+
+    pub async fn download_file(&self, file: &FigshareFile) -> Result<Vec<u8>, BioMcpError> {
+        let mut accepted_retries = 0;
+        loop {
+            let resp = self
+                .client
+                .get(&file.download_url)
+                .with_extension(CacheMode::NoStore)
+                .send()
+                .await?;
+            let status = resp.status();
+            let content_type = resp.headers().get(CONTENT_TYPE).cloned();
+            let bytes = crate::sources::read_limited_body_with_limit(
+                resp,
+                FIGSHARE_API,
+                MAX_FIGSHARE_FILE_BYTES,
+            )
+            .await?;
+            if status == StatusCode::ACCEPTED {
+                if accepted_retries >= FIGSHARE_DOWNLOAD_ACCEPTED_RETRIES {
+                    return Err(BioMcpError::Api {
+                        api: FIGSHARE_API.to_string(),
+                        message: format!(
+                            "HTTP {status}: Figshare file still staging after {accepted_retries} retries"
+                        ),
+                    });
+                }
+                accepted_retries += 1;
+                tokio::time::sleep(Duration::from_millis(FIGSHARE_DOWNLOAD_ACCEPTED_BACKOFF_MS))
+                    .await;
+                continue;
+            }
+            if !status.is_success() {
+                let excerpt =
+                    crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
+                return Err(BioMcpError::Api {
+                    api: FIGSHARE_API.to_string(),
+                    message: format!("HTTP {status}: {excerpt}"),
+                });
+            }
+            return Ok(bytes);
+        }
     }
 }
 
@@ -245,6 +338,8 @@ fn normalize_article(
 
     FigshareArticle {
         article_id: raw.id.unwrap_or(reference.article_id),
+        title: clean_string(raw.title),
+        doi: clean_string(raw.doi),
         api_url: clean_string(raw.url_api),
         public_url: clean_string(raw.url_public_html),
         license: raw.license.map(|license| FigshareLicense {
@@ -253,6 +348,18 @@ fn normalize_article(
         }),
         files,
     }
+}
+
+fn normalize_search_result(
+    raw: FigshareArticleSearchResponse,
+) -> Option<FigshareArticleSearchResult> {
+    Some(FigshareArticleSearchResult {
+        article_id: raw.id?,
+        title: clean_string(raw.title),
+        doi: clean_string(raw.doi),
+        api_url: clean_string(raw.url_api),
+        public_url: clean_string(raw.url_public_html),
+    })
 }
 
 fn normalize_file(raw: FigshareFileResponse) -> Option<FigshareFile> {
@@ -430,5 +537,87 @@ mod tests {
         };
 
         assert!(client.download_file(&file).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn search_articles_normalizes_rows() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/v2/articles/search"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "id": 22474817,
+                    "title": " Example ",
+                    "doi": "10.1000/example",
+                    "url_api": format!("{}/v2/articles/22474817", server.uri()),
+                    "url_public_html": "https://figshare.com/articles/example/22474817"
+                },
+                {"title": "missing id"}
+            ])))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = FigshareClient::new_for_test(server.uri()).unwrap();
+        let rows = client.search_articles("10.1000/example").await.unwrap();
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].article_id, 22474817);
+        assert_eq!(rows[0].title.as_deref(), Some("Example"));
+        assert_eq!(rows[0].doi.as_deref(), Some("10.1000/example"));
+    }
+
+    #[tokio::test]
+    async fn download_error_sanitizes_html_body() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/download/error"))
+            .respond_with(ResponseTemplate::new(503).set_body_raw(
+                "<html><body>upstream detail</body></html>",
+                "text/html; charset=utf-8",
+            ))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = FigshareClient::new_for_test(server.uri()).unwrap();
+        let file = FigshareFile {
+            id: 1,
+            filename: "error.pdf".to_string(),
+            size: None,
+            md5: None,
+            mimetype: Some("application/pdf".to_string()),
+            download_url: format!("{}/download/error", server.uri()),
+        };
+        let err = client.download_file(&file).await.unwrap_err();
+        let message = err.to_string();
+
+        assert!(message.contains("HTML error page"));
+        assert!(!message.contains("<html"));
+        assert!(!message.contains("upstream detail"));
+    }
+
+    #[tokio::test]
+    async fn download_errors_after_repeated_accepted_responses() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/download/staged"))
+            .respond_with(ResponseTemplate::new(202))
+            .expect(FIGSHARE_DOWNLOAD_ACCEPTED_RETRIES as u64 + 1)
+            .mount(&server)
+            .await;
+
+        let client = FigshareClient::new_for_test(server.uri()).unwrap();
+        let file = FigshareFile {
+            id: 1,
+            filename: "staged.pdf".to_string(),
+            size: None,
+            md5: None,
+            mimetype: Some("application/pdf".to_string()),
+            download_url: format!("{}/download/staged", server.uri()),
+        };
+        let err = client.download_file(&file).await.unwrap_err();
+
+        assert!(err.to_string().contains("still staging"));
     }
 }

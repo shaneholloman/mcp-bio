@@ -1,11 +1,12 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use roxmltree::Node;
 use sha2::{Digest, Sha256};
 
 use crate::error::BioMcpError;
 use crate::sources::figshare::{
-    FigshareArticle, FigshareClient, FigshareFile, parse_figshare_article_url,
+    FigshareArticle, FigshareArticleRef, FigshareArticleSearchResult, FigshareClient, FigshareFile,
+    parse_figshare_article_url,
 };
 use crate::sources::ncbi_idconv::NcbiIdConverterClient;
 use crate::sources::pmc_oa::{
@@ -22,6 +23,7 @@ const PMC_PROVIDER_LABEL: &str = "PMC OA Archive";
 const PMC_PROVIDER_SOURCE: &str = "PMC OA";
 const FIGSHARE_PROVIDER_LABEL: &str = "Figshare";
 const FIGSHARE_PROVIDER_SOURCE: &str = "Figshare";
+const FIGSHARE_COLLECTION_RECORD_LIMIT: usize = 25;
 
 #[derive(Clone, Debug, Default)]
 struct JatsAssetFacts {
@@ -173,7 +175,9 @@ async fn resolve_article_pmcid(
     })
 }
 
-async fn figshare_article(article: &mut Article) -> Result<Option<FigshareArticle>, BioMcpError> {
+async fn figshare_collection(
+    article: &mut Article,
+) -> Result<Option<Vec<FigshareArticle>>, BioMcpError> {
     super::detail::enrich_article_with_semantic_scholar(article).await?;
     let Some(url) = article
         .semantic_scholar
@@ -187,39 +191,204 @@ async fn figshare_article(article: &mut Article) -> Result<Option<FigshareArticl
     let Some(reference) = parse_figshare_article_url(url) else {
         return Ok(None);
     };
-    FigshareClient::new()?.article(&reference).await.map(Some)
+
+    let client = FigshareClient::new()?;
+    let linked = client.article(&reference).await?;
+    let target_doi = article
+        .doi
+        .as_deref()
+        .and_then(normalize_doi)
+        .or_else(|| linked.doi.as_deref().and_then(normalize_doi));
+    let target_title = normalize_title(&article.title)
+        .or_else(|| linked.title.as_deref().and_then(normalize_title));
+    let mut ids = vec![linked.article_id];
+    let mut seen = BTreeSet::from([linked.article_id]);
+    let doi_additions = match target_doi.as_deref() {
+        Some(doi) => {
+            append_figshare_search_ids(
+                &client,
+                doi,
+                target_doi.as_deref(),
+                target_title.as_deref(),
+                &mut seen,
+                &mut ids,
+            )
+            .await?
+        }
+        None => 0,
+    };
+    if doi_additions == 0
+        && let Some(title) = target_title.as_deref()
+    {
+        append_figshare_search_ids(
+            &client,
+            title,
+            target_doi.as_deref(),
+            Some(title),
+            &mut seen,
+            &mut ids,
+        )
+        .await?;
+    }
+
+    let mut articles = vec![linked];
+    for article_id in ids.into_iter().skip(1) {
+        let reference = FigshareArticleRef {
+            article_id,
+            file_id: None,
+        };
+        match client.article(&reference).await {
+            Ok(article) => articles.push(article),
+            Err(err) => tracing::warn!(?err, article_id, "Figshare sibling article unavailable"),
+        }
+    }
+    Ok(Some(articles))
+}
+
+async fn append_figshare_search_ids(
+    client: &FigshareClient,
+    query: &str,
+    target_doi: Option<&str>,
+    target_title: Option<&str>,
+    seen: &mut BTreeSet<u64>,
+    ids: &mut Vec<u64>,
+) -> Result<usize, BioMcpError> {
+    let rows = match client.search_articles(query).await {
+        Ok(rows) => rows,
+        Err(err) => {
+            tracing::warn!(?err, query, "Figshare sibling search unavailable");
+            return Ok(0);
+        }
+    };
+    Ok(append_matching_figshare_ids(
+        rows,
+        target_doi,
+        target_title,
+        seen,
+        ids,
+    ))
+}
+
+fn append_matching_figshare_ids(
+    mut rows: Vec<FigshareArticleSearchResult>,
+    target_doi: Option<&str>,
+    target_title: Option<&str>,
+    seen: &mut BTreeSet<u64>,
+    ids: &mut Vec<u64>,
+) -> usize {
+    rows.sort_by_key(|row| row.article_id);
+    let mut additions = 0;
+    for row in rows
+        .into_iter()
+        .filter(|row| figshare_same_paper(row, target_doi, target_title))
+    {
+        if seen.contains(&row.article_id) {
+            continue;
+        }
+        if ids.len() >= FIGSHARE_COLLECTION_RECORD_LIMIT {
+            tracing::warn!(
+                limit = FIGSHARE_COLLECTION_RECORD_LIMIT,
+                "Figshare sibling enumeration truncated"
+            );
+            break;
+        }
+        seen.insert(row.article_id);
+        ids.push(row.article_id);
+        additions += 1;
+    }
+    additions
+}
+
+fn figshare_same_paper(
+    row: &FigshareArticleSearchResult,
+    target_doi: Option<&str>,
+    target_title: Option<&str>,
+) -> bool {
+    if let (Some(candidate), Some(target)) =
+        (row.doi.as_deref().and_then(normalize_doi), target_doi)
+        && candidate == target
+    {
+        return true;
+    }
+    if let (Some(candidate), Some(target)) =
+        (row.title.as_deref().and_then(normalize_title), target_title)
+    {
+        return candidate == target || figshare_supplement_title_matches(&candidate, target);
+    }
+    false
+}
+
+fn figshare_supplement_title_matches(candidate: &str, target: &str) -> bool {
+    (candidate.starts_with("supplementary ") || candidate.starts_with("supplemental "))
+        && candidate.ends_with(target)
+}
+
+fn normalize_doi(raw: &str) -> Option<String> {
+    let value = raw
+        .trim()
+        .trim_start_matches("doi:")
+        .trim_start_matches("DOI:")
+        .to_ascii_lowercase();
+    (!value.is_empty()).then_some(value)
+}
+
+fn normalize_title(raw: &str) -> Option<String> {
+    let mut text = String::with_capacity(raw.len());
+    let mut in_tag = false;
+    for ch in raw.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if in_tag => {}
+            _ if ch.is_alphanumeric() => text.extend(ch.to_lowercase()),
+            _ => text.push(' '),
+        }
+    }
+    let value = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    (!value.is_empty()).then_some(value)
 }
 
 async fn figshare_assets_manifest(
     requested_id: &str,
     article: &mut Article,
 ) -> Result<Option<ArticleAssetsManifest>, BioMcpError> {
-    let Some(figshare) = figshare_article(article).await? else {
+    let Some(figshare_articles) = figshare_collection(article).await? else {
+        return Ok(None);
+    };
+    let Some(first_article) = figshare_articles.first() else {
         return Ok(None);
     };
     let provider = figshare_provider();
-    let reuse = figshare_reuse(&figshare);
-    let provenance = figshare_provenance(&figshare, article);
+    let provenance = figshare_provenance(first_article, article);
     let client = FigshareClient::new()?;
+    let mut seen_files = BTreeSet::new();
     let mut assets = Vec::new();
-    for file in &figshare.files {
-        match client.download_file(file).await {
-            Ok(bytes) => assets.push(figshare_asset_entry(
-                requested_id,
-                file,
-                &bytes,
-                &provider,
-                &reuse,
-                &provenance,
-            )),
-            Err(err) => {
-                tracing::warn!(?err, filename = %file.filename, "Figshare asset unavailable")
+    for figshare in &figshare_articles {
+        let reuse = figshare_reuse(figshare);
+        let asset_provenance = figshare_provenance(figshare, article);
+        for file in &figshare.files {
+            if !seen_files.insert(file.filename.clone()) {
+                continue;
+            }
+            match client.download_file(file).await {
+                Ok(bytes) => assets.push(figshare_asset_entry(
+                    requested_id,
+                    file,
+                    &bytes,
+                    &provider,
+                    &reuse,
+                    &asset_provenance,
+                )),
+                Err(err) => {
+                    tracing::warn!(?err, filename = %file.filename, "Figshare asset unavailable")
+                }
             }
         }
     }
     if assets.is_empty() {
         return Ok(None);
     }
+    assets.sort_by(|left, right| left.filename.cmp(&right.filename));
     let mut manifest = ArticleAssetsManifest {
         article_id: requested_id.trim().to_string(),
         pmid: article.pmid.clone(),
@@ -237,13 +406,22 @@ async fn figshare_asset_bytes(
     article: &mut Article,
     wanted: &str,
 ) -> Result<Option<Vec<u8>>, BioMcpError> {
-    let Some(figshare) = figshare_article(article).await? else {
+    let Some(figshare_articles) = figshare_collection(article).await? else {
         return Ok(None);
     };
-    let Some(file) = figshare.files.iter().find(|file| file.filename == wanted) else {
-        return Ok(None);
-    };
-    FigshareClient::new()?.download_file(file).await.map(Some)
+    let client = FigshareClient::new()?;
+    let mut seen_files = BTreeSet::new();
+    for figshare in &figshare_articles {
+        for file in &figshare.files {
+            if !seen_files.insert(file.filename.clone()) {
+                continue;
+            }
+            if file.filename == wanted {
+                return client.download_file(file).await.map(Some);
+            }
+        }
+    }
+    Ok(None)
 }
 
 fn figshare_provider() -> ArticleFulltextProvider {
@@ -690,5 +868,68 @@ mod tests {
             not_included.figure_images.retrieve_with,
             "biomcp --json get article \"10.1000/foo bar\" assets"
         );
+    }
+
+    fn figshare_row(
+        article_id: u64,
+        title: Option<&str>,
+        doi: Option<&str>,
+    ) -> FigshareArticleSearchResult {
+        FigshareArticleSearchResult {
+            article_id,
+            title: title.map(str::to_string),
+            doi: doi.map(str::to_string),
+            api_url: None,
+            public_url: None,
+        }
+    }
+
+    #[test]
+    fn figshare_same_paper_matches_doi_or_normalized_exact_title() {
+        assert!(figshare_same_paper(
+            &figshare_row(1, Some("Different title"), Some("10.1000/Example")),
+            Some("10.1000/example"),
+            Some("target title"),
+        ));
+        assert!(figshare_same_paper(
+            &figshare_row(2, Some(" Target   Title "), None),
+            Some("10.1000/example"),
+            Some("target title"),
+        ));
+        assert!(figshare_same_paper(
+            &figshare_row(
+                4,
+                Some("Supplementary Table S1 from High-Throughput <i>ERBB2</i>."),
+                Some("10.1000/figshare-record"),
+            ),
+            Some("10.1000/article"),
+            Some("high throughput erbb2"),
+        ));
+        assert!(!figshare_same_paper(
+            &figshare_row(3, Some("Unrelated"), Some("10.1000/other")),
+            Some("10.1000/example"),
+            Some("target title"),
+        ));
+    }
+
+    #[test]
+    fn append_matching_figshare_ids_dedupes_sorts_and_caps() {
+        let mut rows = (0..30)
+            .rev()
+            .map(|offset| figshare_row(100 + offset, Some("Target Title"), None))
+            .collect::<Vec<_>>();
+        rows.push(figshare_row(100, Some("Target Title"), None));
+        rows.push(figshare_row(999, Some("Unrelated"), None));
+        let mut seen = BTreeSet::from([100]);
+        let mut ids = vec![100];
+
+        let additions =
+            append_matching_figshare_ids(rows, None, Some("target title"), &mut seen, &mut ids);
+
+        assert_eq!(additions, FIGSHARE_COLLECTION_RECORD_LIMIT - 1);
+        assert_eq!(ids.len(), FIGSHARE_COLLECTION_RECORD_LIMIT);
+        assert_eq!(ids[0], 100);
+        assert_eq!(ids[1], 101);
+        assert!(!ids.contains(&999));
     }
 }

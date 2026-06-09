@@ -237,6 +237,38 @@ assert "CC BY" in str(reuse.get("license", ""))
 PY
 ```
 
+## PMC OA Archive XML Fulltext Manifest Carries Source and Reuse Fields
+
+When the XML ladder falls through to the PMC OA Archive package, the JSON
+manifest should identify that package-backed source instead of collapsing it
+into a generic XML winner. The package URL, license, and retraction fact are
+machine-readable provenance for downstream reuse decisions.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci --json get article 22663016 fulltext | uv run --no-sync python3 -c '
+import json, sys
+
+doc = json.load(sys.stdin)
+manifest = doc.get("full_text_manifest") or {}
+assert manifest.get("source_kind") == "jats_xml"
+assert manifest.get("source_identifier") == "PMC123460"
+provider = manifest.get("provider") or {}
+assert provider.get("label") == "PMC OA Archive XML"
+assert provider.get("source") == "PMC OA"
+provenance = manifest.get("provenance") or {}
+assert provenance.get("open_access") is True
+assert provenance.get("retracted") is False
+assert "oa-assets-22663016.tgz" in str(provenance.get("package_url", ""))
+reuse = manifest.get("reuse") or {}
+assert reuse.get("license_present") is True
+assert "CC BY-NC" in str(reuse.get("license", ""))
+print("pmc oa archive fulltext manifest ok")
+' | mustmatch like "pmc oa archive fulltext manifest ok"
+```
+
 ## OA Package Assets Manifest
 
 Article assets are resolved from the canonical PMC OA package on demand, even
@@ -364,6 +396,64 @@ trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true
 Figshare supplemental fixture bytes"
 ```
 
+## Non-PMC Figshare Assets Manifest Includes Same-Paper Sibling Records
+
+AACR/Figshare supplements can split a paper across one linked contribution and
+separate sibling records for individual tables. The article asset manifest should
+merge same-paper sibling files into the stable BioMCP handle list so downstream
+agents do not have to rediscover provider records themselves.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci --json get article 22663015 assets | uv run --no-sync python3 -c '
+import json, sys
+
+doc = json.load(sys.stdin)
+assets = {row.get("filename"): row for row in doc.get("assets") or []}
+commands = (doc.get("_meta") or {}).get("next_commands") or []
+for filename in ["figshare-supplement.pdf", "supplementary-table-s1.xlsx", "supplementary-table-s2.xlsx"]:
+    row = assets.get(filename) or {}
+    assert row.get("kind") == "supplementary-file", filename
+    assert isinstance(row.get("size_bytes"), int) and row["size_bytes"] > 0, filename
+    provider = row.get("provider") or {}
+    assert provider.get("label") == "Figshare", filename
+    assert provider.get("source") == "Figshare", filename
+    handle = f"biomcp get article 22663015 asset {filename}"
+    assert row.get("handle") == handle, filename
+    assert handle in commands, filename
+assert "unrelated-table.xlsx" not in assets
+print("figshare sibling assets manifest ok")
+' | mustmatch like "figshare sibling assets manifest ok"
+```
+
+## Non-PMC Figshare Sibling Asset Retrieval Returns Bytes
+
+Every handle listed in the Figshare manifest should be fetchable through BioMCP.
+Sibling table bytes remain raw provider bytes; BioMCP does not parse workbook
+contents.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci get article 22663015 asset supplementary-table-s1.xlsx | mustmatch like "S1 workbook fixture bytes"
+```
+
+## Figshare Cold-Storage Asset Retrieval Retries Accepted Downloads
+
+Figshare can answer a download request with `202 Accepted` while a cold-storage
+file is being staged. A BioMCP asset handle should wait through that bounded
+staging state and still stream the final provider bytes.
+
+```bash
+bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
+. ../../.cache/spec-article-fulltext-source-env
+trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+../../tools/biomcp-ci get article 22663017 asset cold-storage-supplement.pdf | mustmatch like "Figshare cold-storage fixture bytes"
+```
+
 ## Fulltext Reports Assets Not Included
 
 Full text Markdown remains text-first, but JSON must tell agents which evidence
@@ -402,7 +492,9 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 ../../tools/biomcp-ci get article 22663011 fulltext | mustmatch like "biomcp --json get article 22663011 assets"
 ../../tools/biomcp-ci get article 22663011 fulltext | mustmatch not like "figure-floats.png
-traces-s1.csv"
+traces-s1.csv
+sha256
+size_bytes"
 ```
 
 ## Semantic Scholar Degrades Truthfully Without a Key
