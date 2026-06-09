@@ -80,6 +80,23 @@ fn ticket_406_coordinate_outputs_carry_genome_build_context() {
         markdown.contains("GRCh") && markdown.contains("7:140719327-140924976"),
         "coordinate output must include explicit genome-build context with the position, got {markdown:?}"
     );
+
+    let search_result = GeneSearchResult {
+        symbol: gene.symbol,
+        name: gene.name,
+        entrez_id: gene.entrez_id,
+        genomic_coordinates: gene.genomic_coordinates,
+        uniprot_id: gene.uniprot_id,
+        omim_id: gene.omim_id,
+    };
+    let search_markdown =
+        gene_search_markdown("BRAF", &[search_result]).expect("rendered search markdown");
+
+    assert!(
+        search_markdown.contains("Coordinates (GRCh38)")
+            && search_markdown.contains("7:140719327-140924976"),
+        "gene search coordinate output must include explicit genome-build context with the position, got {search_markdown:?}"
+    );
 }
 
 #[test]
