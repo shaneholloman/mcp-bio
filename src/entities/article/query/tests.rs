@@ -123,6 +123,20 @@ fn strip_pubmed_stopwords_cleans_question_patterns() {
 }
 
 #[test]
+fn ticket_406_myd88_exact_protein_alias_article_precision() {
+    let mut filters = empty_filters();
+    filters.gene = Some("MYD88".into());
+    filters.keyword = Some("p.N291S".into());
+
+    let term = build_pubmed_search_term(&filters).expect("pubmed term should build");
+
+    assert!(
+        term.contains("MYD88") && term.contains("\"p.N291S\""),
+        "exact gene/protein-alias article searches must preserve both the gene anchor and quoted exact protein alias, got {term:?}"
+    );
+}
+
+#[test]
 fn build_pubmed_search_term_cleans_unfielded_clauses_only() {
     let mut filters = empty_filters();
     filters.gene = Some("Which are the genes thought to be regulated by EWS/FLI?".into());

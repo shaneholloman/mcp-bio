@@ -36,6 +36,20 @@ cargo test --lib ticket_377_variant_renderer_envelope_contracts -- --nocapture \
   | mustmatch like 'ticket_377_variant_renderer_envelope_contracts'
 ```
 
+## Coordinate Genome-Build Context
+
+Variant and gene coordinate strings are source-derived genomic positions, so
+consumer-facing output must say which genome build those coordinates use rather
+than emitting a bare chromosome/start/end string. The deterministic renderer
+contract covers the markdown and JSON envelopes without depending on live
+MyVariant or MyGene responses.
+
+```bash
+set -o pipefail
+cargo test --lib ticket_406_coordinate_outputs_carry_genome_build_context -- --nocapture \
+  | mustmatch like 'ticket_406_coordinate_outputs_carry_genome_build_context'
+```
+
 ## Gene-Scoped Variant Search
 
 Gene-first search should still return the canonical variant identity columns and
