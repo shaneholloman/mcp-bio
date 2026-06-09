@@ -17,8 +17,8 @@ pub(super) fn list_article() -> String {
 - `get article <id> annotations` - PubTator entity mentions
 - `get article <id> fulltext` - download/cache full text via XML -> PMC HTML
 - `get article <id> fulltext --pdf` - allow Semantic Scholar PDF after XML and PMC HTML miss
-- `get article <id> assets` - JSON-only article asset manifest (PMC OA first, Figshare fallback)
-- `get article <id> asset <name>` - return one provider asset as raw bytes with no conversion
+- `get article <id> assets` - JSON-only article asset manifest (PMC OA first, Figshare fallback with same-paper siblings discovered by DOI/title)
+- `get article <id> asset <name>` - return one provider asset as raw bytes with no conversion; handles stay as BioMCP commands
 - Asset quick reference:
 get article <id> assets
 get article <id> asset <name>
@@ -114,8 +114,8 @@ Worked examples:
 - Set `S2_API_KEY` to send authenticated Semantic Scholar requests at 1 req/sec. Without it, BioMCP uses the shared pool at 1 req/2sec.
 - `search article --json` and `--debug-plan` expose redacted Semantic Scholar auth/availability source status.
 - `get article <id> fulltext` tries XML first, then PMC HTML, and never falls back to PDF.
-- `get article <id> assets` resolves the canonical PMC OA package first; when unavailable, supported Figshare/AACR Figshare metadata discovered through Semantic Scholar can provide a provider-labelled fallback manifest.
-- `get article <id> asset <name>` streams provider bytes without conversion; downstream tools parse CSV, XLSX, DOC, PDF, or images.
+- `get article <id> assets` resolves the canonical PMC OA package first; when unavailable, supported Figshare/AACR Figshare metadata discovered through Semantic Scholar can provide a provider-labelled fallback manifest with same-paper sibling records discovered by DOI/title.
+- `get article <id> asset <name>` streams provider bytes without conversion; handles stay as BioMCP commands and downstream tools parse CSV, XLSX, DOC, PDF, or images.
 - Add `--pdf` only with `fulltext` to extend that ladder with Semantic Scholar PDF as the last resort.
 - `--pdf` requires the `fulltext` section and is rejected for other article requests.
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.

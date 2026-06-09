@@ -462,13 +462,13 @@ EXAMPLES:
   biomcp get article 22663011 annotations
   biomcp get article 22663011 fulltext
   biomcp get article 22663011 fulltext --pdf
-  biomcp --json get article 22663011 assets
-  biomcp get article 22663011 asset traces-s1.csv
+  biomcp --json get article <id> assets
+  biomcp get article <id> asset <filename>
   biomcp get article 22663011 tldr
 
 Full text defaults to the XML -> PMC HTML ladder.
-Use `assets` for the JSON-only article asset manifest (PMC OA first, Figshare fallback).
-Use `asset <name>` to return one provider asset as raw bytes with no conversion.
+Use `assets` for the JSON-only article asset manifest (PMC OA first, Figshare fallback, including same-paper Figshare siblings discovered by DOI/title).
+Use `asset <name>` to return one provider asset as raw bytes with no conversion; handles stay as BioMCP commands, not provider URLs.
 Asset keywords:
 assets
 asset <name>

@@ -3,7 +3,7 @@ use std::path::{Component, Path, PathBuf};
 use std::time::Duration;
 
 use http_cache_reqwest::CacheMode;
-use reqwest::{StatusCode, Url};
+use reqwest::{StatusCode, Url, header::CONTENT_TYPE};
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
@@ -147,9 +147,10 @@ impl FigshareClient {
             .send()
             .await?;
         let status = resp.status();
+        let content_type = resp.headers().get(CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, FIGSHARE_API).await?;
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
             return Err(BioMcpError::Api {
                 api: FIGSHARE_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
@@ -184,9 +185,10 @@ impl FigshareClient {
             .send()
             .await?;
         let status = resp.status();
+        let content_type = resp.headers().get(CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, FIGSHARE_API).await?;
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
             return Err(BioMcpError::Api {
                 api: FIGSHARE_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
@@ -213,6 +215,7 @@ impl FigshareClient {
                 .send()
                 .await?;
             let status = resp.status();
+            let content_type = resp.headers().get(CONTENT_TYPE).cloned();
             let bytes = crate::sources::read_limited_body_with_limit(
                 resp,
                 FIGSHARE_API,
@@ -234,7 +237,8 @@ impl FigshareClient {
                 continue;
             }
             if !status.is_success() {
-                let excerpt = crate::sources::body_excerpt(&bytes);
+                let excerpt =
+                    crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
                 return Err(BioMcpError::Api {
                     api: FIGSHARE_API.to_string(),
                     message: format!("HTTP {status}: {excerpt}"),
@@ -561,6 +565,36 @@ mod tests {
         assert_eq!(rows[0].article_id, 22474817);
         assert_eq!(rows[0].title.as_deref(), Some("Example"));
         assert_eq!(rows[0].doi.as_deref(), Some("10.1000/example"));
+    }
+
+    #[tokio::test]
+    async fn download_error_sanitizes_html_body() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/download/error"))
+            .respond_with(ResponseTemplate::new(503).set_body_raw(
+                "<html><body>upstream detail</body></html>",
+                "text/html; charset=utf-8",
+            ))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = FigshareClient::new_for_test(server.uri()).unwrap();
+        let file = FigshareFile {
+            id: 1,
+            filename: "error.pdf".to_string(),
+            size: None,
+            md5: None,
+            mimetype: Some("application/pdf".to_string()),
+            download_url: format!("{}/download/error", server.uri()),
+        };
+        let err = client.download_file(&file).await.unwrap_err();
+        let message = err.to_string();
+
+        assert!(message.contains("HTML error page"));
+        assert!(!message.contains("<html"));
+        assert!(!message.contains("upstream detail"));
     }
 
     #[tokio::test]
