@@ -184,6 +184,11 @@ async fn article_citations_suppresses_retry_warnings_on_default_stderr_but_keeps
         "debug stderr should retain retry diagnostics\nstderr:\n{}",
         debug_result.stderr
     );
+    assert!(
+        !debug_result.stderr.contains("\u{1b}["),
+        "redirected non-TTY stderr diagnostics should not include ANSI color escapes\nstderr:\n{}",
+        debug_result.stderr
+    );
 }
 
 #[tokio::test]

@@ -317,17 +317,17 @@ class Handler(BaseHTTPRequestHandler):
                 },
                 {
                     "id": 22474817,
-                    "title": "Figshare asset fallback winner",
-                    "doi": "10.1158/fixture.figshare",
+                    "title": "Supplementary Table S1 from Figshare asset fallback winner",
+                    "doi": "10.1158/1078-0432.22474817.v1",
                     "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474817",
-                    "url_public_html": "https://aacr.figshare.com/articles/dataset/Fixture_Supplementary_Table_S1/22474817",
+                    "url_public_html": "https://aacr.figshare.com/articles/dataset/Supplementary_Table_S1_from_Figshare_asset_fallback_winner/22474817",
                 },
                 {
                     "id": 22474818,
-                    "title": "Figshare asset fallback winner",
-                    "doi": "10.1158/fixture.figshare",
+                    "title": "Supplementary Data S2 from Figshare asset fallback winner",
+                    "doi": "10.1158/1078-0432.22474818.v1",
                     "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474818",
-                    "url_public_html": "https://aacr.figshare.com/articles/dataset/Fixture_Supplementary_Table_S2/22474818",
+                    "url_public_html": "https://aacr.figshare.com/articles/dataset/Supplementary_Data_S2_from_Figshare_asset_fallback_winner/22474818",
                 },
                 {
                     "id": 99999999,
@@ -513,9 +513,9 @@ class Handler(BaseHTTPRequestHandler):
         if decoded_path == "/v2/articles/22474817":
             send_json(self, 200, {
                 "id": 22474817,
-                "title": "Figshare asset fallback winner",
-                "doi": "10.1158/fixture.figshare",
-                "url_public_html": "https://aacr.figshare.com/articles/dataset/Fixture_Supplementary_Table_S1/22474817",
+                "title": "Supplementary Table S1 from Figshare asset fallback winner",
+                "doi": "10.1158/1078-0432.22474817.v1",
+                "url_public_html": "https://aacr.figshare.com/articles/dataset/Supplementary_Table_S1_from_Figshare_asset_fallback_winner/22474817",
                 "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474817",
                 "license": {"name": "CC BY 4.0"},
                 "files": [
@@ -533,9 +533,9 @@ class Handler(BaseHTTPRequestHandler):
         if decoded_path == "/v2/articles/22474818":
             send_json(self, 200, {
                 "id": 22474818,
-                "title": "Figshare asset fallback winner",
-                "doi": "10.1158/fixture.figshare",
-                "url_public_html": "https://aacr.figshare.com/articles/dataset/Fixture_Supplementary_Table_S2/22474818",
+                "title": "Supplementary Data S2 from Figshare asset fallback winner",
+                "doi": "10.1158/1078-0432.22474818.v1",
+                "url_public_html": "https://aacr.figshare.com/articles/dataset/Supplementary_Data_S2_from_Figshare_asset_fallback_winner/22474818",
                 "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474818",
                 "license": {"name": "CC BY 4.0"},
                 "files": [

@@ -68,3 +68,19 @@ ticket_403_retry_after_malformed_values_fall_back_to_backoff
 ticket_403_retry_after_extreme_values_are_capped
 ticket_403_retry_send_uses_the_shared_retry_sleep_budget"
 ```
+
+## Ticket 401 Surface Ratchets
+
+The post-migration spec runner must keep routine Python surface contracts in the
+routine lane, and the static ratchets around spec quality and fixture realism
+must fail when weak proof shapes return. This local contract file covers the
+runner, Cargo-wrapper, robust mustmatch-lint, and Figshare fixture gaps without
+calling public services.
+
+```bash
+set -o pipefail
+cd ../.. && uv run --no-sync pytest spec/surface/test_ticket_401_surface_ratchets.py -v | mustmatch like "test_ticket_401_quality_ratchet_rejects_printf_captured_output_mustmatch
+test_ticket_401_article_figshare_fixture_uses_realistic_aacr_sibling_shapes
+test_ticket_401_request_plan_ratchets_execute_named_contracts_not_list_only
+test_ticket_401_routine_modes_execute_python_surface_contracts"
+```
