@@ -78,6 +78,8 @@ pub(crate) mod who_pq;
 pub(crate) mod wikipathways;
 
 const ERROR_BODY_MAX_BYTES: usize = 2048;
+const MAX_RETRY_AFTER_SLEEP: Duration = Duration::from_secs(5);
+const TOTAL_RETRY_SLEEP_BUDGET: Duration = Duration::from_secs(15);
 pub(crate) const DEFAULT_MAX_BODY_BYTES: usize = 8 * 1024 * 1024;
 pub(crate) const BIOTHINGS_MAX_RESULT_WINDOW: usize = 10_000;
 
@@ -191,23 +193,57 @@ pub(crate) fn append_ncbi_api_key(req: RequestBuilder, api_key: Option<&str>) ->
 
 fn parse_retry_after_header(headers: &HeaderMap) -> Option<Duration> {
     // Retry-After is interpreted as integer seconds when present.
-    headers
-        .get(RETRY_AFTER)?
-        .to_str()
-        .ok()?
-        .trim()
-        .parse::<u64>()
-        .ok()
-        .map(Duration::from_secs)
+    let raw = headers.get(RETRY_AFTER)?.to_str().ok()?.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    let mut seconds = 0_u64;
+    for byte in raw.bytes() {
+        if !byte.is_ascii_digit() {
+            return None;
+        }
+        seconds = seconds
+            .saturating_mul(10)
+            .saturating_add(u64::from(byte - b'0'));
+    }
+    Some(Duration::from_secs(seconds))
 }
 
-fn retry_sleep_duration(attempt: u32, retry_after_floor: Option<Duration>) -> Duration {
+fn retry_sleep_duration(
+    attempt: u32,
+    retry_after_floor: Option<Duration>,
+    sleep_budget_used: Duration,
+) -> Option<Duration> {
     let backoff_ms = 100_u64.saturating_mul(2_u64.saturating_pow(attempt));
     let backoff = Duration::from_millis(backoff_ms);
-    match retry_after_floor {
+    let capped_floor = retry_after_floor.map(|floor| floor.min(MAX_RETRY_AFTER_SLEEP));
+    let target = match capped_floor {
         Some(floor) if floor > backoff => floor,
         _ => backoff,
+    };
+    let remaining = TOTAL_RETRY_SLEEP_BUDGET.checked_sub(sleep_budget_used)?;
+    if remaining.is_zero() {
+        return None;
     }
+    Some(target.min(remaining))
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct RetrySleepState {
+    attempt: u32,
+    sleep_budget_used: Duration,
+}
+
+fn next_retry_sleep(
+    state: &mut RetrySleepState,
+    retry_after_floor: Option<Duration>,
+) -> Option<Duration> {
+    let duration = retry_sleep_duration(state.attempt, retry_after_floor, state.sleep_budget_used);
+    state.attempt = state.attempt.saturating_add(1);
+    if let Some(duration) = duration {
+        state.sleep_budget_used = state.sleep_budget_used.saturating_add(duration);
+    }
+    duration
 }
 
 /// Returns a shared HTTP client with retry and caching middleware.
@@ -239,10 +275,20 @@ impl Middleware for RetryAfterTooManyRequestsMiddleware {
         next: Next<'_>,
     ) -> reqwest_middleware::Result<reqwest::Response> {
         let response = next.run(req, extensions).await?;
-        if response.status() == StatusCode::TOO_MANY_REQUESTS
-            && let Some(duration) = parse_retry_after_header(response.headers())
-        {
-            tokio::time::sleep(duration).await;
+        if response.status() == StatusCode::TOO_MANY_REQUESTS {
+            let retry_after_floor = parse_retry_after_header(response.headers());
+            let duration = {
+                if extensions.get::<RetrySleepState>().is_none() {
+                    extensions.insert(RetrySleepState::default());
+                }
+                let state = extensions
+                    .get_mut::<RetrySleepState>()
+                    .expect("retry sleep state should exist");
+                next_retry_sleep(state, retry_after_floor)
+            };
+            if let Some(duration) = duration {
+                tokio::time::sleep(duration).await;
+            }
         }
         Ok(response)
     }
@@ -437,6 +483,7 @@ where
     let total_attempts = max_retries.saturating_add(1);
     let mut last_http_err: Option<reqwest::Error> = None;
     let mut last_server_status: Option<reqwest::StatusCode> = None;
+    let mut retry_sleep_state = RetrySleepState::default();
 
     for attempt in 0..total_attempts {
         let mut retry_after_floor = None;
@@ -461,8 +508,10 @@ where
             }
         }
 
-        if attempt + 1 < total_attempts {
-            tokio::time::sleep(retry_sleep_duration(attempt, retry_after_floor)).await;
+        if attempt + 1 < total_attempts
+            && let Some(duration) = next_retry_sleep(&mut retry_sleep_state, retry_after_floor)
+        {
+            tokio::time::sleep(duration).await;
         }
     }
 
@@ -832,14 +881,53 @@ mod tests {
     }
 
     #[test]
-    fn retry_sleep_duration_uses_retry_after_as_floor() {
+    fn ticket_403_retry_after_normal_floor_is_honored() {
         assert_eq!(
-            retry_sleep_duration(0, Some(Duration::from_secs(2))),
-            Duration::from_secs(2)
+            retry_sleep_duration(0, Some(Duration::from_secs(2)), Duration::ZERO),
+            Some(Duration::from_secs(2))
+        );
+    }
+
+    #[test]
+    fn ticket_403_retry_after_malformed_values_fall_back_to_backoff() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            RETRY_AFTER,
+            HeaderValue::from_static("Wed, 21 Oct 2015 07:28:00 GMT"),
+        );
+        assert_eq!(parse_retry_after_header(&headers), None);
+        assert_eq!(
+            retry_sleep_duration(1, parse_retry_after_header(&headers), Duration::ZERO),
+            Some(Duration::from_millis(200))
+        );
+    }
+
+    #[test]
+    fn ticket_403_retry_after_extreme_values_are_capped() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            RETRY_AFTER,
+            HeaderValue::from_static("999999999999999999999999999999999999"),
         );
         assert_eq!(
-            retry_sleep_duration(2, Some(Duration::from_millis(100))),
-            Duration::from_millis(400)
+            retry_sleep_duration(0, parse_retry_after_header(&headers), Duration::ZERO),
+            Some(MAX_RETRY_AFTER_SLEEP)
+        );
+    }
+
+    #[test]
+    fn ticket_403_retry_send_uses_the_shared_retry_sleep_budget() {
+        let mut state = RetrySleepState {
+            sleep_budget_used: TOTAL_RETRY_SLEEP_BUDGET - Duration::from_secs(1),
+            ..RetrySleepState::default()
+        };
+        assert_eq!(
+            next_retry_sleep(&mut state, Some(Duration::from_secs(4))),
+            Some(Duration::from_secs(1))
+        );
+        assert_eq!(
+            next_retry_sleep(&mut state, Some(Duration::from_secs(4))),
+            None
         );
     }
 

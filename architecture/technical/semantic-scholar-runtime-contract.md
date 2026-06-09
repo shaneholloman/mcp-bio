@@ -137,12 +137,14 @@ The structure is additive. Existing rows, pagination, ranking metadata,
 ### Retry contract
 
 The shared HTTP client retry policy honors upstream numeric `Retry-After` floors
-for 429 responses on the default shared-client path. The target code path is
+for 429 responses on the default shared-client path, but remote-directed waits
+are bounded to a 5-second per-attempt cap and a 15-second total retry-sleep
+budget for one logical request. The target code path is
 `src/sources/mod.rs::build_http_client()`: a private middleware delays 429
-responses with numeric `Retry-After` before they return to the shared
-`RetryTransientMiddleware`, preserving the existing exponential retry
+responses with bounded numeric `Retry-After` handling before they return to the
+shared `RetryTransientMiddleware`, preserving the existing exponential retry
 classification and max-retry behavior while preventing the next retry from
-starting on the short 100/200/400ms cadence.
+starting on the short 100/200/400ms cadence or an unbounded remote sleep.
 
 The unauthenticated shared-pool fast-fail behavior remains unchanged:
 `SemanticScholarSharedPoolRateLimitMiddleware` continues converting

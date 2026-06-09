@@ -52,10 +52,11 @@ Optional `S2_API_KEY` for dedicated quota and higher reliability. Configure it w
 Without `S2_API_KEY`, BioMCP uses the shared unauthenticated pool at
 1 req/2sec. A shared-pool HTTP 429 fails fast with guidance to set the key
 instead of retrying against the same public pool. With `S2_API_KEY`, BioMCP
-sends authenticated requests at 1 req/sec and honors authenticated
-`Retry-After` responses before retrying. Source status and debug-plan output
-report `auth_mode` as `shared_pool` or `authenticated`, but never print the
-secret key or key prefix.
+sends authenticated requests at 1 req/sec and honors authenticated numeric
+`Retry-After` responses before retrying, bounded by BioMCP's shared 5-second
+per-attempt cap and 15-second total retry-sleep budget. Source status and
+debug-plan output report `auth_mode` as `shared_pool` or `authenticated`, but
+never print the secret key or key prefix.
 
 ## Runtime behavior
 
