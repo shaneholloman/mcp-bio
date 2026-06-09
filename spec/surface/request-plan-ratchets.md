@@ -63,7 +63,7 @@ deterministic without calling a live service.
 
 ```bash
 set -o pipefail
-cd ../.. && cargo test --lib ticket_403_retry_after -- --nocapture | mustmatch like "ticket_403_retry_after_normal_floor_is_honored
+cd ../.. && cargo test --lib ticket_403_retry -- --nocapture | mustmatch like "ticket_403_retry_after_normal_floor_is_honored
 ticket_403_retry_after_malformed_values_fall_back_to_backoff
 ticket_403_retry_after_extreme_values_are_capped
 ticket_403_retry_send_uses_the_shared_retry_sleep_budget"
