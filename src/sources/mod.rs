@@ -275,8 +275,9 @@ impl Middleware for RetryAfterTooManyRequestsMiddleware {
         next: Next<'_>,
     ) -> reqwest_middleware::Result<reqwest::Response> {
         let response = next.run(req, extensions).await?;
-        if response.status() == StatusCode::TOO_MANY_REQUESTS {
-            let retry_after_floor = parse_retry_after_header(response.headers());
+        if response.status() == StatusCode::TOO_MANY_REQUESTS
+            && let Some(retry_after_floor) = parse_retry_after_header(response.headers())
+        {
             let duration = {
                 if extensions.get::<RetrySleepState>().is_none() {
                     extensions.insert(RetrySleepState::default());
@@ -284,7 +285,7 @@ impl Middleware for RetryAfterTooManyRequestsMiddleware {
                 let state = extensions
                     .get_mut::<RetrySleepState>()
                     .expect("retry sleep state should exist");
-                next_retry_sleep(state, retry_after_floor)
+                next_retry_sleep(state, Some(retry_after_floor))
             };
             if let Some(duration) = duration {
                 tokio::time::sleep(duration).await;
