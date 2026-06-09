@@ -481,6 +481,21 @@ where
     F: Fn() -> Fut,
     Fut: Future<Output = Result<reqwest::Response, reqwest::Error>>,
 {
+    retry_send_with_sleep(api, max_retries, build_request, tokio::time::sleep).await
+}
+
+async fn retry_send_with_sleep<F, Fut, S, SleepFut>(
+    api: &str,
+    max_retries: u32,
+    build_request: F,
+    mut sleep_fn: S,
+) -> Result<reqwest::Response, BioMcpError>
+where
+    F: Fn() -> Fut,
+    Fut: Future<Output = Result<reqwest::Response, reqwest::Error>>,
+    S: FnMut(Duration) -> SleepFut,
+    SleepFut: Future<Output = ()>,
+{
     let total_attempts = max_retries.saturating_add(1);
     let mut last_http_err: Option<reqwest::Error> = None;
     let mut last_server_status: Option<reqwest::StatusCode> = None;
@@ -512,7 +527,7 @@ where
         if attempt + 1 < total_attempts
             && let Some(duration) = next_retry_sleep(&mut retry_sleep_state, retry_after_floor)
         {
-            tokio::time::sleep(duration).await;
+            sleep_fn(duration).await;
         }
     }
 
@@ -708,7 +723,7 @@ mod tests {
     use crate::test_support::{TempDirGuard, set_env_var};
     use std::path::Path;
     use std::sync::{
-        Arc,
+        Arc, Mutex,
         atomic::{AtomicUsize, Ordering},
     };
     use tokio::sync::MutexGuard;
@@ -916,19 +931,63 @@ mod tests {
         );
     }
 
-    #[test]
-    fn ticket_403_retry_send_uses_the_shared_retry_sleep_budget() {
-        let mut state = RetrySleepState {
-            sleep_budget_used: TOTAL_RETRY_SLEEP_BUDGET - Duration::from_secs(1),
-            ..RetrySleepState::default()
-        };
-        assert_eq!(
-            next_retry_sleep(&mut state, Some(Duration::from_secs(4))),
-            Some(Duration::from_secs(1))
+    #[tokio::test]
+    async fn ticket_403_retry_send_uses_the_shared_retry_sleep_budget() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/budget"))
+            .respond_with(ResponseTemplate::new(429).insert_header(RETRY_AFTER.as_str(), "999"))
+            .expect(5)
+            .mount(&server)
+            .await;
+
+        let client = reqwest::Client::new();
+        let url = format!("{}/budget", server.uri());
+        let attempts = Arc::new(AtomicUsize::new(0));
+        let sleeps = Arc::new(Mutex::new(Vec::new()));
+        let err = retry_send_with_sleep(
+            "test-api",
+            4,
+            {
+                let client = client.clone();
+                let url = url.clone();
+                let attempts = attempts.clone();
+                move || {
+                    let client = client.clone();
+                    let url = url.clone();
+                    let attempts = attempts.clone();
+                    async move {
+                        attempts.fetch_add(1, Ordering::SeqCst);
+                        client.get(&url).send().await
+                    }
+                }
+            },
+            {
+                let sleeps = sleeps.clone();
+                move |duration| {
+                    let sleeps = sleeps.clone();
+                    async move {
+                        sleeps.lock().expect("record sleep").push(duration);
+                    }
+                }
+            },
+        )
+        .await
+        .expect_err("retry_send should exhaust repeated 429 responses");
+
+        assert!(
+            err.to_string()
+                .contains("HTTP 429 Too Many Requests after 5 attempts"),
+            "unexpected retry_send error: {err}"
         );
+        assert_eq!(attempts.load(Ordering::SeqCst), 5);
         assert_eq!(
-            next_retry_sleep(&mut state, Some(Duration::from_secs(4))),
-            None
+            *sleeps.lock().expect("read sleeps"),
+            vec![
+                MAX_RETRY_AFTER_SLEEP,
+                MAX_RETRY_AFTER_SLEEP,
+                MAX_RETRY_AFTER_SLEEP
+            ]
         );
     }
 
