@@ -337,7 +337,7 @@ def make_missing_bash_mustmatch_findings(spec_path: Path) -> list[dict[str, obje
                     "rule": "missing-bash-mustmatch",
                     "section": current_section["section"],
                     "message": (
-                        "section has non-skipped bash blocks but no `| mustmatch` "
+                        "section has non-skipped bash blocks but no `mustmatch` "
                         "assertion and no `<!-- mustmatch-lint: skip -->` opt-out"
                     ),
                     "text": current_section["text"],

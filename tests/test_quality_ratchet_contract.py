@@ -737,7 +737,7 @@ def test_wrapper_reports_missing_bash_mustmatch(tmp_path: Path) -> None:
     assert findings[0]["line"] == 3
     assert findings[0]["section"] == "Missing Collection Anchor"
     assert findings[0]["message"] == (
-        "section has non-skipped bash blocks but no `| mustmatch` assertion and no "
+        "section has non-skipped bash blocks but no `mustmatch` assertion and no "
         "`<!-- mustmatch-lint: skip -->` opt-out"
     )
     assert findings[0]["text"] == "## Missing Collection Anchor"
