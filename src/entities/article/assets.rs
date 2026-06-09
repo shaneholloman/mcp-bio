@@ -313,9 +313,14 @@ fn figshare_same_paper(
     if let (Some(candidate), Some(target)) =
         (row.title.as_deref().and_then(normalize_title), target_title)
     {
-        return candidate == target;
+        return candidate == target || figshare_supplement_title_matches(&candidate, target);
     }
     false
+}
+
+fn figshare_supplement_title_matches(candidate: &str, target: &str) -> bool {
+    (candidate.starts_with("supplementary ") || candidate.starts_with("supplemental "))
+        && candidate.ends_with(target)
 }
 
 fn normalize_doi(raw: &str) -> Option<String> {
@@ -328,11 +333,18 @@ fn normalize_doi(raw: &str) -> Option<String> {
 }
 
 fn normalize_title(raw: &str) -> Option<String> {
-    let value = raw
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
-        .to_ascii_lowercase();
+    let mut text = String::with_capacity(raw.len());
+    let mut in_tag = false;
+    for ch in raw.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if in_tag => {}
+            _ if ch.is_alphanumeric() => text.extend(ch.to_lowercase()),
+            _ => text.push(' '),
+        }
+    }
+    let value = text.split_whitespace().collect::<Vec<_>>().join(" ");
     (!value.is_empty()).then_some(value)
 }
 
@@ -883,6 +895,15 @@ mod tests {
             &figshare_row(2, Some(" Target   Title "), None),
             Some("10.1000/example"),
             Some("target title"),
+        ));
+        assert!(figshare_same_paper(
+            &figshare_row(
+                4,
+                Some("Supplementary Table S1 from High-Throughput <i>ERBB2</i>."),
+                Some("10.1000/figshare-record"),
+            ),
+            Some("10.1000/article"),
+            Some("high throughput erbb2"),
         ));
         assert!(!figshare_same_paper(
             &figshare_row(3, Some("Unrelated"), Some("10.1000/other")),
