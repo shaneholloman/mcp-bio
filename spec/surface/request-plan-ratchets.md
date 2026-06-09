@@ -53,3 +53,18 @@ set -o pipefail
 cd ../.. && cargo test --lib ticket_400_pub -- --nocapture | mustmatch like "ticket_400_pubmed_auth_and_cache_modes_are_consumed_from_request_plans
 ticket_400_pubtator_auth_and_cache_modes_are_consumed_from_request_plans"
 ```
+
+## Shared Retry-After Waits Stay Bounded
+
+Shared HTTP retries should honor ordinary upstream `Retry-After` hints without
+letting an extreme header park a CLI command or March worker indefinitely. The
+Rust policy tests keep normal, malformed, extreme, and total-budget paths
+deterministic without calling a live service.
+
+```bash
+set -o pipefail
+cd ../.. && cargo test --lib ticket_403_retry -- --nocapture | mustmatch like "ticket_403_retry_after_normal_floor_is_honored
+ticket_403_retry_after_malformed_values_fall_back_to_backoff
+ticket_403_retry_after_extreme_values_are_capped
+ticket_403_retry_send_uses_the_shared_retry_sleep_budget"
+```

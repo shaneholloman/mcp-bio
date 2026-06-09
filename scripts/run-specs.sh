@@ -124,7 +124,12 @@ case "$mode" in
     ;;
   spec-contracts)
     timeout_args=(--timeout 180)
-    paths=(spec/entity/article.md spec/surface/mcp.md spec/surface/test_parallel_isolation_contract.py)
+    paths=(
+      spec/entity/article.md
+      spec/surface/mcp.md
+      spec/surface/request-plan-ratchets.md
+      spec/surface/test_parallel_isolation_contract.py
+    )
     run_python=1
     mustmatch_path_dir="$(mustmatch_dir)"
     sync_python_dev

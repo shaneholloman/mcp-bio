@@ -63,6 +63,7 @@ All HTTP-based sources share a common client with:
 - Connect timeout: 10 seconds
 - Request timeout: 30 seconds
 - Retries: exponential backoff, up to 3 retries for transient failures
+- Retry-After: numeric 429 hints are honored only within a 5-second per-attempt cap and 15-second total retry-sleep budget
 - Disk cache: `<cache_root>/http` under the resolved cache root (`~/.cache/biomcp/http` on Linux)
 
 cBioPortal DataHub study archive downloads are the exception: archive downloads do
