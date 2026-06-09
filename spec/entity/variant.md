@@ -44,10 +44,8 @@ than emitting a bare chromosome/start/end string. The deterministic renderer
 contract covers the markdown and JSON envelopes without depending on live
 MyVariant or MyGene responses.
 
-```bash
-set -o pipefail
-cargo test --lib ticket_406_coordinate_outputs_carry_genome_build_context -- --nocapture \
-  | mustmatch like 'ticket_406_coordinate_outputs_carry_genome_build_context'
+```bash run id=coordinate-genome-build-context
+cargo test --lib ticket_406_coordinate_outputs_carry_genome_build_context -- --nocapture
 ```
 
 ## Gene-Scoped Variant Search

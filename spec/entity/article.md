@@ -51,10 +51,8 @@ papers. The deterministic Rust contract uses fixture rows rather than live
 PubMed or LitSense2 ranking, because BioMCP owns query planning and local
 relevance scoring but not upstream result order.
 
-```bash
-set -o pipefail
-cargo test --lib ticket_406_myd88_exact_protein_alias_article_precision -- --nocapture \
-  | mustmatch like 'ticket_406_myd88_exact_protein_alias_article_precision'
+```bash run id=myd88-protein-alias-article-precision
+cargo test --lib ticket_406_myd88_exact_protein_alias_article_precision -- --nocapture
 ```
 
 ## Gene Search
