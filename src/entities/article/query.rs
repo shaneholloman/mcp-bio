@@ -207,10 +207,22 @@ pub(super) fn build_pubmed_search_term(
         filters.gene.as_deref(),
         filters.disease.as_deref(),
         filters.drug.as_deref(),
-        filters.keyword.as_deref(),
     ] {
         if let Some(value) = value.map(str::trim).filter(|value| !value.is_empty()) {
             clauses.push(strip_pubmed_stopwords(value));
+        }
+    }
+    if let Some(value) = filters
+        .keyword
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        let clause = strip_pubmed_stopwords(value);
+        if clause.starts_with("p.") && !clause.contains(char::is_whitespace) {
+            clauses.push(format!("\"{clause}\""));
+        } else {
+            clauses.push(clause);
         }
     }
 

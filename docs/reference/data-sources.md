@@ -9,7 +9,7 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 
 | Entity / feature | Primary source(s) | Base URL | Auth required | Notes |
 |------------------|-------------------|----------|---------------|-------|
-| Gene | MyGene.info | `https://mygene.info/v3` | No | Symbol lookup, aliases, summaries |
+| Gene | MyGene.info | `https://mygene.info/v3` | No | Symbol lookup, aliases, summaries, and GRCh38-labeled genomic coordinates when returned |
 | Gene sections | UniProt, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, OpenTargets, ClinGen, gnomAD GraphQL API | `https://rest.uniprot.org`, `https://www.ebi.ac.uk/QuickGO/services`, `https://string-db.org/api`, `https://gtexportal.org/api/v2`, `https://www.proteinatlas.org`, `https://dgidb.org/api/graphql`, `https://api.platform.opentargets.org/api/v4/graphql`, `https://search.clinicalgenome.org`, `https://gnomad.broadinstitute.org/api` | No | Protein summary, GO terms, interactions, GTEx RNA tissue expression, HPA protein tissue expression and subcellular localization, combined DGIdb/OpenTargets druggability, gene-disease validity, and gnomAD v4 GRCh38 gene constraint |
 | Gene `disgenet` section | DisGeNET REST API | `https://api.disgenet.com/api/v1` | Yes (`DISGENET_API_KEY`) | Ranked scored gene-disease associations with PMIDs, clinical-trial counts, evidence index, and evidence level |
 | Variant | MyVariant.info | `https://myvariant.info/v1` | No | rsID/HGVS lookup, ClinVar and population annotations |

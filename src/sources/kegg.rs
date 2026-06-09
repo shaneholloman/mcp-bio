@@ -124,26 +124,23 @@ fn parse_search_response(body: &str, limit: usize) -> Vec<KeggPathwayHit> {
         let Some((raw_id, raw_name)) = line.split_once('\t') else {
             continue;
         };
-        let Some(name) = raw_name
-            .trim()
-            .split(" - ")
-            .next()
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-        else {
+        let name = raw_name.trim().trim_end_matches(';').trim();
+        if name.is_empty() {
             continue;
-        };
+        }
         let Some(id) = normalize_search_pathway_id(raw_id, raw_name) else {
             continue;
+        };
+        let name = if id.starts_with("hsa") && !name.contains(" - ") {
+            format!("{name} - Homo sapiens (human)")
+        } else {
+            name.to_string()
         };
         if !seen.insert(id.clone()) {
             continue;
         }
 
-        out.push(KeggPathwayHit {
-            id,
-            name: name.to_string(),
-        });
+        out.push(KeggPathwayHit { id, name });
         if out.len() >= limit {
             break;
         }
@@ -279,7 +276,7 @@ fn dedupe_preserving_order(values: Vec<String>) -> Vec<String> {
 }
 
 fn normalize_search_pathway_id(raw_id: &str, raw_name: &str) -> Option<String> {
-    let id = raw_id.trim().strip_prefix("path:")?.trim();
+    let id = raw_id.trim().strip_prefix("path:").unwrap_or(raw_id).trim();
     if is_human_pathway_id(id) {
         return Some(id.to_string());
     }
@@ -317,7 +314,10 @@ mod tests {
 
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].id, "hsa04010");
-        assert_eq!(rows[0].name, "MAPK signaling pathway");
+        assert_eq!(
+            rows[0].name,
+            "MAPK signaling pathway - Homo sapiens (human)"
+        );
     }
 
     #[test]
@@ -328,7 +328,10 @@ mod tests {
         let rows = parse_search_response("path:map04010\tMAPK signaling pathway\n", 10);
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].id, "hsa04010");
-        assert_eq!(rows[0].name, "MAPK signaling pathway");
+        assert_eq!(
+            rows[0].name,
+            "MAPK signaling pathway - Homo sapiens (human)"
+        );
     }
 
     #[test]

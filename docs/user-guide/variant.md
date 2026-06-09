@@ -82,7 +82,9 @@ biomcp variant normalize variantvalidator NM_004448.2:c.829G>T
 
 JSON output preserves the submitted `input`, one result per service, each
 service `status`, source-returned transcript/normalized/genomic/protein fields,
-and warnings such as VariantValidator `TranscriptVersionWarning`.
+and warnings such as VariantValidator `TranscriptVersionWarning`. Markdown
+VariantValidator genomic descriptions are labeled as GRCh38 because BioMCP calls
+VariantValidator's GRCh38 normalization endpoint.
 
 This helper does not parse messy report prose, does not choose, select, guess,
 or infer transcripts, and does not classify variants or provide clinical

@@ -45,6 +45,8 @@ cargo test --lib ticket_377_article_renderer_envelope_contracts -- --nocapture \
 
 ## MYD88 Protein-Alias Article Precision
 
+<!-- mustmatch-lint: skip -->
+
 Exact gene plus protein-alias literature searches should preserve both anchors
 before ranking so a clinically specific alias does not drift into generic MYD88
 papers. The deterministic Rust contract uses fixture rows rather than live

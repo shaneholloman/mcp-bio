@@ -38,6 +38,8 @@ cargo test --lib ticket_377_variant_renderer_envelope_contracts -- --nocapture \
 
 ## Coordinate Genome-Build Context
 
+<!-- mustmatch-lint: skip -->
+
 Variant and gene coordinate strings are source-derived genomic positions, so
 consumer-facing output must say which genome build those coordinates use rather
 than emitting a bare chromosome/start/end string. The deterministic renderer
