@@ -53,6 +53,7 @@ PDF_FALLBACK = (
 FIGSHARE_SUPPLEMENT = b"%PDF-1.4\nFigshare supplemental fixture bytes\n%%EOF\n"
 FIGSHARE_TABLE_S1 = b"PK\x03\x04\nS1 workbook fixture bytes\n"
 FIGSHARE_TABLE_S2 = b"PK\x03\x04\nS2 workbook fixture bytes\n"
+FIGSHARE_UNRELATED_TABLE = b"PK\x03\x04\nUnrelated workbook fixture bytes\n"
 FIGSHARE_COLD_STORAGE = b"%PDF-1.4\nFigshare cold-storage fixture bytes\n%%EOF\n"
 COLD_STORAGE_LOCK = threading.Lock()
 COLD_STORAGE_HITS = {}
@@ -569,6 +570,26 @@ class Handler(BaseHTTPRequestHandler):
             })
             return
 
+        if decoded_path == "/v2/articles/99999999":
+            send_json(self, 200, {
+                "id": 99999999,
+                "title": "Unrelated figshare supplement",
+                "doi": "10.1158/unrelated.fixture",
+                "url_public_html": "https://figshare.com/articles/dataset/Unrelated/99999999",
+                "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/99999999",
+                "license": {"name": "CC BY 4.0"},
+                "files": [
+                    {
+                        "id": 39926999,
+                        "name": "unrelated-table.xlsx",
+                        "size": len(FIGSHARE_UNRELATED_TABLE),
+                        "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "download_url": f"http://127.0.0.1:{self.server.server_port}/figshare/files/39926999/unrelated-table.xlsx",
+                    }
+                ],
+            })
+            return
+
         if decoded_path == "/figshare/files/39926318/figshare-supplement.pdf":
             send_bytes(self, 200, FIGSHARE_SUPPLEMENT, "application/pdf")
             return
@@ -579,6 +600,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if decoded_path == "/figshare/files/39926316/supplementary-table-s2.xlsx":
             send_bytes(self, 200, FIGSHARE_TABLE_S2, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            return
+
+        if decoded_path == "/figshare/files/39926999/unrelated-table.xlsx":
+            send_bytes(self, 200, FIGSHARE_UNRELATED_TABLE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             return
 
         if decoded_path == "/figshare/files/39926330/cold-storage-supplement.pdf":
