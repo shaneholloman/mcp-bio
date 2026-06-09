@@ -11,7 +11,10 @@ from pathlib import Path
 
 MUSTMATCH_JSON_RE = re.compile(r"(?:^|\|\s*)mustmatch\s+json\b")
 SHORT_LIKE_RE = re.compile(r'(?:^|\|\s*)mustmatch\s+like\s+("([^"]*)"|\'([^\']*)\')')
-MUSTMATCH_PIPE_RE = re.compile(r"\|\s*mustmatch\b")
+MUSTMATCH_ASSERT_RE = re.compile(r"(?:^|[;&|]\s*)mustmatch\b")
+CAPTURED_PRINTF_MUSTMATCH_RE = re.compile(
+    r"\bprintf\b(?=[^|]*\"\$[A-Za-z_][A-Za-z0-9_]*\")[^|]*\|\s*mustmatch\b"
+)
 MUSTMATCH_LINT_SKIP = "<!-- mustmatch-lint: skip -->"
 CLI_LINE_CAP = 700
 CLI_LINE_CAP_TICKET_RE = re.compile(r"^\d+(?:[-_][a-z0-9][a-z0-9-]*)?$")
@@ -289,6 +292,27 @@ def make_repo_compatibility_findings(
     return findings
 
 
+def make_captured_output_mustmatch_findings(spec_path: Path) -> list[dict[str, object]]:
+    findings: list[dict[str, object]] = []
+    text = spec_path.read_text(encoding="utf-8")
+
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        if CAPTURED_PRINTF_MUSTMATCH_RE.search(line):
+            findings.append(
+                {
+                    "line": lineno,
+                    "rule": "captured-output-mustmatch-pipe",
+                    "message": (
+                        "pipes captured command output into mustmatch via printf; "
+                        "pipe the command directly into mustmatch instead"
+                    ),
+                    "text": line.strip(),
+                }
+            )
+
+    return findings
+
+
 def make_missing_bash_mustmatch_findings(spec_path: Path) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
     text = spec_path.read_text(encoding="utf-8")
@@ -332,7 +356,7 @@ def make_missing_bash_mustmatch_findings(spec_path: Path) -> list[dict[str, obje
                 current_section is not None
                 and inside_bash
                 and not skipped_bash
-                and MUSTMATCH_PIPE_RE.search(line)
+                and MUSTMATCH_ASSERT_RE.search(line)
             ):
                 current_section["has_mustmatch"] = True
             continue
@@ -400,6 +424,11 @@ def lint_spec_file(spec_path: Path) -> dict[str, object]:
             findings.append(finding)
             seen.add(key)
     for finding in make_missing_bash_mustmatch_findings(spec_path):
+        key = (finding["line"], finding["rule"], finding["text"])
+        if key not in seen:
+            findings.append(finding)
+            seen.add(key)
+    for finding in make_captured_output_mustmatch_findings(spec_path):
         key = (finding["line"], finding["rule"], finding["text"])
         if key not in seen:
             findings.append(finding)

@@ -14,12 +14,12 @@ search/get request shape, identifier normalization, and Mutalyzer/
 VariantValidator status mapping locally.
 
 ```bash
-cargo test --lib ticket_376_variant_source_contracts -- --list \
+cargo test --lib ticket_376_variant_source_contracts -- --nocapture \
   | mustmatch like 'ticket_376_variant_source_contracts'
 ```
 
 ```bash
-cargo test --lib ticket_376_variant_normalization_contracts -- --list \
+cargo test --lib ticket_376_variant_normalization_contracts -- --nocapture \
   | mustmatch like 'ticket_376_variant_normalization_contracts'
 ```
 
@@ -32,7 +32,7 @@ per-service status, warnings, and genomic-description rendering without live
 MyVariant, Mutalyzer, or VariantValidator calls.
 
 ```bash
-cargo test --lib ticket_377_variant_renderer_envelope_contracts -- --list \
+cargo test --lib ticket_377_variant_renderer_envelope_contracts -- --nocapture \
   | mustmatch like 'ticket_377_variant_renderer_envelope_contracts'
 ```
 
@@ -101,9 +101,9 @@ out="$(../../tools/biomcp-ci --json variant normalize all 'BRAF V600E' 2>&1)"
 rc=$?
 set -e
 test "$rc" -ne 0
-printf '%s\n' "$out" | mustmatch like 'unsupported_notation
+mustmatch like 'unsupported_notation
 BRAF V600E
-transcript HGVS'
+transcript HGVS' <<<"$out"
 ```
 
 ## Normalization Command Discoverability

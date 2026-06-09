@@ -21,12 +21,12 @@ must instead prove PubMed, Europe PMC, PubTator, LitSense2, and Semantic Scholar
 request shape, status mapping, and redacted auth behavior locally.
 
 ```bash
-cargo test --lib ticket_376_article_source_contracts -- --list \
+cargo test --lib ticket_376_article_source_contracts -- --nocapture \
   | mustmatch like 'ticket_376_article_source_contracts'
 ```
 
 ```bash
-cargo test --lib ticket_376_article_source_status_contracts -- --list \
+cargo test --lib ticket_376_article_source_status_contracts -- --nocapture \
   | mustmatch like 'ticket_376_article_source_status_contracts'
 ```
 
@@ -39,7 +39,7 @@ anchors without live PubMed, Europe PMC, PubTator, LitSense2, or Semantic Schola
 calls.
 
 ```bash
-cargo test --lib ticket_377_article_renderer_envelope_contracts -- --list \
+cargo test --lib ticket_377_article_renderer_envelope_contracts -- --nocapture \
   | mustmatch like 'ticket_377_article_renderer_envelope_contracts'
 ```
 
@@ -152,7 +152,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 jats_json="$(../../tools/biomcp-ci --json get article 22663011 fulltext)"
-printf '%s\n' "$jats_json" | mustmatch like '"full_text_source"'
+mustmatch like '"full_text_source"' <<<"$jats_json"
 ARTICLE_JSON="$jats_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
@@ -185,7 +185,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 html_json="$(../../tools/biomcp-ci --json get article 22663012 fulltext)"
-printf '%s\n' "$html_json" | mustmatch like '"full_text_source"'
+mustmatch like '"full_text_source"' <<<"$html_json"
 ARTICLE_JSON="$html_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
@@ -217,7 +217,7 @@ bash ../fixtures/setup-article-fulltext-source-fixture.sh ../..
 . ../../.cache/spec-article-fulltext-source-env
 trap 'kill "${BIOMCP_ARTICLE_FULLTEXT_SOURCE_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 pdf_json="$(../../tools/biomcp-ci --json get article 22663013 fulltext --pdf)"
-printf '%s\n' "$pdf_json" | mustmatch like '"full_text_source"'
+mustmatch like '"full_text_source"' <<<"$pdf_json"
 ARTICLE_JSON="$pdf_json" uv run --no-sync python3 - <<'PY'
 import json, os
 doc = json.loads(os.environ["ARTICLE_JSON"])
