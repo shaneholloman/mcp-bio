@@ -51,6 +51,11 @@ PDF_FALLBACK = (
     FIXTURE_DIR / "pdf" / "pmc_oa_article_pdf.pdf"
 ).read_bytes()
 FIGSHARE_SUPPLEMENT = b"%PDF-1.4\nFigshare supplemental fixture bytes\n%%EOF\n"
+FIGSHARE_TABLE_S1 = b"PK\x03\x04\nS1 workbook fixture bytes\n"
+FIGSHARE_TABLE_S2 = b"PK\x03\x04\nS2 workbook fixture bytes\n"
+FIGSHARE_COLD_STORAGE = b"%PDF-1.4\nFigshare cold-storage fixture bytes\n%%EOF\n"
+COLD_STORAGE_LOCK = threading.Lock()
+COLD_STORAGE_HITS = {}
 
 
 ARTICLE_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -106,6 +111,21 @@ ARTICLE_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
   </back>
 </article>"""
 
+PMC_OA_ONLY_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
+  <front>
+    <article-meta>
+      <title-group><article-title>PMC OA archive full text winner</article-title></title-group>
+      <abstract><p>PMC OA abstract text.</p></abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>PMC OA results</title>
+      <p>PMC OA Archive XML body text with fixture-only provenance.</p>
+    </sec>
+  </body>
+</article>"""
+
 
 def make_oa_assets_tgz():
     entries = {
@@ -125,7 +145,22 @@ def make_oa_assets_tgz():
     return out.getvalue()
 
 
+def make_pmc_oa_only_tgz():
+    entries = {
+        "pmc-oa-only.nxml": PMC_OA_ONLY_XML.encode("utf-8"),
+    }
+    out = io.BytesIO()
+    with tarfile.open(fileobj=out, mode="w:gz") as archive:
+        for name, body in entries.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(body)
+            info.mode = 0o644
+            archive.addfile(info, io.BytesIO(body))
+    return out.getvalue()
+
+
 OA_ASSETS_TGZ = make_oa_assets_tgz()
+PMC_OA_ONLY_TGZ = make_pmc_oa_only_tgz()
 
 
 ARTICLES = {
@@ -158,6 +193,18 @@ ARTICLES = {
         "title": "Figshare asset fallback winner",
         "abstract": "Abstract text.",
         "paper_id": "paper-5",
+    },
+    "22663016": {
+        "pmcid": "PMC123460",
+        "title": "PMC OA archive full text winner",
+        "abstract": "Abstract text.",
+        "paper_id": "paper-6",
+    },
+    "22663017": {
+        "pmcid": None,
+        "title": "Figshare cold storage asset winner",
+        "abstract": "Abstract text.",
+        "paper_id": "paper-7",
     },
 }
 
@@ -238,6 +285,10 @@ def europepmc_search_payload(pmid):
         result["license"] = "CC BY"
     if pmid == "22663015":
         result["doi"] = "10.1158/fixture.figshare"
+    if pmid == "22663016":
+        result["license"] = "CC BY-NC"
+    if pmid == "22663017":
+        result["doi"] = "10.1158/fixture.figshare-cold"
     return {
         "hitCount": 1,
         "resultList": {
@@ -247,6 +298,48 @@ def europepmc_search_payload(pmid):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        decoded_path = unquote(parsed.path)
+        length = int(self.headers.get("Content-Length") or 0)
+        if length:
+            self.rfile.read(length)
+
+        if decoded_path == "/v2/articles/search":
+            send_json(self, 200, [
+                {
+                    "id": 22474820,
+                    "title": "Figshare asset fallback winner",
+                    "doi": "10.1158/fixture.figshare",
+                    "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474820",
+                    "url_public_html": "https://aacr.figshare.com/articles/journal_contribution/Fixture_Figshare_supplement/22474820",
+                },
+                {
+                    "id": 22474817,
+                    "title": "Figshare asset fallback winner",
+                    "doi": "10.1158/fixture.figshare",
+                    "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474817",
+                    "url_public_html": "https://aacr.figshare.com/articles/dataset/Fixture_Supplementary_Table_S1/22474817",
+                },
+                {
+                    "id": 22474818,
+                    "title": "Figshare asset fallback winner",
+                    "doi": "10.1158/fixture.figshare",
+                    "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474818",
+                    "url_public_html": "https://aacr.figshare.com/articles/dataset/Fixture_Supplementary_Table_S2/22474818",
+                },
+                {
+                    "id": 99999999,
+                    "title": "Unrelated figshare supplement",
+                    "doi": "10.1158/unrelated.fixture",
+                    "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/99999999",
+                    "url_public_html": "https://figshare.com/articles/dataset/Unrelated/99999999",
+                },
+            ])
+            return
+
+        send_json(self, 404, {"error": "not found"})
+
     def do_GET(self):
         parsed = urlparse(self.path)
         decoded_path = unquote(parsed.path)
@@ -282,17 +375,17 @@ class Handler(BaseHTTPRequestHandler):
         if (
             decoded_path == "/"
             and query.get("idtype") == ["pmid"]
-            and query.get("ids") == ["22663015"]
+            and query.get("ids") in (["22663015"], ["22663017"])
         ):
-            send_json(self, 200, {"records": [{"pmid": 22663015}]})
+            send_json(self, 200, {"records": [{"pmid": int(query.get("ids")[0])}]})
             return
 
         if (
             decoded_path == "/"
             and query.get("idtype") == ["doi"]
-            and query.get("ids") == ["10.1158/fixture.figshare"]
+            and query.get("ids") in (["10.1158/fixture.figshare"], ["10.1158/fixture.figshare-cold"])
         ):
-            send_json(self, 200, {"records": [{"doi": "10.1158/fixture.figshare"}]})
+            send_json(self, 200, {"records": [{"doi": query.get("ids")[0]}]})
             return
 
         if decoded_path == "/PMC123456/fullTextXML":
@@ -309,7 +402,7 @@ class Handler(BaseHTTPRequestHandler):
             send_text(self, 404, "not found", "text/plain")
             return
 
-        if decoded_path in {"/PMC123457/fullTextXML", "/PMC123458/fullTextXML", "/22663012/fullTextXML", "/22663013/fullTextXML"}:
+        if decoded_path in {"/PMC123457/fullTextXML", "/PMC123458/fullTextXML", "/PMC123460/fullTextXML", "/22663012/fullTextXML", "/22663013/fullTextXML", "/22663016/fullTextXML"}:
             send_text(self, 404, "not found", "text/plain")
             return
 
@@ -319,6 +412,14 @@ class Handler(BaseHTTPRequestHandler):
 
         if decoded_path == "/oa-assets-22663011.tgz":
             send_bytes(self, 200, OA_ASSETS_TGZ, "application/gzip")
+            return
+
+        if decoded_path == "/" and query.get("id") == ["PMC123460"]:
+            send_text(self, 200, f"""<records><record license=\"CC BY-NC\" retracted=\"no\"><link format=\"tgz\" href=\"http://127.0.0.1:{self.server.server_port}/oa-assets-22663016.tgz\" /></record></records>""", "application/xml")
+            return
+
+        if decoded_path == "/oa-assets-22663016.tgz":
+            send_bytes(self, 200, PMC_OA_ONLY_TGZ, "application/gzip")
             return
 
         if decoded_path == "/" and query.get("id") == ["PMC123459"]:
@@ -340,6 +441,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if decoded_path == "/articles/PMC123459/":
             append_request_log("fulltext:html:pmc")
+            send_text(self, 404, "not found", "text/plain")
+            return
+
+        if decoded_path == "/articles/PMC123460/":
             send_text(self, 404, "not found", "text/plain")
             return
 
@@ -371,12 +476,19 @@ class Handler(BaseHTTPRequestHandler):
                     "status": "GREEN",
                     "license": "CC BY 4.0",
                 }
+            if pmid == "22663017":
+                payload["openAccessPdf"] = {
+                    "url": "https://aacr.figshare.com/articles/journal_contribution/Fixture_Figshare_cold_storage/22474830?file=39926330",
+                    "status": "GREEN",
+                    "license": "CC BY 4.0",
+                }
             send_json(self, 200, payload)
             return
 
         if decoded_path == "/v2/articles/22474820":
             send_json(self, 200, {
                 "id": 22474820,
+                "title": "Figshare asset fallback winner",
                 "doi": "10.1158/fixture.figshare",
                 "url_public_html": "https://aacr.figshare.com/articles/journal_contribution/Fixture_Figshare_supplement/22474820",
                 "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474820",
@@ -397,8 +509,86 @@ class Handler(BaseHTTPRequestHandler):
             })
             return
 
+        if decoded_path == "/v2/articles/22474817":
+            send_json(self, 200, {
+                "id": 22474817,
+                "title": "Figshare asset fallback winner",
+                "doi": "10.1158/fixture.figshare",
+                "url_public_html": "https://aacr.figshare.com/articles/dataset/Fixture_Supplementary_Table_S1/22474817",
+                "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474817",
+                "license": {"name": "CC BY 4.0"},
+                "files": [
+                    {
+                        "id": 39926317,
+                        "name": "supplementary-table-s1.xlsx",
+                        "size": len(FIGSHARE_TABLE_S1),
+                        "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "download_url": f"http://127.0.0.1:{self.server.server_port}/figshare/files/39926317/supplementary-table-s1.xlsx",
+                    }
+                ],
+            })
+            return
+
+        if decoded_path == "/v2/articles/22474818":
+            send_json(self, 200, {
+                "id": 22474818,
+                "title": "Figshare asset fallback winner",
+                "doi": "10.1158/fixture.figshare",
+                "url_public_html": "https://aacr.figshare.com/articles/dataset/Fixture_Supplementary_Table_S2/22474818",
+                "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474818",
+                "license": {"name": "CC BY 4.0"},
+                "files": [
+                    {
+                        "id": 39926316,
+                        "name": "supplementary-table-s2.xlsx",
+                        "size": len(FIGSHARE_TABLE_S2),
+                        "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "download_url": f"http://127.0.0.1:{self.server.server_port}/figshare/files/39926316/supplementary-table-s2.xlsx",
+                    }
+                ],
+            })
+            return
+
+        if decoded_path == "/v2/articles/22474830":
+            send_json(self, 200, {
+                "id": 22474830,
+                "title": "Figshare cold storage asset winner",
+                "doi": "10.1158/fixture.figshare-cold",
+                "url_public_html": "https://aacr.figshare.com/articles/journal_contribution/Fixture_Figshare_cold_storage/22474830",
+                "url_api": f"http://127.0.0.1:{self.server.server_port}/v2/articles/22474830",
+                "license": {"name": "CC BY 4.0"},
+                "files": [
+                    {
+                        "id": 39926330,
+                        "name": "cold-storage-supplement.pdf",
+                        "size": len(FIGSHARE_COLD_STORAGE),
+                        "mimetype": "application/pdf",
+                        "download_url": f"http://127.0.0.1:{self.server.server_port}/figshare/files/39926330/cold-storage-supplement.pdf",
+                    }
+                ],
+            })
+            return
+
         if decoded_path == "/figshare/files/39926318/figshare-supplement.pdf":
             send_bytes(self, 200, FIGSHARE_SUPPLEMENT, "application/pdf")
+            return
+
+        if decoded_path == "/figshare/files/39926317/supplementary-table-s1.xlsx":
+            send_bytes(self, 200, FIGSHARE_TABLE_S1, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            return
+
+        if decoded_path == "/figshare/files/39926316/supplementary-table-s2.xlsx":
+            send_bytes(self, 200, FIGSHARE_TABLE_S2, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            return
+
+        if decoded_path == "/figshare/files/39926330/cold-storage-supplement.pdf":
+            with COLD_STORAGE_LOCK:
+                hits = COLD_STORAGE_HITS.get(decoded_path, 0)
+                COLD_STORAGE_HITS[decoded_path] = hits + 1
+            if hits == 0:
+                send_bytes(self, 202, b"", "application/octet-stream")
+            else:
+                send_bytes(self, 200, FIGSHARE_COLD_STORAGE, "application/pdf")
             return
 
         if decoded_path == "/pdf/22663013.pdf":
