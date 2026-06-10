@@ -203,13 +203,16 @@ async fn cancerhotspots_enrichment_uses_requested_change_not_resolved_hgvsp() {
     let _base = set_env_var("BIOMCP_CANCERHOTSPOTS_BASE", Some(&server.uri()));
 
     let mut variant = braf_variant_stub();
-    add_cancerhotspots(
-        &mut variant,
-        &VariantIdFormat::GeneProteinChange {
-            gene: "BRAF".into(),
-            change: "V600E".into(),
-        },
-    )
+    crate::sources::with_no_cache(true, async {
+        add_cancerhotspots(
+            &mut variant,
+            &VariantIdFormat::GeneProteinChange {
+                gene: "BRAF".into(),
+                change: "V600E".into(),
+            },
+        )
+        .await;
+    })
     .await;
 
     let recurrence = variant
@@ -238,13 +241,16 @@ async fn cancerhotspots_upstream_failure_omits_recurrence_and_preserves_cbioport
             frequency: 0.5,
             sample_count: 10,
         });
-    add_cancerhotspots(
-        &mut variant,
-        &VariantIdFormat::GeneProteinChange {
-            gene: "BRAF".into(),
-            change: "V600E".into(),
-        },
-    )
+    crate::sources::with_no_cache(true, async {
+        add_cancerhotspots(
+            &mut variant,
+            &VariantIdFormat::GeneProteinChange {
+                gene: "BRAF".into(),
+                change: "V600E".into(),
+            },
+        )
+        .await;
+    })
     .await;
 
     assert!(variant.cancerhotspots.is_none());
