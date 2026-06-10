@@ -235,9 +235,8 @@ fn message_result(
 fn genomic_descriptions(result: &serde_json::Value) -> Vec<String> {
     let mut values = result
         .get("primary_assembly_loci")
-        .and_then(|v| v.as_object())
+        .and_then(|v| v.get("grch38"))
         .into_iter()
-        .flat_map(|object| object.values())
         .filter_map(|locus| locus.get("hgvs_genomic_description"))
         .filter_map(|v| v.as_str())
         .filter(|v| !v.trim().is_empty())
@@ -290,6 +289,7 @@ mod tests {
                 "submitted_variant": "NM_000248.3:c.135del",
                 "hgvs_transcript_variant": "NM_000248.3:c.135del",
                 "primary_assembly_loci": {
+                    "grch37": {"hgvs_genomic_description": "NC_000003.11:g.69987074del"},
                     "grch38": {"hgvs_genomic_description": "NC_000003.12:g.69937923del"}
                 },
                 "validation_warnings": ["TranscriptVersionWarning: transcript updated"]
@@ -308,6 +308,13 @@ mod tests {
                 .genomic_descriptions
                 .iter()
                 .any(|value| value == "NC_000003.12:g.69937923del")
+        );
+        assert!(
+            result
+                .genomic_descriptions
+                .iter()
+                .all(|value| !value.contains("NC_000003.11")),
+            "GRCh37 genomic descriptions must not be labeled through the GRCh38 markdown surface"
         );
     }
 
