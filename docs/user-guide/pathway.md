@@ -16,9 +16,13 @@ Key boundaries:
 
 ```bash
 biomcp search pathway "MAPK signaling" --limit 5
+biomcp search pathway "MAPK signaling pathway" --limit 5
 biomcp search pathway -q "Pathways in cancer" --limit 5
 biomcp search pathway --top-level --limit 5
 ```
+
+Exact KEGG title searches can surface organism-specific KEGG rows such as
+`hsa04010` for `MAPK signaling pathway` when the live KEGG source participates.
 
 ## Get pathway records
 

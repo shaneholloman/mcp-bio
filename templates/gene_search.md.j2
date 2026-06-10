@@ -7,7 +7,7 @@ Try a broader search or check spelling.
 {% else -%}
 Found {{ count }} gene{% if count != 1 %}s{% endif %}
 
-| Symbol | Name | Entrez ID | Coordinates | UniProt | OMIM |
+| Symbol | Name | Entrez ID | Coordinates (GRCh38) | UniProt | OMIM |
 |---|---|---|---|---|---|
 {% for gene in results -%}
 | {{ gene.symbol }} | {{ gene.name }} | {{ gene.entrez_id }} | {{ gene.genomic_coordinates | default("-") }} | {{ gene.uniprot_id | default("-") }} | {{ gene.omim_id | default("-") }} |

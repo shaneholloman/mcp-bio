@@ -25,9 +25,12 @@ Useful fields in search output typically include symbol, Entrez ID, and species.
 biomcp get gene BRAF
 ```
 
-The default gene view is concise and intended for orientation.
-Its `More:` block keeps `pathways`, `ontology`, and `diseases` visible and now
-also surfaces `funding` as a direct follow-up from the base card.
+The default gene view is concise and intended for orientation. When MyGene.info
+returns genomic coordinates, BioMCP labels them with the GRCh38 genome build
+(`Chromosome (GRCh38): ...`) so coordinate consumers do not have to infer the
+reference. Its `More:` block keeps `pathways`, `ontology`, and `diseases`
+visible and now also surfaces `funding` as a direct follow-up from the base
+card.
 
 ## Request deeper sections
 

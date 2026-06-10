@@ -40,6 +40,66 @@ fn gene_markdown_includes_evidence_links() {
 }
 
 #[test]
+fn ticket_406_coordinate_outputs_carry_genome_build_context() {
+    let gene = Gene {
+        symbol: "BRAF".to_string(),
+        name: "B-Raf proto-oncogene".to_string(),
+        entrez_id: "673".to_string(),
+        ensembl_id: Some("ENSG00000157764".to_string()),
+        location: Some("7q34".to_string()),
+        genomic_coordinates: Some("7:140719327-140924976 (strand: -1)".to_string()),
+        omim_id: None,
+        uniprot_id: Some("P15056".to_string()),
+        summary: Some("Kinase involved in MAPK signaling.".to_string()),
+        gene_type: Some("protein-coding".to_string()),
+        aliases: vec!["BRAF1".to_string()],
+        clinical_diseases: Vec::new(),
+        clinical_drugs: Vec::new(),
+        pathways: None,
+        ontology: None,
+        diseases: None,
+        protein: None,
+        go: None,
+        interactions: None,
+        civic: None,
+        expression: None,
+        hpa: None,
+        druggability: None,
+        clingen: None,
+        constraint: None,
+        disgenet: None,
+        funding: None,
+        funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
+    };
+
+    let markdown = gene_markdown(&gene, &[]).expect("rendered markdown");
+
+    assert!(
+        markdown.contains("GRCh") && markdown.contains("7:140719327-140924976"),
+        "coordinate output must include explicit genome-build context with the position, got {markdown:?}"
+    );
+
+    let search_result = GeneSearchResult {
+        symbol: gene.symbol,
+        name: gene.name,
+        entrez_id: gene.entrez_id,
+        genomic_coordinates: gene.genomic_coordinates,
+        uniprot_id: gene.uniprot_id,
+        omim_id: gene.omim_id,
+    };
+    let search_markdown =
+        gene_search_markdown("BRAF", &[search_result]).expect("rendered search markdown");
+
+    assert!(
+        search_markdown.contains("Coordinates (GRCh38)")
+            && search_markdown.contains("7:140719327-140924976"),
+        "gene search coordinate output must include explicit genome-build context with the position, got {search_markdown:?}"
+    );
+}
+
+#[test]
 fn gene_markdown_section_only_shows_new_gene_enrichment_sections() {
     let gene = Gene {
         symbol: "BRAF".to_string(),

@@ -37,6 +37,16 @@ source-identified pathway rows visible instead of returning an empty card.
 MAPK'
 ```
 
+## Exact KEGG Title Participation
+
+The same exact title is also the stable KEGG pathway label for `hsa04010`.
+When the live KEGG source participates, search should expose that exact-title
+row instead of silently returning only non-KEGG matches.
+
+```bash
+../../tools/biomcp-ci search pathway 'MAPK signaling pathway' --limit 5 | mustmatch like '| KEGG | hsa04010 | MAPK signaling pathway - Homo sapiens (human) |'
+```
+
 ## Concise KEGG Default
 
 Default KEGG cards should stay summary-first and point users at opt-in deeper

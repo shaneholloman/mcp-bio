@@ -1,5 +1,8 @@
 use super::*;
-use crate::entities::variant::TreatmentImplication;
+use crate::entities::variant::{
+    TreatmentImplication, VariantNormalizationResponse, VariantNormalizationServiceResult,
+    VariantNormalizationStatus,
+};
 
 #[test]
 fn markdown_render_variant_entity() {
@@ -155,6 +158,32 @@ fn phenotype_search_markdown_renders_top_disease_follow_up() {
     assert_eq!(
         related_command_description("biomcp get disease \"Dravet syndrome\" genes phenotypes"),
         Some("open the top phenotype-match disease with genes and phenotypes")
+    );
+}
+
+#[test]
+fn ticket_406_coordinate_outputs_carry_genome_build_context() {
+    let response = VariantNormalizationResponse {
+        input: "NM_000248.3:c.135del".to_string(),
+        services: vec![VariantNormalizationServiceResult {
+            service: "variantvalidator".to_string(),
+            status: VariantNormalizationStatus::Success,
+            input_description: Some("NM_000248.3:c.135del".to_string()),
+            normalized_description: Some("NM_000248.3:c.135del".to_string()),
+            corrected_description: None,
+            transcript_description: Some("NM_000248.3:c.135del".to_string()),
+            protein: None,
+            genomic_descriptions: vec!["NC_000023.11:g.32389644del".to_string()],
+            warnings: Vec::new(),
+            message: None,
+        }],
+    };
+
+    let markdown = variant_normalization_markdown(&response);
+
+    assert!(
+        markdown.contains("GRCh") && markdown.contains("NC_000023.11:g.32389644del"),
+        "variant genomic descriptions must include explicit genome-build context with the position, got {markdown:?}"
     );
 }
 

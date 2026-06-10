@@ -1,7 +1,7 @@
 # BRAF (B-Raf proto-oncogene, serine/threonine kinase)
 
 Entrez ID: 673
-Chromosome: 7:140719327-140924976 (strand: -1)
+Chromosome (GRCh38): 7:140719327-140924976 (strand: -1)
 UniProt: P15056
 Type: protein-coding
 

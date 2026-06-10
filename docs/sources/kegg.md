@@ -24,7 +24,7 @@ In BioMCP, pathway search and detail are multi-source across Reactome, KEGG, and
 biomcp search pathway "MAPK signaling" --limit 5
 ```
 
-Returns a mixed-source pathway table that can include KEGG rows.
+Returns a mixed-source pathway table that can include KEGG rows. Exact title searches such as `MAPK signaling pathway` can include the human KEGG row `hsa04010` when KEGG participates.
 
 ```bash
 biomcp get pathway hsa05200

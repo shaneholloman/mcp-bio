@@ -237,7 +237,7 @@ pub fn variant_normalization_markdown(result: &VariantNormalizationResponse) -> 
         if !service.genomic_descriptions.is_empty() {
             out.push_str("Genomic descriptions:\n");
             for value in &service.genomic_descriptions {
-                out.push_str(&format!("- {value}\n"));
+                out.push_str(&format!("- GRCh38 {value}\n"));
             }
         }
         if let Some(protein) = &service.protein {

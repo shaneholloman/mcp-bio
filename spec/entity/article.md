@@ -43,6 +43,20 @@ cargo test --lib ticket_377_article_renderer_envelope_contracts -- --nocapture \
   | mustmatch like 'ticket_377_article_renderer_envelope_contracts'
 ```
 
+## MYD88 Protein-Alias Article Precision
+
+<!-- mustmatch-lint: skip -->
+
+Exact gene plus protein-alias literature searches should preserve both anchors
+before ranking so a clinically specific alias does not drift into generic MYD88
+papers. The deterministic Rust contract uses fixture rows rather than live
+PubMed or LitSense2 ranking, because BioMCP owns query planning and local
+relevance scoring but not upstream result order.
+
+```bash run id=myd88-protein-alias-article-precision
+cargo test --lib ticket_406_myd88_exact_protein_alias_article_precision -- --nocapture
+```
+
 ## Gene Search
 
 Gene-linked article search should still read like a literature intake surface:
