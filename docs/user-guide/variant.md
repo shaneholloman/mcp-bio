@@ -169,6 +169,14 @@ cBioPortal (frequency data):
 biomcp get variant "BRAF V600E" cbioportal
 ```
 
+Cancerhotspots.org recurrence counts are loaded by `all` for exact gene/protein
+queries such as `BRAF V600E`. JSON includes `cancerhotspots.source`,
+`matched_transcript`, `position_count` (residue-level `tumorCount`), and
+`same_aa_count` (the exact alternate amino acid count). If the lookup succeeds
+but the residue/change is not a cancerhotspots hotspot, those count/provenance
+fields are present as JSON `null` under the source-labelled object; upstream
+unavailability omits the object instead of emitting zeros.
+
 All supported sections:
 
 ```bash

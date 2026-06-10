@@ -3,6 +3,46 @@
 use super::super::test_support::*;
 use super::*;
 
+fn braf_variant_stub() -> Variant {
+    Variant {
+        gene: "BRAF".into(),
+        id: "chr7:g.140453136A>T".into(),
+        hgvs_p: Some("p.X999Y".into()),
+        legacy_name: None,
+        hgvs_c: None,
+        rsid: None,
+        cosmic_id: None,
+        significance: None,
+        clinvar_id: None,
+        clinvar_review_status: None,
+        clinvar_review_stars: None,
+        conditions: Vec::new(),
+        gnomad_af: None,
+        allele_frequency_raw: None,
+        allele_frequency_percent: None,
+        consequence: None,
+        cadd_score: None,
+        sift_pred: None,
+        polyphen_pred: None,
+        conservation: None,
+        expanded_predictions: Vec::new(),
+        population_breakdown: None,
+        cosmic_context: None,
+        cgi_associations: Vec::new(),
+        civic: None,
+        clinvar_conditions: Vec::new(),
+        clinvar_condition_reports: None,
+        top_disease: None,
+        cancerhotspots: None,
+        cancer_frequencies: Vec::new(),
+        cancer_frequency_source: None,
+        gwas: Vec::new(),
+        gwas_unavailable_reason: None,
+        supporting_pmids: None,
+        prediction: None,
+    }
+}
+
 #[test]
 fn variant_json_omits_legacy_name_when_absent() {
     let variant = gwas_only_variant_stub("rs7903146");
@@ -95,6 +135,7 @@ fn civic_molecular_profile_name_prefers_gene_and_hgvs_p() {
         clinvar_conditions: Vec::new(),
         clinvar_condition_reports: None,
         top_disease: None,
+        cancerhotspots: None,
         cancer_frequencies: Vec::new(),
         cancer_frequency_source: None,
         gwas: Vec::new(),
@@ -138,6 +179,82 @@ async fn gwas_only_request_returns_variant_when_gwas_is_unavailable() {
         Some("GWAS association data temporarily unavailable.")
     );
     assert_eq!(variant.supporting_pmids, None);
+}
+
+#[tokio::test]
+async fn cancerhotspots_enrichment_uses_requested_change_not_resolved_hgvsp() {
+    let _env = lock_env().await;
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/hotspots/single/byGene/BRAF"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([
+            {
+                "hugoSymbol": "BRAF",
+                "residue": "V600",
+                "tumorCount": 897,
+                "transcriptId": "ENST00000288602",
+                "aminoAcidPosition": 600,
+                "variantAminoAcid": {"E": 833}
+            }
+        ])))
+        .expect(1)
+        .mount(&server)
+        .await;
+    let _base = set_env_var("BIOMCP_CANCERHOTSPOTS_BASE", Some(&server.uri()));
+
+    let mut variant = braf_variant_stub();
+    crate::sources::with_no_cache(true, async {
+        add_cancerhotspots(
+            &mut variant,
+            &VariantIdFormat::GeneProteinChange {
+                gene: "BRAF".into(),
+                change: "V600E".into(),
+            },
+        )
+        .await;
+    })
+    .await;
+
+    let recurrence = variant
+        .cancerhotspots
+        .expect("recurrence should be present");
+    assert_eq!(recurrence.position_count, Some(897));
+    assert_eq!(recurrence.same_aa_count, Some(833));
+}
+
+#[tokio::test]
+async fn cancerhotspots_upstream_failure_omits_recurrence_and_preserves_cbioportal() {
+    let _env = lock_env().await;
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/hotspots/single/byGene/BRAF"))
+        .respond_with(ResponseTemplate::new(500).set_body_string("upstream failure"))
+        .mount(&server)
+        .await;
+    let _base = set_env_var("BIOMCP_CANCERHOTSPOTS_BASE", Some(&server.uri()));
+
+    let mut variant = braf_variant_stub();
+    variant
+        .cancer_frequencies
+        .push(crate::sources::cbioportal::CancerFrequency {
+            cancer_type: "Melanoma".into(),
+            frequency: 0.5,
+            sample_count: 10,
+        });
+    crate::sources::with_no_cache(true, async {
+        add_cancerhotspots(
+            &mut variant,
+            &VariantIdFormat::GeneProteinChange {
+                gene: "BRAF".into(),
+                change: "V600E".into(),
+            },
+        )
+        .await;
+    })
+    .await;
+
+    assert!(variant.cancerhotspots.is_none());
+    assert_eq!(variant.cancer_frequencies.len(), 1);
 }
 
 #[test]

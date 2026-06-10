@@ -13,6 +13,7 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 | Gene sections | UniProt, QuickGO, STRING, GTEx, Human Protein Atlas, DGIdb, OpenTargets, ClinGen, gnomAD GraphQL API | `https://rest.uniprot.org`, `https://www.ebi.ac.uk/QuickGO/services`, `https://string-db.org/api`, `https://gtexportal.org/api/v2`, `https://www.proteinatlas.org`, `https://dgidb.org/api/graphql`, `https://api.platform.opentargets.org/api/v4/graphql`, `https://search.clinicalgenome.org`, `https://gnomad.broadinstitute.org/api` | No | Protein summary, GO terms, interactions, GTEx RNA tissue expression, HPA protein tissue expression and subcellular localization, combined DGIdb/OpenTargets druggability, gene-disease validity, and gnomAD v4 GRCh38 gene constraint |
 | Gene `disgenet` section | DisGeNET REST API | `https://api.disgenet.com/api/v1` | Yes (`DISGENET_API_KEY`) | Ranked scored gene-disease associations with PMIDs, clinical-trial counts, evidence index, and evidence level |
 | Variant | MyVariant.info | `https://myvariant.info/v1` | No | rsID/HGVS lookup, ClinVar and population annotations |
+| Variant cancerhotspots recurrence | Cancerhotspots.org | `https://www.cancerhotspots.org` | No | `get variant <gene> <change> all` adds source-labelled residue and exact amino-acid recurrence counts when cancerhotspots can be checked |
 | Variant normalization | Mutalyzer | `variant normalize` / `https://mutalyzer.nl/api` | No | Calls `GET /normalize/{description}` for explicit transcript HGVS and preserves normalized/corrected/protein fields plus source warnings/status |
 | Variant normalization | VariantValidator | `variant normalize` / `https://rest.variantvalidator.org` | No | Calls `GET /VariantValidator/variantvalidator/{genome_build}/{variant_description}/{select_transcripts}` for explicit transcript HGVS and preserves `TranscriptVersionWarning`, GRCh38 genomic descriptions, and source status |
 | Variant population section | MyVariant.info (gnomAD fields) | `https://myvariant.info/v1` | No | Uses cached gnomAD AF/subpopulation fields from MyVariant payload |
@@ -55,6 +56,7 @@ Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse 
 | Vaccine adverse-event search | CDC WONDER VAERS | `https://wonder.cdc.gov/controller/datarequest/D8` | No | Aggregate-only vaccine adverse-event summaries for `search adverse-event --source vaers|all`; BioMCP uses the CDC WONDER XML POST contract, includes the required data-use agreement, and resolves vaccine identity through the CDC CVX/MVX bridge when available |
 | Gene enrichment sections | Enrichr | `https://maayanlab.cloud/Enrichr` | No | Gene enrichment sections inside entity outputs use Enrichr; this is distinct from top-level `biomcp enrich` |
 | Cohort frequencies (best-effort) | cBioPortal | `https://www.cbioportal.org/api` | No | Supplemental cancer frequency context |
+| Cancer hotspot recurrence | Cancerhotspots.org | `https://www.cancerhotspots.org` | No | Best-effort source-labelled recurrence counts for exact gene/protein variant detail under `get variant ... all` |
 
 ## Global HTTP behavior
 

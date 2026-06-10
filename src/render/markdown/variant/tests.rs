@@ -40,6 +40,29 @@ fn variant_markdown_renders_compact_clinvar_and_population_fields() {
 }
 
 #[test]
+fn variant_markdown_renders_cancerhotspots_recurrence_when_present() {
+    let variant: Variant = serde_json::from_value(serde_json::json!({
+        "id": "chr7:g.140453136A>T",
+        "gene": "BRAF",
+        "hgvs_p": "p.V600E",
+        "cancerhotspots": {
+            "source": "cancerhotspots.org",
+            "position_count": 897,
+            "same_aa_count": 833,
+            "matched_transcript": "ENST00000288602"
+        }
+    }))
+    .expect("variant should deserialize");
+
+    let markdown = variant_markdown(&variant, &["all".to_string()]).expect("rendered markdown");
+    assert!(markdown.contains("## Cancerhotspots.org Recurrence"));
+    assert!(markdown.contains("Source: cancerhotspots.org"));
+    assert!(markdown.contains("Matched transcript: ENST00000288602"));
+    assert!(markdown.contains("Position count: 897"));
+    assert!(markdown.contains("Same amino-acid count: 833"));
+}
+
+#[test]
 fn variant_markdown_renders_gwas_unavailable_message() {
     let variant: Variant = serde_json::from_value(serde_json::json!({
         "id": "rs7903146",

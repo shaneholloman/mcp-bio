@@ -32,6 +32,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 | Source | Tier | Mode | BioMCP auth | License / terms summary | Redistribution summary | Terms URL |
 |---|---|---|---|---|---|---|
 | AlphaGenome | 2 | direct_api | required_env | custom provider terms; access is gated by Google/DeepMind service controls | do not assume open redistribution rights for returned prediction outputs | <https://deepmind.google/science/alphagenome/> |
+| Cancerhotspots.org | 3 | direct_api | none | public cancer hotspot recurrence resource with provider-specific reuse expectations | BioMCP queries recurrence counts live and does not redistribute a local cancerhotspots dataset | <https://www.cancerhotspots.org/> |
 | cBioPortal | 3 | direct_api | none | public API with study-specific downstream terms | reuse depends on the specific study or consortium behind each dataset | <https://www.cbioportal.org/> |
 | CDC CVX/MVX | 1 | direct_api | none | most CDC website materials are public domain, but attribution, disclaimer, and exceptions for third-party or non-federal content still apply | reuse is generally allowed with CDC attribution and non-endorsement language; avoid CDC logos and review exceptions before republishing | <https://www.cdc.gov/other/agencymaterials.html> |
 | CDC WONDER VAERS | 1 | direct_api | none | CDC WONDER data use restrictions require statistical reporting/analysis use and prohibit re-identification attempts | reuse is allowed for statistical reporting and analysis with source attribution, but do not try to identify individuals or publish identifying linkages | <https://wonder.cdc.gov/datause.html> |
@@ -714,6 +715,18 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Notes: The UMLS landing page explicitly states that you must accept the license and create a UTS account for access.
 
 ## Tier 3 - Open or queryable, but with notable terms
+
+### Cancerhotspots.org
+
+- BioMCP surfaces: `get variant <gene> <change> all`
+- Integration mode: `direct_api`
+- BioMCP auth: `none`
+- Provider access / registration: public API access
+- License / terms summary: public cancer hotspot recurrence resource with provider-specific reuse expectations
+- Redistribution / reuse summary: BioMCP queries recurrence counts live and does not redistribute a local cancerhotspots dataset
+- Official terms URL: <https://www.cancerhotspots.org/>
+- Reviewed on: `2026-06-10`
+- Notes: BioMCP uses the byGene hotspot endpoint to expose residue-level `tumorCount` and exact `variantAminoAcid` counts for variant detail recurrence provenance.
 
 ### cBioPortal
 

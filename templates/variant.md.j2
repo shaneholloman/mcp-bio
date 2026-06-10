@@ -160,6 +160,13 @@ No CIViC records returned for this variant.
 - PolyPhen: {{ polyphen_pred }}
 {% endif -%}
 {% endif -%}
+{% if show_cancerhotspots_section and cancerhotspots -%}
+## Cancerhotspots.org Recurrence
+Source: {{ cancerhotspots.source }}
+Matched transcript: {{ cancerhotspots.matched_transcript or "Not matched" }}
+Position count: {% if cancerhotspots.position_count is not none %}{{ cancerhotspots.position_count }}{% else %}Not a cancerhotspots hotspot{% endif %}
+Same amino-acid count: {% if cancerhotspots.same_aa_count is not none %}{{ cancerhotspots.same_aa_count }}{% else %}Not a cancerhotspots hotspot{% endif %}
+{% endif -%}
 {% if show_cbioportal_section -%}
 ## cBioPortal
 {% if cancer_frequencies -%}

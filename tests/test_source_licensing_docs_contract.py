@@ -8,6 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 DIRECT_SOURCE_MODULES = {
     "alphagenome": "AlphaGenome",
+    "cancerhotspots": "Cancerhotspots.org",
     "cbioportal": "cBioPortal",
     "chembl": "ChEMBL",
     "civic": "CIViC",

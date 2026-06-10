@@ -6,6 +6,7 @@ use tracing::warn;
 
 use crate::error::BioMcpError;
 use crate::sources::alphagenome::AlphaGenomeClient;
+use crate::sources::cancerhotspots::CancerHotspotsClient;
 use crate::sources::cbioportal::CBioPortalClient;
 use crate::sources::civic::CivicClient;
 use crate::sources::mygene::MyGeneClient;
@@ -63,6 +64,7 @@ struct VariantSections {
     include_cgi: bool,
     include_civic: bool,
     include_cbioportal: bool,
+    include_cancerhotspots: bool,
     include_gwas: bool,
 }
 
@@ -109,6 +111,7 @@ fn parse_sections(sections: &[String]) -> Result<VariantSections, BioMcpError> {
         out.include_cgi = true;
         out.include_civic = true;
         out.include_cbioportal = true;
+        out.include_cancerhotspots = true;
         out.include_gwas = true;
     }
 
@@ -266,11 +269,6 @@ async fn resolve_base(id: &str) -> Result<(Variant, VariantIdFormat), BioMcpErro
     Ok((variant, id_format))
 }
 
-async fn get_base(id: &str) -> Result<Variant, BioMcpError> {
-    let (variant, _) = resolve_base(id).await?;
-    Ok(variant)
-}
-
 pub async fn oncokb(id: &str) -> Result<VariantOncoKbResult, BioMcpError> {
     let (variant, id_format) = resolve_base(id).await?;
     let gene = variant.gene.trim();
@@ -384,6 +382,41 @@ async fn add_prediction(variant: &mut Variant) -> Result<(), BioMcpError> {
     Ok(())
 }
 
+async fn add_cancerhotspots(variant: &mut Variant, id_format: &VariantIdFormat) {
+    let VariantIdFormat::GeneProteinChange { gene, change } = id_format else {
+        return;
+    };
+    let Some(normalized_change) = super::normalize_protein_change(change) else {
+        return;
+    };
+    let gene = gene.trim();
+    if gene.is_empty() {
+        return;
+    }
+
+    let cancerhotspots_fut = async {
+        let client = CancerHotspotsClient::new()?;
+        let rows = client.by_gene(gene).await?;
+        Ok::<_, BioMcpError>(crate::sources::cancerhotspots::recurrence_for_change(
+            &rows,
+            &normalized_change,
+        ))
+    };
+
+    match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, cancerhotspots_fut).await {
+        Ok(Ok(recurrence)) => variant.cancerhotspots = Some(recurrence),
+        Ok(Err(err)) => {
+            warn!(gene = %gene, change = %normalized_change, "cancerhotspots.org unavailable: {err}")
+        }
+        Err(_) => warn!(
+            gene = %gene,
+            change = %normalized_change,
+            timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
+            "cancerhotspots.org enrichment timed out"
+        ),
+    }
+}
+
 async fn add_cbioportal(variant: &mut Variant) {
     let gene = variant.gene.trim();
     if gene.is_empty() {
@@ -470,6 +503,7 @@ fn is_gwas_only_request(flags: &VariantSections) -> bool {
         && !flags.include_cgi
         && !flags.include_civic
         && !flags.include_cbioportal
+        && !flags.include_cancerhotspots
 }
 
 fn gwas_only_variant_stub(rsid: &str) -> Variant {
@@ -502,6 +536,7 @@ fn gwas_only_variant_stub(rsid: &str) -> Variant {
         clinvar_conditions: Vec::new(),
         clinvar_condition_reports: None,
         top_disease: None,
+        cancerhotspots: None,
         cancer_frequencies: Vec::new(),
         cancer_frequency_source: None,
         gwas: Vec::new(),
@@ -552,7 +587,7 @@ pub async fn get_with_workflow_signals(
         return Ok((variant, VariantWorkflowSignals::default()));
     }
 
-    let mut variant = get_base(id).await?;
+    let (mut variant, id_format) = resolve_base(id).await?;
     let signals = VariantWorkflowSignals {
         has_clinvar_signal: has_clinvar_workflow_signal(&variant),
     };
@@ -581,6 +616,9 @@ pub async fn get_with_workflow_signals(
     if !section_flags.include_cbioportal {
         variant.cancer_frequencies.clear();
     }
+    if !section_flags.include_cancerhotspots {
+        variant.cancerhotspots = None;
+    }
     if !section_flags.include_gwas {
         variant.gwas.clear();
         variant.gwas_unavailable_reason = None;
@@ -591,6 +629,9 @@ pub async fn get_with_workflow_signals(
     }
     if section_flags.include_cbioportal {
         add_cbioportal(&mut variant).await;
+    }
+    if section_flags.include_cancerhotspots {
+        add_cancerhotspots(&mut variant, &id_format).await;
     }
     if section_flags.include_civic {
         add_civic(&mut variant).await;

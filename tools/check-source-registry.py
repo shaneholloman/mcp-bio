@@ -19,6 +19,7 @@ EXEMPT_MODULES = {
     "who_pq",
 }
 HEALTH_ALIASES = {
+    "cancerhotspots": "Cancerhotspots.org",
     "cbioportal": "cBioPortal",
     "clinicaltrials": "ClinicalTrials.gov",
     "ddinter": "DDInter local data",
