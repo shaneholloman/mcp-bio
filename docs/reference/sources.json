@@ -34,6 +34,23 @@
     "notes": "BioMCP uses the public API. TCGA-derived studies are broadly open, while some cohorts such as AACR Project GENIE carry additional access or reuse conditions."
   },
   {
+    "id": "cancerhotspots",
+    "name": "Cancerhotspots.org",
+    "tier": 3,
+    "integration_mode": "direct_api",
+    "via": null,
+    "bioMcp_surfaces": ["get variant <gene> <change> all"],
+    "bioMcp_auth": "none",
+    "env_var": null,
+    "provider_access": "public API access",
+    "license_summary": "public cancer hotspot recurrence resource with provider-specific reuse expectations",
+    "redistribution_summary": "BioMCP queries recurrence counts live and does not redistribute a local cancerhotspots dataset",
+    "terms_url": "https://www.cancerhotspots.org/",
+    "key_url": null,
+    "reviewed_on": "2026-06-10",
+    "notes": "BioMCP uses the byGene hotspot endpoint to expose residue-level tumorCount and exact variantAminoAcid counts for variant detail recurrence provenance."
+  },
+  {
     "id": "chembl",
     "name": "ChEMBL",
     "tier": 1,

@@ -10,6 +10,7 @@ fn health_inventory_includes_all_expected_sources() {
         vec![
             "MyGene",
             "MyVariant",
+            "Cancerhotspots.org",
             "MyChem",
             "PubTator3",
             "PubMed",

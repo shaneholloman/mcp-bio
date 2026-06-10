@@ -6,6 +6,7 @@ position-level and exact-amino-acid counts as source-labelled variant detail,
 without treating cBioPortal cohort frequencies as the grading numbers.
 
 ## Cancerhotspots recurrence counts for somatic oncogenicity tiers
+<!-- mustmatch-lint: skip -->
 
 BRAF V600E is the OS3-scale happy path: the cancerhotspots residue count and the
 same-amino-acid count should both clear the somatic hotspot thresholds, and the

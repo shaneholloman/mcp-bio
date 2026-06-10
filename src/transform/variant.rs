@@ -989,6 +989,7 @@ pub fn from_myvariant_hit(hit: &MyVariantHit) -> Variant {
             graphql: None,
         }),
         top_disease,
+        cancerhotspots: None,
         cancer_frequencies: Vec::new(),
         cancer_frequency_source: None,
         gwas: Vec::new(),

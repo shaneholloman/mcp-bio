@@ -22,6 +22,7 @@ pub fn variant_markdown(
     let show_cosmic_section = include_all || has_requested("cosmic");
     let show_cgi_section = include_all || has_requested("cgi");
     let show_civic_section = include_all || has_requested("civic");
+    let show_cancerhotspots_section = include_all && variant.cancerhotspots.is_some();
     let show_cbioportal_section = include_all || has_requested("cbioportal");
     let show_gwas_section = include_all || has_requested("gwas");
     let variant_label = if !variant.gene.trim().is_empty() && variant.hgvs_p.is_some() {
@@ -69,6 +70,7 @@ pub fn variant_markdown(
         cosmic_context => &variant.cosmic_context,
         cgi_associations => &variant.cgi_associations,
         civic => &variant.civic,
+        cancerhotspots => &variant.cancerhotspots,
         cancer_frequencies => &variant.cancer_frequencies,
         cancer_frequency_source => &variant.cancer_frequency_source,
         gwas => &variant.gwas,
@@ -85,6 +87,7 @@ pub fn variant_markdown(
         show_cosmic_section => show_cosmic_section,
         show_cgi_section => show_cgi_section,
         show_civic_section => show_civic_section,
+        show_cancerhotspots_section => show_cancerhotspots_section,
         show_cbioportal_section => show_cbioportal_section,
         show_gwas_section => show_gwas_section,
         sections_block => format_sections_block("variant", &variant.id, sections_variant(variant, requested_sections)),

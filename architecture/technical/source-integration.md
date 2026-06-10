@@ -15,8 +15,8 @@ source's transport, authentication, and payload shape.
 - Extend the existing module when the work deepens an already integrated
   provider instead of creating a sibling client for the same API surface.
 - Current examples of distinct upstream modules include
-  `src/sources/hpa.rs`, `src/sources/gnomad.rs`, and
-  `src/sources/complexportal.rs`.
+  `src/sources/hpa.rs`, `src/sources/gnomad.rs`,
+  `src/sources/cancerhotspots.rs`, and `src/sources/complexportal.rs`.
 - Current examples of extension work include `src/sources/opentargets.rs`,
   which already owns multiple OpenTargets query paths.
 - Every source module must be declared from `src/sources/mod.rs`.
@@ -133,6 +133,9 @@ BioMCP prefers entity-section integration over ad hoc command sprawl.
 Entity integration shapes differ by entity, but common patterns include:
 
 - adding new optional fields or section structs to the owning entity type;
+- adding source-labelled enrichments under an existing broad section when the
+  source is not a user-selectable section, as variant `all` does for
+  Cancerhotspots.org recurrence counts;
 - gating a section on prerequisite identifiers already present on the base
   entity card;
 - keeping helper commands for true cross-entity pivots rather than routine

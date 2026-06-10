@@ -17,6 +17,7 @@ use tracing::warn;
 use crate::error::BioMcpError;
 
 pub(crate) mod alphagenome;
+pub(crate) mod cancerhotspots;
 pub(crate) mod cbioportal;
 pub(crate) mod cbioportal_download;
 pub(crate) mod cbioportal_study;

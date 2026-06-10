@@ -1224,6 +1224,7 @@ mod tests {
             clinvar_conditions: Vec::new(),
             clinvar_condition_reports: None,
             top_disease: None,
+            cancerhotspots: None,
             cancer_frequencies: Vec::new(),
             cancer_frequency_source: None,
             gwas: Vec::new(),

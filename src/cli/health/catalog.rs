@@ -66,6 +66,13 @@ pub(in crate::cli::health) const HEALTH_SOURCES: &[SourceDescriptor] = &[
         },
     },
     SourceDescriptor {
+        api: "Cancerhotspots.org",
+        affects: Some("get variant <id> all recurrence counts"),
+        probe: ProbeKind::Get {
+            url: "https://www.cancerhotspots.org/api/hotspots/single/byGene/BRAF",
+        },
+    },
+    SourceDescriptor {
         api: "MyChem",
         affects: Some("get/search drug and drug helper commands"),
         probe: ProbeKind::Get {
