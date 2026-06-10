@@ -273,6 +273,7 @@ impl GeneIncludeType {
         }
     }
 
+    #[allow(dead_code)]
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Pathways => GENE_SECTION_PATHWAYS,
@@ -293,6 +294,7 @@ impl GeneIncludeType {
         }
     }
 
+    #[allow(dead_code)]
     pub fn all_default() -> Vec<Self> {
         vec![
             Self::Pathways,
@@ -402,6 +404,7 @@ impl GeneGetStrategy {
         }
     }
 
+    #[allow(dead_code)]
     pub fn from_name(value: &str) -> Option<Self> {
         match value.trim().to_ascii_lowercase().as_str() {
             "baseline" => Some(Self::Baseline),
@@ -436,21 +439,25 @@ impl Default for GeneGetOptions {
 }
 
 impl GeneGetOptions {
+    #[allow(dead_code)]
     pub fn with_sections(mut self, sections: Vec<GeneSection>) -> Self {
         self.sections = sections;
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_strategy(mut self, strategy: GeneGetStrategy) -> Self {
         self.strategy = strategy;
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_optional_timeout(mut self, timeout: Duration) -> Self {
         self.optional_timeout = timeout;
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_timing_path(mut self, path: impl Into<PathBuf>) -> Self {
         self.timing_path = Some(path.into());
         self

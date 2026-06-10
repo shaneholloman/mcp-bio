@@ -28,6 +28,14 @@ The binary is also distributed as `biomcp-cli` on PyPI (a thin Python wrapper
 that ships the platform-specific Rust binary). Python is packaging only;
 no Python logic is involved in query processing.
 
+## Public Surface and Crate Boundary
+
+BioMCP's supported product surface is the `biomcp` CLI/MCP runtime. The Rust
+crate exists so Cargo can share implementation between the binaries; its module
+exports are internal implementation details, unstable, have no semver guarantee,
+and are not for downstream import. Do not treat `biomcp_cli::...` modules as a
+supported library API.
+
 ## Build and Packaging
 
 ```

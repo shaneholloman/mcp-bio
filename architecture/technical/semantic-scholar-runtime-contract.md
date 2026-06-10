@@ -181,7 +181,7 @@ BioMCP.
   enrichment is unavailable and at least one required article backend returns.
 - Source-status metadata is additive and must not change ranking, pagination, or
   row serialization except for explicitly added metadata fields.
-- `make check` remains the canonical gate for BioMCP changes; BotAssembly changes
+- `make lint`, `make test`, and `make spec` remain the canonical gates for BioMCP changes; BotAssembly changes
   use that repo's `make -C packages/basm check` or repo-equivalent gate.
 
 ## Follow-up Work

@@ -84,3 +84,22 @@ test_ticket_401_article_figshare_fixture_uses_realistic_aacr_sibling_shapes
 test_ticket_401_request_plan_ratchets_execute_named_contracts_not_list_only
 test_ticket_401_routine_modes_execute_python_surface_contracts"
 ```
+
+## Ticket 405 Architecture and Operator Contracts
+
+Current repo docs must describe the shipped BioMCP architecture and operator
+contracts, not migrated targets. The static contract suite keeps the routine spec
+lane honest about the Rust crate surface, spec/surface participation,
+cache/logging configuration, article fulltext dependencies, next-command
+ownership, and docs navigation without calling public services.
+
+```bash
+set -o pipefail
+cd ../.. && uv run --no-sync pytest spec/surface/test_ticket_405_architecture_operator_contracts.py -v | mustmatch like "test_ticket_405_rust_crate_surface_is_internal_not_gene_facade
+test_ticket_405_current_docs_do_not_present_make_check_as_biomcp_gate
+test_ticket_405_surface_contract_lane_is_documented_for_make_spec_and_make_test
+test_ticket_405_cache_and_logging_operator_contracts_are_inventoried
+test_ticket_405_dependency_docs_name_article_fulltext_conversion_stack
+test_ticket_405_next_command_ownership_is_ratcheted_or_named_followup
+test_ticket_405_mkdocs_nav_keeps_source_pages_visible"
+```

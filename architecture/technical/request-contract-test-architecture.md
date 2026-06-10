@@ -85,6 +85,11 @@ Invariants:
 - JSON `_meta.next_commands` is asserted as a behavior contract, not as incidental text.
 - Markdown tests assert stable structural anchors, not exact prose/count trivia unless the exact text is the product contract.
 
+Current next-command ownership debt: older entity/render paths still mix semantic
+follow-up construction with markdown presentation. Treat that as a named
+next-command ownership follow-up rather than widening this ticket into a broad
+renderer refactor.
+
 ## Validation profile target
 
 Keep March profile names compatible with the current build flow. Change command bodies only after deterministic replacements exist.
@@ -96,12 +101,12 @@ Current profile behavior after ticket 378:
 | `preflight` / `baseline` | `cargo check --all-targets` | No | Compilation and target graph health |
 | `focused` | `cargo test --lib && cargo clippy --lib --tests -- -D warnings`, with touched-area deterministic tests included by ordinary cargo test selection | No | Unit, request, source-plan, response/status, and renderer contracts for touched code |
 | `spec-only` | deterministic `make spec-contracts` | No by default | CLI help/list, JSON envelope, fixture-backed/static workflows, no routine live upstream blockers |
-| `full-blocking` / `full-contracts` | `make release-gate`, which composes `make check` plus deterministic `make spec-contracts` | No by default | Release-quality deterministic local gate |
+| `full-blocking` / `full-contracts` | `make release-gate`, which composes `make lint`, `make test`, and `make spec` | No by default | Release-quality deterministic local gate |
 | `release-live-smoke` | explicit opt-in `make release-live-smoke` target using `tools/biomcp-ci` and a small serialized matrix | Yes | Public upstream availability and release/operator confidence |
 
 Target `Makefile` shape:
 
-- keep `check` as the canonical local gate and keep the advisory gate under `bin/lint`/`make check`;
+- keep `make lint`, `make test`, and `make spec` as the canonical local gates and keep the advisory ratchets under `bin/lint`/`make lint`;
 - add an explicit live target such as `release-live-smoke` or `spec-live-smoke` instead of burying live calls inside `spec-only`;
 - keep `tools/biomcp-ci` as the executable-spec wrapper for cache roots, XDG roots, key stripping, and warm replay;
 - update `tests/test_validation_profile_contract.py` whenever profile commands change;
@@ -110,7 +115,7 @@ Target `Makefile` shape:
 Invariants:
 
 - Existing March profile names remain present until the shared flow changes.
-- Dependency-free build tickets can still run `make check` successfully at every intermediate state.
+- Dependency-free build tickets can still run `make lint`, `make test`, and `make spec` successfully at every intermediate state.
 - No live public API call is required by ordinary kickoff/focused/spec-only proof after the split is complete.
 - FAQ #14's OLS4 parallel-isolation ratchet remains executable for the legacy canary targets while routine proof uses deterministic `spec-contracts` and live OLS4 confidence lives in `release-live-smoke`.
 
@@ -139,11 +144,11 @@ Every implementation ticket that touches these areas should include the relevant
 - Targeted module tests where useful, e.g. `cargo test --lib sources::ols4`, `cargo test --lib sources::mydisease`, `cargo test --lib entities::article::planner`, `cargo test --lib cli::variant`.
 - `uv run --no-sync pytest tests/test_validation_profile_contract.py -v` when changing `.march/validation-profiles.toml`.
 - `uv run --no-sync pytest spec/surface/test_parallel_isolation_contract.py -v` when changing `Makefile`, OLS4 disease/discover spec partitioning, or the ticket-372 quarantine replacement.
-- `make check` as the canonical local gate, preserving FAQ #12's advisory visibility.
+- `make lint`, `make test`, and `make spec` as the canonical local gates, preserving FAQ #12's advisory visibility.
 - Deterministic spec commands (`make spec-contracts` for routine proof, with `make spec-pr` retained for full canary debugging) only after replacement fixture contracts exist.
 
 ## Assumptions to validate during rollout
 
 - Source-local plan types for OLS4 and MyDisease will expose enough common fields to decide whether a shared helper is useful. If not, keep source-local types and avoid abstraction churn.
 - Fixture-backed disease/discover and article/variant replacements can preserve user-visible behavior without exact live upstream rows. If a section cannot be expressed deterministically, classify it as explicit release-live-smoke instead of forcing it into routine gates.
-- The final deterministic spec/profile split will still keep local `make check` under release-acceptable time and preserve the advisory/lint contracts. If not, keep `spec-only` narrow and leave heavier live checks in release-live-smoke.
+- The final deterministic spec/profile split will still keep local `make lint`, `make test`, and `make spec` under release-acceptable time and preserve the advisory/lint contracts. If not, keep `spec-only` narrow and leave heavier live checks in release-live-smoke.

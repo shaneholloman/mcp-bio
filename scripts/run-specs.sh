@@ -17,6 +17,7 @@ SPEC_ROUTINE_PATHS=(
   spec/surface/test_search_all_cli_structure.py
   spec/surface/test_semantic_scholar_retry_after_contract.py
   spec/surface/test_ticket_401_surface_ratchets.py
+  spec/surface/test_ticket_405_architecture_operator_contracts.py
   spec/surface/test_trial_help_contract.py
   spec/surface/test_variant_normalization_docs_contract.py
 )

@@ -711,6 +711,7 @@ EXPECTED_NAV_BLOCK = """  - Sources:
       - NCBI Genetic Testing Registry: sources/gtr.md
       - WHO Prequalified IVD: sources/who-ivd.md
       - CDC CVX/MVX: sources/cdc-cvx.md
+      - CDC WONDER VAERS: sources/vaers.md
       - MedlinePlus: sources/medlineplus.md
       - KEGG: sources/kegg.md
       - PharmGKB / CPIC: sources/pharmgkb.md

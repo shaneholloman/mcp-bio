@@ -6,7 +6,7 @@
 
 pub mod cli;
 pub mod error;
-pub mod gene;
+mod gene;
 pub mod mcp;
 
 #[cfg_attr(not(test), allow(dead_code))]
