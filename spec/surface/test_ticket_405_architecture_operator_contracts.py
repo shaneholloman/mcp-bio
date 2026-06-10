@@ -13,6 +13,7 @@ CURRENT_ARCHITECTURE_DOCS = [
     "architecture/technical/request-contract-test-architecture.md",
     "architecture/technical/semantic-scholar-runtime-contract.md",
     "architecture/technical/cli-module-decomposition.md",
+    "architecture/technical/benchmark-cli-ownership-decision.md",
     "architecture/ux/cli-reference.md",
 ]
 
@@ -62,7 +63,7 @@ def test_ticket_405_current_docs_do_not_present_make_check_as_biomcp_gate() -> N
         re.IGNORECASE,
     )
     current_gate_claim = re.compile(
-        r"\b(canonical|current|local|routine|release|verify|full-blocking|dependency-free|intermediate)\b",
+        r"\b(canonical|current|local|routine|release|verify|full-blocking|dependency-free|intermediate|gate|fail)\b",
         re.IGNORECASE,
     )
 

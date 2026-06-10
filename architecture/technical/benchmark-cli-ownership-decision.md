@@ -281,8 +281,9 @@ that script's README. No ticket needed at this time.
   symbol; in-tree there are no production callers.
 - **March / CI agents:** the contract test in 335 turns the
   internal-vs-public ambiguity into a hard gate. Any future ticket
-  that tries to wire benchmark public will fail `make check` until
-  it also revises this decision doc and 335's contract test.
+  that tries to wire benchmark public will fail the standard `make lint`,
+  `make test`, and `make spec` gates until it also revises this decision
+  doc and 335's contract test.
 - **Release reviewers:** the architecture doc no longer claims a
   surface that does not exist. The 327 review's `#2` blocker is
   resolved.
