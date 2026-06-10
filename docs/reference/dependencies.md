@@ -2,6 +2,19 @@
 
 BioMCP is a single Rust binary. All dependencies are compiled in — no runtime installations required.
 
+## Article fulltext and conversion stack
+
+Article fulltext resolution uses provider APIs and in-process converters rather
+than external runtime tools. Europe PMC supplies open-access article metadata and
+fulltext links; NCBI EFetch retrieves PubMed/PMC records; the NCBI ID Converter
+maps between PMID, PMCID, and DOI when one identifier needs another route; PMC OA
+supplies open-access package/file discovery; Figshare supports article
+supplement and hosted-file retrieval; Semantic Scholar PDF links are optional
+PDF candidates when available. Retrieved content is normalized by Rust
+transformers: JATS XML through `src/transform/article/jats.rs`, HTML through
+`src/transform/article/html.rs`, and PDF text extraction through
+`src/transform/article/pdf.rs`.
+
 ## Key Dependencies
 
 ### Kuva — Charting

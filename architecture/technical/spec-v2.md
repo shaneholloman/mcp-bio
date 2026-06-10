@@ -75,8 +75,8 @@ The new corpus enforces these invariants:
    assertions.**
 5. **No `SPEC_PR_DESELECT_ARGS` or `SPEC_SERIAL_FILES` dependence on the old
    corpus shape.**
-6. **Every migrated ticket leaves `make check` healthy and the active spec lane
-   executable.**
+6. **Every migrated ticket leaves `make lint`, `make test`, and `make spec`
+   healthy with the active spec lane executable.**
 7. **Live upstream behavior is not routine proof once a deterministic replacement exists.** Source request shape, fixture response/status mapping, entity orchestration, and renderer/envelope output belong in routine gates; public upstream availability belongs in an explicit release/live-smoke lane.
 
 ## Per-file outlines
@@ -500,7 +500,7 @@ working and keeps the active gate meaningful.
 | 1 | Add `tools/biomcp-ci`, add CI cache restore/key/schema constant, delete the old corpus, land `gene.md`, `variant.md`, `article.md`, repoint `make spec-pr` to `spec/entity/` + `spec/surface/` | New layout exists, old numbered corpus is gone, three canary entity files prove the template, cache-warm path exists | PR gate runs only the canary v2 corpus |
 | 2 | Land entity batch A: `trial.md`, `drug.md`, `disease.md`, `protein.md` | Core clinical entity coverage is in v2 format; no old entity files remain | Gate expands without reintroducing old fixture or deselect debt |
 | 3 | Land entity batch B: `pathway.md`, `study.md`, `pgx.md`, `phenotype.md`, `diagnostic.md`, `vaers.md` | All 13 entities are on the v2 corpus | Gate covers the full entity surface in the new layout |
-| 4 | Land `cli.md`, `mcp.md`, `discover.md`, remove any residual old-spec glue, and keep the already-shipped `make check`/`test-contracts` integration green while the final v2 corpus comes online | Full 16-file v2 corpus is active; stable PR gate and canonical `make check` gate align | Preserves 287 and makes the older spec tickets obsolete |
+| 4 | Land `cli.md`, `mcp.md`, `discover.md`, remove any residual old-spec glue, and keep the already-shipped `make lint`/`make test`/`make spec` integration green while the final v2 corpus comes online | Full 16-file v2 corpus is active; stable PR gate and canonical repo gates align | Preserves 287 and makes the older spec tickets obsolete |
 
 ### Build-flow note
 
@@ -530,7 +530,7 @@ Pause the rewrite and escalate if any of these are proven true:
 ## Ticket disposition
 
 - **287** - already done independently. Slice 4 must preserve the shipped
-  `make check` -> `test-contracts` contract rather than re-implement it.
+  `make test` -> `test-contracts` contract rather than re-implement it.
 - **292** - untouched and orthogonal.
 - **293** - closes as superseded once the v2 corpus and rubric land.
 - **294** - closes as superseded once the old flaky corpus is gone.

@@ -118,7 +118,7 @@ For any decomposition slice, proof should include:
 
 ## Ratchet rules
 
-`make check` runs `tools/check-quality-ratchet.py`, which performs a global scan
+`make lint` runs `tools/check-quality-ratchet.py`, which performs a global scan
 of tracked Rust files under `src/cli/` and enforces the 700-line cap. Files over
 the cap must either be decomposed or appear in `tools/cli-line-cap-allowlist.json`
 with a dated follow-up ticket reference and their current line count. The

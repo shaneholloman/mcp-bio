@@ -83,6 +83,25 @@ biomcp discover "chest pain"           # relational or multi-entity questions ma
 
 See also: [Search All Workflow](../how-to/search-all-workflow.md)
 
+## Operator runtime configuration
+
+Cache configuration is resolved from env > file > default for env-overridable
+fields. `BIOMCP_CACHE_DIR`, `BIOMCP_CACHE_MAX_SIZE`, and
+`BIOMCP_CACHE_MIN_DISK_FREE` override `cache.toml` values; the file lives under
+the platform config directory's `biomcp/cache.toml`. Supported TOML fields are
+`[cache].dir`, `[cache].max_size`, `[cache].min_disk_free`, and
+`[cache].max_age_secs`. Defaults are a platform cache directory with a `biomcp`
+subdirectory (or temp-dir fallback), max size `10_000_000_000`, min disk free
+`10%`, and max age `86_400` seconds. Max age is file > default only in the
+current runtime.
+
+Logging/tracing goes to stderr. The default `RUST_LOG` filter is `warn`; set
+`RUST_LOG=error` for quieter automation. `tools/biomcp-ci` defaults to
+`RUST_LOG=error`. ANSI color is emitted only when stderr is a TTY. Do not log or
+copy API-key values, partial values, hashes, or secret-derived strings; operator
+notes and reports should redact secrets. In `--json` mode, machine-readable
+payloads stay on stdout while errors and diagnostics stay on stderr.
+
 ## Output modes and discovery commands
 
 ```bash
