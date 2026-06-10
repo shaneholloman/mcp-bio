@@ -127,13 +127,13 @@ pub(crate) fn recurrence_for_change(
     };
 
     rows.iter()
-        .find(|row| {
+        .filter(|row| {
             row.residue
                 .as_deref()
                 .map(normalize_residue)
                 .is_some_and(|residue| residue == requested_residue)
         })
-        .and_then(|row| {
+        .find_map(|row| {
             let same_aa_count = same_aa_count(row, &requested_alt)?;
             Some(CancerHotspotRecurrence {
                 source: CANCERHOTSPOTS_API.to_string(),
@@ -252,5 +252,36 @@ mod tests {
         assert!(json["position_count"].is_null());
         assert!(json["same_aa_count"].is_null());
         assert!(json["matched_transcript"].is_null());
+    }
+
+    #[test]
+    fn recurrence_checks_later_matching_residue_rows_for_exact_alt() {
+        let rows: Vec<CancerHotspotRow> = serde_json::from_value(serde_json::json!([
+            {
+                "hugoSymbol": "BRAF",
+                "residue": "V600",
+                "tumorCount": 64,
+                "transcriptId": "ENST00000000000",
+                "aminoAcidPosition": 600,
+                "variantAminoAcid": {"K": 64}
+            },
+            {
+                "hugoSymbol": "BRAF",
+                "residue": "V600",
+                "tumorCount": 897,
+                "transcriptId": "ENST00000288602",
+                "aminoAcidPosition": 600,
+                "variantAminoAcid": {"E": 833}
+            }
+        ]))
+        .unwrap();
+
+        let recurrence = recurrence_for_change(&rows, "V600E");
+        assert!(recurrence.position_count.is_some());
+        assert!(recurrence.same_aa_count.is_some());
+        assert_eq!(
+            recurrence.matched_transcript.as_deref(),
+            Some("ENST00000288602")
+        );
     }
 }
