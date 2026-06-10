@@ -133,26 +133,32 @@ pub(crate) fn recurrence_for_change(
                 .map(normalize_residue)
                 .is_some_and(|residue| residue == requested_residue)
         })
-        .map(|row| CancerHotspotRecurrence {
-            source: CANCERHOTSPOTS_API.to_string(),
-            position_count: row.tumor_count,
-            same_aa_count: row
-                .variant_amino_acid
-                .get(&requested_alt)
-                .copied()
-                .or_else(|| {
-                    row.variant_amino_acid
-                        .get(&requested_alt.to_ascii_uppercase())
-                        .copied()
-                }),
-            matched_transcript: row
-                .transcript_id
-                .as_deref()
-                .map(str::trim)
-                .filter(|v| !v.is_empty())
-                .map(str::to_string),
+        .and_then(|row| {
+            let same_aa_count = same_aa_count(row, &requested_alt)?;
+            Some(CancerHotspotRecurrence {
+                source: CANCERHOTSPOTS_API.to_string(),
+                position_count: row.tumor_count,
+                same_aa_count: Some(same_aa_count),
+                matched_transcript: row
+                    .transcript_id
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|v| !v.is_empty())
+                    .map(str::to_string),
+            })
         })
         .unwrap_or_else(CancerHotspotRecurrence::checked_absent)
+}
+
+fn same_aa_count(row: &CancerHotspotRow, requested_alt: &str) -> Option<u32> {
+    row.variant_amino_acid
+        .get(requested_alt)
+        .copied()
+        .or_else(|| {
+            row.variant_amino_acid
+                .get(&requested_alt.to_ascii_uppercase())
+                .copied()
+        })
 }
 
 fn normalize_residue(value: &str) -> String {
@@ -223,6 +229,26 @@ mod tests {
         let json = serde_json::to_value(&recurrence).unwrap();
         assert_eq!(json["source"], "cancerhotspots.org");
         assert!(json.get("position_count").is_some());
+        assert!(json["position_count"].is_null());
+        assert!(json["same_aa_count"].is_null());
+        assert!(json["matched_transcript"].is_null());
+    }
+
+    #[test]
+    fn recurrence_treats_missing_exact_alt_as_checked_absence() {
+        let rows: Vec<CancerHotspotRow> = serde_json::from_value(serde_json::json!([
+            {
+                "hugoSymbol": "KRAS",
+                "residue": "G12",
+                "tumorCount": 100,
+                "transcriptId": "ENST00000256078",
+                "aminoAcidPosition": 12,
+                "variantAminoAcid": {"D": 25}
+            }
+        ]))
+        .unwrap();
+
+        let json = serde_json::to_value(recurrence_for_change(&rows, "G12V")).unwrap();
         assert!(json["position_count"].is_null());
         assert!(json["same_aa_count"].is_null());
         assert!(json["matched_transcript"].is_null());
