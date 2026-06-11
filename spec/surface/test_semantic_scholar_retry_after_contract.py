@@ -14,13 +14,17 @@ from urllib.parse import urlparse
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BIOMCP_BIN = Path(os.environ.get("BIOMCP_BIN", REPO_ROOT / "target/release/biomcp"))
 RETRY_AFTER_SECONDS = 2.0
+EXTREME_RETRY_AFTER_SECONDS = 999
 RETRY_AFTER_TOLERANCE_SECONDS = 0.2
 GUIDANCE = "Rate limited by Semantic Scholar. Set S2_API_KEY for a dedicated rate limit."
 
 
 class _SemanticScholarState:
-    def __init__(self, *, authenticated_retry_after: bool) -> None:
+    def __init__(
+        self, *, authenticated_retry_after: bool, retry_after_value: int = 2
+    ) -> None:
         self.authenticated_retry_after = authenticated_retry_after
+        self.retry_after_value = retry_after_value
         self.lock = threading.Lock()
         self.batch_seen_api_key: list[bool] = []
         self.citation_seen_api_key: list[bool] = []
@@ -72,7 +76,11 @@ class _SemanticScholarHandler(BaseHTTPRequestHandler):
 
         if self.server.state.authenticated_retry_after:
             if citation_attempt == 1:
-                self._send_json(429, {"error": "slow down"}, {"Retry-After": "2"})
+                self._send_json(
+                    429,
+                    {"error": "slow down"},
+                    {"Retry-After": str(self.server.state.retry_after_value)},
+                )
                 return
             self._send_json(
                 200,
@@ -115,9 +123,12 @@ class _SemanticScholarServer(ThreadingHTTPServer):
 
 
 class _RunningSemanticScholarServer:
-    def __init__(self, *, authenticated_retry_after: bool) -> None:
+    def __init__(
+        self, *, authenticated_retry_after: bool, retry_after_value: int = 2
+    ) -> None:
         self.state = _SemanticScholarState(
-            authenticated_retry_after=authenticated_retry_after
+            authenticated_retry_after=authenticated_retry_after,
+            retry_after_value=retry_after_value,
         )
         self.server = _SemanticScholarServer(("127.0.0.1", 0), _SemanticScholarHandler)
         self.server.state = self.state
@@ -191,6 +202,28 @@ def test_authenticated_semantic_scholar_retry_waits_for_retry_after() -> None:
             "authenticated Semantic Scholar 429 retried before the Retry-After floor: "
             f"observed {second_retry_delay:.3f}s, required at least "
             f"{RETRY_AFTER_SECONDS - RETRY_AFTER_TOLERANCE_SECONDS:.3f}s"
+        )
+
+
+def test_authenticated_semantic_scholar_extreme_retry_after_stays_bounded() -> None:
+    with _RunningSemanticScholarServer(
+        authenticated_retry_after=True,
+        retry_after_value=EXTREME_RETRY_AFTER_SECONDS,
+    ) as server:
+        started = time.monotonic()
+        result = _run_article_citations(server, api_key="spec-test-key")
+        elapsed = time.monotonic() - started
+
+        assert result.returncode == 0, (
+            "authenticated Semantic Scholar retry should recover after capped Retry-After\n"
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
+        assert len(server.state.citation_times) >= 2, (
+            "extreme Retry-After should still retry through the default-client path"
+        )
+        assert elapsed < 20, (
+            f"Retry-After: {EXTREME_RETRY_AFTER_SECONDS} should be capped, not slept "
+            f"literally; elapsed {elapsed:.3f}s"
         )
 
 

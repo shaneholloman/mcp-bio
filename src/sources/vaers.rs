@@ -12,6 +12,7 @@ pub(crate) const VAERS_BASE_ENV: &str = "BIOMCP_VAERS_BASE";
 const VAERS_REQUEST_PATH: &str = "/controller/datarequest/D8";
 const VAERS_MAX_BODY_BYTES: usize = 2 * 1024 * 1024;
 const LIVE_REQUEST_GAP: Duration = Duration::from_secs(16);
+const CDC_WONDER_COMPATIBLE_USER_AGENT: &str = "Wget/1.21.4";
 const REQUEST_TEMPLATE: &str = include_str!("../../spec/fixtures/vaers/reactions-request.xml");
 const REQUEST_RESTRICTIONS_FLAG: (&str, &str) = ("accept_datause_restrictions", "true");
 
@@ -69,7 +70,7 @@ pub(crate) struct VaersClient {
 impl VaersClient {
     pub(crate) fn new() -> Result<Self, BioMcpError> {
         Ok(Self {
-            client: crate::sources::shared_client()?,
+            client: vaers_http_client()?,
             base: crate::sources::env_base(VAERS_BASE, VAERS_BASE_ENV),
         })
     }
@@ -77,7 +78,7 @@ impl VaersClient {
     #[cfg(test)]
     fn new_for_test(base: String) -> Result<Self, BioMcpError> {
         Ok(Self {
-            client: crate::sources::test_client()?,
+            client: vaers_http_client()?,
             base: Cow::Owned(base),
         })
     }
@@ -214,6 +215,18 @@ impl VaersClient {
                 message: format!("CDC WONDER VAERS XML parse task failed: {err}"),
             })?
     }
+}
+
+fn vaers_http_client() -> Result<reqwest_middleware::ClientWithMiddleware, BioMcpError> {
+    // CDC WONDER's edge denies the shared `biomcp-cli/<version>` user-agent for
+    // VAERS XML POSTs while allowing common command-line clients.
+    let base_client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(30))
+        .connect_timeout(Duration::from_secs(10))
+        .user_agent(CDC_WONDER_COMPATIBLE_USER_AGENT)
+        .build()
+        .map_err(BioMcpError::HttpClientInit)?;
+    Ok(reqwest_middleware::ClientBuilder::new(base_client).build())
 }
 
 fn build_request_xml(kind: VaersAggregateKind, wonder_code: &str) -> Result<String, BioMcpError> {
@@ -426,8 +439,8 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     use super::{
-        REQUEST_TEMPLATE, VAERS_REQUEST_PATH, VaersAggregateKind, VaersClient, build_request_xml,
-        node_text, parse_aggregate_response,
+        CDC_WONDER_COMPATIBLE_USER_AGENT, REQUEST_TEMPLATE, VAERS_REQUEST_PATH, VaersAggregateKind,
+        VaersClient, build_request_xml, node_text, parse_aggregate_response,
     };
 
     const REACTIONS_REQUEST_FIXTURE: &str =
@@ -567,5 +580,42 @@ mod tests {
 
         assert_eq!(table.total_events, 83_359);
         assert!(!table.rows.is_empty());
+    }
+
+    #[tokio::test]
+    async fn vaers_requests_use_cdc_wonder_compatible_user_agent() {
+        let server = MockServer::start().await;
+        let client = VaersClient::new_for_test(server.uri()).expect("client");
+
+        Mock::given(method("POST"))
+            .and(path(VAERS_REQUEST_PATH))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
+                    .set_body_raw(REACTIONS_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
+            )
+            .mount(&server)
+            .await;
+
+        client
+            .reaction_counts("MMR")
+            .await
+            .expect("reaction counts");
+
+        let requests = server
+            .received_requests()
+            .await
+            .expect("wiremock should record requests");
+        assert_eq!(requests.len(), 1);
+        let user_agent = requests[0]
+            .headers
+            .get("user-agent")
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or_default();
+        assert_eq!(user_agent, CDC_WONDER_COMPATIBLE_USER_AGENT);
+        assert!(
+            !user_agent.contains("biomcp-cli/"),
+            "VAERS must not send the BioMCP shared-client user-agent blocked by CDC WONDER"
+        );
     }
 }

@@ -4,6 +4,8 @@ BioMCP unifies multiple biomedical data providers behind one CLI grammar.
 This reference explains source provenance, authentication requirements, base endpoints,
 and operational caveats so users can reason about result quality and troubleshooting.
 Use [Source Licensing and Terms](source-licensing.md) for provider terms, reuse constraints, and indirect-only provenance rows.
+Use [Configuration Reference](configuration.md) for supported environment
+variables, test-only override seams, cache settings, and release/install knobs.
 
 ## Source matrix
 

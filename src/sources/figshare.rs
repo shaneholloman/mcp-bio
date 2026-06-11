@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::net::IpAddr;
 use std::path::{Component, Path, PathBuf};
 use std::time::Duration;
 
@@ -206,11 +207,12 @@ impl FigshareClient {
     }
 
     pub async fn download_file(&self, file: &FigshareFile) -> Result<Vec<u8>, BioMcpError> {
+        let download_url = self.validate_download_url(&file.download_url)?;
         let mut accepted_retries = 0;
         loop {
             let resp = self
                 .client
-                .get(&file.download_url)
+                .get(download_url.clone())
                 .with_extension(CacheMode::NoStore)
                 .send()
                 .await?;
@@ -247,6 +249,77 @@ impl FigshareClient {
             return Ok(bytes);
         }
     }
+
+    fn validate_download_url(&self, raw: &str) -> Result<Url, BioMcpError> {
+        let url = Url::parse(raw.trim()).map_err(|err| BioMcpError::Api {
+            api: FIGSHARE_API.to_string(),
+            message: format!("unsafe Figshare download_url: invalid URL: {err}"),
+        })?;
+        if self.is_explicit_test_download_url(&url) {
+            return Ok(url);
+        }
+        if url.scheme() != "https" {
+            return Err(unsafe_download_url("expected https scheme"));
+        }
+        let host = url
+            .host_str()
+            .ok_or_else(|| unsafe_download_url("missing host"))?
+            .to_ascii_lowercase();
+        if is_private_or_local_host(&host) {
+            return Err(unsafe_download_url("local/private host is not allowed"));
+        }
+        if host != "figshare.com" && !host.ends_with(".figshare.com") {
+            return Err(unsafe_download_url(
+                "host is not a Figshare-controlled domain",
+            ));
+        }
+        Ok(url)
+    }
+
+    fn is_explicit_test_download_url(&self, url: &Url) -> bool {
+        if self.base.as_ref().trim_end_matches('/') == FIGSHARE_BASE {
+            return false;
+        }
+        let Ok(base) = Url::parse(self.base.as_ref()) else {
+            return false;
+        };
+        same_origin(&base, url)
+    }
+}
+
+fn unsafe_download_url(reason: &str) -> BioMcpError {
+    BioMcpError::Api {
+        api: FIGSHARE_API.to_string(),
+        message: format!("unsafe Figshare download_url: {reason}"),
+    }
+}
+
+fn same_origin(left: &Url, right: &Url) -> bool {
+    left.scheme() == right.scheme()
+        && left.host_str().map(str::to_ascii_lowercase)
+            == right.host_str().map(str::to_ascii_lowercase)
+        && left.port_or_known_default() == right.port_or_known_default()
+}
+
+fn is_private_or_local_host(host: &str) -> bool {
+    if host == "localhost" || host.ends_with(".localhost") {
+        return true;
+    }
+    host.parse::<IpAddr>().is_ok_and(|addr| match addr {
+        IpAddr::V4(addr) => {
+            addr.is_loopback()
+                || addr.is_private()
+                || addr.is_link_local()
+                || addr.is_unspecified()
+                || addr.octets()[0] == 0
+        }
+        IpAddr::V6(addr) => {
+            addr.is_loopback()
+                || addr.is_unspecified()
+                || (addr.segments()[0] & 0xfe00) == 0xfc00
+                || (addr.segments()[0] & 0xffc0) == 0xfe80
+        }
+    })
 }
 
 pub fn parse_figshare_article_url(raw: &str) -> Option<FigshareArticleRef> {
@@ -619,5 +692,75 @@ mod tests {
         let err = client.download_file(&file).await.unwrap_err();
 
         assert!(err.to_string().contains("still staging"));
+    }
+
+    #[tokio::test]
+    async fn production_download_rejects_private_url_before_fetch() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/download/private"))
+            .respond_with(ResponseTemplate::new(200).set_body_bytes(b"internal".to_vec()))
+            .expect(0)
+            .mount(&server)
+            .await;
+
+        let client = FigshareClient {
+            client: crate::sources::test_client().unwrap(),
+            base: Cow::Borrowed(FIGSHARE_BASE),
+        };
+        let file = FigshareFile {
+            id: 1,
+            filename: "private.pdf".to_string(),
+            size: None,
+            md5: None,
+            mimetype: Some("application/pdf".to_string()),
+            download_url: format!("{}/download/private", server.uri()),
+        };
+
+        let err = client.download_file(&file).await.unwrap_err();
+        assert!(err.to_string().contains("unsafe Figshare download_url"));
+    }
+
+    #[test]
+    fn production_download_url_validation_rejects_unsafe_targets() {
+        let client = FigshareClient {
+            client: crate::sources::test_client().unwrap(),
+            base: Cow::Borrowed(FIGSHARE_BASE),
+        };
+
+        for raw in [
+            "http://ndownloader.figshare.com/files/1",
+            "https://localhost/files/1",
+            "https://127.0.0.1/files/1",
+            "https://10.0.0.5/files/1",
+            "https://169.254.169.254/files/1",
+            "file:///tmp/asset.pdf",
+            "https://example.org/files/1",
+        ] {
+            let err = client.validate_download_url(raw).unwrap_err();
+            assert!(
+                err.to_string().contains("unsafe Figshare download_url"),
+                "{raw} should be rejected with a clear unsafe-url error"
+            );
+        }
+    }
+
+    #[test]
+    fn production_download_url_validation_allows_figshare_https_hosts() {
+        let client = FigshareClient {
+            client: crate::sources::test_client().unwrap(),
+            base: Cow::Borrowed(FIGSHARE_BASE),
+        };
+
+        for raw in [
+            "https://figshare.com/files/1",
+            "https://ndownloader.figshare.com/files/1",
+            "https://api.figshare.com/v2/articles/1/files/2",
+        ] {
+            assert!(
+                client.validate_download_url(raw).is_ok(),
+                "{raw} should be allowed"
+            );
+        }
     }
 }

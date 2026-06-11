@@ -25,6 +25,24 @@ that plainly instead of pretending the source searched nothing.
 VAERS is vaccine-only; this query did not resolve to a vaccine identity.'
 ```
 
+## Positive VAERS Aggregate Live Canary
+<!-- mustmatch-lint: skip -->
+
+VAERS is a live CDC WONDER aggregate source. The verify lane must prove at least
+one realistic vaccine query reaches the positive aggregate path; negative and
+help-only assertions are not enough to support a release claim.
+
+```bash run id=mmr-vaers-positive-live exit=0 timeout=180
+../../tools/biomcp-ci search adverse-event "MMR vaccine" --source vaers --limit 5 | mustmatch like 'CDC VAERS Summary
+Matched vaccine: MMR
+CDC WONDER code: MMR
+Serious reports:
+Non-serious reports:
+Age distribution
+Top reactions
+Source: CDC VAERS'
+```
+
 ## Source-Specific Limitations
 
 FAERS-style filters should fail truthfully when the user forces the VAERS

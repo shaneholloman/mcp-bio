@@ -102,7 +102,6 @@ fn parse_sections(sections: &[String]) -> Result<VariantSections, BioMcpError> {
     }
 
     if include_all {
-        out.include_prediction = true;
         out.include_expanded_predictions = true;
         out.include_clinvar = true;
         out.include_population = true;

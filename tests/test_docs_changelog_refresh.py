@@ -6,6 +6,30 @@ import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_RELEASE_TICKETS = {
+    "0.8.23": {
+        369,
+        *range(371, 387),
+        389,
+        390,
+        391,
+        392,
+        393,
+        395,
+        396,
+        397,
+        398,
+        400,
+        401,
+        403,
+        404,
+        405,
+        406,
+        408,
+        409,
+        410,
+        411,
+        *range(412, 421),
+    },
     "0.8.22": {
         217,
         218,
@@ -111,6 +135,37 @@ EXPECTED_RELEASE_TICKETS = {
     }
 }
 EXPECTED_RELEASE_MARKERS = {
+    "0.8.23": {
+        "fixes": [
+            "CDC WONDER-compatible",
+            "Figshare provider-supplied asset download URLs",
+            "private-network",
+            "Source unavailable",
+            "extreme `Retry-After`",
+            "list-only Cargo wrappers",
+        ],
+        "new_features": [
+            "source-first article full-text",
+            "asset retrieval improvements",
+            "Cancerhotspots recurrence enrichment",
+            "AlphaGenome prediction credentials",
+        ],
+        "docs": [
+            "source-versioning",
+            "configuration",
+            "observability",
+            "gettable versus search-only",
+            "architecture experiment policy",
+            "quality ratchet",
+        ],
+        "internal": [
+            "request-contract tests",
+            "mustmatch binary",
+            "live upstream specs",
+            "0.8.23 hardening pass",
+            "Monarch 502",
+        ],
+    },
     "0.8.22": {
         "fixes": [
             "compact diagnostic rows",
@@ -251,37 +306,24 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
     assert "biomcp ema sync" in previous_new_features_block
     assert _ticket_references(previous_release_block) == {182, *range(193, 214), 221}
 
-    assert "WHO Prequalification drug coverage" in latest_release_block
-    assert "--product-type api" in latest_release_block
-    assert "CDC CVX/MVX vaccine identity bridge" in latest_release_block
-    assert "biomcp cvx sync" in latest_new_features_block
-    assert "CDC WONDER VAERS" in latest_release_block
-    assert "--source <faers|vaers|all>" in latest_release_block
-    assert "local GTR-backed `diagnostic` entity" in latest_release_block
-    assert "WHO Prequalified IVD" in latest_release_block
-    assert "biomcp gtr sync" in latest_new_features_block
-    assert "biomcp who-ivd sync" in latest_release_block
-    assert "FDA 510(k) and PMA regulatory overlays" in latest_release_block
-    assert "get diagnostic <id> regulatory" in latest_release_block
-    assert (
-        "Added opt-in diagnostic pivots to gene and disease cards"
-        in latest_release_block
-    )
-    assert "`get gene <symbol> diagnostics`" in latest_release_block
-    assert "`get disease <name_or_id> diagnostics`" in latest_release_block
-    assert "backed by local GTR and WHO IVD diagnostic search." in latest_release_block
-    assert "cross-entity keyword hints" in latest_release_block
-    assert "_meta.next_commands" in latest_release_block
-    assert "See also:" in latest_release_block
-    assert "clinical_features" in latest_release_block
-    assert "MedlinePlus" in latest_release_block
-    assert "BioASQ-oriented how-to routing rows" in latest_docs_block
-    assert "skills/SKILL.md" in latest_docs_block
-    assert "public landing-copy contract" in latest_docs_block
-    assert "workflow landing bullets" in latest_docs_block
-    assert "SPEC_SMOKE_ARGS" in latest_release_block
-    assert "current mustmatch pytest item IDs" in latest_release_block
-    assert "quality ratchet" in latest_release_block
+    assert "source-first article full-text" in latest_release_block
+    assert "Figshare supplementary-file retrieval" in latest_release_block
+    assert "Cancerhotspots recurrence enrichment" in latest_release_block
+    assert "AlphaGenome prediction credentials" in latest_new_features_block
+    assert "VAERS live support" in latest_fixes_block
+    assert "CDC WONDER-compatible" in latest_fixes_block
+    assert "Figshare provider-supplied asset download URLs" in latest_fixes_block
+    assert "Monarch phenotype 5xx" in latest_fixes_block
+    assert "Source unavailable" in latest_fixes_block
+    assert "gettable versus search-only" in latest_docs_block
+    assert "source-versioning" in latest_docs_block
+    assert "configuration" in latest_docs_block
+    assert "observability" in latest_docs_block
+    assert "architecture experiment policy" in latest_docs_block
+    assert "mustmatch binary" in latest_internal_block
+    assert "live upstream specs" in latest_internal_block
+    assert "0.8.23 hardening pass" in latest_internal_block
+    assert "Monarch 502" in latest_internal_block
     assert _ticket_references(latest_release_block) == EXPECTED_RELEASE_TICKETS[
         current_release_version
     ]
@@ -296,6 +338,7 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
     assert "pending separate merge" not in latest_release_block
 
     expected_releases = [
+        ("0.8.22", "2026-04-30"),
         ("0.8.20", "2026-03-30"),
         ("0.8.18", "2026-03-25"),
         ("0.8.17", "2026-03-23"),

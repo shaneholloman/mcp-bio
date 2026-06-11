@@ -51,6 +51,17 @@ impl MonarchClient {
 
         if !status.is_success() {
             let excerpt = crate::sources::body_excerpt(&bytes);
+            if status.is_server_error() {
+                return Err(BioMcpError::SourceUnavailable {
+                    source_name: "Monarch Initiative".to_string(),
+                    reason: format!(
+                        "Monarch returned HTTP {status} for phenotype/disease evidence: {excerpt}"
+                    ),
+                    suggestion:
+                        "Retry later or run the release verify lane again when Monarch is healthy."
+                            .to_string(),
+                });
+            }
             return Err(BioMcpError::Api {
                 api: MONARCH_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
@@ -563,5 +574,34 @@ mod tests {
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].disease_id, "MONDO:0010450");
         assert!(rows[0].score > 0.0);
+    }
+
+    #[tokio::test]
+    async fn monarch_5xx_maps_to_source_unavailable() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path_regex(r"/v3/api/semsim/search/.+/Human(%20| )Diseases"))
+            .respond_with(ResponseTemplate::new(502).set_body_string("bad gateway"))
+            .mount(&server)
+            .await;
+
+        let client = MonarchClient::new_for_test(server.uri()).expect("client");
+        let err = client
+            .phenotype_similarity_search(&["HP:0001250".into()], 5)
+            .await
+            .expect_err("5xx should be classified as source unavailable");
+
+        match err {
+            BioMcpError::SourceUnavailable {
+                source_name,
+                reason,
+                suggestion,
+            } => {
+                assert_eq!(source_name, "Monarch Initiative");
+                assert!(reason.contains("HTTP 502"));
+                assert!(suggestion.contains("Retry later"));
+            }
+            other => panic!("expected SourceUnavailable, got {other}"),
+        }
     }
 }

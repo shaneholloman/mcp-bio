@@ -269,6 +269,13 @@ so its stable contract uses top-level `region`, top-level `regions`, and
 per-region `pagination` / `count` / `results` buckets instead of one shared
 top-level `results` array.
 
+Legacy helper JSON shapes are documented, not silently normalized in this
+release. `article batch --json` remains a bare array of compact article cards;
+helper-specific JSON such as `drug interactions --json` and `drug
+adverse-events --json` keeps helper-owned fields plus optional `_meta`
+follow-ups. `biomcp --json list` and `biomcp --json list <entity>` are command
+reference payloads, not query result envelopes.
+
 ## See Also and Next Commands
 
 BioMCP uses result-local guidance to teach the next executable step directly

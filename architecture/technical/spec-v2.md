@@ -68,6 +68,13 @@ See [Request-contract test architecture target](request-contract-test-architectu
 
 The new corpus enforces these invariants:
 
+Public entity coverage is verb-aware. `gwas` is covered by `spec/entity/variant.md`
+through `get variant <id> gwas` and `search gwas` contracts rather than a
+nonexistent `get gwas` file. The public `adverse-event` search surface is split
+across OpenFDA/FAERS coverage in drug adverse-event contracts and the
+CDC WONDER VAERS aggregate lane in `spec/entity/vaers.md`; there is no implied
+`get adverse-event` detail-card surface.
+
 1. **One behavioral ownership zone per file.**
 2. **No hand-rolled env isolation inside spec blocks.**
 3. **No required live API keys in the PR gate.**

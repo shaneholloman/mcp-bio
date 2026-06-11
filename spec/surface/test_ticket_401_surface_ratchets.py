@@ -105,11 +105,8 @@ def test_ticket_401_article_figshare_fixture_uses_realistic_aacr_sibling_shapes(
 
 def test_ticket_401_request_plan_ratchets_execute_named_contracts_not_list_only() -> None:
     failures: list[str] = []
-    for path in (
-        "spec/surface/request-plan-ratchets.md",
-        "spec/entity/article.md",
-        "spec/entity/variant.md",
-    ):
+    for spec_path in sorted((REPO_ROOT / "spec").glob("**/*.md")):
+        path = spec_path.relative_to(REPO_ROOT).as_posix()
         text = _read_repo(path)
         for match in re.finditer(r"cargo\s+test[^\n]*--\s+--list", text):
             line = text[: match.start()].count("\n") + 1

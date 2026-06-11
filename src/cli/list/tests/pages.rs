@@ -1,17 +1,19 @@
 //! Page content tests for `biomcp list` command-reference output.
 
-use super::super::render;
+use super::super::{render, render_json};
 
 #[test]
 fn list_root_includes_routing_table_and_quickstart() {
     let out = render(None).expect("list root should render");
     assert!(out.contains("## Quickstart"));
     assert!(out.contains("## When to Use What"));
+    assert!(out.contains("## Gettable Entities"));
+    assert!(out.contains("## Search-Only Entities"));
     assert_eq!(out.matches("## When to Use What").count(), 1);
     assert!(out.contains("search all --gene BRAF --disease melanoma"));
     assert!(out.contains("suggest \"What drugs treat melanoma?\""));
     assert!(out.contains("discover \"<free text>\""));
-    assert!(out.contains("single-entity biomedical phrase"));
+    assert!(out.contains("biomedical phrase and need routing"));
     assert!(out.contains("search all --keyword \"<query>\""));
     assert!(out.contains("article citations <id>"));
     assert!(out.contains("enrich <GENE1,GENE2,...>"));
@@ -24,6 +26,49 @@ fn list_root_includes_routing_table_and_quickstart() {
     assert!(out.contains("`cache clean [--max-age <duration>] [--max-size <size>] [--dry-run]`"));
     assert!(!out.contains("## Query formulation"));
     assert!(!out.contains("photosensitivity mechanism"));
+}
+
+#[test]
+fn list_root_entity_verbs_match_public_grammar() {
+    let out = render(None).expect("list root should render");
+    assert!(out.contains("- `gwas` - GWAS Catalog; use `search gwas`"));
+    assert!(out.contains("- `phenotype` - Monarch/HPO disease similarity; use `search phenotype`"));
+    assert!(!out.contains("`get gwas"));
+    assert!(!out.contains("`get phenotype"));
+}
+
+#[test]
+fn list_root_json_includes_gettable_and_search_only_entities() {
+    let out = render_json(None).expect("list root JSON should render");
+    let value: serde_json::Value = serde_json::from_str(&out).expect("valid JSON");
+    let entities = value
+        .get("entities")
+        .and_then(serde_json::Value::as_array)
+        .expect("entities array");
+    let entities: Vec<_> = entities
+        .iter()
+        .filter_map(serde_json::Value::as_str)
+        .collect();
+    assert!(entities.contains(&"gene"));
+    assert!(entities.contains(&"adverse-event"));
+    assert!(entities.contains(&"gwas"));
+    assert!(entities.contains(&"phenotype"));
+}
+
+#[test]
+fn list_root_primary_discovery_lines_stay_terminal_friendly() {
+    let out = render(None).expect("list root should render");
+    let overwide: Vec<_> = out
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| line.chars().count() > 160)
+        .map(|(index, line)| format!("{}:{}", index + 1, line))
+        .collect();
+    assert!(
+        overwide.is_empty(),
+        "overwide list lines:\n{}",
+        overwide.join("\n")
+    );
 }
 
 #[test]

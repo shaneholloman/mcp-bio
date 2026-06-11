@@ -18,6 +18,7 @@ CAPTURED_PRINTF_MUSTMATCH_RE = re.compile(
 MUSTMATCH_LINT_SKIP = "<!-- mustmatch-lint: skip -->"
 CLI_LINE_CAP = 700
 CLI_LINE_CAP_TICKET_RE = re.compile(r"^\d+(?:[-_][a-z0-9][a-z0-9-]*)?$")
+EXPERIMENT_RESULTS_GLOB = "architecture/experiments/**/results/**"
 
 
 def parse_args() -> argparse.Namespace:
@@ -91,6 +92,55 @@ def tracked_cli_rust_files(root_dir: Path) -> tuple[list[str], list[str]]:
     if proc.returncode != 0:
         return [], [proc.stderr.strip() or "git ls-files failed"]
     return sorted({line for line in proc.stdout.splitlines() if line}), []
+
+
+def tracked_experiment_result_files(root_dir: Path) -> tuple[list[str], list[str]]:
+    proc = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root_dir),
+            "ls-files",
+            "--",
+            EXPERIMENT_RESULTS_GLOB,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return [], [proc.stderr.strip() or "git ls-files failed"]
+    return sorted({line for line in proc.stdout.splitlines() if line}), []
+
+
+def check_architecture_experiment_results(root_dir: Path) -> dict[str, object]:
+    tracked_files, errors = tracked_experiment_result_files(root_dir)
+    if errors:
+        return {
+            "status": "error",
+            "glob": EXPERIMENT_RESULTS_GLOB,
+            "errors": errors,
+        }
+
+    findings = [
+        {
+            "path": relative_path,
+            "message": (
+                "generated experiment result payloads must stay out of git; "
+                "keep writeups/scripts in architecture/experiments and store "
+                "run outputs as untracked local artifacts"
+            ),
+        }
+        for relative_path in tracked_files
+    ]
+    return {
+        "status": "fail" if findings else "pass",
+        "glob": EXPERIMENT_RESULTS_GLOB,
+        "files_checked": len(tracked_files),
+        "finding_count": len(findings),
+        "findings": findings,
+        "errors": [],
+    }
 
 
 def load_cli_line_cap_allowlist(
@@ -544,11 +594,18 @@ def main() -> int:
     cli_line_cap_payload = check_cli_line_cap(args.root_dir, cli_line_cap_allowlist)
     write_json(args.output_dir / "quality-ratchet-cli-line-cap.json", cli_line_cap_payload)
 
+    experiment_results_payload = check_architecture_experiment_results(args.root_dir)
+    write_json(
+        args.output_dir / "quality-ratchet-experiment-results.json",
+        experiment_results_payload,
+    )
+
     statuses = [
         lint_payload["status"],
         mcp_payload.get("status"),
         source_payload.get("status"),
         cli_line_cap_payload.get("status"),
+        experiment_results_payload.get("status"),
     ]
     if "error" in statuses:
         summary_status = "error"
@@ -563,6 +620,7 @@ def main() -> int:
         "mcp_allowlist": {"status": mcp_payload.get("status")},
         "source_registry": {"status": source_payload.get("status")},
         "cli_line_cap": {"status": cli_line_cap_payload.get("status")},
+        "experiment_results": {"status": experiment_results_payload.get("status")},
     }
     write_json(args.output_dir / "quality-ratchet-summary.json", summary_payload)
     return 0 if summary_status == "pass" else 1

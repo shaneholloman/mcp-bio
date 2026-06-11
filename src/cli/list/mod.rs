@@ -46,9 +46,11 @@ pub fn render_json(entity: Option<&str>) -> Result<String, BioMcpError> {
             }
 
             let page = helpers::list_all();
+            let mut entities = section_plain_items(&page, "## Gettable Entities");
+            entities.extend(section_code_items(&page, "## Search-Only Entities"));
             crate::render::json::to_pretty(&ListJson {
                 kind: "list",
-                entities: section_plain_items(&page, "## Entities"),
+                entities,
                 commands: section_code_items(&page, "## Quickstart"),
                 patterns: section_code_items(&page, "## Patterns"),
             })

@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.8.23 — 2026-06-11
+
+### New features
+
+- Added source-first article full-text and asset retrieval improvements,
+  including provenance and quality flags, BioC/JATS markdown fixture coverage,
+  figure/supplement/table handling, canonical open-access package asset
+  manifests, and Figshare supplementary-file retrieval for non-PMC articles.
+  (383, 384, 385, 386, 398, 408, 409)
+- Added Cancerhotspots recurrence enrichment for somatic variants, surfacing
+  graded recurrence counts for OS3/OM3/OP3 evidence without coupling the
+  recurrence lane to optional AlphaGenome prediction credentials. (410, 412)
+
+### Docs
+
+- Refreshed migrated architecture, operator, source-versioning, configuration,
+  observability, CLI discovery, and JSON contract documentation so public docs,
+  `biomcp list`, and spec architecture agree on gettable versus search-only
+  entities and current source/operator knobs. (405, 406, 411, 419, 420)
+- Distilled architecture experiment policy so durable writeups stay in the repo
+  while generated `architecture/experiments/**/results/**` artifacts are
+  ignored and blocked from reappearing by the quality ratchet. (369, 381, 415)
+
+### Fixes
+
+- Fixed VAERS live support by using a CDC WONDER-compatible request client and
+  pinned the positive VAERS vaccine aggregate canary. (413)
+- Validated Figshare provider-supplied asset download URLs before fetch,
+  rejecting unsafe schemes, unrelated hosts, localhost, and private-network
+  targets while preserving explicit test server seams. (414)
+- Classified Monarch phenotype 5xx responses as `Source unavailable` with
+  retry guidance instead of generic API failures, keeping temporary upstream
+  outages actionable in live verify. (416)
+- Pinned extreme `Retry-After` handling through the default shared client so
+  authenticated Semantic Scholar retries stay bounded even when an upstream
+  returns very large retry windows. (403, 417)
+- Tightened public CLI and spec contracts for high-risk request plans,
+  update-option behavior, list-only Cargo wrappers, MCP skill allowlisting,
+  GTR/diagnostic examples, and source-specific live lanes. (400, 401, 404, 418)
+- Stabilized OLS4/discover timeout behavior, deterministic validation routing,
+  live-pathway quarantine, and residual spec-runner reliability gaps after the
+  mustmatch migration. (389, 390, 397)
+
+### Internal
+
+- Reset BioMCP validation around request-contract tests, split routine
+  `make spec` from release live verify, migrated markdown specs to the
+  mustmatch binary, adopted robust ellipsis/run-expect assertions, and moved
+  all live upstream specs into the verify lane. (371, 372, 373, 374, 375, 376,
+  377, 378, 379, 391, 392, 393, 395, 396)
+- Pruned brittle live assertions, quarantined ambiguous drug fallback specs,
+  added renderer-envelope fixture contracts, and repaired deterministic
+  request-plan coverage for disease, discover, article, and variant surfaces.
+  (380, 382)
+- Completed the 0.8.23 hardening pass for tickets 412 through 420, including
+  full `make lint`, `make test`, `make spec`, variant-hotspots and VAERS live
+  lane proofs, and a documented Monarch 502 live-lane caveat. (412, 413, 414,
+  415, 416, 417, 418, 419, 420)
+
 ## 0.8.22 — 2026-04-30
 
 ### New features

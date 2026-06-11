@@ -183,6 +183,12 @@ All supported sections:
 biomcp get variant rs113488022 all
 ```
 
+`all` includes broad source-backed annotation sections such as ClinVar,
+population, conservation, expanded MyVariant prediction scores, cBioPortal,
+Cancerhotspots.org, CIViC, CGI, COSMIC, and GWAS. It does not run the
+AlphaGenome `predict` section because that path requires `ALPHAGENOME_API_KEY`;
+request `predict` explicitly when you want AlphaGenome output.
+
 ## Helper commands
 
 ```bash

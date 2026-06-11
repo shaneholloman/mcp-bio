@@ -21,7 +21,7 @@ source provenance, markdown table/card anchors, and follow-up guidance without
 making live MyDisease, OLS4, Open Targets, GTR, or trial calls.
 
 ```bash
-cargo test --lib ticket_377_disease_renderer_envelope_contracts -- --list \
+cargo test --lib ticket_377_disease_renderer_envelope_contracts -- --nocapture \
   | mustmatch like 'ticket_377_disease_renderer_envelope_contracts'
 ```
 

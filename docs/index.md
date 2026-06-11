@@ -122,8 +122,10 @@ search all [slot filters]    → counts-first cross-entity orientation
 
 ## Entities and sources
 
-The 13-row table below is the public entity surface; individual rows may use
-live APIs, local runtime data, or hybrid source overlays.
+The tables below distinguish detail-card entities from search-only surfaces so
+agents do not synthesize unsupported `get` commands.
+
+### Gettable entities
 
 | Entity | Upstream providers used by BioMCP | Example |
 |--------|-----------------------------------|---------|
@@ -138,6 +140,11 @@ live APIs, local runtime data, or hybrid source overlays.
 | protein | UniProt, InterPro, STRING, ComplexPortal, PDB, AlphaFold | `biomcp get protein P15056 complexes` |
 | adverse-event | OpenFDA FAERS/MAUDE/recalls plus CDC WONDER VAERS aggregate vaccine search | `biomcp search adverse-event --drug pembrolizumab` |
 | pgx | CPIC, PharmGKB | `biomcp get pgx CYP2D6 recommendations` |
+
+### Search-only entities
+
+| Entity | Upstream providers used by BioMCP | Example |
+|--------|-----------------------------------|---------|
 | gwas | GWAS Catalog | `biomcp search gwas --trait "type 2 diabetes"` |
 | phenotype | Monarch Initiative (HPO semantic similarity) | `biomcp search phenotype "HP:0001250"` |
 

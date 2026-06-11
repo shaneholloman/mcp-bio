@@ -73,6 +73,23 @@ fn parse_sections_supports_new_variant_sections() {
 }
 
 #[test]
+fn parse_sections_all_excludes_key_required_prediction() {
+    let flags = parse_sections(&["all".to_string()]).expect("all should parse");
+
+    assert!(!flags.include_prediction);
+    assert!(flags.include_expanded_predictions);
+    assert!(flags.include_clinvar);
+    assert!(flags.include_population);
+    assert!(flags.include_conservation);
+    assert!(flags.include_cosmic);
+    assert!(flags.include_cgi);
+    assert!(flags.include_civic);
+    assert!(flags.include_cbioportal);
+    assert!(flags.include_cancerhotspots);
+    assert!(flags.include_gwas);
+}
+
+#[test]
 fn gwas_only_request_detection_matches_section_flags() {
     let gwas_only = parse_sections(&["gwas".to_string()]).expect("sections should parse");
     assert!(is_gwas_only_request(&gwas_only));

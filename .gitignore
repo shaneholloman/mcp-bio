@@ -18,6 +18,7 @@ site/
 .agents/
 /planning/
 paper/generated/
+architecture/experiments/**/results/
 benchmarks/bioasq/datasets/raw/
 benchmarks/bioasq/datasets/normalized/
 **/work/

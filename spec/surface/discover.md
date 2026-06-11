@@ -23,7 +23,7 @@ anchors, and truthful degraded guidance without live OLS4, UMLS, or MedlinePlus
 calls.
 
 ```bash
-cargo test --lib ticket_377_discover_renderer_envelope_contracts -- --list \
+cargo test --lib ticket_377_discover_renderer_envelope_contracts -- --nocapture \
   | mustmatch like 'ticket_377_discover_renderer_envelope_contracts'
 ```
 
