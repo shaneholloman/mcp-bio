@@ -42,6 +42,9 @@
 - Stabilized OLS4/discover timeout behavior, deterministic validation routing,
   live-pathway quarantine, and residual spec-runner reliability gaps after the
   mustmatch migration. (389, 390, 397)
+- Fixed release and PR validation setup so GitHub Actions installs the
+  standalone mustmatch CLI before contract/spec jobs, and refreshed vulnerable
+  Python and Rust lockfile packages flagged by Dependabot. (post-0.8.23)
 
 ### Internal
 

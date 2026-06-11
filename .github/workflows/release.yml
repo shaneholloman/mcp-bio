@@ -46,6 +46,12 @@ jobs:
 
       - uses: astral-sh/setup-uv@v4
 
+      - name: Install mustmatch CLI
+        run: |
+          uv tool install mustmatch
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/mustmatch" --version
+
       - run: cargo build --release --locked
       - run: uv sync --extra dev --no-install-project
       - run: uv run --no-sync pytest tests/ -v --mcp-cmd "./target/release/biomcp serve"
