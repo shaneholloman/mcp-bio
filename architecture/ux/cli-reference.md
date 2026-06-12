@@ -66,7 +66,13 @@ biomcp get drug pembrolizumab label targets civic approvals
 biomcp get disease "Lynch syndrome" genes phenotypes variants
 biomcp get disease "uterine leiomyoma" clinical_features
 biomcp get trial NCT02576665 eligibility locations outcomes
+# target rare-disease trial detail contract (ticket 412):
+biomcp get trial NCT... locations contacts eligibility
 ```
+
+The rare-disease trial-search target adds a `contacts` section for ClinicalTrials.gov
+central contacts and email-bearing site contacts. Until that implementation ships,
+`locations` and `eligibility` remain the current shipped sections.
 
 The pattern is consistent across the entity command surface: no-section gives
 a summary, named sections are additive, and `all` gives the standard default
@@ -78,6 +84,42 @@ BioMCP commands rather than provider download URLs.
 Opt-in sections such as
 `clinical_features`, `diagnostics`, `disgenet`, and `funding` still require
 explicit naming.
+
+## Rare-Disease Trial Search Target
+
+Ticket 412 identified a gap in rare-disease trial search: users may know a
+syndrome name, a chromosomal-deletion label, a gene handle, a sponsor, or only a
+mixed free-text question. The target UX keeps ordinary `search trial` compact,
+but adds a shared rare-disease trial plan beneath `discover`, `search trial`,
+`gene trials`, and `disease trials`.
+
+Target command flow:
+
+```bash
+# orient from mixed free text and suggest typed trial commands
+biomcp discover "Phelan-McDermid Syndrome SHANK3 clinical trial"
+
+# search with bounded condition/gene expansion and visible matched labels
+biomcp search trial -c "Phelan-McDermid Syndrome" --limit 20
+biomcp search trial -c "Phelan-McDermid Syndrome" --no-condition-expand --limit 20
+biomcp gene trials SHANK3 --limit 20
+
+# inspect action-critical detail through progressive disclosure
+biomcp get trial NCT... locations contacts eligibility
+
+# target opt-in action-summary shape; exact command name will be fixed by the build ticket
+biomcp search trial -c "Phelan-McDermid Syndrome" --action-summary --state MI --limit 20
+```
+
+UX invariants for this target:
+
+- expansion is bounded and visible; output shows which condition/gene label matched a trial;
+- strict/literal search remains available through an opt-out flag;
+- `discover` may suggest a rare-disease trial plan, but it does not become the trial engine;
+- compact search remains the default; site/contact/eligibility detail stays opt-in;
+- action summaries rank and caveat only listed ClinicalTrials.gov data, and never imply unlisted pending sites.
+
+See `architecture/functional/rare-disease-trial-workflow.md` for target module boundaries, plan types, and fixture contracts.
 
 ## Cross-Entity Pivot Pattern
 
