@@ -103,9 +103,62 @@ SHELL_SAFE_STUDY = {
     }
 }
 
+CONTACTS_ELIGIBILITY_STUDY = {
+    "protocolSection": {
+        "identificationModule": {
+            "nctId": "NCT41300001",
+            "briefTitle": "Central and Site Contact Fixture",
+        },
+        "statusModule": {"overallStatus": "RECRUITING"},
+        "descriptionModule": {
+            "briefSummary": "Fixture study for trial contact and eligibility detail."
+        },
+        "conditionsModule": {"conditions": ["Phelan-McDermid Syndrome"]},
+        "designModule": {
+            "phases": ["PHASE2"],
+            "studyType": "Interventional",
+            "enrollmentInfo": {"count": 24},
+        },
+        "eligibilityModule": {
+            "minimumAge": "2 Years",
+            "maximumAge": "18 Years",
+            "sex": "FEMALE",
+            "eligibilityCriteria": "Key inclusion: confirmed SHANK3-related neurodevelopmental disorder."
+        },
+        "contactsLocationsModule": {
+            "centralContacts": [
+                {
+                    "name": "Central Coordinator",
+                    "role": "CONTACT",
+                    "phone": "555-0100",
+                    "email": "central@example.test",
+                }
+            ],
+            "locations": [
+                {
+                    "facility": "Rare Disease Center",
+                    "city": "Ann Arbor",
+                    "state": "Michigan",
+                    "country": "United States",
+                    "status": "RECRUITING",
+                    "contacts": [
+                        {
+                            "name": "Site Coordinator",
+                            "role": "CONTACT",
+                            "phone": "555-0199",
+                            "email": "site@example.test",
+                        }
+                    ],
+                }
+            ],
+        },
+    }
+}
+
 STUDIES = {
     "nct02136914": NCT02136914_STUDY,
     "nct35700001": SHELL_SAFE_STUDY,
+    "nct41300001": CONTACTS_ELIGIBILITY_STUDY,
 }
 
 
