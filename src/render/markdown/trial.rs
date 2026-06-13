@@ -14,6 +14,8 @@ pub fn trial_markdown(trial: &Trial, requested_sections: &[String]) -> Result<St
         || requested
             .iter()
             .any(|s| s.eq_ignore_ascii_case("eligibility"));
+    let show_contacts_section =
+        include_all || requested.iter().any(|s| s.eq_ignore_ascii_case("contacts"));
     let show_locations_section = include_all
         || requested
             .iter()
@@ -44,11 +46,14 @@ pub fn trial_markdown(trial: &Trial, requested_sections: &[String]) -> Result<St
         start_date => &trial.start_date,
         completion_date => &trial.completion_date,
         eligibility_text => &trial.eligibility_text,
+        eligibility => &trial.eligibility,
+        contacts => &trial.contacts,
         locations => &trial.locations,
         outcomes => &trial.outcomes,
         arms => &trial.arms,
         references => &trial.references,
         show_eligibility_section => show_eligibility_section,
+        show_contacts_section => show_contacts_section,
         show_locations_section => show_locations_section,
         show_outcomes_section => show_outcomes_section,
         show_arms_section => show_arms_section,

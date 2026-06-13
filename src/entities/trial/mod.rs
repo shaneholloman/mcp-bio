@@ -44,6 +44,10 @@ pub struct Trial {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub eligibility_text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub eligibility: Option<TrialEligibility>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contacts: Option<Vec<TrialContact>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub locations: Option<Vec<TrialLocation>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub outcomes: Option<TrialOutcomes>,
@@ -76,7 +80,41 @@ pub struct TrialLocation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contact_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub contact_role: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub contact_phone: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contact_email: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrialContact {
+    pub level: String,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub phone: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub facility: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub city: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub country: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrialEligibility {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sex: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub minimum_age: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub maximum_age: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -179,6 +217,7 @@ impl TrialSource {
 }
 
 const TRIAL_SECTION_ELIGIBILITY: &str = "eligibility";
+const TRIAL_SECTION_CONTACTS: &str = "contacts";
 const TRIAL_SECTION_LOCATIONS: &str = "locations";
 const TRIAL_SECTION_OUTCOMES: &str = "outcomes";
 const TRIAL_SECTION_ARMS: &str = "arms";
@@ -187,6 +226,7 @@ const TRIAL_SECTION_ALL: &str = "all";
 
 pub const TRIAL_SECTION_NAMES: &[&str] = &[
     TRIAL_SECTION_ELIGIBILITY,
+    TRIAL_SECTION_CONTACTS,
     TRIAL_SECTION_LOCATIONS,
     TRIAL_SECTION_OUTCOMES,
     TRIAL_SECTION_ARMS,

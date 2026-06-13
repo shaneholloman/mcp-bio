@@ -2,8 +2,8 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 
 use crate::entities::trial::{
-    Trial, TrialArm, TrialIntervention, TrialLocation, TrialOutcome, TrialOutcomes, TrialReference,
-    TrialSearchResult,
+    Trial, TrialArm, TrialContact, TrialEligibility, TrialIntervention, TrialLocation,
+    TrialOutcome, TrialOutcomes, TrialReference, TrialSearchResult,
 };
 use crate::sources::clinicaltrials::CtGovStudy;
 
@@ -136,7 +136,9 @@ fn extract_locations(study: &CtGovStudy) -> Option<Vec<TrialLocation>> {
                 country,
                 status: clean_opt(loc.status.as_deref()),
                 contact_name: contact.and_then(|c| clean_opt(c.name.as_deref())),
+                contact_role: contact.and_then(|c| clean_opt(c.role.as_deref())),
                 contact_phone: contact.and_then(|c| clean_opt(c.phone.as_deref())),
+                contact_email: contact.and_then(|c| clean_opt(c.email.as_deref())),
             })
         })
         .collect::<Vec<_>>();
@@ -154,6 +156,81 @@ fn extract_locations(study: &CtGovStudy) -> Option<Vec<TrialLocation>> {
     });
 
     (!out.is_empty()).then_some(out)
+}
+
+fn extract_contact(
+    level: &str,
+    contact: &crate::sources::clinicaltrials::CtGovContact,
+    facility: Option<&str>,
+    city: Option<&str>,
+    state: Option<&str>,
+    country: Option<&str>,
+) -> Option<TrialContact> {
+    Some(TrialContact {
+        level: level.to_string(),
+        name: clean_opt(contact.name.as_deref())?,
+        role: clean_opt(contact.role.as_deref()),
+        phone: clean_opt(contact.phone.as_deref()),
+        email: clean_opt(contact.email.as_deref()),
+        facility: clean_opt(facility),
+        city: clean_opt(city),
+        state: clean_opt(state),
+        country: clean_opt(country),
+    })
+}
+
+fn extract_contacts(study: &CtGovStudy) -> Option<Vec<TrialContact>> {
+    let module = study
+        .protocol_section
+        .as_ref()
+        .and_then(|p| p.contacts_locations_module.as_ref())?;
+    let mut out = module
+        .central_contacts
+        .iter()
+        .filter_map(|contact| extract_contact("central", contact, None, None, None, None))
+        .collect::<Vec<_>>();
+
+    for loc in &module.locations {
+        for contact in loc.contacts.iter().chain(loc.central_contacts.iter()) {
+            if let Some(contact) = extract_contact(
+                "site",
+                contact,
+                loc.facility.as_deref(),
+                loc.city.as_deref(),
+                loc.state.as_deref(),
+                loc.country.as_deref(),
+            ) {
+                out.push(contact);
+            }
+        }
+    }
+
+    (!out.is_empty()).then_some(out)
+}
+
+fn format_sex(value: Option<&str>) -> Option<String> {
+    clean_opt(value).map(|sex| match sex.to_ascii_lowercase().as_str() {
+        "female" | "f" => "Female".to_string(),
+        "male" | "m" => "Male".to_string(),
+        "all" => "All".to_string(),
+        _ => sex,
+    })
+}
+
+fn extract_eligibility(study: &CtGovStudy) -> Option<TrialEligibility> {
+    let module = study
+        .protocol_section
+        .as_ref()
+        .and_then(|p| p.eligibility_module.as_ref())?;
+    let eligibility = TrialEligibility {
+        sex: format_sex(module.sex.as_deref()),
+        minimum_age: normalize_age(module.minimum_age.as_deref()),
+        maximum_age: normalize_age(module.maximum_age.as_deref()),
+    };
+    (eligibility.sex.is_some()
+        || eligibility.minimum_age.is_some()
+        || eligibility.maximum_age.is_some())
+    .then_some(eligibility)
 }
 
 fn extract_outcomes(study: &CtGovStudy) -> Option<TrialOutcomes> {
@@ -371,6 +448,8 @@ pub fn from_ctgov_study(study: &CtGovStudy) -> Trial {
         start_date,
         completion_date,
         eligibility_text: None,
+        eligibility: extract_eligibility(study),
+        contacts: extract_contacts(study),
         locations: extract_locations(study),
         outcomes: extract_outcomes(study),
         arms: extract_arms(study),
@@ -545,6 +624,8 @@ pub fn from_nci_trial(trial: &serde_json::Value) -> Trial {
         start_date,
         completion_date,
         eligibility_text: None,
+        eligibility: None,
+        contacts: None,
         locations: None,
         outcomes: None,
         arms: None,
@@ -622,6 +703,61 @@ mod tests {
         assert_eq!(locations.len(), 2);
         assert_eq!(locations[0].facility, "Site A");
         assert_eq!(locations[0].contact_name.as_deref(), Some("Lead Contact"));
+    }
+
+    #[test]
+    fn from_ctgov_study_preserves_contacts_and_structured_eligibility() {
+        let study: CtGovStudy = serde_json::from_value(json!({
+            "protocolSection": {
+                "identificationModule": {"nctId": "NCT41300001", "briefTitle": "Contact Trial"},
+                "eligibilityModule": {
+                    "minimumAge": "2 Years",
+                    "maximumAge": "18 Years",
+                    "sex": "FEMALE"
+                },
+                "contactsLocationsModule": {
+                    "centralContacts": [{
+                        "name": "Central Coordinator",
+                        "role": "CONTACT",
+                        "phone": "555-0100",
+                        "email": "central@example.test"
+                    }],
+                    "locations": [{
+                        "facility": "Rare Disease Center",
+                        "city": "Ann Arbor",
+                        "state": "Michigan",
+                        "country": "United States",
+                        "contacts": [{
+                            "name": "Site Coordinator",
+                            "role": "CONTACT",
+                            "phone": "555-0199",
+                            "email": "site@example.test"
+                        }]
+                    }]
+                }
+            }
+        }))
+        .unwrap();
+
+        let trial = from_ctgov_study(&study);
+        let eligibility = trial.eligibility.expect("eligibility");
+        assert_eq!(eligibility.sex.as_deref(), Some("Female"));
+        assert_eq!(eligibility.minimum_age.as_deref(), Some("2 Years"));
+        assert_eq!(eligibility.maximum_age.as_deref(), Some("18 Years"));
+
+        let contacts = trial.contacts.expect("contacts");
+        assert_eq!(contacts[0].level, "central");
+        assert_eq!(contacts[0].email.as_deref(), Some("central@example.test"));
+        assert_eq!(contacts[1].level, "site");
+        assert_eq!(contacts[1].facility.as_deref(), Some("Rare Disease Center"));
+        assert_eq!(contacts[1].email.as_deref(), Some("site@example.test"));
+
+        let locations = trial.locations.expect("locations");
+        assert_eq!(locations[0].contact_role.as_deref(), Some("CONTACT"));
+        assert_eq!(
+            locations[0].contact_email.as_deref(),
+            Some("site@example.test")
+        );
     }
 
     #[test]

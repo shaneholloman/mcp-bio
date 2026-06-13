@@ -30,7 +30,23 @@ const CTGOV_GET_FIELDS_BASE: &[&str] = &[
     "MaximumAge",
 ];
 
-const CTGOV_GET_FIELDS_ELIGIBILITY: &[&str] = &["EligibilityCriteria"];
+const CTGOV_GET_FIELDS_ELIGIBILITY: &[&str] =
+    &["EligibilityCriteria", "MinimumAge", "MaximumAge", "Sex"];
+
+const CTGOV_GET_FIELDS_CONTACTS: &[&str] = &[
+    "CentralContactName",
+    "CentralContactRole",
+    "CentralContactPhone",
+    "CentralContactEMail",
+    "LocationFacility",
+    "LocationCity",
+    "LocationState",
+    "LocationCountry",
+    "LocationContactName",
+    "LocationContactRole",
+    "LocationContactPhone",
+    "LocationContactEMail",
+];
 
 const CTGOV_GET_FIELDS_LOCATIONS: &[&str] = &[
     "LocationFacility",
@@ -40,9 +56,11 @@ const CTGOV_GET_FIELDS_LOCATIONS: &[&str] = &[
     "LocationCountry",
     "LocationStatus",
     "LocationContactName",
+    "LocationContactRole",
     "LocationContactPhone",
     "LocationContactEMail",
     "CentralContactName",
+    "CentralContactRole",
     "CentralContactPhone",
     "CentralContactEMail",
     "LocationGeoPoint",
@@ -103,6 +121,7 @@ fn build_get_fields(sections: &[String]) -> String {
     for section in sections {
         match section.trim().to_ascii_lowercase().as_str() {
             "eligibility" => fields.extend_from_slice(CTGOV_GET_FIELDS_ELIGIBILITY),
+            "contacts" => fields.extend_from_slice(CTGOV_GET_FIELDS_CONTACTS),
             "locations" => fields.extend_from_slice(CTGOV_GET_FIELDS_LOCATIONS),
             "outcomes" => fields.extend_from_slice(CTGOV_GET_FIELDS_OUTCOMES),
             "arms" => fields.extend_from_slice(CTGOV_GET_FIELDS_ARMS),
@@ -114,6 +133,7 @@ fn build_get_fields(sections: &[String]) -> String {
 
     if add_all_sections {
         fields.extend_from_slice(CTGOV_GET_FIELDS_ELIGIBILITY);
+        fields.extend_from_slice(CTGOV_GET_FIELDS_CONTACTS);
         fields.extend_from_slice(CTGOV_GET_FIELDS_LOCATIONS);
         fields.extend_from_slice(CTGOV_GET_FIELDS_OUTCOMES);
         fields.extend_from_slice(CTGOV_GET_FIELDS_ARMS);
@@ -443,6 +463,7 @@ pub struct CtGovArmGroup {
 #[serde(rename_all = "camelCase")]
 pub struct CtGovEligibilityModule {
     pub eligibility_criteria: Option<String>,
+    pub sex: Option<String>,
     pub minimum_age: Option<String>,
     pub maximum_age: Option<String>,
 }
@@ -450,6 +471,8 @@ pub struct CtGovEligibilityModule {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CtGovContactsLocationsModule {
+    #[serde(default)]
+    pub central_contacts: Vec<CtGovContact>,
     #[serde(default)]
     pub locations: Vec<CtGovLocation>,
 }
@@ -522,6 +545,57 @@ mod tests {
     use super::*;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn get_fields_contacts_preserve_site_context_and_eligibility_sex() {
+        let contact_fields = build_get_fields(&["contacts".to_string()]);
+        for field in [
+            "CentralContactEMail",
+            "LocationFacility",
+            "LocationCity",
+            "LocationState",
+            "LocationCountry",
+            "LocationContactEMail",
+        ] {
+            assert!(contact_fields.split(',').any(|actual| actual == field));
+        }
+
+        let eligibility_fields = build_get_fields(&["eligibility".to_string()]);
+        assert!(eligibility_fields.split(',').any(|field| field == "Sex"));
+    }
+
+    #[test]
+    fn ctgov_deserializes_central_contacts_and_eligibility_sex() {
+        let study: CtGovStudy = serde_json::from_value(serde_json::json!({
+            "protocolSection": {
+                "identificationModule": {"nctId": "NCT41300001"},
+                "eligibilityModule": {"sex": "FEMALE"},
+                "contactsLocationsModule": {
+                    "centralContacts": [{"name": "Central", "email": "central@example.test"}]
+                }
+            }
+        }))
+        .unwrap();
+
+        let protocol = study.protocol_section.expect("protocol");
+        assert_eq!(
+            protocol
+                .eligibility_module
+                .expect("eligibility")
+                .sex
+                .as_deref(),
+            Some("FEMALE")
+        );
+        assert_eq!(
+            protocol
+                .contacts_locations_module
+                .expect("contacts")
+                .central_contacts[0]
+                .email
+                .as_deref(),
+            Some("central@example.test")
+        );
+    }
 
     #[tokio::test]
     async fn search_builds_expected_params() {
