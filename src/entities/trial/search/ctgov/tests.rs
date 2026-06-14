@@ -1125,6 +1125,39 @@ async fn ticket_415_rare_disease_trial_search_preserves_intervention_alias_prove
 }
 
 #[tokio::test]
+async fn code_review_literal_intervention_search_does_not_report_alias_provenance() {
+    let server = MockServer::start().await;
+    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
+
+    Mock::given(method("GET"))
+        .and(path("/studies"))
+        .and(query_param("query.intr", "pembrolizumab"))
+        .and(query_param("countTotal", "true"))
+        .and(query_param("pageSize", "10"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "studies": [ctgov_search_study_fixture("NCT00000420", "18 Years", "75 Years")],
+            "nextPageToken": null,
+            "totalCount": 1
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let filters = TrialSearchFilters {
+        intervention: Some("pembrolizumab".into()),
+        no_alias_expand: true,
+        ..Default::default()
+    };
+
+    let page = search_page_with_ctgov_client(&client, &filters, 10, 0, None)
+        .await
+        .expect("page");
+
+    assert_eq!(page.results.len(), 1);
+    assert_eq!(page.results[0].matched_intervention_label, None);
+}
+
+#[tokio::test]
 async fn ticket_415_rare_disease_trial_search_count_dedupes_expanded_condition_ncts() {
     let server = MockServer::start().await;
     let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");

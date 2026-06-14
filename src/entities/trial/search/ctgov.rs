@@ -504,6 +504,7 @@ fn ctgov_workers(
     } else {
         condition_labels.iter().cloned().map(Some).collect()
     };
+    let has_intervention_fanout = intervention_labels.len() > 1;
     let interventions: Vec<Option<String>> = if intervention_labels.is_empty() {
         vec![None]
     } else {
@@ -520,7 +521,9 @@ fn ctgov_workers(
                     .map(str::to_string),
                 condition_query: condition_query.clone(),
                 intervention_query: intervention_query.clone(),
-                matched_intervention_label: intervention_query.clone(),
+                matched_intervention_label: intervention_query
+                    .clone()
+                    .filter(|_| has_intervention_fanout),
                 next_page_token: None,
                 exhausted: false,
                 pages_fetched: 0,
