@@ -86,6 +86,8 @@ fn trial_markdown_includes_source_labeled_sections() {
         start_date: Some("2025-01-01".to_string()),
         completion_date: None,
         eligibility_text: Some("Eligibility text.".to_string()),
+        eligibility: None,
+        contacts: None,
         locations: Some(vec![crate::entities::trial::TrialLocation {
             facility: "Example Hospital".to_string(),
             city: "Boston".to_string(),
@@ -93,7 +95,9 @@ fn trial_markdown_includes_source_labeled_sections() {
             country: "United States".to_string(),
             status: Some("Recruiting".to_string()),
             contact_name: None,
+            contact_role: None,
             contact_phone: None,
+            contact_email: None,
         }]),
         outcomes: Some(crate::entities::trial::TrialOutcomes {
             primary: vec![crate::entities::trial::TrialOutcome {
@@ -126,4 +130,77 @@ fn trial_markdown_includes_source_labeled_sections() {
     assert!(markdown.contains("## Outcomes (ClinicalTrials.gov)"));
     assert!(markdown.contains("## Arms (ClinicalTrials.gov)"));
     assert!(markdown.contains("## References (ClinicalTrials.gov)"));
+}
+
+#[test]
+fn trial_markdown_renders_contacts_eligibility_and_json_fields() {
+    let trial = crate::entities::trial::Trial {
+        nct_id: "NCT41300001".to_string(),
+        source: Some("ClinicalTrials.gov".to_string()),
+        title: "Contact trial".to_string(),
+        status: "Recruiting".to_string(),
+        phase: None,
+        study_type: None,
+        age_range: Some("2 Years to 18 Years".to_string()),
+        conditions: vec![],
+        interventions: vec![],
+        intervention_details: Vec::new(),
+        sponsor: None,
+        enrollment: None,
+        summary: None,
+        start_date: None,
+        completion_date: None,
+        eligibility_text: Some("Key inclusion.".to_string()),
+        eligibility: Some(crate::entities::trial::TrialEligibility {
+            sex: Some("Female".to_string()),
+            minimum_age: Some("2 Years".to_string()),
+            maximum_age: Some("18 Years".to_string()),
+        }),
+        contacts: Some(vec![crate::entities::trial::TrialContact {
+            level: "central".to_string(),
+            name: "Central Coordinator".to_string(),
+            role: Some("CONTACT".to_string()),
+            phone: Some("555-0100".to_string()),
+            email: Some("central@example.test".to_string()),
+            facility: None,
+            city: None,
+            state: None,
+            country: None,
+        }]),
+        locations: Some(vec![crate::entities::trial::TrialLocation {
+            facility: "Rare Disease Center".to_string(),
+            city: "Ann Arbor".to_string(),
+            state: Some("Michigan".to_string()),
+            country: "United States".to_string(),
+            status: Some("Recruiting".to_string()),
+            contact_name: Some("Site Coordinator".to_string()),
+            contact_role: Some("CONTACT".to_string()),
+            contact_phone: None,
+            contact_email: Some("site@example.test".to_string()),
+        }]),
+        outcomes: None,
+        arms: None,
+        references: None,
+    };
+
+    let markdown = trial_markdown(
+        &trial,
+        &[
+            "contacts".to_string(),
+            "eligibility".to_string(),
+            "locations".to_string(),
+        ],
+    )
+    .expect("trial markdown");
+    assert!(markdown.contains("## Contacts (ClinicalTrials.gov)"));
+    assert!(markdown.contains("Central Contact"));
+    assert!(markdown.contains("central@example.test"));
+    assert!(markdown.contains("Sex: Female"));
+    assert!(markdown.contains("Eligible Ages: 2 Years to 18 Years"));
+    assert!(markdown.contains("site@example.test"));
+
+    let json = serde_json::to_value(&trial).expect("trial json");
+    assert_eq!(json["contacts"][0]["email"], "central@example.test");
+    assert_eq!(json["eligibility"]["sex"], "Female");
+    assert_eq!(json["locations"][0]["contact_email"], "site@example.test");
 }

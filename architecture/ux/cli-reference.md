@@ -70,9 +70,9 @@ biomcp get trial NCT02576665 eligibility locations outcomes
 biomcp get trial NCT... locations contacts eligibility
 ```
 
-The rare-disease trial-search target adds a `contacts` section for ClinicalTrials.gov
-central contacts and email-bearing site contacts. Until that implementation ships,
-`locations` and `eligibility` remain the current shipped sections.
+The trial detail surface includes a `contacts` section for ClinicalTrials.gov
+central contacts and email-bearing site contacts. `locations` and `eligibility`
+remain opt-in sections for site detail and criteria text.
 
 The pattern is consistent across the entity command surface: no-section gives
 a summary, named sections are additive, and `all` gives the standard default

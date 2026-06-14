@@ -142,6 +142,7 @@ pub(super) fn section_description(entity: &str, section: &str) -> &'static str {
         ("drug", "civic") => "CIViC therapy evidence",
         ("drug", "approvals") => "Drugs@FDA approval history",
         ("trial", "eligibility") => "inclusion and exclusion criteria",
+        ("trial", "contacts") => "central and site contact details",
         ("trial", "locations") => "site list and contact details",
         ("trial", "outcomes") => "endpoint measures and time frames",
         ("trial", "arms") => "study arms and assigned interventions",
@@ -270,6 +271,7 @@ const COMPLETED_TRIAL_SECTION_NAMES: &[&str] = &[
     "references",
     "arms",
     "eligibility",
+    "contacts",
     "locations",
     "all",
 ];

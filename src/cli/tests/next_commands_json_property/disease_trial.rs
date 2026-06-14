@@ -271,6 +271,8 @@ fn trial_json_next_commands_parse() {
         start_date: None,
         completion_date: None,
         eligibility_text: None,
+        eligibility: None,
+        contacts: None,
         locations: None,
         outcomes: None,
         arms: None,

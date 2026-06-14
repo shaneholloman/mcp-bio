@@ -520,7 +520,10 @@ See also: biomcp list pgx")]
 EXAMPLES:
   biomcp get trial NCT02576665
   biomcp get trial NCT02576665 --source ctgov eligibility
+  biomcp get trial NCT02576665 contacts eligibility locations
   biomcp get trial NCT02576665 --offset 20 --limit 20 locations
+
+Supported section tokens: eligibility, contacts, locations, outcomes, arms, references, all
 
 See also: biomcp list trial")]
     Trial(trial::TrialGetArgs),

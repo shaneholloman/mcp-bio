@@ -47,6 +47,42 @@ sections directly instead of forcing a second fetch or a hidden pagination path.
 | Facility | City | Country | Status | Contact |'
 ```
 
+## Trial Contacts Preserve Email and Structured Eligibility
+
+When a user asks for contacts with eligibility and locations, the detail card
+should show the action-critical central contact, site email, structured sex/age
+eligibility, and full criteria without requiring raw ClinicalTrials.gov JSON.
+
+```bash
+bash ../fixtures/setup-ctgov-intervention-alias-spec-fixture.sh ../..
+. ../../.cache/spec-ctgov-intervention-alias-env
+trap 'bash ../fixtures/cleanup-ctgov-intervention-alias-spec-fixture.sh ../..' EXIT
+../../tools/biomcp-ci get trial NCT41300001 contacts eligibility locations | mustmatch like '## Contacts (ClinicalTrials.gov)
+Central Contact
+Central Coordinator
+central@example.test
+site@example.test
+## Eligibility (ClinicalTrials.gov)
+Sex: Female
+Eligible Ages: 2 Years to 18 Years
+Key inclusion: confirmed SHANK3-related neurodevelopmental disorder.
+## Locations (ClinicalTrials.gov)'
+```
+
+The `contacts` section needs site context to label site contacts, but JSON should
+not expose the full locations section unless the user asks for it.
+
+```bash
+bash ../fixtures/setup-ctgov-intervention-alias-spec-fixture.sh ../..
+. ../../.cache/spec-ctgov-intervention-alias-env
+trap 'bash ../fixtures/cleanup-ctgov-intervention-alias-spec-fixture.sh ../..' EXIT
+../../tools/biomcp-ci --json get trial NCT41300001 contacts \
+  | jq -r '[.contacts[]? | select(.level == "site") | .facility][0], has("locations"), has("eligibility")' \
+  | mustmatch like 'Rare Disease Center
+false
+false'
+```
+
 ## Location Pagination Help Declares Its Flags
 
 Location paging is part of the trial detail surface, so the paged locations

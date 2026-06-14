@@ -8,8 +8,9 @@ use crate::sources::nci_cts::NciCtsClient;
 use crate::transform;
 
 use super::{
-    TRIAL_SECTION_ALL, TRIAL_SECTION_ARMS, TRIAL_SECTION_ELIGIBILITY, TRIAL_SECTION_LOCATIONS,
-    TRIAL_SECTION_NAMES, TRIAL_SECTION_OUTCOMES, TRIAL_SECTION_REFERENCES, Trial, TrialSource,
+    TRIAL_SECTION_ALL, TRIAL_SECTION_ARMS, TRIAL_SECTION_CONTACTS, TRIAL_SECTION_ELIGIBILITY,
+    TRIAL_SECTION_LOCATIONS, TRIAL_SECTION_NAMES, TRIAL_SECTION_OUTCOMES, TRIAL_SECTION_REFERENCES,
+    Trial, TrialSource,
 };
 
 const ELIGIBILITY_MAX_CHARS: usize = 12_000;
@@ -17,6 +18,7 @@ const ELIGIBILITY_MAX_CHARS: usize = 12_000;
 #[derive(Debug, Clone, Copy, Default)]
 struct TrialSections {
     include_eligibility: bool,
+    include_contacts: bool,
     include_locations: bool,
     include_outcomes: bool,
     include_arms: bool,
@@ -37,6 +39,7 @@ fn parse_sections(sections: &[String]) -> Result<TrialSections, BioMcpError> {
         }
         match section.as_str() {
             TRIAL_SECTION_ELIGIBILITY => out.include_eligibility = true,
+            TRIAL_SECTION_CONTACTS => out.include_contacts = true,
             TRIAL_SECTION_LOCATIONS => out.include_locations = true,
             TRIAL_SECTION_OUTCOMES => out.include_outcomes = true,
             TRIAL_SECTION_ARMS => out.include_arms = true,
@@ -53,6 +56,7 @@ fn parse_sections(sections: &[String]) -> Result<TrialSections, BioMcpError> {
 
     if include_all {
         out.include_eligibility = true;
+        out.include_contacts = true;
         out.include_locations = true;
         out.include_outcomes = true;
         out.include_arms = true;
@@ -121,6 +125,15 @@ pub async fn get(
             let study = client.get(nct_id, sections).await?;
             let mut trial = transform::trial::from_ctgov_study(&study);
             trial.source = Some("ClinicalTrials.gov".into());
+            if !section_flags.include_contacts {
+                trial.contacts = None;
+            }
+            if !section_flags.include_eligibility {
+                trial.eligibility = None;
+            }
+            if !section_flags.include_locations {
+                trial.locations = None;
+            }
 
             if section_flags.include_eligibility {
                 let criteria = study

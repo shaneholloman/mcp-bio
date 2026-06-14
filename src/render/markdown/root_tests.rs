@@ -280,6 +280,8 @@ fn markdown_detail_outputs_label_article_trial_and_pathway_sources() {
         start_date: Some("2025-01-01".to_string()),
         completion_date: None,
         eligibility_text: Some("Eligibility text.".to_string()),
+        eligibility: None,
+        contacts: None,
         locations: Some(vec![crate::entities::trial::TrialLocation {
             facility: "Example Hospital".to_string(),
             city: "Boston".to_string(),
@@ -287,7 +289,9 @@ fn markdown_detail_outputs_label_article_trial_and_pathway_sources() {
             country: "United States".to_string(),
             status: Some("Recruiting".to_string()),
             contact_name: None,
+            contact_role: None,
             contact_phone: None,
+            contact_email: None,
         }]),
         outcomes: Some(crate::entities::trial::TrialOutcomes {
             primary: vec![crate::entities::trial::TrialOutcome {

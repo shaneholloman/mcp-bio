@@ -9,7 +9,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BIOMCP_BIN = Path(os.environ.get("BIOMCP_BIN", REPO_ROOT / "target/release/biomcp"))
 LONG_FLAG = re.compile(r"(?<![\w-])--[a-z][a-z0-9-]*")
-TRIAL_SECTIONS = {"eligibility", "locations", "outcomes", "arms", "references", "all"}
+TRIAL_SECTIONS = {"eligibility", "contacts", "locations", "outcomes", "arms", "references", "all"}
 
 
 def _run_help(*args: str) -> str:

@@ -119,6 +119,12 @@ Eligibility:
 biomcp get trial NCT02576665 eligibility
 ```
 
+Contacts:
+
+```bash
+biomcp get trial NCT02576665 contacts
+```
+
 Locations:
 
 ```bash
@@ -172,7 +178,8 @@ biomcp --json search trial -i daraxonrasib --limit 20
 
 - Start broad on condition, then add intervention and biomarker filters.
 - Keep limits low while tuning search criteria.
-- Use `eligibility` section only when you need raw criteria text.
+- Use `eligibility` for full criteria text and structured sex/age facts.
+- Use `contacts` when you need CTGov central or site contact details.
 
 ## Related guides
 

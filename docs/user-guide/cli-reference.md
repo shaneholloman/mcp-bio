@@ -406,7 +406,8 @@ with no conversion.
 
 ```bash
 biomcp get trial NCT02576665
-biomcp get trial NCT02576665 eligibility
+biomcp get trial NCT02576665 contacts eligibility locations
+biomcp get trial NCT02576665 all
 ```
 
 ### Variant

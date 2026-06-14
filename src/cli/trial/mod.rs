@@ -126,7 +126,7 @@ pub struct TrialSearchArgs {
 pub struct TrialGetArgs {
     /// ClinicalTrials.gov identifier (e.g., NCT02693535)
     pub nct_id: String,
-    /// Sections to include (eligibility, locations, outcomes, arms, references, all)
+    /// Sections to include (eligibility, contacts, locations, outcomes, arms, references, all)
     #[arg(trailing_var_arg = true)]
     pub sections: Vec<String>,
     /// Trial data source (ctgov or nci)

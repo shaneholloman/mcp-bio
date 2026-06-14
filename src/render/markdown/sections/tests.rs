@@ -401,6 +401,8 @@ fn format_sections_block_describes_guardrailed_drug_and_trial_sections() {
         start_date: None,
         completion_date: None,
         eligibility_text: None,
+        eligibility: None,
+        contacts: None,
         locations: None,
         outcomes: None,
         arms: None,
@@ -433,6 +435,6 @@ fn format_sections_block_describes_guardrailed_drug_and_trial_sections() {
     };
     let recruiting_sections = sections_trial(&recruiting, &[]);
     assert_eq!(recruiting_sections[0], "eligibility");
-    assert_eq!(recruiting_sections[1], "locations");
-    assert_eq!(recruiting_sections[2], "outcomes");
+    assert_eq!(recruiting_sections[1], "contacts");
+    assert_eq!(recruiting_sections[2], "locations");
 }

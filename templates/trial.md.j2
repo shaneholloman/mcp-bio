@@ -40,10 +40,33 @@ _and {{ interventions | length - 5 }} more (see `arms` section)_
 {{ summary }}
 {% endif -%}
 {% endif -%}
-{% if show_eligibility_section and eligibility_text -%}
+{% if show_contacts_section and contacts -%}
+## Contacts ({{ trial_source_label }})
+
+{% for contact in contacts -%}
+### {% if contact.level == "central" %}Central Contact{% else %}Site Contact{% endif %}
+- Name: {{ contact.name }}
+{% if contact.role -%}- Role: {{ contact.role }}
+{% endif -%}
+{% if contact.email -%}- Email: {{ contact.email }}
+{% endif -%}
+{% if contact.phone -%}- Phone: {{ contact.phone }}
+{% endif -%}
+{% if contact.facility or contact.city or contact.state or contact.country -%}- Location: {% if contact.facility %}{{ contact.facility }}{% endif %}{% if contact.city %}{% if contact.facility %}, {% endif %}{{ contact.city }}{% endif %}{% if contact.state %}, {{ contact.state }}{% endif %}{% if contact.country %}, {{ contact.country }}{% endif %}
+{% endif -%}
+{% endfor %}
+{% endif -%}
+{% if show_eligibility_section and (eligibility or eligibility_text) -%}
 ## Eligibility ({{ trial_source_label }})
 
-{{ eligibility_text }}
+{% if eligibility -%}
+{% if eligibility.sex %}Sex: {{ eligibility.sex }}
+{% endif -%}
+{% if eligibility.minimum_age or eligibility.maximum_age %}Eligible Ages: {{ eligibility.minimum_age or "Any age" }} to {{ eligibility.maximum_age or "Any age" }}
+{% endif -%}
+{% endif -%}
+{% if eligibility_text %}{{ eligibility_text }}
+{% endif -%}
 {% endif -%}
 {% if show_locations_section and locations -%}
 ## Locations ({{ trial_source_label }})
@@ -51,7 +74,7 @@ _and {{ interventions | length - 5 }} more (see `arms` section)_
 | Facility | City | Country | Status | Contact |
 |---|---|---|---|---|
 {% for loc in locations[:20] -%}
-| {{ loc.facility | truncate(40) }} | {{ loc.city }}{% if loc.state %}, {{ loc.state }}{% endif %} | {{ loc.country }} | {{ loc.status or "-" }} | {% if loc.contact_name %}{{ loc.contact_name }}{% if loc.contact_phone %} ({{ loc.contact_phone }}){% endif %}{% else %}-{% endif %} |
+| {{ loc.facility | truncate(40) }} | {{ loc.city }}{% if loc.state %}, {{ loc.state }}{% endif %} | {{ loc.country }} | {{ loc.status or "-" }} | {% if loc.contact_name %}{{ loc.contact_name }}{% if loc.contact_role %} ({{ loc.contact_role }}){% endif %}{% if loc.contact_phone %} {{ loc.contact_phone }}{% endif %}{% if loc.contact_email %} {{ loc.contact_email }}{% endif %}{% else %}-{% endif %} |
 {% endfor -%}
 {% endif -%}
 {% if show_outcomes_section and outcomes -%}
