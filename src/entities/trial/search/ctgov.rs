@@ -6,6 +6,9 @@ use futures::future::join_all;
 
 use crate::entities::SearchPage;
 use crate::entities::drug::resolve_trial_aliases;
+use crate::entities::trial::planning::{
+    RareDiseaseTrialRequest, TrialPlanningMode, plan_rare_disease_trials,
+};
 use crate::error::BioMcpError;
 use crate::sources::clinicaltrials::{ClinicalTrialsClient, CtGovSearchParams, CtGovStudy};
 use crate::transform;
@@ -199,12 +202,13 @@ pub(super) fn ctgov_query_term(
 fn build_ctgov_search_params(
     filters: &TrialSearchFilters,
     context: &CtGovSearchContext,
+    condition_query: Option<&str>,
     intervention_query: Option<&str>,
     page_token: Option<String>,
     page_size: usize,
 ) -> CtGovSearchParams {
     CtGovSearchParams {
-        condition: filters.condition.clone(),
+        condition: condition_query.map(str::to_string),
         intervention: intervention_query.map(normalize_intervention_query),
         facility: context.facility.clone(),
         status: context.normalized_status.clone(),
@@ -247,11 +251,22 @@ struct CtGovFilteredPage {
 }
 
 #[derive(Debug, Clone)]
-struct AliasWorkerState {
-    alias_query: String,
+struct CtGovWorkerState {
+    condition_query: Option<String>,
+    intervention_query: Option<String>,
+    matched_condition_label: Option<String>,
+    matched_intervention_label: Option<String>,
     next_page_token: Option<String>,
     exhausted: bool,
     pages_fetched: usize,
+}
+
+fn raw_condition_query(filters: &TrialSearchFilters) -> Option<&str> {
+    filters
+        .condition
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
 }
 
 fn raw_intervention_query(filters: &TrialSearchFilters) -> Option<&str> {
@@ -260,6 +275,46 @@ fn raw_intervention_query(filters: &TrialSearchFilters) -> Option<&str> {
         .as_deref()
         .map(str::trim)
         .filter(|value| !value.is_empty())
+}
+
+fn push_unique_label(labels: &mut Vec<String>, seen: &mut HashSet<String>, value: &str) {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return;
+    }
+    if seen.insert(trimmed.to_ascii_lowercase()) {
+        labels.push(trimmed.to_string());
+    }
+}
+
+fn resolve_ctgov_condition_labels(
+    filters: &TrialSearchFilters,
+) -> Result<Vec<String>, BioMcpError> {
+    let Some(condition_query) = raw_condition_query(filters) else {
+        return Ok(Vec::new());
+    };
+    if filters.no_condition_expand {
+        return Ok(vec![condition_query.to_string()]);
+    }
+
+    let plan = plan_rare_disease_trials(RareDiseaseTrialRequest {
+        raw_query: Some(condition_query.to_string()),
+        condition: Some(condition_query.to_string()),
+        gene: None,
+        sponsor: filters.sponsor.clone(),
+        strict_condition: false,
+        mode: TrialPlanningMode::Search,
+    })?;
+    let mut labels = Vec::new();
+    let mut seen = HashSet::new();
+    push_unique_label(&mut labels, &mut seen, condition_query);
+    for label in plan.primary_condition_labels {
+        push_unique_label(&mut labels, &mut seen, &label.label);
+    }
+    for label in plan.expanded_condition_labels {
+        push_unique_label(&mut labels, &mut seen, &label.label);
+    }
+    Ok(labels)
 }
 
 async fn resolve_ctgov_intervention_aliases(
@@ -278,17 +333,23 @@ async fn resolve_ctgov_intervention_aliases(
     resolve_trial_aliases(intervention_query).await
 }
 
-fn alias_expansion_next_page_error() -> BioMcpError {
-    BioMcpError::InvalidArgument(
-        "--next-page is not supported when intervention alias expansion uses multiple queries; use --offset or --no-alias-expand"
-            .into(),
-    )
+fn fanout_next_page_error(condition_fanout: bool, alias_fanout: bool) -> BioMcpError {
+    let alternatives = match (condition_fanout, alias_fanout) {
+        (true, true) => "use --offset, --no-condition-expand, or --no-alias-expand",
+        (true, false) => "use --offset or --no-condition-expand",
+        (false, true) => "use --offset or --no-alias-expand",
+        (false, false) => "use --offset",
+    };
+    BioMcpError::InvalidArgument(format!(
+        "--next-page is not supported when CTGov expansion uses multiple queries; {alternatives}"
+    ))
 }
 
 async fn fetch_ctgov_filtered_page(
     client: &ClinicalTrialsClient,
     filters: &TrialSearchFilters,
     context: &CtGovSearchContext,
+    condition_query: Option<&str>,
     intervention_query: Option<&str>,
     page_token: Option<String>,
     page_size: usize,
@@ -297,6 +358,7 @@ async fn fetch_ctgov_filtered_page(
         .search(&build_ctgov_search_params(
             filters,
             context,
+            condition_query,
             intervention_query,
             page_token,
             page_size,
@@ -322,7 +384,7 @@ async fn search_page_with_single_ctgov_intervention(
     client: &ClinicalTrialsClient,
     filters: &TrialSearchFilters,
     context: &CtGovSearchContext,
-    intervention_query: Option<&str>,
+    worker: &CtGovWorkerState,
     limit: usize,
     offset: usize,
     next_page: Option<String>,
@@ -344,7 +406,8 @@ async fn search_page_with_single_ctgov_intervention(
             client,
             filters,
             context,
-            intervention_query,
+            worker.condition_query.as_deref(),
+            worker.intervention_query.as_deref(),
             page_token.clone(),
             page_size,
         )
@@ -376,7 +439,10 @@ async fn search_page_with_single_ctgov_intervention(
                 continue;
             }
             if rows.len() < limit {
-                rows.push(transform::trial::from_ctgov_hit(&study));
+                let mut row = transform::trial::from_ctgov_hit(&study);
+                row.matched_condition_label = worker.matched_condition_label.clone();
+                row.matched_intervention_label = worker.matched_intervention_label.clone();
+                rows.push(row);
             }
             if rows.len() >= limit {
                 break;
@@ -428,25 +494,53 @@ async fn search_page_with_single_ctgov_intervention(
     Ok(SearchPage::cursor(rows, returned_total, page_token))
 }
 
-async fn search_page_with_ctgov_alias_union(
+fn ctgov_workers(
+    condition_labels: &[String],
+    intervention_labels: &[String],
+) -> Vec<CtGovWorkerState> {
+    let requested_condition = condition_labels.first().map(String::as_str);
+    let conditions: Vec<Option<String>> = if condition_labels.is_empty() {
+        vec![None]
+    } else {
+        condition_labels.iter().cloned().map(Some).collect()
+    };
+    let interventions: Vec<Option<String>> = if intervention_labels.is_empty() {
+        vec![None]
+    } else {
+        intervention_labels.iter().cloned().map(Some).collect()
+    };
+
+    let mut workers = Vec::new();
+    for condition_query in conditions {
+        for intervention_query in &interventions {
+            workers.push(CtGovWorkerState {
+                matched_condition_label: condition_query
+                    .as_deref()
+                    .filter(|label| requested_condition != Some(*label))
+                    .map(str::to_string),
+                condition_query: condition_query.clone(),
+                intervention_query: intervention_query.clone(),
+                matched_intervention_label: intervention_query.clone(),
+                next_page_token: None,
+                exhausted: false,
+                pages_fetched: 0,
+            });
+        }
+    }
+    workers
+}
+
+async fn search_page_with_ctgov_union(
     client: &ClinicalTrialsClient,
     filters: &TrialSearchFilters,
     context: &CtGovSearchContext,
-    aliases: &[String],
+    condition_labels: &[String],
+    intervention_labels: &[String],
     limit: usize,
     offset: usize,
 ) -> Result<SearchPage<TrialSearchResult>, BioMcpError> {
     let page_size = offset.saturating_add(limit).clamp(1, 100);
-    let mut workers: Vec<AliasWorkerState> = aliases
-        .iter()
-        .cloned()
-        .map(|alias_query| AliasWorkerState {
-            alias_query,
-            next_page_token: None,
-            exhausted: false,
-            pages_fetched: 0,
-        })
-        .collect();
+    let mut workers = ctgov_workers(condition_labels, intervention_labels);
     let mut merged_rows: Vec<TrialSearchResult> = Vec::new();
     let mut merged_index: HashMap<String, usize> = HashMap::new();
     let mut traversal_capped = false;
@@ -467,7 +561,8 @@ async fn search_page_with_ctgov_alias_union(
                 client,
                 filters,
                 context,
-                Some(worker.alias_query.as_str()),
+                worker.condition_query.as_deref(),
+                worker.intervention_query.as_deref(),
                 worker.next_page_token.clone(),
                 page_size,
             )
@@ -490,7 +585,8 @@ async fn search_page_with_ctgov_alias_union(
                 if merged_index.contains_key(&row.nct_id) {
                     continue;
                 }
-                row.matched_intervention_label = Some(worker.alias_query.clone());
+                row.matched_condition_label = worker.matched_condition_label.clone();
+                row.matched_intervention_label = worker.matched_intervention_label.clone();
                 merged_index.insert(row.nct_id.clone(), merged_rows.len());
                 merged_rows.push(row);
             }
@@ -545,27 +641,40 @@ pub(super) async fn search_page_with_ctgov_client(
     validate_search_page_args(limit, offset, next_page.as_deref())?;
     let normalized = validate_trial_search(filters)?;
     let context = prepare_ctgov_search_context(filters, &normalized)?;
+    let condition_labels = resolve_ctgov_condition_labels(filters)?;
     let aliases = resolve_ctgov_intervention_aliases(filters).await?;
+    let condition_fanout = condition_labels.len() > 1;
+    let alias_fanout = aliases.len() > 1;
 
-    if aliases.len() > 1 {
+    if condition_fanout || alias_fanout {
         if next_page
             .as_deref()
             .map(str::trim)
             .is_some_and(|value| !value.is_empty())
         {
-            return Err(alias_expansion_next_page_error());
+            return Err(fanout_next_page_error(condition_fanout, alias_fanout));
         }
-        return search_page_with_ctgov_alias_union(
-            client, filters, &context, &aliases, limit, offset,
+        return search_page_with_ctgov_union(
+            client,
+            filters,
+            &context,
+            &condition_labels,
+            &aliases,
+            limit,
+            offset,
         )
         .await;
     }
 
+    let single_worker = ctgov_workers(&condition_labels, &aliases)
+        .into_iter()
+        .next()
+        .expect("single CTGov worker should exist");
     search_page_with_single_ctgov_intervention(
         client,
         filters,
         &context,
-        raw_intervention_query(filters),
+        &single_worker,
         limit,
         offset,
         next_page,
@@ -573,22 +682,14 @@ pub(super) async fn search_page_with_ctgov_client(
     .await
 }
 
-async fn count_all_with_ctgov_alias_union(
+async fn count_all_with_ctgov_union(
     client: &ClinicalTrialsClient,
     filters: &TrialSearchFilters,
     context: &CtGovSearchContext,
-    aliases: &[String],
+    condition_labels: &[String],
+    intervention_labels: &[String],
 ) -> Result<TrialCount, BioMcpError> {
-    let mut workers: Vec<AliasWorkerState> = aliases
-        .iter()
-        .cloned()
-        .map(|alias_query| AliasWorkerState {
-            alias_query,
-            next_page_token: None,
-            exhausted: false,
-            pages_fetched: 0,
-        })
-        .collect();
+    let mut workers = ctgov_workers(condition_labels, intervention_labels);
     let mut unique_nct_ids: HashSet<String> = HashSet::new();
     let mut fetched_pages = 0usize;
 
@@ -612,7 +713,8 @@ async fn count_all_with_ctgov_alias_union(
                 client,
                 filters,
                 context,
-                Some(worker.alias_query.as_str()),
+                worker.condition_query.as_deref(),
+                worker.intervention_query.as_deref(),
                 worker.next_page_token.clone(),
                 CTGOV_COUNT_PAGE_SIZE,
             )
@@ -656,10 +758,12 @@ pub(super) async fn count_all_with_ctgov_client(
 
     let normalized = validate_trial_search(filters)?;
     let context = prepare_ctgov_search_context(filters, &normalized)?;
+    let condition_labels = resolve_ctgov_condition_labels(filters)?;
     let aliases = resolve_ctgov_intervention_aliases(filters).await?;
 
-    if aliases.len() > 1 {
-        return count_all_with_ctgov_alias_union(client, filters, &context, &aliases).await;
+    if condition_labels.len() > 1 || aliases.len() > 1 {
+        return count_all_with_ctgov_union(client, filters, &context, &condition_labels, &aliases)
+            .await;
     }
 
     if !context.uses_expensive_post_filters {
@@ -667,6 +771,7 @@ pub(super) async fn count_all_with_ctgov_client(
             .search(&build_ctgov_search_params(
                 filters,
                 &context,
+                raw_condition_query(filters),
                 raw_intervention_query(filters),
                 None,
                 1,
@@ -693,6 +798,7 @@ pub(super) async fn count_all_with_ctgov_client(
             .search(&build_ctgov_search_params(
                 filters,
                 &context,
+                raw_condition_query(filters),
                 raw_intervention_query(filters),
                 page_token.clone(),
                 CTGOV_COUNT_PAGE_SIZE,

@@ -81,6 +81,9 @@ pub fn trial_search_markdown_with_footer(
     nickname_query: Option<&str>,
 ) -> Result<String, BioMcpError> {
     let tmpl = env()?.get_template("trial_search.md.j2")?;
+    let show_matched_condition_column = results
+        .iter()
+        .any(|result| result.matched_condition_label.is_some());
     let show_matched_intervention_column = results
         .iter()
         .any(|result| result.matched_intervention_label.is_some());
@@ -89,6 +92,7 @@ pub fn trial_search_markdown_with_footer(
         count => results.len(),
         total => total,
         results => results,
+        show_matched_condition_column => show_matched_condition_column,
         show_matched_intervention_column => show_matched_intervention_column,
         pagination_footer => pagination_footer,
         show_zero_result_nickname_hint => show_zero_result_nickname_hint,

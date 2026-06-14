@@ -130,6 +130,7 @@ fn search_trial_parses_positional_query() {
                         condition,
                         positional_query,
                         intervention,
+                        no_condition_expand,
                         no_alias_expand,
                         facility,
                         phase,
@@ -167,6 +168,7 @@ fn search_trial_parses_positional_query() {
     assert!(condition.is_empty());
     assert_eq!(positional_query.as_deref(), Some("melanoma"));
     assert!(intervention.is_empty());
+    assert!(!no_condition_expand);
     assert!(!no_alias_expand);
     assert!(facility.is_empty());
     assert_eq!(phase, None);

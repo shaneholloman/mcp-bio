@@ -170,6 +170,8 @@ pub struct TrialSearchResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sponsor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub matched_condition_label: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub matched_intervention_label: Option<String>,
 }
 
@@ -178,6 +180,7 @@ pub struct TrialSearchFilters {
     pub condition: Option<String>,
     pub intervention: Option<String>,
     pub no_alias_expand: bool,
+    pub no_condition_expand: bool,
     pub facility: Option<String>,
     pub status: Option<String>,
     pub phase: Option<String>,

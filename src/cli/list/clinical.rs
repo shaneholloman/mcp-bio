@@ -17,6 +17,7 @@ pub(super) fn list_trial() -> String {
 ## Useful filters (ctgov)
 
 - `--condition <name>` (or `-c`)
+- `--no-condition-expand`
 - `--intervention <name>` (or `-i`)
 - `--no-alias-expand`
 - `--status <status>` (or `-s`)
@@ -41,10 +42,13 @@ pub(super) fn list_trial() -> String {
 
 ## CTGov alias expansion
 
+- `--condition` auto-expands bounded rare-disease labels on the default CTGov path.
+- Condition-expanded rows add `Matched Condition` in markdown and `matched_condition_label` in JSON when an expanded label matched.
+- `--no-condition-expand` forces literal condition matching.
 - `--intervention` auto-expands known aliases from the shared drug identity surface on the default CTGov path.
 - Expanded rows add `Matched Intervention` in markdown and `matched_intervention_label` in JSON when an alternate alias matched first.
-- `--no-alias-expand` forces literal matching.
-- `--next-page` is not supported once alias expansion fans out to multiple queries; use `--offset` or `--no-alias-expand`.
+- `--no-alias-expand` forces literal intervention matching.
+- `--next-page` is not supported once expansion fans out to multiple queries; use `--offset`, `--no-condition-expand`, or `--no-alias-expand`. For intervention-only fan-out, use `--offset` or `--no-alias-expand`.
 
 ## NCI source notes
 
@@ -57,6 +61,7 @@ pub(super) fn list_trial() -> String {
 
 - Non-empty `search trial --json` responses include `_meta.next_commands`.
 - `get trial --json` can include CTGov source-provided intervention alternate names; See-also and JSON next commands may prefer search/article follow-ups for investigational codes.
+- Condition-expanded trial rows may include `matched_condition_label`.
 - Alias-expanded trial rows may include `matched_intervention_label`.
 - The first follow-up drills the top result with `biomcp get trial <nct_id>`.
 - `biomcp list trial` is always included so agents can inspect the full filter surface.
