@@ -380,31 +380,39 @@ fn format_article_score(value: f64) -> String {
     if out == "-0" { "0".to_string() } else { out }
 }
 
-fn semantic_scholar_source_status_note(
+fn article_source_status_note(
     source_status: &[crate::entities::article::ArticleSourceStatus],
 ) -> Option<String> {
-    source_status.iter().find_map(|status| {
-        if status.source != ArticleSource::SemanticScholar {
-            return None;
-        }
-        let availability = match status.status? {
-            crate::entities::article::ArticleSourceAvailability::Degraded => "degraded",
-            crate::entities::article::ArticleSourceAvailability::Unavailable => "unavailable",
-            _ => return None,
-        };
-        let auth = match status.auth_mode {
-            Some(crate::sources::semantic_scholar::SemanticScholarAuthMode::Authenticated) => {
-                "authenticated"
-            }
-            Some(crate::sources::semantic_scholar::SemanticScholarAuthMode::SharedPool) => {
-                "shared_pool"
-            }
-            None => "unknown_auth",
-        };
-        Some(format!(
-            "Semantic Scholar source status: {availability} ({auth})"
-        ))
-    })
+    let notes = source_status
+        .iter()
+        .filter_map(|status| {
+            let availability = match status.status? {
+                crate::entities::article::ArticleSourceAvailability::Degraded => "degraded",
+                crate::entities::article::ArticleSourceAvailability::Unavailable => "unavailable",
+                _ => return None,
+            };
+            let auth = match status.auth_mode {
+                Some(crate::sources::semantic_scholar::SemanticScholarAuthMode::Authenticated) => {
+                    Some("authenticated")
+                }
+                Some(crate::sources::semantic_scholar::SemanticScholarAuthMode::SharedPool) => {
+                    Some("shared_pool")
+                }
+                None => None,
+            };
+            let suffix = status
+                .message
+                .as_deref()
+                .or(auth)
+                .map(|message| format!(" ({message})"))
+                .unwrap_or_default();
+            Some(format!(
+                "{} source status: {availability}{suffix}",
+                status.source.display_name()
+            ))
+        })
+        .collect::<Vec<_>>();
+    (!notes.is_empty()).then(|| notes.join("\n"))
 }
 
 fn article_ranking_why(row: &ArticleSearchResult, filters: &ArticleSearchFilters) -> String {
@@ -476,8 +484,7 @@ pub fn article_search_markdown_with_footer_and_context(
         ),
     );
     let index_date_footer = newest_indexed_footer(results);
-    let semantic_scholar_source_status_note =
-        semantic_scholar_source_status_note(context.source_status);
+    let semantic_scholar_source_status_note = article_source_status_note(context.source_status);
 
     let tmpl = env()?.get_template("article_search.md.j2")?;
     let body = tmpl.render(context! {
