@@ -30,6 +30,26 @@ cargo test --lib ticket_376_article_source_status_contracts -- --nocapture \
   | mustmatch like 'ticket_376_article_source_status_contracts'
 ```
 
+## Federated Article Search Bounds Slow Sources
+
+When one article source is slow, the default federated search should still return
+bounded results from the healthy sources and say which source degraded. The
+fixture points every article source base URL at local HTTP handlers: PubTator3,
+PubMed, Semantic Scholar, and LitSense2 respond quickly, while Europe PMC holds
+its response long enough to prove the per-source timeout contract.
+
+```bash
+bash ../fixtures/setup-article-federated-timeout-fixture.sh ../..
+. ../../.cache/spec-article-federated-timeout-env
+trap 'kill "${BIOMCP_ARTICLE_FEDERATED_TIMEOUT_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
+BIOMCP_CACHE_DIR="../../.cache/biomcp-article-federated-timeout" \
+  timeout 25s ../../tools/biomcp-ci search article -k "BRAF melanoma" --source all --debug-plan --limit 3 \
+  | mustmatch like '"source": "europepmc"
+"status": "degraded"
+timed out
+BRAF melanoma bounded federation fixture'
+```
+
 ## Deterministic Renderer Envelope Contracts
 
 Ticket 377 moves routine article renderer/envelope proof into fixture-result
