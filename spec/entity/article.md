@@ -39,11 +39,7 @@ PubMed, Semantic Scholar, and LitSense2 respond quickly, while Europe PMC holds
 its response long enough to prove the per-source timeout contract.
 
 ```bash
-bash ../fixtures/setup-article-federated-timeout-fixture.sh ../..
-. ../../.cache/spec-article-federated-timeout-env
-trap 'kill "${BIOMCP_ARTICLE_FEDERATED_TIMEOUT_FIXTURE_PID:-}" 2>/dev/null || true' EXIT
-BIOMCP_CACHE_DIR="../../.cache/biomcp-article-federated-timeout" \
-  timeout 25s ../../tools/biomcp-ci search article -k "BRAF melanoma" --source all --debug-plan --limit 3 \
+bash ../fixtures/run-article-federated-timeout-search.sh ../.. \
   | mustmatch like '"source": "europepmc"
 "status": "degraded"
 timed out
