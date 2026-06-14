@@ -168,7 +168,8 @@ Results depend on source document wording and may vary across sources.
 
 - Set `NCBI_API_KEY` to increase NCBI request throughput for article annotation/full-text paths.
 - Set `S2_API_KEY` for authenticated Semantic Scholar requests at 1 req/sec; without it, BioMCP uses the shared pool at 1 req/2sec.
-- `search article --json` and `--debug-plan` expose redacted Semantic Scholar auth/availability source status.
+- `search article --json` and `--debug-plan` expose article source status,
+  including federated degradation and redacted Semantic Scholar auth/availability.
 - On default `search article --source all`, typed anchors use compatible federated
   sources and Semantic Scholar remains automatic.
 - Add `-k/--keyword` for mechanisms, phenotypes, datasets, and free-text concepts.

@@ -112,7 +112,8 @@ Worked examples:
 
 - Set `NCBI_API_KEY` to increase throughput for NCBI-backed article enrichment.
 - Set `S2_API_KEY` to send authenticated Semantic Scholar requests at 1 req/sec. Without it, BioMCP uses the shared pool at 1 req/2sec.
-- `search article --json` and `--debug-plan` expose redacted Semantic Scholar auth/availability source status.
+- `search article --json` and `--debug-plan` expose article source status,
+  including federated degradation and redacted Semantic Scholar auth/availability.
 - `get article <id> fulltext` tries XML first, then PMC HTML, and never falls back to PDF.
 - `get article <id> assets` resolves the canonical PMC OA package first; when unavailable, supported Figshare/AACR Figshare metadata discovered through Semantic Scholar can provide a provider-labelled fallback manifest with same-paper sibling records discovered by DOI/title.
 - `get article <id> asset <name>` streams provider bytes without conversion; handles stay as BioMCP commands and downstream tools parse CSV, XLSX, DOC, PDF, or images.
