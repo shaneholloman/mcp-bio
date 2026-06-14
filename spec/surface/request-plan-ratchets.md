@@ -85,6 +85,21 @@ test_ticket_401_request_plan_ratchets_execute_named_contracts_not_list_only
 test_ticket_401_routine_modes_execute_python_surface_contracts"
 ```
 
+## Rare-Disease Trial Planning Keeps Expansion Bounded
+
+Rare-disease trial planning should be a deterministic request contract before
+any ClinicalTrials.gov or ontology execution. The Rust seam tests prove the
+Phelan-McDermid / SHANK3 / 22q13 plan carries bounded condition and biomarker
+terms, records provenance, rejects broad noisy labels, and exposes strict
+condition mode as data.
+
+```bash
+set -o pipefail
+cd ../.. && cargo test --lib ticket_414_rare_disease_trial_planning -- --nocapture | mustmatch like "ticket_414_rare_disease_trial_planning_phelan_shank3_expands_to_bounded_trial_terms
+ticket_414_rare_disease_trial_planning_rejects_noisy_broad_terms
+ticket_414_rare_disease_trial_planning_strict_mode_keeps_literal_condition"
+```
+
 ## Ticket 405 Architecture and Operator Contracts
 
 Current repo docs must describe the shipped BioMCP architecture and operator
