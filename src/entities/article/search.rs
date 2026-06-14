@@ -1,5 +1,9 @@
 //! Article search orchestration across planner, backends, enrichment, and finalization.
 
+use std::future::Future;
+use std::time::Duration;
+
+use tokio::time::timeout;
 use tracing::warn;
 
 use crate::entities::SearchPage;
@@ -27,6 +31,8 @@ use super::{
     ArticleSourceAvailability, ArticleSourceFilter, ArticleSourceStatus,
     MAX_FEDERATED_FETCH_RESULTS, MAX_SEARCH_LIMIT,
 };
+
+const FEDERATED_ARTICLE_SOURCE_TIMEOUT: Duration = Duration::from_secs(12);
 
 pub async fn search(
     filters: &ArticleSearchFilters,
@@ -99,7 +105,87 @@ impl SemanticScholarStatusTracker {
 
 struct FederatedArticleRows {
     rows: Vec<ArticleSearchResult>,
+    source_status: Vec<ArticleSourceStatus>,
     semantic_scholar_status: ArticleSourceStatus,
+}
+
+enum FederatedSourceOutcome<T> {
+    Available(T),
+    Unavailable {
+        error: Option<BioMcpError>,
+        status: ArticleSourceStatus,
+    },
+}
+
+fn source_degraded_status(source: ArticleSource, message: String) -> ArticleSourceStatus {
+    ArticleSourceStatus {
+        source,
+        enabled: true,
+        auth_mode: None,
+        status: Some(ArticleSourceAvailability::Degraded),
+        message: Some(message),
+    }
+}
+
+fn timed_out_source_status(source: ArticleSource) -> ArticleSourceStatus {
+    source_degraded_status(
+        source,
+        format!(
+            "{} timed out after {}s",
+            source.display_name(),
+            FEDERATED_ARTICLE_SOURCE_TIMEOUT.as_secs()
+        ),
+    )
+}
+
+async fn with_federated_source_timeout<T, F>(
+    source: ArticleSource,
+    future: F,
+) -> FederatedSourceOutcome<T>
+where
+    F: Future<Output = Result<T, BioMcpError>>,
+{
+    match timeout(FEDERATED_ARTICLE_SOURCE_TIMEOUT, future).await {
+        Ok(Ok(value)) => FederatedSourceOutcome::Available(value),
+        Ok(Err(err)) => {
+            warn!(
+                ?err,
+                source = source.display_name(),
+                "Federated article source failed"
+            );
+            FederatedSourceOutcome::Unavailable {
+                error: Some(err),
+                status: source_degraded_status(
+                    source,
+                    format!("{} search unavailable", source.display_name()),
+                ),
+            }
+        }
+        Err(_) => {
+            warn!(
+                source = source.display_name(),
+                "Federated article source timed out"
+            );
+            FederatedSourceOutcome::Unavailable {
+                error: None,
+                status: timed_out_source_status(source),
+            }
+        }
+    }
+}
+
+fn unavailable_source_error(source: ArticleSource) -> BioMcpError {
+    BioMcpError::SourceUnavailable {
+        source_name: source.display_name().to_string(),
+        reason: format!(
+            "timed out after {}s during federated article search",
+            FEDERATED_ARTICLE_SOURCE_TIMEOUT.as_secs()
+        ),
+        suggestion: format!(
+            "Retry with --source all or use --source {}",
+            source.display_name()
+        ),
+    }
 }
 
 fn semantic_scholar_unavailable_status(message: &str) -> ArticleSourceStatus {
@@ -126,21 +212,40 @@ async fn search_federated_page(
     let include_pubmed = pubmed_filter_compatible(filters);
     let include_litsense2 = litsense2_search_enabled(filters, ArticleSourceFilter::All);
     let (pubtator_leg, europe_leg, pubmed_leg, semantic_scholar_leg, litsense2_leg) = tokio::join!(
-        search_pubtator_page(filters, fetch_count, 0),
-        search_europepmc_page(filters, fetch_count, 0),
+        with_federated_source_timeout(
+            ArticleSource::PubTator,
+            search_pubtator_page(filters, fetch_count, 0),
+        ),
+        with_federated_source_timeout(
+            ArticleSource::EuropePmc,
+            search_europepmc_page(filters, fetch_count, 0),
+        ),
         async {
             if include_pubmed {
-                Some(search_pubmed_page(filters, fetch_count, 0).await)
+                Some(
+                    with_federated_source_timeout(
+                        ArticleSource::PubMed,
+                        search_pubmed_page(filters, fetch_count, 0),
+                    )
+                    .await,
+                )
             } else {
                 None
             }
         },
-        search_semantic_scholar_candidates(filters, fetch_count),
+        with_federated_source_timeout(
+            ArticleSource::SemanticScholar,
+            search_semantic_scholar_candidates(filters, fetch_count),
+        ),
         async {
             if include_litsense2 {
-                search_litsense2_candidates(filters, fetch_count).await
+                with_federated_source_timeout(
+                    ArticleSource::LitSense2,
+                    search_litsense2_candidates(filters, fetch_count),
+                )
+                .await
             } else {
-                Ok(Vec::new())
+                FederatedSourceOutcome::Available(Vec::new())
             }
         }
     );
@@ -167,48 +272,46 @@ async fn search_federated_page(
         tracker.record(status);
     }
 
-    Ok(article_search_page(page, tracker.finish()))
+    let mut source_status = federated.source_status;
+    source_status.extend(tracker.finish());
+
+    Ok(article_search_page(page, source_status))
 }
 
 #[allow(clippy::too_many_arguments)]
 fn collect_federated_article_rows(
-    pubtator_leg: Result<SearchPage<ArticleSearchResult>, BioMcpError>,
-    europe_leg: Result<SearchPage<ArticleSearchResult>, BioMcpError>,
-    pubmed_leg: Option<Result<SearchPage<ArticleSearchResult>, BioMcpError>>,
-    semantic_scholar_leg: Result<super::backends::SemanticScholarCandidateOutcome, BioMcpError>,
-    litsense2_leg: Result<Vec<ArticleSearchResult>, BioMcpError>,
+    pubtator_leg: FederatedSourceOutcome<SearchPage<ArticleSearchResult>>,
+    europe_leg: FederatedSourceOutcome<SearchPage<ArticleSearchResult>>,
+    pubmed_leg: Option<FederatedSourceOutcome<SearchPage<ArticleSearchResult>>>,
+    semantic_scholar_leg: FederatedSourceOutcome<super::backends::SemanticScholarCandidateOutcome>,
+    litsense2_leg: FederatedSourceOutcome<Vec<ArticleSearchResult>>,
 ) -> Result<FederatedArticleRows, BioMcpError> {
+    let mut source_status = Vec::new();
     let (semantic_scholar_rows, semantic_scholar_status) = match semantic_scholar_leg {
-        Ok(outcome) => (outcome.rows, outcome.status),
-        Err(err) => {
-            warn!(
-                ?err,
-                "Semantic Scholar search leg failed; continuing without it"
-            );
-            (
-                Vec::new(),
-                semantic_scholar_unavailable_status("Semantic Scholar search unavailable"),
-            )
-        }
+        FederatedSourceOutcome::Available(outcome) => (outcome.rows, outcome.status),
+        FederatedSourceOutcome::Unavailable { status, .. } => (Vec::new(), status),
     };
     let litsense2_rows = match litsense2_leg {
-        Ok(rows) => rows,
-        Err(err) => {
-            warn!(?err, "LitSense2 search leg failed; continuing without it");
+        FederatedSourceOutcome::Available(rows) => rows,
+        FederatedSourceOutcome::Unavailable { status, .. } => {
+            source_status.push(status);
             Vec::new()
         }
     };
     let pubmed_rows = match pubmed_leg {
-        Some(Ok(page)) => page.results,
-        Some(Err(err)) => {
-            warn!(?err, "PubMed search leg failed; continuing without it");
+        Some(FederatedSourceOutcome::Available(page)) => page.results,
+        Some(FederatedSourceOutcome::Unavailable { status, .. }) => {
+            source_status.push(status);
             Vec::new()
         }
         None => Vec::new(),
     };
 
     match (pubtator_leg, europe_leg) {
-        (Ok(pubtator_page), Ok(europe_page)) => {
+        (
+            FederatedSourceOutcome::Available(pubtator_page),
+            FederatedSourceOutcome::Available(europe_page),
+        ) => {
             let mut merged = pubtator_page.results;
             merged.extend(europe_page.results);
             merged.extend(pubmed_rows);
@@ -216,41 +319,44 @@ fn collect_federated_article_rows(
             merged.extend(litsense2_rows);
             Ok(FederatedArticleRows {
                 rows: merged,
+                source_status,
                 semantic_scholar_status,
             })
         }
-        (Ok(pubtator_page), Err(err)) => {
-            warn!(
-                ?err,
-                "Europe PMC search leg failed; returning PubTator-only results"
-            );
+        (
+            FederatedSourceOutcome::Available(pubtator_page),
+            FederatedSourceOutcome::Unavailable { status, .. },
+        ) => {
+            source_status.push(status);
             let mut rows = pubtator_page.results;
             rows.extend(pubmed_rows);
             rows.extend(semantic_scholar_rows);
             rows.extend(litsense2_rows);
             Ok(FederatedArticleRows {
                 rows,
+                source_status,
                 semantic_scholar_status,
             })
         }
-        (Err(err), Ok(europe_page)) => {
-            warn!(
-                ?err,
-                "PubTator search leg failed; returning Europe PMC-only results"
-            );
+        (
+            FederatedSourceOutcome::Unavailable { status, .. },
+            FederatedSourceOutcome::Available(europe_page),
+        ) => {
+            source_status.push(status);
             let mut rows = europe_page.results;
             rows.extend(pubmed_rows);
             rows.extend(semantic_scholar_rows);
             rows.extend(litsense2_rows);
             Ok(FederatedArticleRows {
                 rows,
+                source_status,
                 semantic_scholar_status,
             })
         }
-        (Err(pubtator_err), Err(europe_err)) => {
-            warn!(?europe_err, "Europe PMC leg also failed");
-            Err(pubtator_err)
-        }
+        (
+            FederatedSourceOutcome::Unavailable { error, status: _ },
+            FederatedSourceOutcome::Unavailable { .. },
+        ) => Err(error.unwrap_or_else(|| unavailable_source_error(ArticleSource::PubTator))),
     }
 }
 
@@ -278,11 +384,53 @@ pub(super) fn merge_federated_pages(
             },
         });
     let rows = collect_federated_article_rows(
-        pubtator_leg,
-        europe_leg,
-        pubmed_leg,
-        semantic_scholar_leg,
-        litsense2_leg,
+        match pubtator_leg {
+            Ok(page) => FederatedSourceOutcome::Available(page),
+            Err(err) => FederatedSourceOutcome::Unavailable {
+                error: Some(err),
+                status: source_degraded_status(
+                    ArticleSource::PubTator,
+                    "PubTator3 search unavailable".to_string(),
+                ),
+            },
+        },
+        match europe_leg {
+            Ok(page) => FederatedSourceOutcome::Available(page),
+            Err(err) => FederatedSourceOutcome::Unavailable {
+                error: Some(err),
+                status: source_degraded_status(
+                    ArticleSource::EuropePmc,
+                    "Europe PMC search unavailable".to_string(),
+                ),
+            },
+        },
+        pubmed_leg.map(|leg| match leg {
+            Ok(page) => FederatedSourceOutcome::Available(page),
+            Err(err) => FederatedSourceOutcome::Unavailable {
+                error: Some(err),
+                status: source_degraded_status(
+                    ArticleSource::PubMed,
+                    "PubMed search unavailable".to_string(),
+                ),
+            },
+        }),
+        match semantic_scholar_leg {
+            Ok(outcome) => FederatedSourceOutcome::Available(outcome),
+            Err(err) => FederatedSourceOutcome::Unavailable {
+                error: Some(err),
+                status: semantic_scholar_unavailable_status("Semantic Scholar search unavailable"),
+            },
+        },
+        match litsense2_leg {
+            Ok(rows) => FederatedSourceOutcome::Available(rows),
+            Err(err) => FederatedSourceOutcome::Unavailable {
+                error: Some(err),
+                status: source_degraded_status(
+                    ArticleSource::LitSense2,
+                    "LitSense2 search unavailable".to_string(),
+                ),
+            },
+        },
     )?
     .rows;
     Ok(finalize_article_candidates(

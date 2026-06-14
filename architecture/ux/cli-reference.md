@@ -85,6 +85,19 @@ Opt-in sections such as
 `clinical_features`, `diagnostics`, `disgenet`, and `funding` still require
 explicit naming.
 
+## Article Search Source UX
+
+`biomcp search article` defaults to `--source all` for recall. The federated
+article path fans out across PubTator3, Europe PMC, PubMed, Semantic Scholar,
+and LitSense2 with a 12-second per-source latency bound. Explicit single-source calls such
+as `--source pubmed` or `--source pubtator` remain the fast opt-in path and keep
+their normal source/client behavior.
+
+When a federated source times out or is unreachable, BioMCP returns rows from the
+healthy sources and reports the degraded source. Markdown includes source-status
+notes, JSON includes `_meta.source_status`, and `--debug-plan` includes the same
+per-source status in the article leg.
+
 ## Rare-Disease Trial Search Target
 
 Ticket 412 identified a gap in rare-disease trial search: users may know a
