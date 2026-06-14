@@ -677,13 +677,11 @@ fn ticket_377_article_renderer_envelope_contracts_json_meta() {
             next_commands: vec!["biomcp get article 22663011".to_string()],
             suggestions: Vec::new(),
             source_status: vec![crate::entities::article::ArticleSourceStatus {
-                source: crate::entities::article::ArticleSource::SemanticScholar,
+                source: crate::entities::article::ArticleSource::EuropePmc,
                 enabled: true,
-                auth_mode: Some(
-                    crate::sources::semantic_scholar::SemanticScholarAuthMode::SharedPool,
-                ),
+                auth_mode: None,
                 status: Some(crate::entities::article::ArticleSourceAvailability::Degraded),
-                message: Some("Semantic Scholar shared-pool degraded".to_string()),
+                message: Some("Europe PMC timed out after 12s".to_string()),
             }],
         },
     )
@@ -693,5 +691,10 @@ fn ticket_377_article_renderer_envelope_contracts_json_meta() {
         value["_meta"]["next_commands"][0],
         "biomcp get article 22663011"
     );
+    assert_eq!(value["_meta"]["source_status"][0]["source"], "europepmc");
     assert_eq!(value["_meta"]["source_status"][0]["status"], "degraded");
+    assert_eq!(
+        value["_meta"]["source_status"][0]["message"],
+        "Europe PMC timed out after 12s"
+    );
 }

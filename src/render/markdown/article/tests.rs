@@ -380,6 +380,58 @@ fn ticket_377_article_renderer_envelope_contracts_markdown_status() {
 }
 
 #[test]
+fn article_search_markdown_renders_non_semantic_source_status() {
+    let rows = vec![ArticleSearchResult {
+        pmid: "41800001".into(),
+        title: "BRAF melanoma bounded federation fixture".into(),
+        pmcid: None,
+        doi: None,
+        journal: None,
+        date: Some("2026-01-01".into()),
+        first_index_date: None,
+        citation_count: None,
+        influential_citation_count: None,
+        source: ArticleSource::PubTator,
+        matched_sources: vec![ArticleSource::PubTator],
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: None,
+        ranking: None,
+        normalized_title: "braf melanoma bounded federation fixture".into(),
+        normalized_abstract: String::new(),
+        publication_type: None,
+        source_local_position: 0,
+    }];
+    let source_status = vec![crate::entities::article::ArticleSourceStatus {
+        source: ArticleSource::EuropePmc,
+        enabled: true,
+        auth_mode: None,
+        status: Some(crate::entities::article::ArticleSourceAvailability::Degraded),
+        message: Some("Europe PMC timed out after 12s".to_string()),
+    }];
+
+    let markdown = article_search_markdown_with_footer_and_context(
+        "BRAF melanoma",
+        &rows,
+        "",
+        &article_filters_for_test(ArticleSort::Relevance),
+        ArticleSearchRenderContext {
+            source_filter: crate::entities::article::ArticleSourceFilter::All,
+            semantic_scholar_enabled: true,
+            note: None,
+            debug_plan: None,
+            exact_entity_commands: &[],
+            source_status: &source_status,
+        },
+    )
+    .expect("article_search_markdown_with_footer_and_context");
+
+    assert!(markdown.lines().any(|line| {
+        line.contains("Europe PMC source status: degraded") && line.contains("timed out after 12s")
+    }));
+}
+
+#[test]
 fn article_ranking_why_tier1_mixed_shows_title_plus_abstract() {
     let row = ArticleSearchResult {
         pmid: "1".into(),
