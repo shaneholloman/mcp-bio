@@ -123,11 +123,25 @@ search behavior, so the rendered help, list page, and user docs should teach the
 same contract as the execution path.
 
 ```bash
-(
-  ../../tools/biomcp-ci search trial --help
-  ../../tools/biomcp-ci list trial
-  grep -h "no-condition-expand\|matched_condition_label\|Matched Condition" ../../docs/user-guide/trial.md ../../docs/user-guide/cli-reference.md
-) | mustmatch like "--no-condition-expand
+../../tools/biomcp-ci search trial --help | mustmatch like "--no-condition-expand
+matched_condition_label
+Matched Condition"
+```
+
+```bash
+../../tools/biomcp-ci list trial | mustmatch like "--no-condition-expand
+matched_condition_label
+Matched Condition"
+```
+
+```bash
+grep -h "no-condition-expand\|matched_condition_label\|Matched Condition" ../../docs/user-guide/trial.md | mustmatch like "--no-condition-expand
+matched_condition_label
+Matched Condition"
+```
+
+```bash
+grep -h "no-condition-expand\|matched_condition_label\|Matched Condition" ../../docs/user-guide/cli-reference.md | mustmatch like "--no-condition-expand
 matched_condition_label
 Matched Condition"
 ```
