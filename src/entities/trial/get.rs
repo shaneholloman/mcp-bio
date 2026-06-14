@@ -131,6 +131,9 @@ pub async fn get(
             if !section_flags.include_eligibility {
                 trial.eligibility = None;
             }
+            if !section_flags.include_locations {
+                trial.locations = None;
+            }
 
             if section_flags.include_eligibility {
                 let criteria = study

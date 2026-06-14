@@ -69,6 +69,20 @@ Key inclusion: confirmed SHANK3-related neurodevelopmental disorder.
 ## Locations (ClinicalTrials.gov)'
 ```
 
+The `contacts` section needs site context to label site contacts, but JSON should
+not expose the full locations section unless the user asks for it.
+
+```bash
+bash ../fixtures/setup-ctgov-intervention-alias-spec-fixture.sh ../..
+. ../../.cache/spec-ctgov-intervention-alias-env
+trap 'bash ../fixtures/cleanup-ctgov-intervention-alias-spec-fixture.sh ../..' EXIT
+../../tools/biomcp-ci --json get trial NCT41300001 contacts \
+  | jq -r '[.contacts[]? | select(.level == "site") | .facility][0], has("locations"), has("eligibility")' \
+  | mustmatch like 'Rare Disease Center
+false
+false'
+```
+
 ## Location Pagination Help Declares Its Flags
 
 Location paging is part of the trial detail surface, so the paged locations
