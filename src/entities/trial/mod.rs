@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::BioMcpError;
 
 mod get;
-#[cfg(test)]
+#[cfg_attr(not(test), allow(dead_code))]
 mod planning;
 #[cfg(test)]
 mod planning_contract_tests;

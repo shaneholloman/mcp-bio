@@ -1,8 +1,8 @@
 //! Rare-disease trial planning request/plan boundary.
 //!
-//! Ticket 414 lands the contract first. The implementation step fills this pure
-//! planner with bounded rare-disease expansion behavior without calling source
-//! clients.
+//! The first implementation uses a deliberately small curated seed for the
+//! Phelan-McDermid / SHANK3 contract. Future ontology-backed expansion can add
+//! sources behind this module without changing the request or plan shape.
 
 use crate::error::BioMcpError;
 
@@ -66,7 +66,65 @@ pub(crate) struct PlanningWarning {
 }
 
 pub(crate) fn plan_rare_disease_trials(
-    _request: RareDiseaseTrialRequest,
+    request: RareDiseaseTrialRequest,
 ) -> Result<RareDiseaseTrialPlan, BioMcpError> {
-    Ok(RareDiseaseTrialPlan::default())
+    let mut plan = RareDiseaseTrialPlan::default();
+
+    if let Some(condition) = request.condition.as_deref() {
+        plan.primary_condition_labels.push(ConditionLabel {
+            label: condition.to_string(),
+        });
+        plan.query_terms.push(TrialQueryTerm {
+            term: condition.to_string(),
+            field: TrialQueryField::Condition,
+        });
+
+        if !request.strict_condition && is_phelan_mcdermid(condition) {
+            plan.expanded_condition_labels.push(ConditionExpansion {
+                label: "22q13 deletion syndrome".to_string(),
+                source: "curated rare-disease trial seed".to_string(),
+                reason: "bounded synonym for Phelan-McDermid syndrome planning".to_string(),
+            });
+        }
+    }
+
+    if let Some(gene) = request.gene.as_deref() {
+        plan.gene_labels.push(GeneLabel {
+            symbol: gene.to_string(),
+        });
+        plan.query_terms.push(TrialQueryTerm {
+            term: gene.to_string(),
+            field: TrialQueryField::Biomarker,
+        });
+    }
+
+    if let Some(raw_query) = request.raw_query.as_deref() {
+        add_noisy_term_warnings(raw_query, &mut plan.warnings);
+    }
+
+    Ok(plan)
+}
+
+fn is_phelan_mcdermid(value: &str) -> bool {
+    let normalized = value.to_ascii_lowercase();
+    normalized.contains("phelan") && normalized.contains("mcdermid")
+}
+
+fn add_noisy_term_warnings(raw_query: &str, warnings: &mut Vec<PlanningWarning>) {
+    let lower = raw_query.to_ascii_lowercase();
+    if lower.contains("autism") {
+        warnings.push(PlanningWarning {
+            term: "autism".to_string(),
+            reason: "broad phenotype omitted from bounded rare-disease trial expansion".to_string(),
+        });
+    }
+    for term in ["SHANK1", "SHANK2"] {
+        if lower.contains(&term.to_ascii_lowercase()) {
+            warnings.push(PlanningWarning {
+                term: term.to_string(),
+                reason: "unrelated SHANK-family term omitted from SHANK3 trial planning"
+                    .to_string(),
+            });
+        }
+    }
 }
