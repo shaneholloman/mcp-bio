@@ -18,6 +18,9 @@ pub struct TrialSearchArgs {
     /// literal matching.
     #[arg(short = 'i', long, num_args = 1..)]
     pub intervention: Vec<String>,
+    /// Disable ClinicalTrials.gov rare-disease condition expansion and preserve literal condition matching.
+    #[arg(long = "no-condition-expand")]
+    pub no_condition_expand: bool,
     /// Disable ClinicalTrials.gov intervention alias expansion and force literal matching.
     #[arg(long = "no-alias-expand")]
     pub no_alias_expand: bool,
@@ -113,8 +116,9 @@ pub struct TrialSearchArgs {
     pub offset: usize,
     /// Cursor token from a previous response.
     ///
-    /// When CTGov intervention alias expansion fans out to multiple queries,
-    /// `--next-page` is unavailable; use `--offset` or `--no-alias-expand`.
+    /// When CTGov condition expansion or intervention alias expansion fans out
+    /// to multiple queries, `--next-page` is unavailable; use `--offset`,
+    /// `--no-condition-expand`, or `--no-alias-expand`.
     #[arg(long = "next-page")]
     pub next_page: Option<String>,
     /// Maximum results (default: 10)

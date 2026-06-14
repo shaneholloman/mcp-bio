@@ -108,6 +108,7 @@ pub(in crate::cli) async fn handle_search(
         condition,
         intervention,
         no_alias_expand: args.no_alias_expand,
+        no_condition_expand: args.no_condition_expand,
         facility,
         status: args.status,
         phase: args.phase,
@@ -365,11 +366,18 @@ pub(super) fn trial_search_query_summary(
     offset: usize,
     next_page: Option<&str>,
 ) -> String {
+    let is_ctgov = matches!(
+        filters.source,
+        crate::entities::trial::TrialSource::ClinicalTrialsGov
+    );
+    let has_condition = filters
+        .condition
+        .as_deref()
+        .map(str::trim)
+        .is_some_and(|value| !value.is_empty());
+    let shows_condition_opt_out = filters.no_condition_expand && is_ctgov && has_condition;
     let shows_alias_opt_out = filters.no_alias_expand
-        && matches!(
-            filters.source,
-            crate::entities::trial::TrialSource::ClinicalTrialsGov
-        )
+        && is_ctgov
         && filters
             .intervention
             .as_deref()
@@ -381,6 +389,7 @@ pub(super) fn trial_search_query_summary(
             .condition
             .as_deref()
             .map(|v| format!("condition={v}")),
+        shows_condition_opt_out.then(|| "condition_expand=off".to_string()),
         query_intervention.map(|v| format!("intervention={v}")),
         shows_alias_opt_out.then(|| "alias_expand=off".to_string()),
         filters.facility.as_deref().map(|v| format!("facility={v}")),

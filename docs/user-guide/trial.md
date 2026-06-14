@@ -22,6 +22,19 @@ Add intervention and phase filters:
 biomcp search trial -c melanoma -i pembrolizumab --phase 3 --limit 5
 ```
 
+On the default CTGov path, `--condition` auto-expands bounded rare-disease
+labels, unions the matching trials, and shows which expanded label matched each
+returned row.
+
+```bash
+biomcp search trial -c "Phelan-McDermid Syndrome" --limit 20
+biomcp search trial -c "Phelan-McDermid Syndrome" --no-condition-expand --limit 20
+```
+
+When an expanded condition label wins, markdown adds a `Matched Condition`
+column and JSON adds `matched_condition_label`. `--no-condition-expand` forces
+strict literal condition matching.
+
 On the default CTGov path, `--intervention` auto-expands known drug aliases
 from the shared drug identity surface, unions the matching trials, and shows
 which alias matched each returned row.
@@ -33,8 +46,9 @@ biomcp search trial -i daraxonrasib --no-alias-expand --limit 20
 
 When an alternate alias wins, markdown adds a `Matched Intervention` column and
 JSON adds `matched_intervention_label`. `--no-alias-expand` forces strict
-literal matching. If alias expansion fans out to multiple CTGov queries,
-`--next-page` is unavailable; use `--offset` or `--no-alias-expand`.
+literal intervention matching. If condition or intervention expansion fans out
+to multiple CTGov queries, `--next-page` is unavailable; use `--offset`,
+`--no-condition-expand`, or `--no-alias-expand`.
 
 Add biomarker filters:
 

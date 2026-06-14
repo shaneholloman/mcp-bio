@@ -23,6 +23,7 @@ fn trial_row(nct_id: &str, status: &str) -> TrialSearchResult {
         phase: None,
         conditions: Vec::new(),
         sponsor: None,
+        matched_condition_label: None,
         matched_intervention_label: None,
     }
 }

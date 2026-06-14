@@ -100,6 +100,52 @@ ticket_414_rare_disease_trial_planning_rejects_noisy_broad_terms
 ticket_414_rare_disease_trial_planning_strict_mode_keeps_literal_condition"
 ```
 
+## Rare-Disease Trial Search Executes Bounded Condition Expansion
+
+Rare-disease trial search should consume the deterministic plan before any live
+ClinicalTrials.gov call. The Rust request-contract tests prove the CTGov search
+execution fans out accepted Phelan-McDermid condition labels, dedupes repeated
+NCT IDs, records matched-condition provenance, keeps strict mode literal, and
+preserves existing intervention alias provenance when both fan-out paths combine.
+
+```bash
+set -o pipefail
+cd ../.. && cargo test --lib ticket_415_rare_disease_trial_search -- --nocapture | mustmatch like "ticket_415_rare_disease_trial_search_condition_expansion_fans_out_and_dedupes_ncts
+ticket_415_rare_disease_trial_search_strict_mode_keeps_literal_condition_request
+ticket_415_rare_disease_trial_search_preserves_intervention_alias_provenance_with_condition_expansion
+ticket_415_rare_disease_trial_search_count_dedupes_expanded_condition_ncts"
+```
+
+## Trial Search Documents Condition Expansion Controls
+
+The strict/literal opt-out and matched-condition provenance are user-facing
+search behavior, so the rendered help, list page, and user docs should teach the
+same contract as the execution path.
+
+```bash
+../../tools/biomcp-ci search trial --help | mustmatch like "--no-condition-expand
+matched_condition_label
+Matched Condition"
+```
+
+```bash
+../../tools/biomcp-ci list trial | mustmatch like "--no-condition-expand
+matched_condition_label
+Matched Condition"
+```
+
+```bash
+grep -h "no-condition-expand\|matched_condition_label\|Matched Condition" ../../docs/user-guide/trial.md | mustmatch like "--no-condition-expand
+matched_condition_label
+Matched Condition"
+```
+
+```bash
+grep -h "no-condition-expand\|matched_condition_label\|Matched Condition" ../../docs/user-guide/cli-reference.md | mustmatch like "--no-condition-expand
+matched_condition_label
+Matched Condition"
+```
+
 ## Ticket 405 Architecture and Operator Contracts
 
 Current repo docs must describe the shipped BioMCP architecture and operator
