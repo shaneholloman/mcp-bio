@@ -32,9 +32,8 @@ When the user already knows the pathway title, the small result set should keep
 source-identified pathway rows visible instead of returning an empty card.
 
 ```bash
-../../tools/biomcp-ci search pathway 'MAPK signaling pathway' --limit 3 | mustmatch like '| Source | ID | Name |
-| Reactome |
-MAPK'
+../../tools/biomcp-ci search pathway 'MAPK signaling pathway' --limit 3 | mustmatch like '| Source | ID | Name |'
+../../tools/biomcp-ci search pathway 'MAPK signaling pathway' --limit 3 | mustmatch '/\| (KEGG|Reactome|WikiPathways) \| [^|]+ \| [^|]*MAPK[^|]* \|/'
 ```
 
 ## Exact KEGG Title Participation
