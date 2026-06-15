@@ -1154,6 +1154,7 @@ def test_pull_request_contract_gate_matches_release_validation() -> None:
 def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     makefile = _read_repo("Makefile")
     runner = _read_repo("scripts/run-specs.sh")
+    cargo_toml = _read_repo("Cargo.toml")
     assert (
         ".PHONY: build test lint check-quality-ratchet release-gate run clean spec spec-pr spec-contracts verify release-live-smoke validate-skills test-contracts install sync-python-dev"
         in makefile
@@ -1175,7 +1176,27 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         flags=re.MULTILINE,
     )
     assert not re.search(r"^check:", makefile, flags=re.MULTILINE)
-    assert re.search(r"^release-gate: lint test spec$", makefile, flags=re.MULTILINE)
+    assert re.search(
+        r'^\[profile\.release\]\n'
+        r'lto = "thin"\n'
+        r'codegen-units = 1\n'
+        r'panic = "abort"\n'
+        r'strip = true\n\n'
+        r'^\[profile\.spec\]\n'
+        r'inherits = "release"\n'
+        r'lto = false\n'
+        r'codegen-units = 16$',
+        cargo_toml,
+        flags=re.MULTILINE,
+    )
+    assert "SPEC_PROFILE ?= spec" in makefile
+    assert "SPEC_BIN ?= $(CURDIR)/target/$(SPEC_PROFILE)/biomcp" in makefile
+    assert re.search(
+        r"^release-gate: lint test\n"
+        r'\t\$\(MAKE\) spec SPEC_PROFILE=release SPEC_BIN="\$\(CURDIR\)/target/release/biomcp"$',
+        makefile,
+        flags=re.MULTILINE,
+    )
     assert re.search(r"^spec-contracts:\n", makefile, flags=re.MULTILINE)
     assert re.search(r"^release-live-smoke:\n", makefile, flags=re.MULTILINE)
     assert re.search(
@@ -1188,18 +1209,18 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     )
     assert re.search(
         r"^spec:\n"
-        r"\tcargo build --release --locked\n"
-        r"\tbash scripts/run-specs\.sh spec$",
+        r"\tcargo build --locked --profile \$\(SPEC_PROFILE\)\n"
+        r'\tBIOMCP_BIN="\$\(SPEC_BIN\)" bash scripts/run-specs\.sh spec$',
         makefile,
         flags=re.MULTILINE,
-    ), "spec: must run through scripts/run-specs.sh"
+    ), "spec: must run through scripts/run-specs.sh with the selected binary"
     assert re.search(
         r"^spec-pr:\n"
-        r"\tcargo build --release --locked\n"
-        r"\tbash scripts/run-specs\.sh spec-pr$",
+        r"\tcargo build --locked --profile \$\(SPEC_PROFILE\)\n"
+        r'\tBIOMCP_BIN="\$\(SPEC_BIN\)" bash scripts/run-specs\.sh spec-pr$',
         makefile,
         flags=re.MULTILINE,
-    ), "spec-pr: must run through scripts/run-specs.sh"
+    ), "spec-pr: must run through scripts/run-specs.sh with the selected binary"
     assert re.search(
         r"^sync-python-dev:\n"
         r"\tuv sync --extra dev --no-install-project$",
@@ -1207,6 +1228,10 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         flags=re.MULTILINE,
     )
     assert "uv sync --extra dev --no-install-project" in runner
+    assert 'verify) default_biomcp_bin="$ROOT/target/release/biomcp"' in runner
+    assert '*) default_biomcp_bin="$ROOT/target/spec/biomcp"' in runner
+    assert 'BIOMCP_BIN="${BIOMCP_BIN:-$default_biomcp_bin}"' in runner
+    assert 'export PATH="$mustmatch_path_dir:$BIOMCP_BIN_DIR:$PATH"' in runner
     for mode in ("spec", "spec-pr", "spec-contracts"):
         mode_block = re.search(rf"  {re.escape(mode)}\)\n(?P<body>.*?)\n    ;;", runner, flags=re.DOTALL)
         assert mode_block is not None, f"runner must define {mode} mode"

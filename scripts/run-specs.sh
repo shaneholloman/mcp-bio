@@ -104,11 +104,23 @@ run_python_contracts() {
   fi
 }
 
+# Build the Cargo test binaries up front so the `cargo test ...` invocations
+# inside the executable Markdown specs run an already-compiled harness instead
+# of recompiling under each spec heading's mustmatch `--timeout`. A cold
+# test-harness compile can exceed the per-heading timeout and fail an otherwise
+# green gate — the root cause of the ticket 422 routine-spec timeout. Routine
+# specs only call `cargo test --lib`; the live lane (cli.md/discover.md) also
+# calls `cargo test --test <name>`, so verify pre-builds every test target.
+prebuild_cargo_test_targets() {
+  echo "run-specs: pre-building cargo test binaries ($*) to keep in-spec cargo runs off the timeout path" >&2
+  cargo test --locked --no-run "$@"
+}
+
 mode="${1:-}"
 run_python=0
 case "$mode" in
   spec)
-    timeout_args=(--timeout 120)
+    timeout_args=(--timeout 180)
     paths=("${SPEC_ROUTINE_PATHS[@]}")
     run_python=1
     mustmatch_path_dir="$(mustmatch_dir)"
@@ -149,8 +161,23 @@ case "$mode" in
     ;;
 esac
 
-export BIOMCP_BIN="$ROOT/target/release/biomcp"
-export PATH="$mustmatch_path_dir:$ROOT/target/release:$PATH"
+case "$mode" in
+  verify) default_biomcp_bin="$ROOT/target/release/biomcp" ;;
+  *) default_biomcp_bin="$ROOT/target/spec/biomcp" ;;
+esac
+BIOMCP_BIN="${BIOMCP_BIN:-$default_biomcp_bin}"
+case "$BIOMCP_BIN" in
+  /*) ;;
+  *) BIOMCP_BIN="$ROOT/$BIOMCP_BIN" ;;
+esac
+BIOMCP_BIN_DIR="$(cd "$(dirname "$BIOMCP_BIN")" && pwd)"
+export BIOMCP_BIN
+export PATH="$mustmatch_path_dir:$BIOMCP_BIN_DIR:$PATH"
+
+case "$mode" in
+  spec|spec-pr|spec-contracts) prebuild_cargo_test_targets --lib ;;
+  verify) prebuild_cargo_test_targets ;;
+esac
 
 partition_paths "${paths[@]}"
 run_markdown_specs

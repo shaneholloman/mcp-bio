@@ -24,11 +24,12 @@ should fail closed but still explain the recovery path. Both spellings should
 print the same stderr guidance and keep stdout free for MCP protocol traffic.
 
 ```bash
+biomcp_bin="${BIOMCP_BIN:-../../target/release/biomcp}"
 for cmd in mcp serve; do
   stdout_file="$(mktemp)"
   stderr_file="$(mktemp)"
   set +e
-  ../../target/release/biomcp "$cmd" </dev/null >"$stdout_file" 2>"$stderr_file"
+  "$biomcp_bin" "$cmd" </dev/null >"$stdout_file" 2>"$stderr_file"
   status=$?
   set -e
   test "$status" -ne 0
@@ -185,11 +186,15 @@ tools/check-quality-ratchet.sh"
 ## Repository Release Gate Uses The Three Standard Gates
 
 The routine release gate should compose the workspace-standard commands
-directly. Keeping the dependency line visible prevents an obsolete shim or narrow
-spec subset from replacing the standard `lint`, `test`, and `spec` gates.
+directly, while overriding the spec profile back to the release binary for final
+artifact proof. Keeping the recipe visible prevents an obsolete shim or narrow
+spec subset from replacing the standard `lint`, `test`, and release-profile
+`spec` gate.
 
 ```bash
-awk '/^release-gate:/{print}' ../../Makefile | mustmatch like "release-gate: lint test spec"
+make -C ../.. -n release-gate 2>&1 | mustmatch like 'cargo nextest run
+cargo build --release --locked
+make spec SPEC_PROFILE=release SPEC_BIN='
 ```
 
 ## Repository Make Check Is Not A Public Target
@@ -270,12 +275,13 @@ make -C ../.. -n spec 2>&1 | mustmatch like "scripts/run-specs.sh"
 make -C ../.. -n spec-pr 2>&1 | mustmatch like "scripts/run-specs.sh"
 make -C ../.. -n spec-contracts 2>&1 | mustmatch like "scripts/run-specs.sh"
 make -C ../.. -n verify 2>&1 | mustmatch like "scripts/run-specs.sh"
-find ../../scripts -maxdepth 1 -name run-specs.sh -type f -exec sed -n '1,240p' {} \; | mustmatch like "mustmatch test
+find ../../scripts -maxdepth 1 -name run-specs.sh -type f -exec sed -n '1,240p' {} \; | mustmatch like 'mustmatch test
 --lang bash
---timeout 120
 --timeout 180
 SPEC_ROUTINE_PATHS
-SPEC_LIVE_PATHS"
+SPEC_LIVE_PATHS
+default_biomcp_bin="$ROOT/target/spec/biomcp"
+BIOMCP_BIN="${BIOMCP_BIN:-$default_biomcp_bin}"'
 ```
 
 ## Mustmatch Is No Longer A Python Dev Dependency

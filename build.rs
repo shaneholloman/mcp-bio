@@ -82,7 +82,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=protos/dna_model_service.proto");
     println!("cargo:rerun-if-changed=protos/dna_model.proto");
     println!("cargo:rerun-if-changed=protos/tensor.proto");
-    println!("cargo:rerun-if-changed=src/cli/list.rs");
+    // `src/cli/list.rs` was decomposed into the `src/cli/list/` module dir; the
+    // old path no longer exists. cargo treats a missing rerun-if-changed file as
+    // permanently stale, so it re-ran this build script — and recompiled the whole
+    // crate — on EVERY build. Watch the current directory instead.
+    println!("cargo:rerun-if-changed=src/cli/list");
     println!("cargo:rerun-if-changed=src/cli/list_reference.md");
 
     write_shell_description()?;
@@ -90,8 +94,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let git_sha = command_output("git", &["rev-parse", "--short", "HEAD"])
         .unwrap_or_else(|| "unknown".into());
     let git_tag = command_output("git", &["describe", "--tags", "--always"]);
+    // Stamp the HEAD commit date (deterministic), not the wall-clock build time.
+    // A wall-clock timestamp is a fresh value on every build-script run, i.e. a
+    // changed compile input that forces a full crate recompile on every build —
+    // the cache can never go warm. The commit date is stable for a given commit
+    // and is the more reproducible thing to record anyway.
     let build_date =
-        command_output("date", &["-u", "+%Y-%m-%dT%H:%M:%SZ"]).unwrap_or_else(|| "unknown".into());
+        command_output("git", &["log", "-1", "--format=%cI"]).unwrap_or_else(|| "unknown".into());
     println!("cargo:rustc-env=BIOMCP_BUILD_GIT_SHA={git_sha}");
     if let Some(tag) = &git_tag {
         println!("cargo:rustc-env=BIOMCP_BUILD_GIT_TAG={tag}");
@@ -109,9 +118,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match compiled {
         Ok(()) => {
-            // Update vendored copy so it stays current.
+            // Refresh the vendored fallback only when the generated output actually
+            // changed. Copying on every build rewrites this tracked source-tree file,
+            // which bumps its mtime and makes cargo treat the package as dirty —
+            // forcing a full recompile on every "warm" build (cargo build, make spec,
+            // make test, focused). Compare bytes and write only on a real change so
+            // the package stays clean and the build cache works.
             if proto_out.exists() {
-                let _ = fs::copy(&proto_out, &vendored);
+                let new_bytes = fs::read(&proto_out).ok();
+                let current = fs::read(&vendored).ok();
+                if let Some(new_bytes) = new_bytes
+                    && current.as_deref() != Some(new_bytes.as_slice())
+                {
+                    fs::write(&vendored, &new_bytes)?;
+                }
             }
         }
         Err(e) => {
