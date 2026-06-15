@@ -33,6 +33,9 @@ SPEC_LIVE_PATHS = \
 	spec/surface/cli.md \
 	spec/surface/discover.md
 
+SPEC_PROFILE ?= spec
+SPEC_BIN ?= $(CURDIR)/target/$(SPEC_PROFILE)/biomcp
+
 sync-python-dev:
 	uv sync --extra dev --no-install-project
 
@@ -53,7 +56,8 @@ lint:
 	./bin/lint
 	tools/check-quality-ratchet.sh
 
-release-gate: lint test spec
+release-gate: lint test
+	$(MAKE) spec SPEC_PROFILE=release SPEC_BIN="$(CURDIR)/target/release/biomcp"
 
 check-quality-ratchet:
 	@bash tools/check-quality-ratchet.sh
@@ -70,16 +74,16 @@ install:
 	install -m 755 target/release/biomcp "$(HOME)/.local/bin/biomcp"
 
 spec:
-	cargo build --release --locked
-	bash scripts/run-specs.sh spec
+	cargo build --locked --profile $(SPEC_PROFILE)
+	BIOMCP_BIN="$(SPEC_BIN)" bash scripts/run-specs.sh spec
 
 spec-pr:
-	cargo build --release --locked
-	bash scripts/run-specs.sh spec-pr
+	cargo build --locked --profile $(SPEC_PROFILE)
+	BIOMCP_BIN="$(SPEC_BIN)" bash scripts/run-specs.sh spec-pr
 
 spec-contracts:
-	cargo build --release --locked
-	bash scripts/run-specs.sh spec-contracts
+	cargo build --locked --profile $(SPEC_PROFILE)
+	BIOMCP_BIN="$(SPEC_BIN)" bash scripts/run-specs.sh spec-contracts
 
 verify:
 	cargo build --release --locked
@@ -87,7 +91,7 @@ verify:
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci search disease melanoma --limit 3
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci search article -g BRAF --limit 3
 	PATH="$${PWD}/target/release:$$PATH" BIOMCP_BIN="$${PWD}/target/release/biomcp" tools/biomcp-ci variant normalize all 'NM_000248.3:c.135del'
-	bash scripts/run-specs.sh verify
+	BIOMCP_BIN="$${PWD}/target/release/biomcp" bash scripts/run-specs.sh verify
 
 release-live-smoke:
 	$(MAKE) verify

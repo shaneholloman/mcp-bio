@@ -1180,9 +1180,15 @@ def test_ticket_378_profiles_route_routine_specs_to_deterministic_contracts() ->
     )
     assert commands["full-blocking"] == "make release-gate"
     assert commands["full-contracts"] == "make release-gate"
-    assert {"lint", "test", "spec"}.issubset(release_gate_deps), (
-        "release-gate must compose the standard lint, test, and spec gates directly"
+    assert {"lint", "test"}.issubset(release_gate_deps), (
+        "release-gate must compose the standard lint and test gates directly"
     )
+    assert re.search(
+        r"^release-gate: lint test\n"
+        r'\t\$\(MAKE\) spec SPEC_PROFILE=release SPEC_BIN="\$\(CURDIR\)/target/release/biomcp"$',
+        makefile,
+        flags=re.MULTILINE,
+    ), "release-gate must run the standard spec gate against the release binary"
     assert "spec-pr" not in release_gate_deps and "verify" not in release_gate_deps, (
         "release-gate must not keep live/cache-backed lanes as routine proof"
     )

@@ -108,7 +108,7 @@ mode="${1:-}"
 run_python=0
 case "$mode" in
   spec)
-    timeout_args=(--timeout 120)
+    timeout_args=(--timeout 180)
     paths=("${SPEC_ROUTINE_PATHS[@]}")
     run_python=1
     mustmatch_path_dir="$(mustmatch_dir)"
@@ -149,8 +149,18 @@ case "$mode" in
     ;;
 esac
 
-export BIOMCP_BIN="$ROOT/target/release/biomcp"
-export PATH="$mustmatch_path_dir:$ROOT/target/release:$PATH"
+case "$mode" in
+  verify) default_biomcp_bin="$ROOT/target/release/biomcp" ;;
+  *) default_biomcp_bin="$ROOT/target/spec/biomcp" ;;
+esac
+BIOMCP_BIN="${BIOMCP_BIN:-$default_biomcp_bin}"
+case "$BIOMCP_BIN" in
+  /*) ;;
+  *) BIOMCP_BIN="$ROOT/$BIOMCP_BIN" ;;
+esac
+BIOMCP_BIN_DIR="$(cd "$(dirname "$BIOMCP_BIN")" && pwd)"
+export BIOMCP_BIN
+export PATH="$mustmatch_path_dir:$BIOMCP_BIN_DIR:$PATH"
 
 partition_paths "${paths[@]}"
 run_markdown_specs
