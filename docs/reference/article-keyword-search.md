@@ -20,11 +20,12 @@ biomcp search article -k '"cafe-au-lait spots" neurofibromas disease' --type rev
 biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5
 ```
 
-On the default `--source all` route, adding `-k/--keyword` also brings LitSense2
-into compatible federated searches and makes the default relevance mode
-`hybrid`.
-That semantic-aware path uses the LitSense2-derived semantic signal; rows
-without LitSense2 provenance contribute `semantic=0`.
+On the default `--source all` route, adding `-k/--keyword` keeps the source set
+on PubTator3, Europe PMC, PubMed, and compatible Semantic Scholar while making
+the default relevance mode `hybrid`. Use `--source litsense2` explicitly when
+you want LitSense2.
+Semantic-aware ranking uses the LitSense2-derived semantic signal when a row has
+LitSense2 provenance; rows without LitSense2 provenance contribute `semantic=0`.
 BioMCP caps each federated source's contribution after deduplication and before
 ranking. Default: 40% of `--limit` on federated pools with at least three
 surviving primary sources. Rows count against their primary source after
@@ -122,9 +123,9 @@ whitespace-containing values.
 PubMed-specific behavior: direct `--source pubmed` searches and the compatible
 federated PubMed leg clean bounded question-format filler words from
 unfielded gene, disease, drug, and keyword terms before PubMed ESearch.
-Markdown and JSON query echoes keep the original wording, and PubTator3,
-Europe PMC, LitSense2, and Semantic Scholar keep their existing query
-behavior.
+Markdown and JSON query echoes keep the original wording, PubTator3, Europe
+PMC, and Semantic Scholar keep their existing default-route query behavior, and
+explicit `--source litsense2` searches keep the LitSense2 query behavior.
 
 This allows multi-word keyword retrieval such as:
 

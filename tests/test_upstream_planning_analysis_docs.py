@@ -172,7 +172,7 @@ def test_functional_overview_repaired_source_rows_match_current_contract() -> No
     assert "public entity surface" in functional_ws
 
     assert (
-        "| article | PubMed, PubTator3, Europe PMC, LitSense2 (keyword-gated), "
+        "| article | PubMed, PubTator3, Europe PMC, explicit LitSense2, "
         "PMC OA, NCBI ID Converter, Semantic Scholar (optional auth; `S2_API_KEY` "
         "recommended) | `biomcp search article -g BRAF --limit 5` |" in functional
     )
@@ -413,7 +413,8 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "`search article --source all` plans PubTator3 plus Europe PMC plus PubMed"
         in article_validation_section
     )
-    assert "Keyword-bearing queries also add LitSense2" in article_validation_section
+    assert "Keyword-bearing queries keep that default source set" in article_validation_section
+    assert "LitSense2 remains available only through explicit `--source litsense2`" in article_validation_section
     assert "Semantic Scholar remains an optional compatible search leg" in (
         article_validation_section
     )
@@ -437,7 +438,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         article_validation_section
     )
     assert (
-        "PubTator3, Europe PMC, LitSense2, and Semantic Scholar receive their existing query inputs"
+        "PubTator3, Europe PMC, and Semantic Scholar receive their existing query inputs on the default route"
         in (article_validation_section)
     )
     assert (
@@ -492,7 +493,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     )
     assert "MeSH/title/abstract" not in article_guide_ws
     assert (
-        "When a non-empty keyword is present, BioMCP also adds LitSense2 to the federated route."
+        "LitSense2 remains available only when selected explicitly with `--source litsense2`."
         in article_guide_ws
     )
     assert "LitSense2-derived semantic signal" in article_guide_ws
@@ -527,14 +528,14 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     )
     assert "MeSH/title/abstract" not in article_keyword_reference_ws
     assert (
-        "On the default `--source all` route, adding `-k/--keyword` also brings LitSense2 into compatible federated searches and makes the default relevance mode `hybrid`."
+        "On the default `--source all` route, adding `-k/--keyword` keeps the source set on PubTator3, Europe PMC, PubMed, and compatible Semantic Scholar while making the default relevance mode `hybrid`. Use `--source litsense2` explicitly when you want LitSense2."
         in article_keyword_reference_ws
     )
     assert "LitSense2-derived semantic signal" in article_keyword_reference_ws
     assert "semantic=0" in article_keyword_reference_ws
     assert "PubMed-specific behavior" in article_keyword_reference_ws
     assert (
-        "PubTator3, Europe PMC, LitSense2, and Semantic Scholar keep their existing query behavior"
+        "PubTator3, Europe PMC, and Semantic Scholar keep their existing default-route query behavior"
         in article_keyword_reference_ws
     )
     assert (
@@ -552,12 +553,11 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "LitSense2-derived semantic signal" in cli_list_reference_ws
     assert "semantic=0" in cli_list_reference_ws
     assert (
-        "PubTator3 + Europe PMC + PubMed + LitSense2 + optional Semantic Scholar"
+        "PubTator3 + Europe PMC + PubMed + optional Semantic Scholar; LitSense2 by explicit `--source litsense2`"
         in (data_sources_ws)
     )
     assert (
-        "PubTator3 + Europe PMC + PubMed for federated search, with LitSense2 added for "
-        "keyword-bearing queries and an optional Semantic Scholar leg"
+        "PubTator3 + Europe PMC + PubMed for default federated search, with an optional Semantic Scholar leg"
         in data_sources_ws
     )
     assert (

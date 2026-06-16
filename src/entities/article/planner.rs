@@ -124,12 +124,10 @@ pub(crate) fn semantic_scholar_search_enabled(
 }
 
 pub(crate) fn litsense2_search_enabled(
-    filters: &ArticleSearchFilters,
+    _filters: &ArticleSearchFilters,
     source: ArticleSourceFilter,
 ) -> bool {
-    source == ArticleSourceFilter::All
-        && !has_strict_europepmc_filters(filters)
-        && has_keyword_query(filters)
+    source == ArticleSourceFilter::LitSense2
 }
 
 pub(crate) fn article_type_limitation_note(
@@ -190,9 +188,6 @@ pub(crate) fn summarize_debug_plan(
             let mut sources = vec!["PubTator3".to_string(), "Europe PMC".to_string()];
             if pubmed_filter_compatible(filters) {
                 sources.push("PubMed".to_string());
-            }
-            if litsense2_search_enabled(filters, source) {
-                sources.push("LitSense2".to_string());
             }
             sources
         }

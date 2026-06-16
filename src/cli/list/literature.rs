@@ -80,7 +80,7 @@ Entity-only quick start:
 Routing note:
 
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
-- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
+- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; the default source set remains PubTator3 + Europe PMC + PubMed + Semantic Scholar, and the default relevance mode becomes hybrid instead of lexical. Use `--source litsense2` explicitly when you want LitSense2.
 - Direct and compatible federated PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally; query echoes and non-PubMed sources keep the original wording.
 - Cap each federated source's contribution after deduplication and before ranking.
 - Default: 40% of `--limit` on federated pools with at least three surviving primary sources.
@@ -120,7 +120,7 @@ Worked examples:
 - Add `--pdf` only with `fulltext` to extend that ladder with Semantic Scholar PDF as the last resort.
 - `--pdf` requires the `fulltext` section and is rejected for other article requests.
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
-- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; that also brings LitSense2 into compatible federated searches and makes the default relevance mode hybrid instead of lexical.
+- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; the default source set remains PubTator3 + Europe PMC + PubMed + Semantic Scholar, and the default relevance mode becomes hybrid instead of lexical. Use `--source litsense2` explicitly when you want LitSense2.
 - Direct and compatible federated PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally; query echoes and non-PubMed sources keep the original wording.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
 - `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.

@@ -313,11 +313,13 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert "Do not guess `-g`, `-d`, or `--drug`" in find_articles
     assert 'biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5' in find_articles
     assert "MeSH/title/abstract" not in keyword_reference
-    assert "On the default `--source all` route, adding `-k/--keyword` also brings LitSense2" in keyword_reference
+    assert "On the default `--source all` route, adding `-k/--keyword` keeps the source set" in keyword_reference
+    assert "Use `--source litsense2` explicitly" in keyword_reference
+    assert "you want LitSense2" in keyword_reference
     assert "LitSense2-derived semantic signal" in keyword_reference
     assert "semantic=0" in keyword_reference
     assert "PubMed-specific behavior" in keyword_reference
-    assert "Semantic Scholar keep their existing query" in keyword_reference
+    assert "Semantic Scholar keep their existing default-route query" in keyword_reference
     assert "do not guess a disease or drug name" in keyword_reference
     assert (
         'biomcp search article --drug amiodarone -k "photosensitivity mechanism" --limit 5'

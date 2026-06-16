@@ -172,7 +172,9 @@ Results depend on source document wording and may vary across sources.
   including federated degradation and redacted Semantic Scholar auth/availability.
 - On default `search article --source all`, typed anchors use compatible federated
   sources and Semantic Scholar remains automatic.
-- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and free-text concepts.
+- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and free-text concepts;
+  the default source set stays PubTator3 + Europe PMC + PubMed + Semantic Scholar.
+- Use `--source litsense2` explicitly to query LitSense2.
 - Keyword-bearing article queries default to hybrid ranking.
 - Cap each federated source's contribution after deduplication and before ranking.
 - Default: 40% of `--limit` on federated pools with at least three surviving primary sources.

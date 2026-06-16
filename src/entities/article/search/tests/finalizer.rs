@@ -385,10 +385,8 @@ async fn federated_search_enrichment_overwrites_europepmc_zero_citation_count() 
 
     Mock::given(method("GET"))
         .and(path("/sentences/"))
-        .and(query_param("query", "GDNF RET Hirschsprung 1996"))
-        .and(query_param("rerank", "true"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
-        .expect(1)
+        .expect(0)
         .mount(&litsense2)
         .await;
 

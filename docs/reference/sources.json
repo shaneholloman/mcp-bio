@@ -518,7 +518,7 @@
     "terms_url": "https://www.ncbi.nlm.nih.gov/research/litsense2-api/",
     "key_url": null,
     "reviewed_on": "2026-04-10",
-    "notes": "LitSense2 is only used for keyword-bearing article search paths and contributes semantic-signal metadata rather than acting as the sole article backend."
+    "notes": "LitSense2 is individually selectable with search article --source litsense2 and contributes semantic-signal metadata; it is not part of the default --source all federation."
   },
   {
     "id": "monarch-initiative",

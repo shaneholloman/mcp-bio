@@ -246,10 +246,10 @@ export ALPHAGENOME_API_KEY="..." # AlphaGenome variant effect prediction
 the explicit Semantic Scholar helpers all work without `S2_API_KEY`. With the
 key, BioMCP sends authenticated requests and uses a dedicated rate limit at
 1 req/sec. Without it, BioMCP uses the shared unauthenticated pool at 1 req/2sec.
-`search article --source` supports `all`, `pubtator`, `europepmc`, and
-`pubmed`. The
-default compatible article federation uses PubTator3, Europe PMC, and PubMed,
-while the S2 leg remains automatic rather than directly selectable. References
+`search article --source` supports `all`, `pubtator`, `europepmc`, `pubmed`,
+and `litsense2`. The default compatible article federation uses PubTator3,
+Europe PMC, PubMed, and automatic Semantic Scholar; use `--source litsense2`
+explicitly when you want LitSense2. References
 and recommendations can be empty for paywalled papers because of publisher
 elision in Semantic Scholar upstream coverage.
 

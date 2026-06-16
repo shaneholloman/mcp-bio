@@ -790,7 +790,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 
 ### LitSense2
 
-- BioMCP surfaces: `search article -k <query>`
+- BioMCP surfaces: `search article --source litsense2 -k <query>`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: open public API
@@ -798,7 +798,7 @@ The canonical machine-readable inventory for this page lives in [`sources.json`]
 - Redistribution / reuse summary: query results are broadly reusable, but preserve article-level provenance and record rights separately
 - Official terms URL: <https://www.ncbi.nlm.nih.gov/research/litsense2-api/>
 - Reviewed on: `2026-04-10`
-- Notes: LitSense2 is only used for keyword-bearing article search paths and contributes semantic-signal metadata rather than acting as the sole article backend.
+- Notes: LitSense2 is individually selectable with `search article --source litsense2` and contributes semantic-signal metadata; it is not part of the default `--source all` federation.
 
 ### PharmGKB
 

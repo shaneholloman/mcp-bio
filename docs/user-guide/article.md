@@ -108,11 +108,11 @@ biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 
 ### Multi-source federation
 
 Article search fans out to PubTator3, Europe PMC, and PubMed by default when
-the filter set is compatible. Known gene, disease, and drug anchors
-participate in that typed route. When a non-empty keyword is present, BioMCP
-also adds LitSense2 to the federated route. Semantic Scholar can still join
-the same query when the filter set is compatible. BioMCP merges duplicates
-across PMID, PMCID, and DOI where possible. `S2_API_KEY` upgrades the Semantic
+the filter set is compatible. Known gene, disease, drug, and keyword queries
+participate in that route. Semantic Scholar can still join the same query when
+the filter set is compatible. LitSense2 remains available only when selected
+explicitly with `--source litsense2`. BioMCP merges duplicates across PMID,
+PMCID, and DOI where possible. `S2_API_KEY` upgrades the Semantic
 Scholar leg to authenticated requests at 1 req/sec; without it, BioMCP uses
 the shared unauthenticated pool at 1 req/2sec. Search results are still
 deduplicated by PMID when BioMCP can resolve one.

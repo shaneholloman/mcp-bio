@@ -282,7 +282,7 @@ EXAMPLES:
 
 See also: biomcp list gwas")]
     Gwas(gwas::GwasSearchArgs),
-    /// Search articles by gene, disease, drug, keyword, or author (PubTator3 + Europe PMC + PubMed + keyword-gated LitSense2, optional Semantic Scholar)
+    /// Search articles by gene, disease, drug, keyword, or author (PubTator3 + Europe PMC + PubMed + optional Semantic Scholar by default; LitSense2 only with --source litsense2)
     #[command(after_help = "\
 When to use: use keyword search to scan a topic before you know the entities. Add -g/--gene when you already know the molecular anchor. Prefer --type review for synthesis questions.
 
@@ -326,7 +326,7 @@ QUERY FORMULATION:
   - Unknown-entity questions should stay keyword-first or start with `discover`.
   - Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole `-k/--keyword` exactly matches a vocabulary label or alias.
   - Multi-concept phrases and searches that already use `-g/--gene`, `-d/--disease`, or `--drug` do not get direct entity suggestions.
-  - Adding `-k/--keyword` on the default route brings in LitSense2 and default `hybrid` relevance.
+  - Adding `-k/--keyword` keeps the default route on PubTator3 + Europe PMC + PubMed + Semantic Scholar and selects default `hybrid` relevance. Use `--source litsense2` explicitly when you want LitSense2.
   - Prefer `--type review` for synthesis or list-style questions; it can narrow the compatible default backend set.
   - Avoid: `biomcp search article \"TP53 apoptosis gene regulation\"`
     Prefer: `biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5`
