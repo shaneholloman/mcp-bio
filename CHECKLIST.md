@@ -88,7 +88,7 @@ NCBI / literature:
 
 Trials / cancer:
 - [x] clinicaltrials ~6 · [x] cbioportal ~2 · [x] cbioportal_download ~9 · [x] cbioportal_study ~35
-- [ ] cancerhotspots ~5 · [ ] oncokb ~4 (no API token available → reuse the existing canned response as the fixture) · [ ] seer ~4
+- [x] cancerhotspots ~5 · [ ] oncokb ~4 (no API token available → reuse the existing canned response as the fixture) · [ ] seer ~4
 
 Variants / genomics:
 - [ ] gnomad ~4 · [ ] gtex ~4 · [ ] gwas ~5 · [ ] variantvalidator ~6 · [ ] mutalyzer ~6
@@ -188,4 +188,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: `cbioportal_study` reviewed and kept as-is because it is already a
   pure local file parser/statistics test set, not an HTTP source. Checks:
   `cargo nextest run -E 'test(/sources::cbioportal_study::/)'` → 35/35 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `cancerhotspots` converted. Checks:
+  `cargo nextest run -E 'test(/sources::cancerhotspots::/)'` → 8/8 pass;
   `bash scripts/check-no-server-tests.sh` → pass.

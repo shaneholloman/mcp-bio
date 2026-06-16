@@ -1,0 +1,18 @@
+[
+  {
+    "hugoSymbol": "BRAF",
+    "residue": "V600",
+    "tumorCount": 64,
+    "transcriptId": "ENST00000000000",
+    "aminoAcidPosition": 600,
+    "variantAminoAcid": {"K": 64}
+  },
+  {
+    "hugoSymbol": "BRAF",
+    "residue": "V600",
+    "tumorCount": 897,
+    "transcriptId": "ENST00000288602",
+    "aminoAcidPosition": 600,
+    "variantAminoAcid": {"E": 833}
+  }
+]

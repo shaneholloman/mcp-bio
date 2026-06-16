@@ -1,9 +1,12 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const CANCERHOTSPOTS_BASE: &str = "https://www.cancerhotspots.org";
 const CANCERHOTSPOTS_API: &str = "cancerhotspots.org";
@@ -55,53 +58,40 @@ impl CancerHotspotsClient {
         })
     }
 
-    #[cfg(test)]
-    pub(crate) fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
-    pub(crate) fn by_gene_url(&self, gene: &str) -> String {
-        self.endpoint(&format!(
+    pub(crate) fn by_gene_plan(gene: &str) -> RequestPlan {
+        RequestPlan::get(format!(
             "api/hotspots/single/byGene/{}",
             encode_path_segment(gene.trim())
         ))
     }
 
-    pub async fn by_gene(&self, gene: &str) -> Result<Vec<CancerHotspotRow>, BioMcpError> {
-        let url = self.by_gene_url(gene);
-        let resp = crate::sources::apply_cache_mode(self.client.get(&url))
-            .send()
-            .await?;
-        let status = resp.status();
-        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
-        let bytes = crate::sources::read_limited_body(resp, CANCERHOTSPOTS_API).await?;
+    pub(crate) fn decode_by_gene_response(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<Vec<CancerHotspotRow>, BioMcpError> {
         if !status.is_success() {
-            let excerpt = crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
+            let excerpt = crate::sources::summarize_http_error_body(content_type, bytes);
             return Err(BioMcpError::Api {
                 api: CANCERHOTSPOTS_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
-        crate::sources::ensure_json_content_type(
-            CANCERHOTSPOTS_API,
-            content_type.as_ref(),
-            &bytes,
-        )?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+        crate::sources::ensure_json_content_type(CANCERHOTSPOTS_API, content_type, bytes)?;
+        serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
             api: CANCERHOTSPOTS_API.to_string(),
             source,
         })
+    }
+
+    pub async fn by_gene(&self, gene: &str) -> Result<Vec<CancerHotspotRow>, BioMcpError> {
+        let plan = Self::by_gene_plan(gene);
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let resp = crate::sources::apply_cache_mode(req).send().await?;
+        let status = resp.status();
+        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
+        let bytes = crate::sources::read_limited_body(resp, CANCERHOTSPOTS_API).await?;
+        Self::decode_by_gene_response(status, content_type.as_ref(), &bytes)
     }
 }
 
@@ -179,109 +169,4 @@ fn residue_and_alt(normalized_change: &str) -> Option<(String, String)> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn by_gene_request_uses_encoded_path_and_no_body() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/api/hotspots/single/byGene/ALK%20FUSION"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = CancerHotspotsClient::new_for_test(server.uri()).unwrap();
-        let rows = client.by_gene("ALK FUSION").await.unwrap();
-        assert!(rows.is_empty());
-    }
-
-    #[test]
-    fn recurrence_maps_counts_and_transcript_for_exact_alt() {
-        let rows: Vec<CancerHotspotRow> = serde_json::from_value(serde_json::json!([
-            {
-                "hugoSymbol": "BRAF",
-                "residue": "V600",
-                "tumorCount": 897,
-                "transcriptId": "ENST00000288602",
-                "aminoAcidPosition": 600,
-                "variantAminoAcid": {"E": 833, "K": 64}
-            }
-        ]))
-        .unwrap();
-
-        let recurrence = recurrence_for_change(&rows, "V600E");
-        assert_eq!(recurrence.source, "cancerhotspots.org");
-        assert_eq!(recurrence.position_count, Some(897));
-        assert_eq!(recurrence.same_aa_count, Some(833));
-        assert_eq!(
-            recurrence.matched_transcript.as_deref(),
-            Some("ENST00000288602")
-        );
-    }
-
-    #[test]
-    fn recurrence_serializes_checked_absence_with_nulls() {
-        let recurrence = recurrence_for_change(&[], "G12D");
-        let json = serde_json::to_value(&recurrence).unwrap();
-        assert_eq!(json["source"], "cancerhotspots.org");
-        assert!(json.get("position_count").is_some());
-        assert!(json["position_count"].is_null());
-        assert!(json["same_aa_count"].is_null());
-        assert!(json["matched_transcript"].is_null());
-    }
-
-    #[test]
-    fn recurrence_treats_missing_exact_alt_as_checked_absence() {
-        let rows: Vec<CancerHotspotRow> = serde_json::from_value(serde_json::json!([
-            {
-                "hugoSymbol": "KRAS",
-                "residue": "G12",
-                "tumorCount": 100,
-                "transcriptId": "ENST00000256078",
-                "aminoAcidPosition": 12,
-                "variantAminoAcid": {"D": 25}
-            }
-        ]))
-        .unwrap();
-
-        let json = serde_json::to_value(recurrence_for_change(&rows, "G12V")).unwrap();
-        assert!(json["position_count"].is_null());
-        assert!(json["same_aa_count"].is_null());
-        assert!(json["matched_transcript"].is_null());
-    }
-
-    #[test]
-    fn recurrence_checks_later_matching_residue_rows_for_exact_alt() {
-        let rows: Vec<CancerHotspotRow> = serde_json::from_value(serde_json::json!([
-            {
-                "hugoSymbol": "BRAF",
-                "residue": "V600",
-                "tumorCount": 64,
-                "transcriptId": "ENST00000000000",
-                "aminoAcidPosition": 600,
-                "variantAminoAcid": {"K": 64}
-            },
-            {
-                "hugoSymbol": "BRAF",
-                "residue": "V600",
-                "tumorCount": 897,
-                "transcriptId": "ENST00000288602",
-                "aminoAcidPosition": 600,
-                "variantAminoAcid": {"E": 833}
-            }
-        ]))
-        .unwrap();
-
-        let recurrence = recurrence_for_change(&rows, "V600E");
-        assert!(recurrence.position_count.is_some());
-        assert!(recurrence.same_aa_count.is_some());
-        assert_eq!(
-            recurrence.matched_transcript.as_deref(),
-            Some("ENST00000288602")
-        );
-    }
-}
+mod tests;
