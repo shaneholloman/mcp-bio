@@ -95,7 +95,7 @@ Variants / genomics:
 - [x] clingen ~5 · [x] civic ~3 · [x] gtr ~12
 
 Drugs / chem / regulatory:
-- [x] chembl ~3 · [ ] dgidb ~3 · [ ] ddinter ~5 · [ ] openfda ~9 · [ ] ema ~11 · [ ] pharmgkb ~2
+- [x] chembl ~3 · [x] dgidb ~3 · [ ] ddinter ~5 · [ ] openfda ~9 · [ ] ema ~11 · [ ] pharmgkb ~2
 - [ ] cpic ~3 · [ ] cvx ~11 · [ ] vaers ~10 · [ ] who_pq ~20 · [ ] who_ivd ~6
 
 Ontologies / proteins / pathways / misc:
@@ -226,4 +226,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `bash scripts/check-no-server-tests.sh` → pass.
 - 2026-06-16: `chembl` converted. Checks:
   `cargo nextest run -E 'test(/sources::chembl::/)'` → 6/6 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `dgidb` converted. Checks:
+  `cargo nextest run -E 'test(/sources::dgidb::/)'` → 5/5 pass;
   `bash scripts/check-no-server-tests.sh` → pass.

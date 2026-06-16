@@ -2,10 +2,13 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashMap};
 
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestBody, RequestPlan, request_from_plan};
 
 const DGIDB_BASE: &str = "https://dgidb.org/api";
 const DGIDB_API: &str = "dgidb";
@@ -51,65 +54,52 @@ impl DgidbClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
+    pub(crate) fn gene_interactions_plan(gene_name: &str) -> Result<RequestPlan, BioMcpError> {
+        let gene_name = normalize_gene_symbol(gene_name)?;
+        let mut plan = RequestPlan::post("graphql");
+        plan.body = RequestBody::Json(serde_json::json!({
+            "query": DGIDB_GENE_QUERY,
+            "variables": {
+                "gene": gene_name,
+                "first": 1,
+            },
+        }));
+        Ok(plan)
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        crate::sources::decode_json(DGIDB_API, status, content_type, bytes, true)
     }
 
-    async fn post_json<T: DeserializeOwned, B: Serialize>(
+    async fn post_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
-        body: &B,
     ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode(req.json(body))
-            .send()
-            .await?;
+        let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, DGIDB_API).await?;
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: DGIDB_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(DGIDB_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: DGIDB_API.to_string(),
-            source,
-        })
+        Self::decode_json_response(status, content_type.as_ref(), &bytes)
     }
 
     pub async fn gene_interactions(
         &self,
         gene_name: &str,
     ) -> Result<GeneDruggability, BioMcpError> {
-        let gene_name = normalize_gene_symbol(gene_name)?;
-        let url = self.endpoint("graphql");
-        let body = GraphQlRequest {
-            query: DGIDB_GENE_QUERY,
-            variables: serde_json::json!({
-                "gene": gene_name,
-                "first": 1,
-            }),
-        };
-        let resp: GraphQlResponse<DgidbGeneData> =
-            self.post_json(self.client.post(&url), &body).await?;
+        let plan = Self::gene_interactions_plan(gene_name)?;
+        let resp: GraphQlResponse<DgidbGeneData> = self
+            .post_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Self::druggability_from_response(resp)
+    }
 
+    fn druggability_from_response(
+        resp: GraphQlResponse<DgidbGeneData>,
+    ) -> Result<GeneDruggability, BioMcpError> {
         if let Some(errors) = resp.errors {
             let message = errors
                 .into_iter()
@@ -279,12 +269,6 @@ struct InteractionAccumulator {
     sources: BTreeSet<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-struct GraphQlRequest<'a> {
-    query: &'a str,
-    variables: serde_json::Value,
-}
-
 #[derive(Debug, Clone, Deserialize)]
 struct GraphQlResponse<T> {
     data: Option<T>,
@@ -385,102 +369,4 @@ fn normalize_label(value: &str) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{body_string_contains, method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn gene_interactions_aggregates_categories_and_interactions() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DgidbGeneDruggability"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "genes": {
-                        "nodes": [{
-                            "name": "BRAF",
-                            "geneCategories": [
-                                {"name": "KINASE"},
-                                {"name": "kinase"},
-                                {"name": "PROTEIN KINASE"}
-                            ],
-                            "interactions": [
-                                {
-                                    "drug": {"name": "DABRAFENIB", "approved": true},
-                                    "interactionScore": 0.8,
-                                    "interactionTypes": [{"type": "inhibitor"}],
-                                    "sources": [{"sourceDbName": "SourceA"}]
-                                },
-                                {
-                                    "drug": {"name": "DABRAFENIB", "approved": false},
-                                    "interactionScore": 1.2,
-                                    "interactionTypes": [{"type": "antagonist"}, {"type": "inhibitor"}],
-                                    "sources": [{"sourceDbName": "SourceB"}]
-                                },
-                                {
-                                    "drug": {"name": "SORAFENIB", "approved": true},
-                                    "interactionScore": 0.4,
-                                    "interactionTypes": [{"type": "inhibitor"}],
-                                    "sources": [{"sourceDbName": "SourceC"}]
-                                }
-                            ]
-                        }]
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = DgidbClient::new_for_test(server.uri()).expect("client");
-        let out = client
-            .gene_interactions("BRAF")
-            .await
-            .expect("druggability");
-
-        assert_eq!(out.categories, vec!["Kinase", "Protein Kinase"]);
-        assert_eq!(out.interactions.len(), 2);
-
-        let first = &out.interactions[0];
-        assert_eq!(first.drug, "DABRAFENIB");
-        assert_eq!(first.score, Some(1.2));
-        assert_eq!(first.approved, Some(true));
-        assert_eq!(first.source_count, 2);
-        assert_eq!(first.interaction_types, vec!["antagonist", "inhibitor"]);
-    }
-
-    #[tokio::test]
-    async fn gene_interactions_returns_graphql_errors() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "errors": [
-                    {"message": "GraphQL validation failed"}
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = DgidbClient::new_for_test(server.uri()).expect("client");
-        let err = client
-            .gene_interactions("BRAF")
-            .await
-            .expect_err("graphql error should propagate");
-        assert!(matches!(err, BioMcpError::Api { .. }));
-        assert!(err.to_string().contains("GraphQL validation failed"));
-    }
-
-    #[tokio::test]
-    async fn gene_interactions_rejects_invalid_symbol() {
-        let client = DgidbClient::new_for_test("http://127.0.0.1".into()).expect("client");
-        let err = client
-            .gene_interactions("BRAF!")
-            .await
-            .expect_err("invalid symbol should fail");
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-}
+mod tests;

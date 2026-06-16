@@ -1,0 +1,39 @@
+{
+  "data": {
+    "genes": {
+      "nodes": [
+        {
+          "name": "BRAF",
+          "geneCategories": [
+            {"name": "KINASE"},
+            {"name": "kinase"},
+            {"name": "PROTEIN KINASE"}
+          ],
+          "interactions": [
+            {
+              "drug": {"name": "DABRAFENIB", "approved": true},
+              "interactionScore": 0.8,
+              "interactionTypes": [{"type": "inhibitor"}],
+              "sources": [{"sourceDbName": "SourceA"}]
+            },
+            {
+              "drug": {"name": "DABRAFENIB", "approved": false},
+              "interactionScore": 1.2,
+              "interactionTypes": [
+                {"type": "antagonist"},
+                {"type": "inhibitor"}
+              ],
+              "sources": [{"sourceDbName": "SourceB"}]
+            },
+            {
+              "drug": {"name": "SORAFENIB", "approved": true},
+              "interactionScore": 0.4,
+              "interactionTypes": [{"type": "inhibitor"}],
+              "sources": [{"sourceDbName": "SourceC"}]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
