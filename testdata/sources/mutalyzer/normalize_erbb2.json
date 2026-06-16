@@ -1,0 +1,12 @@
+{
+  "input_description": "NM_004448.2:c.829G>T",
+  "normalized_description": "NM_004448.2:c.829G>T",
+  "protein": {
+    "description": "NP_004439.2:p.(Asp277Tyr)"
+  },
+  "infos": [
+    {
+      "details": "source warning"
+    }
+  ]
+}

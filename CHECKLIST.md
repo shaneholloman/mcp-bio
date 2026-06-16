@@ -91,7 +91,7 @@ Trials / cancer:
 - [x] cancerhotspots ~5 · [x] oncokb ~4 (no API token available → reuse the existing canned response as the fixture) · [x] seer ~4
 
 Variants / genomics:
-- [x] gnomad ~4 · [x] gtex ~4 · [x] gwas ~5 · [x] variantvalidator ~6 · [ ] mutalyzer ~6
+- [x] gnomad ~4 · [x] gtex ~4 · [x] gwas ~5 · [x] variantvalidator ~6 · [x] mutalyzer ~6
 - [ ] clingen ~5 · [ ] civic ~3 · [ ] gtr ~12
 
 Drugs / chem / regulatory:
@@ -210,4 +210,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `bash scripts/check-no-server-tests.sh` → pass.
 - 2026-06-16: `variantvalidator` converted. Checks:
   `cargo nextest run -E 'test(/sources::variantvalidator::/)'` → 7/7 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `mutalyzer` converted. Checks:
+  `cargo nextest run -E 'test(/sources::mutalyzer::/)'` → 7/7 pass;
   `bash scripts/check-no-server-tests.sh` → pass.

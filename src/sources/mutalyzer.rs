@@ -4,6 +4,8 @@ use crate::entities::variant::{
     VariantNormalizationService, VariantNormalizationServiceResult, VariantNormalizationStatus,
 };
 use crate::error::BioMcpError;
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 
 const MUTALYZER_BASE: &str = "https://mutalyzer.nl/api";
 const MUTALYZER_API: &str = "mutalyzer";
@@ -29,14 +31,6 @@ impl MutalyzerClient {
         Ok(Self {
             client: crate::sources::shared_client()?,
             base: crate::sources::env_base(MUTALYZER_BASE, MUTALYZER_BASE_ENV),
-        })
-    }
-
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
         })
     }
 
@@ -97,33 +91,40 @@ impl MutalyzerClient {
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, MUTALYZER_API).await?;
 
-        if !status.is_success() {
-            return Ok(provider_error(status, &bytes));
-        }
-
-        if let Err(err) =
-            crate::sources::ensure_json_content_type(MUTALYZER_API, content_type.as_ref(), &bytes)
-        {
-            return Ok(message_result(
-                VariantNormalizationStatus::ServiceError,
-                err.to_string(),
-            ));
-        }
-        let value: serde_json::Value = match serde_json::from_slice(&bytes) {
-            Ok(value) => value,
-            Err(source) => {
-                return Ok(message_result(
-                    VariantNormalizationStatus::ServiceError,
-                    BioMcpError::ApiJson {
-                        api: MUTALYZER_API.to_string(),
-                        source,
-                    }
-                    .to_string(),
-                ));
-            }
-        };
-        Ok(result_from_value(&value))
+        Ok(decode_normalize_response(
+            status,
+            content_type.as_ref(),
+            &bytes,
+        ))
     }
+}
+
+fn decode_normalize_response(
+    status: StatusCode,
+    content_type: Option<&HeaderValue>,
+    bytes: &[u8],
+) -> VariantNormalizationServiceResult {
+    if !status.is_success() {
+        return provider_error(status, bytes);
+    }
+
+    if let Err(err) = crate::sources::ensure_json_content_type(MUTALYZER_API, content_type, bytes) {
+        return message_result(VariantNormalizationStatus::ServiceError, err.to_string());
+    }
+    let value: serde_json::Value = match serde_json::from_slice(bytes) {
+        Ok(value) => value,
+        Err(source) => {
+            return message_result(
+                VariantNormalizationStatus::ServiceError,
+                BioMcpError::ApiJson {
+                    api: MUTALYZER_API.to_string(),
+                    source,
+                }
+                .to_string(),
+            );
+        }
+    };
+    result_from_value(&value)
 }
 
 fn result_from_value(value: &serde_json::Value) -> VariantNormalizationServiceResult {
@@ -245,179 +246,4 @@ fn string_field(value: &serde_json::Value, key: &str) -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{any, method};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[test]
-    fn ticket_376_variant_normalization_contracts_mutalyzer_request_plan_maps_invalid_input() {
-        let client = MutalyzerClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let plan: MutalyzerNormalizeRequestPlan = client
-            .normalize_request_plan("NM_000248.3:c.135del")
-            .expect("MutalyzerNormalizeRequestPlan");
-
-        assert_eq!(plan.method, "GET");
-        assert_eq!(plan.path, "/normalize/NM_000248.3:c.135del");
-        let encoded = client
-            .normalize_request_plan("NM_004448.2:c.829G>T")
-            .expect("encoded plan");
-        assert_eq!(encoded.path, "/normalize/NM_004448.2:c.829G%3ET");
-        assert!(plan.status_expectation.contains("invalid_input"));
-        assert!(plan.status_expectation.contains("not_found"));
-        assert!(plan.status_expectation.contains("service_error"));
-    }
-
-    #[tokio::test]
-    async fn normalize_encodes_transcript_path_and_parses_success() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(any())
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "input_description": "NM_004448.2:c.829G>T",
-                "normalized_description": "NM_004448.2:c.829G>T",
-                "protein": {"description": "NP_004439.2:p.(Asp277Tyr)"},
-                "infos": [{"details": "source warning"}]
-            })))
-            .mount(&server)
-            .await;
-
-        let result = MutalyzerClient::new_for_test(format!("{}/api", server.uri()))
-            .unwrap()
-            .normalize("NM_004448.2:c.829G>T")
-            .await
-            .unwrap();
-
-        let requests = server.received_requests().await.unwrap();
-        assert_eq!(
-            requests[0].url.path(),
-            "/api/normalize/NM_004448.2:c.829G%3ET"
-        );
-        assert_eq!(result.status, VariantNormalizationStatus::Success);
-        assert_eq!(
-            result.normalized_description.as_deref(),
-            Some("NM_004448.2:c.829G>T")
-        );
-        assert!(
-            result
-                .warnings
-                .iter()
-                .any(|warning| warning == "source warning")
-        );
-    }
-
-    #[tokio::test]
-    async fn normalize_maps_provider_invalid_input() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(ResponseTemplate::new(422).set_body_json(serde_json::json!({
-                "message": "Errors encountered. Check the custom field.",
-                "custom": {"input_description": "NM_000248.3:c."}
-            })))
-            .mount(&server)
-            .await;
-
-        let result = MutalyzerClient::new_for_test(server.uri())
-            .unwrap()
-            .normalize("NM_000248.3:c.")
-            .await
-            .unwrap();
-
-        assert_eq!(result.status, VariantNormalizationStatus::InvalidInput);
-        assert_eq!(result.input_description.as_deref(), Some("NM_000248.3:c."));
-    }
-
-    #[tokio::test]
-    async fn normalize_maps_success_status_error_payload_to_invalid_input() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "message": "Errors encountered. Check the custom field.",
-                "custom": {"input_description": "NM_000248.3:c."}
-            })))
-            .mount(&server)
-            .await;
-
-        let result = MutalyzerClient::new_for_test(server.uri())
-            .unwrap()
-            .normalize("NM_000248.3:c.")
-            .await
-            .unwrap();
-
-        assert_eq!(result.status, VariantNormalizationStatus::InvalidInput);
-        assert_eq!(result.input_description.as_deref(), Some("NM_000248.3:c."));
-        assert!(result.normalized_description.is_none());
-    }
-
-    #[tokio::test]
-    async fn normalize_maps_not_found_and_http_errors() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(ResponseTemplate::new(404).set_body_string("not found"))
-            .mount(&server)
-            .await;
-
-        let result = MutalyzerClient::new_for_test(server.uri())
-            .unwrap()
-            .normalize("NM_000248.3:c.135del")
-            .await
-            .unwrap();
-
-        assert_eq!(result.status, VariantNormalizationStatus::NotFound);
-        assert!(
-            result
-                .message
-                .as_deref()
-                .unwrap_or_default()
-                .contains("HTTP 404")
-        );
-
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(ResponseTemplate::new(500).set_body_string("upstream failed"))
-            .mount(&server)
-            .await;
-
-        let result = MutalyzerClient::new_for_test(server.uri())
-            .unwrap()
-            .normalize("NM_000248.3:c.135del")
-            .await
-            .unwrap();
-
-        assert_eq!(result.status, VariantNormalizationStatus::ServiceError);
-        assert!(
-            result
-                .message
-                .as_deref()
-                .unwrap_or_default()
-                .contains("HTTP 500")
-        );
-    }
-
-    #[tokio::test]
-    async fn normalize_maps_html_response_to_service_error() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html")
-                    .set_body_string("<html>maintenance</html>"),
-            )
-            .mount(&server)
-            .await;
-
-        let result = MutalyzerClient::new_for_test(server.uri())
-            .unwrap()
-            .normalize("NM_000248.3:c.135del")
-            .await
-            .unwrap();
-
-        assert_eq!(result.status, VariantNormalizationStatus::ServiceError);
-        assert!(
-            result
-                .message
-                .as_deref()
-                .is_some_and(|message| !message.is_empty())
-        );
-    }
-}
+mod tests;
