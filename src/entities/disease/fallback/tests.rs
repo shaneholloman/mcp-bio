@@ -414,33 +414,42 @@ async fn fallback_search_page_applies_offset_and_limit_after_dedupe() {
     assert_eq!(page.results[0].source_id.as_deref(), Some("ICD10CM:Q07.0"));
 }
 
-#[tokio::test]
-async fn resolve_fallback_row_ignores_not_found_canonical_ids() {
-    let _guard = lock_env().await;
-    with_no_http_cache(async {
-        let server = MockServer::start().await;
-        let _env = set_env_var(
-            "BIOMCP_MYDISEASE_BASE",
-            Some(&format!("{}/v1", server.uri())),
-        );
+#[test]
+fn canonical_fallback_row_ignores_not_found_and_maps_hits() {
+    let not_found = canonical_fallback_row(
+        "DOID:8552",
+        false,
+        Err(BioMcpError::NotFound {
+            entity: "mydisease disease".into(),
+            id: "DOID:8552".into(),
+            suggestion: "try another disease ID".into(),
+        }),
+    )
+    .expect("canonical not-found should degrade cleanly");
+    assert!(not_found.is_none());
 
-        Mock::given(method("GET"))
-            .and(path("/v1/disease/DOID:8552"))
-            .respond_with(ResponseTemplate::new(404))
-            .expect(1)
-            .mount(&server)
-            .await;
+    let row = canonical_fallback_row(
+        "DOID:1909",
+        true,
+        Ok(serde_json::from_value(serde_json::json!({
+            "_id": "MONDO:0005105",
+            "mondo": {
+                "name": "melanoma",
+                "synonym": []
+            },
+            "disease_ontology": {
+                "name": "melanoma",
+                "doid": "1909",
+                "synonyms": ["melanoma"]
+            }
+        }))
+        .expect("valid disease hit")),
+    )
+    .expect("canonical hit should map")
+    .expect("canonical hit should produce a row");
 
-        let client = MyDiseaseClient::new().expect("client");
-        let row = resolve_fallback_row(
-            &client,
-            false,
-            &DiseaseFallbackId::CanonicalOntology("DOID:8552".into()),
-        )
-        .await
-        .expect("canonical not-found should degrade cleanly");
-
-        assert!(row.is_none());
-    })
-    .await;
+    assert_eq!(row.id, "DOID:1909");
+    assert_eq!(row.name, "melanoma");
+    assert_eq!(row.resolved_via.as_deref(), Some("DOID canonical"));
+    assert_eq!(row.source_id.as_deref(), Some("DOID:1909"));
 }

@@ -155,6 +155,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/disease/fallback/tests.rs` Arnold synonym crosswalk page
       test is pure: it keeps OLS/MyDisease request-plan assertions and uses a
       deterministic row resolver instead of a mocked MyDisease query endpoint.
+- [x] `src/entities/disease/fallback/tests.rs` canonical not-found behavior is
+      pure: canonical lookup result handling is split into a direct helper test
+      instead of using a mocked MyDisease 404.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -513,10 +516,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::disease::resolution::/)'` → 11/11
   pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
   pass; `git diff --check` → pass.
-- 2026-06-16: partial disease fallback cleanup. Converted the Arnold Chiari
+- 2026-06-16: disease fallback cleanup. Converted the Arnold Chiari
   synonym-rescue crosswalk test from a mocked MyDisease query to request-plan
-  assertions plus a deterministic fallback-row resolver. One canonical
-  not-found mock-server test remains in fallback. Checks:
+  assertions plus a deterministic fallback-row resolver. Then converted the
+  canonical not-found test from a mocked MyDisease 404 to a pure helper test.
+  `src/entities/disease/fallback/tests.rs` now has no mock-server/env-lock
+  cases. Checks:
   `cargo nextest run -E 'test(/entities::disease::fallback::/)'` → 11/11 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.

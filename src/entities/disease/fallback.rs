@@ -311,21 +311,9 @@ async fn resolve_fallback_row(
 ) -> Result<Option<DiseaseSearchResult>, BioMcpError> {
     let row = match source_id {
         DiseaseFallbackId::CanonicalOntology(id) => {
-            let hit = match client.get(id).await {
-                Ok(hit) => hit,
-                Err(BioMcpError::NotFound { .. }) => return Ok(None),
-                Err(err) => return Err(err),
+            let Some(row) = canonical_fallback_row(id, prefer_doid, client.get(id).await)? else {
+                return Ok(None);
             };
-            let mut row = transform::disease::from_mydisease_search_hit(&hit);
-            if prefer_doid && let Some(doid) = transform::disease::doid_from_mydisease_hit(&hit) {
-                row.id = doid;
-            }
-            row.resolved_via = Some(if id.starts_with("DOID:") {
-                "DOID canonical".to_string()
-            } else {
-                "MONDO canonical".to_string()
-            });
-            row.source_id = Some(id.clone());
             row
         }
         DiseaseFallbackId::Crosswalk(kind, source_value) => {
@@ -344,6 +332,30 @@ async fn resolve_fallback_row(
             row
         }
     };
+
+    Ok(Some(row))
+}
+
+fn canonical_fallback_row(
+    id: &str,
+    prefer_doid: bool,
+    hit: Result<MyDiseaseHit, BioMcpError>,
+) -> Result<Option<DiseaseSearchResult>, BioMcpError> {
+    let hit = match hit {
+        Ok(hit) => hit,
+        Err(BioMcpError::NotFound { .. }) => return Ok(None),
+        Err(err) => return Err(err),
+    };
+    let mut row = transform::disease::from_mydisease_search_hit(&hit);
+    if prefer_doid && let Some(doid) = transform::disease::doid_from_mydisease_hit(&hit) {
+        row.id = doid;
+    }
+    row.resolved_via = Some(if id.starts_with("DOID:") {
+        "DOID canonical".to_string()
+    } else {
+        "MONDO canonical".to_string()
+    });
+    row.source_id = Some(id.to_string());
 
     Ok(Some(row))
 }
