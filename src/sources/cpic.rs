@@ -1,10 +1,13 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
+use reqwest::StatusCode;
+use reqwest::header::{HeaderMap, HeaderValue};
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const CPIC_BASE: &str = "https://api.cpicpgx.org/v1";
 const CPIC_API: &str = "cpic";
@@ -29,20 +32,104 @@ impl CpicClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
+    pub(crate) fn pairs_by_gene_plan(
+        gene_symbol: &str,
+        limit: usize,
+        offset: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
+        let limit = limit.clamp(1, 200);
+        Ok(RequestPlan::get("pair_view")
+            .query("genesymbol", format!("eq.{gene_symbol}"))
+            .query("select", "*")
+            .query("limit", limit.to_string())
+            .query("offset", offset.to_string())
+            .query("order", "cpiclevel.asc,drugname.asc"))
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    pub(crate) fn pairs_by_drug_plan(
+        drug_name: &str,
+        limit: usize,
+        offset: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let drug_name = normalize_drug_name(drug_name)?;
+        let limit = limit.clamp(1, 200);
+        let like = format!("ilike.*{}*", sanitize_like_value(&drug_name));
+        Ok(RequestPlan::get("pair_view")
+            .query("drugname", like)
+            .query("select", "*")
+            .query("limit", limit.to_string())
+            .query("offset", offset.to_string())
+            .query("order", "cpiclevel.asc,genesymbol.asc"))
+    }
+
+    pub(crate) fn recommendations_by_gene_plan(
+        gene_symbol: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
+        let limit = limit.clamp(1, 200);
+        Ok(RequestPlan::get("recommendation_view")
+            .query(format!("lookupkey->>{gene_symbol}"), "not.is.null")
+            .query("select", "*")
+            .query("limit", limit.to_string()))
+    }
+
+    pub(crate) fn recommendations_by_drug_plan(
+        drug_name: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let drug_name = normalize_drug_name(drug_name)?;
+        let limit = limit.clamp(1, 200);
+        let like = format!("ilike.*{}*", sanitize_like_value(&drug_name));
+        Ok(RequestPlan::get("recommendation_view")
+            .query("drugname", like)
+            .query("select", "*")
+            .query("limit", limit.to_string()))
+    }
+
+    pub(crate) fn frequencies_by_gene_plan(
+        gene_symbol: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
+        let limit = limit.clamp(1, 200);
+        Ok(RequestPlan::get("population_frequency_view")
+            .query("genesymbol", format!("eq.{gene_symbol}"))
+            .query("select", "*")
+            .query("limit", limit.to_string()))
+    }
+
+    pub(crate) fn guidelines_by_gene_plan(
+        gene_symbol: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
+        let limit = limit.clamp(1, 200);
+        let filter = format!("cs.[{{\"symbol\":\"{gene_symbol}\"}}]");
+        Ok(RequestPlan::get("guideline_summary_view")
+            .query("genes", filter)
+            .query("select", "*")
+            .query("limit", limit.to_string()))
+    }
+
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        crate::sources::decode_json(CPIC_API, status, content_type, bytes, true)
+    }
+
+    pub(crate) fn decode_json_page_response<T: DeserializeOwned>(
+        status: StatusCode,
+        headers: &HeaderMap,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<CpicPage<T>, BioMcpError> {
+        let total = parse_content_range_total(headers);
+        let rows = Self::decode_json_response(status, content_type, bytes)?;
+        Ok(CpicPage { rows, total })
     }
 
     async fn get_json<T: DeserializeOwned>(
@@ -53,20 +140,7 @@ impl CpicClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, CPIC_API).await?;
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: CPIC_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(CPIC_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: CPIC_API.to_string(),
-            source,
-        })
+        Self::decode_json_response(status, content_type.as_ref(), &bytes)
     }
 
     async fn get_json_with_total<T: DeserializeOwned>(
@@ -75,24 +149,10 @@ impl CpicClient {
     ) -> Result<CpicPage<T>, BioMcpError> {
         let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
-        let total = parse_content_range_total(resp.headers());
+        let headers = resp.headers().clone();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, CPIC_API).await?;
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: CPIC_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(CPIC_API, content_type.as_ref(), &bytes)?;
-        let rows = serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: CPIC_API.to_string(),
-            source,
-        })?;
-        Ok(CpicPage { rows, total })
+        Self::decode_json_page_response(status, &headers, content_type.as_ref(), &bytes)
     }
 
     pub async fn pairs_by_gene(
@@ -109,20 +169,9 @@ impl CpicClient {
         limit: usize,
         offset: usize,
     ) -> Result<CpicPage<Vec<CpicPairRow>>, BioMcpError> {
-        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("pair_view");
-        let offset = offset.to_string();
-
-        let req = self.client.get(&url).query(&[
-            ("genesymbol", format!("eq.{gene_symbol}")),
-            ("select", "*".to_string()),
-            ("limit", limit.to_string()),
-            ("offset", offset),
-            ("order", "cpiclevel.asc,drugname.asc".to_string()),
-        ]);
-
-        self.get_json_with_total(req).await
+        let plan = Self::pairs_by_gene_plan(gene_symbol, limit, offset)?;
+        self.get_json_with_total(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn pairs_by_drug(
@@ -139,21 +188,9 @@ impl CpicClient {
         limit: usize,
         offset: usize,
     ) -> Result<CpicPage<Vec<CpicPairRow>>, BioMcpError> {
-        let drug_name = normalize_drug_name(drug_name)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("pair_view");
-        let like = format!("ilike.*{}*", sanitize_like_value(&drug_name));
-        let offset = offset.to_string();
-
-        let req = self.client.get(&url).query(&[
-            ("drugname", like),
-            ("select", "*".to_string()),
-            ("limit", limit.to_string()),
-            ("offset", offset),
-            ("order", "cpiclevel.asc,genesymbol.asc".to_string()),
-        ]);
-
-        self.get_json_with_total(req).await
+        let plan = Self::pairs_by_drug_plan(drug_name, limit, offset)?;
+        self.get_json_with_total(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn recommendations_by_gene(
@@ -161,19 +198,9 @@ impl CpicClient {
         gene_symbol: &str,
         limit: usize,
     ) -> Result<Vec<CpicRecommendationRow>, BioMcpError> {
-        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("recommendation_view");
-        let lookup_filter = "not.is.null".to_string();
-        let lookup_key = format!("lookupkey->>{gene_symbol}");
-
-        let req = self.client.get(&url).query(&[
-            (lookup_key, lookup_filter),
-            ("select".to_string(), "*".to_string()),
-            ("limit".to_string(), limit.to_string()),
-        ]);
-
-        self.get_json(req).await
+        let plan = Self::recommendations_by_gene_plan(gene_symbol, limit)?;
+        self.get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn recommendations_by_drug(
@@ -181,18 +208,9 @@ impl CpicClient {
         drug_name: &str,
         limit: usize,
     ) -> Result<Vec<CpicRecommendationRow>, BioMcpError> {
-        let drug_name = normalize_drug_name(drug_name)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("recommendation_view");
-        let like = format!("ilike.*{}*", sanitize_like_value(&drug_name));
-
-        let req = self.client.get(&url).query(&[
-            ("drugname", like),
-            ("select", "*".to_string()),
-            ("limit", limit.to_string()),
-        ]);
-
-        self.get_json(req).await
+        let plan = Self::recommendations_by_drug_plan(drug_name, limit)?;
+        self.get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn frequencies_by_gene(
@@ -200,17 +218,9 @@ impl CpicClient {
         gene_symbol: &str,
         limit: usize,
     ) -> Result<Vec<CpicFrequencyRow>, BioMcpError> {
-        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("population_frequency_view");
-
-        let req = self.client.get(&url).query(&[
-            ("genesymbol", format!("eq.{gene_symbol}")),
-            ("select", "*".to_string()),
-            ("limit", limit.to_string()),
-        ]);
-
-        self.get_json(req).await
+        let plan = Self::frequencies_by_gene_plan(gene_symbol, limit)?;
+        self.get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn guidelines_by_gene(
@@ -218,18 +228,9 @@ impl CpicClient {
         gene_symbol: &str,
         limit: usize,
     ) -> Result<Vec<CpicGuidelineSummaryRow>, BioMcpError> {
-        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("guideline_summary_view");
-        let filter = format!("cs.[{{\"symbol\":\"{gene_symbol}\"}}]");
-
-        let req = self.client.get(&url).query(&[
-            ("genes", filter),
-            ("select", "*".to_string()),
-            ("limit", limit.to_string()),
-        ]);
-
-        self.get_json(req).await
+        let plan = Self::guidelines_by_gene_plan(gene_symbol, limit)?;
+        self.get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 }
 
@@ -373,90 +374,4 @@ pub struct CpicGuidelineGene {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn pairs_by_gene_builds_expected_query() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/pair_view"))
-            .and(query_param("genesymbol", "eq.CYP2D6"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-                {
-                    "pairid": 1,
-                    "genesymbol": "CYP2D6",
-                    "drugname": "codeine",
-                    "cpiclevel": "A"
-                }
-            ])))
-            .mount(&server)
-            .await;
-
-        let client = CpicClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .pairs_by_gene("cyp2d6", 5)
-            .await
-            .expect("rows should parse");
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].drugname, "codeine");
-    }
-
-    #[tokio::test]
-    async fn recommendations_by_drug_parses_payload() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/recommendation_view"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-                {
-                    "recommendationid": 1,
-                    "drugname": "codeine",
-                    "phenotypes": {"CYP2D6": "Poor Metabolizer"},
-                    "activityscore": {"CYP2D6": "0.0"},
-                    "drugrecommendation": "Avoid codeine",
-                    "classification": "Strong"
-                }
-            ])))
-            .mount(&server)
-            .await;
-
-        let client = CpicClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .recommendations_by_drug("codeine", 3)
-            .await
-            .expect("rows should parse");
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].drugname, "codeine");
-        assert_eq!(rows[0].drugrecommendation.as_deref(), Some("Avoid codeine"));
-    }
-
-    #[tokio::test]
-    async fn guidelines_by_gene_parses_guideline_rows() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/guideline_summary_view"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-                {
-                    "guideline_name": "CYP2D6 and Opioids",
-                    "guideline_url": "https://cpicpgx.org/guidelines/guideline-for-codeine-and-cyp2d6/",
-                    "drugs": ["codeine"],
-                    "genes": [{"symbol": "CYP2D6"}]
-                }
-            ])))
-            .mount(&server)
-            .await;
-
-        let client = CpicClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .guidelines_by_gene("CYP2D6", 5)
-            .await
-            .expect("rows should parse");
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].guideline_name, "CYP2D6 and Opioids");
-        assert_eq!(rows[0].genes[0].symbol, "CYP2D6");
-    }
-}
+mod tests;

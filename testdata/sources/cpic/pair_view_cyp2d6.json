@@ -1,0 +1,11 @@
+[
+  {
+    "pairid": 1,
+    "genesymbol": "CYP2D6",
+    "drugname": "codeine",
+    "cpiclevel": "A",
+    "pgxtesting": "Recommended",
+    "guidelinename": "CYP2D6 and Opioids",
+    "guidelineurl": "https://cpicpgx.org/guidelines/guideline-for-codeine-and-cyp2d6/"
+  }
+]

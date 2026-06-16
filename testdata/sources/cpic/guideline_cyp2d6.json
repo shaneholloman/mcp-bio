@@ -1,0 +1,8 @@
+[
+  {
+    "guideline_name": "CYP2D6 and Opioids",
+    "guideline_url": "https://cpicpgx.org/guidelines/guideline-for-codeine-and-cyp2d6/",
+    "drugs": ["codeine"],
+    "genes": [{"symbol": "CYP2D6"}]
+  }
+]

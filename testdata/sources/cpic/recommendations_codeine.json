@@ -1,0 +1,10 @@
+[
+  {
+    "recommendationid": 1,
+    "drugname": "codeine",
+    "phenotypes": {"CYP2D6": "Poor Metabolizer"},
+    "activityscore": {"CYP2D6": "0.0"},
+    "drugrecommendation": "Avoid codeine",
+    "classification": "Strong"
+  }
+]
