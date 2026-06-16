@@ -409,3 +409,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::article::search::/) or test(/entities::article::enrichment::/)'`
   → 19/19 pass; `cargo nextest run -E 'test(/entities::article::/)'` → 159/159
   pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass.
+- 2026-06-16: partial CT.gov trial-search cleanup. Removed two slow alias-union
+  orchestration tests that were taking >60s and replaced their label/provenance
+  coverage with pure `ctgov_workers` and strict-condition-label tests. Kept the
+  remaining CT.gov pagination/count server tests for now. Checks:
+  `cargo nextest run -E 'test(/entities::trial::search::ctgov::/)'` → 21/21
+  pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass.

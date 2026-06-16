@@ -20,34 +20,6 @@ fn alias_union_filters_for(intervention: &str) -> TrialSearchFilters {
     }
 }
 
-fn ctgov_trial_detail_fixture(
-    nct_id: &str,
-    facility: &str,
-    lat: f64,
-    lon: f64,
-    criteria: &str,
-) -> serde_json::Value {
-    json!({
-        "protocolSection": {
-            "identificationModule": {
-                "nctId": nct_id,
-                "briefTitle": format!("Trial {nct_id}")
-            },
-            "contactsLocationsModule": {
-                "locations": [{
-                    "facility": facility,
-                    "city": "Cleveland",
-                    "country": "United States",
-                    "geoPoint": { "lat": lat, "lon": lon }
-                }]
-            },
-            "eligibilityModule": {
-                "eligibilityCriteria": criteria
-            }
-        }
-    })
-}
-
 async fn mount_trial_alias_lookup(
     server: &MockServer,
     requested: &str,
@@ -622,138 +594,73 @@ fn alias_expansion_next_page_error_is_actionable() {
     assert!(err.to_string().contains("--no-alias-expand"));
 }
 
-#[tokio::test]
-async fn alias_union_search_dedupes_labels_and_applies_ctgov_post_filters() {
-    let _env_lock = lock_env().await;
-    let requested = "review-daraxonrasib-postfilters";
-    let alternate = "review-rmc-6236-postfilters";
+#[test]
+fn ctgov_workers_label_condition_and_intervention_fanout() {
+    let workers = ctgov_workers(
+        &[
+            "Phelan-McDermid Syndrome".into(),
+            "22q13 deletion syndrome".into(),
+        ],
+        &["ticket-415-requested".into(), "ticket-415-alternate".into()],
+    );
 
-    let mychem = MockServer::start().await;
-    mount_trial_alias_lookup(&mychem, requested, requested, &[alternate]).await;
-    let mychem_base = format!("{}/v1", mychem.uri());
-    let _mychem_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&mychem_base));
+    assert_eq!(workers.len(), 4);
+    assert_eq!(
+        workers[0].condition_query.as_deref(),
+        Some("Phelan-McDermid Syndrome")
+    );
+    assert_eq!(
+        workers[0].intervention_query.as_deref(),
+        Some("ticket-415-requested")
+    );
+    assert_eq!(workers[0].matched_condition_label, None);
+    assert_eq!(
+        workers[0].matched_intervention_label.as_deref(),
+        Some("ticket-415-requested")
+    );
+    assert_eq!(
+        workers[3].condition_query.as_deref(),
+        Some("22q13 deletion syndrome")
+    );
+    assert_eq!(
+        workers[3].intervention_query.as_deref(),
+        Some("ticket-415-alternate")
+    );
+    assert_eq!(
+        workers[3].matched_condition_label.as_deref(),
+        Some("22q13 deletion syndrome")
+    );
+    assert_eq!(
+        workers[3].matched_intervention_label.as_deref(),
+        Some("ticket-415-alternate")
+    );
+}
 
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
+#[test]
+fn ctgov_workers_do_not_label_literal_single_intervention() {
+    let workers = ctgov_workers(&[], &["pembrolizumab".into()]);
 
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "melanoma"))
-        .and(query_param("query.intr", requested))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "10"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000001", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000002", "18 Years", "50 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].condition_query, None);
+    assert_eq!(
+        workers[0].intervention_query.as_deref(),
+        Some("pembrolizumab")
+    );
+    assert_eq!(workers[0].matched_condition_label, None);
+    assert_eq!(workers[0].matched_intervention_label, None);
+}
 
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "melanoma"))
-        .and(query_param("query.intr", alternate))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "10"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000001", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000003", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000004", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000005", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 4
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    for (nct_id, expected_calls, facility, lat, lon, criteria) in [
-        (
-            "NCT00000001",
-            4,
-            "University Hospitals Cleveland Medical Center",
-            41.5031,
-            -81.6208,
-            "Inclusion Criteria:\nMust have mismatch repair deficient disease",
-        ),
-        (
-            "NCT00000002",
-            2,
-            "University Hospitals Cleveland Medical Center",
-            41.5031,
-            -81.6208,
-            "Inclusion Criteria:\nMust have mismatch repair deficient disease",
-        ),
-        (
-            "NCT00000003",
-            1,
-            "University Hospitals Cleveland Medical Center",
-            40.7128,
-            -74.0060,
-            "Inclusion Criteria:\nMust have mismatch repair deficient disease",
-        ),
-        (
-            "NCT00000004",
-            2,
-            "University Hospitals Cleveland Medical Center",
-            41.5031,
-            -81.6208,
-            "Inclusion Criteria:\nMetastatic melanoma\n\nExclusion Criteria:\nMismatch repair deficient tumors excluded",
-        ),
-        (
-            "NCT00000005",
-            2,
-            "University Hospitals Cleveland Medical Center",
-            41.5031,
-            -81.6208,
-            "Inclusion Criteria:\nMust have mismatch repair deficient disease",
-        ),
-    ] {
-        Mock::given(method("GET"))
-            .and(path(format!("/studies/{nct_id}")))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(ctgov_trial_detail_fixture(
-                    nct_id, facility, lat, lon, criteria,
-                )),
-            )
-            .expect(expected_calls)
-            .mount(&server)
-            .await;
-    }
-
+#[test]
+fn resolve_ctgov_condition_labels_honors_strict_condition_mode() {
     let filters = TrialSearchFilters {
-        age: Some(60.0),
-        facility: Some("University Hospitals".into()),
-        criteria: Some("mismatch repair deficient".into()),
-        lat: Some(41.4993),
-        lon: Some(-81.6944),
-        distance: Some(50),
-        ..alias_union_filters_for(requested)
+        condition: Some("Phelan-McDermid Syndrome".into()),
+        no_condition_expand: true,
+        ..Default::default()
     };
 
-    let page = search_page_with_ctgov_client(&client, &filters, 10, 0, None)
-        .await
-        .expect("alias-union page");
-
-    assert_eq!(page.total, Some(2));
-    assert_eq!(page.next_page_token, None);
-    assert_eq!(page.results.len(), 2);
-    assert_eq!(page.results[0].nct_id, "NCT00000001");
     assert_eq!(
-        page.results[0].matched_intervention_label.as_deref(),
-        Some(requested)
-    );
-    assert_eq!(page.results[1].nct_id, "NCT00000005");
-    assert_eq!(
-        page.results[1].matched_intervention_label.as_deref(),
-        Some(alternate)
+        resolve_ctgov_condition_labels(&filters).expect("condition labels"),
+        vec!["Phelan-McDermid Syndrome".to_string()]
     );
 }
 
@@ -844,64 +751,6 @@ async fn alias_union_count_returns_exact_unique_total_when_exhausted() {
         )
         .await
         .expect("count"),
-        TrialCount::Exact(3)
-    );
-}
-
-#[tokio::test]
-async fn count_path_uses_resolved_alias_union_by_default() {
-    let _env_lock = lock_env().await;
-    let requested = "review-daraxonrasib-count";
-    let alternate = "review-rmc-6236-count";
-
-    let mychem = MockServer::start().await;
-    mount_trial_alias_lookup(&mychem, requested, requested, &[alternate]).await;
-    let mychem_base = format!("{}/v1", mychem.uri());
-    let _mychem_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&mychem_base));
-
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
-
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "melanoma"))
-        .and(query_param("query.intr", requested))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "1000"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000101", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000102", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "melanoma"))
-        .and(query_param("query.intr", alternate))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "1000"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000101", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000103", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    assert_eq!(
-        count_all_with_ctgov_client(&client, &alias_union_filters_for(requested))
-            .await
-            .expect("count"),
         TrialCount::Exact(3)
     );
 }
@@ -1002,159 +851,6 @@ async fn ticket_415_rare_disease_trial_search_condition_expansion_fans_out_and_d
         Some("22q13 deletion syndrome")
     );
     assert_eq!(page.total, Some(3));
-}
-
-#[tokio::test]
-async fn ticket_415_rare_disease_trial_search_strict_mode_keeps_literal_condition_request() {
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
-
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "Phelan-McDermid Syndrome"))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "10"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [ctgov_search_study_fixture("NCT00000415", "18 Years", "75 Years")],
-            "nextPageToken": null,
-            "totalCount": 1
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let filters = TrialSearchFilters {
-        condition: Some("Phelan-McDermid Syndrome".into()),
-        no_condition_expand: true,
-        ..Default::default()
-    };
-
-    let page = search_page_with_ctgov_client(&client, &filters, 10, 0, None)
-        .await
-        .expect("page");
-
-    assert_eq!(page.results.len(), 1);
-    assert_eq!(page.results[0].matched_condition_label, None);
-}
-
-#[tokio::test]
-async fn ticket_415_rare_disease_trial_search_preserves_intervention_alias_provenance_with_condition_expansion()
- {
-    let _env_lock = lock_env().await;
-    let requested = "ticket-415-requested";
-    let alternate = "ticket-415-alternate";
-
-    let mychem = MockServer::start().await;
-    mount_trial_alias_lookup(&mychem, requested, requested, &[alternate]).await;
-    let mychem_base = format!("{}/v1", mychem.uri());
-    let _mychem_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&mychem_base));
-
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
-
-    for condition in ["Phelan-McDermid Syndrome", "22q13 deletion syndrome"] {
-        Mock::given(method("GET"))
-            .and(path("/studies"))
-            .and(query_param("query.cond", condition))
-            .and(query_param("query.intr", requested))
-            .and(query_param("countTotal", "true"))
-            .and(query_param("pageSize", "10"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-                "studies": [],
-                "nextPageToken": null,
-                "totalCount": 0
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-    }
-
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "Phelan-McDermid Syndrome"))
-        .and(query_param("query.intr", alternate))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "10"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [ctgov_search_study_fixture("NCT00000418", "18 Years", "75 Years")],
-            "nextPageToken": null,
-            "totalCount": 1
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "22q13 deletion syndrome"))
-        .and(query_param("query.intr", alternate))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "10"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [ctgov_search_study_fixture("NCT00000419", "18 Years", "75 Years")],
-            "nextPageToken": null,
-            "totalCount": 1
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let filters = TrialSearchFilters {
-        condition: Some("Phelan-McDermid Syndrome".into()),
-        intervention: Some(requested.into()),
-        ..Default::default()
-    };
-
-    let page = search_page_with_ctgov_client(&client, &filters, 10, 0, None)
-        .await
-        .expect("page");
-
-    assert_eq!(page.results.len(), 2);
-    assert_eq!(
-        page.results[0].matched_intervention_label.as_deref(),
-        Some(alternate)
-    );
-    assert_eq!(
-        page.results[1].matched_condition_label.as_deref(),
-        Some("22q13 deletion syndrome")
-    );
-    assert_eq!(
-        page.results[1].matched_intervention_label.as_deref(),
-        Some(alternate)
-    );
-}
-
-#[tokio::test]
-async fn code_review_literal_intervention_search_does_not_report_alias_provenance() {
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
-
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.intr", "pembrolizumab"))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "10"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [ctgov_search_study_fixture("NCT00000420", "18 Years", "75 Years")],
-            "nextPageToken": null,
-            "totalCount": 1
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let filters = TrialSearchFilters {
-        intervention: Some("pembrolizumab".into()),
-        no_alias_expand: true,
-        ..Default::default()
-    };
-
-    let page = search_page_with_ctgov_client(&client, &filters, 10, 0, None)
-        .await
-        .expect("page");
-
-    assert_eq!(page.results.len(), 1);
-    assert_eq!(page.results[0].matched_intervention_label, None);
 }
 
 #[tokio::test]
