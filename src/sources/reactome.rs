@@ -1,9 +1,11 @@
 use std::borrow::Cow;
 
+use reqwest::StatusCode;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 use crate::utils::serde::StringOrVec;
 
 const REACTOME_BASE: &str = "https://reactome.org/ContentService";
@@ -23,22 +25,6 @@ impl ReactomeClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
@@ -46,24 +32,30 @@ impl ReactomeClient {
         let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, REACTOME_API).await?;
+        Self::decode_json_response(status, &bytes)
+    }
+
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::body_excerpt(bytes);
             return Err(BioMcpError::Api {
                 api: REACTOME_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+        serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
             api: REACTOME_API.to_string(),
             source,
         })
     }
 
-    pub async fn search_pathways(
-        &self,
+    pub(crate) fn search_pathways_plan(
         query: &str,
         limit: usize,
-    ) -> Result<(Vec<ReactomePathwayHit>, Option<usize>), BioMcpError> {
+    ) -> Result<RequestPlan, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -71,15 +63,17 @@ impl ReactomeClient {
             ));
         }
 
-        let url = self.endpoint("search/query");
         let page_size = limit.clamp(1, 25).to_string();
-        let resp: ReactomeSearchResponse = self
-            .get_json(self.client.get(&url).query(&[
-                ("query", query),
-                ("species", "Homo sapiens"),
-                ("pageSize", page_size.as_str()),
-            ]))
-            .await?;
+        Ok(RequestPlan::get("search/query")
+            .query("query", query)
+            .query("species", "Homo sapiens")
+            .query("pageSize", page_size))
+    }
+
+    fn map_search_response(
+        resp: ReactomeSearchResponse,
+        limit: usize,
+    ) -> (Vec<ReactomePathwayHit>, Option<usize>) {
         let total_results = resp.total_results;
 
         let mut out = Vec::new();
@@ -100,20 +94,34 @@ impl ReactomeClient {
                 };
                 out.push(ReactomePathwayHit { id, name });
                 if out.len() >= limit {
-                    return Ok((out, total_results));
+                    return (out, total_results);
                 }
             }
         }
 
-        Ok((out, total_results))
+        (out, total_results)
     }
 
-    pub async fn top_level_pathways(
+    pub async fn search_pathways(
         &self,
+        query: &str,
         limit: usize,
-    ) -> Result<Vec<ReactomePathwayHit>, BioMcpError> {
-        let url = self.endpoint("data/pathways/top/Homo%20sapiens");
-        let rows: Vec<ReactomeTopLevelPathway> = self.get_json(self.client.get(&url)).await?;
+    ) -> Result<(Vec<ReactomePathwayHit>, Option<usize>), BioMcpError> {
+        let plan = Self::search_pathways_plan(query, limit)?;
+        let resp: ReactomeSearchResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Ok(Self::map_search_response(resp, limit))
+    }
+
+    pub(crate) fn top_level_pathways_plan() -> RequestPlan {
+        RequestPlan::get("data/pathways/top/Homo%20sapiens")
+    }
+
+    fn map_top_level_pathways(
+        rows: Vec<ReactomeTopLevelPathway>,
+        limit: usize,
+    ) -> Vec<ReactomePathwayHit> {
         let mut out = Vec::new();
         for row in rows.into_iter().take(limit.clamp(1, 200)) {
             let Some(id) = row
@@ -140,23 +148,42 @@ impl ReactomeClient {
             };
             out.push(ReactomePathwayHit { id, name });
         }
-        Ok(out)
+        out
     }
 
-    pub async fn get_pathway(&self, st_id: &str) -> Result<ReactomePathwayRecord, BioMcpError> {
+    pub async fn top_level_pathways(
+        &self,
+        limit: usize,
+    ) -> Result<Vec<ReactomePathwayHit>, BioMcpError> {
+        let plan = Self::top_level_pathways_plan();
+        let rows: Vec<ReactomeTopLevelPathway> = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Ok(Self::map_top_level_pathways(rows, limit))
+    }
+
+    fn normalize_stable_id(st_id: &str) -> Result<String, BioMcpError> {
         let st_id = st_id.trim();
         if st_id.is_empty() {
             return Err(BioMcpError::InvalidArgument(
                 "Reactome stable ID is required".into(),
             ));
         }
+        Ok(st_id.to_string())
+    }
 
-        let url = self.endpoint(&format!("data/query/{st_id}"));
-        let resp: ReactomePathwayRecordRaw = self.get_json(self.client.get(&url)).await?;
+    pub(crate) fn get_pathway_plan(st_id: &str) -> Result<RequestPlan, BioMcpError> {
+        let st_id = Self::normalize_stable_id(st_id)?;
+        Ok(RequestPlan::get(format!("data/query/{st_id}")))
+    }
 
-        Ok(ReactomePathwayRecord {
-            id: resp.st_id.unwrap_or_else(|| st_id.to_string()),
-            name: resp.display_name.unwrap_or_else(|| st_id.to_string()),
+    fn map_pathway_record(
+        resp: ReactomePathwayRecordRaw,
+        fallback_id: &str,
+    ) -> ReactomePathwayRecord {
+        ReactomePathwayRecord {
+            id: resp.st_id.unwrap_or_else(|| fallback_id.to_string()),
+            name: resp.display_name.unwrap_or_else(|| fallback_id.to_string()),
             species: resp.species_name,
             summary: resp
                 .summation
@@ -164,24 +191,25 @@ impl ReactomeClient {
                 .and_then(|v| v.text)
                 .map(|v| v.trim().to_string())
                 .filter(|v| !v.is_empty()),
-        })
+        }
     }
 
-    pub async fn participants(
-        &self,
-        st_id: &str,
-        limit: usize,
-    ) -> Result<Vec<String>, BioMcpError> {
-        let st_id = st_id.trim();
-        if st_id.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Reactome stable ID is required".into(),
-            ));
-        }
+    pub async fn get_pathway(&self, st_id: &str) -> Result<ReactomePathwayRecord, BioMcpError> {
+        let fallback_id = Self::normalize_stable_id(st_id)?;
+        let plan = Self::get_pathway_plan(&fallback_id)?;
+        let resp: ReactomePathwayRecordRaw = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
 
-        let url = self.endpoint(&format!("data/participants/{st_id}"));
-        let resp: Vec<ReactomeParticipant> = self.get_json(self.client.get(&url)).await?;
+        Ok(Self::map_pathway_record(resp, &fallback_id))
+    }
 
+    pub(crate) fn participants_plan(st_id: &str) -> Result<RequestPlan, BioMcpError> {
+        let st_id = Self::normalize_stable_id(st_id)?;
+        Ok(RequestPlan::get(format!("data/participants/{st_id}")))
+    }
+
+    fn map_participants(resp: Vec<ReactomeParticipant>, limit: usize) -> Vec<String> {
         let mut out = Vec::new();
         for row in resp.into_iter().take(limit.clamp(1, 200)) {
             let Some(name) = row
@@ -195,24 +223,30 @@ impl ReactomeClient {
             out.push(name.to_string());
         }
 
-        Ok(out)
+        out
     }
 
-    pub async fn contained_events(
+    pub async fn participants(
         &self,
         st_id: &str,
         limit: usize,
     ) -> Result<Vec<String>, BioMcpError> {
-        let st_id = st_id.trim();
-        if st_id.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Reactome stable ID is required".into(),
-            ));
-        }
+        let plan = Self::participants_plan(st_id)?;
+        let resp: Vec<ReactomeParticipant> = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
 
-        let url = self.endpoint(&format!("data/pathway/{st_id}/containedEvents"));
-        let resp: Vec<ReactomeContainedEvent> = self.get_json(self.client.get(&url)).await?;
+        Ok(Self::map_participants(resp, limit))
+    }
 
+    pub(crate) fn contained_events_plan(st_id: &str) -> Result<RequestPlan, BioMcpError> {
+        let st_id = Self::normalize_stable_id(st_id)?;
+        Ok(RequestPlan::get(format!(
+            "data/pathway/{st_id}/containedEvents"
+        )))
+    }
+
+    fn map_contained_events(resp: Vec<ReactomeContainedEvent>, limit: usize) -> Vec<String> {
         let mut out = Vec::new();
         for row in resp.into_iter().take(limit.clamp(1, 200)) {
             let ReactomeContainedEvent::Event(row) = row else {
@@ -228,7 +262,19 @@ impl ReactomeClient {
             };
             out.push(name.to_string());
         }
-        Ok(out)
+        out
+    }
+
+    pub async fn contained_events(
+        &self,
+        st_id: &str,
+        limit: usize,
+    ) -> Result<Vec<String>, BioMcpError> {
+        let plan = Self::contained_events_plan(st_id)?;
+        let resp: Vec<ReactomeContainedEvent> = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Ok(Self::map_contained_events(resp, limit))
     }
 }
 
@@ -327,58 +373,4 @@ enum ReactomeContainedEvent {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[test]
-    fn strip_html_removes_tags_and_extra_spaces() {
-        assert_eq!(strip_html("RAF <b>MAPK</b> cascade"), "RAF MAPK cascade");
-    }
-
-    #[tokio::test]
-    async fn search_pathways_extracts_entries_and_limits_results() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/search/query"))
-            .and(query_param("query", "MAPK"))
-            .and(query_param("species", "Homo sapiens"))
-            .and(query_param("pageSize", "2"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "results": [{
-                    "entries": [
-                        {"stId": "R-HSA-1", "name": "A <b>pathway</b>"},
-                        {"id": "R-HSA-2", "name": "B pathway"}
-                    ]
-                }]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ReactomeClient::new_for_test(server.uri()).unwrap();
-        let (rows, total) = client.search_pathways("MAPK", 2).await.unwrap();
-        assert_eq!(rows.len(), 2);
-        assert_eq!(total, None);
-        assert_eq!(rows[0].id, "R-HSA-1");
-        assert_eq!(rows[0].name, "A pathway");
-    }
-
-    #[tokio::test]
-    async fn contained_events_maps_display_names() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/data/pathway/R-HSA-5673001/containedEvents"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-                {"displayName": "RAS activates RAF"},
-                9652817,
-                {"displayName": " "}
-            ])))
-            .mount(&server)
-            .await;
-
-        let client = ReactomeClient::new_for_test(server.uri()).unwrap();
-        let rows = client.contained_events("R-HSA-5673001", 10).await.unwrap();
-        assert_eq!(rows, vec!["RAS activates RAF".to_string()]);
-    }
-}
+mod tests;
