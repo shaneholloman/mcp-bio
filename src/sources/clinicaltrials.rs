@@ -4,6 +4,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const CTGOV_BASE: &str = "https://clinicaltrials.gov/api/v2";
 const CTGOV_API: &str = "clinicaltrials.gov";
@@ -161,48 +162,40 @@ impl ClinicalTrialsClient {
         })
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    async fn send(
+        &self,
+        req: reqwest_middleware::RequestBuilder,
+    ) -> Result<(reqwest::StatusCode, Vec<u8>), BioMcpError> {
+        let resp = crate::sources::apply_cache_mode(req).send().await?;
+        let status = resp.status();
+        let bytes = crate::sources::read_limited_body(resp, CTGOV_API).await?;
+        Ok((status, bytes.to_vec()))
     }
 
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
     ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode(req).send().await?;
-        let status = resp.status();
-        let bytes = crate::sources::read_limited_body(resp, CTGOV_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: CTGOV_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: CTGOV_API.to_string(),
-            source,
-        })
+        let (status, bytes) = self.send(req).await?;
+        Self::decode_json_response(status, &bytes)
     }
 
-    pub async fn search(
-        &self,
-        params: &CtGovSearchParams,
-    ) -> Result<CtGovSearchResponse, BioMcpError> {
-        let url = self.endpoint("studies");
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: reqwest::StatusCode,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        crate::sources::decode_json(CTGOV_API, status, None, bytes, false)
+    }
 
-        let mut req = self.client.get(&url);
+    pub(crate) fn search_plan(params: &CtGovSearchParams) -> RequestPlan {
+        let mut plan = RequestPlan::get("studies");
         if let Some(v) = params
             .condition
             .as_deref()
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("query.cond", v)]);
+            plan = plan.query("query.cond", v);
         }
         if let Some(v) = params
             .intervention
@@ -210,7 +203,7 @@ impl ClinicalTrialsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("query.intr", v)]);
+            plan = plan.query("query.intr", v);
         }
         if let Some(v) = params
             .facility
@@ -218,7 +211,7 @@ impl ClinicalTrialsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("query.locn", v)]);
+            plan = plan.query("query.locn", v);
         }
         if let Some(v) = params
             .status
@@ -226,7 +219,7 @@ impl ClinicalTrialsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("filter.overallStatus", v)]);
+            plan = plan.query("filter.overallStatus", v);
         }
         if let Some(v) = params
             .agg_filters
@@ -234,7 +227,7 @@ impl ClinicalTrialsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("aggFilters", v)]);
+            plan = plan.query("aggFilters", v);
         }
         if let Some(v) = params
             .query_term
@@ -242,10 +235,10 @@ impl ClinicalTrialsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("query.term", v)]);
+            plan = plan.query("query.term", v);
         }
         if params.count_total {
-            req = req.query(&[("countTotal", "true")]);
+            plan = plan.query("countTotal", "true");
         }
         if let Some(v) = params
             .page_token
@@ -253,35 +246,43 @@ impl ClinicalTrialsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("pageToken", v)]);
+            plan = plan.query("pageToken", v);
         }
         if let (Some(lat), Some(lon), Some(distance)) =
             (params.lat, params.lon, params.distance_miles)
         {
-            let filter_geo = format!("distance({lat},{lon},{distance}mi)");
-            req = req.query(&[("filter.geo", filter_geo.as_str())]);
+            plan = plan.query("filter.geo", format!("distance({lat},{lon},{distance}mi)"));
         }
 
-        let page_size = params.page_size.to_string();
         let fields = params
             .fields_override
             .as_deref()
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .unwrap_or(CTGOV_SEARCH_FIELDS);
-        req = req.query(&[("pageSize", page_size.as_str()), ("fields", fields)]);
+        plan.query("pageSize", params.page_size.to_string())
+            .query("fields", fields)
+    }
 
+    pub async fn search(
+        &self,
+        params: &CtGovSearchParams,
+    ) -> Result<CtGovSearchResponse, BioMcpError> {
+        let plan = Self::search_plan(params);
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
         self.get_json(req).await
     }
 
-    pub async fn get(&self, nct_id: &str, sections: &[String]) -> Result<CtGovStudy, BioMcpError> {
-        let url = self.endpoint(&format!("studies/{nct_id}"));
-        let fields = build_get_fields(sections);
+    pub(crate) fn get_plan(nct_id: &str, sections: &[String]) -> RequestPlan {
+        RequestPlan::get(format!("studies/{nct_id}")).query("fields", build_get_fields(sections))
+    }
 
-        let req = self.client.get(&url).query(&[("fields", fields.as_str())]);
-        let resp = crate::sources::apply_cache_mode(req).send().await?;
-
-        if resp.status() == reqwest::StatusCode::NOT_FOUND {
+    pub(crate) fn decode_get_response(
+        nct_id: &str,
+        status: reqwest::StatusCode,
+        bytes: &[u8],
+    ) -> Result<CtGovStudy, BioMcpError> {
+        if status == reqwest::StatusCode::NOT_FOUND {
             return Err(BioMcpError::NotFound {
                 entity: "trial".into(),
                 id: nct_id.to_string(),
@@ -289,20 +290,14 @@ impl ClinicalTrialsClient {
             });
         }
 
-        let status = resp.status();
-        let bytes = crate::sources::read_limited_body(resp, CTGOV_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: CTGOV_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
+        Self::decode_json_response(status, bytes)
+    }
 
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: CTGOV_API.to_string(),
-            source,
-        })
+    pub async fn get(&self, nct_id: &str, sections: &[String]) -> Result<CtGovStudy, BioMcpError> {
+        let plan = Self::get_plan(nct_id, sections);
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let (status, bytes) = self.send(req).await?;
+        Self::decode_get_response(nct_id, status, &bytes)
     }
 }
 
@@ -541,210 +536,4 @@ pub struct CtGovReferencesModule {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[test]
-    fn get_fields_contacts_preserve_site_context_and_eligibility_sex() {
-        let contact_fields = build_get_fields(&["contacts".to_string()]);
-        for field in [
-            "CentralContactEMail",
-            "LocationFacility",
-            "LocationCity",
-            "LocationState",
-            "LocationCountry",
-            "LocationContactEMail",
-        ] {
-            assert!(contact_fields.split(',').any(|actual| actual == field));
-        }
-
-        let eligibility_fields = build_get_fields(&["eligibility".to_string()]);
-        assert!(eligibility_fields.split(',').any(|field| field == "Sex"));
-    }
-
-    #[test]
-    fn ctgov_deserializes_central_contacts_and_eligibility_sex() {
-        let study: CtGovStudy = serde_json::from_value(serde_json::json!({
-            "protocolSection": {
-                "identificationModule": {"nctId": "NCT41300001"},
-                "eligibilityModule": {"sex": "FEMALE"},
-                "contactsLocationsModule": {
-                    "centralContacts": [{"name": "Central", "email": "central@example.test"}]
-                }
-            }
-        }))
-        .unwrap();
-
-        let protocol = study.protocol_section.expect("protocol");
-        assert_eq!(
-            protocol
-                .eligibility_module
-                .expect("eligibility")
-                .sex
-                .as_deref(),
-            Some("FEMALE")
-        );
-        assert_eq!(
-            protocol
-                .contacts_locations_module
-                .expect("contacts")
-                .central_contacts[0]
-                .email
-                .as_deref(),
-            Some("central@example.test")
-        );
-    }
-
-    #[tokio::test]
-    async fn search_builds_expected_params() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/studies"))
-            .and(query_param("query.cond", "melanoma"))
-            .and(query_param("query.intr", "pembrolizumab"))
-            .and(query_param("filter.overallStatus", "RECRUITING"))
-            .and(query_param("query.term", "AREA[Phase]PHASE2"))
-            .and(query_param("countTotal", "true"))
-            .and(query_param("pageSize", "3"))
-            .and(query_param("fields", CTGOV_SEARCH_FIELDS))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "studies": [],
-                "nextPageToken": null
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ClinicalTrialsClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .search(&CtGovSearchParams {
-                condition: Some("melanoma".into()),
-                intervention: Some("pembrolizumab".into()),
-                facility: None,
-                status: Some("RECRUITING".into()),
-                agg_filters: None,
-                query_term: Some("AREA[Phase]PHASE2".into()),
-                fields_override: None,
-                count_total: true,
-                page_token: None,
-                page_size: 3,
-                lat: None,
-                lon: None,
-                distance_miles: None,
-            })
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn search_includes_geo_filter_when_requested() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/studies"))
-            .and(query_param("query.cond", "melanoma"))
-            .and(query_param("filter.geo", "distance(41.5,-81.7,50mi)"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "studies": [],
-                "nextPageToken": null
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ClinicalTrialsClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .search(&CtGovSearchParams {
-                condition: Some("melanoma".into()),
-                intervention: None,
-                facility: None,
-                status: None,
-                agg_filters: None,
-                query_term: None,
-                fields_override: None,
-                count_total: false,
-                page_token: None,
-                page_size: 10,
-                lat: Some(41.5),
-                lon: Some(-81.7),
-                distance_miles: Some(50),
-            })
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn search_includes_facility_and_agg_filters_when_requested() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/studies"))
-            .and(query_param("query.cond", "melanoma"))
-            .and(query_param("query.locn", "MD Anderson"))
-            .and(query_param("aggFilters", "sex:f,funderType:nih"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "studies": [],
-                "nextPageToken": null
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ClinicalTrialsClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .search(&CtGovSearchParams {
-                condition: Some("melanoma".into()),
-                intervention: None,
-                facility: Some("MD Anderson".into()),
-                status: None,
-                agg_filters: Some("sex:f,funderType:nih".into()),
-                query_term: None,
-                fields_override: None,
-                count_total: false,
-                page_token: None,
-                page_size: 5,
-                lat: None,
-                lon: None,
-                distance_miles: None,
-            })
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn search_uses_fields_override_when_requested() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/studies"))
-            .and(query_param("query.intr", "daraxonrasib"))
-            .and(query_param("aggFilters", "results:with"))
-            .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "studies": [],
-                "nextPageToken": null
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ClinicalTrialsClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .search(&CtGovSearchParams {
-                condition: None,
-                intervention: Some("daraxonrasib".into()),
-                facility: None,
-                status: None,
-                agg_filters: Some("results:with".into()),
-                query_term: None,
-                fields_override: Some(CTGOV_ADVERSE_EVENT_SEARCH_FIELDS.into()),
-                count_total: false,
-                page_token: None,
-                page_size: 20,
-                lat: None,
-                lon: None,
-                distance_miles: None,
-            })
-            .await
-            .unwrap();
-    }
-}
+mod tests;

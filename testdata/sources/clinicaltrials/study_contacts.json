@@ -1,0 +1,18 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT41300001"
+    },
+    "eligibilityModule": {
+      "sex": "FEMALE"
+    },
+    "contactsLocationsModule": {
+      "centralContacts": [
+        {
+          "name": "Central",
+          "email": "central@example.test"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT41300001",
+          "briefTitle": "BRAF melanoma study"
+        },
+        "statusModule": {
+          "overallStatus": "RECRUITING"
+        }
+      }
+    }
+  ],
+  "nextPageToken": null,
+  "totalCount": 1
+}
