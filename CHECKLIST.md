@@ -174,3 +174,6 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: `pubmed` converted. Checks:
   `cargo nextest run -E 'test(/sources::pubmed::/)'` → 11/11 pass;
   `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: NCBI/literature group check. Checks:
+  `cargo nextest run -E '<pubmed|pubtator|europepmc|semantic_scholar|litsense2|nih_reporter|pmc_oa|ncbi_efetch|ncbi_idconv source filters>'`
+  → 99/99 pass.
