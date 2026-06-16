@@ -1,9 +1,12 @@
 use std::borrow::Cow;
 
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const COMPLEXPORTAL_BASE: &str = "https://www.ebi.ac.uk/intact/complex-ws";
 const COMPLEXPORTAL_API: &str = "complexportal";
@@ -24,22 +27,6 @@ impl ComplexPortalClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
@@ -48,25 +35,32 @@ impl ComplexPortalClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, COMPLEXPORTAL_API).await?;
+        Self::decode_json_response(status, content_type.as_ref(), &bytes)
+    }
+
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::body_excerpt(bytes);
             return Err(BioMcpError::Api {
                 api: COMPLEXPORTAL_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
-        crate::sources::ensure_json_content_type(COMPLEXPORTAL_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+        crate::sources::ensure_json_content_type(COMPLEXPORTAL_API, content_type, bytes)?;
+        serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
             api: COMPLEXPORTAL_API.to_string(),
             source,
         })
     }
 
-    pub async fn complexes(
-        &self,
+    pub(crate) fn complexes_plan(
         accession: &str,
         limit: usize,
-    ) -> Result<Vec<ComplexPortalComplex>, BioMcpError> {
+    ) -> Result<Option<RequestPlan>, BioMcpError> {
         let accession = accession.trim();
         if accession.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -74,17 +68,21 @@ impl ComplexPortalClient {
             ));
         }
         if limit == 0 {
-            return Ok(Vec::new());
+            return Ok(None);
         }
 
-        let url = self.endpoint(&format!("search/{accession}"));
-        let response: ComplexPortalSearchResponse = self
-            .get_json(self.client.get(&url).query(&[
-                ("number", COMPLEXPORTAL_SEARCH_PAGE_SIZE),
-                ("filters", COMPLEXPORTAL_FILTERS_HUMAN),
-            ]))
-            .await?;
+        Ok(Some(
+            RequestPlan::get(format!("search/{accession}"))
+                .query("number", COMPLEXPORTAL_SEARCH_PAGE_SIZE)
+                .query("filters", COMPLEXPORTAL_FILTERS_HUMAN),
+        ))
+    }
 
+    fn map_complexes(
+        response: ComplexPortalSearchResponse,
+        accession: &str,
+        limit: usize,
+    ) -> Vec<ComplexPortalComplex> {
         let mut out = Vec::new();
         for row in response.elements {
             if !queried_accession_is_protein_participant(&row.interactors, accession) {
@@ -126,7 +124,22 @@ impl ComplexPortalClient {
             }
         }
 
-        Ok(out)
+        out
+    }
+
+    pub async fn complexes(
+        &self,
+        accession: &str,
+        limit: usize,
+    ) -> Result<Vec<ComplexPortalComplex>, BioMcpError> {
+        let accession = accession.trim();
+        let Some(plan) = Self::complexes_plan(accession, limit)? else {
+            return Ok(Vec::new());
+        };
+        let response: ComplexPortalSearchResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Ok(Self::map_complexes(response, accession, limit))
     }
 }
 
@@ -204,105 +217,4 @@ struct ComplexPortalInteractor {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn complexes_requests_expected_endpoint_and_filters_false_positives() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/search/P15056"))
-            .and(query_param("number", "25"))
-            .and(query_param("filters", r#"species_f:("Homo sapiens")"#))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "elements": [
-                    {
-                        "complexAC": "CPX-1",
-                        "complexName": "BRAF complex",
-                        "description": "  RAF signaling complex  ",
-                        "predictedComplex": false,
-                        "interactors": [
-                            {
-                                "identifier": "P15056",
-                                "name": "BRAF",
-                                "stochiometry": " minValue: 1, maxValue: 1 ",
-                                "interactorType": "protein"
-                            },
-                            {
-                                "identifier": "Q02750",
-                                "name": "MAP2K1",
-                                "stochiometry": "",
-                                "interactorType": "protein"
-                            },
-                            {
-                                "identifier": "CHEBI:1234",
-                                "name": "ATP",
-                                "stochiometry": "minValue: 1, maxValue: 1",
-                                "interactorType": "small molecule"
-                            }
-                        ]
-                    },
-                    {
-                        "complexAC": "CPX-2",
-                        "complexName": "Description-only mention",
-                        "description": "Mentions P15056 but does not contain it as a participant",
-                        "predictedComplex": true,
-                        "interactors": [
-                            {
-                                "identifier": "Q9Y243",
-                                "name": "AKT3",
-                                "stochiometry": "minValue: 1, maxValue: 1",
-                                "interactorType": "protein"
-                            }
-                        ]
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ComplexPortalClient::new_for_test(server.uri()).unwrap();
-        let rows = client.complexes("P15056", 10).await.unwrap();
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].accession, "CPX-1");
-        assert_eq!(rows[0].name, "BRAF complex");
-        assert_eq!(
-            rows[0].description.as_deref(),
-            Some("RAF signaling complex")
-        );
-        assert_eq!(rows[0].participants.len(), 2);
-        assert_eq!(rows[0].participants[0].accession, "P15056");
-        assert_eq!(rows[0].participants[0].name, "BRAF");
-        assert_eq!(
-            rows[0].participants[0].stoichiometry.as_deref(),
-            Some("minValue: 1, maxValue: 1")
-        );
-        assert_eq!(rows[0].participants[1].accession, "Q02750");
-        assert_eq!(rows[0].participants[1].stoichiometry, None);
-    }
-
-    #[tokio::test]
-    async fn complexes_rejects_empty_accession() {
-        let client = ComplexPortalClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client.complexes(" ", 10).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn complexes_returns_empty_vec_for_zero_participant_matches() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/search/Q9Y243"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "elements": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ComplexPortalClient::new_for_test(server.uri()).unwrap();
-        let rows = client.complexes("Q9Y243", 10).await.unwrap();
-        assert!(rows.is_empty());
-    }
-}
+mod tests;
