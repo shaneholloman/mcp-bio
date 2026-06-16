@@ -1,0 +1,8 @@
+"CLINGEN GENE DISEASE VALIDITY CURATIONS","","","","","","","","",""
+"FILE CREATED: 2026-03-06","","","","","","","","",""
+"+++++++++++","++++++++++++++","+++++++++++++","++++++++++++++++++","+++++++++","+++++++++","++++++++++++++","+++++++++++++","+++++++++++++++++++","+++++++++++++++++++"
+"GENE SYMBOL","GENE ID (HGNC)","DISEASE LABEL","DISEASE ID (MONDO)","MOI","SOP","CLASSIFICATION","ONLINE REPORT","CLASSIFICATION DATE","GCEP"
+"+++++++++++","++++++++++++++","+++++++++++++","++++++++++++++++++","+++++++++","+++++++++","++++++++++++++","+++++++++++++","+++++++++++++++++++","+++++++++++++++++++"
+"BRAF","HGNC:1097","Noonan syndrome","MONDO:0018997","AD","SOP10","Moderate","https://example.org/r1","2023-05-01T16:00:00.000Z","Panel A"
+"BRAF","HGNC:1097","cardiofaciocutaneous syndrome","MONDO:0015280","AD","SOP10","Definitive","https://example.org/r2","2024-01-12T16:00:00.000Z","Panel B"
+"TP53","HGNC:11998","Li-Fraumeni syndrome","MONDO:0018874","AD","SOP9","Definitive","https://example.org/r3","2022-03-01T16:00:00.000Z","Panel C"
