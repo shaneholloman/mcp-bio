@@ -342,3 +342,5 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   validation tests, replacing source-level mock server tests. Checks:
   `cargo nextest run -E 'test(/sources::figshare::/)'` → 18/18 pass;
   `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.
+- 2026-06-16: source endpoint inventory checkpoint. Checks:
+  `cargo nextest run -E 'test(/sources::/)'` → 669/669 pass.
