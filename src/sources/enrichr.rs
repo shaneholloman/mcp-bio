@@ -4,6 +4,7 @@ use serde::Deserialize;
 use tracing::warn;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const ENRICHR_BASE: &str = "https://maayanlab.cloud/Enrichr";
 const ENRICHR_API: &str = "enrichr";
@@ -22,15 +23,6 @@ impl EnrichrClient {
             client: crate::sources::shared_client()?,
             streaming_client: crate::sources::streaming_http_client()?,
             base: crate::sources::env_base(ENRICHR_BASE, ENRICHR_BASE_ENV),
-        })
-    }
-
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            streaming_client: crate::sources::streaming_http_client()?,
-            base: Cow::Owned(base),
         })
     }
 
@@ -83,7 +75,7 @@ impl EnrichrClient {
         Ok((status, content_type, bytes))
     }
 
-    pub async fn add_list(&self, genes: &[&str]) -> Result<i64, BioMcpError> {
+    pub(crate) fn add_list_body(genes: &[&str]) -> Result<String, BioMcpError> {
         if genes.is_empty() {
             return Err(BioMcpError::InvalidArgument(
                 "Gene list is required for enrichment.".into(),
@@ -111,7 +103,31 @@ impl EnrichrClient {
                 "Gene list is required for enrichment.".into(),
             ));
         }
+        Ok(list)
+    }
 
+    pub(crate) fn decode_add_list_response(
+        status: reqwest::StatusCode,
+        bytes: &[u8],
+    ) -> Result<i64, BioMcpError> {
+        if status.is_success() {
+            let parsed: EnrichrAddListResponse =
+                serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
+                    api: ENRICHR_API.to_string(),
+                    source,
+                })?;
+            return Ok(parsed.user_list_id);
+        }
+
+        let excerpt = crate::sources::body_excerpt(bytes);
+        Err(BioMcpError::Api {
+            api: ENRICHR_API.to_string(),
+            message: format!("HTTP {status}: {excerpt}"),
+        })
+    }
+
+    pub async fn add_list(&self, genes: &[&str]) -> Result<i64, BioMcpError> {
+        let list = Self::add_list_body(genes)?;
         let url = self.endpoint("addList");
         crate::sources::rate_limit::wait_for_url_str(&url).await;
         let request_url = url.clone();
@@ -127,16 +143,39 @@ impl EnrichrClient {
             })
             .await?;
 
+        Self::decode_add_list_response(status, &bytes)
+    }
+
+    pub(crate) fn enrich_plan(user_list_id: i64, library: &str) -> RequestPlan {
+        RequestPlan::get("enrich")
+            .query("userListId", user_list_id.to_string())
+            .query("backgroundType", library)
+    }
+
+    pub(crate) fn decode_enrich_response(
+        status: reqwest::StatusCode,
+        content_type: Option<&reqwest::header::HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<serde_json::Value, BioMcpError> {
         if status.is_success() {
-            let parsed: EnrichrAddListResponse =
-                serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-                    api: ENRICHR_API.to_string(),
-                    source,
-                })?;
-            return Ok(parsed.user_list_id);
+            crate::sources::ensure_json_content_type(ENRICHR_API, content_type, bytes)?;
+            return serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
+                api: ENRICHR_API.to_string(),
+                source,
+            });
         }
 
-        let excerpt = crate::sources::body_excerpt(&bytes);
+        if status == reqwest::StatusCode::BAD_REQUEST {
+            warn!(
+                source = ENRICHR_API,
+                status = %status,
+                body = %crate::sources::body_excerpt(bytes),
+                "Enrichr returned HTTP 400; degrading to empty enrichment payload"
+            );
+            return Ok(serde_json::Value::Object(serde_json::Map::new()));
+        }
+
+        let excerpt = crate::sources::body_excerpt(bytes);
         Err(BioMcpError::Api {
             api: ENRICHR_API.to_string(),
             message: format!("HTTP {status}: {excerpt}"),
@@ -148,39 +187,12 @@ impl EnrichrClient {
         user_list_id: i64,
         library: &str,
     ) -> Result<serde_json::Value, BioMcpError> {
-        let url = self.endpoint("enrich");
+        let plan = Self::enrich_plan(user_list_id, library);
         let (status, content_type, bytes) = self
-            .send_bytes(self.client.get(&url).query(&[
-                ("userListId", user_list_id.to_string()),
-                ("backgroundType", library.to_string()),
-            ]))
+            .send_bytes(request_from_plan(&self.client, self.base.as_ref(), &plan))
             .await?;
 
-        if status.is_success() {
-            crate::sources::ensure_json_content_type(ENRICHR_API, content_type.as_ref(), &bytes)?;
-            return serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-                api: ENRICHR_API.to_string(),
-                source,
-            });
-        }
-
-        // Enrichr occasionally returns HTTP 400 for otherwise-valid requests. Degrade
-        // gracefully so gene lookups still succeed (terms will be empty for this library).
-        if status == reqwest::StatusCode::BAD_REQUEST {
-            warn!(
-                source = ENRICHR_API,
-                status = %status,
-                body = %crate::sources::body_excerpt(&bytes),
-                "Enrichr returned HTTP 400; degrading to empty enrichment payload"
-            );
-            return Ok(serde_json::Value::Object(serde_json::Map::new()));
-        }
-
-        let excerpt = crate::sources::body_excerpt(&bytes);
-        Err(BioMcpError::Api {
-            api: ENRICHR_API.to_string(),
-            message: format!("HTTP {status}: {excerpt}"),
-        })
+        Self::decode_enrich_response(status, content_type.as_ref(), &bytes)
     }
 }
 
@@ -191,65 +203,4 @@ pub struct EnrichrAddListResponse {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn add_list_rejects_empty_gene_lists() {
-        let client = EnrichrClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client.add_list(&[]).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn add_list_parses_user_list_id() {
-        let server = MockServer::start().await;
-        Mock::given(method("POST"))
-            .and(path("/addList"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "userListId": 42
-            })))
-            .mount(&server)
-            .await;
-
-        let client = EnrichrClient::new_for_test(server.uri()).unwrap();
-        let id = client.add_list(&["BRAF", "KRAS"]).await.unwrap();
-        assert_eq!(id, 42);
-    }
-
-    #[tokio::test]
-    async fn enrich_gracefully_handles_bad_request() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/enrich"))
-            .and(query_param("userListId", "42"))
-            .and(query_param("backgroundType", "KEGG_2021_Human"))
-            .respond_with(ResponseTemplate::new(400).set_body_string("bad request"))
-            .mount(&server)
-            .await;
-
-        let client = EnrichrClient::new_for_test(server.uri()).unwrap();
-        let value = client.enrich(42, "KEGG_2021_Human").await.unwrap();
-        assert!(value.is_object());
-        assert!(value.as_object().unwrap().is_empty());
-    }
-
-    #[tokio::test]
-    async fn enrich_bad_request_returns_empty_object_without_error() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/enrich"))
-            .and(query_param("userListId", "7"))
-            .and(query_param("backgroundType", "DisGeNET"))
-            .respond_with(ResponseTemplate::new(400).set_body_string("invalid"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = EnrichrClient::new_for_test(server.uri()).unwrap();
-        let value = client.enrich(7, "DisGeNET").await.unwrap();
-        assert_eq!(value, serde_json::json!({}));
-    }
-}
+mod tests;
