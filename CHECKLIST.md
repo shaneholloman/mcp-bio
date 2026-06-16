@@ -415,3 +415,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   remaining CT.gov pagination/count server tests for now. Checks:
   `cargo nextest run -E 'test(/entities::trial::search::ctgov::/)'` → 21/21
   pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass.
+- 2026-06-16: partial NCI trial-search cleanup. Replaced server/env-lock status
+  and phase mapping tests with direct `nci_status_filter` / `nci_phase_filters`
+  unit tests, and replaced the slow no-hit disease-grounding fallback test with
+  a pure NCI request-plan assertion for keyword fallback. Checks:
+  `cargo nextest run -E 'test(/entities::trial::search::nci::/)'` → 12/12 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass.
