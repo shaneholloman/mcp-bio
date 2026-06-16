@@ -26,35 +26,8 @@ pub(crate) async fn handle_search(
     args: DrugSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
-    let region_arg = args.region;
     let who_product_type_arg = args.who_product_type;
-    if who_product_type_arg.is_some() && !matches!(region_arg, Some(crate::cli::DrugRegionArg::Who))
-    {
-        return Err(crate::error::BioMcpError::InvalidArgument(
-            "The WHO-only --product-type filter requires explicit --region who; rerun with --region who.".into(),
-        )
-        .into());
-    }
-
-    let who_product_type = who_product_type_arg
-        .map(|value| match value {
-            WhoProductTypeArg::FinishedPharma => WhoProductTypeFilter::FinishedPharma,
-            WhoProductTypeArg::Api => WhoProductTypeFilter::Api,
-            WhoProductTypeArg::Vaccine => WhoProductTypeFilter::Vaccine,
-        })
-        .unwrap_or_default();
-    let query = super::super::resolve_query_input(args.query, args.positional_query, "--query")?;
-    let filters = crate::entities::drug::DrugSearchFilters {
-        query,
-        target: args.target,
-        indication: args.indication,
-        mechanism: args.mechanism,
-        drug_type: args.drug_type,
-        atc: args.atc,
-        pharm_class: args.pharm_class,
-        interactions: args.interactions,
-    };
-    let region = resolve_drug_search_region(region_arg, &filters)?;
+    let (filters, region, who_product_type) = search_plan_from_args(&args)?;
     let page_with_region = crate::entities::drug::search_page_with_region(
         &filters,
         args.limit,
@@ -204,7 +177,7 @@ pub(crate) async fn handle_command(
                     source,
                     no_alias_expand,
                 } => {
-                    let trial_source = crate::entities::trial::TrialSource::from_flag(&source)?;
+                    let trial_source = validate_trial_args(&source, no_alias_expand)?;
                     let filters = crate::entities::trial::TrialSearchFilters {
                         intervention: Some(name.clone()),
                         no_alias_expand,
@@ -396,6 +369,78 @@ pub(crate) async fn handle_command(
 }
 
 pub(super) const DRUG_SEARCH_EMA_STRUCTURED_FILTER_ERROR: &str = "EMA and all-region search currently support name/alias lookups only; use --region us for structured MyChem filters or --region who to filter structured U.S. hits through WHO prequalification.";
+
+pub(super) fn search_plan_from_args(
+    args: &DrugSearchArgs,
+) -> Result<
+    (
+        crate::entities::drug::DrugSearchFilters,
+        DrugRegion,
+        WhoProductTypeFilter,
+    ),
+    crate::error::BioMcpError,
+> {
+    let region_arg = args.region;
+    let who_product_type = args
+        .who_product_type
+        .map(|value| match value {
+            WhoProductTypeArg::FinishedPharma => WhoProductTypeFilter::FinishedPharma,
+            WhoProductTypeArg::Api => WhoProductTypeFilter::Api,
+            WhoProductTypeArg::Vaccine => WhoProductTypeFilter::Vaccine,
+        })
+        .unwrap_or_default();
+    if args.who_product_type.is_some()
+        && !matches!(region_arg, Some(crate::cli::DrugRegionArg::Who))
+    {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "The WHO-only --product-type filter requires explicit --region who; rerun with --region who.".into(),
+        ));
+    }
+
+    let query = super::super::resolve_query_input(
+        args.query.clone(),
+        args.positional_query.clone(),
+        "--query",
+    )?;
+    let filters = crate::entities::drug::DrugSearchFilters {
+        query,
+        target: args.target.clone(),
+        indication: args.indication.clone(),
+        mechanism: args.mechanism.clone(),
+        drug_type: args.drug_type.clone(),
+        atc: args.atc.clone(),
+        pharm_class: args.pharm_class.clone(),
+        interactions: args.interactions.clone(),
+    };
+    let region = resolve_drug_search_region(region_arg, &filters)?;
+    if matches!(region, DrugRegion::Who)
+        && matches!(who_product_type, WhoProductTypeFilter::Vaccine)
+        && filters.has_structured_filters()
+    {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "WHO vaccine search is plain name/brand only; remove structured filters or search by vaccine name with --region who --product-type vaccine.".into(),
+        ));
+    }
+    Ok((filters, region, who_product_type))
+}
+
+pub(super) fn validate_trial_args(
+    source: &str,
+    no_alias_expand: bool,
+) -> Result<crate::entities::trial::TrialSource, crate::error::BioMcpError> {
+    let trial_source = crate::entities::trial::TrialSource::from_flag(source)?;
+    if no_alias_expand
+        && !matches!(
+            trial_source,
+            crate::entities::trial::TrialSource::ClinicalTrialsGov
+        )
+    {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "--no-alias-expand is only supported for CTGov intervention searches".into(),
+        ));
+    }
+    Ok(trial_source)
+}
 
 pub(super) fn resolve_drug_search_region(
     region_arg: Option<crate::cli::DrugRegionArg>,

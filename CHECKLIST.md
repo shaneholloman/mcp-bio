@@ -358,3 +358,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `pathway`) made pure for fast-fail limit checks. Checks:
   `cargo nextest run -E 'test(/cli::pgx::/) | test(/cli::phenotype::/) | test(/cli::pathway::/)'` → 11/11 pass;
   `cargo check` → pass.
+- 2026-06-16: fourth CLI parser-validation batch (`drug`) made pure for
+  source/product-type/no-alias validation while leaving raw-label entity
+  behavior covered by existing tests. Checks:
+  `cargo nextest run -E 'test(/cli::drug::/)'` → 30/30 pass;
+  `cargo check` → pass.

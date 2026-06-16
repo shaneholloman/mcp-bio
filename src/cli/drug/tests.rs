@@ -1,6 +1,8 @@
 use clap::{CommandFactory, Parser};
 
-use super::dispatch::{resolve_drug_get_region, resolve_drug_search_region};
+use super::dispatch::{
+    resolve_drug_get_region, resolve_drug_search_region, search_plan_from_args, validate_trial_args,
+};
 use crate::cli::{Cli, Commands, DrugCommand, DrugRegionArg, GetEntity, SearchEntity};
 use crate::entities::drug::{DrugRegion, DrugSearchFilters};
 
@@ -301,8 +303,8 @@ fn drug_trials_parse_no_alias_expand() {
     }
 }
 
-#[tokio::test]
-async fn drug_trials_reject_no_alias_expand_for_nci_source() {
+#[test]
+fn drug_trials_reject_no_alias_expand_for_nci_source() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "drug",
@@ -323,17 +325,25 @@ async fn drug_trials_reject_no_alias_expand_for_nci_source() {
         panic!("expected drug command");
     };
 
-    let err = super::handle_command(cmd, json, false)
-        .await
-        .expect_err("nci no-alias-expand should fail");
+    assert!(!json);
+    let DrugCommand::Trials {
+        source,
+        no_alias_expand,
+        ..
+    } = cmd
+    else {
+        panic!("expected drug trials command");
+    };
+    let err =
+        validate_trial_args(&source, no_alias_expand).expect_err("nci no-alias-expand should fail");
     assert!(
         err.to_string()
             .contains("--no-alias-expand is only supported for CTGov intervention searches")
     );
 }
 
-#[tokio::test]
-async fn handle_search_rejects_non_us_structured_region() {
+#[test]
+fn search_plan_rejects_non_us_structured_region() {
     let cli = Cli::try_parse_from([
         "biomcp", "search", "drug", "--target", "EGFR", "--region", "eu",
     ])
@@ -350,17 +360,16 @@ async fn handle_search_rejects_non_us_structured_region() {
         panic!("expected search drug command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
-        .expect_err("explicit EU structured search should fail");
+    assert!(!json);
+    let err = search_plan_from_args(&args).expect_err("explicit EU structured search should fail");
     assert!(
         err.to_string()
             .contains("EMA and all-region search currently support name/alias lookups only")
     );
 }
 
-#[tokio::test]
-async fn handle_search_rejects_product_type_without_explicit_who_region() {
+#[test]
+fn search_plan_rejects_product_type_without_explicit_who_region() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
@@ -382,14 +391,14 @@ async fn handle_search_rejects_product_type_without_explicit_who_region() {
         panic!("expected search drug command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
+    assert!(!json);
+    let err = search_plan_from_args(&args)
         .expect_err("product-type without explicit who region should fail");
     assert!(err.to_string().contains("requires explicit --region who"));
 }
 
-#[tokio::test]
-async fn handle_search_rejects_structured_who_vaccine_requests() {
+#[test]
+fn search_plan_rejects_structured_who_vaccine_requests() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
@@ -414,9 +423,8 @@ async fn handle_search_rejects_structured_who_vaccine_requests() {
         panic!("expected search drug command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
-        .expect_err("structured WHO vaccine search should fail");
+    assert!(!json);
+    let err = search_plan_from_args(&args).expect_err("structured WHO vaccine search should fail");
     assert!(
         err.to_string()
             .contains("WHO vaccine search is plain name/brand only")
