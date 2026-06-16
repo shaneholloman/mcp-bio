@@ -149,6 +149,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
+- [x] `src/entities/disease/fallback/tests.rs` Arnold synonym crosswalk page
+      test is pure: it keeps OLS/MyDisease request-plan assertions and uses a
+      deterministic row resolver instead of a mocked MyDisease query endpoint.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -501,3 +504,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::disease::resolution::/)'` → 11/11
   pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
   pass; `git diff --check` → pass.
+- 2026-06-16: partial disease fallback cleanup. Converted the Arnold Chiari
+  synonym-rescue crosswalk test from a mocked MyDisease query to request-plan
+  assertions plus a deterministic fallback-row resolver. One canonical
+  not-found mock-server test remains in fallback. Checks:
+  `cargo nextest run -E 'test(/entities::disease::fallback::/)'` → 11/11 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
