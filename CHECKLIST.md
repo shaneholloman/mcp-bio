@@ -84,7 +84,7 @@ BioThings (near-copies of mygene/myvariant):
 
 NCBI / literature:
 - [ ] pubmed ~18 · [ ] pubtator ~8 · [x] ncbi_efetch ~2 · [x] ncbi_idconv ~3 · [x] pmc_oa ~6
-- [ ] europepmc ~8 · [ ] semantic_scholar ~13 · [ ] litsense2 ~4 · [ ] nih_reporter ~7
+- [ ] europepmc ~8 · [ ] semantic_scholar ~13 · [x] litsense2 ~4 · [ ] nih_reporter ~7
 
 Trials / cancer:
 - [ ] clinicaltrials ~6 · [ ] cbioportal ~2 · [ ] cbioportal_download ~9 · [ ] cbioportal_study ~33
@@ -155,4 +155,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `bash scripts/check-no-server-tests.sh` → pass.
 - 2026-06-16: `pmc_oa` converted. Checks:
   `cargo nextest run -E 'test(/sources::pmc_oa::/)'` → 11/11 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `litsense2` converted. Checks:
+  `cargo nextest run -E 'test(/sources::litsense2::/)'` → 10/10 pass;
   `bash scripts/check-no-server-tests.sh` → pass.
