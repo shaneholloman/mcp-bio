@@ -2,8 +2,9 @@
 set -euo pipefail
 
 repo_root="${1:-../..}"
+scenario="${2:-all}"
 repo_root="$(cd "$repo_root" && pwd)"
-fixture_root="${repo_root}/.cache/spec-variant-article-entity"
+fixture_root="${repo_root}/.cache/spec-variant-article-entity-${scenario}"
 ready_file="${fixture_root}/ready"
 server_py="${fixture_root}/server.py"
 request_log="${fixture_root}/requests.log"
@@ -60,6 +61,11 @@ class Handler(BaseHTTPRequestHandler):
             if query == "BRAF":
                 rows.append({"_id": "@GENE_BRAF", "biotype": "Gene", "name": "BRAF"})
             if query in {"BRAF V600E", "V600E", "p.V600E"}:
+                rows.append({
+                    "_id": "@VARIANT_p.V600V_BRAF_human",
+                    "biotype": "Variant",
+                    "name": "BRAF p.V600V",
+                })
                 rows.append({
                     "_id": "@VARIANT_p.V600E_BRAF_human",
                     "biotype": "Variant",
@@ -152,9 +158,18 @@ export BIOMCP_PUBMED_BASE="$base_url/entrez/eutils"
 export BIOMCP_S2_BASE="$base_url"
 export BIOMCP_LITSENSE2_BASE="$base_url"
 
-printf '## BRAF V600E limit 1\n'
-"$binary" variant articles "BRAF V600E" --limit 1
-printf '\n## BRAF V600E limit 3\n'
-"$binary" variant articles "BRAF V600E" --limit 3
-printf '\n## MYD88 S219C fallback\n'
-"$binary" variant articles "MYD88 S219C" --limit 3
+case "$scenario" in
+  all|braf)
+    printf '## BRAF V600E limit 1\n'
+    "$binary" variant articles "BRAF V600E" --limit 1
+    printf '\n## BRAF V600E limit 3\n'
+    "$binary" variant articles "BRAF V600E" --limit 3
+    ;;
+esac
+
+case "$scenario" in
+  all|myd88)
+    printf '## MYD88 S219C fallback\n'
+    "$binary" variant articles "MYD88 S219C" --limit 3
+    ;;
+esac

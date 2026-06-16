@@ -94,11 +94,14 @@ fixture serves the BRAF V600E article only for the `@VARIANT_...` query and
 serves the MYD88 S219C article only for the labeled best-effort fallback path.
 
 ```bash
-bash ../fixtures/run-variant-article-entity-fixture.sh ../.. | mustmatch like '## BRAF V600E limit 1
+bash ../fixtures/run-variant-article-entity-fixture.sh ../.. braf | mustmatch like '## BRAF V600E limit 1
 4260001
 ## BRAF V600E limit 3
-4260001
-## MYD88 S219C fallback
+4260001'
+```
+
+```bash
+bash ../fixtures/run-variant-article-entity-fixture.sh ../.. myd88 | mustmatch like '## MYD88 S219C fallback
 best-effort free-text fallback
 24534189'
 ```
