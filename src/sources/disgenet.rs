@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use reqwest::header::CONTENT_TYPE;
+use reqwest::StatusCode;
+use reqwest::header::{CONTENT_TYPE, HeaderMap};
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 use tracing::debug;
@@ -8,6 +9,7 @@ use tracing::debug;
 use crate::entities::disease::Disease;
 use crate::entities::gene::Gene;
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const DISGENET_BASE: &str = "https://api.disgenet.com";
 const DISGENET_API: &str = "disgenet";
@@ -34,25 +36,6 @@ impl DisgenetClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String, api_key: Option<String>) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-            api_key: api_key
-                .map(|value| value.trim().to_string())
-                .filter(|value| !value.is_empty()),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     fn require_api_key(&self) -> Result<&str, BioMcpError> {
         self.api_key
             .as_deref()
@@ -71,20 +54,30 @@ impl DisgenetClient {
             .send()
             .await?;
         let status = resp.status();
-        let retry_after = parse_retry_after_seconds(resp.headers());
-        let content_type = resp.headers().get(CONTENT_TYPE).cloned();
+        let headers = resp.headers().clone();
         let bytes = crate::sources::read_limited_body(resp, DISGENET_API).await?;
-        if status == reqwest::StatusCode::FORBIDDEN {
+        Self::decode_json_response(status, &headers, &bytes)
+    }
+
+    fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        headers: &HeaderMap,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        if status == StatusCode::FORBIDDEN {
             return Err(BioMcpError::ApiKeyRequired {
                 api: DISGENET_API.to_string(),
                 env_var: DISGENET_API_KEY_ENV.to_string(),
                 docs_url: DISGENET_DOCS_URL.to_string(),
             });
         }
-        crate::sources::ensure_json_content_type(DISGENET_API, content_type.as_ref(), &bytes)?;
 
-        if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+        let retry_after = parse_retry_after_seconds(headers);
+        let content_type = headers.get(CONTENT_TYPE).cloned();
+        crate::sources::ensure_json_content_type(DISGENET_API, content_type.as_ref(), bytes)?;
+
+        if status == StatusCode::TOO_MANY_REQUESTS {
+            let excerpt = crate::sources::body_excerpt(bytes);
             let detail = match retry_after {
                 Some(seconds) => format!("{excerpt}. Retry after {seconds} seconds."),
                 None => excerpt,
@@ -96,16 +89,90 @@ impl DisgenetClient {
         }
 
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::body_excerpt(bytes);
             return Err(BioMcpError::Api {
                 api: DISGENET_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
 
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+        serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
             api: DISGENET_API.to_string(),
             source,
+        })
+    }
+
+    fn gene_associations_plan(
+        gene: &Gene,
+        limit: usize,
+        api_key: &str,
+    ) -> Result<Option<RequestPlan>, BioMcpError> {
+        if limit == 0 {
+            return Ok(None);
+        }
+
+        let mut plan = authenticated_get("api/v1/gda/summary", api_key).query("page_number", "0");
+        if !gene.entrez_id.trim().is_empty() {
+            plan = plan.query("gene_ncbi_id", gene.entrez_id.trim());
+        } else if !gene.symbol.trim().is_empty() {
+            plan = plan.query("gene_symbol", gene.symbol.trim());
+        } else {
+            return Err(BioMcpError::InvalidArgument(
+                "DisGeNET gene lookup requires a gene symbol or Entrez ID".into(),
+            ));
+        }
+
+        Ok(Some(plan))
+    }
+
+    fn disease_associations_plan(
+        disease_id: &str,
+        limit: usize,
+        api_key: &str,
+    ) -> Option<RequestPlan> {
+        if limit == 0 {
+            return None;
+        }
+
+        Some(
+            authenticated_get("api/v1/gda/summary", api_key)
+                .query("disease", disease_id)
+                .query("page_number", "0"),
+        )
+    }
+
+    fn disease_resolution_plan(query: &str, api_key: &str) -> RequestPlan {
+        authenticated_get("api/v1/entity/disease", api_key)
+            .query("disease_free_text_search_string", query)
+    }
+
+    fn associations_from_response(
+        resp: DisgenetResponse<DisgenetGdaSummaryRow>,
+        limit: usize,
+    ) -> Result<Vec<DisgenetAssociationRecord>, BioMcpError> {
+        Ok(validate_response(resp)?
+            .into_iter()
+            .take(limit)
+            .map(DisgenetAssociationRecord::from)
+            .collect())
+    }
+
+    fn disease_id_from_response(
+        query: &str,
+        resp: DisgenetResponse<DisgenetDiseaseRow>,
+    ) -> Result<String, BioMcpError> {
+        let rows = validate_response(resp)?;
+
+        if let Some(row) = select_disease_match(query, &rows) {
+            return Ok(format!("UMLS_{}", row.disease_umls_cui));
+        }
+
+        Err(BioMcpError::SourceUnavailable {
+            source_name: DISGENET_API.to_string(),
+            reason: format!("No DisGeNET disease identifier matched \"{query}\"."),
+            suggestion:
+                "Try a more specific disease query or resolve a disease with a UMLS CUI first."
+                    .into(),
         })
     }
 
@@ -119,30 +186,11 @@ impl DisgenetClient {
         }
 
         let api_key = self.require_api_key()?;
-        let url = self.endpoint("/api/v1/gda/summary");
-        let mut req = self
-            .client
-            .get(&url)
-            .header("Authorization", api_key)
-            .header("accept", "application/json")
-            .query(&[("page_number", "0")]);
-
-        if !gene.entrez_id.trim().is_empty() {
-            req = req.query(&[("gene_ncbi_id", gene.entrez_id.trim())]);
-        } else if !gene.symbol.trim().is_empty() {
-            req = req.query(&[("gene_symbol", gene.symbol.trim())]);
-        } else {
-            return Err(BioMcpError::InvalidArgument(
-                "DisGeNET gene lookup requires a gene symbol or Entrez ID".into(),
-            ));
-        }
+        let plan = Self::gene_associations_plan(gene, limit, api_key)?.expect("limit checked");
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
 
         let resp: DisgenetResponse<DisgenetGdaSummaryRow> = self.get_json(req).await?;
-        Ok(validate_response(resp)?
-            .into_iter()
-            .take(limit)
-            .map(DisgenetAssociationRecord::from)
-            .collect())
+        Self::associations_from_response(resp, limit)
     }
 
     pub async fn fetch_disease_associations(
@@ -164,20 +212,12 @@ impl DisgenetClient {
             None => self.resolve_disease_id(&disease.name).await?,
         };
 
-        let url = self.endpoint("/api/v1/gda/summary");
-        let req = self
-            .client
-            .get(&url)
-            .header("Authorization", api_key)
-            .header("accept", "application/json")
-            .query(&[("disease", disease_id.as_str()), ("page_number", "0")]);
+        let plan = Self::disease_associations_plan(disease_id.as_str(), limit, api_key)
+            .expect("limit checked");
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
 
         let resp: DisgenetResponse<DisgenetGdaSummaryRow> = self.get_json(req).await?;
-        Ok(validate_response(resp)?
-            .into_iter()
-            .take(limit)
-            .map(DisgenetAssociationRecord::from)
-            .collect())
+        Self::associations_from_response(resp, limit)
     }
 
     async fn resolve_disease_id(&self, name: &str) -> Result<String, BioMcpError> {
@@ -192,28 +232,17 @@ impl DisgenetClient {
         }
 
         let api_key = self.require_api_key()?;
-        let url = self.endpoint("/api/v1/entity/disease");
-        let req = self
-            .client
-            .get(&url)
-            .header("Authorization", api_key)
-            .header("accept", "application/json")
-            .query(&[("disease_free_text_search_string", query)]);
+        let plan = Self::disease_resolution_plan(query, api_key);
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
         let resp: DisgenetResponse<DisgenetDiseaseRow> = self.get_json(req).await?;
-        let rows = validate_response(resp)?;
-
-        if let Some(row) = select_disease_match(query, &rows) {
-            return Ok(format!("UMLS_{}", row.disease_umls_cui));
-        }
-
-        Err(BioMcpError::SourceUnavailable {
-            source_name: DISGENET_API.to_string(),
-            reason: format!("No DisGeNET disease identifier matched \"{query}\"."),
-            suggestion:
-                "Try a more specific disease query or resolve a disease with a UMLS CUI first."
-                    .into(),
-        })
+        Self::disease_id_from_response(query, resp)
     }
+}
+
+fn authenticated_get(path: &str, api_key: &str) -> RequestPlan {
+    RequestPlan::get(path)
+        .header("Authorization", api_key)
+        .header("accept", "application/json")
 }
 
 fn validate_response<T>(resp: DisgenetResponse<T>) -> Result<Vec<T>, BioMcpError> {
@@ -408,380 +437,4 @@ struct DisgenetDiseaseSynonym {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::HashMap;
-    use wiremock::matchers::{header, method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    fn test_gene(entrez_id: &str) -> Gene {
-        Gene {
-            symbol: "TP53".to_string(),
-            name: "tumor protein p53".to_string(),
-            entrez_id: entrez_id.to_string(),
-            ensembl_id: None,
-            location: None,
-            genomic_coordinates: None,
-            omim_id: None,
-            uniprot_id: None,
-            summary: None,
-            gene_type: None,
-            aliases: Vec::new(),
-            clinical_diseases: Vec::new(),
-            clinical_drugs: Vec::new(),
-            pathways: None,
-            ontology: None,
-            diseases: None,
-            protein: None,
-            go: None,
-            interactions: None,
-            civic: None,
-            expression: None,
-            hpa: None,
-            druggability: None,
-            clingen: None,
-            constraint: None,
-            disgenet: None,
-            funding: None,
-            funding_note: None,
-            diagnostics: None,
-            diagnostics_note: None,
-        }
-    }
-
-    fn test_disease(name: &str, umls_cui: Option<&str>) -> Disease {
-        let mut xrefs = HashMap::new();
-        if let Some(cui) = umls_cui {
-            xrefs.insert("umls_cui".to_string(), cui.to_string());
-        }
-        Disease {
-            id: "MONDO:0007254".to_string(),
-            name: name.to_string(),
-            definition: None,
-            synonyms: Vec::new(),
-            parents: Vec::new(),
-            associated_genes: Vec::new(),
-            gene_associations: Vec::new(),
-            top_genes: Vec::new(),
-            top_gene_scores: Vec::new(),
-            treatment_landscape: Vec::new(),
-            recruiting_trial_count: None,
-            pathways: Vec::new(),
-            phenotypes: Vec::new(),
-            clinical_features: Vec::new(),
-            key_features: Vec::new(),
-            variants: Vec::new(),
-            top_variant: None,
-            models: Vec::new(),
-            prevalence: Vec::new(),
-            prevalence_note: None,
-            survival: None,
-            survival_note: None,
-            civic: None,
-            disgenet: None,
-            funding: None,
-            funding_note: None,
-            diagnostics: None,
-            diagnostics_note: None,
-            xrefs,
-        }
-    }
-
-    fn summary_response() -> serde_json::Value {
-        serde_json::json!({
-            "status": "OK",
-            "httpStatus": 200,
-            "paging": {
-                "pageSize": 100,
-                "totalElements": 2,
-                "totalElementsInPage": 2,
-                "currentPageNumber": 0
-            },
-            "warnings": [],
-            "payload": [
-                {
-                    "symbolOfGene": "TP53",
-                    "geneNcbiID": 7157,
-                    "diseaseName": "Breast Carcinoma",
-                    "diseaseUMLSCUI": "C0678222",
-                    "score": 0.91,
-                    "numPMIDs": 1234,
-                    "numCTsupportingAssociation": 4,
-                    "ei": 0.72,
-                    "el": "Definitive"
-                },
-                {
-                    "symbolOfGene": "TP53",
-                    "geneNcbiID": 7157,
-                    "diseaseName": "Li-Fraumeni Syndrome",
-                    "diseaseUMLSCUI": "C0085390",
-                    "score": 0.88,
-                    "numPMIDs": 400,
-                    "numCTsupportingAssociation": 1,
-                    "ei": 0.66,
-                    "el": "Strong"
-                }
-            ]
-        })
-    }
-
-    #[tokio::test]
-    async fn fetch_gene_associations_sends_auth_header_and_gene_ncbi_id() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/gda/summary"))
-            .and(query_param("gene_ncbi_id", "7157"))
-            .and(query_param("page_number", "0"))
-            .and(header("Authorization", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(summary_response()))
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let rows = client
-            .fetch_gene_associations(&test_gene("7157"), 10)
-            .await
-            .unwrap();
-        assert_eq!(rows.len(), 2);
-        assert_eq!(rows[0].disease_name, "Breast Carcinoma");
-        assert_eq!(rows[0].publication_count, Some(1234));
-        assert_eq!(rows[0].clinical_trial_count, Some(4));
-        assert_eq!(rows[0].evidence_level.as_deref(), Some("Definitive"));
-    }
-
-    #[tokio::test]
-    async fn fetch_gene_associations_falls_back_to_gene_symbol() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/gda/summary"))
-            .and(query_param("gene_symbol", "TP53"))
-            .and(query_param("page_number", "0"))
-            .and(header("Authorization", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(summary_response()))
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let rows = client
-            .fetch_gene_associations(&test_gene(""), 1)
-            .await
-            .unwrap();
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].gene_symbol, "TP53");
-    }
-
-    #[tokio::test]
-    async fn fetch_disease_associations_uses_umls_cui_when_available() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/gda/summary"))
-            .and(query_param("disease", "UMLS_C0678222"))
-            .and(query_param("page_number", "0"))
-            .and(header("Authorization", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(summary_response()))
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let rows = client
-            .fetch_disease_associations(&test_disease("breast cancer", Some("C0678222")), 10)
-            .await
-            .unwrap();
-        assert_eq!(rows.len(), 2);
-        assert_eq!(rows[0].disease_umls_cui, "C0678222");
-    }
-
-    #[tokio::test]
-    async fn fetch_disease_associations_resolves_free_text_to_umls_cui() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/entity/disease"))
-            .and(query_param(
-                "disease_free_text_search_string",
-                "breast cancer",
-            ))
-            .and(header("Authorization", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "status": "OK",
-                "httpStatus": 200,
-                "payload": [
-                    {
-                        "name": "Breast carcinoma",
-                        "diseaseUMLSCUI": "C0678222",
-                        "search_rank": 0.82,
-                        "synonyms": [
-                            {"name": "Breast cancer"}
-                        ]
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/gda/summary"))
-            .and(query_param("disease", "UMLS_C0678222"))
-            .and(query_param("page_number", "0"))
-            .and(header("Authorization", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(summary_response()))
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let rows = client
-            .fetch_disease_associations(&test_disease("breast cancer", None), 10)
-            .await
-            .unwrap();
-        assert_eq!(rows.len(), 2);
-        assert_eq!(rows[0].gene_symbol, "TP53");
-    }
-
-    #[tokio::test]
-    async fn fetch_disease_associations_returns_source_unavailable_when_resolution_fails() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/entity/disease"))
-            .and(query_param(
-                "disease_free_text_search_string",
-                "completely unknown disease",
-            ))
-            .and(header("Authorization", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "status": "OK",
-                "httpStatus": 200,
-                "payload": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let err = client
-            .fetch_disease_associations(&test_disease("completely unknown disease", None), 10)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::SourceUnavailable { .. }));
-    }
-
-    #[tokio::test]
-    async fn missing_key_returns_api_key_required_error() {
-        let server = MockServer::start().await;
-        let client = DisgenetClient::new_for_test(server.uri(), None).unwrap();
-
-        let err = client
-            .fetch_gene_associations(&test_gene("7157"), 10)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::ApiKeyRequired { .. }));
-    }
-
-    #[tokio::test]
-    async fn fetch_gene_associations_403_returns_api_key_required_for_html_error_body() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/gda/summary"))
-            .and(query_param("gene_ncbi_id", "7157"))
-            .and(query_param("page_number", "0"))
-            .and(header("Authorization", "test-key"))
-            .respond_with(
-                ResponseTemplate::new(403)
-                    .insert_header("Content-Type", "text/html; charset=utf-8")
-                    .set_body_string("<html><body>Unauthorized</body></html>"),
-            )
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let err = client
-            .fetch_gene_associations(&test_gene("7157"), 10)
-            .await
-            .expect_err("403 should require an API key");
-
-        assert!(
-            matches!(
-                err,
-                BioMcpError::ApiKeyRequired { ref env_var, .. } if env_var == "DISGENET_API_KEY"
-            ),
-            "expected ApiKeyRequired, got {err:?}"
-        );
-        let message = err.to_string();
-        assert!(message.contains("DISGENET_API_KEY"));
-        assert!(message.contains("export DISGENET_API_KEY"));
-        assert!(!message.contains("Unauthorized"));
-        assert!(!message.contains("403 Forbidden"));
-    }
-
-    #[tokio::test]
-    async fn rate_limit_error_includes_retry_after_seconds() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/gda/summary"))
-            .respond_with(
-                ResponseTemplate::new(429)
-                    .insert_header("Content-Type", "application/json")
-                    .insert_header("X-Rate-Limit-Retry-After-Seconds", "85564")
-                    .set_body_json(serde_json::json!({"message": "Too many requests"})),
-            )
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let err = client
-            .fetch_gene_associations(&test_gene("7157"), 10)
-            .await
-            .unwrap_err();
-        let message = err.to_string();
-        assert!(message.contains("85564"));
-        assert!(message.contains("Too many requests"));
-    }
-
-    #[tokio::test]
-    async fn http_500_returns_api_error() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/gda/summary"))
-            .respond_with(
-                ResponseTemplate::new(500)
-                    .insert_header("Content-Type", "application/json")
-                    .set_body_json(serde_json::json!({"message": "upstream failure"})),
-            )
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let err = client
-            .fetch_gene_associations(&test_gene("7157"), 10)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::Api { .. }));
-    }
-
-    #[tokio::test]
-    async fn empty_payload_returns_empty_vec() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v1/gda/summary"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "status": "OK",
-                "httpStatus": 200,
-                "payload": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = DisgenetClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let rows = client
-            .fetch_gene_associations(&test_gene("7157"), 10)
-            .await
-            .unwrap();
-        assert!(rows.is_empty());
-    }
-}
+mod tests;
