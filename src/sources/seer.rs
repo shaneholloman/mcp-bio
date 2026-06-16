@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use reqwest::header::CONTENT_TYPE;
+use reqwest::StatusCode;
+use reqwest::header::{CONTENT_TYPE, HeaderValue};
 use reqwest_middleware::ClientWithMiddleware;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
@@ -9,6 +10,7 @@ use serde_json::Value;
 
 use crate::entities::disease::Disease;
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const SEER_BASE: &str =
     "https://seer.cancer.gov/statistics-network/explorer/source/content_writers";
@@ -63,20 +65,48 @@ impl SeerClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
+    pub(crate) fn site_catalog_plan() -> RequestPlan {
+        RequestPlan::get("get_var_formats.php")
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    pub(crate) fn survival_plan(site_code: u16) -> RequestPlan {
+        RequestPlan::get("render_region_5.php")
+            .query("site", site_code.to_string())
+            .query("data_type", "4")
+            .query("graph_type", "1")
+            .query("compareBy", "sex")
+            .query(
+                "relative_survival_interval",
+                RELATIVE_SURVIVAL_INTERVAL.to_string(),
+            )
+    }
+
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        if !status.is_success() {
+            return Err(seer_unavailable(format!(
+                "SEER Explorer returned HTTP {status}."
+            )));
+        }
+
+        crate::sources::ensure_json_content_type(SEER_API, content_type, bytes)
+            .map_err(|_| seer_unavailable("SEER Explorer returned an unexpected content type."))?;
+
+        serde_json::from_slice(bytes)
+            .map_err(|_| seer_unavailable("SEER Explorer returned data BioMCP could not decode."))
+    }
+
+    #[cfg(test)]
+    pub(crate) fn decode_site_catalog_response(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<SeerSiteCatalog, BioMcpError> {
+        let raw: RawSiteCatalog = Self::decode_json_response(status, content_type, bytes)?;
+        SeerSiteCatalog::try_from(raw)
     }
 
     async fn send_json<T: DeserializeOwned>(
@@ -92,23 +122,13 @@ impl SeerClient {
         let bytes = crate::sources::read_limited_body(resp, SEER_API)
             .await
             .map_err(remap_seer_error)?;
-
-        if !status.is_success() {
-            return Err(seer_unavailable(format!(
-                "SEER Explorer returned HTTP {status}."
-            )));
-        }
-
-        crate::sources::ensure_json_content_type(SEER_API, content_type.as_ref(), &bytes)
-            .map_err(|_| seer_unavailable("SEER Explorer returned an unexpected content type."))?;
-
-        serde_json::from_slice(&bytes)
-            .map_err(|_| seer_unavailable("SEER Explorer returned data BioMCP could not decode."))
+        Self::decode_json_response(status, content_type.as_ref(), &bytes)
     }
 
     pub async fn site_catalog(&self) -> Result<SeerSiteCatalog, BioMcpError> {
-        let url = self.endpoint("get_var_formats.php");
-        let raw: RawSiteCatalog = self.send_json(self.client.get(&url)).await?;
+        let plan = Self::site_catalog_plan();
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let raw: RawSiteCatalog = self.send_json(req).await?;
         SeerSiteCatalog::try_from(raw)
     }
 
@@ -123,20 +143,18 @@ impl SeerClient {
             )));
         }
 
-        let url = self.endpoint("render_region_5.php");
-        let outer_json: String = self
-            .send_json(self.client.get(&url).query(&[
-                ("site", site_code.to_string()),
-                ("data_type", "4".to_string()),
-                ("graph_type", "1".to_string()),
-                ("compareBy", "sex".to_string()),
-                (
-                    "relative_survival_interval",
-                    RELATIVE_SURVIVAL_INTERVAL.to_string(),
-                ),
-            ]))
-            .await?;
-        let inner: RawSurvivalResponse = serde_json::from_str(&outer_json).map_err(|_| {
+        let plan = Self::survival_plan(site_code);
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let outer_json: String = self.send_json(req).await?;
+        Self::decode_survival_payload(site_code, catalog, &outer_json)
+    }
+
+    pub(crate) fn decode_survival_payload(
+        site_code: u16,
+        catalog: &SeerSiteCatalog,
+        outer_json: &str,
+    ) -> Result<SeerSurvivalPayload, BioMcpError> {
+        let inner: RawSurvivalResponse = serde_json::from_str(outer_json).map_err(|_| {
             seer_unavailable("SEER Explorer returned data BioMCP could not double-decode.")
         })?;
 
@@ -649,262 +667,4 @@ struct RawSurvivalBucket {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    fn test_catalog() -> SeerSiteCatalog {
-        SeerSiteCatalog {
-            site_labels: HashMap::from([
-                (1, "All Cancer Sites Combined".to_string()),
-                (55, "Breast".to_string()),
-                (83, "Hodgkin Lymphoma".to_string()),
-                (90, "Leukemia".to_string()),
-                (97, "Chronic Myeloid Leukemia (CML)".to_string()),
-            ]),
-            sex_labels: HashMap::from([
-                (1, "Both Sexes".to_string()),
-                (2, "Male".to_string()),
-                (3, "Female".to_string()),
-            ]),
-            race_labels: HashMap::from([(1, "All Races / Ethnicities".to_string())]),
-            age_range_labels: HashMap::from([
-                (1, "All Ages".to_string()),
-                (157, "Ages 65+".to_string()),
-            ]),
-            active_sites: HashSet::from([1, 55, 83, 90, 97]),
-        }
-    }
-
-    fn outer_json_string(value: Value) -> String {
-        serde_json::to_string(&serde_json::to_string(&value).expect("inner json"))
-            .expect("outer json")
-    }
-
-    fn survival_payload_with_site(site_code: u16) -> Value {
-        serde_json::json!({
-            "info": {
-                "key-order": EXPECTED_KEY_ORDER,
-                "data-fields": EXPECTED_DATA_FIELDS,
-            },
-            "data": {
-                format!("5_1_1_1_{site_code}"): {
-                    "data_series": [
-                        [2016, "67.100", "1.200", "64.800", "69.500", "67.100", 450],
-                        [2017, "69.400", "1.100", "67.200", "71.300", "70.400", 471],
-                        [2018, null, null, null, null, "70.000", null]
-                    ]
-                },
-                format!("5_2_1_1_{site_code}"): {
-                    "data_series": [
-                        [2016, "61.300", "1.700", "58.100", "64.400", "61.300", 273],
-                        [2017, "63.900", "1.600", "60.800", "66.900", "64.800", 284],
-                        [2018, null, null, null, null, "64.200", null]
-                    ]
-                },
-                format!("5_1_1_157_{site_code}"): {
-                    "data_series": [
-                        [2017, "48.900", "4.400", "40.100", "57.300", "50.800", 201]
-                    ]
-                },
-                format!("5_1_2_1_{site_code}"): {
-                    "data_series": [
-                        [2017, "58.500", "3.000", "52.200", "64.100", "58.500", 111]
-                    ]
-                }
-            }
-        })
-    }
-
-    #[tokio::test]
-    async fn site_catalog_decodes_live_variable_formats() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/get_var_formats.php"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "VariableFormats": {
-                    "site": {
-                        "1": "All Cancer Sites Combined",
-                        "97": "Chronic Myeloid Leukemia (CML)"
-                    },
-                    "sex": {
-                        "1": "Both Sexes",
-                        "2": "Male",
-                        "3": "Female"
-                    },
-                    "race": {
-                        "1": "All Races / Ethnicities"
-                    },
-                    "age_range": {
-                        "1": "All Ages",
-                        "157": "Ages 65+"
-                    }
-                },
-                "CancerSites": [
-                    {"value": 1, "active": true},
-                    {"value": 97, "active": true},
-                    {"value": 55, "active": false}
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = SeerClient::new_for_test(server.uri()).expect("client");
-        let catalog = client.site_catalog().await.expect("catalog");
-
-        assert_eq!(
-            catalog.site_label(97),
-            Some("Chronic Myeloid Leukemia (CML)")
-        );
-        assert_eq!(catalog.sex_label(2), Some("Male"));
-        assert_eq!(catalog.race_label(1), Some("All Races / Ethnicities"));
-        assert_eq!(catalog.age_range_label(157), Some("Ages 65+"));
-        assert!(catalog.is_active_site(97));
-        assert!(!catalog.is_active_site(55));
-    }
-
-    #[tokio::test]
-    async fn decode_double_encoded_survival_payload_and_filter_all_ages() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/render_region_5.php"))
-            .and(query_param("site", "97"))
-            .and(query_param("data_type", "4"))
-            .and(query_param("graph_type", "1"))
-            .and(query_param("compareBy", "sex"))
-            .and(query_param("relative_survival_interval", "5"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "application/json")
-                    .set_body_string(outer_json_string(survival_payload_with_site(97))),
-            )
-            .mount(&server)
-            .await;
-
-        let client = SeerClient::new_for_test(server.uri()).expect("client");
-        let payload = client
-            .fetch_survival(97, &test_catalog())
-            .await
-            .expect("survival payload");
-
-        assert_eq!(payload.site_code, 97);
-        assert_eq!(payload.site_label, "Chronic Myeloid Leukemia (CML)");
-        assert_eq!(payload.series.len(), 2);
-        assert_eq!(payload.series[0].sex_label, "Both Sexes");
-        assert_eq!(payload.series[0].points.len(), 3);
-        assert_eq!(payload.series[0].points[1].year, 2017);
-        assert_eq!(
-            payload.series[0].points[1].relative_survival_rate,
-            Some(69.4)
-        );
-        assert_eq!(
-            payload.series[0].points[2].modeled_relative_survival_rate,
-            Some(70.0)
-        );
-        assert_eq!(payload.series[1].sex_label, "Male");
-    }
-
-    #[test]
-    fn resolve_site_prefers_exact_alias_and_rejects_ambiguous_matches() {
-        let catalog = test_catalog();
-
-        let cml = Disease {
-            id: "MONDO:123".to_string(),
-            name: "CML".to_string(),
-            definition: None,
-            synonyms: vec!["Chronic myelogenous leukemia".to_string()],
-            parents: Vec::new(),
-            associated_genes: Vec::new(),
-            gene_associations: Vec::new(),
-            top_genes: Vec::new(),
-            top_gene_scores: Vec::new(),
-            treatment_landscape: Vec::new(),
-            recruiting_trial_count: None,
-            pathways: Vec::new(),
-            phenotypes: Vec::new(),
-            clinical_features: Vec::new(),
-            key_features: Vec::new(),
-            variants: Vec::new(),
-            top_variant: None,
-            models: Vec::new(),
-            prevalence: Vec::new(),
-            prevalence_note: None,
-            survival: None,
-            survival_note: None,
-            civic: None,
-            disgenet: None,
-            funding: None,
-            funding_note: None,
-            diagnostics: None,
-            diagnostics_note: None,
-            xrefs: HashMap::new(),
-        };
-        assert_eq!(
-            resolve_site(&cml, &catalog),
-            Some(ResolvedSeerSite {
-                site_code: 97,
-                site_label: "Chronic Myeloid Leukemia (CML)".to_string(),
-            })
-        );
-
-        let ambiguous = Disease {
-            name: "Leukemia".to_string(),
-            synonyms: vec!["CML".to_string()],
-            ..cml.clone()
-        };
-        assert_eq!(resolve_site(&ambiguous, &catalog), None);
-
-        // "breast cancer" alias (user query term)
-        let breast = Disease {
-            name: "breast cancer".to_string(),
-            synonyms: Vec::new(),
-            ..cml.clone()
-        };
-        assert_eq!(
-            resolve_site(&breast, &catalog),
-            Some(ResolvedSeerSite {
-                site_code: 55,
-                site_label: "Breast".to_string(),
-            })
-        );
-
-        // "breast carcinoma" is the name MyDisease returns when the user queries "breast cancer"
-        let breast_carcinoma = Disease {
-            name: "breast carcinoma".to_string(),
-            synonyms: vec!["carcinoma of breast".to_string()],
-            ..cml
-        };
-        assert_eq!(
-            resolve_site(&breast_carcinoma, &catalog),
-            Some(ResolvedSeerSite {
-                site_code: 55,
-                site_label: "Breast".to_string(),
-            })
-        );
-    }
-
-    #[tokio::test]
-    async fn rejects_response_when_requested_site_code_is_not_returned() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/render_region_5.php"))
-            .and(query_param("site", "97"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "application/json")
-                    .set_body_string(outer_json_string(survival_payload_with_site(1))),
-            )
-            .mount(&server)
-            .await;
-
-        let client = SeerClient::new_for_test(server.uri()).expect("client");
-        let err = client
-            .fetch_survival(97, &test_catalog())
-            .await
-            .expect_err("site mismatch should fail");
-
-        assert!(matches!(err, BioMcpError::SourceUnavailable { .. }));
-        assert!(err.to_string().contains("different site"));
-    }
-}
+mod tests;

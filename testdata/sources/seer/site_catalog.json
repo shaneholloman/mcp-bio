@@ -1,0 +1,31 @@
+{
+  "VariableFormats": {
+    "site": {
+      "1": "All Cancer Sites Combined",
+      "55": "Breast",
+      "83": "Hodgkin Lymphoma",
+      "90": "Leukemia",
+      "97": "Chronic Myeloid Leukemia (CML)"
+    },
+    "sex": {
+      "1": "Both Sexes",
+      "2": "Male",
+      "3": "Female"
+    },
+    "race": {
+      "1": "All Races / Ethnicities"
+    },
+    "age_range": {
+      "1": "All Ages",
+      "157": "Ages 65+"
+    }
+  },
+  "CancerSites": [
+    {"value": 1, "active": true},
+    {"value": 55, "active": true},
+    {"value": 83, "active": true},
+    {"value": 90, "active": true},
+    {"value": 97, "active": true},
+    {"value": 56, "active": false}
+  ]
+}
