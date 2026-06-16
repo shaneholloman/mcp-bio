@@ -115,8 +115,8 @@ fn search_diagnostic_help_mentions_source_aware_examples() {
     assert!(help.contains("`--source` accepts gtr, who-ivd, or all"));
 }
 
-#[tokio::test]
-async fn handle_search_rejects_zero_limit_before_gtr_lookup() {
+#[test]
+fn search_args_reject_zero_limit_before_gtr_lookup() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
@@ -139,8 +139,8 @@ async fn handle_search_rejects_zero_limit_before_gtr_lookup() {
         panic!("expected search diagnostic command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
+    assert!(!json);
+    let err = super::dispatch::validate_search_args(&args)
         .expect_err("zero diagnostic limit should fail fast");
     assert!(err.to_string().contains("--limit must be between 1 and 50"));
 }

@@ -1,6 +1,13 @@
 use super::{DiseaseCommand, DiseaseGetArgs, DiseaseSearchArgs};
 use crate::cli::CommandOutcome;
 
+pub(super) fn validate_related_limit(
+    limit: usize,
+    offset: usize,
+) -> Result<(), crate::error::BioMcpError> {
+    super::super::paged_fetch_limit(limit, offset, 50).map(|_| ())
+}
+
 pub(in crate::cli) async fn handle_get(
     args: DiseaseGetArgs,
     json: bool,
@@ -224,6 +231,7 @@ pub(in crate::cli) async fn handle_command(
             limit,
             offset,
         } => {
+            validate_related_limit(limit, offset)?;
             let filters = crate::entities::article::ArticleSearchFilters {
                 disease: Some(name.clone()),
                 ..super::super::related_article_filters()
@@ -276,6 +284,7 @@ pub(in crate::cli) async fn handle_command(
             limit,
             offset,
         } => {
+            validate_related_limit(limit, offset)?;
             let filters = crate::entities::drug::DrugSearchFilters {
                 indication: Some(name.clone()),
                 ..Default::default()

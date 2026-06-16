@@ -349,3 +349,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   handler tests. Checks:
   `cargo nextest run -E 'test(/cli::gwas::/) | test(/cli::protein::/)'` → 4/4 pass;
   `cargo check` → pass.
+- 2026-06-16: second CLI parser-validation batch (`diagnostic`, `disease`)
+  made pure for fast-fail limit checks while leaving real JSON behavior tests
+  in place. Checks:
+  `cargo nextest run -E 'test(/cli::diagnostic::/) | test(/cli::disease::/)'` → 14/14 pass;
+  `cargo check` → pass.

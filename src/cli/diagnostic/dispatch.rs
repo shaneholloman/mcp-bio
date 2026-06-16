@@ -1,6 +1,17 @@
 use super::{DiagnosticGetArgs, DiagnosticSearchArgs};
 use crate::cli::CommandOutcome;
 
+pub(super) fn validate_search_args(
+    args: &DiagnosticSearchArgs,
+) -> Result<(), crate::error::BioMcpError> {
+    if args.limit == 0 || args.limit > 50 {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "--limit must be between 1 and 50".into(),
+        ));
+    }
+    Ok(())
+}
+
 pub(in crate::cli) async fn handle_get(
     args: DiagnosticGetArgs,
     json: bool,
@@ -25,6 +36,7 @@ pub(in crate::cli) async fn handle_search(
     args: DiagnosticSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
+    validate_search_args(&args)?;
     let filters = crate::entities::diagnostic::DiagnosticSearchFilters {
         source: args.source.into(),
         gene: args.gene,
