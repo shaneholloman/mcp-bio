@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::Deserialize;
 
 use crate::error::BioMcpError;
@@ -87,16 +89,24 @@ impl OlsClient {
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, OLS4_API).await?;
 
+        Self::decode_search_response(status, content_type.as_ref(), &bytes)
+    }
+
+    pub(crate) fn decode_search_response(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<Vec<OlsDoc>, BioMcpError> {
         if !status.is_success() {
             return Err(BioMcpError::Api {
                 api: OLS4_API.to_string(),
-                message: format!("HTTP {status}: {}", crate::sources::body_excerpt(&bytes)),
+                message: format!("HTTP {status}: {}", crate::sources::body_excerpt(bytes)),
             });
         }
 
-        crate::sources::ensure_json_content_type(OLS4_API, content_type.as_ref(), &bytes)?;
+        crate::sources::ensure_json_content_type(OLS4_API, content_type, bytes)?;
         let response: OlsSearchEnvelope =
-            serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+            serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
                 api: OLS4_API.to_string(),
                 source,
             })?;
@@ -143,80 +153,4 @@ pub struct OlsDoc {
 }
 
 #[cfg(test)]
-mod tests {
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    use super::{OLS4_ONTOLOGIES, OlsClient};
-
-    #[test]
-    fn search_request_plan_exposes_canonical_query_contract() {
-        let client = OlsClient::new_for_test("http://127.0.0.1/base".into()).expect("client");
-        let plan = client.search_request_plan(" ERBB1 ");
-
-        assert_eq!(plan.method, "GET");
-        assert_eq!(plan.path, Some("/api/search"));
-        assert_eq!(plan.source_label, "ols4");
-        assert_eq!(plan.base_url, "http://127.0.0.1/base");
-        assert_eq!(plan.cache_mode, "default");
-        assert_eq!(plan.status_expectation, "non-2xx => Api");
-        assert_eq!(plan.content_type_expectation, "json");
-        assert_eq!(
-            plan.query_params,
-            vec![
-                ("q", "ERBB1".to_string()),
-                ("rows", "10".to_string()),
-                ("groupField", "iri".to_string()),
-                ("ontology", OLS4_ONTOLOGIES.to_string()),
-            ]
-        );
-    }
-
-    #[test]
-    fn search_request_plan_keeps_empty_query_as_no_request() {
-        let client = OlsClient::new_for_test("http://127.0.0.1".into()).expect("client");
-        let plan = client.search_request_plan("   ");
-
-        assert_eq!(plan.method, "GET");
-        assert_eq!(plan.path, None);
-        assert!(plan.query_params.is_empty());
-    }
-
-    #[tokio::test]
-    async fn search_uses_required_query_contract() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/api/search"))
-            .and(query_param("q", "ERBB1"))
-            .and(query_param("rows", "10"))
-            .and(query_param("groupField", "iri"))
-            .and(query_param(
-                "ontology",
-                "hgnc,mesh,mondo,doid,hp,go,chebi,dron,ncit,ordo,wikipathways,so",
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "response": {
-                    "docs": [
-                        {
-                            "iri": "http://example.org/hgnc/3236",
-                            "ontology_name": "hgnc",
-                            "ontology_prefix": "hgnc",
-                            "short_form": "hgnc:3236",
-                            "obo_id": "HGNC:3236",
-                            "label": "EGFR",
-                            "description": [],
-                            "exact_synonyms": ["ERBB1"],
-                            "type": "class"
-                        }
-                    ]
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OlsClient::new_for_test(server.uri()).expect("client");
-        let rows = client.search("ERBB1").await.expect("search");
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].label, "EGFR");
-    }
-}
+mod tests;
