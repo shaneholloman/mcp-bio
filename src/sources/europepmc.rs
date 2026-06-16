@@ -5,6 +5,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const EUROPE_PMC_BASE: &str = "https://www.ebi.ac.uk/europepmc/webservices/rest";
 const EUROPE_PMC_API: &str = "europepmc";
@@ -42,40 +43,15 @@ impl EuropePmcClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
     ) -> Result<T, BioMcpError> {
         let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
+        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, EUROPE_PMC_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: EUROPE_PMC_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: EUROPE_PMC_API.to_string(),
-            source,
-        })
+        crate::sources::decode_json(EUROPE_PMC_API, status, content_type.as_ref(), &bytes, false)
     }
 
     pub async fn search_by_doi(&self, doi: &str) -> Result<EuropePmcSearchResponse, BioMcpError> {
@@ -148,13 +124,12 @@ impl EuropePmcClient {
             .await
     }
 
-    pub fn search_query_request_plan(
-        &self,
+    pub(crate) fn search_query_plan(
         query: &str,
         page: usize,
         page_size: usize,
         sort: EuropePmcSort,
-    ) -> Result<EuropePmcSearchRequestPlan, BioMcpError> {
+    ) -> Result<RequestPlan, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -177,21 +152,46 @@ impl EuropePmcClient {
             ));
         }
 
-        let mut query_params = vec![
-            ("query", query.to_string()),
-            ("format", "json".to_string()),
-            ("page", page.to_string()),
-            ("pageSize", page_size.to_string()),
-        ];
+        let mut plan = RequestPlan::get("search")
+            .query("query", query)
+            .query("format", "json")
+            .query("page", page.to_string())
+            .query("pageSize", page_size.to_string());
         match sort {
-            EuropePmcSort::Date => query_params.push(("sort", "P_PDATE_D desc".to_string())),
-            EuropePmcSort::Citations => query_params.push(("sort", "CITED desc".to_string())),
+            EuropePmcSort::Date => plan = plan.query("sort", "P_PDATE_D desc"),
+            EuropePmcSort::Citations => plan = plan.query("sort", "CITED desc"),
             EuropePmcSort::Relevance => {}
         }
+        Ok(plan)
+    }
+
+    #[allow(dead_code)]
+    pub fn search_query_request_plan(
+        &self,
+        query: &str,
+        page: usize,
+        page_size: usize,
+        sort: EuropePmcSort,
+    ) -> Result<EuropePmcSearchRequestPlan, BioMcpError> {
+        let plan = Self::search_query_plan(query, page, page_size, sort)?;
         Ok(EuropePmcSearchRequestPlan {
             method: "GET",
             path: "/search",
-            query_params,
+            query_params: plan
+                .query
+                .iter()
+                .map(|(key, value)| {
+                    let key = match key.as_str() {
+                        "query" => "query",
+                        "format" => "format",
+                        "page" => "page",
+                        "pageSize" => "pageSize",
+                        "sort" => "sort",
+                        _ => "",
+                    };
+                    (key, value.clone())
+                })
+                .collect(),
             cache_mode: "default",
             status_expectation: "non-2xx => Api",
             content_type_expectation: "json",
@@ -205,17 +205,15 @@ impl EuropePmcClient {
         page_size: usize,
         sort: EuropePmcSort,
     ) -> Result<EuropePmcSearchResponse, BioMcpError> {
-        let plan = self.search_query_request_plan(query, page, page_size, sort)?;
-        let url = self.endpoint(plan.path);
-        let req = self.client.get(&url).query(&plan.query_params);
+        let plan = Self::search_query_plan(query, page, page_size, sort)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
         self.get_json(req).await
     }
 
-    pub async fn get_full_text_xml(
-        &self,
+    pub(crate) fn full_text_xml_plan(
         source: &str,
         id: &str,
-    ) -> Result<Option<String>, BioMcpError> {
+    ) -> Result<Option<RequestPlan>, BioMcpError> {
         let source = source.trim();
         let id = id.trim();
         if source.is_empty() || id.is_empty() {
@@ -231,29 +229,43 @@ impl EuropePmcClient {
         } else {
             id.to_string()
         };
+        Ok(Some(RequestPlan::get(format!(
+            "{normalized_id}/fullTextXML"
+        ))))
+    }
 
-        let url = self.endpoint(&format!("{normalized_id}/fullTextXML"));
-        let resp = self
-            .client
-            .get(&url)
-            .with_extension(CacheMode::NoStore)
-            .send()
-            .await?;
-        if resp.status() == reqwest::StatusCode::NOT_FOUND {
+    pub(crate) fn decode_full_text_xml(
+        status: reqwest::StatusCode,
+        bytes: &[u8],
+    ) -> Result<Option<String>, BioMcpError> {
+        if status == reqwest::StatusCode::NOT_FOUND {
             return Ok(None);
         }
-
-        let status = resp.status();
-        let bytes = crate::sources::read_limited_body(resp, EUROPE_PMC_API).await?;
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::body_excerpt(bytes);
             return Err(BioMcpError::Api {
                 api: EUROPE_PMC_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
 
-        Ok(Some(String::from_utf8_lossy(&bytes).to_string()))
+        Ok(Some(String::from_utf8_lossy(bytes).to_string()))
+    }
+
+    pub async fn get_full_text_xml(
+        &self,
+        source: &str,
+        id: &str,
+    ) -> Result<Option<String>, BioMcpError> {
+        let Some(plan) = Self::full_text_xml_plan(source, id)? else {
+            return Ok(None);
+        };
+
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let resp = req.with_extension(CacheMode::NoStore).send().await?;
+        let status = resp.status();
+        let bytes = crate::sources::read_limited_body(resp, EUROPE_PMC_API).await?;
+        Self::decode_full_text_xml(status, &bytes)
     }
 }
 
@@ -306,158 +318,4 @@ pub struct EuropePmcResult {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::test_support::set_env_var;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    async fn env_lock_async() -> tokio::sync::MutexGuard<'static, ()> {
-        crate::test_support::env_lock().lock().await
-    }
-
-    #[test]
-    fn ticket_376_article_source_contracts_europepmc_request_plan_covers_keyword_shape() {
-        let client = EuropePmcClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let plan: EuropePmcSearchRequestPlan = client
-            .search_query_request_plan("alternative microexon", 2, 25, EuropePmcSort::Date)
-            .expect("EuropePmcSearchRequestPlan");
-
-        assert_eq!(plan.method, "GET");
-        assert_eq!(plan.path, "/search");
-        assert!(
-            plan.query_params
-                .contains(&("query", "alternative microexon".to_string()))
-        );
-        assert!(plan.query_params.contains(&("page", "2".to_string())));
-        assert!(plan.query_params.contains(&("pageSize", "25".to_string())));
-        assert!(
-            plan.query_params
-                .contains(&("sort", "P_PDATE_D desc".to_string()))
-        );
-        assert_eq!(plan.content_type_expectation, "json");
-    }
-
-    #[tokio::test]
-    async fn search_query_sets_expected_params() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/search"))
-            .and(query_param("query", "EXT_ID:22663011 AND SRC:MED"))
-            .and(query_param("format", "json"))
-            .and(query_param("page", "1"))
-            .and(query_param("pageSize", "1"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "hitCount": 1,
-                "resultList": {"result": [{"id": "22663011"}]}
-            })))
-            .mount(&server)
-            .await;
-
-        let client = EuropePmcClient::new_for_test(server.uri()).unwrap();
-        let resp = client.search_by_pmid("22663011").await.unwrap();
-        assert_eq!(resp.hit_count, Some(1));
-    }
-
-    #[test]
-    fn europepmc_result_deserializes_first_index_date() {
-        let result: EuropePmcResult = serde_json::from_value(serde_json::json!({
-            "id": "22663011",
-            "pmid": "22663011",
-            "firstPublicationDate": "2025-01-14",
-            "firstIndexDate": "2025-01-15"
-        }))
-        .expect("europepmc result should deserialize");
-
-        assert_eq!(result.first_index_date.as_deref(), Some("2025-01-15"));
-    }
-
-    #[tokio::test]
-    async fn search_query_with_sort_sets_sort_param() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/search"))
-            .and(query_param("query", "BRAF"))
-            .and(query_param("format", "json"))
-            .and(query_param("page", "1"))
-            .and(query_param("pageSize", "5"))
-            .and(query_param("sort", "CITED desc"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "hitCount": 0,
-                "resultList": {"result": []}
-            })))
-            .mount(&server)
-            .await;
-
-        let client = EuropePmcClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .search_query_with_sort("BRAF", 1, 5, EuropePmcSort::Citations)
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn search_by_pmid_rejects_non_numeric_values() {
-        let client = EuropePmcClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client.search_by_pmid("PMID226").await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn get_full_text_xml_returns_none_on_not_found() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/22663011/fullTextXML"))
-            .respond_with(ResponseTemplate::new(404))
-            .mount(&server)
-            .await;
-
-        let client = EuropePmcClient::new_for_test(server.uri()).unwrap();
-        let xml = client.get_full_text_xml("MED", "22663011").await.unwrap();
-        assert!(xml.is_none());
-    }
-
-    #[tokio::test]
-    async fn get_full_text_xml_uses_id_only_endpoint() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/PMC123/fullTextXML"))
-            .respond_with(ResponseTemplate::new(200).set_body_string("<article/>"))
-            .mount(&server)
-            .await;
-
-        let client = EuropePmcClient::new_for_test(server.uri()).unwrap();
-        let xml = client.get_full_text_xml("PMC", "PMC123").await.unwrap();
-        assert_eq!(xml, Some("<article/>".to_string()));
-    }
-
-    #[tokio::test]
-    async fn get_full_text_xml_bypasses_persistent_cache_when_response_recovers() {
-        let _guard = env_lock_async().await;
-        let server = MockServer::start().await;
-        let _base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&server.uri()));
-        let client = EuropePmcClient::new().unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/PMC987654/fullTextXML"))
-            .respond_with(ResponseTemplate::new(404))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let first = client.get_full_text_xml("PMC", "PMC987654").await.unwrap();
-        assert!(first.is_none());
-
-        server.reset().await;
-
-        Mock::given(method("GET"))
-            .and(path("/PMC987654/fullTextXML"))
-            .respond_with(ResponseTemplate::new(200).set_body_string("<article>fresh</article>"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let second = client.get_full_text_xml("PMC", "PMC987654").await.unwrap();
-        assert_eq!(second, Some("<article>fresh</article>".to_string()));
-    }
-}
+mod tests;
