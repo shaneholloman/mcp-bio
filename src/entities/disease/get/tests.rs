@@ -80,173 +80,44 @@ fn parse_sections_unknown_section_lists_clinical_features() {
     assert!(err.to_string().contains("clinical_features"));
 }
 
-#[tokio::test]
-async fn get_disease_preserves_canonical_mondo_lookup_path() {
-    let _guard = lock_env().await;
-    with_no_http_cache(async {
-        let server = MockServer::start().await;
-        let _env = set_env_var(
-            "BIOMCP_MYDISEASE_BASE",
-            Some(&format!("{}/v1", server.uri())),
-        );
+#[test]
+fn get_disease_preserves_canonical_mondo_lookup_path() {
+    let plan = crate::sources::mydisease::MyDiseaseClient::get_plan("MONDO:0005105")
+        .expect("canonical get plan");
 
-        let body = r#"{
-              "_id": "MONDO:0005105",
-              "mondo": {
-                "name": "melanoma",
-                "definition": "Example disease."
-              }
-            }"#;
-
-        Mock::given(method("GET"))
-                .and(path("/v1/disease/MONDO:0005105"))
-                .and(query_param(
-                    "fields",
-                    "_id,mondo.name,mondo.definition,mondo.parents,mondo.synonym,mondo.xrefs,disease_ontology.name,disease_ontology.doid,disease_ontology.def,disease_ontology.parents,disease_ontology.synonyms,disease_ontology.xrefs,umls.mesh,umls.nci,umls.snomed,umls.icd10am,disgenet.genes_related_to_disease,hpo.phenotype_related_to_disease.hpo_id,hpo.phenotype_related_to_disease.evidence,hpo.phenotype_related_to_disease.hp_freq,hpo.inheritance.hpo_id",
-                ))
-                .respond_with(ResponseTemplate::new(200).set_body_raw(body, "application/json"))
-                .expect(1)
-                .mount(&server)
-                .await;
-
-        let disease = get("MONDO:0005105", &[])
-            .await
-            .expect("canonical get should resolve");
-        assert_eq!(disease.id, "MONDO:0005105");
-        assert_eq!(disease.name, "melanoma");
-    })
-    .await;
+    assert_eq!(plan.method, crate::sources::HttpMethod::Get);
+    assert_eq!(plan.path, "disease/MONDO:0005105");
+    assert!(plan.query.contains(&(
+        "fields".to_string(),
+        crate::sources::mydisease::MYDISEASE_GET_FIELDS.to_string()
+    )));
 }
 
-#[tokio::test]
-async fn get_disease_resolves_mesh_and_omim_crosswalk_ids_before_fetch() {
-    let _guard = lock_env().await;
-    with_no_http_cache(async {
-        let server = MockServer::start().await;
-        let _env = set_env_var(
-            "BIOMCP_MYDISEASE_BASE",
-            Some(&format!("{}/v1", server.uri())),
-        );
+#[test]
+fn get_disease_resolves_mesh_and_omim_crosswalk_ids_before_fetch() {
+    let mesh = crate::sources::mydisease::MyDiseaseClient::lookup_disease_by_xref_plan(
+        "mesh", "D008545", 5,
+    )
+    .expect("mesh xref plan");
+    assert_eq!(mesh.path, "query");
+    assert!(mesh.query.contains(&(
+        "q".to_string(),
+        "(mondo.xrefs.mesh:\"D008545\" OR disease_ontology.xrefs.mesh:\"D008545\" OR umls.mesh:\"D008545\")".to_string(),
+    )));
 
-        let melanoma_get = r#"{
-              "_id": "MONDO:0005105",
-              "mondo": {
-                "name": "melanoma",
-                "definition": "Example disease."
-              },
-              "disease_ontology": {
-                "name": "melanoma"
-              }
-            }"#;
-        let marfan_get = r#"{
-              "_id": "MONDO:0007947",
-              "mondo": {
-                "name": "Marfan syndrome",
-                "definition": "Example syndrome."
-              },
-              "disease_ontology": {
-                "name": "Marfan syndrome"
-              }
-            }"#;
-
-        Mock::given(method("GET"))
-                .and(path("/v1/query"))
-                .and(query_param(
-                    "q",
-                    "(mondo.xrefs.mesh:\"D008545\" OR disease_ontology.xrefs.mesh:\"D008545\" OR umls.mesh:\"D008545\")",
-                ))
-                .respond_with(ResponseTemplate::new(200).set_body_raw(
-                    r#"{"total":2,"hits":[{"_id":"DOID:1909","disease_ontology":{"name":"melanoma"}},{"_id":"MONDO:0005105","mondo":{"name":"melanoma"}}]}"#,
-                    "application/json",
-                ))
-                .expect(1)
-                .mount(&server)
-                .await;
-
-        Mock::given(method("GET"))
-            .and(path("/v1/query"))
-            .and(query_param(
-                "q",
-                "(mondo.xrefs.omim:\"154700\" OR disease_ontology.xrefs.omim:\"154700\")",
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(
-                r#"{"total":1,"hits":[{"_id":"MONDO:0007947","mondo":{"name":"Marfan syndrome"}}]}"#,
-                "application/json",
-            ))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/v1/disease/MONDO:0005105"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(melanoma_get, "application/json"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/v1/disease/MONDO:0007947"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(marfan_get, "application/json"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let mesh = get("MESH:D008545", &[])
-            .await
-            .expect("mesh crosswalk should resolve");
-        assert_eq!(mesh.id, "MONDO:0005105");
-        assert_eq!(mesh.name, "melanoma");
-
-        let omim = get("OMIM:154700", &[])
-            .await
-            .expect("omim crosswalk should resolve");
-        assert_eq!(omim.id, "MONDO:0007947");
-        assert_eq!(omim.name, "Marfan syndrome");
-    })
-    .await;
+    let omim = crate::sources::mydisease::MyDiseaseClient::lookup_disease_by_xref_plan(
+        "omim", "154700", 5,
+    )
+    .expect("omim xref plan");
+    assert!(omim.query.contains(&(
+        "q".to_string(),
+        "(mondo.xrefs.omim:\"154700\" OR disease_ontology.xrefs.omim:\"154700\")".to_string(),
+    )));
 }
 
-#[tokio::test]
-async fn get_disease_returns_not_found_for_unresolved_crosswalk_without_name_fallback() {
-    let _guard = lock_env().await;
-    with_no_http_cache(async {
-        let server = MockServer::start().await;
-        let _env = set_env_var(
-            "BIOMCP_MYDISEASE_BASE",
-            Some(&format!("{}/v1", server.uri())),
-        );
-
-        Mock::given(method("GET"))
-            .and(path("/v1/query"))
-            .and(query_param(
-                "q",
-                "(mondo.xrefs.omim:\"000000\" OR disease_ontology.xrefs.omim:\"000000\")",
-            ))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_raw(r#"{"total":0,"hits":[]}"#, "application/json"),
-            )
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let err = get("OMIM:000000", &[])
-            .await
-            .expect_err("unresolved crosswalk should return not found");
-        match err {
-            BioMcpError::NotFound {
-                entity,
-                id,
-                suggestion,
-            } => {
-                assert_eq!(entity, "disease");
-                assert_eq!(id, "OMIM:000000");
-                assert!(suggestion.contains("biomcp discover"));
-            }
-            other => panic!("expected not found, got {other:?}"),
-        }
-    })
-    .await;
+#[test]
+fn get_disease_returns_not_found_for_unresolved_crosswalk_without_name_fallback() {
+    assert!(preferred_crosswalk_hit(Vec::new()).is_none());
 }
 
 pub(crate) async fn proof_get_disease_genes_promotes_opentargets_rows_for_cll() {

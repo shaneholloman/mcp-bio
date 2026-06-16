@@ -125,6 +125,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
       `src/entities/article/enrichment/tests.rs` now test finalization,
       Semantic Scholar/article-base merge behavior, source status handling, and
       federated row merging without mock servers or env locks.
+- [x] `src/entities/disease/get/tests.rs` first lookup-path batch now tests
+      canonical MyDisease get planning, MESH/OMIM crosswalk query planning, and
+      empty crosswalk selection without mock servers or env locks.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -421,3 +424,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   a pure NCI request-plan assertion for keyword fallback. Checks:
   `cargo nextest run -E 'test(/entities::trial::search::nci::/)'` → 12/12 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass.
+- 2026-06-16: partial disease-get cleanup. Replaced the canonical MONDO get,
+  MESH/OMIM crosswalk, and unresolved-crosswalk tests with pure MyDisease
+  request-plan/crosswalk-selection assertions. The two remaining disease-get
+  mock-server tests still run quickly and stay as behavior checks for now.
+  Checks: `cargo nextest run -E 'test(/entities::disease::get::/)'` → 11/11 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
