@@ -3,7 +3,7 @@
 use crate::entities::SearchPage;
 use crate::entities::disease::resolve_disease_hit_by_name;
 use crate::error::BioMcpError;
-use crate::sources::mydisease::MyDiseaseClient;
+use crate::sources::mydisease::{MyDiseaseClient, MyDiseaseHit};
 use crate::sources::nci_cts::{
     NciCtsClient, NciDiseaseFilter, NciGeoFilter, NciSearchParams, NciStatusFilter,
 };
@@ -22,19 +22,7 @@ async fn resolve_nci_disease_filter_with_client(
     };
 
     match resolve_disease_hit_by_name(client, condition).await {
-        Ok(hit) => {
-            let mut disease = transform::disease::from_mydisease_hit(hit);
-            if let Some(nci_id) = disease
-                .xrefs
-                .remove("NCI")
-                .map(|value| value.trim().to_string())
-                .filter(|value| !value.is_empty())
-            {
-                Ok(Some(NciDiseaseFilter::ConceptId(nci_id)))
-            } else {
-                Ok(Some(NciDiseaseFilter::Keyword(condition.to_string())))
-            }
-        }
+        Ok(hit) => Ok(Some(nci_disease_filter_from_hit(condition, hit))),
         Err(BioMcpError::NotFound { .. }) => {
             Ok(Some(NciDiseaseFilter::Keyword(condition.to_string())))
         }
@@ -46,6 +34,20 @@ async fn resolve_nci_disease_filter_with_client(
             );
             Ok(Some(NciDiseaseFilter::Keyword(condition.to_string())))
         }
+    }
+}
+
+fn nci_disease_filter_from_hit(condition: &str, hit: MyDiseaseHit) -> NciDiseaseFilter {
+    let mut disease = transform::disease::from_mydisease_hit(hit);
+    if let Some(nci_id) = disease
+        .xrefs
+        .remove("NCI")
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+    {
+        NciDiseaseFilter::ConceptId(nci_id)
+    } else {
+        NciDiseaseFilter::Keyword(condition.to_string())
     }
 }
 

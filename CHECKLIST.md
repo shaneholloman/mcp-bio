@@ -128,6 +128,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/disease/get/tests.rs` first lookup-path batch now tests
       canonical MyDisease get planning, MESH/OMIM crosswalk query planning, and
       empty crosswalk selection without mock servers or env locks.
+- [x] `src/entities/trial/search/nci/tests.rs` is pure: NCI disease grounding,
+      keyword fallback, status/phase mapping, and unsupported-filter validation
+      no longer use mock servers or async search calls.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -431,3 +434,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   Checks: `cargo nextest run -E 'test(/entities::disease::get::/)'` → 11/11 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: finished NCI trial-search cleanup. Replaced the remaining
+  MyDisease/NCI mock-server tests with a pure helper for NCI disease grounding
+  (`ConceptId` vs keyword fallback) plus request-plan assertions. Converted the
+  unsupported-filter tests from async `search()` calls to direct validation
+  checks, and removed the now-unused `NciCtsClient::new_for_test` helper.
+  Checks: `cargo nextest run -E 'test(/entities::trial::search::nci::/)'` →
+  12/12 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings`
+  → pass; `git diff --check` → pass.

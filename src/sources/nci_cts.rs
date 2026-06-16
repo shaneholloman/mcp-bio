@@ -94,15 +94,6 @@ impl NciCtsClient {
         })
     }
 
-    #[cfg(test)]
-    pub(crate) fn new_for_test(base: String, api_key: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-            api_key,
-        })
-    }
-
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,

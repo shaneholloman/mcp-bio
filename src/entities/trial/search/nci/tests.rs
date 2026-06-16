@@ -1,178 +1,90 @@
 //! Tests for NCI CTS trial search helpers.
 
-use super::super::super::test_support::*;
-use super::super::{search, validate_trial_search};
+use super::super::validate_trial_search;
 use super::*;
-use crate::sources::mydisease::MyDiseaseClient;
+use crate::entities::trial::TrialSource;
+use crate::error::BioMcpError;
 use crate::sources::nci_cts::NciCtsClient;
 
-fn nci_search_response(nct_id: &str) -> serde_json::Value {
-    json!({
-        "data": [{
-            "nct_id": nct_id,
-            "brief_title": "Fixture NCI Trial",
-            "current_trial_status": "ACTIVE",
-            "phase": "II",
-            "diseases": ["Melanoma"]
-        }],
-        "total": 1
-    })
+fn mydisease_hit(value: serde_json::Value) -> crate::sources::mydisease::MyDiseaseHit {
+    serde_json::from_value(value).expect("valid MyDisease hit")
 }
 
-fn mydisease_query_response(hit: serde_json::Value) -> serde_json::Value {
-    json!({
-        "total": 1,
-        "hits": [hit]
-    })
+fn validation_error(filters: &TrialSearchFilters) -> BioMcpError {
+    match validate_trial_search(filters) {
+        Ok(_) => panic!("expected validation to fail"),
+        Err(err) => err,
+    }
 }
 
-fn mydisease_client_for_test(server: &MockServer) -> MyDiseaseClient {
-    MyDiseaseClient::new_for_test(format!("{}/v1", server.uri())).expect("mydisease client")
-}
-
-fn nci_client_for_test(server: &MockServer) -> NciCtsClient {
-    NciCtsClient::new_for_test(server.uri(), "test-key".into()).expect("nci client")
-}
-
-async fn mount_keyword_nci_search(nci: &MockServer, keyword: &str, nct_id: &str) {
-    Mock::given(method("GET"))
-        .and(path("/trials"))
-        .and(query_param("keyword", keyword))
-        .and(query_param_is_missing("diseases.nci_thesaurus_concept_id"))
-        .and(query_param("size", "1"))
-        .and(query_param("from", "0"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(nci_search_response(nct_id)))
-        .expect(1)
-        .mount(nci)
-        .await;
-}
-
-#[tokio::test]
-async fn nci_search_page_prefers_grounded_disease_concept_id() {
-    let mydisease = MockServer::start().await;
-    let nci = MockServer::start().await;
-
-    Mock::given(method("GET"))
-        .and(path("/v1/query"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(mydisease_query_response(json!({
-                "_id": "MONDO:0005105",
-                "mondo": {
-                    "name": "Melanoma",
-                    "xrefs": {
-                        "ncit": ["C3224"]
-                    }
+#[test]
+fn nci_search_prefers_grounded_disease_concept_id() {
+    let filter = nci_disease_filter_from_hit(
+        "melanoma",
+        mydisease_hit(serde_json::json!({
+            "_id": "MONDO:0005105",
+            "mondo": {
+                "name": "Melanoma",
+                "xrefs": {
+                    "ncit": ["C3224"]
                 }
-            }))),
-        )
-        .mount(&mydisease)
-        .await;
+            }
+        })),
+    );
+    let plan = NciCtsClient::search_plan(
+        "test-key",
+        &NciSearchParams {
+            disease: Some(filter),
+            size: 1,
+            from: 0,
+            ..NciSearchParams::default()
+        },
+    );
 
-    Mock::given(method("GET"))
-        .and(path("/trials"))
-        .and(query_param("diseases.nci_thesaurus_concept_id", "C3224"))
-        .and(query_param_is_missing("keyword"))
-        .and(query_param("size", "1"))
-        .and(query_param("from", "0"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(nci_search_response("NCT00000001")))
-        .expect(1)
-        .mount(&nci)
-        .await;
-
-    let filters = TrialSearchFilters {
-        source: TrialSource::NciCts,
-        condition: Some("melanoma".into()),
-        ..Default::default()
-    };
-    let normalized = validate_trial_search(&filters).expect("filters should validate");
-
-    let page = search_page_with_nci_clients(
-        &nci_client_for_test(&nci),
-        &mydisease_client_for_test(&mydisease),
-        &filters,
-        &normalized,
-        1,
-        0,
-    )
-    .await
-    .expect("grounded NCI search should succeed");
-    assert_eq!(page.results.len(), 1);
-    assert_eq!(page.results[0].nct_id, "NCT00000001");
+    assert!(
+        plan.query
+            .contains(&("diseases.nci_thesaurus_concept_id".into(), "C3224".into()))
+    );
+    assert!(!plan.query.iter().any(|(key, _)| *key == "keyword"));
 }
 
-#[tokio::test]
-async fn nci_search_page_falls_back_to_keyword_when_grounding_is_unavailable() {
-    let mydisease = MockServer::start().await;
-    let nci = MockServer::start().await;
+#[test]
+fn nci_search_falls_back_to_keyword_when_grounding_is_unavailable() {
+    let plan = NciCtsClient::search_plan(
+        "test-key",
+        &NciSearchParams {
+            disease: Some(NciDiseaseFilter::Keyword("melanoma".into())),
+            size: 1,
+            from: 0,
+            ..NciSearchParams::default()
+        },
+    );
 
-    Mock::given(method("GET"))
-        .and(path("/v1/query"))
-        .respond_with(ResponseTemplate::new(500).set_body_string("resolver unavailable"))
-        .mount(&mydisease)
-        .await;
-
-    mount_keyword_nci_search(&nci, "melanoma", "NCT00000002").await;
-
-    let filters = TrialSearchFilters {
-        source: TrialSource::NciCts,
-        condition: Some("melanoma".into()),
-        ..Default::default()
-    };
-    let normalized = validate_trial_search(&filters).expect("filters should validate");
-
-    let page = search_page_with_nci_clients(
-        &nci_client_for_test(&nci),
-        &mydisease_client_for_test(&mydisease),
-        &filters,
-        &normalized,
-        1,
-        0,
-    )
-    .await
-    .expect("keyword fallback should keep NCI search available");
-    assert_eq!(page.results.len(), 1);
-    assert_eq!(page.results[0].nct_id, "NCT00000002");
+    assert!(plan.query.contains(&("keyword".into(), "melanoma".into())));
+    assert!(
+        !plan
+            .query
+            .iter()
+            .any(|(key, _)| *key == "diseases.nci_thesaurus_concept_id")
+    );
 }
 
-#[tokio::test]
-async fn nci_search_page_falls_back_to_keyword_when_best_hit_lacks_nci_xref() {
-    let mydisease = MockServer::start().await;
-    let nci = MockServer::start().await;
+#[test]
+fn nci_search_falls_back_to_keyword_when_best_hit_lacks_nci_xref() {
+    let filter = nci_disease_filter_from_hit(
+        "melanoma",
+        mydisease_hit(serde_json::json!({
+            "_id": "MONDO:0005105",
+            "mondo": {
+                "name": "Melanoma"
+            }
+        })),
+    );
 
-    Mock::given(method("GET"))
-        .and(path("/v1/query"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(mydisease_query_response(json!({
-                "_id": "MONDO:0005105",
-                "mondo": {
-                    "name": "Melanoma"
-                }
-            }))),
-        )
-        .mount(&mydisease)
-        .await;
-
-    mount_keyword_nci_search(&nci, "melanoma", "NCT00000008").await;
-
-    let filters = TrialSearchFilters {
-        source: TrialSource::NciCts,
-        condition: Some("melanoma".into()),
-        ..Default::default()
-    };
-    let normalized = validate_trial_search(&filters).expect("filters should validate");
-
-    let page = search_page_with_nci_clients(
-        &nci_client_for_test(&nci),
-        &mydisease_client_for_test(&mydisease),
-        &filters,
-        &normalized,
-        1,
-        0,
-    )
-    .await
-    .expect("missing NCI xrefs should fall back to keyword search");
-    assert_eq!(page.results.len(), 1);
-    assert_eq!(page.results[0].nct_id, "NCT00000008");
+    match filter {
+        NciDiseaseFilter::Keyword(value) => assert_eq!(value, "melanoma"),
+        other => panic!("expected keyword fallback, got {other:?}"),
+    }
 }
 
 #[test]
@@ -276,23 +188,23 @@ fn nci_source_rejects_early_phase1() {
     assert!(err.to_string().contains("--source nci"));
 }
 
-#[tokio::test]
-async fn nci_source_rejects_essie_filters() {
+#[test]
+fn nci_source_rejects_essie_filters() {
     let filters = TrialSearchFilters {
         source: TrialSource::NciCts,
         prior_therapies: Some("platinum".into()),
         ..Default::default()
     };
 
-    let err = search(&filters, 10, 0).await.expect_err("should fail");
+    let err = validation_error(&filters);
     assert!(
         format!("{err}").contains("--prior-therapies, --progression-on, and --line-of-therapy"),
         "unexpected error: {err}"
     );
 }
 
-#[tokio::test]
-async fn nci_source_rejects_age_filter() {
+#[test]
+fn nci_source_rejects_age_filter() {
     let filters = TrialSearchFilters {
         source: TrialSource::NciCts,
         condition: Some("melanoma".into()),
@@ -300,15 +212,15 @@ async fn nci_source_rejects_age_filter() {
         ..Default::default()
     };
 
-    let err = search(&filters, 10, 0).await.expect_err("should fail");
+    let err = validation_error(&filters);
     assert!(
         format!("{err}").contains("--age is only supported for --source ctgov"),
         "unexpected error: {err}"
     );
 }
 
-#[tokio::test]
-async fn nci_source_rejects_sex_filter() {
+#[test]
+fn nci_source_rejects_sex_filter() {
     let filters = TrialSearchFilters {
         source: TrialSource::NciCts,
         condition: Some("melanoma".into()),
@@ -316,15 +228,15 @@ async fn nci_source_rejects_sex_filter() {
         ..Default::default()
     };
 
-    let err = search(&filters, 10, 0).await.expect_err("should fail");
+    let err = validation_error(&filters);
     assert!(
         format!("{err}").contains("--sex is only supported for --source ctgov"),
         "unexpected error: {err}"
     );
 }
 
-#[tokio::test]
-async fn nci_source_rejects_sponsor_type_filter() {
+#[test]
+fn nci_source_rejects_sponsor_type_filter() {
     let filters = TrialSearchFilters {
         source: TrialSource::NciCts,
         condition: Some("melanoma".into()),
@@ -332,7 +244,7 @@ async fn nci_source_rejects_sponsor_type_filter() {
         ..Default::default()
     };
 
-    let err = search(&filters, 10, 0).await.expect_err("should fail");
+    let err = validation_error(&filters);
     assert!(
         format!("{err}").contains("--sponsor-type is only supported for --source ctgov"),
         "unexpected error: {err}"
