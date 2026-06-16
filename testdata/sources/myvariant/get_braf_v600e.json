@@ -1,0 +1,786 @@
+{
+  "_id": "chr7:g.140453136A>T",
+  "_version": 2,
+  "cadd": {
+    "_license": "http://bit.ly/2TIuab9",
+    "consequence": "NON_SYNONYMOUS",
+    "phred": 32
+  },
+  "cgi": [
+    {
+      "_license": "http://bit.ly/2FqS871",
+      "association": "Responsive",
+      "cdna": "c.1799T>A",
+      "drug": "PLX4720 (BRAF inhibitor)",
+      "evidence_level": "Pre-clinical",
+      "gene": "BRAF",
+      "primary_tumor_type": "Malignant astrocytoma",
+      "protein_change": "BRAF:V600E",
+      "region": "inside_[cds_in_exon_15]",
+      "source": "PMC3638050",
+      "transcript": "ENST00000288602"
+    }
+  ],
+  "civic": {
+    "_license": "http://bit.ly/2FqS871",
+    "alleleRegistryId": "CA123643",
+    "clinvarIds": [
+      "13961",
+      "376069"
+    ],
+    "comments": {
+      "totalCount": 1
+    },
+    "contributors": {
+      "curators": [
+        {
+          "lastActionDate": "2015-09-08T19:54:43Z",
+          "totalActionCount": 1,
+          "uniqueActions": [
+            {
+              "action": "REVISION_SUGGESTED",
+              "count": 1
+            }
+          ],
+          "user": {
+            "id": 70,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhObWQ0TWpJeU5EUmpPR0ZrYVRnMGJETnJZVGRuTVdSa2FIQnFkZ1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTjJsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpjd0xtcHdaeUk3SUdacGJHVnVZVzFsS2oxVlZFWXRPQ2NuTnpBdWFuQm5CanNHVkRvUlkyOXVkR1Z1ZEY5MGVYQmxTU0lQYVcxaFoyVXZhbkJsWndZN0JsUTZFWE5sY25acFkyVmZibUZ0WlRvS2JHOWpZV3c9IiwiZXhwIjoiMjAyNS0wNS0yMlQxNzo0NjoxNS45NjdaIiwicHVyIjoiYmxvYl9rZXkifX0=--3939abf5347105cba0dcfce7157b4c64ea9b3169/70.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2016-02-18T22:19:46Z",
+          "totalActionCount": 3,
+          "uniqueActions": [
+            {
+              "action": "REVISION_SUGGESTED",
+              "count": 3
+            }
+          ],
+          "user": {
+            "id": 41,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhkREF4YXpKa1pXSTNaekpzZDJ0amN6Qm1OWGxtTkd3MmNuVjJlQVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTjJsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpReExtcHdaeUk3SUdacGJHVnVZVzFsS2oxVlZFWXRPQ2NuTkRFdWFuQm5CanNHVkRvUlkyOXVkR1Z1ZEY5MGVYQmxTU0lQYVcxaFoyVXZhbkJsWndZN0JsUTZFWE5sY25acFkyVmZibUZ0WlRvS2JHOWpZV3c9IiwiZXhwIjoiMjAyNS0wNS0yMlQxNzo0NjoxNS45NjRaIiwicHVyIjoiYmxvYl9rZXkifX0=--f7e93cd25997fffae679f143b95178197dc69f7e/41.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2016-03-24T02:17:27Z",
+          "totalActionCount": 2,
+          "uniqueActions": [
+            {
+              "action": "REVISION_SUGGESTED",
+              "count": 2
+            }
+          ],
+          "user": {
+            "id": 3,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhaM2cwTVdVM1pXdHllR1YyYUhKMGFXczFlbTV2YlhrMGEyb3lhUVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTldsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpNdWFuQm5JanNnWm1sc1pXNWhiV1VxUFZWVVJpMDRKeWN6TG1wd1p3WTdCbFE2RVdOdmJuUmxiblJmZEhsd1pVa2lEMmx0WVdkbEwycHdaV2NHT3daVU9oRnpaWEoyYVdObFgyNWhiV1U2Q214dlkyRnMiLCJleHAiOiIyMDI1LTA1LTIyVDE3OjQ2OjE1Ljk2MFoiLCJwdXIiOiJibG9iX2tleSJ9fQ==--7799b0bb9067720e24ad51178d4192f90ed89085/3.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2019-05-17T00:23:44Z",
+          "totalActionCount": 3,
+          "uniqueActions": [
+            {
+              "action": "REVISION_SUGGESTED",
+              "count": 2
+            },
+            {
+              "action": "VARIANT_CREATED",
+              "count": 1
+            }
+          ],
+          "user": {
+            "id": 6,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhhM0kxTW1FelptSm1aREZpTUc1eU9HOXdhVFkyTVhaNmQyUTRhQVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTldsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpZdWFuQm5JanNnWm1sc1pXNWhiV1VxUFZWVVJpMDRKeWMyTG1wd1p3WTdCbFE2RVdOdmJuUmxiblJmZEhsd1pVa2lEMmx0WVdkbEwycHdaV2NHT3daVU9oRnpaWEoyYVdObFgyNWhiV1U2Q214dlkyRnMiLCJleHAiOiIyMDI1LTA1LTIyVDE3OjQ2OjE1Ljk4M1oiLCJwdXIiOiJibG9iX2tleSJ9fQ==--96fc7c9a8fcc8a4bbd2320503d7b11a76728bf2f/6.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2017-04-29T15:22:52Z",
+          "totalActionCount": 4,
+          "uniqueActions": [
+            {
+              "action": "REVISION_SUGGESTED",
+              "count": 4
+            }
+          ],
+          "user": {
+            "id": 83,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhOVE5oTjNoMVpqWmtaVzkzZEhOcWMzb3lhelp4YVdRemFHUnNZZ1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTjJsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpnekxtcHdaeUk3SUdacGJHVnVZVzFsS2oxVlZFWXRPQ2NuT0RNdWFuQm5CanNHVkRvUlkyOXVkR1Z1ZEY5MGVYQmxTU0lQYVcxaFoyVXZhbkJsWndZN0JsUTZFWE5sY25acFkyVmZibUZ0WlRvS2JHOWpZV3c9IiwiZXhwIjoiMjAyNS0wNS0yMlQxNzo0NjoxNS45NzBaIiwicHVyIjoiYmxvYl9rZXkifX0=--087d4c6930d73f225bf651e4bb955e29f57bcc4f/83.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2022-01-13T05:40:29Z",
+          "totalActionCount": 1,
+          "uniqueActions": [
+            {
+              "action": "COMMENTED",
+              "count": 1
+            }
+          ],
+          "user": {
+            "id": 110,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhZalpwTVhFM05uSnNOV2R2ZEdWa1lXSTVibXhpZG1Oa1oyVjFhd1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpT1dsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpFeE1DNXFjR2NpT3lCbWFXeGxibUZ0WlNvOVZWUkdMVGduSnpFeE1DNXFjR2NHT3daVU9oRmpiMjUwWlc1MFgzUjVjR1ZKSWc5cGJXRm5aUzlxY0dWbkJqc0dWRG9SYzJWeWRtbGpaVjl1WVcxbE9ncHNiMk5oYkE9PSIsImV4cCI6IjIwMjUtMDUtMjJUMTc6NDY6MTUuOTczWiIsInB1ciI6ImJsb2Jfa2V5In19--863138045ed80ced798653d685837c34da7395ca/110.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2022-01-10T19:43:00Z",
+          "totalActionCount": 3,
+          "uniqueActions": [
+            {
+              "action": "REVISION_SUGGESTED",
+              "count": 3
+            }
+          ],
+          "user": {
+            "id": 15,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhNR1ZvTm5vNGIzQXdPV0YzYVRZNE5uVXpiR2RwZEdacGQyazJlUVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpVzJsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWsxaGJHRmphR2t0Vkdsa2VTMURjbTl3Y0dWa0xtcHdaeUk3SUdacGJHVnVZVzFsS2oxVlZFWXRPQ2NuVFdGc1lXTm9hUzFVYVdSNUxVTnliM0J3WldRdWFuQm5CanNHVkRvUlkyOXVkR1Z1ZEY5MGVYQmxTU0lQYVcxaFoyVXZhbkJsWndZN0JsUTZFWE5sY25acFkyVmZibUZ0WlRvS2JHOWpZV3c9IiwiZXhwIjoiMjAyNS0wNS0yMlQxNzo0NjoxNS45NzlaIiwicHVyIjoiYmxvYl9rZXkifX0=--43d432472724aaa4ce7bb461900aea32307938da/Malachi-Tidy-Cropped.jpg"
+          }
+        }
+      ],
+      "editors": [
+        {
+          "lastActionDate": "2017-04-02T01:41:36Z",
+          "totalActionCount": 5,
+          "uniqueActions": [
+            {
+              "action": "REVISION_ACCEPTED",
+              "count": 5
+            }
+          ],
+          "user": {
+            "id": 15,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhNR1ZvTm5vNGIzQXdPV0YzYVRZNE5uVXpiR2RwZEdacGQyazJlUVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpVzJsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWsxaGJHRmphR2t0Vkdsa2VTMURjbTl3Y0dWa0xtcHdaeUk3SUdacGJHVnVZVzFsS2oxVlZFWXRPQ2NuVFdGc1lXTm9hUzFVYVdSNUxVTnliM0J3WldRdWFuQm5CanNHVkRvUlkyOXVkR1Z1ZEY5MGVYQmxTU0lQYVcxaFoyVXZhbkJsWndZN0JsUTZFWE5sY25acFkyVmZibUZ0WlRvS2JHOWpZV3c9IiwiZXhwIjoiMjAyNS0wNS0yMlQxNzo0NjoxNS45NzhaIiwicHVyIjoiYmxvYl9rZXkifX0=--b85ccb412dfce4991505737580ccc90478483758/Malachi-Tidy-Cropped.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2016-02-18T22:20:12Z",
+          "totalActionCount": 3,
+          "uniqueActions": [
+            {
+              "action": "REVISION_ACCEPTED",
+              "count": 3
+            }
+          ],
+          "user": {
+            "id": 41,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhkREF4YXpKa1pXSTNaekpzZDJ0amN6Qm1OWGxtTkd3MmNuVjJlQVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTjJsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpReExtcHdaeUk3SUdacGJHVnVZVzFsS2oxVlZFWXRPQ2NuTkRFdWFuQm5CanNHVkRvUlkyOXVkR1Z1ZEY5MGVYQmxTU0lQYVcxaFoyVXZhbkJsWndZN0JsUTZFWE5sY25acFkyVmZibUZ0WlRvS2JHOWpZV3c9IiwiZXhwIjoiMjAyNS0wNS0yMlQxNzo0NjoxNS45NjNaIiwicHVyIjoiYmxvYl9rZXkifX0=--17f6836911cf50543bc397e16e8a479cfdf87115/41.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2017-05-12T03:16:45Z",
+          "totalActionCount": 4,
+          "uniqueActions": [
+            {
+              "action": "REVISION_ACCEPTED",
+              "count": 3
+            },
+            {
+              "action": "REVISION_REJECTED",
+              "count": 1
+            }
+          ],
+          "user": {
+            "id": 6,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhhM0kxTW1FelptSm1aREZpTUc1eU9HOXdhVFkyTVhaNmQyUTRhQVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTldsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpZdWFuQm5JanNnWm1sc1pXNWhiV1VxUFZWVVJpMDRKeWMyTG1wd1p3WTdCbFE2RVdOdmJuUmxiblJmZEhsd1pVa2lEMmx0WVdkbEwycHdaV2NHT3daVU9oRnpaWEoyYVdObFgyNWhiV1U2Q214dlkyRnMiLCJleHAiOiIyMDI1LTA1LTIyVDE3OjQ2OjE1Ljk4MloiLCJwdXIiOiJibG9iX2tleSJ9fQ==--d4ed2b2d28af0d59b8b9114bd8fac262b91c3f77/6.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2017-05-14T03:50:30Z",
+          "totalActionCount": 4,
+          "uniqueActions": [
+            {
+              "action": "REVISION_ACCEPTED",
+              "count": 4
+            }
+          ],
+          "user": {
+            "id": 3,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhaM2cwTVdVM1pXdHllR1YyYUhKMGFXczFlbTV2YlhrMGEyb3lhUVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTldsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpNdWFuQm5JanNnWm1sc1pXNWhiV1VxUFZWVVJpMDRKeWN6TG1wd1p3WTdCbFE2RVdOdmJuUmxiblJmZEhsd1pVa2lEMmx0WVdkbEwycHdaV2NHT3daVU9oRnpaWEoyYVdObFgyNWhiV1U2Q214dlkyRnMiLCJleHAiOiIyMDI1LTA1LTIyVDE3OjQ2OjE1Ljk1OVoiLCJwdXIiOiJibG9iX2tleSJ9fQ==--06dc513462af1f050d0b8001fedf057c4f960867/3.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2020-05-30T00:13:47Z",
+          "totalActionCount": 1,
+          "uniqueActions": [
+            {
+              "action": "REVISION_ACCEPTED",
+              "count": 1
+            }
+          ],
+          "user": {
+            "id": 968,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhNelExTTNsaGJqWnhOSEUwZUhGNmFHdHFlVEYxT0haamN6WmpjZ1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpT1dsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWprMk9DNXFjR2NpT3lCbWFXeGxibUZ0WlNvOVZWUkdMVGduSnprMk9DNXFjR2NHT3daVU9oRmpiMjUwWlc1MFgzUjVjR1ZKSWc5cGJXRm5aUzlxY0dWbkJqc0dWRG9SYzJWeWRtbGpaVjl1WVcxbE9ncHNiMk5oYkE9PSIsImV4cCI6IjIwMjUtMDUtMjJUMTc6NDY6MTUuOTc2WiIsInB1ciI6ImJsb2Jfa2V5In19--db778ad93e79c921ccb2b25e2563f56b0c083379/968.jpg"
+          }
+        },
+        {
+          "lastActionDate": "2022-01-13T05:39:29Z",
+          "totalActionCount": 1,
+          "uniqueActions": [
+            {
+              "action": "REVISION_ACCEPTED",
+              "count": 1
+            }
+          ],
+          "user": {
+            "id": 110,
+            "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhZalpwTVhFM05uSnNOV2R2ZEdWa1lXSTVibXhpZG1Oa1oyVjFhd1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpT1dsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpFeE1DNXFjR2NpT3lCbWFXeGxibUZ0WlNvOVZWUkdMVGduSnpFeE1DNXFjR2NHT3daVU9oRmpiMjUwWlc1MFgzUjVjR1ZKSWc5cGJXRm5aUzlxY0dWbkJqc0dWRG9SYzJWeWRtbGpaVjl1WVcxbE9ncHNiMk5oYkE9PSIsImV4cCI6IjIwMjUtMDUtMjJUMTc6NDY6MTUuOTczWiIsInB1ciI6ImJsb2Jfa2V5In19--863138045ed80ced798653d685837c34da7395ca/110.jpg"
+          }
+        }
+      ]
+    },
+    "coordinates": {
+      "chromosome": "7",
+      "coordinateType": "GENE_VARIANT_COORDINATE",
+      "ensemblVersion": 75,
+      "referenceBases": "A",
+      "referenceBuild": "GRCH37",
+      "representativeTranscript": "ENST00000288602.6",
+      "start": 140453136,
+      "stop": 140453136,
+      "variantBases": "T"
+    },
+    "creationActivity": {
+      "createdAt": "2015-06-21T16:49:42Z",
+      "user": {
+        "displayName": "kkrysiak",
+        "id": 6,
+        "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhaWEk1YVhGdk0yUjZOV2RqWVdFNVpYTnhNMmhxTUdOdk1YTXhZd1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTldsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpZdWFuQm5JanNnWm1sc1pXNWhiV1VxUFZWVVJpMDRKeWMyTG1wd1p3WTdCbFE2RVdOdmJuUmxiblJmZEhsd1pVa2lEMmx0WVdkbEwycHdaV2NHT3daVU9oRnpaWEoyYVdObFgyNWhiV1U2Q214dlkyRnMiLCJleHAiOiIyMDI1LTA1LTIyVDE3OjQ2OjE1LjcwNVoiLCJwdXIiOiJibG9iX2tleSJ9fQ==--b91cd8b04ab402e2c60521ae03ab20a6249e0605/6.jpg",
+        "role": "ADMIN"
+      }
+    },
+    "deprecated": false,
+    "feature": {
+      "deprecated": false,
+      "flagged": false,
+      "id": 5,
+      "link": "/features/5",
+      "name": "BRAF"
+    },
+    "flags": {
+      "totalCount": 0
+    },
+    "hgvsDescriptions": [
+      "NM_004333.4:c.1799T>A",
+      "NP_004324.2:p.Val600Glu",
+      "NC_000007.13:g.140453136A>T",
+      "ENST00000288602.6:c.1799T>A"
+    ],
+    "id": 12,
+    "lastAcceptedRevisionEvent": {
+      "originatingUser": {
+        "displayName": "CamGrisdale",
+        "id": 968,
+        "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhlR3huYkdWaWJIUnJZamgxT1hCME5IUnlkVGt3ZVhsbmFXTjBPUVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpT1dsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWprMk9DNXFjR2NpT3lCbWFXeGxibUZ0WlNvOVZWUkdMVGduSnprMk9DNXFjR2NHT3daVU9oRmpiMjUwWlc1MFgzUjVjR1ZKSWc5cGJXRm5aUzlxY0dWbkJqc0dWRG9SYzJWeWRtbGpaVjl1WVcxbE9ncHNiMk5oYkE9PSIsImV4cCI6IjIwMjUtMDUtMjJUMTc6NDY6MTUuNzA3WiIsInB1ciI6ImJsb2Jfa2V5In19--a46a02233e3aca0b145edb10638acb17e325048c/968.jpg",
+        "role": "EDITOR"
+      }
+    },
+    "lastSubmittedRevisionEvent": {
+      "originatingUser": {
+        "displayName": "LynzeyKujan",
+        "id": 83,
+        "profileImagePath": "https://civicdb.org/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhNM05yWkRjeE4zUTJjV1psTldSM05XaHROWFZoYkhocmJEWm5OZ1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpTjJsdWJHbHVaVHNnWm1sc1pXNWhiV1U5SWpnekxtcHdaeUk3SUdacGJHVnVZVzFsS2oxVlZFWXRPQ2NuT0RNdWFuQm5CanNHVkRvUlkyOXVkR1Z1ZEY5MGVYQmxTU0lQYVcxaFoyVXZhbkJsWndZN0JsUTZFWE5sY25acFkyVmZibUZ0WlRvS2JHOWpZV3c9IiwiZXhwIjoiMjAyNS0wNS0yMlQxNzo0NjoxNS43MDZaIiwicHVyIjoiYmxvYl9rZXkifX0=--25dfe1f43acf2c76b82b8390ce7ecea7e69f6864/83.jpg",
+        "role": "CURATOR"
+      }
+    },
+    "maneSelectTranscript": "ENST00000646891.2:c.1799T>A",
+    "molecularProfiles": [
+      {
+        "evidenceItems": [
+          {
+            "description": "BRAF V600E is shown to be associated with the tall-cell variant of papillary thyroid cancer.",
+            "disease": {
+              "diseaseAliases": [
+                "Malignant Neoplasm Of Thyroid Gland",
+                "Malignant Tumour Of Thyroid Gland",
+                "Neoplasm Of Thyroid Gland",
+                "Thyroid Gland Cancer",
+                "Thyroid Gland Neoplasm",
+                "Thyroid Neoplasm"
+              ],
+              "diseaseUrl": "https://www.disease-ontology.org/?id=DOID:1781",
+              "displayName": "Thyroid Cancer",
+              "doid": "1781",
+              "id": 16,
+              "link": "/diseases/16",
+              "myDiseaseInfo": {
+                "doDef": "An endocrine gland cancer located in the thyroid gland located in the neck below the thyroid cartilage.",
+                "icd10": "C73",
+                "mesh": "D013964",
+                "mondoId": "MONDO:0002108",
+                "ncit": [
+                  "C3414",
+                  "C7510"
+                ]
+              },
+              "name": "Thyroid Cancer"
+            },
+            "evidenceDirection": "SUPPORTS",
+            "evidenceLevel": "B",
+            "evidenceRating": 3,
+            "evidenceType": "DIAGNOSTIC",
+            "flagged": false,
+            "id": 79,
+            "molecularProfile": {
+              "id": 12
+            },
+            "name": "EID79",
+            "significance": "POSITIVE",
+            "source": {
+              "abstract": "This study was designed to examine the aggressive features of BRAF-positive papillary thyroid cancer (PTC) and association with age.We compared the clinicopathologic parameters and BRAF V600E mutation status of 121 elderly (age \u226565 years) PTC patients who underwent thyroidectomy from January 2007 to December 2009 to a consecutive cohort of 98 younger (age <65 years) PTC patients.Younger and elderly PTC patients had similar incidences of BRAF-positive tumors (41% vs. 38%; p = 0.67). The elderly cohort was more likely to have smaller tumors (mean 1.6 vs. 2.1 cm; p = 0.001), present with advanced TNM stage (36% vs. 19%; p = 0.008), and have persistent/recurrent disease (10% vs. 1%; p = 0.006). BRAF-positive status was associated with PTC that were tall cell variant (p < 0.001), had extrathyroidal extension (p < 0.001), lymph node involvement (p = 0.008), advanced (III/IV) TNM stage (p < 0.001), and disease recurrence (p < 0.001). Except for lymph node involvement, the association between aggressive histology characteristics at presentation and BRAF-positive PTC also was observed within the age-defined cohorts. In short-term follow-up (mean, 18 months), persistent/recurrent PTC was much more likely to occur in patients who were both BRAF-positive and elderly (22%).BRAF mutations are equally present in younger and older patients. Aggressive histology characteristics at presentation are associated with BRAF-positive PTC, irrespective of age. However, the well-established association of BRAF with recurrence is limited to older (age \u226565 years) patients.",
+              "authorString": "Gina M Howell, Sally E Carty, Michaele J Armstrong, Shane O Lebeau, Steven P Hodak, Christopher Coyne, Michael T Stang, Kelly L McCoy, Marina N Nikiforova, Yuri E Nikiforov, Linwah Yip",
+              "citation": "Howell et al., 2011",
+              "citationId": "21594703",
+              "id": 93,
+              "journal": "Ann Surg Oncol",
+              "link": "/sources/93",
+              "name": "PubMed: Howell et al., 2011",
+              "openAccess": false,
+              "publicationDate": "2011-12",
+              "retracted": false,
+              "sourceType": "PUBMED",
+              "sourceUrl": "http://www.ncbi.nlm.nih.gov/pubmed/21594703",
+              "title": "Both BRAF V600E mutation and older age (\u2265 65 years) are associated with recurrent papillary thyroid cancer."
+            },
+            "variantOrigin": "SOMATIC"
+          },
+          {
+            "description": "Dabrafenib with trametinib provides higher response rate and lower toxicity (as compared to chemotherapy) in patients with melanoma.",
+            "disease": {
+              "diseaseAliases": [
+                "Malignant Melanoma",
+                "Naevocarcinoma"
+              ],
+              "diseaseUrl": "https://www.disease-ontology.org/?id=DOID:1909",
+              "displayName": "Melanoma",
+              "doid": "1909",
+              "id": 7,
+              "link": "/diseases/7",
+              "myDiseaseInfo": {
+                "doDef": "A cell type cancer that has_material_basis_in abnormally proliferating cells derives_from melanocytes which are found in skin, the bowel and the eye.",
+                "icdo": "8720/3",
+                "mesh": "D008545",
+                "mondoId": "MONDO:0005105",
+                "ncit": [
+                  "C3224"
+                ]
+              },
+              "name": "Melanoma"
+            },
+            "evidenceDirection": "SUPPORTS",
+            "evidenceLevel": "B",
+            "evidenceRating": 5,
+            "evidenceType": "PREDICTIVE",
+            "flagged": false,
+            "id": 95,
+            "molecularProfile": {
+              "id": 12
+            },
+            "name": "EID95",
+            "significance": "SENSITIVITYRESPONSE",
+            "source": {
+              "abstract": "Dabrafenib and trametinib were approved for use as monotherapies in BRAF-mutant metastatic melanoma by the U.S. Food and Drug Administration (FDA) in 2013, and most recently, their use in combination has received accelerated FDA approval. Both drugs target the mitogen-activated protein kinase (MAPK) pathway: dabrafenib selectively inhibits mutant BRAF that constitutively activates the pathway, and trametinib selectively inhibits MEK1 and MEK2 proteins activated by RAF kinases. The phase III study of dabrafenib in BRAF(V600E) metastatic melanoma reported rapid tumor regression in most patients and a 59% objective RECIST response rate. The median progression-free survival (PFS) and overall survival (OS) were improved compared with dacarbazine. Toxicities were well tolerated and different from those reported for vemurafenib, the first FDA-approved BRAF inhibitor. Efficacy has been demonstrated in other BRAF-mutant genotypes. The phase III study of trametinib in BRAF inhibitor-na\u00efve patients with BRAF(V600E) or BRAF(V600K) also showed benefit with a prolonged median PFS and OS compared with chemotherapy. Trametinib is ineffective in patients who have progressed on BRAF inhibitors. A phase II trial of combined dabrafenib and trametinib demonstrated higher response rates and longer median PFS than dabrafenib monotherapy, with less cutaneous toxicity. Here, we review the clinical development of both drugs as monotherapies and in combination, and discuss their role in the management of BRAF-mutant melanoma.",
+              "authorString": "Alexander M Menzies, Georgina V Long",
+              "citation": "Menzies et al., 2014",
+              "citationId": "24583796",
+              "id": 105,
+              "journal": "Clin Cancer Res",
+              "link": "/sources/105",
+              "name": "PubMed: Menzies et al., 2014",
+              "openAccess": false,
+              "publicationDate": "2014-4-15",
+              "retracted": false,
+              "sourceType": "PUBMED",
+              "sourceUrl": "http://www.ncbi.nlm.nih.gov/pubmed/24583796",
+              "title": "Dabrafenib and trametinib, alone and in combination for BRAF-mutant metastatic melanoma."
+            },
+            "therapies": [
+              {
+                "deprecated": false,
+                "id": 22,
+                "link": "/therapies/22",
+                "name": "Dabrafenib"
+              },
+              {
+                "deprecated": false,
+                "id": 19,
+                "link": "/therapies/19",
+                "name": "Trametinib"
+              }
+            ],
+            "variantOrigin": "SOMATIC"
+          }
+        ],
+        "id": 12,
+        "molecularProfileAliases": [
+          "RS113488022",
+          "VAL600GLU",
+          "V640E",
+          "VAL640GLU"
+        ],
+        "molecularProfileScore": 1433.5,
+        "name": "BRAF V600E",
+        "variants": [
+          {
+            "id": 12,
+            "link": "/variants/12",
+            "name": "V600E"
+          }
+        ]
+      }
+    ],
+    "name": "V600E",
+    "openCravatUrl": "https://run.opencravat.org/webapps/variantreport/index.html?alt_base=T&chrom=chr7&pos=140753336&ref_base=A",
+    "openRevisionCount": 0,
+    "revisions": {
+      "totalCount": 0
+    },
+    "variantAliases": [
+      "RS113488022",
+      "VAL600GLU",
+      "V640E",
+      "VAL640GLU",
+      "RS113488022",
+      "VAL600GLU",
+      "V640E",
+      "VAL640GLU"
+    ],
+    "variantTypes": {
+      "id": 47,
+      "link": "/variant-types/47",
+      "name": "Missense Variant",
+      "soid": "SO:0001583"
+    }
+  },
+  "clinvar": {
+    "_license": "http://bit.ly/2SQdcI0",
+    "rcv": [
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "medgen": "C0699790",
+            "mondo": "MONDO:0002032"
+          },
+          "name": "Carcinoma of colon (CRC)",
+          "synonyms": [
+            "Colonic carcinoma",
+            "Colon carcinoma"
+          ]
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "human_phenotype_ontology": "HP:0002895",
+            "medgen": "C0238463",
+            "mesh": "D000077273",
+            "mondo": "MONDO:0005075",
+            "orphanet": "146"
+          },
+          "name": "Papillary thyroid carcinoma",
+          "synonyms": [
+            "NONMEDULLARY THYROID CARCINOMA, PAPILLARY",
+            "Thyroid carcinoma, papillary, somatic",
+            "Thyroid gland papillary carcinoma"
+          ]
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "medgen": "C2674727"
+          },
+          "name": "Astrocytoma, low-grade, somatic"
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "medgen": "C1266158",
+            "mondo": "MONDO:0021656"
+          },
+          "name": "Nongerminomatous germ cell tumor",
+          "synonyms": [
+            "NONSEMINOMATOUS GERM CELL TUMORS, SOMATIC",
+            "Germ cell tumor, nonseminomatous",
+            "Non-seminomatous germ-cell tumors"
+          ]
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "human_phenotype_ontology": "HP:0030358",
+            "medgen": "C0007131",
+            "mesh": "D002289",
+            "mondo": "MONDO:0005233"
+          },
+          "name": "Non-small cell lung carcinoma (NSCLC)",
+          "synonyms": [
+            "Non-small cell lung cancer"
+          ]
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "human_phenotype_ontology": "HP:0007474",
+            "medgen": "C0025202",
+            "mesh": "D008545",
+            "mondo": "MONDO:0005105"
+          },
+          "name": "Melanoma"
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "medgen": "C3661900"
+          },
+          "name": "not provided",
+          "synonyms": [
+            "none provided",
+            "RECLASSIFIED - ADRA2C POLYMORPHISM",
+            "RECLASSIFIED - ADRB1 POLYMORPHISM"
+          ]
+        },
+        "review_status": "criteria provided, multiple submitters, no conflicts"
+      },
+      {
+        "clinical_significance": "not provided",
+        "conditions": {
+          "identifiers": {
+            "medgen": "C1275081",
+            "mondo": "MONDO:0015280",
+            "omim": "PS115150",
+            "orphanet": "1340"
+          },
+          "name": "Cardio-facio-cutaneous syndrome",
+          "synonyms": [
+            "Cardiofaciocutaneous syndrome",
+            "CFC syndrome"
+          ]
+        },
+        "review_status": "no assertion provided"
+      },
+      {
+        "clinical_significance": "Likely pathogenic",
+        "conditions": {
+          "identifiers": {
+            "human_phenotype_ontology": "HP:0006775",
+            "medgen": "C0026764",
+            "mesh": "D009101",
+            "mondo": "MONDO:0009693",
+            "omim": "254500",
+            "orphanet": "85443"
+          },
+          "name": "Multiple myeloma (MM)",
+          "synonyms": [
+            "Plasma cell myeloma",
+            "Kahler disease",
+            "Myelomatosis",
+            "Plasma cell dyscrasia",
+            "Multiple myeloma, somatic"
+          ]
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "name": "Cystic epithelial invagination containing papillae lined by columnar epithelium"
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "human_phenotype_ontology": "HP:0002408",
+            "medgen": "C0917804",
+            "mondo": "MONDO:0007154",
+            "omim": "108010",
+            "orphanet": "46724"
+          },
+          "name": "Cerebral arteriovenous malformation (BAVM)",
+          "synonyms": [
+            "CEREBRAL ARTERIOVENOUS MALFORMATIONS",
+            "Arteriovenous malformations of the brain"
+          ]
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "human_phenotype_ontology": "HP:0000115",
+            "medgen": "C0027708",
+            "mesh": "D009396",
+            "mondo": "MONDO:0006058"
+          },
+          "name": "Nephroblastoma",
+          "synonyms": [
+            "Wilms tumor",
+            "Wilms' tumor"
+          ]
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Likely pathogenic",
+        "conditions": {
+          "identifiers": {
+            "medgen": "C0006826",
+            "mondo": "MONDO:0004992"
+          },
+          "name": "Malignant neoplastic disease",
+          "synonyms": [
+            "Cancer"
+          ]
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "human_phenotype_ontology": "HP:0100764",
+            "medgen": "C0024221",
+            "mondo": "MONDO:0002013"
+          },
+          "name": "Lymphangioma"
+        },
+        "review_status": "no assertion criteria provided"
+      },
+      {
+        "clinical_significance": "Pathogenic",
+        "conditions": {
+          "identifiers": {
+            "medgen": "C0158570",
+            "mondo": "MONDO:0024291"
+          },
+          "name": "Vascular malformation",
+          "synonyms": [
+            "Vascular malformations"
+          ]
+        },
+        "review_status": "criteria provided, single submitter"
+      },
+      {
+        "clinical_significance": "Likely pathogenic",
+        "conditions": {
+          "identifiers": {
+            "medgen": "CN230736"
+          },
+          "name": "Cardiovascular phenotype"
+        },
+        "review_status": "criteria provided, single submitter"
+      },
+      {
+        "clinical_significance": "Uncertain significance",
+        "conditions": {
+          "identifiers": {
+            "medgen": "C5555857",
+            "mondo": "MONDO:0021060"
+          },
+          "name": "RASopathy",
+          "synonyms": [
+            "rasopathies",
+            "Noonan spectrum disorder"
+          ]
+        },
+        "review_status": "criteria provided, single submitter"
+      }
+    ],
+    "variant_id": 13961
+  },
+  "cosmic": {
+    "_license": "http://bit.ly/2VMkY7R",
+    "cosmic_id": "COSM476",
+    "mut_freq": 2.83,
+    "tumor_site": "biliary_tract"
+  },
+  "dbnsfp": {
+    "_license": "http://bit.ly/2VLnQBz",
+    "alphamissense": {
+      "pred": [
+        "P",
+        "P",
+        "P",
+        "P"
+      ],
+      "score": [
+        0.9853,
+        0.9978,
+        0.9927,
+        0.9941
+      ]
+    },
+    "genename": [
+      "BRAF",
+      "BRAF",
+      "BRAF",
+      "BRAF"
+    ],
+    "hgvsc": [
+      "c.620T>A",
+      "c.1919T>A",
+      "c.1799T>A"
+    ],
+    "hgvsp": [
+      "p.Val640Glu",
+      "p.Val600Glu",
+      "p.Val207Glu",
+      "p.V600E"
+    ],
+    "metarnn": {
+      "pred": [
+        "D",
+        "D",
+        "D",
+        "D"
+      ],
+      "score": [
+        0.88336486,
+        0.88336486,
+        0.88336486,
+        0.88336486
+      ]
+    },
+    "polyphen2": {
+      "hdiv": {
+        "pred": "D"
+      }
+    },
+    "revel": {
+      "rankscore": 0.98378,
+      "score": 0.931
+    }
+  },
+  "dbsnp": {
+    "_license": "http://bit.ly/2AqoLOc",
+    "rsid": "rs113488022"
+  },
+  "exac": {
+    "_license": "http://bit.ly/2H9c4hg",
+    "af": 1.647e-05
+  },
+  "gnomad_exome": {
+    "_license": "http://bit.ly/2I1cl1I",
+    "af": {
+      "af": 3.97994e-06
+    }
+  }
+}

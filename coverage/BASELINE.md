@@ -41,3 +41,4 @@ mygene production-only (`mygene.rs` = 263 exec lines after tests moved out):
 <!-- src | uncovered: old -> new(pure+live) | parity? | old deleted? | issues -->
 - **mygene** — uncovered 59 → **23** (90.94%; pure-only 95) — ✅ improved — old tests deleted — issues: none
 - **nci_cts** — uncovered 39 → **10** (91.94%) — ✅ improved — old tests deleted; 12 entity-level nci tests (behavior oracle) stay green — issues: none
+- **myvariant** — uncovered 178 → **4** (99.14%, pure+live; pure-only 49) — ✅ improved — sub-agent converted; 174 variant consumer tests green; clippy clean — issues: none

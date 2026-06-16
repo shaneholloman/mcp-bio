@@ -234,7 +234,10 @@ parallelism, low conflict.
   cover the async glue. Coverage **improved** (uncovered production lines: mygene 59→23,
   nci_cts 39→10); behavior preserved (12 entity-level nci tests stay green). Old inline
   wiremock tests deleted. Substrate (`RequestPlan`/`decode_json`) landed in `sources/mod.rs`.
-- [ ] Write the pilot up as the canonical pattern doc (`PATTERN.md`) for fan-out agents.
+- [x] Canonical pattern doc `PATTERN.md` written; purity ratchet `scripts/check-no-server-tests.sh` added (comment-aware).
+- [x] **Fan-out delegation validated (2026-06-16):** a sub-agent converted `myvariant`
+  autonomously (uncovered 178→4 / 99.14%; 174 variant consumer tests green; clippy clean),
+  proving PATTERN.md is agent-executable. Surfaced 5 recipe gaps → folded into PATTERN.md gotchas.
 - [ ] Write the pilot up as the canonical pattern doc for fan-out agents.
 
 ### Phase 1 — Source fan-out (per source: harvest → Tier2 → Tier3 → parity → wipe → file issues)

@@ -5,7 +5,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::entities::variant::VariantProteinAlias;
 use crate::error::BioMcpError;
-use crate::sources::is_valid_gene_symbol;
+use crate::sources::{RequestPlan, is_valid_gene_symbol, request_from_plan};
 use crate::utils::serde::StringOrVec;
 
 const MYVARIANT_BASE: &str = "https://myvariant.info/v1";
@@ -68,36 +68,6 @@ where
 pub struct MyVariantClient {
     client: reqwest_middleware::ClientWithMiddleware,
     base: Cow<'static, str>,
-}
-
-#[allow(dead_code)]
-pub struct MyVariantQueryRequestPlan {
-    pub method: &'static str,
-    pub path: &'static str,
-    pub query_params: Vec<(&'static str, String)>,
-    pub cache_mode: &'static str,
-    pub status_expectation: &'static str,
-    pub content_type_expectation: &'static str,
-}
-
-#[allow(dead_code)]
-pub struct MyVariantSearchRequestPlan {
-    pub method: &'static str,
-    pub path: &'static str,
-    pub query_params: Vec<(&'static str, String)>,
-    pub cache_mode: &'static str,
-    pub status_expectation: &'static str,
-    pub content_type_expectation: &'static str,
-}
-
-#[allow(dead_code)]
-pub struct MyVariantGetRequestPlan {
-    pub method: &'static str,
-    pub path: String,
-    pub query_params: Vec<(&'static str, String)>,
-    pub cache_mode: &'static str,
-    pub status_expectation: &'static str,
-    pub content_type_expectation: &'static str,
 }
 
 pub struct VariantSearchParams {
@@ -186,7 +156,7 @@ fn invalid_filter_error(flag: &str, raw: &str, accepted: &[&str]) -> BioMcpError
     ))
 }
 
-fn normalize_significance_filter(value: &str) -> Result<String, BioMcpError> {
+pub(crate) fn normalize_significance_filter(value: &str) -> Result<String, BioMcpError> {
     let raw = value.trim();
     if raw.is_empty() {
         return Err(BioMcpError::InvalidArgument(
@@ -221,7 +191,7 @@ fn normalize_significance_filter(value: &str) -> Result<String, BioMcpError> {
     Ok(canonical.to_string())
 }
 
-fn normalize_consequence_filter(value: &str) -> Result<String, BioMcpError> {
+pub(crate) fn normalize_consequence_filter(value: &str) -> Result<String, BioMcpError> {
     let raw = value.trim();
     if raw.is_empty() {
         return Err(BioMcpError::InvalidArgument(
@@ -254,7 +224,7 @@ fn normalize_consequence_filter(value: &str) -> Result<String, BioMcpError> {
     Ok(canonical)
 }
 
-fn normalize_population_filter(value: &str) -> Result<String, BioMcpError> {
+pub(crate) fn normalize_population_filter(value: &str) -> Result<String, BioMcpError> {
     let raw = value.trim();
     if raw.is_empty() {
         return Err(BioMcpError::InvalidArgument(
@@ -268,7 +238,7 @@ fn normalize_population_filter(value: &str) -> Result<String, BioMcpError> {
     Ok(normalized)
 }
 
-fn normalize_impact_filter(value: &str) -> Result<String, BioMcpError> {
+pub(crate) fn normalize_impact_filter(value: &str) -> Result<String, BioMcpError> {
     let raw = value.trim();
     if raw.is_empty() {
         return Err(BioMcpError::InvalidArgument(
@@ -282,7 +252,7 @@ fn normalize_impact_filter(value: &str) -> Result<String, BioMcpError> {
     Ok(normalized)
 }
 
-fn normalize_review_status_filter(value: &str) -> Result<String, BioMcpError> {
+pub(crate) fn normalize_review_status_filter(value: &str) -> Result<String, BioMcpError> {
     let raw = value.trim();
     if raw.is_empty() {
         return Err(BioMcpError::InvalidArgument(
@@ -309,22 +279,6 @@ impl MyVariantClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     pub(crate) fn escape_query_value(value: &str) -> String {
         crate::utils::query::escape_lucene_value(value)
     }
@@ -337,27 +291,16 @@ impl MyVariantClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, MYVARIANT_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: MYVARIANT_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        crate::sources::ensure_json_content_type(MYVARIANT_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: MYVARIANT_API.to_string(),
-            source,
-        })
+        crate::sources::decode_json(MYVARIANT_API, status, content_type.as_ref(), &bytes, true)
     }
 
-    pub fn query_request_plan(
-        &self,
+    /// Build the outbound free-form `/query` request (pure — Tier-2 testable, never sent).
+    pub(crate) fn query_plan(
         q: &str,
         limit: usize,
         offset: usize,
         fields: &str,
-    ) -> Result<MyVariantQueryRequestPlan, BioMcpError> {
+    ) -> Result<RequestPlan, BioMcpError> {
         let q = q.trim();
         if q.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -366,19 +309,11 @@ impl MyVariantClient {
         }
         crate::sources::validate_biothings_result_window("MyVariant search", limit, offset)?;
 
-        Ok(MyVariantQueryRequestPlan {
-            method: "GET",
-            path: "/query",
-            query_params: vec![
-                ("q", q.to_string()),
-                ("size", limit.to_string()),
-                ("from", offset.to_string()),
-                ("fields", fields.to_string()),
-            ],
-            cache_mode: "default",
-            status_expectation: "non-2xx => Api",
-            content_type_expectation: "json",
-        })
+        Ok(RequestPlan::get("query")
+            .query("q", q)
+            .query("size", limit.to_string())
+            .query("from", offset.to_string())
+            .query("fields", fields))
     }
 
     pub async fn query_with_fields(
@@ -388,16 +323,13 @@ impl MyVariantClient {
         offset: usize,
         fields: &str,
     ) -> Result<MyVariantSearchResponse, BioMcpError> {
-        let plan = self.query_request_plan(q, limit, offset, fields)?;
-        let url = self.endpoint(plan.path);
-        let req = self.client.get(&url).query(&plan.query_params);
+        let plan = Self::query_plan(q, limit, offset, fields)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
         self.get_json(req).await
     }
 
-    pub fn search_request_plan(
-        &self,
-        params: &VariantSearchParams,
-    ) -> Result<MyVariantSearchRequestPlan, BioMcpError> {
+    /// Build the outbound filter-driven `/query` request (pure — Tier-2 testable).
+    pub(crate) fn search_plan(params: &VariantSearchParams) -> Result<RequestPlan, BioMcpError> {
         crate::sources::validate_biothings_result_window(
             "MyVariant search",
             params.limit,
@@ -643,32 +575,24 @@ impl MyVariantClient {
         }
 
         let q = terms.join(" AND ");
-        Ok(MyVariantSearchRequestPlan {
-            method: "GET",
-            path: "/query",
-            query_params: vec![
-                ("q", q),
-                ("size", params.limit.to_string()),
-                ("from", params.offset.to_string()),
-                ("fields", MYVARIANT_FIELDS_SEARCH.to_string()),
-            ],
-            cache_mode: "default",
-            status_expectation: "non-2xx => Api",
-            content_type_expectation: "json",
-        })
+        Ok(RequestPlan::get("query")
+            .query("q", q)
+            .query("size", params.limit.to_string())
+            .query("from", params.offset.to_string())
+            .query("fields", MYVARIANT_FIELDS_SEARCH))
     }
 
     pub async fn search(
         &self,
         params: &VariantSearchParams,
     ) -> Result<MyVariantSearchResponse, BioMcpError> {
-        let plan = self.search_request_plan(params)?;
-        let url = self.endpoint(plan.path);
-        let req = self.client.get(&url).query(&plan.query_params);
+        let plan = Self::search_plan(params)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
         self.get_json(req).await
     }
 
-    pub fn get_request_plan(&self, id: &str) -> Result<MyVariantGetRequestPlan, BioMcpError> {
+    /// Build the outbound single-variant lookup request (pure — Tier-2 testable).
+    pub(crate) fn get_plan(id: &str) -> Result<RequestPlan, BioMcpError> {
         let id = id.trim();
         if id.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -681,39 +605,40 @@ impl MyVariantClient {
             ));
         }
 
-        Ok(MyVariantGetRequestPlan {
-            method: "GET",
-            path: format!("/variant/{id}"),
-            query_params: vec![("fields", MYVARIANT_FIELDS_GET.to_string())],
-            cache_mode: "default",
-            status_expectation: "empty array => NotFound; non-2xx => Api",
-            content_type_expectation: "json",
-        })
+        Ok(RequestPlan::get(format!("variant/{id}")).query("fields", MYVARIANT_FIELDS_GET))
     }
 
-    pub async fn get(&self, id: &str) -> Result<MyVariantHit, BioMcpError> {
-        let id = id.trim();
-        let plan = self.get_request_plan(id)?;
-        let url = self.endpoint(&plan.path);
-        let req = self.client.get(&url).query(&plan.query_params);
-        let value: serde_json::Value = self.get_json(req).await?;
-
-        let hit_value = match value {
-            serde_json::Value::Object(_) => value,
+    /// Reduce a `/variant/{id}` response to a single hit value (pure — Tier-3 testable).
+    ///
+    /// MyVariant returns either an object (a single hit) or an array; an empty array
+    /// means the variant was not found.
+    pub(crate) fn select_get_hit_value(
+        value: serde_json::Value,
+        id: &str,
+    ) -> Result<serde_json::Value, BioMcpError> {
+        match value {
+            serde_json::Value::Object(_) => Ok(value),
             serde_json::Value::Array(mut arr) => {
                 arr.drain(..).next().ok_or_else(|| BioMcpError::NotFound {
                     entity: "variant".into(),
                     id: id.to_string(),
                     suggestion: format!("Try searching: biomcp search variant -g \"{id}\""),
-                })?
+                })
             }
-            _ => {
-                return Err(BioMcpError::Api {
-                    api: MYVARIANT_API.to_string(),
-                    message: "Unexpected response type".into(),
-                });
-            }
-        };
+            _ => Err(BioMcpError::Api {
+                api: MYVARIANT_API.to_string(),
+                message: "Unexpected response type".into(),
+            }),
+        }
+    }
+
+    pub async fn get(&self, id: &str) -> Result<MyVariantHit, BioMcpError> {
+        let id = id.trim();
+        let plan = Self::get_plan(id)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let value: serde_json::Value = self.get_json(req).await?;
+
+        let hit_value = Self::select_get_hit_value(value, id)?;
 
         serde_json::from_value(hit_value).map_err(|source| BioMcpError::ApiJson {
             api: MYVARIANT_API.to_string(),
@@ -919,505 +844,4 @@ impl FloatOrVec {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn query_sets_fields_and_size() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/query"))
-            .and(query_param("q", "dbnsfp.genename:BRAF"))
-            .and(query_param("size", "3"))
-            .and(query_param("from", "0"))
-            .and(query_param("fields", MYVARIANT_FIELDS_SEARCH))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "total": 0,
-                "hits": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = MyVariantClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .query_with_fields("dbnsfp.genename:BRAF", 3, 0, MYVARIANT_FIELDS_SEARCH)
-            .await
-            .unwrap();
-    }
-
-    #[test]
-    fn clinvar_rcv_deserializes_single_object() {
-        let clinvar: MyVariantClinVar = serde_json::from_value(json!({
-            "variant_id": 123,
-            "rcv": {
-                "clinical_significance": "Pathogenic",
-                "review_status": "criteria provided",
-                "conditions": "Lung carcinoma"
-            }
-        }))
-        .expect("single-object RCV should deserialize");
-
-        assert_eq!(clinvar.variant_id, Some(123));
-        assert_eq!(clinvar.rcv.len(), 1);
-        assert_eq!(
-            clinvar.rcv[0].clinical_significance.as_deref(),
-            Some("Pathogenic")
-        );
-    }
-
-    #[test]
-    fn clinvar_rcv_deserializes_array() {
-        let clinvar: MyVariantClinVar = serde_json::from_value(json!({
-            "variant_id": 456,
-            "rcv": [
-                { "clinical_significance": "Pathogenic" },
-                { "clinical_significance": "Likely pathogenic" }
-            ]
-        }))
-        .expect("array RCV should deserialize");
-
-        assert_eq!(clinvar.variant_id, Some(456));
-        assert_eq!(clinvar.rcv.len(), 2);
-        assert_eq!(
-            clinvar.rcv[0].clinical_significance.as_deref(),
-            Some("Pathogenic")
-        );
-    }
-
-    #[test]
-    fn gnomad_nested_fields_deserialize() {
-        let hit: MyVariantHit = serde_json::from_value(json!({
-            "_id": "chr1:g.1A>T",
-            "dbnsfp": {"genename": "TP53"},
-            "gnomad": {
-                "exomes": { "af": { "af": 0.001 } },
-                "genomes": { "af": { "af": 0.002 } }
-            }
-        }))
-        .expect("gnomad nested object should deserialize");
-
-        assert_eq!(
-            hit.gnomad
-                .as_ref()
-                .and_then(|g| g.exomes.as_ref())
-                .and_then(|e| e.af.as_ref())
-                .and_then(|a| a.af),
-            Some(0.001)
-        );
-        assert_eq!(
-            hit.gnomad
-                .as_ref()
-                .and_then(|g| g.genomes.as_ref())
-                .and_then(|e| e.af.as_ref())
-                .and_then(|a| a.af),
-            Some(0.002)
-        );
-    }
-
-    #[test]
-    fn ticket_376_variant_source_contracts_myvariant_request_plans_cover_search_get_and_id_normalization()
-     {
-        let client = MyVariantClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let params = VariantSearchParams {
-            gene: Some("BRAF".into()),
-            hgvsp: Some("p.Val600Glu".into()),
-            hgvsc: None,
-            rsid: None,
-            protein_alias: None,
-            significance: None,
-            max_frequency: None,
-            min_cadd: None,
-            consequence: None,
-            review_status: None,
-            population: None,
-            revel_min: None,
-            gerp_min: None,
-            tumor_site: None,
-            condition: None,
-            impact: None,
-            lof: false,
-            has: None,
-            missing: None,
-            therapy: None,
-            limit: 5,
-            offset: 0,
-        };
-        let search: MyVariantSearchRequestPlan = client
-            .search_request_plan(&params)
-            .expect("MyVariantSearchRequestPlan");
-        let query = search
-            .query_params
-            .iter()
-            .find(|(name, _)| *name == "q")
-            .map(|(_, value)| value.as_str())
-            .unwrap();
-        assert!(query.contains("dbnsfp.genename:BRAF"));
-        assert!(query.contains("p.Val600Glu"));
-        assert!(
-            search
-                .query_params
-                .contains(&("fields", MYVARIANT_FIELDS_SEARCH.to_string()))
-        );
-
-        let get: MyVariantGetRequestPlan = client
-            .get_request_plan("rs113488022")
-            .expect("MyVariantGetRequestPlan");
-        assert_eq!(get.path, "/variant/rs113488022");
-        assert!(get.status_expectation.contains("NotFound"));
-        assert!(
-            get.query_params
-                .contains(&("fields", MYVARIANT_FIELDS_GET.to_string()))
-        );
-
-        let parsed = crate::entities::variant::parse_variant_id("BRAF V600E")
-            .expect("BRAF V600E parses as gene/protein input");
-        let crate::entities::variant::VariantIdFormat::GeneProteinChange { gene, change } = parsed
-        else {
-            panic!("BRAF V600E should parse as gene/protein input");
-        };
-        assert_eq!(gene, "BRAF");
-        assert_eq!(change, "V600E");
-        assert_eq!(
-            client.get_request_plan("rs113488022").unwrap().path,
-            "/variant/rs113488022"
-        );
-    }
-
-    #[test]
-    fn expanded_fields_deserialize() {
-        let hit: MyVariantHit = serde_json::from_value(json!({
-            "_id": "chr7:g.140453136A>T",
-            "dbnsfp": {
-                "genename": "BRAF",
-                "revel": { "score": 0.931 },
-                "alphamissense": { "score": [0.99], "pred": ["P"] },
-                "gerp++": { "rs": 5.65 },
-                "phylop": { "100way_vertebrate": { "rankscore": 0.94 } }
-            },
-            "exac": { "af": 0.00001 },
-            "exac_nontcga": { "af": 0.00002 },
-            "cosmic": { "cosmic_id": "COSM476", "mut_freq": 2.8, "tumor_site": "skin" },
-            "cgi": [{ "drug": "vemurafenib", "association": "Responsive" }],
-            "civic": {"molecularProfiles": [{"name": "BRAF V600E"}]}
-        }))
-        .expect("expanded fields should deserialize");
-
-        assert_eq!(
-            hit.dbnsfp
-                .as_ref()
-                .and_then(|d| d.revel.as_ref())
-                .and_then(|r| r.score.as_ref())
-                .and_then(FloatOrVec::first),
-            Some(0.931)
-        );
-        assert_eq!(hit.exac.as_ref().and_then(|e| e.af), Some(0.00001));
-        assert_eq!(hit.exac_nontcga.as_ref().and_then(|e| e.af), Some(0.00002));
-        assert!(hit.cgi.is_some());
-        assert!(hit.civic.is_some());
-    }
-
-    #[test]
-    fn significance_filter_accepts_common_aliases() {
-        assert_eq!(
-            normalize_significance_filter("Likely Pathogenic").unwrap(),
-            "likely_pathogenic"
-        );
-        assert_eq!(
-            normalize_significance_filter("uncertain").unwrap(),
-            "uncertain_significance"
-        );
-        assert_eq!(
-            normalize_significance_filter("conflicting").unwrap(),
-            "conflicting_interpretations_of_pathogenicity"
-        );
-    }
-
-    #[test]
-    fn significance_filter_rejects_unknown_value() {
-        let err = normalize_significance_filter("bogus").unwrap_err();
-        let msg = err.to_string();
-        assert!(msg.contains("--significance"));
-        assert!(msg.contains("Expected one of"));
-    }
-
-    #[test]
-    fn consequence_filter_accepts_shorthand_and_aliases() {
-        assert_eq!(
-            normalize_consequence_filter("missense").unwrap(),
-            "missense_variant"
-        );
-        assert_eq!(
-            normalize_consequence_filter("synonymous").unwrap(),
-            "synonymous_variant"
-        );
-        assert_eq!(
-            normalize_consequence_filter("non-synonymous").unwrap(),
-            "missense_variant"
-        );
-        assert_eq!(
-            normalize_consequence_filter("splice donor").unwrap(),
-            "splice_donor_variant"
-        );
-    }
-
-    #[test]
-    fn consequence_filter_rejects_unknown_value() {
-        let err = normalize_consequence_filter("bogus").unwrap_err();
-        let msg = err.to_string();
-        assert!(msg.contains("--consequence"));
-        assert!(msg.contains("Expected one of"));
-    }
-
-    #[tokio::test]
-    async fn search_rejects_invalid_gene_symbol_characters() {
-        let client = MyVariantClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let params = VariantSearchParams {
-            gene: Some("BRAF:V600E".into()),
-            hgvsp: None,
-            hgvsc: None,
-            rsid: None,
-            protein_alias: None,
-            significance: None,
-            max_frequency: None,
-            min_cadd: None,
-            consequence: None,
-            review_status: None,
-            population: None,
-            revel_min: None,
-            gerp_min: None,
-            tumor_site: None,
-            condition: None,
-            impact: None,
-            lof: false,
-            has: None,
-            missing: None,
-            therapy: None,
-            limit: 3,
-            offset: 0,
-        };
-
-        let err = client.search(&params).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("Gene symbol filter"));
-    }
-
-    #[tokio::test]
-    async fn search_rejects_offset_at_biothings_window() {
-        let client = MyVariantClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let params = VariantSearchParams {
-            gene: Some("BRAF".into()),
-            hgvsp: None,
-            hgvsc: None,
-            rsid: None,
-            protein_alias: None,
-            significance: None,
-            max_frequency: None,
-            min_cadd: None,
-            consequence: None,
-            review_status: None,
-            population: None,
-            revel_min: None,
-            gerp_min: None,
-            tumor_site: None,
-            condition: None,
-            impact: None,
-            lof: false,
-            has: None,
-            missing: None,
-            therapy: None,
-            limit: 5,
-            offset: 10_000,
-        };
-
-        let err = client.search(&params).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("--offset must be less than 10000"));
-    }
-
-    #[tokio::test]
-    async fn search_rejects_offset_limit_window_overflow() {
-        let client = MyVariantClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let params = VariantSearchParams {
-            gene: Some("BRAF".into()),
-            hgvsp: None,
-            hgvsc: None,
-            rsid: None,
-            protein_alias: None,
-            significance: None,
-            max_frequency: None,
-            min_cadd: None,
-            consequence: None,
-            review_status: None,
-            population: None,
-            revel_min: None,
-            gerp_min: None,
-            tumor_site: None,
-            condition: None,
-            impact: None,
-            lof: false,
-            has: None,
-            missing: None,
-            therapy: None,
-            limit: 25,
-            offset: 9_980,
-        };
-
-        let err = client.search(&params).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(
-            err.to_string()
-                .contains("--offset + --limit must be <= 10000")
-        );
-    }
-
-    #[tokio::test]
-    async fn search_builds_exact_hgvsc_clause() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/query"))
-            .and(query_param("q", "dbnsfp.hgvsc:\"c.1799T>A\""))
-            .and(query_param("size", "5"))
-            .and(query_param("from", "0"))
-            .and(query_param("fields", MYVARIANT_FIELDS_SEARCH))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "total": 0,
-                "hits": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = MyVariantClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .search(&VariantSearchParams {
-                gene: None,
-                hgvsp: None,
-                hgvsc: Some("1799T>A".into()),
-                rsid: None,
-                protein_alias: None,
-                significance: None,
-                max_frequency: None,
-                min_cadd: None,
-                consequence: None,
-                review_status: None,
-                population: None,
-                revel_min: None,
-                gerp_min: None,
-                tumor_site: None,
-                condition: None,
-                impact: None,
-                lof: false,
-                has: None,
-                missing: None,
-                therapy: None,
-                limit: 5,
-                offset: 0,
-            })
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn search_builds_exact_rsid_clause() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/query"))
-            .and(query_param("q", "dbsnp.rsid:\"rs113488022\""))
-            .and(query_param("size", "5"))
-            .and(query_param("from", "0"))
-            .and(query_param("fields", MYVARIANT_FIELDS_SEARCH))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "total": 0,
-                "hits": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = MyVariantClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .search(&VariantSearchParams {
-                gene: None,
-                hgvsp: None,
-                hgvsc: None,
-                rsid: Some("RS113488022".into()),
-                protein_alias: None,
-                significance: None,
-                max_frequency: None,
-                min_cadd: None,
-                consequence: None,
-                review_status: None,
-                population: None,
-                revel_min: None,
-                gerp_min: None,
-                tumor_site: None,
-                condition: None,
-                impact: None,
-                lof: false,
-                has: None,
-                missing: None,
-                therapy: None,
-                limit: 5,
-                offset: 0,
-            })
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn search_builds_gene_residue_alias_clause() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/query"))
-            .and(query_param(
-                "q",
-                "dbnsfp.genename:PTPN22 AND (dbnsfp.hgvsp:*620W OR dbnsfp.hgvsp:*W620*)",
-            ))
-            .and(query_param("size", "5"))
-            .and(query_param("from", "0"))
-            .and(query_param("fields", MYVARIANT_FIELDS_SEARCH))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "total": 0,
-                "hits": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = MyVariantClient::new_for_test(server.uri()).unwrap();
-        let _ = client
-            .search(&VariantSearchParams {
-                gene: Some("PTPN22".into()),
-                hgvsp: None,
-                hgvsc: None,
-                rsid: None,
-                protein_alias: Some(crate::entities::variant::VariantProteinAlias {
-                    position: 620,
-                    residue: 'W',
-                }),
-                significance: None,
-                max_frequency: None,
-                min_cadd: None,
-                consequence: None,
-                review_status: None,
-                population: None,
-                revel_min: None,
-                gerp_min: None,
-                tumor_site: None,
-                condition: None,
-                impact: None,
-                lof: false,
-                has: None,
-                missing: None,
-                therapy: None,
-                limit: 5,
-                offset: 0,
-            })
-            .await
-            .unwrap();
-    }
-}
+mod tests;
