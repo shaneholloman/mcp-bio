@@ -15,6 +15,8 @@ use crate::sources::oncokb::{OncoKBAnnotation, OncoKBClient};
 use crate::transform;
 
 use super::gwas::add_gwas_section;
+#[cfg(test)]
+use super::gwas::mark_gwas_unavailable;
 use super::resolution::{hgvs_coords_re, parse_variant_id};
 use super::{
     TreatmentImplication, Variant, VariantCivicSection, VariantIdFormat, VariantOncoKbResult,

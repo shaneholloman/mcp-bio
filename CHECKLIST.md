@@ -134,6 +134,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/trial/search/ctgov/tests.rs` no longer uses the trial
       env-lock/MyChem mock path for next-page fanout validation; that assertion
       is now a direct error-helper test.
+- [x] `src/entities/variant/get/tests.rs` GWAS-only unavailable case is pure:
+      it now asserts the exact degraded output state through a helper instead
+      of running `get()` against a broken GWAS mock response.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -452,3 +455,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   Checks: `cargo nextest run -E 'test(/entities::trial::search::ctgov::/)'` →
   21/21 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings`
   → pass; `git diff --check` → pass.
+- 2026-06-16: partial variant-get cleanup. Extracted `mark_gwas_unavailable`
+  and converted the GWAS-only unavailable test from a bad-JSON GWAS mock-server
+  test to a pure output-state assertion. The two remaining Cancer Hotspots
+  mock-server tests still cover enrichment success/failure and are the slow part
+  of this file. Checks:
+  `cargo nextest run -E 'test(/entities::variant::get::/)'` → 11/11 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.

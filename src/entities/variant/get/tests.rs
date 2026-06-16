@@ -167,27 +167,10 @@ fn civic_molecular_profile_name_prefers_gene_and_hgvs_p() {
     );
 }
 
-#[tokio::test]
-async fn gwas_only_request_returns_variant_when_gwas_is_unavailable() {
-    let _env = lock_env().await;
-    let server = MockServer::start().await;
-    Mock::given(method("GET"))
-        .and(path(
-            "/singleNucleotidePolymorphisms/rs7903146/associations",
-        ))
-        .and(query_param("projection", "associationByStudy"))
-        .respond_with(
-            ResponseTemplate::new(200)
-                .insert_header("content-type", "application/json")
-                .set_body_string("{bad-json"),
-        )
-        .mount(&server)
-        .await;
-
-    let _base = set_env_var("BIOMCP_GWAS_BASE", Some(&server.uri()));
-    let variant = get("rs7903146", &["gwas".to_string()])
-        .await
-        .expect("GWAS-only request should degrade");
+#[test]
+fn gwas_only_request_returns_variant_when_gwas_is_unavailable() {
+    let mut variant = gwas_only_variant_stub("rs7903146");
+    mark_gwas_unavailable(&mut variant);
 
     assert_eq!(variant.id, "rs7903146");
     assert!(variant.gwas.is_empty());

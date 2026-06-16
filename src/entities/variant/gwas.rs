@@ -438,9 +438,7 @@ pub(in crate::entities::variant) async fn add_gwas_section(
         Ok(client) => client,
         Err(err @ BioMcpError::SourceUnavailable { .. }) => {
             warn!(rsid = %rsid, "GWAS association data unavailable: {err}");
-            variant.supporting_pmids = None;
-            variant.gwas_unavailable_reason =
-                Some("GWAS association data temporarily unavailable.".to_string());
+            mark_gwas_unavailable(variant);
             return Ok(());
         }
         Err(err) => return Err(err),
@@ -449,9 +447,7 @@ pub(in crate::entities::variant) async fn add_gwas_section(
         Ok(associations) => associations,
         Err(err @ BioMcpError::SourceUnavailable { .. }) => {
             warn!(rsid = %rsid, "GWAS association data unavailable: {err}");
-            variant.supporting_pmids = None;
-            variant.gwas_unavailable_reason =
-                Some("GWAS association data temporarily unavailable.".to_string());
+            mark_gwas_unavailable(variant);
             return Ok(());
         }
         Err(err) => return Err(err),
@@ -465,6 +461,11 @@ pub(in crate::entities::variant) async fn add_gwas_section(
     variant.gwas = rows;
     variant.supporting_pmids = Some(supporting_pmids);
     Ok(())
+}
+
+pub(in crate::entities::variant) fn mark_gwas_unavailable(variant: &mut Variant) {
+    variant.supporting_pmids = None;
+    variant.gwas_unavailable_reason = Some("GWAS association data temporarily unavailable.".into());
 }
 
 fn collect_supporting_pmids(rows: &[VariantGwasAssociation]) -> Vec<String> {
