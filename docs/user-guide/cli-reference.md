@@ -87,7 +87,7 @@ biomcp list [entity]
 biomcp study list
 biomcp study download [--list] [<study_id>]
 biomcp study filter --study <id> [--mutated <symbol>] [--amplified <symbol>] [--deleted <symbol>] [--expression-above <gene:threshold>] [--expression-below <gene:threshold>] [--cancer-type <type>]
-biomcp study query --study <id> --gene <symbol> --type <mutations|cna|expression>
+biomcp study query --study <id> --gene <symbol> --type <mutations|cna|expression|sv>
 biomcp study cohort --study <id> --gene <symbol>
 biomcp study survival --study <id> --gene <symbol> [--endpoint <os|dfs|pfs|dss>]
 biomcp study compare --study <id> --gene <symbol> --type <expression|mutations> --target <symbol>
@@ -597,6 +597,7 @@ biomcp study list
 biomcp study download --list
 biomcp study download msk_impact_2017
 biomcp study query --study msk_impact_2017 --gene TP53 --type mutations
+biomcp study query --study msk_impact_2017 --gene RET --type sv
 biomcp study query --study msk_impact_2017 --gene TP53 --type mutations --chart bar --theme dark --palette wong -o docs/blog/images/tp53-mutation-bar.svg
 biomcp study filter --study brca_tcga_pan_can_atlas_2018 --mutated TP53 --amplified ERBB2 --expression-above ERBB2:1.5
 biomcp study cohort --study brca_tcga_pan_can_atlas_2018 --gene TP53
@@ -611,7 +612,8 @@ biomcp study co-occurrence --study msk_impact_2017 --genes TP53,KRAS
 - `study list` shows locally available studies.
 - `study download` fetches remote datasets into the local study root.
 - `study filter` intersects mutation, CNA, expression, and clinical filters.
-- `study query` supports `mutations`, `cna`, and `expression` per-gene summaries.
+- `study query` supports `mutations`, `cna`, `expression`, and structural variants/fusions (`sv`, alias `fusion`) per-gene summaries.
+- Mutation query and top-mutated outputs are mutation-only; when `data_sv.txt` is present, they say fusions/SV are excluded and point to `--type sv`.
 - `study cohort`, `study survival`, and `study compare` require `data_mutations.txt` and `data_clinical_sample.txt`.
 - `study survival` also requires `data_clinical_patient.txt` with canonical `{ENDPOINT}_STATUS` and `{ENDPOINT}_MONTHS` columns.
 - Expression workflows require a supported expression matrix file.

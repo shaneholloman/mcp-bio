@@ -222,12 +222,13 @@ catalog. Read it with `biomcp skill`, install it with
 `study` is BioMCP's local analysis family for downloaded cBioPortal-style datasets.
 The public entity surface handles API-backed, local-runtime, and hybrid
 discovery/detail; `study` commands cover local query, cohort, survival,
-compare, and co-occurrence workflows.
+compare, and co-occurrence workflows. Local queries can read structural variants/fusions from `data_sv.txt`; mutation summaries remain mutation-only and point to `--type sv` when SV data is present.
 
 ```bash
 export BIOMCP_STUDY_DIR="$HOME/.local/share/biomcp/studies"
 biomcp study download msk_impact_2017
 biomcp study query --study msk_impact_2017 --gene TP53 --type mutations --chart bar --theme dark --palette wong -o docs/blog/images/tp53-mutation-bar.svg
+biomcp study query --study msk_impact_2017 --gene RET --type fusion
 ```
 
 ## Documentation

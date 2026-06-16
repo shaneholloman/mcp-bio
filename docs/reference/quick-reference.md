@@ -153,7 +153,7 @@ analysis; if it is unset, BioMCP uses its default study root.
 | `biomcp study list` | List locally available studies |
 | `biomcp study download [--list] [<study_id>]` | List downloadable study IDs or install a study locally |
 | `biomcp study filter --study <id> [--mutated <symbol>] [--amplified <symbol>] [--deleted <symbol>] [--expression-above <gene:threshold>] [--expression-below <gene:threshold>] [--cancer-type <type>]` | Intersect mutation, CNA, expression, and clinical sample filters |
-| `biomcp study query --study <id> --gene <symbol> --type <mutations|cna|expression>` | Summarize one gene within one study |
+| `biomcp study query --study <id> --gene <symbol> --type <mutations|cna|expression|sv>` | Summarize one gene within one study, including local structural variants/fusions from `data_sv.txt` |
 | `biomcp study cohort --study <id> --gene <symbol>` | Split a cohort into mutant vs wildtype groups |
 | `biomcp study survival --study <id> --gene <symbol> [--endpoint <os|dfs|pfs|dss>]` | Compare mutation-defined groups on survival endpoints |
 | `biomcp study compare --study <id> --gene <symbol> --type <expression|mutations> --target <symbol>` | Compare a target gene across mutation-defined groups |
@@ -165,10 +165,13 @@ Examples:
 biomcp study download --list
 biomcp study download msk_impact_2017
 biomcp study query --study msk_impact_2017 --gene TP53 --type mutations
+biomcp study query --study msk_impact_2017 --gene RET --type fusion
 biomcp study filter --study brca_tcga_pan_can_atlas_2018 --mutated TP53 --amplified ERBB2 --expression-above ERBB2:1.5
 biomcp study compare --study brca_tcga_pan_can_atlas_2018 --gene TP53 --type expression --target ERBB2
 biomcp study co-occurrence --study msk_impact_2017 --genes TP53,KRAS
 ```
+
+Mutation summaries stay mutation-only; if a study also has `data_sv.txt`, they note that fusions/SV are excluded and point to `--type sv`.
 
 `study cohort`, `study survival`, and `study compare` require
 `data_mutations.txt` and `data_clinical_sample.txt`. `study survival` also

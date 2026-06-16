@@ -7,7 +7,7 @@ description: "Use BioMCP to add cBioPortal cohort-frequency context to variants 
 
 cBioPortal matters when a single variant or gene question turns into a cohort question. It is the source page to use when you need cancer-study frequencies, downloadable study datasets, or local analytics that operate on a concrete study instead of a live one-record API lookup.
 
-In BioMCP, the variant `cbioportal` section adds best-effort cohort frequency context, while `study` is BioMCP's local cBioPortal analytics family for downloaded datasets. Use `study download` to install a study into your local root and `study query` when you want per-study mutation, CNA, or expression summaries.
+In BioMCP, the variant `cbioportal` section adds best-effort cohort frequency context, while `study` is BioMCP's local cBioPortal analytics family for downloaded datasets. Use `study download` to install a study into your local root and `study query` when you want per-study mutation, CNA, expression, or structural-variant/fusion summaries from local files.
 
 ## What BioMCP exposes
 
@@ -16,7 +16,7 @@ In BioMCP, the variant `cbioportal` section adds best-effort cohort frequency co
 | `get variant <id> cbioportal` | Cohort-frequency context for a variant | Best-effort cBioPortal enrichment section |
 | `study download --list` | List of downloadable study IDs | Local analytics entry point |
 | `study download <study_id>` | Local installation of one study dataset | Downloads into the default study root or `BIOMCP_STUDY_DIR` |
-| `study query --study <id> --gene <symbol> --type <mutations|cna|expression>` | Per-study summaries for one gene | Local analytics workflow over downloaded files |
+| `study query --study <id> --gene <symbol> --type <mutations|cna|expression|sv>` | Per-study summaries for one gene, including structural variants/fusions from `data_sv.txt` | Local analytics workflow over downloaded files |
 
 ## Example commands
 
@@ -40,9 +40,10 @@ Downloads the named study into the configured local study root.
 
 ```bash
 biomcp study query --study msk_impact_2017 --gene TP53 --type mutations
+biomcp study query --study msk_impact_2017 --gene RET --type sv
 ```
 
-Returns a per-study mutation summary for TP53 from local study files.
+Returns a per-study mutation summary for TP53 from local study files. Mutation summaries remain mutation-only; if local `data_sv.txt` is present, BioMCP notes that fusions/SV are excluded and points to `--type sv`.
 
 ## API access
 

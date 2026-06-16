@@ -150,7 +150,7 @@ New to BioMCP? Try:
 - `study top-mutated --study <id> [--limit <N>]`
 - `study filter --study <id> [--mutated <symbol>] [--amplified <symbol>]`
   - add CNA, expression, and cancer-type filters as needed
-- `study query --study <id> --gene <symbol> --type <mutations|cna|expression>`
+- `study query --study <id> --gene <symbol> --type <mutations|cna|expression|sv>`
 - `study cohort --study <id> --gene <symbol>`
 - `study survival --study <id> --gene <symbol> [--endpoint <os|dfs|pfs|dss>]`
 - `study compare --study <id> --gene <symbol> --type <expression|mutations> --target <symbol>`

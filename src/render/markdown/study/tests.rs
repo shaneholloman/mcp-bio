@@ -20,6 +20,7 @@ fn study_top_mutated_markdown_renders_ranked_table() {
                 mutation_rate: 2.0 / 3.0,
             },
         ],
+        mutation_only_caveat: None,
     });
 
     assert!(markdown.contains("# Study Top Mutated Genes: msk_impact_2017"));
@@ -75,6 +76,7 @@ fn study_query_markdown_renders_mutation_shape() {
             frequency: 0.09,
             top_variant_classes: vec![("Missense_Mutation".to_string(), 8)],
             top_protein_changes: vec![("p.R175H".to_string(), 3)],
+            mutation_only_caveat: None,
         },
     ));
 
