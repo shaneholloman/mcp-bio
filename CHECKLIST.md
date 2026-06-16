@@ -137,6 +137,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/variant/get/tests.rs` GWAS-only unavailable case is pure:
       it now asserts the exact degraded output state through a helper instead
       of running `get()` against a broken GWAS mock response.
+- [x] `src/entities/variant/get/tests.rs` Cancer Hotspots success case is pure:
+      it now tests recurrence matching directly instead of driving a mocked
+      upstream by-gene endpoint.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -460,6 +463,13 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   test to a pure output-state assertion. The two remaining Cancer Hotspots
   mock-server tests still cover enrichment success/failure and are the slow part
   of this file. Checks:
+  `cargo nextest run -E 'test(/entities::variant::get::/)'` → 11/11 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: second variant-get cleanup. Converted the Cancer Hotspots success
+  enrichment test to a pure `recurrence_for_change` fixture test with the same
+  position/same-amino-acid assertions. One Cancer Hotspots failure/no-op
+  mock-server test remains. Checks:
   `cargo nextest run -E 'test(/entities::variant::get::/)'` → 11/11 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.

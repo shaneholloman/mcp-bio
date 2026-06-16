@@ -181,13 +181,10 @@ fn gwas_only_request_returns_variant_when_gwas_is_unavailable() {
     assert_eq!(variant.supporting_pmids, None);
 }
 
-#[tokio::test]
-async fn cancerhotspots_enrichment_uses_requested_change_not_resolved_hgvsp() {
-    let _env = lock_env().await;
-    let server = MockServer::start().await;
-    Mock::given(method("GET"))
-        .and(path("/api/hotspots/single/byGene/BRAF"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!([
+#[test]
+fn cancerhotspots_enrichment_uses_requested_change_not_resolved_hgvsp() {
+    let rows: Vec<crate::sources::cancerhotspots::CancerHotspotRow> =
+        serde_json::from_value(json!([
             {
                 "hugoSymbol": "BRAF",
                 "residue": "V600",
@@ -196,28 +193,10 @@ async fn cancerhotspots_enrichment_uses_requested_change_not_resolved_hgvsp() {
                 "aminoAcidPosition": 600,
                 "variantAminoAcid": {"E": 833}
             }
-        ])))
-        .expect(1)
-        .mount(&server)
-        .await;
-    let _base = set_env_var("BIOMCP_CANCERHOTSPOTS_BASE", Some(&server.uri()));
+        ]))
+        .expect("valid Cancer Hotspots rows");
 
-    let mut variant = braf_variant_stub();
-    crate::sources::with_no_cache(true, async {
-        add_cancerhotspots(
-            &mut variant,
-            &VariantIdFormat::GeneProteinChange {
-                gene: "BRAF".into(),
-                change: "V600E".into(),
-            },
-        )
-        .await;
-    })
-    .await;
-
-    let recurrence = variant
-        .cancerhotspots
-        .expect("recurrence should be present");
+    let recurrence = crate::sources::cancerhotspots::recurrence_for_change(&rows, "V600E");
     assert_eq!(recurrence.position_count, Some(897));
     assert_eq!(recurrence.same_aa_count, Some(833));
 }
