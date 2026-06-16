@@ -92,7 +92,7 @@ Trials / cancer:
 
 Variants / genomics:
 - [x] gnomad ~4 · [x] gtex ~4 · [x] gwas ~5 · [x] variantvalidator ~6 · [x] mutalyzer ~6
-- [x] clingen ~5 · [x] civic ~3 · [ ] gtr ~12
+- [x] clingen ~5 · [x] civic ~3 · [x] gtr ~12
 
 Drugs / chem / regulatory:
 - [ ] chembl ~3 · [ ] dgidb ~3 · [ ] ddinter ~5 · [ ] openfda ~9 · [ ] ema ~11 · [ ] pharmgkb ~2
@@ -219,4 +219,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `bash scripts/check-no-server-tests.sh` → pass.
 - 2026-06-16: `civic` converted. Checks:
   `cargo nextest run -E 'test(/sources::civic::/)'` → 6/6 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `gtr` converted to standard source test layout and kept pure local
+  file/parser coverage. Checks:
+  `cargo nextest run -E 'test(/sources::gtr::/)'` → 12/12 pass;
   `bash scripts/check-no-server-tests.sh` → pass.
