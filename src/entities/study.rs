@@ -1166,6 +1166,19 @@ mod tests {
             StudyQueryType::from_flag("expression").expect("expression should parse"),
             StudyQueryType::Expression
         ));
+        assert!(matches!(
+            StudyQueryType::from_flag("sv").expect("sv should parse"),
+            StudyQueryType::StructuralVariants
+        ));
+        assert!(matches!(
+            StudyQueryType::from_flag("fusion").expect("fusion should parse"),
+            StudyQueryType::StructuralVariants
+        ));
+        assert!(matches!(
+            StudyQueryType::from_flag("structural_variants")
+                .expect("structural_variants should parse"),
+            StudyQueryType::StructuralVariants
+        ));
     }
 
     #[test]
@@ -1214,6 +1227,10 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("list");
         minimal_study_fixture(&fixture.root, "demo_study");
+        write_file(
+            &fixture.root.join("demo_study").join("data_sv.txt"),
+            "Site1_Hugo_Symbol\tSite2_Hugo_Symbol\nKIF5B\tRET\n",
+        );
         let _study_dir = set_study_dir(&fixture.root);
 
         let studies = list_studies().await.expect("list studies");
@@ -1225,6 +1242,11 @@ mod tests {
             studies[0]
                 .available_data
                 .contains(&"expression".to_string())
+        );
+        assert!(
+            studies[0]
+                .available_data
+                .contains(&"structural_variants".to_string())
         );
         assert_eq!(studies[0].sample_count, Some(3));
     }
@@ -1246,9 +1268,73 @@ mod tests {
                 assert_eq!(result.mutation_count, 2);
                 assert_eq!(result.unique_samples, 2);
                 assert_eq!(result.total_samples, 3);
+                assert_eq!(result.mutation_only_caveat, None);
             }
             other => panic!("unexpected query result: {other:?}"),
         }
+    }
+
+    #[tokio::test]
+    async fn query_study_structural_variants_round_trips_source_result() {
+        let _guard = crate::test_support::env_lock().lock().await;
+        let fixture = TestStudyDir::new("query-sv");
+        minimal_study_fixture(&fixture.root, "demo_study");
+        write_file(
+            &fixture.root.join("demo_study").join("data_sv.txt"),
+            "Sample_Id\tSite1_Hugo_Symbol\tSite2_Hugo_Symbol\tSite2_Effect_On_Frame\tTumor_Split_Read_Count\tNormal_Split_Read_Count\tEvent_Info\nS1\tKIF5B\tRET\tin-frame\t12\t0\tKIF5B-RET Fusion\n",
+        );
+        let _study_dir = set_study_dir(&fixture.root);
+
+        let result = query_study("demo_study", "RET", StudyQueryType::StructuralVariants)
+            .await
+            .expect("query should pass");
+        match result {
+            StudyQueryResult::StructuralVariants(result) => {
+                assert_eq!(result.study_id, "demo_study");
+                assert_eq!(result.gene, "RET");
+                assert_eq!(result.rows.len(), 1);
+                assert_eq!(result.rows[0].site1_gene, "KIF5B");
+                assert_eq!(result.rows[0].site2_gene, "RET");
+                assert_eq!(result.rows[0].frame_effect, "in-frame");
+                assert_eq!(result.rows[0].event_info, "KIF5B-RET Fusion");
+            }
+            other => panic!("unexpected query result: {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mutation_outputs_include_caveat_when_structural_variants_exist() {
+        let _guard = crate::test_support::env_lock().lock().await;
+        let fixture = TestStudyDir::new("mutation-caveat");
+        minimal_study_fixture(&fixture.root, "demo_study");
+        write_file(
+            &fixture.root.join("demo_study").join("data_sv.txt"),
+            "Site1_Hugo_Symbol\tSite2_Hugo_Symbol\nKIF5B\tRET\n",
+        );
+        let _study_dir = set_study_dir(&fixture.root);
+
+        let mutation = query_study("demo_study", "TP53", StudyQueryType::Mutations)
+            .await
+            .expect("mutation query should pass");
+        match mutation {
+            StudyQueryResult::MutationFrequency(result) => {
+                let caveat = result
+                    .mutation_only_caveat
+                    .expect("mutation caveat should be populated");
+                assert!(caveat.contains("excludes fusions/SV"));
+                assert!(caveat.contains("--type sv"));
+            }
+            other => panic!("unexpected query result: {other:?}"),
+        }
+
+        let top = top_mutated_genes("demo_study", 10)
+            .await
+            .expect("top mutated should pass");
+        let caveat = top
+            .mutation_only_caveat
+            .expect("top-mutated caveat should be populated");
+        assert!(caveat.contains("excludes fusions/SV"));
+        assert!(caveat.contains("--type sv"));
     }
 
     #[tokio::test]

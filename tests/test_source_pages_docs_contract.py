@@ -409,7 +409,7 @@ SOURCE_PAGE_SPECS = {
             "get variant <id> cbioportal",
             "study download --list",
             "study download <study_id>",
-            "study query --study <id> --gene <symbol> --type <mutations|cna|expression>",
+            "study query --study <id> --gene <symbol> --type <mutations|cna|expression|sv>",
         ],
         "example_commands": [
             'biomcp get variant "BRAF V600E" cbioportal',

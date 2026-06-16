@@ -2322,6 +2322,10 @@ ERBB2\t2064\t2.1\t1.0\t3.4\tbad\n",
             &study_dir.join("data_mrna_seq_v2_rsem_zscores_ref_all_samples.txt"),
             "Hugo_Symbol\tEntrez_Gene_Id\tS1\nTP53\t7157\t0.3\n",
         );
+        fixture.write_file(
+            &study_dir.join("data_sv.txt"),
+            "Site1_Hugo_Symbol\tSite2_Hugo_Symbol\nKIF5B\tRET\n",
+        );
         write_minimal_clinical_samples(
             &study_dir,
             &["P1\tS1\tLung Cancer\tLung Adenocarcinoma\tLUAD"],
@@ -2340,6 +2344,7 @@ ERBB2\t2064\t2.1\t1.0\t3.4\tbad\n",
         assert!(study.has_cna);
         assert!(study.has_expression);
         assert!(study.has_clinical_sample);
+        assert!(study.has_structural_variants);
     }
 
     #[test]
@@ -2417,6 +2422,49 @@ ERBB2\t2064\t2.1\t1.0\t3.4\tbad\n",
                 ("p.R248Q".to_string(), 1)
             ]
         );
+    }
+
+    #[test]
+    fn structural_variants_match_either_breakpoint_and_fill_optional_blanks() {
+        let fixture = TestStudyDir::new("structural-variants");
+        let study_dir = fixture.study_path("sv_study");
+        fixture.write_file(
+            &study_dir.join("data_sv.txt"),
+            "Sample_Id\tSite1_Hugo_Symbol\tSite2_Hugo_Symbol\tSite2_Effect_On_Frame\tTumor_Split_Read_Count\tNormal_Split_Read_Count\tEvent_Info\n\
+S1\tKIF5B\tRET\tin-frame\t12\t0\tKIF5B-RET Fusion\n\
+S2\tNTRK3\tETV6\tin-frame\t\t\tETV6-NTRK3 Fusion\n",
+        );
+
+        let ret = structural_variants(&study_dir, "ret").expect("RET SV query");
+        assert_eq!(ret.study_id, "sv_study");
+        assert_eq!(ret.gene, "RET");
+        assert_eq!(ret.rows.len(), 1);
+        assert_eq!(ret.rows[0].site1_gene, "KIF5B");
+        assert_eq!(ret.rows[0].site2_gene, "RET");
+        assert_eq!(ret.rows[0].tumor_split_read_count, "12");
+        assert_eq!(ret.rows[0].normal_split_read_count, "0");
+        assert_eq!(ret.rows[0].event_info, "KIF5B-RET Fusion");
+
+        let ntrk = structural_variants(&study_dir, "NTRK3").expect("NTRK3 SV query");
+        assert_eq!(ntrk.rows.len(), 1);
+        assert_eq!(ntrk.rows[0].site1_gene, "NTRK3");
+        assert_eq!(ntrk.rows[0].site2_gene, "ETV6");
+        assert_eq!(ntrk.rows[0].tumor_split_read_count, "-");
+        assert_eq!(ntrk.rows[0].normal_split_read_count, "-");
+    }
+
+    #[test]
+    fn structural_variants_require_both_gene_columns() {
+        let fixture = TestStudyDir::new("structural-variants-missing-column");
+        let study_dir = fixture.study_path("sv_bad_study");
+        fixture.write_file(
+            &study_dir.join("data_sv.txt"),
+            "Sample_Id\tSite1_Hugo_Symbol\tEvent_Info\nS1\tKIF5B\tKIF5B-RET Fusion\n",
+        );
+
+        let err = structural_variants(&study_dir, "RET").expect_err("missing Site2 column");
+        assert!(matches!(err, BioMcpError::SourceUnavailable { .. }));
+        assert!(err.to_string().contains("Site2_Hugo_Symbol"));
     }
 
     #[test]
