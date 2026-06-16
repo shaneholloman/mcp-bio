@@ -11,7 +11,7 @@ use crate::sources::clinicaltrials::{
     CtGovStudy,
 };
 use crate::sources::cvx::{CvxClient, CvxSyncMode, CvxVaccineCandidate};
-use crate::sources::openfda::OpenFdaClient;
+use crate::sources::openfda::{FaersEventResult, OpenFdaClient, OpenFdaResponse};
 use crate::sources::vaers::VaersClient;
 use crate::transform;
 use crate::utils::date::validate_since;
@@ -1078,6 +1078,14 @@ async fn search_with_status_client(
 
     let q = build_openfda_query(filters)?;
     let resp = client.faers_search(&q, limit, offset).await?;
+    faers_status_from_openfda_response(resp, filters, requested_drug)
+}
+
+fn faers_status_from_openfda_response(
+    resp: Option<OpenFdaResponse<FaersEventResult>>,
+    filters: &AdverseEventSearchFilters,
+    requested_drug: &str,
+) -> Result<FaersSearchStatus, BioMcpError> {
     let Some(resp) = resp else {
         return Ok(FaersSearchStatus::NotFound);
     };
@@ -1954,56 +1962,31 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn search_with_status_preserves_openfda_not_found() {
-        let _env_lock = crate::test_support::env_lock().lock().await;
-        let server = MockServer::start().await;
+    #[test]
+    fn search_with_status_preserves_openfda_not_found() {
         let filters = AdverseEventSearchFilters {
             drug: Some("daraxonrasib".into()),
             ..Default::default()
         };
-        let query = build_openfda_query(&filters).unwrap();
-        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
 
-        Mock::given(method("GET"))
-            .and(path("/drug/event.json"))
-            .and(query_param("search", query.as_str()))
-            .and(query_param("limit", "5"))
-            .and(query_param("skip", "0"))
-            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
-                "error": {"code": "NOT_FOUND", "message": "No matches found!"}
-            })))
-            .mount(&server)
-            .await;
-
-        let status = search_with_status(&filters, 5, 0).await.unwrap();
+        let status = faers_status_from_openfda_response(None, &filters, "daraxonrasib").unwrap();
         assert!(matches!(status, FaersSearchStatus::NotFound));
     }
 
-    #[tokio::test]
-    async fn search_with_status_preserves_openfda_empty_results() {
-        let _env_lock = crate::test_support::env_lock().lock().await;
-        let server = MockServer::start().await;
+    #[test]
+    fn search_with_status_preserves_openfda_empty_results() {
         let filters = AdverseEventSearchFilters {
             drug: Some("faers-empty".into()),
             ..Default::default()
         };
-        let query = build_openfda_query(&filters).unwrap();
-        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+        let resp: OpenFdaResponse<FaersEventResult> = serde_json::from_value(serde_json::json!({
+            "meta": {"results": {"skip": 0, "limit": 5, "total": 0}},
+            "results": []
+        }))
+        .expect("valid empty OpenFDA response");
 
-        Mock::given(method("GET"))
-            .and(path("/drug/event.json"))
-            .and(query_param("search", query.as_str()))
-            .and(query_param("limit", "5"))
-            .and(query_param("skip", "0"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 5, "total": 0}},
-                "results": []
-            })))
-            .mount(&server)
-            .await;
-
-        let status = search_with_status(&filters, 5, 0).await.unwrap();
+        let status =
+            faers_status_from_openfda_response(Some(resp), &filters, "faers-empty").unwrap();
         match status {
             FaersSearchStatus::NotFound => panic!("expected empty results, got not-found"),
             FaersSearchStatus::Results(response) => {

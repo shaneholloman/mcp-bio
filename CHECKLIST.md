@@ -140,6 +140,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/variant/get/tests.rs` Cancer Hotspots success case is pure:
       it now tests recurrence matching directly instead of driving a mocked
       upstream by-gene endpoint.
+- [x] `src/entities/adverse_event.rs` OpenFDA status mapping tests are pure:
+      404/not-found and empty-result behavior now test decoded response mapping
+      directly instead of running a mock OpenFDA server.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -471,5 +474,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   position/same-amino-acid assertions. One Cancer Hotspots failure/no-op
   mock-server test remains. Checks:
   `cargo nextest run -E 'test(/entities::variant::get::/)'` → 11/11 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: partial adverse-event cleanup. Extracted the decoded OpenFDA
+  response-to-`FaersSearchStatus` mapper and converted the 404/not-found and
+  empty-result status tests to pure unit tests. VAERS/CVX and trial adverse
+  event server tests still remain. Checks:
+  `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
