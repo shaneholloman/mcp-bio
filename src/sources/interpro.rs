@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const INTERPRO_BASE: &str = "https://www.ebi.ac.uk/interpro/api";
 const INTERPRO_API: &str = "interpro";
@@ -20,22 +21,6 @@ impl InterProClient {
             client: crate::sources::shared_client()?,
             base: crate::sources::env_base(INTERPRO_BASE, INTERPRO_BASE_ENV),
         })
-    }
-
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
     }
 
     async fn get_json<T: DeserializeOwned>(
@@ -58,11 +43,10 @@ impl InterProClient {
         })
     }
 
-    pub async fn domains(
-        &self,
+    pub(crate) fn domains_plan(
         uniprot_accession: &str,
         limit: usize,
-    ) -> Result<Vec<InterProDomain>, BioMcpError> {
+    ) -> Result<RequestPlan, BioMcpError> {
         let uniprot_accession = uniprot_accession.trim();
         if uniprot_accession.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -71,18 +55,13 @@ impl InterProClient {
         }
 
         let page_size = limit.clamp(1, 25).to_string();
-        let url = self.endpoint(&format!(
+        Ok(RequestPlan::get(format!(
             "entry/interpro/protein/uniprot/{uniprot_accession}/"
-        ));
+        ))
+        .query("page_size", page_size))
+    }
 
-        let resp: InterProResponse = self
-            .get_json(
-                self.client
-                    .get(&url)
-                    .query(&[("page_size", page_size.as_str())]),
-            )
-            .await?;
-
+    fn decode_domains_response(resp: InterProResponse, limit: usize) -> Vec<InterProDomain> {
         let mut out = Vec::new();
         for row in resp.results.into_iter().take(limit.clamp(1, 25)) {
             let Some(meta) = row.metadata else { continue };
@@ -107,7 +86,19 @@ impl InterProClient {
             });
         }
 
-        Ok(out)
+        out
+    }
+
+    pub async fn domains(
+        &self,
+        uniprot_accession: &str,
+        limit: usize,
+    ) -> Result<Vec<InterProDomain>, BioMcpError> {
+        let plan = Self::domains_plan(uniprot_accession, limit)?;
+        let resp: InterProResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Ok(Self::decode_domains_response(resp, limit))
     }
 }
 
@@ -138,37 +129,4 @@ struct InterProMetadata {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn domains_requests_expected_endpoint_and_maps_rows() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/entry/interpro/protein/uniprot/P15056/"))
-            .and(query_param("page_size", "3"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "results": [
-                    {"metadata": {"accession": "IPR000719", "name": "Protein kinase", "type": "domain"}},
-                    {"metadata": {"accession": " ", "name": "skip", "type": "domain"}}
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = InterProClient::new_for_test(server.uri()).unwrap();
-        let rows = client.domains("P15056", 3).await.unwrap();
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].accession, "IPR000719");
-        assert_eq!(rows[0].name.as_deref(), Some("Protein kinase"));
-    }
-
-    #[tokio::test]
-    async fn domains_rejects_empty_accession() {
-        let client = InterProClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client.domains(" ", 5).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-}
+mod tests;
