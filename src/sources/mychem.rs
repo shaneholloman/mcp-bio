@@ -4,6 +4,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 use crate::utils::serde::StringOrVec;
 
 const MYCHEM_BASE: &str = "https://mychem.info/v1";
@@ -58,22 +59,6 @@ impl MyChemClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     pub(crate) fn escape_query_value(value: &str) -> String {
         crate::utils::query::escape_lucene_value(value)
     }
@@ -86,27 +71,15 @@ impl MyChemClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, MYCHEM_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: MYCHEM_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        crate::sources::ensure_json_content_type(MYCHEM_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: MYCHEM_API.to_string(),
-            source,
-        })
+        crate::sources::decode_json(MYCHEM_API, status, content_type.as_ref(), &bytes, true)
     }
 
-    pub async fn query_with_fields(
-        &self,
+    pub(crate) fn query_with_fields_plan(
         q: &str,
         limit: usize,
         offset: usize,
         fields: &str,
-    ) -> Result<MyChemQueryResponse, BioMcpError> {
+    ) -> Result<RequestPlan, BioMcpError> {
         let q = q.trim();
         if q.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -123,16 +96,23 @@ impl MyChemClient {
         }
         crate::sources::validate_biothings_result_window("MyChem search", limit, offset)?;
 
-        let url = self.endpoint("query");
-        let size = limit.to_string();
-        let from = offset.to_string();
-        self.get_json(self.client.get(&url).query(&[
-            ("q", q),
-            ("size", size.as_str()),
-            ("from", from.as_str()),
-            ("fields", fields),
-        ]))
-        .await
+        Ok(RequestPlan::get("query")
+            .query("q", q)
+            .query("size", limit.to_string())
+            .query("from", offset.to_string())
+            .query("fields", fields))
+    }
+
+    pub async fn query_with_fields(
+        &self,
+        q: &str,
+        limit: usize,
+        offset: usize,
+        fields: &str,
+    ) -> Result<MyChemQueryResponse, BioMcpError> {
+        let plan = Self::query_with_fields_plan(q, limit, offset, fields)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        self.get_json(req).await
     }
 }
 
@@ -332,253 +312,4 @@ impl MyChemPharmClass {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn pharm_class_supports_string_and_map() {
-        let input = r#"
-        {
-          "total": 1,
-          "hits": [
-            {
-              "_id": "X",
-              "_score": 1.0,
-              "ndc": {
-                "pharm_classes": [
-                  "Kinase inhibitor [MoA]",
-                  { "classname": "Alkylating agent [MoA]" }
-                ]
-              }
-            }
-          ]
-        }
-        "#;
-        let parsed: MyChemQueryResponse = serde_json::from_str(input).expect("parse");
-        let hit = parsed.hits.first().expect("hit");
-        let ndc = hit.ndc.as_ref().expect("ndc");
-        let MyChemNdcField::One(ndc) = ndc else {
-            panic!("expected one ndc entry");
-        };
-        let classes = ndc
-            .pharm_classes
-            .iter()
-            .filter_map(MyChemPharmClass::as_str)
-            .collect::<Vec<_>>();
-        assert_eq!(
-            classes,
-            vec!["Kinase inhibitor [MoA]", "Alkylating agent [MoA]"]
-        );
-    }
-
-    #[test]
-    fn chebi_name_round_trips() {
-        let input = r#"
-        {
-          "total": 2,
-          "hits": [
-            { "_id": "CHEBI:1", "_score": 1.0, "chebi": { "name": "Example inhibitor" } },
-            { "_id": "CHEBI:2", "_score": 1.0, "chebi": [{ "name": "Example inhibitor 2" }] }
-          ]
-        }
-        "#;
-        let parsed: MyChemQueryResponse = serde_json::from_str(input).expect("parse");
-        let hit = parsed.hits.first().expect("hit");
-        assert_eq!(
-            hit.chebi.as_ref().and_then(MyChemChebiField::name),
-            Some("Example inhibitor")
-        );
-
-        let hit = parsed.hits.get(1).expect("hit");
-        assert_eq!(
-            hit.chebi.as_ref().and_then(MyChemChebiField::name),
-            Some("Example inhibitor 2")
-        );
-    }
-
-    #[test]
-    fn unii_supports_object_and_list() {
-        let input = r#"
-        {
-          "total": 2,
-          "hits": [
-            { "_id": "X", "_score": 1.0, "unii": { "unii": "ABC", "display_name": "Example" } },
-            { "_id": "Y", "_score": 1.0, "unii": [{ "unii": "DEF", "display_name": "Example 2" }] }
-          ]
-        }
-        "#;
-
-        let parsed: MyChemQueryResponse = serde_json::from_str(input).expect("parse");
-        let hit = parsed.hits.first().expect("hit");
-        let unii = hit.unii.as_ref().expect("unii");
-        assert_eq!(unii.unii(), Some("ABC"));
-        assert_eq!(unii.display_name(), Some("Example"));
-
-        let hit = parsed.hits.get(1).expect("hit");
-        let unii = hit.unii.as_ref().expect("unii");
-        assert_eq!(unii.unii(), Some("DEF"));
-        assert_eq!(unii.display_name(), Some("Example 2"));
-    }
-
-    #[test]
-    fn atc_classifications_support_string_and_list() {
-        let input = r#"
-        {
-          "total": 2,
-          "hits": [
-            {
-              "_id": "X",
-              "_score": 1.0,
-              "chembl": {
-                "atc_classifications": "L01XX08"
-              }
-            },
-            {
-              "_id": "Y",
-              "_score": 1.0,
-              "chembl": {
-                "atc_classifications": ["L01BB04", "L04AA40"]
-              }
-            }
-          ]
-        }
-        "#;
-
-        let parsed: MyChemQueryResponse = serde_json::from_str(input).expect("parse");
-        let first = parsed.hits.first().expect("first");
-        assert_eq!(
-            first
-                .chembl
-                .as_ref()
-                .expect("chembl")
-                .atc_classifications
-                .clone()
-                .into_vec(),
-            vec!["L01XX08"]
-        );
-
-        let second = parsed.hits.get(1).expect("second");
-        assert_eq!(
-            second
-                .chembl
-                .as_ref()
-                .expect("chembl")
-                .atc_classifications
-                .clone()
-                .into_vec(),
-            vec!["L01BB04", "L04AA40"]
-        );
-    }
-
-    #[test]
-    fn drugcentral_approval_supports_object_and_list() {
-        let input = r#"
-        {
-          "total": 2,
-          "hits": [
-            {
-              "_id": "A",
-              "_score": 1.0,
-              "drugcentral": {
-                "approval": { "agency": "FDA", "date": "2011-08-17" }
-              }
-            },
-            {
-              "_id": "B",
-              "_score": 1.0,
-              "drugcentral": {
-                "approval": [
-                  { "agency": "FDA", "date": "2014-09-04" },
-                  { "agency": "EMA", "date": "2015-07-01" }
-                ]
-              }
-            }
-          ]
-        }
-        "#;
-
-        let parsed: MyChemQueryResponse = serde_json::from_str(input).expect("parse");
-        let first = parsed
-            .hits
-            .first()
-            .and_then(|hit| hit.drugcentral.as_ref())
-            .map(|dc| dc.approval.len());
-        assert_eq!(first, Some(1));
-
-        let second = parsed
-            .hits
-            .get(1)
-            .and_then(|hit| hit.drugcentral.as_ref())
-            .map(|dc| dc.approval.len());
-        assert_eq!(second, Some(2));
-    }
-
-    #[test]
-    fn drugbank_interactions_support_object_and_list() {
-        let parsed: MyChemQueryResponse = serde_json::from_value(serde_json::json!({
-            "total": 2,
-            "hits": [
-                {
-                    "_id": "A",
-                    "_score": 1.0,
-                    "drugbank": {
-                        "id": "DB1",
-                        "drug_interactions": {
-                            "name": "Aspirin",
-                            "description": "May increase bleeding risk."
-                        }
-                    }
-                },
-                {
-                    "_id": "B",
-                    "_score": 1.0,
-                    "drugbank": {
-                        "id": "DB2",
-                        "drug_interactions": [
-                            {"name": "Clopidogrel", "description": "Monitor bleeding."}
-                        ]
-                    }
-                }
-            ]
-        }))
-        .expect("parse");
-
-        let first = parsed
-            .hits
-            .first()
-            .and_then(|h| h.drugbank.as_ref())
-            .map(|d| d.drug_interactions.len());
-        let second = parsed
-            .hits
-            .get(1)
-            .and_then(|h| h.drugbank.as_ref())
-            .map(|d| d.drug_interactions.len());
-        assert_eq!(first, Some(1));
-        assert_eq!(second, Some(1));
-    }
-
-    #[tokio::test]
-    async fn query_with_fields_rejects_offset_at_biothings_window() {
-        let client = MyChemClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client
-            .query_with_fields("imatinib", 5, 10_000, MYCHEM_FIELDS_SEARCH)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("--offset must be less than 10000"));
-    }
-
-    #[tokio::test]
-    async fn query_with_fields_rejects_offset_limit_window_overflow() {
-        let client = MyChemClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client
-            .query_with_fields("imatinib", 30, 9_980, MYCHEM_FIELDS_SEARCH)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(
-            err.to_string()
-                .contains("--offset + --limit must be <= 10000")
-        );
-    }
-}
+mod tests;

@@ -73,14 +73,14 @@ How (copy the three examples):
 ## Inventory (check off as you go)
 
 ### DONE
-- [x] mygene · [x] nci_cts · [x] myvariant
+- [x] mygene · [x] nci_cts · [x] myvariant · [x] mychem · [x] mydisease
 
 ### Endpoints TODO — build test + parse test each (`~N` = old test count, a size hint)
 `ls src/sources/*.rs` is the source of truth if anything here is stale. Do families
 together — siblings share structure, so they go fast.
 
 BioThings (near-copies of mygene/myvariant):
-- [ ] mychem ~8 · [ ] mydisease ~14
+- [x] mychem ~8 · [x] mydisease ~14
 
 NCBI / literature:
 - [ ] pubmed ~18 · [ ] pubtator ~8 · [ ] ncbi_efetch ~2 · [ ] ncbi_idconv ~3 · [ ] pmc_oa ~6
@@ -141,3 +141,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - `src/sources/{mygene,nci_cts,myvariant}.rs` + their `tests/` — copy these.
 - `coverage/BASELINE.md` — what "kept coverage" looked like for the done ones.
 - `TEST-REBUILD.md` — original detailed write-up (background only; skip if you just want to work).
+
+## Batch log
+- 2026-06-16: `mychem` + `mydisease` converted. Checks:
+  `cargo nextest run -E 'test(/sources::mychem::/) | test(/sources::mydisease::/)'` → 27/27 pass;
+  `bash scripts/check-no-server-tests.sh` → pass;
+  `cargo nextest run -E 'test(/entities::disease/) | test(/entities::trial::search::nci/)'` → 84/84 pass.
