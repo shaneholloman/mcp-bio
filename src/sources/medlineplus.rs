@@ -2,10 +2,12 @@ use std::borrow::Cow;
 use std::sync::OnceLock;
 
 use regex::Regex;
+use reqwest::StatusCode;
 use reqwest::header::HeaderValue;
 use roxmltree::Document;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const MEDLINEPLUS_BASE: &str = "https://wsearch.nlm.nih.gov";
 const MEDLINEPLUS_API: &str = "medlineplus";
@@ -33,22 +35,10 @@ impl MedlinePlusClient {
         })
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
-    pub async fn search_n(
-        &self,
-        query: &str,
-        retmax: u8,
-    ) -> Result<Vec<MedlinePlusTopic>, BioMcpError> {
+    fn search_plan(query: &str, retmax: u8) -> Result<Option<RequestPlan>, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
-            return Ok(Vec::new());
+            return Ok(None);
         }
         if retmax == 0 || retmax > MEDLINEPLUS_MAX_RETMAX {
             return Err(BioMcpError::InvalidArgument(format!(
@@ -56,15 +46,19 @@ impl MedlinePlusClient {
             )));
         }
 
-        let retmax = retmax.to_string();
-        let resp = crate::sources::apply_cache_mode(self.client.get(self.endpoint("ws/query")))
-            .query(&[("db", "healthTopics"), ("term", query), ("retmax", &retmax)])
-            .send()
-            .await?;
-        let status = resp.status();
-        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
-        let bytes = crate::sources::read_limited_body(resp, MEDLINEPLUS_API).await?;
+        Ok(Some(
+            RequestPlan::get("ws/query")
+                .query("db", "healthTopics")
+                .query("term", query)
+                .query("retmax", retmax.to_string()),
+        ))
+    }
 
+    fn decode_response_body(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: Vec<u8>,
+    ) -> Result<String, BioMcpError> {
         if !status.is_success() {
             return Err(BioMcpError::Api {
                 api: MEDLINEPLUS_API.to_string(),
@@ -72,12 +66,34 @@ impl MedlinePlusClient {
             });
         }
 
-        reject_html_content_type(content_type.as_ref(), &bytes)?;
+        reject_html_content_type(content_type, &bytes)?;
 
-        let xml = String::from_utf8(bytes).map_err(|_| BioMcpError::Api {
+        String::from_utf8(bytes).map_err(|_| BioMcpError::Api {
             api: MEDLINEPLUS_API.to_string(),
             message: "Response body was not valid UTF-8 XML".to_string(),
-        })?;
+        })
+    }
+
+    pub async fn search_n(
+        &self,
+        query: &str,
+        retmax: u8,
+    ) -> Result<Vec<MedlinePlusTopic>, BioMcpError> {
+        let Some(plan) = Self::search_plan(query, retmax)? else {
+            return Ok(Vec::new());
+        };
+
+        let resp = crate::sources::apply_cache_mode(request_from_plan(
+            &self.client,
+            self.base.as_ref(),
+            &plan,
+        ))
+        .send()
+        .await?;
+        let status = resp.status();
+        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
+        let bytes = crate::sources::read_limited_body(resp, MEDLINEPLUS_API).await?;
+        let xml = Self::decode_response_body(status, content_type.as_ref(), bytes)?;
 
         tokio::task::spawn_blocking(move || parse_topics(&xml))
             .await
@@ -201,122 +217,4 @@ fn parse_topics(xml: &str) -> Result<Vec<MedlinePlusTopic>, BioMcpError> {
 }
 
 #[cfg(test)]
-mod tests {
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    use crate::error::BioMcpError;
-
-    use super::{MEDLINEPLUS_MAX_RETMAX, MedlinePlusClient, parse_topics};
-
-    #[test]
-    fn parse_topics_decodes_inline_markup() {
-        let topics = parse_topics(
-            r#"<?xml version="1.0" encoding="UTF-8"?>
-<nlmSearchResult>
-  <list num="1" start="0" per="1">
-    <document rank="0" url="https://medlineplus.gov/chestpain.html">
-      <content name="title">&lt;span class="qt0"&gt;Chest&lt;/span&gt; Pain</content>
-      <content name="FullSummary">&lt;p&gt;Chest pain summary.&lt;/p&gt;</content>
-    </document>
-  </list>
-</nlmSearchResult>"#,
-        )
-        .expect("topics");
-
-        assert_eq!(topics.len(), 1);
-        assert_eq!(topics[0].title, "Chest Pain");
-        assert_eq!(topics[0].summary_excerpt, "Chest pain summary.");
-    }
-
-    fn topic_response() -> ResponseTemplate {
-        ResponseTemplate::new(200)
-            .insert_header("content-type", "application/xml")
-            .set_body_string(
-                r#"<?xml version="1.0" encoding="UTF-8"?>
-<nlmSearchResult>
-  <list num="1" start="0" per="1">
-    <document rank="0" url="https://medlineplus.gov/chestpain.html">
-      <content name="title">Chest Pain</content>
-      <content name="FullSummary">Summary</content>
-    </document>
-  </list>
-</nlmSearchResult>"#,
-            )
-    }
-
-    #[tokio::test]
-    async fn search_uses_expected_query_contract() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/ws/query"))
-            .and(query_param("db", "healthTopics"))
-            .and(query_param("term", "chest pain"))
-            .and(query_param("retmax", "3"))
-            .respond_with(topic_response())
-            .mount(&server)
-            .await;
-
-        let client = MedlinePlusClient::new_for_test(server.uri()).expect("client");
-        let topics = client.search("chest pain").await.expect("search");
-        assert_eq!(topics.len(), 1);
-        assert_eq!(topics[0].title, "Chest Pain");
-    }
-
-    #[tokio::test]
-    async fn search_n_uses_retmax_parameter() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/ws/query"))
-            .and(query_param("db", "healthTopics"))
-            .and(query_param("term", "chest pain"))
-            .and(query_param("retmax", "5"))
-            .respond_with(topic_response())
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = MedlinePlusClient::new_for_test(server.uri()).expect("client");
-        let topics = client.search_n("chest pain", 5).await.expect("search");
-        assert_eq!(topics.len(), 1);
-        assert_eq!(topics[0].title, "Chest Pain");
-    }
-
-    #[tokio::test]
-    async fn search_n_accepts_max_retmax() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/ws/query"))
-            .and(query_param("db", "healthTopics"))
-            .and(query_param("term", "chest pain"))
-            .and(query_param("retmax", MEDLINEPLUS_MAX_RETMAX.to_string()))
-            .respond_with(topic_response())
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = MedlinePlusClient::new_for_test(server.uri()).expect("client");
-        let topics = client
-            .search_n("chest pain", MEDLINEPLUS_MAX_RETMAX)
-            .await
-            .expect("search");
-        assert_eq!(topics.len(), 1);
-    }
-
-    #[tokio::test]
-    async fn search_n_rejects_invalid_retmax_bounds() {
-        let client =
-            MedlinePlusClient::new_for_test("http://127.0.0.1:9".to_string()).expect("client");
-
-        for retmax in [0, MEDLINEPLUS_MAX_RETMAX + 1] {
-            let err = client
-                .search_n("chest pain", retmax)
-                .await
-                .expect_err("invalid retmax should fail before request");
-            assert!(
-                matches!(&err, BioMcpError::InvalidArgument(message) if message.contains("MedlinePlus retmax must be between 1 and 50")),
-                "unexpected error for retmax {retmax}: {err}"
-            );
-        }
-    }
-}
+mod tests;
