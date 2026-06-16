@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use time::{Date, Month, OffsetDateTime};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestBody, RequestPlan, request_from_plan};
 
 const NIH_REPORTER_BASE: &str = "https://api.reporter.nih.gov/v2";
 const NIH_REPORTER_API: &str = "nih_reporter";
@@ -41,58 +42,46 @@ impl NihReporterClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
-    async fn post_json<T: DeserializeOwned, B: Serialize>(
+    async fn post_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
-        body: &B,
     ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode(req.json(body))
-            .send()
-            .await?;
+        let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, NIH_REPORTER_API).await?;
 
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: NIH_REPORTER_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(NIH_REPORTER_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: NIH_REPORTER_API.to_string(),
-            source,
-        })
+        crate::sources::decode_json(
+            NIH_REPORTER_API,
+            status,
+            content_type.as_ref(),
+            &bytes,
+            true,
+        )
     }
 
-    pub async fn funding(&self, query: &str) -> Result<NihReporterFundingSection, BioMcpError> {
+    pub(crate) fn funding_plan(
+        query: &str,
+        today: Date,
+    ) -> Result<(RequestPlan, String, Vec<i32>), BioMcpError> {
         let query = normalize_query(query)?;
-        let request = build_search_request(&query, current_funding_window_date());
+        let request = build_search_request(&query, today);
         let fiscal_years = request.criteria.fiscal_years.clone();
-        let response: NihReporterSearchResponse = self
-            .post_json(self.client.post(self.endpoint(NIH_REPORTER_PATH)), &request)
-            .await?;
+        let body = serde_json::to_value(&request).map_err(|source| BioMcpError::ApiJson {
+            api: NIH_REPORTER_API.to_string(),
+            source,
+        })?;
+        let mut plan = RequestPlan::post(NIH_REPORTER_PATH);
+        plan.body = RequestBody::Json(body);
+        Ok((plan, query, fiscal_years))
+    }
 
-        Ok(NihReporterFundingSection {
+    fn funding_section_from_response(
+        query: String,
+        fiscal_years: Vec<i32>,
+        response: NihReporterSearchResponse,
+    ) -> NihReporterFundingSection {
+        NihReporterFundingSection {
             query,
             fiscal_years,
             matching_project_years: response.meta.total,
@@ -103,7 +92,18 @@ impl NihReporterClient {
                     .filter_map(map_project_year_row)
                     .collect(),
             ),
-        })
+        }
+    }
+
+    pub async fn funding(&self, query: &str) -> Result<NihReporterFundingSection, BioMcpError> {
+        let (plan, query, fiscal_years) = Self::funding_plan(query, current_funding_window_date())?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let response: NihReporterSearchResponse = self.post_json(req).await?;
+        Ok(Self::funding_section_from_response(
+            query,
+            fiscal_years,
+            response,
+        ))
     }
 }
 
@@ -341,273 +341,4 @@ fn grant_sort_cmp(left: &NihReporterGrant, right: &NihReporterGrant) -> Ordering
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-    use wiremock::matchers::{method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    fn test_date(year: i32, month: Month, day: u8) -> Date {
-        Date::from_calendar_date(year, month, day).expect("valid test date")
-    }
-
-    fn test_grant(
-        project_num: &str,
-        core_project_num: Option<&str>,
-        fiscal_year: i32,
-        award_amount: u64,
-    ) -> NihReporterGrant {
-        NihReporterGrant {
-            project_title: format!("Project {project_num}"),
-            project_num: project_num.to_string(),
-            core_project_num: core_project_num.map(str::to_string),
-            project_detail_url: Some(format!("https://example.org/{project_num}")),
-            pi_name: Some("Example PI".to_string()),
-            organization: Some("Example Org".to_string()),
-            fiscal_year,
-            award_amount,
-        }
-    }
-
-    #[test]
-    fn build_search_request_uses_approved_request_shape() {
-        let request = build_search_request("Marfan syndrome", test_date(2026, Month::April, 11));
-        let body = serde_json::to_value(&request).expect("request JSON");
-
-        assert!(body["criteria"].get("project_terms").is_none());
-        assert_eq!(body["criteria"]["advanced_text_search"]["operator"], "and");
-        assert_eq!(
-            body["criteria"]["advanced_text_search"]["search_field"],
-            NIH_REPORTER_SEARCH_FIELDS
-        );
-        assert_eq!(
-            body["criteria"]["advanced_text_search"]["search_text"],
-            "\"Marfan syndrome\""
-        );
-        assert_eq!(
-            body["criteria"]["fiscal_years"],
-            json!([2022, 2023, 2024, 2025, 2026])
-        );
-        assert_eq!(body["include_fields"], json!(NIH_REPORTER_INCLUDE_FIELDS));
-        assert_eq!(body["offset"], 0);
-        assert_eq!(body["limit"], NIH_REPORTER_MAX_RESULTS);
-        assert_eq!(body["sort_field"], "award_amount");
-        assert_eq!(body["sort_order"], "desc");
-    }
-
-    #[test]
-    fn exact_phrase_search_text_escapes_quotes_and_backslashes() {
-        assert_eq!(
-            exact_phrase_search_text("BCR\\ABL \"fusion\""),
-            "\"BCR\\\\ABL \\\"fusion\\\"\""
-        );
-    }
-
-    #[test]
-    fn recent_nih_fiscal_years_roll_over_on_october_boundary() {
-        assert_eq!(
-            recent_nih_fiscal_years(test_date(2026, Month::September, 30)),
-            vec![2022, 2023, 2024, 2025, 2026]
-        );
-        assert_eq!(
-            recent_nih_fiscal_years(test_date(2026, Month::October, 1)),
-            vec![2023, 2024, 2025, 2026, 2027]
-        );
-    }
-
-    #[test]
-    fn map_project_year_row_prefers_contact_pi_then_contact_investigator_then_first_pi() {
-        let contact_name_row = NihReporterProjectYearRow {
-            project_title: Some("Example".to_string()),
-            principal_investigators: vec![NihReporterPrincipalInvestigator {
-                full_name: Some("Ignored PI".to_string()),
-                first_name: None,
-                middle_name: None,
-                last_name: None,
-                is_contact_pi: Some(true),
-            }],
-            contact_pi_name: Some("  DOE, JANE  ".to_string()),
-            organization: None,
-            fiscal_year: Some(2026),
-            award_amount: Some(1),
-            project_num: Some("P1".to_string()),
-            core_project_num: None,
-            project_detail_url: None,
-        };
-        assert_eq!(
-            map_project_year_row(contact_name_row)
-                .and_then(|grant| grant.pi_name)
-                .as_deref(),
-            Some("DOE, JANE")
-        );
-
-        let contact_investigator_row = NihReporterProjectYearRow {
-            project_title: Some("Example".to_string()),
-            principal_investigators: vec![
-                NihReporterPrincipalInvestigator {
-                    full_name: Some("Other PI".to_string()),
-                    first_name: None,
-                    middle_name: None,
-                    last_name: None,
-                    is_contact_pi: Some(false),
-                },
-                NihReporterPrincipalInvestigator {
-                    full_name: Some("Contact PI".to_string()),
-                    first_name: None,
-                    middle_name: None,
-                    last_name: None,
-                    is_contact_pi: Some(true),
-                },
-            ],
-            contact_pi_name: None,
-            organization: None,
-            fiscal_year: Some(2026),
-            award_amount: Some(1),
-            project_num: Some("P2".to_string()),
-            core_project_num: None,
-            project_detail_url: None,
-        };
-        assert_eq!(
-            map_project_year_row(contact_investigator_row)
-                .and_then(|grant| grant.pi_name)
-                .as_deref(),
-            Some("Contact PI")
-        );
-
-        let first_investigator_row = NihReporterProjectYearRow {
-            project_title: Some("Example".to_string()),
-            principal_investigators: vec![NihReporterPrincipalInvestigator {
-                full_name: None,
-                first_name: Some("Ada".to_string()),
-                middle_name: Some("M".to_string()),
-                last_name: Some("Lovelace".to_string()),
-                is_contact_pi: None,
-            }],
-            contact_pi_name: None,
-            organization: None,
-            fiscal_year: Some(2026),
-            award_amount: Some(1),
-            project_num: Some("P3".to_string()),
-            core_project_num: None,
-            project_detail_url: None,
-        };
-        assert_eq!(
-            map_project_year_row(first_investigator_row)
-                .and_then(|grant| grant.pi_name)
-                .as_deref(),
-            Some("Ada M Lovelace")
-        );
-    }
-
-    #[test]
-    fn deduplicate_grants_groups_by_core_project_num_then_project_num() {
-        let deduped = deduplicate_grants(vec![
-            test_grant("P-002", Some("CORE-A"), 2025, 250),
-            test_grant("P-001", Some("CORE-A"), 2026, 250),
-            test_grant("P-100", None, 2024, 180),
-            test_grant("P-100", None, 2023, 400),
-            test_grant("P-200", Some("CORE-B"), 2025, 300),
-        ]);
-
-        assert_eq!(deduped.len(), 3);
-        assert_eq!(deduped[0].project_num, "P-100");
-        assert_eq!(deduped[0].award_amount, 400);
-        assert_eq!(deduped[1].project_num, "P-200");
-        assert_eq!(deduped[2].project_num, "P-001");
-    }
-
-    #[test]
-    fn deduplicate_grants_truncates_to_top_ten_after_sorting() {
-        let grants = (0..12)
-            .map(|idx| test_grant(&format!("P-{idx:03}"), None, 2026, 1_000 - idx))
-            .collect::<Vec<_>>();
-
-        let deduped = deduplicate_grants(grants);
-
-        assert_eq!(deduped.len(), 10);
-        assert_eq!(deduped[0].project_num, "P-000");
-        assert_eq!(deduped[9].project_num, "P-009");
-    }
-
-    #[tokio::test]
-    async fn funding_posts_to_projects_search_and_maps_response() {
-        let server = MockServer::start().await;
-        Mock::given(method("POST"))
-            .and(path("/projects/search"))
-            .and(|request: &wiremock::Request| {
-                let body: serde_json::Value =
-                    serde_json::from_slice(&request.body).expect("request body JSON");
-                body["criteria"]["advanced_text_search"]["search_text"] == "\"ERBB2\""
-                    && body["criteria"]["advanced_text_search"]["search_field"]
-                        == NIH_REPORTER_SEARCH_FIELDS
-                    && body["criteria"]["fiscal_years"] == json!([2022, 2023, 2024, 2025, 2026])
-                    && body["include_fields"] == json!(NIH_REPORTER_INCLUDE_FIELDS)
-                    && body["offset"] == 0
-                    && body["limit"] == NIH_REPORTER_MAX_RESULTS
-                    && body["sort_field"] == "award_amount"
-                    && body["sort_order"] == "desc"
-            })
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-                "meta": {
-                    "total": 4
-                },
-                "results": [
-                    {
-                        "project_title": "Older lower award duplicate",
-                        "principal_investigators": [
-                            {"full_name": "Other PI", "is_contact_pi": true}
-                        ],
-                        "contact_pi_name": "",
-                        "organization": {"org_name": "Org B"},
-                        "fiscal_year": 2024,
-                        "award_amount": 100,
-                        "project_num": "P-2",
-                        "core_project_num": "CORE-1",
-                        "project_detail_url": "https://reporter.nih.gov/project-details/2"
-                    },
-                    {
-                        "project_title": "Winning duplicate",
-                        "principal_investigators": [
-                            {"full_name": "Ignored PI", "is_contact_pi": true}
-                        ],
-                        "contact_pi_name": "DOE, JANE",
-                        "organization": {"org_name": "Org A"},
-                        "fiscal_year": 2025,
-                        "award_amount": 500,
-                        "project_num": "P-1",
-                        "core_project_num": "CORE-1",
-                        "project_detail_url": "https://reporter.nih.gov/project-details/1"
-                    },
-                    {
-                        "project_title": "Fallback PI project",
-                        "principal_investigators": [
-                            {"first_name": "Ada", "middle_name": "", "last_name": "Lovelace", "is_contact_pi": false}
-                        ],
-                        "contact_pi_name": null,
-                        "organization": {"org_name": "Org C"},
-                        "fiscal_year": 2026,
-                        "award_amount": 250,
-                        "project_num": "P-3",
-                        "core_project_num": null,
-                        "project_detail_url": null
-                    }
-                ]
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = NihReporterClient::new_for_test(server.uri()).expect("client");
-        let section = client.funding("ERBB2").await.expect("funding section");
-
-        assert_eq!(section.query, "ERBB2");
-        assert_eq!(section.fiscal_years, vec![2022, 2023, 2024, 2025, 2026]);
-        assert_eq!(section.matching_project_years, 4);
-        assert_eq!(section.grants.len(), 2);
-        assert_eq!(section.grants[0].project_num, "P-1");
-        assert_eq!(section.grants[0].pi_name.as_deref(), Some("DOE, JANE"));
-        assert_eq!(section.grants[0].organization.as_deref(), Some("Org A"));
-        assert_eq!(section.grants[1].project_num, "P-3");
-        assert_eq!(section.grants[1].pi_name.as_deref(), Some("Ada Lovelace"));
-    }
-}
+mod tests;
