@@ -6,6 +6,7 @@ use http_cache_reqwest::CacheMode;
 use regex::Regex;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 // PubMed Central Open Access (OA) service
 // Docs: https://www.ncbi.nlm.nih.gov/pmc/tools/oa/
@@ -56,21 +57,6 @@ impl PmcOaClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String, api_key: Option<String>) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-            api_key: api_key
-                .map(|v| v.trim().to_string())
-                .filter(|v| !v.is_empty()),
-        })
-    }
-
-    fn endpoint(&self) -> String {
-        self.base.as_ref().trim_end_matches('/').to_string()
-    }
-
     async fn get_text(
         &self,
         req: reqwest_middleware::RequestBuilder,
@@ -78,20 +64,13 @@ impl PmcOaClient {
         let resp = req.with_extension(CacheMode::NoStore).send().await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, PMC_OA_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: PMC_OA_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        Ok(String::from_utf8_lossy(&bytes).to_string())
+        decode_text(status, &bytes)
     }
 
-    async fn oa_archive_manifest(
-        &self,
+    pub(crate) fn oa_archive_manifest_plan(
         pmcid: &str,
-    ) -> Result<Option<PmcOaArchiveManifest>, BioMcpError> {
+        api_key: Option<&str>,
+    ) -> Result<Option<RequestPlan>, BioMcpError> {
         let pmcid = pmcid.trim();
         if pmcid.is_empty() {
             return Ok(None);
@@ -100,77 +79,23 @@ impl PmcOaClient {
             return Err(BioMcpError::InvalidArgument("PMCID is too long.".into()));
         }
 
-        let url = self.endpoint();
-        let req = self.client.get(&url).query(&[("id", pmcid)]);
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
-        let xml = self.get_text(req).await?;
-
-        let re = TGZ_HREF_RE.get_or_init(|| {
-            Regex::new(r#"<link[^>]*format="tgz"[^>]*href="([^"]+)""#)
-                .expect("valid tgz href regex")
-        });
-
-        let Some(caps) = re.captures(&xml) else {
-            return Ok(None);
-        };
-        let Some(raw_href) = caps
-            .get(1)
-            .map(|m| m.as_str().trim())
-            .filter(|s| !s.is_empty())
-        else {
-            return Ok(None);
-        };
-
-        let href = if raw_href.starts_with("ftp://ftp.ncbi.nlm.nih.gov/") {
-            raw_href.replacen(
-                "ftp://ftp.ncbi.nlm.nih.gov/",
-                "https://ftp.ncbi.nlm.nih.gov/",
-                1,
-            )
-        } else if raw_href.starts_with("ftp://") {
-            raw_href.replacen("ftp://", "https://", 1)
-        } else {
-            raw_href.to_string()
-        };
-
-        let license = LICENSE_ATTR_RE
-            .get_or_init(|| Regex::new(r#"\blicense="([^"]+)""#).expect("valid license regex"))
-            .captures(&xml)
-            .and_then(|caps| caps.get(1))
-            .map(|m| m.as_str().trim().to_string())
-            .filter(|s| !s.is_empty());
-        let retracted = RETRACTED_ATTR_RE
-            .get_or_init(|| Regex::new(r#"\bretracted="([^"]+)""#).expect("valid retracted regex"))
-            .captures(&xml)
-            .and_then(|caps| caps.get(1))
-            .and_then(|value| parse_boolish(value.as_str()));
-
-        Ok(Some(PmcOaArchiveManifest {
-            tgz_url: href.clone(),
-            package_url: href,
-            license,
-            retracted,
-        }))
+        let mut plan = RequestPlan::get("").query("id", pmcid);
+        if let Some(key) = api_key.map(str::trim).filter(|value| !value.is_empty()) {
+            plan = plan.query("api_key", key);
+        }
+        Ok(Some(plan))
     }
 
-    async fn archive_bytes(&self, manifest: &PmcOaArchiveManifest) -> Result<Vec<u8>, BioMcpError> {
-        let resp = self
-            .client
-            .get(&manifest.tgz_url)
-            .with_extension(CacheMode::NoStore)
-            .send()
-            .await?;
-        let status = resp.status();
-        let bytes =
-            crate::sources::read_limited_body_with_limit(resp, PMC_OA_API, MAX_TGZ_BYTES).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: PMC_OA_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        Ok(bytes.to_vec())
+    async fn oa_archive_manifest(
+        &self,
+        pmcid: &str,
+    ) -> Result<Option<PmcOaArchiveManifest>, BioMcpError> {
+        let Some(plan) = Self::oa_archive_manifest_plan(pmcid, self.api_key.as_deref())? else {
+            return Ok(None);
+        };
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let xml = self.get_text(req).await?;
+        parse_archive_manifest_xml(&xml)
     }
 
     pub async fn get_full_text_xml_with_manifest(
@@ -208,6 +133,91 @@ impl PmcOaClient {
             })??;
         Ok(Some(PmcOaArchivePackage { manifest, entries }))
     }
+}
+
+fn decode_text(status: reqwest::StatusCode, bytes: &[u8]) -> Result<String, BioMcpError> {
+    if !status.is_success() {
+        let excerpt = crate::sources::body_excerpt(bytes);
+        return Err(BioMcpError::Api {
+            api: PMC_OA_API.to_string(),
+            message: format!("HTTP {status}: {excerpt}"),
+        });
+    }
+    Ok(String::from_utf8_lossy(bytes).to_string())
+}
+
+fn parse_archive_manifest_xml(xml: &str) -> Result<Option<PmcOaArchiveManifest>, BioMcpError> {
+    let re = TGZ_HREF_RE.get_or_init(|| {
+        Regex::new(r#"<link[^>]*format="tgz"[^>]*href="([^"]+)""#).expect("valid tgz href regex")
+    });
+
+    let Some(caps) = re.captures(xml) else {
+        return Ok(None);
+    };
+    let Some(raw_href) = caps
+        .get(1)
+        .map(|m| m.as_str().trim())
+        .filter(|s| !s.is_empty())
+    else {
+        return Ok(None);
+    };
+
+    let href = if raw_href.starts_with("ftp://ftp.ncbi.nlm.nih.gov/") {
+        raw_href.replacen(
+            "ftp://ftp.ncbi.nlm.nih.gov/",
+            "https://ftp.ncbi.nlm.nih.gov/",
+            1,
+        )
+    } else if raw_href.starts_with("ftp://") {
+        raw_href.replacen("ftp://", "https://", 1)
+    } else {
+        raw_href.to_string()
+    };
+
+    let license = LICENSE_ATTR_RE
+        .get_or_init(|| Regex::new(r#"\blicense="([^"]+)""#).expect("valid license regex"))
+        .captures(xml)
+        .and_then(|caps| caps.get(1))
+        .map(|m| m.as_str().trim().to_string())
+        .filter(|s| !s.is_empty());
+    let retracted = RETRACTED_ATTR_RE
+        .get_or_init(|| Regex::new(r#"\bretracted="([^"]+)""#).expect("valid retracted regex"))
+        .captures(xml)
+        .and_then(|caps| caps.get(1))
+        .and_then(|value| parse_boolish(value.as_str()));
+
+    Ok(Some(PmcOaArchiveManifest {
+        tgz_url: href.clone(),
+        package_url: href,
+        license,
+        retracted,
+    }))
+}
+
+impl PmcOaClient {
+    async fn archive_bytes(&self, manifest: &PmcOaArchiveManifest) -> Result<Vec<u8>, BioMcpError> {
+        let resp = self
+            .client
+            .get(&manifest.tgz_url)
+            .with_extension(CacheMode::NoStore)
+            .send()
+            .await?;
+        let status = resp.status();
+        let bytes =
+            crate::sources::read_limited_body_with_limit(resp, PMC_OA_API, MAX_TGZ_BYTES).await?;
+        decode_archive_bytes(status, &bytes)
+    }
+}
+
+fn decode_archive_bytes(status: reqwest::StatusCode, bytes: &[u8]) -> Result<Vec<u8>, BioMcpError> {
+    if !status.is_success() {
+        let excerpt = crate::sources::body_excerpt(bytes);
+        return Err(BioMcpError::Api {
+            api: PMC_OA_API.to_string(),
+            message: format!("HTTP {status}: {excerpt}"),
+        });
+    }
+    Ok(bytes.to_vec())
 }
 
 fn parse_boolish(value: &str) -> Option<bool> {
@@ -300,232 +310,4 @@ fn extract_first_nxml(tgz_bytes: &[u8]) -> Result<Option<String>, BioMcpError> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use flate2::Compression;
-    use flate2::write::GzEncoder;
-    use std::io::Write;
-    use tar::{Builder, Header};
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    fn tgz_with_entries(entries: &[(&str, &[u8])]) -> Vec<u8> {
-        let mut tar_buf = Vec::new();
-        {
-            let mut builder = Builder::new(&mut tar_buf);
-            for (name, body) in entries {
-                let mut header = Header::new_gnu();
-                header.set_size(body.len() as u64);
-                header.set_mode(0o644);
-                header.set_cksum();
-                builder
-                    .append_data(&mut header, *name, *body)
-                    .expect("archive entry should append");
-            }
-            builder.finish().expect("tar should finish");
-        }
-
-        let mut gz = GzEncoder::new(Vec::new(), Compression::default());
-        gz.write_all(&tar_buf).expect("gzip should write tar");
-        gz.finish().expect("gzip should finish")
-    }
-
-    #[tokio::test]
-    async fn oa_tgz_url_rewrites_ftp_to_https() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/"))
-            .and(query_param("id", "PMC123"))
-            .respond_with(ResponseTemplate::new(200).set_body_string(
-                r#"<records><record><link format="tgz" href="ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/file.tar.gz"/></record></records>"#,
-            ))
-            .mount(&server)
-            .await;
-
-        let client = PmcOaClient::new_for_test(server.uri(), None).unwrap();
-        let manifest = client.oa_archive_manifest("PMC123").await.unwrap().unwrap();
-        assert_eq!(
-            manifest.tgz_url,
-            "https://ftp.ncbi.nlm.nih.gov/pub/pmc/file.tar.gz"
-        );
-    }
-
-    #[tokio::test]
-    async fn oa_tgz_url_includes_api_key_when_configured() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/"))
-            .and(query_param("id", "PMC123"))
-            .and(query_param("api_key", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_string(
-                r#"<records><record><link format="tgz" href="ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/file.tar.gz"/></record></records>"#,
-            ))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PmcOaClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let manifest = client.oa_archive_manifest("PMC123").await.unwrap().unwrap();
-        assert_eq!(
-            manifest.tgz_url,
-            "https://ftp.ncbi.nlm.nih.gov/pub/pmc/file.tar.gz"
-        );
-    }
-
-    #[tokio::test]
-    async fn get_full_text_xml_accepts_archive_larger_than_default_body_limit() {
-        let server = MockServer::start().await;
-        let mut tar_buf = Vec::new();
-        {
-            let mut builder = Builder::new(&mut tar_buf);
-            let mut state = 0x1234_5678_u32;
-            let filler = (0..(9 * 1024 * 1024))
-                .map(|_| {
-                    state ^= state << 13;
-                    state ^= state >> 17;
-                    state ^= state << 5;
-                    (state & 0xff) as u8
-                })
-                .collect::<Vec<_>>();
-            let mut filler_header = Header::new_gnu();
-            filler_header.set_size(filler.len() as u64);
-            filler_header.set_mode(0o644);
-            filler_header.set_cksum();
-            builder
-                .append_data(&mut filler_header, "supplement.bin", &filler[..])
-                .unwrap();
-
-            let contents = b"<article><body>large-ok</body></article>";
-            let mut xml_header = Header::new_gnu();
-            xml_header.set_size(contents.len() as u64);
-            xml_header.set_mode(0o644);
-            xml_header.set_cksum();
-            builder
-                .append_data(&mut xml_header, "sample.nxml", &contents[..])
-                .unwrap();
-            builder.finish().unwrap();
-        }
-
-        let mut gz = GzEncoder::new(Vec::new(), Compression::default());
-        gz.write_all(&tar_buf).unwrap();
-        let tgz = gz.finish().unwrap();
-        assert!(tgz.len() > 8 * 1024 * 1024);
-
-        Mock::given(method("GET"))
-            .and(path("/"))
-            .and(query_param("id", "PMC123"))
-            .respond_with(ResponseTemplate::new(200).set_body_string(format!(
-                r#"<records><record><link format="tgz" href="{}/archive.tgz"/></record></records>"#,
-                server.uri()
-            )))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/archive.tgz"))
-            .respond_with(ResponseTemplate::new(200).set_body_bytes(tgz))
-            .mount(&server)
-            .await;
-
-        let client = PmcOaClient::new_for_test(server.uri(), None).unwrap();
-        let (xml, manifest) = client
-            .get_full_text_xml_with_manifest("PMC123")
-            .await
-            .expect("large archive should succeed")
-            .expect("nxml should be extracted");
-        assert_eq!(
-            manifest.package_url,
-            format!("{}/archive.tgz", server.uri())
-        );
-        assert!(xml.contains("large-ok"));
-    }
-
-    #[test]
-    fn extract_first_nxml_reads_xml_entry() {
-        let tgz = tgz_with_entries(&[("sample.nxml", b"<article><body>ok</body></article>")]);
-
-        let xml = extract_first_nxml(&tgz).unwrap().unwrap();
-        assert!(xml.contains("<article>"));
-    }
-
-    #[tokio::test]
-    async fn get_archive_package_enumerates_non_xml_and_preserves_binary_bytes() {
-        let server = MockServer::start().await;
-        let image_bytes = b"\x89PNG\r\n\x1a\n\0\xfffixture";
-        let tgz = tgz_with_entries(&[
-            ("article.nxml", b"<article><body>ok</body></article>"),
-            ("figures/panel.png", image_bytes),
-            ("supplement/traces.csv", b"time,value\n0,1\n"),
-        ]);
-
-        Mock::given(method("GET"))
-            .and(path("/"))
-            .and(query_param("id", "PMC123"))
-            .respond_with(ResponseTemplate::new(200).set_body_string(format!(
-                r#"<records><record license="CC BY" retracted="no"><link format="tgz" href="{}/archive.tgz"/></record></records>"#,
-                server.uri()
-            )))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/archive.tgz"))
-            .respond_with(ResponseTemplate::new(200).set_body_bytes(tgz))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PmcOaClient::new_for_test(server.uri(), None).unwrap();
-        let package = client
-            .get_archive_package("PMC123")
-            .await
-            .expect("package request should succeed")
-            .expect("package should exist");
-        assert_eq!(package.manifest.license.as_deref(), Some("CC BY"));
-        assert_eq!(package.manifest.retracted, Some(false));
-        let image = package
-            .entries
-            .iter()
-            .find(|entry| entry.filename == "figures/panel.png")
-            .expect("image entry should be listed");
-        assert!(!image.is_xml);
-        assert_eq!(image.bytes, image_bytes);
-        assert!(
-            package
-                .entries
-                .iter()
-                .any(|entry| entry.filename == "article.nxml" && entry.is_xml)
-        );
-    }
-
-    #[test]
-    fn extract_archive_entries_rejects_unsafe_empty_and_oversized_members() {
-        assert_eq!(
-            safe_archive_name(Path::new("safe\\readme.txt")).as_deref(),
-            Some("safe/readme.txt")
-        );
-        assert!(safe_archive_name(Path::new("../secret.csv")).is_none());
-        assert!(safe_archive_name(Path::new("..\\secret.csv")).is_none());
-        assert!(safe_archive_name(Path::new("/absolute.csv")).is_none());
-        assert!(safe_archive_name(Path::new("C:\\absolute.csv")).is_none());
-
-        let oversized = vec![b'x'; MAX_ARCHIVE_ENTRY_BYTES as usize + 1];
-        let tgz = tgz_with_entries(&[
-            ("article.nxml", &b"<article/>"[..]),
-            ("safe/readme.txt", b"ok"),
-            ("empty.bin", b""),
-            ("huge.bin", oversized.as_slice()),
-        ]);
-
-        let entries = extract_archive_entries(&tgz).expect("archive should parse");
-        let names = entries
-            .iter()
-            .map(|entry| entry.filename.as_str())
-            .collect::<Vec<_>>();
-        assert!(names.contains(&"article.nxml"));
-        assert!(names.contains(&"safe/readme.txt"));
-        assert!(!names.contains(&"empty.bin"));
-        assert!(!names.contains(&"huge.bin"));
-    }
-}
+mod tests;
