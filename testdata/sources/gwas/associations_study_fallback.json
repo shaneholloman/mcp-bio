@@ -1,0 +1,9 @@
+{
+  "_embedded": {
+    "associations": [
+      {
+        "pvalue": 1.0e-8
+      }
+    ]
+  }
+}

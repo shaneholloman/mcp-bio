@@ -1,11 +1,14 @@
 use std::borrow::Cow;
 
 use http_cache_reqwest::CacheMode;
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const GWAS_BASE: &str = "https://www.ebi.ac.uk/gwas/rest/api";
 const GWAS_API: &str = "gwas";
@@ -24,26 +27,98 @@ impl GwasClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
+    pub(crate) fn associations_by_rsid_plan(
+        rsid: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let rsid = normalize_rsid(rsid)?;
+        Ok(
+            RequestPlan::get(format!("singleNucleotidePolymorphisms/{rsid}/associations"))
+                .query("projection", "associationByStudy")
+                .query("page", "0")
+                .query("size", limit.clamp(1, 200).to_string()),
         )
     }
 
-    fn request_no_store(&self, url: &str) -> reqwest_middleware::RequestBuilder {
+    pub(crate) fn snps_by_gene_plan(
+        gene_symbol: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
+        Ok(
+            RequestPlan::get("singleNucleotidePolymorphisms/search/findByGene")
+                .query("geneName", gene_symbol)
+                .query("page", "0")
+                .query("size", limit.clamp(1, 200).to_string()),
+        )
+    }
+
+    pub(crate) fn snps_by_trait_plan(
+        trait_query: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let trait_query = normalize_trait_query(trait_query)?;
+        Ok(
+            RequestPlan::get("singleNucleotidePolymorphisms/search/findByDiseaseTrait")
+                .query("diseaseTrait", trait_query)
+                .query("page", "0")
+                .query("size", limit.clamp(1, 200).to_string()),
+        )
+    }
+
+    pub(crate) fn studies_by_trait_plan(
+        trait_query: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let trait_query = normalize_trait_query(trait_query)?;
+        Ok(RequestPlan::get("studies/search/findByDiseaseTrait")
+            .query("diseaseTrait", trait_query)
+            .query("page", "0")
+            .query("size", limit.clamp(1, 200).to_string()))
+    }
+
+    pub(crate) fn associations_by_study_search_plan(
+        study_accession: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let study_accession = normalize_study_accession(study_accession)?;
+        Ok(
+            RequestPlan::get("associations/search/findByStudyAccessionId")
+                .query("studyAccessionId", study_accession)
+                .query("page", "0")
+                .query("size", limit.clamp(1, 200).to_string())
+                .query("projection", "associationByStudy"),
+        )
+    }
+
+    pub(crate) fn associations_by_study_fallback_plan(
+        study_accession: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let study_accession = normalize_study_accession(study_accession)?;
+        Ok(
+            RequestPlan::get(format!("studies/{study_accession}/associations"))
+                .query("projection", "associationByStudy")
+                .query("page", "0")
+                .query("size", limit.clamp(1, 200).to_string()),
+        )
+    }
+
+    fn request_no_store(&self, plan: &RequestPlan) -> reqwest_middleware::RequestBuilder {
         // GWAS responses occasionally produce cache decode failures when a stale
         // body entry is reused. Always bypass persistence for this source.
-        self.client.get(url).with_extension(CacheMode::NoStore)
+        request_from_plan(&self.client, self.base.as_ref(), plan).with_extension(CacheMode::NoStore)
+    }
+
+    pub(crate) fn decode_json_optional<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<Option<T>, BioMcpError> {
+        if status == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        crate::sources::decode_json(GWAS_API, status, content_type, bytes, true).map(Some)
     }
 
     async fn get_json_optional<T: DeserializeOwned>(
@@ -58,23 +133,7 @@ impl GwasClient {
         if status == reqwest::StatusCode::NOT_FOUND {
             return Ok(None);
         }
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: GWAS_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(GWAS_API, content_type.as_ref(), &bytes)?;
-
-        serde_json::from_slice(&bytes)
-            .map(Some)
-            .map_err(|source| BioMcpError::ApiJson {
-                api: GWAS_API.to_string(),
-                source,
-            })
+        Self::decode_json_optional(status, content_type.as_ref(), &bytes)
     }
 
     pub async fn associations_by_rsid(
@@ -82,17 +141,8 @@ impl GwasClient {
         rsid: &str,
         limit: usize,
     ) -> Result<Vec<GwasAssociation>, BioMcpError> {
-        let rsid = normalize_rsid(rsid)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint(&format!(
-            "singleNucleotidePolymorphisms/{rsid}/associations"
-        ));
-
-        let req = self.request_no_store(&url).query(&[
-            ("projection", "associationByStudy"),
-            ("page", "0"),
-            ("size", &limit.to_string()),
-        ]);
+        let plan = Self::associations_by_rsid_plan(rsid, limit)?;
+        let req = self.request_no_store(&plan);
 
         let Some(resp): Option<GwasAssociationsResponse> = self
             .get_json_optional(req)
@@ -110,15 +160,8 @@ impl GwasClient {
         gene_symbol: &str,
         limit: usize,
     ) -> Result<Vec<GwasSnp>, BioMcpError> {
-        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("singleNucleotidePolymorphisms/search/findByGene");
-
-        let req = self.request_no_store(&url).query(&[
-            ("geneName", gene_symbol.as_str()),
-            ("page", "0"),
-            ("size", &limit.to_string()),
-        ]);
+        let plan = Self::snps_by_gene_plan(gene_symbol, limit)?;
+        let req = self.request_no_store(&plan);
 
         let Some(resp): Option<GwasSnpsResponse> = self
             .get_json_optional(req)
@@ -136,15 +179,8 @@ impl GwasClient {
         trait_query: &str,
         limit: usize,
     ) -> Result<Vec<GwasSnp>, BioMcpError> {
-        let trait_query = normalize_trait_query(trait_query)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("singleNucleotidePolymorphisms/search/findByDiseaseTrait");
-
-        let req = self.request_no_store(&url).query(&[
-            ("diseaseTrait", trait_query.as_str()),
-            ("page", "0"),
-            ("size", &limit.to_string()),
-        ]);
+        let plan = Self::snps_by_trait_plan(trait_query, limit)?;
+        let req = self.request_no_store(&plan);
 
         let Some(resp): Option<GwasSnpsResponse> = self
             .get_json_optional(req)
@@ -162,15 +198,8 @@ impl GwasClient {
         trait_query: &str,
         limit: usize,
     ) -> Result<Vec<GwasStudy>, BioMcpError> {
-        let trait_query = normalize_trait_query(trait_query)?;
-        let limit = limit.clamp(1, 200);
-        let url = self.endpoint("studies/search/findByDiseaseTrait");
-
-        let req = self.request_no_store(&url).query(&[
-            ("diseaseTrait", trait_query.as_str()),
-            ("page", "0"),
-            ("size", &limit.to_string()),
-        ]);
+        let plan = Self::studies_by_trait_plan(trait_query, limit)?;
+        let req = self.request_no_store(&plan);
 
         let Some(resp): Option<GwasStudiesResponse> = self
             .get_json_optional(req)
@@ -188,16 +217,8 @@ impl GwasClient {
         study_accession: &str,
         limit: usize,
     ) -> Result<Vec<GwasAssociation>, BioMcpError> {
-        let study_accession = normalize_study_accession(study_accession)?;
-        let limit = limit.clamp(1, 200);
-
-        let search_url = self.endpoint("associations/search/findByStudyAccessionId");
-        let search_req = self.request_no_store(&search_url).query(&[
-            ("studyAccessionId", study_accession.as_str()),
-            ("page", "0"),
-            ("size", &limit.to_string()),
-            ("projection", "associationByStudy"),
-        ]);
+        let search_plan = Self::associations_by_study_search_plan(study_accession, limit)?;
+        let search_req = self.request_no_store(&search_plan);
 
         if let Some(search_resp) = self
             .get_json_optional::<GwasAssociationsResponse>(search_req)
@@ -208,12 +229,8 @@ impl GwasClient {
             return Ok(search_resp.embedded.associations);
         }
 
-        let fallback_url = self.endpoint(&format!("studies/{study_accession}/associations"));
-        let fallback_req = self.request_no_store(&fallback_url).query(&[
-            ("projection", "associationByStudy"),
-            ("page", "0"),
-            ("size", &limit.to_string()),
-        ]);
+        let fallback_plan = Self::associations_by_study_fallback_plan(study_accession, limit)?;
+        let fallback_req = self.request_no_store(&fallback_plan);
 
         let Some(fallback_resp): Option<GwasAssociationsResponse> = self
             .get_json_optional(fallback_req)
@@ -486,164 +503,4 @@ pub struct GwasAuthor {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[test]
-    fn de_opt_f64_accepts_string_numbers() {
-        #[derive(Deserialize)]
-        struct Wrapper {
-            #[serde(deserialize_with = "de_opt_f64")]
-            value: Option<f64>,
-        }
-
-        let parsed: Wrapper = serde_json::from_str("{\"value\":\"8e-12\"}").expect("parse");
-        assert_eq!(parsed.value, Some(8e-12));
-    }
-
-    #[tokio::test]
-    async fn associations_by_rsid_parses_rows() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path(
-                "/singleNucleotidePolymorphisms/rs7903146/associations",
-            ))
-            .and(query_param("projection", "associationByStudy"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "_embedded": {
-                    "associations": [
-                        {
-                            "pvalue": "8e-12",
-                            "orPerCopyNum": 1.54,
-                            "riskFrequency": "0.04",
-                            "loci": [
-                                {
-                                    "strongestRiskAlleles": [
-                                        {"riskAlleleName": "rs7903146-T"}
-                                    ],
-                                    "authorReportedGenes": [
-                                        {"geneName": "TCF7L2"}
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = GwasClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .associations_by_rsid("rs7903146", 5)
-            .await
-            .expect("associations");
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].pvalue, Some(8e-12));
-        assert_eq!(rows[0].or_per_copy_num, Some(1.54));
-        assert_eq!(rows[0].risk_frequency, Some(0.04));
-    }
-
-    #[tokio::test]
-    async fn associations_by_study_falls_back_when_search_is_empty() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/associations/search/findByStudyAccessionId"))
-            .and(query_param("studyAccessionId", "GCST000796"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "_embedded": {"associations": []}
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/studies/GCST000796/associations"))
-            .and(query_param("projection", "associationByStudy"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "_embedded": {
-                    "associations": [
-                        {
-                            "pvalue": 1.0e-8
-                        }
-                    ]
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = GwasClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .associations_by_study("GCST000796", 5)
-            .await
-            .expect("associations");
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].pvalue, Some(1.0e-8));
-    }
-
-    #[tokio::test]
-    async fn associations_by_rsid_remaps_decode_failures_to_source_unavailable() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path(
-                "/singleNucleotidePolymorphisms/rs7903146/associations",
-            ))
-            .and(query_param("projection", "associationByStudy"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "application/json")
-                    .set_body_string("{not-json"),
-            )
-            .mount(&server)
-            .await;
-
-        let client = GwasClient::new_for_test(server.uri()).expect("client");
-        let err = client
-            .associations_by_rsid("rs7903146", 5)
-            .await
-            .expect_err("decode failure should be remapped");
-
-        assert!(matches!(
-            err,
-            BioMcpError::SourceUnavailable {
-                ref source_name,
-                ref reason,
-                ..
-            } if source_name == "GWAS Catalog"
-                && reason.contains("could not decode")
-        ));
-    }
-
-    #[tokio::test]
-    async fn associations_by_rsid_remaps_transient_http_failures_to_source_unavailable() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path(
-                "/singleNucleotidePolymorphisms/rs7903146/associations",
-            ))
-            .and(query_param("projection", "associationByStudy"))
-            .respond_with(ResponseTemplate::new(503).set_body_string("maintenance"))
-            .mount(&server)
-            .await;
-
-        let client = GwasClient::new_for_test(server.uri()).expect("client");
-        let err = client
-            .associations_by_rsid("rs7903146", 5)
-            .await
-            .expect_err("503 should be remapped");
-
-        assert!(matches!(
-            err,
-            BioMcpError::SourceUnavailable {
-                ref source_name,
-                ref reason,
-                ..
-            } if source_name == "GWAS Catalog"
-                && reason.contains("temporarily unavailable")
-        ));
-    }
-}
+mod tests;

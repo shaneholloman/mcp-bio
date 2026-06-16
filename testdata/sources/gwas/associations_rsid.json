@@ -1,0 +1,21 @@
+{
+  "_embedded": {
+    "associations": [
+      {
+        "pvalue": "8e-12",
+        "orPerCopyNum": 1.54,
+        "riskFrequency": "0.04",
+        "loci": [
+          {
+            "strongestRiskAlleles": [
+              {"riskAlleleName": "rs7903146-T"}
+            ],
+            "authorReportedGenes": [
+              {"geneName": "TCF7L2"}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
