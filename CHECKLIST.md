@@ -99,7 +99,7 @@ Drugs / chem / regulatory:
 - [x] cpic ~3 · [x] cvx ~11 · [x] vaers ~10 · [x] who_pq ~20 · [x] who_ivd ~6
 
 Ontologies / proteins / pathways / misc:
-- [x] uniprot ~10 · [x] interpro ~2 · [x] hpa ~4 · [x] hpo ~4 · [ ] monarch ~4 · [ ] ols4 ~3
+- [x] uniprot ~10 · [x] interpro ~2 · [x] hpa ~4 · [x] hpo ~4 · [x] monarch ~4 · [ ] ols4 ~3
 - [ ] umls ~1 · [ ] reactome ~3 · [ ] wikipathways ~8 · [ ] kegg ~6 · [ ] gprofiler ~7
 - [ ] enrichr ~4 · [ ] quickgo ~3 · [ ] complexportal ~3 · [ ] string ~3 · [ ] disgenet ~10
 - [ ] alphagenome ~4 · [ ] medlineplus ~5 · [ ] figshare ~13
@@ -277,4 +277,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: `hpo` converted to pure request construction and JSON response
   parsing tests, replacing source-level mock server tests. Checks:
   `cargo nextest run -E 'test(/sources::hpo::/)'` → 8/8 pass;
+  `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.
+- 2026-06-16: `monarch` converted to pure request construction and response
+  mapper tests for associations and phenotype similarity, replacing source-level
+  mock server tests. Checks:
+  `cargo nextest run -E 'test(/sources::monarch::/)'` → 10/10 pass;
   `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.

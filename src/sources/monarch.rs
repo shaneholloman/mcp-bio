@@ -1,10 +1,13 @@
 use std::borrow::Cow;
 use std::collections::HashSet;
 
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 use crate::utils::serde::StringOrVec;
 
 const MONARCH_BASE: &str = "https://api-v3.monarchinitiative.org";
@@ -24,22 +27,6 @@ impl MonarchClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
@@ -48,9 +35,16 @@ impl MonarchClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, MONARCH_API).await?;
+        Self::decode_json_response(status, content_type.as_ref(), &bytes)
+    }
 
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::body_excerpt(bytes);
             if status.is_server_error() {
                 return Err(BioMcpError::SourceUnavailable {
                     source_name: "Monarch Initiative".to_string(),
@@ -68,29 +62,31 @@ impl MonarchClient {
             });
         }
 
-        crate::sources::ensure_json_content_type(MONARCH_API, content_type.as_ref(), &bytes)?;
+        crate::sources::ensure_json_content_type(MONARCH_API, content_type, bytes)?;
 
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+        serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
             api: MONARCH_API.to_string(),
             source,
         })
     }
 
-    pub async fn disease_gene_associations(
-        &self,
+    pub(crate) fn disease_gene_associations_plan(
         disease_id: &str,
         limit: usize,
-    ) -> Result<Vec<MonarchGeneAssociation>, BioMcpError> {
+    ) -> Result<RequestPlan, BioMcpError> {
         let disease_id = normalize_disease_id(disease_id)?;
         let limit = limit.clamp(1, 200);
-        let url = self.endpoint("v3/api/association");
-        let req = self.client.get(&url).query(&[
-            ("object", disease_id.as_str()),
-            ("subject_category", "biolink:Gene"),
-            ("limit", &limit.to_string()),
-        ]);
+        Ok(RequestPlan::get("v3/api/association")
+            .query("object", disease_id)
+            .query("subject_category", "biolink:Gene")
+            .query("limit", limit.to_string()))
+    }
 
-        let resp: MonarchAssociationResponse = self.get_json(req).await?;
+    fn map_gene_associations(
+        resp: MonarchAssociationResponse,
+        limit: usize,
+    ) -> Vec<MonarchGeneAssociation> {
+        let limit = limit.clamp(1, 200);
         let mut out = Vec::new();
         let mut seen = HashSet::new();
         for item in resp.items {
@@ -129,24 +125,39 @@ impl MonarchClient {
                 break;
             }
         }
-        Ok(out)
+        out
     }
 
-    pub async fn disease_phenotypes(
+    pub async fn disease_gene_associations(
         &self,
         disease_id: &str,
         limit: usize,
-    ) -> Result<Vec<MonarchPhenotypeAssociation>, BioMcpError> {
+    ) -> Result<Vec<MonarchGeneAssociation>, BioMcpError> {
+        let plan = Self::disease_gene_associations_plan(disease_id, limit)?;
+        let resp: MonarchAssociationResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        let out = Self::map_gene_associations(resp, limit);
+        Ok(out)
+    }
+
+    pub(crate) fn disease_phenotypes_plan(
+        disease_id: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
         let disease_id = normalize_disease_id(disease_id)?;
         let limit = limit.clamp(1, 200);
-        let url = self.endpoint("v3/api/association");
-        let req = self.client.get(&url).query(&[
-            ("subject", disease_id.as_str()),
-            ("object_category", "biolink:PhenotypicFeature"),
-            ("limit", &limit.to_string()),
-        ]);
+        Ok(RequestPlan::get("v3/api/association")
+            .query("subject", disease_id)
+            .query("object_category", "biolink:PhenotypicFeature")
+            .query("limit", limit.to_string()))
+    }
 
-        let resp: MonarchAssociationResponse = self.get_json(req).await?;
+    fn map_phenotype_associations(
+        resp: MonarchAssociationResponse,
+        limit: usize,
+    ) -> Vec<MonarchPhenotypeAssociation> {
+        let limit = limit.clamp(1, 200);
         let mut out = Vec::new();
         let mut seen = HashSet::new();
         for item in resp.items {
@@ -183,24 +194,39 @@ impl MonarchClient {
                 break;
             }
         }
-        Ok(out)
+        out
     }
 
-    pub async fn disease_models(
+    pub async fn disease_phenotypes(
         &self,
         disease_id: &str,
         limit: usize,
-    ) -> Result<Vec<MonarchModelAssociation>, BioMcpError> {
+    ) -> Result<Vec<MonarchPhenotypeAssociation>, BioMcpError> {
+        let plan = Self::disease_phenotypes_plan(disease_id, limit)?;
+        let resp: MonarchAssociationResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        let out = Self::map_phenotype_associations(resp, limit);
+        Ok(out)
+    }
+
+    pub(crate) fn disease_models_plan(
+        disease_id: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
         let disease_id = normalize_disease_id(disease_id)?;
         let limit = limit.clamp(1, 200);
-        let url = self.endpoint("v3/api/association");
-        let req = self.client.get(&url).query(&[
-            ("object", disease_id.as_str()),
-            ("subject_category", "biolink:Genotype"),
-            ("limit", &limit.to_string()),
-        ]);
+        Ok(RequestPlan::get("v3/api/association")
+            .query("object", disease_id)
+            .query("subject_category", "biolink:Genotype")
+            .query("limit", limit.to_string()))
+    }
 
-        let resp: MonarchAssociationResponse = self.get_json(req).await?;
+    fn map_model_associations(
+        resp: MonarchAssociationResponse,
+        limit: usize,
+    ) -> Vec<MonarchModelAssociation> {
+        let limit = limit.clamp(1, 200);
         let mut out = Vec::new();
         let mut seen = HashSet::new();
         for item in resp.items {
@@ -239,25 +265,40 @@ impl MonarchClient {
                 break;
             }
         }
+        out
+    }
+
+    pub async fn disease_models(
+        &self,
+        disease_id: &str,
+        limit: usize,
+    ) -> Result<Vec<MonarchModelAssociation>, BioMcpError> {
+        let plan = Self::disease_models_plan(disease_id, limit)?;
+        let resp: MonarchAssociationResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        let out = Self::map_model_associations(resp, limit);
         Ok(out)
     }
 
-    pub async fn phenotype_similarity_search(
-        &self,
+    pub(crate) fn phenotype_similarity_search_plan(
         hpo_terms: &[String],
         limit: usize,
-    ) -> Result<Vec<MonarchPhenotypeMatch>, BioMcpError> {
+    ) -> Result<RequestPlan, BioMcpError> {
         let normalized = normalize_hpo_terms(hpo_terms)?;
         let limit = limit.clamp(1, 50);
         let termset = normalized.join(",");
-        let url = self.endpoint(&format!("v3/api/semsim/search/{termset}/Human%20Diseases"));
+        Ok(
+            RequestPlan::get(format!("v3/api/semsim/search/{termset}/Human%20Diseases"))
+                .query("limit", limit.to_string()),
+        )
+    }
 
-        let req = self
-            .client
-            .get(&url)
-            .query(&[("limit", &limit.to_string())]);
-
-        let rows: Vec<MonarchSemsimRow> = self.get_json(req).await?;
+    fn map_phenotype_matches(
+        rows: Vec<MonarchSemsimRow>,
+        limit: usize,
+    ) -> Vec<MonarchPhenotypeMatch> {
+        let limit = limit.clamp(1, 50);
         let mut out = Vec::new();
         for row in rows {
             let Some(disease_id) = row
@@ -291,6 +332,19 @@ impl MonarchClient {
             }
         }
 
+        out
+    }
+
+    pub async fn phenotype_similarity_search(
+        &self,
+        hpo_terms: &[String],
+        limit: usize,
+    ) -> Result<Vec<MonarchPhenotypeMatch>, BioMcpError> {
+        let plan = Self::phenotype_similarity_search_plan(hpo_terms, limit)?;
+        let rows: Vec<MonarchSemsimRow> = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        let out = Self::map_phenotype_matches(rows, limit);
         Ok(out)
     }
 }
@@ -474,134 +528,4 @@ pub struct MonarchPhenotypeMatch {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, path_regex, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn disease_gene_associations_maps_rows() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/v3/api/association"))
-            .and(query_param("object", "MONDO:0007739"))
-            .and(query_param("subject_category", "biolink:Gene"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "total": 1,
-                "items": [
-                    {
-                        "subject": "HGNC:4851",
-                        "subject_label": "HTT",
-                        "predicate": "biolink:gene_associated_with_condition",
-                        "primary_knowledge_source": "infores:orphanet",
-                        "object": "MONDO:0016621",
-                        "object_label": "juvenile Huntington disease"
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = MonarchClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .disease_gene_associations("MONDO:0007739", 5)
-            .await
-            .expect("rows");
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].gene, "HTT");
-        assert_eq!(
-            rows[0].relationship.as_deref(),
-            Some("gene associated with condition")
-        );
-    }
-
-    #[tokio::test]
-    async fn disease_models_maps_genotype_rows() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/v3/api/association"))
-            .and(query_param("object", "MONDO:0007739"))
-            .and(query_param("subject_category", "biolink:Genotype"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "total": 1,
-                "items": [
-                    {
-                        "subject": "MGI:3698752",
-                        "subject_label": "Htt tm1.1",
-                        "subject_taxon_label": "Mus musculus",
-                        "predicate": "biolink:model_of",
-                        "provided_by": "alliance_disease_edges"
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = MonarchClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .disease_models("MONDO:0007739", 5)
-            .await
-            .expect("rows");
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].organism.as_deref(), Some("Mus musculus"));
-    }
-
-    #[tokio::test]
-    async fn phenotype_similarity_search_maps_scores() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path_regex(r"/v3/api/semsim/search/.+/Human(%20| )Diseases"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-                {
-                    "subject": {
-                        "id": "MONDO:0010450",
-                        "name": "intellectual disability, X-linked 89"
-                    },
-                    "score": 13.302
-                }
-            ])))
-            .mount(&server)
-            .await;
-
-        let client = MonarchClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .phenotype_similarity_search(&["HP:0001250".into(), "HP:0001263".into()], 5)
-            .await
-            .expect("rows");
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].disease_id, "MONDO:0010450");
-        assert!(rows[0].score > 0.0);
-    }
-
-    #[tokio::test]
-    async fn monarch_5xx_maps_to_source_unavailable() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path_regex(r"/v3/api/semsim/search/.+/Human(%20| )Diseases"))
-            .respond_with(ResponseTemplate::new(502).set_body_string("bad gateway"))
-            .mount(&server)
-            .await;
-
-        let client = MonarchClient::new_for_test(server.uri()).expect("client");
-        let err = client
-            .phenotype_similarity_search(&["HP:0001250".into()], 5)
-            .await
-            .expect_err("5xx should be classified as source unavailable");
-
-        match err {
-            BioMcpError::SourceUnavailable {
-                source_name,
-                reason,
-                suggestion,
-            } => {
-                assert_eq!(source_name, "Monarch Initiative");
-                assert!(reason.contains("HTTP 502"));
-                assert!(suggestion.contains("Retry later"));
-            }
-            other => panic!("expected SourceUnavailable, got {other}"),
-        }
-    }
-}
+mod tests;
