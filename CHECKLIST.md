@@ -83,7 +83,7 @@ BioThings (near-copies of mygene/myvariant):
 - [x] mychem ~8 · [x] mydisease ~14
 
 NCBI / literature:
-- [ ] pubmed ~18 · [ ] pubtator ~8 · [x] ncbi_efetch ~2 · [x] ncbi_idconv ~3 · [x] pmc_oa ~6
+- [ ] pubmed ~18 · [x] pubtator ~8 · [x] ncbi_efetch ~2 · [x] ncbi_idconv ~3 · [x] pmc_oa ~6
 - [x] europepmc ~8 · [ ] semantic_scholar ~13 · [x] litsense2 ~4 · [x] nih_reporter ~7
 
 Trials / cancer:
@@ -164,4 +164,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `bash scripts/check-no-server-tests.sh` → pass.
 - 2026-06-16: `europepmc` converted. Checks:
   `cargo nextest run -E 'test(/sources::europepmc::/)'` → 12/12 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `pubtator` converted. Checks:
+  `cargo nextest run -E 'test(/sources::pubtator::/)'` → 11/11 pass;
   `bash scripts/check-no-server-tests.sh` → pass.

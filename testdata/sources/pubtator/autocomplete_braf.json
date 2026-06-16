@@ -1,0 +1,9 @@
+[
+  {
+    "_id": "@GENE_BRAF",
+    "biotype": "gene",
+    "db_id": "673",
+    "db": "Gene",
+    "name": "BRAF"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "_id": "123",
+      "pmid": 123,
+      "pmcid": "PMC123",
+      "title": "BRAF alterations in melanoma",
+      "journal": "Test Journal",
+      "date": "2024-01-01T00:00:00Z",
+      "score": 42.5
+    }
+  ],
+  "count": 1,
+  "total_pages": 1,
+  "current": 1,
+  "page_size": 25,
+  "facets": {}
+}

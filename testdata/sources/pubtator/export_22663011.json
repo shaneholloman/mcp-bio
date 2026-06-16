@@ -1,0 +1,28 @@
+{
+  "PubTator3": [
+    {
+      "pmid": 22663011,
+      "pmcid": "PMC3326122",
+      "date": "2012",
+      "journal": "The New England journal of medicine",
+      "authors": ["Example Author"],
+      "passages": [
+        {
+          "infons": {
+            "type": "abstract"
+          },
+          "text": "BRAF alterations are observed in melanoma.",
+          "annotations": [
+            {
+              "text": "BRAF",
+              "infons": {
+                "type": "Gene",
+                "identifier": "673"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
