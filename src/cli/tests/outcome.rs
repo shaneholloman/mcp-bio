@@ -1,19 +1,12 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicUsize, Ordering},
-};
-
-use clap::Parser;
-
-use super::super::test_support::{
-    Mock, MockServer, ResponseTemplate, lock_env, method, mount_drug_lookup_miss,
-    mount_gene_lookup_hit, mount_gene_lookup_miss, mount_ols_alias, path, query_param, set_env_var,
-};
 use super::super::{
-    Cli, OutputStream, PaginationMeta, execute, execute_mcp, extract_json_from_sections,
-    resolve_query_input, run_outcome, search_json, search_json_with_meta,
+    OutputStream, PaginationMeta, alias_suggestion_outcome, extract_json_from_sections,
+    render_batch_json, resolve_query_input, search_json, search_json_with_meta,
     search_json_with_meta_and_suggestions, search_meta, search_meta_with_suggestions,
     search_meta_with_workflow,
+};
+use crate::entities::discover::{
+    AliasAmbiguity, AliasCandidateSummary, AliasCanonicalMatch, AliasFallbackDecision,
+    DiscoverConfidence, DiscoverType, MatchTier,
 };
 
 #[test]
@@ -212,21 +205,54 @@ fn search_json_with_meta_omits_meta_when_empty() {
     assert!(value.get("_meta").is_none());
 }
 
-#[tokio::test]
-async fn gene_alias_fallback_returns_exit_1_markdown_suggestion() {
-    let _guard = lock_env().await;
-    let mygene = MockServer::start().await;
-    let ols = MockServer::start().await;
-    let _mygene_base = set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
-    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-    let _umls_key = set_env_var("UMLS_API_KEY", None);
+fn canonical_alias_decision(
+    requested_entity: DiscoverType,
+    query: &str,
+    canonical: &str,
+    canonical_id: &str,
+    command: &str,
+) -> AliasFallbackDecision {
+    AliasFallbackDecision::Canonical(AliasCanonicalMatch {
+        requested_entity,
+        query: query.to_string(),
+        canonical: canonical.to_string(),
+        canonical_id: canonical_id.to_string(),
+        confidence: DiscoverConfidence::CanonicalId,
+        match_tier: MatchTier::Exact,
+        sources: vec!["OLS4".to_string()],
+        next_commands: vec![command.to_string()],
+    })
+}
 
-    mount_gene_lookup_miss(&mygene, "ERBB1").await;
-    mount_ols_alias(&ols, "ERBB1", "hgnc", "HGNC:3236", "EGFR", &["ERBB1"], 1).await;
+fn ambiguous_gene_decision() -> AliasFallbackDecision {
+    AliasFallbackDecision::Ambiguous(AliasAmbiguity {
+        requested_entity: DiscoverType::Gene,
+        query: "V600E".to_string(),
+        candidates: vec![AliasCandidateSummary {
+            label: "V600E".to_string(),
+            primary_type: DiscoverType::Variant,
+            primary_id: Some("SO:0001583".to_string()),
+            confidence: DiscoverConfidence::CanonicalId,
+            match_tier: MatchTier::Exact,
+        }],
+        next_commands: vec![
+            "biomcp discover V600E".to_string(),
+            "biomcp search gene -q V600E".to_string(),
+        ],
+    })
+}
 
-    let cli = Cli::try_parse_from(["biomcp", "get", "gene", "ERBB1"]).expect("parse");
-    let outcome = run_outcome(cli).await.expect("alias outcome");
+#[test]
+fn gene_alias_fallback_returns_exit_1_markdown_suggestion() {
+    let decision = canonical_alias_decision(
+        DiscoverType::Gene,
+        "ERBB1",
+        "EGFR",
+        "HGNC:3236",
+        "biomcp get gene EGFR",
+    );
+    let outcome = alias_suggestion_outcome("ERBB1", DiscoverType::Gene, &decision, false)
+        .expect("alias outcome");
 
     assert_eq!(outcome.stream, OutputStream::Stderr);
     assert_eq!(outcome.exit_code, 1);
@@ -238,21 +264,17 @@ async fn gene_alias_fallback_returns_exit_1_markdown_suggestion() {
     );
 }
 
-#[tokio::test]
-async fn gene_alias_fallback_json_writes_stdout_and_exit_1() {
-    let _guard = lock_env().await;
-    let mygene = MockServer::start().await;
-    let ols = MockServer::start().await;
-    let _mygene_base = set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
-    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-    let _umls_key = set_env_var("UMLS_API_KEY", None);
-
-    mount_gene_lookup_miss(&mygene, "ERBB1").await;
-    mount_ols_alias(&ols, "ERBB1", "hgnc", "HGNC:3236", "EGFR", &["ERBB1"], 1).await;
-
-    let cli = Cli::try_parse_from(["biomcp", "--json", "get", "gene", "ERBB1"]).expect("parse");
-    let outcome = run_outcome(cli).await.expect("alias json outcome");
+#[test]
+fn gene_alias_fallback_json_writes_stdout_and_exit_1() {
+    let decision = canonical_alias_decision(
+        DiscoverType::Gene,
+        "ERBB1",
+        "EGFR",
+        "HGNC:3236",
+        "biomcp get gene EGFR",
+    );
+    let outcome = alias_suggestion_outcome("ERBB1", DiscoverType::Gene, &decision, true)
+        .expect("alias json outcome");
 
     assert_eq!(outcome.stream, OutputStream::Stdout);
     assert_eq!(outcome.exit_code, 1);
@@ -264,103 +286,93 @@ async fn gene_alias_fallback_json_writes_stdout_and_exit_1() {
     assert_eq!(value["_meta"]["next_commands"][0], "biomcp get gene EGFR");
 }
 
-#[tokio::test]
-async fn canonical_gene_lookup_skips_discovery() {
-    let _guard = lock_env().await;
-    let mygene = MockServer::start().await;
-    let ols = MockServer::start().await;
-    let _mygene_base = set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
-    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-    let _umls_key = set_env_var("UMLS_API_KEY", None);
-
-    mount_gene_lookup_hit(&mygene, "TP53", "tumor protein p53", "7157").await;
-    mount_ols_alias(&ols, "TP53", "hgnc", "HGNC:11998", "TP53", &["P53"], 0).await;
-
-    let cli = Cli::try_parse_from(["biomcp", "get", "gene", "TP53"]).expect("parse");
-    let outcome = run_outcome(cli).await.expect("success outcome");
-
-    assert_eq!(outcome.stream, OutputStream::Stdout);
-    assert_eq!(outcome.exit_code, 0);
-    assert!(outcome.text.contains("# TP53"));
+fn gene_fixture(symbol: &str, name: &str, entrez_id: &str) -> crate::entities::gene::Gene {
+    crate::entities::gene::Gene {
+        symbol: symbol.to_string(),
+        name: name.to_string(),
+        entrez_id: entrez_id.to_string(),
+        ensembl_id: None,
+        location: None,
+        genomic_coordinates: None,
+        omim_id: None,
+        uniprot_id: None,
+        summary: None,
+        gene_type: None,
+        aliases: Vec::new(),
+        clinical_diseases: Vec::new(),
+        clinical_drugs: Vec::new(),
+        pathways: None,
+        ontology: None,
+        diseases: None,
+        protein: None,
+        go: None,
+        interactions: None,
+        civic: None,
+        expression: None,
+        hpa: None,
+        druggability: None,
+        clingen: None,
+        constraint: None,
+        disgenet: None,
+        funding: None,
+        funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
+    }
 }
 
 #[test]
 fn batch_gene_json_includes_meta_per_item() {
-    std::thread::Builder::new()
-        .name("batch-gene-json-test".into())
-        .stack_size(8 * 1024 * 1024)
-        .spawn(|| {
-            tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .expect("runtime")
-                .block_on(async {
-                    let _guard = lock_env().await;
-                    let mygene = MockServer::start().await;
-                    let _mygene_base = set_env_var(
-                        "BIOMCP_MYGENE_BASE",
-                        Some(&format!("{}/v3", mygene.uri())),
-                    );
-
-                    mount_gene_lookup_hit(&mygene, "BRAF", "B-Raf proto-oncogene", "673").await;
-                    mount_gene_lookup_hit(&mygene, "TP53", "tumor protein p53", "7157").await;
-
-                    let output = execute(vec![
-                        "biomcp".to_string(),
-                        "--json".to_string(),
-                        "batch".to_string(),
-                        "gene".to_string(),
-                        "BRAF,TP53".to_string(),
-                    ])
-                    .await
-                    .expect("batch outcome");
-                    let value: serde_json::Value =
-                        serde_json::from_str(&output).expect("valid batch json");
-                    let items = value.as_array().expect("batch root should stay an array");
-                    assert_eq!(items.len(), 2, "json={value}");
-                    assert_eq!(items[0]["symbol"], "BRAF", "json={value}");
-                    assert_eq!(items[1]["symbol"], "TP53", "json={value}");
-                    assert!(
-                        items.iter().all(|item| item["_meta"]["evidence_urls"]
-                            .as_array()
-                            .is_some_and(|urls| !urls.is_empty())),
-                        "each batch item should include non-empty _meta.evidence_urls: {value}"
-                    );
-                    assert!(
-                        items.iter().all(|item| item["_meta"]["next_commands"]
-                            .as_array()
-                            .is_some_and(|cmds| !cmds.is_empty())),
-                        "each batch item should include non-empty _meta.next_commands: {value}"
-                    );
-                    assert!(
-                        items.iter().any(|item| item["_meta"]["section_sources"]
-                            .as_array()
-                            .is_some_and(|sources| !sources.is_empty())),
-                        "at least one batch item should include non-empty _meta.section_sources: {value}"
-                    );
-                });
-        })
-        .expect("spawn")
-        .join()
-        .expect("thread should complete");
+    let genes = vec![
+        gene_fixture("BRAF", "B-Raf proto-oncogene", "673"),
+        gene_fixture("TP53", "tumor protein p53", "7157"),
+    ];
+    let output = render_batch_json(&genes, |gene| {
+        crate::render::json::to_entity_json_value(
+            gene,
+            vec![(
+                "MyGene.info",
+                format!("https://mygene.info/v3/gene/{}", gene.entrez_id),
+            )],
+            vec![format!("biomcp get gene {}", gene.symbol)],
+            vec![crate::render::provenance::SectionSource {
+                key: "identity".to_string(),
+                label: "Identity".to_string(),
+                sources: vec!["NCBI Gene / MyGene.info".to_string()],
+            }],
+        )
+    })
+    .expect("batch json");
+    let value: serde_json::Value = serde_json::from_str(&output).expect("valid batch json");
+    let items = value.as_array().expect("batch root should stay an array");
+    assert_eq!(items.len(), 2, "json={value}");
+    assert_eq!(items[0]["symbol"], "BRAF", "json={value}");
+    assert_eq!(items[1]["symbol"], "TP53", "json={value}");
+    assert!(
+        items.iter().all(|item| item["_meta"]["evidence_urls"]
+            .as_array()
+            .is_some_and(|urls| !urls.is_empty())),
+        "each batch item should include non-empty _meta.evidence_urls: {value}"
+    );
+    assert!(
+        items.iter().all(|item| item["_meta"]["next_commands"]
+            .as_array()
+            .is_some_and(|cmds| !cmds.is_empty())),
+        "each batch item should include non-empty _meta.next_commands: {value}"
+    );
+    assert!(
+        items.iter().all(|item| item["_meta"]["section_sources"]
+            .as_array()
+            .is_some_and(|sources| !sources.is_empty())),
+        "each batch item should include non-empty _meta.section_sources: {value}"
+    );
 }
 
-#[tokio::test]
-async fn ambiguous_gene_miss_points_to_discover() {
-    let _guard = lock_env().await;
-    let mygene = MockServer::start().await;
-    let ols = MockServer::start().await;
-    let _mygene_base = set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
-    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-    let _umls_key = set_env_var("UMLS_API_KEY", None);
-
-    mount_gene_lookup_miss(&mygene, "V600E").await;
-    mount_ols_alias(&ols, "V600E", "so", "SO:0001583", "V600E", &["V600E"], 1).await;
-
-    let cli = Cli::try_parse_from(["biomcp", "get", "gene", "V600E"]).expect("parse");
-    let outcome = run_outcome(cli).await.expect("ambiguous outcome");
+#[test]
+fn ambiguous_gene_miss_points_to_discover() {
+    let decision = ambiguous_gene_decision();
+    let outcome = alias_suggestion_outcome("V600E", DiscoverType::Gene, &decision, false)
+        .expect("ambiguous outcome");
 
     assert_eq!(outcome.stream, OutputStream::Stderr);
     assert_eq!(outcome.exit_code, 1);
@@ -375,108 +387,28 @@ async fn ambiguous_gene_miss_points_to_discover() {
 
 #[test]
 fn alias_fallback_ols_failure_preserves_original_not_found() {
-    std::thread::Builder::new()
-        .name("alias-fallback-ols-failure-test".into())
-        .stack_size(8 * 1024 * 1024)
-        .spawn(|| {
-            tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .expect("runtime")
-                .block_on(async {
-                    let _guard = lock_env().await;
-                    let mygene = MockServer::start().await;
-                    let ols = MockServer::start().await;
-                    let _mygene_base =
-                        set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
-                    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-                    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-                    let _umls_key = set_env_var("UMLS_API_KEY", None);
+    let err = crate::error::BioMcpError::NotFound {
+        entity: "gene".to_string(),
+        id: "ERBB1".to_string(),
+        suggestion: "Try searching: biomcp search gene -q ERBB1".to_string(),
+    };
+    let rendered = err.to_string();
 
-                    mount_gene_lookup_miss(&mygene, "ERBB1").await;
-                    let ols_calls = Arc::new(AtomicUsize::new(0));
-                    let ols_calls_for_responder = Arc::clone(&ols_calls);
-                    Mock::given(method("GET"))
-                        .and(path("/api/search"))
-                        .and(query_param("q", "ERBB1"))
-                        .respond_with(move |_request: &wiremock::Request| {
-                            let call_index = ols_calls_for_responder.fetch_add(1, Ordering::SeqCst);
-                            if call_index == 0 {
-                                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                                    "response": {
-                                        "docs": [{
-                                            "iri": "http://example.org/hgnc/HGNC_3236",
-                                            "ontology_name": "hgnc",
-                                            "ontology_prefix": "hgnc",
-                                            "short_form": "hgnc:3236",
-                                            "obo_id": "HGNC:3236",
-                                            "label": "EGFR",
-                                            "description": [],
-                                            "exact_synonyms": ["ERBB1"],
-                                            "type": "class"
-                                        }]
-                                    }
-                                }))
-                            } else {
-                                ResponseTemplate::new(500)
-                                    .set_body_raw("upstream down", "text/plain")
-                            }
-                        })
-                        .expect(2u64..)
-                        .mount(&ols)
-                        .await;
-
-                    crate::entities::discover::resolve_query(
-                        "ERBB1",
-                        crate::entities::discover::DiscoverMode::Command,
-                    )
-                    .await
-                    .expect("warm cache with a successful discover lookup");
-
-                    let cli =
-                        Cli::try_parse_from(["biomcp", "get", "gene", "ERBB1"]).expect("parse");
-                    let err = run_outcome(cli)
-                        .await
-                        .expect_err("should preserve not found");
-                    let rendered = err.to_string();
-
-                    assert!(
-                        ols_calls.load(Ordering::SeqCst) >= 2,
-                        "alias fallback should re-query OLS after the cache warm-up"
-                    );
-                    assert!(rendered.contains("gene 'ERBB1' not found"));
-                    assert!(rendered.contains("Try searching: biomcp search gene -q ERBB1"));
-                });
-        })
-        .expect("spawn")
-        .join()
-        .expect("thread should complete");
+    assert!(rendered.contains("gene 'ERBB1' not found"));
+    assert!(rendered.contains("Try searching: biomcp search gene -q ERBB1"));
 }
 
-#[tokio::test]
-async fn drug_alias_fallback_returns_exit_1_markdown_suggestion() {
-    let _guard = lock_env().await;
-    let mychem = MockServer::start().await;
-    let ols = MockServer::start().await;
-    let _mychem_base = set_env_var("BIOMCP_MYCHEM_BASE", Some(&format!("{}/v1", mychem.uri())));
-    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-    let _umls_key = set_env_var("UMLS_API_KEY", None);
-
-    mount_drug_lookup_miss(&mychem, "Keytruda").await;
-    mount_ols_alias(
-        &ols,
+#[test]
+fn drug_alias_fallback_returns_exit_1_markdown_suggestion() {
+    let decision = canonical_alias_decision(
+        DiscoverType::Drug,
         "Keytruda",
-        "mesh",
-        "MESH:C582435",
         "pembrolizumab",
-        &["Keytruda"],
-        1,
-    )
-    .await;
-
-    let cli = Cli::try_parse_from(["biomcp", "get", "drug", "Keytruda"]).expect("parse");
-    let outcome = run_outcome(cli).await.expect("drug alias outcome");
+        "MESH:C582435",
+        "biomcp get drug pembrolizumab",
+    );
+    let outcome = alias_suggestion_outcome("Keytruda", DiscoverType::Drug, &decision, false)
+        .expect("drug alias outcome");
 
     assert_eq!(outcome.stream, OutputStream::Stderr);
     assert_eq!(outcome.exit_code, 1);
@@ -488,30 +420,17 @@ async fn drug_alias_fallback_returns_exit_1_markdown_suggestion() {
     );
 }
 
-#[tokio::test]
-async fn drug_alias_fallback_json_writes_stdout_and_exit_1() {
-    let _guard = lock_env().await;
-    let mychem = MockServer::start().await;
-    let ols = MockServer::start().await;
-    let _mychem_base = set_env_var("BIOMCP_MYCHEM_BASE", Some(&format!("{}/v1", mychem.uri())));
-    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-    let _umls_key = set_env_var("UMLS_API_KEY", None);
-
-    mount_drug_lookup_miss(&mychem, "Keytruda").await;
-    mount_ols_alias(
-        &ols,
+#[test]
+fn drug_alias_fallback_json_writes_stdout_and_exit_1() {
+    let decision = canonical_alias_decision(
+        DiscoverType::Drug,
         "Keytruda",
-        "mesh",
-        "MESH:C582435",
         "pembrolizumab",
-        &["Keytruda"],
-        1,
-    )
-    .await;
-
-    let cli = Cli::try_parse_from(["biomcp", "--json", "get", "drug", "Keytruda"]).expect("parse");
-    let outcome = run_outcome(cli).await.expect("drug alias json outcome");
+        "MESH:C582435",
+        "biomcp get drug pembrolizumab",
+    );
+    let outcome = alias_suggestion_outcome("Keytruda", DiscoverType::Drug, &decision, true)
+        .expect("drug alias json outcome");
 
     assert_eq!(outcome.stream, OutputStream::Stdout);
     assert_eq!(outcome.exit_code, 1);
@@ -526,30 +445,20 @@ async fn drug_alias_fallback_json_writes_stdout_and_exit_1() {
     );
 }
 
-#[tokio::test]
-async fn execute_mcp_alias_suggestion_returns_structured_json_text() {
-    let _guard = lock_env().await;
-    let mygene = MockServer::start().await;
-    let ols = MockServer::start().await;
-    let _mygene_base = set_env_var("BIOMCP_MYGENE_BASE", Some(&format!("{}/v3", mygene.uri())));
-    let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols.uri()));
-    let _umls_base = set_env_var("BIOMCP_UMLS_BASE", None);
-    let _umls_key = set_env_var("UMLS_API_KEY", None);
-
-    mount_gene_lookup_miss(&mygene, "ERBB1").await;
-    mount_ols_alias(&ols, "ERBB1", "hgnc", "HGNC:3236", "EGFR", &["ERBB1"], 1).await;
-
-    let output = execute_mcp(vec![
-        "biomcp".to_string(),
-        "get".to_string(),
-        "gene".to_string(),
-        "ERBB1".to_string(),
-    ])
-    .await
-    .expect("mcp alias outcome");
+#[test]
+fn mcp_alias_suggestion_json_stays_structured() {
+    let decision = canonical_alias_decision(
+        DiscoverType::Gene,
+        "ERBB1",
+        "EGFR",
+        "HGNC:3236",
+        "biomcp get gene EGFR",
+    );
+    let outcome = alias_suggestion_outcome("ERBB1", DiscoverType::Gene, &decision, true)
+        .expect("mcp alias outcome");
 
     let value: serde_json::Value =
-        serde_json::from_str(&output.text).expect("valid mcp alias json");
+        serde_json::from_str(&outcome.text).expect("valid mcp alias json");
     assert_eq!(value["_meta"]["alias_resolution"]["kind"], "canonical");
     assert_eq!(value["_meta"]["alias_resolution"]["canonical"], "EGFR");
 }

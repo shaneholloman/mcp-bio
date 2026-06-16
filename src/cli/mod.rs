@@ -59,6 +59,8 @@ pub use self::variant::VariantCommand;
 #[cfg(test)]
 use self::shared::RUNTIME_HELP_SUBCOMMANDS;
 #[cfg(test)]
+use self::shared::alias_suggestion_outcome;
+#[cfg(test)]
 use self::shared::search_meta_with_suggestions;
 use self::shared::{
     PaginationMeta, SearchJsonMeta, empty_sections, extract_json_from_sections,

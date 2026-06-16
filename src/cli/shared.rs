@@ -174,7 +174,7 @@ fn alias_suggestion_markdown(
     format!("Error: {err}")
 }
 
-fn alias_suggestion_outcome(
+pub(super) fn alias_suggestion_outcome(
     query: &str,
     requested_entity: crate::entities::discover::DiscoverType,
     decision: &crate::entities::discover::AliasFallbackDecision,

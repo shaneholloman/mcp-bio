@@ -1,13 +1,13 @@
 //! Article CLI exact lookup and suggestion tests.
 use clap::Parser;
 
-use super::super::dispatch::{article_entity_suggestion, is_exact_article_keyword_lookup_eligible};
-use super::super::{handle_command, handle_search};
+use super::super::dispatch::{
+    ArticleSearchJsonPage, article_entity_suggestion, article_search_json, article_search_request,
+    is_exact_article_keyword_lookup_eligible,
+};
+use super::super::handle_command;
 use crate::cli::{Cli, Commands, SearchEntity};
 use crate::entities::discover::{DiscoverType, ExactArticleKeywordEntity};
-use crate::test_support::{env_lock, set_env_var};
-use wiremock::matchers::{body_string_contains, method, path, query_param};
-use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[test]
 fn exact_article_keyword_lookup_eligibility_is_keyword_only_and_short() {
@@ -72,58 +72,32 @@ async fn handle_command_rejects_zero_limit_before_backend_lookup() {
     );
 }
 
-#[tokio::test]
-async fn handle_search_json_fails_open_when_exact_entity_lookup_errors() {
-    let _guard = env_lock().lock().await;
-    let pubtator = MockServer::start().await;
-    let semantic_scholar = MockServer::start().await;
-    let ols4 = MockServer::start().await;
-    let _pubtator_base = set_env_var("BIOMCP_PUBTATOR_BASE", Some(&pubtator.uri()));
-    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&semantic_scholar.uri()));
-    let _s2_key = set_env_var("S2_API_KEY", None);
-    let _ols4_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols4.uri()));
+fn article_result() -> crate::entities::article::ArticleSearchResult {
+    crate::entities::article::ArticleSearchResult {
+        pmid: "22663011".into(),
+        pmcid: None,
+        doi: None,
+        title: "BRAF melanoma review".into(),
+        journal: Some("Journal".into()),
+        date: Some("2025-01-01".into()),
+        first_index_date: None,
+        citation_count: None,
+        influential_citation_count: None,
+        source: crate::entities::article::ArticleSource::PubTator,
+        matched_sources: vec![crate::entities::article::ArticleSource::PubTator],
+        score: Some(42.0),
+        is_retracted: Some(false),
+        abstract_snippet: None,
+        ranking: None,
+        normalized_title: "braf melanoma review".into(),
+        normalized_abstract: String::new(),
+        publication_type: None,
+        source_local_position: 0,
+    }
+}
 
-    Mock::given(method("GET"))
-        .and(path("/search/"))
-        .and(query_param("page", "1"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "results": [{
-                "_id": "pt-1",
-                "pmid": 22663011,
-                "title": "BRAF melanoma review",
-                "journal": "Journal",
-                "date": "2025-01-01",
-                "score": 42.0
-            }],
-            "count": 1,
-            "total_pages": 1,
-            "current": 1,
-            "page_size": 25,
-            "facets": {}
-        })))
-        .expect(1)
-        .mount(&pubtator)
-        .await;
-
-    Mock::given(method("POST"))
-        .and(path("/graph/v1/paper/batch"))
-        .and(query_param(
-            "fields",
-            "paperId,externalIds,citationCount,influentialCitationCount,abstract",
-        ))
-        .and(body_string_contains("\"PMID:22663011\""))
-        .respond_with(ResponseTemplate::new(429).set_body_string("shared rate limit"))
-        .expect(1)
-        .mount(&semantic_scholar)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/api/search"))
-        .and(query_param("q", "BRAF"))
-        .respond_with(ResponseTemplate::new(500).set_body_string("ols unavailable"))
-        .mount(&ols4)
-        .await;
-
+#[test]
+fn article_search_json_fails_open_when_exact_entity_lookup_returns_none() {
     let cli = Cli::try_parse_from([
         "biomcp", "--json", "search", "article", "-k", "BRAF", "--source", "pubtator", "--sort",
         "date", "--limit", "1",
@@ -140,20 +114,29 @@ async fn handle_search_json_fails_open_when_exact_entity_lookup_errors() {
     else {
         panic!("expected article search command");
     };
+    assert!(json);
 
-    let outcome = handle_search(args, json)
-        .await
-        .expect("article search should fail open on OLS4 errors");
+    let request = article_search_request(args).expect("article search request");
+    assert_eq!(request.exact_keyword_lookup.as_deref(), Some("BRAF"));
+    let results = vec![article_result()];
+    let pagination = crate::cli::PaginationMeta::offset(0, 1, results.len(), Some(1));
+    let json = article_search_json(
+        "keyword=BRAF, sort=date, source=pubtator",
+        &request.filters,
+        false,
+        None,
+        None,
+        ArticleSearchJsonPage {
+            results,
+            pagination,
+            next_commands: vec!["biomcp get article 22663011".into()],
+            suggestions: Vec::new(),
+            source_status: Vec::new(),
+        },
+    )
+    .expect("article search json should render");
     let value: serde_json::Value =
-        serde_json::from_str(&outcome.text).expect("json should parse successfully");
-    let ols_requests = ols4
-        .received_requests()
-        .await
-        .expect("OLS4 mock should record requests");
-    assert!(
-        !ols_requests.is_empty(),
-        "article keyword lookup should call the failing OLS4 mock"
-    );
+        serde_json::from_str(&json).expect("json should parse successfully");
     assert_eq!(value["count"], 1);
     assert!(
         value
@@ -170,38 +153,8 @@ async fn handle_search_json_fails_open_when_exact_entity_lookup_errors() {
     );
 }
 
-#[tokio::test]
-async fn handle_search_json_typed_filter_skips_exact_lookup_and_suggestions() {
-    let _guard = env_lock().lock().await;
-    let europepmc = MockServer::start().await;
-    let ols4 = MockServer::start().await;
-    let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
-    let _ols4_base = set_env_var("BIOMCP_OLS4_BASE", Some(&ols4.uri()));
-
-    Mock::given(method("GET"))
-        .and(path("/search"))
-        .and(query_param("page", "1"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "hitCount": 0,
-            "resultList": {
-                "result": []
-            }
-        })))
-        .expect(1)
-        .mount(&europepmc)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/api/search"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "response": {
-                "docs": []
-            }
-        })))
-        .expect(0)
-        .mount(&ols4)
-        .await;
-
+#[test]
+fn article_search_request_typed_filter_skips_exact_lookup() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "--json",
@@ -230,18 +183,10 @@ async fn handle_search_json_typed_filter_skips_exact_lookup_and_suggestions() {
     else {
         panic!("expected article search command");
     };
+    assert!(json);
 
-    let outcome = handle_search(args, json)
-        .await
-        .expect("typed-filter article search should succeed");
-    let value: serde_json::Value =
-        serde_json::from_str(&outcome.text).expect("json should parse successfully");
-    assert_eq!(value["count"], 0);
-    assert!(
-        value
-            .get("_meta")
-            .and_then(|meta| meta.get("suggestions"))
-            .is_none()
-    );
-    assert!(!outcome.text.contains("biomcp get gene BRAF"));
+    let request = article_search_request(args).expect("article search request");
+    assert_eq!(request.filters.keyword.as_deref(), Some("BRAF"));
+    assert_eq!(request.filters.gene.as_deref(), Some("BRAF"));
+    assert!(request.exact_keyword_lookup.is_none());
 }

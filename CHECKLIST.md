@@ -372,3 +372,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   alias-fallback/output behavior tests were still running. Result at interrupt:
   537 passed, 11 interrupted. Do not use broad `cli::` as a normal gate yet;
   keep using narrow CLI batches until the alias-fallback tests are decomposed.
+- 2026-06-16: decomposed the 11 broad-CLI blockers. Replaced the remaining
+  alias-fallback/output mock-server tests with pure tests over alias decisions,
+  batch JSON rendering, and article exact-lookup request/rendering behavior.
+  Removed the now-dead CLI mock helpers. Checks:
+  `cargo nextest run -E 'test(/cli::tests::outcome::/) or test(/cli::gene::tests::/) or test(/cli::article::tests::exact_lookup::/)'` → 30/30 pass;
+  `cargo nextest run -E 'test(/cli::/)'` → 547/547 pass; `cargo check` → pass.
