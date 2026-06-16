@@ -173,3 +173,13 @@ case "$scenario" in
     "$binary" variant articles "MYD88 S219C" --limit 3
     ;;
 esac
+
+case "$scenario" in
+  all|myd88-json)
+    json_out="$("$binary" --json variant articles "MYD88 S219C" --limit 3)"
+    jq -e '.retrieval_path | test("fallback")' >/dev/null <<<"$json_out"
+    jq -e '.results | any(.pmid == "24534189")' >/dev/null <<<"$json_out"
+    printf 'JSON fallback path preserved\n'
+    jq -r '.results[] | select(.pmid == "24534189") | .pmid' <<<"$json_out"
+    ;;
+esac

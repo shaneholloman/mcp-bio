@@ -95,14 +95,21 @@ serves the MYD88 S219C article only for the labeled best-effort fallback path.
 
 ```bash
 bash ../fixtures/run-variant-article-entity-fixture.sh ../.. braf | mustmatch like '## BRAF V600E limit 1
+PubTator variant annotation recall
 4260001
 ## BRAF V600E limit 3
+PubTator variant annotation recall
 4260001'
 ```
 
 ```bash
 bash ../fixtures/run-variant-article-entity-fixture.sh ../.. myd88 | mustmatch like '## MYD88 S219C fallback
 best-effort free-text fallback
+24534189'
+```
+
+```bash
+bash ../fixtures/run-variant-article-entity-fixture.sh ../.. myd88-json | mustmatch like 'JSON fallback path preserved
 24534189'
 ```
 
