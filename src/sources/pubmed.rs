@@ -7,6 +7,7 @@ use reqwest_middleware::ClientWithMiddleware;
 use serde::Deserialize;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const PUBMED_EUTILS_BASE: &str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const PUBMED_EUTILS_BASE_ENV: &str = "BIOMCP_PUBMED_BASE";
@@ -116,77 +117,31 @@ impl PubMedClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String, api_key: Option<String>) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: Self::test_client()?,
-            base: Cow::Owned(base),
-            api_key: api_key
-                .map(|value| value.trim().to_string())
-                .filter(|value| !value.is_empty()),
-        })
-    }
-
-    #[cfg(test)]
-    fn test_client() -> Result<ClientWithMiddleware, BioMcpError> {
-        let base = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(10))
-            .connect_timeout(std::time::Duration::from_secs(5))
-            .user_agent(concat!("biomcp-cli-test/", env!("CARGO_PKG_VERSION")))
-            .build()
-            .map_err(BioMcpError::HttpClientInit)?;
-        Ok(reqwest_middleware::ClientBuilder::new(base).build())
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
-    fn apply_planned_ncbi_auth(
+    async fn send(
         &self,
         req: reqwest_middleware::RequestBuilder,
-        auth_mode: &str,
-    ) -> reqwest_middleware::RequestBuilder {
-        match auth_mode {
-            "authenticated" => crate::sources::append_ncbi_api_key(req, self.api_key.as_deref()),
-            "keyless" => req,
-            _ => req,
-        }
-    }
-
-    async fn get_json<T: serde::de::DeserializeOwned>(
-        &self,
-        req: reqwest_middleware::RequestBuilder,
-        cache_mode: &str,
-    ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode_with_auth(req, cache_mode == "auth")
+        authenticated: bool,
+    ) -> Result<
+        (
+            reqwest::StatusCode,
+            Option<reqwest::header::HeaderValue>,
+            Vec<u8>,
+        ),
+        BioMcpError,
+    > {
+        let resp = crate::sources::apply_cache_mode_with_auth(req, authenticated)
             .send()
             .await?;
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, PUBMED_EUTILS_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: PUBMED_EUTILS_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        crate::sources::ensure_json_content_type(PUBMED_EUTILS_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: PUBMED_EUTILS_API.to_string(),
-            source,
-        })
+        Ok((status, content_type, bytes.to_vec()))
     }
 
-    pub fn esearch_request_plan(
-        &self,
+    pub(crate) fn esearch_plan(
         params: &PubMedESearchParams,
-    ) -> Result<PubMedESearchRequestPlan, BioMcpError> {
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
         let term = params.term.trim();
         if term.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -230,11 +185,32 @@ impl PubMedClient {
         {
             query_params.push(("maxdate", format_pubmed_date(date_to)));
         }
+        if let Some(key) = clean_api_key(api_key) {
+            query_params.push(("api_key", key.to_string()));
+        }
 
+        let mut plan = RequestPlan::get("esearch.fcgi");
+        for (key, value) in query_params {
+            plan = plan.query(key, value);
+        }
+        Ok(plan)
+    }
+
+    #[allow(dead_code)]
+    pub fn esearch_request_plan(
+        &self,
+        params: &PubMedESearchParams,
+    ) -> Result<PubMedESearchRequestPlan, BioMcpError> {
+        let plan = Self::esearch_plan(params, self.api_key.as_deref())?;
         Ok(PubMedESearchRequestPlan {
             method: "GET",
             path: "/esearch.fcgi",
-            query_params,
+            query_params: plan
+                .query
+                .into_iter()
+                .filter(|(key, _)| key != "api_key")
+                .map(|(key, value)| (pubmed_query_key(&key), value))
+                .collect(),
             cache_mode: if self.api_key.is_some() {
                 "auth"
             } else {
@@ -254,11 +230,20 @@ impl PubMedClient {
         &self,
         params: &PubMedESearchParams,
     ) -> Result<PubMedESearchResponse, BioMcpError> {
-        let plan = self.esearch_request_plan(params)?;
-        let url = self.endpoint(plan.path);
-        let req = self.client.get(&url).query(&plan.query_params);
-        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
-        let response: ESearchEnvelope = self.get_json(req, plan.cache_mode).await?;
+        let authenticated = self.api_key.is_some();
+        let plan = Self::esearch_plan(params, self.api_key.as_deref())?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let (status, content_type, bytes) = self.send(req, authenticated).await?;
+        Self::decode_esearch_response(status, content_type.as_ref(), &bytes)
+    }
+
+    pub(crate) fn decode_esearch_response(
+        status: reqwest::StatusCode,
+        content_type: Option<&reqwest::header::HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<PubMedESearchResponse, BioMcpError> {
+        let response: ESearchEnvelope =
+            crate::sources::decode_json(PUBMED_EUTILS_API, status, content_type, bytes, true)?;
         let count = response
             .esearchresult
             .count
@@ -278,10 +263,10 @@ impl PubMedClient {
         })
     }
 
-    pub fn esummary_request_plan(
-        &self,
+    pub(crate) fn esummary_plan(
         ids: &[String],
-    ) -> Result<Option<PubMedESummaryRequestPlan>, BioMcpError> {
+        api_key: Option<&str>,
+    ) -> Result<Option<RequestPlan>, BioMcpError> {
         if ids.is_empty() {
             return Ok(None);
         }
@@ -294,14 +279,34 @@ impl PubMedClient {
             )));
         }
 
+        let mut plan = RequestPlan::get("esummary.fcgi")
+            .query("db", "pubmed")
+            .query("retmode", "json")
+            .query("id", requested_ids.join(","));
+        if let Some(key) = clean_api_key(api_key) {
+            plan = plan.query("api_key", key);
+        }
+        Ok(Some(plan))
+    }
+
+    #[allow(dead_code)]
+    pub fn esummary_request_plan(
+        &self,
+        ids: &[String],
+    ) -> Result<Option<PubMedESummaryRequestPlan>, BioMcpError> {
+        let Some(plan) = Self::esummary_plan(ids, self.api_key.as_deref())? else {
+            return Ok(None);
+        };
+
         Ok(Some(PubMedESummaryRequestPlan {
             method: "GET",
             path: "/esummary.fcgi",
-            query_params: vec![
-                ("db", "pubmed".to_string()),
-                ("retmode", "json".to_string()),
-                ("id", requested_ids.join(",")),
-            ],
+            query_params: plan
+                .query
+                .into_iter()
+                .filter(|(key, _)| key != "api_key")
+                .map(|(key, value)| (pubmed_query_key(&key), value))
+                .collect(),
             cache_mode: if self.api_key.is_some() {
                 "auth"
             } else {
@@ -318,16 +323,26 @@ impl PubMedClient {
     }
 
     pub async fn esummary(&self, ids: &[String]) -> Result<Vec<ESummaryEntry>, BioMcpError> {
-        let Some(plan) = self.esummary_request_plan(ids)? else {
+        let Some(plan) = Self::esummary_plan(ids, self.api_key.as_deref())? else {
             return Ok(Vec::new());
         };
 
+        let authenticated = self.api_key.is_some();
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let (status, content_type, bytes) = self.send(req, authenticated).await?;
+        Self::decode_esummary_response(ids, status, content_type.as_ref(), &bytes)
+    }
+
+    pub(crate) fn decode_esummary_response(
+        ids: &[String],
+        status: reqwest::StatusCode,
+        content_type: Option<&reqwest::header::HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<Vec<ESummaryEntry>, BioMcpError> {
         let requested_ids = ids.iter().map(|id| id.trim()).collect::<Vec<_>>();
         let requested_set = requested_ids.iter().copied().collect::<HashSet<_>>();
-        let url = self.endpoint(plan.path);
-        let req = self.client.get(&url).query(&plan.query_params);
-        let req = self.apply_planned_ncbi_auth(req, plan.auth_mode);
-        let response: ESummaryEnvelope = self.get_json(req, plan.cache_mode).await?;
+        let response: ESummaryEnvelope =
+            crate::sources::decode_json(PUBMED_EUTILS_API, status, content_type, bytes, true)?;
 
         let uids = response
             .result
@@ -438,605 +453,26 @@ impl PubMedClient {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
+fn clean_api_key(api_key: Option<&str>) -> Option<&str> {
+    api_key.map(str::trim).filter(|key| !key.is_empty())
+}
 
-    #[test]
-    fn ticket_376_article_source_contracts_pubmed_request_plans_cover_braf() {
-        let client =
-            PubMedClient::new_for_test("http://127.0.0.1".into(), Some("super-secret-ncbi".into()))
-                .expect("client");
-
-        let esearch: PubMedESearchRequestPlan = client
-            .esearch_request_plan(&PubMedESearchParams {
-                term: " BRAF melanoma ".into(),
-                retstart: 0,
-                retmax: 20,
-                date_from: Some("2020-01-01".into()),
-                date_to: None,
-            })
-            .expect("PubMedESearchRequestPlan");
-        assert_eq!(esearch.method, "GET");
-        assert_eq!(esearch.path, "/esearch.fcgi");
-        assert!(
-            esearch
-                .query_params
-                .contains(&("term", "BRAF melanoma".to_string()))
-        );
-        assert!(esearch.query_params.contains(&("retmax", "20".to_string())));
-        assert_eq!(esearch.auth_mode, "authenticated");
-        assert!(
-            !esearch
-                .query_params
-                .iter()
-                .any(|(_, value)| value.contains("super-secret"))
-        );
-
-        let ids = vec!["123".to_string(), "456".to_string()];
-        let esummary: PubMedESummaryRequestPlan = client
-            .esummary_request_plan(&ids)
-            .expect("plan")
-            .expect("PubMedESummaryRequestPlan");
-        assert_eq!(esummary.method, "GET");
-        assert_eq!(esummary.path, "/esummary.fcgi");
-        assert!(
-            esummary
-                .query_params
-                .contains(&("id", "123,456".to_string()))
-        );
-        assert_eq!(esummary.content_type_expectation, "json");
-    }
-
-    #[tokio::test]
-    async fn ticket_400_pubmed_auth_and_cache_modes_are_consumed_from_request_plans() {
-        let keyed_server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esearch.fcgi"))
-            .and(query_param("db", "pubmed"))
-            .and(query_param("term", "BRAF"))
-            .and(query_param("retstart", "0"))
-            .and(query_param("retmax", "10"))
-            .and(query_param("retmode", "json"))
-            .and(query_param("api_key", "ticket-400-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "esearchresult": {"count": "1", "idlist": ["123"]}
-            })))
-            .expect(1)
-            .mount(&keyed_server)
-            .await;
-        let keyed = PubMedClient::new_for_test(keyed_server.uri(), Some("ticket-400-key".into()))
-            .expect("keyed client");
-        let params = PubMedESearchParams {
-            term: "BRAF".into(),
-            retstart: 0,
-            retmax: 10,
-            date_from: None,
-            date_to: None,
-        };
-        let keyed_plan = keyed.esearch_request_plan(&params).expect("keyed plan");
-        assert_eq!(keyed_plan.path, "/esearch.fcgi");
-        assert_eq!(keyed_plan.cache_mode, "auth");
-        assert_eq!(keyed_plan.auth_mode, "authenticated");
-        assert!(
-            keyed_plan
-                .query_params
-                .contains(&("term", "BRAF".to_string()))
-        );
-        let keyed_response = keyed.esearch(&params).await.expect("keyed esearch");
-        assert_eq!(keyed_response.idlist, vec!["123".to_string()]);
-
-        let keyless =
-            PubMedClient::new_for_test("http://127.0.0.1".into(), None).expect("keyless client");
-        let ids = vec!["123".to_string(), "456".to_string()];
-        let keyless_plan = keyless
-            .esummary_request_plan(&ids)
-            .expect("keyless plan")
-            .expect("summary plan");
-        assert_eq!(keyless_plan.path, "/esummary.fcgi");
-        assert_eq!(keyless_plan.cache_mode, "default");
-        assert_eq!(keyless_plan.auth_mode, "keyless");
-        assert!(
-            keyless_plan
-                .query_params
-                .contains(&("id", "123,456".to_string()))
-        );
-    }
-
-    #[tokio::test]
-    async fn esearch_sets_required_query_params() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esearch.fcgi"))
-            .and(query_param("db", "pubmed"))
-            .and(query_param("retmode", "json"))
-            .and(query_param("term", "BRAF melanoma"))
-            .and(query_param("retstart", "5"))
-            .and(query_param("retmax", "20"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "esearchresult": {
-                    "count": "2",
-                    "idlist": ["123", "456"]
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let response = client
-            .esearch(&PubMedESearchParams {
-                term: "BRAF melanoma".into(),
-                retstart: 5,
-                retmax: 20,
-                date_from: None,
-                date_to: None,
-            })
-            .await
-            .expect("esearch should succeed");
-
-        assert_eq!(response.count, 2);
-        assert_eq!(response.idlist, vec!["123".to_string(), "456".to_string()]);
-    }
-
-    #[tokio::test]
-    async fn esearch_appends_ncbi_api_key() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esearch.fcgi"))
-            .and(query_param("db", "pubmed"))
-            .and(query_param("term", "BRAF"))
-            .and(query_param("retstart", "0"))
-            .and(query_param("retmax", "10"))
-            .and(query_param("retmode", "json"))
-            .and(query_param("api_key", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "esearchresult": {
-                    "count": "0",
-                    "idlist": []
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client =
-            PubMedClient::new_for_test(server.uri(), Some("test-key".into())).expect("client");
-        let response = client
-            .esearch(&PubMedESearchParams {
-                term: "BRAF".into(),
-                retstart: 0,
-                retmax: 10,
-                date_from: None,
-                date_to: None,
-            })
-            .await
-            .expect("esearch should succeed");
-
-        assert_eq!(response.count, 0);
-        assert!(response.idlist.is_empty());
-    }
-
-    #[tokio::test]
-    async fn esearch_applies_date_range_params() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esearch.fcgi"))
-            .and(query_param("db", "pubmed"))
-            .and(query_param("term", "BRAF"))
-            .and(query_param("retstart", "0"))
-            .and(query_param("retmax", "10"))
-            .and(query_param("retmode", "json"))
-            .and(query_param("datetype", "pdat"))
-            .and(query_param("mindate", "2020/01/01"))
-            .and(query_param("maxdate", "2024/12/31"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "esearchresult": {
-                    "count": "1",
-                    "idlist": ["31832001"]
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let response = client
-            .esearch(&PubMedESearchParams {
-                term: "BRAF".into(),
-                retstart: 0,
-                retmax: 10,
-                date_from: Some("2020-01-01".into()),
-                date_to: Some("2024-12-31".into()),
-            })
-            .await
-            .expect("esearch should succeed");
-
-        assert_eq!(response.idlist, vec!["31832001".to_string()]);
-    }
-
-    #[tokio::test]
-    async fn esearch_handles_empty_idlist() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esearch.fcgi"))
-            .and(query_param("db", "pubmed"))
-            .and(query_param("term", "BRAF"))
-            .and(query_param("retstart", "0"))
-            .and(query_param("retmax", "5"))
-            .and(query_param("retmode", "json"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "esearchresult": {
-                    "count": "0",
-                    "idlist": []
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let response = client
-            .esearch(&PubMedESearchParams {
-                term: "BRAF".into(),
-                retstart: 0,
-                retmax: 5,
-                date_from: None,
-                date_to: None,
-            })
-            .await
-            .expect("esearch should succeed");
-
-        assert_eq!(response.count, 0);
-        assert!(response.idlist.is_empty());
-    }
-
-    #[tokio::test]
-    async fn esearch_surfaces_http_error_context() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esearch.fcgi"))
-            .respond_with(ResponseTemplate::new(500).set_body_string("upstream failure"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esearch(&PubMedESearchParams {
-                term: "BRAF".into(),
-                retstart: 0,
-                retmax: 5,
-                date_from: None,
-                date_to: None,
-            })
-            .await
-            .expect_err("http failure should surface");
-
-        let msg = err.to_string();
-        assert!(msg.contains("pubmed-eutils"));
-        assert!(msg.contains("500"));
-    }
-
-    #[tokio::test]
-    async fn esearch_rejects_non_numeric_count() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esearch.fcgi"))
-            .and(query_param("db", "pubmed"))
-            .and(query_param("term", "BRAF"))
-            .and(query_param("retstart", "0"))
-            .and(query_param("retmax", "5"))
-            .and(query_param("retmode", "json"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "esearchresult": {
-                    "count": "not-a-number",
-                    "idlist": ["123"]
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esearch(&PubMedESearchParams {
-                term: "BRAF".into(),
-                retstart: 0,
-                retmax: 5,
-                date_from: None,
-                date_to: None,
-            })
-            .await
-            .expect_err("non-numeric count should fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("pubmed-eutils"));
-        assert!(msg.contains("count"));
-    }
-
-    #[tokio::test]
-    async fn esearch_rejects_empty_term() {
-        let client = PubMedClient::new_for_test("http://127.0.0.1".into(), None).expect("client");
-        let err = client
-            .esearch(&PubMedESearchParams {
-                term: "   ".into(),
-                retstart: 0,
-                retmax: 5,
-                date_from: None,
-                date_to: None,
-            })
-            .await
-            .expect_err("empty term should fail");
-
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("term"));
-    }
-
-    #[tokio::test]
-    async fn esummary_handles_empty_ids() {
-        let client = PubMedClient::new_for_test("http://127.0.0.1".into(), None).expect("client");
-        let response = client
-            .esummary(&[])
-            .await
-            .expect("empty ids should short-circuit");
-
-        assert!(response.is_empty());
-    }
-
-    #[tokio::test]
-    async fn esummary_returns_hydrated_entries_in_requested_order() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esummary.fcgi"))
-            .and(query_param("db", "pubmed"))
-            .and(query_param("retmode", "json"))
-            .and(query_param("id", "2,1"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "uids": ["1", "2"],
-                    "1": {
-                        "uid": "1",
-                        "title": "First title",
-                        "sortpubdate": "2024/01/15 00:00",
-                        "pubdate": "2024 Jan 15",
-                        "history": [
-                            {"pubstatus": "entrez", "date": "2024/01/16 00:00"},
-                            {"pubstatus": "medline", "date": "2024/01/17 00:00"}
-                        ],
-                        "fulljournalname": "Journal One",
-                        "source": "J1"
-                    },
-                    "2": {
-                        "uid": "2",
-                        "title": "Second title",
-                        "sortpubdate": "2023/12/01 00:00",
-                        "pubdate": "2023 Dec 01",
-                        "fulljournalname": "Journal Two",
-                        "source": "J2"
-                    }
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let response = client
-            .esummary(&["2".to_string(), "1".to_string()])
-            .await
-            .expect("esummary should hydrate");
-
-        assert_eq!(response.len(), 2);
-        assert_eq!(response[0].uid, "2");
-        assert_eq!(response[0].title, "Second title");
-        assert_eq!(response[0].fulljournalname.as_deref(), Some("Journal Two"));
-        assert_eq!(response[1].uid, "1");
-        assert_eq!(response[1].title, "First title");
-        assert_eq!(response[1].edat.as_deref(), Some("2024/01/16 00:00"));
-        assert_eq!(response[1].lr.as_deref(), Some("2024/01/17 00:00"));
-        assert_eq!(response[1].source.as_deref(), Some("J1"));
-    }
-
-    #[tokio::test]
-    async fn esummary_hard_fails_on_missing_uids() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esummary.fcgi"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "1": {
-                        "uid": "1",
-                        "title": "Only title"
-                    }
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esummary(&["1".to_string()])
-            .await
-            .expect_err("missing uids should fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("pubmed-eutils"));
-        assert!(msg.contains("uids"));
-    }
-
-    #[tokio::test]
-    async fn esummary_hard_fails_on_duplicate_uids() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esummary.fcgi"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "uids": ["1", "1"],
-                    "1": {
-                        "uid": "1",
-                        "title": "Only title"
-                    }
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esummary(&["1".to_string()])
-            .await
-            .expect_err("duplicate uids should fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("duplicate"));
-        assert!(msg.contains("1"));
-    }
-
-    #[tokio::test]
-    async fn esummary_hard_fails_on_missing_requested_uid() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esummary.fcgi"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "uids": ["1"],
-                    "1": {
-                        "uid": "1",
-                        "title": "Only title"
-                    }
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esummary(&["1".to_string(), "2".to_string()])
-            .await
-            .expect_err("missing requested uid should fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("2"));
-        assert!(msg.contains("missing"));
-    }
-
-    #[tokio::test]
-    async fn esummary_hard_fails_on_unexpected_uid() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esummary.fcgi"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "uids": ["1", "9"],
-                    "1": {
-                        "uid": "1",
-                        "title": "Only title"
-                    },
-                    "9": {
-                        "uid": "9",
-                        "title": "Unexpected title"
-                    }
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esummary(&["1".to_string()])
-            .await
-            .expect_err("unexpected uid should fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("unexpected"));
-        assert!(msg.contains("9"));
-    }
-
-    #[tokio::test]
-    async fn esummary_hard_fails_on_missing_entry() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esummary.fcgi"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "uids": ["1"]
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esummary(&["1".to_string()])
-            .await
-            .expect_err("missing entry should fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("entry"));
-        assert!(msg.contains("1"));
-    }
-
-    #[tokio::test]
-    async fn esummary_hard_fails_on_malformed_entry() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esummary.fcgi"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "uids": ["1"],
-                    "1": []
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esummary(&["1".to_string()])
-            .await
-            .expect_err("malformed entry should fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("parse"));
-        assert!(msg.contains("1"));
-    }
-
-    #[tokio::test]
-    async fn esummary_hard_fails_on_conflicting_inner_uid() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/esummary.fcgi"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "uids": ["1"],
-                    "1": {
-                        "uid": "2",
-                        "title": "Conflicting title"
-                    }
-                }
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = PubMedClient::new_for_test(server.uri(), None).expect("client");
-        let err = client
-            .esummary(&["1".to_string()])
-            .await
-            .expect_err("conflicting inner uid should fail");
-
-        let msg = err.to_string();
-        assert!(msg.contains("uid"));
-        assert!(msg.contains("1"));
-        assert!(msg.contains("2"));
+#[allow(dead_code)]
+fn pubmed_query_key(key: &str) -> &'static str {
+    match key {
+        "db" => "db",
+        "retmode" => "retmode",
+        "term" => "term",
+        "retstart" => "retstart",
+        "retmax" => "retmax",
+        "datetype" => "datetype",
+        "mindate" => "mindate",
+        "maxdate" => "maxdate",
+        "id" => "id",
+        "api_key" => "api_key",
+        _ => unreachable!("unexpected PubMed query key: {key}"),
     }
 }
+
+#[cfg(test)]
+mod tests;

@@ -186,13 +186,6 @@ pub(crate) fn s2_api_key() -> Option<String> {
         .filter(|s| !s.is_empty())
 }
 
-pub(crate) fn append_ncbi_api_key(req: RequestBuilder, api_key: Option<&str>) -> RequestBuilder {
-    if let Some(key) = api_key {
-        return req.query(&[("api_key", key)]);
-    }
-    req
-}
-
 // --- Request-construction seam (Tier-2 substrate) ----------------------------
 //
 // A source client builds a pure `RequestPlan` in a `*_plan()` function (no network,
