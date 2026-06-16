@@ -48,9 +48,10 @@ pub enum DiseaseCommand {
     #[command(after_help = "\
 EXAMPLES:
   biomcp disease trials melanoma --limit 5
+  biomcp disease trials \"Phelan-McDermid Syndrome\" --limit 5
   biomcp disease trials \"lung cancer\" --source nci --limit 5
 
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
+Note: CTGov shares the same bounded condition expansion used by search trial -c; other sources keep the literal disease search. Results depend on source document wording.
 See also: biomcp list disease")]
     Trials {
         /// Disease name (e.g., melanoma)
