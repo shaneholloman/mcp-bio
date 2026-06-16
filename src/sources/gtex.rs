@@ -3,11 +3,14 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::sync::OnceLock;
 
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const GTEX_BASE: &str = "https://gtexportal.org";
 const GTEX_API: &str = "gtex";
@@ -30,20 +33,25 @@ impl GtexClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
+    pub(crate) fn gene_search_plan(ensembl_id: &str) -> Result<RequestPlan, BioMcpError> {
+        let ensembl_id = normalize_ensembl_id(ensembl_id)?;
+        Ok(RequestPlan::get("api/v2/reference/geneSearch")
+            .query("geneId", ensembl_id)
+            .query("gencodeVersion", GTEX_GENCODE_VERSION))
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    pub(crate) fn median_expression_plan(versioned_gencode_id: &str) -> RequestPlan {
+        RequestPlan::get("api/v2/expression/medianGeneExpression")
+            .query("gencodeId", versioned_gencode_id.trim())
+            .query("datasetId", GTEX_DATASET_ID)
+    }
+
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        crate::sources::decode_json(GTEX_API, status, content_type, bytes, true)
     }
 
     async fn get_json<T: DeserializeOwned>(
@@ -54,20 +62,7 @@ impl GtexClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, GTEX_API).await?;
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: GTEX_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(GTEX_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: GTEX_API.to_string(),
-            source,
-        })
+        Self::decode_json_response(status, content_type.as_ref(), &bytes)
     }
 
     #[allow(dead_code)]
@@ -101,14 +96,17 @@ impl GtexClient {
         &self,
         ensembl_id: &str,
     ) -> Result<Option<String>, BioMcpError> {
-        let url = self.endpoint("api/v2/reference/geneSearch");
+        let plan = Self::gene_search_plan(ensembl_id)?;
         let resp: GtexGeneSearchResponse = self
-            .get_json(self.client.get(&url).query(&[
-                ("geneId", ensembl_id),
-                ("gencodeVersion", GTEX_GENCODE_VERSION),
-            ]))
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
             .await?;
+        Self::resolve_versioned_gencode_id_from_response(ensembl_id, resp)
+    }
 
+    fn resolve_versioned_gencode_id_from_response(
+        ensembl_id: &str,
+        resp: GtexGeneSearchResponse,
+    ) -> Result<Option<String>, BioMcpError> {
         let mut first_non_empty: Option<String> = None;
         for row in resp.data {
             let Some(gencode_id) = clean_optional(row.gencode_id) else {
@@ -136,14 +134,16 @@ impl GtexClient {
         &self,
         versioned_gencode_id: &str,
     ) -> Result<Vec<TissueExpression>, BioMcpError> {
-        let url = self.endpoint("api/v2/expression/medianGeneExpression");
+        let plan = Self::median_expression_plan(versioned_gencode_id);
         let resp: GtexMedianExpressionResponse = self
-            .get_json(self.client.get(&url).query(&[
-                ("gencodeId", versioned_gencode_id),
-                ("datasetId", GTEX_DATASET_ID),
-            ]))
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
             .await?;
+        Ok(Self::median_expression_rows_from_response(resp))
+    }
 
+    fn median_expression_rows_from_response(
+        resp: GtexMedianExpressionResponse,
+    ) -> Vec<TissueExpression> {
         let mut rows: Vec<TissueExpression> = resp
             .data
             .into_iter()
@@ -162,7 +162,7 @@ impl GtexClient {
                 .unwrap_or(Ordering::Equal)
                 .then_with(|| a.tissue.cmp(&b.tissue))
         });
-        Ok(rows)
+        rows
     }
 }
 
@@ -270,156 +270,4 @@ struct GtexMedianExpressionRow {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::time::Duration;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn resolve_versioned_id_uses_gene_search_endpoint() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/reference/geneSearch"))
-            .and(query_param("geneId", "ENSG00000157764"))
-            .and(query_param("gencodeVersion", "v26"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": [
-                    {"gencodeId": "ENSG00000157764.12"}
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = GtexClient::new_for_test(server.uri()).expect("client");
-        let resolved = client
-            .resolve_versioned_gencode_id("ENSG00000157764")
-            .await
-            .expect("resolved");
-        assert_eq!(resolved.as_deref(), Some("ENSG00000157764.12"));
-    }
-
-    #[tokio::test]
-    async fn median_expression_sorts_and_compacts_to_top_and_low_tissues() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/reference/geneSearch"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": [
-                    {"gencodeId": "ENSG00000157764.12"}
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let rows = (1..=14)
-            .map(|idx| {
-                serde_json::json!({
-                    "median": idx as f64,
-                    "tissueSiteDetailId": format!("Tissue_{idx}")
-                })
-            })
-            .collect::<Vec<_>>();
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/expression/medianGeneExpression"))
-            .and(query_param("gencodeId", "ENSG00000157764.12"))
-            .and(query_param("datasetId", "gtex_v8"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({ "data": rows })),
-            )
-            .mount(&server)
-            .await;
-
-        let client = GtexClient::new_for_test(server.uri()).expect("client");
-        let tissues = client
-            .median_gene_expression("ENSG00000157764")
-            .await
-            .expect("expression");
-
-        assert_eq!(tissues.len(), 13);
-        assert_eq!(
-            tissues.first().map(|row| row.tissue.as_str()),
-            Some("Tissue 14")
-        );
-        assert!(tissues.iter().any(|row| row.tissue == "Tissue 1"));
-        assert!(!tissues.iter().any(|row| row.tissue == "Tissue 4"));
-    }
-
-    #[tokio::test]
-    async fn median_expression_returns_empty_when_gene_search_has_no_match() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/reference/geneSearch"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = GtexClient::new_for_test(server.uri()).expect("client");
-        let tissues = client
-            .median_gene_expression("ENSG00000157764")
-            .await
-            .expect("expression");
-        assert!(tissues.is_empty());
-    }
-
-    #[tokio::test]
-    async fn median_expression_requests_are_serialized() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/reference/geneSearch"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_delay(Duration::from_millis(100))
-                    .set_body_json(serde_json::json!({
-                        "data": [
-                            {"gencodeId": "ENSG00000157764.12"}
-                        ]
-                    })),
-            )
-            .expect(2)
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/expression/medianGeneExpression"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_delay(Duration::from_millis(100))
-                    .set_body_json(serde_json::json!({
-                        "data": [
-                            {"median": 1.0, "tissueSiteDetailId": "Tissue_1"}
-                        ]
-                    })),
-            )
-            .expect(2)
-            .mount(&server)
-            .await;
-
-        let client = std::sync::Arc::new(GtexClient::new_for_test(server.uri()).expect("client"));
-        let elapsed = crate::sources::with_no_cache(true, async {
-            let start = tokio::time::Instant::now();
-            let first = {
-                let client = client.clone();
-                async move { client.median_gene_expression("ENSG00000157764").await }
-            };
-            let second = {
-                let client = client.clone();
-                async move { client.median_gene_expression("ENSG00000157764").await }
-            };
-            let (one, two) = tokio::join!(first, second);
-            one.expect("first request");
-            two.expect("second request");
-            start.elapsed()
-        })
-        .await;
-
-        assert!(elapsed >= Duration::from_millis(350));
-    }
-}
+mod tests;

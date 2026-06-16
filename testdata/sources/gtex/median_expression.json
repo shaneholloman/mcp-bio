@@ -1,0 +1,20 @@
+{
+  "data": [
+    {"median": 1.0, "tissueSiteDetailId": "Tissue_1"},
+    {"median": 2.0, "tissueSiteDetailId": "Tissue_2"},
+    {"median": 3.0, "tissueSiteDetailId": "Tissue_3"},
+    {"median": 4.0, "tissueSiteDetailId": "Tissue_4"},
+    {"median": 5.0, "tissueSiteDetailId": "Tissue_5"},
+    {"median": 6.0, "tissueSiteDetailId": "Tissue_6"},
+    {"median": 7.0, "tissueSiteDetailId": "Tissue_7"},
+    {"median": 8.0, "tissueSiteDetailId": "Tissue_8"},
+    {"median": 9.0, "tissueSiteDetailId": "Tissue_9"},
+    {"median": 10.0, "tissueSiteDetailId": "Tissue_10"},
+    {"median": 11.0, "tissueSiteDetailId": "Tissue_11"},
+    {"median": 12.0, "tissueSiteDetailId": "Tissue_12"},
+    {"median": 13.0, "tissueSiteDetailId": "Tissue_13"},
+    {"median": 14.0, "tissueSiteDetailId": "Tissue_14"},
+    {"median": null, "tissueSiteDetailId": "Missing_Median"},
+    {"median": 15.0, "tissueSiteDetailId": null}
+  ]
+}
