@@ -4,17 +4,18 @@ use std::path::{Component, Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use flate2::read::GzDecoder;
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use tokio::io::AsyncWriteExt;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const DATAHUB_BASE: &str = "https://datahub.assets.cbioportal.org";
 const DATAHUB_API: &str = "cbioportal-datahub";
 const DATAHUB_BASE_ENV: &str = "BIOMCP_CBIOPORTAL_DATAHUB_BASE";
 const DATAHUB_CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const DATAHUB_ARCHIVE_IDLE_TIMEOUT: Duration = Duration::from_secs(120);
-#[cfg(test)]
-const DATAHUB_ARCHIVE_IDLE_TIMEOUT_FOR_TEST: Duration = Duration::from_millis(100);
 
 #[derive(Debug, Clone)]
 pub struct StudyInstallResult {
@@ -38,61 +39,29 @@ impl CBioPortalDownloadClient {
         })
     }
 
-    #[cfg(test)]
-    pub fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: datahub_client(DATAHUB_CONNECT_TIMEOUT, None)?,
-            base: Cow::Owned(base),
-            download_idle_timeout: DATAHUB_ARCHIVE_IDLE_TIMEOUT_FOR_TEST,
-        })
+    pub(crate) fn study_list_plan() -> RequestPlan {
+        RequestPlan::get("study_list.json")
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    pub(crate) fn study_archive_plan(study_id: &str) -> Result<RequestPlan, BioMcpError> {
+        let study_id = validate_study_id(study_id)?;
+        Ok(RequestPlan::get(format!("{study_id}.tar.gz")))
     }
 
-    async fn get_json<T: serde::de::DeserializeOwned>(
-        &self,
-        req: reqwest_middleware::RequestBuilder,
-    ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode(req).send().await?;
-        let status = resp.status();
-        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
-        let body = crate::sources::read_limited_body(resp, DATAHUB_API).await?;
-        if !status.is_success() {
-            return Err(BioMcpError::Api {
-                api: DATAHUB_API.to_string(),
-                message: format!("HTTP {status}: {}", crate::sources::body_excerpt(&body)),
-            });
-        }
-        crate::sources::ensure_json_content_type(DATAHUB_API, content_type.as_ref(), &body)?;
-        serde_json::from_slice(&body).map_err(|source| BioMcpError::ApiJson {
-            api: DATAHUB_API.to_string(),
-            source,
-        })
+    pub(crate) fn decode_study_list_response(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        body: &[u8],
+    ) -> Result<Vec<String>, BioMcpError> {
+        crate::sources::decode_json(DATAHUB_API, status, content_type, body, true)
     }
 
-    async fn download_study_archive_to_path(
-        &self,
+    pub(crate) fn decode_archive_status(
         study_id: &str,
-        dest: &Path,
+        status: StatusCode,
+        body: &[u8],
     ) -> Result<(), BioMcpError> {
-        let mut resp = crate::sources::apply_cache_mode(
-            self.client
-                .get(self.endpoint(&format!("{study_id}.tar.gz"))),
-        )
-        .send()
-        .await?;
-        let status = resp.status();
-        if matches!(
-            status,
-            reqwest::StatusCode::FORBIDDEN | reqwest::StatusCode::NOT_FOUND
-        ) {
-            let _ = crate::sources::read_limited_body(resp, DATAHUB_API).await?;
+        if matches!(status, StatusCode::FORBIDDEN | StatusCode::NOT_FOUND) {
             return Err(BioMcpError::NotFound {
                 entity: "Study".to_string(),
                 id: study_id.to_string(),
@@ -101,11 +70,26 @@ impl CBioPortalDownloadClient {
             });
         }
         if !status.is_success() {
-            let body = crate::sources::read_limited_body(resp, DATAHUB_API).await?;
             return Err(BioMcpError::Api {
                 api: DATAHUB_API.to_string(),
-                message: format!("HTTP {status}: {}", crate::sources::body_excerpt(&body)),
+                message: format!("HTTP {status}: {}", crate::sources::body_excerpt(body)),
             });
+        }
+        Ok(())
+    }
+
+    async fn download_study_archive_to_path(
+        &self,
+        study_id: &str,
+        dest: &Path,
+    ) -> Result<(), BioMcpError> {
+        let plan = Self::study_archive_plan(study_id)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let mut resp = crate::sources::apply_cache_mode(req).send().await?;
+        let status = resp.status();
+        if !status.is_success() {
+            let body = crate::sources::read_limited_body(resp, DATAHUB_API).await?;
+            return Self::decode_archive_status(study_id, status, &body);
         }
         let mut file = tokio::fs::File::create(dest).await?;
         loop {
@@ -130,8 +114,13 @@ impl CBioPortalDownloadClient {
     }
 
     pub async fn list_study_ids(&self) -> Result<Vec<String>, BioMcpError> {
-        self.get_json(self.client.get(self.endpoint("study_list.json")))
-            .await
+        let plan = Self::study_list_plan();
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let resp = crate::sources::apply_cache_mode(req).send().await?;
+        let status = resp.status();
+        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
+        let body = crate::sources::read_limited_body(resp, DATAHUB_API).await?;
+        Self::decode_study_list_response(status, content_type.as_ref(), &body)
     }
 
     pub async fn download_study(
@@ -428,404 +417,4 @@ fn install_study_archive(
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    use crate::test_support::TempDirGuard;
-    use flate2::Compression;
-    use flate2::write::GzEncoder;
-    use std::io::Write;
-    use std::time::Duration;
-    use tar::{Builder, Header};
-    use tokio::io::AsyncReadExt;
-    use tokio::net::TcpListener;
-    use tokio::sync::oneshot;
-    use wiremock::matchers::{method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    struct TempRoot {
-        _guard: TempDirGuard,
-        path: PathBuf,
-    }
-
-    impl TempRoot {
-        fn new(name: &str) -> Self {
-            let guard = TempDirGuard::new(&format!("study-download-{name}"));
-            let path = guard.path().to_path_buf();
-            Self {
-                _guard: guard,
-                path,
-            }
-        }
-    }
-
-    fn tar_gz_bytes(entries: &[(&str, &[u8])]) -> Vec<u8> {
-        let mut tar_buf = Vec::new();
-        {
-            let mut builder = Builder::new(&mut tar_buf);
-            for (path, contents) in entries {
-                let mut header = Header::new_gnu();
-                header.set_size(contents.len() as u64);
-                header.set_mode(0o644);
-                header.set_cksum();
-                builder
-                    .append_data(&mut header, *path, *contents)
-                    .expect("append archive entry");
-            }
-            builder.finish().expect("finish archive");
-        }
-
-        let mut gz = GzEncoder::new(Vec::new(), Compression::default());
-        gz.write_all(&tar_buf).expect("write gz");
-        gz.finish().expect("finish gz")
-    }
-
-    struct StalledArchiveServer {
-        uri: String,
-        release: Option<oneshot::Sender<()>>,
-        handle: tokio::task::JoinHandle<()>,
-    }
-
-    impl StalledArchiveServer {
-        async fn shutdown(mut self) {
-            if let Some(release) = self.release.take() {
-                let _ = release.send(());
-            }
-            let _ = self.handle.await;
-        }
-    }
-
-    async fn stalled_archive_server(study_id: &'static str) -> StalledArchiveServer {
-        let listener = TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("bind stalled archive server");
-        let uri = format!("http://{}", listener.local_addr().expect("local addr"));
-        let (release_tx, release_rx) = oneshot::channel::<()>();
-        let expected_request = format!("GET /{study_id}.tar.gz ");
-
-        let handle = tokio::spawn(async move {
-            let (mut stream, _) = listener.accept().await.expect("accept stalled request");
-            let mut request = Vec::new();
-            let mut buf = [0_u8; 1024];
-            loop {
-                let read = stream.read(&mut buf).await.expect("read stalled request");
-                if read == 0 {
-                    break;
-                }
-                request.extend_from_slice(&buf[..read]);
-                if request.windows(4).any(|window| window == b"\r\n\r\n") {
-                    break;
-                }
-            }
-            let request = String::from_utf8_lossy(&request);
-            assert!(
-                request.starts_with(&expected_request),
-                "unexpected request: {request}"
-            );
-
-            stream
-                .write_all(
-                    b"HTTP/1.1 200 OK\r\nContent-Type: application/gzip\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\n",
-                )
-                .await
-                .expect("write stalled response prefix");
-            stream.flush().await.expect("flush stalled response prefix");
-
-            let _ = release_rx.await;
-        });
-
-        StalledArchiveServer {
-            uri,
-            release: Some(release_tx),
-            handle,
-        }
-    }
-
-    #[tokio::test]
-    async fn list_study_ids_fetches_remote_catalog() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/study_list.json"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_string(r#"["msk_impact_2017","brca_tcga_pan_can_atlas_2018"]"#),
-            )
-            .mount(&server)
-            .await;
-
-        let client = CBioPortalDownloadClient::new_for_test(server.uri()).expect("client");
-        let study_ids = client.list_study_ids().await.expect("study list");
-        assert_eq!(
-            study_ids,
-            vec![
-                "msk_impact_2017".to_string(),
-                "brca_tcga_pan_can_atlas_2018".to_string()
-            ]
-        );
-    }
-
-    #[tokio::test]
-    async fn datahub_client_omits_total_timeout_for_slow_catalog_responses() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/study_list.json"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_delay(Duration::from_millis(100))
-                    .set_body_string(r#"["demo_study"]"#),
-            )
-            .expect(2)
-            .mount(&server)
-            .await;
-
-        let timed_client = CBioPortalDownloadClient {
-            client: datahub_client(DATAHUB_CONNECT_TIMEOUT, Some(Duration::from_millis(50)))
-                .expect("timed client"),
-            base: Cow::Owned(server.uri()),
-            download_idle_timeout: DATAHUB_ARCHIVE_IDLE_TIMEOUT_FOR_TEST,
-        };
-        let err = timed_client
-            .list_study_ids()
-            .await
-            .expect_err("timed client should fail");
-        let timed_out = match &err {
-            BioMcpError::Http(source) => source.is_timeout(),
-            BioMcpError::HttpMiddleware(source) => source.is_timeout(),
-            _ => false,
-        };
-        assert!(timed_out, "expected timeout error, got {err:?}");
-
-        let untimed_client = CBioPortalDownloadClient {
-            client: datahub_client(DATAHUB_CONNECT_TIMEOUT, None).expect("untimed client"),
-            base: Cow::Owned(server.uri()),
-            download_idle_timeout: DATAHUB_ARCHIVE_IDLE_TIMEOUT_FOR_TEST,
-        };
-        let study_ids = untimed_client
-            .list_study_ids()
-            .await
-            .expect("untimed client should succeed");
-        assert_eq!(study_ids, vec!["demo_study".to_string()]);
-    }
-
-    #[tokio::test]
-    async fn download_study_installs_archive_into_root() {
-        let server = MockServer::start().await;
-        let archive = tar_gz_bytes(&[
-            (
-                "demo_study/meta_study.txt",
-                b"cancer_study_identifier: demo_study\nname: Demo Study\n",
-            ),
-            (
-                "demo_study/data_mutations.txt",
-                b"Hugo_Symbol\tTumor_Sample_Barcode\tVariant_Classification\tHGVSp_Short\n",
-            ),
-        ]);
-        Mock::given(method("GET"))
-            .and(path("/demo_study.tar.gz"))
-            .respond_with(ResponseTemplate::new(200).set_body_bytes(archive))
-            .mount(&server)
-            .await;
-
-        let root = TempRoot::new("install");
-        let client = CBioPortalDownloadClient::new_for_test(server.uri()).expect("client");
-        let result = client
-            .download_study("demo_study", &root.path)
-            .await
-            .expect("download result");
-
-        assert!(result.downloaded);
-        assert_eq!(result.path, root.path.join("demo_study"));
-        assert!(result.path.join("meta_study.txt").is_file());
-        let studies =
-            crate::sources::cbioportal_study::list_studies(&root.path).expect("local study list");
-        assert_eq!(studies.len(), 1);
-        assert_eq!(studies[0].study_id, "demo_study");
-    }
-
-    #[tokio::test]
-    async fn download_study_stalled_archive_body_times_out_with_clear_error() {
-        let server = stalled_archive_server("stalled_study").await;
-        let root = TempRoot::new("stalled-archive");
-        let client = CBioPortalDownloadClient::new_for_test(server.uri.clone()).expect("client");
-
-        let result = tokio::time::timeout(
-            Duration::from_millis(750),
-            client.download_study("stalled_study", &root.path),
-        )
-        .await;
-        server.shutdown().await;
-
-        let err = match result {
-            Ok(Ok(result)) => panic!("stalled download unexpectedly succeeded: {result:?}"),
-            Ok(Err(err)) => err,
-            Err(_) => panic!(
-                "stalled download should fail with a readable idle timeout before the test harness timeout"
-            ),
-        };
-        let message = err.to_string();
-        assert!(
-            message.contains("cBioPortal DataHub"),
-            "stall error should name the DataHub source, got: {message}"
-        );
-        assert!(
-            message.contains("stalled"),
-            "stall error should describe a stalled archive download, got: {message}"
-        );
-        assert!(
-            message.contains("no bytes") || message.contains("progress"),
-            "stall error should explain the no-progress condition, got: {message}"
-        );
-        assert!(!root.path.join("stalled_study").exists());
-        let remaining = fs::read_dir(&root.path)
-            .expect("read temp root")
-            .collect::<Result<Vec<_>, _>>()
-            .expect("collect temp root entries");
-        assert!(
-            remaining.is_empty(),
-            "stalled download should not leave partial archive or install files behind"
-        );
-    }
-
-    #[tokio::test]
-    async fn download_study_returns_not_found_for_missing_remote_archive_403() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/missing_study.tar.gz"))
-            .respond_with(ResponseTemplate::new(403).set_body_string(
-                r#"<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code></Error>"#,
-            ))
-            .mount(&server)
-            .await;
-
-        let root = TempRoot::new("missing-403");
-        let client = CBioPortalDownloadClient::new_for_test(server.uri()).expect("client");
-        let err = client
-            .download_study("missing_study", &root.path)
-            .await
-            .expect_err("403 should return not found");
-
-        assert!(
-            matches!(
-                err,
-                BioMcpError::NotFound {
-                    ref entity,
-                    ref id,
-                    ..
-                } if entity == "Study" && id == "missing_study"
-            ),
-            "expected NotFound, got {err:?}"
-        );
-        let message = err.to_string();
-        assert!(message.contains("Study 'missing_study' not found."));
-        assert!(message.contains("biomcp study download --list"));
-        assert!(!message.contains("AccessDenied"));
-        assert!(!message.contains("API error from cbioportal-datahub"));
-    }
-
-    #[tokio::test]
-    async fn download_study_returns_not_found_for_missing_remote_archive_404() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/missing_study.tar.gz"))
-            .respond_with(ResponseTemplate::new(404).set_body_string(
-                r#"<?xml version="1.0" encoding="UTF-8"?><Error><Code>NoSuchKey</Code></Error>"#,
-            ))
-            .mount(&server)
-            .await;
-
-        let root = TempRoot::new("missing-404");
-        let client = CBioPortalDownloadClient::new_for_test(server.uri()).expect("client");
-        let err = client
-            .download_study("missing_study", &root.path)
-            .await
-            .expect_err("404 should return not found");
-
-        assert!(
-            matches!(
-                err,
-                BioMcpError::NotFound {
-                    ref entity,
-                    ref id,
-                    ..
-                } if entity == "Study" && id == "missing_study"
-            ),
-            "expected NotFound, got {err:?}"
-        );
-        let message = err.to_string();
-        assert!(message.contains("Study 'missing_study' not found."));
-        assert!(message.contains("biomcp study download --list"));
-        assert!(!message.contains("NoSuchKey"));
-        assert!(!message.contains("API error from cbioportal-datahub"));
-    }
-
-    #[tokio::test]
-    async fn download_study_skips_existing_valid_target() {
-        let root = TempRoot::new("existing");
-        let study_dir = root.path.join("demo_study");
-        fs::create_dir_all(&study_dir).expect("create study dir");
-        fs::write(
-            study_dir.join("meta_study.txt"),
-            "cancer_study_identifier: demo_study\nname: Demo Study\n",
-        )
-        .expect("write meta");
-
-        let client =
-            CBioPortalDownloadClient::new_for_test("http://127.0.0.1".to_string()).expect("client");
-        let result = client
-            .download_study("demo_study", &root.path)
-            .await
-            .expect("existing study");
-
-        assert!(!result.downloaded);
-        assert_eq!(result.path, study_dir);
-    }
-
-    #[tokio::test]
-    async fn download_study_rejects_path_like_study_id() {
-        let root = TempRoot::new("invalid-study-id");
-        let client =
-            CBioPortalDownloadClient::new_for_test("http://127.0.0.1".to_string()).expect("client");
-        let err = client
-            .download_study("../demo_study", &root.path)
-            .await
-            .expect_err("path-like study ID should fail");
-
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn download_study_rejects_entries_outside_expected_top_level_directory() {
-        let server = MockServer::start().await;
-        let archive = tar_gz_bytes(&[
-            (
-                "demo_study/meta_study.txt",
-                b"cancer_study_identifier: demo_study\nname: Demo Study\n",
-            ),
-            ("other_study/evil.txt", b"bad"),
-        ]);
-        Mock::given(method("GET"))
-            .and(path("/demo_study.tar.gz"))
-            .respond_with(ResponseTemplate::new(200).set_body_bytes(archive))
-            .mount(&server)
-            .await;
-
-        let root = TempRoot::new("traversal");
-        let client = CBioPortalDownloadClient::new_for_test(server.uri()).expect("client");
-        let err = client
-            .download_study("demo_study", &root.path)
-            .await
-            .expect_err("unexpected top-level directory should fail");
-
-        assert!(matches!(err, BioMcpError::Api { .. }));
-        assert!(!root.path.join("demo_study").exists());
-        assert!(!root.path.join("evil.txt").exists());
-        let remaining = fs::read_dir(&root.path)
-            .expect("read temp root")
-            .collect::<Result<Vec<_>, _>>()
-            .expect("collect temp root entries");
-        assert!(
-            remaining.is_empty(),
-            "failed install should not leave staging files behind"
-        );
-    }
-}
+mod tests;
