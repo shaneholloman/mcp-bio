@@ -6,7 +6,7 @@ use crate::error::BioMcpError;
 
 mod get;
 #[cfg_attr(not(test), allow(dead_code))]
-mod planning;
+pub(crate) mod planning;
 #[cfg(test)]
 mod planning_contract_tests;
 mod search;

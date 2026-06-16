@@ -89,6 +89,16 @@ pub(crate) fn plan_rare_disease_trials(
     }
 
     if let Some(gene) = request.gene.as_deref() {
+        if gene.eq_ignore_ascii_case("SHANK3") && request.condition.is_none() {
+            plan.primary_condition_labels.push(ConditionLabel {
+                label: "Phelan-McDermid syndrome".to_string(),
+            });
+            plan.expanded_condition_labels.push(ConditionExpansion {
+                label: "22q13 deletion syndrome".to_string(),
+                source: "curated rare-disease trial seed".to_string(),
+                reason: "bounded SHANK3-associated condition for trial planning".to_string(),
+            });
+        }
         plan.gene_labels.push(GeneLabel {
             symbol: gene.to_string(),
         });

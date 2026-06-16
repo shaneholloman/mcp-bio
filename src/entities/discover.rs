@@ -1500,17 +1500,14 @@ fn generate_commands(
 
     match intent {
         DiscoverIntent::TrialSearch => {
-            if matches!(
-                top.primary_type,
-                DiscoverType::Disease | DiscoverType::Symptom
-            ) {
+            if let Some(condition) = planned_trial_condition(query, concepts) {
                 commands.push(format!(
-                    "biomcp search trial -c \"{}\" --limit 5",
-                    top.label
+                    "biomcp search trial -c {} --limit 5",
+                    quote_query_term(&condition)
                 ));
                 commands.push(format!(
-                    "biomcp search article -k \"{}\" --limit 5",
-                    top.label
+                    "biomcp search article -k {} --limit 5",
+                    quote_query_term(&condition)
                 ));
             }
             return dedupe_strings(commands);
@@ -1700,6 +1697,38 @@ fn top_concept_of_type(
     kind: DiscoverType,
 ) -> Option<&DiscoverConcept> {
     concepts.iter().find(|concept| concept.primary_type == kind)
+}
+
+fn planned_trial_condition(query: &str, concepts: &[DiscoverConcept]) -> Option<String> {
+    let condition = top_concept_of_type(concepts, DiscoverType::Disease)
+        .or_else(|| top_concept_of_type(concepts, DiscoverType::Symptom))
+        .map(|concept| concept.label.clone());
+    let gene = top_concept_of_type(concepts, DiscoverType::Gene)
+        .map(|concept| concept.label.clone())
+        .or_else(|| query.split_whitespace().find_map(gene_symbol_token));
+
+    let plan = crate::entities::trial::planning::plan_rare_disease_trials(
+        crate::entities::trial::planning::RareDiseaseTrialRequest {
+            raw_query: Some(query.trim().to_string()),
+            condition,
+            gene,
+            sponsor: None,
+            strict_condition: false,
+            mode: crate::entities::trial::planning::TrialPlanningMode::Search,
+        },
+    )
+    .ok()?;
+
+    plan.primary_condition_labels
+        .into_iter()
+        .next()
+        .map(|label| label.label)
+}
+
+fn gene_symbol_token(token: &str) -> Option<String> {
+    let token =
+        token.trim_matches(|ch: char| !(ch.is_ascii_alphanumeric() || ch == '_' || ch == '-'));
+    looks_like_gene_symbol_token(token).then(|| token.to_string())
 }
 
 fn collect_hpo_ids(concepts: &[DiscoverConcept]) -> Vec<String> {
