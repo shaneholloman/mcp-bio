@@ -87,7 +87,7 @@ NCBI / literature:
 - [x] europepmc ~8 · [x] semantic_scholar ~13 · [x] litsense2 ~4 · [x] nih_reporter ~7
 
 Trials / cancer:
-- [ ] clinicaltrials ~6 · [ ] cbioportal ~2 · [ ] cbioportal_download ~9 · [ ] cbioportal_study ~33
+- [ ] clinicaltrials ~6 · [x] cbioportal ~2 · [ ] cbioportal_download ~9 · [ ] cbioportal_study ~33
 - [ ] cancerhotspots ~5 · [ ] oncokb ~4 (no API token available → reuse the existing canned response as the fixture) · [ ] seer ~4
 
 Variants / genomics:
@@ -177,3 +177,6 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: NCBI/literature group check. Checks:
   `cargo nextest run -E '<pubmed|pubtator|europepmc|semantic_scholar|litsense2|nih_reporter|pmc_oa|ncbi_efetch|ncbi_idconv source filters>'`
   → 99/99 pass.
+- 2026-06-16: `cbioportal` converted. Checks:
+  `cargo nextest run -E 'test(/sources::cbioportal::/)'` → 7/7 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.

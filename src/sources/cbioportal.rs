@@ -2,8 +2,10 @@ use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestBody, RequestPlan, request_from_plan};
 
 const CBIOPORTAL_BASE: &str = "https://www.cbioportal.org/api";
 const CBIOPORTAL_API: &str = "cbioportal";
@@ -51,23 +53,6 @@ impl CBioPortalClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        let client = reqwest_middleware::ClientBuilder::new(reqwest::Client::new()).build();
-        Ok(Self {
-            client,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     async fn get_json<T: serde::de::DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
@@ -75,40 +60,24 @@ impl CBioPortalClient {
         let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, CBIOPORTAL_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: CBIOPORTAL_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: CBIOPORTAL_API.to_string(),
-            source,
-        })
+        crate::sources::decode_json(CBIOPORTAL_API, status, None, &bytes, false)
     }
 
-    async fn post_json<T: serde::de::DeserializeOwned, B: Serialize>(
-        &self,
-        req: reqwest_middleware::RequestBuilder,
-        body: &B,
-    ) -> Result<T, BioMcpError> {
-        self.get_json(req.json(body)).await
-    }
-
-    async fn resolve_entrez_gene_id(&self, gene: &str) -> Result<i32, BioMcpError> {
+    pub(crate) fn gene_resolution_plan(gene: &str) -> Result<RequestPlan, BioMcpError> {
         let gene = gene.trim();
         if gene.is_empty() {
             return Err(BioMcpError::InvalidArgument("Gene is required".into()));
         }
+        Ok(RequestPlan::get("genes")
+            .query("keyword", gene)
+            .query("pageSize", "1")
+            .query("pageNumber", "0"))
+    }
 
-        let url = self.endpoint("genes");
+    async fn resolve_entrez_gene_id(&self, gene: &str) -> Result<i32, BioMcpError> {
+        let plan = Self::gene_resolution_plan(gene)?;
         let resp: Vec<CBioGene> = self
-            .get_json(self.client.get(&url).query(&[
-                ("keyword", gene),
-                ("pageSize", "1"),
-                ("pageNumber", "0"),
-            ]))
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
             .await?;
 
         resp.into_iter()
@@ -121,9 +90,30 @@ impl CBioPortalClient {
             })
     }
 
+    pub(crate) fn study_plan(study_id: &str) -> RequestPlan {
+        RequestPlan::get(format!("studies/{study_id}"))
+    }
+
     async fn get_study(&self, study_id: &str) -> Result<CBioStudy, BioMcpError> {
-        let url = self.endpoint(&format!("studies/{study_id}"));
-        self.get_json(self.client.get(&url)).await
+        let plan = Self::study_plan(study_id);
+        self.get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
+    }
+
+    pub(crate) fn mutations_plan(
+        molecular_profile_id: &str,
+        sample_list_id: &str,
+        entrez_gene_id: i32,
+        page_size: i32,
+        page_number: i32,
+    ) -> RequestPlan {
+        RequestPlan::get(format!(
+            "molecular-profiles/{molecular_profile_id}/mutations"
+        ))
+        .query("sampleListId", sample_list_id)
+        .query("entrezGeneId", entrez_gene_id.to_string())
+        .query("pageSize", page_size.to_string())
+        .query("pageNumber", page_number.to_string())
     }
 
     async fn mutated_samples_in_profile(
@@ -133,24 +123,19 @@ impl CBioPortalClient {
         entrez_gene_id: i32,
         max_unique_samples: usize,
     ) -> Result<HashSet<String>, BioMcpError> {
-        let url = self.endpoint(&format!(
-            "molecular-profiles/{molecular_profile_id}/mutations"
-        ));
-
         let mut out: HashSet<String> = HashSet::new();
         let page_size: i32 = 500;
 
         for page_number in 0..30_i32 {
-            let entrez = entrez_gene_id.to_string();
-            let page_size_s = page_size.to_string();
-            let page_number_s = page_number.to_string();
+            let plan = Self::mutations_plan(
+                molecular_profile_id,
+                sample_list_id,
+                entrez_gene_id,
+                page_size,
+                page_number,
+            );
             let resp: Vec<CBioMutation> = self
-                .get_json(self.client.get(&url).query(&[
-                    ("sampleListId", sample_list_id),
-                    ("entrezGeneId", entrez.as_str()),
-                    ("pageSize", page_size_s.as_str()),
-                    ("pageNumber", page_number_s.as_str()),
-                ]))
+                .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
                 .await?;
 
             if resp.is_empty() {
@@ -176,28 +161,28 @@ impl CBioPortalClient {
         Ok(out)
     }
 
+    pub(crate) fn clinical_data_plan(study_id: &str, sample_ids: &[String]) -> RequestPlan {
+        let mut plan = RequestPlan::post(format!("studies/{study_id}/clinical-data/fetch"))
+            .query("clinicalDataType", "SAMPLE");
+        plan.body = RequestBody::Json(json!({
+            "attributeIds": ["CANCER_TYPE_DETAILED"],
+            "ids": sample_ids,
+        }));
+        plan
+    }
+
     async fn cancer_type_distribution(
         &self,
         study_id: &str,
         sample_ids: &[String],
     ) -> Result<HashMap<String, usize>, BioMcpError> {
-        let url = self.endpoint(&format!("studies/{study_id}/clinical-data/fetch"));
         let mut counts: HashMap<String, usize> = HashMap::new();
 
         // Avoid sending extremely large request bodies.
         for chunk in sample_ids.chunks(500) {
-            let body = CBioClinicalDataSingleStudyFilter {
-                attribute_ids: vec!["CANCER_TYPE_DETAILED".to_string()],
-                ids: chunk.to_vec(),
-            };
-
+            let plan = Self::clinical_data_plan(study_id, chunk);
             let resp: Vec<CBioClinicalData> = self
-                .post_json(
-                    self.client
-                        .post(&url)
-                        .query(&[("clinicalDataType", "SAMPLE")]),
-                    &body,
-                )
+                .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
                 .await?;
 
             for row in resp {
@@ -299,13 +284,6 @@ struct CBioMutation {
     sample_id: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct CBioClinicalDataSingleStudyFilter {
-    attribute_ids: Vec<String>,
-    ids: Vec<String>,
-}
-
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CBioClinicalData {
@@ -333,43 +311,4 @@ pub struct CBioMutationSummary {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn gene_resolution_uses_keyword() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/genes"))
-            .and(query_param("keyword", "BRAF"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-                {"entrezGeneId": 673, "hugoGeneSymbol": "BRAF"}
-            ])))
-            .mount(&server)
-            .await;
-
-        let client = CBioPortalClient::new_for_test(server.uri()).unwrap();
-        let id = client.resolve_entrez_gene_id("BRAF").await.unwrap();
-        assert_eq!(id, 673);
-    }
-
-    #[tokio::test]
-    async fn gene_resolution_surfaces_http_error_context() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/genes"))
-            .respond_with(ResponseTemplate::new(500).set_body_string("upstream failure"))
-            .mount(&server)
-            .await;
-
-        let client = CBioPortalClient::new_for_test(server.uri()).unwrap();
-        let err = client.resolve_entrez_gene_id("BRAF").await.unwrap_err();
-        let msg = err.to_string();
-        assert!(msg.contains("cbioportal"));
-        assert!(msg.contains("500"));
-    }
-}
+mod tests;

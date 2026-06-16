@@ -1,0 +1,10 @@
+[
+  {
+    "sampleId": "SAMPLE-1",
+    "value": "Melanoma"
+  },
+  {
+    "sampleId": "SAMPLE-2",
+    "value": "Lung Adenocarcinoma"
+  }
+]
