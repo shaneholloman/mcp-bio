@@ -6,6 +6,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestBody, RequestPlan};
 
 const GPROFILER_BASE: &str = "https://biit.cs.ut.ee/gprofiler/api";
 const GPROFILER_API: &str = "gprofiler";
@@ -28,19 +29,6 @@ impl GProfilerClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Self::new_for_test_with_timeout(base, GPROFILER_TIMEOUT)
-    }
-
-    #[cfg(test)]
-    fn new_for_test_with_timeout(base: String, timeout: Duration) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: gprofiler_http_client(timeout)?,
-            base: Cow::Owned(base),
-        })
-    }
-
     fn endpoint(&self, path: &str) -> String {
         format!(
             "{}/{}",
@@ -57,26 +45,31 @@ impl GProfilerClient {
         let resp = req.json(body).send().await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, GPROFILER_API).await?;
+        Self::decode_json_response(status, &bytes)
+    }
 
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
         if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
+            let excerpt = crate::sources::body_excerpt(bytes);
             return Err(BioMcpError::Api {
                 api: GPROFILER_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
 
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+        serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
             api: GPROFILER_API.to_string(),
             source,
         })
     }
 
-    pub async fn enrich_genes(
-        &self,
+    pub(crate) fn enrich_genes_plan(
         genes: &[String],
         limit: usize,
-    ) -> Result<Vec<GProfilerTerm>, BioMcpError> {
+    ) -> Result<(RequestPlan, usize), BioMcpError> {
         let query = genes
             .iter()
             .map(|g| g.trim().to_string())
@@ -93,18 +86,34 @@ impl GProfilerClient {
             )));
         }
 
-        let url = self.endpoint("gost/profile/");
-        let body = serde_json::json!({
+        let mut plan = RequestPlan::post("gost/profile/");
+        plan.body = RequestBody::Json(serde_json::json!({
             "organism": "hsapiens",
             "query": query,
-        });
+        }));
+        Ok((plan, limit))
+    }
 
+    fn map_enrich_response(resp: GProfilerResponse, limit: usize) -> Vec<GProfilerTerm> {
+        resp.result.into_iter().take(limit).collect()
+    }
+
+    pub async fn enrich_genes(
+        &self,
+        genes: &[String],
+        limit: usize,
+    ) -> Result<Vec<GProfilerTerm>, BioMcpError> {
+        let (plan, limit) = Self::enrich_genes_plan(genes, limit)?;
+        let RequestBody::Json(body) = plan.body else {
+            unreachable!("g:Profiler enrich uses a JSON body")
+        };
+        let url = self.endpoint(&plan.path);
         let resp: GProfilerResponse = self
             .post_json(self.client.post(&url), &body)
             .await
             .map_err(remap_gprofiler_error)?;
 
-        Ok(resp.result.into_iter().take(limit).collect())
+        Ok(Self::map_enrich_response(resp, limit))
     }
 }
 
@@ -180,124 +189,4 @@ pub struct GProfilerTerm {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::time::Duration;
-    use wiremock::matchers::{body_string_contains, method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn enrich_genes_posts_query_and_applies_limit() {
-        let server = MockServer::start().await;
-        Mock::given(method("POST"))
-            .and(path("/gost/profile/"))
-            .and(body_string_contains("\"organism\":\"hsapiens\""))
-            .and(body_string_contains("\"BRAF\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": [
-                    {"native": "R-HSA-1", "name": "A", "source": "REAC", "p_value": 0.01},
-                    {"native": "R-HSA-2", "name": "B", "source": "REAC", "p_value": 0.02}
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = GProfilerClient::new_for_test(server.uri()).unwrap();
-        let rows = client
-            .enrich_genes(&["BRAF".to_string(), "KRAS".to_string()], 1)
-            .await
-            .unwrap();
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].native.as_deref(), Some("R-HSA-1"));
-    }
-
-    #[tokio::test]
-    async fn enrich_genes_rejects_empty_input() {
-        let client = GProfilerClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client.enrich_genes(&[], 5).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn enrich_genes_rejects_zero_limit() {
-        let client = GProfilerClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client
-            .enrich_genes(&["BRAF".to_string(), "KRAS".to_string()], 0)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("--limit must be between 1 and 50"));
-    }
-
-    #[tokio::test]
-    async fn enrich_genes_rejects_limit_above_max() {
-        let client = GProfilerClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client
-            .enrich_genes(&["BRAF".to_string(), "KRAS".to_string()], 51)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("--limit must be between 1 and 50"));
-    }
-
-    #[tokio::test]
-    async fn enrich_genes_timeout_maps_to_source_unavailable() {
-        let server = MockServer::start().await;
-        Mock::given(method("POST"))
-            .and(path("/gost/profile/"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_delay(Duration::from_millis(100))
-                    .set_body_json(serde_json::json!({ "result": [] })),
-            )
-            .mount(&server)
-            .await;
-
-        let client =
-            GProfilerClient::new_for_test_with_timeout(server.uri(), Duration::from_millis(50))
-                .unwrap();
-        let err = client
-            .enrich_genes(&["BRAF".to_string(), "KRAS".to_string()], 5)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::SourceUnavailable { .. }));
-        let msg = err.to_string();
-        assert!(msg.contains("g:Profiler"));
-        assert!(msg.to_ascii_lowercase().contains("retry"));
-    }
-
-    #[tokio::test]
-    async fn enrich_genes_503_maps_to_source_unavailable() {
-        let server = MockServer::start().await;
-        Mock::given(method("POST"))
-            .and(path("/gost/profile/"))
-            .respond_with(ResponseTemplate::new(503).set_body_string("upstream failure"))
-            .mount(&server)
-            .await;
-
-        let client = GProfilerClient::new_for_test(server.uri()).unwrap();
-        let err = client
-            .enrich_genes(&["BRAF".to_string(), "KRAS".to_string()], 5)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::SourceUnavailable { .. }));
-    }
-
-    #[tokio::test]
-    async fn enrich_genes_400_remains_api_error() {
-        let server = MockServer::start().await;
-        Mock::given(method("POST"))
-            .and(path("/gost/profile/"))
-            .respond_with(ResponseTemplate::new(400).set_body_string("bad request"))
-            .mount(&server)
-            .await;
-
-        let client = GProfilerClient::new_for_test(server.uri()).unwrap();
-        let err = client
-            .enrich_genes(&["BRAF".to_string(), "KRAS".to_string()], 5)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::Api { .. }));
-        assert!(err.to_string().contains("HTTP 400"));
-    }
-}
+mod tests;
