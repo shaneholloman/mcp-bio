@@ -147,6 +147,12 @@ pub(crate) fn validate_standalone_chart_type(
     if valid_types.contains(&chart_type) {
         return Ok(());
     }
+    if valid_types.is_empty() {
+        return Err(BioMcpError::InvalidArgument(format!(
+            "charts are not supported for '{command_label}'"
+        )));
+    }
+
     Err(BioMcpError::InvalidArgument(format!(
         "chart type '{chart_type}' is not valid for '{command_label}'. Valid types: {}",
         valid_types
@@ -1191,6 +1197,15 @@ mod tests {
         assert!(msg.contains("bar"));
         assert!(msg.contains("pie"));
         assert!(msg.contains("waterfall"));
+    }
+
+    #[test]
+    fn structural_variant_chart_validation_reports_unsupported_surface() {
+        let err = validate_query_chart_type(StudyQueryType::StructuralVariants, ChartType::Bar)
+            .expect_err("charts should be rejected for structural variant queries");
+        let msg = err.to_string();
+        assert!(msg.contains("charts are not supported"));
+        assert!(msg.contains("study query --type sv"));
     }
 
     #[test]
