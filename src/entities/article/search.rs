@@ -93,7 +93,7 @@ pub async fn search_variant_article_page(
     Ok(VariantArticleSearchPage {
         page: search_page(
             &fallback_filters,
-            limit.min(1),
+            limit,
             offset,
             ArticleSourceFilter::PubTator,
         )
