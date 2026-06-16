@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::cli::{Cli, Commands, GetEntity, SearchEntity, execute};
+use crate::cli::{Cli, Commands, GetEntity, SearchEntity};
 
 #[test]
 fn search_adverse_event_parses_serious_default_and_limit() {
@@ -100,8 +100,8 @@ fn get_adverse_event_parses_sections() {
     assert_eq!(sections, vec!["reactions".to_string()]);
 }
 
-#[tokio::test]
-async fn handle_search_rejects_positional_drug_alias_for_device() {
+#[test]
+fn search_plan_rejects_positional_drug_alias_for_device() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
@@ -123,8 +123,8 @@ async fn handle_search_rejects_positional_drug_alias_for_device() {
         panic!("expected adverse-event search command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
+    assert!(!json);
+    let err = super::dispatch::search_plan_from_args(&args)
         .expect_err("device query should reject positional drug alias");
     assert!(
         err.to_string()
@@ -132,26 +132,36 @@ async fn handle_search_rejects_positional_drug_alias_for_device() {
     );
 }
 
-#[tokio::test]
-async fn search_adverse_event_device_rejects_positional_drug_alias() {
-    let err = execute(vec![
-        "biomcp".to_string(),
-        "search".to_string(),
-        "adverse-event".to_string(),
-        "pembrolizumab".to_string(),
-        "--type".to_string(),
-        "device".to_string(),
+#[test]
+fn search_adverse_event_device_rejects_positional_drug_alias() {
+    let cli = Cli::try_parse_from([
+        "biomcp",
+        "search",
+        "adverse-event",
+        "pembrolizumab",
+        "--type",
+        "device",
     ])
-    .await
-    .expect_err("device query should reject positional drug alias");
+    .expect("adverse-event device search should parse");
+    let Cli {
+        command: Commands::Search {
+            entity: SearchEntity::AdverseEvent(args),
+        },
+        ..
+    } = cli
+    else {
+        panic!("expected adverse-event search command");
+    };
+    let err = super::dispatch::search_plan_from_args(&args)
+        .expect_err("device query should reject positional drug alias");
     assert!(
         err.to_string()
             .contains("--drug cannot be used with --type device")
     );
 }
 
-#[tokio::test]
-async fn handle_search_rejects_count_for_vaers_source() {
+#[test]
+fn search_plan_rejects_count_for_vaers_source() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
@@ -175,8 +185,8 @@ async fn handle_search_rejects_count_for_vaers_source() {
         panic!("expected adverse-event search command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
+    assert!(!json);
+    let err = super::dispatch::search_plan_from_args(&args)
         .expect_err("vaers search should reject count");
     assert!(
         err.to_string()
@@ -184,8 +194,8 @@ async fn handle_search_rejects_count_for_vaers_source() {
     );
 }
 
-#[tokio::test]
-async fn handle_search_rejects_nondefault_source_for_recall() {
+#[test]
+fn search_plan_rejects_nondefault_source_for_recall() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
@@ -209,8 +219,8 @@ async fn handle_search_rejects_nondefault_source_for_recall() {
         panic!("expected adverse-event search command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
+    assert!(!json);
+    let err = super::dispatch::search_plan_from_args(&args)
         .expect_err("recall query should reject non-default source");
     assert!(
         err.to_string()
@@ -218,8 +228,8 @@ async fn handle_search_rejects_nondefault_source_for_recall() {
     );
 }
 
-#[tokio::test]
-async fn handle_search_rejects_nondefault_source_for_device() {
+#[test]
+fn search_plan_rejects_nondefault_source_for_device() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
@@ -244,8 +254,8 @@ async fn handle_search_rejects_nondefault_source_for_device() {
         panic!("expected adverse-event search command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
+    assert!(!json);
+    let err = super::dispatch::search_plan_from_args(&args)
         .expect_err("device query should reject non-default source");
     assert!(
         err.to_string()

@@ -363,3 +363,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   behavior covered by existing tests. Checks:
   `cargo nextest run -E 'test(/cli::drug::/)'` → 30/30 pass;
   `cargo check` → pass.
+- 2026-06-16: fifth CLI parser-validation batch (`adverse_event`) made pure
+  for source/type/count validation by adding a callable search-plan helper.
+  Checks: `cargo nextest run -E 'test(/cli::adverse_event::/)'` → 8/8 pass;
+  `cargo check` → pass.

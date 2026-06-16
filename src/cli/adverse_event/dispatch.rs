@@ -11,6 +11,148 @@ fn vaers_only_next_commands(query: &str) -> Vec<String> {
     ]
 }
 
+pub(super) fn search_plan_from_args(
+    args: &AdverseEventSearchArgs,
+) -> Result<
+    (
+        Option<String>,
+        crate::entities::adverse_event::AdverseEventQueryType,
+        crate::entities::adverse_event::AdverseEventSourceFilter,
+    ),
+    crate::error::BioMcpError,
+> {
+    let drug = super::super::resolve_query_input(
+        args.drug.clone(),
+        args.positional_query.clone(),
+        "--drug",
+    )?;
+    let query_type =
+        crate::entities::adverse_event::AdverseEventQueryType::from_flag(&args.r#type)?;
+    let source_filter =
+        crate::entities::adverse_event::AdverseEventSourceFilter::from_flag(&args.source)?;
+
+    match query_type {
+        crate::entities::adverse_event::AdverseEventQueryType::Faers => {
+            if args.device.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--device can only be used with --type device".into(),
+                ));
+            }
+            if args.manufacturer.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--manufacturer can only be used with --type device".into(),
+                ));
+            }
+            if args.product_code.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--product-code can only be used with --type device".into(),
+                ));
+            }
+            if args
+                .count
+                .as_deref()
+                .map(str::trim)
+                .is_some_and(|value| !value.is_empty())
+                && matches!(
+                    source_filter,
+                    crate::entities::adverse_event::AdverseEventSourceFilter::Vaers
+                )
+            {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--count is not supported with --source vaers".into(),
+                ));
+            }
+        }
+        crate::entities::adverse_event::AdverseEventQueryType::Recall => {
+            if !matches!(
+                source_filter,
+                crate::entities::adverse_event::AdverseEventSourceFilter::All
+            ) {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--source is only supported for --type faers adverse-event search".into(),
+                ));
+            }
+            if args.date_from.is_some()
+                || args.date_to.is_some()
+                || args.suspect_only
+                || args.sex.is_some()
+                || args.age_min.is_some()
+                || args.age_max.is_some()
+                || args.reporter.is_some()
+                || args.count.is_some()
+            {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--date-from/--date-to/--suspect-only/--sex/--age-min/--age-max/--reporter/--count are only valid for --type faers".into(),
+                ));
+            }
+            if args.device.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--device can only be used with --type device".into(),
+                ));
+            }
+            if args.manufacturer.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--manufacturer can only be used with --type device".into(),
+                ));
+            }
+            if args.product_code.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--product-code can only be used with --type device".into(),
+                ));
+            }
+            if args.outcome.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--outcome is only valid for --type faers".into(),
+                ));
+            }
+        }
+        crate::entities::adverse_event::AdverseEventQueryType::Device => {
+            if !matches!(
+                source_filter,
+                crate::entities::adverse_event::AdverseEventSourceFilter::All
+            ) {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--source is only supported for --type faers adverse-event search".into(),
+                ));
+            }
+            if drug.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--drug cannot be used with --type device (use --device)".into(),
+                ));
+            }
+            if args.reaction.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--reaction is not supported with --type device".into(),
+                ));
+            }
+            if args.outcome.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--outcome is only valid for --type faers".into(),
+                ));
+            }
+            if args.classification.is_some() {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--classification is only valid for --type recall".into(),
+                ));
+            }
+            if args.date_to.is_some()
+                || args.suspect_only
+                || args.sex.is_some()
+                || args.age_min.is_some()
+                || args.age_max.is_some()
+                || args.reporter.is_some()
+                || args.count.is_some()
+            {
+                return Err(crate::error::BioMcpError::InvalidArgument(
+                    "--date-to/--suspect-only/--sex/--age-min/--age-max/--reporter/--count are only valid for --type faers".into(),
+                ));
+            }
+        }
+    }
+
+    Ok((drug, query_type, source_filter))
+}
+
 pub(crate) async fn handle_get(
     args: AdverseEventGetArgs,
     json: bool,
@@ -54,11 +196,7 @@ pub(crate) async fn handle_search(
     args: AdverseEventSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
-    let drug = super::super::resolve_query_input(args.drug, args.positional_query, "--drug")?;
-    let query_type =
-        crate::entities::adverse_event::AdverseEventQueryType::from_flag(&args.r#type)?;
-    let source_filter =
-        crate::entities::adverse_event::AdverseEventSourceFilter::from_flag(&args.source)?;
+    let (drug, query_type, source_filter) = search_plan_from_args(&args)?;
 
     let text = match query_type {
         crate::entities::adverse_event::AdverseEventQueryType::Faers => {
