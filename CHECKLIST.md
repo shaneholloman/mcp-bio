@@ -96,7 +96,7 @@ Variants / genomics:
 
 Drugs / chem / regulatory:
 - [x] chembl ~3 · [x] dgidb ~3 · [x] ddinter ~5 · [x] openfda ~9 · [x] ema ~11 · [x] pharmgkb ~2
-- [x] cpic ~3 · [x] cvx ~11 · [x] vaers ~10 · [x] who_pq ~20 · [ ] who_ivd ~6
+- [x] cpic ~3 · [x] cvx ~11 · [x] vaers ~10 · [x] who_pq ~20 · [x] who_ivd ~6
 
 Ontologies / proteins / pathways / misc:
 - [ ] uniprot ~10 · [ ] interpro ~2 · [ ] hpa ~4 · [ ] hpo ~4 · [ ] monarch ~4 · [ ] ols4 ~3
@@ -258,3 +258,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   local CSV/feed coverage. Checks:
   `cargo nextest run -E 'test(/sources::who_pq::/)'` → 16/16 pass;
   `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `who_ivd` converted to standard source test layout and removed the
+  source-level env mutation test. Checks:
+  `cargo nextest run -E 'test(/sources::who_ivd::/)'` → 7/7 pass;
+  `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.
