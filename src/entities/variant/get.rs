@@ -405,9 +405,10 @@ async fn add_cancerhotspots(variant: &mut Variant, id_format: &VariantIdFormat) 
     };
 
     match tokio::time::timeout(OPTIONAL_ENRICHMENT_TIMEOUT, cancerhotspots_fut).await {
-        Ok(Ok(recurrence)) => variant.cancerhotspots = Some(recurrence),
-        Ok(Err(err)) => {
-            warn!(gene = %gene, change = %normalized_change, "cancerhotspots.org unavailable: {err}")
+        Ok(result) => {
+            if let Err(err) = apply_cancerhotspots_result(variant, result) {
+                warn!(gene = %gene, change = %normalized_change, "cancerhotspots.org unavailable: {err}")
+            }
         }
         Err(_) => warn!(
             gene = %gene,
@@ -415,6 +416,19 @@ async fn add_cancerhotspots(variant: &mut Variant, id_format: &VariantIdFormat) 
             timeout_secs = OPTIONAL_ENRICHMENT_TIMEOUT.as_secs(),
             "cancerhotspots.org enrichment timed out"
         ),
+    }
+}
+
+fn apply_cancerhotspots_result(
+    variant: &mut Variant,
+    result: Result<crate::sources::cancerhotspots::CancerHotspotRecurrence, BioMcpError>,
+) -> Result<(), BioMcpError> {
+    match result {
+        Ok(recurrence) => {
+            variant.cancerhotspots = Some(recurrence);
+            Ok(())
+        }
+        Err(err) => Err(err),
     }
 }
 

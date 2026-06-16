@@ -201,17 +201,8 @@ fn cancerhotspots_enrichment_uses_requested_change_not_resolved_hgvsp() {
     assert_eq!(recurrence.same_aa_count, Some(833));
 }
 
-#[tokio::test]
-async fn cancerhotspots_upstream_failure_omits_recurrence_and_preserves_cbioportal() {
-    let _env = lock_env().await;
-    let server = MockServer::start().await;
-    Mock::given(method("GET"))
-        .and(path("/api/hotspots/single/byGene/BRAF"))
-        .respond_with(ResponseTemplate::new(500).set_body_string("upstream failure"))
-        .mount(&server)
-        .await;
-    let _base = set_env_var("BIOMCP_CANCERHOTSPOTS_BASE", Some(&server.uri()));
-
+#[test]
+fn cancerhotspots_upstream_failure_omits_recurrence_and_preserves_cbioportal() {
     let mut variant = braf_variant_stub();
     variant
         .cancer_frequencies
@@ -220,17 +211,13 @@ async fn cancerhotspots_upstream_failure_omits_recurrence_and_preserves_cbioport
             frequency: 0.5,
             sample_count: 10,
         });
-    crate::sources::with_no_cache(true, async {
-        add_cancerhotspots(
-            &mut variant,
-            &VariantIdFormat::GeneProteinChange {
-                gene: "BRAF".into(),
-                change: "V600E".into(),
-            },
-        )
-        .await;
-    })
-    .await;
+    let err = BioMcpError::Api {
+        api: "cancerhotspots.org".into(),
+        message: "upstream failure".into(),
+    };
+
+    apply_cancerhotspots_result(&mut variant, Err(err))
+        .expect_err("upstream failure should be returned");
 
     assert!(variant.cancerhotspots.is_none());
     assert_eq!(variant.cancer_frequencies.len(), 1);

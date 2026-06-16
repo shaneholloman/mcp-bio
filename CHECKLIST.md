@@ -140,6 +140,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/variant/get/tests.rs` Cancer Hotspots success case is pure:
       it now tests recurrence matching directly instead of driving a mocked
       upstream by-gene endpoint.
+- [x] `src/entities/variant/get/tests.rs` is now fully pure: the Cancer Hotspots
+      failure/no-op branch also tests result application directly and the unused
+      variant env/mock test support was removed.
 - [x] `src/entities/adverse_event.rs` OpenFDA status mapping tests are pure:
       404/not-found and empty-result behavior now test decoded response mapping
       directly instead of running a mock OpenFDA server.
@@ -482,6 +485,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   enrichment test to a pure `recurrence_for_change` fixture test with the same
   position/same-amino-acid assertions. One Cancer Hotspots failure/no-op
   mock-server test remains. Checks:
+  `cargo nextest run -E 'test(/entities::variant::get::/)'` → 11/11 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: finished variant-get cleanup. Extracted Cancer Hotspots result
+  application, converted the upstream-failure/no-op test to a pure helper test,
+  and removed the now-unused variant env/mock test support. Checks:
   `cargo nextest run -E 'test(/entities::variant::get::/)'` → 11/11 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
