@@ -1,0 +1,30 @@
+{
+  "meta": {"results": {"skip": 0, "limit": 1, "total": 1}},
+  "results": [
+    {
+      "application_number": "NDA021588",
+      "sponsor_name": "NOVARTIS",
+      "products": [
+        {
+          "brand_name": "GLEEVEC",
+          "dosage_form": "TABLET",
+          "route": "ORAL",
+          "marketing_status": "Prescription",
+          "active_ingredients": [{"name": "IMATINIB MESYLATE", "strength": "100MG"}]
+        }
+      ],
+      "submissions": [
+        {
+          "submission_type": "ORIG",
+          "submission_number": "1",
+          "submission_status": "AP",
+          "submission_status_date": "20010510"
+        }
+      ],
+      "openfda": {
+        "brand_name": ["GLEEVEC"],
+        "generic_name": ["IMATINIB MESYLATE"]
+      }
+    }
+  ]
+}

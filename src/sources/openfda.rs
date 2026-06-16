@@ -1,9 +1,11 @@
 use std::borrow::Cow;
 
+use reqwest::StatusCode;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const OPENFDA_BASE: &str = "https://api.fda.gov";
 const OPENFDA_API: &str = "openfda";
@@ -27,27 +29,239 @@ impl OpenFdaClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String, api_key: Option<String>) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-            api_key: api_key
-                .map(|v| v.trim().to_string())
-                .filter(|v| !v.is_empty()),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     pub(crate) fn escape_query_value(value: &str) -> String {
         crate::utils::query::escape_lucene_value(value)
+    }
+
+    pub(crate) fn faers_search_plan(
+        query: &str,
+        limit: usize,
+        offset: usize,
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let query = validate_query(
+            query,
+            "Query is required. Example: biomcp search adverse-event -d pembrolizumab",
+        )?;
+        validate_limit(limit)?;
+        Ok(with_api_key(
+            RequestPlan::get("drug/event.json")
+                .query("search", query)
+                .query("limit", limit.to_string())
+                .query("skip", offset.to_string()),
+            api_key,
+        ))
+    }
+
+    pub(crate) fn faers_count_plans(
+        query: &str,
+        count_field: &str,
+        limit: usize,
+        api_key: Option<&str>,
+    ) -> Result<Vec<(String, RequestPlan)>, BioMcpError> {
+        let query = validate_query(
+            query,
+            "Query is required. Example: biomcp search adverse-event -d pembrolizumab --count patient.reaction.reactionmeddrapt",
+        )?;
+        let count_field = count_field.trim();
+        if count_field.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "--count requires a field name".into(),
+            ));
+        }
+        validate_limit(limit)?;
+
+        let mut count_fields = vec![count_field.to_string()];
+        if !count_field.ends_with(".exact") {
+            count_fields.push(format!("{count_field}.exact"));
+        }
+
+        Ok(count_fields
+            .into_iter()
+            .map(|field| {
+                let plan = with_api_key(
+                    RequestPlan::get("drug/event.json")
+                        .query("search", query.clone())
+                        .query("count", field.clone())
+                        .query("limit", limit.to_string()),
+                    api_key,
+                );
+                (field, plan)
+            })
+            .collect())
+    }
+
+    pub(crate) fn label_search_plan(
+        drug_name: &str,
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let drug_name = drug_name.trim();
+        if drug_name.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "Drug name is required. Example: biomcp get drug vemurafenib label".into(),
+            ));
+        }
+        if drug_name.len() > 256 {
+            return Err(BioMcpError::InvalidArgument(
+                "Drug name is too long.".into(),
+            ));
+        }
+
+        let escaped = Self::escape_query_value(drug_name);
+        let q = format!("openfda.generic_name:\"{escaped}\" OR openfda.brand_name:\"{escaped}\"");
+        Ok(with_api_key(
+            RequestPlan::get("drug/label.json")
+                .query("search", q)
+                .query("limit", "5")
+                .query("sort", "effective_time:desc"),
+            api_key,
+        ))
+    }
+
+    pub(crate) fn drugsfda_search_plan(
+        query: &str,
+        limit: usize,
+        offset: usize,
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let query = validate_query(
+            query,
+            "Query is required. Example: biomcp get drug dabrafenib approvals",
+        )?;
+        validate_limit(limit)?;
+        Ok(with_api_key(
+            RequestPlan::get("drug/drugsfda.json")
+                .query("search", query)
+                .query("limit", limit.to_string())
+                .query("skip", offset.to_string()),
+            api_key,
+        ))
+    }
+
+    pub(crate) fn device_510k_search_plan(
+        query: &str,
+        limit: usize,
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let query = validate_query(
+            query,
+            "Query is required. Example: biomcp get diagnostic \"FoundationOne CDx\" regulatory",
+        )?;
+        validate_limit(limit)?;
+        Ok(with_api_key(
+            RequestPlan::get("device/510k.json")
+                .query("search", query)
+                .query("limit", limit.to_string()),
+            api_key,
+        ))
+    }
+
+    pub(crate) fn device_pma_search_plan(
+        query: &str,
+        limit: usize,
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let query = validate_query(
+            query,
+            "Query is required. Example: biomcp get diagnostic \"FoundationOne CDx\" regulatory",
+        )?;
+        validate_limit(limit)?;
+        Ok(with_api_key(
+            RequestPlan::get("device/pma.json")
+                .query("search", query)
+                .query("limit", limit.to_string()),
+            api_key,
+        ))
+    }
+
+    pub(crate) fn enforcement_search_plan(
+        query: &str,
+        limit: usize,
+        offset: usize,
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let query = validate_query(
+            query,
+            "Query is required. Example: biomcp search adverse-event --type recall",
+        )?;
+        validate_limit(limit)?;
+        Ok(with_api_key(
+            RequestPlan::get("drug/enforcement.json")
+                .query("search", query)
+                .query("limit", limit.to_string())
+                .query("skip", offset.to_string())
+                .query("sort", "recall_initiation_date:desc"),
+            api_key,
+        ))
+    }
+
+    pub(crate) fn shortage_search_plan(
+        query: &str,
+        limit: usize,
+        offset: usize,
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let query = validate_query(
+            query,
+            "Query is required. Example: biomcp get drug carboplatin shortage",
+        )?;
+        validate_limit(limit)?;
+        Ok(with_api_key(
+            RequestPlan::get("drug/shortages.json")
+                .query("search", query)
+                .query("limit", limit.to_string())
+                .query("skip", offset.to_string())
+                .query("sort", "update_date:desc"),
+            api_key,
+        ))
+    }
+
+    pub(crate) fn device_event_search_plan(
+        query: &str,
+        limit: usize,
+        offset: usize,
+        api_key: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let query = validate_query(
+            query,
+            "Query is required. Example: biomcp search adverse-event --type device --device \"insulin pump\"",
+        )?;
+        validate_limit(limit)?;
+        Ok(with_api_key(
+            RequestPlan::get("device/event.json")
+                .query("search", query)
+                .query("limit", limit.to_string())
+                .query("skip", offset.to_string())
+                .query("sort", "date_received:desc"),
+            api_key,
+        ))
+    }
+
+    pub(crate) fn decode_json_optional<T: DeserializeOwned>(
+        status: StatusCode,
+        bytes: &[u8],
+    ) -> Result<Option<T>, BioMcpError> {
+        if status.as_u16() == 404 {
+            return Ok(None);
+        }
+        crate::sources::decode_json(OPENFDA_API, status, None, bytes, false).map(Some)
+    }
+
+    fn count_value_requests_exact_retry(value: &serde_json::Value, count_field: &str) -> bool {
+        let Some(error) = value.get("error").and_then(serde_json::Value::as_object) else {
+            return false;
+        };
+        let code = error
+            .get("code")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or_default();
+        let details = error
+            .get("details")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or_default();
+        code.eq_ignore_ascii_case("SERVER_ERROR")
+            && details.to_ascii_lowercase().contains("keyword field")
+            && !count_field.ends_with(".exact")
     }
 
     async fn get_json_optional<T: DeserializeOwned>(
@@ -59,25 +273,7 @@ impl OpenFdaClient {
             .await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, OPENFDA_API).await?;
-
-        if status.as_u16() == 404 {
-            return Ok(None);
-        }
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: OPENFDA_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        serde_json::from_slice(&bytes)
-            .map(Some)
-            .map_err(|source| BioMcpError::ApiJson {
-                api: OPENFDA_API.to_string(),
-                source,
-            })
+        Self::decode_json_optional(status, &bytes)
     }
 
     pub async fn faers_search(
@@ -86,32 +282,9 @@ impl OpenFdaClient {
         limit: usize,
         offset: usize,
     ) -> Result<Option<OpenFdaResponse<FaersEventResult>>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp search adverse-event -d pembrolizumab".into(),
-            ));
-        }
-        if query.len() > 1024 {
-            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
-        }
-        if limit == 0 || limit > 50 {
-            return Err(BioMcpError::InvalidArgument(
-                "--limit must be between 1 and 50".into(),
-            ));
-        }
-
-        let url = self.endpoint("drug/event.json");
-        let skip = offset.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("search", query),
-            ("limit", &limit.to_string()),
-            ("skip", skip.as_str()),
-        ]);
-        if let Some(key) = self.api_key.as_deref() {
-            req = req.query(&[("api_key", key)]);
-        }
-        self.get_json_optional(req).await
+        let plan = Self::faers_search_plan(query, limit, offset, self.api_key.as_deref())?;
+        self.get_json_optional(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn faers_count(
@@ -120,80 +293,24 @@ impl OpenFdaClient {
         count_field: &str,
         limit: usize,
     ) -> Result<Option<OpenFdaCountResponse>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp search adverse-event -d pembrolizumab --count patient.reaction.reactionmeddrapt".into(),
-            ));
-        }
-        if query.len() > 1024 {
-            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
-        }
-        let count_field = count_field.trim();
-        if count_field.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "--count requires a field name".into(),
-            ));
-        }
-        if limit == 0 || limit > 50 {
-            return Err(BioMcpError::InvalidArgument(
-                "--limit must be between 1 and 50".into(),
-            ));
-        }
-
-        let mut count_fields = vec![count_field.to_string()];
-        if !count_field.ends_with(".exact") {
-            count_fields.push(format!("{count_field}.exact"));
-        }
-
-        let url = self.endpoint("drug/event.json");
-        for count_field in count_fields {
-            let mut req = self.client.get(&url).query(&[
-                ("search", query),
-                ("count", count_field.as_str()),
-                ("limit", &limit.to_string()),
-            ]);
-            if let Some(key) = self.api_key.as_deref() {
-                req = req.query(&[("api_key", key)]);
-            }
+        let plans = Self::faers_count_plans(query, count_field, limit, self.api_key.as_deref())?;
+        for (count_field, plan) in plans {
+            let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
             let resp = crate::sources::apply_cache_mode_with_auth(req, self.api_key.is_some())
                 .send()
                 .await?;
             let status = resp.status();
             let bytes = crate::sources::read_limited_body(resp, OPENFDA_API).await?;
 
-            if status.as_u16() == 404 {
+            let Some(value) = Self::decode_json_optional::<serde_json::Value>(status, &bytes)?
+            else {
                 return Ok(None);
-            }
-            if !status.is_success() {
-                let excerpt = crate::sources::body_excerpt(&bytes);
-                return Err(BioMcpError::Api {
-                    api: OPENFDA_API.to_string(),
-                    message: format!("HTTP {status}: {excerpt}"),
-                });
-            }
+            };
 
-            let value: serde_json::Value =
-                serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-                    api: OPENFDA_API.to_string(),
-                    source,
-                })?;
-
-            if let Some(error) = value.get("error").and_then(serde_json::Value::as_object) {
-                let code = error
-                    .get("code")
-                    .and_then(serde_json::Value::as_str)
-                    .unwrap_or_default();
-                let details = error
-                    .get("details")
-                    .and_then(serde_json::Value::as_str)
-                    .unwrap_or_default();
-                if code.eq_ignore_ascii_case("SERVER_ERROR")
-                    && details.to_ascii_lowercase().contains("keyword field")
-                    && !count_field.ends_with(".exact")
-                {
-                    continue;
-                }
+            if Self::count_value_requests_exact_retry(&value, &count_field) {
+                continue;
+            }
+            if value.get("error").is_some() {
                 return Ok(None);
             }
 
@@ -211,32 +328,9 @@ impl OpenFdaClient {
         &self,
         drug_name: &str,
     ) -> Result<Option<serde_json::Value>, BioMcpError> {
-        let drug_name = drug_name.trim();
-        if drug_name.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Drug name is required. Example: biomcp get drug vemurafenib label".into(),
-            ));
-        }
-        if drug_name.len() > 256 {
-            return Err(BioMcpError::InvalidArgument(
-                "Drug name is too long.".into(),
-            ));
-        }
-
-        let escaped = Self::escape_query_value(drug_name);
-        let q = format!("openfda.generic_name:\"{escaped}\" OR openfda.brand_name:\"{escaped}\"");
-
-        let url = self.endpoint("drug/label.json");
-        let mut req = self.client.get(&url).query(&[
-            ("search", q.as_str()),
-            ("limit", "5"),
-            ("sort", "effective_time:desc"),
-        ]);
-        if let Some(key) = self.api_key.as_deref() {
-            req = req.query(&[("api_key", key)]);
-        }
-
-        self.get_json_optional(req).await
+        let plan = Self::label_search_plan(drug_name, self.api_key.as_deref())?;
+        self.get_json_optional(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn drugsfda_search(
@@ -245,32 +339,9 @@ impl OpenFdaClient {
         limit: usize,
         offset: usize,
     ) -> Result<Option<OpenFdaResponse<DrugsFdaResult>>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp get drug dabrafenib approvals".into(),
-            ));
-        }
-        if query.len() > 1024 {
-            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
-        }
-        if limit == 0 || limit > 50 {
-            return Err(BioMcpError::InvalidArgument(
-                "--limit must be between 1 and 50".into(),
-            ));
-        }
-
-        let url = self.endpoint("drug/drugsfda.json");
-        let skip = offset.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("search", query),
-            ("limit", &limit.to_string()),
-            ("skip", skip.as_str()),
-        ]);
-        if let Some(key) = self.api_key.as_deref() {
-            req = req.query(&[("api_key", key)]);
-        }
-        self.get_json_optional(req).await
+        let plan = Self::drugsfda_search_plan(query, limit, offset, self.api_key.as_deref())?;
+        self.get_json_optional(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn device_510k_search(
@@ -278,30 +349,9 @@ impl OpenFdaClient {
         query: &str,
         limit: usize,
     ) -> Result<Option<OpenFdaResponse<Fda510kResult>>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp get diagnostic \"FoundationOne CDx\" regulatory".into(),
-            ));
-        }
-        if query.len() > 1024 {
-            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
-        }
-        if limit == 0 || limit > 50 {
-            return Err(BioMcpError::InvalidArgument(
-                "--limit must be between 1 and 50".into(),
-            ));
-        }
-
-        let url = self.endpoint("device/510k.json");
-        let mut req = self
-            .client
-            .get(&url)
-            .query(&[("search", query), ("limit", &limit.to_string())]);
-        if let Some(key) = self.api_key.as_deref() {
-            req = req.query(&[("api_key", key)]);
-        }
-        self.get_json_optional(req).await
+        let plan = Self::device_510k_search_plan(query, limit, self.api_key.as_deref())?;
+        self.get_json_optional(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn device_pma_search(
@@ -309,30 +359,9 @@ impl OpenFdaClient {
         query: &str,
         limit: usize,
     ) -> Result<Option<OpenFdaResponse<FdaPmaResult>>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp get diagnostic \"FoundationOne CDx\" regulatory".into(),
-            ));
-        }
-        if query.len() > 1024 {
-            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
-        }
-        if limit == 0 || limit > 50 {
-            return Err(BioMcpError::InvalidArgument(
-                "--limit must be between 1 and 50".into(),
-            ));
-        }
-
-        let url = self.endpoint("device/pma.json");
-        let mut req = self
-            .client
-            .get(&url)
-            .query(&[("search", query), ("limit", &limit.to_string())]);
-        if let Some(key) = self.api_key.as_deref() {
-            req = req.query(&[("api_key", key)]);
-        }
-        self.get_json_optional(req).await
+        let plan = Self::device_pma_search_plan(query, limit, self.api_key.as_deref())?;
+        self.get_json_optional(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn enforcement_search(
@@ -341,33 +370,9 @@ impl OpenFdaClient {
         limit: usize,
         offset: usize,
     ) -> Result<Option<OpenFdaResponse<EnforcementResult>>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp search adverse-event --type recall".into(),
-            ));
-        }
-        if query.len() > 1024 {
-            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
-        }
-        if limit == 0 || limit > 50 {
-            return Err(BioMcpError::InvalidArgument(
-                "--limit must be between 1 and 50".into(),
-            ));
-        }
-
-        let url = self.endpoint("drug/enforcement.json");
-        let skip = offset.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("search", query),
-            ("limit", &limit.to_string()),
-            ("skip", skip.as_str()),
-            ("sort", "recall_initiation_date:desc"),
-        ]);
-        if let Some(key) = self.api_key.as_deref() {
-            req = req.query(&[("api_key", key)]);
-        }
-        self.get_json_optional(req).await
+        let plan = Self::enforcement_search_plan(query, limit, offset, self.api_key.as_deref())?;
+        self.get_json_optional(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn shortage_search(
@@ -376,33 +381,9 @@ impl OpenFdaClient {
         limit: usize,
         offset: usize,
     ) -> Result<Option<OpenFdaResponse<DrugShortageResult>>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp get drug carboplatin shortage".into(),
-            ));
-        }
-        if query.len() > 1024 {
-            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
-        }
-        if limit == 0 || limit > 50 {
-            return Err(BioMcpError::InvalidArgument(
-                "--limit must be between 1 and 50".into(),
-            ));
-        }
-
-        let url = self.endpoint("drug/shortages.json");
-        let skip = offset.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("search", query),
-            ("limit", &limit.to_string()),
-            ("skip", skip.as_str()),
-            ("sort", "update_date:desc"),
-        ]);
-        if let Some(key) = self.api_key.as_deref() {
-            req = req.query(&[("api_key", key)]);
-        }
-        self.get_json_optional(req).await
+        let plan = Self::shortage_search_plan(query, limit, offset, self.api_key.as_deref())?;
+        self.get_json_optional(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
 
     pub async fn device_event_search(
@@ -411,35 +392,37 @@ impl OpenFdaClient {
         limit: usize,
         offset: usize,
     ) -> Result<Option<OpenFdaResponse<DeviceEventResult>>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "Query is required. Example: biomcp search adverse-event --type device --device \"insulin pump\""
-                    .into(),
-            ));
-        }
-        if query.len() > 1024 {
-            return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
-        }
-        if limit == 0 || limit > 50 {
-            return Err(BioMcpError::InvalidArgument(
-                "--limit must be between 1 and 50".into(),
-            ));
-        }
-
-        let url = self.endpoint("device/event.json");
-        let skip = offset.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("search", query),
-            ("limit", &limit.to_string()),
-            ("skip", skip.as_str()),
-            ("sort", "date_received:desc"),
-        ]);
-        if let Some(key) = self.api_key.as_deref() {
-            req = req.query(&[("api_key", key)]);
-        }
-        self.get_json_optional(req).await
+        let plan = Self::device_event_search_plan(query, limit, offset, self.api_key.as_deref())?;
+        self.get_json_optional(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await
     }
+}
+
+fn validate_query(query: &str, required_message: &str) -> Result<String, BioMcpError> {
+    let query = query.trim();
+    if query.is_empty() {
+        return Err(BioMcpError::InvalidArgument(required_message.into()));
+    }
+    if query.len() > 1024 {
+        return Err(BioMcpError::InvalidArgument("Query is too long.".into()));
+    }
+    Ok(query.to_string())
+}
+
+fn validate_limit(limit: usize) -> Result<(), BioMcpError> {
+    if limit == 0 || limit > 50 {
+        return Err(BioMcpError::InvalidArgument(
+            "--limit must be between 1 and 50".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn with_api_key(mut plan: RequestPlan, api_key: Option<&str>) -> RequestPlan {
+    if let Some(key) = api_key.map(str::trim).filter(|key| !key.is_empty()) {
+        plan = plan.query("api_key", key);
+    }
+    plan
 }
 
 #[derive(Debug, Deserialize)]
@@ -720,173 +703,4 @@ pub struct DeviceEventText {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[test]
-    fn escape_query_value_escapes_lucene_special_chars() {
-        assert_eq!(
-            OpenFdaClient::escape_query_value(r#"PD-1 "checkpoint"\test"#),
-            r#"PD\-1 \"checkpoint\"\\test"#
-        );
-    }
-
-    #[tokio::test]
-    async fn faers_search_validates_limit_bounds() {
-        let client = OpenFdaClient::new_for_test("http://127.0.0.1".into(), None).unwrap();
-        let err = client.faers_search("drug:x", 0, 0).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-
-        let err = client.faers_search("drug:x", 51, 0).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn label_search_includes_api_key_when_configured() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/drug/label.json"))
-            .and(query_param("limit", "5"))
-            .and(query_param("sort", "effective_time:desc"))
-            .and(query_param("api_key", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 1, "total": 1}},
-                "results": [{"id": "x"}]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenFdaClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let resp = client.label_search("pembrolizumab").await.unwrap();
-        assert!(resp.is_some());
-    }
-
-    #[tokio::test]
-    async fn drugsfda_search_validates_limit_bounds() {
-        let client = OpenFdaClient::new_for_test("http://127.0.0.1".into(), None).unwrap();
-        let err = client
-            .drugsfda_search("openfda.brand_name:test", 0, 0)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-
-        let err = client
-            .drugsfda_search("openfda.brand_name:test", 51, 0)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn drugsfda_search_hits_expected_endpoint() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/drug/drugsfda.json"))
-            .and(query_param("limit", "3"))
-            .and(query_param("skip", "0"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 3, "total": 1}},
-                "results": [{
-                    "application_number": "NDA123456",
-                    "sponsor_name": "Example Pharma"
-                }]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenFdaClient::new_for_test(server.uri(), None).unwrap();
-        let resp = client
-            .drugsfda_search("openfda.brand_name:test", 3, 0)
-            .await
-            .unwrap();
-        assert!(resp.is_some());
-    }
-
-    #[tokio::test]
-    async fn device_510k_search_validates_limit_bounds() {
-        let client = OpenFdaClient::new_for_test("http://127.0.0.1".into(), None).unwrap();
-        let err = client
-            .device_510k_search("device_name:\"FoundationOne CDx\"", 0)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-
-        let err = client
-            .device_510k_search("device_name:\"FoundationOne CDx\"", 51)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn device_510k_search_hits_expected_endpoint() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/device/510k.json"))
-            .and(query_param("search", "device_name:\"FoundationOne CDx\""))
-            .and(query_param("limit", "3"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 3, "total": 1}},
-                "results": [{
-                    "k_number": "K123456",
-                    "device_name": "FoundationOne CDx"
-                }]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenFdaClient::new_for_test(server.uri(), None).unwrap();
-        let resp = client
-            .device_510k_search("device_name:\"FoundationOne CDx\"", 3)
-            .await
-            .unwrap();
-        assert!(resp.is_some());
-    }
-
-    #[tokio::test]
-    async fn device_pma_search_validates_limit_bounds() {
-        let client = OpenFdaClient::new_for_test("http://127.0.0.1".into(), None).unwrap();
-        let err = client
-            .device_pma_search("trade_name:\"FoundationOne CDx\"", 0)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-
-        let err = client
-            .device_pma_search("trade_name:\"FoundationOne CDx\"", 51)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn device_pma_search_hits_expected_endpoint() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/device/pma.json"))
-            .and(query_param("search", "trade_name:\"FoundationOne CDx\""))
-            .and(query_param("limit", "3"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 3, "total": 1}},
-                "results": [{
-                    "pma_number": "P000019",
-                    "trade_name": "FoundationOne CDx"
-                }]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenFdaClient::new_for_test(server.uri(), None).unwrap();
-        let resp = client
-            .device_pma_search("trade_name:\"FoundationOne CDx\"", 3)
-            .await
-            .unwrap();
-        assert!(resp.is_some());
-    }
-}
+mod tests;

@@ -1,0 +1,25 @@
+{
+  "meta": {"results": {"skip": 0, "limit": 1, "total": 1}},
+  "results": [
+    {
+      "safetyreportid": "10000001",
+      "serious": "1",
+      "receivedate": "20240101",
+      "patient": {
+        "patientonsetage": "67",
+        "patientonsetageunit": "801",
+        "patientsex": "2",
+        "reaction": [{"reactionmeddrapt": "Nausea"}],
+        "drug": [
+          {
+            "medicinalproduct": "KEYTRUDA",
+            "drugcharacterization": "1",
+            "drugindication": "Melanoma",
+            "openfda": {"generic_name": ["PEMBROLIZUMAB"]}
+          }
+        ]
+      },
+      "primarysource": {"qualification": "1", "reportercountry": "US"}
+    }
+  ]
+}

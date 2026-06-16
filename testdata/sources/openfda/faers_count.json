@@ -1,0 +1,7 @@
+{
+  "meta": {"results": {"skip": 0, "limit": 5, "total": 2}},
+  "results": [
+    {"term": "Nausea", "count": 12},
+    {"term": "Fatigue", "count": 8}
+  ]
+}

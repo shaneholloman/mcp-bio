@@ -1,0 +1,14 @@
+{
+  "meta": {"results": {"skip": 0, "limit": 1, "total": 1}},
+  "results": [
+    {
+      "k_number": "K123456",
+      "device_name": "FoundationOne CDx",
+      "applicant": "Foundation Medicine",
+      "decision_date": "20171130",
+      "decision_description": "Substantially Equivalent",
+      "advisory_committee_description": "Clinical Chemistry",
+      "product_code": "PQP"
+    }
+  ]
+}
