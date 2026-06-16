@@ -77,36 +77,14 @@ fn resolver_queries_adds_hodgkin_alias_variants() {
     assert!(queries.iter().any(|query| query == "hodgkin disease"));
 }
 
-#[tokio::test]
-async fn resolve_disease_hit_by_name_direct_rejects_weak_contains_only_match() {
-    let _guard = lock_env().await;
-    with_no_http_cache(async {
-        let server = MockServer::start().await;
-        let _env = set_env_var(
-            "BIOMCP_MYDISEASE_BASE",
-            Some(&format!("{}/v1", server.uri())),
-        );
+#[test]
+fn resolve_disease_hit_by_name_direct_rejects_weak_contains_only_match() {
+    let queries = resolver_queries("Hodgkin lymphoma");
+    let hit = test_disease_hit("MONDO:0015760", "T-cell non-Hodgkin lymphoma", &[], &[]);
 
-        Mock::given(method("GET"))
-            .and(path("/v1/query"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "total": 1,
-                "hits": [{
-                    "_id": "MONDO:0015760",
-                    "mondo": {"name": "T-cell non-Hodgkin lymphoma"}
-                }]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = MyDiseaseClient::new().expect("client");
-        let best = resolve_disease_hit_by_name_direct(&client, "Hodgkin lymphoma")
-            .await
-            .expect("weak direct match should not error");
-
-        assert!(best.is_none());
-    })
-    .await;
+    assert!(
+        best_disease_candidate_score_for_queries(&queries, &hit) < MIN_DIRECT_DISEASE_MATCH_SCORE
+    );
 }
 
 #[test]

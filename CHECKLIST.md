@@ -146,6 +146,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/adverse_event.rs` explicit VAERS rejection tests are pure:
       offset and unsupported-filter errors now test validation directly instead
       of entering async source search.
+- [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
+      disease-name match rejection now tests the resolver score threshold
+      directly instead of querying a mocked MyDisease server.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -492,3 +495,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: disease resolution cleanup. Converted the weak direct-match
+  rejection test from a mocked MyDisease query to a pure score-threshold test
+  over the same Hodgkin/non-Hodgkin candidate. Checks:
+  `cargo nextest run -E 'test(/entities::disease::resolution::/)'` → 11/11
+  pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
+  pass; `git diff --check` → pass.
