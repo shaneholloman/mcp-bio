@@ -25,8 +25,8 @@ fn search_phenotype_help_mentions_hpo_ids_and_symptom_phrases() {
     assert!(help.contains("biomcp list phenotype"));
 }
 
-#[tokio::test]
-async fn handle_search_rejects_zero_limit_before_backend_lookup() {
+#[test]
+fn search_args_reject_zero_limit_before_backend_lookup() {
     let cli = Cli::try_parse_from(["biomcp", "search", "phenotype", "seizure", "--limit", "0"])
         .expect("search phenotype should parse");
 
@@ -41,8 +41,8 @@ async fn handle_search_rejects_zero_limit_before_backend_lookup() {
         panic!("expected search phenotype command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
+    assert!(!json);
+    let err = super::dispatch::validate_search_args(&args)
         .expect_err("zero phenotype limit should fail fast");
     assert!(err.to_string().contains("--limit must be between 1 and 50"));
 }

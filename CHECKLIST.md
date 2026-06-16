@@ -354,3 +354,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   in place. Checks:
   `cargo nextest run -E 'test(/cli::diagnostic::/) | test(/cli::disease::/)'` → 14/14 pass;
   `cargo check` → pass.
+- 2026-06-16: third CLI parser-validation batch (`pgx`, `phenotype`,
+  `pathway`) made pure for fast-fail limit checks. Checks:
+  `cargo nextest run -E 'test(/cli::pgx::/) | test(/cli::phenotype::/) | test(/cli::pathway::/)'` → 11/11 pass;
+  `cargo check` → pass.

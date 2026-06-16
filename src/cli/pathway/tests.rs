@@ -85,8 +85,8 @@ fn pathway_trials_parse_source_and_limit() {
     }
 }
 
-#[tokio::test]
-async fn handle_command_rejects_zero_limit_before_related_lookup() {
+#[test]
+fn related_limit_rejects_zero_before_lookup() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "pathway",
@@ -106,8 +106,11 @@ async fn handle_command_rejects_zero_limit_before_related_lookup() {
         panic!("expected pathway command");
     };
 
-    let err = super::handle_command(cmd, json)
-        .await
+    assert!(!json);
+    let PathwayCommand::Drugs { limit, offset, .. } = cmd else {
+        panic!("expected pathway drugs command");
+    };
+    let err = super::dispatch::validate_related_limit(limit, offset)
         .expect_err("zero pathway drugs limit should fail fast");
     assert!(err.to_string().contains("--limit must be between 1 and 50"));
 }

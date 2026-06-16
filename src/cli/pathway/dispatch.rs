@@ -3,6 +3,13 @@ use crate::cli::CommandOutcome;
 use futures::StreamExt;
 use tracing::{debug, warn};
 
+pub(super) fn validate_related_limit(
+    limit: usize,
+    offset: usize,
+) -> Result<(), crate::error::BioMcpError> {
+    super::super::paged_fetch_limit(limit, offset, 50).map(|_| ())
+}
+
 pub(in crate::cli) async fn handle_get(
     args: PathwayGetArgs,
     json: bool,
@@ -70,6 +77,7 @@ pub(in crate::cli) async fn handle_command(
 ) -> anyhow::Result<CommandOutcome> {
     let text = match cmd {
         PathwayCommand::Drugs { id, limit, offset } => {
+            validate_related_limit(limit, offset)?;
             let fetch_limit = super::super::paged_fetch_limit(limit, offset, 50)?;
             let rows = pathway_drug_results(&id, fetch_limit).await?;
             let (results, total) = super::super::paginate_results(rows, offset, limit);
@@ -97,6 +105,7 @@ pub(in crate::cli) async fn handle_command(
             }
         }
         PathwayCommand::Articles { id, limit, offset } => {
+            validate_related_limit(limit, offset)?;
             let pathway =
                 crate::entities::pathway::get(&id, super::super::empty_sections()).await?;
             let pathway_name = pathway.name.trim();
@@ -158,6 +167,7 @@ pub(in crate::cli) async fn handle_command(
             offset,
             source,
         } => {
+            validate_related_limit(limit, offset)?;
             let pathway =
                 crate::entities::pathway::get(&id, super::super::empty_sections()).await?;
             let pathway_name = pathway.name.trim();

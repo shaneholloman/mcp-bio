@@ -1,10 +1,22 @@
 use super::PhenotypeSearchArgs;
 use crate::cli::CommandOutcome;
 
+pub(super) fn validate_search_args(
+    args: &PhenotypeSearchArgs,
+) -> Result<(), crate::error::BioMcpError> {
+    if args.limit == 0 || args.limit > 50 {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "--limit must be between 1 and 50".into(),
+        ));
+    }
+    Ok(())
+}
+
 pub(in crate::cli) async fn handle_search(
     args: PhenotypeSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
+    validate_search_args(&args)?;
     let mut query_summary = args.terms.trim().to_string();
     if args.offset > 0 {
         query_summary = format!("{query_summary}, offset={}", args.offset);

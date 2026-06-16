@@ -38,8 +38,8 @@ fn search_pgx_parses_positional_query() {
     assert_eq!(offset, 0);
 }
 
-#[tokio::test]
-async fn handle_search_rejects_zero_limit_before_backend_lookup() {
+#[test]
+fn search_args_reject_zero_limit_before_backend_lookup() {
     let cli = Cli::try_parse_from(["biomcp", "search", "pgx", "CYP2D6", "--limit", "0"])
         .expect("search pgx should parse");
 
@@ -54,8 +54,8 @@ async fn handle_search_rejects_zero_limit_before_backend_lookup() {
         panic!("expected search pgx command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
-        .expect_err("zero pgx limit should fail fast");
+    assert!(!json);
+    let err =
+        super::dispatch::validate_search_args(&args).expect_err("zero pgx limit should fail fast");
     assert!(err.to_string().contains("--limit must be between 1 and 50"));
 }
