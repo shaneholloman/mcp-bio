@@ -12,6 +12,7 @@ use reqwest::StatusCode;
 use reqwest::header::{CACHE_CONTROL, HeaderMap, HeaderValue, RETRY_AFTER};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware, Middleware, Next, RequestBuilder};
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
+use serde::de::DeserializeOwned;
 use tracing::warn;
 
 use crate::error::BioMcpError;
@@ -190,6 +191,161 @@ pub(crate) fn append_ncbi_api_key(req: RequestBuilder, api_key: Option<&str>) ->
         return req.query(&[("api_key", key)]);
     }
     req
+}
+
+// --- Request-construction seam (Tier-2 substrate) ----------------------------
+//
+// A source client builds a pure `RequestPlan` in a `*_plan()` function (no network,
+// no client, no env — directly assertable by a Tier-2 test), then hands it to
+// `request_from_plan()` to get a live `RequestBuilder`. The send path (cache mode,
+// retry, body limits) is unchanged; only construction becomes a testable seam.
+
+/// HTTP method for a [`RequestPlan`] — the small subset the source clients use.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum HttpMethod {
+    Get,
+    Post,
+}
+
+/// Outbound request body, as pure data (asserted by Tier-2 tests, applied at send).
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum RequestBody {
+    None,
+    Form(Vec<(String, String)>),
+    #[allow(dead_code)] // used by sources with JSON request bodies (fan-out)
+    Json(serde_json::Value),
+}
+
+/// A fully-described outbound HTTP request, built without sending.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct RequestPlan {
+    pub method: HttpMethod,
+    /// Path relative to the client base URL (leading slash optional).
+    pub path: String,
+    pub query: Vec<(String, String)>,
+    pub headers: Vec<(String, String)>,
+    pub body: RequestBody,
+}
+
+impl RequestPlan {
+    pub(crate) fn get(path: impl Into<String>) -> Self {
+        Self {
+            method: HttpMethod::Get,
+            path: path.into(),
+            query: Vec::new(),
+            headers: Vec::new(),
+            body: RequestBody::None,
+        }
+    }
+
+    pub(crate) fn post(path: impl Into<String>) -> Self {
+        Self {
+            method: HttpMethod::Post,
+            path: path.into(),
+            query: Vec::new(),
+            headers: Vec::new(),
+            body: RequestBody::None,
+        }
+    }
+
+    pub(crate) fn query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.query.push((key.into(), value.into()));
+        self
+    }
+
+    pub(crate) fn header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.headers.push((key.into(), value.into()));
+        self
+    }
+
+    pub(crate) fn form(mut self, form: Vec<(String, String)>) -> Self {
+        self.body = RequestBody::Form(form);
+        self
+    }
+
+    /// First value for a query key (Tier-2 test helper).
+    #[cfg(test)]
+    pub(crate) fn query_value(&self, key: &str) -> Option<&str> {
+        self.query
+            .iter()
+            .find(|(k, _)| k == key)
+            .map(|(_, v)| v.as_str())
+    }
+
+    /// Whether a query key is present at all (Tier-2 test helper).
+    #[cfg(test)]
+    pub(crate) fn has_query(&self, key: &str) -> bool {
+        self.query.iter().any(|(k, _)| k == key)
+    }
+
+    /// First value for a header name, case-insensitive (Tier-2 test helper).
+    #[cfg(test)]
+    pub(crate) fn header_value(&self, key: &str) -> Option<&str> {
+        self.headers
+            .iter()
+            .find(|(k, _)| k.eq_ignore_ascii_case(key))
+            .map(|(_, v)| v.as_str())
+    }
+}
+
+fn join_base_path(base: &str, path: &str) -> String {
+    format!(
+        "{}/{}",
+        base.trim_end_matches('/'),
+        path.trim_start_matches('/')
+    )
+}
+
+/// Turn a pure [`RequestPlan`] into a live `RequestBuilder` against `client`/`base`.
+pub(crate) fn request_from_plan(
+    client: &ClientWithMiddleware,
+    base: &str,
+    plan: &RequestPlan,
+) -> RequestBuilder {
+    let url = join_base_path(base, &plan.path);
+    let mut req = match plan.method {
+        HttpMethod::Get => client.get(&url),
+        HttpMethod::Post => client.post(&url),
+    };
+    for (key, value) in &plan.headers {
+        req = req.header(key.as_str(), value.as_str());
+    }
+    if !plan.query.is_empty() {
+        req = req.query(&plan.query);
+    }
+    match &plan.body {
+        RequestBody::None => {}
+        RequestBody::Form(form) => req = req.form(form),
+        RequestBody::Json(json) => req = req.json(json),
+    }
+    req
+}
+
+/// Decode an already-read JSON response body with the standard status / (optional)
+/// content-type checks. Pure over `(status, content_type, bytes)` so Tier-3 tests can
+/// exercise success, HTTP-error, and bad-content-type paths against committed fixture
+/// bytes — no server, no client.
+pub(crate) fn decode_json<T: DeserializeOwned>(
+    api: &str,
+    status: StatusCode,
+    content_type: Option<&HeaderValue>,
+    bytes: &[u8],
+    require_json_content_type: bool,
+) -> Result<T, BioMcpError> {
+    if !status.is_success() {
+        let excerpt = body_excerpt(bytes);
+        return Err(BioMcpError::Api {
+            api: api.to_string(),
+            message: format!("HTTP {status}: {excerpt}"),
+        });
+    }
+    if require_json_content_type {
+        ensure_json_content_type(api, content_type, bytes)?;
+    }
+    serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
+        api: api.to_string(),
+        source,
+    })
 }
 
 fn parse_retry_after_header(headers: &HeaderMap) -> Option<Duration> {

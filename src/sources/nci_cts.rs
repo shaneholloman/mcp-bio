@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const NCI_CTS_BASE: &str = "https://clinicaltrialsapi.cancer.gov/api/v2";
 const NCI_CTS_API: &str = "nci_cts";
@@ -102,14 +103,6 @@ impl NciCtsClient {
         })
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
@@ -119,33 +112,23 @@ impl NciCtsClient {
             .await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, NCI_CTS_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: NCI_CTS_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: NCI_CTS_API.to_string(),
-            source,
-        })
+        crate::sources::decode_json(NCI_CTS_API, status, None, &bytes, false)
     }
 
-    pub async fn search(&self, params: &NciSearchParams) -> Result<NciSearchResponse, BioMcpError> {
-        let url = self.endpoint("trials");
-        let mut req = self.client.get(&url).header("X-API-KEY", &self.api_key);
+    /// Build the outbound trials-search request (pure — Tier-2 testable, never sent).
+    pub(crate) fn search_plan(api_key: &str, params: &NciSearchParams) -> RequestPlan {
+        let mut plan = RequestPlan::get("trials").header("X-API-KEY", api_key);
 
         if let Some(disease) = &params.disease {
             match disease {
                 NciDiseaseFilter::Keyword(v) => {
                     if let Some(v) = trimmed_non_empty(v.as_str()) {
-                        req = req.query(&[("keyword", v)]);
+                        plan = plan.query("keyword", v);
                     }
                 }
                 NciDiseaseFilter::ConceptId(v) => {
                     if let Some(v) = trimmed_non_empty(v.as_str()) {
-                        req = req.query(&[("diseases.nci_thesaurus_concept_id", v)]);
+                        plan = plan.query("diseases.nci_thesaurus_concept_id", v);
                     }
                 }
             }
@@ -156,7 +139,7 @@ impl NciCtsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("interventions", v)]);
+            plan = plan.query("interventions", v);
         }
         if let Some(v) = params
             .sites_org_name
@@ -164,18 +147,18 @@ impl NciCtsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("sites.org_name", v)]);
+            plan = plan.query("sites.org_name", v);
         }
         if let Some(status) = &params.status {
             match status {
                 NciStatusFilter::CurrentTrialStatus(v) => {
                     if let Some(v) = trimmed_non_empty(v.as_str()) {
-                        req = req.query(&[("current_trial_status", v)]);
+                        plan = plan.query("current_trial_status", v);
                     }
                 }
                 NciStatusFilter::SiteRecruitmentStatus(v) => {
                     if let Some(v) = trimmed_non_empty(v.as_str()) {
-                        req = req.query(&[("sites.recruitment_status", v)]);
+                        plan = plan.query("sites.recruitment_status", v);
                     }
                 }
             }
@@ -185,13 +168,15 @@ impl NciCtsClient {
             if phase.is_empty() {
                 continue;
             }
-            req = req.query(&[("phase", phase)]);
+            plan = plan.query("phase", phase);
         }
         if let Some(geo) = &params.geo {
-            req = req.query(&[("sites.org_coordinates_lat", geo.lat)]);
-            req = req.query(&[("sites.org_coordinates_lon", geo.lon)]);
-            let distance = format!("{}mi", geo.distance_miles);
-            req = req.query(&[("sites.org_coordinates_dist", distance.as_str())]);
+            plan = plan.query("sites.org_coordinates_lat", geo.lat.to_string());
+            plan = plan.query("sites.org_coordinates_lon", geo.lon.to_string());
+            plan = plan.query(
+                "sites.org_coordinates_dist",
+                format!("{}mi", geo.distance_miles),
+            );
         }
         if let Some(v) = params
             .biomarkers
@@ -199,201 +184,31 @@ impl NciCtsClient {
             .map(str::trim)
             .filter(|v| !v.is_empty())
         {
-            req = req.query(&[("biomarkers", v)]);
+            plan = plan.query("biomarkers", v);
         }
 
-        let size = params.size.to_string();
-        req = req.query(&[("size", size.as_str())]);
-        let from = params.from.to_string();
-        req = req.query(&[("from", from.as_str())]);
+        plan = plan.query("size", params.size.to_string());
+        plan = plan.query("from", params.from.to_string());
+        plan
+    }
 
+    pub async fn search(&self, params: &NciSearchParams) -> Result<NciSearchResponse, BioMcpError> {
+        let plan = Self::search_plan(&self.api_key, params);
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
         self.get_json(req).await
     }
 
+    /// Build the outbound single-trial request (pure — Tier-2 testable).
+    pub(crate) fn get_plan(api_key: &str, nct_id: &str) -> RequestPlan {
+        RequestPlan::get(format!("trials/{nct_id}")).header("X-API-KEY", api_key)
+    }
+
     pub async fn get(&self, nct_id: &str) -> Result<serde_json::Value, BioMcpError> {
-        let url = self.endpoint(&format!("trials/{nct_id}"));
-        self.get_json(self.client.get(&url).header("X-API-KEY", &self.api_key))
-            .await
+        let plan = Self::get_plan(&self.api_key, nct_id);
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        self.get_json(req).await
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{header, method, path, query_param, query_param_is_missing};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn search_includes_api_key_header_and_params() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/trials"))
-            .and(header("X-API-KEY", "test-key"))
-            .and(query_param("keyword", "melanoma"))
-            .and(query_param("size", "2"))
-            .and(query_param("from", "0"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = NciCtsClient::new_for_test(server.uri(), "test-key".into()).unwrap();
-        let _ = client
-            .search(&NciSearchParams {
-                disease: Some(NciDiseaseFilter::Keyword("melanoma".into())),
-                interventions: None,
-                sites_org_name: None,
-                status: None,
-                phases: Vec::new(),
-                geo: None,
-                biomarkers: None,
-                size: 2,
-                from: 0,
-            })
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn search_surfaces_http_error_context() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/trials"))
-            .and(header("X-API-KEY", "test-key"))
-            .respond_with(ResponseTemplate::new(500).set_body_string("upstream failure"))
-            .mount(&server)
-            .await;
-
-        let client = NciCtsClient::new_for_test(server.uri(), "test-key".into()).unwrap();
-        let err = client
-            .search(&NciSearchParams {
-                disease: Some(NciDiseaseFilter::Keyword("melanoma".into())),
-                interventions: None,
-                sites_org_name: None,
-                status: None,
-                phases: Vec::new(),
-                geo: None,
-                biomarkers: None,
-                size: 2,
-                from: 0,
-            })
-            .await
-            .unwrap_err();
-        let msg = err.to_string();
-        assert!(msg.contains("nci_cts"));
-        assert!(msg.contains("500"));
-    }
-
-    #[tokio::test]
-    async fn search_includes_sites_org_name_param() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/trials"))
-            .and(header("X-API-KEY", "test-key"))
-            .and(query_param("keyword", "melanoma"))
-            .and(query_param("sites.org_name", "MD Anderson"))
-            .and(query_param("size", "2"))
-            .and(query_param("from", "0"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = NciCtsClient::new_for_test(server.uri(), "test-key".into()).unwrap();
-        let _ = client
-            .search(&NciSearchParams {
-                disease: Some(NciDiseaseFilter::Keyword("melanoma".into())),
-                interventions: None,
-                sites_org_name: Some("MD Anderson".into()),
-                status: None,
-                phases: Vec::new(),
-                geo: None,
-                biomarkers: None,
-                size: 2,
-                from: 0,
-            })
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn search_serializes_nci_contract_params() {
-        let server = MockServer::start().await;
-        let client = NciCtsClient::new_for_test(server.uri(), "test-key".into()).unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/trials"))
-            .and(header("X-API-KEY", "test-key"))
-            .and(query_param("keyword", "melanoma"))
-            .and(query_param_is_missing("diseases"))
-            .and(query_param("sites.recruitment_status", "ACTIVE"))
-            .and(query_param_is_missing("recruitment_status"))
-            .and(query_param("phase", "I_II"))
-            .and(query_param("sites.org_coordinates_lat", "41.9742"))
-            .and(query_param("sites.org_coordinates_lon", "-87.8073"))
-            .and(query_param("sites.org_coordinates_dist", "100mi"))
-            .and(query_param("size", "2"))
-            .and(query_param("from", "0"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": []
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let _ = client
-            .search(&NciSearchParams {
-                disease: Some(NciDiseaseFilter::Keyword("melanoma".into())),
-                interventions: None,
-                sites_org_name: None,
-                status: Some(NciStatusFilter::SiteRecruitmentStatus("ACTIVE".into())),
-                phases: vec!["I_II".into()],
-                geo: Some(NciGeoFilter {
-                    lat: 41.9742,
-                    lon: -87.8073,
-                    distance_miles: 100,
-                }),
-                biomarkers: None,
-                size: 2,
-                from: 0,
-            })
-            .await
-            .unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/trials"))
-            .and(header("X-API-KEY", "test-key"))
-            .and(query_param("diseases.nci_thesaurus_concept_id", "C3224"))
-            .and(query_param_is_missing("keyword"))
-            .and(query_param("current_trial_status", "Complete"))
-            .and(query_param_is_missing("recruitment_status"))
-            .and(query_param("size", "1"))
-            .and(query_param("from", "0"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": []
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let _ = client
-            .search(&NciSearchParams {
-                disease: Some(NciDiseaseFilter::ConceptId("C3224".into())),
-                interventions: None,
-                sites_org_name: None,
-                status: Some(NciStatusFilter::CurrentTrialStatus("Complete".into())),
-                phases: Vec::new(),
-                geo: None,
-                biomarkers: None,
-                size: 1,
-                from: 0,
-            })
-            .await
-            .unwrap();
-    }
-}
+mod tests;

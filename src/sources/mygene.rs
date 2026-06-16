@@ -5,7 +5,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
-use crate::sources::is_valid_gene_symbol;
+use crate::sources::{RequestPlan, is_valid_gene_symbol, request_from_plan};
 use crate::utils::serde::StringOrVec;
 
 const MYGENE_BASE: &str = "https://mygene.info/v3";
@@ -25,22 +25,6 @@ impl MyGeneClient {
             client: crate::sources::shared_client()?,
             base: crate::sources::env_base(MYGENE_BASE, MYGENE_BASE_ENV),
         })
-    }
-
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
     }
 
     pub(crate) fn escape_query_value(value: &str) -> String {
@@ -71,18 +55,32 @@ impl MyGeneClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, MYGENE_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: MYGENE_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
+        crate::sources::decode_json(MYGENE_API, status, content_type.as_ref(), &bytes, true)
+    }
+
+    /// Build the outbound search request (pure — Tier-2 testable, never sent).
+    pub(crate) fn search_plan(
+        query: &str,
+        limit: usize,
+        offset: usize,
+        chromosome: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        Self::validate_search_window(limit, offset)?;
+        let mut plan = RequestPlan::get("query")
+            .query("q", query)
+            .query("species", "human")
+            .query(
+                "fields",
+                "symbol,name,entrezgene,type_of_gene,genomic_pos.chr,genomic_pos.start,genomic_pos.end,MIM,uniprot,pathway.kegg.id,pathway.reactome.id,go.BP.id,go.CC.id,go.MF.id",
+            )
+            .query("size", limit.to_string())
+            .query("from", offset.to_string());
+
+        if let Some(chr) = chromosome.map(str::trim).filter(|v| !v.is_empty()) {
+            // MyGene supports `chr` query param filtering for `/query`.
+            plan = plan.query("chr", chr);
         }
-        crate::sources::ensure_json_content_type(MYGENE_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: MYGENE_API.to_string(),
-            source,
-        })
+        Ok(plan)
     }
 
     /// Search genes by query
@@ -93,36 +91,16 @@ impl MyGeneClient {
         offset: usize,
         chromosome: Option<&str>,
     ) -> Result<MyGeneSearchResponse, BioMcpError> {
-        Self::validate_search_window(limit, offset)?;
-        let url = self.endpoint("query");
-        let size = limit.to_string();
-        let from = offset.to_string();
-        let mut req = self.client.get(&url).query(&[
-            ("q", query),
-            ("species", "human"),
-            (
-                "fields",
-                "symbol,name,entrezgene,type_of_gene,genomic_pos.chr,genomic_pos.start,genomic_pos.end,MIM,uniprot,pathway.kegg.id,pathway.reactome.id,go.BP.id,go.CC.id,go.MF.id",
-            ),
-            ("size", size.as_str()),
-            ("from", from.as_str()),
-        ]);
-
-        if let Some(chr) = chromosome.map(str::trim).filter(|v| !v.is_empty()) {
-            // MyGene supports `chr` query param filtering for `/query`.
-            req = req.query(&[("chr", chr)]);
-        }
-
+        let plan = Self::search_plan(query, limit, offset, chromosome)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
         self.get_json(req).await
     }
 
-    /// Get gene by symbol (single query for fields needed by the caller)
-    pub async fn get(
-        &self,
+    /// Build the outbound single-gene query request (pure — Tier-2 testable).
+    pub(crate) fn get_plan(
         symbol: &str,
         include_transcripts: bool,
-    ) -> Result<MyGeneGetResponse, BioMcpError> {
-        let query_url = self.endpoint("query");
+    ) -> Result<RequestPlan, BioMcpError> {
         let symbol = symbol.trim();
         if symbol.is_empty() {
             return Err(BioMcpError::InvalidArgument(
@@ -147,14 +125,23 @@ impl MyGeneClient {
         };
 
         let q = format!("symbol:\"{}\"", Self::escape_query_value(symbol));
-        let query_resp: MyGeneGetQueryResponse = self
-            .get_json(self.client.get(&query_url).query(&[
-                ("q", q.as_str()),
-                ("species", "human"),
-                ("fields", fields),
-                ("size", "1"),
-            ]))
-            .await?;
+        Ok(RequestPlan::get("query")
+            .query("q", q)
+            .query("species", "human")
+            .query("fields", fields)
+            .query("size", "1"))
+    }
+
+    /// Get gene by symbol (single query for fields needed by the caller)
+    pub async fn get(
+        &self,
+        symbol: &str,
+        include_transcripts: bool,
+    ) -> Result<MyGeneGetResponse, BioMcpError> {
+        let symbol = symbol.trim();
+        let plan = Self::get_plan(symbol, include_transcripts)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let query_resp: MyGeneGetQueryResponse = self.get_json(req).await?;
 
         query_resp
             .hits
@@ -182,7 +169,10 @@ impl MyGeneClient {
             })
     }
 
-    pub async fn symbols_for_entrez_ids(&self, ids: &[String]) -> Result<Vec<String>, BioMcpError> {
+    /// Build the outbound batch-symbol request and return the cleaned id list (pure).
+    pub(crate) fn batch_symbols_plan(
+        ids: &[String],
+    ) -> Result<(RequestPlan, Vec<String>), BioMcpError> {
         let ids = ids
             .iter()
             .map(|value| value.trim())
@@ -200,16 +190,20 @@ impl MyGeneClient {
             )));
         }
 
-        let url = self.endpoint("gene");
         let ids_csv = ids.join(",");
-        let rows: Vec<MyGeneBatchGeneHit> = self
-            .get_json(self.client.post(&url).form(&[
-                ("ids", ids_csv.as_str()),
-                ("fields", "symbol"),
-                ("species", "human"),
-            ]))
-            .await?;
+        let plan = RequestPlan::post("gene").form(vec![
+            ("ids".to_string(), ids_csv),
+            ("fields".to_string(), "symbol".to_string()),
+            ("species".to_string(), "human".to_string()),
+        ]);
+        Ok((plan, ids))
+    }
 
+    /// Map batch rows back to input order with de-duplicated symbols (pure — Tier-3).
+    pub(crate) fn dedupe_symbols_in_order(
+        rows: Vec<MyGeneBatchGeneHit>,
+        ids: &[String],
+    ) -> Vec<String> {
         let mut symbol_by_id = HashMap::new();
         for row in rows {
             let symbol = row
@@ -238,8 +232,14 @@ impl MyGeneClient {
             }
             out.push(symbol.clone());
         }
+        out
+    }
 
-        Ok(out)
+    pub async fn symbols_for_entrez_ids(&self, ids: &[String]) -> Result<Vec<String>, BioMcpError> {
+        let (plan, ids) = Self::batch_symbols_plan(ids)?;
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
+        let rows: Vec<MyGeneBatchGeneHit> = self.get_json(req).await?;
+        Ok(Self::dedupe_symbols_in_order(rows, &ids))
     }
 }
 
@@ -260,7 +260,7 @@ fn first_string_value(value: &serde_json::Value) -> Option<String> {
     }
 }
 
-fn extract_uniprot_accession(value: &serde_json::Value) -> Option<String> {
+pub(crate) fn extract_uniprot_accession(value: &serde_json::Value) -> Option<String> {
     if let Some(obj) = value.as_object() {
         if let Some(swiss_prot) = obj.get("Swiss-Prot").and_then(first_string_value) {
             return Some(swiss_prot);
@@ -320,7 +320,7 @@ pub struct MyGeneGetResponse {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct MyGeneBatchGeneHit {
+pub(crate) struct MyGeneBatchGeneHit {
     query: Option<StringOrU64>,
     #[serde(rename = "_id")]
     id: Option<StringOrU64>,
@@ -411,299 +411,4 @@ impl GenomicPosField {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn search_includes_chr_query_param_for_chromosome_filter() {
-        let server = MockServer::start().await;
-        let client = MyGeneClient::new_for_test(format!("{}/v3", server.uri())).unwrap();
-
-        let body = r#"{
-          "total": 1,
-          "hits": [
-            {"symbol": "EGFR", "name": "epidermal growth factor receptor", "genomic_pos": {"chr": "7"}}
-          ]
-        }"#;
-
-        Mock::given(method("GET"))
-            .and(path("/v3/query"))
-            .and(query_param("q", "symbol:EGFR"))
-            .and(query_param("species", "human"))
-            .and(query_param("size", "5"))
-            .and(query_param("from", "0"))
-            .and(query_param("chr", "7"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(body, "application/json"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let resp = client.search("symbol:EGFR", 5, 0, Some("7")).await.unwrap();
-        assert_eq!(resp.hits.len(), 1);
-    }
-
-    #[tokio::test]
-    async fn get_uses_single_query_minimal_fields_by_default() {
-        let server = MockServer::start().await;
-        let client = MyGeneClient::new_for_test(format!("{}/v3", server.uri())).unwrap();
-
-        let body = r#"{
-          "total": 1,
-          "hits": [
-            {
-              "_id": "673",
-              "symbol": "BRAF",
-              "name": "B-Raf proto-oncogene, serine/threonine kinase",
-              "entrezgene": 673,
-              "summary": "example summary.",
-              "alias": ["B-RAF1"],
-              "type_of_gene": "protein-coding",
-              "ensembl": {"gene": "ENSG00000157764"},
-              "genomic_pos": {"chr": "7"}
-            }
-          ]
-        }"#;
-
-        Mock::given(method("GET"))
-            .and(path("/v3/query"))
-            .and(query_param("q", "symbol:\"BRAF\""))
-            .and(query_param("species", "human"))
-            .and(query_param(
-                "fields",
-                "symbol,name,summary,alias,type_of_gene,ensembl.gene,entrezgene,genomic_pos.chr,genomic_pos.start,genomic_pos.end,genomic_pos.strand,MIM,uniprot,pathway.kegg",
-            ))
-            .and(query_param("size", "1"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(body, "application/json"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let resp = client.get("BRAF", false).await.unwrap();
-        assert_eq!(resp.symbol.as_deref(), Some("BRAF"));
-        assert_eq!(
-            resp.ensembl
-                .as_ref()
-                .and_then(|e| e.gene())
-                .map(String::as_str),
-            Some("ENSG00000157764")
-        );
-    }
-
-    #[tokio::test]
-    async fn get_includes_transcripts_fields_when_requested() {
-        let server = MockServer::start().await;
-        let client = MyGeneClient::new_for_test(format!("{}/v3", server.uri())).unwrap();
-
-        let body = r#"{
-          "total": 1,
-          "hits": [
-            {
-              "symbol": "BRAF",
-              "name": "B-Raf proto-oncogene, serine/threonine kinase",
-              "entrezgene": 673,
-              "summary": "example summary.",
-              "alias": ["B-RAF1"],
-              "type_of_gene": "protein-coding",
-              "ensembl": {
-                "gene": "ENSG00000157764",
-                "transcript": ["ENST00000288602"],
-                "protein": ["ENSP00000288602"]
-              },
-              "genomic_pos": {"chr": "7"}
-            }
-          ]
-        }"#;
-
-        Mock::given(method("GET"))
-            .and(path("/v3/query"))
-            .and(query_param("q", "symbol:\"BRAF\""))
-            .and(query_param("species", "human"))
-            .and(query_param(
-                "fields",
-                "symbol,name,summary,alias,type_of_gene,ensembl.gene,ensembl.transcript,ensembl.protein,entrezgene,genomic_pos.chr,genomic_pos.start,genomic_pos.end,genomic_pos.strand,MIM,uniprot,pathway.kegg",
-            ))
-            .and(query_param("size", "1"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(body, "application/json"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let resp = client.get("BRAF", true).await.unwrap();
-        let ensembl = resp.ensembl.expect("ensembl expected");
-        let first = ensembl.first().expect("ensembl entry expected");
-        assert!(first.transcript.is_some());
-        assert!(first.protein.is_some());
-    }
-
-    #[tokio::test]
-    async fn get_rejects_invalid_symbol_characters() {
-        let client = MyGeneClient::new_for_test("http://127.0.0.1/v3".into()).unwrap();
-        let err = client.get("BRAF:V600E", false).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("letters, numbers"));
-    }
-
-    #[tokio::test]
-    async fn search_rejects_html_content_type_before_json_parse() {
-        let server = MockServer::start().await;
-        let client = MyGeneClient::new_for_test(format!("{}/v3", server.uri())).unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/v3/query"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_raw("<html><body>error page</body></html>", "text/html"),
-            )
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let err = client.search("EGFR", 1, 0, None).await.unwrap_err();
-        let msg = err.to_string();
-        assert!(msg.contains("mygene.info"));
-        assert!(msg.contains("HTML"));
-    }
-
-    #[tokio::test]
-    async fn search_rejects_offset_above_mygene_window() {
-        let client = MyGeneClient::new_for_test("http://127.0.0.1/v3".into()).unwrap();
-        let err = client
-            .search("symbol:EGFR", 5, 10_000, None)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("--offset"));
-    }
-
-    #[tokio::test]
-    async fn search_rejects_offset_limit_window_overflow() {
-        let client = MyGeneClient::new_for_test("http://127.0.0.1/v3".into()).unwrap();
-        let err = client
-            .search("symbol:EGFR", 2, 9_999, None)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("--limit"));
-    }
-
-    #[tokio::test]
-    async fn resolve_uniprot_accession_prefers_swiss_prot() {
-        let server = MockServer::start().await;
-        let client = MyGeneClient::new_for_test(format!("{}/v3", server.uri())).unwrap();
-
-        let body = r#"{
-          "total": 1,
-          "hits": [
-            {
-              "symbol": "BRAF",
-              "uniprot": {
-                "Swiss-Prot": ["P15056"],
-                "TrEMBL": ["A0A0A0"]
-              }
-            }
-          ]
-        }"#;
-
-        Mock::given(method("GET"))
-            .and(path("/v3/query"))
-            .and(query_param("q", "symbol:\"BRAF\""))
-            .and(query_param("species", "human"))
-            .and(query_param(
-                "fields",
-                "symbol,name,summary,alias,type_of_gene,ensembl.gene,entrezgene,genomic_pos.chr,genomic_pos.start,genomic_pos.end,genomic_pos.strand,MIM,uniprot,pathway.kegg",
-            ))
-            .and(query_param("size", "1"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(body, "application/json"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let accession = client.resolve_uniprot_accession("BRAF").await.unwrap();
-        assert_eq!(accession, "P15056");
-    }
-
-    #[tokio::test]
-    async fn resolve_uniprot_accession_returns_not_found_when_missing() {
-        let server = MockServer::start().await;
-        let client = MyGeneClient::new_for_test(format!("{}/v3", server.uri())).unwrap();
-
-        let body = r#"{
-          "total": 1,
-          "hits": [
-            {
-              "symbol": "BRAF",
-              "name": "B-Raf proto-oncogene"
-            }
-          ]
-        }"#;
-
-        Mock::given(method("GET"))
-            .and(path("/v3/query"))
-            .and(query_param("q", "symbol:\"BRAF\""))
-            .and(query_param("species", "human"))
-            .and(query_param(
-                "fields",
-                "symbol,name,summary,alias,type_of_gene,ensembl.gene,entrezgene,genomic_pos.chr,genomic_pos.start,genomic_pos.end,genomic_pos.strand,MIM,uniprot,pathway.kegg",
-            ))
-            .and(query_param("size", "1"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(body, "application/json"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let err = client.resolve_uniprot_accession("BRAF").await.unwrap_err();
-        assert!(matches!(err, BioMcpError::NotFound { .. }));
-    }
-
-    #[tokio::test]
-    async fn symbols_for_entrez_ids_preserves_input_order_and_dedupes_symbols() {
-        let server = MockServer::start().await;
-        let client = MyGeneClient::new_for_test(format!("{}/v3", server.uri())).unwrap();
-
-        Mock::given(method("POST"))
-            .and(path("/v3/gene"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(
-                r#"[
-                  {"query":"7157","_id":"7157","symbol":"TP53"},
-                  {"query":"1956","_id":"1956","symbol":"EGFR"},
-                  {"query":"1956","_id":"1956","symbol":"EGFR"},
-                  {"query":"672","_id":"672","symbol":"BRCA1"}
-                ]"#,
-                "application/json",
-            ))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let symbols = client
-            .symbols_for_entrez_ids(&[
-                "1956".to_string(),
-                "7157".to_string(),
-                "1956".to_string(),
-                "672".to_string(),
-            ])
-            .await
-            .unwrap();
-
-        assert_eq!(symbols, vec!["EGFR", "TP53", "BRCA1"]);
-    }
-
-    #[tokio::test]
-    async fn symbols_for_entrez_ids_rejects_empty_input() {
-        let client = MyGeneClient::new_for_test("http://127.0.0.1/v3".into()).unwrap();
-        let err = client.symbols_for_entrez_ids(&[]).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("at least one ID"));
-    }
-
-    #[tokio::test]
-    async fn symbols_for_entrez_ids_rejects_oversized_batch() {
-        let client = MyGeneClient::new_for_test("http://127.0.0.1/v3".into()).unwrap();
-        let ids: Vec<String> = (1..=201).map(|n| n.to_string()).collect();
-        let err = client.symbols_for_entrez_ids(&ids).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("200"));
-    }
-}
+mod tests;
