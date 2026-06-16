@@ -33,6 +33,25 @@ enum XmlWaterfallWinner {
     EuropePmcMed,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum XmlFulltextAttempt {
+    EuropePmcPmc,
+    NcbiEfetchPmc,
+    PmcOaArchive,
+    EuropePmcMed,
+}
+
+impl XmlFulltextAttempt {
+    fn winner(self) -> XmlWaterfallWinner {
+        match self {
+            Self::EuropePmcPmc => XmlWaterfallWinner::EuropePmcPmc,
+            Self::NcbiEfetchPmc => XmlWaterfallWinner::NcbiEfetchPmc,
+            Self::PmcOaArchive => XmlWaterfallWinner::PmcOaArchive,
+            Self::EuropePmcMed => XmlWaterfallWinner::EuropePmcMed,
+        }
+    }
+}
+
 enum FulltextStepOutcome<T> {
     Resolved(T),
     Miss,
@@ -244,6 +263,34 @@ fn parse_pdf_url(raw_url: &str) -> Option<Url> {
     Url::parse(raw_url.trim()).ok()
 }
 
+fn xml_fulltext_attempts(
+    article: &Article,
+    resolved_pmcid: Option<&str>,
+) -> Vec<XmlFulltextAttempt> {
+    let mut attempts = Vec::new();
+    if resolved_pmcid.is_some() {
+        attempts.push(XmlFulltextAttempt::EuropePmcPmc);
+        attempts.push(XmlFulltextAttempt::NcbiEfetchPmc);
+        attempts.push(XmlFulltextAttempt::PmcOaArchive);
+    }
+    if article.pmid.as_deref().is_some() {
+        attempts.push(XmlFulltextAttempt::EuropePmcMed);
+    }
+    attempts
+}
+
+fn semantic_scholar_pdf_url(article: &Article, options: ArticleGetOptions) -> Option<&str> {
+    if !options.allow_pdf {
+        return None;
+    }
+    article
+        .semantic_scholar
+        .as_ref()
+        .and_then(|value| value.open_access_pdf.as_ref())
+        .map(|value| value.url.trim())
+        .filter(|value| !value.is_empty())
+}
+
 async fn try_resolve_html(pmcid: &str, requested_id: &str) -> FulltextStepOutcome<String> {
     let url = match pmc_article_url(pmcid) {
         Ok(url) => url,
@@ -452,52 +499,60 @@ pub(super) async fn resolve_fulltext(
         article.pmcid = resolved_pmcid.clone();
     }
 
-    if let Some(pmcid) = resolved_pmcid.as_deref() {
+    for attempt in xml_fulltext_attempts(article, resolved_pmcid.as_deref()) {
         state.tried_xml = true;
-        match europe.get_full_text_xml("PMC", pmcid).await {
-            Ok(Some(value)) => resolved_xml = Some((value, XmlWaterfallWinner::EuropePmcPmc, None)),
-            Ok(None) => {}
-            Err(err) => record_hard_error(&mut state, err),
-        }
-    }
-    if resolved_xml.is_none()
-        && let Some(pmcid) = resolved_pmcid.as_deref()
-    {
-        state.tried_xml = true;
-        match NcbiEfetchClient::new() {
-            Ok(ncbi_efetch) => match ncbi_efetch.get_full_text_xml(pmcid).await {
-                Ok(Some(value)) => {
-                    resolved_xml = Some((value, XmlWaterfallWinner::NcbiEfetchPmc, None))
+        match attempt {
+            XmlFulltextAttempt::EuropePmcPmc => {
+                let Some(pmcid) = resolved_pmcid.as_deref() else {
+                    continue;
+                };
+                match europe.get_full_text_xml("PMC", pmcid).await {
+                    Ok(Some(value)) => resolved_xml = Some((value, attempt.winner(), None)),
+                    Ok(None) => {}
+                    Err(err) => record_hard_error(&mut state, err),
                 }
-                Ok(None) => {}
-                Err(err) => record_hard_error(&mut state, err),
-            },
-            Err(err) => record_hard_error(&mut state, err),
-        }
-    }
-    if resolved_xml.is_none()
-        && let Some(pmcid) = resolved_pmcid.as_deref()
-    {
-        state.tried_xml = true;
-        match PmcOaClient::new() {
-            Ok(pmc_oa) => match pmc_oa.get_full_text_xml_with_manifest(pmcid).await {
-                Ok(Some((value, manifest))) => {
-                    resolved_xml = Some((value, XmlWaterfallWinner::PmcOaArchive, Some(manifest)));
+            }
+            XmlFulltextAttempt::NcbiEfetchPmc => {
+                let Some(pmcid) = resolved_pmcid.as_deref() else {
+                    continue;
+                };
+                match NcbiEfetchClient::new() {
+                    Ok(ncbi_efetch) => match ncbi_efetch.get_full_text_xml(pmcid).await {
+                        Ok(Some(value)) => resolved_xml = Some((value, attempt.winner(), None)),
+                        Ok(None) => {}
+                        Err(err) => record_hard_error(&mut state, err),
+                    },
+                    Err(err) => record_hard_error(&mut state, err),
                 }
-                Ok(None) => {}
-                Err(err) => record_hard_error(&mut state, err),
-            },
-            Err(err) => record_hard_error(&mut state, err),
+            }
+            XmlFulltextAttempt::PmcOaArchive => {
+                let Some(pmcid) = resolved_pmcid.as_deref() else {
+                    continue;
+                };
+                match PmcOaClient::new() {
+                    Ok(pmc_oa) => match pmc_oa.get_full_text_xml_with_manifest(pmcid).await {
+                        Ok(Some((value, manifest))) => {
+                            resolved_xml = Some((value, attempt.winner(), Some(manifest)));
+                        }
+                        Ok(None) => {}
+                        Err(err) => record_hard_error(&mut state, err),
+                    },
+                    Err(err) => record_hard_error(&mut state, err),
+                }
+            }
+            XmlFulltextAttempt::EuropePmcMed => {
+                let Some(pmid) = article.pmid.as_deref() else {
+                    continue;
+                };
+                match europe.get_full_text_xml("MED", pmid).await {
+                    Ok(Some(value)) => resolved_xml = Some((value, attempt.winner(), None)),
+                    Ok(None) => {}
+                    Err(err) => record_hard_error(&mut state, err),
+                }
+            }
         }
-    }
-    if resolved_xml.is_none()
-        && let Some(pmid) = article.pmid.as_deref()
-    {
-        state.tried_xml = true;
-        match europe.get_full_text_xml("MED", pmid).await {
-            Ok(Some(value)) => resolved_xml = Some((value, XmlWaterfallWinner::EuropePmcMed, None)),
-            Ok(None) => {}
-            Err(err) => record_hard_error(&mut state, err),
+        if resolved_xml.is_some() {
+            break;
         }
     }
 
@@ -569,15 +624,7 @@ pub(super) async fn resolve_fulltext(
         }
     }
 
-    let pdf_url = article
-        .semantic_scholar
-        .as_ref()
-        .and_then(|value| value.open_access_pdf.as_ref())
-        .map(|value| value.url.trim())
-        .filter(|value| !value.is_empty());
-    if options.allow_pdf
-        && let Some(pdf_url) = pdf_url
-    {
+    if let Some(pdf_url) = semantic_scholar_pdf_url(article, options) {
         state.tried_pdf = true;
         match try_resolve_pdf(pdf_url, requested_id).await {
             FulltextStepOutcome::Resolved(text) => {
@@ -627,6 +674,33 @@ pub(super) async fn resolve_fulltext(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::entities::article::{ArticleSemanticScholar, ArticleSemanticScholarPdf};
+
+    fn article_for_fulltext() -> Article {
+        Article {
+            pmid: Some("22663011".into()),
+            pmcid: Some("PMC123456".into()),
+            doi: Some("10.1000/example".into()),
+            title: "title".into(),
+            authors: Vec::new(),
+            journal: None,
+            date: None,
+            citation_count: None,
+            publication_type: None,
+            open_access: None,
+            abstract_text: None,
+            full_text_path: None,
+            full_text_note: None,
+            full_text_source: None,
+            full_text_manifest: None,
+            not_included: None,
+            europepmc_license: None,
+            europepmc_retracted: None,
+            annotations: None,
+            semantic_scholar: None,
+            pubtator_fallback: false,
+        }
+    }
 
     #[test]
     fn xml_source_metadata_is_truthful() {
@@ -671,6 +745,97 @@ mod tests {
     }
 
     #[test]
+    fn xml_fulltext_attempts_try_pmc_sources_before_med_fallback() {
+        let article = article_for_fulltext();
+
+        assert_eq!(
+            xml_fulltext_attempts(&article, article.pmcid.as_deref()),
+            vec![
+                XmlFulltextAttempt::EuropePmcPmc,
+                XmlFulltextAttempt::NcbiEfetchPmc,
+                XmlFulltextAttempt::PmcOaArchive,
+                XmlFulltextAttempt::EuropePmcMed,
+            ]
+        );
+    }
+
+    #[test]
+    fn xml_fulltext_attempts_use_med_when_only_pmid_is_available() {
+        let mut article = article_for_fulltext();
+        article.pmcid = None;
+
+        assert_eq!(
+            xml_fulltext_attempts(&article, None),
+            vec![XmlFulltextAttempt::EuropePmcMed]
+        );
+    }
+
+    #[test]
+    fn semantic_scholar_pdf_url_requires_opt_in_and_nonblank_url() {
+        let mut article = article_for_fulltext();
+        article.semantic_scholar = Some(ArticleSemanticScholar {
+            paper_id: Some("paper-1".into()),
+            tldr: None,
+            citation_count: None,
+            influential_citation_count: None,
+            reference_count: None,
+            is_open_access: Some(true),
+            open_access_pdf: Some(ArticleSemanticScholarPdf {
+                url: "  https://example.test/open.pdf  ".into(),
+                status: Some("GREEN".into()),
+                license: Some("CC BY".into()),
+            }),
+        });
+
+        assert_eq!(
+            semantic_scholar_pdf_url(
+                &article,
+                ArticleGetOptions {
+                    allow_pdf: false,
+                    ..ArticleGetOptions::default()
+                }
+            ),
+            None
+        );
+        assert_eq!(
+            semantic_scholar_pdf_url(
+                &article,
+                ArticleGetOptions {
+                    allow_pdf: true,
+                    ..ArticleGetOptions::default()
+                }
+            ),
+            Some("https://example.test/open.pdf")
+        );
+
+        let Some(semantic) = article.semantic_scholar.as_mut() else {
+            panic!("semantic scholar metadata");
+        };
+        let Some(pdf) = semantic.open_access_pdf.as_mut() else {
+            panic!("open access pdf");
+        };
+        pdf.url = "   ".into();
+        assert_eq!(
+            semantic_scholar_pdf_url(
+                &article,
+                ArticleGetOptions {
+                    allow_pdf: true,
+                    ..ArticleGetOptions::default()
+                }
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn pdf_detection_rejects_non_pdf_payloads() {
+        let text_plain = reqwest::header::HeaderValue::from_static("text/plain");
+
+        assert!(!pdf_content_type_is_supported(Some(&text_plain)));
+        assert!(!pdf_body_signature_matches(b"not a pdf"));
+    }
+
+    #[test]
     fn fulltext_cache_key_is_kind_aware_and_versioned() {
         assert_eq!(
             fulltext_cache_key(ArticleFulltextKind::JatsXml, "22663011"),
@@ -688,29 +853,7 @@ mod tests {
 
     #[test]
     fn unresolved_note_reflects_attempted_ladder() {
-        let mut article = Article {
-            pmid: Some("22663011".into()),
-            pmcid: Some("PMC123456".into()),
-            doi: None,
-            title: "title".into(),
-            authors: Vec::new(),
-            journal: None,
-            date: None,
-            citation_count: None,
-            publication_type: None,
-            open_access: None,
-            abstract_text: None,
-            full_text_path: None,
-            full_text_note: None,
-            full_text_source: None,
-            full_text_manifest: None,
-            not_included: None,
-            europepmc_license: None,
-            europepmc_retracted: None,
-            annotations: None,
-            semantic_scholar: None,
-            pubtator_fallback: false,
-        };
+        let mut article = article_for_fulltext();
         let html_only = FulltextAttemptState {
             tried_xml: true,
             tried_html: true,

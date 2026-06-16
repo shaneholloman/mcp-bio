@@ -118,10 +118,12 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] **Worst offender fixed:** `src/entities/article/backends/tests.rs` now tests
       request construction and response processing without mock servers, env locks,
       or network-shaped setup.
-- [ ] **Next article offenders:** `src/entities/article/detail/tests.rs` and
-      `src/entities/article/search/tests/{finalizer,integration}.rs` still have
-      slow mock-server/env-lock tests. Rework them to test the pieces without
-      network-shaped setup.
+- [x] `src/entities/article/detail/tests.rs` no longer owns fulltext mock-server
+      tests. Fulltext source order and PDF opt-in/miss behavior now have pure
+      unit tests beside the fulltext code.
+- [ ] **Next article offenders:** `src/entities/article/search/tests/{finalizer,integration}.rs`
+      still have slow mock-server/env-lock tests. Rework them to test the pieces
+      without network-shaped setup.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -390,3 +392,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   was stopped after 69s: 126 passed, 16 interrupted, 24 not run. The remaining
   slow tests are in `article/detail` and `article/search/{finalizer,integration}`,
   so keep using narrow article batches until those are decomposed.
+- 2026-06-16: moved article fulltext waterfall coverage out of
+  `src/entities/article/detail/tests.rs` mock-server tests and into pure
+  `src/entities/article/fulltext.rs` unit tests. The production resolver now uses
+  a testable XML attempt-order helper and a testable Semantic Scholar PDF opt-in
+  helper. Removed dead article test-support XML fixture builders. Checks:
+  `cargo nextest run -E 'test(/entities::article::detail::/) or test(/entities::article::fulltext::/)'`
+  → 15/15 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings`
+  → pass.

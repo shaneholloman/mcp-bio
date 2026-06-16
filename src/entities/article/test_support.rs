@@ -20,19 +20,6 @@ pub(super) async fn lock_env() -> tokio::sync::MutexGuard<'static, ()> {
     crate::test_support::env_lock().lock().await
 }
 
-pub(super) fn sample_jats_article_xml(title: &str, body: &str) -> String {
-    format!(
-        "<article><front><article-meta><title-group><article-title>{title}</article-title></title-group><abstract><p>Abstract text.</p></abstract></article-meta></front><body><p>{body}</p></body></article>"
-    )
-}
-
-pub(super) fn sample_pmc_articleset_xml(title: &str, body: &str) -> String {
-    format!(
-        "<?xml version=\"1.0\"?><!DOCTYPE pmc-articleset><pmc-articleset>{}</pmc-articleset>",
-        sample_jats_article_xml(title, body)
-    )
-}
-
 pub(super) fn empty_filters() -> ArticleSearchFilters {
     ArticleSearchFilters {
         gene: None,
