@@ -36,8 +36,8 @@ fn search_gwas_parses_positional_query() {
     assert_eq!(offset, 0);
 }
 
-#[tokio::test]
-async fn handle_search_rejects_zero_limit_before_backend_lookup() {
+#[test]
+fn search_args_reject_zero_limit_before_backend_lookup() {
     let cli = Cli::try_parse_from(["biomcp", "search", "gwas", "BRAF", "--limit", "0"])
         .expect("search gwas should parse");
 
@@ -52,8 +52,8 @@ async fn handle_search_rejects_zero_limit_before_backend_lookup() {
         panic!("expected search gwas command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
-        .expect_err("zero gwas limit should fail fast");
+    assert!(!json);
+    let err =
+        super::dispatch::validate_search_args(&args).expect_err("zero gwas limit should fail fast");
     assert!(err.to_string().contains("--limit must be between 1 and 50"));
 }

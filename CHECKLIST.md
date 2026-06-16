@@ -344,3 +344,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.
 - 2026-06-16: source endpoint inventory checkpoint. Checks:
   `cargo nextest run -E 'test(/sources::/)'` → 669/669 pass.
+- 2026-06-16: first CLI parser-validation batch (`gwas`, `protein`) made
+  pure by moving fast-fail validation into callable helpers instead of async
+  handler tests. Checks:
+  `cargo nextest run -E 'test(/cli::gwas::/) | test(/cli::protein::/)'` → 4/4 pass;
+  `cargo check` → pass.

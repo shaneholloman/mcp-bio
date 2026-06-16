@@ -1,6 +1,23 @@
 use super::{ProteinCommand, ProteinGetArgs, ProteinSearchArgs};
 use crate::cli::CommandOutcome;
 
+pub(super) fn validate_search_args(
+    args: &ProteinSearchArgs,
+) -> Result<(), crate::error::BioMcpError> {
+    if args
+        .next_page
+        .as_deref()
+        .map(str::trim)
+        .is_some_and(|value| !value.is_empty())
+        && args.offset > 0
+    {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "--next-page cannot be used together with --offset".into(),
+        ));
+    }
+    Ok(())
+}
+
 pub(in crate::cli) async fn handle_get(
     args: ProteinGetArgs,
     json: bool,
@@ -40,20 +57,9 @@ pub(in crate::cli) async fn handle_search(
     args: ProteinSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
+    validate_search_args(&args)?;
     let query = super::super::resolve_query_input(args.query, args.positional_query, "--query")?
         .unwrap_or_default();
-    if args
-        .next_page
-        .as_deref()
-        .map(str::trim)
-        .is_some_and(|value| !value.is_empty())
-        && args.offset > 0
-    {
-        return Err(crate::error::BioMcpError::InvalidArgument(
-            "--next-page cannot be used together with --offset".into(),
-        )
-        .into());
-    }
     let mut query_summary = crate::entities::protein::search_query_summary(
         &query,
         args.reviewed,

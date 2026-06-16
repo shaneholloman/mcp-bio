@@ -34,8 +34,8 @@ fn protein_structures_parses_offset_flag() {
     }
 }
 
-#[tokio::test]
-async fn handle_search_rejects_next_page_with_offset() {
+#[test]
+fn search_args_reject_next_page_with_offset() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
@@ -59,8 +59,8 @@ async fn handle_search_rejects_next_page_with_offset() {
         panic!("expected protein search command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
+    assert!(!json);
+    let err = super::dispatch::validate_search_args(&args)
         .expect_err("next-page plus offset should fail fast");
     assert!(
         err.to_string()

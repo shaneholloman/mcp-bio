@@ -1,10 +1,20 @@
 use super::GwasSearchArgs;
 use crate::cli::CommandOutcome;
 
+pub(super) fn validate_search_args(args: &GwasSearchArgs) -> Result<(), crate::error::BioMcpError> {
+    if args.limit == 0 || args.limit > 50 {
+        return Err(crate::error::BioMcpError::InvalidArgument(
+            "--limit must be between 1 and 50".into(),
+        ));
+    }
+    Ok(())
+}
+
 pub(in crate::cli) async fn handle_search(
     args: GwasSearchArgs,
     json: bool,
 ) -> anyhow::Result<CommandOutcome> {
+    validate_search_args(&args)?;
     let gene = super::super::resolve_query_input(args.gene, args.positional_query, "--gene")?;
     let filters = crate::entities::variant::GwasSearchFilters {
         gene,
