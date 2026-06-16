@@ -131,6 +131,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/trial/search/nci/tests.rs` is pure: NCI disease grounding,
       keyword fallback, status/phase mapping, and unsupported-filter validation
       no longer use mock servers or async search calls.
+- [x] `src/entities/trial/search/ctgov/tests.rs` no longer uses the trial
+      env-lock/MyChem mock path for next-page fanout validation; that assertion
+      is now a direct error-helper test.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -441,4 +444,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   checks, and removed the now-unused `NciCtsClient::new_for_test` helper.
   Checks: `cargo nextest run -E 'test(/entities::trial::search::nci::/)'` →
   12/12 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings`
+  → pass; `git diff --check` → pass.
+- 2026-06-16: small CT.gov trial-search cleanup. Replaced the MyChem/env-lock
+  next-page fanout rejection test with a direct `fanout_next_page_error`
+  assertion and removed the now-unused trial `lock_env` / env re-export helper.
+  The remaining CT.gov server tests are still fast after compile but still exist.
+  Checks: `cargo nextest run -E 'test(/entities::trial::search::ctgov::/)'` →
+  21/21 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings`
   → pass; `git diff --check` → pass.

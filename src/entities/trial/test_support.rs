@@ -7,17 +7,11 @@ pub(super) use crate::error::BioMcpError;
 #[allow(unused_imports)]
 pub(super) use crate::sources::clinicaltrials::{ClinicalTrialsClient, CtGovStudy};
 #[allow(unused_imports)]
-pub(super) use crate::test_support::{EnvVarGuard, set_env_var};
-#[allow(unused_imports)]
 pub(super) use serde_json::json;
 #[allow(unused_imports)]
 pub(super) use wiremock::matchers::{method, path, query_param, query_param_is_missing};
 #[allow(unused_imports)]
 pub(super) use wiremock::{Mock, MockServer, ResponseTemplate};
-
-pub(super) async fn lock_env() -> tokio::sync::MutexGuard<'static, ()> {
-    crate::test_support::env_lock().lock().await
-}
 
 pub(super) fn ctgov_search_study_fixture(
     nct_id: &str,

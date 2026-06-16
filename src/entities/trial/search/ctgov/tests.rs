@@ -12,46 +12,6 @@ fn alias_union_filters() -> TrialSearchFilters {
     }
 }
 
-fn alias_union_filters_for(intervention: &str) -> TrialSearchFilters {
-    TrialSearchFilters {
-        condition: Some("melanoma".into()),
-        intervention: Some(intervention.into()),
-        ..Default::default()
-    }
-}
-
-async fn mount_trial_alias_lookup(
-    server: &MockServer,
-    requested: &str,
-    canonical: &str,
-    aliases: &[&str],
-) {
-    Mock::given(method("GET"))
-        .and(path("/v1/query"))
-        .and(query_param("q", requested))
-        .and(query_param("size", "25"))
-        .and(query_param("from", "0"))
-        .and(query_param(
-            "fields",
-            crate::sources::mychem::MYCHEM_FIELDS_GET,
-        ))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "total": 1,
-            "hits": [{
-                "_id": "drug-test-id",
-                "_score": 42.0,
-                "drugbank": {
-                    "id": "DBTEST",
-                    "name": canonical,
-                    "synonyms": aliases,
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(server)
-        .await;
-}
-
 #[test]
 fn ctgov_query_term_broadens_mutation_across_discovery_fields() {
     let filters = TrialSearchFilters {
@@ -664,33 +624,9 @@ fn resolve_ctgov_condition_labels_honors_strict_condition_mode() {
     );
 }
 
-#[tokio::test]
-async fn search_path_rejects_next_page_when_alias_expansion_uses_multiple_queries() {
-    let _env_lock = lock_env().await;
-    let requested = "review-daraxonrasib-next-page";
-
-    let mychem = MockServer::start().await;
-    mount_trial_alias_lookup(
-        &mychem,
-        requested,
-        requested,
-        &["review-rmc-6236-next-page"],
-    )
-    .await;
-    let mychem_base = format!("{}/v1", mychem.uri());
-    let _mychem_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&mychem_base));
-
-    let client = ClinicalTrialsClient::new_for_test("http://127.0.0.1".into()).expect("client");
-    let err = search_page_with_ctgov_client(
-        &client,
-        &alias_union_filters_for(requested),
-        10,
-        0,
-        Some("page-2".into()),
-    )
-    .await
-    .expect_err("multi-alias search should reject next-page");
-
+#[test]
+fn search_path_rejects_next_page_when_alias_expansion_uses_multiple_queries() {
+    let err = fanout_next_page_error(false, true);
     assert!(err.to_string().contains("--next-page is not supported"));
     assert!(err.to_string().contains("--no-alias-expand"));
 }
