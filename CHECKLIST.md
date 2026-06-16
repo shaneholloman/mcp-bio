@@ -100,7 +100,7 @@ Drugs / chem / regulatory:
 
 Ontologies / proteins / pathways / misc:
 - [x] uniprot ~10 · [x] interpro ~2 · [x] hpa ~4 · [x] hpo ~4 · [x] monarch ~4 · [x] ols4 ~3
-- [ ] umls ~1 · [ ] reactome ~3 · [ ] wikipathways ~8 · [ ] kegg ~6 · [ ] gprofiler ~7
+- [x] umls ~1 · [ ] reactome ~3 · [ ] wikipathways ~8 · [ ] kegg ~6 · [ ] gprofiler ~7
 - [ ] enrichr ~4 · [ ] quickgo ~3 · [ ] complexportal ~3 · [ ] string ~3 · [ ] disgenet ~10
 - [ ] alphagenome ~4 · [ ] medlineplus ~5 · [ ] figshare ~13
 
@@ -286,4 +286,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: `ols4` moved to standard source test layout with pure request-plan
   and search-response parsing tests, replacing the source-level mock server test.
   Checks: `cargo nextest run -E 'test(/sources::ols4::/)'` → 4/4 pass;
+  `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.
+- 2026-06-16: `umls` converted to pure authenticated search/atoms request
+  construction and JSON parsing tests, replacing the source-level mock server
+  test. Checks: `cargo nextest run -E 'test(/sources::umls::/)'` → 6/6 pass;
   `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.

@@ -1,9 +1,12 @@
 use std::borrow::Cow;
 
 use futures::future::join_all;
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::Deserialize;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const UMLS_BASE: &str = "https://uts-ws.nlm.nih.gov";
 const UMLS_API: &str = "umls";
@@ -34,37 +37,72 @@ impl UmlsClient {
         }))
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String, api_key: &str) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-            api_key: api_key.to_string(),
-        })
-    }
+    pub(crate) fn search_plan(query: &str, api_key: &str) -> Option<RequestPlan> {
+        let query = query.trim();
+        if query.is_empty() {
+            return None;
+        }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
+        Some(
+            RequestPlan::get("rest/search/current")
+                .query("string", query)
+                .query("pageSize", "5")
+                .query("apiKey", api_key),
         )
     }
 
-    pub async fn search(&self, query: &str) -> Result<Vec<UmlsConcept>, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Ok(Vec::new());
+    pub(crate) fn atoms_plan(cui: &str, api_key: &str) -> RequestPlan {
+        RequestPlan::get(format!("rest/content/current/CUI/{cui}/atoms"))
+            .query("apiKey", api_key)
+            .query("pageSize", UMLS_ATOM_PAGE_SIZE)
+            .query("language", "ENG")
+    }
+
+    pub(crate) fn decode_json_response<T: serde::de::DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        if !status.is_success() {
+            return Err(BioMcpError::Api {
+                api: UMLS_API.to_string(),
+                message: format!("HTTP {status}: {}", crate::sources::body_excerpt(bytes)),
+            });
         }
+        crate::sources::ensure_json_content_type(UMLS_API, content_type, bytes)?;
+        serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
+            api: UMLS_API.to_string(),
+            source,
+        })
+    }
+
+    fn search_hits(search: UmlsSearchEnvelope) -> Vec<UmlsHit> {
+        search
+            .result
+            .results
+            .into_iter()
+            .filter(|hit| hit.ui != "NONE")
+            .take(5)
+            .collect()
+    }
+
+    fn concept_from_hit(hit: UmlsHit, xrefs: Vec<UmlsXref>) -> UmlsConcept {
+        UmlsConcept {
+            cui: hit.ui,
+            name: hit.name,
+            semantic_types: hit.semantic_types,
+            xrefs,
+            uri: hit.uri,
+        }
+    }
+
+    pub async fn search(&self, query: &str) -> Result<Vec<UmlsConcept>, BioMcpError> {
+        let Some(plan) = Self::search_plan(query, &self.api_key) else {
+            return Ok(Vec::new());
+        };
 
         let resp = crate::sources::apply_cache_mode_with_auth(
-            self.client
-                .get(self.endpoint("rest/search/current"))
-                .query(&[
-                    ("string", query),
-                    ("pageSize", "5"),
-                    ("apiKey", self.api_key.as_str()),
-                ]),
+            request_from_plan(&self.client, self.base.as_ref(), &plan),
             true,
         )
         .send()
@@ -72,35 +110,14 @@ impl UmlsClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, UMLS_API).await?;
-        if !status.is_success() {
-            return Err(BioMcpError::Api {
-                api: UMLS_API.to_string(),
-                message: format!("HTTP {status}: {}", crate::sources::body_excerpt(&bytes)),
-            });
-        }
-        crate::sources::ensure_json_content_type(UMLS_API, content_type.as_ref(), &bytes)?;
-
         let search: UmlsSearchEnvelope =
-            serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-                api: UMLS_API.to_string(),
-                source,
-            })?;
+            Self::decode_json_response(status, content_type.as_ref(), &bytes)?;
 
-        let tasks = search
-            .result
-            .results
+        let tasks = Self::search_hits(search)
             .into_iter()
-            .filter(|hit| hit.ui != "NONE")
-            .take(5)
             .map(|hit| async move {
                 let xrefs = self.fetch_atoms(&hit.ui).await?;
-                Ok::<_, BioMcpError>(UmlsConcept {
-                    cui: hit.ui,
-                    name: hit.name,
-                    semantic_types: hit.semantic_types,
-                    xrefs,
-                    uri: hit.uri,
-                })
+                Ok::<_, BioMcpError>(Self::concept_from_hit(hit, xrefs))
             })
             .collect::<Vec<_>>();
 
@@ -112,14 +129,9 @@ impl UmlsClient {
     }
 
     async fn fetch_atoms(&self, cui: &str) -> Result<Vec<UmlsXref>, BioMcpError> {
+        let plan = Self::atoms_plan(cui, &self.api_key);
         let resp = crate::sources::apply_cache_mode_with_auth(
-            self.client
-                .get(self.endpoint(&format!("rest/content/current/CUI/{cui}/atoms")))
-                .query(&[
-                    ("apiKey", self.api_key.as_str()),
-                    ("pageSize", UMLS_ATOM_PAGE_SIZE),
-                    ("language", "ENG"),
-                ]),
+            request_from_plan(&self.client, self.base.as_ref(), &plan),
             true,
         )
         .send()
@@ -127,20 +139,13 @@ impl UmlsClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, UMLS_API).await?;
-        if !status.is_success() {
-            return Err(BioMcpError::Api {
-                api: UMLS_API.to_string(),
-                message: format!("HTTP {status}: {}", crate::sources::body_excerpt(&bytes)),
-            });
-        }
-        crate::sources::ensure_json_content_type(UMLS_API, content_type.as_ref(), &bytes)?;
-
         let atoms: UmlsAtomsEnvelope =
-            serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-                api: UMLS_API.to_string(),
-                source,
-            })?;
+            Self::decode_json_response(status, content_type.as_ref(), &bytes)?;
 
+        Ok(Self::map_atoms(atoms))
+    }
+
+    fn map_atoms(atoms: UmlsAtomsEnvelope) -> Vec<UmlsXref> {
         let mut out = Vec::new();
         let mut seen = std::collections::HashSet::new();
         for atom in atoms.result {
@@ -165,7 +170,7 @@ impl UmlsClient {
                 });
             }
         }
-        Ok(out)
+        out
     }
 }
 
@@ -225,59 +230,4 @@ struct UmlsAtom {
 }
 
 #[cfg(test)]
-mod tests {
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    use super::UmlsClient;
-
-    #[tokio::test]
-    async fn search_uses_query_param_auth_and_atoms_lookup() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/rest/search/current"))
-            .and(query_param("string", "cystic fibrosis"))
-            .and(query_param("pageSize", "5"))
-            .and(query_param("apiKey", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": {
-                    "results": [
-                        {
-                            "ui": "C0010674",
-                            "name": "Cystic Fibrosis",
-                            "uri": "https://example.org/C0010674",
-                            "semanticTypes": ["Disease or Syndrome"]
-                        }
-                    ]
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/rest/content/current/CUI/C0010674/atoms"))
-            .and(query_param("apiKey", "test-key"))
-            .and(query_param("pageSize", "200"))
-            .and(query_param("language", "ENG"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "result": [
-                    {
-                        "rootSource": "ICD10CM",
-                        "code": "https://example.org/source/ICD10CM/E84",
-                        "language": "ENG",
-                        "name": "Cystic fibrosis"
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = UmlsClient::new_for_test(server.uri(), "test-key").expect("client");
-        let rows = client.search("cystic fibrosis").await.expect("search");
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].cui, "C0010674");
-        assert_eq!(rows[0].xrefs[0].vocab, "ICD10CM");
-        assert_eq!(rows[0].xrefs[0].id, "E84");
-    }
-}
+mod tests;
