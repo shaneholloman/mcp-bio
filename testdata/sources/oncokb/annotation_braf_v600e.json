@@ -1,0 +1,21 @@
+{
+  "oncogenic": "Oncogenic",
+  "mutationEffect": {
+    "knownEffect": "Gain-of-function"
+  },
+  "highestSensitiveLevel": "LEVEL_1",
+  "highestResistanceLevel": null,
+  "treatments": [
+    {
+      "level": "LEVEL_1",
+      "drugs": [
+        {
+          "drugName": "Dabrafenib"
+        }
+      ],
+      "cancerType": {
+        "name": "Melanoma"
+      }
+    }
+  ]
+}

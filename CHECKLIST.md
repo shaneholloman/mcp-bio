@@ -88,7 +88,7 @@ NCBI / literature:
 
 Trials / cancer:
 - [x] clinicaltrials ~6 · [x] cbioportal ~2 · [x] cbioportal_download ~9 · [x] cbioportal_study ~35
-- [x] cancerhotspots ~5 · [ ] oncokb ~4 (no API token available → reuse the existing canned response as the fixture) · [ ] seer ~4
+- [x] cancerhotspots ~5 · [x] oncokb ~4 (no API token available → reuse the existing canned response as the fixture) · [ ] seer ~4
 
 Variants / genomics:
 - [ ] gnomad ~4 · [ ] gtex ~4 · [ ] gwas ~5 · [ ] variantvalidator ~6 · [ ] mutalyzer ~6
@@ -191,4 +191,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `bash scripts/check-no-server-tests.sh` → pass.
 - 2026-06-16: `cancerhotspots` converted. Checks:
   `cargo nextest run -E 'test(/sources::cancerhotspots::/)'` → 8/8 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `oncokb` converted using a committed canned annotation fixture; no
+  API token or network needed. Checks:
+  `cargo nextest run -E 'test(/sources::oncokb::/)'` → 7/7 pass;
   `bash scripts/check-no-server-tests.sh` → pass.
