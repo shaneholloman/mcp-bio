@@ -99,7 +99,7 @@ Drugs / chem / regulatory:
 - [x] cpic ~3 · [x] cvx ~11 · [x] vaers ~10 · [x] who_pq ~20 · [x] who_ivd ~6
 
 Ontologies / proteins / pathways / misc:
-- [ ] uniprot ~10 · [ ] interpro ~2 · [ ] hpa ~4 · [ ] hpo ~4 · [ ] monarch ~4 · [ ] ols4 ~3
+- [x] uniprot ~10 · [ ] interpro ~2 · [ ] hpa ~4 · [ ] hpo ~4 · [ ] monarch ~4 · [ ] ols4 ~3
 - [ ] umls ~1 · [ ] reactome ~3 · [ ] wikipathways ~8 · [ ] kegg ~6 · [ ] gprofiler ~7
 - [ ] enrichr ~4 · [ ] quickgo ~3 · [ ] complexportal ~3 · [ ] string ~3 · [ ] disgenet ~10
 - [ ] alphagenome ~4 · [ ] medlineplus ~5 · [ ] figshare ~13
@@ -261,4 +261,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: `who_ivd` converted to standard source test layout and removed the
   source-level env mutation test. Checks:
   `cargo nextest run -E 'test(/sources::who_ivd::/)'` → 7/7 pass;
+  `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.
+- 2026-06-16: `uniprot` converted to pure request construction and response
+  parsing tests, replacing the source-level mock server test. Checks:
+  `cargo nextest run -E 'test(/sources::uniprot::/)'` → 17/17 pass;
   `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.

@@ -3,11 +3,13 @@ use std::cmp::Ordering;
 use std::io::Read;
 
 use flate2::read::GzDecoder;
-use reqwest::header::ACCEPT;
+use reqwest::StatusCode;
+use reqwest::header::{ACCEPT, HeaderMap};
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::RequestPlan;
 
 const UNIPROT_BASE: &str = "https://rest.uniprot.org";
 const UNIPROT_API: &str = "uniprot";
@@ -33,14 +35,6 @@ impl UniProtClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::streaming_http_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
     fn endpoint(&self, path: &str) -> String {
         format!(
             "{}/{}",
@@ -49,28 +43,110 @@ impl UniProtClient {
         )
     }
 
-    async fn get_json<T, F>(&self, build_request: F) -> Result<T, BioMcpError>
+    fn request_from_plan(&self, plan: &RequestPlan) -> reqwest::RequestBuilder {
+        let url = if plan.path.starts_with("http://") || plan.path.starts_with("https://") {
+            plan.path.clone()
+        } else {
+            self.endpoint(&plan.path)
+        };
+        let mut request = self.client.get(url);
+        for (key, value) in &plan.headers {
+            request = request.header(key, value);
+        }
+        if !plan.query.is_empty() {
+            request = request.query(&plan.query);
+        }
+        request
+    }
+
+    fn plan_url(&self, plan: &RequestPlan) -> String {
+        if plan.path.starts_with("http://") || plan.path.starts_with("https://") {
+            plan.path.clone()
+        } else {
+            self.endpoint(&plan.path)
+        }
+    }
+
+    async fn get_json<T>(&self, request: reqwest::RequestBuilder) -> Result<T, BioMcpError>
     where
         T: DeserializeOwned,
-        F: Fn() -> reqwest::RequestBuilder,
     {
-        let resp =
-            crate::sources::retry_send(UNIPROT_API, 3, || async { build_request().send().await })
-                .await?;
+        let resp = crate::sources::retry_send(UNIPROT_API, 3, || {
+            request
+                .try_clone()
+                .expect("request should be cloneable")
+                .send()
+        })
+        .await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, UNIPROT_API).await?;
-        let mut payload = bytes.to_vec();
-        if payload.starts_with(&[0x1f, 0x8b]) {
-            let mut decoder = GzDecoder::new(payload.as_slice());
-            let mut decoded = Vec::new();
-            decoder
-                .read_to_end(&mut decoded)
-                .map_err(|err| BioMcpError::Api {
-                    api: UNIPROT_API.to_string(),
-                    message: format!("Failed to decode gzip response: {err}"),
-                })?;
-            payload = decoded;
+        Self::decode_json_response(status, &bytes)
+    }
+
+    pub(crate) fn get_record_plan(accession: &str) -> Result<RequestPlan, BioMcpError> {
+        let accession = accession.trim();
+        if accession.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "UniProt accession is required".into(),
+            ));
         }
+
+        Ok(RequestPlan::get(format!("uniprotkb/{accession}.json"))
+            .header(ACCEPT.as_str(), "application/json"))
+    }
+
+    pub(crate) fn search_plan(
+        query: &str,
+        limit: usize,
+        offset: usize,
+        next_page: Option<&str>,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let query = query.trim();
+        if query.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "UniProt query is required".into(),
+            ));
+        }
+
+        let size = limit.clamp(1, 25).to_string();
+        let offset = offset.to_string();
+        let token = normalize_next_page_token(next_page)?;
+        if let Some(token) = token.as_deref() {
+            if token.starts_with("http://") || token.starts_with("https://") {
+                return Ok(
+                    RequestPlan::get(token.to_string()).header(ACCEPT.as_str(), "application/json")
+                );
+            }
+
+            return Ok(RequestPlan::get("uniprotkb/search")
+                .header(ACCEPT.as_str(), "application/json")
+                .query("query", query)
+                .query("format", "json")
+                .query("size", size)
+                .query("cursor", token)
+                .query(
+                    "fields",
+                    "accession,id,protein_name,gene_names,organism_name,length,cc_function,xref_pdb,xref_alphafolddb",
+                ));
+        }
+
+        Ok(RequestPlan::get("uniprotkb/search")
+            .header(ACCEPT.as_str(), "application/json")
+            .query("query", query)
+            .query("format", "json")
+            .query("size", size)
+            .query("offset", offset)
+            .query(
+                "fields",
+                "accession,id,protein_name,gene_names,organism_name,length,cc_function,xref_pdb,xref_alphafolddb",
+            ))
+    }
+
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        let payload = decode_uniprot_payload(bytes)?;
         if !status.is_success() {
             let excerpt = crate::sources::body_excerpt(&payload);
             return Err(BioMcpError::Api {
@@ -87,18 +163,29 @@ impl UniProtClient {
         })
     }
 
-    pub async fn get_record(&self, accession: &str) -> Result<UniProtRecord, BioMcpError> {
-        let accession = accession.trim();
-        if accession.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "UniProt accession is required".into(),
-            ));
-        }
+    pub(crate) fn decode_search_response(
+        status: StatusCode,
+        headers: &HeaderMap,
+        bytes: &[u8],
+    ) -> Result<UniProtSearchPage, BioMcpError> {
+        let total = headers
+            .get("x-total-results")
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.parse::<usize>().ok());
+        let next_page_token = parse_uniprot_next_link(headers.get("link"));
+        let parsed: UniProtSearchResponse = Self::decode_json_response(status, bytes)?;
+        Ok(UniProtSearchPage {
+            results: parsed.results,
+            total,
+            next_page_token,
+        })
+    }
 
-        let url = self.endpoint(&format!("uniprotkb/{accession}.json"));
+    pub async fn get_record(&self, accession: &str) -> Result<UniProtRecord, BioMcpError> {
+        let plan = Self::get_record_plan(accession)?;
+        let url = self.plan_url(&plan);
         crate::sources::rate_limit::wait_for_url_str(&url).await;
-        self.get_json(|| self.client.get(&url).header(ACCEPT, "application/json"))
-            .await
+        self.get_json(self.request_from_plan(&plan)).await
     }
 
     pub async fn search(
@@ -108,101 +195,34 @@ impl UniProtClient {
         offset: usize,
         next_page: Option<&str>,
     ) -> Result<UniProtSearchPage, BioMcpError> {
-        let query = query.trim();
-        if query.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "UniProt query is required".into(),
-            ));
-        }
-
-        let url = self.endpoint("uniprotkb/search");
-        let size = limit.clamp(1, 25).to_string();
-        let offset = offset.to_string();
+        let plan = Self::search_plan(query, limit, offset, next_page)?;
+        let url = self.plan_url(&plan);
         crate::sources::rate_limit::wait_for_url_str(&url).await;
-        let token = normalize_next_page_token(next_page)?;
-        let token_for_request = token.clone();
         let resp = crate::sources::retry_send(UNIPROT_API, 3, || async {
-            if let Some(token) = token_for_request.as_deref() {
-                if token.starts_with("http://") || token.starts_with("https://") {
-                    return self.client.get(token).header(ACCEPT, "application/json").send().await;
-                }
-
-                return self
-                    .client
-                    .get(&url)
-                    .header(ACCEPT, "application/json")
-                    .query(&[
-                        ("query", query),
-                        ("format", "json"),
-                        ("size", size.as_str()),
-                        ("cursor", token),
-                        (
-                            "fields",
-                            "accession,id,protein_name,gene_names,organism_name,length,cc_function,xref_pdb,xref_alphafolddb",
-                        ),
-                    ])
-                    .send()
-                    .await;
-            }
-
-            self.client
-                .get(&url)
-                .header(ACCEPT, "application/json")
-                .query(&[
-                    ("query", query),
-                    ("format", "json"),
-                    ("size", size.as_str()),
-                    ("offset", offset.as_str()),
-                    (
-                        "fields",
-                        "accession,id,protein_name,gene_names,organism_name,length,cc_function,xref_pdb,xref_alphafolddb",
-                    ),
-                ])
-                .send()
-                .await
+            self.request_from_plan(&plan).send().await
         })
         .await?;
         let status = resp.status();
-        let total = resp
-            .headers()
-            .get("x-total-results")
-            .and_then(|value| value.to_str().ok())
-            .and_then(|value| value.parse::<usize>().ok());
-        let next_page_token = parse_uniprot_next_link(resp.headers().get("link"));
+        let headers = resp.headers().clone();
         let bytes = crate::sources::read_limited_body(resp, UNIPROT_API).await?;
-        let mut payload = bytes.to_vec();
-        if payload.starts_with(&[0x1f, 0x8b]) {
-            let mut decoder = GzDecoder::new(payload.as_slice());
-            let mut decoded = Vec::new();
-            decoder
-                .read_to_end(&mut decoded)
-                .map_err(|err| BioMcpError::Api {
-                    api: UNIPROT_API.to_string(),
-                    message: format!("Failed to decode gzip response: {err}"),
-                })?;
-            payload = decoded;
-        }
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&payload);
-            return Err(BioMcpError::Api {
-                api: UNIPROT_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        let parsed: UniProtSearchResponse =
-            serde_json::from_slice(&payload).map_err(|source| BioMcpError::Api {
-                api: UNIPROT_API.to_string(),
-                message: format!(
-                    "Invalid JSON response: {} ({source})",
-                    crate::sources::body_excerpt(&payload)
-                ),
-            })?;
-        Ok(UniProtSearchPage {
-            results: parsed.results,
-            total,
-            next_page_token,
-        })
+        Self::decode_search_response(status, &headers, &bytes)
     }
+}
+
+fn decode_uniprot_payload(bytes: &[u8]) -> Result<Vec<u8>, BioMcpError> {
+    let mut payload = bytes.to_vec();
+    if payload.starts_with(&[0x1f, 0x8b]) {
+        let mut decoder = GzDecoder::new(payload.as_slice());
+        let mut decoded = Vec::new();
+        decoder
+            .read_to_end(&mut decoded)
+            .map_err(|err| BioMcpError::Api {
+                api: UNIPROT_API.to_string(),
+                message: format!("Failed to decode gzip response: {err}"),
+            })?;
+        payload = decoded;
+    }
+    Ok(payload)
 }
 
 fn parse_uniprot_next_link(value: Option<&reqwest::header::HeaderValue>) -> Option<String> {
@@ -633,267 +653,4 @@ fn parse_resolution_angstrom(value: &str) -> Option<f64> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn search_sets_expected_query_params() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/uniprotkb/search"))
-            .and(query_param("query", "BRAF"))
-            .and(query_param("format", "json"))
-            .and(query_param("size", "3"))
-            .and(query_param("offset", "0"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "results": [{
-                    "primaryAccession": "P15056",
-                    "uniProtkbId": "BRAF_HUMAN",
-                    "proteinDescription": {
-                        "recommendedName": {"fullName": {"value": "Serine/threonine-protein kinase B-raf"}}
-                    },
-                    "genes": [{"geneName": {"value": "BRAF"}}]
-                }]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = UniProtClient::new_for_test(server.uri()).unwrap();
-        let page = client.search("BRAF", 3, 0, None).await.unwrap();
-        assert_eq!(page.results.len(), 1);
-        assert_eq!(page.results[0].primary_accession, "P15056");
-        assert_eq!(
-            page.results[0].primary_gene_symbol().as_deref(),
-            Some("BRAF")
-        );
-    }
-
-    #[test]
-    fn record_helpers_extract_display_function_and_structures() {
-        let record: UniProtRecord = serde_json::from_value(serde_json::json!({
-            "primaryAccession": "P15056",
-            "proteinDescription": {
-                "recommendedName": {"fullName": {"value": " Kinase X "}}
-            },
-            "comments": [
-                {"commentType": "FUNCTION", "texts": [{"value": " Signal transduction. "}]}
-            ],
-            "uniProtKBCrossReferences": [
-                {
-                    "database": "PDB",
-                    "id": "1UWH",
-                    "properties": [
-                        {"key": "Method", "value": "X-ray"},
-                        {"key": "Resolution", "value": "2.95 A"}
-                    ]
-                },
-                {"database": "PDB", "id": "1UWH"},
-                {"database": "AlphaFoldDB", "id": "AF-P15056-F1"},
-                {"database": "GO", "id": "GO:0004672"}
-            ]
-        }))
-        .unwrap();
-
-        assert_eq!(record.display_name(), "Kinase X");
-        assert_eq!(
-            record.function_summary().as_deref(),
-            Some("Signal transduction.")
-        );
-        assert_eq!(
-            record.structure_ids(),
-            vec!["1UWH".to_string(), "AF-P15056-F1".to_string()]
-        );
-        assert_eq!(record.structure_count(), 2);
-        assert_eq!(
-            record.structure_summaries(10),
-            vec![
-                "1UWH (X-ray, 2.95 A)".to_string(),
-                "AF-P15056-F1 (AlphaFold model)".to_string()
-            ]
-        );
-    }
-
-    #[test]
-    fn protein_isoforms_prefer_synonyms_and_track_displayed_status() {
-        let record: UniProtRecord = serde_json::from_value(serde_json::json!({
-            "primaryAccession": "P01116",
-            "comments": [
-                {
-                    "commentType": "ALTERNATIVE PRODUCTS",
-                    "isoforms": [
-                        {
-                            "name": {"value": "2A"},
-                            "synonyms": [{"value": "K-Ras4A"}],
-                            "isoformSequenceStatus": "Displayed"
-                        },
-                        {
-                            "name": {"value": "Beta"},
-                            "synonyms": [],
-                            "isoformSequenceStatus": "described"
-                        },
-                        {
-                            "name": {"value": "  "},
-                            "synonyms": [{"value": " "}],
-                            "isoformSequenceStatus": "Displayed"
-                        }
-                    ]
-                }
-            ]
-        }))
-        .unwrap();
-
-        assert_eq!(
-            record.protein_isoforms(),
-            vec![
-                UniProtProteinIsoformSummary {
-                    name: "K-Ras4A".to_string(),
-                    is_displayed: true,
-                },
-                UniProtProteinIsoformSummary {
-                    name: "Beta".to_string(),
-                    is_displayed: false,
-                },
-            ]
-        );
-    }
-
-    #[test]
-    fn protein_isoforms_fall_back_to_name_when_synonyms_are_missing() {
-        let record: UniProtRecord = serde_json::from_value(serde_json::json!({
-            "primaryAccession": "O15350",
-            "comments": [
-                {
-                    "commentType": "alternative products",
-                    "isoforms": [
-                        {
-                            "name": {"value": "Alpha"},
-                            "synonyms": [],
-                            "isoformSequenceStatus": "displayed"
-                        }
-                    ]
-                }
-            ]
-        }))
-        .unwrap();
-
-        assert_eq!(
-            record.protein_isoforms(),
-            vec![UniProtProteinIsoformSummary {
-                name: "Alpha".to_string(),
-                is_displayed: true,
-            }]
-        );
-    }
-
-    #[test]
-    fn protein_isoforms_return_empty_when_alternative_products_comment_is_missing() {
-        let record: UniProtRecord = serde_json::from_value(serde_json::json!({
-            "primaryAccession": "P15056",
-            "comments": [
-                {
-                    "commentType": "FUNCTION",
-                    "texts": [{"value": "Kinase."}]
-                }
-            ]
-        }))
-        .unwrap();
-
-        assert!(record.protein_isoforms().is_empty());
-    }
-
-    #[test]
-    fn alternative_protein_names_flatten_short_and_full_names_in_source_order() {
-        let record: UniProtRecord = serde_json::from_value(serde_json::json!({
-            "primaryAccession": "Q99541",
-            "proteinDescription": {
-                "recommendedName": {
-                    "fullName": {"value": "Perilipin-2"}
-                },
-                "alternativeNames": [
-                    {
-                        "fullName": {"value": "Adipophilin"}
-                    },
-                    {
-                        "fullName": {"value": "Adipose differentiation-related protein"},
-                        "shortNames": [{"value": "ADRP"}]
-                    }
-                ]
-            }
-        }))
-        .unwrap();
-
-        assert_eq!(
-            record.alternative_protein_names(),
-            vec![
-                "Adipophilin".to_string(),
-                "ADRP".to_string(),
-                "Adipose differentiation-related protein".to_string(),
-            ]
-        );
-    }
-
-    #[test]
-    fn alternative_protein_names_trim_deduplicate_and_skip_recommended_name() {
-        let record: UniProtRecord = serde_json::from_value(serde_json::json!({
-            "primaryAccession": "O60240",
-            "proteinDescription": {
-                "recommendedName": {
-                    "fullName": {"value": "Perilipin-1"}
-                },
-                "alternativeNames": [
-                    {
-                        "fullName": {"value": "  Perilipin-1  "},
-                        "shortNames": [
-                            {"value": "  "},
-                            {"value": "PERI"}
-                        ]
-                    },
-                    {
-                        "fullName": {"value": "Lipid droplet-associated protein"},
-                        "shortNames": [{"value": "peri"}]
-                    }
-                ]
-            }
-        }))
-        .unwrap();
-
-        assert_eq!(
-            record.alternative_protein_names(),
-            vec![
-                "PERI".to_string(),
-                "Lipid droplet-associated protein".to_string(),
-            ]
-        );
-    }
-
-    #[test]
-    fn alternative_protein_names_return_empty_when_alternative_names_are_missing() {
-        let record: UniProtRecord = serde_json::from_value(serde_json::json!({
-            "primaryAccession": "P15056",
-            "proteinDescription": {
-                "recommendedName": {
-                    "fullName": {"value": "Serine/threonine-protein kinase B-raf"}
-                }
-            }
-        }))
-        .unwrap();
-
-        assert!(record.alternative_protein_names().is_empty());
-    }
-
-    #[test]
-    fn normalize_next_page_token_rejects_numeric_only_tokens() {
-        let err = normalize_next_page_token(Some("12345")).expect_err("numeric token should fail");
-        assert!(err.to_string().contains("--next-page token is invalid"));
-    }
-
-    #[test]
-    fn normalize_next_page_token_accepts_cursor_url() {
-        let token =
-            normalize_next_page_token(Some("https://rest.uniprot.org/uniprotkb/search?cursor=abc"))
-                .expect("valid URL token");
-        assert!(token.is_some());
-    }
-}
+mod tests;
