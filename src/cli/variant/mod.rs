@@ -99,13 +99,13 @@ See also: biomcp list variant")]
         #[arg(long, default_value = "ctgov")]
         source: String,
     },
-    /// Search articles mentioning the variant (best-effort)
+    /// Search articles using variant annotations, with labeled best-effort fallback
     #[command(after_help = "\
 EXAMPLES:
   biomcp variant articles \"BRAF V600E\" --limit 5
   biomcp variant articles rs113488022 --limit 5
 
-Note: Searches free-text fields (e.g., eligibility criteria). Results depend on source document wording.
+Note: Uses PubTator variant annotations when a confident entity match is available, and labels best-effort free-text fallback when annotation recall is unavailable.
 See also: biomcp list variant")]
     Articles {
         /// Variant identifier (rsID, HGVS, or "GENE CHANGE")
