@@ -115,9 +115,13 @@ OncoKB has none — harvest its existing stub instead of curling.)
 ### Entity processing + output (response → entity → JSON/markdown)
 - [ ] `src/transform/**` and `src/entities/**` — test the pure processing with saved inputs.
 - [ ] `src/render/**` — test markdown/JSON output from saved entities.
-- [ ] **Worst offenders, fix these:** `src/entities/article/backends/tests.rs` — they hang
-      15+ min because they hit the real network (they only mock some of their clients).
-      Rework them to test the pieces without real calls. This is the single biggest speed win.
+- [x] **Worst offender fixed:** `src/entities/article/backends/tests.rs` now tests
+      request construction and response processing without mock servers, env locks,
+      or network-shaped setup.
+- [ ] **Next article offenders:** `src/entities/article/detail/tests.rs` and
+      `src/entities/article/search/tests/{finalizer,integration}.rs` still have
+      slow mock-server/env-lock tests. Rework them to test the pieces without
+      network-shaped setup.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -378,3 +382,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   Removed the now-dead CLI mock helpers. Checks:
   `cargo nextest run -E 'test(/cli::tests::outcome::/) or test(/cli::gene::tests::/) or test(/cli::article::tests::exact_lookup::/)'` → 30/30 pass;
   `cargo nextest run -E 'test(/cli::/)'` → 547/547 pass; `cargo check` → pass.
+- 2026-06-16: converted `src/entities/article/backends/tests.rs` from
+  mock-server/env-lock tests to pure tests over PubMed request plans and row
+  filtering, Semantic Scholar status/row mapping, and LitSense2 dedupe/hydration.
+  Checks: `cargo nextest run -E 'test(/entities::article::backends::/)'` → 13/13 pass;
+  `cargo check` → pass. A broader `cargo nextest run -E 'test(/entities::article::/)'`
+  was stopped after 69s: 126 passed, 16 interrupted, 24 not run. The remaining
+  slow tests are in `article/detail` and `article/search/{finalizer,integration}`,
+  so keep using narrow article batches until those are decomposed.

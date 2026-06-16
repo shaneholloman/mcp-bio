@@ -7,10 +7,12 @@ use tracing::warn;
 use crate::entities::SearchPage;
 use crate::error::BioMcpError;
 use crate::sources::europepmc::EuropePmcClient;
-use crate::sources::litsense2::LitSense2Client;
-use crate::sources::pubmed::{PubMedClient, PubMedESearchParams};
+use crate::sources::litsense2::{LitSense2Client, LitSense2SearchHit};
+use crate::sources::pubmed::{ESummaryEntry, PubMedClient, PubMedESearchParams};
 use crate::sources::pubtator::PubTatorClient;
-use crate::sources::semantic_scholar::SemanticScholarClient;
+use crate::sources::semantic_scholar::{
+    SemanticScholarAuthMode, SemanticScholarClient, SemanticScholarSearchResponse,
+};
 use crate::transform;
 
 use super::filters::{matches_result_filters, normalized_date_bounds};
@@ -47,6 +49,28 @@ pub(super) fn semantic_scholar_year_filter(
 pub(super) struct SemanticScholarCandidateOutcome {
     pub rows: Vec<ArticleSearchResult>,
     pub status: ArticleSourceStatus,
+}
+
+fn semantic_scholar_status(auth_mode: SemanticScholarAuthMode) -> ArticleSourceStatus {
+    ArticleSourceStatus {
+        source: ArticleSource::SemanticScholar,
+        enabled: true,
+        auth_mode: Some(auth_mode),
+        status: Some(ArticleSourceAvailability::Ok),
+        message: None,
+    }
+}
+
+fn semantic_scholar_unavailable_outcome(
+    auth_mode: SemanticScholarAuthMode,
+) -> SemanticScholarCandidateOutcome {
+    let mut status = semantic_scholar_status(auth_mode);
+    status.status = Some(ArticleSourceAvailability::Unavailable);
+    status.message = Some("Semantic Scholar search unavailable".to_string());
+    SemanticScholarCandidateOutcome {
+        rows: Vec::new(),
+        status,
+    }
 }
 
 pub(super) async fn search_pubmed_page(
@@ -110,44 +134,71 @@ pub(super) async fn search_pubmed_page(
 
         let batch_len = response.idlist.len();
         let entries = client.esummary(&response.idlist).await?;
-        for entry in entries {
-            let mut row =
-                transform::article::from_pubmed_esummary_entry(&entry).ok_or_else(|| {
-                    BioMcpError::Api {
-                        api: "pubmed-eutils".to_string(),
-                        message: format!(
-                            "ESummary entry for PMID {} has blank title after cleaning",
-                            entry.uid
-                        ),
-                    }
-                })?;
-            if !matches_result_filters(
-                &row,
-                filters,
-                normalized_date_from.as_deref(),
-                normalized_date_to.as_deref(),
-            ) {
-                continue;
-            }
-            if !seen_pmids.insert(row.pmid.clone()) {
-                continue;
-            }
-            row.source_local_position = source_position;
-            source_position = source_position.saturating_add(1);
-            if visible_skipped < offset {
-                visible_skipped = visible_skipped.saturating_add(1);
-                continue;
-            }
-            out.push(row);
-            if out.len() >= limit {
-                break;
-            }
-        }
+        append_pubmed_entries(
+            entries,
+            filters,
+            normalized_date_from.as_deref(),
+            normalized_date_to.as_deref(),
+            limit,
+            offset,
+            PubMedAppendState {
+                out: &mut out,
+                seen_pmids: &mut seen_pmids,
+                visible_skipped: &mut visible_skipped,
+                source_position: &mut source_position,
+            },
+        )?;
 
         batch_start = batch_start.saturating_add(batch_len);
     }
 
     Ok(SearchPage::offset(out, total))
+}
+
+struct PubMedAppendState<'a> {
+    out: &'a mut Vec<ArticleSearchResult>,
+    seen_pmids: &'a mut HashSet<String>,
+    visible_skipped: &'a mut usize,
+    source_position: &'a mut usize,
+}
+
+fn append_pubmed_entries(
+    entries: Vec<ESummaryEntry>,
+    filters: &ArticleSearchFilters,
+    normalized_date_from: Option<&str>,
+    normalized_date_to: Option<&str>,
+    limit: usize,
+    offset: usize,
+    state: PubMedAppendState<'_>,
+) -> Result<(), BioMcpError> {
+    for entry in entries {
+        let mut row = transform::article::from_pubmed_esummary_entry(&entry).ok_or_else(|| {
+            BioMcpError::Api {
+                api: "pubmed-eutils".to_string(),
+                message: format!(
+                    "ESummary entry for PMID {} has blank title after cleaning",
+                    entry.uid
+                ),
+            }
+        })?;
+        if !matches_result_filters(&row, filters, normalized_date_from, normalized_date_to) {
+            continue;
+        }
+        if !state.seen_pmids.insert(row.pmid.clone()) {
+            continue;
+        }
+        row.source_local_position = *state.source_position;
+        *state.source_position = state.source_position.saturating_add(1);
+        if *state.visible_skipped < offset {
+            *state.visible_skipped = state.visible_skipped.saturating_add(1);
+            continue;
+        }
+        state.out.push(row);
+        if state.out.len() >= limit {
+            break;
+        }
+    }
+    Ok(())
 }
 
 pub(super) async fn search_europepmc_page(
@@ -335,13 +386,7 @@ pub(super) async fn search_semantic_scholar_candidates(
 ) -> Result<SemanticScholarCandidateOutcome, BioMcpError> {
     let client = SemanticScholarClient::new()?;
     let auth_mode = client.auth_mode();
-    let mut status = ArticleSourceStatus {
-        source: ArticleSource::SemanticScholar,
-        enabled: true,
-        auth_mode: Some(auth_mode),
-        status: Some(ArticleSourceAvailability::Ok),
-        message: None,
-    };
+    let status = semantic_scholar_status(auth_mode);
 
     let query = build_free_text_article_query(filters);
     if query.trim().is_empty() {
@@ -363,15 +408,25 @@ pub(super) async fn search_semantic_scholar_candidates(
         Ok(response) => response,
         Err(err) => {
             warn!(?err, query, "Semantic Scholar article search leg failed");
-            status.status = Some(ArticleSourceAvailability::Unavailable);
-            status.message = Some("Semantic Scholar search unavailable".to_string());
-            return Ok(SemanticScholarCandidateOutcome {
-                rows: Vec::new(),
-                status,
-            });
+            return Ok(semantic_scholar_unavailable_outcome(auth_mode));
         }
     };
 
+    let rows = semantic_scholar_rows_from_response(
+        filters,
+        normalized_date_from.as_deref(),
+        normalized_date_to.as_deref(),
+        response,
+    );
+    Ok(SemanticScholarCandidateOutcome { rows, status })
+}
+
+fn semantic_scholar_rows_from_response(
+    filters: &ArticleSearchFilters,
+    normalized_date_from: Option<&str>,
+    normalized_date_to: Option<&str>,
+    response: SemanticScholarSearchResponse,
+) -> Vec<ArticleSearchResult> {
     let mut rows = Vec::with_capacity(response.data.len());
     let mut source_position = 0usize;
     for paper in response.data {
@@ -429,19 +484,14 @@ pub(super) async fn search_semantic_scholar_candidates(
             publication_type: None,
             source_local_position: 0,
         };
-        if matches_result_filters(
-            &row,
-            filters,
-            normalized_date_from.as_deref(),
-            normalized_date_to.as_deref(),
-        ) {
+        if matches_result_filters(&row, filters, normalized_date_from, normalized_date_to) {
             row.source_local_position = source_position;
             source_position = source_position.saturating_add(1);
             rows.push(row);
         }
     }
 
-    Ok(SemanticScholarCandidateOutcome { rows, status })
+    rows
 }
 
 pub(super) async fn search_litsense2_candidates(
@@ -453,11 +503,28 @@ pub(super) async fn search_litsense2_candidates(
         return Ok(Vec::new());
     }
     let (normalized_date_from, normalized_date_to) = normalized_date_bounds(filters)?;
-    let response = LitSense2Client::new()?.sentence_search(&query).await?;
+    let hits = LitSense2Client::new()?.sentence_search(&query).await?;
+    let deduped = dedupe_litsense2_hits(hits);
 
-    let mut deduped: HashMap<u64, (crate::sources::litsense2::LitSense2SearchHit, usize)> =
-        HashMap::new();
-    for (index, hit) in response.into_iter().enumerate() {
+    let pmids = deduped
+        .iter()
+        .map(|(hit, _)| hit.pmid.to_string())
+        .collect::<Vec<_>>();
+    let hydrated = hydrate_pubmed_entries(PubMedClient::new()?.esummary(&pmids).await?);
+
+    Ok(litsense2_rows_from_hits(
+        filters,
+        limit,
+        normalized_date_from.as_deref(),
+        normalized_date_to.as_deref(),
+        deduped,
+        hydrated,
+    ))
+}
+
+fn dedupe_litsense2_hits(hits: Vec<LitSense2SearchHit>) -> Vec<(LitSense2SearchHit, usize)> {
+    let mut deduped: HashMap<u64, (LitSense2SearchHit, usize)> = HashMap::new();
+    for (index, hit) in hits.into_iter().enumerate() {
         match deduped.get_mut(&hit.pmid) {
             Some((best, _)) if hit.score > best.score => *best = hit,
             Some(_) => {}
@@ -476,21 +543,17 @@ pub(super) async fn search_litsense2_candidates(
                 .then_with(|| left_first_seen.cmp(right_first_seen))
         },
     );
+    deduped
+}
 
-    let pmids = deduped
-        .iter()
-        .map(|(hit, _)| hit.pmid.to_string())
-        .collect::<Vec<_>>();
-    let mut hydrated = PubMedClient::new()?
-        .esummary(&pmids)
-        .await?
-        .into_iter()
-        .filter_map(|entry| {
-            transform::article::from_pubmed_esummary_entry(&entry)
-                .map(|row| (row.pmid.clone(), row))
-        })
-        .collect::<HashMap<_, _>>();
-
+fn litsense2_rows_from_hits(
+    filters: &ArticleSearchFilters,
+    limit: usize,
+    normalized_date_from: Option<&str>,
+    normalized_date_to: Option<&str>,
+    deduped: Vec<(LitSense2SearchHit, usize)>,
+    mut hydrated: HashMap<String, ArticleSearchResult>,
+) -> Vec<ArticleSearchResult> {
     let mut rows = Vec::with_capacity(deduped.len());
     let mut source_position = 0usize;
     for (hit, _) in deduped {
@@ -544,12 +607,7 @@ pub(super) async fn search_litsense2_candidates(
         row.normalized_abstract = transform::article::normalize_article_search_text(&cleaned_text);
         row.is_retracted = None;
         row.publication_type = None;
-        if !matches_result_filters(
-            &row,
-            filters,
-            normalized_date_from.as_deref(),
-            normalized_date_to.as_deref(),
-        ) {
+        if !matches_result_filters(&row, filters, normalized_date_from, normalized_date_to) {
             continue;
         }
         row.source_local_position = source_position;
@@ -560,7 +618,17 @@ pub(super) async fn search_litsense2_candidates(
         }
     }
 
-    Ok(rows)
+    rows
+}
+
+fn hydrate_pubmed_entries(entries: Vec<ESummaryEntry>) -> HashMap<String, ArticleSearchResult> {
+    entries
+        .into_iter()
+        .filter_map(|entry| {
+            transform::article::from_pubmed_esummary_entry(&entry)
+                .map(|row| (row.pmid.clone(), row))
+        })
+        .collect()
 }
 
 #[cfg(test)]
