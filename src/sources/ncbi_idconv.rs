@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 // NCBI PMC ID Converter API
 // Docs: https://pmc.ncbi.nlm.nih.gov/tools/id-converter-api/
@@ -27,21 +28,6 @@ impl NcbiIdConverterClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String, api_key: Option<String>) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-            api_key: api_key
-                .map(|v| v.trim().to_string())
-                .filter(|v| !v.is_empty()),
-        })
-    }
-
-    fn endpoint(&self) -> String {
-        self.base.as_ref().trim_end_matches('/').to_string()
-    }
-
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
@@ -50,31 +36,37 @@ impl NcbiIdConverterClient {
             .send()
             .await?;
         let status = resp.status();
+        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, NCBI_IDCONV_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: NCBI_IDCONV_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: NCBI_IDCONV_API.to_string(),
-            source,
-        })
+        crate::sources::decode_json(
+            NCBI_IDCONV_API,
+            status,
+            content_type.as_ref(),
+            &bytes,
+            false,
+        )
     }
 
-    async fn lookup(&self, idtype: &str, id: &str) -> Result<NcbiIdConvResponse, BioMcpError> {
-        let url = self.endpoint();
-        let req =
-            self.client
-                .get(&url)
-                .query(&[("format", "json"), ("idtype", idtype), ("ids", id)]);
-        let req = crate::sources::append_ncbi_api_key(req, self.api_key.as_deref());
+    pub(crate) fn lookup_plan(idtype: &str, id: &str, api_key: Option<&str>) -> RequestPlan {
+        let mut plan = RequestPlan::get("")
+            .query("format", "json")
+            .query("idtype", idtype)
+            .query("ids", id);
+        if let Some(key) = api_key.map(str::trim).filter(|key| !key.is_empty()) {
+            plan = plan.query("api_key", key);
+        }
+        plan
+    }
+
+    async fn lookup(&self, plan: &RequestPlan) -> Result<NcbiIdConvResponse, BioMcpError> {
+        let req = request_from_plan(&self.client, self.base.as_ref(), plan);
         self.get_json(req).await
     }
 
-    pub async fn pmid_to_pmcid(&self, pmid: &str) -> Result<Option<String>, BioMcpError> {
+    pub(crate) fn pmid_to_pmcid_plan(
+        pmid: &str,
+        api_key: Option<&str>,
+    ) -> Result<Option<RequestPlan>, BioMcpError> {
         let pmid = pmid.trim();
         if pmid.is_empty() {
             return Ok(None);
@@ -87,18 +79,30 @@ impl NcbiIdConverterClient {
                 "PMID must contain only digits.".into(),
             ));
         }
+        Ok(Some(Self::lookup_plan("pmid", pmid, api_key)))
+    }
 
-        let resp = self.lookup("pmid", pmid).await?;
-        Ok(resp
-            .records
+    pub(crate) fn extract_first_pmcid(resp: NcbiIdConvResponse) -> Option<String> {
+        resp.records
             .into_iter()
             .next()
             .and_then(|r| r.pmcid)
             .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty()))
+            .filter(|s| !s.is_empty())
     }
 
-    pub async fn doi_to_pmcid(&self, doi: &str) -> Result<Option<String>, BioMcpError> {
+    pub async fn pmid_to_pmcid(&self, pmid: &str) -> Result<Option<String>, BioMcpError> {
+        let Some(plan) = Self::pmid_to_pmcid_plan(pmid, self.api_key.as_deref())? else {
+            return Ok(None);
+        };
+        let resp = self.lookup(&plan).await?;
+        Ok(Self::extract_first_pmcid(resp))
+    }
+
+    pub(crate) fn doi_to_pmcid_plan(
+        doi: &str,
+        api_key: Option<&str>,
+    ) -> Result<Option<RequestPlan>, BioMcpError> {
         let doi = doi.trim();
         if doi.is_empty() {
             return Ok(None);
@@ -112,7 +116,14 @@ impl NcbiIdConverterClient {
             ));
         }
 
-        let resp = self.lookup("doi", doi).await?;
+        Ok(Some(Self::lookup_plan("doi", doi, api_key)))
+    }
+
+    pub async fn doi_to_pmcid(&self, doi: &str) -> Result<Option<String>, BioMcpError> {
+        let Some(plan) = Self::doi_to_pmcid_plan(doi, self.api_key.as_deref())? else {
+            return Ok(None);
+        };
+        let resp = self.lookup(&plan).await?;
         Ok(resp
             .records
             .into_iter()
@@ -148,56 +159,4 @@ pub struct NcbiIdConvRecord {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn pmid_to_pmcid_validates_numeric_input() {
-        let client = NcbiIdConverterClient::new_for_test("http://127.0.0.1".into(), None).unwrap();
-        let err = client.pmid_to_pmcid("abc").await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn pmid_to_pmcid_parses_lookup_response() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/"))
-            .and(query_param("format", "json"))
-            .and(query_param("idtype", "pmid"))
-            .and(query_param("ids", "22663011"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "records": [{"pmcid": "PMC123456"}]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = NcbiIdConverterClient::new_for_test(server.uri(), None).unwrap();
-        let pmcid = client.pmid_to_pmcid("22663011").await.unwrap();
-        assert_eq!(pmcid.as_deref(), Some("PMC123456"));
-    }
-
-    #[tokio::test]
-    async fn pmid_to_pmcid_includes_api_key_when_configured() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/"))
-            .and(query_param("format", "json"))
-            .and(query_param("idtype", "pmid"))
-            .and(query_param("ids", "22663011"))
-            .and(query_param("api_key", "test-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "records": [{"pmcid": "PMC123456"}]
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client =
-            NcbiIdConverterClient::new_for_test(server.uri(), Some("test-key".into())).unwrap();
-        let pmcid = client.pmid_to_pmcid("22663011").await.unwrap();
-        assert_eq!(pmcid.as_deref(), Some("PMC123456"));
-    }
-}
+mod tests;
