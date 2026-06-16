@@ -1,0 +1,19 @@
+{
+  "NM_004448.2:c.829G>T": {
+    "submitted_variant": "NM_004448.2:c.829G>T",
+    "hgvs_transcript_variant": "NM_004448.2:c.829G>T",
+    "primary_assembly_loci": {
+      "grch37": {
+        "hgvs_genomic_description": "NC_000017.10:g.37880997G>T"
+      },
+      "grch38": {
+        "hgvs_genomic_description": "NC_000017.11:g.39710409G>T"
+      }
+    },
+    "validation_warnings": [
+      "TranscriptVersionWarning: newer transcript exists"
+    ]
+  },
+  "flag": "gene_variant",
+  "metadata": {}
+}

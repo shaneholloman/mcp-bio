@@ -4,6 +4,8 @@ use crate::entities::variant::{
     VariantNormalizationService, VariantNormalizationServiceResult, VariantNormalizationStatus,
 };
 use crate::error::BioMcpError;
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 
 const VARIANTVALIDATOR_BASE: &str = "https://rest.variantvalidator.org";
 const VARIANTVALIDATOR_API: &str = "variantvalidator";
@@ -29,14 +31,6 @@ impl VariantValidatorClient {
         Ok(Self {
             client: crate::sources::shared_client()?,
             base: crate::sources::env_base(VARIANTVALIDATOR_BASE, VARIANTVALIDATOR_BASE_ENV),
-        })
-    }
-
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
         })
     }
 
@@ -105,35 +99,42 @@ impl VariantValidatorClient {
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, VARIANTVALIDATOR_API).await?;
 
-        if !status.is_success() {
-            return Ok(http_error(status, &bytes));
-        }
-
-        if let Err(err) = crate::sources::ensure_json_content_type(
-            VARIANTVALIDATOR_API,
+        Ok(decode_normalize_response(
+            status,
             content_type.as_ref(),
             &bytes,
-        ) {
-            return Ok(message_result(
-                VariantNormalizationStatus::ServiceError,
-                err.to_string(),
-            ));
-        }
-        let value: serde_json::Value = match serde_json::from_slice(&bytes) {
-            Ok(value) => value,
-            Err(source) => {
-                return Ok(message_result(
-                    VariantNormalizationStatus::ServiceError,
-                    BioMcpError::ApiJson {
-                        api: VARIANTVALIDATOR_API.to_string(),
-                        source,
-                    }
-                    .to_string(),
-                ));
-            }
-        };
-        Ok(result_from_value(&value))
+        ))
     }
+}
+
+fn decode_normalize_response(
+    status: StatusCode,
+    content_type: Option<&HeaderValue>,
+    bytes: &[u8],
+) -> VariantNormalizationServiceResult {
+    if !status.is_success() {
+        return http_error(status, bytes);
+    }
+
+    if let Err(err) =
+        crate::sources::ensure_json_content_type(VARIANTVALIDATOR_API, content_type, bytes)
+    {
+        return message_result(VariantNormalizationStatus::ServiceError, err.to_string());
+    }
+    let value: serde_json::Value = match serde_json::from_slice(bytes) {
+        Ok(value) => value,
+        Err(source) => {
+            return message_result(
+                VariantNormalizationStatus::ServiceError,
+                BioMcpError::ApiJson {
+                    api: VARIANTVALIDATOR_API.to_string(),
+                    source,
+                }
+                .to_string(),
+            );
+        }
+    };
+    result_from_value(&value)
 }
 
 fn result_from_value(value: &serde_json::Value) -> VariantNormalizationServiceResult {
@@ -256,208 +257,4 @@ fn string_field(value: &serde_json::Value, key: &str) -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{any, method, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[test]
-    fn ticket_376_variant_normalization_contracts_variantvalidator_request_plan_and_mapping() {
-        let client = VariantValidatorClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let plan: VariantValidatorNormalizeRequestPlan = client
-            .normalize_request_plan("NM_000248.3:c.135del")
-            .expect("VariantValidatorNormalizeRequestPlan");
-        assert_eq!(plan.method, "GET");
-        assert_eq!(
-            plan.path,
-            "/VariantValidator/variantvalidator/GRCh38/NM_000248.3:c.135del/all"
-        );
-        assert!(
-            plan.query_params
-                .contains(&("content-type", "application/json".to_string()))
-        );
-        let encoded = client
-            .normalize_request_plan("NM_004448.2:c.829G>T")
-            .expect("encoded plan");
-        assert_eq!(
-            encoded.path,
-            "/VariantValidator/variantvalidator/GRCh38/NM_004448.2:c.829G%3ET/all"
-        );
-
-        let value = serde_json::json!({
-            "NM_000248.3:c.135del": {
-                "submitted_variant": "NM_000248.3:c.135del",
-                "hgvs_transcript_variant": "NM_000248.3:c.135del",
-                "primary_assembly_loci": {
-                    "grch37": {"hgvs_genomic_description": "NC_000003.11:g.69987074del"},
-                    "grch38": {"hgvs_genomic_description": "NC_000003.12:g.69937923del"}
-                },
-                "validation_warnings": ["TranscriptVersionWarning: transcript updated"]
-            }
-        });
-        let result = result_from_value(&value);
-        assert_eq!(result.status, VariantNormalizationStatus::Success);
-        assert!(
-            result
-                .warnings
-                .iter()
-                .any(|warning| warning.contains("TranscriptVersionWarning"))
-        );
-        assert!(
-            result
-                .genomic_descriptions
-                .iter()
-                .any(|value| value == "NC_000003.12:g.69937923del")
-        );
-        assert!(
-            result
-                .genomic_descriptions
-                .iter()
-                .all(|value| !value.contains("NC_000003.11")),
-            "GRCh37 genomic descriptions must not be labeled through the GRCh38 markdown surface"
-        );
-    }
-
-    #[tokio::test]
-    async fn normalize_encodes_transcript_path_and_extracts_warnings() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(any())
-            .and(query_param("content-type", "application/json"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "NM_004448.2:c.829G>T": {
-                    "submitted_variant": "NM_004448.2:c.829G>T",
-                    "hgvs_transcript_variant": "NM_004448.2:c.829G>T",
-                    "primary_assembly_loci": {
-                        "grch38": {"hgvs_genomic_description": "NC_000017.11:g.39710409G>T"}
-                    },
-                    "validation_warnings": ["TranscriptVersionWarning: newer transcript exists"]
-                },
-                "flag": "gene_variant",
-                "metadata": {}
-            })))
-            .mount(&server)
-            .await;
-
-        let result = VariantValidatorClient::new_for_test(format!("{}/api", server.uri()))
-            .unwrap()
-            .normalize("NM_004448.2:c.829G>T")
-            .await
-            .unwrap();
-
-        let requests = server.received_requests().await.unwrap();
-        assert_eq!(
-            requests[0].url.path(),
-            "/api/VariantValidator/variantvalidator/GRCh38/NM_004448.2:c.829G%3ET/all"
-        );
-        assert_eq!(result.status, VariantNormalizationStatus::Success);
-        assert!(result.warnings[0].contains("TranscriptVersionWarning"));
-        assert!(
-            result
-                .genomic_descriptions
-                .iter()
-                .any(|value| value == "NC_000017.11:g.39710409G>T")
-        );
-    }
-
-    #[test]
-    fn result_from_value_maps_warning_without_transcript_to_invalid_input() {
-        let value = serde_json::json!({
-            "flag": "warning",
-            "validation_warning_1": {
-                "submitted_variant": "NM_000248.3:c.",
-                "validation_warnings": ["LovdSyntaxcheckInvalid"]
-            }
-        });
-
-        let result = result_from_value(&value);
-        assert_eq!(result.status, VariantNormalizationStatus::InvalidInput);
-        assert_eq!(result.input_description.as_deref(), Some("NM_000248.3:c."));
-    }
-
-    #[test]
-    fn result_from_value_maps_missing_transcript_to_service_error() {
-        let value = serde_json::json!({
-            "flag": "empty",
-            "result": {
-                "submitted_variant": "NM_000248.3:c.135del"
-            }
-        });
-
-        let result = result_from_value(&value);
-        assert_eq!(result.status, VariantNormalizationStatus::ServiceError);
-        assert!(result.normalized_description.is_none());
-    }
-
-    #[tokio::test]
-    async fn normalize_maps_not_found_and_http_errors() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(ResponseTemplate::new(404).set_body_string("not found"))
-            .mount(&server)
-            .await;
-
-        let result = VariantValidatorClient::new_for_test(server.uri())
-            .unwrap()
-            .normalize("NM_000248.3:c.135del")
-            .await
-            .unwrap();
-
-        assert_eq!(result.status, VariantNormalizationStatus::NotFound);
-        assert!(
-            result
-                .message
-                .as_deref()
-                .unwrap_or_default()
-                .contains("HTTP 404")
-        );
-
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(ResponseTemplate::new(500).set_body_string("upstream failed"))
-            .mount(&server)
-            .await;
-
-        let result = VariantValidatorClient::new_for_test(server.uri())
-            .unwrap()
-            .normalize("NM_000248.3:c.135del")
-            .await
-            .unwrap();
-
-        assert_eq!(result.status, VariantNormalizationStatus::ServiceError);
-        assert!(
-            result
-                .message
-                .as_deref()
-                .unwrap_or_default()
-                .contains("HTTP 500")
-        );
-    }
-
-    #[tokio::test]
-    async fn normalize_maps_html_response_to_service_error() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html")
-                    .set_body_string("<html>maintenance</html>"),
-            )
-            .mount(&server)
-            .await;
-
-        let result = VariantValidatorClient::new_for_test(server.uri())
-            .unwrap()
-            .normalize("NM_000248.3:c.135del")
-            .await
-            .unwrap();
-
-        assert_eq!(result.status, VariantNormalizationStatus::ServiceError);
-        assert!(
-            result
-                .message
-                .as_deref()
-                .is_some_and(|message| !message.is_empty())
-        );
-    }
-}
+mod tests;
