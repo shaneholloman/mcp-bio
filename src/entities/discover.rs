@@ -2634,6 +2634,39 @@ mod tests {
     }
 
     #[test]
+    fn ticket_416_rare_disease_trial_pivots_discover_mixed_query_uses_planned_trial_commands() {
+        let commands = generate_commands(
+            "Phelan-McDermid Syndrome SHANK3 clinical trial",
+            &[
+                test_concept(
+                    "SHANK3",
+                    DiscoverType::Gene,
+                    DiscoverConfidence::CanonicalId,
+                ),
+                test_concept(
+                    "Phelan-McDermid Syndrome",
+                    DiscoverType::Disease,
+                    DiscoverConfidence::CanonicalId,
+                ),
+            ],
+            false,
+            DiscoverIntent::TrialSearch,
+        );
+
+        assert!(
+            commands.iter().any(|command| command
+                == "biomcp search trial -c \"Phelan-McDermid Syndrome\" --limit 5"),
+            "mixed trial-intent discover queries should not depend on the disease being the top concept: {commands:?}"
+        );
+        assert!(
+            commands
+                .iter()
+                .all(|command| !command.contains("SHANK1") && !command.contains("SHANK2")),
+            "mixed rare-disease trial suggestions should not introduce unsupported SHANK-family commands: {commands:?}"
+        );
+    }
+
+    #[test]
     fn treatment_queries_prefer_structured_indication_search() {
         let result = build_result(
             "what drugs treat myasthenia gravis",
