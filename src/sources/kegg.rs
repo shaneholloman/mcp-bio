@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use reqwest::StatusCode;
+
 use crate::error::BioMcpError;
 
 const KEGG_BASE: &str = "https://rest.kegg.jp";
@@ -16,14 +18,6 @@ impl KeggClient {
         Ok(Self {
             client: crate::sources::shared_client()?,
             base: crate::sources::env_base(KEGG_BASE, KEGG_BASE_ENV),
-        })
-    }
-
-    #[cfg(test)]
-    pub(crate) fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
         })
     }
 
@@ -52,6 +46,13 @@ impl KeggClient {
         let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, KEGG_API).await?;
+        Self::decode_text_response(status, bytes.to_vec())
+    }
+
+    pub(crate) fn decode_text_response(
+        status: StatusCode,
+        bytes: Vec<u8>,
+    ) -> Result<String, BioMcpError> {
         if !status.is_success() {
             let excerpt = crate::sources::body_excerpt(&bytes);
             return Err(BioMcpError::Api {
@@ -66,32 +67,46 @@ impl KeggClient {
         })
     }
 
-    pub async fn search_pathways(
-        &self,
-        query: &str,
-        limit: usize,
-    ) -> Result<Vec<KeggPathwayHit>, BioMcpError> {
+    pub(crate) fn search_pathways_segments(query: &str) -> Result<Vec<String>, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
             return Err(BioMcpError::InvalidArgument(
                 "KEGG query is required".into(),
             ));
         }
+        Ok(vec![
+            "find".to_string(),
+            "pathway".to_string(),
+            query.to_string(),
+        ])
+    }
 
-        let url = self.build_segment_url(&["find", "pathway", query])?;
+    pub async fn search_pathways(
+        &self,
+        query: &str,
+        limit: usize,
+    ) -> Result<Vec<KeggPathwayHit>, BioMcpError> {
+        let segments = Self::search_pathways_segments(query)?;
+        let refs = segments.iter().map(String::as_str).collect::<Vec<_>>();
+        let url = self.build_segment_url(&refs)?;
         let body = self.get_text(self.client.get(url)).await?;
         Ok(parse_search_response(&body, limit.clamp(1, 25)))
     }
 
-    pub async fn get_pathway(&self, pathway_id: &str) -> Result<KeggPathwayRecord, BioMcpError> {
+    pub(crate) fn get_pathway_segments(pathway_id: &str) -> Result<Vec<String>, BioMcpError> {
         let pathway_id = pathway_id.trim();
         if pathway_id.is_empty() {
             return Err(BioMcpError::InvalidArgument(
                 "KEGG pathway ID is required".into(),
             ));
         }
+        Ok(vec!["get".to_string(), pathway_id.to_string()])
+    }
 
-        let url = self.build_segment_url(&["get", pathway_id])?;
+    pub async fn get_pathway(&self, pathway_id: &str) -> Result<KeggPathwayRecord, BioMcpError> {
+        let segments = Self::get_pathway_segments(pathway_id)?;
+        let refs = segments.iter().map(String::as_str).collect::<Vec<_>>();
+        let url = self.build_segment_url(&refs)?;
         let body = self.get_text(self.client.get(url)).await?;
         parse_pathway_record(&body)
     }
@@ -297,113 +312,4 @@ fn is_reference_map_id(value: &str) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[test]
-    fn parse_search_response_keeps_human_rows_only() {
-        let rows = parse_search_response(
-            "path:hsa04010\tMAPK signaling pathway - Homo sapiens (human)\n\
-             path:map04010\tMAPK signaling pathway - Reference pathway\n\
-             path:mmu04010\tMAPK signaling pathway - Mus musculus (mouse)\n\
-             bad line\n",
-            10,
-        );
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].id, "hsa04010");
-        assert_eq!(
-            rows[0].name,
-            "MAPK signaling pathway - Homo sapiens (human)"
-        );
-    }
-
-    #[test]
-    fn parse_search_response_normalizes_bare_reference_map_to_human() {
-        // Live KEGG /find/pathway/MAPK returns a bare map##### row without an
-        // organism suffix when no hsa##### row is present (documented deviation
-        // from design in dev-log). This test guards that normalization path.
-        let rows = parse_search_response("path:map04010\tMAPK signaling pathway\n", 10);
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].id, "hsa04010");
-        assert_eq!(
-            rows[0].name,
-            "MAPK signaling pathway - Homo sapiens (human)"
-        );
-    }
-
-    #[test]
-    fn parse_search_response_dedupes_normalized_and_explicit_human_id() {
-        // If the API returns both a bare map##### and an hsa##### for the same
-        // pathway, the normalized entry arrives first and the explicit hsa#####
-        // must be dropped as a duplicate.
-        let rows = parse_search_response(
-            "path:map04010\tMAPK signaling pathway\n\
-             path:hsa04010\tMAPK signaling pathway - Homo sapiens (human)\n",
-            10,
-        );
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].id, "hsa04010");
-    }
-
-    #[test]
-    fn parse_pathway_record_extracts_summary_and_genes() {
-        let record = parse_pathway_record(
-            "ENTRY       hsa05200           Pathway\n\
-             NAME        Pathways in cancer\n\
-             DESCRIPTION Cancer overview pathway.\n\
-             GENE        673    BRAF; B-Raf proto-oncogene\n\
-                         1956   EGFR; epidermal growth factor receptor\n\
-             ///\n",
-        )
-        .expect("record");
-
-        assert_eq!(record.id, "hsa05200");
-        assert_eq!(record.name, "Pathways in cancer");
-        assert_eq!(record.summary.as_deref(), Some("Cancer overview pathway."));
-        assert_eq!(record.genes, vec!["BRAF".to_string(), "EGFR".to_string()]);
-    }
-
-    #[tokio::test]
-    async fn search_pathways_reads_plain_text_body() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/find/pathway/MAPK"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_string(
-                    "path:hsa04010\tMAPK signaling pathway - Homo sapiens (human)\n",
-                ),
-            )
-            .mount(&server)
-            .await;
-
-        let client = KeggClient::new_for_test(server.uri()).expect("client");
-        let rows = client.search_pathways("MAPK", 5).await.expect("rows");
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].id, "hsa04010");
-    }
-
-    #[tokio::test]
-    async fn get_pathway_parses_flat_file_record() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/get/hsa05200"))
-            .respond_with(ResponseTemplate::new(200).set_body_string(
-                "ENTRY       hsa05200           Pathway\n\
-                 NAME        Pathways in cancer\n\
-                 DESCRIPTION Cancer overview pathway.\n\
-                 GENE        673    BRAF; B-Raf proto-oncogene\n\
-                             1956   EGFR; epidermal growth factor receptor\n\
-                 ///\n",
-            ))
-            .mount(&server)
-            .await;
-
-        let client = KeggClient::new_for_test(server.uri()).expect("client");
-        let record = client.get_pathway("hsa05200").await.expect("record");
-        assert_eq!(record.id, "hsa05200");
-        assert_eq!(record.genes, vec!["BRAF".to_string(), "EGFR".to_string()]);
-    }
-}
+mod tests;
