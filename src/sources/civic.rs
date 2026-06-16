@@ -1,10 +1,13 @@
 use std::borrow::Cow;
 use std::collections::HashSet;
 
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestBody, RequestPlan, request_from_plan};
 
 const CIVIC_BASE: &str = "https://civicdb.org/api";
 const CIVIC_API: &str = "civic";
@@ -95,47 +98,55 @@ impl CivicClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
+    pub(crate) fn context_plan(
+        filter: CivicFilter<'_>,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let (variable_name, variable_value) = match filter {
+            CivicFilter::MolecularProfile(value) => (
+                "molecularProfileName",
+                required_query_value("molecular profile name", value)?,
+            ),
+            CivicFilter::Therapy(value) => {
+                ("therapyName", required_query_value("therapy name", value)?)
+            }
+            CivicFilter::Disease(value) => {
+                ("diseaseName", required_query_value("disease name", value)?)
+            }
+        };
+        let first = limit.clamp(1, 25);
+        let mut variables = serde_json::Map::new();
+        variables.insert("first".to_string(), serde_json::json!(first));
+        variables.insert(
+            variable_name.to_string(),
+            serde_json::Value::String(variable_value),
+        );
+
+        let mut plan = RequestPlan::post("graphql");
+        plan.body = RequestBody::Json(serde_json::json!({
+            "query": CIVIC_CONTEXT_QUERY,
+            "variables": serde_json::Value::Object(variables),
+        }));
+        Ok(plan)
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        crate::sources::decode_json(CIVIC_API, status, content_type, bytes, true)
     }
 
-    async fn post_json<T: DeserializeOwned, B: Serialize>(
+    async fn post_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
-        body: &B,
     ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode(req.json(body))
-            .send()
-            .await?;
+        let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, CIVIC_API).await?;
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: CIVIC_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(CIVIC_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: CIVIC_API.to_string(),
-            source,
-        })
+        Self::decode_json_response(status, content_type.as_ref(), &bytes)
     }
 
     pub async fn by_molecular_profile(
@@ -170,34 +181,16 @@ impl CivicClient {
         filter: CivicFilter<'_>,
         limit: usize,
     ) -> Result<CivicContext, BioMcpError> {
-        let (variable_name, variable_value) = match filter {
-            CivicFilter::MolecularProfile(value) => (
-                "molecularProfileName",
-                required_query_value("molecular profile name", value)?,
-            ),
-            CivicFilter::Therapy(value) => {
-                ("therapyName", required_query_value("therapy name", value)?)
-            }
-            CivicFilter::Disease(value) => {
-                ("diseaseName", required_query_value("disease name", value)?)
-            }
-        };
-        let first = limit.clamp(1, 25);
-        let mut variables = serde_json::Map::new();
-        variables.insert("first".to_string(), serde_json::json!(first));
-        variables.insert(
-            variable_name.to_string(),
-            serde_json::Value::String(variable_value),
-        );
+        let plan = Self::context_plan(filter, limit)?;
+        let resp: GraphQlResponse<CivicContextData> = self
+            .post_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Self::context_from_response(resp)
+    }
 
-        let body = GraphQlRequest {
-            query: CIVIC_CONTEXT_QUERY,
-            variables: serde_json::Value::Object(variables),
-        };
-        let url = self.endpoint("graphql");
-        let resp: GraphQlResponse<CivicContextData> =
-            self.post_json(self.client.post(&url), &body).await?;
-
+    fn context_from_response(
+        resp: GraphQlResponse<CivicContextData>,
+    ) -> Result<CivicContext, BioMcpError> {
         if let Some(errors) = resp.errors {
             let message = errors
                 .into_iter()
@@ -374,16 +367,10 @@ fn required_query_value(label: &str, value: &str) -> Result<String, BioMcpError>
     Ok(trimmed.to_string())
 }
 
-enum CivicFilter<'a> {
+pub(crate) enum CivicFilter<'a> {
     MolecularProfile(&'a str),
     Therapy(&'a str),
     Disease(&'a str),
-}
-
-#[derive(Debug, Serialize)]
-struct GraphQlRequest<'a> {
-    query: &'a str,
-    variables: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize)]
@@ -487,90 +474,4 @@ struct CivicCountConnection {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[test]
-    fn required_query_value_rejects_empty() {
-        let err = required_query_value("therapy name", "   ").unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-
-    #[tokio::test]
-    async fn by_molecular_profile_maps_evidence_and_assertions() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "evidenceItems": {
-                        "totalCount": 12,
-                        "nodes": [{
-                            "id": 1409,
-                            "name": "EID1409",
-                            "status": "ACCEPTED",
-                            "evidenceType": "PREDICTIVE",
-                            "evidenceLevel": "A",
-                            "significance": "SENSITIVITYRESPONSE",
-                            "molecularProfile": {"name": "BRAF V600E"},
-                            "disease": {"displayName": "Melanoma"},
-                            "therapies": [{"name": "Vemurafenib"}, {"name": "Vemurafenib"}],
-                            "source": {
-                                "citation": "Chapman et al., 2011",
-                                "sourceType": "PUBMED",
-                                "publicationYear": 2011
-                            }
-                        }]
-                    },
-                    "assertions": {
-                        "totalCount": 2,
-                        "nodes": [{
-                            "id": 7,
-                            "name": "AID7",
-                            "status": "ACCEPTED",
-                            "assertionType": "PREDICTIVE",
-                            "assertionDirection": "SUPPORTS",
-                            "ampLevel": "TIER_I_LEVEL_A",
-                            "significance": "SENSITIVITYRESPONSE",
-                            "molecularProfile": {"name": "BRAF V600E"},
-                            "disease": {"displayName": "Melanoma"},
-                            "therapies": [{"name": "Dabrafenib"}, {"name": "Trametinib"}],
-                            "summary": "Sensitive in melanoma",
-                            "approvals": {"totalCount": 1}
-                        }]
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = CivicClient::new_for_test(server.uri()).unwrap();
-        let out = client.by_molecular_profile("BRAF V600E", 10).await.unwrap();
-        assert_eq!(out.evidence_total_count, 12);
-        assert_eq!(out.assertion_total_count, 2);
-        assert_eq!(out.evidence_items.len(), 1);
-        assert_eq!(out.assertions.len(), 1);
-        assert_eq!(out.evidence_items[0].therapies, vec!["Vemurafenib"]);
-        assert_eq!(out.assertions[0].approvals_count, 1);
-    }
-
-    #[tokio::test]
-    async fn by_therapy_surfaces_graphql_errors() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "errors": [{"message": "Bad query"}]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = CivicClient::new_for_test(server.uri()).unwrap();
-        let err = client.by_therapy("vemurafenib", 5).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::Api { .. }));
-    }
-}
+mod tests;

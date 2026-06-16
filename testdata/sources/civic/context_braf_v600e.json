@@ -1,0 +1,50 @@
+{
+  "data": {
+    "evidenceItems": {
+      "totalCount": 12,
+      "nodes": [
+        {
+          "id": 1409,
+          "name": "EID1409",
+          "status": "ACCEPTED",
+          "evidenceType": "PREDICTIVE",
+          "evidenceLevel": "A",
+          "significance": "SENSITIVITYRESPONSE",
+          "molecularProfile": {"name": "BRAF V600E"},
+          "disease": {"displayName": "Melanoma"},
+          "therapies": [
+            {"name": "Vemurafenib"},
+            {"name": "Vemurafenib"}
+          ],
+          "source": {
+            "citation": "Chapman et al., 2011",
+            "sourceType": "PUBMED",
+            "publicationYear": 2011
+          }
+        }
+      ]
+    },
+    "assertions": {
+      "totalCount": 2,
+      "nodes": [
+        {
+          "id": 7,
+          "name": "AID7",
+          "status": "ACCEPTED",
+          "assertionType": "PREDICTIVE",
+          "assertionDirection": "SUPPORTS",
+          "ampLevel": "TIER_I_LEVEL_A",
+          "significance": "SENSITIVITYRESPONSE",
+          "molecularProfile": {"name": "BRAF V600E"},
+          "disease": {"displayName": "Melanoma"},
+          "therapies": [
+            {"name": "Dabrafenib"},
+            {"name": "Trametinib"}
+          ],
+          "summary": "Sensitive in melanoma",
+          "approvals": {"totalCount": 1}
+        }
+      ]
+    }
+  }
+}
