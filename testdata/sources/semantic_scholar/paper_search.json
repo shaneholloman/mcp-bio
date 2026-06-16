@@ -1,0 +1,16 @@
+{
+  "total": 1,
+  "data": [
+    {
+      "paperId": "paper-1",
+      "externalIds": {
+        "PubMed": "22663011",
+        "DOI": "10.1056/NEJMoa1203421"
+      },
+      "title": "BRAF melanoma response",
+      "citationCount": 12,
+      "influentialCitationCount": 4,
+      "abstract": "Direct answer abstract."
+    }
+  ]
+}

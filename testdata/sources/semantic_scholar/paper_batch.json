@@ -1,0 +1,13 @@
+[
+  {
+    "paperId": "paper-1",
+    "title": "One",
+    "year": 2012
+  },
+  null,
+  {
+    "paperId": "paper-2",
+    "title": "Two",
+    "year": 2014
+  }
+]

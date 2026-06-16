@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "contexts": ["background"],
+      "intents": ["methodology"],
+      "isInfluential": true,
+      "citingPaper": {
+        "paperId": "citing-paper",
+        "externalIds": {
+          "PubMed": "24200969"
+        },
+        "title": "Citing study",
+        "venue": "Example Journal",
+        "year": 2014
+      }
+    }
+  ]
+}

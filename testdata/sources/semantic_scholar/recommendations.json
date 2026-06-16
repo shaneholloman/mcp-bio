@@ -1,0 +1,10 @@
+{
+  "recommendedPapers": [
+    {
+      "paperId": "paper-3",
+      "title": "Three",
+      "venue": "Example Journal",
+      "year": 2020
+    }
+  ]
+}
