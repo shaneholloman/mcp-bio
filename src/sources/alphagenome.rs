@@ -77,21 +77,7 @@ impl AlphaGenomeClient {
             self.channel.clone(),
         );
 
-        let interval = make_interval(chromosome, position);
-        let variant = alphagenome_proto::Variant {
-            chromosome: chromosome.to_string(),
-            position,
-            reference_bases: reference.to_string(),
-            alternate_bases: alternate.to_string(),
-        };
-
-        let request = alphagenome_proto::ScoreVariantRequest {
-            interval: Some(interval),
-            variant: Some(variant),
-            organism: alphagenome_proto::Organism::HomoSapiens as i32,
-            variant_scorers: recommended_scorers(),
-            model_version: String::new(),
-        };
+        let request = score_variant_request(chromosome, position, reference, alternate);
 
         let stream = tokio_stream::iter(vec![request]);
         let mut req = tonic::Request::new(stream);
@@ -200,6 +186,26 @@ fn recommended_scorers() -> Vec<alphagenome_proto::VariantScorer> {
             )),
         },
     ]
+}
+
+fn score_variant_request(
+    chromosome: &str,
+    position: i64,
+    reference: &str,
+    alternate: &str,
+) -> alphagenome_proto::ScoreVariantRequest {
+    alphagenome_proto::ScoreVariantRequest {
+        interval: Some(make_interval(chromosome, position)),
+        variant: Some(alphagenome_proto::Variant {
+            chromosome: chromosome.to_string(),
+            position,
+            reference_bases: reference.to_string(),
+            alternate_bases: alternate.to_string(),
+        }),
+        organism: alphagenome_proto::Organism::HomoSapiens as i32,
+        variant_scorers: recommended_scorers(),
+        model_version: String::new(),
+    }
 }
 
 fn make_interval(chr: &str, pos_1based: i64) -> alphagenome_proto::Interval {
@@ -539,38 +545,4 @@ pub(crate) mod alphagenome_proto {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn make_interval_clamps_start_and_keeps_expected_width() {
-        let interval = make_interval("chr7", 1);
-        assert_eq!(interval.chromosome, "chr7");
-        assert_eq!(interval.start, 0);
-        assert_eq!(interval.end, 2 * INTERVAL_HALF);
-    }
-
-    #[test]
-    fn recommended_scorers_are_stable() {
-        let scorers = recommended_scorers();
-        assert_eq!(scorers.len(), 3);
-    }
-
-    #[test]
-    fn dtype_and_half_precision_helpers_work() {
-        assert_eq!(dtype_size(2), Some(4));
-        assert_eq!(dtype_size(999), None);
-        let one = f16_to_f32(0x3C00); // 1.0 in IEEE-754 half
-        assert!((one - 1.0).abs() < 1e-6);
-    }
-
-    #[test]
-    fn decompress_tensor_bytes_rejects_oversized_chunk() {
-        let chunks = vec![alphagenome_proto::TensorChunk {
-            data: vec![0_u8; MAX_TENSOR_CHUNK_DECOMPRESSED_BYTES + 1],
-            compression_type: 0,
-        }];
-        let err = decompress_tensor_bytes(&chunks).unwrap_err();
-        assert!(format!("{err}").contains("Tensor chunk exceeded"));
-    }
-}
+mod tests;
