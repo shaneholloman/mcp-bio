@@ -1,10 +1,12 @@
 use std::borrow::Cow;
 use std::time::Duration;
 
+use reqwest::StatusCode;
 use reqwest::header::{CONTENT_TYPE, HeaderValue};
 use roxmltree::{Document, Node};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const VAERS_BASE: &str = "https://wonder.cdc.gov";
 const VAERS_API: &str = "vaers";
@@ -73,22 +75,6 @@ impl VaersClient {
             client: vaers_http_client()?,
             base: crate::sources::env_base(VAERS_BASE, VAERS_BASE_ENV),
         })
-    }
-
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: vaers_http_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            VAERS_REQUEST_PATH.trim_start_matches('/')
-        )
     }
 
     fn uses_live_rate_limit_delay(&self) -> bool {
@@ -177,43 +163,24 @@ impl VaersClient {
         kind: VaersAggregateKind,
         wonder_code: &str,
     ) -> Result<VaersAggregateTable, BioMcpError> {
-        let request_xml = build_request_xml(kind, wonder_code)?;
-        let response = self
-            .client
-            .post(self.endpoint())
-            .form(&[
-                ("request_xml", request_xml.as_str()),
-                REQUEST_RESTRICTIONS_FLAG,
-            ])
-            .send()
-            .await?;
+        let plan = aggregate_request_plan(kind, wonder_code)?;
+        let response = self.request_from_plan(&plan).send().await?;
         let status = response.status();
         let content_type = response.headers().get(CONTENT_TYPE).cloned();
         let body =
             crate::sources::read_limited_body_with_limit(response, VAERS_API, VAERS_MAX_BODY_BYTES)
                 .await?;
-
-        if !status.is_success() {
-            let excerpt = crate::sources::summarize_http_error_body(content_type.as_ref(), &body);
-            return Err(BioMcpError::Api {
-                api: VAERS_API.to_string(),
-                message: format!("CDC WONDER VAERS HTTP {status}: {excerpt}"),
-            });
-        }
-
-        reject_html_gateway(content_type.as_ref(), &body)?;
-
-        let xml = String::from_utf8(body).map_err(|_| BioMcpError::Api {
-            api: VAERS_API.to_string(),
-            message: "CDC WONDER VAERS response body was not valid UTF-8 XML".to_string(),
-        })?;
-
+        let xml = decode_aggregate_response(status, content_type.as_ref(), body)?;
         tokio::task::spawn_blocking(move || parse_aggregate_response(&xml))
             .await
             .map_err(|err| BioMcpError::Api {
                 api: VAERS_API.to_string(),
                 message: format!("CDC WONDER VAERS XML parse task failed: {err}"),
             })?
+    }
+
+    fn request_from_plan(&self, plan: &RequestPlan) -> reqwest_middleware::RequestBuilder {
+        request_from_plan(&self.client, self.base.as_ref(), plan)
     }
 }
 
@@ -227,6 +194,20 @@ fn vaers_http_client() -> Result<reqwest_middleware::ClientWithMiddleware, BioMc
         .build()
         .map_err(BioMcpError::HttpClientInit)?;
     Ok(reqwest_middleware::ClientBuilder::new(base_client).build())
+}
+
+fn aggregate_request_plan(
+    kind: VaersAggregateKind,
+    wonder_code: &str,
+) -> Result<RequestPlan, BioMcpError> {
+    let request_xml = build_request_xml(kind, wonder_code)?;
+    Ok(RequestPlan::post(VAERS_REQUEST_PATH).form(vec![
+        ("request_xml".to_string(), request_xml),
+        (
+            REQUEST_RESTRICTIONS_FLAG.0.to_string(),
+            REQUEST_RESTRICTIONS_FLAG.1.to_string(),
+        ),
+    ]))
 }
 
 fn build_request_xml(kind: VaersAggregateKind, wonder_code: &str) -> Result<String, BioMcpError> {
@@ -297,6 +278,27 @@ fn reject_html_gateway(content_type: Option<&HeaderValue>, body: &[u8]) -> Resul
         });
     }
     Ok(())
+}
+
+fn decode_aggregate_response(
+    status: StatusCode,
+    content_type: Option<&HeaderValue>,
+    body: Vec<u8>,
+) -> Result<String, BioMcpError> {
+    if !status.is_success() {
+        let excerpt = crate::sources::summarize_http_error_body(content_type, &body);
+        return Err(BioMcpError::Api {
+            api: VAERS_API.to_string(),
+            message: format!("CDC WONDER VAERS HTTP {status}: {excerpt}"),
+        });
+    }
+
+    reject_html_gateway(content_type, &body)?;
+
+    String::from_utf8(body).map_err(|_| BioMcpError::Api {
+        api: VAERS_API.to_string(),
+        message: "CDC WONDER VAERS response body was not valid UTF-8 XML".to_string(),
+    })
 }
 
 fn parse_aggregate_response(xml: &str) -> Result<VaersAggregateTable, BioMcpError> {
@@ -431,191 +433,4 @@ fn node_text(node: Node<'_, '_>) -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
-    use std::collections::BTreeMap;
-
-    use roxmltree::Document;
-    use wiremock::matchers::{body_string_contains, method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    use super::{
-        CDC_WONDER_COMPATIBLE_USER_AGENT, REQUEST_TEMPLATE, VAERS_REQUEST_PATH, VaersAggregateKind,
-        VaersClient, build_request_xml, node_text, parse_aggregate_response,
-    };
-
-    const REACTIONS_REQUEST_FIXTURE: &str =
-        include_str!("../../spec/fixtures/vaers/reactions-request.xml");
-    const SERIOUS_REQUEST_FIXTURE: &str =
-        include_str!("../../spec/fixtures/vaers/serious-request.xml");
-    const AGE_REQUEST_FIXTURE: &str = include_str!("../../spec/fixtures/vaers/age-request.xml");
-    const REACTIONS_RESPONSE_FIXTURE: &str =
-        include_str!("../../spec/fixtures/vaers/reactions-response.xml");
-    const SERIOUS_RESPONSE_FIXTURE: &str =
-        include_str!("../../spec/fixtures/vaers/serious-response.xml");
-    const AGE_RESPONSE_FIXTURE: &str = include_str!("../../spec/fixtures/vaers/age-response.xml");
-
-    fn parameter_map(xml: &str) -> BTreeMap<String, String> {
-        let doc = Document::parse(xml).expect("request fixture should parse");
-        doc.descendants()
-            .filter(|node| node.has_tag_name("parameter"))
-            .filter_map(|parameter| {
-                let name = parameter
-                    .children()
-                    .find(|node| node.has_tag_name("name"))
-                    .and_then(node_text)?;
-                let value = parameter
-                    .children()
-                    .find(|node| node.has_tag_name("value"))
-                    .map(|node| node.text().unwrap_or_default().to_string())
-                    .unwrap_or_default();
-                Some((name, value))
-            })
-            .collect()
-    }
-
-    #[test]
-    fn request_template_tracks_captured_fixture() {
-        assert_eq!(REQUEST_TEMPLATE, REACTIONS_REQUEST_FIXTURE);
-    }
-
-    #[test]
-    fn build_request_xml_matches_reaction_fixture_parameters() {
-        let built = build_request_xml(VaersAggregateKind::Reactions, "MMR").expect("request");
-        assert_eq!(
-            parameter_map(&built),
-            parameter_map(REACTIONS_REQUEST_FIXTURE)
-        );
-    }
-
-    #[test]
-    fn build_request_xml_matches_serious_fixture_parameters() {
-        let built = build_request_xml(VaersAggregateKind::Seriousness, "MMR").expect("request");
-        assert_eq!(
-            parameter_map(&built),
-            parameter_map(SERIOUS_REQUEST_FIXTURE)
-        );
-    }
-
-    #[test]
-    fn build_request_xml_matches_age_fixture_parameters() {
-        let built = build_request_xml(VaersAggregateKind::Age, "MMR").expect("request");
-        assert_eq!(parameter_map(&built), parameter_map(AGE_REQUEST_FIXTURE));
-    }
-
-    #[test]
-    fn parse_reaction_response_extracts_total_events_and_rows() {
-        let table = parse_aggregate_response(REACTIONS_RESPONSE_FIXTURE).expect("parse reactions");
-
-        assert_eq!(table.total_events, 83_359);
-        assert_eq!(
-            table.rows.first().map(|row| row.label.as_str()),
-            Some("ABASIA")
-        );
-        assert_eq!(table.rows.first().map(|row| row.count), Some(179));
-        assert_eq!(table.rows.first().map(|row| row.percentage), Some(0.21));
-    }
-
-    #[test]
-    fn parse_serious_response_extracts_yes_and_no_rows() {
-        let table = parse_aggregate_response(SERIOUS_RESPONSE_FIXTURE).expect("parse serious");
-
-        assert_eq!(table.total_events, 83_359);
-        assert_eq!(table.rows.len(), 2);
-        assert_eq!(table.rows[0].label, "Yes");
-        assert_eq!(table.rows[0].count, 5_795);
-        assert_eq!(table.rows[1].label, "No");
-        assert_eq!(table.rows[1].count, 77_564);
-    }
-
-    #[test]
-    fn parse_age_response_extracts_buckets_and_skips_total_row() {
-        let table = parse_aggregate_response(AGE_RESPONSE_FIXTURE).expect("parse age");
-
-        assert_eq!(table.total_events, 83_359);
-        assert_eq!(
-            table.rows.first().map(|row| row.label.as_str()),
-            Some("< 6 months")
-        );
-        assert_eq!(
-            table.rows.last().map(|row| row.label.as_str()),
-            Some("Unknown")
-        );
-        assert_eq!(table.rows.last().map(|row| row.count), Some(10_133));
-    }
-
-    #[test]
-    fn parse_processing_error_returns_api_message() {
-        let err = parse_aggregate_response(
-            r#"<?xml version="1.0"?><page><title>Processing Error</title><message>Request rate exceeded.</message></page>"#,
-        )
-        .expect_err("processing error should fail");
-
-        assert!(err.to_string().contains("Request rate exceeded"));
-    }
-
-    #[tokio::test]
-    async fn reaction_counts_posts_form_encoded_request_xml() {
-        let server = MockServer::start().await;
-        let client = VaersClient::new_for_test(server.uri()).expect("client");
-
-        Mock::given(method("POST"))
-            .and(path(VAERS_REQUEST_PATH))
-            .and(body_string_contains("request_xml="))
-            .and(body_string_contains("accept_datause_restrictions=true"))
-            .and(body_string_contains("B_1"))
-            .and(body_string_contains("D8.V13-level2"))
-            .and(body_string_contains("MMR"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(REACTIONS_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
-            )
-            .mount(&server)
-            .await;
-
-        let table = client
-            .reaction_counts("MMR")
-            .await
-            .expect("reaction counts");
-
-        assert_eq!(table.total_events, 83_359);
-        assert!(!table.rows.is_empty());
-    }
-
-    #[tokio::test]
-    async fn vaers_requests_use_cdc_wonder_compatible_user_agent() {
-        let server = MockServer::start().await;
-        let client = VaersClient::new_for_test(server.uri()).expect("client");
-
-        Mock::given(method("POST"))
-            .and(path(VAERS_REQUEST_PATH))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(REACTIONS_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
-            )
-            .mount(&server)
-            .await;
-
-        client
-            .reaction_counts("MMR")
-            .await
-            .expect("reaction counts");
-
-        let requests = server
-            .received_requests()
-            .await
-            .expect("wiremock should record requests");
-        assert_eq!(requests.len(), 1);
-        let user_agent = requests[0]
-            .headers
-            .get("user-agent")
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_default();
-        assert_eq!(user_agent, CDC_WONDER_COMPATIBLE_USER_AGENT);
-        assert!(
-            !user_agent.contains("biomcp-cli/"),
-            "VAERS must not send the BioMCP shared-client user-agent blocked by CDC WONDER"
-        );
-    }
-}
+mod tests;
