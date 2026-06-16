@@ -1,10 +1,13 @@
 use std::borrow::Cow;
 use std::collections::HashSet;
 
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const PHARMGKB_BASE: &str = "https://api.pharmgkb.org/v1";
 const PHARMGKB_API: &str = "pharmgkb";
@@ -23,20 +26,94 @@ impl PharmGkbClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
+    pub(crate) fn drug_annotation_plans(
+        drug_name: &str,
+        limit: usize,
+    ) -> Result<Vec<AnnotationPlan>, BioMcpError> {
+        let drug_name = normalize_drug_name(drug_name)?;
+        let limit = limit.clamp(1, 100);
+        Ok(vec![
+            annotation_plan(
+                "clinicalAnnotation",
+                "relatedChemicals.name",
+                &drug_name,
+                "Clinical Annotation",
+                limit,
+            ),
+            annotation_plan(
+                "guidelineAnnotation",
+                "relatedChemicals.name",
+                &drug_name,
+                "Guideline Annotation",
+                limit,
+            ),
+            annotation_plan(
+                "labelAnnotation",
+                "relatedChemicals.name",
+                &drug_name,
+                "Label Annotation",
+                limit,
+            ),
+        ])
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    pub(crate) fn gene_annotation_plans(
+        gene_symbol: &str,
+        limit: usize,
+    ) -> Result<Vec<AnnotationPlan>, BioMcpError> {
+        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
+        let limit = limit.clamp(1, 100);
+        Ok(vec![
+            annotation_plan(
+                "clinicalAnnotation",
+                "location.genes.symbol",
+                &gene_symbol,
+                "Clinical Annotation",
+                limit,
+            ),
+            annotation_plan(
+                "guidelineAnnotation",
+                "relatedGenes.symbol",
+                &gene_symbol,
+                "Guideline Annotation",
+                limit,
+            ),
+            annotation_plan(
+                "labelAnnotation",
+                "relatedGenes.symbol",
+                &gene_symbol,
+                "Label Annotation",
+                limit,
+            ),
+        ])
+    }
+
+    pub(crate) fn decode_json_optional<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<Option<T>, BioMcpError> {
+        if status == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        crate::sources::decode_json(PHARMGKB_API, status, content_type, bytes, true).map(Some)
+    }
+
+    pub(crate) fn annotations_from_response(
+        resp: PharmGkbDataResponse,
+        fallback_kind: &str,
+        limit: usize,
+    ) -> Vec<PharmGkbAnnotation> {
+        let mut out = Vec::new();
+        for row in resp.data {
+            if let Some(annotation) = map_annotation(&row, fallback_kind) {
+                out.push(annotation);
+            }
+            if out.len() >= limit {
+                break;
+            }
+        }
+        out
     }
 
     async fn get_json_optional<T: DeserializeOwned>(
@@ -47,27 +124,7 @@ impl PharmGkbClient {
         let status = resp.status();
         let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
         let bytes = crate::sources::read_limited_body(resp, PHARMGKB_API).await?;
-
-        if status == reqwest::StatusCode::NOT_FOUND {
-            return Ok(None);
-        }
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: PHARMGKB_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(PHARMGKB_API, content_type.as_ref(), &bytes)?;
-
-        serde_json::from_slice(&bytes)
-            .map(Some)
-            .map_err(|source| BioMcpError::ApiJson {
-                api: PHARMGKB_API.to_string(),
-                source,
-            })
+        Self::decode_json_optional(status, content_type.as_ref(), &bytes)
     }
 
     pub async fn annotations_by_drug(
@@ -75,42 +132,12 @@ impl PharmGkbClient {
         drug_name: &str,
         limit: usize,
     ) -> Result<Vec<PharmGkbAnnotation>, BioMcpError> {
-        let drug_name = normalize_drug_name(drug_name)?;
-        let limit = limit.clamp(1, 100);
-
         let mut out = Vec::new();
-        out.extend(
-            self.fetch_annotations(
-                "clinicalAnnotation",
-                "relatedChemicals.name",
-                &drug_name,
-                "Clinical Annotation",
-                limit,
-            )
-            .await?,
-        );
-        out.extend(
-            self.fetch_annotations(
-                "guidelineAnnotation",
-                "relatedChemicals.name",
-                &drug_name,
-                "Guideline Annotation",
-                limit,
-            )
-            .await?,
-        );
-        out.extend(
-            self.fetch_annotations(
-                "labelAnnotation",
-                "relatedChemicals.name",
-                &drug_name,
-                "Label Annotation",
-                limit,
-            )
-            .await?,
-        );
+        for plan in Self::drug_annotation_plans(drug_name, limit)? {
+            out.extend(self.fetch_annotations(plan).await?);
+        }
 
-        Ok(dedupe_and_limit(out, limit))
+        Ok(dedupe_and_limit(out, limit.clamp(1, 100)))
     }
 
     pub async fn annotations_by_gene(
@@ -118,73 +145,50 @@ impl PharmGkbClient {
         gene_symbol: &str,
         limit: usize,
     ) -> Result<Vec<PharmGkbAnnotation>, BioMcpError> {
-        let gene_symbol = normalize_gene_symbol(gene_symbol)?;
-        let limit = limit.clamp(1, 100);
-
         let mut out = Vec::new();
-        out.extend(
-            self.fetch_annotations(
-                "clinicalAnnotation",
-                "location.genes.symbol",
-                &gene_symbol,
-                "Clinical Annotation",
-                limit,
-            )
-            .await?,
-        );
-        out.extend(
-            self.fetch_annotations(
-                "guidelineAnnotation",
-                "relatedGenes.symbol",
-                &gene_symbol,
-                "Guideline Annotation",
-                limit,
-            )
-            .await?,
-        );
-        out.extend(
-            self.fetch_annotations(
-                "labelAnnotation",
-                "relatedGenes.symbol",
-                &gene_symbol,
-                "Label Annotation",
-                limit,
-            )
-            .await?,
-        );
+        for plan in Self::gene_annotation_plans(gene_symbol, limit)? {
+            out.extend(self.fetch_annotations(plan).await?);
+        }
 
-        Ok(dedupe_and_limit(out, limit))
+        Ok(dedupe_and_limit(out, limit.clamp(1, 100)))
     }
 
     async fn fetch_annotations(
         &self,
-        endpoint: &str,
-        criteria_key: &str,
-        criteria_value: &str,
-        fallback_kind: &str,
-        limit: usize,
+        plan: AnnotationPlan,
     ) -> Result<Vec<PharmGkbAnnotation>, BioMcpError> {
-        let url = self.endpoint(&format!("data/{endpoint}"));
-        let req = self
-            .client
-            .get(&url)
-            .query(&[(criteria_key, criteria_value), ("view", "min")]);
-
+        let req = request_from_plan(&self.client, self.base.as_ref(), &plan.request);
         let Some(resp): Option<PharmGkbDataResponse> = self.get_json_optional(req).await? else {
             return Ok(Vec::new());
         };
+        Ok(Self::annotations_from_response(
+            resp,
+            plan.fallback_kind,
+            plan.limit,
+        ))
+    }
+}
 
-        let mut out = Vec::new();
-        for row in resp.data {
-            if let Some(annotation) = map_annotation(&row, fallback_kind) {
-                out.push(annotation);
-            }
-            if out.len() >= limit {
-                break;
-            }
-        }
+#[derive(Debug, Clone)]
+pub(crate) struct AnnotationPlan {
+    pub request: RequestPlan,
+    pub fallback_kind: &'static str,
+    pub limit: usize,
+}
 
-        Ok(out)
+fn annotation_plan(
+    endpoint: &str,
+    criteria_key: &str,
+    criteria_value: &str,
+    fallback_kind: &'static str,
+    limit: usize,
+) -> AnnotationPlan {
+    AnnotationPlan {
+        request: RequestPlan::get(format!("data/{endpoint}"))
+            .query(criteria_key, criteria_value)
+            .query("view", "min"),
+        fallback_kind,
+        limit,
     }
 }
 
@@ -296,7 +300,7 @@ fn to_string_value(value: &serde_json::Value) -> Option<String> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct PharmGkbDataResponse {
+pub(crate) struct PharmGkbDataResponse {
     #[serde(default)]
     data: Vec<serde_json::Value>,
 }
@@ -314,114 +318,4 @@ pub struct PharmGkbAnnotation {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn annotations_by_drug_collects_multiple_kinds() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/data/clinicalAnnotation"))
-            .and(query_param("relatedChemicals.name", "warfarin"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": [
-                    {
-                        "id": 981239556,
-                        "accessionId": "PA166134613",
-                        "levelOfEvidence": {"term": "3"}
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/data/guidelineAnnotation"))
-            .and(query_param("relatedChemicals.name", "warfarin"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": [
-                    {
-                        "objCls": "Guideline Annotation",
-                        "id": "PA166104949",
-                        "name": "Annotation of CPIC Guideline for warfarin"
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/data/labelAnnotation"))
-            .and(query_param("relatedChemicals.name", "warfarin"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": [
-                    {
-                        "objCls": "Label Annotation",
-                        "id": "PA166104776",
-                        "name": "Annotation of FDA Label for warfarin"
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = PharmGkbClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .annotations_by_drug("warfarin", 10)
-            .await
-            .expect("annotations");
-
-        assert_eq!(rows.len(), 3);
-        assert!(rows.iter().any(|row| row.kind.contains("Guideline")));
-        assert!(rows.iter().any(|row| row.kind.contains("Label")));
-    }
-
-    #[tokio::test]
-    async fn annotations_by_gene_uses_expected_properties() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/data/clinicalAnnotation"))
-            .and(query_param("location.genes.symbol", "CYP2D6"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": [
-                    {
-                        "id": 1,
-                        "accessionId": "PA1"
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/data/guidelineAnnotation"))
-            .and(query_param("relatedGenes.symbol", "CYP2D6"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": []
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/data/labelAnnotation"))
-            .and(query_param("relatedGenes.symbol", "CYP2D6"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": []
-            })))
-            .mount(&server)
-            .await;
-
-        let client = PharmGkbClient::new_for_test(server.uri()).expect("client");
-        let rows = client
-            .annotations_by_gene("cyp2d6", 5)
-            .await
-            .expect("annotations");
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].id, "1");
-    }
-}
+mod tests;

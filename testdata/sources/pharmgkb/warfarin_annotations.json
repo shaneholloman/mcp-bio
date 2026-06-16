@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "id": 981239556,
+      "accessionId": "PA166134613",
+      "levelOfEvidence": {"term": "3"}
+    },
+    {
+      "objCls": "Guideline Annotation",
+      "id": "PA166104949",
+      "name": "Annotation of CPIC Guideline for warfarin",
+      "crossReferences": [
+        {"_url": "https://www.pharmgkb.org/guidelineAnnotation/PA166104949"}
+      ]
+    },
+    {
+      "objCls": "Label Annotation",
+      "id": "PA166104776",
+      "name": "Annotation of FDA Label for warfarin"
+    }
+  ]
+}

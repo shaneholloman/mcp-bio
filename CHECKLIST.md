@@ -95,7 +95,7 @@ Variants / genomics:
 - [x] clingen ~5 · [x] civic ~3 · [x] gtr ~12
 
 Drugs / chem / regulatory:
-- [x] chembl ~3 · [x] dgidb ~3 · [x] ddinter ~5 · [x] openfda ~9 · [x] ema ~11 · [ ] pharmgkb ~2
+- [x] chembl ~3 · [x] dgidb ~3 · [x] ddinter ~5 · [x] openfda ~9 · [x] ema ~11 · [x] pharmgkb ~2
 - [ ] cpic ~3 · [ ] cvx ~11 · [ ] vaers ~10 · [ ] who_pq ~20 · [ ] who_ivd ~6
 
 Ontologies / proteins / pathways / misc:
@@ -240,4 +240,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: `ema` converted to standard source test layout and kept pure
   local-feed coverage. Checks:
   `cargo nextest run -E 'test(/sources::ema::/)'` → 10/10 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `pharmgkb` converted. Checks:
+  `cargo nextest run -E 'test(/sources::pharmgkb::/)'` → 6/6 pass;
   `bash scripts/check-no-server-tests.sh` → pass.
