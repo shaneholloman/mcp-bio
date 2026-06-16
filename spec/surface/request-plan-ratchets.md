@@ -116,6 +116,20 @@ ticket_415_rare_disease_trial_search_preserves_intervention_alias_provenance_wit
 ticket_415_rare_disease_trial_search_count_dedupes_expanded_condition_ncts"
 ```
 
+## Rare-Disease Trial Pivots Reuse the Shared Plan
+
+Discover, gene trial pivots, and disease trial pivots should enter the same
+rare-disease trial plan as `search trial`. These no-network seam tests keep the
+mixed Phelan-McDermid / SHANK3 first move, the SHANK3 gene pivot, the disease
+pivot, and unsupported noisy text from drifting back to top-concept-only or
+biomarker-only routing.
+
+```bash
+set -o pipefail
+cd ../.. && cargo test --lib ticket_416_rare_disease_trial_pivots -- --nocapture | mustmatch like "ticket_416_rare_disease_trial_pivots_discover_mixed_query_uses_planned_trial_commands
+ticket_416_rare_disease_trial_pivots_gene_trials_shank3_uses_planned_condition_expansion"
+```
+
 ## Trial Search Documents Condition Expansion Controls
 
 The strict/literal opt-out and matched-condition provenance are user-facing

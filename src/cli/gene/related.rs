@@ -13,11 +13,29 @@ pub(super) async fn handle_related_command(
             source,
         } => {
             let trial_source = crate::entities::trial::TrialSource::from_flag(&source)?;
-            let filters = crate::entities::trial::TrialSearchFilters {
+            let mut filters = crate::entities::trial::TrialSearchFilters {
                 biomarker: Some(symbol.clone()),
                 source: trial_source,
                 ..Default::default()
             };
+            if matches!(
+                trial_source,
+                crate::entities::trial::TrialSource::ClinicalTrialsGov
+            ) {
+                let plan = crate::entities::trial::planning::plan_rare_disease_trials(
+                    crate::entities::trial::planning::RareDiseaseTrialRequest {
+                        raw_query: Some(symbol.clone()),
+                        condition: None,
+                        gene: Some(symbol.clone()),
+                        sponsor: None,
+                        strict_condition: false,
+                        mode: crate::entities::trial::planning::TrialPlanningMode::Search,
+                    },
+                )?;
+                if let Some(condition) = plan.primary_condition_labels.first() {
+                    filters.condition = Some(condition.label.clone());
+                }
+            }
             let (results, total) = crate::entities::trial::search(&filters, limit, offset).await?;
             if let Some(total) = total {
                 super::super::log_pagination_truncation(total as usize, offset, results.len());

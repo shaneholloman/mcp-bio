@@ -1500,17 +1500,14 @@ fn generate_commands(
 
     match intent {
         DiscoverIntent::TrialSearch => {
-            if matches!(
-                top.primary_type,
-                DiscoverType::Disease | DiscoverType::Symptom
-            ) {
+            if let Some(condition) = planned_trial_condition(query, concepts) {
                 commands.push(format!(
-                    "biomcp search trial -c \"{}\" --limit 5",
-                    top.label
+                    "biomcp search trial -c {} --limit 5",
+                    quote_query_term(&condition)
                 ));
                 commands.push(format!(
-                    "biomcp search article -k \"{}\" --limit 5",
-                    top.label
+                    "biomcp search article -k {} --limit 5",
+                    quote_query_term(&condition)
                 ));
             }
             return dedupe_strings(commands);
@@ -1700,6 +1697,45 @@ fn top_concept_of_type(
     kind: DiscoverType,
 ) -> Option<&DiscoverConcept> {
     concepts.iter().find(|concept| concept.primary_type == kind)
+}
+
+fn planned_trial_condition(query: &str, concepts: &[DiscoverConcept]) -> Option<String> {
+    let condition = top_concept_of_type(concepts, DiscoverType::Disease)
+        .or_else(|| top_concept_of_type(concepts, DiscoverType::Symptom))
+        .filter(|concept| query_mentions_label(query, &concept.label))
+        .map(|concept| concept.label.clone());
+    let gene = top_concept_of_type(concepts, DiscoverType::Gene)
+        .map(|concept| concept.label.clone())
+        .or_else(|| query.split_whitespace().find_map(gene_symbol_token));
+
+    let plan = crate::entities::trial::planning::plan_rare_disease_trials(
+        crate::entities::trial::planning::RareDiseaseTrialRequest {
+            raw_query: Some(query.trim().to_string()),
+            condition,
+            gene,
+            sponsor: None,
+            strict_condition: false,
+            mode: crate::entities::trial::planning::TrialPlanningMode::Search,
+        },
+    )
+    .ok()?;
+
+    plan.primary_condition_labels
+        .into_iter()
+        .next()
+        .map(|label| label.label)
+}
+
+fn gene_symbol_token(token: &str) -> Option<String> {
+    let token =
+        token.trim_matches(|ch: char| !(ch.is_ascii_alphanumeric() || ch == '_' || ch == '-'));
+    looks_like_gene_symbol_token(token).then(|| token.to_string())
+}
+
+fn query_mentions_label(query: &str, label: &str) -> bool {
+    let query = query.to_ascii_lowercase();
+    let label = label.to_ascii_lowercase();
+    !label.trim().is_empty() && query.contains(label.trim())
 }
 
 fn collect_hpo_ids(concepts: &[DiscoverConcept]) -> Vec<String> {
@@ -2630,6 +2666,72 @@ mod tests {
         assert_eq!(
             result.next_commands[0],
             "biomcp search trial -c \"Breast Cancer\" --limit 5"
+        );
+    }
+
+    #[test]
+    fn ticket_416_rare_disease_trial_pivots_discover_mixed_query_uses_planned_trial_commands() {
+        let commands = generate_commands(
+            "Phelan-McDermid Syndrome SHANK3 clinical trial",
+            &[
+                test_concept(
+                    "SHANK3",
+                    DiscoverType::Gene,
+                    DiscoverConfidence::CanonicalId,
+                ),
+                test_concept(
+                    "Phelan-McDermid Syndrome",
+                    DiscoverType::Disease,
+                    DiscoverConfidence::CanonicalId,
+                ),
+            ],
+            false,
+            DiscoverIntent::TrialSearch,
+        );
+
+        assert!(
+            commands.iter().any(|command| command
+                == "biomcp search trial -c \"Phelan-McDermid Syndrome\" --limit 5"),
+            "mixed trial-intent discover queries should not depend on the disease being the top concept: {commands:?}"
+        );
+        assert!(
+            commands
+                .iter()
+                .all(|command| !command.contains("SHANK1") && !command.contains("SHANK2")),
+            "mixed rare-disease trial suggestions should not introduce unsupported SHANK-family commands: {commands:?}"
+        );
+    }
+
+    #[test]
+    fn ticket_416_rare_disease_trial_pivots_discover_ignores_unmentioned_trial_noise_concepts() {
+        let commands = generate_commands(
+            "Phelan-McDermid Syndrome SHANK3 clinical trial",
+            &[
+                test_concept(
+                    "Clinical relevance",
+                    DiscoverType::Symptom,
+                    DiscoverConfidence::CanonicalId,
+                ),
+                test_concept(
+                    "SHANK3",
+                    DiscoverType::Gene,
+                    DiscoverConfidence::CanonicalId,
+                ),
+            ],
+            false,
+            DiscoverIntent::TrialSearch,
+        );
+
+        assert!(
+            commands.iter().any(|command| command
+                == "biomcp search trial -c \"Phelan-McDermid syndrome\" --limit 5"),
+            "unmentioned generic trial-noise concepts should not outrank the bounded SHANK3 plan: {commands:?}"
+        );
+        assert!(
+            commands
+                .iter()
+                .all(|command| !command.contains("Clinical relevance")),
+            "unmentioned trial-noise concepts should not become follow-up commands: {commands:?}"
         );
     }
 

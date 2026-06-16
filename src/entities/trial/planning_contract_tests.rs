@@ -106,6 +106,100 @@ fn ticket_414_rare_disease_trial_planning_rejects_noisy_broad_terms() {
 }
 
 #[test]
+fn ticket_416_rare_disease_trial_pivots_gene_trials_shank3_uses_planned_condition_expansion() {
+    let request = RareDiseaseTrialRequest {
+        raw_query: Some("SHANK3".to_string()),
+        condition: None,
+        gene: Some("SHANK3".to_string()),
+        sponsor: None,
+        strict_condition: false,
+        mode: TrialPlanningMode::Search,
+    };
+
+    let plan = plan_rare_disease_trials(request)
+        .expect("SHANK3 gene trial planning should be pure and deterministic");
+
+    assert!(
+        plan.primary_condition_labels
+            .iter()
+            .any(|label| label.label == "Phelan-McDermid syndrome"),
+        "SHANK3 trial pivots should carry the bounded Phelan-McDermid condition plan"
+    );
+    assert!(
+        plan.expanded_condition_labels
+            .iter()
+            .any(|label| label.label == "22q13 deletion syndrome"),
+        "SHANK3 trial pivots should carry the bounded 22q13 condition expansion"
+    );
+    assert!(
+        plan.query_terms
+            .iter()
+            .any(|term| { term.term == "SHANK3" && term.field == TrialQueryField::Biomarker }),
+        "SHANK3 biomarker provenance should remain visible in the plan"
+    );
+}
+
+#[test]
+fn ticket_416_rare_disease_trial_pivots_disease_trials_preserve_shared_condition_plan() {
+    let request = RareDiseaseTrialRequest {
+        raw_query: Some("Phelan-McDermid Syndrome".to_string()),
+        condition: Some("Phelan-McDermid Syndrome".to_string()),
+        gene: None,
+        sponsor: None,
+        strict_condition: false,
+        mode: TrialPlanningMode::Search,
+    };
+
+    let plan = plan_rare_disease_trials(request)
+        .expect("disease trial planning should stay pure and deterministic");
+
+    assert!(
+        plan.query_terms.iter().any(|term| {
+            term.term == "Phelan-McDermid Syndrome" && term.field == TrialQueryField::Condition
+        }),
+        "disease trial pivots should preserve the literal condition term"
+    );
+    assert!(
+        plan.expanded_condition_labels
+            .iter()
+            .any(|label| label.label == "22q13 deletion syndrome"),
+        "disease trial pivots should share the same bounded condition expansion"
+    );
+}
+
+#[test]
+fn ticket_416_rare_disease_trial_pivots_noisy_unsupported_query_degrades_without_dead_commands() {
+    let request = RareDiseaseTrialRequest {
+        raw_query: Some("SHANK2 autism trial".to_string()),
+        condition: None,
+        gene: Some("SHANK2".to_string()),
+        sponsor: None,
+        strict_condition: false,
+        mode: TrialPlanningMode::Search,
+    };
+
+    let plan = plan_rare_disease_trials(request)
+        .expect("unsupported noisy trial planning should be deterministic");
+
+    assert!(
+        plan.primary_condition_labels.is_empty() && plan.expanded_condition_labels.is_empty(),
+        "unsupported noisy inputs should not invent rare-disease condition commands"
+    );
+    assert!(
+        plan.warnings
+            .iter()
+            .any(|warning| warning.term.eq_ignore_ascii_case("autism")),
+        "broad noisy terms should be visible as warnings"
+    );
+    assert!(
+        plan.warnings
+            .iter()
+            .any(|warning| warning.term.eq_ignore_ascii_case("SHANK2")),
+        "unsupported SHANK-family terms should be visible as warnings"
+    );
+}
+
+#[test]
 fn ticket_414_rare_disease_trial_planning_strict_mode_keeps_literal_condition() {
     let request = RareDiseaseTrialRequest {
         strict_condition: true,
