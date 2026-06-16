@@ -367,3 +367,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   for source/type/count validation by adding a callable search-plan helper.
   Checks: `cargo nextest run -E 'test(/cli::adverse_event::/)'` → 8/8 pass;
   `cargo check` → pass.
+- 2026-06-16: tried broad CLI checkpoint with
+  `cargo nextest run -E 'test(/cli::/)'`; stopped it after 103s because 11
+  alias-fallback/output behavior tests were still running. Result at interrupt:
+  537 passed, 11 interrupted. Do not use broad `cli::` as a normal gate yet;
+  keep using narrow CLI batches until the alias-fallback tests are decomposed.
