@@ -225,6 +225,7 @@ pub(super) fn article_search_request(
         gene_anchored,
         disease,
         drug,
+        variant: None,
         author,
         keyword,
         date_from,

@@ -193,9 +193,14 @@ request `predict` explicitly when you want AlphaGenome output.
 
 ```bash
 biomcp variant trials "BRAF V600E"   # search trials mentioning this mutation
-biomcp variant articles "BRAF V600E" # search PubMed for this variant
+biomcp variant articles "BRAF V600E" # search PubMed/PubTator for this variant
 biomcp variant oncokb "BRAF V600E"   # OncoKB lookup (requires ONCOKB_TOKEN)
 ```
+
+`variant articles` uses PubTator variant annotations when BioMCP can resolve a
+confident variant entity. If annotation recall is unavailable, the output labels
+the route as a best-effort free-text fallback so agents know which recall path
+was used.
 
 ## Search GWAS associations
 

@@ -62,6 +62,7 @@ pub(super) fn validate_required_search_filters(
     if filters.gene.is_none()
         && filters.disease.is_none()
         && filters.drug.is_none()
+        && filters.variant.is_none()
         && filters.author.is_none()
         && filters.keyword.is_none()
         && filters.article_type.is_none()

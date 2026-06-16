@@ -88,6 +88,7 @@ pub(super) fn related_article_filters() -> crate::entities::article::ArticleSear
         gene_anchored: false,
         disease: None,
         drug: None,
+        variant: None,
         author: None,
         keyword: None,
         date_from: None,

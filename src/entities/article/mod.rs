@@ -27,7 +27,9 @@ pub(crate) use self::planner::{
 };
 #[allow(unused_imports)]
 pub(crate) use self::ranking::{article_effective_ranking_mode, article_relevance_ranking_policy};
-pub use self::search::{search, search_page, validate_search_page_request};
+pub use self::search::{
+    search, search_page, search_variant_article_page, validate_search_page_request,
+};
 
 use std::path::PathBuf;
 
@@ -634,11 +636,20 @@ impl ArticleRankingOptions {
 }
 
 #[derive(Debug, Clone)]
+pub struct ArticleVariantIntent {
+    pub original: String,
+    pub gene: Option<String>,
+    pub change: Option<String>,
+    pub entity_id: Option<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct ArticleSearchFilters {
     pub gene: Option<String>,
     pub gene_anchored: bool,
     pub disease: Option<String>,
     pub drug: Option<String>,
+    pub variant: Option<ArticleVariantIntent>,
     pub author: Option<String>,
     pub keyword: Option<String>,
     pub date_from: Option<String>,

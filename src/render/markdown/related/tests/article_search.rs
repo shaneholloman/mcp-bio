@@ -32,6 +32,7 @@ fn article_filters(
         gene_anchored: false,
         disease: None,
         drug: drug.map(str::to_string),
+        variant: None,
         author: None,
         keyword: keyword.map(str::to_string),
         date_from: None,

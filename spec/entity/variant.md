@@ -85,6 +85,34 @@ the same compact gnomAD frequency story.
 The default card should still advertise typed follow-ups for downstream trial
 and article pivots even when those surfaces are covered elsewhere.
 
+## Variant Article Entity Recall
+
+Exact variant article pivots should use PubTator's normalized variant entity
+when one can be selected confidently, then stay honest when PubTator has no
+abstract-level variant annotation and BioMCP must fall back to free text. This
+fixture serves the BRAF V600E article only for the `@VARIANT_...` query and
+serves the MYD88 S219C article only for the labeled best-effort fallback path.
+
+```bash
+bash ../fixtures/run-variant-article-entity-fixture.sh ../.. braf | mustmatch like '## BRAF V600E limit 1
+PubTator variant annotation recall
+4260001
+## BRAF V600E limit 3
+PubTator variant annotation recall
+4260001'
+```
+
+```bash
+bash ../fixtures/run-variant-article-entity-fixture.sh ../.. myd88 | mustmatch like '## MYD88 S219C fallback
+best-effort free-text fallback
+24534189'
+```
+
+```bash
+bash ../fixtures/run-variant-article-entity-fixture.sh ../.. myd88-json | mustmatch like 'JSON fallback path preserved
+24534189'
+```
+
 ## ID Normalization
 
 Exact variant lookup should normalize equivalent identifiers back to the same
