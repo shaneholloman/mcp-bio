@@ -1,10 +1,12 @@
 use std::borrow::Cow;
 
+use reqwest::StatusCode;
 use reqwest::header::HeaderValue;
 use roxmltree::{Document, Node};
 use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const HPA_BASE: &str = "https://www.proteinatlas.org";
 const HPA_API: &str = "hpa";
@@ -23,34 +25,18 @@ impl HpaClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
-    pub async fn protein_data(&self, ensembl_id: &str) -> Result<GeneHpa, BioMcpError> {
+    pub(crate) fn protein_data_plan(ensembl_id: &str) -> Result<RequestPlan, BioMcpError> {
         let ensembl_id = normalize_ensembl_id(ensembl_id)?;
-        let url = self.endpoint(&format!("{ensembl_id}.xml"));
-        let resp = crate::sources::apply_cache_mode(self.client.get(&url))
-            .send()
-            .await?;
-        let status = resp.status();
-        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
-        let bytes = crate::sources::read_limited_body(resp, HPA_API).await?;
+        Ok(RequestPlan::get(format!("{ensembl_id}.xml")))
+    }
 
-        if status == reqwest::StatusCode::NOT_FOUND {
-            return Ok(GeneHpa::default());
+    pub(crate) fn decode_protein_data_xml(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: Vec<u8>,
+    ) -> Result<Option<String>, BioMcpError> {
+        if status == StatusCode::NOT_FOUND {
+            return Ok(None);
         }
         if !status.is_success() {
             let excerpt = crate::sources::body_excerpt(&bytes);
@@ -60,12 +46,34 @@ impl HpaClient {
             });
         }
 
-        reject_html_content_type(content_type.as_ref(), &bytes)?;
+        reject_html_content_type(content_type, &bytes)?;
 
-        let xml = String::from_utf8(bytes).map_err(|_| BioMcpError::Api {
-            api: HPA_API.to_string(),
-            message: "Response body was not valid UTF-8 XML".to_string(),
-        })?;
+        String::from_utf8(bytes)
+            .map(Some)
+            .map_err(|_| BioMcpError::Api {
+                api: HPA_API.to_string(),
+                message: "Response body was not valid UTF-8 XML".to_string(),
+            })
+    }
+
+    pub async fn protein_data(&self, ensembl_id: &str) -> Result<GeneHpa, BioMcpError> {
+        let plan = Self::protein_data_plan(ensembl_id)?;
+        let resp = crate::sources::apply_cache_mode(request_from_plan(
+            &self.client,
+            self.base.as_ref(),
+            &plan,
+        ))
+        .send()
+        .await?;
+        let status = resp.status();
+        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
+        let bytes = crate::sources::read_limited_body(resp, HPA_API).await?;
+
+        let Some(xml) =
+            Self::decode_protein_data_xml(status, content_type.as_ref(), bytes.to_vec())?
+        else {
+            return Ok(GeneHpa::default());
+        };
 
         tokio::task::spawn_blocking(move || parse_gene_hpa(&xml))
             .await
@@ -377,123 +385,4 @@ fn push_unique_case_insensitive(values: &mut Vec<String>, value: String) {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    const HPA_XML: &str = r#"
-<entry>
-  <name>BRAF</name>
-  <tissueExpression source="HPA" technology="IHC" assayType="tissue">
-    <summary type="tissue">Ubiquitous cytoplasmic expression.</summary>
-    <verification type="reliability">supported</verification>
-    <data>
-      <tissue>Adipose tissue</tissue>
-      <level type="expression">low</level>
-    </data>
-    <data>
-      <tissue>Liver</tissue>
-      <level type="expression">high</level>
-    </data>
-  </tissueExpression>
-  <cellExpression source="HPA" technology="ICC/IF">
-    <summary>Mainly localized to vesicles and cytosol.</summary>
-    <verification type="reliability">approved</verification>
-    <data>
-      <location status="additional">plasma membrane</location>
-      <location status="main">cytosol</location>
-      <location status="main">vesicles</location>
-      <location status="additional">plasma membrane</location>
-    </data>
-  </cellExpression>
-  <rnaExpression source="HPA" technology="RNAseq" assayType="consensusTissue">
-    <rnaSpecificity specificity="Low tissue specificity" />
-    <rnaDistribution>Detected in all</rnaDistribution>
-  </rnaExpression>
-  <antibody>
-    <tissueExpression source="HPA" technology="IHC" assayType="tissue">
-      <data>
-        <tissue>Artifact tissue</tissue>
-        <level type="expression">medium</level>
-      </data>
-    </tissueExpression>
-  </antibody>
-</entry>
-"#;
-
-    #[test]
-    fn parse_gene_hpa_uses_only_top_level_canonical_blocks() {
-        let parsed = parse_gene_hpa(HPA_XML).expect("parsed");
-
-        assert_eq!(
-            parsed,
-            GeneHpa {
-                tissues: vec![
-                    HpaTissueExpression {
-                        tissue: "Adipose tissue".to_string(),
-                        level: "Low".to_string(),
-                    },
-                    HpaTissueExpression {
-                        tissue: "Liver".to_string(),
-                        level: "High".to_string(),
-                    },
-                ],
-                subcellular_main_location: vec!["cytosol".to_string(), "vesicles".to_string()],
-                subcellular_additional_location: vec!["plasma membrane".to_string()],
-                reliability: Some("Supported".to_string()),
-                protein_summary: Some("Ubiquitous cytoplasmic expression.".to_string()),
-                rna_summary: Some("Low tissue specificity; Detected in all".to_string()),
-            }
-        );
-    }
-
-    #[test]
-    fn parse_gene_hpa_handles_protein_atlas_wrapper_element() {
-        let wrapped = format!("<proteinAtlas>{HPA_XML}</proteinAtlas>");
-        let parsed = parse_gene_hpa(&wrapped).expect("parsed with wrapper");
-        assert_eq!(parsed.tissues.len(), 2);
-        assert_eq!(parsed.reliability.as_deref(), Some("Supported"));
-    }
-
-    #[tokio::test]
-    async fn protein_data_returns_default_for_not_found() {
-        let server = MockServer::start().await;
-        let ensembl_id = "ENSG00000157765";
-
-        Mock::given(method("GET"))
-            .and(path("/ENSG00000157765.xml"))
-            .respond_with(ResponseTemplate::new(404))
-            .mount(&server)
-            .await;
-
-        let client = HpaClient::new_for_test(server.uri()).expect("client");
-        let parsed = client.protein_data(ensembl_id).await.expect("default");
-
-        assert_eq!(parsed, GeneHpa::default());
-    }
-
-    #[tokio::test]
-    async fn protein_data_normalizes_ensembl_id_before_request() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/ENSG00000157766.xml"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/xml")
-                    .set_body_string(HPA_XML),
-            )
-            .mount(&server)
-            .await;
-
-        let client = HpaClient::new_for_test(server.uri()).expect("client");
-        let parsed = client
-            .protein_data("ensg00000157766.12")
-            .await
-            .expect("parsed");
-
-        assert_eq!(parsed.tissues.len(), 2);
-        assert_eq!(parsed.reliability.as_deref(), Some("Supported"));
-    }
-}
+mod tests;
