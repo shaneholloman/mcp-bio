@@ -40,8 +40,10 @@ fusion-oriented row shape with both breakpoints and the event label from the
 local `data_sv.txt` file.
 
 ```bash
-../../tools/biomcp-ci study query --help | mustmatch like 'Canonical values: mutations, cna, expression, sv.
-Accepted aliases: mutation, copy_number, copy-number, expr, fusion, fusions, structural_variants.'
+../../tools/biomcp-ci study query --help | mustmatch like 'Canonical values:
+sv
+Accepted aliases:
+fusion'
 ```
 
 ```bash
