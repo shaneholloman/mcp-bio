@@ -35,6 +35,7 @@ EXAMPLES:
   biomcp study query --study msk_impact_2017 --gene TP53 --type mutations
   biomcp study query --study brca_tcga_pan_can_atlas_2018 --gene ERBB2 --type cna
   biomcp study query --study paad_qcmg_uq_2016 --gene KRAS --type expression
+  biomcp study query --study msk_impact_2017 --gene RET --type sv
 
 See also: biomcp list study")]
     Query {
@@ -44,8 +45,8 @@ See also: biomcp list study")]
         /// HGNC gene symbol to summarize (for example, TP53 or ERBB2)
         #[arg(short, long)]
         gene: String,
-        /// Query type. Canonical values: mutations, cna, expression.
-        /// Accepted aliases: mutation, copy_number, copy-number, expr.
+        /// Query type. Canonical values: mutations, cna, expression, sv.
+        /// Accepted aliases: mutation, copy_number, copy-number, expr, fusion, fusions, structural_variants.
         #[arg(short = 't', long = "type")]
         query_type: String,
         #[command(flatten)]

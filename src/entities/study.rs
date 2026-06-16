@@ -5,6 +5,8 @@ use std::path::Path;
 
 use crate::error::BioMcpError;
 
+const MUTATION_ONLY_CAVEAT: &str = "This mutation-only result excludes fusions/SV; query structural variants with study query --type sv.";
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct StudyInfo {
     pub study_id: String,
@@ -37,6 +39,7 @@ pub struct MutationFrequencyResult {
     pub frequency: f64,
     pub top_variant_classes: Vec<(String, usize)>,
     pub top_protein_changes: Vec<(String, usize)>,
+    pub mutation_only_caveat: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -52,6 +55,25 @@ pub struct TopMutatedGenesResult {
     pub study_id: String,
     pub total_samples: usize,
     pub rows: Vec<TopMutatedGeneRow>,
+    pub mutation_only_caveat: Option<String>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct StructuralVariantRow {
+    pub sample_id: String,
+    pub site1_gene: String,
+    pub site2_gene: String,
+    pub frame_effect: String,
+    pub tumor_split_read_count: String,
+    pub normal_split_read_count: String,
+    pub event_info: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct StructuralVariantResult {
+    pub study_id: String,
+    pub gene: String,
+    pub rows: Vec<StructuralVariantRow>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -112,6 +134,7 @@ pub enum SampleUniverseBasis {
 #[serde(tag = "query_type", content = "result", rename_all = "snake_case")]
 pub enum StudyQueryResult {
     MutationFrequency(MutationFrequencyResult),
+    StructuralVariants(StructuralVariantResult),
     CnaDistribution(CnaDistributionResult),
     ExpressionDistribution(ExpressionDistributionResult),
 }
@@ -119,6 +142,7 @@ pub enum StudyQueryResult {
 #[derive(Debug, Clone, Copy)]
 pub enum StudyQueryType {
     Mutations,
+    StructuralVariants,
     Cna,
     Expression,
 }
@@ -238,8 +262,9 @@ impl StudyQueryType {
             "mutations" | "mutation" => Ok(Self::Mutations),
             "cna" | "copy_number" | "copy-number" => Ok(Self::Cna),
             "expression" | "expr" => Ok(Self::Expression),
+            "sv" | "fusion" | "fusions" | "structural_variants" => Ok(Self::StructuralVariants),
             other => Err(BioMcpError::InvalidArgument(format!(
-                "Unknown study query type '{other}'. Expected: mutations, cna, expression."
+                "Unknown study query type '{other}'. Expected: mutations, cna, expression, sv."
             ))),
         }
     }
@@ -314,6 +339,9 @@ pub async fn list_studies() -> Result<Vec<StudyInfo>, BioMcpError> {
             if study.has_clinical_sample {
                 available_data.push("clinical".to_string());
             }
+            if study.has_structural_variants {
+                available_data.push("structural_variants".to_string());
+            }
 
             out.push(StudyInfo {
                 study_id: study.study_id,
@@ -359,8 +387,16 @@ pub async fn query_study(
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
         match query_type {
-            StudyQueryType::Mutations => Ok(StudyQueryResult::MutationFrequency(
-                crate::sources::cbioportal_study::mutation_frequency(&study_dir, &gene)?.into(),
+            StudyQueryType::Mutations => {
+                let mut result: MutationFrequencyResult =
+                    crate::sources::cbioportal_study::mutation_frequency(&study_dir, &gene)?.into();
+                if study_dir.join("data_sv.txt").exists() {
+                    result.mutation_only_caveat = Some(MUTATION_ONLY_CAVEAT.to_string());
+                }
+                Ok(StudyQueryResult::MutationFrequency(result))
+            }
+            StudyQueryType::StructuralVariants => Ok(StudyQueryResult::StructuralVariants(
+                crate::sources::cbioportal_study::structural_variants(&study_dir, &gene)?.into(),
             )),
             StudyQueryType::Cna => Ok(StudyQueryResult::CnaDistribution(
                 crate::sources::cbioportal_study::cna_distribution(&study_dir, &gene)?.into(),
@@ -383,7 +419,12 @@ pub async fn top_mutated_genes(
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
-        Ok(crate::sources::cbioportal_study::top_mutated_genes(&study_dir, limit)?.into())
+        let mut result: TopMutatedGenesResult =
+            crate::sources::cbioportal_study::top_mutated_genes(&study_dir, limit)?.into();
+        if study_dir.join("data_sv.txt").exists() {
+            result.mutation_only_caveat = Some(MUTATION_ONLY_CAVEAT.to_string());
+        }
+        Ok(result)
     })
     .await
 }
@@ -615,6 +656,7 @@ impl From<crate::sources::cbioportal_study::MutationFrequencyResult> for Mutatio
             frequency: value.frequency,
             top_variant_classes: value.top_variant_classes,
             top_protein_changes: value.top_protein_changes,
+            mutation_only_caveat: None,
         }
     }
 }
@@ -635,6 +677,31 @@ impl From<crate::sources::cbioportal_study::TopMutatedGenesResult> for TopMutate
         Self {
             study_id: value.study_id,
             total_samples: value.total_samples,
+            rows: value.rows.into_iter().map(Into::into).collect(),
+            mutation_only_caveat: None,
+        }
+    }
+}
+
+impl From<crate::sources::cbioportal_study::StructuralVariantRow> for StructuralVariantRow {
+    fn from(value: crate::sources::cbioportal_study::StructuralVariantRow) -> Self {
+        Self {
+            sample_id: value.sample_id,
+            site1_gene: value.site1_gene,
+            site2_gene: value.site2_gene,
+            frame_effect: value.frame_effect,
+            tumor_split_read_count: value.tumor_split_read_count,
+            normal_split_read_count: value.normal_split_read_count,
+            event_info: value.event_info,
+        }
+    }
+}
+
+impl From<crate::sources::cbioportal_study::StructuralVariantResult> for StructuralVariantResult {
+    fn from(value: crate::sources::cbioportal_study::StructuralVariantResult) -> Self {
+        Self {
+            study_id: value.study_id,
+            gene: value.gene,
             rows: value.rows.into_iter().map(Into::into).collect(),
         }
     }

@@ -108,6 +108,9 @@ pub(crate) async fn handle_command(
                             .into());
                         }
                     },
+                    crate::entities::study::StudyQueryType::StructuralVariants => unreachable!(
+                        "structural variant charts should fail validation before dispatch"
+                    ),
                 }
             } else {
                 let result = crate::entities::study::query_study(&study, &gene, query_type).await?;
