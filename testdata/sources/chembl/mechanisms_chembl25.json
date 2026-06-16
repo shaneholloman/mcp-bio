@@ -1,0 +1,13 @@
+{
+  "mechanisms": [
+    {
+      "target_pref_name": "BRAF",
+      "action_type": "INHIBITOR",
+      "target_chembl_id": "CHEMBL1824"
+    },
+    {
+      "target_pref_name": null,
+      "action_type": null
+    }
+  ]
+}

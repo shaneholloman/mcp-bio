@@ -1,9 +1,11 @@
 use std::borrow::Cow;
 
+use reqwest::StatusCode;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const CHEMBL_BASE: &str = "https://www.ebi.ac.uk/chembl/api/data";
 const CHEMBL_API: &str = "chembl";
@@ -22,20 +24,34 @@ impl ChemblClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
+    pub(crate) fn drug_targets_plan(
+        chembl_id: &str,
+        limit: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let chembl_id = chembl_id.trim();
+        if chembl_id.is_empty() {
+            return Err(BioMcpError::InvalidArgument("ChEMBL ID is required".into()));
+        }
+        Ok(RequestPlan::get("mechanism.json")
+            .query("molecule_chembl_id", chembl_id)
+            .query("limit", limit.clamp(1, 25).to_string()))
     }
 
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
+    pub(crate) fn target_summary_plan(target_chembl_id: &str) -> Result<RequestPlan, BioMcpError> {
+        let target_chembl_id = target_chembl_id.trim();
+        if target_chembl_id.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "ChEMBL target ID is required".into(),
+            ));
+        }
+        Ok(RequestPlan::get(format!("target/{target_chembl_id}.json")))
+    }
+
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
+        crate::sources::decode_json(CHEMBL_API, status, None, bytes, false)
     }
 
     async fn get_json<T: DeserializeOwned>(
@@ -45,17 +61,7 @@ impl ChemblClient {
         let resp = crate::sources::apply_cache_mode(req).send().await?;
         let status = resp.status();
         let bytes = crate::sources::read_limited_body(resp, CHEMBL_API).await?;
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: CHEMBL_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: CHEMBL_API.to_string(),
-            source,
-        })
+        Self::decode_json_response(status, &bytes)
     }
 
     pub async fn drug_targets(
@@ -63,21 +69,25 @@ impl ChemblClient {
         chembl_id: &str,
         limit: usize,
     ) -> Result<Vec<ChemblTarget>, BioMcpError> {
-        let chembl_id = chembl_id.trim();
-        if chembl_id.is_empty() {
-            return Err(BioMcpError::InvalidArgument("ChEMBL ID is required".into()));
-        }
-
-        let url = self.endpoint("mechanism.json");
-        let limit = limit.clamp(1, 25).to_string();
+        let plan = Self::drug_targets_plan(chembl_id, limit)?;
         let resp: ChemblMechanismResponse = self
-            .get_json(
-                self.client
-                    .get(&url)
-                    .query(&[("molecule_chembl_id", chembl_id), ("limit", limit.as_str())]),
-            )
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
             .await?;
+        Ok(Self::targets_from_response(resp))
+    }
 
+    pub async fn target_summary(
+        &self,
+        target_chembl_id: &str,
+    ) -> Result<ChemblTargetSummary, BioMcpError> {
+        let plan = Self::target_summary_plan(target_chembl_id)?;
+        let resp: ChemblTargetSummaryResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Ok(Self::summary_from_response(resp))
+    }
+
+    fn targets_from_response(resp: ChemblMechanismResponse) -> Vec<ChemblTarget> {
         let mut out = Vec::new();
         for row in resp.mechanisms {
             let target = row
@@ -105,27 +115,14 @@ impl ChemblClient {
                 target_chembl_id: row.target_chembl_id,
             });
         }
-
-        Ok(out)
+        out
     }
 
-    pub async fn target_summary(
-        &self,
-        target_chembl_id: &str,
-    ) -> Result<ChemblTargetSummary, BioMcpError> {
-        let target_chembl_id = target_chembl_id.trim();
-        if target_chembl_id.is_empty() {
-            return Err(BioMcpError::InvalidArgument(
-                "ChEMBL target ID is required".into(),
-            ));
-        }
-
-        let url = self.endpoint(&format!("target/{target_chembl_id}.json"));
-        let resp: ChemblTargetSummaryResponse = self.get_json(self.client.get(&url)).await?;
-        Ok(ChemblTargetSummary {
+    fn summary_from_response(resp: ChemblTargetSummaryResponse) -> ChemblTargetSummary {
+        ChemblTargetSummary {
             pref_name: resp.pref_name.unwrap_or_default().trim().to_string(),
             target_type: resp.target_type.unwrap_or_default().trim().to_string(),
-        })
+        }
     }
 }
 
@@ -164,66 +161,4 @@ pub struct ChemblTargetSummary {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    #[tokio::test]
-    async fn drug_targets_requests_mechanism_endpoint() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/mechanism.json"))
-            .and(query_param("molecule_chembl_id", "CHEMBL25"))
-            .and(query_param("limit", "3"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "mechanisms": [
-                    {
-                        "target_pref_name": "BRAF",
-                        "action_type": "INHIBITOR",
-                        "target_chembl_id": "CHEMBL1824"
-                    },
-                    {"target_pref_name": null, "action_type": null}
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ChemblClient::new_for_test(server.uri()).unwrap();
-        let targets = client.drug_targets("CHEMBL25", 3).await.unwrap();
-        assert_eq!(targets.len(), 2);
-        assert_eq!(targets[0].target, "BRAF");
-        assert_eq!(targets[0].action, "INHIBITOR");
-        assert!(targets[0].mechanism.is_none());
-        assert_eq!(targets[0].target_chembl_id.as_deref(), Some("CHEMBL1824"));
-        assert_eq!(targets[1].target, "Unknown target");
-        assert_eq!(targets[1].action, "Mechanism");
-    }
-
-    #[tokio::test]
-    async fn target_summary_returns_pref_name_and_target_type() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("GET"))
-            .and(path("/target/CHEMBL3390820.json"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "pref_name": "PARP 1, 2 and 3",
-                "target_type": "PROTEIN FAMILY"
-            })))
-            .mount(&server)
-            .await;
-
-        let client = ChemblClient::new_for_test(server.uri()).unwrap();
-        let summary = client.target_summary("CHEMBL3390820").await.unwrap();
-        assert_eq!(summary.pref_name, "PARP 1, 2 and 3");
-        assert_eq!(summary.target_type, "PROTEIN FAMILY");
-    }
-
-    #[tokio::test]
-    async fn drug_targets_rejects_empty_chembl_id() {
-        let client = ChemblClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client.drug_targets(" ", 5).await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    }
-}
+mod tests;

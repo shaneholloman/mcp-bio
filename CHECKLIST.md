@@ -95,7 +95,7 @@ Variants / genomics:
 - [x] clingen ~5 · [x] civic ~3 · [x] gtr ~12
 
 Drugs / chem / regulatory:
-- [ ] chembl ~3 · [ ] dgidb ~3 · [ ] ddinter ~5 · [ ] openfda ~9 · [ ] ema ~11 · [ ] pharmgkb ~2
+- [x] chembl ~3 · [ ] dgidb ~3 · [ ] ddinter ~5 · [ ] openfda ~9 · [ ] ema ~11 · [ ] pharmgkb ~2
 - [ ] cpic ~3 · [ ] cvx ~11 · [ ] vaers ~10 · [ ] who_pq ~20 · [ ] who_ivd ~6
 
 Ontologies / proteins / pathways / misc:
@@ -223,4 +223,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: `gtr` converted to standard source test layout and kept pure local
   file/parser coverage. Checks:
   `cargo nextest run -E 'test(/sources::gtr::/)'` → 12/12 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `chembl` converted. Checks:
+  `cargo nextest run -E 'test(/sources::chembl::/)'` → 6/6 pass;
   `bash scripts/check-no-server-tests.sh` → pass.
