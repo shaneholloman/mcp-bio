@@ -83,7 +83,7 @@ BioThings (near-copies of mygene/myvariant):
 - [x] mychem ~8 · [x] mydisease ~14
 
 NCBI / literature:
-- [ ] pubmed ~18 · [ ] pubtator ~8 · [ ] ncbi_efetch ~2 · [x] ncbi_idconv ~3 · [ ] pmc_oa ~6
+- [ ] pubmed ~18 · [ ] pubtator ~8 · [x] ncbi_efetch ~2 · [x] ncbi_idconv ~3 · [ ] pmc_oa ~6
 - [ ] europepmc ~8 · [ ] semantic_scholar ~13 · [ ] litsense2 ~4 · [ ] nih_reporter ~7
 
 Trials / cancer:
@@ -149,4 +149,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::disease/) | test(/entities::trial::search::nci/)'` → 84/84 pass.
 - 2026-06-16: `ncbi_idconv` converted. Checks:
   `cargo nextest run -E 'test(/sources::ncbi_idconv::/)'` → 10/10 pass;
+  `bash scripts/check-no-server-tests.sh` → pass.
+- 2026-06-16: `ncbi_efetch` converted. Checks:
+  `cargo nextest run -E 'test(/sources::ncbi_efetch::/)'` → 9/9 pass;
   `bash scripts/check-no-server-tests.sh` → pass.
