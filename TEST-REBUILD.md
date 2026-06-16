@@ -3,6 +3,21 @@
 Status: **planning / foundations**  ·  Worktree: `worktrees/biomcp-test-rebuild`
 (branch `test-ecosystem-rebuild`, off `main@43d6fb4e`)  ·  Author: Ian + agent, 2026-06-16
 
+## Decisions locked (2026-06-16)
+
+Four choices confirmed with Ian before fan-out:
+1. **Fixtures (Tier 3 inputs) = hybrid.** Capture one real payload per source where
+   reachable (key present or no auth); harvest the existing inline stub only where we
+   can't — today that's **OncoKB** (`ONCOKB_TOKEN` not in env). NCBI key is optional
+   (rate-limit only); keys present for nci_cts, umls, alphagenome, disgenet, s2.
+2. **Pilot = a pair, not pubmed.** One simple source (**mygene**) + one hard one
+   (**nci_cts**, auth header + pagination) become the template every fan-out agent
+   copies, so the pattern covers both shapes up front.
+3. **Cutover = one reviewed test-only PR to `main`**, gated by the coverage floor — not
+   routed through March's per-ticket build flow (that slow gate is what we're fixing).
+4. **Coverage gate = per-source ≥ its own baseline.** A source's old tests are deleted
+   only once its new Tier 1–3 tests meet or beat that source's own baseline coverage.
+
 ## 0. TL;DR
 
 A BioMCP build/SDLC step spends **~90% of its wall-clock re-running the test/spec
@@ -45,6 +60,14 @@ Parsed the real Pi session transcripts (per-message timestamps), two steps:
   `389-pathway-filter-test-flake`, `328-disease-nih-funding-context-flake`, plus open
   `415-slow-ctgov-alias-fanout-tests`, `420-mcp-spec-fixed-port-flake`. All symptoms
   of HTTP-server-spinning, env-locked, port-bound tests.
+- **Confirmed 2026-06-16 (baseline run):** the whole-suite `llvm-cov` run never finished
+  — tests in `entities/article/backends/tests.rs` (`search_pubmed_page_*`,
+  `litsense2_candidates_*`) and `cli::tests::outcome::*` each ran **>15 min**. Production
+  `backends.rs` builds clients via env-reading `PubMedClient::new()` /
+  `EuropePmcClient::new()` / `PubTatorClient::new()` / `SemanticScholarClient::new()` /
+  `LitSense2Client::new()`; the tests override only *some* base URLs via `set_env_var`, so
+  the rest **hit the real network** and retry/timeout for minutes. All three diseases at
+  once (env_lock + MockServer + live leak) → top fan-out + issue-filing candidates.
 
 ---
 
@@ -113,8 +136,12 @@ or touch env (enforced by ratchet, §10).
 
 - **`make coverage`** → `cargo llvm-cov nextest --lcov --output-path coverage/lcov.info`
   plus `--html` for a browsable report; `--summary-only` for the gate number.
-- **Baseline:** run coverage on the OLD suite (current `main`) → record overall +
-  per-module line/region %. This is the bar.
+- **Baseline (per-source, not one whole-suite run).** A single whole-suite `llvm-cov
+  nextest` does **not** finish — some old tests hang ~15 min on real-network leaks (see
+  §1), so the run never reaches a summary. Instead capture each source's baseline with a
+  **filtered** run (`-E 'test(/sources::<src>::/)'`) right before converting it — that is
+  the per-source bar (decision #4). A whole-repo floor can be computed later with
+  hung-test termination once the worst offenders are converted.
 - **Parity gate (the safety net):** a source's old tests may be deleted **only** when
   the new Tier 1–3 tests for it hit **≥ the baseline coverage for that module**. So we
   never lose coverage in the cutover.
@@ -165,8 +192,11 @@ project; `413-live-verify-cpic-nih-red` (live lane) and `419-incomplete-checklis
 
 **Phase 0 — Foundations (do first, single-threaded, in this worktree).**
 Coverage baseline, `testdata/` + tier conventions, the config-injection substrate, the
-no-server/no-env ratchet, and a **full pilot conversion of ONE source (pubmed — 15
-tests, highest count)** to prove coverage parity + the parallelism/time win.
+no-server/no-env ratchet, and a **full pilot conversion of the template pair: `mygene` (simple, 12 tests) +
+`nci_cts` (auth header + pagination, 4 tests)** to prove coverage parity + the
+parallelism/time win. Both already inject their base URL via `new_for_test`, so the pilot
+proves the kill-the-MockServer (Tier 2 + Tier 3) win; fan-out adds that injected
+constructor to sources still reading `BIOMCP_*_BASE` in their tests.
 
 **Phase 1 — Source fan-out (parallel sub-agents).** One agent per source (worktree or
 branch isolation), following the pilot pattern: harvest → Tier 2 + Tier 3 → coverage
@@ -196,7 +226,7 @@ parallelism, low conflict.
 - [ ] Tier test-module convention (`tests/construction.rs`, `tests/parsing.rs`, `cli/**/tests/routing.rs`).
 - [ ] **Config-injection substrate:** source clients take base URL/keys/timeouts as a value; env resolved once at startup.
 - [ ] **Ratchet:** routine test may not start a `MockServer` or read a `BIOMCP_*_BASE` env var (lint/clippy/grep gate).
-- [ ] **Pilot:** convert `pubmed` end-to-end (Tier 2 + Tier 3 + 1 verify round-trip); prove coverage ≥ baseline; measure test time + parallelism; delete old pubmed tests.
+- [ ] **Pilot:** convert `mygene` + `nci_cts` end-to-end (Tier 1/2/3 + 1 verify round-trip each); prove **per-source** coverage ≥ baseline; measure test time + parallelism; delete their old tests.
 - [ ] Write the pilot up as the canonical pattern doc for fan-out agents.
 
 ### Phase 1 — Source fan-out (per source: harvest → Tier2 → Tier3 → parity → wipe → file issues)
@@ -243,7 +273,7 @@ parallelism, low conflict.
 - A build ticket's step time is dominated by model turns again, not gate re-runs.
 
 ## Appendix — source inventory (config-injection + decomposition targets)
-~40 source clients read `BIOMCP_*_BASE`: alphagenome, cancerhotspots, cbioportal(+datahub),
+~60 source clients read `BIOMCP_*_BASE`: alphagenome, cancerhotspots, cbioportal(+datahub),
 chembl, civic, clingen, complexportal, cpic, ctgov, dgidb, disgenet, ema, enrichr,
 europepmc, figshare, gnomad, gprofiler, gtex, gwas, hpa, hpo, interpro, kegg, litsense2,
 medlineplus, monarch, mutalyzer, mychem, mydisease, mygene, myvariant, ncbi_idconv,
