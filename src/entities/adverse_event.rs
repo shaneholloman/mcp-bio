@@ -965,6 +965,24 @@ fn explicit_vaers_filter_error(unsupported: &[&str]) -> BioMcpError {
     ))
 }
 
+fn validate_explicit_vaers_source(
+    filters: &AdverseEventSearchFilters,
+    offset: usize,
+) -> Result<(), BioMcpError> {
+    if offset > 0 {
+        return Err(BioMcpError::InvalidArgument(
+            "--source vaers does not support --offset > 0".into(),
+        ));
+    }
+
+    let unsupported = unsupported_vaers_filter_names(filters);
+    if !unsupported.is_empty() {
+        return Err(explicit_vaers_filter_error(&unsupported));
+    }
+
+    Ok(())
+}
+
 pub async fn search_with_source(
     filters: &AdverseEventSearchFilters,
     source: AdverseEventSourceFilter,
@@ -991,14 +1009,7 @@ pub async fn search_with_source(
             vaers: None,
         }),
         AdverseEventSourceFilter::Vaers => {
-            if offset > 0 {
-                return Err(BioMcpError::InvalidArgument(
-                    "--source vaers does not support --offset > 0".into(),
-                ));
-            }
-            if !unsupported.is_empty() {
-                return Err(explicit_vaers_filter_error(&unsupported));
-            }
+            validate_explicit_vaers_source(filters, offset)?;
 
             let vaers = fetch_vaers_payload(query, CvxLookupMode::AutoSync).await.map_err(|err| {
                 BioMcpError::SourceUnavailable {
@@ -1996,15 +2007,14 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn search_with_source_vaers_rejects_offset() {
+    #[test]
+    fn search_with_source_vaers_rejects_offset() {
         let filters = AdverseEventSearchFilters {
             drug: Some("MMR vaccine".into()),
             ..Default::default()
         };
 
-        let err = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 1)
-            .await
+        let err = validate_explicit_vaers_source(&filters, 1)
             .expect_err("vaers search should reject offset");
         assert!(
             err.to_string()
@@ -2012,16 +2022,15 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn search_with_source_vaers_rejects_unsupported_filters() {
+    #[test]
+    fn search_with_source_vaers_rejects_unsupported_filters() {
         let filters = AdverseEventSearchFilters {
             drug: Some("MMR vaccine".into()),
             reaction: Some("fever".into()),
             ..Default::default()
         };
 
-        let err = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 0)
-            .await
+        let err = validate_explicit_vaers_source(&filters, 0)
             .expect_err("vaers search should reject unsupported filters");
         assert!(err.to_string().contains("--reaction"));
     }

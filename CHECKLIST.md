@@ -143,6 +143,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/adverse_event.rs` OpenFDA status mapping tests are pure:
       404/not-found and empty-result behavior now test decoded response mapping
       directly instead of running a mock OpenFDA server.
+- [x] `src/entities/adverse_event.rs` explicit VAERS rejection tests are pure:
+      offset and unsupported-filter errors now test validation directly instead
+      of entering async source search.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -480,6 +483,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   response-to-`FaersSearchStatus` mapper and converted the 404/not-found and
   empty-result status tests to pure unit tests. VAERS/CVX and trial adverse
   event server tests still remain. Checks:
+  `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: second adverse-event cleanup. Extracted explicit VAERS source
+  validation and converted the offset / unsupported-filter rejection tests from
+  async `search_with_source` calls to direct validation checks. Checks:
   `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
