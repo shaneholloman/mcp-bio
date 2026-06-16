@@ -361,6 +361,7 @@ pub(super) fn article_filters(
         gene_anchored: matches!(input.anchor, Anchor::Gene) && input.gene.is_some(),
         disease: input.article_disease_filter().map(str::to_string),
         drug: input.drug.clone(),
+        variant: None,
         author: None,
         keyword: input.article_keyword_filter().map(str::to_string),
         date_from: input.since.clone(),

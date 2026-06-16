@@ -100,27 +100,26 @@ pub(crate) async fn handle_command(
         }
         VariantCommand::Articles { id, limit, offset } => {
             let id_format = crate::entities::variant::parse_variant_id(&id)?;
-            let (gene, keyword) = match id_format {
-                crate::entities::variant::VariantIdFormat::RsId(rsid) => (None, Some(rsid)),
-                crate::entities::variant::VariantIdFormat::HgvsGenomic(hgvs) => (None, Some(hgvs)),
+            let (gene, change) = match id_format {
+                crate::entities::variant::VariantIdFormat::RsId(_) => (None, None),
+                crate::entities::variant::VariantIdFormat::HgvsGenomic(_) => (None, None),
                 crate::entities::variant::VariantIdFormat::GeneProteinChange { gene, change } => {
                     (Some(gene), Some(change))
                 }
             };
 
             let filters = crate::entities::article::ArticleSearchFilters {
-                gene,
-                gene_anchored: true,
-                keyword,
+                variant: Some(crate::entities::article::ArticleVariantIntent {
+                    original: id.clone(),
+                    gene,
+                    change,
+                    entity_id: None,
+                }),
                 ..super::super::related_article_filters()
             };
 
             let query = vec![
-                filters.gene.as_deref().map(|value| format!("gene={value}")),
-                filters
-                    .keyword
-                    .as_deref()
-                    .map(|value| format!("keyword={value}")),
+                Some(format!("variant={id}")),
                 (offset > 0).then(|| format!("offset={offset}")),
             ]
             .into_iter()
@@ -128,21 +127,25 @@ pub(crate) async fn handle_command(
             .collect::<Vec<_>>()
             .join(", ");
 
-            let fetch_limit = super::super::paged_fetch_limit(limit, offset, 50)?;
-            let rows = crate::entities::article::search(&filters, fetch_limit).await?;
-            let (results, total) = super::super::paginate_results(rows, offset, limit);
+            let page =
+                crate::entities::article::search_variant_article_page(&filters, limit, offset)
+                    .await?;
+            let results = page.page.results;
+            let total = page.page.total.unwrap_or(results.len() + offset);
             super::super::log_pagination_truncation(total, offset, results.len());
             if json {
                 #[derive(serde::Serialize)]
                 struct SearchResponse {
                     total: Option<usize>,
                     count: usize,
+                    retrieval_path: &'static str,
                     results: Vec<crate::entities::article::ArticleSearchResult>,
                 }
 
                 crate::render::json::to_pretty(&SearchResponse {
                     total: Some(total),
                     count: results.len(),
+                    retrieval_path: page.retrieval_path,
                     results,
                 })?
             } else {
@@ -158,7 +161,7 @@ pub(crate) async fn handle_command(
                                 &filters,
                                 crate::entities::article::ArticleSourceFilter::All,
                             ),
-                        note: None,
+                        note: Some(page.retrieval_path),
                         debug_plan: None,
                         exact_entity_commands: &[],
                         source_status: &[],

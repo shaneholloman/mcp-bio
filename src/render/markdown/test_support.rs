@@ -8,6 +8,7 @@ pub(super) fn article_filters_for_test(sort: ArticleSort) -> ArticleSearchFilter
         gene_anchored: false,
         disease: None,
         drug: None,
+        variant: None,
         author: None,
         keyword: None,
         date_from: None,

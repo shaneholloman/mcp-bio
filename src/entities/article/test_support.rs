@@ -39,6 +39,7 @@ pub(super) fn empty_filters() -> ArticleSearchFilters {
         gene_anchored: false,
         disease: None,
         drug: None,
+        variant: None,
         author: None,
         keyword: None,
         date_from: None,

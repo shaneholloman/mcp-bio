@@ -4,7 +4,7 @@ use tracing::warn;
 
 use crate::error::BioMcpError;
 use crate::sources::pubmed::PubMedESearchParams;
-use crate::sources::pubtator::PubTatorClient;
+use crate::sources::pubtator::{PubTatorAutocompleteResult, PubTatorClient};
 
 use super::filters::{
     normalize_article_type, normalized_date_bounds, validate_required_search_filters,
@@ -18,6 +18,7 @@ enum EntityBiotype {
     Gene,
     Disease,
     Chemical,
+    Variant,
 }
 
 pub(super) fn europepmc_escape(value: &str) -> String {
@@ -330,6 +331,87 @@ fn matches_entity_biotype(value: Option<&str>, expected: EntityBiotype) -> bool 
         EntityBiotype::Gene => normalized.contains("gene"),
         EntityBiotype::Disease => normalized.contains("disease"),
         EntityBiotype::Chemical => normalized.contains("chemical") || normalized.contains("drug"),
+        EntityBiotype::Variant => normalized.contains("variant") || normalized.contains("mutation"),
+    }
+}
+
+fn normalize_variant_match_token(value: &str) -> String {
+    value
+        .trim()
+        .trim_start_matches("p.")
+        .trim_start_matches("P.")
+        .chars()
+        .filter_map(|ch| match ch {
+            '*' => Some('X'),
+            ch if ch.is_ascii_alphanumeric() => Some(ch.to_ascii_uppercase()),
+            _ => None,
+        })
+        .collect()
+}
+
+fn variant_candidate_matches(
+    row: &PubTatorAutocompleteResult,
+    filters: &super::ArticleVariantIntent,
+) -> bool {
+    if !matches_entity_biotype(row.biotype.as_deref(), EntityBiotype::Variant) {
+        return false;
+    }
+
+    let haystack = [row.id.as_deref(), row.name.as_deref()]
+        .into_iter()
+        .flatten()
+        .map(normalize_variant_match_token)
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    if let Some(gene) = filters.gene.as_deref() {
+        let gene = normalize_variant_match_token(gene);
+        if !gene.is_empty() && !haystack.contains(&gene) {
+            return false;
+        }
+    }
+    if let Some(change) = filters.change.as_deref() {
+        let change = crate::entities::variant::normalize_protein_change(change)
+            .unwrap_or_else(|| change.to_string());
+        let change = normalize_variant_match_token(&change);
+        if !change.is_empty() && !haystack.contains(&change) {
+            return false;
+        }
+    }
+
+    true
+}
+
+pub(crate) async fn resolve_variant_entity_token(
+    pubtator: &PubTatorClient,
+    intent: &super::ArticleVariantIntent,
+) -> Option<String> {
+    if let Some(entity_id) = intent
+        .entity_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        return Some(entity_id.to_string());
+    }
+
+    let query = intent.original.trim();
+    if query.is_empty() {
+        return None;
+    }
+
+    match pubtator.entity_autocomplete(query).await {
+        Ok(rows) => rows
+            .iter()
+            .find(|row| variant_candidate_matches(row, intent))
+            .and_then(|row| row.id.as_deref())
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(|value| value.to_string()),
+        Err(err) => {
+            warn!(?err, token = query, "pubtator variant autocomplete failed");
+            None
+        }
     }
 }
 
@@ -375,6 +457,10 @@ pub(super) async fn build_pubtator_query(
         normalize_entity_token(pubtator, filters.disease.as_deref(), EntityBiotype::Disease).await;
     let drug =
         normalize_entity_token(pubtator, filters.drug.as_deref(), EntityBiotype::Chemical).await;
+    let variant = match filters.variant.as_ref() {
+        Some(intent) => resolve_variant_entity_token(pubtator, intent).await,
+        None => None,
+    };
 
     let mut terms: Vec<String> = Vec::new();
     if let Some(gene) = gene {
@@ -385,6 +471,9 @@ pub(super) async fn build_pubtator_query(
     }
     if let Some(drug) = drug {
         terms.push(drug);
+    }
+    if let Some(variant) = variant {
+        terms.push(variant);
     }
     if let Some(author) = filters
         .author

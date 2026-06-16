@@ -138,6 +138,7 @@ fn build_article_debug_plan_includes_article_type_limitation_note() {
         gene_anchored: false,
         disease: None,
         drug: None,
+        variant: None,
         author: None,
         keyword: None,
         date_from: None,
