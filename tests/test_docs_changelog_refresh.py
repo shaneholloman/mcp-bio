@@ -822,7 +822,7 @@ def test_public_docs_surface_local_study_analytics() -> None:
         "biomcp study list",
         "biomcp study download [--list] [<study_id>]",
         "biomcp study filter --study <id> [--mutated <symbol>] [--amplified <symbol>] [--deleted <symbol>] [--expression-above <gene:threshold>] [--expression-below <gene:threshold>] [--cancer-type <type>]",
-        "biomcp study query --study <id> --gene <symbol> --type <mutations|cna|expression>",
+        "biomcp study query --study <id> --gene <symbol> --type <mutations|cna|expression|sv>",
         "biomcp study cohort --study <id> --gene <symbol>",
         "biomcp study survival --study <id> --gene <symbol> [--endpoint <os|dfs|pfs|dss>]",
         "biomcp study compare --study <id> --gene <symbol> --type <expression|mutations> --target <symbol>",

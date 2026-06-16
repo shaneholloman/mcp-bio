@@ -52,8 +52,8 @@ fn study_query_help_describes_key_flags_and_aliases() {
 
     assert!(help.contains("cBioPortal study ID"));
     assert!(help.contains("HGNC gene symbol to summarize"));
-    assert!(help.contains("Canonical values: mutations, cna, expression."));
-    assert!(help.contains("copy_number, copy-number, expr"));
+    assert!(help.contains("Canonical values: mutations, cna, expression, sv."));
+    assert!(help.contains("copy_number, copy-number, expr, fusion"));
 }
 
 #[test]

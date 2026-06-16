@@ -359,7 +359,7 @@ installed files, and legacy compatibility notes.
 `study` is BioMCP's local analysis family for downloaded cBioPortal-style datasets.
 The public entity surface handles API-backed, local-runtime, and hybrid
 discovery/detail; `study` commands work on local datasets when you need
-per-study query, cohort, survival, comparison, or co-occurrence workflows.
+per-study query, cohort, survival, comparison, or co-occurrence workflows. Per-gene queries include mutations, CNA, expression, and structural variants/fusions from local `data_sv.txt` files. Mutation summaries stay mutation-only and note when fusions/SV need `--type sv`.
 
 Use `study download` to fetch a dataset into your local study root. Set
 `BIOMCP_STUDY_DIR` when you want an explicit dataset location for reproducible
@@ -369,6 +369,7 @@ scripts and demos; if it is unset, BioMCP falls back to its default study root.
 export BIOMCP_STUDY_DIR="$HOME/.local/share/biomcp/studies"
 biomcp study download msk_impact_2017
 biomcp study query --study msk_impact_2017 --gene TP53 --type mutations --chart bar --theme dark --palette wong -o docs/blog/images/tp53-mutation-bar.svg
+biomcp study query --study msk_impact_2017 --gene RET --type sv
 ```
 
 See the [CLI reference](docs/user-guide/cli-reference.md#local-study-analytics)

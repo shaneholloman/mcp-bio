@@ -27,6 +27,12 @@ KRAS	S1	Missense_Mutation	p.G12D
 KRAS	S3	Missense_Mutation	p.G12V
 EOF
 
+cat >"$study_root/msk_impact_2017/data_sv.txt" <<'EOF'
+Sample_Id	SV_Status	Site1_Hugo_Symbol	Site1_Chromosome	Site1_Position	Site2_Hugo_Symbol	Site2_Chromosome	Site2_Position	Site2_Effect_On_Frame	Tumor_Split_Read_Count	Normal_Split_Read_Count	Event_Info
+S1	SOMATIC	KIF5B	10	32315678	RET	10	43612032	in-frame	12	0	KIF5B-RET Fusion
+S2	SOMATIC	ETV6	12	11869969	NTRK3	15	88420184	in-frame	8	0	ETV6-NTRK3 Fusion
+EOF
+
 cat >"$study_root/msk_impact_2017/data_clinical_sample.txt" <<'EOF'
 # comment
 PATIENT_ID	SAMPLE_ID	CANCER_TYPE	CANCER_TYPE_DETAILED	ONCOTREE_CODE

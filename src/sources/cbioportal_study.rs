@@ -11,6 +11,7 @@ const MUTATIONS_FILE: &str = "data_mutations.txt";
 const CLINICAL_SAMPLE_FILE: &str = "data_clinical_sample.txt";
 const CLINICAL_PATIENT_FILE: &str = "data_clinical_patient.txt";
 const CNA_FILE: &str = "data_cna.txt";
+const SV_FILE: &str = "data_sv.txt";
 const EXPRESSION_FILES: &[&str] = &[
     "data_mrna_seq_v2_rsem_zscores_ref_all_samples.txt",
     "data_mrna_seq_v2_rsem.txt",
@@ -37,6 +38,7 @@ pub struct StudyDataset {
     pub has_cna: bool,
     pub has_expression: bool,
     pub has_clinical_sample: bool,
+    pub has_structural_variants: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -71,6 +73,24 @@ pub struct TopMutatedGenesResult {
     pub study_id: String,
     pub total_samples: usize,
     pub rows: Vec<TopMutatedGeneRow>,
+}
+
+#[derive(Debug, Clone)]
+pub struct StructuralVariantRow {
+    pub sample_id: String,
+    pub site1_gene: String,
+    pub site2_gene: String,
+    pub frame_effect: String,
+    pub tumor_split_read_count: String,
+    pub normal_split_read_count: String,
+    pub event_info: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct StructuralVariantResult {
+    pub study_id: String,
+    pub gene: String,
+    pub rows: Vec<StructuralVariantRow>,
 }
 
 #[derive(Debug, Clone)]
@@ -324,6 +344,7 @@ pub fn list_studies(root: &Path) -> Result<Vec<StudyDataset>, BioMcpError> {
             has_cna: path.join(CNA_FILE).exists(),
             has_expression: find_expression_file(&path).is_some(),
             has_clinical_sample: path.join(CLINICAL_SAMPLE_FILE).exists(),
+            has_structural_variants: path.join(SV_FILE).exists(),
         });
     }
 
@@ -579,6 +600,57 @@ pub fn top_mutated_genes(
     Ok(TopMutatedGenesResult {
         study_id,
         total_samples,
+        rows,
+    })
+}
+
+pub fn structural_variants(
+    study_dir: &Path,
+    gene: &str,
+) -> Result<StructuralVariantResult, BioMcpError> {
+    let gene = normalize_gene(gene)?;
+    let study_id = study_id_from_dir(study_dir);
+
+    let path = study_dir.join(SV_FILE);
+    let mut reader = TsvReader::open(&path)?;
+    let header = header_map(&reader.headers);
+
+    let site1_idx = require_column(&header, "Site1_Hugo_Symbol", &path)?;
+    let site2_idx = require_column(&header, "Site2_Hugo_Symbol", &path)?;
+    let sample_idx = column_index(&header, &["Sample_Id"]);
+    let frame_idx = column_index(&header, &["Site2_Effect_On_Frame"]);
+    let tumor_split_idx = column_index(&header, &["Tumor_Split_Read_Count"]);
+    let normal_split_idx = column_index(&header, &["Normal_Split_Read_Count"]);
+    let event_idx = column_index(&header, &["Event_Info"]);
+    let optional_sv_value = |row: &[String], idx: Option<usize>| {
+        idx.map(|idx| row_field(row, idx))
+            .filter(|value| !value.is_empty())
+            .unwrap_or("-")
+            .to_string()
+    };
+
+    let mut rows = Vec::new();
+    while let Some(row) = reader.next_row()? {
+        let site1_gene = row_field(&row, site1_idx);
+        let site2_gene = row_field(&row, site2_idx);
+        if !site1_gene.eq_ignore_ascii_case(&gene) && !site2_gene.eq_ignore_ascii_case(&gene) {
+            continue;
+        }
+
+        rows.push(StructuralVariantRow {
+            sample_id: optional_sv_value(&row, sample_idx),
+            site1_gene: site1_gene.to_string(),
+            site2_gene: site2_gene.to_string(),
+            frame_effect: optional_sv_value(&row, frame_idx),
+            tumor_split_read_count: optional_sv_value(&row, tumor_split_idx),
+            normal_split_read_count: optional_sv_value(&row, normal_split_idx),
+            event_info: optional_sv_value(&row, event_idx),
+        });
+    }
+
+    Ok(StructuralVariantResult {
+        study_id,
+        gene,
         rows,
     })
 }
@@ -2250,6 +2322,10 @@ ERBB2\t2064\t2.1\t1.0\t3.4\tbad\n",
             &study_dir.join("data_mrna_seq_v2_rsem_zscores_ref_all_samples.txt"),
             "Hugo_Symbol\tEntrez_Gene_Id\tS1\nTP53\t7157\t0.3\n",
         );
+        fixture.write_file(
+            &study_dir.join("data_sv.txt"),
+            "Site1_Hugo_Symbol\tSite2_Hugo_Symbol\nKIF5B\tRET\n",
+        );
         write_minimal_clinical_samples(
             &study_dir,
             &["P1\tS1\tLung Cancer\tLung Adenocarcinoma\tLUAD"],
@@ -2268,6 +2344,7 @@ ERBB2\t2064\t2.1\t1.0\t3.4\tbad\n",
         assert!(study.has_cna);
         assert!(study.has_expression);
         assert!(study.has_clinical_sample);
+        assert!(study.has_structural_variants);
     }
 
     #[test]
@@ -2345,6 +2422,49 @@ ERBB2\t2064\t2.1\t1.0\t3.4\tbad\n",
                 ("p.R248Q".to_string(), 1)
             ]
         );
+    }
+
+    #[test]
+    fn structural_variants_match_either_breakpoint_and_fill_optional_blanks() {
+        let fixture = TestStudyDir::new("structural-variants");
+        let study_dir = fixture.study_path("sv_study");
+        fixture.write_file(
+            &study_dir.join("data_sv.txt"),
+            "Sample_Id\tSite1_Hugo_Symbol\tSite2_Hugo_Symbol\tSite2_Effect_On_Frame\tTumor_Split_Read_Count\tNormal_Split_Read_Count\tEvent_Info\n\
+S1\tKIF5B\tRET\tin-frame\t12\t0\tKIF5B-RET Fusion\n\
+S2\tNTRK3\tETV6\tin-frame\t\t\tETV6-NTRK3 Fusion\n",
+        );
+
+        let ret = structural_variants(&study_dir, "ret").expect("RET SV query");
+        assert_eq!(ret.study_id, "sv_study");
+        assert_eq!(ret.gene, "RET");
+        assert_eq!(ret.rows.len(), 1);
+        assert_eq!(ret.rows[0].site1_gene, "KIF5B");
+        assert_eq!(ret.rows[0].site2_gene, "RET");
+        assert_eq!(ret.rows[0].tumor_split_read_count, "12");
+        assert_eq!(ret.rows[0].normal_split_read_count, "0");
+        assert_eq!(ret.rows[0].event_info, "KIF5B-RET Fusion");
+
+        let ntrk = structural_variants(&study_dir, "NTRK3").expect("NTRK3 SV query");
+        assert_eq!(ntrk.rows.len(), 1);
+        assert_eq!(ntrk.rows[0].site1_gene, "NTRK3");
+        assert_eq!(ntrk.rows[0].site2_gene, "ETV6");
+        assert_eq!(ntrk.rows[0].tumor_split_read_count, "-");
+        assert_eq!(ntrk.rows[0].normal_split_read_count, "-");
+    }
+
+    #[test]
+    fn structural_variants_require_both_gene_columns() {
+        let fixture = TestStudyDir::new("structural-variants-missing-column");
+        let study_dir = fixture.study_path("sv_bad_study");
+        fixture.write_file(
+            &study_dir.join("data_sv.txt"),
+            "Sample_Id\tSite1_Hugo_Symbol\tEvent_Info\nS1\tKIF5B\tKIF5B-RET Fusion\n",
+        );
+
+        let err = structural_variants(&study_dir, "RET").expect_err("missing Site2 column");
+        assert!(matches!(err, BioMcpError::SourceUnavailable { .. }));
+        assert!(err.to_string().contains("Site2_Hugo_Symbol"));
     }
 
     #[test]

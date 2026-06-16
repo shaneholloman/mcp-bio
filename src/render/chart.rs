@@ -107,6 +107,9 @@ pub(crate) fn validate_query_chart_type(
             chart_type,
             &[ChartType::Histogram, ChartType::Density],
         ),
+        StudyQueryType::StructuralVariants => {
+            validate_standalone_chart_type("study query --type sv", chart_type, &[])
+        }
     }
 }
 
@@ -144,6 +147,12 @@ pub(crate) fn validate_standalone_chart_type(
     if valid_types.contains(&chart_type) {
         return Ok(());
     }
+    if valid_types.is_empty() {
+        return Err(BioMcpError::InvalidArgument(format!(
+            "charts are not supported for '{command_label}'"
+        )));
+    }
+
     Err(BioMcpError::InvalidArgument(format!(
         "chart type '{chart_type}' is not valid for '{command_label}'. Valid types: {}",
         valid_types
@@ -1191,6 +1200,15 @@ mod tests {
     }
 
     #[test]
+    fn structural_variant_chart_validation_reports_unsupported_surface() {
+        let err = validate_query_chart_type(StudyQueryType::StructuralVariants, ChartType::Bar)
+            .expect_err("charts should be rejected for structural variant queries");
+        let msg = err.to_string();
+        assert!(msg.contains("charts are not supported"));
+        assert!(msg.contains("study query --type sv"));
+    }
+
+    #[test]
     fn compare_chart_validation_lists_valid_types() {
         let err = validate_compare_chart_type("expression", ChartType::Pie)
             .expect_err("pie should be rejected for expression compare");
@@ -1240,6 +1258,7 @@ mod tests {
                 ("Nonsense_Mutation".into(), 3),
             ],
             top_protein_changes: vec![("R175H".into(), 3)],
+            mutation_only_caveat: None,
         };
 
         let svg = render_mutation_frequency_chart(&mutation, ChartType::Bar, &inline_svg_options())
@@ -1264,6 +1283,7 @@ mod tests {
                 ("Splice_Site".into(), 1),
             ],
             top_protein_changes: vec![("R175H".into(), 3)],
+            mutation_only_caveat: None,
         };
         let cna = CnaDistributionResult {
             study_id: "demo".into(),
@@ -1311,6 +1331,7 @@ mod tests {
                 ("Nonsense_Mutation".into(), 3),
             ],
             top_protein_changes: vec![("R175H".into(), 3)],
+            mutation_only_caveat: None,
         };
         let cna = CnaDistributionResult {
             study_id: "demo".into(),
@@ -1484,6 +1505,7 @@ mod tests {
                 ("Nonsense_Mutation".into(), 3),
             ],
             top_protein_changes: vec![("R175H".into(), 3)],
+            mutation_only_caveat: None,
         };
 
         let output = render_mutation_frequency_chart(
@@ -1522,6 +1544,7 @@ mod tests {
                 ("Nonsense_Mutation".into(), 3),
             ],
             top_protein_changes: vec![("R175H".into(), 3)],
+            mutation_only_caveat: None,
         };
 
         let terminal_err = render_mutation_frequency_chart(
@@ -1586,6 +1609,7 @@ mod tests {
                 ("Nonsense_Mutation".into(), 3),
             ],
             top_protein_changes: vec![("R175H".into(), 3)],
+            mutation_only_caveat: None,
         };
 
         let svg = render_mutation_frequency_chart(

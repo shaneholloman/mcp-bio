@@ -9,27 +9,68 @@ without pinning install-specific row totals.
 
 Listing studies should still look like a local dataset catalog, with stable
 identity and availability columns that tell operators what data is actually on
-disk.
+disk, including structural-variant files when a study package ships them.
 
 ```bash
 ../../tools/biomcp-ci study list | mustmatch like '# Study Datasets
-...
 | Study ID | Name | Cancer Type | Samples | Available Data |
-...
-| msk_impact_2017 | MSK-IMPACT 2017 | mixed | ...'
+msk_impact_2017
+structural_variants'
 ```
 
 ## Gene-Frequency Summary
 
 Per-study mutation queries should keep a human-readable summary heading and the
-variant-class breakout that explains what was counted.
+variant-class breakout that explains what was counted. When the same study has
+structural-variant data, the mutation summary also says that fusions/SV are not
+part of the mutation count and points to the SV query.
 
 ```bash
-../../tools/biomcp-ci study query --help | mustmatch like 'Canonical values: mutations, cna, expression.
-Accepted aliases: mutation, copy_number, copy-number, expr'
 ../../tools/biomcp-ci study query --study msk_impact_2017 --gene TP53 --type mutations | mustmatch like '# Study Mutation Frequency: TP53 (msk_impact_2017)
 ## Top Variant Classes
-## Top Protein Changes'
+## Top Protein Changes
+excludes fusions/SV
+--type sv'
+```
+
+## Structural Variant Queries
+
+Structural-variant queries use the same per-study query command, but return a
+fusion-oriented row shape with both breakpoints and the event label from the
+local `data_sv.txt` file.
+
+```bash
+../../tools/biomcp-ci study query --help | mustmatch like 'Canonical values:
+sv
+Accepted aliases:
+fusion'
+```
+
+```bash
+../../tools/biomcp-ci study query --study msk_impact_2017 --gene RET --type sv | mustmatch like '# Study Structural Variants: RET (msk_impact_2017)
+| Sample | Site 1 Gene | Site 2 Gene | Frame/Effect | Split Reads | Event Info |
+KIF5B
+RET
+in-frame
+KIF5B-RET Fusion'
+```
+
+```bash
+../../tools/biomcp-ci study query --study msk_impact_2017 --gene RET --type fusion | mustmatch like '# Study Structural Variants: RET (msk_impact_2017)
+KIF5B-RET Fusion'
+```
+
+## Top Mutated Genes
+
+Cohort-wide mutation rankings stay mutation-specific. If a study also includes
+structural variants, the output tells users that fusions/SV need the SV query
+instead of implying the ranking covers every actionable lesion type.
+
+```bash
+../../tools/biomcp-ci study top-mutated --study msk_impact_2017 | mustmatch like '# Study Top Mutated Genes: msk_impact_2017
+| Gene | Mutated Samples | Mutation Events | Total Samples | Mutation Rate |
+excludes fusions/SV
+--type sv'
 ```
 
 ## Remote Download Stall Policy

@@ -5,6 +5,8 @@ use std::path::Path;
 
 use crate::error::BioMcpError;
 
+const MUTATION_ONLY_CAVEAT: &str = "This mutation-only result excludes fusions/SV; query structural variants with study query --type sv.";
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct StudyInfo {
     pub study_id: String,
@@ -37,6 +39,7 @@ pub struct MutationFrequencyResult {
     pub frequency: f64,
     pub top_variant_classes: Vec<(String, usize)>,
     pub top_protein_changes: Vec<(String, usize)>,
+    pub mutation_only_caveat: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -52,6 +55,25 @@ pub struct TopMutatedGenesResult {
     pub study_id: String,
     pub total_samples: usize,
     pub rows: Vec<TopMutatedGeneRow>,
+    pub mutation_only_caveat: Option<String>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct StructuralVariantRow {
+    pub sample_id: String,
+    pub site1_gene: String,
+    pub site2_gene: String,
+    pub frame_effect: String,
+    pub tumor_split_read_count: String,
+    pub normal_split_read_count: String,
+    pub event_info: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct StructuralVariantResult {
+    pub study_id: String,
+    pub gene: String,
+    pub rows: Vec<StructuralVariantRow>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -112,6 +134,7 @@ pub enum SampleUniverseBasis {
 #[serde(tag = "query_type", content = "result", rename_all = "snake_case")]
 pub enum StudyQueryResult {
     MutationFrequency(MutationFrequencyResult),
+    StructuralVariants(StructuralVariantResult),
     CnaDistribution(CnaDistributionResult),
     ExpressionDistribution(ExpressionDistributionResult),
 }
@@ -119,6 +142,7 @@ pub enum StudyQueryResult {
 #[derive(Debug, Clone, Copy)]
 pub enum StudyQueryType {
     Mutations,
+    StructuralVariants,
     Cna,
     Expression,
 }
@@ -238,8 +262,9 @@ impl StudyQueryType {
             "mutations" | "mutation" => Ok(Self::Mutations),
             "cna" | "copy_number" | "copy-number" => Ok(Self::Cna),
             "expression" | "expr" => Ok(Self::Expression),
+            "sv" | "fusion" | "fusions" | "structural_variants" => Ok(Self::StructuralVariants),
             other => Err(BioMcpError::InvalidArgument(format!(
-                "Unknown study query type '{other}'. Expected: mutations, cna, expression."
+                "Unknown study query type '{other}'. Expected: mutations, cna, expression, sv."
             ))),
         }
     }
@@ -314,6 +339,9 @@ pub async fn list_studies() -> Result<Vec<StudyInfo>, BioMcpError> {
             if study.has_clinical_sample {
                 available_data.push("clinical".to_string());
             }
+            if study.has_structural_variants {
+                available_data.push("structural_variants".to_string());
+            }
 
             out.push(StudyInfo {
                 study_id: study.study_id,
@@ -359,8 +387,16 @@ pub async fn query_study(
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
         match query_type {
-            StudyQueryType::Mutations => Ok(StudyQueryResult::MutationFrequency(
-                crate::sources::cbioportal_study::mutation_frequency(&study_dir, &gene)?.into(),
+            StudyQueryType::Mutations => {
+                let mut result: MutationFrequencyResult =
+                    crate::sources::cbioportal_study::mutation_frequency(&study_dir, &gene)?.into();
+                if study_dir.join("data_sv.txt").exists() {
+                    result.mutation_only_caveat = Some(MUTATION_ONLY_CAVEAT.to_string());
+                }
+                Ok(StudyQueryResult::MutationFrequency(result))
+            }
+            StudyQueryType::StructuralVariants => Ok(StudyQueryResult::StructuralVariants(
+                crate::sources::cbioportal_study::structural_variants(&study_dir, &gene)?.into(),
             )),
             StudyQueryType::Cna => Ok(StudyQueryResult::CnaDistribution(
                 crate::sources::cbioportal_study::cna_distribution(&study_dir, &gene)?.into(),
@@ -383,7 +419,12 @@ pub async fn top_mutated_genes(
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
-        Ok(crate::sources::cbioportal_study::top_mutated_genes(&study_dir, limit)?.into())
+        let mut result: TopMutatedGenesResult =
+            crate::sources::cbioportal_study::top_mutated_genes(&study_dir, limit)?.into();
+        if study_dir.join("data_sv.txt").exists() {
+            result.mutation_only_caveat = Some(MUTATION_ONLY_CAVEAT.to_string());
+        }
+        Ok(result)
     })
     .await
 }
@@ -615,6 +656,7 @@ impl From<crate::sources::cbioportal_study::MutationFrequencyResult> for Mutatio
             frequency: value.frequency,
             top_variant_classes: value.top_variant_classes,
             top_protein_changes: value.top_protein_changes,
+            mutation_only_caveat: None,
         }
     }
 }
@@ -635,6 +677,31 @@ impl From<crate::sources::cbioportal_study::TopMutatedGenesResult> for TopMutate
         Self {
             study_id: value.study_id,
             total_samples: value.total_samples,
+            rows: value.rows.into_iter().map(Into::into).collect(),
+            mutation_only_caveat: None,
+        }
+    }
+}
+
+impl From<crate::sources::cbioportal_study::StructuralVariantRow> for StructuralVariantRow {
+    fn from(value: crate::sources::cbioportal_study::StructuralVariantRow) -> Self {
+        Self {
+            sample_id: value.sample_id,
+            site1_gene: value.site1_gene,
+            site2_gene: value.site2_gene,
+            frame_effect: value.frame_effect,
+            tumor_split_read_count: value.tumor_split_read_count,
+            normal_split_read_count: value.normal_split_read_count,
+            event_info: value.event_info,
+        }
+    }
+}
+
+impl From<crate::sources::cbioportal_study::StructuralVariantResult> for StructuralVariantResult {
+    fn from(value: crate::sources::cbioportal_study::StructuralVariantResult) -> Self {
+        Self {
+            study_id: value.study_id,
+            gene: value.gene,
             rows: value.rows.into_iter().map(Into::into).collect(),
         }
     }
@@ -1099,6 +1166,19 @@ mod tests {
             StudyQueryType::from_flag("expression").expect("expression should parse"),
             StudyQueryType::Expression
         ));
+        assert!(matches!(
+            StudyQueryType::from_flag("sv").expect("sv should parse"),
+            StudyQueryType::StructuralVariants
+        ));
+        assert!(matches!(
+            StudyQueryType::from_flag("fusion").expect("fusion should parse"),
+            StudyQueryType::StructuralVariants
+        ));
+        assert!(matches!(
+            StudyQueryType::from_flag("structural_variants")
+                .expect("structural_variants should parse"),
+            StudyQueryType::StructuralVariants
+        ));
     }
 
     #[test]
@@ -1147,6 +1227,10 @@ mod tests {
         let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("list");
         minimal_study_fixture(&fixture.root, "demo_study");
+        write_file(
+            &fixture.root.join("demo_study").join("data_sv.txt"),
+            "Site1_Hugo_Symbol\tSite2_Hugo_Symbol\nKIF5B\tRET\n",
+        );
         let _study_dir = set_study_dir(&fixture.root);
 
         let studies = list_studies().await.expect("list studies");
@@ -1158,6 +1242,11 @@ mod tests {
             studies[0]
                 .available_data
                 .contains(&"expression".to_string())
+        );
+        assert!(
+            studies[0]
+                .available_data
+                .contains(&"structural_variants".to_string())
         );
         assert_eq!(studies[0].sample_count, Some(3));
     }
@@ -1179,9 +1268,73 @@ mod tests {
                 assert_eq!(result.mutation_count, 2);
                 assert_eq!(result.unique_samples, 2);
                 assert_eq!(result.total_samples, 3);
+                assert_eq!(result.mutation_only_caveat, None);
             }
             other => panic!("unexpected query result: {other:?}"),
         }
+    }
+
+    #[tokio::test]
+    async fn query_study_structural_variants_round_trips_source_result() {
+        let _guard = crate::test_support::env_lock().lock().await;
+        let fixture = TestStudyDir::new("query-sv");
+        minimal_study_fixture(&fixture.root, "demo_study");
+        write_file(
+            &fixture.root.join("demo_study").join("data_sv.txt"),
+            "Sample_Id\tSite1_Hugo_Symbol\tSite2_Hugo_Symbol\tSite2_Effect_On_Frame\tTumor_Split_Read_Count\tNormal_Split_Read_Count\tEvent_Info\nS1\tKIF5B\tRET\tin-frame\t12\t0\tKIF5B-RET Fusion\n",
+        );
+        let _study_dir = set_study_dir(&fixture.root);
+
+        let result = query_study("demo_study", "RET", StudyQueryType::StructuralVariants)
+            .await
+            .expect("query should pass");
+        match result {
+            StudyQueryResult::StructuralVariants(result) => {
+                assert_eq!(result.study_id, "demo_study");
+                assert_eq!(result.gene, "RET");
+                assert_eq!(result.rows.len(), 1);
+                assert_eq!(result.rows[0].site1_gene, "KIF5B");
+                assert_eq!(result.rows[0].site2_gene, "RET");
+                assert_eq!(result.rows[0].frame_effect, "in-frame");
+                assert_eq!(result.rows[0].event_info, "KIF5B-RET Fusion");
+            }
+            other => panic!("unexpected query result: {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mutation_outputs_include_caveat_when_structural_variants_exist() {
+        let _guard = crate::test_support::env_lock().lock().await;
+        let fixture = TestStudyDir::new("mutation-caveat");
+        minimal_study_fixture(&fixture.root, "demo_study");
+        write_file(
+            &fixture.root.join("demo_study").join("data_sv.txt"),
+            "Site1_Hugo_Symbol\tSite2_Hugo_Symbol\nKIF5B\tRET\n",
+        );
+        let _study_dir = set_study_dir(&fixture.root);
+
+        let mutation = query_study("demo_study", "TP53", StudyQueryType::Mutations)
+            .await
+            .expect("mutation query should pass");
+        match mutation {
+            StudyQueryResult::MutationFrequency(result) => {
+                let caveat = result
+                    .mutation_only_caveat
+                    .expect("mutation caveat should be populated");
+                assert!(caveat.contains("excludes fusions/SV"));
+                assert!(caveat.contains("--type sv"));
+            }
+            other => panic!("unexpected query result: {other:?}"),
+        }
+
+        let top = top_mutated_genes("demo_study", 10)
+            .await
+            .expect("top mutated should pass");
+        let caveat = top
+            .mutation_only_caveat
+            .expect("top-mutated caveat should be populated");
+        assert!(caveat.contains("excludes fusions/SV"));
+        assert!(caveat.contains("--type sv"));
     }
 
     #[tokio::test]

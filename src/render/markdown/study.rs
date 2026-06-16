@@ -127,6 +127,44 @@ pub fn study_query_markdown(result: &StudyQueryResult) -> String {
                     out.push_str(&format!("| {} | {} |\n", change, count));
                 }
             }
+            if let Some(caveat) = &result.mutation_only_caveat {
+                out.push_str(&format!("\nNote: {caveat}\n"));
+            }
+            out
+        }
+        StudyQueryResult::StructuralVariants(result) => {
+            let mut out = String::new();
+            out.push_str(&format!(
+                "# Study Structural Variants: {} ({})\n\n",
+                result.gene, result.study_id
+            ));
+            out.push_str("| Sample | Site 1 Gene | Site 2 Gene | Frame/Effect | Split Reads | Event Info |\n");
+            out.push_str("|---|---|---|---|---|---|\n");
+            if result.rows.is_empty() {
+                out.push_str("| - | - | - | - | - | - |\n");
+            } else {
+                for row in &result.rows {
+                    let split_reads = if row.tumor_split_read_count == "-"
+                        && row.normal_split_read_count == "-"
+                    {
+                        "-".to_string()
+                    } else {
+                        format!(
+                            "tumor {}/normal {}",
+                            row.tumor_split_read_count, row.normal_split_read_count
+                        )
+                    };
+                    out.push_str(&format!(
+                        "| {} | {} | {} | {} | {} | {} |\n",
+                        row.sample_id,
+                        row.site1_gene,
+                        row.site2_gene,
+                        row.frame_effect,
+                        split_reads,
+                        row.event_info
+                    ));
+                }
+            }
             out
         }
         StudyQueryResult::CnaDistribution(result) => {
@@ -185,6 +223,9 @@ pub fn study_top_mutated_markdown(result: &StudyTopMutatedGenesResult) -> String
     out.push_str("|---|---|---|---|---|\n");
     if result.rows.is_empty() {
         out.push_str("| - | 0 | 0 | 0 | 0.000000 |\n");
+        if let Some(caveat) = &result.mutation_only_caveat {
+            out.push_str(&format!("\nNote: {caveat}\n"));
+        }
         return out;
     }
 
@@ -197,6 +238,9 @@ pub fn study_top_mutated_markdown(result: &StudyTopMutatedGenesResult) -> String
             result.total_samples,
             row.mutation_rate
         ));
+    }
+    if let Some(caveat) = &result.mutation_only_caveat {
+        out.push_str(&format!("\nNote: {caveat}\n"));
     }
     out
 }
