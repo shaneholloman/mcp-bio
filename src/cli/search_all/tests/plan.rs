@@ -193,7 +193,7 @@ fn build_result_plan_includes_fallback_and_article_matched_sources() {
 }
 
 #[test]
-fn build_result_plan_keyword_article_leg_includes_litsense2_source_and_match() {
+fn build_result_plan_keyword_article_leg_excludes_litsense2_default_source() {
     let prepared = PreparedInput::new(&SearchAllInput {
         gene: None,
         variant: None,
@@ -215,7 +215,7 @@ fn build_result_plan_keyword_article_leg_includes_litsense2_source_and_match() {
         note: None,
         results: vec![json!({
             "pmid": "36741595",
-            "matched_sources": ["litsense2", "pubmed"]
+            "matched_sources": ["pubmed", "semanticscholar"]
         })],
         links: Vec::new(),
     }];
@@ -230,11 +230,11 @@ fn build_result_plan_keyword_article_leg_includes_litsense2_source_and_match() {
     assert_eq!(plan.surface, "search_all");
     assert_eq!(plan.anchor, Some("keyword"));
     assert_eq!(plan.query, "keyword=Hirschsprung disease");
-    assert!(article_leg.sources.contains(&"LitSense2".to_string()));
+    assert!(!article_leg.sources.contains(&"LitSense2".to_string()));
     assert!(article_leg.sources.contains(&"PubMed".to_string()));
     assert_eq!(
         article_leg.matched_sources,
-        vec!["PubMed".to_string(), "LitSense2".to_string()]
+        vec!["PubMed".to_string(), "Semantic Scholar".to_string()]
     );
 }
 

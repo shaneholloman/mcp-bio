@@ -275,38 +275,46 @@ fn summarize_debug_plan_no_preprints_omits_pubmed() {
 }
 
 #[test]
-fn summarize_debug_plan_keyword_enables_litsense2() {
+fn summarize_debug_plan_keyword_all_excludes_litsense2() {
     let mut filters = empty_filters();
     filters.keyword = Some("Hirschsprung disease".into());
 
     let summary = summarize_debug_plan(&filters, ArticleSourceFilter::All, &[]).expect("summary");
 
-    assert!(
-        summary.sources.contains(&"LitSense2".to_string()),
-        "keyword-driven federated debug plan should advertise LitSense2"
+    assert_eq!(summary.routing, vec!["planner=federated".to_string()]);
+    assert_eq!(
+        summary.sources,
+        vec![
+            "PubTator3".to_string(),
+            "Europe PMC".to_string(),
+            "PubMed".to_string(),
+            "Semantic Scholar".to_string(),
+        ]
     );
 }
 
 #[test]
-fn litsense2_search_enabled_requires_keyword_and_non_strict_filters() {
+fn summarize_debug_plan_explicit_litsense2_remains_selectable() {
+    let mut filters = empty_filters();
+    filters.keyword = Some("Hirschsprung disease".into());
+
+    let summary =
+        summarize_debug_plan(&filters, ArticleSourceFilter::LitSense2, &[]).expect("summary");
+
+    assert_eq!(summary.routing, vec!["planner=litsense2_only".to_string()]);
+    assert_eq!(summary.sources, vec!["LitSense2".to_string()]);
+}
+
+#[test]
+fn litsense2_search_enabled_only_for_explicit_litsense2_source() {
     let mut keyword_filters = empty_filters();
     keyword_filters.keyword = Some("Hirschsprung disease".into());
-    assert!(litsense2_search_enabled(
+    assert!(!litsense2_search_enabled(
         &keyword_filters,
         ArticleSourceFilter::All
     ));
-
-    let mut strict_filters = keyword_filters.clone();
-    strict_filters.article_type = Some("review".into());
-    assert!(!litsense2_search_enabled(
-        &strict_filters,
-        ArticleSourceFilter::All
-    ));
-
-    let mut no_keyword_filters = empty_filters();
-    no_keyword_filters.gene = Some("RET".into());
-    assert!(!litsense2_search_enabled(
-        &no_keyword_filters,
-        ArticleSourceFilter::All
+    assert!(litsense2_search_enabled(
+        &keyword_filters,
+        ArticleSourceFilter::LitSense2
     ));
 }

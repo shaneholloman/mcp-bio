@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Back compatibility
+
+- Changed `search article --source all` to stop querying LitSense2 by default; use `--source litsense2` explicitly when you want LitSense2.
+
 ## 0.8.23 — 2026-06-11
 
 ### New features

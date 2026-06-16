@@ -178,7 +178,7 @@ async fn federated_search_keeps_non_europepmc_matches_under_default_retraction_f
 }
 
 #[tokio::test]
-async fn federated_search_keyword_includes_litsense2_matches() {
+async fn federated_search_keyword_skips_litsense2_matches() {
     let _guard = lock_env().await;
     let pubtator = MockServer::start().await;
     let europepmc = MockServer::start().await;
@@ -244,42 +244,9 @@ async fn federated_search_keyword_includes_litsense2_matches() {
 
     Mock::given(method("GET"))
         .and(path("/sentences/"))
-        .and(query_param("query", "Hirschsprung disease"))
-        .and(query_param("rerank", "true"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-            {
-                "pmid": 22663011,
-                "pmcid": "PMC9984800",
-                "text": "Hirschsprung disease semantic hit",
-                "score": 0.8,
-                "section": "INTRO",
-                "annotations": []
-            }
-        ])))
-        .expect(1)
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
+        .expect(0)
         .mount(&litsense2)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/esummary.fcgi"))
-        .and(query_param("db", "pubmed"))
-        .and(query_param("retmode", "json"))
-        .and(query_param("id", "22663011"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "result": {
-                "uids": ["22663011"],
-                "22663011": {
-                    "uid": "22663011",
-                    "title": "Hydrated LitSense2 federated title",
-                    "sortpubdate": "2024/01/15 00:00",
-                    "pubdate": "2024 Jan 15",
-                    "fulljournalname": "Journal One",
-                    "source": "J1"
-                }
-            }
-        })))
-        .expect(1)
-        .mount(&pubmed)
         .await;
 
     let page = search_page(
@@ -295,13 +262,12 @@ async fn federated_search_keyword_includes_litsense2_matches() {
     .await
     .expect("federated search should succeed");
 
-    assert_eq!(page.results.len(), 1);
-    assert_eq!(page.results[0].source, ArticleSource::LitSense2);
-    assert_eq!(
-        page.results[0].matched_sources,
-        vec![ArticleSource::LitSense2]
+    assert!(page.results.is_empty());
+    assert!(
+        page.source_status
+            .iter()
+            .all(|status| status.source != ArticleSource::LitSense2)
     );
-    assert_eq!(page.results[0].score, Some(0.8));
 }
 
 #[tokio::test]

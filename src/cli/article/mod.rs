@@ -93,7 +93,7 @@ pub struct ArticleSearchArgs {
     /// Hybrid source-position weight (default: 0.1; requires --sort relevance)
     #[arg(long = "weight-position")]
     pub weight_position: Option<f64>,
-    /// Article source [values: all, pubtator, europepmc, pubmed, litsense2] (default: all)
+    /// Article source [values: all, pubtator, europepmc, pubmed, litsense2] (default: all; LitSense2 explicit only)
     #[arg(
         long,
         default_value = "all",

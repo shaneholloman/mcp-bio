@@ -30,6 +30,22 @@ cargo test --lib ticket_376_article_source_status_contracts -- --nocapture \
   | mustmatch like 'ticket_376_article_source_status_contracts'
 ```
 
+## Default Article Source Plan Excludes LitSense2
+
+`--source all` should keep the default federated source set to PubTator3,
+Europe PMC, PubMed, and compatible Semantic Scholar. LitSense2 remains
+individually selectable for callers who explicitly ask for it.
+
+```bash
+cargo test --lib summarize_debug_plan_keyword_all_excludes_litsense2 -- --nocapture \
+  | mustmatch like 'summarize_debug_plan_keyword_all_excludes_litsense2'
+```
+
+```bash
+cargo test --lib summarize_debug_plan_explicit_litsense2_remains_selectable -- --nocapture \
+  | mustmatch like 'summarize_debug_plan_explicit_litsense2_remains_selectable'
+```
+
 ## Federated Article Search Bounds Slow Sources
 
 When one article source is slow, the default federated search should still return

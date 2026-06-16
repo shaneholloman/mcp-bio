@@ -76,9 +76,9 @@ biomcp search article -g BRAF --limit 10
 `search article` always works without credentials. BioMCP keeps
 `sort=relevance` as the default, but the effective ranking mode depends on the
 query: keyword-bearing searches default to hybrid scoring, while entity-only
-searches default to lexical directness. LitSense2 joins keyword-bearing
-federated searches, and the Semantic Scholar leg is still eligible whenever the
-filter set is compatible. `S2_API_KEY` upgrades those Semantic Scholar
+searches default to lexical directness. The default source set stays PubTator3,
+Europe PMC, PubMed, and compatible Semantic Scholar; use `--source litsense2`
+explicitly when you want LitSense2. `S2_API_KEY` upgrades Semantic Scholar
 requests to authenticated quota; without it, BioMCP uses the shared pool.
 BioMCP also caps each federated source's contribution after deduplication and
 before ranking. Default: 40% of `--limit` on federated pools with at least

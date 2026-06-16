@@ -84,8 +84,9 @@ integration.
 ## Article Federation and Front-Door Validation
 
 `search article --source all` plans PubTator3 plus Europe PMC plus PubMed.
-Keyword-bearing queries also add LitSense2, and Semantic Scholar remains an
-optional compatible search leg on that path. Strict Europe PMC-only filters
+Keyword-bearing queries keep that default source set, and Semantic Scholar
+remains an optional compatible search leg on that path. LitSense2 remains
+available only through explicit `--source litsense2`. Strict Europe PMC-only filters
 such as `--open-access` and `--type` disable the federated planner and route
 to Europe PMC only.
 `--source pubtator` with strict Europe PMC-only filters is rejected at the
@@ -97,8 +98,9 @@ Article filters remain raw as the shared contract for planning, ranking,
 rendering, JSON metadata, and session loop-breaker state. At the provider
 boundary, direct and compatible federated PubMed ESearch cleans bounded
 question-format filler words from unfielded gene, disease, drug, and keyword
-clauses. PubTator3, Europe PMC, LitSense2, and Semantic Scholar receive their
-existing query inputs.
+clauses. PubTator3, Europe PMC, and Semantic Scholar receive their existing
+query inputs on the default route; explicit LitSense2 searches keep their
+LitSense2 query input.
 
 After fetch, article results deduplicate across PMID, PMCID, and DOI where
 possible, then re-rank locally. Before local ranking, the PMID-eligible
