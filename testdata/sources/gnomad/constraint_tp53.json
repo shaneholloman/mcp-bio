@@ -1,0 +1,13 @@
+{
+  "data": {
+    "gene": {
+      "canonical_transcript_id": "ENST00000269305",
+      "gnomad_constraint": {
+        "pLI": 0.9979,
+        "oe_lof_upper": 0.449,
+        "mis_z": 1.1539,
+        "syn_z": 0.9583
+      }
+    }
+  }
+}

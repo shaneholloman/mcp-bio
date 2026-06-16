@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "message": "Gene not found"
+    }
+  ],
+  "data": {
+    "gene": null
+  }
+}
