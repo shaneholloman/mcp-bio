@@ -2,10 +2,13 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 
 use http_cache_reqwest::CacheMode;
+use reqwest::StatusCode;
+use reqwest::header::HeaderValue;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const WIKIPATHWAYS_BASE: &str = "https://www.wikipathways.org/json";
 const WIKIPATHWAYS_API: &str = "wikipathways";
@@ -25,27 +28,6 @@ impl WikiPathwaysClient {
         })
     }
 
-    #[cfg(test)]
-    pub(crate) fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
-    fn search_request(&self) -> reqwest_middleware::RequestBuilder {
-        let url = self.endpoint("findPathwaysByText.json");
-        self.client.get(&url).with_extension(CacheMode::NoStore)
-    }
-
     async fn get_json<T: DeserializeOwned>(
         &self,
         req: reqwest_middleware::RequestBuilder,
@@ -59,34 +41,43 @@ impl WikiPathwaysClient {
             WIKIPATHWAYS_MAX_BODY_BYTES,
         )
         .await?;
+        Self::decode_json_response(status, content_type.as_ref(), &bytes)
+    }
+
+    pub(crate) fn decode_json_response<T: DeserializeOwned>(
+        status: StatusCode,
+        content_type: Option<&HeaderValue>,
+        bytes: &[u8],
+    ) -> Result<T, BioMcpError> {
         if !status.is_success() {
-            let excerpt = crate::sources::summarize_http_error_body(content_type.as_ref(), &bytes);
+            let excerpt = crate::sources::summarize_http_error_body(content_type, bytes);
             return Err(BioMcpError::Api {
                 api: WIKIPATHWAYS_API.to_string(),
                 message: format!("HTTP {status}: {excerpt}"),
             });
         }
-        crate::sources::ensure_json_content_type(WIKIPATHWAYS_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
+        crate::sources::ensure_json_content_type(WIKIPATHWAYS_API, content_type, bytes)?;
+        serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
             api: WIKIPATHWAYS_API.to_string(),
             source,
         })
     }
 
-    pub async fn search_pathways(
-        &self,
-        query: &str,
-        limit: usize,
-    ) -> Result<Vec<WikiPathwaysHit>, BioMcpError> {
+    pub(crate) fn search_pathways_plan(query: &str) -> Result<RequestPlan, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
             return Err(BioMcpError::InvalidArgument(
                 "WikiPathways query is required".into(),
             ));
         }
+        Ok(RequestPlan::get("findPathwaysByText.json"))
+    }
 
-        let resp: WikiPathwaysSearchResponse = self.get_json(self.search_request()).await?;
-
+    fn map_search_hits(
+        resp: WikiPathwaysSearchResponse,
+        query: &str,
+        limit: usize,
+    ) -> Vec<WikiPathwaysHit> {
         let mut ranked = Vec::new();
         let mut seen = HashSet::new();
         for row in resp.entries() {
@@ -121,24 +112,44 @@ impl WikiPathwaysClient {
                 .then_with(|| left.1.cmp(&right.1))
         });
 
-        Ok(ranked
+        ranked
             .into_iter()
             .take(limit.clamp(1, 25))
             .map(|(_, id, name)| WikiPathwaysHit { id, name })
-            .collect())
+            .collect()
     }
 
-    pub async fn get_pathway(&self, pw_id: &str) -> Result<WikiPathwaysRecord, BioMcpError> {
+    pub async fn search_pathways(
+        &self,
+        query: &str,
+        limit: usize,
+    ) -> Result<Vec<WikiPathwaysHit>, BioMcpError> {
+        let plan = Self::search_pathways_plan(query)?;
+        let resp: WikiPathwaysSearchResponse = self
+            .get_json(
+                request_from_plan(&self.client, self.base.as_ref(), &plan)
+                    .with_extension(CacheMode::NoStore),
+            )
+            .await?;
+        Ok(Self::map_search_hits(resp, query, limit))
+    }
+
+    pub(crate) fn get_pathway_plan(pw_id: &str) -> Result<(RequestPlan, String), BioMcpError> {
         let pw_id = validate_wikipathways_id(pw_id)?;
-        let url = self.endpoint("getPathwayInfo.json");
-        let resp: WikiPathwaysGetResponse = self.get_json(self.client.get(&url)).await?;
+        Ok((RequestPlan::get("getPathwayInfo.json"), pw_id))
+    }
+
+    fn map_pathway_record(
+        resp: WikiPathwaysGetResponse,
+        pw_id: &str,
+    ) -> Result<WikiPathwaysRecord, BioMcpError> {
         let row = resp
             .entries()
             .into_iter()
-            .find(|row| row.id.as_deref().map(str::trim) == Some(pw_id.as_str()))
+            .find(|row| row.id.as_deref().map(str::trim) == Some(pw_id))
             .ok_or_else(|| BioMcpError::NotFound {
                 entity: "pathway".to_string(),
-                id: pw_id.clone(),
+                id: pw_id.to_string(),
                 suggestion:
                     "Try searching by pathway name, for example: biomcp search pathway -q apoptosis"
                         .to_string(),
@@ -170,11 +181,20 @@ impl WikiPathwaysClient {
         })
     }
 
-    pub async fn pathway_entrez_gene_ids(&self, pw_id: &str) -> Result<Vec<String>, BioMcpError> {
-        let pw_id = validate_wikipathways_id(pw_id)?;
-        let url = self.endpoint("findPathwaysByXref.json");
-        let resp: WikiPathwaysXrefResponse = self.get_json(self.client.get(&url)).await?;
+    pub async fn get_pathway(&self, pw_id: &str) -> Result<WikiPathwaysRecord, BioMcpError> {
+        let (plan, pw_id) = Self::get_pathway_plan(pw_id)?;
+        let resp: WikiPathwaysGetResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+        Self::map_pathway_record(resp, &pw_id)
+    }
 
+    pub(crate) fn pathway_xrefs_plan(pw_id: &str) -> Result<(RequestPlan, String), BioMcpError> {
+        let pw_id = validate_wikipathways_id(pw_id)?;
+        Ok((RequestPlan::get("findPathwaysByXref.json"), pw_id))
+    }
+
+    fn map_pathway_entrez_gene_ids(resp: WikiPathwaysXrefResponse, pw_id: &str) -> Vec<String> {
         let mut out = Vec::new();
         let mut seen = HashSet::new();
         for xref in resp.xrefs.unwrap_or_default() {
@@ -190,7 +210,7 @@ impl WikiPathwaysClient {
         if let Some(row) = resp
             .pathway_info
             .into_iter()
-            .find(|row| row.id.as_deref().map(str::trim) == Some(pw_id.as_str()))
+            .find(|row| row.id.as_deref().map(str::trim) == Some(pw_id))
         {
             for xref in row.ncbigene.unwrap_or_default().split([',', ';']) {
                 let xref = xref.trim();
@@ -204,7 +224,16 @@ impl WikiPathwaysClient {
                 out.push(xref.to_string());
             }
         }
-        Ok(out)
+        out
+    }
+
+    pub async fn pathway_entrez_gene_ids(&self, pw_id: &str) -> Result<Vec<String>, BioMcpError> {
+        let (plan, pw_id) = Self::pathway_xrefs_plan(pw_id)?;
+        let resp: WikiPathwaysXrefResponse = self
+            .get_json(request_from_plan(&self.client, self.base.as_ref(), &plan))
+            .await?;
+
+        Ok(Self::map_pathway_entrez_gene_ids(resp, &pw_id))
     }
 }
 
@@ -382,179 +411,4 @@ struct WikiPathwaysXrefEntry {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::test_support::set_env_var;
-    use wiremock::matchers::{method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    async fn env_lock_async() -> tokio::sync::MutexGuard<'static, ()> {
-        crate::test_support::env_lock().lock().await
-    }
-
-    #[test]
-    fn validates_wikipathways_id_shape() {
-        assert!(is_wikipathways_id("WP254"));
-        assert!(!is_wikipathways_id("wp254"));
-        assert!(!is_wikipathways_id("R-HSA-5673001"));
-        assert!(!is_wikipathways_id("WP25A"));
-    }
-
-    #[tokio::test]
-    async fn search_pathways_filters_non_human_invalid_and_duplicate_rows() {
-        let server = MockServer::start().await;
-        let client = WikiPathwaysClient::new_for_test(server.uri()).unwrap();
-
-        let body = r#"{
-          "pathwayInfo": [
-            {"id": "WP111", "name": "Alpha", "species": "Homo sapiens"},
-            {"id": "WP111", "name": "Alpha duplicate", "species": "Homo sapiens"},
-            {"id": "WP222", "name": "Mouse only", "species": "Mus musculus"},
-            {"id": "BAD", "name": "Bad", "species": "Homo sapiens"},
-            {"id": "WP333", "name": "", "species": "Homo sapiens"},
-            {"id": "WP444", "name": "Alpha beta", "species": "Homo sapiens"}
-          ]
-        }"#;
-
-        Mock::given(method("GET"))
-            .and(path("/findPathwaysByText.json"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(body, "application/json"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let hits = client.search_pathways("alpha", 10).await.unwrap();
-        assert_eq!(hits.len(), 2);
-        assert_eq!(hits[0].id, "WP111");
-        assert_eq!(hits[1].id, "WP444");
-    }
-
-    #[tokio::test]
-    async fn get_pathway_parses_minimal_detail_payload() {
-        let server = MockServer::start().await;
-        let client = WikiPathwaysClient::new_for_test(server.uri()).unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/getPathwayInfo.json"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(
-                r#"{"pathwayInfo":[{"id":"WP254","name":"Apoptosis","species":"Homo sapiens","revision":"140926"}]}"#,
-                "application/json",
-            ))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let record = client.get_pathway("WP254").await.unwrap();
-        assert_eq!(record.id, "WP254");
-        assert_eq!(record.name, "Apoptosis");
-        assert_eq!(record.species.as_deref(), Some("Homo sapiens"));
-    }
-
-    #[tokio::test]
-    async fn pathway_entrez_gene_ids_dedupes_and_filters_non_numeric_rows() {
-        let server = MockServer::start().await;
-        let client = WikiPathwaysClient::new_for_test(server.uri()).unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/findPathwaysByXref.json"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(
-                r#"{"pathwayInfo":[{"id":"WP254","ncbigene":"ncbigene:7157, ncbigene:1956, ncbigene:7157; ncbigene:BAD, , ncbigene:672"}]}"#,
-                "application/json",
-            ))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let ids = client.pathway_entrez_gene_ids("WP254").await.unwrap();
-        assert_eq!(ids, vec!["7157", "1956", "672"]);
-    }
-
-    #[tokio::test]
-    async fn search_rejects_html_content_type_before_json_parse() {
-        let server = MockServer::start().await;
-        let client = WikiPathwaysClient::new_for_test(server.uri()).unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/findPathwaysByText.json"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_raw("<html><body>error page</body></html>", "text/html"),
-            )
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let err = client.search_pathways("apoptosis", 1).await.unwrap_err();
-        assert!(err.to_string().contains("Unexpected HTML response"));
-    }
-
-    #[tokio::test]
-    async fn search_bypasses_persistent_cache_when_mock_responses_change() {
-        let _guard = env_lock_async().await;
-        let server = MockServer::start().await;
-        let _base = set_env_var("BIOMCP_WIKIPATHWAYS_BASE", Some(&server.uri()));
-        let client = WikiPathwaysClient::new().unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/findPathwaysByText.json"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_raw("<html><body>error page</body></html>", "text/html"),
-            )
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let first_err = client.search_pathways("apoptosis", 1).await.unwrap_err();
-        assert!(first_err.to_string().contains("Unexpected HTML response"));
-
-        server.reset().await;
-
-        Mock::given(method("GET"))
-            .and(path("/findPathwaysByText.json"))
-            .respond_with(ResponseTemplate::new(404).set_body_raw(
-                "<!DOCTYPE html><html><head><title>404</title></head><body>File not found</body></html>",
-                "text/html; charset=utf-8",
-            ))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let second_err = client.search_pathways("apoptosis", 1).await.unwrap_err();
-        let second_msg = second_err.to_string();
-        assert!(second_msg.contains("HTTP 404"));
-        assert!(second_msg.contains("HTML error page"));
-    }
-
-    #[tokio::test]
-    async fn search_sanitizes_404_html_error_body() {
-        let server = MockServer::start().await;
-        let client = WikiPathwaysClient::new_for_test(server.uri()).unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/findPathwaysByText.json"))
-            .respond_with(ResponseTemplate::new(404).set_body_raw(
-                "<!DOCTYPE html><html><head><title>404</title></head><body>File not found</body></html>",
-                "text/html; charset=utf-8",
-            ))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let err = client.search_pathways("apoptosis", 1).await.unwrap_err();
-        let msg = err.to_string();
-        assert!(msg.contains("HTTP 404"));
-        assert!(msg.contains("HTML error page"));
-        assert!(!msg.contains("<!DOCTYPE"));
-        assert!(!msg.contains("<html"));
-        assert!(!msg.contains("<head"));
-    }
-
-    #[tokio::test]
-    async fn get_pathway_rejects_invalid_ids_before_request() {
-        let client = WikiPathwaysClient::new_for_test("http://127.0.0.1".into()).unwrap();
-        let err = client.get_pathway("not-a-pathway").await.unwrap_err();
-        assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-        assert!(err.to_string().contains("WP254"));
-    }
-}
+mod tests;
