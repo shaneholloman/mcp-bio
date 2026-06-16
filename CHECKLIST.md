@@ -102,7 +102,7 @@ Ontologies / proteins / pathways / misc:
 - [x] uniprot ~10 · [x] interpro ~2 · [x] hpa ~4 · [x] hpo ~4 · [x] monarch ~4 · [x] ols4 ~3
 - [x] umls ~1 · [x] reactome ~3 · [x] wikipathways ~8 · [x] kegg ~6 · [x] gprofiler ~7
 - [x] enrichr ~4 · [x] quickgo ~3 · [x] complexportal ~3 · [x] string ~3 · [x] disgenet ~10
-- [x] alphagenome ~4 · [x] medlineplus ~5 · [ ] figshare ~13
+- [x] alphagenome ~4 · [x] medlineplus ~5 · [x] figshare ~13
 
 (~57 endpoints. Auth keys are present in env for nci_cts/umls/alphagenome/disgenet/s2;
 OncoKB has none — harvest its existing stub instead of curling.)
@@ -336,4 +336,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   response parsing tests, replacing source-level mock server tests. Kept the
   test-only constructor because downstream entity tests still use it. Checks:
   `cargo nextest run -E 'test(/sources::medlineplus::/)'` → 10/10 pass;
+  `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.
+- 2026-06-16: `figshare` converted to pure article/search request
+  construction, JSON response parsing, download response decision, and URL
+  validation tests, replacing source-level mock server tests. Checks:
+  `cargo nextest run -E 'test(/sources::figshare::/)'` → 18/18 pass;
   `bash scripts/check-no-server-tests.sh` → pass; `cargo check` → pass.
