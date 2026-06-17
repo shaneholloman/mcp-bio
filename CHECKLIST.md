@@ -180,6 +180,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/drug/get/tests.rs` is pure: trial alias transient-failure
       fallback and canonical-name behavior now test the alias resolution helper
       directly instead of swapping MyChem base URLs.
+- [x] `src/entities/discover.rs` is pure: exact article keyword alias
+      canonicalization now tests direct OLS fixtures instead of starting an OLS
+      mock server.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -673,3 +676,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   test(/enrich_sparse_disease_identity_prefers_exact_ols4_match/)'` → 12/12
   pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
   pass; `git diff --check` → pass.
+- 2026-06-16: discover cleanup. Converted exact article keyword alias
+  canonicalization from an OLS mock-server test to direct `OlsDoc` fixtures
+  through `resolve_exact_article_keyword_entity_from_ols_docs`, and removed the
+  now-unused discover wiremock/env imports. `src/entities/discover.rs` now has
+  no mock-server/env-lock cases. Checks:
+  `cargo nextest run -E 'test(/entities::discover::/)'` → 39/39 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass; discover purity `rg` → no matches.

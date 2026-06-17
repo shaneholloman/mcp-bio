@@ -2126,15 +2126,12 @@ mod tests {
         AliasFallbackDecision, ConceptSource, ConceptXref, DiscoverConcept, DiscoverConfidence,
         DiscoverIntent, DiscoverMode, DiscoverRequest, DiscoverResult, DiscoverType, MatchTier,
         OLS4_TIMEOUT, build_result, classify_alias_fallback, concept_from_ols, generate_commands,
-        normalize_primary_id, ols_doc_identifier, resolve_exact_article_keyword_entity,
+        normalize_primary_id, ols_doc_identifier,
         resolve_exact_article_keyword_entity_from_ols_docs, symptom_disease_lookup_query,
     };
     use crate::sources::medlineplus::MedlinePlusTopic;
     use crate::sources::ols4::OlsDoc;
     use crate::sources::umls::{UmlsConcept, UmlsXref};
-    use crate::test_support::{env_lock, set_env_var};
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[test]
     fn discover_request_records_command_intent_before_clients() {
@@ -2603,38 +2600,13 @@ mod tests {
         assert_eq!(gene.primary_id.as_deref(), Some("HGNC:1097"));
     }
 
-    #[tokio::test]
-    async fn exact_article_keyword_resolver_uses_ols4_and_canonicalizes_aliases() {
-        let _guard = env_lock().lock().await;
-        let server = MockServer::start().await;
-        let _ols_base = set_env_var("BIOMCP_OLS4_BASE", Some(&server.uri()));
-        Mock::given(method("GET"))
-            .and(path("/api/search"))
-            .and(query_param("q", "Gleevec"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "response": {
-                    "docs": [
-                        {
-                            "iri": "http://example.org/chebi/45783",
-                            "ontology_name": "chebi",
-                            "ontology_prefix": "chebi",
-                            "short_form": "chebi:45783",
-                            "obo_id": "CHEBI:45783",
-                            "label": "imatinib",
-                            "description": [],
-                            "exact_synonyms": ["Gleevec"],
-                            "type": "class"
-                        }
-                    ]
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let resolved = resolve_exact_article_keyword_entity("Gleevec")
-            .await
-            .expect("resolver should query OLS4")
-            .expect("alias should resolve");
+    #[test]
+    fn exact_article_keyword_resolver_canonicalizes_ols_aliases() {
+        let resolved = resolve_exact_article_keyword_entity_from_ols_docs(
+            "Gleevec",
+            &[ols_doc("chebi", "imatinib", "CHEBI:45783", &["Gleevec"])],
+        )
+        .expect("alias should resolve");
 
         assert_eq!(resolved.entity_type, DiscoverType::Drug);
         assert_eq!(resolved.label, "imatinib");
