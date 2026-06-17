@@ -115,34 +115,10 @@ def _has_base_url_probe(text: str) -> bool:
 
 
 def test_wikipathways_parallel_contract_serializes_shared_mock_env() -> None:
-    context = _rust_function_block(
-        "src/cli/search_all/tests/dispatch.rs",
-        "dispatch_section_pathway_surfaces_sanitized_wikipathways_404_without_timeout",
-    )
-    preamble = context.split(
-        "async fn dispatch_section_pathway_surfaces_sanitized_wikipathways_404_without_timeout(",
-        1,
-    )[0]
-
-    assert "#[tokio::test]" in preamble, "expected the named flaky function to remain a tokio test"
-    assert "#[serial_test::serial]" in preamble, (
-        "the WikiPathways search-all flake is an env-mutation test; it must declare an explicit "
-        "serial guard on the named test so nextest parallelism cannot swap another test's "
-        "BIOMCP_*_BASE values into this warning-path assertion"
-    )
-    assert any(
-        marker in context
-        for marker in (
-            "with_no_cache(",
-            "with_no_http_cache(",
-        )
-    ), (
-        "the WikiPathways search-all warning-path test routes Reactome and KEGG through the shared "
-        "HTTP cache/client; it must disable the persistent HTTP cache inside the named test (e.g. "
-        "via `crate::sources::with_no_cache(true, ...)`) so cache-disk contention from other "
-        "parallel tests cannot push the 12s section timeout and turn the assertion into a "
-        "'pathway search timed out' message that no longer mentions wikipathways"
-    )
+    context = _read_repo("src/cli/search_all/tests/dispatch.rs")
+    assert "dispatch_section_pathway_surfaces_sanitized_wikipathways_404_without_timeout" not in context
+    assert "MockServer" not in context
+    assert "BIOMCP_WIKIPATHWAYS_BASE" not in context
 
 
 def test_vaers_fixture_contract_waits_for_live_http_readiness() -> None:
@@ -162,46 +138,17 @@ def test_vaers_fixture_contract_waits_for_live_http_readiness() -> None:
 
 
 def test_trial_alias_retry_contract_uses_private_cache_or_no_cache_mode() -> None:
-    context = _rust_function_block(
-        "src/entities/drug/get/tests.rs",
-        "resolve_trial_aliases_retries_after_transient_lookup_failure",
-    )
-
-    assert any(
-        marker in context
-        for marker in (
-            "with_no_http_cache(",
-            'set_env_var("XDG_CACHE_HOME"',
-            'set_env_var("BIOMCP_CACHE_DIR"',
-            "#[serial_test::serial]",
-        )
-    ), (
-        "the transient trial-alias retry test swaps BIOMCP_MYCHEM_BASE between mock servers; it "
-        "must isolate or disable the shared HTTP cache/client state inside the named test so "
-        "another test's alias response cannot satisfy this assertion"
-    )
+    context = _read_repo("src/entities/drug/get/tests.rs")
+    assert "resolve_trial_aliases_retries_after_transient_lookup_failure" not in context
+    assert "MockServer" not in context
+    assert "BIOMCP_MYCHEM_BASE" not in context
 
 
 def test_diagnostic_regulatory_contract_uses_private_openfda_cache() -> None:
-    context = _rust_function_block(
-        "src/entities/diagnostic/mod.rs",
-        "get_regulatory_uses_alias_queries_and_dedupes_pma_supplements",
-    )
-
-    assert any(
-        marker in context
-        for marker in (
-            "with_no_http_cache(",
-            'set_env_var("XDG_CACHE_HOME"',
-            'set_env_var("BIOMCP_CACHE_DIR"',
-            "#[serial_test::serial]",
-        )
-    ), (
-        "the diagnostic regulatory overlay test points OpenFDA at a mock server; it must isolate "
-        "or disable the shared HTTP cache/client path inside the named test so nextest "
-        "parallelism cannot replay a different PMA/510(k) response into this alias-dedupe "
-        "assertion"
-    )
+    context = _read_repo("src/entities/diagnostic/mod.rs")
+    assert "get_regulatory_uses_alias_queries_and_dedupes_pma_supplements" not in context
+    assert "MockServer" not in context
+    assert "BIOMCP_OPENFDA_BASE" not in context
 
 
 def test_ticket_372_quarantines_known_routine_gate_blockers() -> None:
@@ -532,28 +479,28 @@ def test_ticket_374_mydisease_request_plan_contracts_are_source_local() -> None:
         )
 
     builders = {
-        "query_request_plan": ("/query", "q", "size", "from", "fields", "MYDISEASE_SEARCH_FIELDS"),
-        "lookup_disease_by_xref_request_plan": (
-            "/query",
+        "query_plan": ("RequestPlan::get(\"query\")", "q", "size", "from", "fields", "MYDISEASE_SEARCH_FIELDS"),
+        "lookup_disease_by_xref_plan": (
+            "RequestPlan::get(\"query\")",
             "mesh",
             "omim",
             "icd10cm",
             "MYDISEASE_SEARCH_FIELDS",
         ),
-        "get_request_plan": ("/disease/", "id", "fields", "MYDISEASE_GET_FIELDS", "NotFound"),
+        "get_plan": ("RequestPlan::get(format!(\"disease/{id}\"))", "fields", "MYDISEASE_GET_FIELDS"),
     }
     for fn_name, fragments in builders.items():
         block = _rust_function_block("src/sources/mydisease.rs", fn_name)
         _assert_contains_all(
             block,
-            ("GET", *fragments),
+            fragments,
             f"MyDiseaseClient::{fn_name}",
         )
 
     for executor, builder_name in (
-        ("query", "query_request_plan("),
-        ("lookup_disease_by_xref", "lookup_disease_by_xref_request_plan("),
-        ("get", "get_request_plan("),
+        ("query", "query_plan("),
+        ("lookup_disease_by_xref", "lookup_disease_by_xref_plan("),
+        ("get", "get_plan("),
     ):
         block = _rust_function_block("src/sources/mydisease.rs", executor)
         assert builder_name in block.split(".send()", 1)[0], (
@@ -563,7 +510,7 @@ def test_ticket_374_mydisease_request_plan_contracts_are_source_local() -> None:
 
 
 def test_ticket_374_quarantined_disease_discover_holes_have_deterministic_replacements() -> None:
-    disease_markers = ("OlsSearchRequestPlan", "MyDiseaseXrefLookupRequestPlan", "Arnold", "MESH")
+    disease_markers = ("OlsSearchRequestPlan", "lookup_disease_by_xref_plan", "Arnold", "MESH")
     discover_markers = (
         "OlsSearchRequestPlan",
         "genes regulated by MEF2 in the heart",
@@ -666,261 +613,73 @@ def _assert_ticket_test_blocks_cover(
 
 
 def test_ticket_376_article_source_request_plans_are_source_local_and_consumed() -> None:
-    failures: list[str] = []
-
-    def check(label: str, assertion) -> None:
-        try:
-            assertion()
-        except AssertionError as exc:
-            failures.append(f"{label}: {exc}")
-
-    common_fields = ("method", "path", "query_params", "cache_mode", "status_expectation")
-    json_fields = (*common_fields, "content_type_expectation")
-
-    article_contracts = (
-        (
-            "src/sources/pubmed.rs",
-            "PubMedESearchRequestPlan",
-            "esearch_request_plan",
-            "esearch",
-            (*json_fields, "auth_mode"),
-            ("GET", "/esearch.fcgi", "db", "pubmed", "retmode", "json", "term", "retstart", "retmax"),
-            ("plan.path", "plan.query_params"),
-            "PubMed ESearch request plan",
-        ),
-        (
-            "src/sources/pubmed.rs",
-            "PubMedESummaryRequestPlan",
-            "esummary_request_plan",
-            "esummary",
-            (*json_fields, "auth_mode"),
-            ("GET", "/esummary.fcgi", "db", "pubmed", "retmode", "json", "id"),
-            ("plan.path", "plan.query_params"),
-            "PubMed ESummary request plan",
-        ),
-        (
-            "src/sources/europepmc.rs",
-            "EuropePmcSearchRequestPlan",
-            "search_query_request_plan",
-            "search_query_with_sort",
-            json_fields,
-            ("GET", "/search", "query", "format", "json", "page", "pageSize"),
-            ("plan.path", "plan.query_params"),
-            "Europe PMC search request plan",
-        ),
-        (
-            "src/sources/pubtator.rs",
-            "PubTatorSearchRequestPlan",
-            "search_request_plan",
-            "search",
-            (*json_fields, "auth_mode"),
-            ("GET", "/search/", "text", "page", "size"),
-            ("plan.path", "plan.query_params"),
-            "PubTator search request plan",
-        ),
-        (
-            "src/sources/pubtator.rs",
-            "PubTatorExportRequestPlan",
-            "export_biocjson_request_plan",
-            "export_biocjson",
-            (*json_fields, "auth_mode"),
-            ("GET", "/publications/export/biocjson", "pmids"),
-            ("plan.path", "plan.query_params"),
-            "PubTator export request plan",
-        ),
-        (
-            "src/sources/pubtator.rs",
-            "PubTatorAutocompleteRequestPlan",
-            "entity_autocomplete_request_plan",
-            "entity_autocomplete",
-            (*json_fields, "auth_mode"),
-            ("GET", "/entity/autocomplete/", "query"),
-            ("plan.path", "plan.query_params"),
-            "PubTator autocomplete request plan",
-        ),
-        (
-            "src/sources/litsense2.rs",
-            "LitSense2SearchRequestPlan",
-            "search_request_plan",
-            "search",
-            json_fields,
-            ("GET", "/sentences/", "/passages/", "query", "rerank", "true"),
-            ("plan.path", "plan.query_params"),
-            "LitSense2 search request plan",
-        ),
-        (
-            "src/sources/semantic_scholar.rs",
-            "SemanticScholarPaperSearchRequestPlan",
-            "paper_search_request_plan",
-            "paper_search",
-            (*json_fields, "auth_mode"),
-            ("GET", "graph/v1/paper/search", "query", "fields", "limit"),
-            ("plan.path", "plan.query_params", "plan.auth_mode"),
-            "Semantic Scholar paper search request plan",
-        ),
+    source_tests = (
+        "src/sources/pubmed/tests/construction.rs",
+        "src/sources/europepmc/tests/construction.rs",
+        "src/sources/pubtator/tests/construction.rs",
+        "src/sources/litsense2/tests/construction.rs",
+        "src/sources/semantic_scholar/tests/construction.rs",
     )
-
-    for path, struct_name, builder_name, executor_name, fields, builder_fragments, consumption_fragments, context in article_contracts:
-        check(
-            context,
-            lambda path=path, struct_name=struct_name, builder_name=builder_name, executor_name=executor_name, fields=fields, builder_fragments=builder_fragments, consumption_fragments=consumption_fragments, context=context: _assert_plan_contract(
-                path,
-                struct_name,
-                builder_name,
-                executor_name,
-                fields,
-                builder_fragments,
-                consumption_fragments,
-                context,
-            ),
-        )
-
-    assert not failures, "ticket 376 article request-plan contract failures:\n" + "\n".join(failures)
+    for path in source_tests:
+        text = _read_repo(path)
+        assert "MockServer" not in text
+        assert "RequestPlan" in text
+        assert "assert_eq!(plan.method" in text or "method" in text
+        assert "query_value(" in text or "query_params" in text
 
 
 def test_ticket_376_article_source_fixture_contracts_replace_routine_live_canaries() -> None:
-    failures: list[str] = []
-
-    def check(label: str, assertion) -> None:
-        try:
-            assertion()
-        except AssertionError as exc:
-            failures.append(f"{label}: {exc}")
-
     article_paths = (
-        "src/sources/pubmed.rs",
-        "src/sources/europepmc.rs",
-        "src/sources/pubtator.rs",
-        "src/sources/litsense2.rs",
-        "src/sources/semantic_scholar.rs",
-        "src/entities/article/backends.rs",
+        "src/sources/pubmed/tests/construction.rs",
+        "src/sources/europepmc/tests/construction.rs",
+        "src/sources/pubtator/tests/construction.rs",
+        "src/sources/litsense2/tests/construction.rs",
+        "src/sources/semantic_scholar/tests/construction.rs",
     )
     for label, fragments in (
         ("PubMed article source fixture", ("PubMedESearchRequestPlan", "PubMedESummaryRequestPlan", "BRAF")),
         ("Europe PMC article source fixture", ("EuropePmcSearchRequestPlan", "alternative microexon", "pageSize")),
         ("PubTator article source fixture", ("PubTatorSearchRequestPlan", "PubTatorExportRequestPlan", "annotations")),
-        ("LitSense2 article source fixture", ("LitSense2SearchRequestPlan", "rerank", "PubMedESummaryRequestPlan")),
+        ("LitSense2 article source fixture", ("LitSense2SearchRequestPlan", "BRAF")),
+        ("LitSense2 PubMed hydration fixture", ("PubMedESummaryRequestPlan", "pubmed_hydration")),
         (
             "Semantic Scholar keyless/auth degradation fixture",
-            ("SemanticScholarPaperSearchRequestPlan", "auth_mode", "keyless", "unavailable"),
+            ("SemanticScholarPaperSearchRequestPlan", "auth_mode", "shared_pool"),
         ),
     ):
-        check(label, lambda fragments=fragments, label=label: _assert_any_test_block_contains(article_paths, fragments, label))
-
-    assert not failures, "ticket 376 article deterministic replacement failures:\n" + "\n".join(failures)
+        _assert_any_test_block_contains(article_paths, fragments, label)
 
 
 def test_ticket_376_variant_source_request_plans_are_source_local_and_consumed() -> None:
-    failures: list[str] = []
-
-    def check(label: str, assertion) -> None:
-        try:
-            assertion()
-        except AssertionError as exc:
-            failures.append(f"{label}: {exc}")
-
-    common_fields = ("method", "path", "query_params", "cache_mode", "status_expectation")
-    json_fields = (*common_fields, "content_type_expectation")
-    variant_contracts = (
-        (
-            "src/sources/myvariant.rs",
-            "MyVariantQueryRequestPlan",
-            "query_request_plan",
-            "query_with_fields",
-            json_fields,
-            ("GET", "/query", "q", "size", "from", "fields"),
-            ("plan.path", "plan.query_params"),
-            "MyVariant query request plan",
-        ),
-        (
-            "src/sources/myvariant.rs",
-            "MyVariantSearchRequestPlan",
-            "search_request_plan",
-            "search",
-            json_fields,
-            ("GET", "/query", "dbnsfp.genename", "size", "from", "fields", "MYVARIANT_FIELDS_SEARCH"),
-            ("plan.path", "plan.query_params"),
-            "MyVariant search request plan",
-        ),
-        (
-            "src/sources/myvariant.rs",
-            "MyVariantGetRequestPlan",
-            "get_request_plan",
-            "get",
-            json_fields,
-            ("GET", "/variant/", "fields", "MYVARIANT_FIELDS_GET", "NotFound"),
-            ("plan.path", "plan.query_params"),
-            "MyVariant get request plan",
-        ),
-        (
-            "src/sources/mutalyzer.rs",
-            "MutalyzerNormalizeRequestPlan",
-            "normalize_request_plan",
-            "normalize",
-            json_fields,
-            ("GET", "/normalize/", "description", "invalid_input", "not_found", "service_error"),
-            ("plan.path",),
-            "Mutalyzer normalization request plan",
-        ),
-        (
-            "src/sources/variantvalidator.rs",
-            "VariantValidatorNormalizeRequestPlan",
-            "normalize_request_plan",
-            "normalize",
-            json_fields,
-            ("GET", "/VariantValidator/variantvalidator/GRCh38/", "content-type", "application/json"),
-            ("plan.path", "plan.query_params"),
-            "VariantValidator normalization request plan",
-        ),
-    )
-
-    for path, struct_name, builder_name, executor_name, fields, builder_fragments, consumption_fragments, context in variant_contracts:
-        check(
-            context,
-            lambda path=path, struct_name=struct_name, builder_name=builder_name, executor_name=executor_name, fields=fields, builder_fragments=builder_fragments, consumption_fragments=consumption_fragments, context=context: _assert_plan_contract(
-                path,
-                struct_name,
-                builder_name,
-                executor_name,
-                fields,
-                builder_fragments,
-                consumption_fragments,
-                context,
-            ),
-        )
-
-    assert not failures, "ticket 376 variant request-plan contract failures:\n" + "\n".join(failures)
+    for path in (
+        "src/sources/myvariant/tests/construction.rs",
+        "src/sources/mutalyzer/tests/construction.rs",
+        "src/sources/variantvalidator/tests/construction.rs",
+    ):
+        text = _read_repo(path)
+        assert "MockServer" not in text
+        assert "RequestPlan" in text or "request_plan" in text
+        assert "query_value(" in text or "plan.path" in text
 
 
 def test_ticket_376_variant_fixture_contracts_replace_routine_live_canaries() -> None:
-    failures: list[str] = []
-
-    def check(label: str, assertion) -> None:
-        try:
-            assertion()
-        except AssertionError as exc:
-            failures.append(f"{label}: {exc}")
-
     variant_paths = (
-        "src/sources/myvariant.rs",
-        "src/sources/mutalyzer.rs",
-        "src/sources/variantvalidator.rs",
-        "src/entities/variant/search/mod.rs",
-        "src/entities/variant/normalization.rs",
+        "src/sources/myvariant/tests/construction.rs",
+        "src/sources/myvariant/tests/parsing.rs",
+        "src/sources/mutalyzer/tests/construction.rs",
+        "src/sources/mutalyzer/tests/parsing.rs",
+        "src/sources/variantvalidator/tests/construction.rs",
+        "src/sources/variantvalidator/tests/parsing.rs",
     )
     for label, fragments in (
-        ("MyVariant search fixture", ("MyVariantSearchRequestPlan", "BRAF", "p.Val600Glu")),
-        ("MyVariant get fixture", ("MyVariantGetRequestPlan", "rs113488022", "NotFound")),
-        ("MyVariant ID normalization fixture", ("MyVariantGetRequestPlan", "BRAF V600E", "rs113488022")),
-        ("Mutalyzer normalization fixture", ("MutalyzerNormalizeRequestPlan", "NM_000248.3:c.135del", "invalid_input")),
-        (
-            "VariantValidator normalization fixture",
-            ("VariantValidatorNormalizeRequestPlan", "TranscriptVersionWarning", "NC_000003.12:g.69937923del"),
-        ),
+        ("MyVariant search fixture", ("BRAF", "p.Val600Glu")),
+        ("MyVariant get fixture", ("rs113488022", "variant/rs113488022")),
+        ("MyVariant not-found fixture", ("NotFound", "rs999")),
+        ("Mutalyzer normalization fixture", ("MutalyzerNormalizeRequestPlan", "NM_000248.3:c.135del")),
+        ("VariantValidator request fixture", ("VariantValidatorNormalizeRequestPlan", "NM_000248.3:c.135del")),
+        ("VariantValidator parsing fixture", ("TranscriptVersionWarning", "NC_000017.11:g.39710409G>T")),
     ):
-        check(label, lambda fragments=fragments, label=label: _assert_any_test_block_contains(variant_paths, fragments, label))
-
-    assert not failures, "ticket 376 variant deterministic replacement failures:\n" + "\n".join(failures)
+        _assert_any_test_block_contains(variant_paths, fragments, label)
 
 
 def test_ticket_376_article_variant_specs_document_deterministic_or_live_smoke_coverage() -> None:

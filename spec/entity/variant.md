@@ -14,13 +14,21 @@ search/get request shape, identifier normalization, and Mutalyzer/
 VariantValidator status mapping locally.
 
 ```bash
-cargo test --lib ticket_376_variant_source_contracts -- --nocapture \
-  | mustmatch like 'ticket_376_variant_source_contracts'
+cargo test --lib myvariant::tests::construction -- --nocapture \
+  | mustmatch like 'search_plan_builds_gene_and_hgvsp_clauses_joined_with_and
+get_plan_builds_variant_path_with_get_fields'
 ```
 
 ```bash
-cargo test --lib ticket_376_variant_normalization_contracts -- --nocapture \
-  | mustmatch like 'ticket_376_variant_normalization_contracts'
+cargo test --lib mutalyzer::tests -- --nocapture \
+  | mustmatch like 'normalize_request_plan_encodes_transcript_path
+normalize_response_parses_success_and_warnings'
+```
+
+```bash
+cargo test --lib variantvalidator::tests -- --nocapture \
+  | mustmatch like 'normalize_request_plan_encodes_transcript_path_and_json_query
+normalize_response_extracts_warnings_and_grch38_genomic_description'
 ```
 
 ## Deterministic Renderer Envelope Contracts

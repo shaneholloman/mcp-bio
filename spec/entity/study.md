@@ -73,15 +73,17 @@ excludes fusions/SV
 --type sv'
 ```
 
-## Remote Download Stall Policy
+## Remote Download Contracts
 
-Remote DataHub archives can be large, but a server that starts an archive
-response and then stops sending bytes should fail clearly instead of hanging
-forever.
+Remote DataHub archives can be large, but routine specs should not depend on a
+mock server or public network behavior. The no-network source tests prove the
+download request shape, archive HTTP error mapping, and local archive extraction
+contract.
 
 ```bash
-cargo test download_study_stalled_archive_body_times_out_with_clear_error --lib 2>&1 | mustmatch like 'download_study_stalled_archive_body_times_out_with_clear_error
-test result: ok'
+cargo test --lib cbioportal_download::tests -- --nocapture | mustmatch like 'study_archive_plan_fetches_tarball_for_valid_study_id
+archive_status_maps_other_http_errors_with_excerpt
+install_study_archive_extracts_a_valid_local_archive'
 ```
 
 ## Filter Validation

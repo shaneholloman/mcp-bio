@@ -21,13 +21,19 @@ must instead prove PubMed, Europe PMC, PubTator, LitSense2, and Semantic Scholar
 request shape, status mapping, and redacted auth behavior locally.
 
 ```bash
-cargo test --lib ticket_376_article_source_contracts -- --nocapture \
-  | mustmatch like 'ticket_376_article_source_contracts'
+cargo test --lib legacy_request_plans_keep_article_contract_shape -- --nocapture \
+  | mustmatch like 'sources::pubmed::tests::construction::legacy_request_plans_keep_article_contract_shape
+sources::pubtator::tests::construction::legacy_request_plans_keep_article_contract_shape'
 ```
 
 ```bash
-cargo test --lib ticket_376_article_source_status_contracts -- --nocapture \
-  | mustmatch like 'ticket_376_article_source_status_contracts'
+cargo test --lib legacy_search_request_plan_keeps_article_contract_shape -- --nocapture \
+  | mustmatch like 'sources::semantic_scholar::tests::construction::legacy_search_request_plan_keeps_article_contract_shape'
+```
+
+```bash
+cargo test --lib ticket_376_article_source_status_contracts_semantic_scholar_unavailable_status_without_key -- --nocapture \
+  | mustmatch like 'ticket_376_article_source_status_contracts_semantic_scholar_unavailable_status_without_key'
 ```
 
 ## Default Article Source Plan Excludes LitSense2

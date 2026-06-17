@@ -145,6 +145,7 @@ See also: biomcp list drug")]
 }
 
 mod dispatch;
+mod workflow;
 pub(crate) use self::dispatch::{handle_command, handle_get, handle_search};
 
 #[cfg(test)]

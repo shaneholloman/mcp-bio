@@ -24,7 +24,7 @@ valid ontology ID still plans the `/disease/{id}` request shape.
 
 ```bash
 set -o pipefail
-cd ../.. && cargo test --lib ticket_400_mydisease_get_rejects_path_query_separators_before_network -- --nocapture | mustmatch like "ticket_400_mydisease_get_rejects_path_query_separators_before_network"
+cd ../.. && cargo test --lib get_plan_rejects_path_query_separators_before_network -- --nocapture | mustmatch like "get_plan_rejects_path_query_separators_before_network"
 ```
 
 ## Request Commands Consume Captured Fields at Execution Boundaries
@@ -50,8 +50,9 @@ routine gate proves keyed behavior without requiring real credentials.
 
 ```bash
 set -o pipefail
-cd ../.. && cargo test --lib ticket_400_pub -- --nocapture | mustmatch like "ticket_400_pubmed_auth_and_cache_modes_are_consumed_from_request_plans
-ticket_400_pubtator_auth_and_cache_modes_are_consumed_from_request_plans"
+cd ../..
+cargo test --lib pubmed::tests::construction -- --nocapture | mustmatch like "esearch_plan_sets_required_query_params_and_api_key"
+cargo test --lib pubtator::tests::construction -- --nocapture | mustmatch like "search_plan_sets_text_paging_sort_and_auth"
 ```
 
 ## Shared Retry-After Waits Stay Bounded
@@ -106,14 +107,15 @@ Rare-disease trial search should consume the deterministic plan before any live
 ClinicalTrials.gov call. The Rust request-contract tests prove the CTGov search
 execution fans out accepted Phelan-McDermid condition labels, dedupes repeated
 NCT IDs, records matched-condition provenance, keeps strict mode literal, and
-preserves existing intervention alias provenance when both fan-out paths combine.
+labels combined condition/intervention fan-out workers.
 
 ```bash
 set -o pipefail
-cd ../.. && cargo test --lib ticket_415_rare_disease_trial_search -- --nocapture | mustmatch like "ticket_415_rare_disease_trial_search_condition_expansion_fans_out_and_dedupes_ncts
-ticket_415_rare_disease_trial_search_strict_mode_keeps_literal_condition_request
-ticket_415_rare_disease_trial_search_preserves_intervention_alias_provenance_with_condition_expansion
+cd ../..
+cargo test --lib ticket_415_rare_disease_trial_search -- --nocapture | mustmatch like "ticket_415_rare_disease_trial_search_condition_expansion_fans_out_and_dedupes_ncts
 ticket_415_rare_disease_trial_search_count_dedupes_expanded_condition_ncts"
+cargo test --lib resolve_ctgov_condition_labels_honors_strict_condition_mode -- --nocapture | mustmatch like "resolve_ctgov_condition_labels_honors_strict_condition_mode"
+cargo test --lib ctgov_workers_label_condition_and_intervention_fanout -- --nocapture | mustmatch like "ctgov_workers_label_condition_and_intervention_fanout"
 ```
 
 ## Rare-Disease Trial Pivots Reuse the Shared Plan

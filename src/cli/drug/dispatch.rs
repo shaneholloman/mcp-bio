@@ -1,3 +1,4 @@
+use super::workflow::drug_search_page_has_results;
 use super::{DrugCommand, DrugGetArgs, DrugSearchArgs, WhoProductTypeArg};
 use crate::cli::CommandOutcome;
 use crate::entities::drug::DrugRegion;
@@ -607,19 +608,6 @@ pub(super) fn bucket_from_page<T: serde::Serialize>(
         pagination: crate::cli::PaginationMeta::offset(offset, limit, count, page.total),
         count,
         results: page.results,
-    }
-}
-
-fn drug_search_page_has_results(
-    page_with_region: &crate::entities::drug::DrugSearchPageWithRegion,
-) -> bool {
-    match page_with_region {
-        crate::entities::drug::DrugSearchPageWithRegion::Us(page) => !page.results.is_empty(),
-        crate::entities::drug::DrugSearchPageWithRegion::Eu(page) => !page.results.is_empty(),
-        crate::entities::drug::DrugSearchPageWithRegion::Who(page) => !page.results.is_empty(),
-        crate::entities::drug::DrugSearchPageWithRegion::All { us, eu, who } => {
-            !us.results.is_empty() || !eu.results.is_empty() || !who.results.is_empty()
-        }
     }
 }
 

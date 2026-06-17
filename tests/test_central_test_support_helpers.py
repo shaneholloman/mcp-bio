@@ -8,21 +8,11 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 THIS_FILE = Path(__file__).resolve()
 ALLOWED = {
-    "struct EnvVarGuard": {"src/test_support.rs"},
     "struct TempDirGuard": {"src/test_support.rs"},
-    "fn set_env_var": {"src/test_support.rs"},
 }
 DEFINITION_PATTERNS = {
-    "struct EnvVarGuard": re.compile(
-        r"^\s*(?:pub(?:\(.+?\))?\s+)?struct\s+EnvVarGuard\b",
-        re.MULTILINE,
-    ),
     "struct TempDirGuard": re.compile(
         r"^\s*(?:pub(?:\(.+?\))?\s+)?struct\s+TempDirGuard\b",
-        re.MULTILINE,
-    ),
-    "fn set_env_var": re.compile(
-        r"^\s*(?:pub(?:\(.+?\))?\s+)?fn\s+set_env_var\b",
         re.MULTILINE,
     ),
 }
@@ -111,18 +101,16 @@ def test_scanner_reports_duplicate_definition_in_fixture(tmp_path: Path) -> None
     src_root = tmp_path / "src"
     src_root.mkdir()
     (src_root / "test_support.rs").write_text(
-        "pub(crate) struct EnvVarGuard {}\n"
-        "pub(crate) struct TempDirGuard {}\n"
-        "pub(crate) fn set_env_var() {}\n",
+        "pub(crate) struct TempDirGuard {}\n",
         encoding="utf-8",
     )
     (src_root / "duplicate.rs").write_text(
-        "struct EnvVarGuard {}\n",
+        "struct TempDirGuard {}\n",
         encoding="utf-8",
     )
 
     with pytest.raises(AssertionError, match="src/duplicate.rs"):
-        assert_marker_is_centralized(tmp_path, "struct EnvVarGuard")
+        assert_marker_is_centralized(tmp_path, "struct TempDirGuard")
 
 
 def test_temp_scratch_scanner_reports_forbidden_patterns_in_fixture(
@@ -133,9 +121,7 @@ def test_temp_scratch_scanner_reports_forbidden_patterns_in_fixture(
     tests_root = tmp_path / "tests"
     tests_root.mkdir()
     (src_root / "test_support.rs").write_text(
-        "pub(crate) struct EnvVarGuard {}\n"
-        "pub(crate) struct TempDirGuard {}\n"
-        "pub(crate) fn set_env_var() {}\n",
+        "pub(crate) struct TempDirGuard {}\n",
         encoding="utf-8",
     )
     bad_raw_temp = (
@@ -168,15 +154,13 @@ def test_scanner_ignores_imports_and_comments_in_fixture(tmp_path: Path) -> None
     src_root = tmp_path / "src"
     src_root.mkdir()
     (src_root / "test_support.rs").write_text(
-        "pub(crate) struct EnvVarGuard {}\n"
-        "pub(crate) struct TempDirGuard {}\n"
-        "pub(crate) fn set_env_var() {}\n",
+        "pub(crate) struct TempDirGuard {}\n",
         encoding="utf-8",
     )
     (src_root / "reexports.rs").write_text(
-        "use crate::test_support::{EnvVarGuard, TempDirGuard, set_env_var};\n"
-        "// struct EnvVarGuard should not count here.\n"
-        'const NOTE: &str = "fn set_env_var is centralized";\n',
+        "use crate::test_support::TempDirGuard;\n"
+        "// struct TempDirGuard should not count here.\n"
+        'const NOTE: &str = "TempDirGuard is centralized";\n',
         encoding="utf-8",
     )
 

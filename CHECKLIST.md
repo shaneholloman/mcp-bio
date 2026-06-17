@@ -286,10 +286,16 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
       `cargo nextest run --run-ignored ignored-only -E 'binary(live_smoke)'`.
 
 ### Final — prove we didn't break anything
-- [ ] Once everything's converted and the old leaky tests are gone, run the full gate
-      (`make test` — now fast, no hangs) and confirm green.
-- [ ] Then delete the leftover old machinery (the global env-lock mutex, the mock-server
+- [x] Once everything's converted and the old leaky tests are gone, run the full gate
+      (`make test` — now fast, no hangs) and confirm green. 2026-06-17:
+      `make test` green — nextest 2331/2331 passed with 28 skipped, Python
+      contracts 257/257 passed, and strict MkDocs build passed.
+- [x] Then delete the leftover old machinery (the global env-lock mutex, the mock-server
       scaffolding) and confirm `make lint` / `make test` / `make spec` are all green.
+      2026-06-17: `make lint` green; `make test` green; `make spec` green
+      — markdown specs 84 passed / 4 skipped, Python surface specs 58/58
+      passed. The old mock-server/env-lock support is gone from routine tests;
+      live API checks are isolated to ignored smoke tests.
 
 ---
 
