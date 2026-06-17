@@ -1072,6 +1072,21 @@ mod tests {
         );
     }
 
+    #[tokio::test]
+    async fn read_limited_body_with_limit_rejects_oversized_body() {
+        let err = read_limited_body_with_limit(
+            test_response(StatusCode::OK, &[], "abcdef"),
+            "test-api",
+            5,
+        )
+        .await
+        .expect_err("body over limit should fail");
+
+        assert!(matches!(err, BioMcpError::Api { .. }));
+        assert!(err.to_string().contains("test-api"));
+        assert!(err.to_string().contains("Response body exceeded 5 bytes"));
+    }
+
     #[test]
     fn parse_retry_after_header_parses_integer_seconds() {
         let mut headers = HeaderMap::new();

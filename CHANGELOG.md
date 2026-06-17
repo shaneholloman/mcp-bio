@@ -5,6 +5,9 @@
 ### Back compatibility
 
 - Changed `search article --source all` to stop querying LitSense2 by default; use `--source litsense2` explicitly when you want LitSense2.
+- Tightened drug CLI validation: `search drug --region who --product-type vaccine`
+  now rejects structured filters, and `drug trials --no-alias-expand` now
+  rejects non-CTGov trial sources.
 
 ## 0.8.23 — 2026-06-11
 

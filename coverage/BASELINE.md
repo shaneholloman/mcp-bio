@@ -42,3 +42,20 @@ mygene production-only (`mygene.rs` = 263 exec lines after tests moved out):
 - **mygene** — uncovered 59 → **23** (90.94%; pure-only 95) — ✅ improved — old tests deleted — issues: none
 - **nci_cts** — uncovered 39 → **10** (91.94%) — ✅ improved — old tests deleted; 12 entity-level nci tests (behavior oracle) stay green — issues: none
 - **myvariant** — uncovered 178 → **4** (99.14%, pure+live; pure-only 49) — ✅ improved — sub-agent converted; 174 variant consumer tests green; clippy clean — issues: none
+
+## Final aggregate coverage check (2026-06-17)
+
+After the full source conversion and mock-server/env-lock removal, ran:
+
+```bash
+cargo llvm-cov nextest --summary-only
+```
+
+Result: nextest 2332/2332 passed with 28 skipped. Aggregate line coverage is
+**71.32%** (93,150 executable lines / 26,715 missed lines). The command exited
+0. It printed `warning: 5 functions have mismatched data`; no test failed, and
+this was treated as an llvm-cov reporting warning rather than a gate failure.
+
+This aggregate check is not a per-source parity table, but it closes the final
+bookkeeping gap: the converted suite still executes cleanly under coverage
+instrumentation after all old routine mock/network tests were removed.

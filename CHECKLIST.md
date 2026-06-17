@@ -288,7 +288,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 ### Final — prove we didn't break anything
 - [x] Once everything's converted and the old leaky tests are gone, run the full gate
       (`make test` — now fast, no hangs) and confirm green. 2026-06-17:
-      `make test` green — nextest 2331/2331 passed with 28 skipped, Python
+      `make test` green — nextest 2332/2332 passed with 28 skipped, Python
       contracts 257/257 passed, and strict MkDocs build passed.
 - [x] Then delete the leftover old machinery (the global env-lock mutex, the mock-server
       scaffolding) and confirm `make lint` / `make test` / `make spec` are all green.
@@ -296,6 +296,19 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
       — markdown specs 84 passed / 4 skipped, Python surface specs 58/58
       passed. The old mock-server/env-lock support is gone from routine tests;
       live API checks are isolated to ignored smoke tests.
+- [x] 2026-06-17 review follow-up: added a pure oversized-body test for
+      `read_limited_body_with_limit`, closing the stall-protection coverage gap
+      without adding a server. Focused check:
+      `cargo nextest run -E 'test(read_limited_body_with_limit_rejects_oversized_body) | test(/cli::drug::/)'`
+      → 31/31 pass.
+- [x] 2026-06-17 review follow-up: documented the drug CLI validation
+      tightening in `CHANGELOG.md`, so the narrower accepted input surface is
+      visible at release time.
+- [x] 2026-06-17 aggregate coverage check:
+      `cargo llvm-cov nextest --summary-only` → nextest 2332/2332 passed with
+      28 skipped; total line coverage 71.32% (93,150 executable lines / 26,715
+      missed lines). The command exited 0 with an llvm-cov warning about 5
+      functions with mismatched data; recorded in `coverage/BASELINE.md`.
 
 ---
 
