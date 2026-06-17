@@ -318,14 +318,15 @@ fn normalize_pathway_query(query: &str) -> String {
     }
 }
 
-fn kegg_disabled() -> bool {
+fn kegg_disabled_from_env_value(value: Option<&str>) -> bool {
     matches!(
-        std::env::var("BIOMCP_DISABLE_KEGG")
-            .ok()
-            .as_deref()
-            .map(str::trim),
+        value.map(str::trim),
         Some("1") | Some("true") | Some("TRUE") | Some("yes") | Some("YES")
     )
+}
+
+fn kegg_disabled() -> bool {
+    kegg_disabled_from_env_value(std::env::var("BIOMCP_DISABLE_KEGG").ok().as_deref())
 }
 
 fn kegg_disabled_error(pathway_id: &str) -> BioMcpError {
@@ -419,6 +420,52 @@ fn push_ranked_hits(
             PathwaySearchResult { source, id, name },
         ));
     }
+}
+
+#[derive(Debug, Default)]
+struct PathwaySearchSourceResults {
+    reactome_hits: Vec<PathwaySearchResult>,
+    reactome_total: Option<usize>,
+    reactome_error: Option<BioMcpError>,
+    kegg_hits: Vec<PathwaySearchResult>,
+    kegg_error: Option<BioMcpError>,
+    wikipathways_hits: Vec<PathwaySearchResult>,
+    wikipathways_error: Option<BioMcpError>,
+}
+
+fn finalize_pathway_search_results(
+    query: &str,
+    limit: usize,
+    source_results: PathwaySearchSourceResults,
+) -> Result<(Vec<PathwaySearchResult>, Option<usize>), BioMcpError> {
+    let PathwaySearchSourceResults {
+        reactome_hits,
+        reactome_total,
+        reactome_error,
+        kegg_hits,
+        kegg_error,
+        wikipathways_hits,
+        wikipathways_error,
+    } = source_results;
+
+    if reactome_hits.is_empty()
+        && kegg_hits.is_empty()
+        && wikipathways_hits.is_empty()
+        && let Some(err) = reactome_error.or(kegg_error).or(wikipathways_error)
+    {
+        return Err(err);
+    }
+
+    let total = if !kegg_hits.is_empty() || !wikipathways_hits.is_empty() {
+        None
+    } else {
+        reactome_total
+    };
+
+    Ok((
+        rerank_pathway_search_results(query, reactome_hits, kegg_hits, wikipathways_hits, limit),
+        total,
+    ))
 }
 
 async fn add_pathway_enrichment(pathway: &mut Pathway, fallback_genes: &[String]) {
@@ -585,28 +632,19 @@ pub async fn search_with_filters(
             (Vec::new(), Some(err))
         }
     };
-    if reactome_hits.is_empty()
-        && kegg_hits.is_empty()
-        && wikipathways_hits.is_empty()
-        && let Some(err) = reactome_error.or(kegg_error).or(wikipathways_error)
-    {
-        return Err(err);
-    }
-    let total = if !kegg_hits.is_empty() || !wikipathways_hits.is_empty() {
-        None
-    } else {
-        reactome_total
-    };
-    Ok((
-        rerank_pathway_search_results(
-            &effective_query,
+    finalize_pathway_search_results(
+        &effective_query,
+        limit,
+        PathwaySearchSourceResults {
             reactome_hits,
+            reactome_total,
+            reactome_error,
             kegg_hits,
+            kegg_error,
             wikipathways_hits,
-            limit,
-        ),
-        total,
-    ))
+            wikipathways_error,
+        },
+    )
 }
 
 pub async fn get(st_id: &str, sections: &[String]) -> Result<Pathway, BioMcpError> {
@@ -706,18 +744,6 @@ pub async fn get(st_id: &str, sections: &[String]) -> Result<Pathway, BioMcpErro
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::set_env_var;
-    use tokio::sync::MutexGuard;
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    fn env_lock() -> MutexGuard<'static, ()> {
-        crate::test_support::env_lock().blocking_lock()
-    }
-
-    async fn env_lock_async() -> tokio::sync::MutexGuard<'static, ()> {
-        crate::test_support::env_lock().lock().await
-    }
 
     #[test]
     fn parse_sections_supports_all_and_rejects_unknown_values() {
@@ -936,44 +962,27 @@ mod tests {
         assert_eq!(ids, vec!["WP382", "hsa04010", "R-HSA-0003", "R-HSA-0002"]);
     }
 
-    #[tokio::test]
-    async fn search_with_filters_keeps_wikipathways_enabled_when_kegg_is_disabled() {
-        let _guard = env_lock_async().await;
-        let reactome = MockServer::start().await;
-        let wikipathways = MockServer::start().await;
-        let _reactome_base = set_env_var("BIOMCP_REACTOME_BASE", Some(&reactome.uri()));
-        let _wikipathways_base = set_env_var("BIOMCP_WIKIPATHWAYS_BASE", Some(&wikipathways.uri()));
-        let _disable_kegg = set_env_var("BIOMCP_DISABLE_KEGG", Some("1"));
-
-        Mock::given(method("GET"))
-            .and(path("/search/query"))
-            .and(query_param("query", "apoptosis"))
-            .and(query_param("species", "Homo sapiens"))
-            .and(query_param("pageSize", "5"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(
-                r#"{"results":[{"entries":[{"stId":"R-HSA-109581","name":"Apoptosis"}]}],"totalResults":1}"#,
-                "application/json",
-            ))
-            .expect(1)
-            .mount(&reactome)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/findPathwaysByText.json"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(
-                r#"{"pathwayInfo":[{"id":"WP254","name":"Apoptosis","species":"Homo sapiens"}]}"#,
-                "application/json",
-            ))
-            .expect(1)
-            .mount(&wikipathways)
-            .await;
-
-        let filters = PathwaySearchFilters {
-            query: Some("apoptosis".to_string()),
-            pathway_type: None,
-            top_level: false,
-        };
-        let (results, total) = search_with_filters(&filters, 5).await.unwrap();
+    #[test]
+    fn finalize_pathway_search_results_keeps_wikipathways_when_kegg_is_disabled() {
+        let (results, total) = finalize_pathway_search_results(
+            "apoptosis",
+            5,
+            PathwaySearchSourceResults {
+                reactome_hits: vec![PathwaySearchResult {
+                    source: "Reactome".to_string(),
+                    id: "R-HSA-109581".to_string(),
+                    name: "Apoptosis".to_string(),
+                }],
+                reactome_total: Some(1),
+                wikipathways_hits: vec![PathwaySearchResult {
+                    source: "WikiPathways".to_string(),
+                    id: "WP254".to_string(),
+                    name: "Apoptosis".to_string(),
+                }],
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         let ids = results
             .iter()
@@ -984,39 +993,25 @@ mod tests {
         assert_eq!(total, None);
     }
 
-    #[tokio::test]
-    async fn search_with_filters_tolerates_reactome_failure_when_other_sources_succeed() {
-        let _guard = env_lock_async().await;
-        let reactome = MockServer::start().await;
-        let wikipathways = MockServer::start().await;
-        let _reactome_base = set_env_var("BIOMCP_REACTOME_BASE", Some(&reactome.uri()));
-        let _wikipathways_base = set_env_var("BIOMCP_WIKIPATHWAYS_BASE", Some(&wikipathways.uri()));
-        let _disable_kegg = set_env_var("BIOMCP_DISABLE_KEGG", Some("1"));
-
-        Mock::given(method("GET"))
-            .and(path("/search/query"))
-            .and(query_param("query", "apoptosis"))
-            .respond_with(ResponseTemplate::new(504))
-            .expect(4)
-            .mount(&reactome)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/findPathwaysByText.json"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(
-                r#"{"pathwayInfo":[{"id":"WP254","name":"Apoptosis","species":"Homo sapiens"}]}"#,
-                "application/json",
-            ))
-            .expect(1)
-            .mount(&wikipathways)
-            .await;
-
-        let filters = PathwaySearchFilters {
-            query: Some("apoptosis".to_string()),
-            pathway_type: None,
-            top_level: false,
-        };
-        let (results, total) = search_with_filters(&filters, 5).await.unwrap();
+    #[test]
+    fn finalize_pathway_search_results_tolerates_reactome_failure_when_other_sources_succeed() {
+        let (results, total) = finalize_pathway_search_results(
+            "apoptosis",
+            5,
+            PathwaySearchSourceResults {
+                reactome_error: Some(BioMcpError::Api {
+                    api: "reactome".to_string(),
+                    message: "HTTP 504".to_string(),
+                }),
+                wikipathways_hits: vec![PathwaySearchResult {
+                    source: "WikiPathways".to_string(),
+                    id: "WP254".to_string(),
+                    name: "Apoptosis".to_string(),
+                }],
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "WP254");
@@ -1025,9 +1020,21 @@ mod tests {
     }
 
     #[test]
-    fn kegg_disabled_flag_accepts_one() {
-        let _guard = env_lock();
-        let _env = set_env_var("BIOMCP_DISABLE_KEGG", Some("1"));
-        assert!(kegg_disabled());
+    fn kegg_disabled_flag_parsing_accepts_expected_values() {
+        assert!(kegg_disabled_from_env_value(Some("1")));
+        assert!(kegg_disabled_from_env_value(Some("true")));
+        assert!(kegg_disabled_from_env_value(Some("TRUE")));
+        assert!(kegg_disabled_from_env_value(Some("yes")));
+        assert!(kegg_disabled_from_env_value(Some("YES")));
+        assert!(!kegg_disabled_from_env_value(Some("0")));
+        assert!(!kegg_disabled_from_env_value(None));
+    }
+
+    #[test]
+    fn kegg_disabled_error_is_actionable() {
+        let err = kegg_disabled_error("hsa05200");
+        let msg = err.to_string();
+        assert!(msg.contains("BIOMCP_DISABLE_KEGG=1"));
+        assert!(msg.contains("R-HSA-5673001"));
     }
 }

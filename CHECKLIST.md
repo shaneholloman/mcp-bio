@@ -186,6 +186,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/diagnostic/mod.rs` OpenFDA regulatory overlay tests are
       pure: empty WHO regulatory overlays and GTR PMA supplement dedupe now use
       direct FDA row fixtures instead of OpenFDA mock servers.
+- [x] `src/entities/pathway.rs` Reactome/WikiPathways search-combine and KEGG
+      disabled behavior are pure: source-result finalization and disabled-flag
+      parsing now test direct fixtures instead of mock servers and env swaps.
 - [x] `src/entities/gene.rs` Reactome workflow-signal mock is gone: the
       limit-one probe request shape is covered in Reactome source tests and the
       gene entity test now covers the empty-symbol no-probe guard directly.
@@ -707,3 +710,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::diagnostic::/)'` → 19/19 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass; diagnostic OpenFDA mock `rg` → no matches.
+- 2026-06-16: pathway entity cleanup. Split source-result finalization and KEGG
+  disabled flag parsing into pure helpers, converted the Reactome/WikiPathways
+  search-combine and disabled-flag tests from mock-server/env-lock tests to
+  direct fixtures, and removed pathway wiremock/env imports. Checks:
+  `cargo nextest run -E 'test(/entities::pathway::/)'` → 18/18 pass.
