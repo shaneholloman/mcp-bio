@@ -118,6 +118,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] **Worst offender fixed:** `src/entities/article/backends/tests.rs` now tests
       request construction and response processing without mock servers, env locks,
       or network-shaped setup.
+- [x] `src/entities/article/batch/tests.rs` is pure: compact item projection,
+      max-ID validation, and Semantic Scholar compact-row merge tests use direct
+      fixtures; stale wiremock imports were removed.
 - [x] `src/entities/article/detail/tests.rs` no longer owns fulltext mock-server
       tests. Fulltext source order and PDF opt-in/miss behavior now have pure
       unit tests beside the fulltext code.
@@ -751,3 +754,6 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   pathway entity tests. Checks:
   `cargo nextest run -E 'test(/cli::search_all::/) | test(/entities::pathway::/)'`
   → 51/51 pass.
+- 2026-06-16: article batch cleanup. Removed stale wiremock imports from the
+  already-pure article batch tests. Checks:
+  `cargo nextest run -E 'test(/entities::article::batch::/)'` → 3/3 pass.
