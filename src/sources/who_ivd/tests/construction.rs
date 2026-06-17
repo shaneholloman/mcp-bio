@@ -74,3 +74,39 @@ fn sync_state_marks_missing_fresh_stale_and_force() {
         SyncState::Stale
     ));
 }
+
+#[test]
+fn sync_intro_matches_missing_stale_and_force_modes() {
+    assert_eq!(
+        sync_intro(SyncState::Missing, WhoIvdSyncMode::Auto),
+        "Downloading"
+    );
+    assert_eq!(
+        sync_intro(SyncState::Stale, WhoIvdSyncMode::Auto),
+        "Refreshing stale"
+    );
+    assert_eq!(
+        sync_intro(SyncState::Fresh, WhoIvdSyncMode::Auto),
+        "Checking"
+    );
+    assert_eq!(
+        sync_intro(SyncState::Fresh, WhoIvdSyncMode::Force),
+        "Refreshing"
+    );
+}
+
+#[test]
+fn who_ivd_sync_error_mentions_recovery_paths() {
+    let root = TempDirGuard::new("who-ivd-sync-error");
+    let err = who_ivd_sync_error(
+        root.path(),
+        "who_ivd.csv is missing required column: product code",
+    );
+    let message = err.to_string();
+
+    assert!(message.contains("WHO Prequalified IVD"));
+    assert!(message.contains("who_ivd.csv is missing required column: product code"));
+    assert!(message.contains("biomcp who-ivd sync"));
+    assert!(message.contains("BIOMCP_WHO_IVD_DIR"));
+    assert!(message.contains(&root.path().display().to_string()));
+}

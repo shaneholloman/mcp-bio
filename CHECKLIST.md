@@ -1011,3 +1011,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   parser tests. Checks:
   `cargo nextest run -E 'test(/sources::tests::.*retry/) |
   test(/sources::semantic_scholar::tests::/)'` → 21/21 pass.
+- 2026-06-17: WHO IVD auto-sync cleanup. Deleted
+  `tests/who_ivd_auto_sync.rs`, replacing its mock-server coverage with pure
+  source tests for missing/fresh/stale/force sync decisions, sync intro text,
+  recovery-path error text, CSV parsing, local row lookup, and HTML response
+  rejection. While adding the HTML test, fixed WHO IVD CSV content-type errors
+  to use the shared sanitized HTTP-body summary instead of leaking raw HTML.
+  Checks: `cargo nextest run -E 'test(/sources::who_ivd::/)'` → 10/10 pass.

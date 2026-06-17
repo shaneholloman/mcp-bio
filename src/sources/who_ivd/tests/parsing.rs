@@ -3,12 +3,24 @@
 
 use super::super::*;
 use crate::test_support::TempDirGuard;
+use reqwest::header::HeaderValue;
 
 #[test]
 fn parse_who_ivd_csv_requires_expected_headers() {
     let err = parse_who_ivd_csv("wrong,header\n1,2\n").expect_err("parse should fail");
     let message = format!("{err}");
     assert!(message.contains("missing required column"));
+}
+
+#[test]
+fn ensure_csv_content_type_rejects_html_response() {
+    let content_type = HeaderValue::from_static("text/html; charset=utf-8");
+    let err = ensure_csv_content_type(Some(&content_type), b"<html><body>not csv</body></html>")
+        .expect_err("html should be rejected");
+    let message = err.to_string();
+
+    assert!(message.contains("Unexpected HTML response"));
+    assert!(!message.contains("<html>"));
 }
 
 #[test]
