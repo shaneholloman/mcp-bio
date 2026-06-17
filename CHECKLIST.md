@@ -1018,3 +1018,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   rejection. While adding the HTML test, fixed WHO IVD CSV content-type errors
   to use the shared sanitized HTTP-body summary instead of leaking raw HTML.
   Checks: `cargo nextest run -E 'test(/sources::who_ivd::/)'` → 10/10 pass.
+- 2026-06-17: WHO prequalification auto-sync cleanup. Deleted
+  `tests/who_pq_auto_sync.rs`, replacing its mock-server coverage with pure
+  source tests for required-file detection, missing/fresh/stale/force sync
+  decisions, sync intro text, recovery-path error text, CSV parsing, row
+  matching, and local row reads. Also changed WHO prequalification CSV
+  content-type errors to use the shared sanitized HTTP-body summary for HTML
+  responses. Checks: `cargo nextest run -E 'test(/sources::who_pq::/)'` →
+  19/19 pass.

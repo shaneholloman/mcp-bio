@@ -82,3 +82,36 @@ fn sync_state_marks_missing_fresh_stale_and_force() {
         SyncState::Stale
     ));
 }
+
+#[test]
+fn sync_intro_matches_missing_stale_and_force_modes() {
+    assert_eq!(
+        sync_intro(SyncState::Missing, WhoPqSyncMode::Auto),
+        "Downloading"
+    );
+    assert_eq!(
+        sync_intro(SyncState::Stale, WhoPqSyncMode::Auto),
+        "Refreshing stale"
+    );
+    assert_eq!(
+        sync_intro(SyncState::Fresh, WhoPqSyncMode::Auto),
+        "Checking"
+    );
+    assert_eq!(
+        sync_intro(SyncState::Fresh, WhoPqSyncMode::Force),
+        "Refreshing"
+    );
+}
+
+#[test]
+fn who_pq_sync_error_mentions_recovery_paths() {
+    let root = TempDirGuard::new("who-pq-sync-error");
+    let err = who_pq_sync_error(root.path(), "who_api.csv is missing required column: inn");
+    let message = err.to_string();
+
+    assert!(message.contains("WHO Prequalification"));
+    assert!(message.contains("who_api.csv is missing required column: inn"));
+    assert!(message.contains("biomcp who sync"));
+    assert!(message.contains("BIOMCP_WHO_DIR"));
+    assert!(message.contains(&root.path().display().to_string()));
+}

@@ -4,6 +4,7 @@
 use super::super::*;
 use crate::entities::drug::{WhoPrequalificationEntry, WhoPrequalificationKind};
 use crate::test_support::TempDirGuard;
+use reqwest::header::HeaderValue;
 
 #[test]
 fn parsers_require_expected_headers() {
@@ -15,6 +16,18 @@ fn parsers_require_expected_headers() {
 
     let err = parse_who_vaccines_csv("wrong,header\n1,2\n").expect_err("parse should fail");
     assert!(err.to_string().contains("missing required column"));
+}
+
+#[test]
+fn ensure_csv_content_type_rejects_html_response_without_raw_tags() {
+    let content_type = HeaderValue::from_static("text/html; charset=utf-8");
+    let err = ensure_csv_content_type(Some(&content_type), b"<html><body>not csv</body></html>")
+        .expect_err("html should be rejected");
+    let message = err.to_string();
+
+    assert!(message.contains("Unexpected HTML response"));
+    assert!(message.contains("HTML error page"));
+    assert!(!message.contains("<html>"));
 }
 
 #[test]
