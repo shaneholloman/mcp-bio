@@ -1,10 +1,30 @@
 #[allow(unused_imports)]
 use super::super::test_support::*;
 use super::*;
-#[allow(unused_imports)]
-use wiremock::matchers::{body_string_contains, header, method, path, query_param};
-#[allow(unused_imports)]
-use wiremock::{Mock, MockServer, ResponseTemplate};
+use crate::sources::semantic_scholar::{
+    SemanticScholarCitationEdge, SemanticScholarExternalIds, SemanticScholarGraphResponse,
+    SemanticScholarPaper, SemanticScholarRecommendationsResponse, SemanticScholarReferenceEdge,
+};
+
+fn semantic_paper(
+    paper_id: &str,
+    pmid: &str,
+    title: &str,
+    venue: &str,
+    year: u32,
+) -> SemanticScholarPaper {
+    SemanticScholarPaper {
+        paper_id: Some(paper_id.to_string()),
+        external_ids: Some(SemanticScholarExternalIds {
+            pubmed: Some(pmid.to_string()),
+            ..Default::default()
+        }),
+        title: Some(title.to_string()),
+        venue: Some(venue.to_string()),
+        year: Some(year),
+        ..Default::default()
+    }
+}
 
 #[test]
 fn semantic_scholar_lookup_id_supports_arxiv_and_paper_ids() {
@@ -18,184 +38,96 @@ fn semantic_scholar_lookup_id_supports_arxiv_and_paper_ids() {
     );
 }
 
-#[tokio::test]
-async fn citations_work_without_api_key() {
-    let _guard = lock_env().await;
-    let server = MockServer::start().await;
-    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&server.uri()));
-    let _s2_key = set_env_var("S2_API_KEY", None);
-
-    Mock::given(method("POST"))
-        .and(path("/graph/v1/paper/batch"))
-        .and(query_param(
-            "fields",
-            "paperId,externalIds,title,venue,year",
-        ))
-        .and(body_string_contains("\"PMID:22663011\""))
-        .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-            {
-                "paperId": "paper-1",
-                "externalIds": {"PubMed": "22663011"},
-                "title": "Seed paper",
-                "venue": "Science",
-                "year": 2012
-            }
-        ])))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/graph/v1/paper/paper-1/citations"))
-        .and(query_param(
-            "fields",
-            "contexts,intents,isInfluential,citingPaper.paperId,citingPaper.externalIds,citingPaper.title,citingPaper.venue,citingPaper.year",
-        ))
-        .and(query_param("limit", "1"))
-        .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "data": [{
-                "contexts": ["Example context"],
-                "intents": ["Background"],
-                "isInfluential": false,
-                "citingPaper": {
-                    "paperId": "paper-2",
-                    "externalIds": {"PubMed": "24200969"},
-                    "title": "Related paper",
-                    "venue": "Nature",
-                    "year": 2024
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let result = citations("22663011", 1)
-        .await
-        .expect("no-key citations should succeed");
+#[test]
+fn citations_map_semantic_scholar_edges() {
+    let article = related_paper_from_semantic_scholar(&semantic_paper(
+        "paper-1",
+        "22663011",
+        "Seed paper",
+        "Science",
+        2012,
+    ));
+    let result = article_graph_from_citations(
+        article,
+        SemanticScholarGraphResponse {
+            data: vec![SemanticScholarCitationEdge {
+                contexts: vec!["Example context".into()],
+                intents: vec!["Background".into()],
+                is_influential: Some(false),
+                citing_paper: semantic_paper(
+                    "paper-2",
+                    "24200969",
+                    "Related paper",
+                    "Nature",
+                    2024,
+                ),
+            }],
+        },
+    );
 
     assert_eq!(result.article.paper_id.as_deref(), Some("paper-1"));
     assert_eq!(result.edges.len(), 1);
     assert_eq!(result.edges[0].paper.pmid.as_deref(), Some("24200969"));
+    assert_eq!(result.edges[0].contexts, ["Example context"]);
+    assert_eq!(result.edges[0].intents, ["Background"]);
+    assert!(!result.edges[0].is_influential);
 }
 
-#[tokio::test]
-async fn references_work_without_api_key() {
-    let _guard = lock_env().await;
-    let server = MockServer::start().await;
-    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&server.uri()));
-    let _s2_key = set_env_var("S2_API_KEY", None);
-
-    Mock::given(method("POST"))
-        .and(path("/graph/v1/paper/batch"))
-        .and(query_param(
-            "fields",
-            "paperId,externalIds,title,venue,year",
-        ))
-        .and(body_string_contains("\"PMID:22663011\""))
-        .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-            {
-                "paperId": "paper-1",
-                "externalIds": {"PubMed": "22663011"},
-                "title": "Seed paper",
-                "venue": "Science",
-                "year": 2012
-            }
-        ])))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/graph/v1/paper/paper-1/references"))
-        .and(query_param(
-            "fields",
-            "contexts,intents,isInfluential,citedPaper.paperId,citedPaper.externalIds,citedPaper.title,citedPaper.venue,citedPaper.year",
-        ))
-        .and(query_param("limit", "1"))
-        .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "data": [{
-                "contexts": ["Example context"],
-                "intents": ["Background"],
-                "isInfluential": false,
-                "citedPaper": {
-                    "paperId": "paper-2",
-                    "externalIds": {"PubMed": "19424861"},
-                    "title": "Referenced paper",
-                    "venue": "Cell",
-                    "year": 2009
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let result = references("22663011", 1)
-        .await
-        .expect("no-key references should succeed");
+#[test]
+fn references_map_semantic_scholar_edges() {
+    let article = related_paper_from_semantic_scholar(&semantic_paper(
+        "paper-1",
+        "22663011",
+        "Seed paper",
+        "Science",
+        2012,
+    ));
+    let result = article_graph_from_references(
+        article,
+        SemanticScholarGraphResponse {
+            data: vec![SemanticScholarReferenceEdge {
+                contexts: vec!["Example context".into()],
+                intents: vec!["Background".into()],
+                is_influential: Some(false),
+                cited_paper: semantic_paper(
+                    "paper-2",
+                    "19424861",
+                    "Referenced paper",
+                    "Cell",
+                    2009,
+                ),
+            }],
+        },
+    );
 
     assert_eq!(result.article.paper_id.as_deref(), Some("paper-1"));
     assert_eq!(result.edges.len(), 1);
     assert_eq!(result.edges[0].paper.pmid.as_deref(), Some("19424861"));
+    assert_eq!(result.edges[0].paper.journal.as_deref(), Some("Cell"));
 }
 
-#[tokio::test]
-async fn recommendations_work_without_api_key() {
-    let _guard = lock_env().await;
-    let server = MockServer::start().await;
-    let _s2_base = set_env_var("BIOMCP_S2_BASE", Some(&server.uri()));
-    let _s2_key = set_env_var("S2_API_KEY", None);
-
-    Mock::given(method("POST"))
-        .and(path("/graph/v1/paper/batch"))
-        .and(query_param(
-            "fields",
-            "paperId,externalIds,title,venue,year",
-        ))
-        .and(body_string_contains("\"PMID:22663011\""))
-        .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-            {
-                "paperId": "paper-1",
-                "externalIds": {"PubMed": "22663011"},
-                "title": "Seed paper",
-                "venue": "Science",
-                "year": 2012
-            }
-        ])))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/recommendations/v1/papers/forpaper/paper-1"))
-        .and(query_param(
-            "fields",
-            "paperId,externalIds,title,venue,year",
-        ))
-        .and(query_param("limit", "1"))
-        .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "recommendedPapers": [{
-                "paperId": "paper-3",
-                "externalIds": {"PubMed": "28052061"},
-                "title": "Recommended paper",
-                "venue": "Nature Medicine",
-                "year": 2017
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let result = recommendations(&["22663011".to_string()], &[], 1)
-        .await
-        .expect("no-key recommendations should succeed");
+#[test]
+fn recommendations_map_semantic_scholar_papers() {
+    let seed = related_paper_from_semantic_scholar(&semantic_paper(
+        "paper-1",
+        "22663011",
+        "Seed paper",
+        "Science",
+        2012,
+    ));
+    let result = article_recommendations_from_response(
+        vec![seed],
+        Vec::new(),
+        SemanticScholarRecommendationsResponse {
+            recommended_papers: vec![semantic_paper(
+                "paper-3",
+                "28052061",
+                "Recommended paper",
+                "Nature Medicine",
+                2017,
+            )],
+        },
+    );
 
     assert_eq!(result.positive_seeds.len(), 1);
     assert_eq!(result.recommendations.len(), 1);

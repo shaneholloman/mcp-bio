@@ -125,6 +125,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
       `src/entities/article/enrichment/tests.rs` now test finalization,
       Semantic Scholar/article-base merge behavior, source status handling, and
       federated row merging without mock servers or env locks.
+- [x] `src/entities/article/graph/tests.rs` is pure: citation, reference, and
+      recommendation output mapping now use direct Semantic Scholar response
+      structs; request path/header behavior stays covered by source tests.
 - [x] `src/entities/disease/get/tests.rs` first lookup-path batch now tests
       canonical MyDisease get planning, MESH/OMIM crosswalk query planning, and
       empty crosswalk selection without mock servers or env locks.
@@ -619,3 +622,13 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::trial::search::ctgov::/)'` → 21/21
   pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
   pass; `git diff --check` → pass; CTGov purity `rg` → no matches.
+- 2026-06-16: article graph cleanup. Split citation/reference/recommendation
+  response assembly into pure helpers, converted the three Semantic Scholar
+  mock-server tests to direct response-struct tests, and added source request
+  plan assertions that no API-key header is sent when no key is supplied.
+  `src/entities/article/graph/tests.rs` now has no mock-server/env-lock cases.
+  Checks:
+  `cargo nextest run -E 'test(/entities::article::graph::/) |
+  test(/sources::semantic_scholar::/)'` → 19/19 pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass; article graph purity `rg` → no matches.

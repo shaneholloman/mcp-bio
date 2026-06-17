@@ -155,6 +155,54 @@ fn graph_edge_from_reference(edge: SemanticScholarReferenceEdge) -> ArticleGraph
     }
 }
 
+fn article_graph_from_citations(
+    article: ArticleRelatedPaper,
+    response: crate::sources::semantic_scholar::SemanticScholarGraphResponse<
+        SemanticScholarCitationEdge,
+    >,
+) -> ArticleGraphResult {
+    ArticleGraphResult {
+        article,
+        edges: response
+            .data
+            .into_iter()
+            .map(graph_edge_from_citation)
+            .collect(),
+    }
+}
+
+fn article_graph_from_references(
+    article: ArticleRelatedPaper,
+    response: crate::sources::semantic_scholar::SemanticScholarGraphResponse<
+        SemanticScholarReferenceEdge,
+    >,
+) -> ArticleGraphResult {
+    ArticleGraphResult {
+        article,
+        edges: response
+            .data
+            .into_iter()
+            .map(graph_edge_from_reference)
+            .collect(),
+    }
+}
+
+fn article_recommendations_from_response(
+    positive_seeds: Vec<ArticleRelatedPaper>,
+    negative_seeds: Vec<ArticleRelatedPaper>,
+    response: crate::sources::semantic_scholar::SemanticScholarRecommendationsResponse,
+) -> ArticleRecommendationsResult {
+    ArticleRecommendationsResult {
+        positive_seeds,
+        negative_seeds,
+        recommendations: response
+            .recommended_papers
+            .into_iter()
+            .map(|paper| related_paper_from_semantic_scholar(&paper))
+            .collect(),
+    }
+}
+
 pub async fn citations(id: &str, limit: usize) -> Result<ArticleGraphResult, BioMcpError> {
     let client = SemanticScholarClient::new()?;
     let europe = EuropePmcClient::new()?;
@@ -166,14 +214,7 @@ pub async fn citations(id: &str, limit: usize) -> Result<ArticleGraphResult, Bio
         .ok_or_else(|| article_not_found(id, id))?;
     let response = client.paper_citations(&graph_id, limit).await?;
 
-    Ok(ArticleGraphResult {
-        article,
-        edges: response
-            .data
-            .into_iter()
-            .map(graph_edge_from_citation)
-            .collect(),
-    })
+    Ok(article_graph_from_citations(article, response))
 }
 
 pub async fn references(id: &str, limit: usize) -> Result<ArticleGraphResult, BioMcpError> {
@@ -187,14 +228,7 @@ pub async fn references(id: &str, limit: usize) -> Result<ArticleGraphResult, Bi
         .ok_or_else(|| article_not_found(id, id))?;
     let response = client.paper_references(&graph_id, limit).await?;
 
-    Ok(ArticleGraphResult {
-        article,
-        edges: response
-            .data
-            .into_iter()
-            .map(graph_edge_from_reference)
-            .collect(),
-    })
+    Ok(article_graph_from_references(article, response))
 }
 
 pub async fn recommendations(
@@ -241,15 +275,11 @@ pub async fn recommendations(
             .await?
     };
 
-    Ok(ArticleRecommendationsResult {
+    Ok(article_recommendations_from_response(
         positive_seeds,
         negative_seeds,
-        recommendations: response
-            .recommended_papers
-            .into_iter()
-            .map(|paper| related_paper_from_semantic_scholar(&paper))
-            .collect(),
-    })
+        response,
+    ))
 }
 
 #[cfg(test)]
