@@ -1191,8 +1191,9 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
     )
     assert "SPEC_PROFILE ?= spec" in makefile
     assert "SPEC_BIN ?= $(CURDIR)/target/$(SPEC_PROFILE)/biomcp" in makefile
-    assert "SPEC_RUN_BIN = $(if $(BIOMCP_BIN),$(BIOMCP_BIN),$(SPEC_BIN))" in makefile
-    assert "SPEC_BUILD = $(if $(BIOMCP_BIN),,cargo build --locked --profile $(SPEC_PROFILE))" in makefile
+    assert 'SPEC_USE_PROVIDED_BIN = $(shell if [ -n "$(BIOMCP_BIN)" ] && [ -x "$(BIOMCP_BIN)" ]; then echo yes; fi)' in makefile
+    assert "SPEC_RUN_BIN = $(if $(SPEC_USE_PROVIDED_BIN),$(BIOMCP_BIN),$(SPEC_BIN))" in makefile
+    assert "SPEC_BUILD = $(if $(SPEC_USE_PROVIDED_BIN),,cargo build --locked --profile $(SPEC_PROFILE))" in makefile
     assert re.search(
         r"^release-gate: lint test\n"
         r'\t\$\(MAKE\) spec SPEC_PROFILE=release SPEC_BIN="\$\(CURDIR\)/target/release/biomcp"$',

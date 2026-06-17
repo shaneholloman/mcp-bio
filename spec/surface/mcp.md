@@ -291,7 +291,10 @@ should reuse that binary instead of rebuilding `target/spec/biomcp`. The dry-run
 recipe keeps this contract visible without executing the binary.
 
 ```bash
-env BIOMCP_BIN=/tmp/already-built-biomcp make -C ../.. -n spec 2>&1 | mustmatch not like "cargo build --locked --profile"
+tmp_bin="$(mktemp)"
+trap 'rm -f "$tmp_bin"' EXIT
+chmod +x "$tmp_bin"
+env BIOMCP_BIN="$tmp_bin" make -C ../.. -n spec 2>&1 | mustmatch not like "cargo build --locked --profile"
 ```
 
 ## Routine Spec Runner Is Markdown Only

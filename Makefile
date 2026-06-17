@@ -22,8 +22,9 @@ SPEC_LIVE_PATHS = \
 
 SPEC_PROFILE ?= spec
 SPEC_BIN ?= $(CURDIR)/target/$(SPEC_PROFILE)/biomcp
-SPEC_RUN_BIN = $(if $(BIOMCP_BIN),$(BIOMCP_BIN),$(SPEC_BIN))
-SPEC_BUILD = $(if $(BIOMCP_BIN),,cargo build --locked --profile $(SPEC_PROFILE))
+SPEC_USE_PROVIDED_BIN = $(shell if [ -n "$(BIOMCP_BIN)" ] && [ -x "$(BIOMCP_BIN)" ]; then echo yes; fi)
+SPEC_RUN_BIN = $(if $(SPEC_USE_PROVIDED_BIN),$(BIOMCP_BIN),$(SPEC_BIN))
+SPEC_BUILD = $(if $(SPEC_USE_PROVIDED_BIN),,cargo build --locked --profile $(SPEC_PROFILE))
 
 sync-python-dev:
 	uv sync --extra dev --no-install-project
