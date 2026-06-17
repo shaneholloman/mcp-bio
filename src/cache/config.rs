@@ -352,19 +352,14 @@ fn config_source_label(config_path: Option<&std::path::Path>) -> String {
 mod tests {
     use super::{
         CacheConfig, CacheConfigOrigins, ConfigOrigin, DEFAULT_MAX_AGE_SECS, DEFAULT_MAX_SIZE,
-        DEFAULT_MIN_DISK_FREE, DiskFreeThreshold, default_cache_root, resolve_cache_config,
-        resolve_cache_config_from_parts,
+        DEFAULT_MIN_DISK_FREE, DiskFreeThreshold, read_cache_toml, resolve_cache_config_from_parts,
+        resolve_cache_config_with_source,
     };
     use crate::error::BioMcpError;
-    use crate::test_support::{TempDirGuard, set_env_var};
+    use crate::test_support::TempDirGuard;
     use std::path::PathBuf;
     use std::str::FromStr;
     use std::time::Duration;
-    use tokio::sync::MutexGuard;
-
-    fn env_lock() -> MutexGuard<'static, ()> {
-        crate::test_support::env_lock().blocking_lock()
-    }
 
     fn default_config_with_root(root: impl Into<PathBuf>) -> CacheConfig {
         CacheConfig {
@@ -610,47 +605,33 @@ mod tests {
 
     #[test]
     fn resolve_cache_config_uses_defaults_when_no_env_or_file() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("defaults");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        std::fs::create_dir_all(&cache_home).expect("create cache home");
-        std::fs::create_dir_all(&config_home).expect("create config home");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-        let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", None);
-
-        let config = resolve_cache_config().expect("defaults should resolve");
-        assert_eq!(config, default_config_with_root(default_cache_root()));
+        let default_root = PathBuf::from("/tmp/default-cache");
+        let config =
+            resolve_cache_config_with_source(None, None, None, None, default_root.clone(), None)
+                .expect("defaults should resolve");
+        assert_eq!(config, default_config_with_root(default_root));
     }
 
     #[test]
     fn resolve_cache_config_reads_cache_toml_from_xdg_config_home() {
-        let _lock = env_lock();
         let root = TempDirGuard::new("toml");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let config_dir = config_home.join("biomcp");
-        std::fs::create_dir_all(&cache_home).expect("create cache home");
-        std::fs::create_dir_all(&config_dir).expect("create config dir");
-        std::fs::write(
-            config_dir.join("cache.toml"),
-            format!(
-                "[cache]\ndir = \"{}\"\nmax_size = 1234\nmax_age_secs = 7200\n",
-                root.path().join("resolved-cache").display()
-            ),
-        )
-        .expect("write cache.toml");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-        let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", None);
+        let config_path = root.path().join("config-home/biomcp/cache.toml");
+        let resolved_cache = root.path().join("resolved-cache");
+        let toml_content = format!(
+            "[cache]\ndir = \"{}\"\nmax_size = 1234\nmax_age_secs = 7200\n",
+            resolved_cache.display()
+        );
 
-        let config = resolve_cache_config().expect("toml should resolve");
-        assert_eq!(config.cache_root, root.path().join("resolved-cache"));
+        let config = resolve_cache_config_with_source(
+            None,
+            None,
+            None,
+            Some(&toml_content),
+            root.path().join("default-cache"),
+            Some(&config_path),
+        )
+        .expect("toml should resolve");
+        assert_eq!(config.cache_root, resolved_cache);
         assert_eq!(config.max_size, 1_234);
         assert_eq!(config.min_disk_free, DEFAULT_MIN_DISK_FREE);
         assert_eq!(config.max_age, Duration::from_secs(7_200));
@@ -667,29 +648,19 @@ mod tests {
 
     #[test]
     fn resolve_cache_config_env_overrides_file() {
-        let _lock = env_lock();
         let root = TempDirGuard::new("env-overrides");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let config_dir = config_home.join("biomcp");
-        std::fs::create_dir_all(&cache_home).expect("create cache home");
-        std::fs::create_dir_all(&config_dir).expect("create config dir");
-        std::fs::write(
-            config_dir.join("cache.toml"),
-            "[cache]\ndir = \"/file-cache\"\nmax_size = 1234\nmax_age_secs = 7200\n",
-        )
-        .expect("write cache.toml");
         let env_dir = root.path().join("env-cache");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var(
-            "BIOMCP_CACHE_DIR",
-            Some(&format!("  {}  ", env_dir.display())),
-        );
-        let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", Some(" 5000 "));
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", None);
+        let env_dir_value = format!("  {}  ", env_dir.display());
 
-        let config = resolve_cache_config().expect("env should override file");
+        let config = resolve_cache_config_with_source(
+            Some(&env_dir_value),
+            Some(" 5000 "),
+            None,
+            Some("[cache]\ndir = \"/file-cache\"\nmax_size = 1234\nmax_age_secs = 7200\n"),
+            root.path().join("default-cache"),
+            Some(&root.path().join("config-home/biomcp/cache.toml")),
+        )
+        .expect("env should override file");
         assert_eq!(config.cache_root, env_dir);
         assert_eq!(config.max_size, 5_000);
         assert_eq!(config.min_disk_free, DEFAULT_MIN_DISK_FREE);
@@ -707,22 +678,18 @@ mod tests {
 
     #[test]
     fn resolve_cache_config_reports_path_on_failure() {
-        let _lock = env_lock();
         let root = TempDirGuard::new("parse-error");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let config_dir = config_home.join("biomcp");
-        std::fs::create_dir_all(&cache_home).expect("create cache home");
-        std::fs::create_dir_all(&config_dir).expect("create config dir");
-        let config_path = config_dir.join("cache.toml");
-        std::fs::write(&config_path, "[cache\nmax_size = 1\n").expect("write invalid cache.toml");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-        let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", None);
+        let config_path = root.path().join("config-home/biomcp/cache.toml");
 
-        let err = resolve_cache_config().expect_err("invalid file should fail");
+        let err = resolve_cache_config_with_source(
+            None,
+            None,
+            None,
+            Some("[cache\nmax_size = 1\n"),
+            root.path().join("default-cache"),
+            Some(&config_path),
+        )
+        .expect_err("invalid file should fail");
         let message = err.to_string();
         assert!(
             message.contains(&*config_path.to_string_lossy()),
@@ -732,22 +699,14 @@ mod tests {
 
     #[test]
     fn resolve_cache_config_reports_path_on_read_failure() {
-        let _lock = env_lock();
         let root = TempDirGuard::new("read-error");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let config_dir = config_home.join("biomcp");
-        std::fs::create_dir_all(&cache_home).expect("create cache home");
+        let config_dir = root.path().join("config-home/biomcp");
         std::fs::create_dir_all(&config_dir).expect("create config dir");
         let config_path = config_dir.join("cache.toml");
         std::fs::create_dir_all(&config_path).expect("create directory at cache.toml path");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-        let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", None);
 
-        let err = resolve_cache_config().expect_err("directory at cache.toml path should fail");
+        let err =
+            read_cache_toml(&config_path).expect_err("directory at cache.toml path should fail");
         let message = err.to_string();
         assert!(matches!(err, BioMcpError::Io(_)));
         assert!(
@@ -785,25 +744,15 @@ mod tests {
 
     #[test]
     fn env_min_disk_free_overrides_file_and_tracks_env_origin() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("min-disk-free-env");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let config_dir = config_home.join("biomcp");
-        std::fs::create_dir_all(&cache_home).expect("create cache home");
-        std::fs::create_dir_all(&config_dir).expect("create config dir");
-        std::fs::write(
-            config_dir.join("cache.toml"),
-            "[cache]\nmin_disk_free = \"5G\"\n",
+        let config = resolve_cache_config_with_source(
+            None,
+            None,
+            Some("10%"),
+            Some("[cache]\nmin_disk_free = \"5G\"\n"),
+            PathBuf::from("/tmp/default-cache"),
+            None,
         )
-        .expect("write cache.toml");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-        let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", Some("10%"));
-
-        let config = resolve_cache_config().expect("env min_disk_free should override file");
+        .expect("env min_disk_free should override file");
 
         assert_eq!(config.min_disk_free, DiskFreeThreshold::Percent(10));
         assert_eq!(config.origins.min_disk_free, ConfigOrigin::Env);
@@ -811,37 +760,29 @@ mod tests {
 
     #[test]
     fn invalid_env_min_disk_free_returns_error() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("min-disk-free-invalid");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        std::fs::create_dir_all(&cache_home).expect("create cache home");
-        std::fs::create_dir_all(&config_home).expect("create config home");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-        let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", Some("0%"));
-
-        let err = resolve_cache_config().expect_err("invalid env min_disk_free should fail");
+        let err = resolve_cache_config_with_source(
+            None,
+            None,
+            Some("0%"),
+            None,
+            PathBuf::from("/tmp/default-cache"),
+            None,
+        )
+        .expect_err("invalid env min_disk_free should fail");
         assert_invalid_argument_contains(err, &["BIOMCP_CACHE_MIN_DISK_FREE", "greater than 0"]);
     }
 
     #[test]
     fn invalid_env_min_disk_free_over_100_percent_returns_error() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("min-disk-free-over100");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        std::fs::create_dir_all(&cache_home).expect("create cache home");
-        std::fs::create_dir_all(&config_home).expect("create config home");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-        let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", Some("101%"));
-
-        let err = resolve_cache_config().expect_err("percent > 100 should fail");
+        let err = resolve_cache_config_with_source(
+            None,
+            None,
+            Some("101%"),
+            None,
+            PathBuf::from("/tmp/default-cache"),
+            None,
+        )
+        .expect_err("percent > 100 should fail");
         assert_invalid_argument_contains(err, &["BIOMCP_CACHE_MIN_DISK_FREE", "between 1 and 100"]);
     }
 

@@ -833,3 +833,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   11/11 pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.
+- 2026-06-16: cache config cleanup. Replaced process-env/XDG cache config
+  tests with direct `resolve_cache_config_with_source` and `read_cache_toml`
+  checks, preserving precedence and error-path coverage without env locks.
+  Checks: `cargo nextest run -E 'test(/cache::config::/)'` → 28/28 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
