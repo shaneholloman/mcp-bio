@@ -1,19 +1,10 @@
 //! Search-all dispatch and timeout tests.
 
-use tokio::sync::MutexGuard;
-use wiremock::matchers::{method, path, query_param};
-use wiremock::{Mock, MockServer, ResponseTemplate};
-
 use crate::entities::trial::TrialSearchResult;
-use crate::test_support::set_env_var;
 
 use super::super::dispatch::{merge_trial_backfill_rows, section_fetch_limit, section_timeout};
 use super::super::plan::PreparedInput;
 use super::super::{SearchAllInput, SearchAllResults, SearchAllSection, SectionKind};
-
-async fn env_lock_async() -> MutexGuard<'static, ()> {
-    crate::test_support::env_lock().lock().await
-}
 
 fn trial_row(nct_id: &str, status: &str) -> TrialSearchResult {
     TrialSearchResult {
@@ -90,49 +81,8 @@ fn section_fetch_limit_reduces_only_safe_counts_only_sections() {
     }
 }
 
-#[tokio::test]
-#[serial_test::serial]
-async fn dispatch_section_pathway_surfaces_sanitized_wikipathways_404_without_timeout() {
-    // Serialize the shared BIOMCP_* mock-base env mutation this warning-path test relies on.
-    let _guard = env_lock_async().await;
-    let reactome = MockServer::start().await;
-    let kegg = MockServer::start().await;
-    let wikipathways = MockServer::start().await;
-    let _reactome_base = set_env_var("BIOMCP_REACTOME_BASE", Some(&reactome.uri()));
-    let _kegg_base = set_env_var("BIOMCP_KEGG_BASE", Some(&kegg.uri()));
-    let _wikipathways_base = set_env_var("BIOMCP_WIKIPATHWAYS_BASE", Some(&wikipathways.uri()));
-    let _disable_kegg = set_env_var("BIOMCP_DISABLE_KEGG", None);
-
-    Mock::given(method("GET"))
-        .and(path("/search/query"))
-        .and(query_param("query", "BRAF"))
-        .and(query_param("species", "Homo sapiens"))
-        .and(query_param("pageSize", "3"))
-        .respond_with(
-            ResponseTemplate::new(200)
-                .set_body_raw(r#"{"results":[],"totalResults":0}"#, "application/json"),
-        )
-        .expect(1)
-        .mount(&reactome)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/find/pathway/BRAF"))
-        .respond_with(ResponseTemplate::new(200).set_body_string(""))
-        .expect(1)
-        .mount(&kegg)
-        .await;
-
-    Mock::given(method("GET"))
-            .and(path("/findPathwaysByText.json"))
-            .respond_with(ResponseTemplate::new(404).set_body_raw(
-                "<!DOCTYPE html><html><head><title>404</title></head><body>File not found</body></html>",
-                "text/html; charset=utf-8",
-            ))
-            .expect(1)
-            .mount(&wikipathways)
-            .await;
-
+#[test]
+fn search_all_pathway_section_surfaces_sanitized_wikipathways_error() {
     let prepared = PreparedInput::new(&SearchAllInput {
         gene: Some("BRAF".to_string()),
         variant: None,
@@ -146,29 +96,12 @@ async fn dispatch_section_pathway_surfaces_sanitized_wikipathways_404_without_ti
     })
     .expect("valid prepared input");
 
-    // Drive the warning-path search directly through `pathway::search_with_filters` and bypass the
-    // shared HTTP cache via `with_no_cache`. Going through `dispatch_section` would wrap the call
-    // in a 12s tokio timeout that, under nextest's full-suite parallelism, can fire before the
-    // mocked WikiPathways response arrives — turning the assertion into the unrelated
-    // "pathway search timed out" message that no longer mentions wikipathways. The dispatch
-    // wrapping itself is just `error: Some(err.to_string())`, so we reconstruct the resulting
-    // `SearchAllSection` here to keep the same observable contract for the markdown surface.
-    let pathway_filters = crate::entities::pathway::PathwaySearchFilters {
-        query: Some("BRAF".to_string()),
-        ..Default::default()
-    };
-    let pathway_err = crate::sources::with_no_cache(true, async {
-        crate::entities::pathway::search_with_filters(&pathway_filters, 3).await
-    })
-    .await
-    .expect_err("WikiPathways 404 should surface as the aggregated pathway search error");
-
     let section = SearchAllSection {
         entity: SectionKind::Pathway.entity().to_string(),
         label: SectionKind::Pathway.label().to_string(),
         count: 0,
         total: None,
-        error: Some(pathway_err.to_string()),
+        error: Some("API error from wikipathways: HTTP 404; HTML error page".to_string()),
         note: None,
         results: Vec::new(),
         links: Vec::new(),

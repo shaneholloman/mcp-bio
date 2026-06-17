@@ -151,6 +151,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
       alias-expansion next-page rejection test was replaced with parser
       coverage, while the real error behavior remains covered in CTGov entity
       tests.
+- [x] `src/cli/search_all/tests/dispatch.rs` pathway error surface is pure:
+      the search-all markdown/error contract now uses a direct section fixture
+      instead of Reactome/KEGG/WikiPathways mock servers and env swaps.
 - [x] `src/entities/variant/get/tests.rs` GWAS-only unavailable case is pure:
       it now asserts the exact degraded output state through a helper instead
       of running `get()` against a broken GWAS mock response.
@@ -741,3 +744,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   wiremock re-exports. Checks:
   `cargo nextest run -E 'test(/cli::trial::/) | test(/entities::trial::search::ctgov::/)'`
   → 54/54 pass.
+- 2026-06-16: search-all pathway error cleanup. Replaced the
+  Reactome/KEGG/WikiPathways mock-server/env warning-path test with a direct
+  `SearchAllSection` error fixture that preserves the sanitized markdown
+  contract. Pathway source-combination/error behavior remains covered in
+  pathway entity tests. Checks:
+  `cargo nextest run -E 'test(/cli::search_all::/) | test(/entities::pathway::/)'`
+  → 51/51 pass.
