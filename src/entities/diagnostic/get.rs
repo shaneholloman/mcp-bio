@@ -32,10 +32,10 @@ struct DiagnosticSections {
 }
 
 #[derive(Debug, Clone)]
-struct DiagnosticRegulatoryLookupContext {
-    display_name: String,
-    aliases: Vec<String>,
-    manufacturer: Option<String>,
+pub(super) struct DiagnosticRegulatoryLookupContext {
+    pub(super) display_name: String,
+    pub(super) aliases: Vec<String>,
+    pub(super) manufacturer: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -272,7 +272,9 @@ fn push_lookup_alias(aliases: &mut Vec<String>, seen: &mut HashSet<String>, valu
     }
 }
 
-fn build_gtr_regulatory_lookup_context(record: &GtrRecord) -> DiagnosticRegulatoryLookupContext {
+pub(super) fn build_gtr_regulatory_lookup_context(
+    record: &GtrRecord,
+) -> DiagnosticRegulatoryLookupContext {
     let display_name = preferred_diagnostic_name(record);
     let mut aliases = Vec::new();
     let mut seen = HashSet::new();
@@ -293,7 +295,9 @@ fn build_gtr_regulatory_lookup_context(record: &GtrRecord) -> DiagnosticRegulato
     }
 }
 
-fn build_who_regulatory_lookup_context(record: &WhoIvdRecord) -> DiagnosticRegulatoryLookupContext {
+pub(super) fn build_who_regulatory_lookup_context(
+    record: &WhoIvdRecord,
+) -> DiagnosticRegulatoryLookupContext {
     let display_name =
         optional_text(&record.product_name).unwrap_or_else(|| record.product_code.clone());
     let mut aliases = Vec::new();
@@ -522,19 +526,25 @@ async fn fetch_fda_regulatory(
         }
     );
 
-    let mut ranked = Vec::new();
-    ranked.extend(merge_510k_results(
+    Ok(regulatory_records_from_fda_rows(
         ctx,
         &device_rows?.map(|resp| resp.results).unwrap_or_default(),
-    ));
-    ranked.extend(merge_pma_results(
-        ctx,
         &pma_rows?.map(|resp| resp.results).unwrap_or_default(),
-    ));
+    ))
+}
+
+pub(super) fn regulatory_records_from_fda_rows(
+    ctx: &DiagnosticRegulatoryLookupContext,
+    device_rows: &[Fda510kResult],
+    pma_rows: &[FdaPmaResult],
+) -> Vec<DiagnosticRegulatoryRecord> {
+    let mut ranked = Vec::new();
+    ranked.extend(merge_510k_results(ctx, device_rows));
+    ranked.extend(merge_pma_results(ctx, pma_rows));
 
     ranked.sort_by(compare_ranked_records);
     ranked.truncate(REGULATORY_RESULT_LIMIT);
-    Ok(ranked.into_iter().map(|row| row.record).collect())
+    ranked.into_iter().map(|row| row.record).collect()
 }
 
 async fn load_regulatory_records(

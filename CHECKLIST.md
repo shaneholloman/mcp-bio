@@ -183,6 +183,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/discover.rs` is pure: exact article keyword alias
       canonicalization now tests direct OLS fixtures instead of starting an OLS
       mock server.
+- [x] `src/entities/diagnostic/mod.rs` OpenFDA regulatory overlay tests are
+      pure: empty WHO regulatory overlays and GTR PMA supplement dedupe now use
+      direct FDA row fixtures instead of OpenFDA mock servers.
 - [x] `src/entities/gene.rs` Reactome workflow-signal mock is gone: the
       limit-one probe request shape is covered in Reactome source tests and the
       gene entity test now covers the empty-symbol no-probe guard directly.
@@ -696,3 +699,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   → 29/29 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D
   warnings` → pass; `git diff --check` → pass; Reactome/gene mock `rg` → no
   matches.
+- 2026-06-16: diagnostic regulatory cleanup. Split FDA regulatory row merging
+  into a pure helper, converted the WHO empty-overlay and GTR PMA supplement
+  dedupe tests from OpenFDA mock servers to direct `FdaPmaResult`/empty-row
+  fixtures, and removed diagnostic wiremock imports. Local GTR/WHO fixture env
+  setup tests still remain. Checks:
+  `cargo nextest run -E 'test(/entities::diagnostic::/)'` → 19/19 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass; diagnostic OpenFDA mock `rg` → no matches.

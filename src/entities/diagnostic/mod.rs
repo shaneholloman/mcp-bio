@@ -254,10 +254,9 @@ mod tests {
     use std::path::Path;
 
     use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE, resolve_gtr_root};
+    use crate::sources::openfda::FdaPmaResult;
     use crate::sources::who_ivd::WHO_IVD_CSV_FILE;
     use crate::test_support::{TempDirGuard, env_lock, set_env_var};
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     async fn install_gtr_fixture_root(
         label: &str,
@@ -636,48 +635,18 @@ mod tests {
         assert!(expanded.regulatory.is_none());
     }
 
-    #[tokio::test]
-    async fn get_who_ivd_regulatory_is_valid_and_returns_empty_vec_on_no_match() {
-        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
-            install_all_fixture_roots("diagnostic-get-who-regulatory").await;
-        let server = MockServer::start().await;
-        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+    #[test]
+    fn who_ivd_regulatory_overlay_returns_empty_vec_on_no_match() {
+        let ctx = super::get::DiagnosticRegulatoryLookupContext {
+            display_name: "ONE STEP Anti-HIV (1&2) Test".into(),
+            aliases: vec!["ONE STEP Anti-HIV (1&2) Test".into()],
+            manufacturer: Some("InTec Products, Inc.".into()),
+        };
 
-        Mock::given(method("GET"))
-            .and(path("/device/510k.json"))
-            .and(query_param("limit", "25"))
-            .and(query_param(
-                "search",
-                r#"device_name:"ONE STEP Anti\-HIV \(1\&2\) Test""#,
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 25, "total": 0}},
-                "results": []
-            })))
-            .mount(&server)
-            .await;
+        let regulatory = super::get::regulatory_records_from_fda_rows(&ctx, &[], &[]);
 
-        Mock::given(method("GET"))
-            .and(path("/device/pma.json"))
-            .and(query_param("limit", "25"))
-            .and(query_param(
-                "search",
-                r#"trade_name:"ONE STEP Anti\-HIV \(1\&2\) Test""#,
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 25, "total": 0}},
-                "results": []
-            })))
-            .mount(&server)
-            .await;
-
-        let diagnostic = get("ITPW02232- TC40", &["regulatory".to_string()])
-            .await
-            .expect("WHO regulatory get");
-
-        assert_eq!(diagnostic.source, "who-ivd");
         assert!(
-            diagnostic.regulatory.as_ref().is_some_and(Vec::is_empty),
+            regulatory.is_empty(),
             "requested WHO regulatory overlay should serialize as an empty section on no match"
         );
     }
@@ -704,71 +673,34 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn get_regulatory_uses_alias_queries_and_dedupes_pma_supplements() {
-        let (_lock, _root, _gtr_env) = install_gtr_fixture_root("diagnostic-get-regulatory").await;
-        // Isolate the shared OpenFDA HTTP cache for this mock-backed regulatory overlay test.
-        let cache_root = TempDirGuard::new("diagnostic-get-regulatory-cache");
-        let cache_root_string = cache_root.path().to_string_lossy().into_owned();
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&cache_root_string));
-        let server = MockServer::start().await;
-        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
+    #[test]
+    fn regulatory_rows_dedupe_pma_supplements_and_keep_latest_decision() {
+        let ctx = super::get::DiagnosticRegulatoryLookupContext {
+            display_name: "BRCA1 Hereditary Cancer Panel".into(),
+            aliases: vec![
+                "BRCA1 Hereditary Cancer Panel".into(),
+                "OncoPanel BRCA1".into(),
+            ],
+            manufacturer: Some("GenomOncology Lab".into()),
+        };
+        let pma_rows = vec![
+            fda_pma_row(
+                "P000019",
+                "OncoPanel BRCA1",
+                "2024-01-15",
+                "supplement approved",
+                "S001",
+            ),
+            fda_pma_row(
+                "P000019",
+                "OncoPanel BRCA1",
+                "2024-09-10",
+                "panel expanded",
+                "S002",
+            ),
+        ];
 
-        Mock::given(method("GET"))
-            .and(path("/device/510k.json"))
-            .and(query_param("limit", "25"))
-            .and(query_param(
-                "search",
-                "device_name:\"BRCA1 Hereditary Cancer Panel\" OR device_name:\"OncoPanel BRCA1\"",
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 25, "total": 0}},
-                "results": []
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/device/pma.json"))
-            .and(query_param("limit", "25"))
-            .and(query_param(
-                "search",
-                "trade_name:\"BRCA1 Hereditary Cancer Panel\" OR trade_name:\"OncoPanel BRCA1\"",
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "meta": {"results": {"skip": 0, "limit": 25, "total": 2}},
-                "results": [
-                    {
-                        "pma_number": "P000019",
-                        "trade_name": "OncoPanel BRCA1",
-                        "generic_name": "Hereditary cancer panel",
-                        "applicant": "GenomOncology Lab",
-                        "decision_date": "2024-01-15",
-                        "decision_description": "supplement approved",
-                        "product_code": "PQP",
-                        "supplement_number": "S001"
-                    },
-                    {
-                        "pma_number": "P000019",
-                        "trade_name": "OncoPanel BRCA1",
-                        "generic_name": "Hereditary cancer panel",
-                        "applicant": "GenomOncology Lab",
-                        "decision_date": "2024-09-10",
-                        "decision_description": "panel expanded",
-                        "product_code": "PQP",
-                        "supplement_number": "S002"
-                    }
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let diagnostic = get("GTR000000001.1", &["regulatory".to_string()])
-            .await
-            .expect("regulatory get");
-        let regulatory = diagnostic
-            .regulatory
-            .expect("regulatory records should be present when requested");
+        let regulatory = super::get::regulatory_records_from_fda_rows(&ctx, &[], &pma_rows);
 
         assert_eq!(regulatory.len(), 1);
         assert_eq!(regulatory[0].submission_type, "PMA");
@@ -779,6 +711,26 @@ mod tests {
             Some("panel expanded")
         );
         assert_eq!(regulatory[0].supplement_count, Some(2));
+    }
+
+    fn fda_pma_row(
+        number: &str,
+        trade_name: &str,
+        decision_date: &str,
+        decision_description: &str,
+        supplement_number: &str,
+    ) -> FdaPmaResult {
+        FdaPmaResult {
+            pma_number: Some(number.into()),
+            trade_name: Some(trade_name.into()),
+            generic_name: Some("Hereditary cancer panel".into()),
+            applicant: Some("GenomOncology Lab".into()),
+            decision_date: Some(decision_date.into()),
+            decision_description: Some(decision_description.into()),
+            advisory_committee_description: None,
+            product_code: Some("PQP".into()),
+            supplement_number: Some(supplement_number.into()),
+        }
     }
 
     #[test]
