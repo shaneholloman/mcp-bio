@@ -37,6 +37,41 @@ query DrugSections($chemblId: String!) {
   }
 }
 "#;
+const DISEASE_GENES_QUERY: &str = r#"
+query DiseaseGenes($efoId: String!, $size: Int!) {
+  disease(efoId: $efoId) {
+    id
+    name
+    associatedTargets(page: {index: 0, size: $size}) {
+      rows {
+        score
+        datatypeScores {
+          id
+          score
+        }
+        datasourceScores {
+          id
+          score
+        }
+        target {
+          approvedSymbol
+        }
+      }
+    }
+  }
+}
+"#;
+const SEARCH_DISEASE_QUERY: &str = r#"
+query SearchDisease($query: String!) {
+  search(queryString: $query, entityNames: ["disease"], page: {index: 0, size: 5}) {
+    hits {
+      id
+      name
+      entity
+    }
+  }
+}
+"#;
 
 pub struct OpenTargetsClient {
     client: reqwest_middleware::ClientWithMiddleware,
@@ -157,92 +192,26 @@ impl OpenTargetsClient {
         };
 
         let size = limit.clamp(1, 25);
-        let url = self.endpoint("graphql");
-        let body = GraphQlRequest {
-            query: r#"
-query DiseaseGenes($efoId: String!, $size: Int!) {
-  disease(efoId: $efoId) {
-    id
-    name
-    associatedTargets(page: {index: 0, size: $size}) {
-      rows {
-        score
-        datatypeScores {
-          id
-          score
-        }
-        datasourceScores {
-          id
-          score
-        }
-        target {
-          approvedSymbol
-        }
-      }
+        let plan = Self::disease_genes_plan(&efo_id, size)?;
+        let resp: GraphQlResponse<DiseaseGenesData> = self.post_plan_json(&plan).await?;
+
+        disease_associated_targets_from_response(resp, size)
     }
-  }
-}
-"#,
-            variables: serde_json::json!({
+
+    fn disease_genes_plan(efo_id: &str, size: usize) -> Result<RequestPlan, BioMcpError> {
+        let efo_id = efo_id.trim();
+        if efo_id.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "OpenTargets disease ID is required".into(),
+            ));
+        }
+        Ok(RequestPlan::post("graphql").json(serde_json::json!({
+            "query": DISEASE_GENES_QUERY,
+            "variables": {
                 "efoId": efo_id,
                 "size": size,
-            }),
-        };
-
-        let resp: GraphQlResponse<DiseaseGenesData> =
-            self.post_json(self.client.post(&url), &body).await?;
-
-        if let Some(errors) = resp.errors {
-            let msg = errors
-                .into_iter()
-                .filter_map(|e| e.message)
-                .collect::<Vec<_>>()
-                .join("; ");
-            if !msg.is_empty() {
-                return Err(BioMcpError::Api {
-                    api: OPENTARGETS_API.to_string(),
-                    message: msg,
-                });
-            }
-        }
-
-        let Some(disease) = resp.data.and_then(|d| d.disease) else {
-            warn_missing_field("DiseaseGenes", "data.disease");
-            return Ok(Vec::new());
-        };
-
-        let Some(rows) = disease.associated_targets.map(|v| v.rows) else {
-            warn_missing_field("DiseaseGenes", "data.disease.associatedTargets");
-            return Ok(Vec::new());
-        };
-
-        let mut out = Vec::new();
-        for row in rows.into_iter().take(size) {
-            let Some(target) = row.target else { continue };
-            let Some(symbol) = target
-                .approved_symbol
-                .as_deref()
-                .map(str::trim)
-                .filter(|v| !v.is_empty())
-            else {
-                continue;
-            };
-            out.push(OpenTargetsAssociatedGene {
-                symbol: symbol.to_string(),
-                overall_score: row.score,
-                gwas_score: score_for_id(&row.datasource_scores, GWAS_CREDIBLE_SETS_DATASOURCE_ID),
-                rare_variant_score: max_score_for_ids(
-                    &row.datasource_scores,
-                    RARE_VARIANT_DATASOURCE_IDS,
-                ),
-                somatic_mutation_score: score_for_id(
-                    &row.datatype_scores,
-                    SOMATIC_MUTATION_DATATYPE_ID,
-                ),
-            });
-        }
-
-        Ok(out)
+            },
+        })))
     }
 
     pub async fn target_druggability_context(
@@ -641,59 +610,26 @@ query DiseasePrevalence($efoId: String!, $size: Int!) {
             return Ok(Some(id.to_string()));
         }
 
-        let url = self.endpoint("graphql");
-        let body = GraphQlRequest {
-            query: r#"
-query SearchDisease($query: String!) {
-  search(queryString: $query, entityNames: ["disease"], page: {index: 0, size: 5}) {
-    hits {
-      id
-      name
-      entity
-    }
-  }
-}
-"#,
-            variables: serde_json::json!({ "query": disease_query }),
-        };
-
-        let resp: GraphQlResponse<SearchData> =
-            self.post_json(self.client.post(&url), &body).await?;
-
-        if let Some(errors) = resp.errors {
-            let msg = errors
-                .into_iter()
-                .filter_map(|e| e.message)
-                .collect::<Vec<_>>()
-                .join("; ");
-            if !msg.is_empty() {
-                return Err(BioMcpError::Api {
-                    api: OPENTARGETS_API.to_string(),
-                    message: msg,
-                });
-            }
-        }
-
-        let hits = resp
-            .data
-            .and_then(|d| d.search)
-            .map(|s| s.hits)
-            .unwrap_or_default();
-
-        let from_search = hits
-            .iter()
-            .find(|h| {
-                h.entity.as_deref() == Some("disease")
-                    && h.id.as_deref().is_some_and(|id| id.starts_with("EFO_"))
-            })
-            .and_then(|h| h.id.clone())
-            .or_else(|| {
-                hits.into_iter()
-                    .find(|h| h.entity.as_deref() == Some("disease"))
-                    .and_then(|h| h.id)
-            });
+        let plan = Self::search_disease_plan(disease_query)?;
+        let resp: GraphQlResponse<SearchData> = self.post_plan_json(&plan).await?;
+        let from_search = disease_id_from_search_response(resp)?;
 
         Ok(from_search.or(prefixed))
+    }
+
+    fn search_disease_plan(disease_query: &str) -> Result<RequestPlan, BioMcpError> {
+        let disease_query = disease_query.trim();
+        if disease_query.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "OpenTargets disease query is required".into(),
+            ));
+        }
+        Ok(RequestPlan::post("graphql").json(serde_json::json!({
+            "query": SEARCH_DISEASE_QUERY,
+            "variables": {
+                "query": disease_query,
+            },
+        })))
     }
 
     async fn resolve_target_id(&self, symbol: &str) -> Result<Option<String>, BioMcpError> {
@@ -866,6 +802,90 @@ fn drug_sections_from_response(
         indications,
         targets,
     })
+}
+
+fn disease_id_from_search_response(
+    resp: GraphQlResponse<SearchData>,
+) -> Result<Option<String>, BioMcpError> {
+    if let Some(msg) = graphql_error_message(&resp) {
+        return Err(BioMcpError::Api {
+            api: OPENTARGETS_API.to_string(),
+            message: msg,
+        });
+    }
+
+    let hits = resp
+        .data
+        .and_then(|d| d.search)
+        .map(|s| s.hits)
+        .unwrap_or_default();
+
+    let from_search = hits
+        .iter()
+        .find(|h| {
+            h.entity.as_deref() == Some("disease")
+                && h.id.as_deref().is_some_and(|id| id.starts_with("EFO_"))
+        })
+        .and_then(|h| h.id.clone())
+        .or_else(|| {
+            hits.into_iter()
+                .find(|h| h.entity.as_deref() == Some("disease"))
+                .and_then(|h| h.id)
+        });
+
+    Ok(from_search)
+}
+
+fn disease_associated_targets_from_response(
+    resp: GraphQlResponse<DiseaseGenesData>,
+    size: usize,
+) -> Result<Vec<OpenTargetsAssociatedGene>, BioMcpError> {
+    if let Some(msg) = graphql_error_message(&resp) {
+        return Err(BioMcpError::Api {
+            api: OPENTARGETS_API.to_string(),
+            message: msg,
+        });
+    }
+
+    let Some(disease) = resp.data.and_then(|d| d.disease) else {
+        warn_missing_field("DiseaseGenes", "data.disease");
+        return Ok(Vec::new());
+    };
+
+    let Some(rows) = disease.associated_targets.map(|v| v.rows) else {
+        warn_missing_field("DiseaseGenes", "data.disease.associatedTargets");
+        return Ok(Vec::new());
+    };
+
+    let mut out = Vec::new();
+    for row in rows.into_iter().take(size) {
+        let Some(target) = row.target else {
+            continue;
+        };
+        let Some(symbol) = target
+            .approved_symbol
+            .as_deref()
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+        else {
+            continue;
+        };
+        out.push(OpenTargetsAssociatedGene {
+            symbol: symbol.to_string(),
+            overall_score: row.score,
+            gwas_score: score_for_id(&row.datasource_scores, GWAS_CREDIBLE_SETS_DATASOURCE_ID),
+            rare_variant_score: max_score_for_ids(
+                &row.datasource_scores,
+                RARE_VARIANT_DATASOURCE_IDS,
+            ),
+            somatic_mutation_score: score_for_id(
+                &row.datatype_scores,
+                SOMATIC_MUTATION_DATATYPE_ID,
+            ),
+        });
+    }
+
+    Ok(out)
 }
 
 fn normalize_disease_id(input: &str) -> Option<String> {
@@ -1423,6 +1443,14 @@ pub(crate) mod tests {
         serde_json::from_value(value).expect("drug sections response")
     }
 
+    fn decode_disease_search(value: serde_json::Value) -> GraphQlResponse<SearchData> {
+        serde_json::from_value(value).expect("disease search response")
+    }
+
+    fn decode_disease_genes(value: serde_json::Value) -> GraphQlResponse<DiseaseGenesData> {
+        serde_json::from_value(value).expect("disease genes response")
+    }
+
     #[test]
     fn drug_sections_plan_builds_graphql_request() {
         let plan = OpenTargetsClient::drug_sections_plan(" CHEMBL25 ").expect("plan");
@@ -1521,62 +1549,98 @@ pub(crate) mod tests {
         assert_eq!(sections.targets.len(), 1);
     }
 
-    #[tokio::test]
-    async fn disease_associated_targets_runs_search_then_lookup() {
-        let server = MockServer::start().await;
+    #[test]
+    fn search_disease_plan_builds_graphql_request() {
+        let plan = OpenTargetsClient::search_disease_plan(" melanoma ").expect("plan");
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchDisease"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [
-                            {"id": "EFO_0000311", "entity": "disease"}
+        assert_eq!(plan.method, crate::sources::HttpMethod::Post);
+        assert_eq!(plan.path, "graphql");
+        let crate::sources::RequestBody::Json(body) = plan.body else {
+            panic!("expected JSON body");
+        };
+        assert!(
+            body["query"]
+                .as_str()
+                .expect("query")
+                .contains("SearchDisease")
+        );
+        assert_eq!(body["variables"]["query"], "melanoma");
+    }
+
+    #[test]
+    fn disease_genes_plan_builds_graphql_request() {
+        let plan = OpenTargetsClient::disease_genes_plan(" EFO_0000311 ", 5).expect("plan");
+
+        assert_eq!(plan.method, crate::sources::HttpMethod::Post);
+        assert_eq!(plan.path, "graphql");
+        let crate::sources::RequestBody::Json(body) = plan.body else {
+            panic!("expected JSON body");
+        };
+        assert!(
+            body["query"]
+                .as_str()
+                .expect("query")
+                .contains("DiseaseGenes")
+        );
+        assert_eq!(body["variables"]["efoId"], "EFO_0000311");
+        assert_eq!(body["variables"]["size"], 5);
+    }
+
+    #[test]
+    fn disease_id_from_search_response_prefers_efo_hit() {
+        let resp = decode_disease_search(serde_json::json!({
+            "data": {
+                "search": {
+                    "hits": [
+                        {
+                            "id": "MONDO_0003864",
+                            "name": "chronic lymphocytic leukemia/small lymphocytic lymphoma",
+                            "entity": "disease"
+                        },
+                        {
+                            "id": "EFO_0000095",
+                            "name": "chronic lymphocytic leukemia",
+                            "entity": "disease"
+                        }
+                    ]
+                }
+            }
+        }));
+
+        let id = disease_id_from_search_response(resp).expect("search response");
+
+        assert_eq!(id.as_deref(), Some("EFO_0000095"));
+    }
+
+    #[test]
+    fn disease_associated_targets_maps_scores() {
+        let resp = decode_disease_genes(serde_json::json!({
+            "data": {
+                "disease": {
+                    "associatedTargets": {
+                        "rows": [
+                            {
+                                "score": 0.91,
+                                "datatypeScores": [{"id": "somatic_mutation", "score": 0.67}],
+                                "datasourceScores": [
+                                    {"id": "gwas_credible_sets", "score": 0.42},
+                                    {"id": "eva", "score": 0.88}
+                                ],
+                                "target": {"approvedSymbol": "BRAF"}
+                            },
+                            {
+                                "score": 0.76,
+                                "datatypeScores": [],
+                                "datasourceScores": [],
+                                "target": {"approvedSymbol": "KRAS"}
+                            }
                         ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DiseaseGenes"))
-            .and(body_string_contains("\"efoId\":\"EFO_0000311\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "disease": {
-                        "associatedTargets": {
-                            "rows": [
-                                {
-                                    "score": 0.91,
-                                    "datatypeScores": [{"id": "somatic_mutation", "score": 0.67}],
-                                    "datasourceScores": [
-                                        {"id": "gwas_credible_sets", "score": 0.42},
-                                        {"id": "eva", "score": 0.88}
-                                    ],
-                                    "target": {"approvedSymbol": "BRAF"}
-                                },
-                                {
-                                    "score": 0.76,
-                                    "datatypeScores": [],
-                                    "datasourceScores": [],
-                                    "target": {"approvedSymbol": "KRAS"}
-                                }
-                            ]
-                        }
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let genes = client
-            .disease_associated_targets("melanoma", 5)
-            .await
-            .unwrap();
+        let genes = disease_associated_targets_from_response(resp, 5).unwrap();
         assert_eq!(genes.len(), 2);
         assert_eq!(genes[0].symbol, "BRAF");
         assert_eq!(genes[0].overall_score, Some(0.91));
@@ -1590,109 +1654,39 @@ pub(crate) mod tests {
         assert_eq!(genes[1].somatic_mutation_score, None);
     }
 
-    pub(crate) async fn proof_disease_associated_targets_prefers_efo_hit_when_search_returns_mondo_first()
-     {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchDisease"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [
+    #[test]
+    fn disease_associated_targets_maps_efo_lookup_result() {
+        let resp = decode_disease_genes(serde_json::json!({
+            "data": {
+                "disease": {
+                    "associatedTargets": {
+                        "rows": [
                             {
-                                "id": "MONDO_0003864",
-                                "name": "chronic lymphocytic leukemia/small lymphocytic lymphoma",
-                                "entity": "disease"
-                            },
-                            {
-                                "id": "EFO_0000095",
-                                "name": "chronic lymphocytic leukemia",
-                                "entity": "disease"
+                                "score": 0.99,
+                                "datatypeScores": [],
+                                "datasourceScores": [],
+                                "target": {"approvedSymbol": "TP53"}
                             }
                         ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DiseaseGenes"))
-            .and(body_string_contains("\"efoId\":\"EFO_0000095\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "disease": {
-                        "associatedTargets": {
-                            "rows": [
-                                {
-                                    "score": 0.99,
-                                    "datatypeScores": [],
-                                    "datasourceScores": [],
-                                    "target": {"approvedSymbol": "TP53"}
-                                }
-                            ]
-                        }
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let genes = client
-            .disease_associated_targets(
-                "chronic lymphocytic leukemia/small lymphocytic lymphoma",
-                5,
-            )
-            .await
-            .unwrap();
+        let genes = disease_associated_targets_from_response(resp, 5).unwrap();
         assert_eq!(genes.len(), 1);
         assert_eq!(genes[0].symbol, "TP53");
     }
 
-    #[tokio::test]
-    async fn disease_associated_targets_prefers_efo_hit_when_search_returns_mondo_first() {
-        proof_disease_associated_targets_prefers_efo_hit_when_search_returns_mondo_first().await;
-    }
+    #[test]
+    fn disease_associated_targets_degrades_when_associated_targets_missing() {
+        let resp = decode_disease_genes(serde_json::json!({
+            "data": {
+                "disease": {}
+            }
+        }));
 
-    #[tokio::test]
-    async fn disease_associated_targets_degrades_when_associated_targets_missing() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchDisease"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [
-                            {"id": "EFO_0000311", "entity": "disease"}
-                        ]
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DiseaseGenes"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "disease": {}
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let genes = client
-            .disease_associated_targets("melanoma", 5)
-            .await
-            .unwrap();
+        let genes = disease_associated_targets_from_response(resp, 5).unwrap();
         assert!(genes.is_empty());
     }
 
