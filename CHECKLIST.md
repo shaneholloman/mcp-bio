@@ -152,6 +152,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/adverse_event.rs` VAERS non-vaccine resolver and
       unsupported-filter combined response tests are pure: they now test the
       resolver/response helpers directly instead of starting CVX/OpenFDA mocks.
+- [x] `src/entities/adverse_event.rs` all-sources non-vaccine VAERS response is
+      pure: the local-only resolver result is combined with FAERS status through
+      a helper instead of running OpenFDA/CVX mock servers.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -527,6 +530,14 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   unsupported-filter combined response helper and converted that test away from
   OpenFDA/CVX mock servers. Remaining adverse-event server cases are the larger
   CVX/VAERS summary and trial adverse-event cases. Checks:
+  `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: fourth adverse-event cleanup. Extracted the all-sources response
+  helper for supported VAERS filters and converted the non-vaccine all-sources
+  case from OpenFDA/CVX mock servers to a pure local-only resolver plus FAERS
+  status test. Remaining adverse-event server cases are the two VAERS summary
+  tests and the three trial adverse-event CTGov cases. Checks:
   `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.

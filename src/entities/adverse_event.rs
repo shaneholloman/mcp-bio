@@ -1000,6 +1000,17 @@ fn all_source_search_with_unsupported_vaers_filters(
     }
 }
 
+fn all_source_search_with_vaers_payload(
+    faers: FaersSearchStatus,
+    vaers: VaersSearchPayload,
+) -> AdverseEventSourceSearch {
+    AdverseEventSourceSearch {
+        source: AdverseEventSourceFilter::All,
+        faers: Some(faers),
+        vaers: Some(vaers),
+    }
+}
+
 pub async fn search_with_source(
     filters: &AdverseEventSearchFilters,
     source: AdverseEventSourceFilter,
@@ -1057,11 +1068,7 @@ pub async fn search_with_source(
                         format!("CDC VAERS unavailable: {err}"),
                     ),
                 };
-                Ok(AdverseEventSourceSearch {
-                    source,
-                    faers: Some(faers_result?),
-                    vaers: Some(vaers),
-                })
+                Ok(all_source_search_with_vaers_payload(faers_result?, vaers))
             } else {
                 Ok(all_source_search_with_unsupported_vaers_filters(
                     search_with_status(filters, limit, offset).await?,
@@ -1829,7 +1836,7 @@ pub fn recall_query_summary(filters: &RecallSearchFilters) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::{TempDirGuard, set_env_var};
+    use crate::test_support::set_env_var;
     use wiremock::matchers::{body_string_contains, method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -2072,53 +2079,20 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn search_with_source_all_non_vaccine_does_not_auto_sync_cvx() {
-        let _env_lock = crate::test_support::env_lock().lock().await;
-        let openfda_server = MockServer::start().await;
-        let cvx_server = MockServer::start().await;
-        let cvx_root = TempDirGuard::new("adverse-event-cvx-empty");
-        let filters = AdverseEventSearchFilters {
-            drug: Some("ibuprofen".into()),
-            ..Default::default()
+    async fn search_with_source_all_non_vaccine_uses_local_only_vaers_result() {
+        let vaers = match resolve_vaers_vaccine("ibuprofen", CvxLookupMode::LocalOnly).await {
+            ResolvedVaersVaccine::QueryNotVaccine(message) => {
+                VaersSearchPayload::status_only(VaersSearchStatus::QueryNotVaccine, message)
+            }
+            _ => panic!("expected non-vaccine query"),
         };
-        let query = build_openfda_query(&filters).unwrap();
-        let cvx_url = format!("{}/cvx.txt", cvx_server.uri());
-        let tradename_url = format!("{}/TRADENAME.txt", cvx_server.uri());
-        let mvx_url = format!("{}/mvx.txt", cvx_server.uri());
-        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&openfda_server.uri()));
-        let _cvx_root_env = set_env_var(
-            "BIOMCP_CVX_DIR",
-            Some(&cvx_root.path().display().to_string()),
-        );
-        let _cvx_url_env = set_env_var("BIOMCP_CVX_URL", Some(&cvx_url));
-        let _tradename_url_env = set_env_var("BIOMCP_CVX_TRADENAME_URL", Some(&tradename_url));
-        let _mvx_url_env = set_env_var("BIOMCP_MVX_URL", Some(&mvx_url));
-
-        Mock::given(method("GET"))
-            .and(path("/drug/event.json"))
-            .and(query_param("search", query.as_str()))
-            .and(query_param("limit", "5"))
-            .and(query_param("skip", "0"))
-            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
-                "error": {"code": "NOT_FOUND", "message": "No matches found!"}
-            })))
-            .mount(&openfda_server)
-            .await;
-
-        let response = search_with_source(&filters, AdverseEventSourceFilter::All, 5, 0)
-            .await
-            .expect("combined source response");
+        let response = all_source_search_with_vaers_payload(FaersSearchStatus::NotFound, vaers);
         let vaers = response.vaers.expect("vaers payload");
 
+        assert_eq!(response.source, AdverseEventSourceFilter::All);
         assert!(matches!(response.faers, Some(FaersSearchStatus::NotFound)));
         assert_eq!(vaers.status, VaersSearchStatus::QueryNotVaccine);
-        assert!(
-            cvx_server
-                .received_requests()
-                .await
-                .expect("cvx mock requests")
-                .is_empty()
-        );
+        assert!(vaers.message.unwrap_or_default().contains("vaccine-only"));
     }
 
     #[tokio::test]
