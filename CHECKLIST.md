@@ -177,6 +177,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
       the remaining VAERS mock-server tests are gone.
 - [x] `src/entities/pgx.rs` is pure: CPIC actionable-gene counting now tests
       direct CPIC pair rows instead of starting a CPIC mock server.
+- [x] `src/entities/drug/get/tests.rs` is pure: trial alias transient-failure
+      fallback and canonical-name behavior now test the alias resolution helper
+      directly instead of swapping MyChem base URLs.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -650,3 +653,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::pgx::/)'` → 6/6 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass; PGx purity `rg` → no matches.
+- 2026-06-16: drug get cleanup. Split trial alias lookup-result handling into a
+  pure helper, converted transient MyChem failure and generic canonical-name
+  tests from mock-server/env swaps to direct helper tests, and kept the async
+  resolver behavior unchanged. `src/entities/drug/get/tests.rs` now has no
+  mock-server/env-lock cases. Checks:
+  `cargo nextest run -E 'test(/entities::drug::get::/)'` → 16/16 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass; drug get purity `rg` → no matches.

@@ -1,41 +1,6 @@
 //! Get-module tests split from the legacy drug facade.
 
 use super::*;
-use crate::test_support::{TempDirGuard, set_env_var};
-use wiremock::matchers::{method, path, query_param};
-use wiremock::{Mock, MockServer, ResponseTemplate};
-
-async fn mount_trial_alias_lookup(
-    server: &MockServer,
-    requested: &str,
-    canonical: &str,
-    aliases: &[&str],
-) {
-    Mock::given(method("GET"))
-        .and(path("/v1/query"))
-        .and(query_param("q", requested))
-        .and(query_param("size", "25"))
-        .and(query_param("from", "0"))
-        .and(query_param(
-            "fields",
-            crate::sources::mychem::MYCHEM_FIELDS_GET,
-        ))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "total": 1,
-            "hits": [{
-                "_id": "drug-test-id",
-                "_score": 42.0,
-                "drugbank": {
-                    "id": "DBTEST",
-                    "name": canonical,
-                    "synonyms": aliases,
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(server)
-        .await;
-}
 
 #[test]
 fn parse_sections_supports_all_and_rejects_unknown() {
@@ -159,66 +124,45 @@ fn trial_alias_cache_key_normalizes_requested_name() {
     assert_eq!(trial_alias_cache_key(" Daraxonrasib "), "daraxonrasib");
 }
 
-#[tokio::test]
-async fn resolve_trial_aliases_retries_after_transient_lookup_failure() {
-    let _env_lock = crate::test_support::env_lock().lock().await;
-    // Isolate the shared MyChem HTTP cache while this test swaps BIOMCP_MYCHEM_BASE.
-    let cache_root = TempDirGuard::new("trial-alias-retry");
-    let cache_root_string = cache_root.path().to_string_lossy().into_owned();
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&cache_root_string));
+#[test]
+fn trial_alias_resolution_does_not_cache_transient_lookup_failure() {
     let requested = "review-transient-alias-drug";
-
-    let failing = MockServer::start().await;
-    Mock::given(method("GET"))
-        .and(path("/v1/query"))
-        .and(query_param("q", requested))
-        .and(query_param("size", "25"))
-        .and(query_param("from", "0"))
-        .and(query_param(
-            "fields",
-            crate::sources::mychem::MYCHEM_FIELDS_GET,
-        ))
-        .respond_with(ResponseTemplate::new(500))
-        .mount(&failing)
-        .await;
-
-    let failing_base = format!("{}/v1", failing.uri());
-    let failing_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&failing_base));
-    assert_eq!(
-        resolve_trial_aliases(requested)
-            .await
-            .expect("fallback aliases"),
-        vec![requested.to_string()]
+    let (fallback, fallback_cacheable) = trial_alias_resolution_from_lookup_result(
+        requested,
+        Err(BioMcpError::Api {
+            api: "mychem.info".into(),
+            message: "HTTP 500".into(),
+        }),
     );
-    drop(failing_env);
+    assert_eq!(fallback.aliases, vec![requested.to_string()]);
+    assert!(!fallback_cacheable);
 
-    let success = MockServer::start().await;
-    mount_trial_alias_lookup(&success, requested, requested, &["RMC-6236"]).await;
-
-    let success_base = format!("{}/v1", success.uri());
-    let _success_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&success_base));
+    let (resolved, resolved_cacheable) = trial_alias_resolution_from_lookup_result(
+        requested,
+        Ok(TrialAliasLookup {
+            canonical_name: requested.into(),
+            brand_names: vec!["RMC-6236".into()],
+        }),
+    );
     assert_eq!(
-        resolve_trial_aliases(requested)
-            .await
-            .expect("resolved aliases after retry"),
+        resolved.aliases,
         vec![requested.to_string(), "RMC-6236".to_string()]
     );
+    assert!(resolved_cacheable);
 }
 
-#[tokio::test]
-async fn resolve_trial_canonical_name_keeps_generic_requests_canonical() {
-    let _env_lock = crate::test_support::env_lock().lock().await;
+#[test]
+fn trial_alias_resolution_keeps_generic_requests_canonical() {
     let requested = "pembrolizumab";
-
-    let success = MockServer::start().await;
-    mount_trial_alias_lookup(&success, requested, requested, &["Keytruda"]).await;
-
-    let success_base = format!("{}/v1", success.uri());
-    let _success_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&success_base));
-    assert_eq!(
-        resolve_trial_canonical_name(requested)
-            .await
-            .expect("resolved canonical trial name"),
-        requested
+    let (resolved, cacheable) = trial_alias_resolution_from_lookup_result(
+        requested,
+        Ok(TrialAliasLookup {
+            canonical_name: requested.into(),
+            brand_names: vec!["Keytruda".into()],
+        }),
     );
+
+    assert_eq!(resolved.canonical_name, requested);
+    assert_eq!(resolved.aliases, vec!["pembrolizumab", "Keytruda"]);
+    assert!(cacheable);
 }

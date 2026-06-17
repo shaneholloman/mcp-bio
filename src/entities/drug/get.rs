@@ -245,6 +245,11 @@ struct TrialAliasResolution {
     aliases: Vec<String>,
 }
 
+struct TrialAliasLookup {
+    canonical_name: String,
+    brand_names: Vec<String>,
+}
+
 static TRIAL_ALIAS_CACHE: OnceLock<Mutex<HashMap<String, TrialAliasResolution>>> = OnceLock::new();
 
 fn trial_alias_cache() -> &'static Mutex<HashMap<String, TrialAliasResolution>> {
@@ -314,29 +319,18 @@ fn build_trial_aliases(
     aliases
 }
 
-async fn resolve_trial_alias_resolution(name: &str) -> Result<TrialAliasResolution, BioMcpError> {
-    let requested_name = name.trim();
-    if requested_name.is_empty() {
-        return Err(BioMcpError::InvalidArgument(
-            "Trial intervention alias expansion requires a non-empty drug name".into(),
-        ));
-    }
-
-    let cache_key = trial_alias_cache_key(requested_name);
-    if let Ok(cache) = trial_alias_cache().lock()
-        && let Some(cached) = cache.get(&cache_key)
-    {
-        return Ok(cached.clone());
-    }
-
-    let (resolution, cacheable) = match resolve_drug_base(requested_name, false, false).await {
+fn trial_alias_resolution_from_lookup_result(
+    requested_name: &str,
+    result: Result<TrialAliasLookup, BioMcpError>,
+) -> (TrialAliasResolution, bool) {
+    match result {
         Ok(resolved) => (
             TrialAliasResolution {
-                canonical_name: resolved.drug.name.clone(),
+                canonical_name: resolved.canonical_name.clone(),
                 aliases: build_trial_aliases(
                     requested_name,
-                    Some(&resolved.drug.name),
-                    &resolved.drug.brand_names,
+                    Some(&resolved.canonical_name),
+                    &resolved.brand_names,
                 ),
             },
             true,
@@ -361,7 +355,31 @@ async fn resolve_trial_alias_resolution(name: &str) -> Result<TrialAliasResoluti
                 false,
             )
         }
-    };
+    }
+}
+
+async fn resolve_trial_alias_resolution(name: &str) -> Result<TrialAliasResolution, BioMcpError> {
+    let requested_name = name.trim();
+    if requested_name.is_empty() {
+        return Err(BioMcpError::InvalidArgument(
+            "Trial intervention alias expansion requires a non-empty drug name".into(),
+        ));
+    }
+
+    let cache_key = trial_alias_cache_key(requested_name);
+    if let Ok(cache) = trial_alias_cache().lock()
+        && let Some(cached) = cache.get(&cache_key)
+    {
+        return Ok(cached.clone());
+    }
+
+    let lookup = resolve_drug_base(requested_name, false, false)
+        .await
+        .map(|resolved| TrialAliasLookup {
+            canonical_name: resolved.drug.name,
+            brand_names: resolved.drug.brand_names,
+        });
+    let (resolution, cacheable) = trial_alias_resolution_from_lookup_result(requested_name, lookup);
 
     if cacheable && let Ok(mut cache) = trial_alias_cache().lock() {
         cache.insert(cache_key, resolution.clone());
