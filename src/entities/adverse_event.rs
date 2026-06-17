@@ -1395,6 +1395,7 @@ pub async fn search_count(
             "--count field is too long".into(),
         ));
     }
+    validate_count_field_for_openfda(count_field)?;
 
     let q = build_openfda_query(filters)?;
     let openfda_count_field = normalize_count_field_for_openfda(count_field);
@@ -1413,6 +1414,37 @@ pub async fn search_count(
         count_field: count_field.to_string(),
         buckets,
     })
+}
+
+fn validate_count_field_for_openfda(count_field: &str) -> Result<(), BioMcpError> {
+    let field = count_field.trim();
+    let lower = field.to_ascii_lowercase();
+    if matches!(
+        lower.as_str(),
+        "total" | "meta.total" | "results.total" | "meta.results.total"
+    ) {
+        return Err(BioMcpError::InvalidArgument(
+            "--count total is not a count field; pass an openFDA field key such as patient.reaction.reactionmeddrapt. The overall report total is meta.results.total, not a --count field.".into(),
+        ));
+    }
+    if !is_plausible_openfda_count_field(field) {
+        return Err(BioMcpError::InvalidArgument(
+            "--count must be an openFDA field key such as patient.reaction.reactionmeddrapt".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn is_plausible_openfda_count_field(field: &str) -> bool {
+    !field.starts_with('.')
+        && !field.ends_with('.')
+        && field
+            .split('.')
+            .all(|segment| !segment.is_empty() && segment.chars().all(is_openfda_field_char))
+}
+
+fn is_openfda_field_char(ch: char) -> bool {
+    ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-')
 }
 
 fn normalize_count_field_for_openfda(count_field: &str) -> String {
@@ -1996,6 +2028,48 @@ mod tests {
             normalize_count_field_for_openfda("patient.drug.medicinalproduct"),
             "patient.drug.medicinalproduct"
         );
+    }
+
+    #[test]
+    fn validate_count_field_rejects_total_affordances() {
+        for field in ["total", "results.total", "meta.results.total"] {
+            let err = validate_count_field_for_openfda(field).expect_err("total is not countable");
+            let message = err.to_string();
+            assert!(message.contains("not a count field"));
+            assert!(message.contains("patient.reaction.reactionmeddrapt"));
+        }
+    }
+
+    #[tokio::test]
+    async fn search_count_rejects_empty_count_field() {
+        let filters = AdverseEventSearchFilters {
+            drug: Some("pembrolizumab".into()),
+            ..Default::default()
+        };
+
+        let err = search_count(&filters, "", 10)
+            .await
+            .expect_err("empty count field should be invalid");
+        assert!(err.to_string().contains("--count requires a field name"));
+    }
+
+    #[test]
+    fn validate_count_field_preserves_real_field_paths_and_aliases() {
+        for field in [
+            "reaction",
+            "patient.reaction.reactionmeddrapt",
+            "patient.reaction.reactionmeddrapt.exact",
+            "patient.drug.medicinalproduct",
+        ] {
+            validate_count_field_for_openfda(field).expect("field should remain countable");
+        }
+    }
+
+    #[test]
+    fn validate_count_field_rejects_non_field_syntax() {
+        let err =
+            validate_count_field_for_openfda("patient reaction").expect_err("not a field key");
+        assert!(err.to_string().contains("openFDA field key"));
     }
 
     #[test]

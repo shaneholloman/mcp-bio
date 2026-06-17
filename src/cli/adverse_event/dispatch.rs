@@ -48,11 +48,7 @@ pub(super) fn search_plan_from_args(
                     "--product-code can only be used with --type device".into(),
                 ));
             }
-            if args
-                .count
-                .as_deref()
-                .map(str::trim)
-                .is_some_and(|value| !value.is_empty())
+            if args.count.is_some()
                 && matches!(
                     source_filter,
                     crate::entities::adverse_event::AdverseEventSourceFilter::Vaers
@@ -249,12 +245,7 @@ pub(crate) async fn handle_search(
                 query_summary = format!("{query_summary}, offset={}", args.offset);
             }
 
-            if let Some(count_field) = args
-                .count
-                .as_deref()
-                .map(str::trim)
-                .filter(|v| !v.is_empty())
-            {
+            if let Some(count_field) = args.count.as_deref().map(str::trim) {
                 if matches!(
                     source_filter,
                     crate::entities::adverse_event::AdverseEventSourceFilter::Vaers
