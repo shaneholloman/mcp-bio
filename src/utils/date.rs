@@ -117,8 +117,44 @@ mod tests {
     }
 
     #[test]
+    fn trims_outer_whitespace() {
+        assert_eq!(
+            validate_since(" 2015-06 ").expect("trimmed year-month"),
+            "2015-06-01".to_string()
+        );
+    }
+
+    #[test]
+    fn accepts_leap_day_only_in_leap_years() {
+        assert_eq!(
+            validate_since("2024-02-29").expect("valid leap day"),
+            "2024-02-29".to_string()
+        );
+
+        let err = validate_since("2023-02-29").expect_err("non-leap day should fail");
+        assert!(err.to_string().contains("Invalid day 29 for month 2"));
+    }
+
+    #[test]
+    fn rejects_invalid_day_for_month() {
+        let err = validate_since("2024-04-31").expect_err("April 31 should fail");
+        assert!(err.to_string().contains("Invalid day 31 for month 4"));
+    }
+
+    #[test]
     fn rejects_invalid_month() {
         let err = validate_since("2015-13").expect_err("month should fail");
         assert!(err.to_string().contains("Invalid month"));
+    }
+
+    #[test]
+    fn rejects_malformed_dates() {
+        for value in ["", "2015/06/01", "2015-6", "2015-06-1", "June 2015"] {
+            let err = validate_since(value).expect_err("malformed date should fail");
+            assert!(
+                err.to_string().contains("--since"),
+                "unexpected error for {value:?}: {err}"
+            );
+        }
     }
 }

@@ -241,17 +241,25 @@ OncoKB has none — harvest its existing stub instead of curling.)
       `BIOMCP_STUDY_DIR` roots.
 
 ### Utils
-- [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
+- [x] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
 - [x] `src/utils/download.rs` cache-root tests are pure: download path and
       atomic-save target tests now use direct config/path inputs instead of
       cache env vars.
-- [ ] The shared helpers in `src/sources/mod.rs` (`RequestPlan`, `decode_json`) — a few tests.
+- [x] The shared helpers in `src/sources/mod.rs` (`RequestPlan`, `decode_json`) — a few tests.
 - [x] `src/sources/mod.rs` HTTP cache migration test is pure: client
       construction can take an explicit resolved cache config, and duplicate
       env cache-root tests were removed.
 - [x] `src/sources/rate_limit.rs` Semantic Scholar key interval tests are
       pure: they assert the interval helper directly instead of mutating
       `S2_API_KEY`.
+- [x] 2026-06-17 utility/shared-helper checkpoint: `src/utils/date.rs` now
+      covers trimming, leap-day acceptance/rejection, invalid month/day, and
+      malformed formats; existing direct tests cover download atomic writes,
+      query escaping, serde helper shapes, source cache-mode helpers, JSON/HTML
+      body handling, retry timing, result-window validation, and cache
+      migration helpers. Checks:
+      `cargo nextest run -E 'test(/utils::/) | test(/sources::tests::/)'` →
+      42/42 pass.
 
 ### Smoke tests (a few, real network — the ONLY network tests)
 - [ ] gene → gene info · [ ] variant → variant info · [ ] article → article
