@@ -170,11 +170,8 @@ fn article_type_limitation_note_tracks_compatible_source_sets() {
     );
 }
 
-#[tokio::test]
-async fn semantic_scholar_search_is_enabled_without_api_key_for_federated_queries() {
-    let _guard = lock_env().await;
-    let _s2_key = set_env_var("S2_API_KEY", None);
-
+#[test]
+fn semantic_scholar_search_is_enabled_for_federated_queries() {
     assert!(semantic_scholar_search_enabled(
         &empty_filters(),
         ArticleSourceFilter::All

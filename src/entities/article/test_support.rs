@@ -13,12 +13,6 @@ pub(super) use crate::entities::SearchPage;
 pub(super) use crate::error::BioMcpError;
 #[allow(unused_imports)]
 pub(super) use crate::sources::europepmc::EuropePmcSort;
-#[allow(unused_imports)]
-pub(super) use crate::test_support::{EnvVarGuard, set_env_var};
-
-pub(super) async fn lock_env() -> tokio::sync::MutexGuard<'static, ()> {
-    crate::test_support::env_lock().lock().await
-}
 
 pub(super) fn empty_filters() -> ArticleSearchFilters {
     ArticleSearchFilters {

@@ -128,6 +128,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/article/graph/tests.rs` is pure: citation, reference, and
       recommendation output mapping now use direct Semantic Scholar response
       structs; request path/header behavior stays covered by source tests.
+- [x] `src/entities/article/planner/tests.rs` is pure: Semantic Scholar
+      federated-source enablement no longer clears `S2_API_KEY`, and the now
+      unused article env-lock helper was removed.
 - [x] `src/entities/disease/get/tests.rs` first lookup-path batch now tests
       canonical MyDisease get planning, MESH/OMIM crosswalk query planning, and
       empty crosswalk selection without mock servers or env locks.
@@ -632,3 +635,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   test(/sources::semantic_scholar::/)'` → 19/19 pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass; article graph purity `rg` → no matches.
+- 2026-06-16: article planner cleanup. Converted Semantic Scholar federated
+  enablement from an env-clearing async test to a direct planner assertion, and
+  removed the now-unused article env-lock test helper. Checks:
+  `cargo nextest run -E 'test(/entities::article::planner::/)'` → 20/20 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass; article planner purity `rg` → no matches.
