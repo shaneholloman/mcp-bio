@@ -239,6 +239,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
+- [x] `src/utils/download.rs` cache-root tests are pure: download path and
+      atomic-save target tests now use direct config/path inputs instead of
+      cache env vars.
 - [ ] The shared helpers in `src/sources/mod.rs` (`RequestPlan`, `decode_json`) — a few tests.
 
 ### Smoke tests (a few, real network — the ONLY network tests)
@@ -776,3 +779,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/cli::cache::/) | test(/cache::config::/)'` →
   37/37 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D
   warnings` → pass; `git diff --check` → pass.
+- 2026-06-16: download util cleanup. Split download path construction from
+  cache config resolution and split atomic-save behavior to accept an explicit
+  target path. Replaced cache-env/env-lock tests with direct config/path tests.
+  Checks: `cargo nextest run -E 'test(/utils::download::/)'` → 6/6 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.

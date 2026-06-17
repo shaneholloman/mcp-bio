@@ -10,10 +10,15 @@ pub fn cache_key(id: &str) -> String {
 }
 
 fn download_path(id: &str) -> Result<PathBuf, BioMcpError> {
-    Ok(crate::cache::resolve_cache_config()?
+    let config = crate::cache::resolve_cache_config()?;
+    Ok(download_path_for_config(id, &config))
+}
+
+fn download_path_for_config(id: &str, config: &crate::cache::ResolvedCacheConfig) -> PathBuf {
+    config
         .cache_root
         .join("downloads")
-        .join(format!("{}.txt", cache_key(id))))
+        .join(format!("{}.txt", cache_key(id)))
 }
 
 async fn create_unique_sibling_temp(
@@ -114,6 +119,10 @@ pub async fn write_atomic_bytes(path: &Path, content: &[u8]) -> Result<(), BioMc
 
 pub async fn save_atomic(id: &str, content: &str) -> Result<PathBuf, BioMcpError> {
     let path = download_path(id)?;
+    save_atomic_to_path(path, content).await
+}
+
+async fn save_atomic_to_path(path: PathBuf, content: &str) -> Result<PathBuf, BioMcpError> {
     if matches!(tokio::fs::metadata(&path).await, Ok(metadata) if metadata.is_file()) {
         return Ok(path);
     }
@@ -124,22 +133,25 @@ pub async fn save_atomic(id: &str, content: &str) -> Result<PathBuf, BioMcpError
 
 #[cfg(test)]
 mod tests {
-    use std::future::Future;
-    use tokio::sync::MutexGuard;
+    use std::time::Duration;
 
-    use super::{cache_key, download_path, save_atomic, write_atomic_bytes};
-    use crate::test_support::{TempDirGuard, set_env_var};
+    use super::{cache_key, download_path_for_config, save_atomic_to_path, write_atomic_bytes};
+    use crate::cache::{CacheConfigOrigins, ConfigOrigin, DiskFreeThreshold, ResolvedCacheConfig};
+    use crate::test_support::TempDirGuard;
 
-    fn block_on<F: Future>(future: F) -> F::Output {
-        tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .expect("download test runtime")
-            .block_on(future)
-    }
-
-    fn env_lock() -> MutexGuard<'static, ()> {
-        crate::test_support::env_lock().blocking_lock()
+    fn test_config(cache_root: impl Into<std::path::PathBuf>) -> ResolvedCacheConfig {
+        ResolvedCacheConfig {
+            cache_root: cache_root.into(),
+            max_size: 10_000_000_000,
+            min_disk_free: DiskFreeThreshold::Percent(10),
+            max_age: Duration::from_secs(86_400),
+            origins: CacheConfigOrigins {
+                cache_root: ConfigOrigin::Default,
+                max_size: ConfigOrigin::Default,
+                min_disk_free: ConfigOrigin::Default,
+                max_age: ConfigOrigin::Default,
+            },
+        }
     }
 
     #[tokio::test]
@@ -174,97 +186,65 @@ mod tests {
     }
 
     #[test]
-    fn download_path_default_root_resolves_to_cache_root_downloads() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("download-path-default");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
+    fn download_path_for_config_resolves_to_cache_root_downloads() {
+        let config = test_config("/tmp/biomcp-cache");
         let id = "pmid:12345";
 
-        let path = download_path(id).expect("default download path should resolve");
+        let path = download_path_for_config(id, &config);
 
         assert_eq!(
             path,
-            cache_home
-                .join("biomcp")
+            std::path::PathBuf::from("/tmp/biomcp-cache")
                 .join("downloads")
                 .join(format!("{}.txt", cache_key(id)))
         );
     }
 
     #[test]
-    fn download_path_env_override_resolves_to_biomcp_cache_dir_downloads() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("download-path-env");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let override_root = root.path().join("override-root");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&override_root.to_string_lossy()));
+    fn download_path_for_config_keeps_relative_cache_roots_relative() {
+        let config = test_config("relative-cache");
         let id = "pmid:12345";
 
-        let path = download_path(id).expect("override download path should resolve");
+        let path = download_path_for_config(id, &config);
 
         assert_eq!(
             path,
-            override_root
+            std::path::PathBuf::from("relative-cache")
                 .join("downloads")
                 .join(format!("{}.txt", cache_key(id)))
         );
     }
 
-    #[test]
-    fn save_atomic_uses_cache_toml_root_for_download_target() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("save-atomic-cache-toml");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let toml_root = root.path().join("toml-root");
-        std::fs::create_dir_all(config_home.join("biomcp")).expect("config dir should exist");
-        std::fs::write(
-            config_home.join("biomcp").join("cache.toml"),
-            format!("[cache]\ndir = \"{}\"\n", toml_root.display()),
-        )
-        .expect("cache.toml should be written");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
+    #[tokio::test]
+    async fn save_atomic_to_path_writes_download_target() {
+        let root = TempDirGuard::new("save-atomic-target");
         let id = "pmid:save-atomic";
+        let path = root
+            .path()
+            .join("downloads")
+            .join(format!("{}.txt", cache_key(id)));
 
-        let path = block_on(save_atomic(id, "hello world"))
-            .expect("save_atomic should honor cache.toml root");
+        let saved_path = save_atomic_to_path(path.clone(), "hello world")
+            .await
+            .expect("save_atomic should write the target path");
 
-        assert_eq!(
-            path,
-            toml_root
-                .join("downloads")
-                .join(format!("{}.txt", cache_key(id)))
-        );
-        let content = std::fs::read_to_string(&path).expect("saved file should exist");
+        assert_eq!(saved_path, path);
+        let content = std::fs::read_to_string(&saved_path).expect("saved file should exist");
         assert_eq!(content, "hello world");
     }
 
-    #[test]
-    fn save_atomic_errors_when_target_path_is_directory() {
-        let _lock = env_lock();
+    #[tokio::test]
+    async fn save_atomic_to_path_errors_when_target_path_is_directory() {
         let root = TempDirGuard::new("save-atomic-directory-target");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let override_root = root.path().join("override-root");
         let id = "pmid:directory-target";
-        let target = override_root
+        let target = root
+            .path()
             .join("downloads")
             .join(format!("{}.txt", cache_key(id)));
         std::fs::create_dir_all(&target).expect("directory target should exist");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&override_root.to_string_lossy()));
 
-        let err = block_on(save_atomic(id, "hello world"))
+        let err = save_atomic_to_path(target, "hello world")
+            .await
             .expect_err("directory target should not short-circuit as a cached file");
 
         assert!(
