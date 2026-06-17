@@ -170,13 +170,6 @@ struct RawWhoVaccineRow {
 
 impl WhoPqClient {
     #[allow(dead_code)]
-    pub(crate) fn new() -> Self {
-        Self {
-            root: resolve_who_pq_root(),
-        }
-    }
-
-    #[allow(dead_code)]
     pub(crate) fn from_root(root: impl Into<PathBuf>) -> Self {
         Self { root: root.into() }
     }

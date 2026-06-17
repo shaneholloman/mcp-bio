@@ -65,17 +65,6 @@ impl GtexClient {
         Self::decode_json_response(status, content_type.as_ref(), &bytes)
     }
 
-    #[allow(dead_code)]
-    pub async fn resolve_versioned_gencode_id(
-        &self,
-        ensembl_id: &str,
-    ) -> Result<Option<String>, BioMcpError> {
-        let ensembl_id = normalize_ensembl_id(ensembl_id)?;
-        let _guard = gtex_sequence_lock().lock().await;
-        self.resolve_versioned_gencode_id_unlocked(&ensembl_id)
-            .await
-    }
-
     pub async fn median_gene_expression(
         &self,
         ensembl_id: &str,

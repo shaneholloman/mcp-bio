@@ -107,7 +107,6 @@ pub(crate) struct DdinterInteractionRow {
 
 #[derive(Debug, Clone)]
 pub(crate) struct DdinterClient {
-    root: PathBuf,
     index: Arc<DdinterIndex>,
 }
 
@@ -139,7 +138,7 @@ impl DdinterClient {
             evict_cached_index(&root);
         }
         let index = cached_index_for_root(&root)?;
-        Ok(Self { root, index })
+        Ok(Self { index })
     }
 
     pub(crate) async fn sync(mode: DdinterSyncMode) -> Result<(), BioMcpError> {
@@ -164,11 +163,6 @@ impl DdinterClient {
             }
         }
         out
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn root(&self) -> &Path {
-        &self.root
     }
 }
 

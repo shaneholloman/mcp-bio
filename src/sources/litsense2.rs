@@ -121,14 +121,6 @@ impl LitSense2Client {
     ) -> Result<Vec<LitSense2SearchHit>, BioMcpError> {
         self.search("sentences/", query).await
     }
-
-    #[allow(dead_code)]
-    pub async fn paragraph_search(
-        &self,
-        query: &str,
-    ) -> Result<Vec<LitSense2SearchHit>, BioMcpError> {
-        self.search("passages/", query).await
-    }
 }
 
 fn deserialize_optional_trimmed_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>

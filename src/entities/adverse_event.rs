@@ -1498,14 +1498,6 @@ fn normalize_product_code(value: &str) -> Option<String> {
     }
 }
 
-#[allow(dead_code)]
-pub async fn search_device(
-    filters: &DeviceEventSearchFilters,
-    limit: usize,
-) -> Result<Vec<DeviceEventSearchResult>, BioMcpError> {
-    Ok(search_device_page(filters, limit, 0).await?.results)
-}
-
 pub async fn search_device_page(
     filters: &DeviceEventSearchFilters,
     limit: usize,
@@ -1589,14 +1581,6 @@ fn build_enforcement_query(filters: &RecallSearchFilters) -> Result<String, BioM
     }
 
     Ok(terms.join(" AND "))
-}
-
-#[allow(dead_code)]
-pub async fn search_recalls(
-    filters: &RecallSearchFilters,
-    limit: usize,
-) -> Result<Vec<RecallSearchResult>, BioMcpError> {
-    Ok(search_recalls_page(filters, limit, 0).await?.results)
 }
 
 pub async fn search_recalls_page(

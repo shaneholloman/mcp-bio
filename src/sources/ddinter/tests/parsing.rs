@@ -59,7 +59,6 @@ fn client_lookup_matches_both_sides_without_duplicates() {
     }
 
     let client = DdinterClient {
-        root: std::path::PathBuf::from("/tmp/ddinter-test"),
         index: Arc::new(index),
     };
     let identity = DdinterIdentity::with_aliases("Warfarin", None, &["warfarin".to_string()]);

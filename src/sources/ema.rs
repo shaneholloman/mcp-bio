@@ -275,13 +275,6 @@ struct EmaShortageRow {
 }
 
 impl EmaClient {
-    #[allow(dead_code)]
-    pub(crate) fn new() -> Self {
-        Self {
-            root: resolve_ema_root(),
-        }
-    }
-
     #[cfg(test)]
     fn from_root(root: PathBuf) -> Self {
         Self { root }

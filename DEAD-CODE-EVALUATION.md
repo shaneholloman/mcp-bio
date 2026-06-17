@@ -34,7 +34,7 @@ jq ... /tmp/biomcp-dead-code.jsonl \
 cargo machete
 ```
 
-The local source report had **164 warning rows**:
+The initial local source report had **164 warning rows**:
 
 | Area | Rows |
 |---|---:|
@@ -49,23 +49,85 @@ The local source report had **164 warning rows**:
 Generated AlphaGenome files under `target/debug/build/...` also warned. Those
 are generated build output and are not source cleanup work.
 
-## High-confidence code that can probably be removed
+## Cleanup pass completed
+
+Completed 2026-06-17.
+
+Removed:
+
+- `src/sources/litsense2.rs::paragraph_search`
+- `src/sources/gtex.rs::resolve_versioned_gencode_id`
+- `src/entities/adverse_event.rs::search_device`
+- `src/entities/adverse_event.rs::search_recalls`
+- `src/sources/ddinter.rs::DdinterClient::root` and the unused `root` field
+- default-root constructors:
+  - `src/sources/ema.rs::EmaClient::new`
+  - `src/sources/gtr.rs::GtrClient::new`
+  - `src/sources/who_ivd.rs::WhoIvdClient::new`
+  - `src/sources/who_pq.rs::WhoPqClient::new`
+- production-only article test adapter:
+  - `src/entities/article/search.rs::merge_federated_pages`
+  - `src/entities/article/search.rs::semantic_scholar_unavailable_status`
+
+The article merge tests still exist. Their adapter now lives in
+`src/entities/article/search/tests.rs`, while production tests call through the
+real production helpers (`collect_federated_article_rows` and
+`finalize_article_candidates`).
+
+Checks:
+
+```bash
+cargo nextest run -E 'test(/sources::litsense2/) | test(/sources::gtex/) | test(/sources::ddinter/) | test(/sources::ema/) | test(/sources::gtr/) | test(/sources::who_ivd/) | test(/sources::who_pq/) | test(/entities::adverse_event/) | test(/cli::adverse_event/) | test(/entities::drug/) | test(/entities::gene/) | test(/entities::diagnostic/)'
+# 221 passed
+
+cargo nextest run -E 'test(/entities::article::/)'
+# 159 passed
+
+cargo nextest run -E 'test(/entities::article::/) | test(/sources::litsense2/) | test(/sources::gtex/) | test(/sources::ddinter/) | test(/sources::ema/) | test(/sources::gtr/) | test(/sources::who_ivd/) | test(/sources::who_pq/) | test(/entities::adverse_event/) | test(/cli::adverse_event/) | test(/entities::drug/) | test(/entities::gene/) | test(/entities::diagnostic/)'
+# 380 passed
+
+make lint
+# passed
+
+make test
+# nextest: 2333 passed, 28 skipped
+# Python contracts: 257 passed
+# mkdocs strict build: passed
+
+make spec
+# markdown specs: 84 passed, 4 skipped
+# Python surface specs: 58 passed
+```
+
+After cleanup, the same forced dead-code scan reports **156 local warning rows**
+instead of 164:
+
+| Area | Rows |
+|---|---:|
+| `src/sources` | 67 |
+| `src/cli` | 50 |
+| `src/entities` | 20 |
+| `src/render` | 14 |
+| `src/main.rs` | 2 |
+| `src/cache` | 2 |
+| `tests/pty_helpers.rs` | 1 |
+
+## High-confidence code already removed
 
 These had definition-only references in local source/spec/docs, or an obsolete
 test-helper shape. Remove one small group at a time and run focused tests.
 
 | Candidate | Why it looks removable | Suggested check |
 |---|---|---|
-| `src/sources/litsense2.rs::paragraph_search` | Definition-only. The article flow uses sentence search, not paragraph search. | `cargo nextest run -E 'test(/sources::litsense2/) | test(/entities::article/)'` |
-| `src/sources/gtex.rs::resolve_versioned_gencode_id` | Public async wrapper is definition-only. The private unlocked resolver is still used by median expression. | `cargo nextest run -E 'test(/sources::gtex/) | test(/entities::gene/)'` |
-| `src/entities/adverse_event.rs::search_device` | No-offset wrapper is definition-only. CLI uses `search_device_page`. | `cargo nextest run -E 'test(/entities::adverse_event/) | test(/cli::adverse_event/)'` |
-| `src/entities/adverse_event.rs::search_recalls` | No-offset wrapper is definition-only. CLI uses `search_recalls_page`. | `cargo nextest run -E 'test(/entities::adverse_event/) | test(/cli::adverse_event/)'` |
-| `src/sources/ddinter.rs::DdinterClient::root` and possibly the `root` field | The accessor is definition-only. The field is only used to return that accessor after the index is loaded and cached by root. | `cargo nextest run -E 'test(/sources::ddinter/) | test(/entities::drug/)'` |
-| `src/sources/{ema,gtr,who_ivd,who_pq}.rs::*Client::new` | These default-root constructors are not called in source, tests, specs, or architecture docs. Production uses `ready()`, and tests use root-specific seams. They are already marked `#[allow(dead_code)]`, so this is a conscious compatibility/API decision, not an accidental leftover. | `cargo nextest run -E 'test(/sources::ema/) | test(/sources::gtr/) | test(/sources::who_ivd/) | test(/sources::who_pq/)'` |
+| `src/sources/litsense2.rs::paragraph_search` | Definition-only. The article flow uses sentence search, not paragraph search. | Removed |
+| `src/sources/gtex.rs::resolve_versioned_gencode_id` | Public async wrapper was definition-only. The private unlocked resolver is still used by median expression. | Removed |
+| `src/entities/adverse_event.rs::search_device` | No-offset wrapper was definition-only. CLI uses `search_device_page`. | Removed |
+| `src/entities/adverse_event.rs::search_recalls` | No-offset wrapper was definition-only. CLI uses `search_recalls_page`. | Removed |
+| `src/sources/ddinter.rs::DdinterClient::root` and `root` field | The accessor was definition-only. The field only fed that accessor after the index was loaded and cached by root. | Removed |
+| `src/sources/{ema,gtr,who_ivd,who_pq}.rs::*Client::new` | These default-root constructors were not called in source, tests, specs, or architecture docs. Production uses `ready()`, and tests use root-specific seams. | Removed |
 
-The `ddinter` cleanup needs one extra look before editing: `ready()` currently
-stores `root` in the client, but interactions only need the loaded index. If no
-caller needs to inspect the cache path, both the accessor and field can go.
+The DDInter extra look is complete: `ready()` still resolves/syncs/caches by
+root, but the constructed client only needs the loaded index.
 
 ## Medium-confidence cleanup candidates
 
@@ -85,8 +147,7 @@ These may be stale, but they are not simple "delete because unused" candidates.
 
 | Candidate | Why it needs investigation |
 |---|---|
-| `src/entities/article/search.rs::merge_federated_pages` | This is currently exercised by article search tests. If production no longer calls it, that may mean the tests are preserving an old merge model while live article search uses a different path. Confirm the intended production article merge path before deleting or rewriting tests. |
-| `src/entities/article/query.rs::build_pubmed_esearch_params` | Used by article backend/query tests, but not obviously by the production search path. Check whether PubMed query construction moved elsewhere or whether production should call this helper. |
+| `src/entities/article/query.rs::build_pubmed_esearch_params` | Used by article backend/query tests, but not obviously by the production search path. It remains for now because it provides pure, no-network coverage for exact PubMed ESearch params and rejection messages. Removing it would mostly move duplicate builder code into tests. |
 | Gene enum/builder helpers: `GeneSection::from_name`, `GeneSection::all_default`, `GeneGetOptions::with_sections`, `with_strategy`, `with_optional_timeout`, `with_timing_path` | These appear unused in code/tests, but architecture experiment notes describe them as planned hardening API. Decide whether that experiment API is still wanted before deleting. |
 
 ## Code I would not remove from this audit
@@ -104,15 +165,15 @@ These may be stale, but they are not simple "delete because unused" candidates.
 
 ## Coverage and dead-code conclusion
 
-The test rebuild did not leave an obvious large cleanup pile. The practical
-removal work is small:
+The test rebuild did not leave an obvious large cleanup pile. After the first
+cleanup pass, the remaining practical choices are:
 
-1. Remove the high-confidence definition-only helpers above.
-2. Decide separately whether BioMCP's Rust crate promises public API stability.
+1. Decide separately whether BioMCP's Rust crate promises public API stability.
    If not, the no-offset entity wrappers and no-footer render wrappers are the
    next cleanup pass. For render wrappers, first move the few remaining CLI
    callers to the footer/context functions.
-3. Investigate the article merge/query helpers before deleting them. If they are
-   test-only now, decide whether the production path or the tests are stale.
+2. Decide whether to keep or retire the planned gene hardening API helpers.
+3. Leave `build_pubmed_esearch_params` unless the tests are rewritten to assert
+   the production search path directly without duplicating the helper in tests.
 4. Leave the benchmark harness and request-plan test surface alone unless there
    is a product decision to retire them.
