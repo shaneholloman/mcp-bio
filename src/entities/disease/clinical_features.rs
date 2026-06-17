@@ -449,6 +449,13 @@ async fn load_topics_for_disease(
     )
     .await;
 
+    collect_live_topics_or_offline(config, results)
+}
+
+fn collect_live_topics_or_offline(
+    config: &ClinicalFeatureConfig,
+    results: Vec<Result<Vec<MedlinePlusTopic>, BioMcpError>>,
+) -> Result<Vec<MedlinePlusTopic>, BioMcpError> {
     let mut topics = Vec::new();
     let mut seen_urls = HashSet::new();
     for result in results {
@@ -762,28 +769,6 @@ mod tests {
             ))
     }
 
-    fn empty_response() -> ResponseTemplate {
-        ResponseTemplate::new(200)
-            .insert_header("content-type", "application/xml")
-            .set_body_string(
-                r#"<?xml version="1.0" encoding="UTF-8"?><nlmSearchResult><list /></nlmSearchResult>"#,
-            )
-    }
-
-    async fn mount_empty_queries(server: &MockServer, config: &ClinicalFeatureConfig) {
-        for query in &config.source_queries {
-            Mock::given(method("GET"))
-                .and(path("/ws/query"))
-                .and(query_param("db", "healthTopics"))
-                .and(query_param("term", query.as_str()))
-                .and(query_param("retmax", "5"))
-                .respond_with(empty_response())
-                .expect(1)
-                .mount(server)
-                .await;
-        }
-    }
-
     fn sha256_hex(value: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(value.as_bytes());
@@ -915,40 +900,39 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn load_topics_uses_embedded_fixture_when_no_live_topics() {
-        let server = MockServer::start().await;
+    #[test]
+    fn load_topics_uses_embedded_fixture_when_no_live_topics() {
         let config = config("endometriosis");
-        mount_empty_queries(&server, &config).await;
-
-        let client = MedlinePlusClient::new_for_test(server.uri()).expect("client");
-        let topics = load_topics_for_disease(&config, &client)
-            .await
-            .expect("topics");
+        let topics = collect_live_topics_or_offline(
+            &config,
+            config
+                .source_queries
+                .iter()
+                .map(|_| Ok(Vec::new()))
+                .collect(),
+        )
+        .expect("topics");
 
         assert_eq!(topics[0].title, "Endometriosis");
     }
 
-    #[tokio::test]
-    async fn load_topics_uses_embedded_fixture_when_live_queries_fail() {
-        let server = MockServer::start().await;
+    #[test]
+    fn load_topics_uses_embedded_fixture_when_live_queries_fail() {
         let config = config("chronic_venous_insufficiency");
-        for query in &config.source_queries {
-            Mock::given(method("GET"))
-                .and(path("/ws/query"))
-                .and(query_param("db", "healthTopics"))
-                .and(query_param("term", query.as_str()))
-                .and(query_param("retmax", "5"))
-                .respond_with(ResponseTemplate::new(500).set_body_string("failed"))
-                .expect(1)
-                .mount(&server)
-                .await;
-        }
-
-        let client = MedlinePlusClient::new_for_test(server.uri()).expect("client");
-        let topics = load_topics_for_disease(&config, &client)
-            .await
-            .expect("topics");
+        let topics = collect_live_topics_or_offline(
+            &config,
+            config
+                .source_queries
+                .iter()
+                .map(|_| {
+                    Err(BioMcpError::Api {
+                        api: "medlineplus".into(),
+                        message: "failed".into(),
+                    })
+                })
+                .collect(),
+        )
+        .expect("topics");
 
         assert_eq!(topics.len(), 4);
         assert!(topics.iter().any(|topic| topic.title == "Varicose Veins"));
