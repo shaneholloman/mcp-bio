@@ -996,3 +996,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   impossible backend URLs and assert invalid front-door input returns clean
   stderr before backend work can matter. Checks:
   `cargo nextest run -E 'binary(article_usage_stderr)'` → 6/6 pass.
+- 2026-06-17: pathway stderr duplicate cleanup. Deleted
+  `tests/pathway_search_stderr.rs`, which only re-tested WikiPathways HTML
+  error sanitization through three mock HTTP servers. The behavior remains
+  covered by pure WikiPathways source parsing tests and the pure search-all
+  markdown warning test. Checks:
+  `cargo nextest run -E 'test(/sources::wikipathways::/) |
+  test(/cli::search_all::tests::dispatch::search_all_pathway_section_surfaces_sanitized_wikipathways_error/) |
+  test(/entities::pathway::tests::/)'` → 27/27 pass.
