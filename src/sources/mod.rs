@@ -884,8 +884,21 @@ mod tests {
         Arc, Mutex,
         atomic::{AtomicUsize, Ordering},
     };
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    fn test_response(
+        status: StatusCode,
+        headers: &[(&'static str, &'static str)],
+        body: &'static str,
+    ) -> reqwest::Response {
+        let mut builder = http::Response::builder().status(status);
+        for (name, value) in headers {
+            builder = builder.header(*name, *value);
+        }
+        builder
+            .body(reqwest::Body::from(body))
+            .expect("test response")
+            .into()
+    }
 
     fn test_cache_config(cache_root: impl Into<std::path::PathBuf>) -> ResolvedCacheConfig {
         ResolvedCacheConfig {
@@ -1101,32 +1114,22 @@ mod tests {
 
     #[tokio::test]
     async fn ticket_403_retry_send_uses_the_shared_retry_sleep_budget() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/budget"))
-            .respond_with(ResponseTemplate::new(429).insert_header(RETRY_AFTER.as_str(), "999"))
-            .expect(5)
-            .mount(&server)
-            .await;
-
-        let client = reqwest::Client::new();
-        let url = format!("{}/budget", server.uri());
         let attempts = Arc::new(AtomicUsize::new(0));
         let sleeps = Arc::new(Mutex::new(Vec::new()));
         let err = retry_send_with_sleep(
             "test-api",
             4,
             {
-                let client = client.clone();
-                let url = url.clone();
                 let attempts = attempts.clone();
                 move || {
-                    let client = client.clone();
-                    let url = url.clone();
                     let attempts = attempts.clone();
                     async move {
                         attempts.fetch_add(1, Ordering::SeqCst);
-                        client.get(&url).send().await
+                        Ok(test_response(
+                            StatusCode::TOO_MANY_REQUESTS,
+                            &[(RETRY_AFTER.as_str(), "999")],
+                            "",
+                        ))
                     }
                 }
             },
@@ -1160,44 +1163,28 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn retry_send_retries_on_too_many_requests() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/retry"))
-            .and(query_param("attempt", "0"))
-            .respond_with(ResponseTemplate::new(429))
-            .expect(1)
-            .mount(&server)
-            .await;
-        Mock::given(method("GET"))
-            .and(path("/retry"))
-            .and(query_param("attempt", "1"))
-            .respond_with(ResponseTemplate::new(200).set_body_string("ok"))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let client = reqwest::Client::new();
-        let url = format!("{}/retry", server.uri());
+    async fn retry_send_with_sleep_retries_on_too_many_requests() {
         let attempts = Arc::new(AtomicUsize::new(0));
-        let resp = retry_send("test-api", 2, {
-            let client = client.clone();
-            let url = url.clone();
-            let attempts = attempts.clone();
-            move || {
-                let client = client.clone();
-                let url = url.clone();
+        let resp = retry_send_with_sleep(
+            "test-api",
+            2,
+            {
                 let attempts = attempts.clone();
-                async move {
-                    let attempt = attempts.fetch_add(1, Ordering::SeqCst);
-                    client
-                        .get(&url)
-                        .query(&[("attempt", attempt.to_string())])
-                        .send()
-                        .await
+                move || {
+                    let attempts = attempts.clone();
+                    async move {
+                        let attempt = attempts.fetch_add(1, Ordering::SeqCst);
+                        let status = if attempt == 0 {
+                            StatusCode::TOO_MANY_REQUESTS
+                        } else {
+                            StatusCode::OK
+                        };
+                        Ok(test_response(status, &[], "ok"))
+                    }
                 }
-            }
-        })
+            },
+            |_| async {},
+        )
         .await
         .expect("retry_send should retry on 429");
 

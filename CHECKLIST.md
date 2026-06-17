@@ -920,3 +920,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   test(/cli::article::tests::help::/)'` → 17/17 pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.
+- 2026-06-17: shared source retry cleanup. Replaced the two `src/sources/mod.rs`
+  mock-server retry tests with canned `reqwest::Response` values passed through
+  `retry_send_with_sleep`; this keeps the retry behavior proof without a local
+  HTTP server. Checks:
+  `cargo nextest run -E 'test(/sources::tests::/)'` → 26/26 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
