@@ -181,8 +181,3 @@ async fn resolve_parent_names(client: &MyDiseaseClient, parents: &[String]) -> V
 
 #[cfg(test)]
 mod tests;
-#[cfg(test)]
-pub(crate) use self::tests::{
-    proof_get_disease_genes_promotes_opentargets_rows_for_cll,
-    proof_get_disease_genes_uses_ols4_label_fallback_for_sparse_mondo_identity,
-};

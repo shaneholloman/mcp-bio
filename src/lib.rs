@@ -44,19 +44,6 @@ async fn enrich_sparse_disease_identity_prefers_exact_ols4_match() {
 }
 
 #[cfg(test)]
-#[tokio::test]
-async fn get_disease_genes_promotes_opentargets_rows_for_cll() {
-    crate::entities::disease::tests::proof_get_disease_genes_promotes_opentargets_rows_for_cll()
-        .await;
-}
-
-#[cfg(test)]
-#[tokio::test]
-async fn get_disease_genes_uses_ols4_label_fallback_for_sparse_mondo_identity() {
-    crate::entities::disease::tests::proof_get_disease_genes_uses_ols4_label_fallback_for_sparse_mondo_identity().await;
-}
-
-#[cfg(test)]
 #[test]
 fn disease_markdown_renders_ot_only_gene_association_table() {
     crate::render::markdown::tests::proof_disease_markdown_renders_ot_only_gene_association_table();

@@ -1,7 +1,5 @@
 //! Shared disease test helpers used by sidecar test modules.
 
-use std::future::Future;
-
 #[allow(unused_imports)]
 pub(super) use std::collections::{HashMap, HashSet};
 
@@ -16,23 +14,6 @@ pub(super) use crate::entities::SearchPage;
 pub(super) use crate::error::BioMcpError;
 #[allow(unused_imports)]
 pub(super) use crate::sources::mydisease::MyDiseaseHit;
-#[allow(unused_imports)]
-pub(super) use crate::test_support::{EnvVarGuard, set_env_var};
-#[allow(unused_imports)]
-pub(super) use wiremock::matchers::{body_string_contains, method, path, query_param};
-#[allow(unused_imports)]
-pub(super) use wiremock::{Mock, MockServer, ResponseTemplate};
-
-pub(super) async fn lock_env() -> tokio::sync::MutexGuard<'static, ()> {
-    crate::test_support::env_lock().lock().await
-}
-
-pub(super) async fn with_no_http_cache<R, Fut>(future: Fut) -> R
-where
-    Fut: Future<Output = R>,
-{
-    crate::sources::with_no_cache(true, future).await
-}
 
 pub(super) fn test_disease(id: &str, name: &str) -> Disease {
     Disease {
@@ -66,58 +47,6 @@ pub(super) fn test_disease(id: &str, name: &str) -> Disease {
         disgenet: None,
         xrefs: HashMap::new(),
     }
-}
-
-pub(super) async fn mock_empty_monarch(server: &MockServer) {
-    Mock::given(method("GET"))
-        .and(path("/v3/api/association"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "items": []
-        })))
-        .mount(server)
-        .await;
-}
-
-pub(super) async fn mock_empty_civic(server: &MockServer) {
-    Mock::given(method("POST"))
-        .and(path("/graphql"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "data": {
-                "evidenceItems": {
-                    "totalCount": 0,
-                    "nodes": []
-                },
-                "assertions": {
-                    "totalCount": 0,
-                    "nodes": []
-                }
-            }
-        })))
-        .mount(server)
-        .await;
-}
-
-pub(super) async fn mock_empty_mychem(server: &MockServer) {
-    Mock::given(method("GET"))
-        .and(path("/query"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "total": 0,
-            "hits": []
-        })))
-        .mount(server)
-        .await;
-}
-
-pub(super) async fn mock_empty_ctgov(server: &MockServer) {
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "studies": [],
-            "nextPageToken": null,
-            "totalCount": 0
-        })))
-        .mount(server)
-        .await;
 }
 
 pub(super) fn test_disease_hit(

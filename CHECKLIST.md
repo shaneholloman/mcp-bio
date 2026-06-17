@@ -854,3 +854,17 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::study::/)'` → 22/22 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: disease get cleanup. Removed the two old get-level mock-server
+  proofs that set multiple service base-url env vars; their behavior is covered
+  by pure association merge tests and the pure OLS4 sparse-identity enrichment
+  test. Removed the now-unused disease mock/env helpers and top-level proof
+  wrappers. Checks:
+  `cargo nextest run -E 'test(/entities::disease::get::/) |
+  test(/entities::disease::associations::/) |
+  test(/entities::disease::enrichment::/) |
+  test(/augment_genes_with_opentargets/) |
+  test(/enrich_sparse_disease_identity/) |
+  test(/disease_markdown_renders_ot_only_gene_association_table/)'` → 28/28
+  pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.
