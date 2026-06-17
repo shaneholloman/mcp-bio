@@ -210,6 +210,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/disease/enrichment/tests.rs` sparse OLS identity proof is
       pure: exact OLS document selection now tests direct `OlsDoc` fixtures
       instead of starting an OLS mock server.
+- [x] `src/entities/disease/enrichment/tests.rs` disease diagnostic rows and
+      unavailable-note behavior are pure: result application now uses direct
+      diagnostic page fixtures instead of GTR/WHO fixture-root env swaps.
 - [x] `src/entities/disease/clinical_features.rs` MedlinePlus fallback behavior
       is pure: empty/failing live query results now test the fixture fallback
       collector directly instead of starting MedlinePlus mock servers.
@@ -722,3 +725,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   into a pure helper and converted the two diagnostics section tests from
   `BIOMCP_GTR_DIR` fixture-root env tests to direct diagnostic rows/errors.
   Checks: `cargo nextest run -E 'test(/entities::gene::/)'` → 21/21 pass.
+- 2026-06-16: disease diagnostics enrichment cleanup. Split diagnostic page
+  application into a pure helper and converted the disease diagnostic rows and
+  unavailable-note tests from GTR/WHO fixture-root env tests to direct
+  diagnostic page fixtures. The MedlinePlus fallback env test in this file
+  remains. Checks:
+  `cargo nextest run -E 'test(/entities::disease::enrichment::/)'` → 11/11 pass.

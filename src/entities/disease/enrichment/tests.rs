@@ -2,33 +2,6 @@ use super::super::DiseaseClinicalFeature;
 use super::super::test_support::*;
 use super::*;
 
-use std::path::Path;
-
-use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE};
-use crate::sources::who_ivd::WHO_IVD_CSV_FILE;
-use crate::test_support::TempDirGuard;
-
-fn write_gtr_fixture(root: &Path) {
-    std::fs::write(
-        root.join(GTR_TEST_VERSION_FILE),
-        include_bytes!("../../../../spec/fixtures/gtr/test_version.gz"),
-    )
-    .expect("write test_version.gz");
-    std::fs::write(
-        root.join(GTR_CONDITION_GENE_FILE),
-        include_str!("../../../../spec/fixtures/gtr/test_condition_gene.txt"),
-    )
-    .expect("write test_condition_gene.txt");
-}
-
-fn write_who_ivd_fixture(root: &Path) {
-    std::fs::write(
-        root.join(WHO_IVD_CSV_FILE),
-        include_str!("../../../../spec/fixtures/who-ivd/who_ivd.csv"),
-    )
-    .expect("write who_ivd.csv");
-}
-
 fn clinical_feature_row(label: &str) -> DiseaseClinicalFeature {
     DiseaseClinicalFeature {
         rank: 1,
@@ -48,6 +21,26 @@ fn clinical_feature_row(label: &str) -> DiseaseClinicalFeature {
         normalized_hpo_label: None,
         mapping_confidence: 0.8,
         mapping_method: "pattern_match".to_string(),
+    }
+}
+
+fn diagnostic_row(
+    source: &str,
+    accession: &str,
+    name: &str,
+    conditions: &[&str],
+) -> crate::entities::diagnostic::DiagnosticSearchResult {
+    crate::entities::diagnostic::DiagnosticSearchResult {
+        source: source.to_string(),
+        accession: accession.to_string(),
+        name: name.to_string(),
+        test_type: Some("molecular".to_string()),
+        manufacturer_or_lab: Some("Example Lab".to_string()),
+        genes: Vec::new(),
+        conditions: conditions
+            .iter()
+            .map(|condition| condition.to_string())
+            .collect(),
     }
 }
 
@@ -194,31 +187,37 @@ async fn apply_requested_sections_populates_configured_clinical_features_from_fa
     }));
 }
 
-#[tokio::test]
-async fn disease_diagnostics_section_populates_from_who_fixture() {
-    let _lock = lock_env().await;
-    let gtr_root = TempDirGuard::new("disease-diagnostics-gtr");
-    write_gtr_fixture(gtr_root.path());
-    let _gtr_env = set_env_var(
-        "BIOMCP_GTR_DIR",
-        Some(gtr_root.path().to_str().expect("utf-8 path")),
-    );
-    let who_root = TempDirGuard::new("disease-diagnostics-who-ivd");
-    write_who_ivd_fixture(who_root.path());
-    let _who_env = set_env_var(
-        "BIOMCP_WHO_IVD_DIR",
-        Some(who_root.path().to_str().expect("utf-8 path")),
-    );
-
+#[test]
+fn disease_diagnostics_section_populates_from_rows() {
     let mut disease = test_disease("MONDO:0018076", "tuberculosis");
-    add_diagnostics_section(&mut disease).await;
+    apply_diagnostics_section_result(
+        &mut disease,
+        "tuberculosis",
+        Ok(SearchPage::offset(
+            vec![
+                diagnostic_row(
+                    crate::entities::diagnostic::DIAGNOSTIC_SOURCE_WHO_IVD,
+                    "WHO-IVD-1",
+                    "Loopamp MTBC Detection Kit",
+                    &["Mycobacterium tuberculosis complex (MTBC)"],
+                ),
+                diagnostic_row(
+                    crate::entities::diagnostic::DIAGNOSTIC_SOURCE_GTR,
+                    "GTR000000002.1",
+                    "Tuberculosis Molecular Panel",
+                    &["tuberculosis"],
+                ),
+            ],
+            Some(12),
+        )),
+    );
 
     let rows = disease.diagnostics.as_ref().expect("diagnostics rows");
-    assert_eq!(rows.len(), 10);
+    assert_eq!(rows.len(), 2);
     assert_eq!(
         disease.diagnostics_note.as_deref(),
         Some(
-            "Showing first 10 diagnostic matches in this disease card. Use diagnostic search with --limit and --offset for the larger result set."
+            "Showing 2 of 12 diagnostic matches in this disease card. Use diagnostic search with --limit and --offset for the larger result set."
         )
     );
     assert!(rows.iter().any(|row| {
@@ -235,19 +234,18 @@ async fn disease_diagnostics_section_populates_from_who_fixture() {
     }));
 }
 
-#[tokio::test]
-async fn disease_diagnostics_unavailable_sets_note() {
-    let _lock = lock_env().await;
-    let root = TempDirGuard::new("disease-diagnostics-unavailable");
-    let blocking_root = root.path().join("not-a-directory");
-    std::fs::write(&blocking_root, b"blocks create_dir_all").expect("write blocking file");
-    let _gtr_env = set_env_var(
-        "BIOMCP_GTR_DIR",
-        Some(blocking_root.to_str().expect("utf-8 path")),
-    );
-
+#[test]
+fn disease_diagnostics_unavailable_sets_note() {
     let mut disease = test_disease("MONDO:0018076", "tuberculosis");
-    add_diagnostics_section(&mut disease).await;
+    apply_diagnostics_section_result(
+        &mut disease,
+        "tuberculosis",
+        Err(BioMcpError::SourceUnavailable {
+            source_name: "gtr".to_string(),
+            reason: "fixture directory is unavailable".to_string(),
+            suggestion: "Run `biomcp gtr sync`".to_string(),
+        }),
+    );
 
     assert!(disease.diagnostics.is_none());
     assert_eq!(

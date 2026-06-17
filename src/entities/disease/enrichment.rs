@@ -10,7 +10,8 @@ use super::associations::{
 };
 use super::get::DiseaseSections;
 use super::resolution::{DiseaseLookupInput, normalize_disease_id, parse_disease_lookup_input};
-use crate::entities::diagnostic::DiagnosticSearchFilters;
+use crate::entities::SearchPage;
+use crate::entities::diagnostic::{DiagnosticSearchFilters, DiagnosticSearchResult};
 
 const OPTIONAL_ENRICHMENT_TIMEOUT: Duration = Duration::from_secs(8);
 const DIAGNOSTIC_PIVOT_LIMIT: usize = 10;
@@ -355,7 +356,17 @@ async fn add_diagnostics_section(disease: &mut Disease) {
         disease: Some(query.clone()),
         ..Default::default()
     };
-    match crate::entities::diagnostic::search_page(&filters, DIAGNOSTIC_PIVOT_LIMIT, 0).await {
+    let result =
+        crate::entities::diagnostic::search_page(&filters, DIAGNOSTIC_PIVOT_LIMIT, 0).await;
+    apply_diagnostics_section_result(disease, &query, result);
+}
+
+fn apply_diagnostics_section_result(
+    disease: &mut Disease,
+    query: &str,
+    result: Result<SearchPage<DiagnosticSearchResult>, BioMcpError>,
+) {
+    match result {
         Ok(page) => {
             let shown = page.results.len();
             let capped = match page.total {
