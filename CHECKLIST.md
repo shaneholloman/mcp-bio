@@ -246,6 +246,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
       atomic-save target tests now use direct config/path inputs instead of
       cache env vars.
 - [ ] The shared helpers in `src/sources/mod.rs` (`RequestPlan`, `decode_json`) — a few tests.
+- [x] `src/sources/rate_limit.rs` Semantic Scholar key interval tests are
+      pure: they assert the interval helper directly instead of mutating
+      `S2_API_KEY`.
 
 ### Smoke tests (a few, real network — the ONLY network tests)
 - [ ] gene → gene info · [ ] variant → variant info · [ ] article → article
@@ -794,5 +797,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `lock_env` helper. Cache output formatting remains covered in
   `src/cli/cache/tests.rs`. Checks:
   `cargo nextest run -E 'test(/cli::tests::facade::cache::/)'` → 12/12 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: rate-limit cleanup. Replaced Semantic Scholar API-key env tests
+  with direct `s2_min_interval` assertions and removed the rate-limit env-lock
+  helper/imports. Checks:
+  `cargo nextest run -E 'test(/sources::rate_limit::/)'` → 14/14 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.

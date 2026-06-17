@@ -240,12 +240,6 @@ pub(crate) async fn wait_for_url_str(raw: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::set_env_var;
-    use tokio::sync::MutexGuard;
-
-    fn env_lock() -> MutexGuard<'static, ()> {
-        crate::test_support::env_lock().blocking_lock()
-    }
 
     fn test_policy(key: &'static str, prefix: &str, ms: u64) -> RateLimitPolicy {
         RateLimitPolicy {
@@ -343,31 +337,9 @@ mod tests {
     }
 
     #[test]
-    fn semantic_scholar_policy_uses_two_second_interval_without_api_key() {
-        let _lock = env_lock();
-        let _env = set_env_var("S2_API_KEY", None);
-        let limiter = RateLimiter::from_env();
-        let policy = limiter
-            .policies
-            .iter()
-            .find(|policy| policy.key == "semantic-scholar")
-            .expect("semantic-scholar policy should be registered");
-        assert_eq!(policy.min_interval, Duration::from_secs(2));
-        assert_eq!(policy.prefix.as_ref(), "https://api.semanticscholar.org");
-    }
-
-    #[test]
-    fn semantic_scholar_policy_uses_one_second_interval_with_api_key() {
-        let _lock = env_lock();
-        let _env = set_env_var("S2_API_KEY", Some("test-key"));
-        let limiter = RateLimiter::from_env();
-        let policy = limiter
-            .policies
-            .iter()
-            .find(|policy| policy.key == "semantic-scholar")
-            .expect("semantic-scholar policy should be registered");
-        assert_eq!(policy.min_interval, Duration::from_secs(1));
-        assert_eq!(policy.prefix.as_ref(), "https://api.semanticscholar.org");
+    fn semantic_scholar_interval_uses_key_aware_values() {
+        assert_eq!(s2_min_interval(false), Duration::from_secs(2));
+        assert_eq!(s2_min_interval(true), Duration::from_secs(1));
     }
 
     #[test]
