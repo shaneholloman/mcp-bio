@@ -284,6 +284,50 @@ default_biomcp_bin="$ROOT/target/spec/biomcp"
 BIOMCP_BIN="${BIOMCP_BIN:-$default_biomcp_bin}"'
 ```
 
+## Caller-Provided Spec Binary Skips Rebuild
+
+When March or a release gate already built BioMCP, the routine spec target
+should reuse that binary instead of rebuilding `target/spec/biomcp`. The dry-run
+recipe keeps this contract visible without executing the binary.
+
+```bash
+env BIOMCP_BIN=/tmp/already-built-biomcp make -C ../.. -n spec 2>&1 | mustmatch not like "cargo build --locked --profile"
+```
+
+## Routine Spec Runner Is Markdown Only
+
+Routine specs are executable Markdown contracts. Static Python checks belong to
+`make test`, so the shared spec runner should not partition or run
+`spec/surface/test_*.py` files in the routine lane.
+
+```bash
+awk '/SPEC_ROUTINE_PATHS=\(/,/^\)/' ../../scripts/run-specs.sh | mustmatch not like "spec/surface/test_"
+```
+
+```bash
+rg -n 'PY_PATHS|run_python_contracts|uv run --no-sync pytest' ../../scripts/run-specs.sh | mustmatch ""
+```
+
+## Routine Markdown Specs Do Not Relaunch Unit Tests
+
+Request plans, renderer envelopes, and parser edge cases are unit/static proof.
+The routine Markdown corpus should drive BioMCP commands instead of relaunching
+Cargo tests from spec headings.
+
+```bash
+rg -n 'cargo test' ../../spec/entity/article.md ../../spec/entity/study.md ../../spec/entity/variant.md ../../spec/surface/request-plan-ratchets.md | mustmatch ""
+```
+
+## Routine Spec Targets Avoid Python Setup
+
+Once Python static contracts move to `make test`, routine spec modes should not
+sync Python dependencies or enable a Python contract leg before running
+mustmatch.
+
+```bash
+rg -n 'sync_python_dev|run_python=1' ../../scripts/run-specs.sh | mustmatch ""
+```
+
 ## Mustmatch Is No Longer A Python Dev Dependency
 
 The binary cutover makes mustmatch a tool on `PATH`, not a Python package in the
