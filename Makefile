@@ -4,20 +4,7 @@ SPEC_ROUTINE_PATHS = \
 	spec/entity/article.md \
 	spec/entity/study.md \
 	spec/entity/variant.md \
-	spec/surface/mcp.md \
-	spec/surface/request-plan-ratchets.md \
-	spec/surface/test_architecture_docs_parity_contract.py \
-	spec/surface/test_biomcp_ci_path_contract.py \
-	spec/surface/test_complexportal_fixture_contract.py \
-	spec/surface/test_parallel_isolation_contract.py \
-	spec/surface/test_public_entity_contract_docs.py \
-	spec/surface/test_search_all_cli_structure.py \
-	spec/surface/test_semantic_scholar_retry_after_contract.py \
-	spec/surface/test_source_configuration_docs_contract.py \
-	spec/surface/test_ticket_401_surface_ratchets.py \
-	spec/surface/test_ticket_405_architecture_operator_contracts.py \
-	spec/surface/test_trial_help_contract.py \
-	spec/surface/test_variant_normalization_docs_contract.py
+	spec/surface/mcp.md
 SPEC_LIVE_PATHS = \
 	spec/entity/diagnostic.md \
 	spec/entity/disease.md \
@@ -35,6 +22,9 @@ SPEC_LIVE_PATHS = \
 
 SPEC_PROFILE ?= spec
 SPEC_BIN ?= $(CURDIR)/target/$(SPEC_PROFILE)/biomcp
+SPEC_USE_PROVIDED_BIN = $(shell if [ -n "$(BIOMCP_BIN)" ] && [ -x "$(BIOMCP_BIN)" ]; then echo yes; fi)
+SPEC_RUN_BIN = $(if $(SPEC_USE_PROVIDED_BIN),$(BIOMCP_BIN),$(SPEC_BIN))
+SPEC_BUILD = $(if $(SPEC_USE_PROVIDED_BIN),,cargo build --locked --profile $(SPEC_PROFILE))
 
 sync-python-dev:
 	uv sync --extra dev --no-install-project
@@ -74,16 +64,16 @@ install:
 	install -m 755 target/release/biomcp "$(HOME)/.local/bin/biomcp"
 
 spec:
-	cargo build --locked --profile $(SPEC_PROFILE)
-	BIOMCP_BIN="$(SPEC_BIN)" bash scripts/run-specs.sh spec
+	$(SPEC_BUILD)
+	BIOMCP_BIN="$(SPEC_RUN_BIN)" bash scripts/run-specs.sh spec
 
 spec-pr:
-	cargo build --locked --profile $(SPEC_PROFILE)
-	BIOMCP_BIN="$(SPEC_BIN)" bash scripts/run-specs.sh spec-pr
+	$(SPEC_BUILD)
+	BIOMCP_BIN="$(SPEC_RUN_BIN)" bash scripts/run-specs.sh spec-pr
 
 spec-contracts:
-	cargo build --locked --profile $(SPEC_PROFILE)
-	BIOMCP_BIN="$(SPEC_BIN)" bash scripts/run-specs.sh spec-contracts
+	$(SPEC_BUILD)
+	BIOMCP_BIN="$(SPEC_RUN_BIN)" bash scripts/run-specs.sh spec-contracts
 
 verify:
 	cargo build --release --locked

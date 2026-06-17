@@ -4,10 +4,10 @@
 
 | Target | Run when | Timeout | Scope | Cache contract |
 |---|---|---|---|---|
-| `make spec-contracts` | legacy profile-compatible deterministic subset | `180s` per heading | offline deterministic executable contracts, including local MCP transport proof and `spec/surface/test_parallel_isolation_contract.py` | uses the spec-profile binary selected by `PATH` and `BIOMCP_BIN`; no live-smoke commands run in this lane |
+| `make spec-contracts` | profile-compatible deterministic subset | `180s` per heading | offline Markdown executable contracts, including local MCP transport proof | uses the spec-profile binary selected by `PATH` and `BIOMCP_BIN`; no live-smoke commands or Python pytest contracts run in this lane |
 | `make verify` | explicit opt-in operator confidence before releases or upstream checks | n/a | live public-upstream matrix for discover/OLS4, disease, article source status, variant normalization, phenotype, protein, pathway, and other live entity/surface specs | every command goes through `tools/biomcp-ci`, which owns cache/XDG roots and optional-key stripping |
 | `make release-live-smoke` | compatibility alias for operators that still use the old live-lane name | n/a | delegates to `make verify` | not part of routine gates |
-| `make spec-pr` | PR CI canary and repo-local debugging of the offline executable corpus | `180s` per heading | explicit `SPEC_ROUTINE_PATHS` only: local/fixture-backed specs and static surface contracts | CI restores `.cache/biomcp-specs/`; cache hits export `BIOMCP_SPEC_CACHE_HIT=1`, which makes `tools/biomcp-ci` replay the warm HTTP cache with `BIOMCP_CACHE_MODE=infinite` |
+| `make spec-pr` | PR CI canary and repo-local debugging of the offline executable corpus | `180s` per heading | explicit Markdown-only `SPEC_ROUTINE_PATHS`: local/fixture-backed CLI/MCP specs | CI restores `.cache/biomcp-specs/`; cache hits export `BIOMCP_SPEC_CACHE_HIT=1`, which makes `tools/biomcp-ci` replay the warm HTTP cache with `BIOMCP_CACHE_MODE=infinite` |
 | `make spec` | repo-local routine spec gate and spec debugging | `180s` per heading | the same offline `SPEC_ROUTINE_PATHS` set as `make spec-pr` | uses the same wrapper/cache root; it should pass with external network blocked while local mock servers remain reachable |
 | `make test-contracts` | PR contracts lane and local docs/Python validation | n/a | Rust release build plus Python/docs contract checks | independent of the executable-spec wrapper |
 
@@ -32,8 +32,8 @@ The executable docs themselves call `tools/biomcp-ci`; `make spec` and
 sets up the local fixtures, defaults routine modes to `target/spec/biomcp`,
 keeps the caller-selected biomcp binary directory on `PATH` and the same binary
 in `BIOMCP_BIN`, and runs Markdown specs with the standalone `mustmatch test`
-binary. Python static contracts remain on plain pytest legs rather than the
-Markdown runner.
+binary. Python static contracts live under `tests/surface/` and run through
+`make test`, not the Markdown runner.
 
 ## Active Corpus
 
@@ -93,11 +93,13 @@ comment immediately after the `##` heading.
 ## Warm Timing Record
 
 Warm timing records before ticket 395 included the old live/cache-backed
-`make spec-pr` corpus. After ticket 395, `make spec`/`make spec-pr` are offline
-routine lanes and `make verify` is the operator-run live lane. The prior
-`make spec-contracts` measurement (`386.98s` on beelink on `2026-05-23`) remains
-recorded in the `spec-only` validation-profile comment until the next timing
-refresh.
+`make spec-pr` corpus. After ticket 427, `make spec`/`make spec-pr` are offline
+Markdown-only routine lanes and `make verify` is the operator-run live lane.
+Before this cleanup, `make spec-contracts` was recorded at `386.98s` on beelink
+on `2026-05-23` for the legacy deterministic subset and in the `spec-only`
+validation-profile comment. After this cleanup, `/usr/bin/time -p make
+spec-contracts` in this worktree recorded `real 337.47`, `user 2.51`, and `sys
+5.92` on 2026-06-17.
 
 ## Per-Section Warm Ceilings
 

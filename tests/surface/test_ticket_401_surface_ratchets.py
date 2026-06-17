@@ -119,18 +119,14 @@ def test_ticket_401_request_plan_ratchets_execute_named_contracts_not_list_only(
     )
 
 
-def test_ticket_401_routine_modes_execute_python_surface_contracts() -> None:
+def test_ticket_401_routine_modes_are_markdown_only() -> None:
     runner = _read_repo("scripts/run-specs.sh")
-    for mode in ("spec", "spec-pr"):
-        match = re.search(rf"(?ms)^\s*{re.escape(mode)}\)\n(?P<body>.*?)\n\s*;;", runner)
-        assert match is not None, f"missing run-specs mode {mode}"
-        body = match.group("body")
-        assert "run_python=1" in body, f"{mode} must enable Python surface contracts"
-        assert "SPEC_ROUTINE_PATHS" in body, f"{mode} must run the routine path inventory"
+    match = re.search(r"(?ms)^\s*spec\|spec-pr\)\n(?P<body>.*?)\n\s*;;", runner)
+    assert match is not None, "missing run-specs routine modes"
+    body = match.group("body")
+    assert "SPEC_ROUTINE_PATHS" in body, "routine modes must run the path inventory"
+    assert "run_markdown_specs" in runner, "routine modes must run Markdown specs"
 
-    assert "partition_paths" in runner
-    assert "run_python_contracts" in runner
-    assert re.search(r"uv run --no-sync pytest", runner), (
-        "the shared spec runner must keep an explicit pytest execution path for "
-        "spec/surface/test_*.py contracts"
-    )
+    assert "PY_PATHS" not in runner
+    assert "run_python_contracts" not in runner
+    assert "uv run --no-sync pytest" not in runner
