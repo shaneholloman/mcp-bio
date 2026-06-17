@@ -167,6 +167,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/disease/clinical_features.rs` MedlinePlus fallback behavior
       is pure: empty/failing live query results now test the fixture fallback
       collector directly instead of starting MedlinePlus mock servers.
+- [x] `src/entities/disease/clinical_features.rs` is now fully pure: the
+      remaining live MedlinePlus dedupe test is a direct collector test, and
+      the unused MedlinePlus test client constructor was removed.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -549,11 +552,13 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::disease::enrichment::/)'` → 11/11
   pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
   pass; `git diff --check` → pass.
-- 2026-06-16: disease clinical-feature fallback cleanup. Split live-topic
+- 2026-06-16: disease clinical-feature cleanup. Split live-topic
   result collection from MedlinePlus HTTP calls, converted the empty-live-result
   and failed-live-result fixture fallback tests to pure helper tests, and
-  removed the unused empty-response mock helpers. One MedlinePlus request-shape
-  mock remains in this file. Checks:
+  removed the unused empty-response mock helpers. Then converted the remaining
+  live MedlinePlus dedupe test to a pure collector/order test and removed the
+  unused MedlinePlus test client constructor. `clinical_features.rs` now has no
+  mock-server/env-lock cases. Checks:
   `cargo nextest run -E 'test(/entities::disease::clinical_features::/)'` →
   15/15 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D
   warnings` → pass; `git diff --check` → pass.

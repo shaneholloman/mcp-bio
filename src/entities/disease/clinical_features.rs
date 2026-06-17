@@ -731,8 +731,6 @@ mod tests {
 
     use serde_json::{Value, json};
     use sha2::{Digest, Sha256};
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     use super::*;
     use crate::entities::disease::test_support::test_disease;
@@ -751,22 +749,6 @@ mod tests {
             url: url.to_string(),
             summary_excerpt: summary.to_string(),
         }
-    }
-
-    fn topic_response(url: &str, title: &str, summary: &str) -> ResponseTemplate {
-        ResponseTemplate::new(200)
-            .insert_header("content-type", "application/xml")
-            .set_body_string(format!(
-                r#"<?xml version="1.0" encoding="UTF-8"?>
-<nlmSearchResult>
-  <list num="1" start="0" per="1">
-    <document rank="0" url="{url}">
-      <content name="title">{title}</content>
-      <content name="FullSummary">{summary}</content>
-    </document>
-  </list>
-</nlmSearchResult>"#
-            ))
     }
 
     fn sha256_hex(value: &str) -> String {
@@ -862,31 +844,32 @@ mod tests {
         assert!(clinical_feature_config_for(&disease, Some("melanoma")).is_none());
     }
 
-    #[tokio::test]
-    async fn load_topics_runs_all_queries_with_retmax_five_and_deduplicates_urls() {
-        let server = MockServer::start().await;
+    #[test]
+    fn collect_live_topics_deduplicates_urls_and_preserves_first_seen_order() {
         let config = config("uterine_fibroid");
-        let urls = [
-            "https://medlineplus.gov/uterinefibroids.html",
-            "https://medlineplus.gov/uterinefibroids.html",
-            "https://medlineplus.gov/leiomyoma.html",
-        ];
-        for (query, url) in config.source_queries.iter().zip(urls) {
-            Mock::given(method("GET"))
-                .and(path("/ws/query"))
-                .and(query_param("db", "healthTopics"))
-                .and(query_param("term", query.as_str()))
-                .and(query_param("retmax", "5"))
-                .respond_with(topic_response(url, query, "summary"))
-                .expect(1)
-                .mount(&server)
-                .await;
-        }
-
-        let client = MedlinePlusClient::new_for_test(server.uri()).expect("client");
-        let topics = load_topics_for_disease(&config, &client)
-            .await
-            .expect("topics");
+        let topics = collect_live_topics_or_offline(
+            &config,
+            vec![
+                Ok(vec![
+                    topic(
+                        "Uterine Fibroids",
+                        "https://medlineplus.gov/uterinefibroids.html",
+                        "summary",
+                    ),
+                    topic(
+                        "Uterine Fibroids duplicate",
+                        "https://medlineplus.gov/uterinefibroids.html",
+                        "duplicate summary",
+                    ),
+                ]),
+                Ok(vec![topic(
+                    "Leiomyoma",
+                    "https://medlineplus.gov/leiomyoma.html",
+                    "summary",
+                )]),
+            ],
+        )
+        .expect("topics");
 
         assert_eq!(
             topics

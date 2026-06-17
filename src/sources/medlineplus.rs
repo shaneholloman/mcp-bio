@@ -27,14 +27,6 @@ impl MedlinePlusClient {
         })
     }
 
-    #[cfg(test)]
-    pub(crate) fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
     fn search_plan(query: &str, retmax: u8) -> Result<Option<RequestPlan>, BioMcpError> {
         let query = query.trim();
         if query.is_empty() {
