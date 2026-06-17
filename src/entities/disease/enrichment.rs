@@ -262,19 +262,9 @@ async fn add_survival_section(disease: &mut Disease) -> Result<(), BioMcpError> 
         }
     };
 
-    let catalog = match client.site_catalog().await {
-        Ok(catalog) => catalog,
-        Err(err) => {
-            warn!("SEER Explorer catalog unavailable for disease survival section: {err}");
-            disease.survival = None;
-            disease.survival_note = Some(SURVIVAL_UNAVAILABLE_NOTE.into());
-            return Ok(());
-        }
-    };
-
-    let Some(site) = resolve_site(disease, &catalog) else {
-        disease.survival = None;
-        disease.survival_note = Some(SURVIVAL_NO_DATA_NOTE.into());
+    let Some((site, catalog)) =
+        resolve_survival_site_from_catalog_result(disease, client.site_catalog().await)
+    else {
         return Ok(());
     };
 
@@ -294,6 +284,29 @@ async fn add_survival_section(disease: &mut Disease) -> Result<(), BioMcpError> 
     }
 
     Ok(())
+}
+
+fn resolve_survival_site_from_catalog_result(
+    disease: &mut Disease,
+    catalog: Result<SeerSiteCatalog, BioMcpError>,
+) -> Option<(ResolvedSeerSite, SeerSiteCatalog)> {
+    let catalog = match catalog {
+        Ok(catalog) => catalog,
+        Err(err) => {
+            warn!("SEER Explorer catalog unavailable for disease survival section: {err}");
+            disease.survival = None;
+            disease.survival_note = Some(SURVIVAL_UNAVAILABLE_NOTE.into());
+            return None;
+        }
+    };
+
+    let Some(site) = resolve_site(disease, &catalog) else {
+        disease.survival = None;
+        disease.survival_note = Some(SURVIVAL_NO_DATA_NOTE.into());
+        return None;
+    };
+
+    Some((site, catalog))
 }
 
 async fn add_civic_section(disease: &mut Disease) {

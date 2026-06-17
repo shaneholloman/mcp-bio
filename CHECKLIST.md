@@ -161,6 +161,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/disease/fallback/tests.rs` canonical not-found behavior is
       pure: canonical lookup result handling is split into a direct helper test
       instead of using a mocked MyDisease 404.
+- [x] `src/entities/disease/enrichment/tests.rs` SEER survival catalog note
+      behavior is pure: no-data and catalog-failure cases now test catalog
+      resolution directly instead of starting a mocked SEER server.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -536,3 +539,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::disease::fallback::/)'` → 11/11 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: disease enrichment SEER survival cleanup. Split survival catalog
+  resolution from the SEER fetch path, converted the no-matching-site and
+  catalog-failure note tests to pure helper tests, and removed the now-unused
+  SEER mock helper. Checks:
+  `cargo nextest run -E 'test(/entities::disease::enrichment::/)'` → 11/11
+  pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
+  pass; `git diff --check` → pass.

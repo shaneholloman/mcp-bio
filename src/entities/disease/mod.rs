@@ -23,7 +23,9 @@ use crate::sources::nih_reporter::{NihReporterClient, NihReporterFundingSection}
 use crate::sources::ols4::OlsClient;
 use crate::sources::opentargets::OpenTargetsClient;
 use crate::sources::reactome::ReactomeClient;
-use crate::sources::seer::{SeerClient, SeerSurvivalPayload, resolve_site};
+use crate::sources::seer::{
+    ResolvedSeerSite, SeerClient, SeerSiteCatalog, SeerSurvivalPayload, resolve_site,
+};
 use crate::transform;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

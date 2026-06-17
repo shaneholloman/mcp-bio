@@ -51,6 +51,44 @@ fn clinical_feature_row(label: &str) -> DiseaseClinicalFeature {
     }
 }
 
+fn seer_catalog_fixture() -> SeerSiteCatalog {
+    let body = serde_json::to_vec(&serde_json::json!({
+        "VariableFormats": {
+            "site": {
+                "1": "All Cancer Sites Combined",
+                "83": "Hodgkin Lymphoma",
+                "97": "Chronic Myeloid Leukemia (CML)"
+            },
+            "sex": {
+                "1": "Both Sexes",
+                "2": "Male",
+                "3": "Female"
+            },
+            "race": {
+                "1": "All Races / Ethnicities"
+            },
+            "age_range": {
+                "1": "All Ages"
+            }
+        },
+        "CancerSites": [
+            {"value": 1, "active": true},
+            {"value": 83, "active": true},
+            {"value": 97, "active": true}
+        ]
+    }))
+    .expect("catalog json");
+
+    SeerClient::decode_site_catalog_response(
+        reqwest::StatusCode::OK,
+        Some(&reqwest::header::HeaderValue::from_static(
+            "application/json",
+        )),
+        &body,
+    )
+    .expect("valid SEER catalog")
+}
+
 #[test]
 fn funding_query_prefers_free_text_lookup() {
     let disease = test_disease(
@@ -218,53 +256,38 @@ async fn disease_diagnostics_unavailable_sets_note() {
     );
 }
 
-#[tokio::test]
-async fn add_survival_section_sets_truthful_note_for_unmapped_disease() {
-    let _lock = lock_env().await;
-    with_no_http_cache(async {
-        let server = MockServer::start().await;
-        mock_seer_catalog(&server).await;
-        let _seer_base = set_env_var("BIOMCP_SEER_BASE", Some(&server.uri()));
+#[test]
+fn survival_catalog_resolution_sets_truthful_note_for_unmapped_disease() {
+    let mut disease = test_disease("MONDO:0007947", "Marfan syndrome");
 
-        let mut disease = test_disease("MONDO:0007947", "Marfan syndrome");
-        add_survival_section(&mut disease)
-            .await
-            .expect("survival section");
+    let site = resolve_survival_site_from_catalog_result(&mut disease, Ok(seer_catalog_fixture()));
 
-        assert!(disease.survival.is_none());
-        assert_eq!(
-            disease.survival_note.as_deref(),
-            Some(SURVIVAL_NO_DATA_NOTE)
-        );
-    })
-    .await;
+    assert!(site.is_none());
+    assert!(disease.survival.is_none());
+    assert_eq!(
+        disease.survival_note.as_deref(),
+        Some(SURVIVAL_NO_DATA_NOTE)
+    );
 }
 
-#[tokio::test]
-async fn add_survival_section_sets_unavailable_note_when_catalog_fails() {
-    let _lock = lock_env().await;
-    with_no_http_cache(async {
-        let server = MockServer::start().await;
-        let _seer_base = set_env_var("BIOMCP_SEER_BASE", Some(&server.uri()));
+#[test]
+fn survival_catalog_resolution_sets_unavailable_note_when_catalog_fails() {
+    let mut disease = test_disease("MONDO:0004952", "Hodgkin's lymphoma");
 
-        Mock::given(method("GET"))
-            .and(path("/get_var_formats.php"))
-            .respond_with(ResponseTemplate::new(500))
-            .mount(&server)
-            .await;
+    let site = resolve_survival_site_from_catalog_result(
+        &mut disease,
+        Err(BioMcpError::Api {
+            api: "SEER Explorer".into(),
+            message: "catalog failed".into(),
+        }),
+    );
 
-        let mut disease = test_disease("MONDO:0004952", "Hodgkin's lymphoma");
-        add_survival_section(&mut disease)
-            .await
-            .expect("survival section");
-
-        assert!(disease.survival.is_none());
-        assert_eq!(
-            disease.survival_note.as_deref(),
-            Some(SURVIVAL_UNAVAILABLE_NOTE)
-        );
-    })
-    .await;
+    assert!(site.is_none());
+    assert!(disease.survival.is_none());
+    assert_eq!(
+        disease.survival_note.as_deref(),
+        Some(SURVIVAL_UNAVAILABLE_NOTE)
+    );
 }
 
 pub(crate) async fn proof_enrich_sparse_disease_identity_prefers_exact_ols4_match() {

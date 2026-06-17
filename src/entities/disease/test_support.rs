@@ -120,38 +120,6 @@ pub(super) async fn mock_empty_ctgov(server: &MockServer) {
         .await;
 }
 
-pub(super) async fn mock_seer_catalog(server: &MockServer) {
-    Mock::given(method("GET"))
-        .and(path("/get_var_formats.php"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "VariableFormats": {
-                "site": {
-                    "1": "All Cancer Sites Combined",
-                    "83": "Hodgkin Lymphoma",
-                    "97": "Chronic Myeloid Leukemia (CML)"
-                },
-                "sex": {
-                    "1": "Both Sexes",
-                    "2": "Male",
-                    "3": "Female"
-                },
-                "race": {
-                    "1": "All Races / Ethnicities"
-                },
-                "age_range": {
-                    "1": "All Ages"
-                }
-            },
-            "CancerSites": [
-                {"value": 1, "active": true},
-                {"value": 83, "active": true},
-                {"value": 97, "active": true}
-            ]
-        })))
-        .mount(server)
-        .await;
-}
-
 pub(super) fn test_disease_hit(
     id: &str,
     disease_name: &str,
