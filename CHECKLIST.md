@@ -815,3 +815,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/sources::tests::/)'` → 26/26 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: CLI test-support cleanup. Removed the now-unused
+  `src/cli/test_support.rs` module after cache facade tests stopped importing
+  env helpers. Checks: `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.
