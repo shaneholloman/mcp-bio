@@ -309,6 +309,16 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
       28 skipped; total line coverage 71.32% (93,150 executable lines / 26,715
       missed lines). The command exited 0 with an llvm-cov warning about 5
       functions with mismatched data; recorded in `coverage/BASELINE.md`.
+- [x] 2026-06-17 dead-code audit:
+      `RUSTFLAGS="--force-warn dead_code" cargo check --all-targets --locked`
+      → exit 0. Filtering to local `src/` and `tests/` paths found 164 forced
+      dead-code warning rows: 71 under `src/sources`, 50 under `src/cli`, 24
+      under `src/entities`, 14 under `src/render`, 2 under `src/main.rs`, 2
+      under `src/cache`, and 1 under `tests/pty_helpers.rs`. `cargo machete`
+      found no unused dependencies. The forced warnings are mostly request-plan
+      DTO fields, serde DTO fields, benchmark internals, search/render facade
+      functions, and generated AlphaGenome code; they are candidates for a
+      separate cleanup pass, not a gate failure.
 
 ---
 
