@@ -956,3 +956,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.
+- 2026-06-17: OpenTargets target clinical cleanup. Split target clinical lookup
+  into a pure GraphQL request plan plus a pure response parser, then replaced
+  the target clinical mock-server tests with construction/parsing tests over
+  in-memory JSON. Disease prevalence and two older OpenTargets fixture-style
+  mock-server tests remain for later slices. Checks:
+  `cargo nextest run -E 'test(/sources::opentargets::tests::/)'` → 22/22
+  pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.

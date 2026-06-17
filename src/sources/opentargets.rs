@@ -111,6 +111,29 @@ query TargetDruggabilityContext($ensemblId: String!) {
   }
 }
 "#;
+const TARGET_CLINICAL_CONTEXT_QUERY: &str = r#"
+query TargetClinicalContext($ensemblId: String!, $size: Int!) {
+  target(ensemblId: $ensemblId) {
+    associatedDiseases(page: {index: 0, size: $size}) {
+      rows {
+        score
+        disease {
+          id
+          name
+        }
+      }
+    }
+    drugAndClinicalCandidates {
+      rows {
+        drug {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+"#;
 
 pub struct OpenTargetsClient {
     client: reqwest_middleware::ClientWithMiddleware,
@@ -333,113 +356,29 @@ impl OpenTargetsClient {
         }
 
         let size = limit.clamp(1, 25);
-        let url = self.endpoint("graphql");
-        let body = GraphQlRequest {
-            query: r#"
-query TargetClinicalContext($ensemblId: String!, $size: Int!) {
-  target(ensemblId: $ensemblId) {
-    associatedDiseases(page: {index: 0, size: $size}) {
-      rows {
-        score
-        disease {
-          id
-          name
-        }
-      }
+        let plan = Self::target_clinical_context_plan(target_id, size)?;
+        let resp: GraphQlResponse<TargetClinicalData> = self.post_plan_json(&plan).await?;
+
+        target_clinical_context_from_response(resp, size)
     }
-    drugAndClinicalCandidates {
-      rows {
-        drug {
-          id
-          name
+
+    fn target_clinical_context_plan(
+        target_id: &str,
+        size: usize,
+    ) -> Result<RequestPlan, BioMcpError> {
+        let target_id = target_id.trim();
+        if target_id.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "OpenTargets target ID is required".into(),
+            ));
         }
-      }
-    }
-  }
-}
-"#,
-            variables: serde_json::json!({
+        Ok(RequestPlan::post("graphql").json(serde_json::json!({
+            "query": TARGET_CLINICAL_CONTEXT_QUERY,
+            "variables": {
                 "ensemblId": target_id,
                 "size": size,
-            }),
-        };
-
-        let resp: GraphQlResponse<TargetClinicalData> =
-            self.post_json(self.client.post(&url), &body).await?;
-
-        if let Some(errors) = resp.errors {
-            let msg = errors
-                .into_iter()
-                .filter_map(|e| e.message)
-                .collect::<Vec<_>>()
-                .join("; ");
-            if !msg.is_empty() {
-                return Err(BioMcpError::Api {
-                    api: OPENTARGETS_API.to_string(),
-                    message: msg,
-                });
-            }
-        }
-
-        let Some(target) = resp.data.and_then(|d| d.target) else {
-            warn_missing_field("TargetClinicalContext", "data.target");
-            return Ok(OpenTargetsTargetClinicalContext::default());
-        };
-
-        let mut diseases: Vec<String> = Vec::new();
-        let mut disease_seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-        if let Some(associated) = target.associated_diseases {
-            for row in associated.rows {
-                let Some(name) = row
-                    .disease
-                    .and_then(|d| d.name)
-                    .map(|v| v.trim().to_string())
-                    .filter(|v| !v.is_empty())
-                else {
-                    continue;
-                };
-                let key = name.to_ascii_lowercase();
-                if !disease_seen.insert(key) {
-                    continue;
-                }
-                diseases.push(name);
-                if diseases.len() >= size {
-                    break;
-                }
-            }
-        } else {
-            warn_missing_field("TargetClinicalContext", "data.target.associatedDiseases");
-        }
-
-        let mut drugs: Vec<String> = Vec::new();
-        let mut drug_seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-        if let Some(drug_candidates) = target.drug_and_clinical_candidates {
-            for row in drug_candidates.rows {
-                let Some(name) = row
-                    .drug
-                    .and_then(|d| d.name)
-                    .map(|v| v.trim().to_string())
-                    .filter(|v| !v.is_empty())
-                else {
-                    continue;
-                };
-                let key = name.to_ascii_lowercase();
-                if !drug_seen.insert(key) {
-                    continue;
-                }
-                drugs.push(name);
-                if drugs.len() >= size {
-                    break;
-                }
-            }
-        } else {
-            warn_missing_field(
-                "TargetClinicalContext",
-                "data.target.drugAndClinicalCandidates",
-            );
-        }
-
-        Ok(OpenTargetsTargetClinicalContext { diseases, drugs })
+            },
+        })))
     }
 
     pub async fn disease_prevalence(
@@ -903,6 +842,78 @@ fn target_druggability_context_from_response(
         tractability: summarize_tractability(target.tractability),
         safety_liabilities: summarize_safety_liabilities(target.safety_liabilities),
     })
+}
+
+fn target_clinical_context_from_response(
+    resp: GraphQlResponse<TargetClinicalData>,
+    size: usize,
+) -> Result<OpenTargetsTargetClinicalContext, BioMcpError> {
+    if let Some(msg) = graphql_error_message(&resp) {
+        return Err(BioMcpError::Api {
+            api: OPENTARGETS_API.to_string(),
+            message: msg,
+        });
+    }
+
+    let Some(target) = resp.data.and_then(|d| d.target) else {
+        warn_missing_field("TargetClinicalContext", "data.target");
+        return Ok(OpenTargetsTargetClinicalContext::default());
+    };
+
+    let mut diseases: Vec<String> = Vec::new();
+    let mut disease_seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    if let Some(associated) = target.associated_diseases {
+        for row in associated.rows {
+            let Some(name) = row
+                .disease
+                .and_then(|d| d.name)
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty())
+            else {
+                continue;
+            };
+            let key = name.to_ascii_lowercase();
+            if !disease_seen.insert(key) {
+                continue;
+            }
+            diseases.push(name);
+            if diseases.len() >= size {
+                break;
+            }
+        }
+    } else {
+        warn_missing_field("TargetClinicalContext", "data.target.associatedDiseases");
+    }
+
+    let mut drugs: Vec<String> = Vec::new();
+    let mut drug_seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    if let Some(drug_candidates) = target.drug_and_clinical_candidates {
+        for row in drug_candidates.rows {
+            let Some(name) = row
+                .drug
+                .and_then(|d| d.name)
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty())
+            else {
+                continue;
+            };
+            let key = name.to_ascii_lowercase();
+            if !drug_seen.insert(key) {
+                continue;
+            }
+            drugs.push(name);
+            if drugs.len() >= size {
+                break;
+            }
+        }
+    } else {
+        warn_missing_field(
+            "TargetClinicalContext",
+            "data.target.drugAndClinicalCandidates",
+        );
+    }
+
+    Ok(OpenTargetsTargetClinicalContext { diseases, drugs })
 }
 
 fn normalize_disease_id(input: &str) -> Option<String> {
@@ -1478,6 +1489,10 @@ pub(crate) mod tests {
         serde_json::from_value(value).expect("target druggability response")
     }
 
+    fn decode_target_clinical(value: serde_json::Value) -> GraphQlResponse<TargetClinicalData> {
+        serde_json::from_value(value).expect("target clinical response")
+    }
+
     #[test]
     fn drug_sections_plan_builds_graphql_request() {
         let plan = OpenTargetsClient::drug_sections_plan(" CHEMBL25 ").expect("plan");
@@ -1931,94 +1946,67 @@ pub(crate) mod tests {
         assert_eq!(rows[0].source.as_deref(), Some("HPO (PCS)"));
     }
 
-    #[tokio::test]
-    async fn target_clinical_context_collects_diseases_and_drugs() {
-        let server = MockServer::start().await;
+    #[test]
+    fn target_clinical_context_plan_builds_graphql_request() {
+        let plan =
+            OpenTargetsClient::target_clinical_context_plan(" ENSG00000157764 ", 5).expect("plan");
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchTarget"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [
-                            {"id": "ENSG00000157764", "entity": "target", "object": {"approvedSymbol": "BRAF"}}
+        assert_eq!(plan.method, crate::sources::HttpMethod::Post);
+        assert_eq!(plan.path, "graphql");
+        let crate::sources::RequestBody::Json(body) = plan.body else {
+            panic!("expected JSON body");
+        };
+        assert!(
+            body["query"]
+                .as_str()
+                .expect("query")
+                .contains("TargetClinicalContext")
+        );
+        assert_eq!(body["variables"]["ensemblId"], "ENSG00000157764");
+        assert_eq!(body["variables"]["size"], 5);
+    }
+
+    #[test]
+    fn target_clinical_context_collects_diseases_and_drugs() {
+        let resp = decode_target_clinical(serde_json::json!({
+            "data": {
+                "target": {
+                    "associatedDiseases": {
+                        "rows": [
+                            {"score": 0.8, "disease": {"id": "EFO_1", "name": "Melanoma"}},
+                            {"score": 0.7, "disease": {"id": "EFO_2", "name": "Colorectal cancer"}}
+                        ]
+                    },
+                    "drugAndClinicalCandidates": {
+                        "rows": [
+                            {"drug": {"id": "CHEMBL1", "name": "Dabrafenib"}},
+                            {"drug": {"id": "CHEMBL2", "name": "Vemurafenib"}}
                         ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("TargetClinicalContext"))
-            .and(body_string_contains("\"ensemblId\":\"ENSG00000157764\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "target": {
-                        "associatedDiseases": {
-                            "rows": [
-                                {"score": 0.8, "disease": {"id": "EFO_1", "name": "Melanoma"}},
-                                {"score": 0.7, "disease": {"id": "EFO_2", "name": "Colorectal cancer"}}
-                            ]
-                        },
-                        "drugAndClinicalCandidates": {
-                            "rows": [
-                                {"drug": {"id": "CHEMBL1", "name": "Dabrafenib"}},
-                                {"drug": {"id": "CHEMBL2", "name": "Vemurafenib"}}
-                            ]
-                        }
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let context = client.target_clinical_context("BRAF", 5).await.unwrap();
+        let context = target_clinical_context_from_response(resp, 5).unwrap();
         assert_eq!(context.diseases, vec!["Melanoma", "Colorectal cancer"]);
         assert_eq!(context.drugs, vec!["Dabrafenib", "Vemurafenib"]);
     }
 
-    #[tokio::test]
-    async fn target_clinical_context_degrades_when_drug_candidates_missing() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchTarget"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [
-                            {"id": "ENSG00000157764", "entity": "target", "object": {"approvedSymbol": "BRAF"}}
+    #[test]
+    fn target_clinical_context_degrades_when_drug_candidates_missing() {
+        let resp = decode_target_clinical(serde_json::json!({
+            "data": {
+                "target": {
+                    "associatedDiseases": {
+                        "rows": [
+                            {"score": 0.8, "disease": {"id": "EFO_1", "name": "Melanoma"}}
                         ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("TargetClinicalContext"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "target": {
-                        "associatedDiseases": {
-                            "rows": [
-                                {"score": 0.8, "disease": {"id": "EFO_1", "name": "Melanoma"}}
-                            ]
-                        }
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let context = client.target_clinical_context("BRAF", 5).await.unwrap();
+        let context = target_clinical_context_from_response(resp, 5).unwrap();
         assert_eq!(context.diseases, vec!["Melanoma"]);
         assert!(context.drugs.is_empty());
     }
