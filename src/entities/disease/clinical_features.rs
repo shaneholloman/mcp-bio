@@ -726,6 +726,24 @@ pub(super) async fn add_clinical_features_section(
 }
 
 #[cfg(test)]
+pub(super) fn add_clinical_features_section_from_topics(
+    disease: &mut Disease,
+    requested_lookup: Option<&str>,
+    topics: Vec<MedlinePlusTopic>,
+) {
+    let Some(config) = clinical_feature_config_for(disease, requested_lookup) else {
+        return;
+    };
+    let selected_topics = select_topics(&config, &topics);
+    disease.clinical_features = extract_features(&config, &selected_topics);
+}
+
+#[cfg(test)]
+pub(super) fn offline_topics_for_test(key: &str) -> Result<Vec<MedlinePlusTopic>, BioMcpError> {
+    load_offline_topics(key)
+}
+
+#[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
 

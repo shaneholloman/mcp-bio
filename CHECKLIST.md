@@ -839,3 +839,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   Checks: `cargo nextest run -E 'test(/cache::config::/)'` → 28/28 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: disease clinical-feature fallback cleanup. Added test-only
+  helpers to apply clinical features from explicit MedlinePlus topics and
+  converted the uterine-fibroid fallback proof from a bad `BIOMCP_MEDLINEPLUS_BASE`
+  env test to direct offline fixture topics. Checks:
+  `cargo nextest run -E 'test(/entities::disease::enrichment::/) |
+  test(/entities::disease::clinical_features::/)'` → 26/26 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
