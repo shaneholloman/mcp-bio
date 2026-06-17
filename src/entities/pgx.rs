@@ -499,8 +499,16 @@ pub async fn distinct_actionable_cpic_gene_count_for_drug(
     let cpic = CpicClient::new()?;
     let fetch_limit = threshold.saturating_mul(10).clamp(threshold, 200);
     let page = cpic.pairs_by_drug_page(drug, fetch_limit, 0).await?;
+    Ok(distinct_actionable_cpic_gene_count(&page.rows, threshold))
+}
+
+fn distinct_actionable_cpic_gene_count(rows: &[CpicPairRow], threshold: usize) -> usize {
+    if threshold == 0 {
+        return 0;
+    }
+
     let mut genes = HashSet::new();
-    for row in page.rows {
+    for row in rows {
         if cpic_level_rank(row.cpiclevel.as_deref()) > 1 {
             continue;
         }
@@ -513,7 +521,7 @@ pub async fn distinct_actionable_cpic_gene_count_for_drug(
             break;
         }
     }
-    Ok(genes.len())
+    genes.len()
 }
 
 pub fn search_query_summary(filters: &PgxSearchFilters) -> String {
@@ -850,9 +858,6 @@ fn cpic_level_rank(level: Option<&str>) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::{env_lock, set_env_var};
-    use wiremock::matchers::{method, path, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[test]
     fn parse_sections_supports_all() {
@@ -894,39 +899,32 @@ mod tests {
         assert!(err.to_string().contains("A, B, C, D"));
     }
 
-    #[tokio::test]
-    async fn distinct_actionable_cpic_gene_count_for_drug_counts_unique_genes_to_threshold() {
-        let _lock = env_lock().lock().await;
-        let cpic = MockServer::start().await;
-        let _cpic_base = set_env_var("BIOMCP_CPIC_BASE", Some(&cpic.uri()));
+    #[test]
+    fn distinct_actionable_cpic_gene_count_counts_unique_genes_to_threshold() {
+        let rows = vec![
+            cpic_pair("CYP2C9", "A"),
+            cpic_pair("cyp2c9", "A"),
+            cpic_pair("G6PD", "C"),
+            cpic_pair("VKORC1", "B"),
+            cpic_pair("", "A"),
+            cpic_pair("CYP4F2", "A"),
+        ];
 
-        Mock::given(method("GET"))
-            .and(path("/pair_view"))
-            .and(query_param("drugname", "ilike.*warfarin*"))
-            .and(query_param("limit", "30"))
-            .and(query_param("offset", "0"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
-                {"genesymbol": "CYP2C9", "drugname": "warfarin", "cpiclevel": "A"},
-                {"genesymbol": "cyp2c9", "drugname": "warfarin", "cpiclevel": "A"},
-                {"genesymbol": "G6PD", "drugname": "warfarin", "cpiclevel": "C"},
-                {"genesymbol": "VKORC1", "drugname": "warfarin", "cpiclevel": "B"},
-                {"genesymbol": "", "drugname": "warfarin", "cpiclevel": "A"},
-                {"genesymbol": "CYP4F2", "drugname": "warfarin", "cpiclevel": "A"}
-            ])))
-            .expect(1)
-            .mount(&cpic)
-            .await;
+        assert_eq!(distinct_actionable_cpic_gene_count(&rows, 3), 3);
+        assert_eq!(distinct_actionable_cpic_gene_count(&rows, 0), 0);
+    }
 
-        let count = distinct_actionable_cpic_gene_count_for_drug(" warfarin ", 3)
-            .await
-            .expect("cpic count");
-
-        assert_eq!(count, 3);
-        assert_eq!(
-            distinct_actionable_cpic_gene_count_for_drug("   ", 3)
-                .await
-                .expect("blank drug"),
-            0
-        );
+    fn cpic_pair(gene: &str, level: &str) -> CpicPairRow {
+        CpicPairRow {
+            pairid: None,
+            genesymbol: gene.into(),
+            drugname: "warfarin".into(),
+            cpiclevel: Some(level.into()),
+            pgxtesting: None,
+            guidelinename: None,
+            guidelineurl: None,
+            usedforrecommendation: None,
+            provisional: None,
+        }
     }
 }

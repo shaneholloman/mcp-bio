@@ -175,6 +175,8 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/adverse_event.rs` is now fully pure: VAERS family matching
       and summary payload mapping now use direct resolver/table fixtures, and
       the remaining VAERS mock-server tests are gone.
+- [x] `src/entities/pgx.rs` is pure: CPIC actionable-gene counting now tests
+      direct CPIC pair rows instead of starting a CPIC mock server.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -641,3 +643,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::article::planner::/)'` → 20/20 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass; article planner purity `rg` → no matches.
+- 2026-06-16: PGx cleanup. Split CPIC actionable-gene counting over fetched
+  rows into a pure helper and converted the warfarin unique-gene threshold test
+  from a CPIC mock server to direct `CpicPairRow` fixtures. `src/entities/pgx.rs`
+  now has no mock-server/env-lock cases. Checks:
+  `cargo nextest run -E 'test(/entities::pgx::/)'` → 6/6 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass; PGx purity `rg` → no matches.
