@@ -52,3 +52,14 @@ source, instead of being silently ignored.
 ../../tools/biomcp-ci search adverse-event --drug 'COVID-19 vaccine' --source vaers --outcome death 2>&1 | mustmatch like '--source vaers only supports
 unsupported flags: --outcome'
 ```
+
+## FAERS Count Field Validation
+
+The `--count` option is for openFDA field aggregations. The overall report total
+lives in response metadata, so `total` should be rejected instead of forwarded as
+a fake field that returns empty buckets.
+
+```bash
+../../tools/biomcp-ci search adverse-event --drug pembrolizumab --count total 2>&1 | mustmatch like '--count total is not a count field
+patient.reaction.reactionmeddrapt'
+```

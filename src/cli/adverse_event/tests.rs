@@ -162,36 +162,39 @@ fn search_adverse_event_device_rejects_positional_drug_alias() {
 
 #[test]
 fn search_plan_rejects_count_for_vaers_source() {
-    let cli = Cli::try_parse_from([
-        "biomcp",
-        "search",
-        "adverse-event",
-        "MMR vaccine",
-        "--source",
-        "vaers",
-        "--count",
-        "reaction",
-    ])
-    .expect("adverse-event vaers count query should parse");
+    for count in ["reaction", ""] {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "search",
+            "adverse-event",
+            "MMR vaccine",
+            "--source",
+            "vaers",
+            "--count",
+            count,
+        ])
+        .expect("adverse-event vaers count query should parse");
 
-    let Cli {
-        command: Commands::Search {
-            entity: SearchEntity::AdverseEvent(args),
-        },
-        json,
-        ..
-    } = cli
-    else {
-        panic!("expected adverse-event search command");
-    };
+        let Cli {
+            command:
+                Commands::Search {
+                    entity: SearchEntity::AdverseEvent(args),
+                },
+            json,
+            ..
+        } = cli
+        else {
+            panic!("expected adverse-event search command");
+        };
 
-    assert!(!json);
-    let err = super::dispatch::search_plan_from_args(&args)
-        .expect_err("vaers search should reject count");
-    assert!(
-        err.to_string()
-            .contains("--count is not supported with --source vaers")
-    );
+        assert!(!json);
+        let err = super::dispatch::search_plan_from_args(&args)
+            .expect_err("vaers search should reject count");
+        assert!(
+            err.to_string()
+                .contains("--count is not supported with --source vaers")
+        );
+    }
 }
 
 #[test]
