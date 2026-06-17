@@ -927,3 +927,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/sources::tests::/)'` → 26/26 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-17: OpenTargets drug sections cleanup. Split `drug_sections` into a
+  pure GraphQL request plan plus a pure response parser, then replaced its
+  mock-server tests with construction/parsing/error tests over in-memory JSON.
+  The larger OpenTargets disease/target tests still use mock servers and should
+  be converted in later slices. Checks:
+  `cargo nextest run -E 'test(/sources::opentargets::tests::/)'` → 15/15
+  pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.

@@ -256,6 +256,11 @@ impl RequestPlan {
         self
     }
 
+    pub(crate) fn json(mut self, json: serde_json::Value) -> Self {
+        self.body = RequestBody::Json(json);
+        self
+    }
+
     /// First value for a query key (Tier-2 test helper).
     #[cfg(test)]
     pub(crate) fn query_value(&self, key: &str) -> Option<&str> {

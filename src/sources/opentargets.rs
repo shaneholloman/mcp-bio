@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use tracing::warn;
 
 use crate::error::BioMcpError;
+use crate::sources::{RequestPlan, request_from_plan};
 
 const OPENTARGETS_BASE: &str = "https://api.platform.opentargets.org/api/v4";
 const OPENTARGETS_API: &str = "opentargets";
@@ -14,6 +15,28 @@ const SOMATIC_MUTATION_DATATYPE_ID: &str = "somatic_mutation";
 // Derived from the current OpenTargets associationDatasources taxonomy.
 const RARE_VARIANT_DATASOURCE_IDS: &[&str] =
     &["eva", "gene_burden", "orphanet", "uniprot_variants"];
+const DRUG_SECTIONS_QUERY: &str = r#"
+query DrugSections($chemblId: String!) {
+  drug(chemblId: $chemblId) {
+    id
+    name
+    indications {
+      rows {
+        maxClinicalStage
+        disease { name }
+      }
+    }
+    mechanismsOfAction {
+      rows {
+        targets {
+          approvedSymbol
+          approvedName
+        }
+      }
+    }
+  }
+}
+"#;
 
 pub struct OpenTargetsClient {
     client: reqwest_middleware::ClientWithMiddleware,
@@ -71,119 +94,49 @@ impl OpenTargetsClient {
         })
     }
 
+    async fn post_plan_json<T: DeserializeOwned>(
+        &self,
+        plan: &RequestPlan,
+    ) -> Result<T, BioMcpError> {
+        let resp = crate::sources::apply_cache_mode(request_from_plan(
+            &self.client,
+            self.base.as_ref(),
+            plan,
+        ))
+        .send()
+        .await?;
+        let status = resp.status();
+        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
+        let bytes = crate::sources::read_limited_body(resp, OPENTARGETS_API).await?;
+
+        decode_graphql_json(status, content_type.as_ref(), &bytes)
+    }
+
     pub async fn drug_sections(
         &self,
         chembl_id: &str,
         limit: usize,
     ) -> Result<OpenTargetsDrugSections, BioMcpError> {
+        let size = limit.clamp(1, 25);
+        let plan = Self::drug_sections_plan(chembl_id)?;
+        let resp: GraphQlResponse<DrugSectionsData> = self.post_plan_json(&plan).await?;
+
+        drug_sections_from_response(resp, size)
+    }
+
+    fn drug_sections_plan(chembl_id: &str) -> Result<RequestPlan, BioMcpError> {
         let chembl_id = chembl_id.trim();
         if chembl_id.is_empty() {
             return Err(BioMcpError::InvalidArgument(
                 "OpenTargets requires chemblId".into(),
             ));
         }
-
-        let size = limit.clamp(1, 25);
-        let url = self.endpoint("graphql");
-        let body = GraphQlRequest {
-            query: r#"
-query DrugSections($chemblId: String!) {
-  drug(chemblId: $chemblId) {
-    id
-    name
-    indications {
-      rows {
-        maxClinicalStage
-        disease { name }
-      }
-    }
-    mechanismsOfAction {
-      rows {
-        targets {
-          approvedSymbol
-          approvedName
-        }
-      }
-    }
-  }
-}
-"#,
-            variables: serde_json::json!({
+        Ok(RequestPlan::post("graphql").json(serde_json::json!({
+            "query": DRUG_SECTIONS_QUERY,
+            "variables": {
                 "chemblId": chembl_id,
-            }),
-        };
-
-        let resp: GraphQlResponse<DrugSectionsData> =
-            self.post_json(self.client.post(&url), &body).await?;
-
-        if let Some(errors) = resp.errors {
-            let msg = errors
-                .into_iter()
-                .filter_map(|e| e.message)
-                .collect::<Vec<_>>()
-                .join("; ");
-            if !msg.is_empty() {
-                return Err(BioMcpError::Api {
-                    api: OPENTARGETS_API.to_string(),
-                    message: msg,
-                });
-            }
-        }
-
-        let Some(drug) = resp.data.and_then(|d| d.drug) else {
-            warn_missing_field("DrugSections", "data.drug");
-            return Ok(OpenTargetsDrugSections::default());
-        };
-
-        let mut indications = Vec::new();
-        if let Some(ind) = drug.indications {
-            for row in ind.rows.into_iter().take(size) {
-                let Some(disease) = row.disease else { continue };
-                let Some(name) = disease.name.map(|v| v.trim().to_string()) else {
-                    continue;
-                };
-                if name.is_empty() {
-                    continue;
-                }
-                indications.push(OpenTargetsIndication {
-                    disease_name: name,
-                    max_clinical_stage: row.max_clinical_stage,
-                });
-            }
-        } else {
-            warn_missing_field("DrugSections", "data.drug.indications");
-        }
-
-        let mut targets = Vec::new();
-        if let Some(mechanisms) = drug.mechanisms_of_action {
-            for row in mechanisms
-                .rows
-                .into_iter()
-                .flat_map(|row| row.targets)
-                .take(size)
-            {
-                let Some(symbol) = row.approved_symbol.map(|v| v.trim().to_string()) else {
-                    continue;
-                };
-                if symbol.is_empty() {
-                    continue;
-                }
-                targets.push(OpenTargetsTarget {
-                    approved_symbol: symbol,
-                    approved_name: row
-                        .approved_name
-                        .map(|v| v.trim().to_string())
-                        .filter(|v| !v.is_empty()),
-                });
-            }
-        } else {
-            warn_missing_field("DrugSections", "data.drug.mechanismsOfAction");
-        }
-
-        Ok(OpenTargetsDrugSections {
-            indications,
-            targets,
-        })
+            },
+        })))
     }
 
     pub async fn disease_associated_targets(
@@ -815,6 +768,106 @@ query SearchTarget($query: String!) {
     }
 }
 
+fn decode_graphql_json<T: DeserializeOwned>(
+    status: reqwest::StatusCode,
+    content_type: Option<&reqwest::header::HeaderValue>,
+    bytes: &[u8],
+) -> Result<T, BioMcpError> {
+    if !status.is_success() {
+        let excerpt = crate::sources::body_excerpt(bytes);
+        return Err(BioMcpError::Api {
+            api: OPENTARGETS_API.to_string(),
+            message: format!("HTTP {status}: {excerpt}"),
+        });
+    }
+
+    crate::sources::ensure_json_content_type(OPENTARGETS_API, content_type, bytes)?;
+    serde_json::from_slice(bytes).map_err(|source| BioMcpError::ApiJson {
+        api: OPENTARGETS_API.to_string(),
+        source,
+    })
+}
+
+fn graphql_error_message<T>(resp: &GraphQlResponse<T>) -> Option<String> {
+    resp.errors.as_ref().and_then(|errors| {
+        let msg = errors
+            .iter()
+            .filter_map(|e| e.message.as_deref())
+            .collect::<Vec<_>>()
+            .join("; ");
+        (!msg.is_empty()).then_some(msg)
+    })
+}
+
+fn drug_sections_from_response(
+    resp: GraphQlResponse<DrugSectionsData>,
+    size: usize,
+) -> Result<OpenTargetsDrugSections, BioMcpError> {
+    if let Some(msg) = graphql_error_message(&resp) {
+        return Err(BioMcpError::Api {
+            api: OPENTARGETS_API.to_string(),
+            message: msg,
+        });
+    }
+
+    let Some(drug) = resp.data.and_then(|d| d.drug) else {
+        warn_missing_field("DrugSections", "data.drug");
+        return Ok(OpenTargetsDrugSections::default());
+    };
+
+    let mut indications = Vec::new();
+    if let Some(ind) = drug.indications {
+        for row in ind.rows.into_iter().take(size) {
+            let Some(disease) = row.disease else {
+                continue;
+            };
+            let Some(name) = disease.name.map(|v| v.trim().to_string()) else {
+                continue;
+            };
+            if name.is_empty() {
+                continue;
+            }
+            indications.push(OpenTargetsIndication {
+                disease_name: name,
+                max_clinical_stage: row.max_clinical_stage,
+            });
+        }
+    } else {
+        warn_missing_field("DrugSections", "data.drug.indications");
+    }
+
+    let mut targets = Vec::new();
+    if let Some(mechanisms) = drug.mechanisms_of_action {
+        for row in mechanisms
+            .rows
+            .into_iter()
+            .flat_map(|row| row.targets)
+            .take(size)
+        {
+            let Some(symbol) = row.approved_symbol.map(|v| v.trim().to_string()) else {
+                continue;
+            };
+            if symbol.is_empty() {
+                continue;
+            }
+            targets.push(OpenTargetsTarget {
+                approved_symbol: symbol,
+                approved_name: row
+                    .approved_name
+                    .map(|v| v.trim().to_string())
+                    .filter(|v| !v.is_empty()),
+            });
+        }
+    } else {
+        warn_missing_field("DrugSections", "data.drug.mechanismsOfAction");
+    }
+
+    Ok(OpenTargetsDrugSections {
+        indications,
+        targets,
+    })
+}
+
 fn normalize_disease_id(input: &str) -> Option<String> {
     let v = input.trim();
     if v.is_empty() {
@@ -1366,53 +1419,66 @@ pub(crate) mod tests {
         assert_eq!(normalize_disease_id(""), None);
     }
 
-    #[tokio::test]
-    async fn drug_sections_maps_targets_and_indications() {
-        let server = MockServer::start().await;
+    fn decode_drug_sections(value: serde_json::Value) -> GraphQlResponse<DrugSectionsData> {
+        serde_json::from_value(value).expect("drug sections response")
+    }
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DrugSections"))
-            .and(body_string_contains("\"chemblId\":\"CHEMBL25\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "drug": {
-                        "indications": {
-                            "rows": [
-                                {
-                                    "maxClinicalStage": "APPROVAL",
-                                    "disease": {"name": "Melanoma"}
-                                }
-                            ]
-                        },
-                        "mechanismsOfAction": {
-                            "rows": [
-                                {
-                                    "targets": [
-                                        {
-                                            "approvedSymbol": "BRAF",
-                                            "approvedName": "B-Raf proto-oncogene serine/threonine-protein kinase"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "targets": [
-                                        {
-                                            "approvedSymbol": "MAP2K1",
-                                            "approvedName": "Dual specificity mitogen-activated protein kinase kinase 1"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
+    #[test]
+    fn drug_sections_plan_builds_graphql_request() {
+        let plan = OpenTargetsClient::drug_sections_plan(" CHEMBL25 ").expect("plan");
+
+        assert_eq!(plan.method, crate::sources::HttpMethod::Post);
+        assert_eq!(plan.path, "graphql");
+        let crate::sources::RequestBody::Json(body) = plan.body else {
+            panic!("expected JSON body");
+        };
+        assert!(
+            body["query"]
+                .as_str()
+                .expect("query")
+                .contains("DrugSections")
+        );
+        assert_eq!(body["variables"]["chemblId"], "CHEMBL25");
+    }
+
+    #[test]
+    fn drug_sections_maps_targets_and_indications() {
+        let resp = decode_drug_sections(serde_json::json!({
+            "data": {
+                "drug": {
+                    "indications": {
+                        "rows": [
+                            {
+                                "maxClinicalStage": "APPROVAL",
+                                "disease": {"name": "Melanoma"}
+                            }
+                        ]
+                    },
+                    "mechanismsOfAction": {
+                        "rows": [
+                            {
+                                "targets": [
+                                    {
+                                        "approvedSymbol": "BRAF",
+                                        "approvedName": "B-Raf proto-oncogene serine/threonine-protein kinase"
+                                    }
+                                ]
+                            },
+                            {
+                                "targets": [
+                                    {
+                                        "approvedSymbol": "MAP2K1",
+                                        "approvedName": "Dual specificity mitogen-activated protein kinase kinase 1"
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
+        let sections = drug_sections_from_response(resp, 5).unwrap();
 
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let sections = client.drug_sections("CHEMBL25", 5).await.unwrap();
         assert_eq!(sections.indications.len(), 1);
         assert_eq!(sections.indications[0].disease_name, "Melanoma");
         assert_eq!(
@@ -1432,33 +1498,25 @@ pub(crate) mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn drug_sections_degrades_when_indications_missing() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DrugSections"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "drug": {
-                        "mechanismsOfAction": {
-                            "rows": [
-                                {
-                                    "targets": [
-                                        {"approvedSymbol": "BRAF"}
-                                    ]
-                                }
-                            ]
-                        }
+    #[test]
+    fn drug_sections_degrades_when_indications_missing() {
+        let resp = decode_drug_sections(serde_json::json!({
+            "data": {
+                "drug": {
+                    "mechanismsOfAction": {
+                        "rows": [
+                            {
+                                "targets": [
+                                    {"approvedSymbol": "BRAF"}
+                                ]
+                            }
+                        ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
+        let sections = drug_sections_from_response(resp, 5).unwrap();
 
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let sections = client.drug_sections("CHEMBL25", 5).await.unwrap();
         assert!(sections.indications.is_empty());
         assert_eq!(sections.targets.len(), 1);
     }
@@ -1936,23 +1994,15 @@ pub(crate) mod tests {
         assert!(context.drugs.is_empty());
     }
 
-    #[tokio::test]
-    async fn drug_sections_propagates_graphql_error_message() {
-        let server = MockServer::start().await;
+    #[test]
+    fn drug_sections_propagates_graphql_error_message() {
+        let resp = decode_drug_sections(serde_json::json!({
+            "errors": [
+                {"message": "Cannot query field linkedTargets on type Drug"}
+            ]
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DrugSections"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "errors": [
-                    {"message": "Cannot query field linkedTargets on type Drug"}
-                ]
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let err = client.drug_sections("CHEMBL25", 5).await.unwrap_err();
+        let err = drug_sections_from_response(resp, 5).unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("linkedTargets"));
         assert!(msg.contains("opentargets"));
