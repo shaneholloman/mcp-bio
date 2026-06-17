@@ -192,6 +192,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/disease/enrichment/tests.rs` SEER survival catalog note
       behavior is pure: no-data and catalog-failure cases now test catalog
       resolution directly instead of starting a mocked SEER server.
+- [x] `src/entities/disease/enrichment/tests.rs` sparse OLS identity proof is
+      pure: exact OLS document selection now tests direct `OlsDoc` fixtures
+      instead of starting an OLS mock server.
 - [x] `src/entities/disease/clinical_features.rs` MedlinePlus fallback behavior
       is pure: empty/failing live query results now test the fixture fallback
       collector directly instead of starting MedlinePlus mock servers.
@@ -661,3 +664,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::drug::get::/)'` → 16/16 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass; drug get purity `rg` → no matches.
+- 2026-06-16: disease enrichment sparse-identity cleanup. Split exact OLS
+  document application from the async OLS fetch path and converted the sparse
+  MONDO identity proof from an OLS mock server to direct `OlsDoc` fixtures.
+  Other disease enrichment env-based diagnostic/clinical-feature tests still
+  remain. Checks:
+  `cargo nextest run -E 'test(/entities::disease::enrichment::/) |
+  test(/enrich_sparse_disease_identity_prefers_exact_ols4_match/)'` → 12/12
+  pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
+  pass; `git diff --check` → pass.

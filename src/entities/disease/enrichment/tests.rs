@@ -291,57 +291,40 @@ fn survival_catalog_resolution_sets_unavailable_note_when_catalog_fails() {
 }
 
 pub(crate) async fn proof_enrich_sparse_disease_identity_prefers_exact_ols4_match() {
-    let _guard = lock_env().await;
-    with_no_http_cache(async {
-        let ols4 = MockServer::start().await;
-        let _ols4_env = set_env_var("BIOMCP_OLS4_BASE", Some(&ols4.uri()));
+    let mut disease = test_disease("MONDO:0019468", "MONDO:0019468");
+    apply_sparse_disease_identity_docs(
+        &mut disease,
+        "MONDO:0019468",
+        vec![
+            ols_doc("MONDO:0019469", "wrong disease", &["Wrong"]),
+            ols_doc(
+                "MONDO:0019468",
+                "T-cell prolymphocytic leukemia",
+                &["T-PLL"],
+            ),
+        ],
+    );
 
-        Mock::given(method("GET"))
-            .and(path("/api/search"))
-            .and(query_param("q", "MONDO:0019468"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "response": {
-                    "docs": [
-                        {
-                            "iri": "http://purl.obolibrary.org/obo/MONDO_0019469",
-                            "ontology_name": "mondo",
-                            "ontology_prefix": "mondo",
-                            "short_form": "MONDO_0019469",
-                            "obo_id": "MONDO:0019469",
-                            "label": "wrong disease",
-                            "description": [],
-                            "exact_synonyms": ["Wrong"],
-                            "type": "class"
-                        },
-                        {
-                            "iri": "http://purl.obolibrary.org/obo/MONDO_0019468",
-                            "ontology_name": "mondo",
-                            "ontology_prefix": "mondo",
-                            "short_form": "MONDO_0019468",
-                            "obo_id": "MONDO:0019468",
-                            "label": "T-cell prolymphocytic leukemia",
-                            "description": [],
-                            "exact_synonyms": ["T-PLL"],
-                            "type": "class"
-                        }
-                    ]
-                }
-            })))
-            .mount(&ols4)
-            .await;
-
-        let mut disease = test_disease("MONDO:0019468", "MONDO:0019468");
-        enrich_sparse_disease_identity(&mut disease)
-            .await
-            .expect("identity repair should succeed");
-
-        assert_eq!(disease.name, "T-cell prolymphocytic leukemia");
-        assert_eq!(disease.synonyms, vec!["T-PLL".to_string()]);
-    })
-    .await;
+    assert_eq!(disease.name, "T-cell prolymphocytic leukemia");
+    assert_eq!(disease.synonyms, vec!["T-PLL".to_string()]);
 }
 
 #[tokio::test]
 async fn enrich_sparse_disease_identity_prefers_exact_ols4_match() {
     proof_enrich_sparse_disease_identity_prefers_exact_ols4_match().await;
+}
+
+fn ols_doc(id: &str, label: &str, synonyms: &[&str]) -> crate::sources::ols4::OlsDoc {
+    crate::sources::ols4::OlsDoc {
+        iri: format!("http://purl.obolibrary.org/obo/{}", id.replace(':', "_")),
+        ontology_name: "mondo".into(),
+        ontology_prefix: "mondo".into(),
+        short_form: Some(id.replace(':', "_")),
+        obo_id: Some(id.into()),
+        label: label.into(),
+        description: Vec::new(),
+        exact_synonyms: synonyms.iter().map(|value| (*value).to_string()).collect(),
+        is_defining_ontology: false,
+        doc_type: Some("class".into()),
+    }
 }

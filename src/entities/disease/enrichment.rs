@@ -39,7 +39,16 @@ pub(super) async fn enrich_sparse_disease_identity(
     };
 
     let client = OlsClient::new()?;
-    let exact = client.search(&canonical_id).await?.into_iter().find(|doc| {
+    apply_sparse_disease_identity_docs(disease, &canonical_id, client.search(&canonical_id).await?);
+    Ok(())
+}
+
+fn apply_sparse_disease_identity_docs(
+    disease: &mut Disease,
+    canonical_id: &str,
+    docs: Vec<crate::sources::ols4::OlsDoc>,
+) {
+    let exact = docs.into_iter().find(|doc| {
         doc.obo_id
             .as_deref()
             .and_then(normalize_ols_disease_id)
@@ -51,7 +60,7 @@ pub(super) async fn enrich_sparse_disease_identity(
                 .is_some_and(|value| value == canonical_id)
     });
     let Some(doc) = exact else {
-        return Ok(());
+        return;
     };
 
     let label = doc.label.trim();
@@ -79,8 +88,6 @@ pub(super) async fn enrich_sparse_disease_identity(
             break;
         }
     }
-
-    Ok(())
 }
 
 fn disease_funding_query_value(
