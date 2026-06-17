@@ -1087,6 +1087,19 @@ mod tests {
         assert!(err.to_string().contains("Response body exceeded 5 bytes"));
     }
 
+    #[tokio::test]
+    async fn read_limited_body_with_limit_accepts_body_within_limit() {
+        let body = read_limited_body_with_limit(
+            test_response(StatusCode::OK, &[], "abcde"),
+            "test-api",
+            5,
+        )
+        .await
+        .expect("body at limit should pass");
+
+        assert_eq!(body, b"abcde");
+    }
+
     #[test]
     fn parse_retry_after_header_parses_integer_seconds() {
         let mut headers = HeaderMap::new();
