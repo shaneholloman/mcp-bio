@@ -1033,3 +1033,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   HTML response rejection. Also changed CVX CSV content-type errors to use the
   shared sanitized HTTP-body summary for HTML responses. Checks:
   `cargo nextest run -E 'test(/sources::cvx::/)'` → 14/14 pass.
+- 2026-06-17: EMA auto-sync cleanup. Deleted `tests/ema_auto_sync.rs`,
+  replacing its mock-server coverage with pure source tests for feed contract
+  shape, required-file detection, missing/stale/force sync planning, sync intro
+  text, recovery-path error text, payload validation, and local EMA row
+  processing. Checks: `cargo nextest run -E 'test(/sources::ema::/)'` →
+  12/12 pass.

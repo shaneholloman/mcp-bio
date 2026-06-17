@@ -57,3 +57,45 @@ fn sync_plan_marks_missing_and_stale_feeds() {
     assert!(matches!(plan[1].state, FeedSyncState::Missing));
     assert_eq!(plan[1].cache_mode, CacheMode::Default);
 }
+
+#[test]
+fn sync_intro_matches_download_refresh_and_force_modes() {
+    let root = TempDirGuard::new("sync-intro");
+    let missing_plan = sync_plan(root.path(), EmaSyncMode::Auto);
+    assert_eq!(sync_intro(&missing_plan, EmaSyncMode::Auto), "Downloading");
+
+    for feed in EMA_FEEDS {
+        std::fs::write(root.path().join(feed.local_name), br#"{"data":[]}"#)
+            .expect("fixture write should succeed");
+    }
+    let stale_path = root.path().join(MEDICINES_FILE);
+    let file = std::fs::OpenOptions::new()
+        .write(true)
+        .open(&stale_path)
+        .expect("stale file should open");
+    file.set_modified(
+        std::time::SystemTime::now()
+            .checked_sub(EMA_STALE_AFTER + std::time::Duration::from_secs(60))
+            .expect("stale time should be valid"),
+    )
+    .expect("stale mtime should update");
+
+    let stale_plan = sync_plan(root.path(), EmaSyncMode::Auto);
+    assert_eq!(sync_intro(&stale_plan, EmaSyncMode::Auto), "Refreshing");
+
+    let force_plan = sync_plan(root.path(), EmaSyncMode::Force);
+    assert_eq!(sync_intro(&force_plan, EmaSyncMode::Force), "Refreshing");
+}
+
+#[test]
+fn ema_sync_error_mentions_recovery_paths() {
+    let root = TempDirGuard::new("ema-sync-error");
+    let err = ema_sync_error(root.path(), "medicines.json: HTTP 503");
+    let message = err.to_string();
+
+    assert!(message.contains("EMA"));
+    assert!(message.contains("medicines.json: HTTP 503"));
+    assert!(message.contains("biomcp ema sync"));
+    assert!(message.contains("BIOMCP_EMA_DIR"));
+    assert!(message.contains(&root.path().display().to_string()));
+}
