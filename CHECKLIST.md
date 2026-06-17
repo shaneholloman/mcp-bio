@@ -820,3 +820,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   env helpers. Checks: `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.
+- 2026-06-16: health local cache-dir cleanup. Split cache-dir health probing
+  so tests can pass a resolved config or config error directly, replacing the
+  remaining cache env-lock tests in `src/cli/health/tests/local.rs`. Checks:
+  `cargo nextest run -E 'test(/cli::health::tests::local::/)'` → 35/35 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.

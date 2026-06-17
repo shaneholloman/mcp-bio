@@ -8,18 +8,19 @@ use super::super::catalog::{
     WHO_IVD_LOCAL_DATA_AFFECTS, WHO_LOCAL_DATA_AFFECTS,
 };
 use super::super::local::{
-    check_cache_dir, check_cache_limits_with, cvx_local_data_outcome, ema_local_data_outcome,
+    check_cache_dir_with, check_cache_limits_with, cvx_local_data_outcome, ema_local_data_outcome,
     gtr_local_data_outcome, probe_cache_dir, who_ivd_local_data_outcome, who_local_data_outcome,
 };
 use super::super::runner::{ProbeClass, report_from_outcomes};
 use super::{
-    assert_cache_dir_affects, assert_millisecond_latency, block_on, env_lock, fixture_ema_root,
+    assert_cache_dir_affects, assert_millisecond_latency, block_on, fixture_ema_root,
     set_fresh_ema_mtimes, set_stale_ema_mtimes, set_stale_mtime, set_stale_mtime_with_age,
     test_blob, test_config, test_entry, test_snapshot, write_cvx_files, write_ema_files,
     write_gtr_files, write_who_files, write_who_ivd_files,
 };
 use crate::cache::{CachePlannerError, DiskFreeThreshold, FilesystemSpace};
-use crate::test_support::{TempDirGuard, set_env_var};
+use crate::error::BioMcpError;
+use crate::test_support::TempDirGuard;
 #[test]
 fn ema_local_data_not_configured_when_default_root_is_empty() {
     let root = TempDirGuard::new("health");
@@ -598,20 +599,16 @@ fn check_cache_limits_reports_snapshot_errors_as_error_rows() {
 
 #[test]
 fn check_cache_dir_success_row_uses_resolved_path_and_ok_contract() {
-    let _lock = env_lock();
     let root = TempDirGuard::new("health");
-    let cache_home = root.path().join("cache-home");
-    let config_home = root.path().join("config-home");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
+    let cache_root = root.path().join("resolved-cache");
+    let config = test_config(&cache_root, 1_024, DiskFreeThreshold::Percent(10));
 
-    let outcome = block_on(check_cache_dir());
+    let outcome = block_on(check_cache_dir_with(|| Ok(config)));
 
     assert_eq!(outcome.class, ProbeClass::Healthy);
     assert_eq!(
         outcome.row.api,
-        format!("Cache dir ({})", cache_home.join("biomcp").display())
+        format!("Cache dir ({})", cache_root.display())
     );
     assert_eq!(outcome.row.status, "ok");
     assert_millisecond_latency(&outcome.row.latency);
@@ -646,19 +643,14 @@ fn probe_cache_dir_failure_preserves_error_contract() {
 
 #[test]
 fn check_cache_dir_config_error_matches_pinned_contract() {
-    let _lock = env_lock();
     let root = TempDirGuard::new("health");
-    let cache_home = root.path().join("cache-home");
-    let config_home = root.path().join("config-home");
-    let config_dir = config_home.join("biomcp");
-    std::fs::create_dir_all(&config_dir).expect("config dir should exist");
-    let config_path = config_dir.join("cache.toml");
-    std::fs::write(&config_path, "[cache]\nmax_size = 0\n").expect("cache.toml should exist");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
+    let config_path = root.path().join("config-home/biomcp/cache.toml");
+    let err = BioMcpError::InvalidArgument(format!(
+        "{}: [cache].max_size must be greater than 0",
+        config_path.display()
+    ));
 
-    let outcome = block_on(check_cache_dir());
+    let outcome = block_on(check_cache_dir_with(|| Err(err)));
 
     assert_eq!(outcome.class, ProbeClass::Error);
     assert_eq!(outcome.row.api, "Cache dir");

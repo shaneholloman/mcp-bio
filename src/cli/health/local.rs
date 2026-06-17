@@ -230,7 +230,14 @@ pub(in crate::cli::health) fn check_who_ivd_local_data() -> ProbeOutcome {
 }
 
 pub(in crate::cli::health) async fn check_cache_dir() -> ProbeOutcome {
-    let dir = match crate::cache::resolve_cache_config() {
+    check_cache_dir_with(crate::cache::resolve_cache_config).await
+}
+
+pub(in crate::cli::health) async fn check_cache_dir_with<R>(resolve_config: R) -> ProbeOutcome
+where
+    R: FnOnce() -> Result<crate::cache::ResolvedCacheConfig, BioMcpError>,
+{
+    let dir = match resolve_config() {
         Ok(config) => config.cache_root,
         Err(err) => {
             return outcome(
