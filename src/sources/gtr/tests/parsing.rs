@@ -32,7 +32,7 @@ GTR000000099.1\t0\tLegacy Retired Test\tLegacyCo\tmolecular\tLegacy Lab\tLegacy 
     gzip_bytes(payload)
 }
 
-fn condition_gene_bytes() -> Vec<u8> {
+pub(super) fn condition_gene_bytes() -> Vec<u8> {
     b"#accession_version\tobject\tobject_name\n\
 GTR000000001.1\tgene\tBRCA1\n\
 GTR000000001.1\tgene\tBARD1\n\

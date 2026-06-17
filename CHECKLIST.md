@@ -1039,3 +1039,18 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   text, recovery-path error text, payload validation, and local EMA row
   processing. Checks: `cargo nextest run -E 'test(/sources::ema::/)'` →
   12/12 pass.
+- 2026-06-17: GTR auto-sync cleanup. Deleted `tests/gtr_auto_sync.rs`,
+  replacing its mock-server coverage with pure source tests for required-file
+  detection, missing/fresh/stale/force sync decisions, sync intro text,
+  recovery-path error text, GTR payload validation, local index loading, and
+  atomic write/rollback behavior. Checks:
+  `cargo nextest run -E 'test(/sources::gtr::/)'` → 15/15 pass.
+- 2026-06-17: mock-server dependency removal. After the final GTR cleanup, a
+  broad scan found no real `wiremock`/mock-server/env-lock usage left under
+  `src` or `tests`, so `wiremock` was removed from `Cargo.toml` and pruned from
+  `Cargo.lock`. Checks: `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass; `bash scripts/check-no-server-tests.sh` → pass; broad scan for
+  `wiremock|MockServer|Mock::given|.mount(|env_lock|set_env_var|EnvVarGuard`
+  under `src`/`tests` → no matches; scan for `wiremock` in `Cargo.toml` and
+  `Cargo.lock` → no matches.
