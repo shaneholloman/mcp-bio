@@ -253,10 +253,23 @@ mod tests {
 
     use std::path::Path;
 
-    use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE, resolve_gtr_root};
+    use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE};
     use crate::sources::openfda::FdaPmaResult;
     use crate::sources::who_ivd::WHO_IVD_CSV_FILE;
     use crate::test_support::{TempDirGuard, env_lock, set_env_var};
+
+    fn fixture_gtr_root(label: &str) -> TempDirGuard {
+        let root = TempDirGuard::new(label);
+        write_gtr_fixture(root.path());
+        root
+    }
+
+    fn fixture_all_roots(label: &str) -> (TempDirGuard, TempDirGuard) {
+        let gtr_root = fixture_gtr_root(&format!("{label}-gtr"));
+        let who_root = TempDirGuard::new(&format!("{label}-who-ivd"));
+        write_who_ivd_fixture(who_root.path());
+        (gtr_root, who_root)
+    }
 
     async fn install_gtr_fixture_root(
         label: &str,
@@ -335,9 +348,9 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_applies_conjunctive_filters_and_stable_ordering() {
-        let (_lock, _root, _env) = install_gtr_fixture_root("diagnostic-search").await;
+        let root = fixture_gtr_root("diagnostic-search");
 
-        let page = search_page(
+        let page = search::search_page_with_roots(
             &DiagnosticSearchFilters {
                 source: DiagnosticSourceFilter::All,
                 gene: Some("EGFR".to_string()),
@@ -347,8 +360,9 @@ mod tests {
             },
             10,
             0,
+            Some(root.path()),
+            None,
         )
-        .await
         .expect("search page");
 
         assert_eq!(page.total, Some(1));
@@ -361,26 +375,13 @@ mod tests {
             page.results[0].conditions,
             vec!["Cutaneous melanoma".to_string()]
         );
-        assert_eq!(
-            resolve_gtr_root()
-                .file_name()
-                .and_then(|value| value.to_str()),
-            Some(
-                _root
-                    .path()
-                    .file_name()
-                    .and_then(|value| value.to_str())
-                    .expect("fixture dir")
-            )
-        );
     }
 
     #[tokio::test]
     async fn search_page_rejects_short_disease_filter() {
-        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
-            install_all_fixture_roots("diagnostic-search-short-disease").await;
+        let (gtr_root, who_root) = fixture_all_roots("diagnostic-search-short-disease");
 
-        let err = search_page(
+        let err = search::search_page_with_roots(
             &DiagnosticSearchFilters {
                 source: DiagnosticSourceFilter::All,
                 disease: Some("ma".to_string()),
@@ -388,8 +389,9 @@ mod tests {
             },
             10,
             0,
+            Some(gtr_root.path()),
+            Some(who_root.path()),
         )
-        .await
         .expect_err("short disease filter should fail");
 
         assert_eq!(
@@ -400,9 +402,9 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_disease_filter_requires_word_boundary() {
-        let (_lock, _root, _env) = install_gtr_fixture_root("diagnostic-search-boundary").await;
+        let root = fixture_gtr_root("diagnostic-search-boundary");
 
-        let partial = search_page(
+        let partial = search::search_page_with_roots(
             &DiagnosticSearchFilters {
                 source: DiagnosticSourceFilter::Gtr,
                 disease: Some("oma".to_string()),
@@ -410,14 +412,15 @@ mod tests {
             },
             10,
             0,
+            Some(root.path()),
+            None,
         )
-        .await
         .expect("partial disease search");
 
         assert_eq!(partial.total, Some(0));
         assert!(partial.results.is_empty());
 
-        let full_word = search_page(
+        let full_word = search::search_page_with_roots(
             &DiagnosticSearchFilters {
                 source: DiagnosticSourceFilter::Gtr,
                 disease: Some("melanoma".to_string()),
@@ -425,8 +428,9 @@ mod tests {
             },
             10,
             0,
+            Some(root.path()),
+            None,
         )
-        .await
         .expect("word-boundary disease search");
 
         assert_eq!(full_word.total, Some(1));
@@ -435,10 +439,9 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_rejects_explicit_who_gene_filter() {
-        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
-            install_all_fixture_roots("diagnostic-search-who-gene").await;
+        let (gtr_root, who_root) = fixture_all_roots("diagnostic-search-who-gene");
 
-        let err = search_page(
+        let err = search::search_page_with_roots(
             &DiagnosticSearchFilters {
                 source: DiagnosticSourceFilter::WhoIvd,
                 gene: Some("BRCA1".to_string()),
@@ -446,8 +449,9 @@ mod tests {
             },
             10,
             0,
+            Some(gtr_root.path()),
+            Some(who_root.path()),
         )
-        .await
         .expect_err("WHO gene filter should fail");
 
         assert_eq!(
@@ -458,10 +462,9 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_returns_who_rows_for_disease_filter() {
-        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
-            install_all_fixture_roots("diagnostic-search-who-disease").await;
+        let (gtr_root, who_root) = fixture_all_roots("diagnostic-search-who-disease");
 
-        let page = search_page(
+        let page = search::search_page_with_roots(
             &DiagnosticSearchFilters {
                 source: DiagnosticSourceFilter::WhoIvd,
                 disease: Some("HIV".to_string()),
@@ -469,8 +472,9 @@ mod tests {
             },
             10,
             0,
+            Some(gtr_root.path()),
+            Some(who_root.path()),
         )
-        .await
         .expect("WHO IVD search");
 
         assert_eq!(page.total, Some(1));
@@ -483,10 +487,9 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_all_source_uses_unknown_total_when_both_sources_match() {
-        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
-            install_all_fixture_roots("diagnostic-search-all").await;
+        let (gtr_root, who_root) = fixture_all_roots("diagnostic-search-all");
 
-        let page = search_page(
+        let page = search::search_page_with_roots(
             &DiagnosticSearchFilters {
                 source: DiagnosticSourceFilter::All,
                 disease: Some("tuberculosis".to_string()),
@@ -494,8 +497,9 @@ mod tests {
             },
             10,
             0,
+            Some(gtr_root.path()),
+            Some(who_root.path()),
         )
-        .await
         .expect("merged search");
 
         assert_eq!(page.total, None);

@@ -3,6 +3,9 @@ use crate::error::BioMcpError;
 use crate::sources::gtr::{GtrClient, GtrIndex, GtrRecord, GtrSyncMode};
 use crate::sources::who_ivd::{WhoIvdClient, WhoIvdRecord, WhoIvdSyncMode};
 
+#[cfg(test)]
+use std::path::Path;
+
 use super::{
     DiagnosticSearchFilters, DiagnosticSearchResult, DiagnosticSourceFilter, search_result,
     who_ivd_search_result,
@@ -197,13 +200,73 @@ pub async fn search_page(
     }
 
     let filters = NormalizedSearchFilters::from_filters(filters)?;
+    let gtr_index = if filters.source.includes_gtr() {
+        let client = GtrClient::ready(GtrSyncMode::Auto).await?;
+        Some(client.load_index()?)
+    } else {
+        None
+    };
+
+    let should_query_who_ivd = filters.source.includes_who_ivd() && filters.gene.is_none();
+    let who_rows = if should_query_who_ivd {
+        let client = WhoIvdClient::ready(WhoIvdSyncMode::Auto).await?;
+        Some(client.read_rows()?)
+    } else {
+        None
+    };
+
+    search_page_from_data(filters, limit, offset, gtr_index, who_rows)
+}
+
+#[cfg(test)]
+pub(super) fn search_page_with_roots(
+    filters: &DiagnosticSearchFilters,
+    limit: usize,
+    offset: usize,
+    gtr_root: Option<&Path>,
+    who_ivd_root: Option<&Path>,
+) -> Result<SearchPage<DiagnosticSearchResult>, BioMcpError> {
+    if limit == 0 || limit > MAX_SEARCH_LIMIT {
+        return Err(BioMcpError::InvalidArgument(format!(
+            "--limit must be between 1 and {MAX_SEARCH_LIMIT}"
+        )));
+    }
+
+    let filters = NormalizedSearchFilters::from_filters(filters)?;
+    let gtr_index = if filters.source.includes_gtr() {
+        let root = gtr_root.ok_or_else(|| {
+            BioMcpError::InvalidArgument("diagnostic GTR test root is required".to_string())
+        })?;
+        Some(GtrClient::from_root(root).load_index()?)
+    } else {
+        None
+    };
+
+    let should_query_who_ivd = filters.source.includes_who_ivd() && filters.gene.is_none();
+    let who_rows = if should_query_who_ivd {
+        let root = who_ivd_root.ok_or_else(|| {
+            BioMcpError::InvalidArgument("diagnostic WHO IVD test root is required".to_string())
+        })?;
+        Some(WhoIvdClient::from_root(root).read_rows()?)
+    } else {
+        None
+    };
+
+    search_page_from_data(filters, limit, offset, gtr_index, who_rows)
+}
+
+fn search_page_from_data(
+    filters: NormalizedSearchFilters,
+    limit: usize,
+    offset: usize,
+    gtr_index: Option<GtrIndex>,
+    who_rows: Option<Vec<WhoIvdRecord>>,
+) -> Result<SearchPage<DiagnosticSearchResult>, BioMcpError> {
     let mut results = Vec::new();
     let mut matching_sources = 0usize;
     let mut known_total = 0usize;
 
-    if filters.source.includes_gtr() {
-        let client = GtrClient::ready(GtrSyncMode::Auto).await?;
-        let index = client.load_index()?;
+    if let Some(index) = gtr_index {
         let gtr_results = index
             .records_by_id
             .values()
@@ -217,11 +280,8 @@ pub async fn search_page(
         results.extend(gtr_results);
     }
 
-    let should_query_who_ivd = filters.source.includes_who_ivd() && filters.gene.is_none();
-    if should_query_who_ivd {
-        let client = WhoIvdClient::ready(WhoIvdSyncMode::Auto).await?;
-        let who_results = client
-            .read_rows()?
+    if let Some(who_rows) = who_rows {
+        let who_results = who_rows
             .into_iter()
             .filter(|record| filters.matches_who_ivd(record))
             .map(|record| who_ivd_search_result(&record))

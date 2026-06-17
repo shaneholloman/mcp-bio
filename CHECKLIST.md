@@ -891,3 +891,13 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/cli::health::tests::http::/)'` → 10/10 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-17: diagnostic search cleanup. Split diagnostic search into a shared
+  data-processing helper so tests can load GTR and WHO IVD fixtures from
+  explicit roots instead of setting `BIOMCP_GTR_DIR` / `BIOMCP_WHO_IVD_DIR`.
+  Converted the seven `search_page_*` entity tests away from the global env
+  lock; diagnostic get tests still use the old fixture-root env helper and are
+  the next diagnostic cleanup target. Checks:
+  `cargo nextest run -E 'test(/entities::diagnostic::tests::search_page_/)'`
+  → 7/7 pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.
