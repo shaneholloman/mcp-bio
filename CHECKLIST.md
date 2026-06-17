@@ -114,6 +114,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/cli/cache/tests.rs` path rendering is pure: CLI tests now call a
       resolved-config helper directly instead of mutating cache env vars. Cache
       config env/file precedence remains covered in `src/cache/config.rs`.
+- [x] `src/cli/tests/facade/cache.rs` is pure: cache facade tests now cover
+      parsing/help and `--json` command selection without executing cache
+      commands against env-derived paths.
 
 ### Entity processing + output (response → entity → JSON/markdown)
 - [ ] `src/transform/**` and `src/entities/**` — test the pure processing with saved inputs.
@@ -783,5 +786,13 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   cache config resolution and split atomic-save behavior to accept an explicit
   target path. Replaced cache-env/env-lock tests with direct config/path tests.
   Checks: `cargo nextest run -E 'test(/utils::download::/)'` → 6/6 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: cache facade cleanup. Removed cache facade `execute(...)` tests
+  that had to mutate cache env vars, kept parse/help coverage, added pure
+  `--json cache path/stats` parse checks, and removed the now-unused CLI
+  `lock_env` helper. Cache output formatting remains covered in
+  `src/cli/cache/tests.rs`. Checks:
+  `cargo nextest run -E 'test(/cli::tests::facade::cache::/)'` → 12/12 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.

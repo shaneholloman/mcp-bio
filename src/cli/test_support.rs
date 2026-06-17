@@ -2,7 +2,3 @@
 
 #[allow(unused_imports)]
 pub(crate) use crate::test_support::{EnvVarGuard, TempDirGuard, set_env_var};
-
-pub(crate) async fn lock_env() -> tokio::sync::MutexGuard<'static, ()> {
-    crate::test_support::env_lock().lock().await
-}
