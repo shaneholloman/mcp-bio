@@ -297,6 +297,14 @@ chmod +x "$tmp_bin"
 env BIOMCP_BIN="$tmp_bin" make -C ../.. -n spec 2>&1 | mustmatch not like "cargo build --locked --profile"
 ```
 
+If the provided value is missing or not executable, `make spec` should keep the
+standalone local path safe by building the spec-profile binary instead of trying
+to run a bad caller value.
+
+```bash
+env BIOMCP_BIN="/tmp/biomcp-missing-for-spec-contract" make -C ../.. -n spec 2>&1 | mustmatch like "cargo build --locked --profile"
+```
+
 ## Routine Spec Runner Is Markdown Only
 
 Routine specs are executable Markdown contracts. Static Python checks belong to
