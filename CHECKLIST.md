@@ -147,6 +147,10 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/trial/search/ctgov/tests.rs` has no mock-server cases:
       single-worker pagination, age-filter totals, native count exact/approx,
       and expensive-filter page-cap behavior now test direct reducers/helpers.
+- [x] `src/cli/trial/tests.rs` is pure: the duplicate MyChem mock-server
+      alias-expansion next-page rejection test was replaced with parser
+      coverage, while the real error behavior remains covered in CTGov entity
+      tests.
 - [x] `src/entities/variant/get/tests.rs` GWAS-only unavailable case is pure:
       it now asserts the exact degraded output state through a helper instead
       of running `get()` against a broken GWAS mock response.
@@ -731,3 +735,9 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   diagnostic page fixtures. The MedlinePlus fallback env test in this file
   remains. Checks:
   `cargo nextest run -E 'test(/entities::disease::enrichment::/)'` → 11/11 pass.
+- 2026-06-16: trial CLI cleanup. Replaced the duplicate MyChem mock-server
+  alias-expansion next-page CLI test with pure parser coverage and kept the
+  behavior proof in CTGov entity tests. Removed now-unused CLI test-support
+  wiremock re-exports. Checks:
+  `cargo nextest run -E 'test(/cli::trial::/) | test(/entities::trial::search::ctgov::/)'`
+  → 54/54 pass.

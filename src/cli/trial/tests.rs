@@ -1,41 +1,6 @@
 use clap::{CommandFactory, Parser};
 
-use crate::cli::test_support::{
-    Mock, MockServer, ResponseTemplate, lock_env, method, path, query_param, set_env_var,
-};
 use crate::cli::{Cli, Commands, GetEntity, SearchEntity};
-
-async fn mount_trial_alias_lookup(
-    server: &MockServer,
-    requested: &str,
-    canonical: &str,
-    aliases: &[&str],
-) {
-    Mock::given(method("GET"))
-        .and(path("/v1/query"))
-        .and(query_param("q", requested))
-        .and(query_param("size", "25"))
-        .and(query_param("from", "0"))
-        .and(query_param(
-            "fields",
-            crate::sources::mychem::MYCHEM_FIELDS_GET,
-        ))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "total": 1,
-            "hits": [{
-                "_id": "drug-test-id",
-                "_score": 42.0,
-                "drugbank": {
-                    "id": "DBTEST",
-                    "name": canonical,
-                    "synonyms": aliases,
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(server)
-        .await;
-}
 
 fn render_trial_search_long_help() -> String {
     let mut command = Cli::command();
@@ -487,22 +452,14 @@ async fn handle_search_rejects_next_page_with_offset() {
     );
 }
 
-#[tokio::test]
-async fn handle_search_rejects_next_page_when_alias_expansion_uses_multiple_queries() {
-    let _env_lock = lock_env().await;
-    let requested = "review-cli-next-page";
-
-    let mychem = MockServer::start().await;
-    mount_trial_alias_lookup(&mychem, requested, requested, &["review-cli-alt"]).await;
-    let mychem_base = format!("{}/v1", mychem.uri());
-    let _mychem_env = set_env_var("BIOMCP_MYCHEM_BASE", Some(&mychem_base));
-
+#[test]
+fn search_trial_parses_next_page_with_intervention() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "search",
         "trial",
         "--intervention",
-        requested,
+        "review-cli-next-page",
         "--next-page",
         "page-2",
     ])
@@ -512,18 +469,14 @@ async fn handle_search_rejects_next_page_when_alias_expansion_uses_multiple_quer
         command: Commands::Search {
             entity: SearchEntity::Trial(args),
         },
-        json,
         ..
     } = cli
     else {
         panic!("expected trial search command");
     };
 
-    let err = super::handle_search(args, json)
-        .await
-        .expect_err("multi-alias search should reject next-page");
-    assert!(err.to_string().contains("--next-page is not supported"));
-    assert!(err.to_string().contains("--no-alias-expand"));
+    assert_eq!(args.intervention, vec!["review-cli-next-page".to_string()]);
+    assert_eq!(args.next_page.as_deref(), Some("page-2"));
 }
 
 #[tokio::test]
