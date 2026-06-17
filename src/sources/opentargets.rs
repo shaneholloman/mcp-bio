@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
+use serde::Deserialize;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
 use tracing::warn;
 
 use crate::error::BioMcpError;
@@ -134,6 +134,25 @@ query TargetClinicalContext($ensemblId: String!, $size: Int!) {
   }
 }
 "#;
+const DISEASE_PREVALENCE_QUERY: &str = r#"
+query DiseasePrevalence($efoId: String!, $size: Int!) {
+  disease(efoId: $efoId) {
+    phenotypes(page: {index: 0, size: $size}) {
+      rows {
+        phenotypeHPO { id name }
+        evidence {
+          frequency
+          frequencyHPO { id name }
+          resource
+          evidenceType
+          sex
+          onset { id name }
+        }
+      }
+    }
+  }
+}
+"#;
 
 pub struct OpenTargetsClient {
     client: reqwest_middleware::ClientWithMiddleware,
@@ -153,41 +172,6 @@ impl OpenTargetsClient {
         Ok(Self {
             client: crate::sources::test_client()?,
             base: Cow::Owned(base),
-        })
-    }
-
-    fn endpoint(&self, path: &str) -> String {
-        format!(
-            "{}/{}",
-            self.base.as_ref().trim_end_matches('/'),
-            path.trim_start_matches('/')
-        )
-    }
-
-    async fn post_json<T: DeserializeOwned, B: Serialize>(
-        &self,
-        req: reqwest_middleware::RequestBuilder,
-        body: &B,
-    ) -> Result<T, BioMcpError> {
-        let resp = crate::sources::apply_cache_mode(req.json(body))
-            .send()
-            .await?;
-        let status = resp.status();
-        let content_type = resp.headers().get(reqwest::header::CONTENT_TYPE).cloned();
-        let bytes = crate::sources::read_limited_body(resp, OPENTARGETS_API).await?;
-
-        if !status.is_success() {
-            let excerpt = crate::sources::body_excerpt(&bytes);
-            return Err(BioMcpError::Api {
-                api: OPENTARGETS_API.to_string(),
-                message: format!("HTTP {status}: {excerpt}"),
-            });
-        }
-
-        crate::sources::ensure_json_content_type(OPENTARGETS_API, content_type.as_ref(), &bytes)?;
-        serde_json::from_slice(&bytes).map_err(|source| BioMcpError::ApiJson {
-            api: OPENTARGETS_API.to_string(),
-            source,
         })
     }
 
@@ -397,151 +381,26 @@ impl OpenTargetsClient {
             return Ok(Vec::new());
         };
         let size = limit.clamp(1, 20);
-        let url = self.endpoint("graphql");
-        let body = GraphQlRequest {
-            query: r#"
-query DiseasePrevalence($efoId: String!, $size: Int!) {
-  disease(efoId: $efoId) {
-    phenotypes(page: {index: 0, size: $size}) {
-      rows {
-        phenotypeHPO { id name }
-        evidence {
-          frequency
-          frequencyHPO { id name }
-          resource
-          evidenceType
-          sex
-          onset { id name }
-        }
-      }
+        let plan = Self::disease_prevalence_plan(&efo_id, size)?;
+        let resp: GraphQlResponse<DiseasePrevalenceData> = self.post_plan_json(&plan).await?;
+
+        disease_prevalence_from_response(resp, size)
     }
-  }
-}
-"#,
-            variables: serde_json::json!({
+
+    fn disease_prevalence_plan(efo_id: &str, size: usize) -> Result<RequestPlan, BioMcpError> {
+        let efo_id = efo_id.trim();
+        if efo_id.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "OpenTargets disease ID is required".into(),
+            ));
+        }
+        Ok(RequestPlan::post("graphql").json(serde_json::json!({
+            "query": DISEASE_PREVALENCE_QUERY,
+            "variables": {
                 "efoId": efo_id,
                 "size": size,
-            }),
-        };
-
-        let resp: GraphQlResponse<DiseasePrevalenceData> =
-            self.post_json(self.client.post(&url), &body).await?;
-
-        if let Some(errors) = resp.errors {
-            let msg = errors
-                .into_iter()
-                .filter_map(|e| e.message)
-                .collect::<Vec<_>>()
-                .join("; ");
-            if !msg.is_empty() {
-                return Err(BioMcpError::Api {
-                    api: OPENTARGETS_API.to_string(),
-                    message: msg,
-                });
-            }
-        }
-
-        let Some(rows) = resp
-            .data
-            .and_then(|d| d.disease)
-            .and_then(|d| d.phenotypes)
-            .map(|p| p.rows)
-        else {
-            return Ok(Vec::new());
-        };
-
-        let mut out: Vec<OpenTargetsDiseasePrevalence> = Vec::new();
-        let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-
-        for row in rows {
-            let phenotype_name = row
-                .phenotype_hpo
-                .as_ref()
-                .and_then(|h| h.name.as_deref())
-                .map(str::trim)
-                .filter(|v| !v.is_empty())
-                .map(str::to_string);
-
-            for ev in row.evidence {
-                let estimate = ev
-                    .frequency
-                    .as_deref()
-                    .map(str::trim)
-                    .filter(|v| !v.is_empty())
-                    .map(str::to_string)
-                    .or_else(|| {
-                        ev.frequency_hpo
-                            .as_ref()
-                            .and_then(|h| h.name.as_deref())
-                            .map(str::trim)
-                            .filter(|v| !v.is_empty())
-                            .map(str::to_string)
-                    });
-                let Some(estimate) = estimate else {
-                    continue;
-                };
-
-                let mut context_parts: Vec<String> = Vec::new();
-                if let Some(name) = phenotype_name.as_deref() {
-                    context_parts.push(format!("Phenotype: {name}"));
-                }
-                if let Some(sex) = ev.sex.as_deref().map(str::trim).filter(|v| !v.is_empty()) {
-                    context_parts.push(format!("Sex: {sex}"));
-                }
-                let onset = ev
-                    .onset
-                    .iter()
-                    .filter_map(|o| o.name.as_deref())
-                    .map(str::trim)
-                    .filter(|v| !v.is_empty())
-                    .collect::<Vec<_>>();
-                if !onset.is_empty() {
-                    context_parts.push(format!("Onset: {}", onset.join(", ")));
-                }
-                let context = if context_parts.is_empty() {
-                    None
-                } else {
-                    Some(context_parts.join("; "))
-                };
-
-                let source = match (
-                    ev.resource
-                        .as_deref()
-                        .map(str::trim)
-                        .filter(|v| !v.is_empty()),
-                    ev.evidence_type
-                        .as_deref()
-                        .map(str::trim)
-                        .filter(|v| !v.is_empty()),
-                ) {
-                    (Some(resource), Some(kind)) => Some(format!("{resource} ({kind})")),
-                    (Some(resource), None) => Some(resource.to_string()),
-                    (None, Some(kind)) => Some(kind.to_string()),
-                    (None, None) => None,
-                };
-
-                let dedupe = format!(
-                    "{}|{}|{}",
-                    estimate.to_ascii_lowercase(),
-                    context.as_deref().unwrap_or("").to_ascii_lowercase(),
-                    source.as_deref().unwrap_or("").to_ascii_lowercase()
-                );
-                if !seen.insert(dedupe) {
-                    continue;
-                }
-
-                out.push(OpenTargetsDiseasePrevalence {
-                    estimate,
-                    context,
-                    source,
-                });
-                if out.len() >= size {
-                    return Ok(out);
-                }
-            }
-        }
-
-        Ok(out)
+            },
+        })))
     }
 
     async fn resolve_disease_id(&self, disease_query: &str) -> Result<Option<String>, BioMcpError> {
@@ -916,6 +775,120 @@ fn target_clinical_context_from_response(
     Ok(OpenTargetsTargetClinicalContext { diseases, drugs })
 }
 
+fn disease_prevalence_from_response(
+    resp: GraphQlResponse<DiseasePrevalenceData>,
+    size: usize,
+) -> Result<Vec<OpenTargetsDiseasePrevalence>, BioMcpError> {
+    if let Some(msg) = graphql_error_message(&resp) {
+        return Err(BioMcpError::Api {
+            api: OPENTARGETS_API.to_string(),
+            message: msg,
+        });
+    }
+
+    let Some(rows) = resp
+        .data
+        .and_then(|d| d.disease)
+        .and_then(|d| d.phenotypes)
+        .map(|p| p.rows)
+    else {
+        return Ok(Vec::new());
+    };
+
+    let mut out: Vec<OpenTargetsDiseasePrevalence> = Vec::new();
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    for row in rows {
+        let phenotype_name = row
+            .phenotype_hpo
+            .as_ref()
+            .and_then(|h| h.name.as_deref())
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .map(str::to_string);
+
+        for ev in row.evidence {
+            let estimate = ev
+                .frequency
+                .as_deref()
+                .map(str::trim)
+                .filter(|v| !v.is_empty())
+                .map(str::to_string)
+                .or_else(|| {
+                    ev.frequency_hpo
+                        .as_ref()
+                        .and_then(|h| h.name.as_deref())
+                        .map(str::trim)
+                        .filter(|v| !v.is_empty())
+                        .map(str::to_string)
+                });
+            let Some(estimate) = estimate else {
+                continue;
+            };
+
+            let mut context_parts: Vec<String> = Vec::new();
+            if let Some(name) = phenotype_name.as_deref() {
+                context_parts.push(format!("Phenotype: {name}"));
+            }
+            if let Some(sex) = ev.sex.as_deref().map(str::trim).filter(|v| !v.is_empty()) {
+                context_parts.push(format!("Sex: {sex}"));
+            }
+            let onset = ev
+                .onset
+                .iter()
+                .filter_map(|o| o.name.as_deref())
+                .map(str::trim)
+                .filter(|v| !v.is_empty())
+                .collect::<Vec<_>>();
+            if !onset.is_empty() {
+                context_parts.push(format!("Onset: {}", onset.join(", ")));
+            }
+            let context = if context_parts.is_empty() {
+                None
+            } else {
+                Some(context_parts.join("; "))
+            };
+
+            let source = match (
+                ev.resource
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|v| !v.is_empty()),
+                ev.evidence_type
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|v| !v.is_empty()),
+            ) {
+                (Some(resource), Some(kind)) => Some(format!("{resource} ({kind})")),
+                (Some(resource), None) => Some(resource.to_string()),
+                (None, Some(kind)) => Some(kind.to_string()),
+                (None, None) => None,
+            };
+
+            let dedupe = format!(
+                "{}|{}|{}",
+                estimate.to_ascii_lowercase(),
+                context.as_deref().unwrap_or("").to_ascii_lowercase(),
+                source.as_deref().unwrap_or("").to_ascii_lowercase()
+            );
+            if !seen.insert(dedupe) {
+                continue;
+            }
+
+            out.push(OpenTargetsDiseasePrevalence {
+                estimate,
+                context,
+                source,
+            });
+            if out.len() >= size {
+                return Ok(out);
+            }
+        }
+    }
+
+    Ok(out)
+}
+
 fn normalize_disease_id(input: &str) -> Option<String> {
     let v = input.trim();
     if v.is_empty() {
@@ -1005,12 +978,6 @@ pub struct OpenTargetsDiseasePrevalence {
     pub estimate: String,
     pub context: Option<String>,
     pub source: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-struct GraphQlRequest<'a> {
-    query: &'a str,
-    variables: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize)]
@@ -1493,6 +1460,12 @@ pub(crate) mod tests {
         serde_json::from_value(value).expect("target clinical response")
     }
 
+    fn decode_disease_prevalence(
+        value: serde_json::Value,
+    ) -> GraphQlResponse<DiseasePrevalenceData> {
+        serde_json::from_value(value).expect("disease prevalence response")
+    }
+
     #[test]
     fn drug_sections_plan_builds_graphql_request() {
         let plan = OpenTargetsClient::drug_sections_plan(" CHEMBL25 ").expect("plan");
@@ -1882,59 +1855,51 @@ pub(crate) mod tests {
         assert!(context.safety_liabilities.is_empty());
     }
 
-    #[tokio::test]
-    async fn disease_prevalence_maps_frequency_evidence() {
-        let server = MockServer::start().await;
+    #[test]
+    fn disease_prevalence_plan_builds_graphql_request() {
+        let plan = OpenTargetsClient::disease_prevalence_plan(" MONDO_0007947 ", 5).expect("plan");
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchDisease"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [
-                            {"id": "MONDO_0007947", "entity": "disease"}
+        assert_eq!(plan.method, crate::sources::HttpMethod::Post);
+        assert_eq!(plan.path, "graphql");
+        let crate::sources::RequestBody::Json(body) = plan.body else {
+            panic!("expected JSON body");
+        };
+        assert!(
+            body["query"]
+                .as_str()
+                .expect("query")
+                .contains("DiseasePrevalence")
+        );
+        assert_eq!(body["variables"]["efoId"], "MONDO_0007947");
+        assert_eq!(body["variables"]["size"], 5);
+    }
+
+    #[test]
+    fn disease_prevalence_maps_frequency_evidence() {
+        let resp = decode_disease_prevalence(serde_json::json!({
+            "data": {
+                "disease": {
+                    "phenotypes": {
+                        "rows": [
+                            {
+                                "phenotypeHPO": {"id": "HP_0000278", "name": "Retrognathia"},
+                                "evidence": [
+                                    {
+                                        "frequency": "10/16",
+                                        "resource": "HPO",
+                                        "evidenceType": "PCS",
+                                        "sex": null,
+                                        "onset": []
+                                    }
+                                ]
+                            }
                         ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DiseasePrevalence"))
-            .and(body_string_contains("\"efoId\":\"MONDO_0007947\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "disease": {
-                        "phenotypes": {
-                            "rows": [
-                                {
-                                    "phenotypeHPO": {"id": "HP_0000278", "name": "Retrognathia"},
-                                    "evidence": [
-                                        {
-                                            "frequency": "10/16",
-                                            "resource": "HPO",
-                                            "evidenceType": "PCS",
-                                            "sex": null,
-                                            "onset": []
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let rows = client
-            .disease_prevalence("Marfan syndrome", 5)
-            .await
-            .expect("prevalence rows");
+        let rows = disease_prevalence_from_response(resp, 5).expect("prevalence rows");
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].estimate, "10/16");
         assert!(
