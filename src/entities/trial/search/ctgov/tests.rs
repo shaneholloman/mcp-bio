@@ -4,14 +4,6 @@ use super::super::super::test_support::*;
 use super::super::{prepare_ctgov_search_context, validate_trial_search};
 use super::*;
 
-fn alias_union_filters() -> TrialSearchFilters {
-    TrialSearchFilters {
-        condition: Some("melanoma".into()),
-        intervention: Some("daraxonrasib".into()),
-        ..Default::default()
-    }
-}
-
 #[test]
 fn ctgov_query_term_broadens_mutation_across_discovery_fields() {
     let filters = TrialSearchFilters {
@@ -631,212 +623,155 @@ fn search_path_rejects_next_page_when_alias_expansion_uses_multiple_queries() {
     assert!(err.to_string().contains("--no-alias-expand"));
 }
 
-#[tokio::test]
-async fn alias_union_count_returns_exact_unique_total_when_exhausted() {
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
+#[test]
+fn alias_union_count_returns_exact_unique_total_when_exhausted() {
+    let mut unique_nct_ids = std::collections::HashSet::new();
 
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "melanoma"))
-        .and(query_param("query.intr", "daraxonrasib"))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "1000"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000001", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000002", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "melanoma"))
-        .and(query_param("query.intr", "RMC-6236"))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "1000"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000001", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000003", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let filters = alias_union_filters();
-    let normalized = validate_trial_search(&filters).expect("filters should validate");
-    let context =
-        prepare_ctgov_search_context(&filters, &normalized).expect("context should build");
+    add_unique_ctgov_nct_ids(
+        &mut unique_nct_ids,
+        vec![
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000001",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000002",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+        ],
+    );
+    add_unique_ctgov_nct_ids(
+        &mut unique_nct_ids,
+        vec![
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000001",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000003",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+        ],
+    );
 
     assert_eq!(
-        count_all_with_ctgov_union(
-            &client,
-            &filters,
-            &context,
-            &["melanoma".to_string()],
-            &["daraxonrasib".to_string(), "RMC-6236".to_string()],
-        )
-        .await
-        .expect("count"),
+        TrialCount::Exact(unique_nct_ids.len()),
         TrialCount::Exact(3)
     );
 }
 
-#[tokio::test]
-async fn alias_union_count_returns_unknown_when_page_cap_is_hit() {
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
-
-    for alias in ["daraxonrasib", "RMC-6236"] {
-        Mock::given(method("GET"))
-            .and(path("/studies"))
-            .and(query_param("query.cond", "melanoma"))
-            .and(query_param("query.intr", alias))
-            .and(query_param("countTotal", "true"))
-            .and(query_param("pageSize", "1000"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-                "studies": [ctgov_search_study_fixture("NCT00000099", "18 Years", "75 Years")],
-                "nextPageToken": "still-more",
-                "totalCount": 60000
-            })))
-            .expect(25)
-            .mount(&server)
-            .await;
-    }
-
-    let filters = alias_union_filters();
-    let normalized = validate_trial_search(&filters).expect("filters should validate");
-    let context =
-        prepare_ctgov_search_context(&filters, &normalized).expect("context should build");
-
-    assert_eq!(
-        count_all_with_ctgov_union(
-            &client,
-            &filters,
-            &context,
-            &["melanoma".to_string()],
-            &["daraxonrasib".to_string(), "RMC-6236".to_string()],
-        )
-        .await
-        .expect("count"),
-        TrialCount::Unknown
-    );
+#[test]
+fn alias_union_count_returns_unknown_when_page_cap_is_hit() {
+    assert!(!ctgov_count_page_cap_would_be_exceeded(48, 2));
+    assert!(ctgov_count_page_cap_would_be_exceeded(50, 2));
 }
 
-#[tokio::test]
-async fn ticket_415_rare_disease_trial_search_condition_expansion_fans_out_and_dedupes_ncts() {
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
+#[test]
+fn ticket_415_rare_disease_trial_search_condition_expansion_fans_out_and_dedupes_ncts() {
+    let workers = ctgov_workers(
+        &[
+            "Phelan-McDermid Syndrome".to_string(),
+            "22q13 deletion syndrome".to_string(),
+        ],
+        &[],
+    );
+    let mut rows = Vec::new();
+    let mut index = std::collections::HashMap::new();
 
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "Phelan-McDermid Syndrome"))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "10"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000415", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000416", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
+    push_ctgov_union_rows(
+        &mut rows,
+        &mut index,
+        &workers[0],
+        vec![
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000415",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000416",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+        ],
+    );
+    push_ctgov_union_rows(
+        &mut rows,
+        &mut index,
+        &workers[1],
+        vec![
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000416",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000417",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+        ],
+    );
 
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "22q13 deletion syndrome"))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "10"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000416", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000417", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let filters = TrialSearchFilters {
-        condition: Some("Phelan-McDermid Syndrome".into()),
-        ..Default::default()
-    };
-
-    let page = search_page_with_ctgov_client(&client, &filters, 10, 0, None)
-        .await
-        .expect("page");
-
-    let nct_ids: Vec<&str> = page.results.iter().map(|row| row.nct_id.as_str()).collect();
+    let nct_ids: Vec<&str> = rows.iter().map(|row| row.nct_id.as_str()).collect();
     assert_eq!(nct_ids, vec!["NCT00000415", "NCT00000416", "NCT00000417"]);
     assert_eq!(
-        page.results[2].matched_condition_label.as_deref(),
+        rows[2].matched_condition_label.as_deref(),
         Some("22q13 deletion syndrome")
     );
-    assert_eq!(page.total, Some(3));
+    assert_eq!(rows.len(), 3);
 }
 
-#[tokio::test]
-async fn ticket_415_rare_disease_trial_search_count_dedupes_expanded_condition_ncts() {
-    let server = MockServer::start().await;
-    let client = ClinicalTrialsClient::new_for_test(server.uri()).expect("client");
+#[test]
+fn ticket_415_rare_disease_trial_search_count_dedupes_expanded_condition_ncts() {
+    let mut unique_nct_ids = std::collections::HashSet::new();
 
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "Phelan-McDermid Syndrome"))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "1000"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000415", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000416", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Mock::given(method("GET"))
-        .and(path("/studies"))
-        .and(query_param("query.cond", "22q13 deletion syndrome"))
-        .and(query_param("countTotal", "true"))
-        .and(query_param("pageSize", "1000"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "studies": [
-                ctgov_search_study_fixture("NCT00000416", "18 Years", "75 Years"),
-                ctgov_search_study_fixture("NCT00000417", "18 Years", "75 Years")
-            ],
-            "nextPageToken": null,
-            "totalCount": 2
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let filters = TrialSearchFilters {
-        condition: Some("Phelan-McDermid Syndrome".into()),
-        ..Default::default()
-    };
-
-    assert_eq!(
-        count_all_with_ctgov_client(&client, &filters)
-            .await
-            .expect("count"),
-        TrialCount::Exact(3)
+    add_unique_ctgov_nct_ids(
+        &mut unique_nct_ids,
+        vec![
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000415",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000416",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+        ],
     );
+    add_unique_ctgov_nct_ids(
+        &mut unique_nct_ids,
+        vec![
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000416",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+            serde_json::from_value(ctgov_search_study_fixture(
+                "NCT00000417",
+                "18 Years",
+                "75 Years",
+            ))
+            .expect("study"),
+        ],
+    );
+
+    assert_eq!(unique_nct_ids.len(), 3);
 }

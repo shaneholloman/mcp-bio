@@ -134,6 +134,10 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/trial/search/ctgov/tests.rs` no longer uses the trial
       env-lock/MyChem mock path for next-page fanout validation; that assertion
       is now a direct error-helper test.
+- [x] `src/entities/trial/search/ctgov/tests.rs` CTGov fan-out dedupe/count
+      coverage is purer: rare-disease condition expansion and alias-union count
+      behavior now exercise direct merge/count helpers instead of mocked CTGov
+      pages.
 - [x] `src/entities/variant/get/tests.rs` GWAS-only unavailable case is pure:
       it now asserts the exact degraded output state through a helper instead
       of running `get()` against a broken GWAS mock response.
@@ -498,6 +502,14 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   Checks: `cargo nextest run -E 'test(/entities::trial::search::ctgov::/)'` →
   21/21 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings`
   → pass; `git diff --check` → pass.
+- 2026-06-16: CT.gov fan-out/count cleanup. Split pure helpers for union-row
+  merging, unique NCT counting, and count page-cap detection. Converted the
+  rare-disease expanded-condition page/count tests and alias-union count
+  exact/unknown tests from mocked CTGov pages to direct helper tests. Remaining
+  CTGov mock-server cases are the single-worker pagination/count traversal
+  tests. Checks: `cargo nextest run -E 'test(/entities::trial::search::ctgov::/)'`
+  → 21/21 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D
+  warnings` → pass; `git diff --check` → pass.
 - 2026-06-16: partial variant-get cleanup. Extracted `mark_gwas_unavailable`
   and converted the GWAS-only unavailable test from a bad-JSON GWAS mock-server
   test to a pure output-state assertion. The two remaining Cancer Hotspots

@@ -533,6 +533,35 @@ fn ctgov_workers(
     workers
 }
 
+fn push_ctgov_union_rows(
+    merged_rows: &mut Vec<TrialSearchResult>,
+    merged_index: &mut HashMap<String, usize>,
+    worker: &CtGovWorkerState,
+    studies: Vec<CtGovStudy>,
+) {
+    for study in studies {
+        let mut row = transform::trial::from_ctgov_hit(&study);
+        if merged_index.contains_key(&row.nct_id) {
+            continue;
+        }
+        row.matched_condition_label = worker.matched_condition_label.clone();
+        row.matched_intervention_label = worker.matched_intervention_label.clone();
+        merged_index.insert(row.nct_id.clone(), merged_rows.len());
+        merged_rows.push(row);
+    }
+}
+
+fn add_unique_ctgov_nct_ids(unique_nct_ids: &mut HashSet<String>, studies: Vec<CtGovStudy>) {
+    for study in studies {
+        let row = transform::trial::from_ctgov_hit(&study);
+        unique_nct_ids.insert(row.nct_id);
+    }
+}
+
+fn ctgov_count_page_cap_would_be_exceeded(fetched_pages: usize, active_workers: usize) -> bool {
+    fetched_pages.saturating_add(active_workers) > COUNT_TRAVERSAL_PAGE_CAP
+}
+
 async fn search_page_with_ctgov_union(
     client: &ClinicalTrialsClient,
     filters: &TrialSearchFilters,
@@ -583,16 +612,7 @@ async fn search_page_with_ctgov_union(
                 continue;
             }
 
-            for study in page.studies {
-                let mut row = transform::trial::from_ctgov_hit(&study);
-                if merged_index.contains_key(&row.nct_id) {
-                    continue;
-                }
-                row.matched_condition_label = worker.matched_condition_label.clone();
-                row.matched_intervention_label = worker.matched_intervention_label.clone();
-                merged_index.insert(row.nct_id.clone(), merged_rows.len());
-                merged_rows.push(row);
-            }
+            push_ctgov_union_rows(&mut merged_rows, &mut merged_index, worker, page.studies);
 
             worker.next_page_token = page.next_page_token;
             if worker.next_page_token.is_none() {
@@ -706,7 +726,7 @@ async fn count_all_with_ctgov_union(
             return Ok(TrialCount::Exact(unique_nct_ids.len()));
         }
 
-        if fetched_pages.saturating_add(active_indices.len()) > COUNT_TRAVERSAL_PAGE_CAP {
+        if ctgov_count_page_cap_would_be_exceeded(fetched_pages, active_indices.len()) {
             return Ok(TrialCount::Unknown);
         }
 
@@ -736,10 +756,7 @@ async fn count_all_with_ctgov_union(
                 continue;
             }
 
-            for study in page.studies {
-                let row = transform::trial::from_ctgov_hit(&study);
-                unique_nct_ids.insert(row.nct_id);
-            }
+            add_unique_ctgov_nct_ids(&mut unique_nct_ids, page.studies);
 
             worker.next_page_token = page.next_page_token;
             if worker.next_page_token.is_none() {
