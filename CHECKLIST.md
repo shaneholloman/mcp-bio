@@ -986,3 +986,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.
+- 2026-06-17: source-tier purity checkpoint. Ran
+  `bash scripts/check-no-server-tests.sh`; it passes and reports source
+  tier-tests are pure. A broader scan still finds `wiremock` in top-level
+  integration tests under `tests/`, so keep the dev dependency for now; those
+  are separate from the source unit-test cleanup.
