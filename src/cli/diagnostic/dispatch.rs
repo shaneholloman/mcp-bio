@@ -20,16 +20,42 @@ pub(in crate::cli) async fn handle_get(
     let json_output = json || json_override;
     let diagnostic = crate::entities::diagnostic::get(&args.accession, &sections).await?;
     let text = if json_output {
-        crate::render::json::to_entity_json(
-            &diagnostic,
-            crate::render::markdown::diagnostic_evidence_urls(&diagnostic),
-            crate::render::markdown::diagnostic_next_commands(&diagnostic, &sections),
-            crate::render::provenance::diagnostic_section_sources(&diagnostic),
-        )?
+        diagnostic_get_json(&diagnostic, &sections)?
     } else {
         crate::render::markdown::diagnostic_markdown(&diagnostic, &sections)?
     };
     Ok(CommandOutcome::stdout(text))
+}
+
+pub(super) fn diagnostic_get_json(
+    diagnostic: &crate::entities::diagnostic::Diagnostic,
+    sections: &[String],
+) -> anyhow::Result<String> {
+    Ok(crate::render::json::to_entity_json(
+        diagnostic,
+        crate::render::markdown::diagnostic_evidence_urls(diagnostic),
+        crate::render::markdown::diagnostic_next_commands(diagnostic, sections),
+        crate::render::provenance::diagnostic_section_sources(diagnostic),
+    )?)
+}
+
+pub(super) fn diagnostic_search_json(
+    results: Vec<crate::entities::diagnostic::DiagnosticSearchResult>,
+    total: Option<usize>,
+    limit: usize,
+    offset: usize,
+) -> anyhow::Result<String> {
+    let true_zero_result = results.is_empty() && total == Some(0);
+    let pagination = super::super::PaginationMeta::offset(offset, limit, results.len(), total);
+    let next_commands = crate::render::markdown::search_next_commands_diagnostic(&results);
+    let suggestions =
+        true_zero_result.then(crate::render::markdown::diagnostic_zero_result_recovery_commands);
+    super::super::search_json_with_meta_and_suggestions(
+        results,
+        pagination,
+        next_commands,
+        suggestions,
+    )
 }
 
 pub(in crate::cli) async fn handle_search(
@@ -55,19 +81,10 @@ pub(in crate::cli) async fn handle_search(
     let page = crate::entities::diagnostic::search_page(&filters, args.limit, args.offset).await?;
     let total = page.total;
     let results = page.results;
-    let true_zero_result = results.is_empty() && total == Some(0);
     let pagination =
         super::super::PaginationMeta::offset(args.offset, args.limit, results.len(), total);
     let text = if json {
-        let next_commands = crate::render::markdown::search_next_commands_diagnostic(&results);
-        let suggestions = true_zero_result
-            .then(crate::render::markdown::diagnostic_zero_result_recovery_commands);
-        super::super::search_json_with_meta_and_suggestions(
-            results,
-            pagination,
-            next_commands,
-            suggestions,
-        )?
+        diagnostic_search_json(results, total, args.limit, args.offset)?
     } else {
         let footer = super::super::pagination_footer_offset(&pagination);
         crate::render::markdown::diagnostic_search_markdown_with_footer(

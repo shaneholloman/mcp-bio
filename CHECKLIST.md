@@ -876,3 +876,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/cli::health::tests::http::/)'` → 9/9 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: diagnostic CLI cleanup. Split diagnostic get/search JSON response
+  assembly into pure dispatch helpers, then converted the CLI JSON/meta tests
+  from temporary `BIOMCP_GTR_DIR` fixtures to explicit diagnostic/result
+  fixtures. Entity-level GTR/WHO fixture behavior remains covered in
+  `src/entities/diagnostic/mod.rs`. Checks:
+  `cargo nextest run -E 'test(/cli::diagnostic::/)'` → 7/7 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.

@@ -1,20 +1,32 @@
 use clap::{CommandFactory, Parser};
 
 use crate::cli::{Cli, Commands, GetEntity, SearchEntity};
-use crate::entities::diagnostic::DiagnosticSourceFilter;
-use crate::test_support::{TempDirGuard, env_lock, set_env_var};
+use crate::entities::diagnostic::{Diagnostic, DiagnosticSourceFilter};
 
-fn write_gtr_fixture(root: &std::path::Path) {
-    std::fs::write(
-        root.join(crate::sources::gtr::GTR_TEST_VERSION_FILE),
-        include_bytes!("../../../spec/fixtures/gtr/test_version.gz"),
-    )
-    .expect("write test_version.gz");
-    std::fs::write(
-        root.join(crate::sources::gtr::GTR_CONDITION_GENE_FILE),
-        include_str!("../../../spec/fixtures/gtr/test_condition_gene.txt"),
-    )
-    .expect("write test_condition_gene.txt");
+fn diagnostic_fixture(accession: &str) -> Diagnostic {
+    Diagnostic {
+        source: "gtr".to_string(),
+        source_id: accession.to_string(),
+        accession: accession.to_string(),
+        name: "BRCA1 Hereditary Cancer Panel".to_string(),
+        test_type: Some("Molecular genetics".to_string()),
+        manufacturer: Some("GenomOncology Lab".to_string()),
+        target_marker: None,
+        regulatory_version: None,
+        prequalification_year: None,
+        laboratory: None,
+        institution: None,
+        country: None,
+        clia_number: None,
+        state_licenses: None,
+        current_status: None,
+        public_status: None,
+        method_categories: vec!["Molecular genetics".to_string()],
+        genes: Some(vec!["BRCA1".to_string(), "BARD1".to_string()]),
+        conditions: Some(vec!["Breast cancer".to_string()]),
+        methods: None,
+        regulatory: None,
+    }
 }
 
 #[test]
@@ -145,16 +157,8 @@ fn search_args_reject_zero_limit_before_gtr_lookup() {
     assert!(err.to_string().contains("--limit must be between 1 and 50"));
 }
 
-#[tokio::test]
-async fn handle_search_json_includes_suggestions_for_true_zero_result() {
-    let _lock = env_lock().lock().await;
-    let root = TempDirGuard::new("cli-diagnostic");
-    write_gtr_fixture(root.path());
-    let _env = set_env_var(
-        "BIOMCP_GTR_DIR",
-        Some(root.path().to_str().expect("utf-8 path")),
-    );
-
+#[test]
+fn handle_search_json_includes_suggestions_for_true_zero_result() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "--json",
@@ -179,12 +183,14 @@ async fn handle_search_json_includes_suggestions_for_true_zero_result() {
     else {
         panic!("expected search diagnostic command");
     };
+    super::dispatch::validate_search_args(&args).expect("search args should validate");
 
-    let outcome = super::handle_search(args, json)
-        .await
-        .expect("search diagnostic json");
-    let value: serde_json::Value = serde_json::from_str(&outcome.text).expect("valid json");
+    let text =
+        super::dispatch::diagnostic_search_json(Vec::new(), Some(0), args.limit, args.offset)
+            .expect("search diagnostic json");
+    let value: serde_json::Value = serde_json::from_str(&text).expect("valid json");
 
+    assert!(json);
     assert_eq!(value["count"], 0);
     assert_eq!(value["results"], serde_json::json!([]));
     assert_eq!(value["pagination"]["total"], 0);
@@ -196,16 +202,8 @@ async fn handle_search_json_includes_suggestions_for_true_zero_result() {
     );
 }
 
-#[tokio::test]
-async fn handle_search_json_omits_suggestions_for_high_offset_empty_page() {
-    let _lock = env_lock().lock().await;
-    let root = TempDirGuard::new("cli-diagnostic");
-    write_gtr_fixture(root.path());
-    let _env = set_env_var(
-        "BIOMCP_GTR_DIR",
-        Some(root.path().to_str().expect("utf-8 path")),
-    );
-
+#[test]
+fn handle_search_json_omits_suggestions_for_high_offset_empty_page() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "--json",
@@ -232,12 +230,14 @@ async fn handle_search_json_omits_suggestions_for_high_offset_empty_page() {
     else {
         panic!("expected search diagnostic command");
     };
+    super::dispatch::validate_search_args(&args).expect("search args should validate");
 
-    let outcome = super::handle_search(args, json)
-        .await
-        .expect("search diagnostic json");
-    let value: serde_json::Value = serde_json::from_str(&outcome.text).expect("valid json");
+    let text =
+        super::dispatch::diagnostic_search_json(Vec::new(), Some(10), args.limit, args.offset)
+            .expect("search diagnostic json");
+    let value: serde_json::Value = serde_json::from_str(&text).expect("valid json");
 
+    assert!(json);
     assert_eq!(value["count"], 0);
     assert_eq!(value["results"], serde_json::json!([]));
     assert!(
@@ -248,16 +248,8 @@ async fn handle_search_json_omits_suggestions_for_high_offset_empty_page() {
     assert!(value.get("_meta").is_none());
 }
 
-#[tokio::test]
-async fn handle_get_honors_trailing_json_flag_after_sections() {
-    let _lock = env_lock().lock().await;
-    let root = TempDirGuard::new("cli-diagnostic");
-    write_gtr_fixture(root.path());
-    let _env = set_env_var(
-        "BIOMCP_GTR_DIR",
-        Some(root.path().to_str().expect("utf-8 path")),
-    );
-
+#[test]
+fn handle_get_honors_trailing_json_flag_after_sections() {
     let cli = Cli::try_parse_from([
         "biomcp",
         "get",
@@ -278,12 +270,15 @@ async fn handle_get_honors_trailing_json_flag_after_sections() {
     else {
         panic!("expected get diagnostic command");
     };
+    let (sections, json_override) = super::super::extract_json_from_sections(&args.sections);
 
-    let outcome = super::handle_get(args, json)
-        .await
-        .expect("get diagnostic json");
-    let value: serde_json::Value = serde_json::from_str(&outcome.text).expect("valid json");
+    let text =
+        super::dispatch::diagnostic_get_json(&diagnostic_fixture(&args.accession), &sections)
+            .expect("get diagnostic json");
+    let value: serde_json::Value = serde_json::from_str(&text).expect("valid json");
 
+    assert!(!json);
+    assert!(json_override);
     assert_eq!(value["accession"], "GTR000000001.1");
     assert!(
         value.get("genes").is_some(),
