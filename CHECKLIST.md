@@ -1004,3 +1004,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/sources::wikipathways::/) |
   test(/cli::search_all::tests::dispatch::search_all_pathway_section_surfaces_sanitized_wikipathways_error/) |
   test(/entities::pathway::tests::/)'` → 27/27 pass.
+- 2026-06-17: retry stderr duplicate cleanup. Deleted `tests/retry_stderr.rs`,
+  which exercised retry and Semantic Scholar 429 handling through a fake HTTP
+  server. The retry loop behavior is covered in `src/sources/mod.rs`, and the
+  no-key Semantic Scholar 429 guidance is covered in pure Semantic Scholar
+  parser tests. Checks:
+  `cargo nextest run -E 'test(/sources::tests::.*retry/) |
+  test(/sources::semantic_scholar::tests::/)'` → 21/21 pass.
