@@ -5,176 +5,72 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use ssri::Integrity;
-use tokio::sync::MutexGuard;
 
 use super::{
     CacheStatsAgeRange, CacheStatsOrigin, CacheStatsReport, build_cache_stats_report,
-    collect_cache_stats_report_with, render_path,
+    collect_cache_stats_report_with, render_path_for_config,
 };
 use crate::cache::{
     CacheBlob, CacheConfigOrigins, CacheEntry, CacheSnapshot, ConfigOrigin, DiskFreeThreshold,
     ResolvedCacheConfig,
 };
-use crate::error::BioMcpError;
-use crate::test_support::{TempDirGuard, set_env_var};
 
-fn env_lock() -> MutexGuard<'static, ()> {
-    crate::test_support::env_lock().blocking_lock()
+#[test]
+fn render_path_for_config_appends_http_to_resolved_cache_root() {
+    let config = test_config(
+        "/tmp/resolved-cache",
+        10_000_000_000,
+        86_400,
+        CacheConfigOrigins {
+            cache_root: ConfigOrigin::Default,
+            max_size: ConfigOrigin::Default,
+            min_disk_free: ConfigOrigin::Default,
+            max_age: ConfigOrigin::Default,
+        },
+    );
+
+    assert_eq!(render_path_for_config(&config), "/tmp/resolved-cache/http");
 }
 
 #[test]
-fn default_path_uses_xdg_cache_home_http_subdir() {
-    let _lock = env_lock();
-    let root = TempDirGuard::new("default");
-    let cache_home = root.path().join("cache-home");
-    let config_home = root.path().join("config-home");
-    std::fs::create_dir_all(&cache_home).expect("create cache home");
-    std::fs::create_dir_all(&config_home).expect("create config home");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-    let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
+fn render_path_for_config_keeps_relative_cache_roots_relative() {
+    let config = test_config(
+        "relative-cache",
+        10_000_000_000,
+        86_400,
+        CacheConfigOrigins {
+            cache_root: ConfigOrigin::File,
+            max_size: ConfigOrigin::Default,
+            min_disk_free: ConfigOrigin::Default,
+            max_age: ConfigOrigin::Default,
+        },
+    );
 
-    let rendered = render_path().expect("default cache path should render");
     assert_eq!(
-        rendered,
-        cache_home.join("biomcp").join("http").display().to_string()
-    );
-}
-
-#[test]
-fn env_override_uses_biomcp_cache_dir_http_subdir() {
-    let _lock = env_lock();
-    let root = TempDirGuard::new("env");
-    let cache_home = root.path().join("cache-home");
-    let config_home = root.path().join("config-home");
-    let env_cache = root.path().join("env-cache");
-    std::fs::create_dir_all(&cache_home).expect("create cache home");
-    std::fs::create_dir_all(&config_home).expect("create config home");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&env_cache.to_string_lossy()));
-    let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-
-    let rendered = render_path().expect("env cache path should render");
-    assert_eq!(rendered, env_cache.join("http").display().to_string());
-}
-
-#[test]
-fn cache_toml_override_uses_configured_http_subdir() {
-    let _lock = env_lock();
-    let root = TempDirGuard::new("toml");
-    let cache_home = root.path().join("cache-home");
-    let config_dir = root.path().join("config-home").join("biomcp");
-    let configured_root = root.path().join("configured-cache");
-    std::fs::create_dir_all(&cache_home).expect("create cache home");
-    std::fs::create_dir_all(&config_dir).expect("create config dir");
-    std::fs::write(
-        config_dir.join("cache.toml"),
-        format!("[cache]\ndir = \"{}\"\n", configured_root.display()),
-    )
-    .expect("write cache.toml");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var(
-        "XDG_CONFIG_HOME",
-        Some(&config_dir.parent().expect("config home").to_string_lossy()),
-    );
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-    let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-
-    let rendered = render_path().expect("config cache path should render");
-    assert_eq!(rendered, configured_root.join("http").display().to_string());
-}
-
-#[test]
-fn relative_cache_toml_path_stays_relative() {
-    let _lock = env_lock();
-    let root = TempDirGuard::new("relative");
-    let cache_home = root.path().join("cache-home");
-    let config_dir = root.path().join("config-home").join("biomcp");
-    std::fs::create_dir_all(&cache_home).expect("create cache home");
-    std::fs::create_dir_all(&config_dir).expect("create config dir");
-    std::fs::write(
-        config_dir.join("cache.toml"),
-        "[cache]\ndir = \"relative-cache\"\n",
-    )
-    .expect("write cache.toml");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var(
-        "XDG_CONFIG_HOME",
-        Some(&config_dir.parent().expect("config home").to_string_lossy()),
-    );
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-    let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-
-    let rendered = render_path().expect("relative cache path should render");
-    assert_eq!(
-        rendered,
+        render_path_for_config(&config),
         PathBuf::from("relative-cache/http").display().to_string()
     );
 }
 
 #[test]
-fn malformed_cache_config_propagates_existing_error() {
-    let _lock = env_lock();
-    let root = TempDirGuard::new("invalid");
-    let cache_home = root.path().join("cache-home");
-    let config_dir = root.path().join("config-home").join("biomcp");
-    std::fs::create_dir_all(&cache_home).expect("create cache home");
-    std::fs::create_dir_all(&config_dir).expect("create config dir");
-    std::fs::write(config_dir.join("cache.toml"), "[cache\nmax_size = 1\n")
-        .expect("write invalid cache.toml");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var(
-        "XDG_CONFIG_HOME",
-        Some(&config_dir.parent().expect("config home").to_string_lossy()),
-    );
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-    let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-
-    let err = render_path().expect_err("invalid cache config should fail");
-    let message = err.to_string();
-    assert!(matches!(err, BioMcpError::InvalidArgument(_)));
-    assert!(message.contains("cache.toml"));
-}
-
-#[test]
-fn render_path_does_not_create_http_or_root_directories() {
-    let _lock = env_lock();
-    let root = TempDirGuard::new("no-create");
-    let cache_home = root.path().join("cache-home");
-    let config_home = root.path().join("config-home");
-    let env_cache = root.path().join("env-cache");
-    std::fs::create_dir_all(&cache_home).expect("create cache home");
-    std::fs::create_dir_all(&config_home).expect("create config home");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&env_cache.to_string_lossy()));
-    let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
-
-    let rendered = render_path().expect("cache path should render");
-    assert_eq!(rendered, env_cache.join("http").display().to_string());
-    assert!(!env_cache.exists());
-    assert!(!env_cache.join("http").exists());
-}
-
-#[test]
-fn render_path_does_not_migrate_legacy_http_cacache_directory() {
-    let _lock = env_lock();
-    let root = TempDirGuard::new("no-migrate");
-    let cache_home = root.path().join("cache-home");
-    let config_home = root.path().join("config-home");
+fn render_path_for_config_does_not_create_or_migrate_directories() {
+    let root = crate::test_support::TempDirGuard::new("cache-cli-path");
     let env_cache = root.path().join("env-cache");
     let legacy = env_cache.join("http-cacache");
-    std::fs::create_dir_all(&cache_home).expect("create cache home");
-    std::fs::create_dir_all(&config_home).expect("create config home");
     std::fs::create_dir_all(&legacy).expect("create legacy cache dir");
-    let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-    let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&env_cache.to_string_lossy()));
-    let _cache_size = set_env_var("BIOMCP_CACHE_MAX_SIZE", None);
+    let config = test_config(
+        env_cache.clone(),
+        10_000_000_000,
+        86_400,
+        CacheConfigOrigins {
+            cache_root: ConfigOrigin::Env,
+            max_size: ConfigOrigin::Default,
+            min_disk_free: ConfigOrigin::Default,
+            max_age: ConfigOrigin::Default,
+        },
+    );
 
-    let rendered = render_path().expect("cache path should render");
+    let rendered = render_path_for_config(&config);
     assert_eq!(rendered, env_cache.join("http").display().to_string());
     assert!(legacy.exists());
     assert!(!env_cache.join("http").exists());

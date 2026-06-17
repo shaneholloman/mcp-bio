@@ -111,6 +111,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [ ] One pure test set per CLI command under `src/cli/**` (gene, variant, article, trial,
       drug, disease, protein, pathway, pgx, adverse_event, …). Many already have a `tests.rs`
       — make them pure (parse args → assert request/route) where they aren't.
+- [x] `src/cli/cache/tests.rs` path rendering is pure: CLI tests now call a
+      resolved-config helper directly instead of mutating cache env vars. Cache
+      config env/file precedence remains covered in `src/cache/config.rs`.
 
 ### Entity processing + output (response → entity → JSON/markdown)
 - [ ] `src/transform/**` and `src/entities/**` — test the pure processing with saved inputs.
@@ -766,3 +769,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   tests from temporary `BIOMCP_STUDY_DIR` roots to direct `StudyLookupRow` and
   study-id fixtures. Checks:
   `cargo nextest run -E 'test(/render::markdown::related::/)'` → 53/53 pass.
+- 2026-06-16: cache CLI path cleanup. Split path rendering from cache config
+  resolution with `render_path_for_config`, replaced env-lock/cache-env CLI path
+  tests with direct resolved-config tests, and left env/file precedence in
+  `src/cache/config.rs`. Checks:
+  `cargo nextest run -E 'test(/cli::cache::/) | test(/cache::config::/)'` →
+  37/37 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D
+  warnings` → pass; `git diff --check` → pass.

@@ -82,7 +82,11 @@ fn parse_cache_max_size(value: &str) -> Result<u64, String> {
 /// Returns an error if cache configuration resolution fails.
 pub fn render_path() -> Result<String, BioMcpError> {
     let config = crate::cache::resolve_cache_config()?;
-    Ok(config.cache_root.join("http").display().to_string())
+    Ok(render_path_for_config(&config))
+}
+
+pub(crate) fn render_path_for_config(config: &crate::cache::ResolvedCacheConfig) -> String {
+    config.cache_root.join("http").display().to_string()
 }
 
 pub(crate) fn execute_clean(
