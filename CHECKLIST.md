@@ -183,6 +183,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/discover.rs` is pure: exact article keyword alias
       canonicalization now tests direct OLS fixtures instead of starting an OLS
       mock server.
+- [x] `src/entities/gene.rs` Reactome workflow-signal mock is gone: the
+      limit-one probe request shape is covered in Reactome source tests and the
+      gene entity test now covers the empty-symbol no-probe guard directly.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -684,3 +687,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::discover::/)'` → 39/39 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass; discover purity `rg` → no matches.
+- 2026-06-16: gene Reactome cleanup. Moved the limit-one Reactome workflow
+  probe assertion into `src/sources/reactome/tests/construction.rs`, converted
+  the gene entity test to the empty-symbol no-probe guard, and removed the
+  Reactome mock-server imports from `src/entities/gene.rs`. Gene diagnostics
+  env-lock tests still remain. Checks:
+  `cargo nextest run -E 'test(/entities::gene::/) | test(/sources::reactome::/)'`
+  → 29/29 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D
+  warnings` → pass; `git diff --check` → pass; Reactome/gene mock `rg` → no
+  matches.

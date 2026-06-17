@@ -16,6 +16,16 @@ fn search_pathways_plan_sets_query_species_and_page_size() {
 }
 
 #[test]
+fn search_pathways_plan_preserves_limit_one_probe() {
+    let plan = ReactomeClient::search_pathways_plan(" ABL1 ", 1).unwrap();
+
+    assert_eq!(plan.path, "search/query");
+    assert_eq!(plan.query_value("query"), Some("ABL1"));
+    assert_eq!(plan.query_value("species"), Some("Homo sapiens"));
+    assert_eq!(plan.query_value("pageSize"), Some("1"));
+}
+
+#[test]
 fn search_pathways_plan_rejects_empty_query() {
     let err = ReactomeClient::search_pathways_plan(" ", 5).unwrap_err();
     assert!(matches!(err, BioMcpError::InvalidArgument(_)));
