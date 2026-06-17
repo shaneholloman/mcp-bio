@@ -138,6 +138,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
       coverage is purer: rare-disease condition expansion and alias-union count
       behavior now exercise direct merge/count helpers instead of mocked CTGov
       pages.
+- [x] `src/entities/trial/search/ctgov/tests.rs` has no mock-server cases:
+      single-worker pagination, age-filter totals, native count exact/approx,
+      and expensive-filter page-cap behavior now test direct reducers/helpers.
 - [x] `src/entities/variant/get/tests.rs` GWAS-only unavailable case is pure:
       it now asserts the exact degraded output state through a helper instead
       of running `get()` against a broken GWAS mock response.
@@ -607,3 +610,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/entities::disease::clinical_features::/)'` →
   15/15 pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D
   warnings` → pass; `git diff --check` → pass.
+- 2026-06-16: CTGov trial-search cleanup. Split single-worker pagination into a
+  direct reducer/finalizer, added native-count and page-cap helpers, converted
+  age-total semantics, cursor preservation, exact/approx native counts, and
+  expensive-filter page-cap tests to pure tests, then removed the unused CTGov
+  mock helper and `ClinicalTrialsClient::new_for_test`. `ctgov/tests.rs` now
+  has no mock-server/env-lock cases. Checks:
+  `cargo nextest run -E 'test(/entities::trial::search::ctgov::/)'` → 21/21
+  pass; `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` →
+  pass; `git diff --check` → pass; CTGov purity `rg` → no matches.

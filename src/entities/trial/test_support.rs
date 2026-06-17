@@ -8,10 +8,6 @@ pub(super) use crate::error::BioMcpError;
 pub(super) use crate::sources::clinicaltrials::{ClinicalTrialsClient, CtGovStudy};
 #[allow(unused_imports)]
 pub(super) use serde_json::json;
-#[allow(unused_imports)]
-pub(super) use wiremock::matchers::{method, path, query_param, query_param_is_missing};
-#[allow(unused_imports)]
-pub(super) use wiremock::{Mock, MockServer, ResponseTemplate};
 
 pub(super) fn ctgov_search_study_fixture(
     nct_id: &str,
@@ -30,19 +26,6 @@ pub(super) fn ctgov_search_study_fixture(
             "eligibilityModule": {
                 "minimumAge": min_age,
                 "maximumAge": max_age
-            }
-        }
-    })
-}
-
-pub(super) fn ctgov_eligibility_detail_fixture(nct_id: &str, criteria: &str) -> serde_json::Value {
-    json!({
-        "protocolSection": {
-            "identificationModule": {
-                "nctId": nct_id
-            },
-            "eligibilityModule": {
-                "eligibilityCriteria": criteria
             }
         }
     })

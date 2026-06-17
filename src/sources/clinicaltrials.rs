@@ -154,14 +154,6 @@ impl ClinicalTrialsClient {
         })
     }
 
-    #[cfg(test)]
-    pub(crate) fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
     async fn send(
         &self,
         req: reqwest_middleware::RequestBuilder,

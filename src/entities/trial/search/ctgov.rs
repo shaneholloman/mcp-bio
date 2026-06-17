@@ -261,6 +261,32 @@ struct CtGovWorkerState {
     pages_fetched: usize,
 }
 
+struct CtGovSinglePageState {
+    rows: Vec<TrialSearchResult>,
+    total: Option<usize>,
+    verified_total: usize,
+    exhausted: bool,
+    page_token: Option<String>,
+    remaining_skip: usize,
+}
+
+impl CtGovSinglePageState {
+    fn new(next_page: Option<String>, offset: usize) -> Self {
+        Self {
+            rows: Vec::new(),
+            total: None,
+            verified_total: 0,
+            exhausted: false,
+            page_token: next_page
+                .as_deref()
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(str::to_string),
+            remaining_skip: offset,
+        }
+    }
+}
+
 fn raw_condition_query(filters: &TrialSearchFilters) -> Option<&str> {
     filters
         .condition
@@ -380,6 +406,101 @@ async fn fetch_ctgov_filtered_page(
     })
 }
 
+fn apply_ctgov_single_page(
+    state: &mut CtGovSinglePageState,
+    context: &CtGovSearchContext,
+    worker: &CtGovWorkerState,
+    limit: usize,
+    page: CtGovFilteredPage,
+) {
+    if state.total.is_none() {
+        state.total = page.total_count;
+    }
+
+    if page.raw_study_count == 0 {
+        state.exhausted = true;
+        return;
+    }
+
+    let next_page_token = page.next_page_token;
+    let mut studies = page.studies;
+    if context.uses_expensive_post_filters {
+        state.verified_total = state.verified_total.saturating_add(studies.len());
+    }
+
+    let page_started_with_skip = state.remaining_skip;
+    let rows_before_page = state.rows.len();
+    let page_study_count = studies.len();
+    let mut page_consumed = 0;
+    for study in studies.drain(..) {
+        page_consumed += 1;
+        if state.remaining_skip > 0 {
+            state.remaining_skip -= 1;
+            continue;
+        }
+        if state.rows.len() < limit {
+            let mut row = transform::trial::from_ctgov_hit(&study);
+            row.matched_condition_label = worker.matched_condition_label.clone();
+            row.matched_intervention_label = worker.matched_intervention_label.clone();
+            state.rows.push(row);
+        }
+        if state.rows.len() >= limit {
+            break;
+        }
+    }
+
+    if state.rows.len() >= limit {
+        if page_consumed >= page_study_count {
+            state.page_token = next_page_token.clone();
+        } else {
+            state.page_token = None;
+        }
+        if next_page_token.is_none() {
+            state.exhausted = true;
+        }
+        return;
+    }
+
+    if page_started_with_skip > 0
+        && state.remaining_skip == 0
+        && state.rows.len() > rows_before_page
+        && page_consumed >= page_study_count
+    {
+        state.page_token = next_page_token;
+        if state.page_token.is_none() {
+            state.exhausted = true;
+        }
+        return;
+    }
+
+    state.page_token = next_page_token;
+    if state.page_token.is_none() {
+        state.exhausted = true;
+    }
+}
+
+fn finish_ctgov_single_page(
+    mut state: CtGovSinglePageState,
+    context: &CtGovSearchContext,
+    limit: usize,
+    offset: usize,
+) -> SearchPage<TrialSearchResult> {
+    if !context.has_explicit_status {
+        sort_trials_by_status_priority(&mut state.rows);
+    }
+
+    state.rows.truncate(limit);
+    let returned_total = if context.uses_expensive_post_filters {
+        state.exhausted.then_some(state.verified_total)
+    } else {
+        state
+            .total
+            .or_else(|| Some(offset.saturating_add(state.rows.len())))
+    };
+
+    SearchPage::cursor(state.rows, returned_total, state.page_token)
+}
+
 async fn search_page_with_single_ctgov_intervention(
     client: &ClinicalTrialsClient,
     filters: &TrialSearchFilters,
@@ -390,16 +511,7 @@ async fn search_page_with_single_ctgov_intervention(
     next_page: Option<String>,
 ) -> Result<SearchPage<TrialSearchResult>, BioMcpError> {
     let page_size = limit.clamp(1, 100);
-    let mut rows: Vec<TrialSearchResult> = Vec::new();
-    let mut total: Option<usize> = None;
-    let mut verified_total: usize = 0;
-    let mut exhausted = false;
-    let mut page_token = next_page
-        .as_deref()
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(str::to_string);
-    let mut remaining_skip = offset;
+    let mut state = CtGovSinglePageState::new(next_page, offset);
 
     for _ in 0..CTGOV_MAX_PAGE_FETCHES {
         let page = fetch_ctgov_filtered_page(
@@ -408,90 +520,18 @@ async fn search_page_with_single_ctgov_intervention(
             context,
             worker.condition_query.as_deref(),
             worker.intervention_query.as_deref(),
-            page_token.clone(),
+            state.page_token.clone(),
             page_size,
         )
         .await?;
 
-        if total.is_none() {
-            total = page.total_count;
-        }
-
-        if page.raw_study_count == 0 {
-            exhausted = true;
-            break;
-        }
-
-        let next_page_token = page.next_page_token;
-        let mut studies = page.studies;
-        if context.uses_expensive_post_filters {
-            verified_total = verified_total.saturating_add(studies.len());
-        }
-
-        let page_started_with_skip = remaining_skip;
-        let rows_before_page = rows.len();
-        let page_study_count = studies.len();
-        let mut page_consumed = 0;
-        for study in studies.drain(..) {
-            page_consumed += 1;
-            if remaining_skip > 0 {
-                remaining_skip -= 1;
-                continue;
-            }
-            if rows.len() < limit {
-                let mut row = transform::trial::from_ctgov_hit(&study);
-                row.matched_condition_label = worker.matched_condition_label.clone();
-                row.matched_intervention_label = worker.matched_intervention_label.clone();
-                rows.push(row);
-            }
-            if rows.len() >= limit {
-                break;
-            }
-        }
-
-        if rows.len() >= limit {
-            if page_consumed >= page_study_count {
-                page_token = next_page_token.clone();
-            } else {
-                page_token = None;
-            }
-            if next_page_token.is_none() {
-                exhausted = true;
-            }
-            break;
-        }
-
-        if page_started_with_skip > 0
-            && remaining_skip == 0
-            && rows.len() > rows_before_page
-            && page_consumed >= page_study_count
-        {
-            page_token = next_page_token;
-            if page_token.is_none() {
-                exhausted = true;
-            }
-            break;
-        }
-
-        page_token = next_page_token;
-        if page_token.is_none() {
-            exhausted = true;
+        apply_ctgov_single_page(&mut state, context, worker, limit, page);
+        if state.exhausted || state.rows.len() >= limit {
             break;
         }
     }
 
-    if !context.has_explicit_status {
-        sort_trials_by_status_priority(&mut rows);
-    }
-
-    rows.truncate(limit);
-    let returned_total = if context.uses_expensive_post_filters {
-        exhausted.then_some(verified_total)
-    } else {
-        total.or_else(|| Some(offset.saturating_add(rows.len())))
-    };
-
-    Ok(SearchPage::cursor(rows, returned_total, page_token))
+    Ok(finish_ctgov_single_page(state, context, limit, offset))
 }
 
 fn ctgov_workers(
@@ -560,6 +600,18 @@ fn add_unique_ctgov_nct_ids(unique_nct_ids: &mut HashSet<String>, studies: Vec<C
 
 fn ctgov_count_page_cap_would_be_exceeded(fetched_pages: usize, active_workers: usize) -> bool {
     fetched_pages.saturating_add(active_workers) > COUNT_TRAVERSAL_PAGE_CAP
+}
+
+fn ctgov_single_count_page_cap_reached(page_count: usize) -> bool {
+    page_count >= COUNT_TRAVERSAL_PAGE_CAP
+}
+
+fn ctgov_count_from_native_total(total: usize, has_age_filter: bool) -> TrialCount {
+    if has_age_filter {
+        TrialCount::Approximate(total)
+    } else {
+        TrialCount::Exact(total)
+    }
 }
 
 async fn search_page_with_ctgov_union(
@@ -798,11 +850,7 @@ pub(super) async fn count_all_with_ctgov_client(
             ))
             .await?;
         let total = resp.total_count.unwrap_or(0) as usize;
-        return Ok(if filters.age.is_some() {
-            TrialCount::Approximate(total)
-        } else {
-            TrialCount::Exact(total)
-        });
+        return Ok(ctgov_count_from_native_total(total, filters.age.is_some()));
     }
 
     let mut verified_total = 0usize;
@@ -810,7 +858,7 @@ pub(super) async fn count_all_with_ctgov_client(
     let mut page_count = 0usize;
 
     loop {
-        if page_count >= COUNT_TRAVERSAL_PAGE_CAP {
+        if ctgov_single_count_page_cap_reached(page_count) {
             return Ok(TrialCount::Unknown);
         }
 
