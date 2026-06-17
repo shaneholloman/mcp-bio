@@ -991,3 +991,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   tier-tests are pure. A broader scan still finds `wiremock` in top-level
   integration tests under `tests/`, so keep the dev dependency for now; those
   are separate from the source unit-test cleanup.
+- 2026-06-17: article usage-error integration cleanup. Removed the mock servers
+  from `tests/article_usage_stderr.rs`; these tests now run the CLI with
+  impossible backend URLs and assert invalid front-door input returns clean
+  stderr before backend work can matter. Checks:
+  `cargo nextest run -E 'binary(article_usage_stderr)'` → 6/6 pass.
