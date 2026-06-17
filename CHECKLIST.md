@@ -108,7 +108,7 @@ Ontologies / proteins / pathways / misc:
 OncoKB has none — harvest its existing stub instead of curling.)
 
 ### CLI points (args → right service call + params)
-- [ ] One pure test set per CLI command under `src/cli/**` (gene, variant, article, trial,
+- [x] One pure test set per CLI command under `src/cli/**` (gene, variant, article, trial,
       drug, disease, protein, pathway, pgx, adverse_event, …). Many already have a `tests.rs`
       — make them pure (parse args → assert request/route) where they aren't.
 - [x] `src/cli/cache/tests.rs` path rendering is pure: CLI tests now call a
@@ -117,6 +117,12 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/cli/tests/facade/cache.rs` is pure: cache facade tests now cover
       parsing/help and `--json` command selection without executing cache
       commands against env-derived paths.
+- [x] 2026-06-17 CLI checkpoint: `src/cli/**` command tests exercise parser,
+      route, validation, JSON envelope, help, and next-command contracts through
+      direct parser/dispatch/helper calls. A scan found no `Command::new` or
+      backend env mutation in command tests; the only command spawning under
+      `src/cli` is benchmark harness execution code. Checks:
+      `cargo nextest run -E 'test(/cli::/)'` → 540/540 pass.
 
 ### Entity processing + output (response → entity → JSON/markdown)
 - [ ] `src/transform/**` and `src/entities/**` — test the pure processing with saved inputs.
