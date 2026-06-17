@@ -159,6 +159,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
       tests are pure: alias dedupe, per-study term counting, and best alias copy
       selection now run over direct `CtGovStudy` fixtures instead of a mocked
       CTGov server.
+- [x] `src/entities/adverse_event.rs` is now fully pure: VAERS family matching
+      and summary payload mapping now use direct resolver/table fixtures, and
+      the remaining VAERS mock-server tests are gone.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -550,6 +553,13 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   per-study term counting, and preferred-alias-copy tests to direct `CtGovStudy`
   fixture batches. Remaining adverse-event mock-server cases are only the two
   VAERS summary tests. Checks:
+  `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: finished adverse-event cleanup. Converted the remaining VAERS
+  summary mock-server tests to pure resolver/table mapping tests. The VAERS
+  source layer already covers request construction and XML parsing, so
+  `src/entities/adverse_event.rs` now has no mock-server/env-lock cases. Checks:
   `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.

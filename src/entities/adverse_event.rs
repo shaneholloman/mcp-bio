@@ -1847,27 +1847,36 @@ pub fn recall_query_summary(filters: &RecallSearchFilters) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::set_env_var;
-    use wiremock::matchers::{body_string_contains, method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    const VAERS_REACTIONS_RESPONSE_FIXTURE: &str =
-        include_str!("../../spec/fixtures/vaers/reactions-response.xml");
-    const VAERS_SERIOUS_RESPONSE_FIXTURE: &str =
-        include_str!("../../spec/fixtures/vaers/serious-response.xml");
-    const VAERS_AGE_RESPONSE_FIXTURE: &str =
-        include_str!("../../spec/fixtures/vaers/age-response.xml");
-
-    fn cvx_fixture_dir() -> String {
-        std::env::current_dir()
-            .expect("repo root")
-            .join("spec/fixtures/cvx")
-            .display()
-            .to_string()
-    }
 
     fn ctgov_study(value: serde_json::Value) -> CtGovStudy {
         serde_json::from_value(value).expect("valid CTGov study")
+    }
+
+    fn vaers_summary_tables_fixture() -> crate::sources::vaers::VaersSummaryTables {
+        use crate::sources::vaers::{VaersAggregateRow, VaersSummaryTables};
+
+        VaersSummaryTables {
+            total_reports: 83_359,
+            serious_reports: 5_795,
+            non_serious_reports: 77_564,
+            reactions: vec![
+                VaersAggregateRow {
+                    label: "Injection site reaction".into(),
+                    count: 12_000,
+                    percentage: 14.4,
+                },
+                VaersAggregateRow {
+                    label: "Fever".into(),
+                    count: 10_500,
+                    percentage: 12.6,
+                },
+            ],
+            age_distribution: vec![VaersAggregateRow {
+                label: "1-5 years".into(),
+                count: 20_000,
+                percentage: 24.0,
+            }],
+        }
     }
 
     #[test]
@@ -2111,63 +2120,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn search_with_source_vaers_resolves_influenza_family_queries() {
-        let _env_lock = crate::test_support::env_lock().lock().await;
-        let server = MockServer::start().await;
-        let _vaers_env = set_env_var("BIOMCP_VAERS_BASE", Some(&server.uri()));
-        let _cvx_env = set_env_var("BIOMCP_CVX_DIR", Some(&cvx_fixture_dir()));
-        let filters = AdverseEventSearchFilters {
-            drug: Some("influenza vaccine".into()),
-            ..Default::default()
-        };
+    async fn vaers_resolver_matches_influenza_family_queries() {
+        let matched =
+            match resolve_vaers_vaccine("influenza vaccine", CvxLookupMode::LocalOnly).await {
+                ResolvedVaersVaccine::Matched(matched) => matched,
+                _ => panic!("expected influenza vaccine match"),
+            };
 
-        Mock::given(method("POST"))
-            .and(path("/controller/datarequest/D8"))
-            .and(body_string_contains("D8.V13-level2"))
-            .and(body_string_contains("FLU"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(
-                        VAERS_REACTIONS_RESPONSE_FIXTURE,
-                        "text/html; charset=ISO-8859-1",
-                    ),
-            )
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(path("/controller/datarequest/D8"))
-            .and(body_string_contains("D8.V10"))
-            .and(body_string_contains("FLU"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(
-                        VAERS_SERIOUS_RESPONSE_FIXTURE,
-                        "text/html; charset=ISO-8859-1",
-                    ),
-            )
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(path("/controller/datarequest/D8"))
-            .and(body_string_contains("D8.V1"))
-            .and(body_string_contains("FLU"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(VAERS_AGE_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
-            )
-            .mount(&server)
-            .await;
-
-        let response = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 0)
-            .await
-            .expect("vaers search response");
-        let vaers = response.vaers.expect("vaers payload");
-        let matched = vaers.matched_vaccine.expect("matched vaccine");
-
-        assert_eq!(vaers.status, VaersSearchStatus::Ok);
         assert_eq!(matched.display_name, "Influenza vaccine");
         assert_eq!(matched.wonder_code, "FLU");
         assert_eq!(
@@ -2176,65 +2135,19 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn search_with_source_vaers_returns_summary_for_mmr() {
-        let _env_lock = crate::test_support::env_lock().lock().await;
-        let server = MockServer::start().await;
-        let _vaers_env = set_env_var("BIOMCP_VAERS_BASE", Some(&server.uri()));
-        let _cvx_env = set_env_var("BIOMCP_CVX_DIR", Some(&cvx_fixture_dir()));
-        let filters = AdverseEventSearchFilters {
-            drug: Some("MMR vaccine".into()),
-            ..Default::default()
-        };
-
-        Mock::given(method("POST"))
-            .and(path("/controller/datarequest/D8"))
-            .and(body_string_contains("D8.V13-level2"))
-            .and(body_string_contains("MMR"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(
-                        VAERS_REACTIONS_RESPONSE_FIXTURE,
-                        "text/html; charset=ISO-8859-1",
-                    ),
-            )
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(path("/controller/datarequest/D8"))
-            .and(body_string_contains("D8.V10"))
-            .and(body_string_contains("MMR"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(
-                        VAERS_SERIOUS_RESPONSE_FIXTURE,
-                        "text/html; charset=ISO-8859-1",
-                    ),
-            )
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(path("/controller/datarequest/D8"))
-            .and(body_string_contains("D8.V1"))
-            .and(body_string_contains("MMR"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(VAERS_AGE_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
-            )
-            .mount(&server)
-            .await;
-
-        let response = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 0)
-            .await
-            .expect("vaers search response");
-        let vaers = response.vaers.expect("vaers payload");
+    #[test]
+    fn vaers_summary_payload_maps_mmr_tables() {
+        let vaers = vaers_summary_from_tables(
+            VaersMatchedVaccine {
+                display_name: "MMR".into(),
+                wonder_code: "MMR".into(),
+                cvx_codes: vec!["03".into(), "94".into()],
+            },
+            vaers_summary_tables_fixture(),
+        );
         let summary = vaers.summary.expect("vaers summary");
         let matched = vaers.matched_vaccine.expect("matched vaccine");
 
-        assert_eq!(response.source, AdverseEventSourceFilter::Vaers);
         assert_eq!(vaers.status, VaersSearchStatus::Ok);
         assert_eq!(matched.display_name, "MMR");
         assert_eq!(matched.wonder_code, "MMR");
