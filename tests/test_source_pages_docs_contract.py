@@ -253,8 +253,8 @@ SOURCE_PAGE_SPECS = {
         "provider_key_url": "https://www.semanticscholar.org/product/api",
         "official_url": "https://www.semanticscholar.org/",
         "required_intro_phrases": [
-            "`search article` does not expose `--source semantic-scholar`",
-            "automatic optional search leg",
+            "individually selectable with `--source semanticscholar`",
+            "automatic optional `search article --source all` leg",
             "shared-pool mode at 1 req/2sec",
             "authenticated mode at 1 req/sec",
             "article citations",
@@ -269,6 +269,7 @@ SOURCE_PAGE_SPECS = {
             "article recommendations <id>",
         ],
         "example_commands": [
+            "biomcp search article -k \"BRAF melanoma\" --source semanticscholar --limit 5",
             "biomcp get article 22663011 tldr",
             "biomcp article citations 22663011 --limit 3",
             "biomcp article references 22663011 --limit 3",
@@ -911,7 +912,7 @@ def test_semantic_scholar_source_page_documents_auth_status_and_backoff_contract
     source_table = _source_table_block(page)
 
     for phrase in (
-        "`--source semantic-scholar` is not a public source switch",
+        "standalone source with `--source semanticscholar`",
         "shared unauthenticated pool at\n1 req/2sec",
         "authenticated requests at 1 req/sec",
         "honors authenticated numeric\n`Retry-After` responses",

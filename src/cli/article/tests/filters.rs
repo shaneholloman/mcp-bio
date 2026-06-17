@@ -86,6 +86,24 @@ fn article_search_request_records_exact_keyword_lookup_intent() {
 }
 
 #[test]
+fn article_search_request_accepts_semantic_scholar_source() {
+    let mut args = default_article_search_args();
+    args.keyword = vec!["BRAF melanoma".into()];
+    args.source = "semanticscholar".into();
+
+    let request = article_search_request(args).expect("request");
+
+    assert_eq!(
+        request.source_filter,
+        crate::entities::article::ArticleSourceFilter::SemanticScholar
+    );
+    assert_eq!(
+        request.backend_plan,
+        crate::entities::article::BackendPlan::SemanticScholarOnly
+    );
+}
+
+#[test]
 fn ticket_400_request_command_article_fields_drive_execution_boundaries() {
     let mut args = default_article_search_args();
     args.keyword = vec!["Gleevec".into()];

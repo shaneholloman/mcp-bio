@@ -69,8 +69,13 @@ fn search_article_help_includes_query_formulation_guidance() {
         "Multi-concept phrases and searches that already use `-g/--gene`, `-d/--disease`, or `--drug` do not get direct entity suggestions."
     ));
     assert!(help.contains(
-        "Adding `-k/--keyword` keeps the default route on PubTator3 + Europe PMC + PubMed + Semantic Scholar and selects default `hybrid` relevance. Use `--source litsense2` explicitly when you want LitSense2."
+        "Adding `-k/--keyword` keeps the default route on PubTator3 + Europe PMC + PubMed + Semantic Scholar and selects default `hybrid` relevance. Use `--source semanticscholar` or `--source litsense2` explicitly when you want one of those sources alone."
     ));
+    assert!(
+        help.contains(
+            "biomcp search article -k \"BRAF melanoma\" --source semanticscholar --limit 5"
+        )
+    );
     assert!(help.contains(
         "`semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties."
     ));

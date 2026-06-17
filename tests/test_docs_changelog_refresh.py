@@ -786,7 +786,7 @@ def test_data_sources_reference_covers_new_gene_and_article_sources() -> None:
     assert "gnomAD v4 GRCh38 gene constraint" in data_sources
     assert "HPA protein tissue expression and subcellular localization" in data_sources
     assert (
-        "| Article search & metadata | PubTator3 + Europe PMC + PubMed + optional Semantic Scholar; LitSense2 by explicit `--source litsense2` |"
+        "| Article search & metadata | PubTator3 + Europe PMC + PubMed + optional Semantic Scholar; Semantic Scholar and LitSense2 by explicit `--source semanticscholar` / `--source litsense2` |"
         in data_sources
     )
     assert "| Article enrichment and graph helpers | Semantic Scholar |" in data_sources

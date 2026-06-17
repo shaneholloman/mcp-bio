@@ -110,8 +110,9 @@ biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 
 Article search fans out to PubTator3, Europe PMC, and PubMed by default when
 the filter set is compatible. Known gene, disease, drug, and keyword queries
 participate in that route. Semantic Scholar can still join the same query when
-the filter set is compatible. LitSense2 remains available only when selected
-explicitly with `--source litsense2`. BioMCP merges duplicates across PMID,
+the filter set is compatible. Semantic Scholar and LitSense2 are also available
+as explicit single-source routes with `--source semanticscholar` and
+`--source litsense2`. BioMCP merges duplicates across PMID,
 PMCID, and DOI where possible. `S2_API_KEY` upgrades the Semantic
 Scholar leg to authenticated requests at 1 req/sec; without it, BioMCP uses
 the shared unauthenticated pool at 1 req/2sec. Search results are still
@@ -135,8 +136,8 @@ Markdown preserves the merged rank order, and JSON includes row-level
 `matched_sources`, `ranking`, `citation_count`, and
 `influential_citation_count`.
 
-Use `--source <all, pubtator, europepmc, pubmed, litsense2>` to select one
-backend or keep the default federated search.
+Use `--source <all, pubtator, europepmc, pubmed, semanticscholar, litsense2>`
+to select one backend or keep the default federated search.
 BioMCP caps each federated source's contribution after deduplication and before
 ranking. Default: 40% of `--limit` on federated pools with at least three
 surviving primary sources. Rows count against their primary source after
@@ -182,9 +183,10 @@ biomcp get article 22663011
 Default article output can include an optional Semantic Scholar section with
 TLDR text, influence counts, and open-access PDF metadata when that paper
 resolves in Semantic Scholar. `S2_API_KEY` makes those requests authenticated;
-without it, BioMCP uses the shared pool. `search article --source` now supports
-`all`, `pubtator`, `europepmc`, `pubmed`, and `litsense2`; Semantic Scholar
-remains an automatic compatible leg rather than a directly selectable backend.
+without it, BioMCP uses the shared pool. `search article --source` supports
+`all`, `pubtator`, `europepmc`, `pubmed`, `semanticscholar`, and `litsense2`;
+Semantic Scholar remains an automatic compatible leg and can also be queried
+alone with `--source semanticscholar`.
 
 ## Request specific sections
 

@@ -414,7 +414,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         in article_validation_section
     )
     assert "Keyword-bearing queries keep that default source set" in article_validation_section
-    assert "LitSense2 remains available only through explicit `--source litsense2`" in article_validation_section
+    assert "Semantic Scholar and LitSense2 are available through explicit `--source semanticscholar` and `--source litsense2`" in article_validation_section
     assert "Semantic Scholar remains an optional compatible search leg" in (
         article_validation_section
     )
@@ -423,11 +423,11 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
         "disable the federated planner"
     ) in article_validation_section
     assert (
-        "`--source pubtator` with strict Europe PMC-only filters is rejected at the front door"
+        "`--source pubtator` and `--source semanticscholar` with strict Europe PMC-only filters are rejected at the front door"
         in article_validation_section
     )
     assert (
-        "`--source` remains `all|pubtator|europepmc|pubmed|litsense2` in v1"
+        "`--source` accepts `all|pubtator|europepmc|pubmed|semanticscholar|litsense2` in v1"
         in article_validation_section
     )
     assert (
@@ -493,7 +493,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     )
     assert "MeSH/title/abstract" not in article_guide_ws
     assert (
-        "LitSense2 remains available only when selected explicitly with `--source litsense2`."
+        "Semantic Scholar and LitSense2 are also available as explicit single-source routes with `--source semanticscholar` and `--source litsense2`."
         in article_guide_ws
     )
     assert "LitSense2-derived semantic signal" in article_guide_ws
@@ -528,7 +528,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     )
     assert "MeSH/title/abstract" not in article_keyword_reference_ws
     assert (
-        "On the default `--source all` route, adding `-k/--keyword` keeps the source set on PubTator3, Europe PMC, PubMed, and compatible Semantic Scholar while making the default relevance mode `hybrid`. Use `--source litsense2` explicitly when you want LitSense2."
+        "On the default `--source all` route, adding `-k/--keyword` keeps the source set on PubTator3, Europe PMC, PubMed, and compatible Semantic Scholar while making the default relevance mode `hybrid`. Use `--source semanticscholar` or `--source litsense2` explicitly when you want one of those sources alone."
         in article_keyword_reference_ws
     )
     assert "LitSense2-derived semantic signal" in article_keyword_reference_ws
@@ -553,7 +553,7 @@ def test_technical_and_ux_docs_match_current_cli_and_workflow_contracts() -> Non
     assert "LitSense2-derived semantic signal" in cli_list_reference_ws
     assert "semantic=0" in cli_list_reference_ws
     assert (
-        "PubTator3 + Europe PMC + PubMed + optional Semantic Scholar; LitSense2 by explicit `--source litsense2`"
+        "PubTator3 + Europe PMC + PubMed + optional Semantic Scholar; Semantic Scholar and LitSense2 by explicit `--source semanticscholar` / `--source litsense2`"
         in (data_sources_ws)
     )
     assert (

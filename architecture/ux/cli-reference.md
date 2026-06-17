@@ -92,7 +92,7 @@ article path fans out across PubTator3, Europe PMC, PubMed, and compatible
 Semantic Scholar with a 12-second per-source latency bound. LitSense2 is not
 part of the default fan-out; use `--source litsense2` explicitly when you want
 that source. Explicit single-source calls such as `--source pubmed`, `--source
-pubtator`, or `--source litsense2` keep their normal source/client behavior.
+pubtator`, `--source semanticscholar`, or `--source litsense2` keep their normal source/client behavior.
 
 When a federated source times out or is unreachable, BioMCP returns rows from the
 healthy sources and reports the degraded source. Markdown includes source-status

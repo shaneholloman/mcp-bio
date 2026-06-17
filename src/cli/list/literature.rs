@@ -51,7 +51,7 @@ raw bytes
 - `search article --weight-lexical <float>`
 - `search article --weight-citations <float>`
 - `search article --weight-position <float>`
-- `search article --source <all, pubtator, europepmc, pubmed, litsense2>`
+- `search article --source <all, pubtator, europepmc, pubmed, semanticscholar, litsense2>`
 - `search article --max-per-source <N>`
 - `search article --session <token>` - local caller label for JSON loop-breaker suggestions across consecutive article keyword searches
 - `search article --debug-plan` - include executed planner/routing metadata in markdown or JSON
@@ -80,7 +80,7 @@ Entity-only quick start:
 Routing note:
 
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
-- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; the default source set remains PubTator3 + Europe PMC + PubMed + Semantic Scholar, and the default relevance mode becomes hybrid instead of lexical. Use `--source litsense2` explicitly when you want LitSense2.
+- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; the default source set remains PubTator3 + Europe PMC + PubMed + Semantic Scholar, and the default relevance mode becomes hybrid instead of lexical. Use `--source semanticscholar` or `--source litsense2` explicitly when you want one of those sources alone.
 - Direct and compatible federated PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally; query echoes and non-PubMed sources keep the original wording.
 - Cap each federated source's contribution after deduplication and before ranking.
 - Default: 40% of `--limit` on federated pools with at least three surviving primary sources.
@@ -120,8 +120,9 @@ Worked examples:
 - Add `--pdf` only with `fulltext` to extend that ladder with Semantic Scholar PDF as the last resort.
 - `--pdf` requires the `fulltext` section and is rejected for other article requests.
 - On the default `search article --source all` route, typed gene/disease/drug anchors participate in PubTator3 + Europe PMC + PubMed when the filter set is compatible; Semantic Scholar is still automatic on compatible queries.
-- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; the default source set remains PubTator3 + Europe PMC + PubMed + Semantic Scholar, and the default relevance mode becomes hybrid instead of lexical. Use `--source litsense2` explicitly when you want LitSense2.
+- Add `-k/--keyword` for mechanisms, phenotypes, datasets, and other free-text concepts; the default source set remains PubTator3 + Europe PMC + PubMed + Semantic Scholar, and the default relevance mode becomes hybrid instead of lexical. Use `--source semanticscholar` or `--source litsense2` explicitly when you want one of those sources alone.
 - Direct and compatible federated PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally; query echoes and non-PubMed sources keep the original wording.
+- `search article --source semanticscholar` uses the same Semantic Scholar client/auth/degradation behavior as the compatible federated route and does not support `--type` or `--open-access`.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
 - `--type`, `--open-access`, and `--no-preprints` can narrow the compatible default source set instead of acting as universal article filters across every backend.
 - `search article --type ...` on `--source all` uses Europe PMC + PubMed when PubMed-compatible filters are selected, and collapses to Europe PMC-only when `--open-access` or `--no-preprints` makes PubMed ineligible.
