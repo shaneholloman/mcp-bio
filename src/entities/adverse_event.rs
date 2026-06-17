@@ -1312,15 +1312,26 @@ async fn trial_adverse_events_with_aliases(
     client: &ClinicalTrialsClient,
     aliases: &[String],
 ) -> Result<TrialAdverseEventOutcome, BioMcpError> {
-    let mut studies_by_nct: HashMap<String, CtGovStudy> = HashMap::new();
-
+    let mut batches = Vec::new();
     for alias in aliases
         .iter()
         .map(String::as_str)
         .map(str::trim)
         .filter(|value| !value.is_empty())
     {
-        for study in fetch_ctgov_studies_for_alias(client, alias).await? {
+        batches.push(fetch_ctgov_studies_for_alias(client, alias).await?);
+    }
+
+    Ok(trial_adverse_events_from_study_batches(batches))
+}
+
+fn trial_adverse_events_from_study_batches(
+    batches: impl IntoIterator<Item = Vec<CtGovStudy>>,
+) -> TrialAdverseEventOutcome {
+    let mut studies_by_nct: HashMap<String, CtGovStudy> = HashMap::new();
+
+    for studies in batches {
+        for study in studies {
             let Some(nct_id) = study_nct_id(&study).map(str::to_string) else {
                 continue;
             };
@@ -1340,9 +1351,9 @@ async fn trial_adverse_events_with_aliases(
 
     let rows = aggregate_trial_adverse_event_terms(studies_by_nct.into_values());
     if rows.is_empty() {
-        Ok(TrialAdverseEventOutcome::Empty)
+        TrialAdverseEventOutcome::Empty
     } else {
-        Ok(TrialAdverseEventOutcome::Found(rows))
+        TrialAdverseEventOutcome::Found(rows)
     }
 }
 
@@ -1837,7 +1848,7 @@ pub fn recall_query_summary(filters: &RecallSearchFilters) -> String {
 mod tests {
     use super::*;
     use crate::test_support::set_env_var;
-    use wiremock::matchers::{body_string_contains, method, path, query_param};
+    use wiremock::matchers::{body_string_contains, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     const VAERS_REACTIONS_RESPONSE_FIXTURE: &str =
@@ -1853,6 +1864,10 @@ mod tests {
             .join("spec/fixtures/cvx")
             .display()
             .to_string()
+    }
+
+    fn ctgov_study(value: serde_json::Value) -> CtGovStudy {
+        serde_json::from_value(value).expect("valid CTGov study")
     }
 
     #[test]
@@ -2233,50 +2248,32 @@ mod tests {
         assert!(summary.top_reactions.len() <= 10);
     }
 
-    #[tokio::test]
-    async fn trial_adverse_events_dedupe_studies_across_aliases() {
-        let server = MockServer::start().await;
-        let client =
-            ClinicalTrialsClient::new_for_test(format!("{}/api/v2", server.uri())).unwrap();
-
-        for alias in ["daraxonrasib", "RMC-6236"] {
-            Mock::given(method("GET"))
-                .and(path("/api/v2/studies"))
-                .and(query_param("query.intr", alias))
-                .and(query_param("aggFilters", "results:with"))
-                .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
-                .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "studies": [{
-                        "protocolSection": {
-                            "identificationModule": {
-                                "nctId": "NCT05379985",
-                                "briefTitle": "Daraxonrasib first-in-human study"
-                            }
-                        },
-                        "hasResults": true,
-                        "resultsSection": {
-                            "adverseEventsModule": {
-                                "seriousEvents": [{
-                                    "term": "Rash",
-                                    "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
-                                }],
-                                "otherEvents": [{
-                                    "term": "Fatigue",
-                                    "stats": [{"groupId": "g1", "numAffected": 1, "numAtRisk": 10}]
-                                }]
-                            }
-                        }
+    #[test]
+    fn trial_adverse_events_dedupe_studies_across_aliases() {
+        let study = ctgov_study(serde_json::json!({
+            "protocolSection": {
+                "identificationModule": {
+                    "nctId": "NCT05379985",
+                    "briefTitle": "Daraxonrasib first-in-human study"
+                }
+            },
+            "hasResults": true,
+            "resultsSection": {
+                "adverseEventsModule": {
+                    "seriousEvents": [{
+                        "term": "Rash",
+                        "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
                     }],
-                    "nextPageToken": null
-                })))
-                .mount(&server)
-                .await;
-        }
+                    "otherEvents": [{
+                        "term": "Fatigue",
+                        "stats": [{"groupId": "g1", "numAffected": 1, "numAtRisk": 10}]
+                    }]
+                }
+            }
+        }));
 
         let outcome =
-            trial_adverse_events_with_aliases(&client, &["daraxonrasib".into(), "RMC-6236".into()])
-                .await
-                .unwrap();
+            trial_adverse_events_from_study_batches(vec![vec![study.clone()], vec![study]]);
 
         match outcome {
             TrialAdverseEventOutcome::Empty => panic!("expected trial adverse events"),
@@ -2290,67 +2287,49 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn trial_adverse_events_count_each_term_once_per_study() {
-        let server = MockServer::start().await;
-        let client =
-            ClinicalTrialsClient::new_for_test(format!("{}/api/v2", server.uri())).unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/studies"))
-            .and(query_param("query.intr", "daraxonrasib"))
-            .and(query_param("aggFilters", "results:with"))
-            .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "studies": [
-                    {
-                        "protocolSection": {
-                            "identificationModule": {
-                                "nctId": "NCT05379985",
-                                "briefTitle": "Daraxonrasib first-in-human study"
-                            }
-                        },
-                        "hasResults": true,
-                        "resultsSection": {
-                            "adverseEventsModule": {
-                                "seriousEvents": [{
-                                    "term": "Rash",
-                                    "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
-                                }],
-                                "otherEvents": [{
-                                    "term": "Rash",
-                                    "stats": [{"groupId": "g2", "numAffected": 4, "numAtRisk": 10}]
-                                }]
-                            }
-                        }
-                    },
-                    {
-                        "protocolSection": {
-                            "identificationModule": {
-                                "nctId": "NCT00000002",
-                                "briefTitle": "Daraxonrasib expansion cohort"
-                            }
-                        },
-                        "hasResults": true,
-                        "resultsSection": {
-                            "adverseEventsModule": {
-                                "seriousEvents": [],
-                                "otherEvents": [{
-                                    "term": "Rash",
-                                    "stats": [{"groupId": "g3", "numAffected": 1, "numAtRisk": 12}]
-                                }]
-                            }
-                        }
+    #[test]
+    fn trial_adverse_events_count_each_term_once_per_study() {
+        let outcome = trial_adverse_events_from_study_batches(vec![vec![
+            ctgov_study(serde_json::json!({
+                "protocolSection": {
+                    "identificationModule": {
+                        "nctId": "NCT05379985",
+                        "briefTitle": "Daraxonrasib first-in-human study"
                     }
-                ],
-                "nextPageToken": null
-            })))
-            .mount(&server)
-            .await;
-
-        let outcome = trial_adverse_events_with_aliases(&client, &["daraxonrasib".into()])
-            .await
-            .unwrap();
+                },
+                "hasResults": true,
+                "resultsSection": {
+                    "adverseEventsModule": {
+                        "seriousEvents": [{
+                            "term": "Rash",
+                            "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
+                        }],
+                        "otherEvents": [{
+                            "term": "Rash",
+                            "stats": [{"groupId": "g2", "numAffected": 4, "numAtRisk": 10}]
+                        }]
+                    }
+                }
+            })),
+            ctgov_study(serde_json::json!({
+                "protocolSection": {
+                    "identificationModule": {
+                        "nctId": "NCT00000002",
+                        "briefTitle": "Daraxonrasib expansion cohort"
+                    }
+                },
+                "hasResults": true,
+                "resultsSection": {
+                    "adverseEventsModule": {
+                        "seriousEvents": [],
+                        "otherEvents": [{
+                            "term": "Rash",
+                            "stats": [{"groupId": "g3", "numAffected": 1, "numAtRisk": 12}]
+                        }]
+                    }
+                }
+            })),
+        ]]);
 
         match outcome {
             TrialAdverseEventOutcome::Empty => panic!("expected trial adverse events"),
@@ -2361,77 +2340,49 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn trial_adverse_events_prefers_alias_copy_with_counted_terms() {
-        let server = MockServer::start().await;
-        let client =
-            ClinicalTrialsClient::new_for_test(format!("{}/api/v2", server.uri())).unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/studies"))
-            .and(query_param("query.intr", "daraxonrasib"))
-            .and(query_param("aggFilters", "results:with"))
-            .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "studies": [{
-                    "protocolSection": {
-                        "identificationModule": {
-                            "nctId": "NCT05379985",
-                            "briefTitle": "Daraxonrasib first-in-human study"
-                        }
-                    },
-                    "hasResults": true,
-                    "resultsSection": {
-                        "adverseEventsModule": {
-                            "seriousEvents": [{
-                                "term": "Rash",
-                                "stats": [{"groupId": "g1", "numAffected": 0, "numAtRisk": 10}]
-                            }],
-                            "otherEvents": []
-                        }
+    #[test]
+    fn trial_adverse_events_prefers_alias_copy_with_counted_terms() {
+        let outcome = trial_adverse_events_from_study_batches(vec![
+            vec![ctgov_study(serde_json::json!({
+                "protocolSection": {
+                    "identificationModule": {
+                        "nctId": "NCT05379985",
+                        "briefTitle": "Daraxonrasib first-in-human study"
                     }
-                }],
-                "nextPageToken": null
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("GET"))
-            .and(path("/api/v2/studies"))
-            .and(query_param("query.intr", "RMC-6236"))
-            .and(query_param("aggFilters", "results:with"))
-            .and(query_param("fields", CTGOV_ADVERSE_EVENT_SEARCH_FIELDS))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "studies": [{
-                    "protocolSection": {
-                        "identificationModule": {
-                            "nctId": "NCT05379985",
-                            "briefTitle": "Daraxonrasib first-in-human study"
-                        }
-                    },
-                    "hasResults": true,
-                    "resultsSection": {
-                        "adverseEventsModule": {
-                            "seriousEvents": [{
-                                "term": "Rash",
-                                "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
-                            }],
-                            "otherEvents": [{
-                                "term": "Fatigue",
-                                "stats": [{"groupId": "g1", "numAffected": 1, "numAtRisk": 10}]
-                            }]
-                        }
+                },
+                "hasResults": true,
+                "resultsSection": {
+                    "adverseEventsModule": {
+                        "seriousEvents": [{
+                            "term": "Rash",
+                            "stats": [{"groupId": "g1", "numAffected": 0, "numAtRisk": 10}]
+                        }],
+                        "otherEvents": []
                     }
-                }],
-                "nextPageToken": null
-            })))
-            .mount(&server)
-            .await;
-
-        let outcome =
-            trial_adverse_events_with_aliases(&client, &["daraxonrasib".into(), "RMC-6236".into()])
-                .await
-                .unwrap();
+                }
+            }))],
+            vec![ctgov_study(serde_json::json!({
+                "protocolSection": {
+                    "identificationModule": {
+                        "nctId": "NCT05379985",
+                        "briefTitle": "Daraxonrasib first-in-human study"
+                    }
+                },
+                "hasResults": true,
+                "resultsSection": {
+                    "adverseEventsModule": {
+                        "seriousEvents": [{
+                            "term": "Rash",
+                            "stats": [{"groupId": "g1", "numAffected": 2, "numAtRisk": 10}]
+                        }],
+                        "otherEvents": [{
+                            "term": "Fatigue",
+                            "stats": [{"groupId": "g1", "numAffected": 1, "numAtRisk": 10}]
+                        }]
+                    }
+                }
+            }))],
+        ]);
 
         match outcome {
             TrialAdverseEventOutcome::Empty => panic!("expected trial adverse events"),

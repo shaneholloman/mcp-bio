@@ -155,6 +155,10 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/adverse_event.rs` all-sources non-vaccine VAERS response is
       pure: the local-only resolver result is combined with FAERS status through
       a helper instead of running OpenFDA/CVX mock servers.
+- [x] `src/entities/adverse_event.rs` CTGov trial adverse-event aggregation
+      tests are pure: alias dedupe, per-study term counting, and best alias copy
+      selection now run over direct `CtGovStudy` fixtures instead of a mocked
+      CTGov server.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -538,6 +542,14 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   case from OpenFDA/CVX mock servers to a pure local-only resolver plus FAERS
   status test. Remaining adverse-event server cases are the two VAERS summary
   tests and the three trial adverse-event CTGov cases. Checks:
+  `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: fifth adverse-event cleanup. Split CTGov trial adverse-event
+  aggregation from the async CTGov fetch loop, then converted alias dedupe,
+  per-study term counting, and preferred-alias-copy tests to direct `CtGovStudy`
+  fixture batches. Remaining adverse-event mock-server cases are only the two
+  VAERS summary tests. Checks:
   `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
