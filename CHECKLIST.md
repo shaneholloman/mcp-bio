@@ -125,8 +125,14 @@ OncoKB has none — harvest its existing stub instead of curling.)
       `cargo nextest run -E 'test(/cli::/)'` → 540/540 pass.
 
 ### Entity processing + output (response → entity → JSON/markdown)
-- [ ] `src/transform/**` and `src/entities/**` — test the pure processing with saved inputs.
-- [ ] `src/render/**` — test markdown/JSON output from saved entities.
+- [x] `src/transform/**` and `src/entities/**` — test the pure processing with saved inputs.
+- [x] `src/render/**` — test markdown/JSON output from saved entities.
+- [x] 2026-06-17 entity/transform/render checkpoint: a scan found no
+      mock-server, binary-spawning, or backend env-mutation patterns under
+      `src/entities`, `src/transform`, or `src/render` (only ordinary
+      `BIOMCP_DISABLE_KEGG` help/error text). Scoped gate:
+      `cargo nextest run -E 'test(/entities::/) | test(/transform::/) |
+      test(/render::/)'` → 951/951 pass.
 - [x] **Worst offender fixed:** `src/entities/article/backends/tests.rs` now tests
       request construction and response processing without mock servers, env locks,
       or network-shaped setup.
@@ -268,9 +274,16 @@ OncoKB has none — harvest its existing stub instead of curling.)
       42/42 pass.
 
 ### Smoke tests (a few, real network — the ONLY network tests)
-- [ ] gene → gene info · [ ] variant → variant info · [ ] article → article
+- [x] gene → gene info · [x] variant → variant info · [x] article → article
 - [ ] (optional) trial, drug
 Keep these `#[ignore]` so they stay out of the normal gate; run them in the verify lane.
+- [x] 2026-06-17 CLI live smoke tests added in `tests/live_smoke.rs`: ignored
+      end-to-end `biomcp --json get gene BRAF`, `biomcp --json get variant
+      chr7:g.140453136A>T`, and `biomcp --json get article 22663011` checks.
+      Compile check: `cargo test --test live_smoke --no-run` → pass. Normal
+      gate check: `cargo nextest run -E 'binary(live_smoke)' --no-tests warn`
+      → 0 run / 3 skipped. Verify lane command:
+      `cargo nextest run --run-ignored ignored-only -E 'binary(live_smoke)'`.
 
 ### Final — prove we didn't break anything
 - [ ] Once everything's converted and the old leaky tests are gone, run the full gate
