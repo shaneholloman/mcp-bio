@@ -976,3 +976,13 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.
+- 2026-06-17: OpenTargets final mock cleanup. Replaced the two remaining
+  fixture-style OpenTargets mock-server tests (`EGFR` disease targets and
+  osimertinib drug sections) with direct parser tests over in-memory JSON, and
+  removed the now-unused OpenTargets `new_for_test` plus wiremock imports. A
+  scan shows no remaining `wiremock` / `MockServer` usage in OpenTargets.
+  Checks:
+  `cargo nextest run -E 'test(/sources::opentargets::tests::/)'` → 23/23
+  pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.

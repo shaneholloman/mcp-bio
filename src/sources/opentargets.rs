@@ -167,14 +167,6 @@ impl OpenTargetsClient {
         })
     }
 
-    #[cfg(test)]
-    fn new_for_test(base: String) -> Result<Self, BioMcpError> {
-        Ok(Self {
-            client: crate::sources::test_client()?,
-            base: Cow::Owned(base),
-        })
-    }
-
     async fn post_plan_json<T: DeserializeOwned>(
         &self,
         plan: &RequestPlan,
@@ -1418,8 +1410,6 @@ fn summarize_safety_liabilities(rows: Vec<SafetyLiabilityRow>) -> Vec<OpenTarget
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
-    use wiremock::matchers::{body_string_contains, method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[test]
     fn normalize_disease_id_handles_known_forms() {
@@ -1990,86 +1980,52 @@ pub(crate) mod tests {
         assert!(msg.contains("opentargets"));
     }
 
-    #[tokio::test]
-    async fn disease_associated_targets_egfr_lung() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchDisease"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [{"id": "EFO_0001071", "entity": "disease"}]
+    #[test]
+    fn disease_associated_targets_egfr_lung() {
+        let resp = decode_disease_genes(serde_json::json!({
+            "data": {
+                "disease": {
+                    "associatedTargets": {
+                        "rows": [
+                            {"target": {"approvedSymbol": "EGFR"}},
+                            {"target": {"approvedSymbol": "ERBB2"}}
+                        ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DiseaseGenes"))
-            .and(body_string_contains("\"efoId\":\"EFO_0001071\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "disease": {
-                        "associatedTargets": {
-                            "rows": [
-                                {"target": {"approvedSymbol": "EGFR"}},
-                                {"target": {"approvedSymbol": "ERBB2"}}
-                            ]
-                        }
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let genes = client
-            .disease_associated_targets("lung adenocarcinoma", 3)
-            .await
-            .unwrap();
+        let genes = disease_associated_targets_from_response(resp, 3).unwrap();
         assert_eq!(genes.first().map(|g| g.symbol.as_str()), Some("EGFR"));
     }
 
-    #[tokio::test]
-    async fn drug_sections_maps_osimertinib() {
-        let server = MockServer::start().await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("DrugSections"))
-            .and(body_string_contains("\"chemblId\":\"CHEMBL3353410\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "drug": {
-                        "indications": {
-                            "rows": [
-                                {
-                                    "maxClinicalStage": "APPROVAL",
-                                    "disease": {"name": "Non-small cell lung cancer"}
-                                }
-                            ]
-                        },
-                        "mechanismsOfAction": {
-                            "rows": [
-                                {
-                                    "targets": [
-                                        {"approvedSymbol": "EGFR"}
-                                    ]
-                                }
-                            ]
-                        }
+    #[test]
+    fn drug_sections_maps_osimertinib() {
+        let resp = decode_drug_sections(serde_json::json!({
+            "data": {
+                "drug": {
+                    "indications": {
+                        "rows": [
+                            {
+                                "maxClinicalStage": "APPROVAL",
+                                "disease": {"name": "Non-small cell lung cancer"}
+                            }
+                        ]
+                    },
+                    "mechanismsOfAction": {
+                        "rows": [
+                            {
+                                "targets": [
+                                    {"approvedSymbol": "EGFR"}
+                                ]
+                            }
+                        ]
                     }
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let sections = client.drug_sections("CHEMBL3353410", 5).await.unwrap();
+        let sections = drug_sections_from_response(resp, 5).unwrap();
         assert_eq!(
             sections
                 .indications
