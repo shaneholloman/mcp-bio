@@ -847,3 +847,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   test(/entities::disease::clinical_features::/)'` → 26/26 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: study entity cleanup. Split cBioPortal study entity functions so
+  tests can pass an explicit fixture root instead of setting `BIOMCP_STUDY_DIR`,
+  and converted the study entity tests away from the global env lock. Public
+  functions still resolve the configured study directory normally. Checks:
+  `cargo nextest run -E 'test(/entities::study::/)'` → 22/22 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.

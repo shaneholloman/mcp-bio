@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufRead;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::error::BioMcpError;
 
@@ -322,6 +322,10 @@ impl SurvivalEndpoint {
 
 pub async fn list_studies() -> Result<Vec<StudyInfo>, BioMcpError> {
     let root = crate::sources::cbioportal_study::resolve_study_root();
+    list_studies_with_root(root).await
+}
+
+async fn list_studies_with_root(root: PathBuf) -> Result<Vec<StudyInfo>, BioMcpError> {
     run_blocking(move || {
         let studies = crate::sources::cbioportal_study::list_studies(&root)?;
         let mut out = Vec::with_capacity(studies.len());
@@ -380,9 +384,18 @@ pub async fn query_study(
     gene: &str,
     query_type: StudyQueryType,
 ) -> Result<StudyQueryResult, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    query_study_with_root(root, study_id, gene, query_type).await
+}
+
+async fn query_study_with_root(
+    root: PathBuf,
+    study_id: &str,
+    gene: &str,
+    query_type: StudyQueryType,
+) -> Result<StudyQueryResult, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let gene = normalize_gene(gene)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -414,8 +427,16 @@ pub async fn top_mutated_genes(
     study_id: &str,
     limit: usize,
 ) -> Result<TopMutatedGenesResult, BioMcpError> {
-    let study_id = normalize_study_id(study_id)?;
     let root = crate::sources::cbioportal_study::resolve_study_root();
+    top_mutated_genes_with_root(root, study_id, limit).await
+}
+
+async fn top_mutated_genes_with_root(
+    root: PathBuf,
+    study_id: &str,
+    limit: usize,
+) -> Result<TopMutatedGenesResult, BioMcpError> {
+    let study_id = normalize_study_id(study_id)?;
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -430,9 +451,17 @@ pub async fn top_mutated_genes(
 }
 
 pub async fn expression_values(study_id: &str, gene: &str) -> Result<Vec<f64>, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    expression_values_with_root(root, study_id, gene).await
+}
+
+async fn expression_values_with_root(
+    root: PathBuf,
+    study_id: &str,
+    gene: &str,
+) -> Result<Vec<f64>, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let gene = normalize_gene(gene)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -450,9 +479,17 @@ pub async fn mutation_counts_by_sample(
     study_id: &str,
     gene: &str,
 ) -> Result<Vec<(String, usize)>, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    mutation_counts_by_sample_with_root(root, study_id, gene).await
+}
+
+async fn mutation_counts_by_sample_with_root(
+    root: PathBuf,
+    study_id: &str,
+    gene: &str,
+) -> Result<Vec<(String, usize)>, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let gene = normalize_gene(gene)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -466,10 +503,19 @@ pub async fn expression_pairs_by_sample(
     gene_x: &str,
     gene_y: &str,
 ) -> Result<Vec<(f64, f64)>, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    expression_pairs_by_sample_with_root(root, study_id, gene_x, gene_y).await
+}
+
+async fn expression_pairs_by_sample_with_root(
+    root: PathBuf,
+    study_id: &str,
+    gene_x: &str,
+    gene_y: &str,
+) -> Result<Vec<(f64, f64)>, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let gene_x = normalize_gene(gene_x)?;
     let gene_y = normalize_gene(gene_y)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -483,10 +529,19 @@ pub async fn compare_expression_values(
     stratify_gene: &str,
     target_gene: &str,
 ) -> Result<Vec<(String, Vec<f64>)>, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    compare_expression_values_with_root(root, study_id, stratify_gene, target_gene).await
+}
+
+async fn compare_expression_values_with_root(
+    root: PathBuf,
+    study_id: &str,
+    stratify_gene: &str,
+    target_gene: &str,
+) -> Result<Vec<(String, Vec<f64>)>, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let stratify_gene = normalize_gene(stratify_gene)?;
     let target_gene = normalize_gene(target_gene)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -523,6 +578,15 @@ pub async fn co_occurrence(
     study_id: &str,
     genes: &[String],
 ) -> Result<CoOccurrenceResult, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    co_occurrence_with_root(root, study_id, genes).await
+}
+
+async fn co_occurrence_with_root(
+    root: PathBuf,
+    study_id: &str,
+    genes: &[String],
+) -> Result<CoOccurrenceResult, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let genes = normalize_gene_list(genes)?;
     if genes.len() < 2 || genes.len() > 10 {
@@ -531,7 +595,6 @@ pub async fn co_occurrence(
         ));
     }
 
-    let root = crate::sources::cbioportal_study::resolve_study_root();
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
         let result = crate::sources::cbioportal_study::co_occurrence(&study_dir, &genes)?;
@@ -544,6 +607,15 @@ pub async fn filter(
     study_id: &str,
     criteria: Vec<FilterCriterion>,
 ) -> Result<FilterResult, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    filter_with_root(root, study_id, criteria).await
+}
+
+async fn filter_with_root(
+    root: PathBuf,
+    study_id: &str,
+    criteria: Vec<FilterCriterion>,
+) -> Result<FilterResult, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     if criteria.is_empty() {
         return Err(BioMcpError::InvalidArgument(
@@ -552,7 +624,6 @@ pub async fn filter(
     }
 
     let source_criteria = normalize_filter_criteria(criteria)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -564,9 +635,17 @@ pub async fn filter(
 }
 
 pub async fn cohort(study_id: &str, gene: &str) -> Result<CohortResult, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    cohort_with_root(root, study_id, gene).await
+}
+
+async fn cohort_with_root(
+    root: PathBuf,
+    study_id: &str,
+    gene: &str,
+) -> Result<CohortResult, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let gene = normalize_gene(gene)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -580,9 +659,18 @@ pub async fn survival(
     gene: &str,
     endpoint: SurvivalEndpoint,
 ) -> Result<SurvivalResult, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    survival_with_root(root, study_id, gene, endpoint).await
+}
+
+async fn survival_with_root(
+    root: PathBuf,
+    study_id: &str,
+    gene: &str,
+    endpoint: SurvivalEndpoint,
+) -> Result<SurvivalResult, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let gene = normalize_gene(gene)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
     let _required_columns = (endpoint.status_column(), endpoint.months_column());
 
     run_blocking(move || {
@@ -602,10 +690,19 @@ pub async fn compare_expression(
     stratify_gene: &str,
     target_gene: &str,
 ) -> Result<ExpressionComparisonResult, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    compare_expression_with_root(root, study_id, stratify_gene, target_gene).await
+}
+
+async fn compare_expression_with_root(
+    root: PathBuf,
+    study_id: &str,
+    stratify_gene: &str,
+    target_gene: &str,
+) -> Result<ExpressionComparisonResult, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let stratify_gene = normalize_gene(stratify_gene)?;
     let target_gene = normalize_gene(target_gene)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -626,10 +723,19 @@ pub async fn compare_mutations(
     stratify_gene: &str,
     target_gene: &str,
 ) -> Result<MutationComparisonResult, BioMcpError> {
+    let root = crate::sources::cbioportal_study::resolve_study_root();
+    compare_mutations_with_root(root, study_id, stratify_gene, target_gene).await
+}
+
+async fn compare_mutations_with_root(
+    root: PathBuf,
+    study_id: &str,
+    stratify_gene: &str,
+    target_gene: &str,
+) -> Result<MutationComparisonResult, BioMcpError> {
     let study_id = normalize_study_id(study_id)?;
     let stratify_gene = normalize_gene(stratify_gene)?;
     let target_gene = normalize_gene(target_gene)?;
-    let root = crate::sources::cbioportal_study::resolve_study_root();
 
     run_blocking(move || {
         let study_dir = resolve_study_dir(&root, &study_id)?;
@@ -1087,7 +1193,7 @@ where
 mod tests {
     use super::*;
 
-    use crate::test_support::{EnvVarGuard, TempDirGuard, set_env_var};
+    use crate::test_support::TempDirGuard;
     use std::fs;
     use std::path::{Path, PathBuf};
 
@@ -1143,13 +1249,6 @@ mod tests {
             &study.join("data_clinical_patient.txt"),
             "# comment\nPATIENT_ID\tOS_STATUS\tOS_MONTHS\tDFS_STATUS\tDFS_MONTHS\tPFS_STATUS\tPFS_MONTHS\tDSS_STATUS\tDSS_MONTHS\nP1\t1:DECEASED\t12\t1:Recurred\t8\t1:Progressed\t7\t1:Died of disease\t12\nP2\t0:LIVING\t24\t0:DiseaseFree\t20\t0:No progression\t18\t0:Alive\t24\nP3\t1:DECEASED\tNA\t1:Recurred\t10\t1:Progressed\t8\t1:Died of disease\t10\n",
         );
-    }
-
-    fn set_study_dir(root: &Path) -> EnvVarGuard {
-        set_env_var(
-            "BIOMCP_STUDY_DIR",
-            Some(root.to_str().expect("study root path should be utf-8")),
-        )
     }
 
     #[test]
@@ -1224,16 +1323,16 @@ mod tests {
 
     #[tokio::test]
     async fn list_studies_returns_available_data() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("list");
         minimal_study_fixture(&fixture.root, "demo_study");
         write_file(
             &fixture.root.join("demo_study").join("data_sv.txt"),
             "Site1_Hugo_Symbol\tSite2_Hugo_Symbol\nKIF5B\tRET\n",
         );
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let studies = list_studies().await.expect("list studies");
+        let studies = list_studies_with_root(fixture.root.clone())
+            .await
+            .expect("list studies");
         assert_eq!(studies.len(), 1);
         assert_eq!(studies[0].study_id, "demo_study");
         assert!(studies[0].available_data.contains(&"mutations".to_string()));
@@ -1253,14 +1352,17 @@ mod tests {
 
     #[tokio::test]
     async fn query_study_mutations_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("query-mutations");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let result = query_study("demo_study", "TP53", StudyQueryType::Mutations)
-            .await
-            .expect("query should pass");
+        let result = query_study_with_root(
+            fixture.root.clone(),
+            "demo_study",
+            "TP53",
+            StudyQueryType::Mutations,
+        )
+        .await
+        .expect("query should pass");
         match result {
             StudyQueryResult::MutationFrequency(result) => {
                 assert_eq!(result.study_id, "demo_study");
@@ -1276,18 +1378,21 @@ mod tests {
 
     #[tokio::test]
     async fn query_study_structural_variants_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("query-sv");
         minimal_study_fixture(&fixture.root, "demo_study");
         write_file(
             &fixture.root.join("demo_study").join("data_sv.txt"),
             "Sample_Id\tSite1_Hugo_Symbol\tSite2_Hugo_Symbol\tSite2_Effect_On_Frame\tTumor_Split_Read_Count\tNormal_Split_Read_Count\tEvent_Info\nS1\tKIF5B\tRET\tin-frame\t12\t0\tKIF5B-RET Fusion\n",
         );
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let result = query_study("demo_study", "RET", StudyQueryType::StructuralVariants)
-            .await
-            .expect("query should pass");
+        let result = query_study_with_root(
+            fixture.root.clone(),
+            "demo_study",
+            "RET",
+            StudyQueryType::StructuralVariants,
+        )
+        .await
+        .expect("query should pass");
         match result {
             StudyQueryResult::StructuralVariants(result) => {
                 assert_eq!(result.study_id, "demo_study");
@@ -1304,18 +1409,21 @@ mod tests {
 
     #[tokio::test]
     async fn mutation_outputs_include_caveat_when_structural_variants_exist() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("mutation-caveat");
         minimal_study_fixture(&fixture.root, "demo_study");
         write_file(
             &fixture.root.join("demo_study").join("data_sv.txt"),
             "Site1_Hugo_Symbol\tSite2_Hugo_Symbol\nKIF5B\tRET\n",
         );
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let mutation = query_study("demo_study", "TP53", StudyQueryType::Mutations)
-            .await
-            .expect("mutation query should pass");
+        let mutation = query_study_with_root(
+            fixture.root.clone(),
+            "demo_study",
+            "TP53",
+            StudyQueryType::Mutations,
+        )
+        .await
+        .expect("mutation query should pass");
         match mutation {
             StudyQueryResult::MutationFrequency(result) => {
                 let caveat = result
@@ -1327,7 +1435,7 @@ mod tests {
             other => panic!("unexpected query result: {other:?}"),
         }
 
-        let top = top_mutated_genes("demo_study", 10)
+        let top = top_mutated_genes_with_root(fixture.root.clone(), "demo_study", 10)
             .await
             .expect("top mutated should pass");
         let caveat = top
@@ -1339,16 +1447,14 @@ mod tests {
 
     #[tokio::test]
     async fn top_mutated_genes_reports_ranked_rows() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("top-mutated");
         minimal_study_fixture(&fixture.root, "demo_study");
         write_file(
             &fixture.root.join("demo_study").join("data_mutations.txt"),
             "Hugo_Symbol\tTumor_Sample_Barcode\tVariant_Classification\tHGVSp_Short\nTP53\tS1\tMissense_Mutation\tp.R175H\nTP53\tS2\tMissense_Mutation\tp.R248Q\nKRAS\tS2\tMissense_Mutation\tp.G12D\nKRAS\tS3\tMissense_Mutation\tp.G12V\nBRAF\tS1\tMissense_Mutation\tp.V600E\n",
         );
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let result = top_mutated_genes("demo_study", 10)
+        let result = top_mutated_genes_with_root(fixture.root.clone(), "demo_study", 10)
             .await
             .expect("top mutated should pass");
         assert_eq!(result.study_id, "demo_study");
@@ -1363,38 +1469,38 @@ mod tests {
 
     #[tokio::test]
     async fn query_study_unknown_study_returns_not_found() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("unknown-study");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let err = query_study("missing", "TP53", StudyQueryType::Mutations)
-            .await
-            .expect_err("unknown study should fail");
+        let err = query_study_with_root(
+            fixture.root.clone(),
+            "missing",
+            "TP53",
+            StudyQueryType::Mutations,
+        )
+        .await
+        .expect_err("unknown study should fail");
         assert!(matches!(err, BioMcpError::NotFound { .. }));
     }
 
     #[tokio::test]
     async fn co_occurrence_validates_gene_count() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("co-occur-count");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let err = co_occurrence("demo_study", &["TP53".to_string()])
-            .await
-            .expect_err("one gene should fail");
+        let err =
+            co_occurrence_with_root(fixture.root.clone(), "demo_study", &["TP53".to_string()])
+                .await
+                .expect_err("one gene should fail");
         assert!(matches!(err, BioMcpError::InvalidArgument(_)));
     }
 
     #[tokio::test]
     async fn cohort_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("cohort");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let result = cohort("demo_study", "TP53")
+        let result = cohort_with_root(fixture.root.clone(), "demo_study", "TP53")
             .await
             .expect("cohort should pass");
         assert_eq!(result.study_id, "demo_study");
@@ -1408,14 +1514,17 @@ mod tests {
 
     #[tokio::test]
     async fn survival_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("survival");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let result = survival("demo_study", "TP53", SurvivalEndpoint::Os)
-            .await
-            .expect("survival should pass");
+        let result = survival_with_root(
+            fixture.root.clone(),
+            "demo_study",
+            "TP53",
+            SurvivalEndpoint::Os,
+        )
+        .await
+        .expect("survival should pass");
         assert_eq!(result.study_id, "demo_study");
         assert_eq!(result.gene, "TP53");
         assert_eq!(result.endpoint, SurvivalEndpoint::Os);
@@ -1435,14 +1544,13 @@ mod tests {
 
     #[tokio::test]
     async fn compare_expression_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("compare-expression");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let result = compare_expression("demo_study", "TP53", "ERBB2")
-            .await
-            .expect("expression compare should pass");
+        let result =
+            compare_expression_with_root(fixture.root.clone(), "demo_study", "TP53", "ERBB2")
+                .await
+                .expect("expression compare should pass");
         assert_eq!(result.study_id, "demo_study");
         assert_eq!(result.stratify_gene, "TP53");
         assert_eq!(result.target_gene, "ERBB2");
@@ -1459,12 +1567,11 @@ mod tests {
 
     #[tokio::test]
     async fn filter_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("filter");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let result = filter(
+        let result = filter_with_root(
+            fixture.root.clone(),
             "demo_study",
             vec![
                 FilterCriterion::Mutated("tp53".to_string()),
@@ -1499,14 +1606,13 @@ mod tests {
 
     #[tokio::test]
     async fn compare_mutations_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("compare-mutations");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let result = compare_mutations("demo_study", "TP53", "KRAS")
-            .await
-            .expect("mutation compare should pass");
+        let result =
+            compare_mutations_with_root(fixture.root.clone(), "demo_study", "TP53", "KRAS")
+                .await
+                .expect("mutation compare should pass");
         assert_eq!(result.study_id, "demo_study");
         assert_eq!(result.stratify_gene, "TP53");
         assert_eq!(result.target_gene, "KRAS");
@@ -1520,12 +1626,10 @@ mod tests {
 
     #[tokio::test]
     async fn expression_values_returns_sorted_values() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("expression-values");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let values = expression_values("demo_study", "ERBB2")
+        let values = expression_values_with_root(fixture.root.clone(), "demo_study", "ERBB2")
             .await
             .expect("raw expression values should load");
         assert_eq!(values, vec![1.0, 2.0, 4.0]);
@@ -1533,40 +1637,45 @@ mod tests {
 
     #[tokio::test]
     async fn mutation_counts_by_sample_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("mutation-counts-by-sample");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let counts = mutation_counts_by_sample("demo_study", "TP53")
-            .await
-            .expect("mutation sample counts should load");
+        let counts =
+            mutation_counts_by_sample_with_root(fixture.root.clone(), "demo_study", "TP53")
+                .await
+                .expect("mutation sample counts should load");
         assert_eq!(counts, vec![("S1".to_string(), 1), ("S2".to_string(), 1),]);
     }
 
     #[tokio::test]
     async fn expression_pairs_by_sample_round_trips_source_result() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("expression-pairs-by-sample");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let pairs = expression_pairs_by_sample("demo_study", "TP53", "ERBB2")
-            .await
-            .expect("expression pairs should load");
+        let pairs = expression_pairs_by_sample_with_root(
+            fixture.root.clone(),
+            "demo_study",
+            "TP53",
+            "ERBB2",
+        )
+        .await
+        .expect("expression pairs should load");
         assert_eq!(pairs, vec![(1.0, 2.0), (2.0, 4.0), (3.0, 1.0)]);
     }
 
     #[tokio::test]
     async fn compare_expression_values_returns_mutant_then_wildtype_groups() {
-        let _guard = crate::test_support::env_lock().lock().await;
         let fixture = TestStudyDir::new("compare-expression-values");
         minimal_study_fixture(&fixture.root, "demo_study");
-        let _study_dir = set_study_dir(&fixture.root);
 
-        let groups = compare_expression_values("demo_study", "TP53", "ERBB2")
-            .await
-            .expect("grouped expression values should load");
+        let groups = compare_expression_values_with_root(
+            fixture.root.clone(),
+            "demo_study",
+            "TP53",
+            "ERBB2",
+        )
+        .await
+        .expect("grouped expression values should load");
         assert_eq!(groups.len(), 2);
         assert_eq!(groups[0].0, "TP53-mutant");
         assert_eq!(groups[0].1, vec![2.0, 4.0]);
