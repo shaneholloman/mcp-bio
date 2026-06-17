@@ -7,8 +7,11 @@ use crate::error::BioMcpError;
 use super::runner::{ProbeClass, ProbeOutcome, health_row, outcome};
 
 pub(in crate::cli::health) fn configured_key(env_var: &str) -> Option<String> {
-    std::env::var(env_var)
-        .ok()
+    configured_key_from_value(std::env::var(env_var).ok())
+}
+
+pub(in crate::cli::health) fn configured_key_from_value(value: Option<String>) -> Option<String> {
+    value
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
 }
@@ -154,6 +157,64 @@ pub(in crate::cli::health) async fn check_auth_get(
 }
 
 #[allow(clippy::too_many_arguments)]
+pub(in crate::cli::health) fn optional_auth_status_outcome(
+    api: &str,
+    status: reqwest::StatusCode,
+    elapsed_ms: u128,
+    key_configured: Option<bool>,
+    unauthenticated_ok_status: &str,
+    authenticated_ok_status: &str,
+    unauthenticated_rate_limited_status: Option<&str>,
+    affects: Option<&'static str>,
+) -> ProbeOutcome {
+    let success_status = if key_configured == Some(true) {
+        authenticated_ok_status
+    } else {
+        unauthenticated_ok_status
+    };
+
+    if status.is_success() {
+        return outcome(
+            health_row(
+                api,
+                success_status.to_string(),
+                format!("{elapsed_ms}ms"),
+                None,
+                key_configured,
+            ),
+            ProbeClass::Healthy,
+        );
+    }
+
+    if key_configured == Some(false)
+        && status == reqwest::StatusCode::TOO_MANY_REQUESTS
+        && let Some(status_message) = unauthenticated_rate_limited_status
+    {
+        return outcome(
+            health_row(
+                api,
+                status_message.to_string(),
+                format!("{elapsed_ms}ms"),
+                None,
+                key_configured,
+            ),
+            ProbeClass::Healthy,
+        );
+    }
+
+    outcome(
+        health_row(
+            api,
+            "error".into(),
+            format!("{elapsed_ms}ms (HTTP {})", status.as_u16()),
+            affects,
+            key_configured,
+        ),
+        ProbeClass::Error,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
 pub(in crate::cli::health) async fn check_optional_auth_get(
     client: reqwest::Client,
     api: &str,
@@ -174,11 +235,6 @@ pub(in crate::cli::health) async fn check_optional_auth_get(
             .header(header_name, format!("{header_value_prefix}{key}")),
         None => client.get(url),
     };
-    let success_status = if key_configured == Some(true) {
-        authenticated_ok_status
-    } else {
-        unauthenticated_ok_status
-    };
     let start = Instant::now();
     let error_outcome = |latency: String| {
         outcome(
@@ -191,34 +247,16 @@ pub(in crate::cli::health) async fn check_optional_auth_get(
         Ok(response) => {
             let status = response.status();
             let elapsed = start.elapsed().as_millis();
-            if status.is_success() {
-                outcome(
-                    health_row(
-                        api,
-                        success_status.to_string(),
-                        format!("{elapsed}ms"),
-                        None,
-                        key_configured,
-                    ),
-                    ProbeClass::Healthy,
-                )
-            } else if key_configured == Some(false)
-                && status == reqwest::StatusCode::TOO_MANY_REQUESTS
-                && let Some(status_message) = unauthenticated_rate_limited_status
-            {
-                outcome(
-                    health_row(
-                        api,
-                        status_message.to_string(),
-                        format!("{elapsed}ms"),
-                        None,
-                        key_configured,
-                    ),
-                    ProbeClass::Healthy,
-                )
-            } else {
-                error_outcome(format!("{elapsed}ms (HTTP {})", status.as_u16()))
-            }
+            optional_auth_status_outcome(
+                api,
+                status,
+                elapsed,
+                key_configured,
+                unauthenticated_ok_status,
+                authenticated_ok_status,
+                unauthenticated_rate_limited_status,
+                affects,
+            )
         }
         Err(err) => error_outcome(transport_error_latency(start, &err)),
     }

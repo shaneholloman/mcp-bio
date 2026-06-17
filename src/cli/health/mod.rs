@@ -97,7 +97,6 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::Duration;
 
-    use super::catalog::{ProbeKind, SourceDescriptor, health_sources};
     use crate::cache::{
         CacheBlob, CacheConfigOrigins, CacheEntry, CacheSnapshot, ConfigOrigin, DiskFreeThreshold,
         ResolvedCacheConfig,
@@ -251,39 +250,6 @@ mod tests {
                 Ok(_) => break,
                 Err(actual) => observed = actual,
             }
-        }
-    }
-
-    fn semantic_scholar_source(url: &'static str) -> SourceDescriptor {
-        let source = health_sources()
-            .iter()
-            .find(|source| source.api == "Semantic Scholar")
-            .expect("semantic scholar health source");
-        let ProbeKind::OptionalAuthGet {
-            env_var,
-            header_name,
-            header_value_prefix,
-            unauthenticated_ok_status,
-            authenticated_ok_status,
-            unauthenticated_rate_limited_status,
-            ..
-        } = source.probe
-        else {
-            panic!("semantic scholar should use optional auth get");
-        };
-
-        SourceDescriptor {
-            api: source.api,
-            affects: source.affects,
-            probe: ProbeKind::OptionalAuthGet {
-                url,
-                env_var,
-                header_name,
-                header_value_prefix,
-                unauthenticated_ok_status,
-                authenticated_ok_status,
-                unauthenticated_rate_limited_status,
-            },
         }
     }
 

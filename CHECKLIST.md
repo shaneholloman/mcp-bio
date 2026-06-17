@@ -868,3 +868,11 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.
+- 2026-06-16: health HTTP auth cleanup. Split configured-key trimming and
+  optional-auth HTTP status classification into pure helpers, then converted
+  the OncoKB/NCI key-gated tests and Semantic Scholar optional-auth tests away
+  from env mutation and mock servers. The VAERS health probe remains as the
+  only end-to-end mock-server test in this file. Checks:
+  `cargo nextest run -E 'test(/cli::health::tests::http::/)'` → 9/9 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.

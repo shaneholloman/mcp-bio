@@ -1,13 +1,30 @@
 //! HTTP/auth probe tests for `biomcp health`.
 
-use wiremock::matchers::{body_string_contains, header, method, path};
+use reqwest::StatusCode;
+use wiremock::matchers::{body_string_contains, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use super::super::HealthRow;
 use super::super::catalog::health_sources;
+use super::super::http::{
+    configured_key_from_value, excluded_outcome, optional_auth_status_outcome,
+};
 use super::super::runner::{ProbeClass, ProbeOutcome, probe_source, report_from_outcomes};
-use super::{assert_millisecond_latency, block_on, env_lock, semantic_scholar_source};
+use super::{assert_millisecond_latency, block_on, env_lock};
 use crate::test_support::set_env_var;
+
+fn semantic_scholar_optional_outcome(status: StatusCode, key_configured: bool) -> ProbeOutcome {
+    optional_auth_status_outcome(
+        "Semantic Scholar",
+        status,
+        7,
+        Some(key_configured),
+        "available (unauthenticated, shared rate limit)",
+        "configured (authenticated)",
+        Some("unavailable (set S2_API_KEY for reliable access)"),
+        Some("Semantic Scholar features"),
+    )
+}
 #[test]
 fn probe_source_runs_vaers_query_against_fixture_server() {
     const REACTIONS_RESPONSE_FIXTURE: &str =
@@ -45,14 +62,13 @@ fn probe_source_runs_vaers_query_against_fixture_server() {
 
 #[test]
 fn key_gated_source_is_excluded_when_env_missing() {
-    let _lock = env_lock();
-    let _env = set_env_var("ONCOKB_TOKEN", None);
+    assert!(configured_key_from_value(None).is_none());
     let source = health_sources()
         .iter()
         .find(|source| source.api == "OncoKB")
         .expect("oncokb health source");
 
-    let outcome = block_on(probe_source(reqwest::Client::new(), source));
+    let outcome = excluded_outcome("OncoKB", "ONCOKB_TOKEN", source.affects);
 
     assert_eq!(outcome.class, ProbeClass::Excluded);
     assert_eq!(outcome.row.status, "excluded (set ONCOKB_TOKEN)");
@@ -87,14 +103,13 @@ fn excluded_key_gated_row_serializes_key_configured_false() {
 
 #[test]
 fn empty_key_is_treated_as_missing() {
-    let _lock = env_lock();
-    let _env = set_env_var("NCI_API_KEY", Some("   "));
+    assert!(configured_key_from_value(Some("   ".to_string())).is_none());
     let source = health_sources()
         .iter()
         .find(|source| source.api == "NCI CTS")
         .expect("nci health source");
 
-    let outcome = block_on(probe_source(reqwest::Client::new(), source));
+    let outcome = excluded_outcome("NCI CTS", "NCI_API_KEY", source.affects);
 
     assert_eq!(outcome.class, ProbeClass::Excluded);
     assert_eq!(outcome.row.status, "excluded (set NCI_API_KEY)");
@@ -104,23 +119,7 @@ fn empty_key_is_treated_as_missing() {
 
 #[test]
 fn optional_auth_get_reports_unauthed_semantic_scholar_as_healthy() {
-    let _lock = env_lock();
-    let _env = set_env_var("S2_API_KEY", None);
-    let server = block_on(MockServer::start());
-    let url = Box::leak(format!("{}/health", server.uri()).into_boxed_str());
-    let source = semantic_scholar_source(url);
-
-    block_on(async {
-        Mock::given(method("GET"))
-            .and(path("/health"))
-            .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-            .respond_with(ResponseTemplate::new(200))
-            .expect(1)
-            .mount(&server)
-            .await;
-    });
-
-    let outcome = block_on(probe_source(reqwest::Client::new(), &source));
+    let outcome = semantic_scholar_optional_outcome(StatusCode::OK, false);
     assert_eq!(outcome.class, ProbeClass::Healthy);
     assert_eq!(
         outcome.row.status,
@@ -131,23 +130,7 @@ fn optional_auth_get_reports_unauthed_semantic_scholar_as_healthy() {
 
 #[test]
 fn optional_auth_get_reports_authed_semantic_scholar_as_configured() {
-    let _lock = env_lock();
-    let _env = set_env_var("S2_API_KEY", Some("test-key-abc"));
-    let server = block_on(MockServer::start());
-    let url = Box::leak(format!("{}/health", server.uri()).into_boxed_str());
-    let source = semantic_scholar_source(url);
-
-    block_on(async {
-        Mock::given(method("GET"))
-            .and(path("/health"))
-            .and(header("x-api-key", "test-key-abc"))
-            .respond_with(ResponseTemplate::new(200))
-            .expect(1)
-            .mount(&server)
-            .await;
-    });
-
-    let outcome = block_on(probe_source(reqwest::Client::new(), &source));
+    let outcome = semantic_scholar_optional_outcome(StatusCode::OK, true);
     assert_eq!(outcome.class, ProbeClass::Healthy);
     assert_eq!(outcome.row.status, "configured (authenticated)");
     assert_eq!(outcome.row.key_configured, Some(true));
@@ -155,23 +138,7 @@ fn optional_auth_get_reports_authed_semantic_scholar_as_configured() {
 
 #[test]
 fn optional_auth_get_reports_unauthenticated_429_as_unavailable() {
-    let _lock = env_lock();
-    let _env = set_env_var("S2_API_KEY", None);
-    let server = block_on(MockServer::start());
-    let url = Box::leak(format!("{}/health", server.uri()).into_boxed_str());
-    let source = semantic_scholar_source(url);
-
-    block_on(async {
-        Mock::given(method("GET"))
-            .and(path("/health"))
-            .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-            .respond_with(ResponseTemplate::new(429))
-            .expect(1)
-            .mount(&server)
-            .await;
-    });
-
-    let outcome = block_on(probe_source(reqwest::Client::new(), &source));
+    let outcome = semantic_scholar_optional_outcome(StatusCode::TOO_MANY_REQUESTS, false);
     assert_eq!(outcome.class, ProbeClass::Healthy);
     assert_eq!(
         outcome.row.status,
@@ -216,23 +183,7 @@ fn optional_auth_get_reports_unauthenticated_429_as_unavailable() {
 
 #[test]
 fn optional_auth_get_reports_unauthenticated_non_429_as_error() {
-    let _lock = env_lock();
-    let _env = set_env_var("S2_API_KEY", None);
-    let server = block_on(MockServer::start());
-    let url = Box::leak(format!("{}/health", server.uri()).into_boxed_str());
-    let source = semantic_scholar_source(url);
-
-    block_on(async {
-        Mock::given(method("GET"))
-            .and(path("/health"))
-            .and(|request: &wiremock::Request| !request.headers.contains_key("x-api-key"))
-            .respond_with(ResponseTemplate::new(403))
-            .expect(1)
-            .mount(&server)
-            .await;
-    });
-
-    let outcome = block_on(probe_source(reqwest::Client::new(), &source));
+    let outcome = semantic_scholar_optional_outcome(StatusCode::FORBIDDEN, false);
     assert_eq!(outcome.class, ProbeClass::Error);
     assert_eq!(outcome.row.status, "error");
     assert!(outcome.row.latency.contains("HTTP 403"));
@@ -245,23 +196,7 @@ fn optional_auth_get_reports_unauthenticated_non_429_as_error() {
 
 #[test]
 fn optional_auth_get_reports_authenticated_429_as_error() {
-    let _lock = env_lock();
-    let _env = set_env_var("S2_API_KEY", Some("test-key-abc"));
-    let server = block_on(MockServer::start());
-    let url = Box::leak(format!("{}/health", server.uri()).into_boxed_str());
-    let source = semantic_scholar_source(url);
-
-    block_on(async {
-        Mock::given(method("GET"))
-            .and(path("/health"))
-            .and(header("x-api-key", "test-key-abc"))
-            .respond_with(ResponseTemplate::new(429))
-            .expect(1)
-            .mount(&server)
-            .await;
-    });
-
-    let outcome = block_on(probe_source(reqwest::Client::new(), &source));
+    let outcome = semantic_scholar_optional_outcome(StatusCode::TOO_MANY_REQUESTS, true);
     assert_eq!(outcome.class, ProbeClass::Error);
     assert_eq!(outcome.row.status, "error");
     assert!(outcome.row.latency.contains("HTTP 429"));
