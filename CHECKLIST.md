@@ -895,9 +895,18 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   data-processing helper so tests can load GTR and WHO IVD fixtures from
   explicit roots instead of setting `BIOMCP_GTR_DIR` / `BIOMCP_WHO_IVD_DIR`.
   Converted the seven `search_page_*` entity tests away from the global env
-  lock; diagnostic get tests still use the old fixture-root env helper and are
-  the next diagnostic cleanup target. Checks:
+  lock. Checks:
   `cargo nextest run -E 'test(/entities::diagnostic::tests::search_page_/)'`
   → 7/7 pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.
+- 2026-06-17: diagnostic get cleanup. Split diagnostic get into a shared
+  data-processing helper so GTR and WHO IVD get tests can load fixture roots
+  directly. Removed the diagnostic entity tests' env-lock fixture helpers; the
+  diagnostic entity and CLI diagnostic test paths no longer set
+  `BIOMCP_GTR_DIR` / `BIOMCP_WHO_IVD_DIR`. Kept `WhoIvdClient::get` as
+  test-only for the source parsing tests. Checks:
+  `cargo nextest run -E 'test(/entities::diagnostic::tests::get_/)'` → 4/4
+  pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.

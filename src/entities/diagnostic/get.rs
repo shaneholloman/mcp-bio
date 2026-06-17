@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
+#[cfg(test)]
+use std::path::Path;
 use std::time::Duration;
 
 use tracing::warn;
@@ -585,6 +587,57 @@ pub async fn get(accession: &str, sections: &[String]) -> Result<Diagnostic, Bio
     if looks_like_gtr_accession(accession) {
         let client = GtrClient::ready(GtrSyncMode::Auto).await?;
         let index = client.load_index()?;
+        return get_from_data(accession, sections, Some(index), None).await;
+    }
+
+    let client = WhoIvdClient::ready(WhoIvdSyncMode::Auto).await?;
+    get_from_data(accession, sections, None, Some(client.read_rows()?)).await
+}
+
+#[cfg(test)]
+pub(super) async fn get_with_roots(
+    accession: &str,
+    sections: &[String],
+    gtr_root: Option<&Path>,
+    who_ivd_root: Option<&Path>,
+) -> Result<Diagnostic, BioMcpError> {
+    let accession = accession.trim();
+    if accession.is_empty() {
+        return Err(BioMcpError::InvalidArgument(
+            "Diagnostic accession or WHO IVD product code is required. Example: biomcp get diagnostic GTR000006692.3".into(),
+        ));
+    }
+
+    let gtr_index = if looks_like_gtr_accession(accession) {
+        let root = gtr_root.ok_or_else(|| {
+            BioMcpError::InvalidArgument("diagnostic GTR test root is required".to_string())
+        })?;
+        Some(GtrClient::from_root(root).load_index()?)
+    } else {
+        None
+    };
+    let who_rows = if !looks_like_gtr_accession(accession) {
+        let root = who_ivd_root.ok_or_else(|| {
+            BioMcpError::InvalidArgument("diagnostic WHO IVD test root is required".to_string())
+        })?;
+        Some(WhoIvdClient::from_root(root).read_rows()?)
+    } else {
+        None
+    };
+
+    get_from_data(accession, sections, gtr_index, who_rows).await
+}
+
+async fn get_from_data(
+    accession: &str,
+    sections: &[String],
+    gtr_index: Option<GtrIndex>,
+    who_rows: Option<Vec<WhoIvdRecord>>,
+) -> Result<Diagnostic, BioMcpError> {
+    if looks_like_gtr_accession(accession) {
+        let index = gtr_index.ok_or_else(|| {
+            BioMcpError::InvalidArgument("diagnostic GTR data is required".to_string())
+        })?;
         let record = index.record(accession).ok_or_else(|| BioMcpError::NotFound {
             entity: "diagnostic".to_string(),
             id: accession.to_string(),
@@ -603,8 +656,13 @@ pub async fn get(accession: &str, sections: &[String]) -> Result<Diagnostic, Bio
         return Ok(diagnostic);
     }
 
-    let client = WhoIvdClient::ready(WhoIvdSyncMode::Auto).await?;
-    let record = client.get(accession)?.ok_or_else(|| BioMcpError::NotFound {
+    let record = who_rows
+        .ok_or_else(|| {
+            BioMcpError::InvalidArgument("diagnostic WHO IVD data is required".to_string())
+        })?
+        .into_iter()
+        .find(|record| record.product_code == accession)
+        .ok_or_else(|| BioMcpError::NotFound {
         entity: "diagnostic".to_string(),
         id: accession.to_string(),
         suggestion:

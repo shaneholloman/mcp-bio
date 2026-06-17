@@ -256,7 +256,7 @@ mod tests {
     use crate::sources::gtr::{GTR_CONDITION_GENE_FILE, GTR_TEST_VERSION_FILE};
     use crate::sources::openfda::FdaPmaResult;
     use crate::sources::who_ivd::WHO_IVD_CSV_FILE;
-    use crate::test_support::{TempDirGuard, env_lock, set_env_var};
+    use crate::test_support::TempDirGuard;
 
     fn fixture_gtr_root(label: &str) -> TempDirGuard {
         let root = TempDirGuard::new(label);
@@ -266,51 +266,14 @@ mod tests {
 
     fn fixture_all_roots(label: &str) -> (TempDirGuard, TempDirGuard) {
         let gtr_root = fixture_gtr_root(&format!("{label}-gtr"));
-        let who_root = TempDirGuard::new(&format!("{label}-who-ivd"));
-        write_who_ivd_fixture(who_root.path());
+        let who_root = fixture_who_ivd_root(&format!("{label}-who-ivd"));
         (gtr_root, who_root)
     }
 
-    async fn install_gtr_fixture_root(
-        label: &str,
-    ) -> (
-        tokio::sync::MutexGuard<'static, ()>,
-        TempDirGuard,
-        crate::test_support::EnvVarGuard,
-    ) {
-        let lock = env_lock().lock().await;
+    fn fixture_who_ivd_root(label: &str) -> TempDirGuard {
         let root = TempDirGuard::new(label);
-        write_gtr_fixture(root.path());
-        let env = set_env_var(
-            "BIOMCP_GTR_DIR",
-            Some(root.path().to_str().expect("utf-8 path")),
-        );
-        (lock, root, env)
-    }
-
-    async fn install_all_fixture_roots(
-        label: &str,
-    ) -> (
-        tokio::sync::MutexGuard<'static, ()>,
-        TempDirGuard,
-        crate::test_support::EnvVarGuard,
-        TempDirGuard,
-        crate::test_support::EnvVarGuard,
-    ) {
-        let lock = env_lock().lock().await;
-        let gtr_root = TempDirGuard::new(&format!("{label}-gtr"));
-        write_gtr_fixture(gtr_root.path());
-        let gtr_env = set_env_var(
-            "BIOMCP_GTR_DIR",
-            Some(gtr_root.path().to_str().expect("utf-8 path")),
-        );
-        let who_root = TempDirGuard::new(&format!("{label}-who-ivd"));
-        write_who_ivd_fixture(who_root.path());
-        let who_env = set_env_var(
-            "BIOMCP_WHO_IVD_DIR",
-            Some(who_root.path().to_str().expect("utf-8 path")),
-        );
-        (lock, gtr_root, gtr_env, who_root, who_env)
+        write_who_ivd_fixture(root.path());
+        root
     }
 
     fn write_gtr_fixture(root: &Path) {
@@ -510,9 +473,11 @@ mod tests {
 
     #[tokio::test]
     async fn get_keeps_summary_by_default_and_requested_sections_as_options() {
-        let (_lock, _root, _env) = install_gtr_fixture_root("diagnostic-get").await;
+        let root = fixture_gtr_root("diagnostic-get");
 
-        let summary = get("GTR000000001.1", &[]).await.expect("summary get");
+        let summary = super::get::get_with_roots("GTR000000001.1", &[], Some(root.path()), None)
+            .await
+            .expect("summary get");
         assert_eq!(summary.source, "gtr");
         assert_eq!(summary.source_id, "GTR000000001.1");
         assert_eq!(summary.accession, "GTR000000001.1");
@@ -529,13 +494,15 @@ mod tests {
             vec!["Molecular genetics".to_string()]
         );
 
-        let expanded = get(
+        let expanded = super::get::get_with_roots(
             "GTR000000001.1",
             &[
                 "genes".to_string(),
                 "conditions".to_string(),
                 "methods".to_string(),
             ],
+            Some(root.path()),
+            None,
         )
         .await
         .expect("expanded get");
@@ -562,11 +529,13 @@ mod tests {
 
     #[tokio::test]
     async fn get_diagnostic_genes_returns_full_deduped_broad_panel_list() {
-        let (_lock, _root, _env) = install_gtr_fixture_root("diagnostic-get-broad-panel").await;
+        let root = fixture_gtr_root("diagnostic-get-broad-panel");
 
-        let expanded = get(
+        let expanded = super::get::get_with_roots(
             "GTR000000003.1",
             &["genes".to_string(), "conditions".to_string()],
+            Some(root.path()),
+            None,
         )
         .await
         .expect("expanded broad-panel get");
@@ -600,10 +569,11 @@ mod tests {
 
     #[tokio::test]
     async fn get_who_ivd_keeps_summary_and_resolves_supported_sections() {
-        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
-            install_all_fixture_roots("diagnostic-get-who").await;
+        let root = fixture_who_ivd_root("diagnostic-get-who");
 
-        let summary = get("ITPW02232- TC40", &[]).await.expect("summary get");
+        let summary = super::get::get_with_roots("ITPW02232- TC40", &[], None, Some(root.path()))
+            .await
+            .expect("summary get");
         assert_eq!(summary.source, "who-ivd");
         assert_eq!(summary.source_id, "ITPW02232- TC40");
         assert_eq!(summary.accession, "ITPW02232- TC40");
@@ -625,14 +595,24 @@ mod tests {
         assert!(summary.regulatory.is_none());
         assert!(summary.method_categories.is_empty());
 
-        let conditions = get("ITPW02232- TC40", &["conditions".to_string()])
-            .await
-            .expect("conditions get");
+        let conditions = super::get::get_with_roots(
+            "ITPW02232- TC40",
+            &["conditions".to_string()],
+            None,
+            Some(root.path()),
+        )
+        .await
+        .expect("conditions get");
         assert_eq!(conditions.conditions, Some(vec!["HIV".to_string()]));
 
-        let expanded = get("ITPW02232- TC40", &["all".to_string()])
-            .await
-            .expect("all get");
+        let expanded = super::get::get_with_roots(
+            "ITPW02232- TC40",
+            &["all".to_string()],
+            None,
+            Some(root.path()),
+        )
+        .await
+        .expect("all get");
         assert_eq!(expanded.conditions, Some(vec!["HIV".to_string()]));
         assert!(expanded.genes.is_none());
         assert!(expanded.methods.is_none());
@@ -657,20 +637,29 @@ mod tests {
 
     #[tokio::test]
     async fn get_who_ivd_rejects_unsupported_sections_with_recovery_hint() {
-        let (_lock, _gtr_root, _gtr_env, _who_root, _who_env) =
-            install_all_fixture_roots("diagnostic-get-who-sections").await;
+        let root = fixture_who_ivd_root("diagnostic-get-who-sections");
 
-        let genes = get("ITPW02232- TC40", &["genes".to_string()])
-            .await
-            .expect_err("WHO genes should fail");
+        let genes = super::get::get_with_roots(
+            "ITPW02232- TC40",
+            &["genes".to_string()],
+            None,
+            Some(root.path()),
+        )
+        .await
+        .expect_err("WHO genes should fail");
         assert_eq!(
             genes.to_string(),
             "Invalid argument: Section `genes` is not available for WHO Prequalified IVD diagnostic records. Try `biomcp get diagnostic \"ITPW02232- TC40\" conditions`"
         );
 
-        let methods = get("ITPW02232- TC40", &["methods".to_string()])
-            .await
-            .expect_err("WHO methods should fail");
+        let methods = super::get::get_with_roots(
+            "ITPW02232- TC40",
+            &["methods".to_string()],
+            None,
+            Some(root.path()),
+        )
+        .await
+        .expect_err("WHO methods should fail");
         assert_eq!(
             methods.to_string(),
             "Invalid argument: Section `methods` is not available for WHO Prequalified IVD diagnostic records. Try `biomcp get diagnostic \"ITPW02232- TC40\" conditions`"

@@ -92,6 +92,7 @@ impl WhoIvdClient {
         parse_who_ivd_csv(&payload)
     }
 
+    #[cfg(test)]
     pub(crate) fn get(&self, product_code: &str) -> Result<Option<WhoIvdRecord>, BioMcpError> {
         let target = product_code.trim();
         if target.is_empty() {
