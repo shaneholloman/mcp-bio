@@ -192,6 +192,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/gene.rs` Reactome workflow-signal mock is gone: the
       limit-one probe request shape is covered in Reactome source tests and the
       gene entity test now covers the empty-symbol no-probe guard directly.
+- [x] `src/entities/gene.rs` diagnostics tests are now pure: diagnostic row
+      application and unavailable-note behavior test direct fixtures instead of
+      creating a temporary GTR data root through `BIOMCP_GTR_DIR`.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -715,3 +718,7 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   search-combine and disabled-flag tests from mock-server/env-lock tests to
   direct fixtures, and removed pathway wiremock/env imports. Checks:
   `cargo nextest run -E 'test(/entities::pathway::/)'` → 18/18 pass.
+- 2026-06-16: gene diagnostics cleanup. Split diagnostic row/error application
+  into a pure helper and converted the two diagnostics section tests from
+  `BIOMCP_GTR_DIR` fixture-root env tests to direct diagnostic rows/errors.
+  Checks: `cargo nextest run -E 'test(/entities::gene::/)'` → 21/21 pass.
