@@ -103,7 +103,6 @@ mod tests {
     };
     use crate::test_support::TempDirGuard;
     use ssri::Integrity;
-    use tokio::sync::MutexGuard;
 
     fn block_on<F: Future>(future: F) -> F::Output {
         tokio::runtime::Builder::new_current_thread()
@@ -111,10 +110,6 @@ mod tests {
             .build()
             .expect("health test runtime")
             .block_on(future)
-    }
-
-    fn env_lock() -> MutexGuard<'static, ()> {
-        crate::test_support::env_lock().blocking_lock()
     }
 
     fn fixture_ema_root() -> TempDirGuard {

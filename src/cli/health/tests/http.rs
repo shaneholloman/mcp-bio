@@ -1,17 +1,15 @@
 //! HTTP/auth probe tests for `biomcp health`.
 
 use reqwest::StatusCode;
-use wiremock::matchers::{body_string_contains, method, path};
-use wiremock::{Mock, MockServer, ResponseTemplate};
+use std::time::Instant;
 
 use super::super::HealthRow;
 use super::super::catalog::health_sources;
 use super::super::http::{
-    configured_key_from_value, excluded_outcome, optional_auth_status_outcome,
+    configured_key_from_value, excluded_outcome, optional_auth_status_outcome, vaers_query_outcome,
 };
-use super::super::runner::{ProbeClass, ProbeOutcome, probe_source, report_from_outcomes};
-use super::{assert_millisecond_latency, block_on, env_lock};
-use crate::test_support::set_env_var;
+use super::super::runner::{ProbeClass, ProbeOutcome, report_from_outcomes};
+use super::assert_millisecond_latency;
 
 fn semantic_scholar_optional_outcome(status: StatusCode, key_configured: bool) -> ProbeOutcome {
     optional_auth_status_outcome(
@@ -26,38 +24,39 @@ fn semantic_scholar_optional_outcome(status: StatusCode, key_configured: bool) -
     )
 }
 #[test]
-fn probe_source_runs_vaers_query_against_fixture_server() {
-    const REACTIONS_RESPONSE_FIXTURE: &str =
-        include_str!("../../../../spec/fixtures/vaers/reactions-response.xml");
+fn vaers_query_success_reports_healthy_row() {
+    let outcome = vaers_query_outcome(
+        "CDC WONDER VAERS",
+        Some("adverse-event vaers"),
+        Instant::now(),
+        Ok(()),
+    );
 
-    let _env_lock = env_lock();
-    block_on(async {
-        let server = MockServer::start().await;
-        let _vaers_env = set_env_var("BIOMCP_VAERS_BASE", Some(&server.uri()));
-        let source = health_sources()
-            .iter()
-            .find(|source| source.api == "CDC WONDER VAERS")
-            .expect("vaers health source");
+    assert_eq!(outcome.class, ProbeClass::Healthy);
+    assert_eq!(outcome.row.api, "CDC WONDER VAERS");
+    assert_eq!(outcome.row.status, "ok");
+    assert_eq!(outcome.row.affects, None);
+    assert_millisecond_latency(&outcome.row.latency);
+}
 
-        Mock::given(method("POST"))
-            .and(path("/controller/datarequest/D8"))
-            .and(body_string_contains("request_xml="))
-            .and(body_string_contains("MMR"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("content-type", "text/html; charset=ISO-8859-1")
-                    .set_body_raw(REACTIONS_RESPONSE_FIXTURE, "text/html; charset=ISO-8859-1"),
-            )
-            .mount(&server)
-            .await;
+#[test]
+fn vaers_query_error_reports_error_row_with_affects() {
+    let outcome = vaers_query_outcome(
+        "CDC WONDER VAERS",
+        Some("adverse-event vaers"),
+        Instant::now(),
+        Err(crate::error::BioMcpError::Api {
+            api: "vaers".to_string(),
+            message: "bad gateway".to_string(),
+        }),
+    );
 
-        let outcome = probe_source(reqwest::Client::new(), source).await;
-        assert_eq!(outcome.class, ProbeClass::Healthy);
-        assert_eq!(outcome.row.api, "CDC WONDER VAERS");
-        assert_eq!(outcome.row.status, "ok");
-        assert_eq!(outcome.row.affects, None);
-        assert_millisecond_latency(&outcome.row.latency);
-    });
+    assert_eq!(outcome.class, ProbeClass::Error);
+    assert_eq!(outcome.row.api, "CDC WONDER VAERS");
+    assert_eq!(outcome.row.status, "error");
+    assert!(outcome.row.latency.ends_with("ms (error)"));
+    assert_eq!(outcome.row.affects.as_deref(), Some("adverse-event vaers"));
+    assert_eq!(outcome.row.key_configured, None);
 }
 
 #[test]

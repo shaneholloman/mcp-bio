@@ -368,21 +368,19 @@ pub(in crate::cli::health) async fn check_vaers_query(
     let start = Instant::now();
     let client = match crate::sources::vaers::VaersClient::new() {
         Ok(client) => client,
-        Err(err) => {
-            return outcome(
-                health_row(
-                    api,
-                    "error".into(),
-                    api_error_latency(start, &err),
-                    affects,
-                    None,
-                ),
-                ProbeClass::Error,
-            );
-        }
+        Err(err) => return vaers_query_outcome(api, affects, start, Err(err)),
     };
 
-    match client.health_check().await {
+    vaers_query_outcome(api, affects, start, client.health_check().await)
+}
+
+pub(in crate::cli::health) fn vaers_query_outcome(
+    api: &str,
+    affects: Option<&'static str>,
+    start: Instant,
+    result: Result<(), BioMcpError>,
+) -> ProbeOutcome {
+    match result {
         Ok(()) => outcome(
             health_row(
                 api,

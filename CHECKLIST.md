@@ -884,3 +884,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/cli::diagnostic::/)'` → 7/7 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-17: health VAERS cleanup. Split VAERS health row construction into
+  a pure helper and replaced the mock-server/`BIOMCP_VAERS_BASE` health test
+  with direct success/error outcome tests. VAERS request construction and XML
+  response parsing remain covered in `src/sources/vaers.rs`. Checks:
+  `cargo nextest run -E 'test(/cli::health::tests::http::/)'` → 10/10 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
