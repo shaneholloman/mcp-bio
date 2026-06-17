@@ -1026,3 +1026,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   content-type errors to use the shared sanitized HTTP-body summary for HTML
   responses. Checks: `cargo nextest run -E 'test(/sources::who_pq::/)'` →
   19/19 pass.
+- 2026-06-17: CVX auto-sync cleanup. Deleted `tests/cvx_auto_sync.rs`,
+  replacing its mock-server coverage with pure source tests for required-file
+  detection, missing/fresh/stale/force sync decisions, sync intro text,
+  recovery-path error text, CVX/TRADENAME/MVX parsing, local alias lookup, and
+  HTML response rejection. Also changed CVX CSV content-type errors to use the
+  shared sanitized HTTP-body summary for HTML responses. Checks:
+  `cargo nextest run -E 'test(/sources::cvx::/)'` → 14/14 pass.

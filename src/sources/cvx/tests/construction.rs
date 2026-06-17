@@ -48,3 +48,33 @@ fn sync_state_marks_missing_fresh_stale_and_force() {
         SyncState::Stale
     ));
 }
+
+#[test]
+fn sync_intro_matches_missing_stale_and_force_modes() {
+    assert_eq!(
+        sync_intro(SyncState::Missing, CvxSyncMode::Auto),
+        "Downloading"
+    );
+    assert_eq!(
+        sync_intro(SyncState::Stale, CvxSyncMode::Auto),
+        "Refreshing stale"
+    );
+    assert_eq!(sync_intro(SyncState::Fresh, CvxSyncMode::Auto), "Checking");
+    assert_eq!(
+        sync_intro(SyncState::Fresh, CvxSyncMode::Force),
+        "Refreshing"
+    );
+}
+
+#[test]
+fn cvx_read_error_mentions_recovery_paths() {
+    let root = TempDirGuard::new("cvx-read-error");
+    let err = cvx_read_error(root.path(), "mvx.txt: HTTP 503");
+    let message = err.to_string();
+
+    assert!(message.contains("CDC CVX/MVX"));
+    assert!(message.contains("mvx.txt: HTTP 503"));
+    assert!(message.contains("biomcp cvx sync"));
+    assert!(message.contains("BIOMCP_CVX_DIR"));
+    assert!(message.contains(&root.path().display().to_string()));
+}

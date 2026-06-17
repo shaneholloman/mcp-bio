@@ -688,7 +688,7 @@ fn ensure_csv_content_type(
             api: CVX_API.to_string(),
             message: format!(
                 "Unexpected HTML response (content-type: {raw}): {}",
-                crate::sources::body_excerpt(body)
+                crate::sources::summarize_http_error_body(Some(header), body)
             ),
         });
     }

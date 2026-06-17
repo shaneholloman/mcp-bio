@@ -3,6 +3,19 @@
 
 use super::super::*;
 use crate::test_support::TempDirGuard;
+use reqwest::header::HeaderValue;
+
+#[test]
+fn ensure_csv_content_type_rejects_html_response_without_raw_tags() {
+    let content_type = HeaderValue::from_static("text/html; charset=utf-8");
+    let err = ensure_csv_content_type(Some(&content_type), b"<html><body>not csv</body></html>")
+        .expect_err("html should be rejected");
+    let message = err.to_string();
+
+    assert!(message.contains("Unexpected HTML response"));
+    assert!(message.contains("HTML error page"));
+    assert!(!message.contains("<html>"));
+}
 
 #[test]
 fn parse_cvx_codes_parses_real_shape_and_non_vaccine_flag() {
