@@ -330,20 +330,14 @@ pub(in crate::cli) async fn handle_search(
         &exact_entity_commands,
     );
     if let Some(token) = session_token.as_deref() {
-        let pmids = results
-            .iter()
-            .map(|result| result.pmid.clone())
-            .collect::<Vec<_>>();
         let session_suggestions = match crate::cache::resolve_cache_config() {
-            Ok(config) => super::session::record_success_and_suggestions(
+            Ok(config) => article_session_suggestions(
                 &config.cache_root,
-                super::session::SessionSearch {
-                    token,
-                    keyword: filters.keyword.as_deref(),
-                    pmids: &pmids,
-                    next_commands: &next_commands,
-                    now_epoch_secs: super::session::current_epoch_secs(),
-                },
+                token,
+                filters,
+                &results,
+                &next_commands,
+                super::session::current_epoch_secs(),
             ),
             Err(err) => {
                 tracing::warn!("Article search session loop-breaker cache root unavailable: {err}");
@@ -389,6 +383,30 @@ pub(in crate::cli) async fn handle_search(
     };
 
     Ok(CommandOutcome::stdout(text))
+}
+
+pub(super) fn article_session_suggestions(
+    cache_root: &std::path::Path,
+    token: &str,
+    filters: &crate::entities::article::ArticleSearchFilters,
+    results: &[crate::entities::article::ArticleSearchResult],
+    next_commands: &[String],
+    now_epoch_secs: u64,
+) -> Vec<ArticleSuggestion> {
+    let pmids = results
+        .iter()
+        .map(|result| result.pmid.clone())
+        .collect::<Vec<_>>();
+    super::session::record_success_and_suggestions(
+        cache_root,
+        super::session::SessionSearch {
+            token,
+            keyword: filters.keyword.as_deref(),
+            pmids: &pmids,
+            next_commands,
+            now_epoch_secs,
+        },
+    )
 }
 
 pub(in crate::cli) async fn handle_command(

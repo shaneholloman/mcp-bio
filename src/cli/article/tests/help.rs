@@ -34,23 +34,6 @@ fn render_article_get_long_help() -> String {
     String::from_utf8(help).expect("help should be utf-8")
 }
 
-pub(super) fn parse_article_search(
-    argv: impl IntoIterator<Item = &'static str>,
-) -> (super::super::ArticleSearchArgs, bool) {
-    let cli = Cli::try_parse_from(argv).expect("article search should parse");
-    let Cli {
-        command: Commands::Search {
-            entity: SearchEntity::Article(args),
-        },
-        json,
-        ..
-    } = cli
-    else {
-        panic!("expected article search command");
-    };
-    (args, json)
-}
-
 #[test]
 fn search_article_help_includes_when_to_use_guidance() {
     let help = render_article_search_long_help();

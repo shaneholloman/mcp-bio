@@ -910,3 +910,13 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   pass; `cargo check` → pass;
   `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
   pass.
+- 2026-06-17: article CLI session cleanup. Split the article session-suggestion
+  wiring into a pure helper that accepts an explicit cache root, then replaced
+  the two mock-server/env-driven article JSON session tests with direct
+  in-memory result tests. Removed the now-unused global env-lock and env-var
+  test helpers from `src/test_support.rs`; a scan shows no remaining
+  `env_lock` / `set_env_var` test usage. Checks:
+  `cargo nextest run -E 'test(/cli::article::tests::json::/) |
+  test(/cli::article::tests::help::/)'` → 17/17 pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.

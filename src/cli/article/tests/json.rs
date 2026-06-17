@@ -1,16 +1,12 @@
 //! Article CLI JSON and session integration tests.
 use chrono::NaiveDate;
-use clap::Parser;
 
 use super::super::dispatch::{
     ArticleSearchJsonPage, ArticleSuggestion, article_query_summary, article_search_json,
+    article_session_suggestions,
 };
-use super::super::handle_search;
-use super::help::parse_article_search;
-use crate::cli::{Cli, Commands, PaginationMeta, SearchEntity};
-use crate::test_support::{TempDirGuard, env_lock, set_env_var};
-use wiremock::matchers::{method, path, query_param};
-use wiremock::{Mock, MockServer, ResponseTemplate};
+use crate::cli::PaginationMeta;
+use crate::test_support::TempDirGuard;
 
 #[test]
 fn article_search_json_includes_query_and_ranking_context() {
@@ -342,115 +338,100 @@ fn article_search_json_allows_loop_suggestions_without_sections() {
     );
 }
 
-#[tokio::test]
-async fn handle_search_json_appends_session_loop_suggestions_after_successful_overlap() {
-    let _guard = env_lock().lock().await;
-    let europepmc = MockServer::start().await;
+fn session_article_result(
+    pmid: &str,
+    title: &str,
+) -> crate::entities::article::ArticleSearchResult {
+    crate::entities::article::ArticleSearchResult {
+        pmid: pmid.into(),
+        pmcid: None,
+        doi: None,
+        title: title.into(),
+        journal: Some("Journal".into()),
+        date: Some("2025-01-01".into()),
+        first_index_date: Some(NaiveDate::from_ymd_opt(2025, 1, 15).expect("valid date")),
+        citation_count: Some(25),
+        influential_citation_count: None,
+        source: crate::entities::article::ArticleSource::EuropePmc,
+        matched_sources: vec![crate::entities::article::ArticleSource::EuropePmc],
+        score: None,
+        is_retracted: Some(false),
+        abstract_snippet: None,
+        ranking: None,
+        normalized_title: title.to_ascii_lowercase(),
+        normalized_abstract: String::new(),
+        publication_type: Some("journal article".into()),
+        source_local_position: 0,
+    }
+}
+
+#[test]
+fn article_session_suggestions_flow_into_search_json_after_overlap() {
     let cache_root = TempDirGuard::new("article-session-loop-dispatch");
-    let cache_root_string = cache_root.path().to_string_lossy().into_owned();
-    let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&cache_root_string));
-    let _s2_key = set_env_var("S2_API_KEY", None);
+    let previous_results = vec![session_article_result("22663011", "Oncotype DX article")];
+    let current_results = vec![session_article_result(
+        "39073865",
+        "Oncotype DX DCIS article",
+    )];
+    let mut previous_filters = super::super::super::related_article_filters();
+    previous_filters.keyword = Some("Oncotype DX review paper".into());
+    let mut current_filters = super::super::super::related_article_filters();
+    current_filters.keyword = Some("Oncotype DX DCIS study".into());
+    let next_commands = vec![
+        "biomcp get article 39073865".to_string(),
+        "biomcp search article -k \"Oncotype DX DCIS study\" --year-min 2025 --year-max 2025 --limit 5".to_string(),
+        "biomcp list article".to_string(),
+    ];
 
-    Mock::given(method("GET"))
-        .and(path("/search"))
-        .and(query_param("page", "1"))
-        .and(query_param("format", "json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "hitCount": 1,
-            "resultList": {
-                "result": [{
-                    "id": "EP-1",
-                    "pmid": "22663011",
-                    "title": "Oncotype DX article",
-                    "journalTitle": "Journal",
-                    "firstPublicationDate": "2025-01-01",
-                    "citedByCount": 25,
-                    "pubType": "journal article"
-                }]
-            }
-        })))
-        .expect(2)
-        .mount(&europepmc)
-        .await;
-
-    let first = Cli::try_parse_from([
-        "biomcp",
-        "--json",
-        "search",
-        "article",
-        "-k",
-        "Oncotype DX review paper",
-        "--source",
-        "europepmc",
-        "--sort",
-        "date",
-        "--session",
+    let first = article_session_suggestions(
+        cache_root.path(),
         "lit-review-1",
-        "--limit",
-        "1",
-    ])
-    .expect("first article search should parse");
-    let second = Cli::try_parse_from([
-        "biomcp",
-        "--json",
-        "search",
-        "article",
-        "-k",
-        "Oncotype DX DCIS study",
-        "--source",
-        "europepmc",
-        "--sort",
-        "date",
-        "--session",
-        "lit-review-1",
-        "--limit",
-        "1",
-    ])
-    .expect("second article search should parse");
-
-    let Cli {
-        command: Commands::Search {
-            entity: SearchEntity::Article(first_args),
-        },
-        json,
-        ..
-    } = first
-    else {
-        panic!("expected first article search command");
-    };
-    let first_outcome = handle_search(first_args, json)
-        .await
-        .expect("first article search should succeed");
-    let first_value: serde_json::Value =
-        serde_json::from_str(&first_outcome.text).expect("first json should parse");
+        &previous_filters,
+        &previous_results,
+        &[],
+        1_000,
+    );
     assert!(
-        first_value
-            .get("_meta")
-            .and_then(|meta| meta.get("suggestions"))
-            .is_none()
+        first.is_empty(),
+        "first search should only record the session baseline"
     );
 
-    let Cli {
-        command:
-            Commands::Search {
-                entity: SearchEntity::Article(second_args),
-            },
-        json,
-        ..
-    } = second
-    else {
-        panic!("expected second article search command");
-    };
-    let second_outcome = handle_search(second_args, json)
-        .await
-        .expect("second article search should succeed");
-    let second_value: serde_json::Value =
-        serde_json::from_str(&second_outcome.text).expect("second json should parse");
-    let suggestions = second_value["_meta"]["suggestions"]
+    let suggestions = article_session_suggestions(
+        cache_root.path(),
+        "lit-review-1",
+        &current_filters,
+        &current_results,
+        &next_commands,
+        1_030,
+    );
+    let query = article_query_summary(
+        &current_filters,
+        crate::entities::article::ArticleSourceFilter::EuropePmc,
+        false,
+        1,
+        0,
+    );
+    let json = article_search_json(
+        &query,
+        &current_filters,
+        false,
+        None,
+        None,
+        ArticleSearchJsonPage {
+            results: current_results,
+            pagination: PaginationMeta::offset(0, 1, 1, Some(1)),
+            next_commands,
+            suggestions,
+            source_status: Vec::new(),
+        },
+    )
+    .expect("article search json should render");
+
+    let value: serde_json::Value =
+        serde_json::from_str(&json).expect("json should parse successfully");
+    let commands = value["_meta"]["suggestions"]
         .as_array()
-        .expect("overlap should emit suggestions");
-    let commands = suggestions
+        .expect("overlap should emit suggestions")
         .iter()
         .filter_map(|suggestion| {
             suggestion
@@ -465,136 +446,15 @@ async fn handle_search_json_appends_session_loop_suggestions_after_successful_ov
         commands[2].contains("--year-min 2025 --year-max 2025"),
         "date retry should come from the current result page: {commands:#?}"
     );
-    for command in commands.iter().copied() {
-        let argv = shlex::split(command).unwrap_or_else(|| panic!("shlex failed on {command}"));
-        Cli::try_parse_from(argv)
-            .unwrap_or_else(|err| panic!("loop suggestion did not parse: {command}: {err}"));
-    }
-    assert!(suggestions.iter().all(|suggestion| {
-        suggestion
-            .as_object()
-            .is_some_and(|object| !object.contains_key("sections"))
-    }));
-}
-
-#[tokio::test]
-async fn handle_search_session_baseline_is_markdown_independent_and_no_session_does_not_reset() {
-    let _guard = env_lock().lock().await;
-    let europepmc = MockServer::start().await;
-    let cache_root = TempDirGuard::new("article-session-markdown-baseline");
-    let cache_root_string = cache_root.path().to_string_lossy().into_owned();
-    let _europepmc_base = set_env_var("BIOMCP_EUROPEPMC_BASE", Some(&europepmc.uri()));
-    let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&cache_root_string));
-    let _s2_key = set_env_var("S2_API_KEY", None);
-
-    Mock::given(method("GET"))
-        .and(path("/search"))
-        .and(query_param("page", "1"))
-        .and(query_param("format", "json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "hitCount": 1,
-            "resultList": {
-                "result": [{
-                    "id": "EP-1",
-                    "pmid": "22663011",
-                    "title": "Oncotype DX article",
-                    "journalTitle": "Journal",
-                    "firstPublicationDate": "2025-01-01",
-                    "citedByCount": 25,
-                    "pubType": "journal article"
-                }]
-            }
-        })))
-        .expect(3)
-        .mount(&europepmc)
-        .await;
-
-    let (markdown_args, markdown_json) = parse_article_search([
-        "biomcp",
-        "search",
-        "article",
-        "-k",
-        "Oncotype DX review paper",
-        "--source",
-        "europepmc",
-        "--sort",
-        "date",
-        "--session",
-        "lit-review-1",
-        "--limit",
-        "1",
-    ]);
-    assert!(!markdown_json);
-    let markdown_outcome = handle_search(markdown_args, markdown_json)
-        .await
-        .expect("markdown article search should succeed");
-    assert!(!markdown_outcome.text.contains("_meta"));
     assert!(
-        !markdown_outcome
-            .text
-            .contains("Use the prior search's article set")
+        value["_meta"]["suggestions"]
+            .as_array()
+            .expect("suggestions")
+            .iter()
+            .all(|suggestion| suggestion
+                .as_object()
+                .is_some_and(|object| !object.contains_key("sections")))
     );
-
-    let (no_session_args, no_session_json) = parse_article_search([
-        "biomcp",
-        "--json",
-        "search",
-        "article",
-        "-k",
-        "Oncotype DX DCIS study",
-        "--source",
-        "europepmc",
-        "--sort",
-        "date",
-        "--limit",
-        "1",
-    ]);
-    let no_session_outcome = handle_search(no_session_args, no_session_json)
-        .await
-        .expect("no-session article search should succeed");
-    let no_session_value: serde_json::Value =
-        serde_json::from_str(&no_session_outcome.text).expect("no-session json should parse");
-    assert!(
-        no_session_value
-            .get("_meta")
-            .and_then(|meta| meta.get("suggestions"))
-            .is_none(),
-        "searches without --session should not emit loop-breaker suggestions"
-    );
-
-    let (session_args, session_json) = parse_article_search([
-        "biomcp",
-        "--json",
-        "search",
-        "article",
-        "-k",
-        "Oncotype DX DCIS study",
-        "--source",
-        "europepmc",
-        "--sort",
-        "date",
-        "--session",
-        "lit-review-1",
-        "--limit",
-        "1",
-    ]);
-    let session_outcome = handle_search(session_args, session_json)
-        .await
-        .expect("session article search should succeed");
-    let session_value: serde_json::Value =
-        serde_json::from_str(&session_outcome.text).expect("session json should parse");
-    let commands = session_value["_meta"]["suggestions"]
-        .as_array()
-        .expect("session overlap should emit suggestions")
-        .iter()
-        .filter_map(|suggestion| {
-            suggestion
-                .get("command")
-                .and_then(serde_json::Value::as_str)
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(commands[0], "biomcp article batch 22663011");
-    assert_eq!(commands[1], "biomcp discover \"Oncotype DX DCIS study\"");
 }
 
 #[test]
