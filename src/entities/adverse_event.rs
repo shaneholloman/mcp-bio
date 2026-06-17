@@ -983,6 +983,23 @@ fn validate_explicit_vaers_source(
     Ok(())
 }
 
+fn all_source_search_with_unsupported_vaers_filters(
+    faers: FaersSearchStatus,
+    unsupported: &[&str],
+) -> AdverseEventSourceSearch {
+    AdverseEventSourceSearch {
+        source: AdverseEventSourceFilter::All,
+        faers: Some(faers),
+        vaers: Some(VaersSearchPayload::status_only(
+            VaersSearchStatus::UnsupportedFilters,
+            format!(
+                "CDC VAERS skipped because these filters are unsupported for aggregate vaccine search: {}",
+                unsupported.join(", ")
+            ),
+        )),
+    }
+}
+
 pub async fn search_with_source(
     filters: &AdverseEventSearchFilters,
     source: AdverseEventSourceFilter,
@@ -1046,17 +1063,10 @@ pub async fn search_with_source(
                     vaers: Some(vaers),
                 })
             } else {
-                Ok(AdverseEventSourceSearch {
-                    source,
-                    faers: Some(search_with_status(filters, limit, offset).await?),
-                    vaers: Some(VaersSearchPayload::status_only(
-                        VaersSearchStatus::UnsupportedFilters,
-                        format!(
-                            "CDC VAERS skipped because these filters are unsupported for aggregate vaccine search: {}",
-                            unsupported.join(", ")
-                        ),
-                    )),
-                })
+                Ok(all_source_search_with_unsupported_vaers_filters(
+                    search_with_status(filters, limit, offset).await?,
+                    &unsupported,
+                ))
             }
         }
     }
@@ -2036,51 +2046,23 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn search_with_source_vaers_returns_query_not_vaccine_without_upstream_call() {
-        let _env_lock = crate::test_support::env_lock().lock().await;
-        let _cvx_env = set_env_var("BIOMCP_CVX_DIR", Some(&cvx_fixture_dir()));
-        let filters = AdverseEventSearchFilters {
-            drug: Some("ibuprofen".into()),
-            ..Default::default()
-        };
+    async fn vaers_resolver_returns_query_not_vaccine_without_upstream_call() {
+        let resolved = resolve_vaers_vaccine("ibuprofen", CvxLookupMode::LocalOnly).await;
 
-        let response = search_with_source(&filters, AdverseEventSourceFilter::Vaers, 5, 0)
-            .await
-            .expect("vaers search response");
-        let vaers = response.vaers.expect("vaers payload");
-
-        assert_eq!(response.source, AdverseEventSourceFilter::Vaers);
-        assert_eq!(vaers.status, VaersSearchStatus::QueryNotVaccine);
-        assert!(vaers.message.unwrap_or_default().contains("vaccine-only"));
-        assert!(vaers.summary.is_none());
+        match resolved {
+            ResolvedVaersVaccine::QueryNotVaccine(message) => {
+                assert!(message.contains("vaccine-only"));
+            }
+            _ => panic!("expected non-vaccine query"),
+        }
     }
 
-    #[tokio::test]
-    async fn search_with_source_all_skips_vaers_for_unsupported_filters() {
-        let _env_lock = crate::test_support::env_lock().lock().await;
-        let server = MockServer::start().await;
-        let filters = AdverseEventSearchFilters {
-            drug: Some("COVID-19 vaccine".into()),
-            reaction: Some("fever".into()),
-            ..Default::default()
-        };
-        let query = build_openfda_query(&filters).unwrap();
-        let _openfda_env = set_env_var("BIOMCP_OPENFDA_BASE", Some(&server.uri()));
-
-        Mock::given(method("GET"))
-            .and(path("/drug/event.json"))
-            .and(query_param("search", query.as_str()))
-            .and(query_param("limit", "5"))
-            .and(query_param("skip", "0"))
-            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
-                "error": {"code": "NOT_FOUND", "message": "No matches found!"}
-            })))
-            .mount(&server)
-            .await;
-
-        let response = search_with_source(&filters, AdverseEventSourceFilter::All, 5, 0)
-            .await
-            .expect("combined source response");
+    #[test]
+    fn search_with_source_all_skips_vaers_for_unsupported_filters() {
+        let response = all_source_search_with_unsupported_vaers_filters(
+            FaersSearchStatus::NotFound,
+            &["--reaction"],
+        );
         let vaers = response.vaers.expect("vaers payload");
 
         assert_eq!(response.source, AdverseEventSourceFilter::All);

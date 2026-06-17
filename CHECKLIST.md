@@ -149,6 +149,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/adverse_event.rs` explicit VAERS rejection tests are pure:
       offset and unsupported-filter errors now test validation directly instead
       of entering async source search.
+- [x] `src/entities/adverse_event.rs` VAERS non-vaccine resolver and
+      unsupported-filter combined response tests are pure: they now test the
+      resolver/response helpers directly instead of starting CVX/OpenFDA mocks.
 - [x] `src/entities/disease/resolution/tests.rs` is pure: the weak direct
       disease-name match rejection now tests the resolver score threshold
       directly instead of querying a mocked MyDisease server.
@@ -507,6 +510,14 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: second adverse-event cleanup. Extracted explicit VAERS source
   validation and converted the offset / unsupported-filter rejection tests from
   async `search_with_source` calls to direct validation checks. Checks:
+  `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: third adverse-event cleanup. Converted the non-vaccine VAERS
+  resolver test to call the resolver directly, then extracted the
+  unsupported-filter combined response helper and converted that test away from
+  OpenFDA/CVX mock servers. Remaining adverse-event server cases are the larger
+  CVX/VAERS summary and trial adverse-event cases. Checks:
   `cargo nextest run -E 'test(/entities::adverse_event::/)'` → 23/23 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
