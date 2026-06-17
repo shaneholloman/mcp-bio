@@ -72,6 +72,45 @@ query SearchDisease($query: String!) {
   }
 }
 "#;
+const SEARCH_TARGET_QUERY: &str = r#"
+query SearchTarget($query: String!) {
+  search(queryString: $query, entityNames: ["target"], page: {index: 0, size: 10}) {
+    hits {
+      id
+      entity
+      object {
+        ... on Target {
+          approvedSymbol
+        }
+      }
+    }
+  }
+}
+"#;
+const TARGET_DRUGGABILITY_CONTEXT_QUERY: &str = r#"
+query TargetDruggabilityContext($ensemblId: String!) {
+  target(ensemblId: $ensemblId) {
+    tractability {
+      label
+      modality
+      value
+    }
+    safetyLiabilities {
+      event
+      datasource
+      effects {
+        direction
+        dosing
+      }
+      biosamples {
+        tissueLabel
+        cellLabel
+        cellFormat
+      }
+    }
+  }
+}
+"#;
 
 pub struct OpenTargetsClient {
     client: reqwest_middleware::ClientWithMiddleware,
@@ -242,63 +281,25 @@ impl OpenTargetsClient {
             return Ok(OpenTargetsTargetDruggabilityContext::default());
         }
 
-        let url = self.endpoint("graphql");
-        let body = GraphQlRequest {
-            query: r#"
-query TargetDruggabilityContext($ensemblId: String!) {
-  target(ensemblId: $ensemblId) {
-    tractability {
-      label
-      modality
-      value
-    }
-    safetyLiabilities {
-      event
-      datasource
-      effects {
-        direction
-        dosing
-      }
-      biosamples {
-        tissueLabel
-        cellLabel
-        cellFormat
-      }
-    }
-  }
-}
-"#,
-            variables: serde_json::json!({
-                "ensemblId": target_id,
-            }),
-        };
+        let plan = Self::target_druggability_context_plan(target_id)?;
+        let resp: GraphQlResponse<TargetDruggabilityData> = self.post_plan_json(&plan).await?;
 
-        let resp: GraphQlResponse<TargetDruggabilityData> =
-            self.post_json(self.client.post(&url), &body).await?;
+        target_druggability_context_from_response(resp)
+    }
 
-        if let Some(errors) = resp.errors {
-            let msg = errors
-                .into_iter()
-                .filter_map(|e| e.message)
-                .collect::<Vec<_>>()
-                .join("; ");
-            if !msg.is_empty() {
-                return Err(BioMcpError::Api {
-                    api: OPENTARGETS_API.to_string(),
-                    message: msg,
-                });
-            }
+    fn target_druggability_context_plan(target_id: &str) -> Result<RequestPlan, BioMcpError> {
+        let target_id = target_id.trim();
+        if target_id.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "OpenTargets target ID is required".into(),
+            ));
         }
-
-        let Some(target) = resp.data.and_then(|d| d.target) else {
-            warn_missing_field("TargetDruggabilityContext", "data.target");
-            return Ok(OpenTargetsTargetDruggabilityContext::default());
-        };
-
-        Ok(OpenTargetsTargetDruggabilityContext {
-            tractability: summarize_tractability(target.tractability),
-            safety_liabilities: summarize_safety_liabilities(target.safety_liabilities),
-        })
+        Ok(RequestPlan::post("graphql").json(serde_json::json!({
+            "query": TARGET_DRUGGABILITY_CONTEXT_QUERY,
+            "variables": {
+                "ensemblId": target_id,
+            },
+        })))
     }
 
     pub async fn target_clinical_context(
@@ -638,69 +639,25 @@ query DiseasePrevalence($efoId: String!, $size: Int!) {
             return Ok(None);
         }
 
-        let url = self.endpoint("graphql");
-        let body = GraphQlRequest {
-            query: r#"
-query SearchTarget($query: String!) {
-  search(queryString: $query, entityNames: ["target"], page: {index: 0, size: 10}) {
-    hits {
-      id
-      entity
-      object {
-        ... on Target {
-          approvedSymbol
-        }
-      }
+        let plan = Self::search_target_plan(symbol)?;
+        let resp: GraphQlResponse<TargetSearchData> = self.post_plan_json(&plan).await?;
+
+        target_id_from_search_response(resp, symbol)
     }
-  }
-}
-"#,
-            variables: serde_json::json!({ "query": symbol }),
-        };
 
-        let resp: GraphQlResponse<TargetSearchData> =
-            self.post_json(self.client.post(&url), &body).await?;
-
-        if let Some(errors) = resp.errors {
-            let msg = errors
-                .into_iter()
-                .filter_map(|e| e.message)
-                .collect::<Vec<_>>()
-                .join("; ");
-            if !msg.is_empty() {
-                return Err(BioMcpError::Api {
-                    api: OPENTARGETS_API.to_string(),
-                    message: msg,
-                });
-            }
+    fn search_target_plan(symbol: &str) -> Result<RequestPlan, BioMcpError> {
+        let symbol = symbol.trim();
+        if symbol.is_empty() {
+            return Err(BioMcpError::InvalidArgument(
+                "OpenTargets target symbol is required".into(),
+            ));
         }
-
-        let hits = resp
-            .data
-            .and_then(|d| d.search)
-            .map(|s| s.hits)
-            .unwrap_or_default();
-
-        for hit in &hits {
-            let approved_symbol = hit
-                .object
-                .as_ref()
-                .and_then(|o| o.approved_symbol.as_deref())
-                .map(str::trim);
-            if hit.entity.as_deref() == Some("target")
-                && approved_symbol.is_some_and(|v| v.eq_ignore_ascii_case(symbol))
-                && let Some(id) = hit.id.as_deref().map(str::trim).filter(|v| !v.is_empty())
-            {
-                return Ok(Some(id.to_string()));
-            }
-        }
-
-        Ok(hits
-            .into_iter()
-            .find(|h| h.entity.as_deref() == Some("target"))
-            .and_then(|h| h.id)
-            .map(|v| v.trim().to_string())
-            .filter(|v| !v.is_empty()))
+        Ok(RequestPlan::post("graphql").json(serde_json::json!({
+            "query": SEARCH_TARGET_QUERY,
+            "variables": {
+                "query": symbol,
+            },
+        })))
     }
 }
 
@@ -886,6 +843,66 @@ fn disease_associated_targets_from_response(
     }
 
     Ok(out)
+}
+
+fn target_id_from_search_response(
+    resp: GraphQlResponse<TargetSearchData>,
+    symbol: &str,
+) -> Result<Option<String>, BioMcpError> {
+    if let Some(msg) = graphql_error_message(&resp) {
+        return Err(BioMcpError::Api {
+            api: OPENTARGETS_API.to_string(),
+            message: msg,
+        });
+    }
+
+    let hits = resp
+        .data
+        .and_then(|d| d.search)
+        .map(|s| s.hits)
+        .unwrap_or_default();
+
+    for hit in &hits {
+        let approved_symbol = hit
+            .object
+            .as_ref()
+            .and_then(|o| o.approved_symbol.as_deref())
+            .map(str::trim);
+        if hit.entity.as_deref() == Some("target")
+            && approved_symbol.is_some_and(|v| v.eq_ignore_ascii_case(symbol))
+            && let Some(id) = hit.id.as_deref().map(str::trim).filter(|v| !v.is_empty())
+        {
+            return Ok(Some(id.to_string()));
+        }
+    }
+
+    Ok(hits
+        .into_iter()
+        .find(|h| h.entity.as_deref() == Some("target"))
+        .and_then(|h| h.id)
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty()))
+}
+
+fn target_druggability_context_from_response(
+    resp: GraphQlResponse<TargetDruggabilityData>,
+) -> Result<OpenTargetsTargetDruggabilityContext, BioMcpError> {
+    if let Some(msg) = graphql_error_message(&resp) {
+        return Err(BioMcpError::Api {
+            api: OPENTARGETS_API.to_string(),
+            message: msg,
+        });
+    }
+
+    let Some(target) = resp.data.and_then(|d| d.target) else {
+        warn_missing_field("TargetDruggabilityContext", "data.target");
+        return Ok(OpenTargetsTargetDruggabilityContext::default());
+    };
+
+    Ok(OpenTargetsTargetDruggabilityContext {
+        tractability: summarize_tractability(target.tractability),
+        safety_liabilities: summarize_safety_liabilities(target.safety_liabilities),
+    })
 }
 
 fn normalize_disease_id(input: &str) -> Option<String> {
@@ -1451,6 +1468,16 @@ pub(crate) mod tests {
         serde_json::from_value(value).expect("disease genes response")
     }
 
+    fn decode_target_search(value: serde_json::Value) -> GraphQlResponse<TargetSearchData> {
+        serde_json::from_value(value).expect("target search response")
+    }
+
+    fn decode_target_druggability(
+        value: serde_json::Value,
+    ) -> GraphQlResponse<TargetDruggabilityData> {
+        serde_json::from_value(value).expect("target druggability response")
+    }
+
     #[test]
     fn drug_sections_plan_builds_graphql_request() {
         let plan = OpenTargetsClient::drug_sections_plan(" CHEMBL25 ").expect("plan");
@@ -1690,69 +1717,100 @@ pub(crate) mod tests {
         assert!(genes.is_empty());
     }
 
-    #[tokio::test]
-    async fn target_druggability_context_groups_modalities_and_safety_summary() {
-        let server = MockServer::start().await;
+    #[test]
+    fn search_target_plan_builds_graphql_request() {
+        let plan = OpenTargetsClient::search_target_plan(" EGFR ").expect("plan");
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchTarget"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [
-                            {"id": "ENSG00000146648", "entity": "target", "object": {"approvedSymbol": "EGFR"}}
-                        ]
-                    }
+        assert_eq!(plan.method, crate::sources::HttpMethod::Post);
+        assert_eq!(plan.path, "graphql");
+        let crate::sources::RequestBody::Json(body) = plan.body else {
+            panic!("expected JSON body");
+        };
+        assert!(
+            body["query"]
+                .as_str()
+                .expect("query")
+                .contains("SearchTarget")
+        );
+        assert_eq!(body["variables"]["query"], "EGFR");
+    }
+
+    #[test]
+    fn target_druggability_context_plan_builds_graphql_request() {
+        let plan =
+            OpenTargetsClient::target_druggability_context_plan(" ENSG00000146648 ").expect("plan");
+
+        assert_eq!(plan.method, crate::sources::HttpMethod::Post);
+        assert_eq!(plan.path, "graphql");
+        let crate::sources::RequestBody::Json(body) = plan.body else {
+            panic!("expected JSON body");
+        };
+        assert!(
+            body["query"]
+                .as_str()
+                .expect("query")
+                .contains("TargetDruggabilityContext")
+        );
+        assert_eq!(body["variables"]["ensemblId"], "ENSG00000146648");
+    }
+
+    #[test]
+    fn target_id_from_search_response_prefers_exact_symbol_match() {
+        let resp = decode_target_search(serde_json::json!({
+            "data": {
+                "search": {
+                    "hits": [
+                        {"id": "ENSG00000000000", "entity": "target", "object": {"approvedSymbol": "ERBB1"}},
+                        {"id": "ENSG00000146648", "entity": "target", "object": {"approvedSymbol": "EGFR"}}
+                    ]
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("TargetDruggabilityContext"))
-            .and(body_string_contains("\"ensemblId\":\"ENSG00000146648\""))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "target": {
-                        "tractability": [
-                            {"label": "Approved Drug", "modality": "SM", "value": true},
-                            {"label": "Clinical Precedence", "modality": "SM", "value": true},
-                            {"label": "High-quality binder", "modality": "AB", "value": false},
-                            {"label": "Clinical Precedence", "modality": "AB", "value": true},
-                            {"label": "Discovery chemistry", "modality": "PR", "value": false},
-                            {"label": "Ligand present", "modality": "OC", "value": true},
-                            {"label": "Exploratory", "modality": "XX", "value": true}
-                        ],
-                        "safetyLiabilities": [
-                            {
-                                "event": "Skin rash",
-                                "datasource": "ForceGenetics",
-                                "effects": [{"direction": "activation", "dosing": "chronic"}],
-                                "biosamples": [{"tissueLabel": "Skin", "cellLabel": null, "cellFormat": null}]
-                            },
-                            {
-                                "event": "skin rash",
-                                "datasource": "",
-                                "effects": [{"direction": "", "dosing": null}],
-                                "biosamples": [{"tissueLabel": null, "cellLabel": "Keratinocyte", "cellFormat": null}]
-                            },
-                            {
-                                "event": "Cardiotoxicity",
-                                "datasource": null,
-                                "effects": [{"direction": "inhibition", "dosing": null}],
-                                "biosamples": [{"tissueLabel": null, "cellLabel": null, "cellFormat": "iPSC cardiomyocyte"}]
-                            }
-                        ]
-                    }
+        let target_id = target_id_from_search_response(resp, "EGFR").expect("target search");
+
+        assert_eq!(target_id.as_deref(), Some("ENSG00000146648"));
+    }
+
+    #[test]
+    fn target_druggability_context_groups_modalities_and_safety_summary() {
+        let resp = decode_target_druggability(serde_json::json!({
+            "data": {
+                "target": {
+                    "tractability": [
+                        {"label": "Approved Drug", "modality": "SM", "value": true},
+                        {"label": "Clinical Precedence", "modality": "SM", "value": true},
+                        {"label": "High-quality binder", "modality": "AB", "value": false},
+                        {"label": "Clinical Precedence", "modality": "AB", "value": true},
+                        {"label": "Discovery chemistry", "modality": "PR", "value": false},
+                        {"label": "Ligand present", "modality": "OC", "value": true},
+                        {"label": "Exploratory", "modality": "XX", "value": true}
+                    ],
+                    "safetyLiabilities": [
+                        {
+                            "event": "Skin rash",
+                            "datasource": "ForceGenetics",
+                            "effects": [{"direction": "activation", "dosing": "chronic"}],
+                            "biosamples": [{"tissueLabel": "Skin", "cellLabel": null, "cellFormat": null}]
+                        },
+                        {
+                            "event": "skin rash",
+                            "datasource": "",
+                            "effects": [{"direction": "", "dosing": null}],
+                            "biosamples": [{"tissueLabel": null, "cellLabel": "Keratinocyte", "cellFormat": null}]
+                        },
+                        {
+                            "event": "Cardiotoxicity",
+                            "datasource": null,
+                            "effects": [{"direction": "inhibition", "dosing": null}],
+                            "biosamples": [{"tissueLabel": null, "cellLabel": null, "cellFormat": "iPSC cardiomyocyte"}]
+                        }
+                    ]
                 }
-            })))
-            .mount(&server)
-            .await;
+            }
+        }));
 
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let context = client.target_druggability_context("EGFR").await.unwrap();
+        let context = target_druggability_context_from_response(resp).unwrap();
 
         assert_eq!(context.tractability.len(), 5);
         assert_eq!(context.tractability[0].modality, "small molecule");
@@ -1796,38 +1854,15 @@ pub(crate) mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn target_druggability_context_returns_default_when_target_missing() {
-        let server = MockServer::start().await;
+    #[test]
+    fn target_druggability_context_returns_default_when_target_missing() {
+        let resp = decode_target_druggability(serde_json::json!({
+            "data": {
+                "target": null
+            }
+        }));
 
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("SearchTarget"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "search": {
-                        "hits": [
-                            {"id": "ENSG00000146648", "entity": "target", "object": {"approvedSymbol": "EGFR"}}
-                        ]
-                    }
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        Mock::given(method("POST"))
-            .and(path("/graphql"))
-            .and(body_string_contains("TargetDruggabilityContext"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "data": {
-                    "target": null
-                }
-            })))
-            .mount(&server)
-            .await;
-
-        let client = OpenTargetsClient::new_for_test(server.uri()).unwrap();
-        let context = client.target_druggability_context("EGFR").await.unwrap();
+        let context = target_druggability_context_from_response(resp).unwrap();
         assert!(context.tractability.is_empty());
         assert!(context.safety_liabilities.is_empty());
     }
