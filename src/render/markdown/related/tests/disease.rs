@@ -289,7 +289,6 @@ fn related_disease_quotes_single_word_indication_search() {
 
 #[test]
 fn related_disease_oncology_without_local_match_falls_back_to_download_list() {
-    let _guard = crate::test_support::env_lock().blocking_lock();
     let disease = Disease {
         id: "MONDO:0005105".to_string(),
         name: "melanoma".to_string(),
@@ -322,39 +321,13 @@ fn related_disease_oncology_without_local_match_falls_back_to_download_list() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let root = crate::test_support::TempDirGuard::new("render-study-empty");
-    std::fs::create_dir_all(root.path()).expect("create empty study root");
-    let _study_dir = crate::test_support::set_env_var(
-        "BIOMCP_STUDY_DIR",
-        Some(root.path().to_str().expect("study root path should be utf-8")),
-    );
-    let related = related_disease(&disease);
+    let related = related_disease_with_oncology_study_id(&disease, None);
 
     assert!(related.contains(&"biomcp study download --list".to_string()));
 }
 
 #[test]
 fn related_disease_oncology_with_local_match_prefers_top_mutated() {
-    let _guard = crate::test_support::env_lock().blocking_lock();
-    let root = crate::test_support::TempDirGuard::new("render-study-match");
-    let study_dir = root.path().join("brca_tcga_pan_can_atlas_2018");
-    std::fs::create_dir_all(&study_dir).expect("create study dir");
-    std::fs::write(
-            study_dir.join("meta_study.txt"),
-            "cancer_study_identifier: brca_tcga_pan_can_atlas_2018\nname: BRCA TCGA PanCan Atlas 2018\ntype_of_cancer: brca\n",
-        )
-        .expect("write meta");
-    std::fs::write(
-            study_dir.join("data_mutations.txt"),
-            "Hugo_Symbol\tTumor_Sample_Barcode\tVariant_Classification\tHGVSp_Short\nTP53\tS1\tMissense_Mutation\tp.R175H\n",
-        )
-        .expect("write mutations");
-    std::fs::write(
-            study_dir.join("data_clinical_sample.txt"),
-            "# comment\nPATIENT_ID\tSAMPLE_ID\tCANCER_TYPE\tCANCER_TYPE_DETAILED\tONCOTREE_CODE\nP1\tS1\tBreast Cancer\tBreast Invasive Carcinoma\tBRCA\n",
-        )
-        .expect("write clinical sample");
-
     let disease = Disease {
         id: "MONDO:0007254".to_string(),
         name: "breast cancer".to_string(),
@@ -395,11 +368,20 @@ fn related_disease_oncology_with_local_match_prefers_top_mutated() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let _study_dir = crate::test_support::set_env_var(
-        "BIOMCP_STUDY_DIR",
-        Some(root.path().to_str().expect("study root path should be utf-8")),
+    let study_id = best_oncology_study_id(
+        &disease,
+        &[crate::sources::cbioportal_study::StudyLookupRow {
+            study_id: "brca_tcga_pan_can_atlas_2018".to_string(),
+            has_mutations: true,
+            terms: vec![
+                "BRCA TCGA PanCan Atlas 2018".to_string(),
+                "Breast Cancer".to_string(),
+                "Breast Invasive Carcinoma".to_string(),
+                "BRCA".to_string(),
+            ],
+        }],
     );
-    let related = related_disease(&disease);
+    let related = related_disease_with_oncology_study_id(&disease, study_id);
 
     assert!(
         related
@@ -410,26 +392,6 @@ fn related_disease_oncology_with_local_match_prefers_top_mutated() {
 
 #[test]
 fn related_disease_oncology_matches_noncontiguous_carcinoma_study_labels() {
-    let _guard = crate::test_support::env_lock().blocking_lock();
-    let root = crate::test_support::TempDirGuard::new("render-study-carcinoma");
-    let study_dir = root.path().join("brca_tcga_pan_can_atlas_2018");
-    std::fs::create_dir_all(&study_dir).expect("create study dir");
-    std::fs::write(
-            study_dir.join("meta_study.txt"),
-            "cancer_study_identifier: brca_tcga_pan_can_atlas_2018\nname: BRCA TCGA PanCan Atlas 2018\ntype_of_cancer: brca\n",
-        )
-        .expect("write meta");
-    std::fs::write(
-            study_dir.join("data_mutations.txt"),
-            "Hugo_Symbol\tTumor_Sample_Barcode\tVariant_Classification\tHGVSp_Short\nTP53\tS1\tMissense_Mutation\tp.R175H\n",
-        )
-        .expect("write mutations");
-    std::fs::write(
-            study_dir.join("data_clinical_sample.txt"),
-            "# comment\nPATIENT_ID\tSAMPLE_ID\tCANCER_TYPE\tCANCER_TYPE_DETAILED\tONCOTREE_CODE\nP1\tS1\tBreast Cancer\tBreast Invasive Carcinoma\tBRCA\n",
-        )
-        .expect("write clinical sample");
-
     let disease = Disease {
         id: "MONDO:0004989".to_string(),
         name: "breast carcinoma".to_string(),
@@ -470,11 +432,15 @@ fn related_disease_oncology_matches_noncontiguous_carcinoma_study_labels() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let _study_dir = crate::test_support::set_env_var(
-        "BIOMCP_STUDY_DIR",
-        Some(root.path().to_str().expect("study root path should be utf-8")),
+    let study_id = best_oncology_study_id(
+        &disease,
+        &[crate::sources::cbioportal_study::StudyLookupRow {
+            study_id: "brca_tcga_pan_can_atlas_2018".to_string(),
+            has_mutations: true,
+            terms: vec!["Breast Invasive Carcinoma".to_string()],
+        }],
     );
-    let related = related_disease(&disease);
+    let related = related_disease_with_oncology_study_id(&disease, study_id);
 
     assert!(
         related

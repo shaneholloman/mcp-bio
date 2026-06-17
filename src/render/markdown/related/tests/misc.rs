@@ -19,7 +19,6 @@ fn related_pgx_uses_search_flags() {
 
 #[test]
 fn related_disease_malformed_study_lookup_falls_back_to_download_list() {
-    let _guard = crate::test_support::env_lock().blocking_lock();
     let disease = Disease {
         id: "MONDO:0005105".to_string(),
         name: "melanoma".to_string(),
@@ -52,25 +51,7 @@ fn related_disease_malformed_study_lookup_falls_back_to_download_list() {
         xrefs: std::collections::HashMap::new(),
     };
 
-    let root = crate::test_support::TempDirGuard::new("render-study-malformed");
-    let study_dir = root.path().join("broken-study");
-    std::fs::create_dir_all(&study_dir).expect("create malformed study dir");
-    std::fs::write(
-        study_dir.join("meta_study.txt"),
-        "name: Missing identifier\n",
-    )
-    .expect("write malformed meta");
-    std::fs::write(
-            study_dir.join("data_mutations.txt"),
-            "Hugo_Symbol\tTumor_Sample_Barcode\tVariant_Classification\tHGVSp_Short\nTP53\tS1\tMissense_Mutation\tp.R175H\n",
-        )
-        .expect("write mutations");
-
-    let _study_dir = crate::test_support::set_env_var(
-        "BIOMCP_STUDY_DIR",
-        Some(root.path().to_str().expect("study root path should be utf-8")),
-    );
-    let related = related_disease(&disease);
+    let related = related_disease_with_oncology_study_id(&disease, None);
 
     assert!(related.contains(&"biomcp study download --list".to_string()));
 }

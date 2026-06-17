@@ -773,6 +773,13 @@ pub(super) fn related_trial(trial: &Trial) -> Vec<String> {
 }
 
 pub(super) fn related_disease(disease: &Disease) -> Vec<String> {
+    related_disease_with_oncology_study_id(disease, best_local_oncology_study_id(disease))
+}
+
+pub(super) fn related_disease_with_oncology_study_id(
+    disease: &Disease,
+    oncology_study_id: Option<String>,
+) -> Vec<String> {
     let name = force_quote_arg(&disease_literature_query(disease));
     let mut out = Vec::new();
     if let Some(symbol) = disease_top_gene_symbol(disease) {
@@ -790,7 +797,7 @@ pub(super) fn related_disease(disease: &Disease) -> Vec<String> {
         out.push(format!("biomcp search drug --indication {name}"));
     }
     if is_oncology_disease(disease) {
-        if let Some(study_id) = best_local_oncology_study_id(disease) {
+        if let Some(study_id) = oncology_study_id {
             out.push(format!("biomcp study top-mutated --study {study_id}"));
         } else {
             out.push("biomcp study download --list".to_string());

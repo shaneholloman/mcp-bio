@@ -229,6 +229,10 @@ OncoKB has none — harvest its existing stub instead of curling.)
 - [x] `src/entities/disease/clinical_features.rs` is now fully pure: the
       remaining live MedlinePlus dedupe test is a direct collector test, and
       the unused MedlinePlus test client constructor was removed.
+- [x] `src/render/markdown/related/tests/{disease,misc}.rs` oncology study
+      related-command tests are pure: local study selection now tests direct
+      `StudyLookupRow`/study-id fixtures instead of writing temporary
+      `BIOMCP_STUDY_DIR` roots.
 
 ### Utils
 - [ ] `src/utils/*.rs` (date, download, query, serde) — direct unit tests.
@@ -757,3 +761,8 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
 - 2026-06-16: article batch cleanup. Removed stale wiremock imports from the
   already-pure article batch tests. Checks:
   `cargo nextest run -E 'test(/entities::article::batch::/)'` → 3/3 pass.
+- 2026-06-16: render related cleanup. Split disease related-command generation
+  from the local cBioPortal study lookup and converted oncology study follow-up
+  tests from temporary `BIOMCP_STUDY_DIR` roots to direct `StudyLookupRow` and
+  study-id fixtures. Checks:
+  `cargo nextest run -E 'test(/render::markdown::related::/)'` → 53/53 pass.
