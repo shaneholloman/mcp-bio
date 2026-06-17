@@ -826,3 +826,10 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   `cargo nextest run -E 'test(/cli::health::tests::local::/)'` → 35/35 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
+- 2026-06-16: health runner timeout cleanup. Split timeout row construction so
+  runner tests can assert timeout status/key metadata directly, replacing the
+  mock-server/env-lock timeout test in `src/cli/health/tests/runner.rs`.
+  Checks: `cargo nextest run -E 'test(/cli::health::tests::runner::/)'` →
+  11/11 pass; `cargo check` → pass;
+  `cargo clippy --lib --tests -- -D warnings` → pass; `git diff --check` →
+  pass.

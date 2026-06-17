@@ -159,15 +159,22 @@ where
         .await
 }
 
-fn timeout_key_configured(source: SourceDescriptor) -> Option<bool> {
+fn timeout_key_configured_with<F>(source: SourceDescriptor, configured_key_fn: F) -> Option<bool>
+where
+    F: FnOnce(&str) -> Option<String>,
+{
     match source.probe {
         ProbeKind::AuthGet { .. }
         | ProbeKind::AuthQueryParam { .. }
         | ProbeKind::AuthPostJson { .. }
         | ProbeKind::AlphaGenomeConnect { .. } => Some(true),
-        ProbeKind::OptionalAuthGet { env_var, .. } => Some(configured_key(env_var).is_some()),
+        ProbeKind::OptionalAuthGet { env_var, .. } => Some(configured_key_fn(env_var).is_some()),
         ProbeKind::Get { .. } | ProbeKind::PostJson { .. } | ProbeKind::VaersQuery => None,
     }
+}
+
+fn timeout_key_configured(source: SourceDescriptor) -> Option<bool> {
+    timeout_key_configured_with(source, configured_key)
 }
 
 fn timed_out_probe_outcome(source: SourceDescriptor, timeout: Duration) -> ProbeOutcome {
@@ -178,6 +185,27 @@ fn timed_out_probe_outcome(source: SourceDescriptor, timeout: Duration) -> Probe
             format!("{}ms (timeout)", timeout.as_millis()),
             source.affects,
             timeout_key_configured(source),
+        ),
+        ProbeClass::Error,
+    )
+}
+
+#[cfg(test)]
+pub(in crate::cli::health) fn timed_out_probe_outcome_for_test<F>(
+    source: SourceDescriptor,
+    timeout: Duration,
+    configured_key_fn: F,
+) -> ProbeOutcome
+where
+    F: FnOnce(&str) -> Option<String>,
+{
+    outcome(
+        health_row(
+            source.api,
+            "error".into(),
+            format!("{}ms (timeout)", timeout.as_millis()),
+            source.affects,
+            timeout_key_configured_with(source, configured_key_fn),
         ),
         ProbeClass::Error,
     )

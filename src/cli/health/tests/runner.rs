@@ -4,17 +4,13 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
-use wiremock::matchers::{method, path};
-use wiremock::{Mock, MockServer, ResponseTemplate};
-
 use super::super::catalog::{ProbeKind, SourceDescriptor};
 use super::super::runner::{
-    HEALTH_API_PROBE_CONCURRENCY_LIMIT, ProbeClass, ProbeOutcome,
-    probe_source_with_timeout_for_test, report_from_outcomes, run_buffered_in_order,
+    HEALTH_API_PROBE_CONCURRENCY_LIMIT, ProbeClass, ProbeOutcome, report_from_outcomes,
+    run_buffered_in_order, timed_out_probe_outcome_for_test,
 };
 use super::super::{HealthReport, HealthRow};
-use super::{block_on, env_lock, update_max};
-use crate::test_support::set_env_var;
+use super::{block_on, update_max};
 #[test]
 fn markdown_shows_affects_column_when_present() {
     let report = HealthReport {
@@ -308,24 +304,11 @@ fn health_probes_respect_concurrency_limit_and_source_order() {
 
 #[test]
 fn timed_out_probe_returns_error_row_with_timeout_latency() {
-    let _lock = env_lock();
-    let server = block_on(MockServer::start());
-    let slow_url = Box::leak(format!("{}/health", server.uri()).into_boxed_str());
-
-    block_on(async {
-        Mock::given(method("GET"))
-            .and(path("/health"))
-            .respond_with(ResponseTemplate::new(200).set_delay(Duration::from_millis(100)))
-            .expect(3)
-            .mount(&server)
-            .await;
-    });
-
     let optional_source = SourceDescriptor {
         api: "Semantic Scholar",
         affects: Some("Semantic Scholar features"),
         probe: ProbeKind::OptionalAuthGet {
-            url: slow_url,
+            url: "https://example.test/health",
             env_var: "S2_API_KEY",
             header_name: "x-api-key",
             header_value_prefix: "",
@@ -336,12 +319,8 @@ fn timed_out_probe_returns_error_row_with_timeout_latency() {
             ),
         },
     };
-    let _optional_env = set_env_var("S2_API_KEY", None);
-    let optional_outcome = block_on(probe_source_with_timeout_for_test(
-        reqwest::Client::new(),
-        optional_source,
-        Duration::from_millis(10),
-    ));
+    let optional_outcome =
+        timed_out_probe_outcome_for_test(optional_source, Duration::from_millis(10), |_| None);
     assert_eq!(optional_outcome.class, ProbeClass::Error);
     assert_eq!(optional_outcome.row.status, "error");
     assert_eq!(optional_outcome.row.latency, "10ms (timeout)");
@@ -355,18 +334,14 @@ fn timed_out_probe_returns_error_row_with_timeout_latency() {
         api: "OncoKB",
         affects: Some("variant oncokb command and variant evidence section"),
         probe: ProbeKind::AuthGet {
-            url: slow_url,
+            url: "https://example.test/health",
             env_var: "ONCOKB_TOKEN",
             header_name: "Authorization",
             header_value_prefix: "Bearer ",
         },
     };
-    let _auth_env = set_env_var("ONCOKB_TOKEN", Some("test-token"));
-    let auth_outcome = block_on(probe_source_with_timeout_for_test(
-        reqwest::Client::new(),
-        auth_source,
-        Duration::from_millis(10),
-    ));
+    let auth_outcome =
+        timed_out_probe_outcome_for_test(auth_source, Duration::from_millis(10), |_| None);
     assert_eq!(auth_outcome.class, ProbeClass::Error);
     assert_eq!(auth_outcome.row.status, "error");
     assert_eq!(auth_outcome.row.latency, "10ms (timeout)");
@@ -379,13 +354,12 @@ fn timed_out_probe_returns_error_row_with_timeout_latency() {
     let public_source = SourceDescriptor {
         api: "MyGene",
         affects: Some("gene search and gene get"),
-        probe: ProbeKind::Get { url: slow_url },
+        probe: ProbeKind::Get {
+            url: "https://example.test/health",
+        },
     };
-    let public_outcome = block_on(probe_source_with_timeout_for_test(
-        reqwest::Client::new(),
-        public_source,
-        Duration::from_millis(10),
-    ));
+    let public_outcome =
+        timed_out_probe_outcome_for_test(public_source, Duration::from_millis(10), |_| None);
     assert_eq!(public_outcome.class, ProbeClass::Error);
     assert_eq!(public_outcome.row.status, "error");
     assert_eq!(public_outcome.row.latency, "10ms (timeout)");
