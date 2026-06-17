@@ -478,6 +478,13 @@ where
 
 fn build_http_client(kind: SharedHttpClientKind) -> Result<ClientWithMiddleware, BioMcpError> {
     let config = crate::cache::resolve_cache_config()?;
+    build_http_client_with_config(kind, config)
+}
+
+fn build_http_client_with_config(
+    kind: SharedHttpClientKind,
+    config: crate::cache::ResolvedCacheConfig,
+) -> Result<ClientWithMiddleware, BioMcpError> {
     let cache_root = config.cache_root.clone();
     apply_migration_non_fatal(&cache_root, crate::cache::migrate_http_cache, |err| {
         warn!(
@@ -870,18 +877,29 @@ pub(crate) async fn read_limited_body(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::{TempDirGuard, set_env_var};
+    use crate::cache::{CacheConfigOrigins, ConfigOrigin, DiskFreeThreshold, ResolvedCacheConfig};
+    use crate::test_support::TempDirGuard;
     use std::path::Path;
     use std::sync::{
         Arc, Mutex,
         atomic::{AtomicUsize, Ordering},
     };
-    use tokio::sync::MutexGuard;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    fn env_lock() -> MutexGuard<'static, ()> {
-        crate::test_support::env_lock().blocking_lock()
+    fn test_cache_config(cache_root: impl Into<std::path::PathBuf>) -> ResolvedCacheConfig {
+        ResolvedCacheConfig {
+            cache_root: cache_root.into(),
+            max_size: 10_000_000_000,
+            min_disk_free: DiskFreeThreshold::Percent(10),
+            max_age: Duration::from_secs(86_400),
+            origins: CacheConfigOrigins {
+                cache_root: ConfigOrigin::Default,
+                max_size: ConfigOrigin::Default,
+                min_disk_free: ConfigOrigin::Default,
+                max_age: ConfigOrigin::Default,
+            },
+        }
     }
 
     #[test]
@@ -1188,45 +1206,6 @@ mod tests {
     }
 
     #[test]
-    fn http_cache_dir_default_root_uses_xdg_cache_home_biomcp_http() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("http-cache-default-root");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", None);
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", None);
-
-        let path = crate::cache::resolve_cache_config()
-            .expect("default cache root should resolve")
-            .cache_root
-            .join("http");
-
-        assert_eq!(path, cache_home.join("biomcp").join("http"));
-    }
-
-    #[test]
-    fn http_cache_dir_env_override_uses_biomcp_cache_dir_http() {
-        let _lock = env_lock();
-        let root = TempDirGuard::new("http-cache-env-override");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
-        let override_root = root.path().join("override-root");
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&override_root.to_string_lossy()));
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", None);
-
-        let path = crate::cache::resolve_cache_config()
-            .expect("env override cache root should resolve")
-            .cache_root
-            .join("http");
-
-        assert_eq!(path, override_root.join("http"));
-    }
-
-    #[test]
     fn apply_migration_non_fatal_warns_and_continues_on_error() {
         let mut warned: Vec<std::io::ErrorKind> = Vec::new();
 
@@ -1246,21 +1225,14 @@ mod tests {
 
     #[test]
     fn build_http_client_renames_legacy_http_cache_before_client_init() {
-        let _lock = env_lock();
         let root = TempDirGuard::new("http-cache-migration");
-        let cache_home = root.path().join("cache-home");
-        let config_home = root.path().join("config-home");
         let override_root = root.path().join("override-root");
         let legacy_dir = override_root.join("http-cacache");
         std::fs::create_dir_all(&legacy_dir).expect("create legacy dir");
         std::fs::write(legacy_dir.join("sentinel.txt"), b"cached payload").expect("write sentinel");
+        let config = test_cache_config(&override_root);
 
-        let _cache_home = set_env_var("XDG_CACHE_HOME", Some(&cache_home.to_string_lossy()));
-        let _config_home = set_env_var("XDG_CONFIG_HOME", Some(&config_home.to_string_lossy()));
-        let _cache_dir = set_env_var("BIOMCP_CACHE_DIR", Some(&override_root.to_string_lossy()));
-        let _min_disk_free = set_env_var("BIOMCP_CACHE_MIN_DISK_FREE", None);
-
-        let result = build_http_client(SharedHttpClientKind::Default);
+        let result = build_http_client_with_config(SharedHttpClientKind::Default, config);
 
         assert!(
             result.is_ok(),

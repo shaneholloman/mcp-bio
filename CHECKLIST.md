@@ -246,6 +246,9 @@ OncoKB has none — harvest its existing stub instead of curling.)
       atomic-save target tests now use direct config/path inputs instead of
       cache env vars.
 - [ ] The shared helpers in `src/sources/mod.rs` (`RequestPlan`, `decode_json`) — a few tests.
+- [x] `src/sources/mod.rs` HTTP cache migration test is pure: client
+      construction can take an explicit resolved cache config, and duplicate
+      env cache-root tests were removed.
 - [x] `src/sources/rate_limit.rs` Semantic Scholar key interval tests are
       pure: they assert the interval helper directly instead of mutating
       `S2_API_KEY`.
@@ -803,5 +806,12 @@ Keep these `#[ignore]` so they stay out of the normal gate; run them in the veri
   with direct `s2_min_interval` assertions and removed the rate-limit env-lock
   helper/imports. Checks:
   `cargo nextest run -E 'test(/sources::rate_limit::/)'` → 14/14 pass;
+  `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
+  `git diff --check` → pass.
+- 2026-06-16: shared source HTTP-cache cleanup. Split shared HTTP client
+  construction so tests can pass a resolved cache config directly, removed
+  duplicate env-based cache-root assertions, and kept the legacy
+  `http-cacache` migration proof as a pure temp-directory test. Checks:
+  `cargo nextest run -E 'test(/sources::tests::/)'` → 26/26 pass;
   `cargo check` → pass; `cargo clippy --lib --tests -- -D warnings` → pass;
   `git diff --check` → pass.
