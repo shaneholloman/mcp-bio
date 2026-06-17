@@ -10,6 +10,7 @@ pub(crate) enum BackendPlan {
     EuropeOnly,
     PubTatorOnly,
     PubMedOnly,
+    SemanticScholarOnly,
     LitSense2Only,
     TypeCapable,
     Both,
@@ -54,6 +55,20 @@ fn pubmed_source_filter_error(filters: &ArticleSearchFilters) -> BioMcpError {
     }
 }
 
+fn semantic_scholar_source_filter_error(filters: &ArticleSearchFilters) -> BioMcpError {
+    if has_article_type_filter(filters) {
+        return BioMcpError::InvalidArgument(
+            "--source semanticscholar does not support --type. Use --source europepmc, --source pubmed, or remove --type.".into(),
+        );
+    }
+    if filters.open_access {
+        return BioMcpError::InvalidArgument(
+            "--source semanticscholar does not support --open-access. Use --source europepmc or remove --open-access.".into(),
+        );
+    }
+    unreachable!("semantic_scholar_source_filter_error called with compatible filters");
+}
+
 fn litsense2_source_filter_error(filters: &ArticleSearchFilters) -> BioMcpError {
     if !has_keyword_query(filters) {
         return BioMcpError::InvalidArgument(
@@ -91,6 +106,12 @@ pub(crate) fn plan_backends(
             }
             Ok(BackendPlan::PubMedOnly)
         }
+        ArticleSourceFilter::SemanticScholar => {
+            if has_strict_europepmc_filters(filters) {
+                return Err(semantic_scholar_source_filter_error(filters));
+            }
+            Ok(BackendPlan::SemanticScholarOnly)
+        }
         ArticleSourceFilter::LitSense2 => {
             if !has_keyword_query(filters)
                 || has_article_type_filter(filters)
@@ -120,7 +141,10 @@ pub(crate) fn semantic_scholar_search_enabled(
     filters: &ArticleSearchFilters,
     source: ArticleSourceFilter,
 ) -> bool {
-    source == ArticleSourceFilter::All && !has_strict_europepmc_filters(filters)
+    matches!(
+        source,
+        ArticleSourceFilter::All | ArticleSourceFilter::SemanticScholar
+    ) && !has_strict_europepmc_filters(filters)
 }
 
 pub(crate) fn litsense2_search_enabled(
@@ -173,6 +197,7 @@ pub(crate) fn summarize_debug_plan(
         (BackendPlan::EuropeOnly, _) => "planner=europe_only",
         (BackendPlan::PubTatorOnly, _) => "planner=pubtator_only",
         (BackendPlan::PubMedOnly, _) => "planner=pubmed_only",
+        (BackendPlan::SemanticScholarOnly, _) => "planner=semanticscholar_only",
         (BackendPlan::LitSense2Only, _) => "planner=litsense2_only",
         (BackendPlan::TypeCapable, _) => "planner=type_capable",
         (BackendPlan::Both, _) => "planner=federated",
@@ -182,6 +207,7 @@ pub(crate) fn summarize_debug_plan(
         BackendPlan::EuropeOnly => vec!["Europe PMC".to_string()],
         BackendPlan::PubTatorOnly => vec!["PubTator3".to_string()],
         BackendPlan::PubMedOnly => vec!["PubMed".to_string()],
+        BackendPlan::SemanticScholarOnly => vec!["Semantic Scholar".to_string()],
         BackendPlan::LitSense2Only => vec!["LitSense2".to_string()],
         BackendPlan::TypeCapable => vec!["Europe PMC".to_string(), "PubMed".to_string()],
         BackendPlan::Both => {
@@ -192,7 +218,9 @@ pub(crate) fn summarize_debug_plan(
             sources
         }
     };
-    if semantic_scholar_search_enabled(filters, source) {
+    if semantic_scholar_search_enabled(filters, source)
+        && !matches!(plan, BackendPlan::SemanticScholarOnly)
+    {
         sources.push("Semantic Scholar".to_string());
     }
 

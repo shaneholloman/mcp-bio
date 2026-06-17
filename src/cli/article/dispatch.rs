@@ -248,7 +248,11 @@ pub(in crate::cli) async fn handle_search(
     let pagination = super::super::PaginationMeta::offset(offset, limit, results.len(), page.total);
     let _ = (request.sort, &request.ranking);
     let semantic_scholar_enabled =
-        request.backend_plan == crate::entities::article::BackendPlan::Both;
+        matches!(
+            request.backend_plan,
+            crate::entities::article::BackendPlan::Both
+                | crate::entities::article::BackendPlan::SemanticScholarOnly
+        ) && crate::entities::article::semantic_scholar_search_enabled(filters, source_filter);
     let debug_plan = if debug_plan_requested {
         Some(build_article_debug_plan(
             &query,

@@ -486,6 +486,7 @@ pub enum ArticleSourceFilter {
     PubTator,
     EuropePmc,
     PubMed,
+    SemanticScholar,
     LitSense2,
 }
 
@@ -496,9 +497,10 @@ impl ArticleSourceFilter {
             "pubtator" => Ok(Self::PubTator),
             "europepmc" | "europe-pmc" => Ok(Self::EuropePmc),
             "pubmed" => Ok(Self::PubMed),
+            "semanticscholar" => Ok(Self::SemanticScholar),
             "litsense2" => Ok(Self::LitSense2),
             other => Err(BioMcpError::InvalidArgument(format!(
-                "Unknown --source '{other}'. Expected one of: all, pubtator, europepmc, pubmed, litsense2."
+                "Unknown --source '{other}'. Expected one of: all, pubtator, europepmc, pubmed, semanticscholar, litsense2."
             ))),
         }
     }
@@ -509,6 +511,7 @@ impl ArticleSourceFilter {
             Self::PubTator => "pubtator",
             Self::EuropePmc => "europepmc",
             Self::PubMed => "pubmed",
+            Self::SemanticScholar => "semanticscholar",
             Self::LitSense2 => "litsense2",
         }
     }
@@ -796,6 +799,11 @@ mod tests {
         assert_eq!(
             ArticleSourceFilter::from_flag("pubmed").expect("pubmed should parse"),
             ArticleSourceFilter::PubMed
+        );
+        assert_eq!(
+            ArticleSourceFilter::from_flag("semanticscholar")
+                .expect("semanticscholar should parse"),
+            ArticleSourceFilter::SemanticScholar
         );
         assert!(
             ArticleSourceFilter::from_flag("litsense2").is_ok(),

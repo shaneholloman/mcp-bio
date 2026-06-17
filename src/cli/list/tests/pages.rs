@@ -372,9 +372,12 @@ fn list_trial_and_article_include_missing_flags() {
     assert!(article.contains("--weight-lexical <float>"));
     assert!(article.contains("--weight-citations <float>"));
     assert!(article.contains("--weight-position <float>"));
-    assert!(article.contains("--source <all, pubtator, europepmc, pubmed, litsense2>"));
+    assert!(
+        article.contains("--source <all, pubtator, europepmc, pubmed, semanticscholar, litsense2>")
+    );
     assert!(article.contains("--max-per-source <N>"));
     assert!(article.contains("--session <token>"));
+    assert!(article.contains("search article --source semanticscholar"));
     assert!(article.contains("search article --source litsense2"));
     assert!(article.contains(
         "Direct and compatible federated PubMed ESearch cleans question-format gene/disease/drug/keyword terms provider-locally"

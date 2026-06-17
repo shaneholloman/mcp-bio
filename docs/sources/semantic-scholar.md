@@ -7,19 +7,25 @@ description: "Use BioMCP to add Semantic Scholar TLDRs, citations, references, a
 
 Semantic Scholar matters when you already have the paper and need the graph around it: the TLDR, the follow-up literature, the references it builds on, and the related papers worth checking next. It turns a flat article lookup into a literature-review workflow that an agent can keep extending without losing the thread.
 
-In BioMCP, `search article` does not expose `--source semantic-scholar`. Instead, Semantic Scholar is an automatic optional search leg when the filter set is compatible, with shared-pool mode at 1 req/2sec without `S2_API_KEY` and authenticated mode at 1 req/sec with the key. The dedicated helper commands on this page are the direct reason to come here: `get article <id> tldr`, `article citations`, `article references`, and `article recommendations`.
+In BioMCP, Semantic Scholar is an automatic optional `search article --source all` leg when the filter set is compatible, and it is also individually selectable with `--source semanticscholar`. Both routes use shared-pool mode at 1 req/2sec without `S2_API_KEY` and authenticated mode at 1 req/sec with the key. The dedicated helper commands on this page are the graph-oriented reason to come here: `get article <id> tldr`, `article citations`, `article references`, and `article recommendations`.
 
 ## What BioMCP exposes
 
 | Command | What BioMCP gets from this source | Integration note |
 |---|---|---|
-| `search article` | Optional compatible search-leg enrichment plus source status | Semantic Scholar joins article search automatically when the filter set allows it; `--source semantic-scholar` is not a public source switch |
+| `search article` | Optional compatible search-leg enrichment plus source status | Semantic Scholar joins article search automatically when the filter set allows it and can be selected alone with `--source semanticscholar` |
 | `get article <id> tldr` | TLDR text, influence counts, and related article metadata | Dedicated Semantic Scholar helper |
 | `article citations <id>` | Citation graph rows | Dedicated Semantic Scholar helper |
 | `article references <id>` | Reference graph rows | Dedicated Semantic Scholar helper |
 | `article recommendations <id>` | Related-paper recommendations | Dedicated Semantic Scholar helper |
 
 ## Example commands
+
+```bash
+biomcp search article -k "BRAF melanoma" --source semanticscholar --limit 5
+```
+
+Returns article rows whose source is Semantic Scholar.
 
 ```bash
 biomcp get article 22663011 tldr
@@ -60,10 +66,10 @@ never print the secret key or key prefix.
 
 ## Runtime behavior
 
-`search article` exposes Semantic Scholar as an automatic compatible leg rather
-than a user-selectable source flag. Keep using `--source all`, `pubtator`,
-`europepmc`, `pubmed`, or `litsense2` for the public source switch; Semantic
-Scholar joins only when the article filters can support it.
+`search article` exposes Semantic Scholar both as an automatic compatible leg
+inside `--source all` and as a standalone source with `--source semanticscholar`.
+The standalone route uses the same client, auth mode, rate limits, and graceful
+degradation behavior as the compatible federated route.
 
 JSON search responses can include redacted Semantic Scholar source status under
 `_meta.source_status[]`, and `--debug-plan` mirrors that redacted status in the

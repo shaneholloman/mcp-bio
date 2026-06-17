@@ -314,8 +314,9 @@ def test_public_skill_docs_match_current_cli_contract() -> None:
     assert 'biomcp search article -k "TCGA mutation analysis dataset" --type review --limit 5' in find_articles
     assert "MeSH/title/abstract" not in keyword_reference
     assert "On the default `--source all` route, adding `-k/--keyword` keeps the source set" in keyword_reference
-    assert "Use `--source litsense2` explicitly" in keyword_reference
-    assert "you want LitSense2" in keyword_reference
+    assert "Use `--source semanticscholar` or" in keyword_reference
+    assert "`--source litsense2` explicitly" in keyword_reference
+    assert "one of those sources alone" in keyword_reference
     assert "LitSense2-derived semantic signal" in keyword_reference
     assert "semantic=0" in keyword_reference
     assert "PubMed-specific behavior" in keyword_reference

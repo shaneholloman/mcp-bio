@@ -32,6 +32,16 @@ fn planner_routes_litsense2_to_litsense2_only() {
 }
 
 #[test]
+fn planner_routes_semantic_scholar_to_semantic_scholar_only() {
+    let mut filters = empty_filters();
+    filters.keyword = Some("BRAF melanoma".into());
+
+    let plan =
+        plan_backends(&filters, ArticleSourceFilter::SemanticScholar).expect("planner should work");
+    assert!(matches!(plan, BackendPlan::SemanticScholarOnly));
+}
+
+#[test]
 fn planner_routes_all_with_type_to_type_capable() {
     let mut filters = empty_filters();
     filters.gene = Some("BRAF".into());
@@ -109,6 +119,32 @@ fn planner_rejects_litsense2_without_keyword() {
 }
 
 #[test]
+fn planner_rejects_semantic_scholar_type_filter() {
+    let mut filters = empty_filters();
+    filters.keyword = Some("melanoma".into());
+    filters.article_type = Some("review".into());
+
+    let err = plan_backends(&filters, ArticleSourceFilter::SemanticScholar)
+        .expect_err("planner should reject --type for semanticscholar");
+    let msg = err.to_string();
+    assert!(msg.contains("--source semanticscholar"));
+    assert!(msg.contains("--type"));
+}
+
+#[test]
+fn planner_rejects_semantic_scholar_open_access_filter() {
+    let mut filters = empty_filters();
+    filters.keyword = Some("melanoma".into());
+    filters.open_access = true;
+
+    let err = plan_backends(&filters, ArticleSourceFilter::SemanticScholar)
+        .expect_err("planner should reject --open-access for semanticscholar");
+    let msg = err.to_string();
+    assert!(msg.contains("--source semanticscholar"));
+    assert!(msg.contains("--open-access"));
+}
+
+#[test]
 fn planner_rejects_litsense2_type_filter() {
     let mut filters = empty_filters();
     filters.keyword = Some("melanoma".into());
@@ -175,6 +211,14 @@ fn semantic_scholar_search_is_enabled_for_federated_queries() {
     assert!(semantic_scholar_search_enabled(
         &empty_filters(),
         ArticleSourceFilter::All
+    ));
+}
+
+#[test]
+fn semantic_scholar_search_is_enabled_for_explicit_semantic_scholar_source() {
+    assert!(semantic_scholar_search_enabled(
+        &empty_filters(),
+        ArticleSourceFilter::SemanticScholar
     ));
 }
 
@@ -300,6 +344,21 @@ fn summarize_debug_plan_explicit_litsense2_remains_selectable() {
 
     assert_eq!(summary.routing, vec!["planner=litsense2_only".to_string()]);
     assert_eq!(summary.sources, vec!["LitSense2".to_string()]);
+}
+
+#[test]
+fn summarize_debug_plan_explicit_semantic_scholar_remains_selectable() {
+    let mut filters = empty_filters();
+    filters.keyword = Some("Hirschsprung disease".into());
+
+    let summary =
+        summarize_debug_plan(&filters, ArticleSourceFilter::SemanticScholar, &[]).expect("summary");
+
+    assert_eq!(
+        summary.routing,
+        vec!["planner=semanticscholar_only".to_string()]
+    );
+    assert_eq!(summary.sources, vec!["Semantic Scholar".to_string()]);
 }
 
 #[test]

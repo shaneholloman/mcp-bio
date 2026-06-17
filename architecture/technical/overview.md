@@ -85,14 +85,13 @@ integration.
 
 `search article --source all` plans PubTator3 plus Europe PMC plus PubMed.
 Keyword-bearing queries keep that default source set, and Semantic Scholar
-remains an optional compatible search leg on that path. LitSense2 remains
-available only through explicit `--source litsense2`. Strict Europe PMC-only filters
-such as `--open-access` and `--type` disable the federated planner and route
-to Europe PMC only.
-`--source pubtator` with strict Europe PMC-only filters is rejected at the
-front door. `--source` remains
-`all|pubtator|europepmc|pubmed|litsense2` in v1; the CLI does not expose a
-user-facing `--source semanticscholar` mode.
+remains an optional compatible search leg on that path. Semantic Scholar and
+LitSense2 are available through explicit `--source semanticscholar` and
+`--source litsense2`. Strict Europe PMC-only filters such as `--open-access` and
+`--type` disable the federated planner and route to Europe PMC only.
+`--source pubtator` and `--source semanticscholar` with strict Europe PMC-only
+filters are rejected at the front door. `--source` accepts
+`all|pubtator|europepmc|pubmed|semanticscholar|litsense2` in v1.
 
 Article filters remain raw as the shared contract for planning, ranking,
 rendering, JSON metadata, and session loop-breaker state. At the provider

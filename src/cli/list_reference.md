@@ -100,7 +100,7 @@ New to BioMCP? Try:
 - `search protein ... --reviewed --disease --existence` (default reviewed mode)
 - `search trial ... --mutation --criteria --study-type --has-results --date-from --date-to`
 - `search article ... --date-from --date-to --year-min --year-max --journal`
-  - add `--source <all, pubtator, europepmc, pubmed, litsense2>`
+  - add `--source <all, pubtator, europepmc, pubmed, semanticscholar, litsense2>`
   - add `--max-per-source <N>` or `--session <token>` when needed
 - known gene/disease/drug anchors go in `-g/-d/--drug`; free-text concepts go in `-k`
 - For article search, keep known gene/disease/drug anchors in `-g/-d/--drug`.
@@ -174,6 +174,7 @@ Results depend on source document wording and may vary across sources.
   sources and Semantic Scholar remains automatic.
 - Add `-k/--keyword` for mechanisms, phenotypes, datasets, and free-text concepts;
   the default source set stays PubTator3 + Europe PMC + PubMed + Semantic Scholar.
+- Use `--source semanticscholar` explicitly to query Semantic Scholar alone.
 - Use `--source litsense2` explicitly to query LitSense2.
 - Keyword-bearing article queries default to hybrid ranking.
 - Cap each federated source's contribution after deduplication and before ranking.
@@ -182,6 +183,8 @@ Results depend on source document wording and may vary across sources.
 - Rows count against their primary source after deduplication.
 - `--ranking-mode semantic` sorts by the LitSense2-derived semantic signal and falls back to lexical ties.
 - Hybrid ranking uses the same LitSense2-derived semantic signal, and rows without LitSense2 provenance contribute `semantic=0`.
+- `search article --source semanticscholar` uses the same Semantic Scholar route as federation.
+- It does not support `--type` or `--open-access`.
 - `search article --source litsense2` requires `-k/--keyword` (or a positional query) and does not support `--type` or `--open-access`.
 - `--type`, `--open-access`, and `--no-preprints` narrow compatible article
   sources instead of acting as universal backend filters.

@@ -282,7 +282,7 @@ EXAMPLES:
 
 See also: biomcp list gwas")]
     Gwas(gwas::GwasSearchArgs),
-    /// Search articles by gene, disease, drug, keyword, or author (PubTator3 + Europe PMC + PubMed + optional Semantic Scholar by default; LitSense2 only with --source litsense2)
+    /// Search articles by gene, disease, drug, keyword, or author (PubTator3 + Europe PMC + PubMed + optional Semantic Scholar by default; use --source semanticscholar or --source litsense2 for those explicit-only routes)
     #[command(after_help = "\
 When to use: use keyword search to scan a topic before you know the entities. Add -g/--gene when you already know the molecular anchor. Prefer --type review for synthesis questions.
 
@@ -293,6 +293,7 @@ EXAMPLES:
   biomcp search article -d melanoma --type review --journal Nature --limit 5
   biomcp search article -k \"Kartagener syndrome ciliopathy\" --limit 50 --max-per-source 10
   biomcp search article -g BRAF --source pubtator --limit 20
+  biomcp search article -k \"BRAF melanoma\" --source semanticscholar --limit 5
   biomcp search article -k \"Hirschsprung disease ganglion cells\" --source litsense2 --limit 5
   biomcp search article -k \"Hirschsprung disease ganglion cells\" --ranking-mode hybrid --weight-semantic 0.5 --weight-lexical 0.2 --limit 5
   biomcp search article -g BRAF --source pubmed --limit 5
@@ -326,7 +327,7 @@ QUERY FORMULATION:
   - Unknown-entity questions should stay keyword-first or start with `discover`.
   - Keyword-only result pages can suggest typed `get gene`, `get drug`, or `get disease` follow-ups when the whole `-k/--keyword` exactly matches a vocabulary label or alias.
   - Multi-concept phrases and searches that already use `-g/--gene`, `-d/--disease`, or `--drug` do not get direct entity suggestions.
-  - Adding `-k/--keyword` keeps the default route on PubTator3 + Europe PMC + PubMed + Semantic Scholar and selects default `hybrid` relevance. Use `--source litsense2` explicitly when you want LitSense2.
+  - Adding `-k/--keyword` keeps the default route on PubTator3 + Europe PMC + PubMed + Semantic Scholar and selects default `hybrid` relevance. Use `--source semanticscholar` or `--source litsense2` explicitly when you want one of those sources alone.
   - Prefer `--type review` for synthesis or list-style questions; it can narrow the compatible default backend set.
   - Avoid: `biomcp search article \"TP53 apoptosis gene regulation\"`
     Prefer: `biomcp search article -g TP53 -k \"apoptosis gene regulation\" --limit 5`

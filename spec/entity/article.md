@@ -52,6 +52,22 @@ cargo test --lib summarize_debug_plan_explicit_litsense2_remains_selectable -- -
   | mustmatch like 'summarize_debug_plan_explicit_litsense2_remains_selectable'
 ```
 
+## Semantic Scholar Is Individually Selectable
+
+`--source semanticscholar` should use the same Semantic Scholar search client as
+federation, while keeping the returned rows attributable to Semantic Scholar.
+The fixture points only the Semantic Scholar base URL at a local handler, so the
+contract fails before the source value is accepted and passes without touching
+other article backends.
+
+```bash
+bash ../fixtures/run-article-semanticscholar-source-search.sh ../.. \
+  | mustmatch like '"semantic_scholar_enabled": true
+"source": "semanticscholar"
+"Semantic Scholar selectable source fixture"
+"planner=semanticscholar_only"'
+```
+
 ## Federated Article Search Bounds Slow Sources
 
 When one article source is slow, the default federated search should still return

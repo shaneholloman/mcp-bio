@@ -508,6 +508,13 @@ async fn search_relevance_page(
             )
             .await)
         }
+        BackendPlan::SemanticScholarOnly => {
+            let outcome = search_semantic_scholar_candidates(filters, fetch_count).await?;
+            Ok(
+                enrich_and_finalize_article_candidates(outcome.rows, limit, offset, None, filters)
+                    .await,
+            )
+        }
         BackendPlan::LitSense2Only => {
             let rows = search_litsense2_candidates(filters, fetch_count).await?;
             Ok(enrich_and_finalize_article_candidates(rows, limit, offset, None, filters).await)
@@ -517,6 +524,24 @@ async fn search_relevance_page(
         }
         BackendPlan::Both => unreachable!("federated relevance is handled by search_page"),
     }
+}
+
+async fn search_semantic_scholar_page(
+    filters: &ArticleSearchFilters,
+    limit: usize,
+    offset: usize,
+) -> Result<ArticleSearchPage, BioMcpError> {
+    let fetch_count = limit.saturating_add(offset);
+    if fetch_count > MAX_FEDERATED_FETCH_RESULTS {
+        return Err(BioMcpError::InvalidArgument(format!(
+            "--offset + --limit must be <= {MAX_FEDERATED_FETCH_RESULTS} for Semantic Scholar article search"
+        )));
+    }
+
+    let outcome = search_semantic_scholar_candidates(filters, fetch_count).await?;
+    let page =
+        enrich_and_finalize_article_candidates(outcome.rows, limit, offset, None, filters).await;
+    Ok(article_search_page(page, vec![outcome.status]))
 }
 
 pub async fn search_page(
@@ -530,6 +555,9 @@ pub async fn search_page(
     if filters.sort == ArticleSort::Relevance {
         if plan == BackendPlan::Both {
             return search_federated_page(filters, limit, offset).await;
+        }
+        if plan == BackendPlan::SemanticScholarOnly {
+            return search_semantic_scholar_page(filters, limit, offset).await;
         }
         return Ok(article_search_page(
             search_relevance_page(filters, limit, offset, plan).await?,
@@ -556,6 +584,9 @@ pub async fn search_page(
                 search_relevance_page(filters, limit, offset, plan).await?,
                 Vec::new(),
             ))
+        }
+        BackendPlan::SemanticScholarOnly => {
+            search_semantic_scholar_page(filters, limit, offset).await
         }
         BackendPlan::Both => search_federated_page(filters, limit, offset).await,
     }
