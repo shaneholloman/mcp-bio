@@ -20,37 +20,11 @@ availability check belongs in an explicit release/live-smoke lane; routine specs
 must instead prove PubMed, Europe PMC, PubTator, LitSense2, and Semantic Scholar
 request shape, status mapping, and redacted auth behavior locally.
 
-```bash
-cargo test --lib legacy_request_plans_keep_article_contract_shape -- --nocapture \
-  | mustmatch like 'sources::pubmed::tests::construction::legacy_request_plans_keep_article_contract_shape
-sources::pubtator::tests::construction::legacy_request_plans_keep_article_contract_shape'
-```
-
-```bash
-cargo test --lib legacy_search_request_plan_keeps_article_contract_shape -- --nocapture \
-  | mustmatch like 'sources::semantic_scholar::tests::construction::legacy_search_request_plan_keeps_article_contract_shape'
-```
-
-```bash
-cargo test --lib ticket_376_article_source_status_contracts_semantic_scholar_unavailable_status_without_key -- --nocapture \
-  | mustmatch like 'ticket_376_article_source_status_contracts_semantic_scholar_unavailable_status_without_key'
-```
-
 ## Default Article Source Plan Excludes LitSense2
 
 `--source all` should keep the default federated source set to PubTator3,
 Europe PMC, PubMed, and compatible Semantic Scholar. LitSense2 remains
 individually selectable for callers who explicitly ask for it.
-
-```bash
-cargo test --lib summarize_debug_plan_keyword_all_excludes_litsense2 -- --nocapture \
-  | mustmatch like 'summarize_debug_plan_keyword_all_excludes_litsense2'
-```
-
-```bash
-cargo test --lib summarize_debug_plan_explicit_litsense2_remains_selectable -- --nocapture \
-  | mustmatch like 'summarize_debug_plan_explicit_litsense2_remains_selectable'
-```
 
 ## Semantic Scholar Is Individually Selectable
 
@@ -92,11 +66,6 @@ contracts. The deterministic tests should cover article JSON `_meta.next_command
 anchors without live PubMed, Europe PMC, PubTator, LitSense2, or Semantic Scholar
 calls.
 
-```bash
-cargo test --lib ticket_377_article_renderer_envelope_contracts -- --nocapture \
-  | mustmatch like 'ticket_377_article_renderer_envelope_contracts'
-```
-
 ## MYD88 Protein-Alias Article Precision
 
 <!-- mustmatch-lint: skip -->
@@ -106,10 +75,6 @@ before ranking so a clinically specific alias does not drift into generic MYD88
 papers. The deterministic Rust contract uses fixture rows rather than live
 PubMed or LitSense2 ranking, because BioMCP owns query planning and local
 relevance scoring but not upstream result order.
-
-```bash run id=myd88-protein-alias-article-precision
-cargo test --lib ticket_406_myd88_exact_protein_alias_article_precision -- --nocapture
-```
 
 ## Gene Search
 

@@ -87,15 +87,15 @@ def test_ticket_405_surface_contract_lane_is_documented_for_make_spec_and_make_t
     runner = _read("scripts/run-specs.sh")
     makefile = _read("Makefile")
 
-    assert "spec/surface/" in overview, (
-        "current technical overview must explain why Python/static surface contracts live "
-        "under spec/surface/"
+    assert "tests/surface/" in overview, (
+        "current technical overview must explain that Python/static surface contracts live "
+        "under tests/surface/"
     )
     assert "make spec" in overview and "make test" in overview, (
-        "current guidance must describe how make spec and make test exercise the "
-        "spec/surface Python/static contracts"
+        "current guidance must describe the split between Markdown specs and "
+        "Python/static contracts"
     )
-    assert "run_python_contracts" in runner and "uv run --no-sync pytest" in runner
+    assert "run_python_contracts" not in runner and "uv run --no-sync pytest" not in runner
     assert "test-contracts" in makefile and "pytest tests/" in makefile
 
 

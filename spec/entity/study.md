@@ -80,12 +80,6 @@ mock server or public network behavior. The no-network source tests prove the
 download request shape, archive HTTP error mapping, and local archive extraction
 contract.
 
-```bash
-cargo test --lib cbioportal_download::tests -- --nocapture | mustmatch like 'study_archive_plan_fetches_tarball_for_valid_study_id
-archive_status_maps_other_http_errors_with_excerpt
-install_study_archive_extracts_a_valid_local_archive'
-```
-
 ## Filter Validation
 
 Filter workflows should reject missing criteria explicitly instead of silently

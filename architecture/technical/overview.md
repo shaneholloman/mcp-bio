@@ -399,11 +399,12 @@ opt-in live public-upstream confidence, or `make spec-pr` for
 the same offline corpus with the longer PR timeout.
 
 Repo-local `make spec` and `make spec-pr` use `scripts/run-specs.sh` to run
-`mustmatch test` with `--lang bash` over the Markdown subset of explicit
-`SPEC_ROUTINE_PATHS` only: local or fixture-backed specs such as
+`mustmatch test` with `--lang bash` over explicit `SPEC_ROUTINE_PATHS` that are
+Markdown-only: local or fixture-backed specs such as
 `spec/entity/article.md`, `spec/entity/study.md`, `spec/entity/variant.md`, and
-`spec/surface/mcp.md`. The deterministic `spec/surface/test_*.py` contracts stay on
-plain pytest legs inside `scripts/run-specs.sh`, with `spec-contracts` retaining the lane subset. Live-upstream specs leave routine canaries
+`spec/surface/mcp.md`. Python/static surface contracts live under
+`tests/surface/` and run in the `make test` contract lane, not in the Markdown
+spec runner. Live-upstream specs leave routine canaries
 entirely for `make verify`: phenotype/Monarch, protein/UniProt and
 ComplexPortal, disease/discover OLS4 paths, pathway Reactome/WikiPathways/KEGG,
 plus gene, drug, diagnostic, trial, PGx, VAERS, and CLI/discover surfaces that

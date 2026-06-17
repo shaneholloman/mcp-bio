@@ -9,17 +9,6 @@ SPEC_ROUTINE_PATHS=(
   spec/entity/study.md
   spec/entity/variant.md
   spec/surface/mcp.md
-  spec/surface/request-plan-ratchets.md
-  spec/surface/test_architecture_docs_parity_contract.py
-  spec/surface/test_biomcp_ci_path_contract.py
-  spec/surface/test_complexportal_fixture_contract.py
-  spec/surface/test_parallel_isolation_contract.py
-  spec/surface/test_search_all_cli_structure.py
-  spec/surface/test_semantic_scholar_retry_after_contract.py
-  spec/surface/test_ticket_401_surface_ratchets.py
-  spec/surface/test_ticket_405_architecture_operator_contracts.py
-  spec/surface/test_trial_help_contract.py
-  spec/surface/test_variant_normalization_docs_contract.py
 )
 
 SPEC_LIVE_PATHS=(
@@ -57,29 +46,12 @@ mustmatch_dir() {
   return 1
 }
 
-partition_paths() {
-  MD_PATHS=()
-  PY_PATHS=()
-  local path
-  for path in "$@"; do
-    case "$path" in
-      *.md) MD_PATHS+=("$path") ;;
-      *.py) PY_PATHS+=("$path") ;;
-      *) echo "unsupported spec path extension: $path" >&2; return 1 ;;
-    esac
-  done
-}
-
 source_if_present() {
   local path="$1"
   if [[ -f "$path" ]]; then
     # shellcheck source=/dev/null
     . "$path"
   fi
-}
-
-sync_python_dev() {
-  uv sync --extra dev --no-install-project
 }
 
 run_study_fixture() {
@@ -93,47 +65,20 @@ run_ddinter_fixture() {
 }
 
 run_markdown_specs() {
-  if ((${#MD_PATHS[@]})); then
-    mustmatch test "${MD_PATHS[@]}" --lang bash "${timeout_args[@]}"
-  fi
+  mustmatch test "$@" --lang bash "${timeout_args[@]}"
 }
 
-run_python_contracts() {
-  if ((${#PY_PATHS[@]})); then
-    uv run --no-sync pytest "${PY_PATHS[@]}" -v
-  fi
-}
-
-# Build the Cargo test binaries up front so the `cargo test ...` invocations
-# inside the executable Markdown specs run an already-compiled harness instead
-# of recompiling under each spec heading's mustmatch `--timeout`. A cold
-# test-harness compile can exceed the per-heading timeout and fail an otherwise
-# green gate — the root cause of the ticket 422 routine-spec timeout. Routine
-# specs only call `cargo test --lib`; the live lane (cli.md/discover.md) also
-# calls `cargo test --test <name>`, so verify pre-builds every test target.
 prebuild_cargo_test_targets() {
-  echo "run-specs: pre-building cargo test binaries ($*) to keep in-spec cargo runs off the timeout path" >&2
+  echo "run-specs: pre-building cargo test binaries ($*) for live specs" >&2
   cargo test --locked --no-run "$@"
 }
 
 mode="${1:-}"
-run_python=0
 case "$mode" in
-  spec)
+  spec|spec-pr)
     timeout_args=(--timeout 180)
     paths=("${SPEC_ROUTINE_PATHS[@]}")
-    run_python=1
     mustmatch_path_dir="$(mustmatch_dir)"
-    sync_python_dev
-    run_study_fixture
-    run_ddinter_fixture
-    ;;
-  spec-pr)
-    timeout_args=(--timeout 180)
-    paths=("${SPEC_ROUTINE_PATHS[@]}")
-    run_python=1
-    mustmatch_path_dir="$(mustmatch_dir)"
-    sync_python_dev
     run_study_fixture
     run_ddinter_fixture
     ;;
@@ -142,12 +87,8 @@ case "$mode" in
     paths=(
       spec/entity/article.md
       spec/surface/mcp.md
-      spec/surface/request-plan-ratchets.md
-      spec/surface/test_parallel_isolation_contract.py
     )
-    run_python=1
     mustmatch_path_dir="$(mustmatch_dir)"
-    sync_python_dev
     run_study_fixture
     ;;
   verify)
@@ -174,13 +115,8 @@ BIOMCP_BIN_DIR="$(cd "$(dirname "$BIOMCP_BIN")" && pwd)"
 export BIOMCP_BIN
 export PATH="$mustmatch_path_dir:$BIOMCP_BIN_DIR:$PATH"
 
-case "$mode" in
-  spec|spec-pr|spec-contracts) prebuild_cargo_test_targets --lib ;;
-  verify) prebuild_cargo_test_targets ;;
-esac
-
-partition_paths "${paths[@]}"
-run_markdown_specs
-if ((run_python)); then
-  run_python_contracts
+if [[ "$mode" == "verify" ]]; then
+  prebuild_cargo_test_targets
 fi
+
+run_markdown_specs "${paths[@]}"

@@ -820,7 +820,11 @@ def test_ticket_377_renderer_envelope_specs_document_deterministic_coverage() ->
         assert "without" in lower and "live" in lower and "calls" in lower, (
             f"{path} must state the contract runs without live source calls"
         )
-        assert marker in section, f"{path} must expose the executable cargo marker {marker}"
+        if path in {"spec/entity/article.md", "spec/entity/variant.md"}:
+            assert marker not in section, f"{path} must not relaunch cargo marker {marker} from routine specs"
+            assert "cargo test" not in section, f"{path} must keep renderer/envelope proof in make test"
+        else:
+            assert marker in section, f"{path} must expose the executable cargo marker {marker}"
 
 
 ROUTINE_SPEC_PATHS = (
@@ -828,19 +832,6 @@ ROUTINE_SPEC_PATHS = (
     "spec/entity/study.md",
     "spec/entity/variant.md",
     "spec/surface/mcp.md",
-    "spec/surface/request-plan-ratchets.md",
-    "spec/surface/test_architecture_docs_parity_contract.py",
-    "spec/surface/test_biomcp_ci_path_contract.py",
-    "spec/surface/test_complexportal_fixture_contract.py",
-    "spec/surface/test_parallel_isolation_contract.py",
-    "spec/surface/test_public_entity_contract_docs.py",
-    "spec/surface/test_search_all_cli_structure.py",
-    "spec/surface/test_semantic_scholar_retry_after_contract.py",
-    "spec/surface/test_source_configuration_docs_contract.py",
-    "spec/surface/test_ticket_401_surface_ratchets.py",
-    "spec/surface/test_ticket_405_architecture_operator_contracts.py",
-    "spec/surface/test_trial_help_contract.py",
-    "spec/surface/test_variant_normalization_docs_contract.py",
 )
 
 LIVE_SPEC_PATHS = (
@@ -872,12 +863,12 @@ def test_ticket_395_routine_and_live_spec_variables_are_disjoint_and_complete() 
     live = _make_variable_paths("SPEC_LIVE_PATHS")
     spec_files = {str(path.relative_to(REPO_ROOT)) for path in (REPO_ROOT / "spec/entity").glob("*.md")}
     spec_files |= {str(path.relative_to(REPO_ROOT)) for path in (REPO_ROOT / "spec/surface").glob("*.md")}
-    spec_files |= {str(path.relative_to(REPO_ROOT)) for path in (REPO_ROOT / "spec/surface").glob("test_*.py")}
 
     assert routine == set(ROUTINE_SPEC_PATHS)
     assert live == set(LIVE_SPEC_PATHS)
     assert not routine & live, "routine and live spec lanes must be disjoint"
-    assert routine | live == spec_files, "every entity/surface spec must be explicitly routed"
+    retired = {"spec/surface/request-plan-ratchets.md"}
+    assert routine | live == spec_files - retired, "every active entity/surface spec must be explicitly routed"
 
 
 
@@ -985,8 +976,8 @@ def test_ticket_378_routine_lane_no_longer_depends_on_serialized_live_carveouts(
     assert "spec/surface/mcp.md" in spec_contracts_surface, (
         "spec-contracts should keep local MCP transport proof in routine validation"
     )
-    assert "test_parallel_isolation_contract.py" in spec_contracts_surface, (
-        "spec-contracts must run the deterministic surface contract tests that replace live canaries"
+    assert "test_parallel_isolation_contract.py" not in spec_contracts_surface, (
+        "spec-contracts must not run Python surface contracts; they belong to make test"
     )
     assert "spec/surface/cli.md" not in spec_contracts, (
         "spec-contracts must not keep live CLI/discover/health probes in routine proof"
