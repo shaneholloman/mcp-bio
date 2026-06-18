@@ -131,6 +131,8 @@ fn trial_locations_json_preserves_location_pagination_and_section_sources() {
             contact_role: None,
             contact_phone: None,
             contact_email: None,
+            latitude: None,
+            longitude: None,
         }]),
         outcomes: None,
         arms: None,

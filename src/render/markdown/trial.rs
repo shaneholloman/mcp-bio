@@ -129,6 +129,9 @@ pub fn trial_action_summary_markdown(
                     out.push_str(&format!(", {state}"));
                 }
                 out.push_str(&format!(" ({})", site.match_status));
+                if let Some(distance) = site.distance_miles {
+                    out.push_str(&format!(" — {:.1} miles", distance));
+                }
                 if site.match_status == "no_listed_facility_match"
                     && let Some(requested) = site.requested_facility.as_deref()
                 {

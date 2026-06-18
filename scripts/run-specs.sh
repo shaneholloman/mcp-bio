@@ -9,6 +9,7 @@ SPEC_ROUTINE_PATHS=(
   spec/entity/study.md
   spec/entity/variant.md
   spec/surface/mcp.md
+  spec/surface/trial-action-summary.md
 )
 
 SPEC_LIVE_PATHS=(
@@ -91,6 +92,7 @@ case "$mode" in
     mustmatch_path_dir="$(mustmatch_dir)"
     run_study_fixture
     run_ddinter_fixture
+    run_ctgov_fixture
     prepare_mcp_markdown_deps
     ;;
   spec-contracts)

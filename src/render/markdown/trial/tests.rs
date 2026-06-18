@@ -100,6 +100,8 @@ fn trial_markdown_includes_source_labeled_sections() {
             contact_role: None,
             contact_phone: None,
             contact_email: None,
+            latitude: None,
+            longitude: None,
         }]),
         outcomes: Some(crate::entities::trial::TrialOutcomes {
             primary: vec![crate::entities::trial::TrialOutcome {
@@ -179,6 +181,8 @@ fn trial_markdown_renders_contacts_eligibility_and_json_fields() {
             contact_role: Some("CONTACT".to_string()),
             contact_phone: None,
             contact_email: Some("site@example.test".to_string()),
+            latitude: None,
+            longitude: None,
         }]),
         outcomes: None,
         arms: None,

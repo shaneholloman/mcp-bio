@@ -6,7 +6,7 @@ use crate::error::BioMcpError;
 
 use super::{
     Trial, TrialContact, TrialEligibility, TrialLocation, TrialSearchFilters, TrialSource, get,
-    search_page,
+    search::haversine_miles, search_page,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -53,6 +53,8 @@ pub struct RankedTrialSite {
     pub match_status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub requested_facility: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub distance_miles: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -69,6 +71,8 @@ pub async fn action_summary(
     limit: usize,
     offset: usize,
 ) -> Result<TrialActionSummary, BioMcpError> {
+    validate_geo_hints(&hints)?;
+
     let mut candidate_filters = filters.clone();
     candidate_filters.facility = None;
     candidate_filters.lat = None;
@@ -188,12 +192,17 @@ fn rank_sites(locations: &[TrialLocation], hints: &ActionSummaryHints) -> Vec<Ra
             let facility_matches = requested_lower
                 .as_deref()
                 .is_some_and(|needle| location.facility.to_ascii_lowercase().contains(needle));
+            let distance_miles = location_distance_miles(location, hints);
             let match_status = if requested.is_some() && !has_facility_match {
                 "no_listed_facility_match"
             } else if facility_matches {
                 "listed_facility_match"
-            } else if hints.lat.is_some() || hints.lon.is_some() || hints.distance.is_some() {
-                "listed_site_coordinates_not_ranked"
+            } else if hints.lat.is_some() {
+                if distance_miles.is_some() {
+                    "listed_geo_ranked"
+                } else {
+                    "listed_site_missing_coordinates"
+                }
             } else {
                 "listed_site"
             };
@@ -205,15 +214,61 @@ fn rank_sites(locations: &[TrialLocation], hints: &ActionSummaryHints) -> Vec<Ra
                 status: location.status.clone(),
                 match_status: match_status.to_string(),
                 requested_facility: requested.map(str::to_string),
+                distance_miles,
             }
         })
         .collect::<Vec<_>>();
 
-    sites.sort_by_key(|site| match site.match_status.as_str() {
-        "listed_facility_match" => 0,
-        _ => 1,
+    sites.sort_by(|a, b| {
+        site_rank(a)
+            .cmp(&site_rank(b))
+            .then_with(|| match (a.distance_miles, b.distance_miles) {
+                (Some(left), Some(right)) => left.total_cmp(&right),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => std::cmp::Ordering::Equal,
+            })
     });
     sites
+}
+
+fn site_rank(site: &RankedTrialSite) -> u8 {
+    match site.match_status.as_str() {
+        "listed_facility_match" => 0,
+        "listed_geo_ranked" => 1,
+        _ => 2,
+    }
+}
+
+fn validate_geo_hints(hints: &ActionSummaryHints) -> Result<(), BioMcpError> {
+    let has_lat = hints.lat.is_some();
+    let has_lon = hints.lon.is_some();
+    let has_distance = hints.distance.is_some();
+    if has_distance && (!has_lat || !has_lon) {
+        return Err(BioMcpError::InvalidArgument(
+            "--distance requires both --lat and --lon".into(),
+        ));
+    }
+    if (has_lat || has_lon) && !has_distance {
+        return Err(BioMcpError::InvalidArgument(
+            "--lat/--lon requires --distance".into(),
+        ));
+    }
+    if has_lat != has_lon {
+        return Err(BioMcpError::InvalidArgument(
+            "--lat and --lon must be provided together".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn location_distance_miles(location: &TrialLocation, hints: &ActionSummaryHints) -> Option<f64> {
+    let (Some(origin_lat), Some(origin_lon), Some(site_lat), Some(site_lon)) =
+        (hints.lat, hints.lon, location.latitude, location.longitude)
+    else {
+        return None;
+    };
+    Some(haversine_miles(origin_lat, origin_lon, site_lat, site_lon))
 }
 
 fn eligibility_snippets(text: Option<&str>) -> Vec<String> {
@@ -230,5 +285,73 @@ pub fn trial_type_label(value: &str) -> &str {
     match value {
         "open_label_extension" => "Open-label extension",
         _ => value,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn location(facility: &str, lat: Option<f64>, lon: Option<f64>) -> TrialLocation {
+        TrialLocation {
+            facility: facility.to_string(),
+            city: facility.to_string(),
+            state: None,
+            country: "United States".to_string(),
+            status: Some("RECRUITING".to_string()),
+            contact_name: None,
+            contact_role: None,
+            contact_phone: None,
+            contact_email: None,
+            latitude: lat,
+            longitude: lon,
+        }
+    }
+
+    #[test]
+    fn geo_hints_rank_listed_sites_by_distance() {
+        let sites = rank_sites(
+            &[
+                location("Far Site", Some(41.8781), Some(-87.6298)),
+                location("Near Site", Some(42.2808), Some(-83.7430)),
+            ],
+            &ActionSummaryHints {
+                lat: Some(42.2808),
+                lon: Some(-83.7430),
+                distance: Some(300),
+                ..ActionSummaryHints::default()
+            },
+        );
+
+        assert_eq!(sites[0].facility, "Near Site");
+        assert_eq!(sites[0].match_status, "listed_geo_ranked");
+        assert!(sites[0].distance_miles.unwrap_or(f64::INFINITY) < 1.0);
+    }
+
+    #[test]
+    fn geo_hints_mark_missing_coordinates() {
+        let sites = rank_sites(
+            &[location("Unmapped Site", None, None)],
+            &ActionSummaryHints {
+                lat: Some(42.2808),
+                lon: Some(-83.7430),
+                distance: Some(300),
+                ..ActionSummaryHints::default()
+            },
+        );
+
+        assert_eq!(sites[0].match_status, "listed_site_missing_coordinates");
+        assert!(sites[0].distance_miles.is_none());
+    }
+
+    #[test]
+    fn action_summary_geo_hints_keep_existing_validation_rules() {
+        let err = validate_geo_hints(&ActionSummaryHints {
+            lat: Some(42.2808),
+            ..ActionSummaryHints::default()
+        })
+        .expect_err("lat without lon/distance should be rejected");
+
+        assert!(err.to_string().contains("--lat/--lon requires --distance"));
     }
 }

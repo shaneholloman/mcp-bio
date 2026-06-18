@@ -23,7 +23,7 @@ fn normalize_facility_text(value: &str) -> Option<String> {
     (!normalized.is_empty()).then_some(normalized)
 }
 
-fn haversine_miles(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
+pub(crate) fn haversine_miles(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
     const EARTH_RADIUS_MILES: f64 = 3958.7613;
     let to_rad = |deg: f64| deg.to_radians();
     let d_lat = to_rad(lat2 - lat1);
