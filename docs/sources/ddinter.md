@@ -59,7 +59,10 @@ No BioMCP API key required. BioMCP auto-downloads the eight public DDInter CSV
 files into `BIOMCP_DDINTER_DIR` or the default data directory on first use.
 DDInter's own terms warn that absence from the database does not prove no
 interaction exists, so BioMCP keeps empty results scoped to the current local
-bundle instead of treating them as safety claims.
+bundle instead of treating them as safety claims. When the queried drug is not
+present in the loaded DDInter bundle at all, JSON includes
+`coverage_status: "not_in_ddinter_coverage"` and markdown says this is a source
+coverage miss.
 
 ## Official source
 

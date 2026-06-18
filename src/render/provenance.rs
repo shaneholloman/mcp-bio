@@ -1405,7 +1405,10 @@ mod tests {
                 partner_classes: vec!["antiplatelets".to_string()],
             }],
             class_summaries: Vec::new(),
+            coverage_status:
+                crate::entities::drug::interactions::DrugInteractionCoverageStatus::InDdinterCoverage,
             source_note: None,
+            coverage_note: None,
             label_interaction_text: None,
         };
 

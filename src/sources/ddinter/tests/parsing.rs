@@ -64,7 +64,32 @@ fn client_lookup_matches_both_sides_without_duplicates() {
     let identity = DdinterIdentity::with_aliases("Warfarin", None, &["warfarin".to_string()]);
     let matches = client.interactions(&identity);
 
+    assert!(client.contains_identity(&identity));
     assert_eq!(matches.len(), 2);
     assert_eq!(matches[0].drug_a, "Abacavir");
     assert_eq!(matches[1].drug_b, "Aspirin");
+}
+
+#[test]
+fn client_coverage_status_distinguishes_absent_drug_from_empty_matches() {
+    let rows = parse_csv_rows("fixture.csv", INTERACTIONS_CSV).expect("rows");
+    let mut index = DdinterIndex::default();
+    for row in rows {
+        let idx = index.rows.len();
+        if let Some(key) = normalize_name_key(&row.drug_a) {
+            index.by_name.entry(key).or_default().push(idx);
+        }
+        if let Some(key) = normalize_name_key(&row.drug_b) {
+            index.by_name.entry(key).or_default().push(idx);
+        }
+        index.rows.push(row);
+    }
+
+    let client = DdinterClient {
+        index: Arc::new(index),
+    };
+    let uncovered = DdinterIdentity::with_aliases("dabigatran", None, &[]);
+
+    assert!(!client.contains_identity(&uncovered));
+    assert!(client.interactions(&uncovered).is_empty());
 }

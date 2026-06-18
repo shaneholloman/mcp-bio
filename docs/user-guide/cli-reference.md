@@ -581,8 +581,12 @@ root instead of querying remote APIs for each request.
 
 Use `BIOMCP_STUDY_DIR` when you want an explicit study root for reproducible
 downloads and examples; if it is unset, BioMCP falls back to its default study
-root. `biomcp study download --list` shows downloadable IDs, and
-`biomcp study download <study_id>` installs a study into that local root.
+root. `biomcp study list` is the authoritative local cohort list for the current
+snapshot. `biomcp study download --list` shows downloadable IDs, and
+`biomcp study download <study_id>` installs a study into that local root. If a
+query names a study that is not local, BioMCP returns `not_in_local_cohorts` and
+points to `biomcp study download <study_id>` instead of returning an empty cohort
+as if it had been analyzed.
 
 | Use this | When |
 |----------|------|
@@ -609,10 +613,10 @@ biomcp study co-occurrence --study msk_impact_2017 --genes TP53,KRAS
 
 ### Dataset requirements
 
-- `study list` shows locally available studies.
+- `study list` shows locally available studies; this is the local cohort list for coverage decisions.
 - `study download` fetches remote datasets into the local study root.
 - `study filter` intersects mutation, CNA, expression, and clinical filters.
-- `study query` supports `mutations`, `cna`, `expression`, and structural variants/fusions (`sv`, alias `fusion`) per-gene summaries.
+- `study query` supports `mutations`, `cna`, `expression`, and structural variants/fusions (`sv`, alias `fusion`) per-gene summaries; off-snapshot study IDs return `not_in_local_cohorts` with a `study download` hint.
 - Mutation query and top-mutated outputs are mutation-only; when `data_sv.txt` is present, they say fusions/SV are excluded and point to `--type sv`.
 - `study cohort`, `study survival`, and `study compare` require `data_mutations.txt` and `data_clinical_sample.txt`.
 - `study survival` also requires `data_clinical_patient.txt` with canonical `{ENDPOINT}_STATUS` and `{ENDPOINT}_MONTHS` columns.

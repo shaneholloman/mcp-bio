@@ -133,3 +133,14 @@ interactions.
 ../../tools/biomcp-ci drug interactions daraxonrasib | mustmatch like 'current DDInter download bundle has no matching rows'
 ../../tools/biomcp-ci drug interactions daraxonrasib | mustmatch not like 'no clinical interactions'
 ```
+
+Uncovered drugs should also carry a structured coverage status so agents can
+branch on a source-coverage miss instead of treating an empty table as safety
+evidence.
+
+```bash
+../../tools/biomcp-ci --json drug interactions dabigatran | mustmatch like '"coverage_status": "not_in_ddinter_coverage"'
+../../tools/biomcp-ci drug interactions dabigatran | mustmatch like 'current DDInter download bundle has no matching rows
+not_in_ddinter_coverage
+source coverage miss'
+```

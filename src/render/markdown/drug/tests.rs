@@ -91,6 +91,29 @@ fn drug_markdown_uses_truthful_public_unavailable_interactions_message() {
 }
 
 #[test]
+fn drug_interaction_report_markdown_renders_not_in_coverage_signal() {
+    let report = crate::entities::drug::DrugInteractionReport {
+        name: "dabigatran".to_string(),
+        drugbank_id: None,
+        chembl_id: None,
+        interactions: Vec::new(),
+        class_summaries: Vec::new(),
+        coverage_status: crate::entities::drug::interactions::DrugInteractionCoverageStatus::NotInDdinterCoverage,
+        source_note: Some(
+            "The current DDInter download bundle has no matching rows for this drug. DDInter warns that missing rows do not prove no interaction exists.".to_string(),
+        ),
+        coverage_note: Some("Coverage status: not_in_ddinter_coverage. The queried drug is not present in the current DDInter download bundle; this is a source coverage miss, not evidence of no interactions.".to_string()),
+        label_interaction_text: None,
+    };
+
+    let markdown = drug_interaction_report_markdown(&report).expect("markdown");
+
+    assert!(markdown.contains("current DDInter download bundle has no matching rows"));
+    assert!(markdown.contains("not_in_ddinter_coverage"));
+    assert!(markdown.contains("source coverage miss"));
+}
+
+#[test]
 fn drug_markdown_renders_interaction_class_summaries_without_overloading_anchor_classes() {
     let drug = Drug {
         name: "warfarin".to_string(),
