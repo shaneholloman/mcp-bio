@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
 
+mod action_summary;
 mod get;
 #[cfg_attr(not(test), allow(dead_code))]
 pub(crate) mod planning;
@@ -13,6 +14,9 @@ mod search;
 #[cfg(test)]
 mod test_support;
 
+pub use self::action_summary::{
+    ActionSummaryHints, TrialActionSummary, action_summary, trial_type_label,
+};
 pub use self::get::get;
 pub use self::search::{count_all, search, search_page};
 
@@ -89,6 +93,10 @@ pub struct TrialLocation {
     pub contact_phone: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contact_email: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latitude: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub longitude: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

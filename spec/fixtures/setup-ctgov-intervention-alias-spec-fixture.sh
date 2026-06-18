@@ -155,10 +155,92 @@ CONTACTS_ELIGIBILITY_STUDY = {
     }
 }
 
+ACTION_SUMMARY_STUDY = {
+    "protocolSection": {
+        "identificationModule": {
+            "nctId": "NCT41700001",
+            "briefTitle": "Open-label Extension for Phelan-McDermid Syndrome",
+        },
+        "statusModule": {"overallStatus": "RECRUITING"},
+        "descriptionModule": {
+            "briefSummary": "Open-label extension study for participants who completed the antecedent randomized study."
+        },
+        "conditionsModule": {"conditions": ["Phelan-McDermid Syndrome", "22q13 deletion syndrome"]},
+        "designModule": {
+            "phases": ["PHASE2"],
+            "studyType": "Interventional",
+            "enrollmentInfo": {"count": 18},
+        },
+        "armsInterventionsModule": {
+            "interventions": [
+                {
+                    "type": "DRUG",
+                    "name": "Fixture therapy",
+                    "description": "Supportive investigational treatment in the extension phase.",
+                    "armGroupLabels": ["Open-label extension"],
+                    "otherNames": [],
+                }
+            ],
+            "armGroups": [
+                {
+                    "label": "Open-label extension",
+                    "type": "EXPERIMENTAL",
+                    "description": "Participants receive fixture therapy after completing the antecedent study.",
+                    "interventionNames": ["Fixture therapy"],
+                }
+            ],
+        },
+        "eligibilityModule": {
+            "minimumAge": "2 Years",
+            "maximumAge": "18 Years",
+            "sex": "ALL",
+            "eligibilityCriteria": "Key inclusion: confirmed SHANK3-related neurodevelopmental disorder. Participants must have completed antecedent Study ABC-101 before enrolling in this open-label extension."
+        },
+        "contactsLocationsModule": {
+            "centralContacts": [
+                {
+                    "name": "Central Coordinator",
+                    "role": "CONTACT",
+                    "phone": "555-0417",
+                    "email": "central-action@example.test",
+                }
+            ],
+            "locations": [
+                {
+                    "facility": "Rare Disease Center",
+                    "city": "Ann Arbor",
+                    "state": "Michigan",
+                    "country": "United States",
+                    "status": "RECRUITING",
+                    "contacts": [
+                        {
+                            "name": "Action Site Coordinator",
+                            "role": "CONTACT",
+                            "phone": "555-4170",
+                            "email": "site-action@example.test",
+                        }
+                    ],
+                    "geoPoint": {"lat": 42.2808, "lon": -83.7430},
+                },
+                {
+                    "facility": "Chicago Rare Disease Clinic",
+                    "city": "Chicago",
+                    "state": "Illinois",
+                    "country": "United States",
+                    "status": "RECRUITING",
+                    "contacts": [],
+                    "geoPoint": {"lat": 41.8781, "lon": -87.6298},
+                }
+            ],
+        },
+    }
+}
+
 STUDIES = {
     "nct02136914": NCT02136914_STUDY,
     "nct35700001": SHELL_SAFE_STUDY,
     "nct41300001": CONTACTS_ELIGIBILITY_STUDY,
+    "nct41700001": ACTION_SUMMARY_STUDY,
 }
 
 
@@ -176,6 +258,14 @@ def study_payload_for_request(parsed, study):
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/api/v2/studies":
+            query = parse_qs(parsed.query)
+            requested_facility = " ".join(query.get("query.locn", [])).lower()
+            if "university of michigan" in requested_facility:
+                send_json(self, 200, {"studies": [], "totalCount": 0})
+                return
+            send_json(self, 200, {"studies": [study_payload_for_request(parsed, ACTION_SUMMARY_STUDY)], "totalCount": 1})
+            return
         if parsed.path.startswith("/api/v2/studies/"):
             nct_id = parsed.path.rsplit("/", 1)[-1].lower()
             if nct_id in STUDIES:

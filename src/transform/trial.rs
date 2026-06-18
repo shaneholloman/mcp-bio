@@ -139,6 +139,8 @@ fn extract_locations(study: &CtGovStudy) -> Option<Vec<TrialLocation>> {
                 contact_role: contact.and_then(|c| clean_opt(c.role.as_deref())),
                 contact_phone: contact.and_then(|c| clean_opt(c.phone.as_deref())),
                 contact_email: contact.and_then(|c| clean_opt(c.email.as_deref())),
+                latitude: loc.geo_point.as_ref().and_then(|geo| geo.lat),
+                longitude: loc.geo_point.as_ref().and_then(|geo| geo.lon),
             })
         })
         .collect::<Vec<_>>();

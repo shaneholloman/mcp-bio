@@ -292,6 +292,8 @@ fn markdown_detail_outputs_label_article_trial_and_pathway_sources() {
             contact_role: None,
             contact_phone: None,
             contact_email: None,
+            latitude: None,
+            longitude: None,
         }]),
         outcomes: Some(crate::entities::trial::TrialOutcomes {
             primary: vec![crate::entities::trial::TrialOutcome {

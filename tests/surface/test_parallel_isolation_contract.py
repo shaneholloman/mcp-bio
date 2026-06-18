@@ -832,6 +832,7 @@ ROUTINE_SPEC_PATHS = (
     "spec/entity/study.md",
     "spec/entity/variant.md",
     "spec/surface/mcp.md",
+    "spec/surface/trial-action-summary.md",
 )
 
 LIVE_SPEC_PATHS = (

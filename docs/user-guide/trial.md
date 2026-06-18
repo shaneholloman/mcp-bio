@@ -65,6 +65,19 @@ biomcp search trial -c melanoma --lat 42.36 --lon -71.06 --distance 50 --limit 5
 
 When geo filters are set, the search query summary includes `lat`, `lon`, and `distance`.
 
+## Rare-disease action summaries
+
+Use `--action-summary` when a rare-disease trial search needs practical CTGov detail instead of compact rows:
+
+```bash
+biomcp search trial -c "Phelan-McDermid Syndrome" --action-summary --facility "University of Michigan" --limit 5
+biomcp --json search trial -c "Phelan-McDermid Syndrome" --action-summary --facility "University of Michigan" --limit 5
+```
+
+Action summaries fetch full ClinicalTrials.gov records for selected candidate NCT IDs. Facility and geo flags are ranking hints against listed CTGov sites only; BioMCP reports when no listed site matches and does not infer pending or unlisted availability.
+
+JSON action-summary rows include stable `trial_type`, `access_caveats`, `ranked_sites`, `contacts`, and `eligibility` fields for agent workflows.
+
 Prior-therapy filters:
 
 ```bash
@@ -186,7 +199,10 @@ This keeps repeated lookups responsive.
 ```bash
 biomcp --json get trial NCT02576665
 biomcp --json search trial -i daraxonrasib --limit 20
+biomcp --json search trial -c "Phelan-McDermid Syndrome" --action-summary --limit 5
 ```
+
+Action-summary JSON includes `trial_type`, `access_caveats`, `ranked_sites`, `contacts`, and `eligibility`.
 
 ## Practical tips
 

@@ -9,6 +9,7 @@ SPEC_ROUTINE_PATHS=(
   spec/entity/study.md
   spec/entity/variant.md
   spec/surface/mcp.md
+  spec/surface/trial-action-summary.md
 )
 
 SPEC_LIVE_PATHS=(
@@ -64,6 +65,11 @@ run_ddinter_fixture() {
   source_if_present "$ROOT/.cache/spec-ddinter-env"
 }
 
+run_ctgov_fixture() {
+  bash spec/fixtures/setup-ctgov-intervention-alias-spec-fixture.sh "$ROOT"
+  source_if_present "$ROOT/.cache/spec-ctgov-intervention-alias-env"
+}
+
 prepare_mcp_markdown_deps() {
   echo "run-specs: preparing Python MCP client dependency for markdown MCP contracts" >&2
   uv sync --extra dev --no-install-project
@@ -86,6 +92,7 @@ case "$mode" in
     mustmatch_path_dir="$(mustmatch_dir)"
     run_study_fixture
     run_ddinter_fixture
+    run_ctgov_fixture
     prepare_mcp_markdown_deps
     ;;
   spec-contracts)
@@ -93,9 +100,11 @@ case "$mode" in
     paths=(
       spec/entity/article.md
       spec/surface/mcp.md
+      spec/surface/trial-action-summary.md
     )
     mustmatch_path_dir="$(mustmatch_dir)"
     run_study_fixture
+    run_ctgov_fixture
     prepare_mcp_markdown_deps
     ;;
   verify)
