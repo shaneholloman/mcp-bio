@@ -29,6 +29,23 @@ pub struct StudyDownloadResult {
     pub downloaded: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LocalCohortCoverageStatus {
+    InLocalCohorts,
+    NotInLocalCohorts,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct NotInLocalCohortsResult {
+    pub study_id: String,
+    pub gene: String,
+    pub coverage_status: LocalCohortCoverageStatus,
+    pub message: String,
+    pub suggestion: String,
+    pub local_study_ids: Vec<String>,
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MutationFrequencyResult {
     pub study_id: String,
@@ -137,6 +154,7 @@ pub enum StudyQueryResult {
     StructuralVariants(StructuralVariantResult),
     CnaDistribution(CnaDistributionResult),
     ExpressionDistribution(ExpressionDistributionResult),
+    NotInLocalCohorts(NotInLocalCohortsResult),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -398,7 +416,11 @@ async fn query_study_with_root(
     let gene = normalize_gene(gene)?;
 
     run_blocking(move || {
-        let study_dir = resolve_study_dir(&root, &study_id)?;
+        let Some(study_dir) = find_study_dir(&root, &study_id)? else {
+            return Ok(StudyQueryResult::NotInLocalCohorts(
+                not_in_local_cohorts_result(&root, &study_id, &gene)?,
+            ));
+        };
         match query_type {
             StudyQueryType::Mutations => {
                 let mut result: MutationFrequencyResult =
@@ -1126,17 +1148,43 @@ fn normalize_gene_list(genes: &[String]) -> Result<Vec<String>, BioMcpError> {
     Ok(out)
 }
 
-fn resolve_study_dir(root: &Path, study_id: &str) -> Result<std::path::PathBuf, BioMcpError> {
+fn find_study_dir(root: &Path, study_id: &str) -> Result<Option<std::path::PathBuf>, BioMcpError> {
     let studies = crate::sources::cbioportal_study::list_studies(root)?;
-    studies
+    Ok(studies
         .into_iter()
         .find(|study| study.study_id.eq_ignore_ascii_case(study_id))
-        .map(|study| study.path)
-        .ok_or_else(|| BioMcpError::NotFound {
-            entity: "study".to_string(),
-            id: study_id.to_string(),
-            suggestion: "Try listing available studies: biomcp study list".to_string(),
-        })
+        .map(|study| study.path))
+}
+
+fn resolve_study_dir(root: &Path, study_id: &str) -> Result<std::path::PathBuf, BioMcpError> {
+    find_study_dir(root, study_id)?.ok_or_else(|| BioMcpError::NotFound {
+        entity: "study".to_string(),
+        id: study_id.to_string(),
+        suggestion: format!(
+            "Not in local cBioPortal cohorts. Try `biomcp study download {study_id}` or list local studies with `biomcp study list`."
+        ),
+    })
+}
+
+fn not_in_local_cohorts_result(
+    root: &Path,
+    study_id: &str,
+    gene: &str,
+) -> Result<NotInLocalCohortsResult, BioMcpError> {
+    let local_study_ids = crate::sources::cbioportal_study::list_studies(root)?
+        .into_iter()
+        .map(|study| study.study_id)
+        .collect::<Vec<_>>();
+    Ok(NotInLocalCohortsResult {
+        study_id: study_id.to_string(),
+        gene: gene.to_string(),
+        coverage_status: LocalCohortCoverageStatus::NotInLocalCohorts,
+        message: format!(
+            "Study {study_id} is not in the local cBioPortal cohort snapshot; no local cohort result was computed."
+        ),
+        suggestion: format!("Try `biomcp study download {study_id}` before querying this cohort."),
+        local_study_ids,
+    })
 }
 
 fn clinical_sample_count(study_dir: &Path) -> Option<usize> {
@@ -1408,6 +1456,43 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn query_study_missing_local_cohort_returns_coverage_signal() {
+        let fixture = TestStudyDir::new("missing-local-cohort");
+        minimal_study_fixture(&fixture.root, "msk_impact_2017");
+
+        let result = query_study_with_root(
+            fixture.root.clone(),
+            "skcm_tcga_pan_can_atlas_2018",
+            "BRAF",
+            StudyQueryType::Mutations,
+        )
+        .await
+        .expect("missing local study should return a coverage signal");
+
+        match result {
+            StudyQueryResult::NotInLocalCohorts(result) => {
+                assert_eq!(
+                    result.coverage_status,
+                    LocalCohortCoverageStatus::NotInLocalCohorts
+                );
+                assert_eq!(result.study_id, "skcm_tcga_pan_can_atlas_2018");
+                assert!(
+                    result
+                        .message
+                        .contains("not in the local cBioPortal cohort snapshot")
+                );
+                assert!(
+                    result
+                        .suggestion
+                        .contains("biomcp study download skcm_tcga_pan_can_atlas_2018")
+                );
+                assert_eq!(result.local_study_ids, vec!["msk_impact_2017".to_string()]);
+            }
+            other => panic!("unexpected query result: {other:?}"),
+        }
+    }
+
+    #[tokio::test]
     async fn mutation_outputs_include_caveat_when_structural_variants_exist() {
         let fixture = TestStudyDir::new("mutation-caveat");
         minimal_study_fixture(&fixture.root, "demo_study");
@@ -1468,19 +1553,28 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn query_study_unknown_study_returns_not_found() {
+    async fn query_study_unknown_study_returns_not_in_local_cohorts() {
         let fixture = TestStudyDir::new("unknown-study");
         minimal_study_fixture(&fixture.root, "demo_study");
 
-        let err = query_study_with_root(
+        let result = query_study_with_root(
             fixture.root.clone(),
             "missing",
             "TP53",
             StudyQueryType::Mutations,
         )
         .await
-        .expect_err("unknown study should fail");
-        assert!(matches!(err, BioMcpError::NotFound { .. }));
+        .expect("unknown study should return a local coverage signal");
+        match result {
+            StudyQueryResult::NotInLocalCohorts(result) => {
+                assert_eq!(
+                    result.coverage_status,
+                    LocalCohortCoverageStatus::NotInLocalCohorts
+                );
+                assert_eq!(result.local_study_ids, vec!["demo_study".to_string()]);
+            }
+            other => panic!("unexpected query result: {other:?}"),
+        }
     }
 
     #[tokio::test]

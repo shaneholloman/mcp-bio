@@ -39,12 +39,14 @@ use crate::entities::study::{
     ExpressionComparisonResult as StudyExpressionComparisonResult,
     ExpressionDistributionResult as StudyExpressionDistributionResult,
     ExpressionGroupStats as StudyExpressionGroupStats, FilterResult as StudyFilterResult,
+    LocalCohortCoverageStatus as StudyLocalCohortCoverageStatus,
     MutationComparisonResult as StudyMutationComparisonResult,
     MutationFrequencyResult as StudyMutationFrequencyResult,
-    MutationGroupStats as StudyMutationGroupStats, SampleUniverseBasis as StudySampleUniverseBasis,
-    StudyDownloadCatalog, StudyDownloadResult, StudyInfo, StudyQueryResult,
-    SurvivalEndpoint as StudySurvivalEndpoint, SurvivalGroupResult as StudySurvivalGroupResult,
-    SurvivalResult as StudySurvivalResult,
+    MutationGroupStats as StudyMutationGroupStats,
+    NotInLocalCohortsResult as StudyNotInLocalCohortsResult,
+    SampleUniverseBasis as StudySampleUniverseBasis, StudyDownloadCatalog, StudyDownloadResult,
+    StudyInfo, StudyQueryResult, SurvivalEndpoint as StudySurvivalEndpoint,
+    SurvivalGroupResult as StudySurvivalGroupResult, SurvivalResult as StudySurvivalResult,
 };
 
 #[test]
@@ -62,6 +64,27 @@ fn study_list_markdown_renders_study_table() {
     assert!(markdown.contains("| Study ID | Name | Cancer Type | Samples | Available Data |"));
     assert!(markdown.contains("msk_impact_2017"));
     assert!(markdown.contains("mutations, cna"));
+}
+
+#[test]
+fn study_query_markdown_renders_not_in_local_cohorts_signal() {
+    let markdown = study_query_markdown(&StudyQueryResult::NotInLocalCohorts(
+        StudyNotInLocalCohortsResult {
+            study_id: "skcm_tcga_pan_can_atlas_2018".to_string(),
+            gene: "BRAF".to_string(),
+            coverage_status: StudyLocalCohortCoverageStatus::NotInLocalCohorts,
+            message: "Study skcm_tcga_pan_can_atlas_2018 is not in the local cBioPortal cohort snapshot; no local cohort result was computed.".to_string(),
+            suggestion: "Try `biomcp study download skcm_tcga_pan_can_atlas_2018` before querying this cohort.".to_string(),
+            local_study_ids: vec!["msk_impact_2017".to_string()],
+        },
+    ));
+
+    assert!(
+        markdown.contains("# Study Not in Local cBioPortal Cohorts: skcm_tcga_pan_can_atlas_2018")
+    );
+    assert!(markdown.contains("not_in_local_cohorts"));
+    assert!(markdown.contains("biomcp study download skcm_tcga_pan_can_atlas_2018"));
+    assert!(markdown.contains("msk_impact_2017"));
 }
 
 #[test]

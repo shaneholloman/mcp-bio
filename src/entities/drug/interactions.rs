@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use futures::stream::{self, StreamExt};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::entities::drug::{Drug, DrugInteraction};
 use crate::error::BioMcpError;
@@ -11,7 +11,15 @@ use super::label::extract_interaction_text_from_label;
 
 const DDINTER_SOURCE_NOTE: &str = "Structured rows come from the current DDInter download bundle. DDInter warns that missing rows do not prove no interaction exists.";
 const DDINTER_EMPTY_NOTE: &str = "The current DDInter download bundle has no matching rows for this drug. DDInter warns that missing rows do not prove no interaction exists.";
+const DDINTER_NOT_IN_COVERAGE_NOTE: &str = "Coverage status: not_in_ddinter_coverage. The queried drug is not present in the current DDInter download bundle; this is a source coverage miss, not evidence of no interactions.";
 const PARTNER_ENRICH_CONCURRENCY: usize = 8;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DrugInteractionCoverageStatus {
+    InDdinterCoverage,
+    NotInDdinterCoverage,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct DrugInteractionClassSummary {
@@ -32,8 +40,11 @@ pub struct DrugInteractionReport {
     pub interactions: Vec<DrugInteraction>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub class_summaries: Vec<DrugInteractionClassSummary>,
+    pub coverage_status: DrugInteractionCoverageStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_note: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub coverage_note: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label_interaction_text: Option<String>,
 }
@@ -65,6 +76,7 @@ pub(crate) async fn interaction_report_from_base(
     let client = DdinterClient::ready(crate::sources::ddinter::DdinterSyncMode::Auto).await?;
     let identity = DdinterIdentity::with_aliases(&requested_name, Some(&anchor_name), &brand_names);
     let rows = client.interactions(&identity);
+    let in_ddinter_coverage = client.contains_identity(&identity);
     let interactions = aggregate_rows(&rows, &identity)?;
     let partner_classes = enrich_partner_classes(&interactions).await;
     let mut out = Vec::new();
@@ -86,18 +98,26 @@ pub(crate) async fn interaction_report_from_base(
             .then_with(|| a.drug.cmp(&b.drug))
     });
     let class_summaries = build_class_summaries(&out);
+    let coverage_status = if in_ddinter_coverage {
+        DrugInteractionCoverageStatus::InDdinterCoverage
+    } else {
+        DrugInteractionCoverageStatus::NotInDdinterCoverage
+    };
     let source_note = Some(if out.is_empty() {
         DDINTER_EMPTY_NOTE.to_string()
     } else {
         DDINTER_SOURCE_NOTE.to_string()
     });
+    let coverage_note = (!in_ddinter_coverage).then(|| DDINTER_NOT_IN_COVERAGE_NOTE.to_string());
     Ok(DrugInteractionReport {
         name: anchor_name,
         drugbank_id,
         chembl_id,
         interactions: out,
         class_summaries,
+        coverage_status,
         source_note,
+        coverage_note,
         label_interaction_text,
     })
 }
@@ -462,7 +482,9 @@ mod tests {
                 interaction_count: 1,
                 highest_level: Some("Major".to_string()),
             }],
+            coverage_status: crate::entities::drug::interactions::DrugInteractionCoverageStatus::InDdinterCoverage,
             source_note: None,
+            coverage_note: None,
             label_interaction_text: Some("Additive label text".to_string()),
         };
 

@@ -92,6 +92,29 @@ pub fn study_download_markdown(result: &StudyDownloadResult) -> String {
 
 pub fn study_query_markdown(result: &StudyQueryResult) -> String {
     match result {
+        StudyQueryResult::NotInLocalCohorts(result) => {
+            let mut out = String::new();
+            out.push_str(&format!(
+                "# Study Not in Local cBioPortal Cohorts: {}\n\n",
+                result.study_id
+            ));
+            out.push_str("| Field | Value |\n");
+            out.push_str("|---|---|\n");
+            out.push_str(&format!("| Study ID | {} |\n", result.study_id));
+            out.push_str(&format!("| Gene | {} |\n", result.gene));
+            out.push_str("| Coverage Status | not_in_local_cohorts |\n");
+            out.push_str(&format!("| Message | {} |\n", result.message));
+            out.push_str(&format!("| Next Step | {} |\n", result.suggestion));
+            out.push_str("\n## Local Cohorts in This Snapshot\n\n");
+            if result.local_study_ids.is_empty() {
+                out.push_str("No local studies found. Run `biomcp study download --list` to browse downloadable cBioPortal study IDs.\n");
+            } else {
+                for study_id in &result.local_study_ids {
+                    out.push_str(&format!("- {study_id}\n"));
+                }
+            }
+            out
+        }
         StudyQueryResult::MutationFrequency(result) => {
             let mut out = String::new();
             out.push_str(&format!(

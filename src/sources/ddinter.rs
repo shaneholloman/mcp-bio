@@ -164,6 +164,13 @@ impl DdinterClient {
         }
         out
     }
+
+    pub(crate) fn contains_identity(&self, identity: &DdinterIdentity) -> bool {
+        identity
+            .terms()
+            .iter()
+            .any(|term| self.index.by_name.contains_key(term))
+    }
 }
 
 fn cached_index_map() -> &'static Mutex<HashMap<PathBuf, Arc<DdinterIndex>>> {

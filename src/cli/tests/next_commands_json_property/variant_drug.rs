@@ -105,9 +105,12 @@ fn drug_interaction_report_json_next_commands_include_helper_follow_ups() {
         chembl_id: Some("CHEMBL88".to_string()),
         interactions: Vec::new(),
         class_summaries: Vec::new(),
+        coverage_status:
+            crate::entities::drug::interactions::DrugInteractionCoverageStatus::InDdinterCoverage,
         source_note: Some(
             "Structured rows come from the current DDInter download bundle.".to_string(),
         ),
+        coverage_note: None,
         label_interaction_text: None,
     };
 

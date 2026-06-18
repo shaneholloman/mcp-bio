@@ -99,6 +99,9 @@ pub fn drug_interaction_report_markdown(
     if let Some(note) = report.source_note.as_deref() {
         let _ = writeln!(out, "{note}\n");
     }
+    if let Some(note) = report.coverage_note.as_deref() {
+        let _ = writeln!(out, "{note}\n");
+    }
     if !report.class_summaries.is_empty() {
         out.push_str("## Interacting Drug Classes\n\n");
         out.push_str("| Class | Interactions | Highest Level |\n");

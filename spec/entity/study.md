@@ -33,6 +33,23 @@ excludes fusions/SV
 --type sv'
 ```
 
+Queries for studies outside the local cBioPortal snapshot should return a
+coverage signal with the download hint, not a hollow local result. The spec
+fixture's local cohort list is intentionally small: `msk_impact_2017`,
+`brca_tcga_pan_can_atlas_2018`, and `paad_qcmg_uq_2016`.
+
+```bash
+../../tools/biomcp-ci study query --study skcm_tcga_pan_can_atlas_2018 --gene BRAF --type mutations | mustmatch like '# Study Not in Local cBioPortal Cohorts: skcm_tcga_pan_can_atlas_2018
+not_in_local_cohorts
+biomcp study download skcm_tcga_pan_can_atlas_2018
+msk_impact_2017
+brca_tcga_pan_can_atlas_2018
+paad_qcmg_uq_2016'
+../../tools/biomcp-ci --json study query --study skcm_tcga_pan_can_atlas_2018 --gene BRAF --type mutations | mustmatch like '"query_type": "not_in_local_cohorts"
+"coverage_status": "not_in_local_cohorts"
+biomcp study download skcm_tcga_pan_can_atlas_2018'
+```
+
 ## Structural Variant Queries
 
 Structural-variant queries use the same per-study query command, but return a

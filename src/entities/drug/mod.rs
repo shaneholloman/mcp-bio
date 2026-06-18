@@ -1,7 +1,7 @@
 //! Drug entity models and workflows exposed through the stable drug facade.
 
 mod get;
-mod interactions;
+pub(crate) mod interactions;
 mod label;
 mod metadata;
 mod query;
