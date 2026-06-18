@@ -64,6 +64,11 @@ run_ddinter_fixture() {
   source_if_present "$ROOT/.cache/spec-ddinter-env"
 }
 
+prepare_mcp_markdown_deps() {
+  echo "run-specs: preparing Python MCP client dependency for markdown MCP contracts" >&2
+  uv sync --extra dev --no-install-project
+}
+
 run_markdown_specs() {
   mustmatch test "$@" --lang bash "${timeout_args[@]}"
 }
@@ -81,6 +86,7 @@ case "$mode" in
     mustmatch_path_dir="$(mustmatch_dir)"
     run_study_fixture
     run_ddinter_fixture
+    prepare_mcp_markdown_deps
     ;;
   spec-contracts)
     timeout_args=(--timeout 180)
@@ -90,6 +96,7 @@ case "$mode" in
     )
     mustmatch_path_dir="$(mustmatch_dir)"
     run_study_fixture
+    prepare_mcp_markdown_deps
     ;;
   verify)
     timeout_args=(--timeout 180)

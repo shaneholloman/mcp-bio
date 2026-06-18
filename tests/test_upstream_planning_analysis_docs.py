@@ -1230,7 +1230,11 @@ def test_makefile_spec_split_contract_is_documented_and_executable() -> None:
         makefile,
         flags=re.MULTILINE,
     )
-    assert "uv sync --extra dev --no-install-project" not in runner
+    assert "sync_python_dev" not in runner
+    assert "uv run --no-sync pytest" not in runner
+    assert "run_python_contracts" not in runner
+    assert "prepare_mcp_markdown_deps()" in runner
+    assert "uv sync --extra dev --no-install-project" in runner
     assert 'verify) default_biomcp_bin="$ROOT/target/release/biomcp"' in runner
     assert '*) default_biomcp_bin="$ROOT/target/spec/biomcp"' in runner
     assert 'BIOMCP_BIN="${BIOMCP_BIN:-$default_biomcp_bin}"' in runner
