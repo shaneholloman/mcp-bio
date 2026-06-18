@@ -259,6 +259,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/api/v2/studies":
+            query = parse_qs(parsed.query)
+            requested_facility = " ".join(query.get("query.locn", [])).lower()
+            if "university of michigan" in requested_facility:
+                send_json(self, 200, {"studies": [], "totalCount": 0})
+                return
             send_json(self, 200, {"studies": [study_payload_for_request(parsed, ACTION_SUMMARY_STUDY)], "totalCount": 1})
             return
         if parsed.path.startswith("/api/v2/studies/"):
