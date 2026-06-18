@@ -280,6 +280,7 @@ find ../../scripts -maxdepth 1 -name run-specs.sh -type f -exec sed -n '1,240p' 
 --timeout 180
 SPEC_ROUTINE_PATHS
 SPEC_LIVE_PATHS
+prepare_mcp_markdown_deps
 default_biomcp_bin="$ROOT/target/spec/biomcp"
 BIOMCP_BIN="${BIOMCP_BIN:-$default_biomcp_bin}"'
 ```
@@ -329,14 +330,18 @@ Cargo tests from spec headings.
 rg -n 'cargo test' ../../spec/entity/article.md ../../spec/entity/study.md ../../spec/entity/variant.md ../../spec/surface/request-plan-ratchets.md | mustmatch ""
 ```
 
-## Routine Spec Targets Avoid Python Setup
+## Routine Spec Targets Avoid Broad Python Contract Setup
 
 Once Python static contracts move to `make test`, routine spec modes should not
-sync Python dependencies or enable a Python contract leg before running
-mustmatch.
+enable a broad Python contract leg before running mustmatch. The MCP markdown
+contracts are the only routine specs that still import a Python package, so the
+runner keeps an explicit bounded setup for that client dependency.
 
 ```bash
-rg -n 'sync_python_dev|run_python=1' ../../scripts/run-specs.sh | mustmatch ""
+rg -n 'sync_python_dev|run_python=1|uv run --no-sync pytest' ../../scripts/run-specs.sh | mustmatch ""
+rg -n 'prepare_mcp_markdown_deps|uv sync --extra dev --no-install-project' ../../scripts/run-specs.sh | mustmatch like 'prepare_mcp_markdown_deps
+uv sync --extra dev --no-install-project
+prepare_mcp_markdown_deps'
 ```
 
 ## Mustmatch Is No Longer A Python Dev Dependency
