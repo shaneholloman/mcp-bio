@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::BioMcpError;
 
+mod action_summary;
 mod get;
 #[cfg_attr(not(test), allow(dead_code))]
 pub(crate) mod planning;
@@ -13,6 +14,9 @@ mod search;
 #[cfg(test)]
 mod test_support;
 
+pub use self::action_summary::{
+    ActionSummaryHints, TrialActionSummary, action_summary, trial_type_label,
+};
 pub use self::get::get;
 pub use self::search::{count_all, search, search_page};
 

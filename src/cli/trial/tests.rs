@@ -97,6 +97,7 @@ fn search_trial_parses_positional_query() {
                         intervention,
                         no_condition_expand,
                         no_alias_expand,
+                        action_summary,
                         facility,
                         phase,
                         study_type,
@@ -135,6 +136,7 @@ fn search_trial_parses_positional_query() {
     assert!(intervention.is_empty());
     assert!(!no_condition_expand);
     assert!(!no_alias_expand);
+    assert!(!action_summary);
     assert!(facility.is_empty());
     assert_eq!(phase, None);
     assert_eq!(study_type, None);

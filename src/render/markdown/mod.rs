@@ -77,7 +77,10 @@ pub use self::study::{
     study_top_mutated_markdown,
 };
 #[allow(unused_imports)]
-pub use self::trial::{trial_markdown, trial_search_markdown, trial_search_markdown_with_footer};
+pub use self::trial::{
+    trial_action_summary_markdown, trial_markdown, trial_search_markdown,
+    trial_search_markdown_with_footer,
+};
 #[allow(unused_imports)]
 pub use self::variant::{
     gwas_search_markdown, gwas_search_markdown_with_footer, phenotype_search_markdown,

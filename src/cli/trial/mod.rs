@@ -3,6 +3,8 @@
 use clap::Args;
 
 #[derive(Args, Debug)]
+#[command(after_help = "\
+ACTION SUMMARY:\n  --action-summary fetches full CTGov records using listed CTGov sites only.\n  JSON fields: trial_type\n  access_caveats\n  ranked_sites")]
 pub struct TrialSearchArgs {
     /// Filter by condition/disease
     #[arg(short = 'c', long, num_args = 1..)]
@@ -24,6 +26,13 @@ pub struct TrialSearchArgs {
     /// Disable ClinicalTrials.gov intervention alias expansion and force literal matching.
     #[arg(long = "no-alias-expand")]
     pub no_alias_expand: bool,
+    /// Fetch full CTGov records and render rare-disease trial action summaries.
+    ///
+    /// Uses listed CTGov sites only, treats facility/geo flags as post-hydration
+    /// ranking hints, and exposes JSON fields: trial_type, access_caveats,
+    /// ranked_sites, contacts, and eligibility.
+    #[arg(long = "action-summary")]
+    pub action_summary: bool,
     /// Filter by institution/facility name (text-search mode by default).
     ///
     /// Without `--lat`/`--lon`/`--distance`, this uses cheap CTGov

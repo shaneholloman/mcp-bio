@@ -172,6 +172,59 @@ pub(in crate::cli) async fn handle_search(
         args.offset,
         args.next_page.as_deref(),
     );
+
+    if args.action_summary {
+        if !matches!(
+            trial_source,
+            crate::entities::trial::TrialSource::ClinicalTrialsGov
+        ) {
+            return Err(crate::error::BioMcpError::InvalidArgument(
+                "--action-summary is only supported for --source ctgov".into(),
+            )
+            .into());
+        }
+        if args.count_only {
+            return Err(crate::error::BioMcpError::InvalidArgument(
+                "--action-summary cannot be used with --count-only".into(),
+            )
+            .into());
+        }
+        if args
+            .next_page
+            .as_deref()
+            .map(str::trim)
+            .is_some_and(|value| !value.is_empty())
+        {
+            return Err(crate::error::BioMcpError::InvalidArgument(
+                "--action-summary cannot be used with --next-page".into(),
+            )
+            .into());
+        }
+
+        let hints = crate::entities::trial::ActionSummaryHints {
+            facility: filters.facility.clone(),
+            lat: filters.lat,
+            lon: filters.lon,
+            distance: filters.distance,
+        };
+        let summary =
+            crate::entities::trial::action_summary(&filters, hints, args.limit, args.offset)
+                .await?;
+        if json {
+            let pagination = super::super::PaginationMeta::offset(
+                args.offset,
+                args.limit,
+                summary.results.len(),
+                None,
+            );
+            return super::super::search_json_with_meta(summary.results, pagination, Vec::new())
+                .map(CommandOutcome::stdout);
+        }
+        return Ok(CommandOutcome::stdout(
+            crate::render::markdown::trial_action_summary_markdown(&summary)?,
+        ));
+    }
+
     let text = if args.count_only {
         let count = crate::entities::trial::count_all(&filters).await?;
         if json {
