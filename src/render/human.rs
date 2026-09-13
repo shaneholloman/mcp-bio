@@ -319,6 +319,18 @@ mod tests {
     }
 
     #[test]
+    fn provider_sanitizer_counts_a_replacement_as_retained_base() {
+        // U+200B is replaced by U+FFFD, and the replacement is itself a
+        // retained non-space scalar, so a following combining mark attaches
+        // to the replacement and gets no dotted circle. This freezes that
+        // step-3 interpretation; the implementation is unchanged.
+        assert_eq!(
+            sanitize_provider_inline("A\u{200B}\u{0301}"),
+            "A\u{FFFD}\u{0301}"
+        );
+    }
+
+    #[test]
     fn provider_sanitizer_encodes_every_non_literal_ascii_graphic() {
         for code in 0x21u32..=0x7e {
             let character = char::from_u32(code).unwrap();
@@ -345,10 +357,13 @@ mod tests {
         const BOUNDARY_CASES: &[(u32, bool)] = &[
             (0x00AC, false),
             (0x00AD, true),
+            (0x00AE, false),
             (0x034E, false),
             (0x034F, true),
+            (0x0350, false),
             (0x061B, false),
             (0x061C, true),
+            (0x061D, false),
             (0x115E, false),
             (0x115F, true),
             (0x1160, true),
@@ -362,6 +377,7 @@ mod tests {
             (0x180D, true),
             (0x180E, true),
             (0x180F, true),
+            (0x1810, false),
             (0x200A, false),
             (0x200B, true),
             (0x200F, true),
@@ -379,14 +395,17 @@ mod tests {
             (0x2070, false),
             (0x3163, false),
             (0x3164, true),
+            (0x3165, false),
             (0xFDFF, false),
             (0xFE00, true),
             (0xFE0F, true),
             (0xFE10, false),
             (0xFEFE, false),
             (0xFEFF, true),
+            (0xFF00, false),
             (0xFF9F, false),
             (0xFFA0, true),
+            (0xFFA1, false),
             (0xFFEF, false),
             (0xFFF0, true),
             (0xFFF8, true),
@@ -419,20 +438,25 @@ mod tests {
             (0x0606, false),
             (0x06DC, false),
             (0x06DD, true),
+            (0x06DE, false),
             (0x070E, false),
             (0x070F, true),
+            (0x0710, false),
             (0x088F, false),
             (0x0890, true),
             (0x0891, true),
             (0x0892, false),
             (0x08E1, false),
             (0x08E2, true),
+            (0x08E3, false),
             (0xFFFB, true),
             (0xFFFC, false),
             (0x110BC, false),
             (0x110BD, true),
+            (0x110BE, false),
             (0x110CC, false),
             (0x110CD, true),
+            (0x110CE, false),
             (0x1342F, false),
             (0x13430, true),
             (0x1343F, true),
