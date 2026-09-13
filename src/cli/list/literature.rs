@@ -8,7 +8,7 @@ Semantic Scholar author records remain provider-exact. BioMCP does not merge sam
 
 - `search author -q <name> --source semanticscholar [--limit N] [--offset N]`
 - `get author semanticscholar:<id>`
-- `author papers semanticscholar:<id> [--limit N] [--offset N]`
+- `author papers semanticscholar:<id> [--limit N] [--offset N] [--full]`
 
 ## Notes
 
