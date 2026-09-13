@@ -65,6 +65,16 @@ RICH_ROW = {
 
 PAPERS_BODY = {"offset": 0, "next": 1, "data": [RICH_ROW]}
 
+# The frozen hostile identifier from ticket 1143: admitted (nonblank after
+# trim), opaque, and never an article follow-up.
+HOSTILE_ROW = {
+    "paperId": "A/?#% \n雪",
+    "title": "Hostile identifier fixture",
+    "externalIds": {},
+}
+HOSTILE_PAPERS_BODY = {"offset": 0, "next": None, "data": [HOSTILE_ROW]}
+HOSTILE_AUTHOR_ID = "semanticscholar:9999999"
+
 
 class _RecordingHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - http.server naming
@@ -73,6 +83,8 @@ class _RecordingHandler(BaseHTTPRequestHandler):
         self.server.requests.append((parsed.path, query))  # type: ignore[attr-defined]
         if parsed.path == "/graph/v1/author/1716151/papers":
             body = json.dumps(PAPERS_BODY).encode("utf-8")
+        elif parsed.path == "/graph/v1/author/9999999/papers":
+            body = json.dumps(HOSTILE_PAPERS_BODY).encode("utf-8")
         else:
             body = json.dumps({"error": f"unexpected path {parsed.path}"}).encode("utf-8")
         self.send_response(200)
@@ -279,7 +291,7 @@ def test_rich_raw_mcp_matches_cli_byte_for_byte(fixture: _FixtureServer) -> None
         assert "europepmc" not in path.lower()
 
 
-def test_rich_provider_error_is_an_mcp_error_not_an_empty_page(
+def test_rich_malformed_provider_page_is_an_mcp_error_not_an_empty_page(
     fixture: _FixtureServer,
 ) -> None:
     server = _StdioMcp(fixture.base)
@@ -296,9 +308,78 @@ def test_rich_provider_error_is_an_mcp_error_not_an_empty_page(
                 },
             }
         )
+        # The ID is a valid ASCII decimal; the fixture serves a malformed page
+        # for unlisted authors, so the provider failure must surface as an MCP
+        # error rather than a successful empty page.
         result = server.tool(
-            "biomcp --json author papers semanticscholar:unknown-author --full"
+            "biomcp --json author papers semanticscholar:1234567 --full"
         )
         assert result.get("isError") is True
+        paths = [path for path, _ in fixture.requests]
+        assert paths == ["/graph/v1/author/1234567/papers"], fixture.requests
     finally:
         server.close()
+
+
+def test_rich_hostile_paper_id_is_contained_and_never_a_command(
+    fixture: _FixtureServer,
+) -> None:
+    result = _run_cli(
+        ["--json", "author", "papers", HOSTILE_AUTHOR_ID, "--full"],
+        fixture.base,
+    )
+    assert result.returncode == 0, result.stderr
+    page = json.loads(result.stdout)
+    assert page["papers"][0]["paper_id"] == "A/?#% \n雪"
+    evidence_urls = [u["url"] for u in page["_meta"]["evidence_urls"]]
+    assert evidence_urls == [
+        "https://www.semanticscholar.org/paper/A%2F%3F%23%25%20%0A%E9%9B%AA"
+    ]
+    assert page["_meta"]["next_commands"] == [], "opaque ID gets no follow-up"
+    assert page["pagination"]["next"] is None
+
+    markdown = _run_cli(
+        ["author", "papers", HOSTILE_AUTHOR_ID, "--full"],
+        fixture.base,
+    )
+    assert markdown.returncode == 0, markdown.stderr
+    assert "- Paper ID: `A/?#% 雪`" in markdown.stdout
+    assert "get article" not in markdown.stdout
+    assert "](http" not in markdown.stdout, "no injected link"
+    assert "](https" not in markdown.stdout, "no injected link"
+
+    server = _StdioMcp(fixture.base)
+    try:
+        server.call(
+            {
+                "jsonrpc": "2.0",
+                "id": 0,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": {"name": "hostile-parity-test", "version": "0"},
+                },
+            }
+        )
+        server.notify(
+            {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}}
+        )
+        mcp_json = server.tool(
+            f"biomcp --json author papers {HOSTILE_AUTHOR_ID} --full"
+        )
+        assert not mcp_json.get("isError", False), mcp_json
+        assert mcp_json["content"][0]["text"].rstrip("\n") == result.stdout.rstrip("\n")
+        mcp_markdown = server.tool(
+            f"biomcp author papers {HOSTILE_AUTHOR_ID} --full"
+        )
+        assert not mcp_markdown.get("isError", False), mcp_markdown
+        assert (
+            mcp_markdown["content"][0]["text"].rstrip("\n")
+            == markdown.stdout.rstrip("\n")
+        )
+    finally:
+        server.close()
+
+    paths = [path for path, _ in fixture.requests]
+    assert paths == ["/graph/v1/author/9999999/papers"] * 4, fixture.requests

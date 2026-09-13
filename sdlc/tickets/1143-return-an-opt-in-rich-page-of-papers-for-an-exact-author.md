@@ -313,3 +313,11 @@ cases; the corrected contract was accepted with no remaining findings.
   (floor 959, delta 44, removal condition recorded) rather than artificial
   compression of serde wire types. Primary-agent decision; overturnable by
   demanding compression instead.
+
+- Review note (remediation, 2026-09-13): the 35-second monotonic wrapper
+  lives in `fetch_author_papers_page` (src/entities/author/papers.rs) around
+  client construction, request admission, body read, and decode; the
+  synchronous projection and rendering run after the wrapper returns, which
+  the reviewer blessed as satisfying the no-late-work contract since a future
+  can neither start nor complete inside it. Both the deadline arm and the
+  request arm surface the base sanitized unavailable message.

@@ -187,18 +187,22 @@ async fn fetch_author_papers_page(
     full: bool,
 ) -> Result<crate::sources::semantic_scholar::SemanticScholarAuthorPapersResponse, BioMcpError> {
     let deadline = tokio::time::Instant::now() + command_deadline_budget();
-    let page = tokio::time::timeout_at(
-        deadline,
-        SemanticScholarClient::new()?.author_papers(&requested.value, offset, limit, full),
-    )
-    .await
-    .map_err(|_| {
-        sanitized_provider_error(BioMcpError::Api {
-            api: "semantic-scholar".into(),
-            message: "author papers request exceeded its bounded deadline".into(),
-        })
-    })??;
-    Ok(page)
+    let request = async {
+        SemanticScholarClient::new()?
+            .author_papers(&requested.value, offset, limit, full)
+            .await
+            .map_err(sanitized_provider_error)
+    };
+    tokio::time::timeout_at(deadline, request)
+        .await
+        // The carrier is discarded; the helper supplies the pinned sanitized
+        // unavailable message for the deadline arm, matching the request arm.
+        .map_err(|_| {
+            sanitized_provider_error(BioMcpError::Api {
+                api: "".to_string(),
+                message: "".into(),
+            })
+        })?
 }
 
 fn admitted(paper: &SemanticScholarAuthorPaper) -> bool {
