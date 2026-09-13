@@ -30,15 +30,12 @@ const RECOMMENDATION_FIELDS: &str = "paperId,externalIds,title,venue,year";
 #[allow(dead_code)]
 const AUTHOR_FIELDS: &str =
     "authorId,name,affiliations,externalIds,paperCount,citationCount,hIndex";
-// dead-code reason: semantic_scholar::AUTHOR_PAPER_FIELDS preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 const AUTHOR_PAPER_FIELDS: &str =
     "paperId,corpusId,externalIds,title,venue,year,authors.authorId,authors.name";
+const AUTHOR_PAPER_FULL_FIELDS: &str = "paperId,corpusId,externalIds,title,abstract,venue,year,publicationDate,citationCount,referenceCount,influentialCitationCount,isOpenAccess,openAccessPdf,fieldsOfStudy,publicationTypes,authors.authorId,authors.name";
 // dead-code reason: semantic_scholar::SEMANTIC_SCHOLAR_AUTHOR_PAGE_MAX preserves the provider shape used by source contract fixtures
 #[allow(dead_code)]
 const SEMANTIC_SCHOLAR_AUTHOR_PAGE_MAX: usize = 100;
-// dead-code reason: semantic_scholar::SEMANTIC_SCHOLAR_AUTHOR_BATCH_MAX preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 const SEMANTIC_SCHOLAR_AUTHOR_BATCH_MAX: usize = 1_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -353,15 +350,21 @@ impl SemanticScholarClient {
         offset: usize,
         limit: usize,
         api_key: Option<&str>,
+        full: bool,
     ) -> Result<RequestPlan, BioMcpError> {
         let author_id = validate_author_id(author_id)?;
         let limit = validate_author_page_limit(limit)?;
+        let fields = if full {
+            AUTHOR_PAPER_FULL_FIELDS
+        } else {
+            AUTHOR_PAPER_FIELDS
+        };
         Ok(with_s2_api_key(
             RequestPlan::get(format!(
                 "graph/v1/author/{}/papers",
                 encode_path_segment(author_id)
             ))
-            .query("fields", AUTHOR_PAPER_FIELDS)
+            .query("fields", fields)
             .query("offset", offset.to_string())
             .query("limit", limit.to_string()),
             api_key,
@@ -373,11 +376,49 @@ impl SemanticScholarClient {
         author_id: &str,
         offset: usize,
         limit: usize,
+        full: bool,
     ) -> Result<SemanticScholarAuthorPapersResponse, BioMcpError> {
-        let plan = Self::author_papers_plan(author_id, offset, limit, self.api_key.as_deref())?;
+        let plan =
+            Self::author_papers_plan(author_id, offset, limit, self.api_key.as_deref(), full)?;
         let req = request_from_plan(&self.client, self.base.as_ref(), &plan);
-        self.send_json(req).await
+        let page = self.send_json(req).await?;
+        validate_author_papers_page(&page, offset as u64, limit)?;
+        Ok(page)
     }
+}
+
+fn author_papers_page_error(message: &str) -> BioMcpError {
+    BioMcpError::Api {
+        api: SEMANTIC_SCHOLAR_API.to_string(),
+        message: message.to_string(),
+    }
+}
+
+pub(crate) fn validate_author_papers_page(
+    page: &SemanticScholarAuthorPapersResponse,
+    requested_offset: u64,
+    limit: usize,
+) -> Result<Option<u64>, BioMcpError> {
+    let bad = |message: &str| author_papers_page_error(message);
+    let offset = page
+        .offset
+        .ok_or_else(|| bad("author papers response omitted its required offset"))?;
+    if offset != requested_offset {
+        return Err(bad(
+            "author papers response offset did not match the request",
+        ));
+    }
+    if page.data.len() > limit {
+        return Err(bad(
+            "author papers response returned more rows than the page size",
+        ));
+    }
+    if let Some(next) = page.next
+        && next <= offset
+    {
+        return Err(bad("author papers response continuation did not advance"));
+    }
+    Ok(page.next)
 }
 
 impl SemanticScholarClient {
@@ -813,8 +854,6 @@ pub struct SemanticScholarAuthor {
     pub h_index: Option<u64>,
 }
 
-// dead-code reason: semantic_scholar::SemanticScholarAuthorPaper preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SemanticScholarAuthorPaper {
     #[serde(rename = "paperId")]
@@ -824,13 +863,29 @@ pub struct SemanticScholarAuthorPaper {
     #[serde(rename = "externalIds")]
     pub external_ids: Option<serde_json::Map<String, serde_json::Value>>,
     pub title: Option<String>,
+    #[serde(rename = "abstract")]
+    pub abstract_text: Option<String>,
     pub venue: Option<String>,
     pub year: Option<u32>,
+    #[serde(rename = "publicationDate")]
+    pub publication_date: Option<String>,
+    #[serde(rename = "citationCount")]
+    pub citation_count: Option<u64>,
+    #[serde(rename = "referenceCount")]
+    pub reference_count: Option<u64>,
+    #[serde(rename = "influentialCitationCount")]
+    pub influential_citation_count: Option<u64>,
+    #[serde(rename = "isOpenAccess")]
+    pub is_open_access: Option<bool>,
+    #[serde(rename = "openAccessPdf")]
+    pub open_access_pdf: Option<SemanticScholarOpenAccessPdf>,
+    #[serde(rename = "fieldsOfStudy")]
+    pub fields_of_study: Option<Vec<String>>,
+    #[serde(rename = "publicationTypes")]
+    pub publication_types: Option<Vec<String>>,
     pub authors: Option<Vec<SemanticScholarAuthorPaperAuthor>>,
 }
 
-// dead-code reason: semantic_scholar::SemanticScholarAuthorPaperAuthor preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SemanticScholarAuthorPaperAuthor {
     #[serde(rename = "authorId")]
@@ -849,8 +904,6 @@ pub struct SemanticScholarAuthorSearchResponse {
     pub data: Vec<SemanticScholarAuthor>,
 }
 
-// dead-code reason: semantic_scholar::SemanticScholarAuthorPapersResponse preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SemanticScholarAuthorPapersResponse {
     pub offset: Option<u64>,

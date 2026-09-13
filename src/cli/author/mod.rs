@@ -16,16 +16,19 @@ pub(in crate::cli) use search::handle_search;
 
 #[derive(Subcommand, Debug)]
 pub enum AuthorCommand {
-    /// List compact papers for one exact Semantic Scholar author record
+    /// List papers for one exact Semantic Scholar author record (compact by default; --full adds rich source metadata)
     Papers {
         /// Provider-qualified author ID (`semanticscholar:<id>`)
         id: String,
-        /// Maximum papers, 1-100 (default: 10)
+        /// Maximum papers, 1-100 (default: 10); one bounded page, no prefetching
         #[arg(short, long, default_value = "10")]
         limit: usize,
         /// Zero-based provider offset
         #[arg(long, default_value = "0")]
         offset: usize,
+        /// Return the rich page with abstract, counts, open-access, fields, and byline (source-exact, one page)
+        #[arg(long)]
+        full: bool,
     },
 }
 
@@ -33,8 +36,13 @@ pub(in crate::cli) async fn handle(
     command: AuthorCommand,
     json: bool,
 ) -> anyhow::Result<crate::cli::CommandOutcome> {
-    let AuthorCommand::Papers { id, limit, offset } = command;
-    handle_papers(id, limit, offset, json).await
+    let AuthorCommand::Papers {
+        id,
+        limit,
+        offset,
+        full,
+    } = command;
+    handle_papers(id, limit, offset, full, json).await
 }
 
 #[cfg(test)]
