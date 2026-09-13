@@ -399,7 +399,7 @@ pub(crate) fn validate_author_papers_page(
     requested_offset: u64,
     limit: usize,
 ) -> Result<Option<u64>, BioMcpError> {
-    let bad = |message: &str| author_papers_page_error(message);
+    let bad = |m: &str| author_papers_page_error(m);
     let offset = page
         .offset
         .ok_or_else(|| bad("author papers response omitted its required offset"))?;
