@@ -193,7 +193,12 @@ paper or byline author do not cross the public boundary.
 "externalIds":
 "external_ids":
 private-author@example.invalid
-
+https://private.example.invalid/author
+fixture-private-profile
+fixture-inferred-demographic
+fixture-long-abstract-sentinel
+0000-0002-7433-2740
+```
 
 The rich mode opts into the same provider page with source metadata. One
 request returns abstract, dates, counts, open-access data, fields, types,
@@ -246,13 +251,6 @@ private-author@example.invalid
 
 ```text expect=author-papers-rich contains
 biomcp author papers semanticscholar:1716151 --full --limit 1 --offset 1
-```
-
-https://private.example.invalid/author
-fixture-private-profile
-fixture-inferred-demographic
-fixture-long-abstract-sentinel
-0000-0002-7433-2740
 ```
 
 ```text expect=article-authors not-contains

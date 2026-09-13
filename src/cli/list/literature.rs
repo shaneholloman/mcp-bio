@@ -13,6 +13,7 @@ Semantic Scholar author records remain provider-exact. BioMCP does not merge sam
 ## Notes
 
 - `--source semanticscholar` is the only source in this release.
+- `author papers --full` returns the same one bounded page (at most 100 rows) with source-exact rich metadata; there is no enrichment.
 - IDs are case-sensitive and always provider-qualified.
 - Paper lists preserve Semantic Scholar order and provider pagination.
 - Coauthor aggregation, topic, affiliation-filter, and PubMed operations are future work; ORCID remains citation-supplied identity evidence.
