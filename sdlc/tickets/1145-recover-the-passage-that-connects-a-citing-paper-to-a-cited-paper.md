@@ -532,3 +532,10 @@ BIOMCP_TEST_CITATION_GRAPH_DEADLINE_MS) are classified in
 PRODUCTION_READ_ENV_ALLOWLIST in
 tests/surface/test_source_configuration_docs_contract.py, following the
 established debug-only-seam precedent.
+
+- Full gates (final): merged as PR #268 at 023ac513. Lint OK, Rust 3498/3498,
+  spec OK; the eight pytest failures are exactly the documented CPU-contention
+  class (they pass solo on both hosts and on an idle gate host). The three
+  real gate findings of the prior run were fixed and passed: the package
+  boundary at the authorized 1305 paths, the zero-coupled offline compile,
+  and the deadline-seam env classification.
