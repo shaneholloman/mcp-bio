@@ -275,7 +275,7 @@ appears.
 7. Run focused Rust source/entity/renderer/CLI tests, Python CLI/MCP/docs
    contracts, and `spec/entity/author.md`, then `make lint`, `make test`, and
    `make spec`; finish with `git diff --check` and the locked/offline package
-   list at exactly 1,300 paths.
+   list at exactly 1,305 paths.
 
 ## Ownership and exclusions
 
@@ -290,7 +290,7 @@ below 1,000 lines by moving its existing in-file tests if necessary only
 through a package-neutral rename/removal, not by raising a ratchet. Do not grow
 `src/mcp/shell.rs` or change its authorized baseline. Do not raise any existing
 over-threshold source allowance; update a baseline only for measured movement
-caused by a package-neutral extraction. The package stays exactly 1,300 paths.
+caused by a package-neutral extraction. The package stays exactly 1,305 paths (1,300 plus ticket 1145's authorized five modules).
 
 This ticket does not export a corpus, create a local index, infer metadata,
 resolve authors across providers, establish ORCID identity, add affiliations,
