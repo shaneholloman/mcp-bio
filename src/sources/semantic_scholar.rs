@@ -26,8 +26,6 @@ const SEARCH_PAPER_FIELDS: &str =
 const CITATION_EDGE_FIELDS: &str = "contexts,intents,isInfluential,citingPaper.paperId,citingPaper.externalIds,citingPaper.title,citingPaper.venue,citingPaper.year";
 const REFERENCE_EDGE_FIELDS: &str = "contexts,intents,isInfluential,citedPaper.paperId,citedPaper.externalIds,citedPaper.title,citedPaper.venue,citedPaper.year";
 const RECOMMENDATION_FIELDS: &str = "paperId,externalIds,title,venue,year";
-// dead-code reason: semantic_scholar::AUTHOR_FIELDS preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 const AUTHOR_FIELDS: &str =
     "authorId,name,affiliations,externalIds,paperCount,citationCount,hIndex";
 const AUTHOR_PAPER_FIELDS: &str =
@@ -36,6 +34,8 @@ const AUTHOR_PAPER_FULL_FIELDS: &str = "paperId,corpusId,externalIds,title,abstr
 // dead-code reason: semantic_scholar::SEMANTIC_SCHOLAR_AUTHOR_PAGE_MAX preserves the provider shape used by source contract fixtures
 #[allow(dead_code)]
 const SEMANTIC_SCHOLAR_AUTHOR_PAGE_MAX: usize = 100;
+// dead-code reason: semantic_scholar::SEMANTIC_SCHOLAR_AUTHOR_BATCH_MAX preserves the provider shape used by source contract fixtures
+#[allow(dead_code)]
 const SEMANTIC_SCHOLAR_AUTHOR_BATCH_MAX: usize = 1_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -86,9 +86,7 @@ impl SemanticScholarClient {
         let base = crate::sources::env_base(SEMANTIC_SCHOLAR_BASE, SEMANTIC_SCHOLAR_BASE_ENV);
         let base_url = reqwest::Url::parse(base.as_ref()).map_err(|_| BioMcpError::Api {
             api: SEMANTIC_SCHOLAR_API.to_string(),
-            message:
-                "Semantic Scholar source unavailable: outbound policy rejected invalid base URL"
-                    .into(),
+            message: "outbound policy rejected invalid Semantic Scholar base URL".into(),
         })?;
         let policy = ProviderUrlPolicy::semantic_scholar_api(&base_url)?;
         let api_key = effective_api_key(&policy, &base_url, crate::sources::s2_api_key());
@@ -144,9 +142,7 @@ impl SemanticScholarClient {
         let base = crate::sources::env_base(SEMANTIC_SCHOLAR_BASE, SEMANTIC_SCHOLAR_BASE_ENV);
         let base_url = reqwest::Url::parse(base.as_ref()).map_err(|_| BioMcpError::Api {
             api: SEMANTIC_SCHOLAR_API.to_string(),
-            message:
-                "Semantic Scholar source unavailable: outbound policy rejected invalid base URL"
-                    .into(),
+            message: "outbound policy rejected invalid Semantic Scholar base URL".into(),
         })?;
         let policy = ProviderUrlPolicy::semantic_scholar_api(&base_url)?;
         let api_key = effective_api_key(&policy, &base_url, crate::sources::s2_api_key());
@@ -202,9 +198,7 @@ impl SemanticScholarClient {
             Err(_) => {
                 return Err(BioMcpError::Api {
                     api: SEMANTIC_SCHOLAR_API.to_string(),
-                    message:
-                        "Semantic Scholar source unavailable: outbound request rejected or failed"
-                            .to_string(),
+                    message: "Semantic Scholar outbound request rejected or failed".to_string(),
                 }
                 .with_source_context(context));
             }
@@ -219,8 +213,7 @@ impl SemanticScholarClient {
                 };
                 BioMcpError::Api {
                     api: SEMANTIC_SCHOLAR_API.to_string(),
-                    message: "Semantic Scholar source unavailable: response body could not be read"
-                        .to_string(),
+                    message: "Semantic Scholar response body could not be read".to_string(),
                 }
                 .with_source_context(error_context)
             })?;
@@ -257,8 +250,6 @@ impl SemanticScholarClient {
     }
 }
 
-// dead-code reason: semantic_scholar::SemanticScholarClient preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 impl SemanticScholarClient {
     pub(crate) fn author_search_plan(
         query: &str,
@@ -318,6 +309,8 @@ impl SemanticScholarClient {
         self.send_json(req).await
     }
 
+    // dead-code reason: semantic_scholar::author_batch_plan preserves the provider shape used by source contract fixtures
+    #[allow(dead_code)]
     pub(crate) fn author_batch_plan(
         author_ids: &[String],
         api_key: Option<&str>,
@@ -336,6 +329,8 @@ impl SemanticScholarClient {
         Ok(with_s2_api_key(plan, api_key))
     }
 
+    // dead-code reason: semantic_scholar::author_batch preserves the provider shape used by source contract fixtures
+    #[allow(dead_code)]
     pub async fn author_batch(
         &self,
         author_ids: &[String],
@@ -779,8 +774,6 @@ where
     Ok(Option::<Vec<T>>::deserialize(deserializer)?.unwrap_or_default())
 }
 
-// dead-code reason: semantic_scholar::validate_author_id preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 fn validate_author_id(author_id: &str) -> Result<&str, BioMcpError> {
     let author_id = author_id.trim();
     if author_id.is_empty() {
@@ -801,8 +794,6 @@ fn validate_author_id(author_id: &str) -> Result<&str, BioMcpError> {
     Ok(author_id)
 }
 
-// dead-code reason: semantic_scholar::validate_author_page_limit preserves the provider shape used by source contract fixtures
-#[allow(dead_code)]
 fn validate_author_page_limit(limit: usize) -> Result<usize, BioMcpError> {
     if limit == 0 || limit > SEMANTIC_SCHOLAR_AUTHOR_PAGE_MAX {
         return Err(BioMcpError::InvalidArgument(format!(
