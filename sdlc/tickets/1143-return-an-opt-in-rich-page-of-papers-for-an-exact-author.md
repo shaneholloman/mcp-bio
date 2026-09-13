@@ -321,3 +321,10 @@ cases; the corrected contract was accepted with no remaining findings.
   the reviewer blessed as satisfying the no-late-work contract since a future
   can neither start nor complete inside it. Both the deadline arm and the
   request arm surface the base sanitized unavailable message.
+
+- Full gates (final): merged as PR #269. At bd216833: lint OK, Rust 3519/3519
+  complete, spec OK; pytest showed the eight documented contention failures
+  plus one env-docs miss, fixed at c8d1d39d with the deadline seam classified
+  and the contract standalone-verified 5/5. A prior run's single GenCC
+  fault-injection flake is the documented second load-sensitivity instance and
+  did not recur.
