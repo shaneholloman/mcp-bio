@@ -516,3 +516,19 @@ three seconds through a debug-only `BIOMCP_TEST_CITATION_COMMAND_DEADLINE_MS`
 budget seam (mirroring the graph-deadline seam) and settles in about three
 seconds against the genuine absolute-deadline admission path; the frozen
 twenty-two-second production value is untouched.
+
+Amendment 2026-09-13, primary-agent decision: the acceptance sentence "The
+source package remains exactly 1,300 paths" is amended to 1,305. The five
+additional paths are the modules this ticket's reviews authorized:
+src/cli/article/tests/citation_evidence.rs,
+src/entities/article/graph/citation_evidence.rs,
+src/entities/article/graph/tests/admission.rs,
+src/transform/article/jats/refs/citation.rs, and
+src/transform/article/jats/tests/citation_evidence.rs. Each split was
+verified in review against the line-count ratchets; the path-count freeze is
+amended to match rather than churning reviewed code for a number. The two
+debug-only deadline seams (BIOMCP_TEST_CITATION_COMMAND_DEADLINE_MS,
+BIOMCP_TEST_CITATION_GRAPH_DEADLINE_MS) are classified in
+PRODUCTION_READ_ENV_ALLOWLIST in
+tests/surface/test_source_configuration_docs_contract.py, following the
+established debug-only-seam precedent.
