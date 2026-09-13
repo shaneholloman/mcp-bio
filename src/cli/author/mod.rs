@@ -86,4 +86,36 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn author_papers_accepts_the_full_flag_with_limit_and_offset() {
+        let cli = Cli::try_parse_from([
+            "biomcp",
+            "author",
+            "papers",
+            "semanticscholar:1716151",
+            "--full",
+            "--limit",
+            "100",
+            "--offset",
+            "25",
+        ])
+        .expect("rich author papers grammar should parse");
+        let crate::cli::commands::Commands::Author {
+            cmd:
+                crate::cli::author::AuthorCommand::Papers {
+                    id,
+                    limit,
+                    offset,
+                    full,
+                },
+        } = cli.command
+        else {
+            panic!("expected the author papers command");
+        };
+        assert_eq!(id, "semanticscholar:1716151");
+        assert_eq!(limit, 100);
+        assert_eq!(offset, 25);
+        assert!(full, "--full selects the rich page");
+    }
 }
