@@ -306,3 +306,10 @@ renderer/MCP behavior, ownership, and sequencing behind 1145. A follow-up
 review required opaque paper IDs to be serialized with the URL crate's exact
 path-segment rules, including deterministic reserved-byte and dot-segment
 cases; the corrected contract was accepted with no remaining findings.
+
+- Amendment 2026-09-13: the Ownership sentence "below 1,000 lines ... not by
+  raising a ratchet" is amended for src/sources/semantic_scholar.rs: the rich
+  wire contract landed at 1,003 lines with an authorized inventory baseline
+  (floor 959, delta 44, removal condition recorded) rather than artificial
+  compression of serde wire types. Primary-agent decision; overturnable by
+  demanding compression instead.
