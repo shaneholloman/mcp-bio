@@ -14,7 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CHECKER = ROOT / "tools/check-artifact-fixtures"
 ZERO_COUPLING_CHECKER = ROOT / "tools/check-zero-coupling.py"
 OFFLINE = ROOT / "tools/run-offline"
-MAX_PACKAGE_FILES = 1_300
+# Ticket 1145 raised the package by five authorized module paths:
+# citation evidence traversal, its admission proof, the pure JATS citation
+# extractor, its tests, and the article CLI citation test sidecar.
+MAX_PACKAGE_FILES = 1_305
 REMOVED_TRIAL_CRATE = "bio" + "data"
 
 
