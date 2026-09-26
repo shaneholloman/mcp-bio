@@ -58,3 +58,26 @@ the count partial (both directions pinned). Code review ACCEPT with
 four P2s (the inventory miscount 59→71 corrected, the fixture
 hardening, the control's literal token, singular/plural reworded
 away); yellow gate at ca7c1fa0 — lint, test, and spec OK.
+
+## Batch 2 (2026-09-26)
+
+Items 2-6 landed. search all reports a dropped recruiting filter
+through the section note and count_exact stops ignoring notes; the
+CIViC discriminator turns a missing data block (without a surfaced
+error) or a positive total with zero rows into a source failure while
+a genuine zero stays healthy; enrichment labels fallback genes with
+their real source in the heading and the provenance row together
+(assign_top_genes is the single seam); the stale-cache marker is
+stamped in the manager's get from the stored policy and cleared in
+put — verified against http-cache 0.20's serve paths, so it labels
+only direct stale serves, never survives revalidation, and is
+stripped before any response returns — with the log line as the
+landed consumer and entity-page plumbing recorded as a deliberate
+deferral; and the SOURCE_STATE_ROWS walk plus the end-to-end disease
+anchor complete the anti-regression set. Code review ACCEPT with
+P2s: the anchor's vacuous negative assertion replaced by an exact
+provenance-row check, the boundary comment names the new test file,
+and the residuals are recorded in the ticket (the default-card
+owns=true mislabel path, the missing dispatch-level drive, the CIViC
+double-rename empty, the single-template end-to-end). Yellow gate at
+bb516645 — lint, test, and spec OK.
