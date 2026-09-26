@@ -819,13 +819,13 @@ fn disease_markdown_heading_and_provenance_credit_the_fallback_source() {
     );
 
     let provenance = crate::render::provenance::disease_section_sources(&disease);
-    let provenance_text = serde_json::to_string(&provenance).expect("provenance json");
-    assert!(
-        provenance_text.contains("Monarch Initiative"),
-        "the provenance row must match the heading: {provenance_text}"
-    );
-    assert!(
-        !provenance_text.contains("Open Targets\\\""),
-        "the top-gene row must not credit Open Targets when it produced nothing"
+    let top_gene_row = provenance
+        .iter()
+        .find(|row| row.key == "top_genes")
+        .expect("the top-gene provenance row exists");
+    assert_eq!(
+        top_gene_row.sources,
+        vec!["Monarch Initiative".to_string()],
+        "the top-gene row must credit exactly the fallback source: {provenance:?}"
     );
 }

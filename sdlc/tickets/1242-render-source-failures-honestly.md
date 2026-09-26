@@ -186,3 +186,21 @@ The per-item state:
   directions tested). Inventory: ctgov/tests.rs grew 71 lines (the
   review's 59 was the worker's miscount; nothing unaccounted).
   see `sdlc/records/1242-render-source-failures-honestly.md`
+
+### Batch 2 residuals (2026-09-26 review)
+
+- The default disease card (no explicit sections) still passes
+  owns=true to assign_top_genes, so a MyDisease-seeded DisGeNET gene
+  list renders under "Genes (Open Targets)" when the Open Targets
+  fetch fails — the exact mislabel item 4 targets, on the common
+  path. Pre-existing; next pass computes owns from
+  !top_gene_scores.is_empty() and labels MyDisease-seeded genes.
+- Item 2's dispatch wiring (note attaches only when the backfill
+  returned rows) is pinned by compilation and the constructor test,
+  not by a fixture-server drive through dispatch_section(Trial);
+  batch 3 candidate alongside the item-1 standard.
+- CIViC: a present-but-empty data block from a double schema rename
+  still reads as a healthy empty (serde defaults); outside the two
+  designed discriminators, recorded as accepted.
+- The item-6 walk proves every entity at the render-context seam but
+  only the disease template end-to-end.
