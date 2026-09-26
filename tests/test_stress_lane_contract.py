@@ -71,7 +71,7 @@ def test_the_lane_avoids_single_cpu_pinning() -> None:
     Catches any single-number pinning in any spelling, not just the
     literal `taskset -c 0 `."""
     recipe = stress_recipe()
-    for pin in re.finditer(r"taskset\s+(?:-c\s+|--cpus\s+)(\d+)", recipe):
+    for pin in re.finditer(r"taskset\s+(?:-c|--cpus)[ =]\s*(\d+)", recipe):
         after = recipe[pin.end() : pin.end() + 1]
         assert after in (",", "-", "\n", ""), (
             f"never pin the lane to exactly one CPU: {pin.group(0)!r}"

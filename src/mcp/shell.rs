@@ -387,6 +387,16 @@ fn merge_property(left: &Value, right: &Value) -> Value {
             (schema_type(left), schema_type(right)),
             ("string", "array") | ("array", "string")
         );
+        // An enum or const on exactly one side of a same-type merge
+        // narrows what the bare side accepted: that is a clash too,
+        // not a quiet keep.
+        let one_sided_enum = (left.contains_key("enum") != right.contains_key("enum"))
+            || (left.contains_key("const") != right.contains_key("const"));
+        if one_sided_enum {
+            panic!(
+                "one-sided enum or const clash the collision rule does not cover: {left} vs {right}"
+            );
+        }
         let mut merged = l.clone();
         if flat_types {
             merged.insert("type".into(), json!(["string", "array"]));
@@ -2075,6 +2085,16 @@ mod tests {
     fn a_type_clash_between_branches_panics_instead_of_first_value_wins() {
         let branches = [
             json!({"type":"object","properties":{"grade":{"type":"integer"}}}),
+            json!({"type":"object","properties":{"grade":{"type":"string"}}}),
+        ];
+        let _ = merge_branch_properties(&branches);
+    }
+
+    #[test]
+    #[should_panic(expected = "one-sided enum or const clash")]
+    fn an_enum_on_one_side_of_a_same_type_merge_panics() {
+        let branches = [
+            json!({"type":"object","properties":{"grade":{"type":"string","enum":["G1","G2"]}}}),
             json!({"type":"object","properties":{"grade":{"type":"string"}}}),
         ];
         let _ = merge_branch_properties(&branches);
