@@ -115,3 +115,7 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
   attestation confirmed) 2026-09-25
 - Verification (batch 1): yellow gate at d8475987 lint/test/spec OK;
   see `sdlc/records/1254-close-the-review-follow-ups-for-1235-through-1247.md`
+- 1251/1252 review fixes (2026-09-26): merged panics + literal
+  tripwire + ADR/changelog corrections; wait-ratchet hardening,
+  stress lane in CI, one-CPU wording, 1248 watch record. See
+  `sdlc/records/1251-1252-review-fixes.md`.
