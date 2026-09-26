@@ -32,16 +32,35 @@ from pathlib import Path
 
 # `Instant::now() + watchdog(..)` routes through the shared scaled
 # builder and does not count; every other deadline addition does.
+# `\bsleep(` catches the bare form that follows a `use
+# std::thread::sleep` import (and subsumes the qualified forms);
+# `elapsed() >` (strictly greater, not `>=` floor assertions) is the
+# deadline-poll guard shape.
 RUST_PATTERNS = [
     re.compile(pattern)
     for pattern in (
         r"Instant::now\(\)\s*\+\s*(?!.*\bwatchdog\()",
-        r"thread::sleep",
-        r"tokio::time::sleep",
+        r"\bsleep\s*\(",
+        r"elapsed\(\)\s*>\s*(?!=)",
     )
 ]
-PYTHON_PATTERNS = [re.compile(r"time\.sleep")]
-DEFINITION = re.compile(r"^\s*(?:pub(?:\(.+?\))?\s+)?(?:async\s+)?fn\s+\w*heartbeat\w*|^\s*def\s+_?\w*heartbeat\w*", re.IGNORECASE)
+PYTHON_PATTERNS = [
+    re.compile(pattern)
+    for pattern in (
+        r"time\.sleep",
+        r"asyncio\.sleep",
+        r"(?<![\w.])sleep\s*\(",
+        r"from\s+time\s+import\s+[^\n]*\bsleep\b",
+    )
+]
+# A `watchdog:` marker vouches for a wait only when it carries a
+# reason: at least one word of three or more characters after the
+# colon. A bare `watchdog:` (or `watchdog: x`) does not pass.
+WATCHDOG_REASON = re.compile(r"watchdog:\s*\w{3,}")
+DEFINITION = re.compile(
+    r"^\s*(?:pub(?:\(.+?\))?\s+)?(?:async\s+)?fn\s+\w*heartbeat\w*|^\s*def\s+_?\w*heartbeat\w*",
+    re.IGNORECASE,
+)
 
 TEST_FILE_NAME = re.compile(r"(?:^|/)(?:tests?\.rs|test_support\.rs)$")
 
@@ -57,9 +76,7 @@ def tracked(root: Path, directory: str, suffix: str) -> list[str]:
         text=True,
     ).stdout
     return sorted(
-        line
-        for line in output.splitlines()
-        if line and line.endswith(suffix)
+        line for line in output.splitlines() if line and line.endswith(suffix)
     )
 
 
@@ -74,7 +91,9 @@ def rust_test_region(path: Path) -> str | None:
     return text[marker:]
 
 
-def count_waits(lines: list[str], patterns: list[re.Pattern[str]]) -> tuple[int, list[str]]:
+def count_waits(
+    lines: list[str], patterns: list[re.Pattern[str]]
+) -> tuple[int, list[str]]:
     marked = 0
     violations: list[str] = []
     in_heartbeat_helper = False
@@ -84,9 +103,11 @@ def count_waits(lines: list[str], patterns: list[re.Pattern[str]]) -> tuple[int,
         elif re.match(r"^\s*(?:pub(?:\(.+?\))?\s+)?(?:async\s+)?fn\s|^\s*def\s", line):
             in_heartbeat_helper = False
         if "watchdog:" in line:
-            if any(p.search(line) for p in patterns):
+            if WATCHDOG_REASON.search(line) and any(p.search(line) for p in patterns):
                 marked += 1
-            continue
+                continue
+            # A marker without a reason text does not vouch for the
+            # wait; fall through and count it like any other.
         if any(p.search(line) for p in patterns):
             if in_heartbeat_helper:
                 violations.append(
@@ -120,7 +141,9 @@ def scan(root: Path) -> dict[str, dict[str, object]]:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument(
+        "--root", type=Path, default=Path(__file__).resolve().parents[1]
+    )
     parser.add_argument(
         "--update",
         action="store_true",
@@ -140,17 +163,25 @@ def main(argv: list[str]) -> int:
     for name, count in sorted((n, e["count"]) for n, e in current.items()):
         ceiling = pinned.get(name)
         if ceiling is None:
-            failures.append(f"new unmarked timed waits in {name} ({count}); convert to a signal or mark each with `watchdog:`")
+            failures.append(
+                f"new unmarked timed waits in {name} ({count}); convert to a signal or mark each with `watchdog:`"
+            )
         elif count > ceiling:
-            failures.append(f"{name} has {count} unmarked waits, above the pinned ceiling {ceiling}")
+            failures.append(
+                f"{name} has {count} unmarked waits, above the pinned ceiling {ceiling}"
+            )
         elif count < ceiling:
-            notes.append(f"{name} dropped {ceiling} -> {count}; re-pin down with --update")
+            notes.append(
+                f"{name} dropped {ceiling} -> {count}; re-pin down with --update"
+            )
     for name in sorted(set(pinned) - set(current)):
         notes.append(f"{name} now has zero unmarked waits; re-pin down with --update")
 
     if args.update:
         inventory["files"] = {name: entry for name, entry in sorted(current.items())}
-        inventory_path.write_text(json.dumps(inventory, indent=2) + "\n", encoding="utf-8")
+        inventory_path.write_text(
+            json.dumps(inventory, indent=2) + "\n", encoding="utf-8"
+        )
         print(f"re-pinned {len(current)} file ceilings in {inventory_path}")
         return 0
 

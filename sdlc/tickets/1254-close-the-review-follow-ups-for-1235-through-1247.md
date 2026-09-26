@@ -115,3 +115,58 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
   attestation confirmed) 2026-09-25
 - Verification (batch 1): yellow gate at d8475987 lint/test/spec OK;
   see `sdlc/records/1254-close-the-review-follow-ups-for-1235-through-1247.md`
+
+## The 1251 and 1252 review fixes, folded early (2026-09-26)
+
+Folded ahead of batches 2-3 from the 2026-09-26 review issue, on
+branch tickets/1251-1252-review-fixes:
+
+1. merge_property panics on any clash the collision rule does not
+   cover: a type clash fails in a match before the object merge, and
+   scalar or enum-vs-free-text clashes fail at the bottom — never a
+   silent first-value win. Two should_panic tests pin the scalar and
+   type-clash shapes; the live tree builds clean, so no covered clash
+   regressed.
+2. The flat-root tripwire no longer builds its expectation with the
+   function under test: the key set still derives from the branch
+   table, but the entity enum, limit and offset schemas, the source
+   enum, and the text-or-list fields are pinned against hand-written
+   literals.
+3. ADR 0002 corrected: the union is wider in accepted values, not
+   unconditionally wider (a first-seen constraint like `uniqueItems`
+   survives the merge); a Verification status section records what is
+   shown (the spec-test drive, the documented oneOf rejection) and
+   marks the Gemini acceptance of type lists, typeless enums, and
+   additionalProperties as not verified here.
+4. CHANGELOG: the 1240 bullet now says in-body validation errors
+   return isError while rmcp deserialization failures (missing
+   fields, wrong types, erepo unknown fields) stay -32602; the 1251
+   bullet names the erepo unknown-field rejection and the wrong-type
+   limit/offset error.
+5. The stress lane's "one CPU" texts corrected everywhere the lane
+   pins two (Makefile echo, tickets 1252 and 1248, the CHANGELOG, the
+   stress contract docstring); the scale-factor wording now says it
+   stretches helper-built watchdogs only.
+6. The wait ratchet hardened: a `watchdog:` marker passes only with a
+   reason (a word of three or more characters); new patterns catch
+   the time-module sleep import plus bare calls, asyncio.sleep, bare
+   Rust sleep after a use-import, and strict `elapsed() >` deadline
+   polls (floor assertions with `>=` do not count). Each new pattern
+   has a direct test; the tree still passes its 35 pinned ceilings.
+7. The stress contract catches any single-CPU pinning in any
+   spelling, not just the literal `taskset -c 0 `.
+8. `make stress` runs in CI as its own `stress-lane` job (pinned
+   toolchain, sandbox, nextest; 40-minute timeout), so the lane
+   cannot rot. Not yet exercised: the job's first live run is on the
+   branch's CI.
+9. Ticket 1248's watch recorded, not reopened: the original sampler
+   could not distinguish a slow decoy from a wrongly killed one; the
+   direct /proc check now fails deterministically on the killed
+   (product-bug) case, and the stress lane re-runs it thrice; no
+   reproduction is claimed.
+
+Validation: cargo fmt and clippy clean; cargo test --lib mcp::shell
+42 passed (40 existing plus the two new should_panic); pytest ratchet,
+stress contract, and quality ratchet green after the shell.rs size
+baseline took the tripwire growth (2616, authorized under 1251);
+changelog coverage and release provenance suites 92 passed.

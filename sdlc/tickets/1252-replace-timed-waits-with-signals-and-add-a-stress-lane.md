@@ -103,7 +103,7 @@ guessed at a cause from one 200 ms heartbeat sample.
 ## Acceptance
 
 - The GenCC lease tests contain no fixed sleep: the handshake is the
-  wait, and the stress lane runs them pinned to one CPU green.
+  wait, and the stress lane runs them green on its pinned CPU set.
 - Killing the parent mid-test leaves no orphan child (a test proves
   the child exits on end-of-input).
 - The settle failure names the leaked paths.

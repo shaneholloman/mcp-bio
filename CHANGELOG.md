@@ -35,11 +35,13 @@
 
 ### Changed
 
-- MCP argument-validation errors now come back as `isError` tool
+- In-body MCP argument validation now comes back as `isError` tool
   results instead of `-32602` protocol errors, so a model can read the
-  message (which names the field and its bounds) and self-correct;
-  malformed protocol input before the handler still returns `-32602`.
-  (1240)
+  message (which names the field and its bounds) and self-correct.
+  Failures rmcp raises while deserializing the arguments before the
+  handler runs — a missing required field, a wrong type, an unknown
+  `variant_erepo` field — still return `-32602`, with the message
+  visible either way. (1240)
 
 - An unknown non-empty cursor on `tools/list`, `resources/list`,
   `resources/templates/list`, or `prompts/list` is now rejected with
@@ -51,8 +53,10 @@
   OpenAI and Gemini function calling, which reject `oneOf` roots, see
   the real argument shape. Same-named fields merge: source enums
   union, and fields that are text on some entities and lists on
-  others accept either form. Per-entity validation in the tool bodies
-  is unchanged. (1251)
+  others accept either form. `variant_erepo` now rejects unknown
+  fields (a `-32602` deserialization error), and a wrong-type `limit`
+  or `offset` errors instead of being ignored. Per-entity validation
+  in the tool bodies is unchanged. (1251)
 
 ### Fixes
 
@@ -96,9 +100,10 @@
   (a dying parent can no longer leave it polling for two minutes), the
   cancellation settle failure names the leaked temporary paths, and the
   disease-survival reap test reads `/proc` instead of sampling heartbeats.
-  A `make stress` lane runs the known load-flaky tests pinned to one CPU,
-  a lint ratchets against new timed waits, and `BIOMCP_TEST_TIMEOUT_SCALE`
-  stretches every watchdog at once for slow hosts. (1252)
+  A `make stress` lane runs the known load-flaky tests pinned to a
+  two-CPU set, a lint ratchets against new timed waits, and
+  `BIOMCP_TEST_TIMEOUT_SCALE` stretches the watchdogs built through
+  the test helpers at once for slow hosts. (1252)
 - Advanced the development package identity to Rust `0.9.1-dev.1` and Python
   `0.9.1.dev1` after the public 0.9.0 release. Citation, MCP directory,
   registry, and Homebrew metadata stay on the latest published release, v0.9.0.

@@ -371,6 +371,18 @@ fn merge_property(left: &Value, right: &Value) -> Value {
                 .and_then(Value::as_str)
                 .unwrap_or_default()
         }
+        // Only three type pairs may ride the object merge: identical
+        // types, both undeclared (the enum path handled those with
+        // values above; scalars under a shared object fall through),
+        // and the flat text-or-list pair. Anything else is a clash
+        // the collision rule does not cover: fail loudly here, at
+        // build and test time, rather than publishing a quietly
+        // wrong union.
+        match (schema_type(left), schema_type(right)) {
+            ("string", "array") | ("array", "string") => {}
+            (a, b) if a == b => {}
+            _ => panic!("schema type clash the collision rule does not cover: {left} vs {right}"),
+        }
         let flat_types = matches!(
             (schema_type(left), schema_type(right)),
             ("string", "array") | ("array", "string")
@@ -395,7 +407,10 @@ fn merge_property(left: &Value, right: &Value) -> Value {
         }
         return Value::Object(merged);
     }
-    left.clone()
+    // Scalars and arrays that differ (bounds, lengths, defaults), or
+    // an enum against free text: no rule covers the clash, so the
+    // drift tripwire fires instead of the first value winning.
+    panic!("unmerged schema clash: {left} vs {right}");
 }
 
 fn typed_variant_erepo_schema(schema: &mut schemars::Schema) {
@@ -1885,16 +1900,50 @@ mod tests {
                 "flat search root must not carry {combinator}"
             );
         }
-        // The root properties equal the merged union of the branch
-        // properties: this is the drift tripwire for both halves.
+        // The key set may derive from the branch table; the collision
+        // rule itself is pinned against hand-written literals below,
+        // so the merge cannot vouch for itself.
         let branches = ENTITIES
             .iter()
             .map(|entity| typed_search_branch(entity))
             .collect::<Vec<_>>();
-        let mut expected = merge_branch_properties(&branches);
-        expected.insert("entity".into(), json!({"type":"string","enum":ENTITIES}));
-        assert_eq!(search["properties"], Value::Object(expected));
+        let mut expected_keys: Vec<String> = branches
+            .iter()
+            .flat_map(|branch| {
+                branch["properties"]
+                    .as_object()
+                    .expect("branch properties object")
+                    .keys()
+                    .cloned()
+                    .chain(std::iter::once("entity".to_string()))
+            })
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        let mut published_keys: Vec<String> = search["properties"]
+            .as_object()
+            .expect("published properties object")
+            .keys()
+            .cloned()
+            .collect();
+        published_keys.sort_unstable();
+        assert_eq!(published_keys, expected_keys);
         assert_eq!(search["required"], json!(["entity"]));
+        assert_eq!(
+            search["properties"]["entity"],
+            json!({"type":"string","enum":ENTITIES})
+        );
+        // Shared scalar bounds pinned literally: a drift in any
+        // branch's pagination shape fails here, not silently in the
+        // merge.
+        assert_eq!(
+            search["properties"]["limit"],
+            json!({"default":10,"maximum":25,"minimum":1,"type":"integer"})
+        );
+        assert_eq!(
+            search["properties"]["offset"],
+            json!({"default":0,"maximum":1000,"minimum":0,"type":"integer"})
+        );
 
         // Collision rule spot checks on the merged union.
         assert_eq!(
@@ -2005,6 +2054,30 @@ mod tests {
             ))
             .is_err()
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "unmerged schema clash")]
+    fn a_conflicting_scalar_bound_panics_instead_of_first_value_wins() {
+        let branches = [
+            json!({"type":"object","properties":{"score":{"maximum":5}}}),
+            json!({"type":"object","properties":{"score":{"maximum":10}}}),
+        ];
+        // Must panic: no collision rule covers differing scalar
+        // bounds, so the drift tripwire fires rather than publishing
+        // the first branch's bound quietly. Both values are named in
+        // the panic message.
+        let _ = merge_branch_properties(&branches);
+    }
+
+    #[test]
+    #[should_panic(expected = "schema type clash")]
+    fn a_type_clash_between_branches_panics_instead_of_first_value_wins() {
+        let branches = [
+            json!({"type":"object","properties":{"grade":{"type":"integer"}}}),
+            json!({"type":"object","properties":{"grade":{"type":"string"}}}),
+        ];
+        let _ = merge_branch_properties(&branches);
     }
 
     #[test]

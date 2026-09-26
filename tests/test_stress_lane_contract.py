@@ -1,4 +1,4 @@
-"""The stress lane contract: one CPU, forced workers, the flaky set."""
+"""The stress lane contract: a pinned CPU set, forced workers, the flaky set."""
 
 from __future__ import annotations
 
@@ -65,7 +65,14 @@ def test_the_repeat_count_defaults_to_three() -> None:
 
 
 def test_the_lane_avoids_single_cpu_pinning() -> None:
-    """One-CPU pinning deadlocks the pipe handshake child; see
-    sdlc/issues/2026-09-25-single-cpu-affinity-deadlocks-the-handshake-child.md."""
+    """Pinning to exactly one CPU deadlocks the pipe handshake child;
+    see
+    sdlc/issues/2026-09-25-single-cpu-affinity-deadlocks-the-handshake-child.md.
+    Catches any single-number pinning in any spelling, not just the
+    literal `taskset -c 0 `."""
     recipe = stress_recipe()
-    assert "taskset -c 0 " not in recipe, "never pin the lane to exactly one CPU"
+    for pin in re.finditer(r"taskset\s+(?:-c\s+|--cpus\s+)(\d+)", recipe):
+        after = recipe[pin.end() : pin.end() + 1]
+        assert after in (",", "-", "\n", ""), (
+            f"never pin the lane to exactly one CPU: {pin.group(0)!r}"
+        )
