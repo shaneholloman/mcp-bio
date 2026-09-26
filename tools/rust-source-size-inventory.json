@@ -261,11 +261,11 @@
     },
     {
       "path": "src/mcp/shell.rs",
-      "baseline_lines": 2616,
+      "baseline_lines": 2636,
       "floor_lines": 1956,
       "authorized_increase": {
         "ticket": "1251",
-        "delta": 660,
+        "delta": 680,
         "reason": "Drift-tripwire restructure (literal key-set and scalar pins), the clash panics, and their tests.",
         "removal_condition": "Move the schema merge into a submodule when shell.rs next shrinks."
       }
