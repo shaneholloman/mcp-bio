@@ -53,7 +53,10 @@ pub struct SearchAllSection {
 
 impl SearchAllSection {
     fn count_exact(&self) -> bool {
-        self.error.is_none() && self.total.is_some()
+        // A note is a degradation the user must see (a dropped filter, a
+        // widened fallback), so a note-carrying section never claims an
+        // exact count even when a total survives.
+        self.error.is_none() && self.note.is_none() && self.total.is_some()
     }
 
     fn total_lower_bound(&self) -> Option<usize> {

@@ -507,12 +507,18 @@ pub(crate) fn disease_section_sources(disease: &Disease) -> Vec<SectionSource> {
         "Parents",
         ["MONDO / Disease Ontology via MyDisease.info"],
     );
+    // The row credits whoever actually produced the top-gene list: Open
+    // Targets by default, or the fallback sources named on the disease.
+    let top_gene_sources: Vec<String> = match disease.top_gene_source.as_deref() {
+        Some(label) => label.split(", ").map(str::to_string).collect(),
+        None => vec!["Open Targets".to_string()],
+    };
     push_section(
         &mut out,
         !disease.top_genes.is_empty() || !disease.top_gene_scores.is_empty(),
         "top_genes",
         "Genes",
-        ["Open Targets"],
+        top_gene_sources,
     );
     push_section(
         &mut out,
@@ -1292,6 +1298,7 @@ mod tests {
     #[test]
     fn disease_section_sources_include_survival_when_note_present() {
         let disease = Disease {
+            top_gene_source: None,
             id: "MONDO:0007947".to_string(),
             name: "Marfan syndrome".to_string(),
             definition: None,
@@ -1533,6 +1540,7 @@ mod tests {
     #[test]
     fn disease_section_sources_include_funding_when_note_present() {
         let disease = Disease {
+            top_gene_source: None,
             id: "MONDO:0007947".to_string(),
             name: "Marfan syndrome".to_string(),
             definition: None,
@@ -1580,6 +1588,7 @@ mod tests {
     #[test]
     fn disease_section_sources_include_diagnostics_from_rows() {
         let disease = Disease {
+            top_gene_source: None,
             id: "MONDO:0005105".to_string(),
             name: "melanoma".to_string(),
             definition: None,
@@ -1658,6 +1667,7 @@ mod tests {
     #[test]
     fn disease_section_sources_include_clinical_features() {
         let disease = Disease {
+            top_gene_source: None,
             id: "MONDO:0004277".to_string(),
             name: "uterine leiomyoma".to_string(),
             definition: None,
@@ -1716,6 +1726,7 @@ mod tests {
     #[test]
     fn disease_section_sources_include_diagnostics_note_sources() {
         let disease = Disease {
+        top_gene_source: None,
             id: "MONDO:0018076".to_string(),
             name: "tuberculosis".to_string(),
             definition: None,

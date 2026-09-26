@@ -111,6 +111,7 @@ fn variant_evidence_urls_fall_back_to_hgvs_slug_for_population_data() {
 #[test]
 fn disease_evidence_urls_include_record_links() {
     let disease = Disease {
+        top_gene_source: None,
         id: "MONDO:0009061".to_string(),
         name: "cystic fibrosis".to_string(),
         definition: None,

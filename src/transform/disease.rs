@@ -708,6 +708,7 @@ pub fn from_mydisease_hit(hit: MyDiseaseHit) -> Disease {
         associated_genes,
         gene_associations: Vec::new(),
         top_genes: Vec::new(),
+        top_gene_source: None,
         top_gene_scores: Vec::new(),
         treatment_landscape: Vec::new(),
         recruiting_trial_count: None,
@@ -978,6 +979,7 @@ mod tests {
     #[test]
     fn derive_key_features_supplements_definition_with_high_frequency_phenotypes() {
         let disease = Disease {
+            top_gene_source: None,
             id: "MONDO:0008222".to_string(),
             name: "Andersen-Tawil syndrome".to_string(),
             definition: Some(

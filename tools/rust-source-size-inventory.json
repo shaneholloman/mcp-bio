@@ -4,13 +4,13 @@
   "entries": [
     {
       "path": "src/cache/manager.rs",
-      "baseline_lines": 1077,
+      "baseline_lines": 1115,
       "floor_lines": 985,
       "authorized_increase": {
-        "ticket": "1150",
-        "delta": 92,
-        "reason": "Deadline-aware cache get, put, delete, and size traversal remain beside the cache manager trait implementation.",
-        "removal_condition": "Extract cache deadline adapters when the cache manager is next decomposed."
+        "ticket": "1242",
+        "delta": 130,
+        "reason": "Batch 2: stale-serve marker helpers, the cache note consumer, the honest top-gene source label, and the required new struct field.",
+        "removal_condition": "Shrink when the stale label moves into per-source status plumbing and the test field inserts fold into shared fixtures."
       }
     },
     {
@@ -333,13 +333,13 @@
     },
     {
       "path": "src/render/provenance.rs",
-      "baseline_lines": 1894,
+      "baseline_lines": 1905,
       "floor_lines": 1847,
       "authorized_increase": {
-        "ticket": "1254",
-        "delta": 47,
-        "reason": "Ticket 1254: the DDInter/GenCC review follow-ups (tests and classification).",
-        "removal_condition": "Fold the new tests into shared fixtures when the modules next shrink."
+        "ticket": "1242",
+        "delta": 58,
+        "reason": "Batch 2: stale-serve marker helpers, the cache note consumer, the honest top-gene source label, and the required new struct field.",
+        "removal_condition": "Shrink when the stale label moves into per-source status plumbing and the test field inserts fold into shared fixtures."
       }
     },
     {
@@ -405,13 +405,13 @@
     },
     {
       "path": "src/sources/mod.rs",
-      "baseline_lines": 2292,
+      "baseline_lines": 2324,
       "floor_lines": 1847,
       "authorized_increase": {
-        "ticket": "1022, 1150, 1158, 1199, 1200, 1202, 1205, 1221",
-        "delta": 445,
-        "reason": "Register dbSNP and GenCC, carry the task-local variant deadline through shared request, retry, and provider-admission utilities, resolve the citation-evidence sidecar cache mode, and register the OpenCitations reference client, and register the Cellosaurus client (ticket 1202, +1), and the pharmacodb module declaration (ticket 1205, +1), and the operator CA bundle module declaration (ticket 1221, +1).",
-        "removal_condition": "Move source registration beside the provider registry when source utilities are decomposed."
+        "ticket": "1242",
+        "delta": 477,
+        "reason": "Batch 2: stale-serve marker helpers, the cache note consumer, the honest top-gene source label, and the required new struct field.",
+        "removal_condition": "Shrink when the stale label moves into per-source status plumbing and the test field inserts fold into shared fixtures."
       }
     },
     {
@@ -477,9 +477,14 @@
     },
     {
       "path": "src/transform/disease.rs",
-      "baseline_lines": 1050,
+      "baseline_lines": 1052,
       "floor_lines": 1050,
-      "authorized_increase": null
+      "authorized_increase": {
+        "ticket": "1242",
+        "delta": 2,
+        "reason": "Batch 2: stale-serve marker helpers, the cache note consumer, the honest top-gene source label, and the required new struct field.",
+        "removal_condition": "Shrink when the stale label moves into per-source status plumbing and the test field inserts fold into shared fixtures."
+      }
     },
     {
       "path": "src/transform/drug.rs",

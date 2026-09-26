@@ -434,3 +434,81 @@ fn ols_doc(id: &str, label: &str, synonyms: &[&str]) -> crate::sources::ols4::Ol
         doc_type: Some("class".into()),
     }
 }
+
+#[test]
+fn top_genes_label_names_the_fallback_when_open_targets_did_not_produce_them() {
+    let mut disease = test_disease("MONDO:0003864", "chronic lymphocytic leukemia");
+    // Open Targets produced nothing; Monarch pushed the genes and said so.
+    disease.associated_genes = vec!["TP53".into(), "BCL2".into()];
+    disease.gene_associations = vec![DiseaseGeneAssociation {
+        gene: "TP53".into(),
+        relationship: Some("causal".into()),
+        source: Some("Monarch".into()),
+        opentargets_score: None,
+    }];
+
+    super::assign_top_genes(&mut disease, false);
+    assert_eq!(
+        disease.top_genes,
+        vec!["TP53".to_string(), "BCL2".to_string()]
+    );
+    assert_eq!(
+        disease.top_gene_source.as_deref(),
+        Some("Monarch Initiative"),
+        "the label must credit the source that produced the genes"
+    );
+
+    // A late Open Targets augment attaches scores to the same genes; the
+    // label still names where the genes came from.
+    disease.top_gene_scores = vec![DiseaseTargetScore {
+        symbol: "TP53".into(),
+        summary: DiseaseAssociationScoreSummary {
+            overall_score: 0.9,
+            gwas_score: None,
+            rare_variant_score: None,
+            somatic_mutation_score: None,
+        },
+    }];
+    super::assign_top_genes(&mut disease, false);
+    assert_eq!(
+        disease.top_gene_source.as_deref(),
+        Some("Monarch Initiative"),
+        "a late augment scores the fallback genes but does not re-credit Open Targets"
+    );
+
+    // Open Targets owning the list keeps the default heading.
+    super::assign_top_genes(&mut disease, true);
+    assert_eq!(disease.top_gene_source, None);
+}
+
+#[test]
+fn top_genes_label_joins_both_fallback_sources() {
+    let mut disease = test_disease("MONDO:0007947", "Huntington disease");
+    disease.associated_genes = vec!["HTT".into()];
+    disease.gene_associations = vec![
+        DiseaseGeneAssociation {
+            gene: "HTT".into(),
+            relationship: None,
+            source: Some("Monarch".into()),
+            opentargets_score: None,
+        },
+        DiseaseGeneAssociation {
+            gene: "HTT".into(),
+            relationship: None,
+            source: Some("CIViC".into()),
+            opentargets_score: None,
+        },
+    ];
+
+    super::assign_top_genes(&mut disease, false);
+    assert_eq!(
+        disease.top_gene_source.as_deref(),
+        Some("Monarch Initiative, CIViC")
+    );
+
+    // An empty list never carries a label: no heading is rendered at all.
+    disease.top_genes.clear();
+    disease.associated_genes.clear();
+    super::assign_top_genes(&mut disease, false);
+    assert_eq!(disease.top_gene_source, None);
+}
