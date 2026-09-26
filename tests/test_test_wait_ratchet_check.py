@@ -23,7 +23,13 @@ INVENTORY = ROOT / "tools" / "test-wait-inventory.json"
 
 def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(ROOT / "tools" / "check-test-wait-ratchet.py"), "--root", str(root), *args],
+        [
+            sys.executable,
+            str(ROOT / "tools" / "check-test-wait-ratchet.py"),
+            "--root",
+            str(root),
+            *args,
+        ],
         capture_output=True,
         text=True,
         check=False,
@@ -48,7 +54,8 @@ def test_a_new_unmarked_wait_fails(tmp_path: Path) -> None:
     tests_dir = root / "tests"
     tests_dir.mkdir()
     (tests_dir / "test_example.py").write_text(
-        "def test_waits() -> None:\n    time.sleep(0.1)\n", encoding="utf-8"  # watchdog: synthetic literal
+        "def test_waits() -> None:\n    time.sleep(0.1)\n",  # watchdog: synthetic literal
+        encoding="utf-8",
     )
     # scan() shells out to git ls-files, so stage the file.
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
@@ -82,14 +89,16 @@ def test_watchdog_builder_deadlines_do_not_count() -> None:
     lines = [
         "    let deadline = std::time::Instant::now() + crate::test_support::watchdog(30);",
         "    let deadline = tokio::time::Instant::now() + watchdog(60);",
-        "    let deadline = tokio::time::Instant::now() + Duration::from_secs(60);",
+        "    let deadline = tokio::time::Instant::now() + Duration::from_secs(60);",  # watchdog: synthetic literal
     ]
     count, violations = count_waits(lines, MODULE.RUST_PATTERNS)
     assert count == 1
     assert violations == ["3"]
 
 
-def test_an_inventory_decrease_passes_and_notes_the_ratchet_down(tmp_path: Path) -> None:
+def test_an_inventory_decrease_passes_and_notes_the_ratchet_down(
+    tmp_path: Path,
+) -> None:
     """A count below the pinned ceiling passes; the note says re-pin down."""
     root = tmp_path / "repo"
     (root / "tools").mkdir(parents=True)
@@ -105,7 +114,8 @@ def test_an_inventory_decrease_passes_and_notes_the_ratchet_down(tmp_path: Path)
     tests_dir = root / "tests"
     tests_dir.mkdir()
     (tests_dir / "test_example.py").write_text(
-        "def test_waits() -> None:\n    time.sleep(0.1)\n", encoding="utf-8"  # watchdog: synthetic literal
+        "def test_waits() -> None:\n    time.sleep(0.1)\n",  # watchdog: synthetic literal
+        encoding="utf-8",
     )
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
     subprocess.run(["git", "add", "."], cwd=root, check=True)
@@ -114,6 +124,56 @@ def test_an_inventory_decrease_passes_and_notes_the_ratchet_down(tmp_path: Path)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "dropped 2 -> 1" in result.stdout
     assert "re-pin down with --update" in result.stdout
+
+
+def test_a_bare_sleep_after_the_time_import_counts() -> None:
+    """The time-module sleep import plus a bare call is a timed wait."""  # watchdog: synthetic literal
+    lines = [
+        "from time import sleep",  # watchdog: synthetic literal
+        "def test_waits() -> None:",
+        "    sleep(0.1)",  # watchdog: synthetic literal
+    ]
+    count, _ = count_waits(lines, MODULE.PYTHON_PATTERNS)
+    assert count == 2  # the import line and the call
+
+
+def test_asyncio_sleep_counts() -> None:
+    lines = ["    await asyncio.sleep(0.2)"]  # watchdog: synthetic literal
+    count, _ = count_waits(lines, MODULE.PYTHON_PATTERNS)
+    assert count == 1
+
+
+def test_a_bare_rust_sleep_after_a_use_import_counts() -> None:
+    """A use-import of sleep followed by a bare call is a timed wait."""  # watchdog: synthetic literal
+    lines = [
+        "    use std::thread::sleep;",  # watchdog: synthetic literal
+        "    sleep(Duration::from_millis(25));",  # watchdog: synthetic literal
+    ]
+    count, _ = count_waits(lines, MODULE.RUST_PATTERNS)
+    assert count == 1
+
+
+def test_a_strict_elapsed_deadline_check_counts_but_a_floor_assertion_does_not() -> (
+    None
+):
+    lines = [
+        "    if started.elapsed() > deadline {",  # watchdog: synthetic literal
+        "    assert!(started.elapsed() >= Duration::from_millis(50));",
+    ]
+    count, violations = count_waits(lines, MODULE.RUST_PATTERNS)
+    assert count == 1
+    assert violations == ["1"]
+
+
+def test_a_watchdog_marker_without_a_reason_does_not_pass() -> None:
+    """The marker must carry a reason; a bare marker vouches for nothing."""
+    for line in (
+        "    time.sleep(0.05)  # watchdog:",  # watchdog: synthetic literal
+        "    time.sleep(0.05)  # watchdog: x",  # watchdog: synthetic literal
+    ):
+        count, violations = count_waits([line], [MODULE.PYTHON_PATTERNS[0]])
+        assert count == 1, line
+        assert violations == ["1"], line
 
 
 def test_the_helpers_own_poll_sleep_is_marked() -> None:

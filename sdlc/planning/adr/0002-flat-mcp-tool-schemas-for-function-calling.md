@@ -32,10 +32,17 @@ one schema when identical; `enum`/`const` values union into one `enum`
 (`source` merges the author, article, and trial source enums; `get`
 sections union every entity's section names); a field that is text on
 some branches and a list on others (`disease`, `drug`) publishes
-`type: ["string", "array"]` with both sides' constraints. The merged
-root can only be wider than any single branch, never narrower. The
-flat lists are derived from the same constants and capability tables
-the branch builders and the body checks use, so they cannot drift.
+`type: ["string", "array"]` with both sides' constraints. Any clash
+the rule does not cover panics at build and test time, so an
+unforeseen collision fails the drift tripwire instead of publishing
+the first branch's value quietly. The union is wider in accepted
+values, not unconditionally wider: a first-seen constraint survives
+the merge even when another branch was more permissive (the merged
+`sections` keeps `uniqueItems` although the adverse-event branch
+accepts duplicates), so the root can be narrower than one permissive
+branch — the body stays prescriptive per entity. The flat lists are
+derived from the same constants and capability tables the branch
+builders and the body checks use, so they cannot drift.
 
 Failures that rmcp raises while deserializing `Parameters` (a missing
 required field, a wrong type, and — since ticket 1251 — an unknown
@@ -43,6 +50,18 @@ required field, a wrong type, and — since ticket 1251 — an unknown
 before the handler body and rmcp's wrapper cannot be converted without
 restructuring rmcp. The MCP specification allows both channels; the
 model sees the message either way.
+
+## Verification status
+
+Shown: the 2026-07-28 conformance reviewer's drive with
+`@hasmcp/mcp-spec-test` 0.1.5 against a live server (nine passed, two
+not verified), and the documented OpenAI and Gemini rejection of
+top-level `oneOf` that motivated the change. Not verified here:
+whether Gemini accepts `type: ["string", "array"]` lists, a typeless
+`enum`, or `additionalProperties` in tool schemas. Those constructs
+ride the union today on the strength of the JSON Schema draft they
+follow; verifying them against each provider's live tool-API is
+recorded as open work alongside the live provider checks.
 
 ## Options weighed
 

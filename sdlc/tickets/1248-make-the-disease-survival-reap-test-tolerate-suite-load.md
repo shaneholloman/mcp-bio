@@ -27,14 +27,15 @@ killed decoy fails the test immediately instead of after a sampling
 race. The waits use the shared `tests/support.py` helpers (`proc_alive`
 and `wait_until` with the `BIOMCP_TEST_TIMEOUT_SCALE` watchdog), and
 the heartbeat sampler is deleted. The stress lane (`make stress`,
-ticket 1252) runs this test pinned to one CPU with forced worker
-parallelism, so a regression is reproduced under contention rather
-than hoped away.
+ticket 1252) runs this test on its pinned two-CPU set with forced
+worker parallelism, so a regression is reproduced under contention
+rather than hoped away.
 
 ## Acceptance
 
 - The test contains no heartbeat sampling and no unscaled waits.
-- `make stress` runs it green pinned to one CPU (ticket 1252's lane).
+- `make stress` runs it green on the lane's pinned CPU set (ticket
+  1252's lane).
 
 ## Review
 
