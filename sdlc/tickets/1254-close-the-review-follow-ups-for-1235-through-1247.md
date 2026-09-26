@@ -173,5 +173,5 @@ changelog coverage and release provenance suites 92 passed.
 - 1251/1252 review fixes (2026-09-26): merged panics + literal
   tripwire + ADR/changelog corrections; wait-ratchet hardening,
   stress lane in CI, one-CPU wording, 1248 watch record. See
-  `sdlc/records/1251-1252-review-fixes.md`.
+  `sdlc/records/review-fixes-for-1251-and-1252.md`.
 origin/tickets/1251-1252-review-fixes

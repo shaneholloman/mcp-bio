@@ -1917,7 +1917,7 @@ mod tests {
             .iter()
             .map(|entity| typed_search_branch(entity))
             .collect::<Vec<_>>();
-        let mut expected_keys: Vec<String> = branches
+        let expected_keys: Vec<String> = branches
             .iter()
             .flat_map(|branch| {
                 branch["properties"]
