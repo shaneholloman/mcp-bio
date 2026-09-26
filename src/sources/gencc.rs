@@ -915,7 +915,7 @@ async fn cancelling_stalled_headers_and_streamed_body_drops_request_and_store_wo
 #[cfg(test)]
 #[tokio::test(flavor = "current_thread")]
 #[serial_test::serial(source_env)]
-async fn cancelling_active_publication_joins_cleanup_and_releases_locks() {
+async fn cancelled_publication_settles_and_the_previous_generation_survives() {
     use axum::{Router, body::Body, http::Response};
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;

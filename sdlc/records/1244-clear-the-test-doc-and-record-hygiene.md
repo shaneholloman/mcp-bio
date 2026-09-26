@@ -50,5 +50,11 @@ host; yellow gate at e4e27a8e — lint, test, and spec OK (the first run
 needed one formatter collapse of the flag binding).
 
 Residuals: the clingen-cspec 180-second block limit and retry/request-
-log items remain open in the issue file; the freshness warning is
-deliberately unenforced.
+log items remain open in the issue file; the freshness warning was
+deliberately unenforced at 1244 time — closed 2026-09-26 by ticket
+1254 batch 2, which makes the check warn at 300 days and fail the
+gate past 365. Correction 2026-09-26 (ticket 1254 batch 2):
+the three near-duplicate raw-ctgov-total issue files were NOT merged
+at landing, although the issue's Resolved section said all items
+landed; they were merged 2026-09-26 and the Resolved section now
+says so.
