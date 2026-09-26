@@ -390,8 +390,8 @@ fn merge_property(left: &Value, right: &Value) -> Value {
         // An enum or const on exactly one side of a same-type merge
         // narrows what the bare side accepted: that is a clash too,
         // not a quiet keep.
-        let one_sided_enum = (left.contains_key("enum") != right.contains_key("enum"))
-            || (left.contains_key("const") != right.contains_key("const"));
+        let one_sided_enum = (left.get("enum").is_some() != right.get("enum").is_some())
+            || (left.get("const").is_some() != right.get("const").is_some());
         if one_sided_enum {
             panic!(
                 "one-sided enum or const clash the collision rule does not cover: {left} vs {right}"
