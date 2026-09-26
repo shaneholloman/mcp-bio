@@ -39,3 +39,27 @@ floor attestation, confirmed by the 11-file diff-stat and a passing
 ratchet); yellow gate at d8475987 — lint, test, and spec OK after
 one cycle that exposed the uv-lock flap. Items 5-12 remain for
 batches 2 and 3.
+
+## Batch 2 (2026-09-26)
+
+Items 5-8 landed. The licensing guard warns at 300 days (a real
+UserWarning, not a hidden print) and fails the gate past 365, with
+the boundary pinned by synthetic entries; the oldest real review
+date is 2026-03-20 (190 days), recorded in the ticket with its
+2027-03 crossing flagged for Ian's review pass — nothing was bumped.
+The three raw-ctgov duplicate issues are merged into the canonical
+file with their unique sentences restored (including the two the
+first merge dropped), the dangling references repointed, and the
+1244 record corrected. The 1247 test names its observable
+(settles and the previous generation survives), not an ordering the
+product does not have, with the stress lane's filters following. The
+health handshake gained a real end-to-end test through a test-only
+address override — and the review's P1 closed it properly: the
+override is gated exactly like the GenCC endpoint (debug assertions
+or an exact loopback test signal), so operator credentials on the
+authed probe arms can never be redirected in release builds; both
+sides now parse as URLs with a fallback, and every probe arm
+including the keyed one routes through the gate. Code review REJECT
+once on the ungated override, all eight findings fixed and
+re-verified; yellow gate at 43e86ff6 — lint, test, and spec OK.
+Batch 3 (items 10-12, the 1235/1236/1237 minors) remains.
