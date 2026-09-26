@@ -119,5 +119,5 @@ source-size, package, and gate constraints.
   same tip. The gate host's Rust run was cancelled solely by a pre-existing
   host-specific SIGABRT (fails identically on unmodified main there, passes
   on the dev host), filed as
-  sdlc/issues/2026-09-13-raw-ctgov-total-test-sigaborts-on-the-gate-host-only.md.
+  sdlc/issues/2026-09-13-raw-ctgov-total-test-sigaborts-on-the-gate-host.md.
   Code review: single-cycle ACCEPT.

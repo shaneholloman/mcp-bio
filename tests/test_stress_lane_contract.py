@@ -54,7 +54,7 @@ def test_the_rust_lane_names_the_flaky_set() -> None:
         "subprocess_lease_defers_old_generation_cleanup_until_reader_exits",
         "subprocess_lease_child_exits_on_parent_end_of_input",
         "cancelling_stalled_headers_and_streamed_body_drops_request_and_store_work",
-        "cancelling_active_publication_settles_before_releasing_the_refresh_lock",
+        "cancelled_publication_settles_and_the_previous_generation_survives",
     ):
         assert name in cargo_line, f"{name} must be in the stress lane"
 

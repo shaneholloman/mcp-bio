@@ -27,6 +27,12 @@ toolchain pass on the dev host. An 8 MiB overflow suggests deep or
 unbounded recursion on a path that only runs on the gate host —
 plausibly environment-triggered (Ubuntu 25.10 runtime, or a
 provider-policy lookup that walks a symlinked PATH element differently).
+Next step for whoever takes it: reproduce under gdb on the gate host,
+catch the guard-page fault, and read the recursion; then either bound
+the recursion or make the triggering branch host-independent. Until
+this lands, the gate host cannot complete its own Rust lane (fail-fast
+cancels at this test), which is the one remaining reason any Rust
+verification runs on the dev host.
 
 gdb method and raw frame table (2026-09-14, gate host, debug build at
 main 1746c918, single faulting test under `gdb -batch` with `handle

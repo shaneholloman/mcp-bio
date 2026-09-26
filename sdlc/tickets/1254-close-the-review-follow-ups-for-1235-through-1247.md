@@ -129,17 +129,21 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
 - Item 7 done (batch 2): the rename, not the wait — cleanup runs
   detached by design and waiting for it would couple the test to
   detached timing; the test is now
-  cancelling_active_publication_settles_before_releasing_the_refresh_lock
-  (what its assertions prove: the settle helper waits the temporaries
-  out and the previous generation survives), and the Makefile stress
-  filter and the stress lane contract name the new name. gencc.rs
-  stays line-neutral at its pinned 1,008.
+  cancelled_publication_settles_and_the_previous_generation_survives
+  (the observable, per review), and the Makefile stress filter and
+  the stress lane contract name the new name. gencc.rs stays
+  line-neutral at its pinned 1,008.
 - Item 8 done (batch 2): BIOMCP_HEALTH_PROBE_BASE is a test-only
   address override that rewrites a health probe's scheme and
-  authority onto a fixture origin (path and query kept; unset or
-  unshapely leaves the catalog URL unchanged), applied at every
-  URL-taking probe arm; classified in the configuration docs
-  contract. The handshake test drives the real binary with
+  authority onto a fixture origin (path and query kept), applied at
+  every URL-taking probe arm including the keyed optional-auth arm
+  (review follow-up); gated exactly like the GenCC endpoint override
+  (debug builds, or a base naming the exact loopback origin the
+  BIOMCP_TEST_UNPACED_ORIGIN signal allows — mirrored
+  fixture_override_allowed, unit-tested for the non-loopback
+  rejection), with both sides parsed through Url::parse so an
+  unparseable base leaves the catalog URL unchanged; classified in
+  the configuration docs contract. The handshake test drives the real binary with
   `health --api MyGene` against the TLS fixture and proves the shared
   client completes the request: one TLS session and the rewritten
   /v3/query?q=BRAF&size=1 request line both asserted.

@@ -49,6 +49,8 @@ cspec fixture waits 30s and prints diagnostics, CI records the three
 tool versions and installs with -y, the overview names seven tools and
 the true pinning state, the residuals have recorded dispositions, and
 the 1222 record file was renamed. Deliberately open: the cspec block
-limit and retry/request-log items, and the unenforced freshness
-warning. See
+limit and retry/request-log items. The freshness warning was
+deliberately unenforced at 1244; since ticket 1254 batch 2
+(2026-09-26) the check warns at 300 days and fails the gate past 365.
+See
 `sdlc/records/1244-clear-the-test-doc-and-record-hygiene.md`.

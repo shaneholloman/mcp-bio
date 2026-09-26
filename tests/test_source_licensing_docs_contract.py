@@ -213,22 +213,28 @@ def _review_age_days(reviewed_on: str, today: date) -> int:
 SOURCE_REVIEW_WARN_AGE_DAYS = 300
 
 
-def _stale_review_entries(today: date) -> tuple[list[str], list[str]]:
-    """Split the inventory into (nearing-limit, expired) review lines."""
+def _split_review_entries(
+    entries: list[dict[str, object]], today: date
+) -> tuple[list[str], list[str]]:
+    """Split review entries into (nearing-limit, expired) lines."""
     warned = [
         f"{item['id']} reviewed_on={item['reviewed_on']} ({_review_age_days(str(item['reviewed_on']), today)} days)"
-        for item in _source_inventory()
+        for item in entries
         if SOURCE_REVIEW_WARN_AGE_DAYS
         < _review_age_days(str(item["reviewed_on"]), today)
         <= SOURCE_REVIEW_MAX_AGE_DAYS
     ]
     expired = [
         f"{item['id']} reviewed_on={item['reviewed_on']} ({_review_age_days(str(item['reviewed_on']), today)} days)"
-        for item in _source_inventory()
+        for item in entries
         if _review_age_days(str(item["reviewed_on"]), today)
         > SOURCE_REVIEW_MAX_AGE_DAYS
     ]
     return warned, expired
+
+
+def _stale_review_entries(today: date) -> tuple[list[str], list[str]]:
+    return _split_review_entries(_source_inventory(), today)
 
 
 def test_source_review_dates_warn_then_fail() -> None:
@@ -253,27 +259,27 @@ def test_source_review_dates_warn_then_fail() -> None:
     )
 
 
-def test_the_age_boundary_is_off_by_no_day() -> None:
-    """A review exactly 365 days old is neither warned nor failed.
+def test_a_review_exactly_365_days_old_is_warned_not_failed() -> None:
+    """The boundary: 365 days warns (and passes); 366 days fails.
 
-    The main test reads today's real inventory (oldest entry 190 days
-    old at batch-2 time), so the boundary itself needs a synthetic
-    check: shift the reference date a year forward and every real
-    entry must land in the expired bucket.
+    Drives the same splitter the main test reads the real inventory
+    through, with synthetic entries pinned to the boundary so the
+    behavior does not depend on any real date aging into range.
     """
     from datetime import timedelta
 
-    real_today = date.today()
-    year_ahead = real_today + timedelta(days=366)
-    _, expired = _stale_review_entries(year_ahead)
-    assert expired, "every real entry is older than 366 days from a year ahead"
-    assert all("reviewed_on" in entry for entry in expired)
-    # The boundary: a review exactly 365 days back is neither warned
-    # (that needs >300) ... it IS warned; it is not failed. Pin both.
-    boundary = (real_today - timedelta(days=365)).isoformat()
-    assert _review_age_days(boundary, real_today) == SOURCE_REVIEW_MAX_AGE_DAYS
-    one_more = (real_today - timedelta(days=366)).isoformat()
-    assert _review_age_days(one_more, real_today) > SOURCE_REVIEW_MAX_AGE_DAYS
+    today = date.today()
+    entries = [
+        {"id": "boundary", "reviewed_on": (today - timedelta(days=365)).isoformat()},
+        {"id": "one-more", "reviewed_on": (today - timedelta(days=366)).isoformat()},
+        {"id": "fresh", "reviewed_on": (today - timedelta(days=10)).isoformat()},
+    ]
+    warned, expired = _split_review_entries(entries, today)
+    assert [line.split()[0] for line in warned] == ["boundary"]
+    assert [line.split()[0] for line in expired] == ["one-more"]
+    # And the whole real inventory, viewed a year ahead, all expires.
+    _, real_expired = _stale_review_entries(today + timedelta(days=366))
+    assert real_expired, "every real entry is older than 366 days from a year ahead"
 
 
 def test_orcid_is_a_direct_exact_record_source() -> None:
