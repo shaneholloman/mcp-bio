@@ -95,29 +95,82 @@ The per-item state:
    `json_and_text_mark_a_partial_count_with_its_reason`,
    `search_results_carry_the_partial_detail_verification_note`, and
    the `completed_ctgov_union_count` partial arm in ctgov/tests.rs.
-2. NOT STARTED.
-3. NOT STARTED.
-4. NOT STARTED.
-5. NOT STARTED. Design note from this session for whoever picks it
-   up: http-cache 0.20's `conditional_fetch` serves the manager's
-   cached object directly on stale-within-tolerance and
-   offline/must-not-revalidate paths, and serves the `put()` RETURN on
-   304/200 revalidation — so stamping a stale marker on the cached
-   response in `SizeAwareCacheManager::get` (computed from the stored
-   `CachePolicy.is_stale/age`) and clearing it in `put` labels stale
-   serves with no false positive after revalidation. The entity-page
-   per-source plumbing beyond the response-level flag still needs a
-   design decision (source clients discard response headers; there is
-   no single response funnel — `request_from_plan` returns a builder).
-6. PARTIAL: the two trial anchors in item 1 exist; the
-   SOURCE_STATE_ROWS markdown walk and the SearchAllSection anchor are
-   NOT STARTED.
+2. DONE (2026-09-26, batch 2). The trial arm's recruiting-filter
+   failure now reports through the section note when the unfiltered
+   backfill still returned rows (the pure constructor is
+   `trial_recruiting_filter_note`, tested directly); an empty result
+   still returns the preferred error. `count_exact` requires
+   `note.is_none()`, so a note-carrying section never claims an exact
+   count. Anchors:
+   `a_degraded_trial_section_renders_the_note_and_drops_count_exact`
+   (JSON count_exact false + markdown note) and
+   `trial_recruiting_filter_note_names_the_failure_and_the_widening`.
+   The one format fixture that carried an arbitrary note now asserts
+   `note` null with `count_exact` true (notes are degradations).
+3. DONE (2026-09-26, batch 2). `context_from_response` rejects a
+   missing data block (schema change) and a `totalCount > 0` with
+   zero parsed rows for both evidence and assertions; a genuine
+   `totalCount=0, nodes=[]` stays a healthy empty. Anchors:
+   `context_response_rejects_a_missing_data_block`,
+   `context_response_rejects_a_total_without_parsed_rows`,
+   `context_response_accepts_a_genuine_empty_page`.
+4. DONE (2026-09-26, batch 2). `assign_top_genes(disease, owns)`
+   assigns the list and its label in one place (both the base-context
+   and sections paths call it): Open Targets keeps the default
+   heading; when the base fetch failed, the label names the fallbacks
+   that actually pushed the genes (Monarch Initiative, CIViC) — even
+   when a late Open Targets augment only attached scores. The
+   template heading uses the label (`top_gene_source or "Open
+   Targets"`), and the provenance row derives its sources from the
+   same field, so the two cannot contradict. New additive
+   `Disease.top_gene_source` field. Anchors:
+   `top_genes_label_names_the_fallback_when_open_targets_did_not_produce_them`,
+   `top_genes_label_joins_both_fallback_sources`,
+   `disease_markdown_heading_and_provenance_credit_the_fallback_source`.
+5. DONE at the verified seam (2026-09-26, batch 2), with the
+   remaining plumbing recorded. `SizeAwareCacheManager::get` stamps
+   `x-biomcp-cache-stale-age: <seconds>` on a served entry whose
+   stored `CachePolicy` is stale at serve time (age from the policy
+   clock, never the file write time); `put` strips the marker before
+   storing and returning, so a 304/200-revalidated response can never
+   carry it (http-cache 0.20 serves put's return on both
+   revalidation arms — verified in the crate source). The consumer
+   landed is the shared request funnel: both
+   `send_with_source_context` impls read the marker, log "served
+   from cache, older than the provider's freshness window (N h
+   old)" (never implying revalidation failure), and strip it before
+   the response reaches source clients. Anchors:
+   `a_stale_serve_carries_the_marker_with_its_policy_age`,
+   `a_fresh_serve_carries_no_marker`,
+   `put_clears_the_marker_so_revalidation_cannot_carry_it` (the
+   304-flow unit: put receives the stamped cached response exactly as
+   conditional_fetch hands it over). REMAINS: per-source status lines
+   on the entity pages do not yet carry the label — source clients
+   discard response headers after the log, and there is no single
+   response funnel into `section_outcomes`; that plumbing is a
+   deliberate deferral to the next design pass, not an oversight.
+6. DONE (2026-09-26, batch 2). The SOURCE_STATE_ROWS walk
+   (`every_registry_source_status_row_survives_the_render_context`)
+   completes each row as Unavailable and asserts the status line
+   survives the render-context seam with the row's label, providers,
+   and state — it immediately caught that the disease template's
+   diagnostics status only renders under the opt-in section name
+   (recorded in the test). The end-to-end disease anchor
+   (`a_fully_unavailable_disease_card_keeps_every_status_line`)
+   proves the template renders every disease row's status line. The
+   SearchAllSection anchor is the item-2 test above. All six items
+   now have named anchors.
 
 ## Review
 
 - Design review: REJECT once (stale-cache label named the wrong
   seam; partial-count and per-trial surfaces unspecified; anchors
   unnamed), findings folded, re-review ACCEPT 2026-09-25
+- Batch 2 (2026-09-26): implemented; validation is fmt + clippy
+  (-D warnings) clean and the focused filters green (search_all 41,
+  civic 9, cache::manager 27, root_tests 10, entities::disease 77);
+  the yellow gate has NOT run — this state lands for review and gate
+  as the next step
 - Code review (batch 1): ACCEPT with P2s (spacing fixed; JSON note
   and offset wording recorded for batch 2) 2026-09-25
 - Verification (batch 1): yellow gate at 66c55c55 lint/test/spec OK;

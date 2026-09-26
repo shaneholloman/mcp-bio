@@ -196,6 +196,33 @@ fn ensure_variant_article_time() -> Result<(), BioMcpError> {
     Ok(())
 }
 
+/// Read the stale-serve marker and log the honest wording. The label says
+/// the entry is older than the provider's freshness window — it never
+/// implies a revalidation failure, because a revalidated response cannot
+/// carry the marker (put strips it).
+fn note_stale_cache_serve(response: &mut reqwest::Response) {
+    if let Some(value) = response
+        .headers()
+        .get(crate::cache::manager::STALE_SERVE_AGE_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<u64>().ok())
+    {
+        let hours = value / 3600;
+        let wording = if hours >= 1 {
+            format!("{hours} h old")
+        } else {
+            format!("{} s old", value.max(1))
+        };
+        warn!(
+            age_seconds = value,
+            "served from cache, older than the provider's freshness window ({wording})"
+        );
+    }
+    response
+        .headers_mut()
+        .remove(crate::cache::manager::STALE_SERVE_AGE_HEADER);
+}
+
 fn attach_variant_article_deadline(request: RequestBuilder) -> RequestBuilder {
     match current_variant_article_deadline() {
         Some(deadline) => request.with_extension(deadline),
@@ -228,14 +255,16 @@ impl RequestBuilderSourceContextExt for RequestBuilder {
             }
             None => request.send().await,
         };
-        response.map_err(BioMcpError::from).map_err(|error| {
+        let mut response = response.map_err(BioMcpError::from).map_err(|error| {
             let context = if matches!(error, BioMcpError::BodyLimit { .. }) {
                 SourceContext::narrow(context.provider())
             } else {
                 context
             };
             error.with_source_context(context)
-        })
+        })?;
+        note_stale_cache_serve(&mut response);
+        Ok(response)
     }
 }
 
@@ -244,10 +273,13 @@ impl RequestBuilderSourceContextExt for reqwest::RequestBuilder {
         self,
         context: SourceContext,
     ) -> Result<reqwest::Response, BioMcpError> {
-        self.send()
+        let mut response = self
+            .send()
             .await
             .map_err(BioMcpError::from)
-            .map_err(|error| error.with_source_context(context))
+            .map_err(|error| error.with_source_context(context))?;
+        note_stale_cache_serve(&mut response);
+        Ok(response)
     }
 }
 
