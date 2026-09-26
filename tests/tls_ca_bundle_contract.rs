@@ -282,6 +282,38 @@ async fn health_probe_reaches_a_private_ca_provider_through_the_orphan_client() 
 }
 
 #[tokio::test]
+async fn health_probe_completes_a_tls_handshake_through_the_shared_client() {
+    // The shared health client (not the orphan probe's own
+    // construction) must complete a request against a private CA it
+    // trusts: drive the real binary with the test-only probe-base
+    // override (BIOMCP_HEALTH_PROBE_BASE) pinned onto the MyGene
+    // catalog probe, and prove the handshake and the rewritten
+    // request line both landed (ticket 1254 batch 2, item 8).
+    let fixture = TlsFixture::start().await;
+    let output = fixture
+        .run_command(
+            &[("BIOMCP_HEALTH_PROBE_BASE", &fixture.origin)],
+            &["health", "--api", "MyGene"],
+        )
+        .await;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        output.status.success(),
+        "health exited {status}: stdout={stdout} stderr={stderr}",
+        status = output.status
+    );
+    assert_eq!(fixture.sessions.load(Ordering::SeqCst), 1);
+    let requests = fixture.requests.lock().expect("request log");
+    assert!(
+        requests
+            .iter()
+            .any(|line| line.contains("/v3/query?q=BRAF&size=1")),
+        "the rewritten MyGene probe path must be requested: {requests:?}"
+    );
+}
+
+#[tokio::test]
 async fn fda_orphan_client_reaches_a_private_ca_provider() {
     let fixture = TlsFixture::start_with_body(MYCHEM_IMATINIB).await;
     let output = fixture

@@ -108,7 +108,43 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
   because they are environmental — permission changes, NFS stale
   handles, transient contention — and pruning a healthy generation
   over them would be destructive; the errno unit tests record it.
-- Items 5-12: not started; next batch.
+- Item 5 done (batch 2): the licensing guard warns then fails —
+  reviewed_on dates 300-365 days old raise a UserWarning naming the
+  source and age; anything past 365 fails the canonical test gate
+  (which runs this file in CI, so the release cannot pass with an
+  expired review). Boundary pinned synthetically: exactly 365 days
+  warns-and-passes, 366 fails. Date finding: the oldest real
+  reviewed_on is 2026-03-20 (alphafold-db through wikipathways, 190
+  days at batch-2 time), so no date is near the limit and nothing
+  went red; the next limit crossing is around 2027-03 for the
+  2026-03-20 cohort, which needs Ian's review pass, not a silent
+  bump.
+- Item 6 done (batch 2): the three 2026-09-13 raw-ctgov-total files
+  are one file now — the canonical -sigaborts- spelling carries the
+  observation, the 2026-09-14 root cause (Rust stack overflow in the
+  8 MiB execute thread), and the gdb frame table verbatim; the two
+  -only variants are deleted; the hygiene issue's Resolved section
+  and the 1244 record both say the merge happened 2026-09-26, not at
+  landing.
+- Item 7 done (batch 2): the rename, not the wait — cleanup runs
+  detached by design and waiting for it would couple the test to
+  detached timing; the test is now
+  cancelling_active_publication_settles_before_releasing_the_refresh_lock
+  (what its assertions prove: the settle helper waits the temporaries
+  out and the previous generation survives), and the Makefile stress
+  filter and the stress lane contract name the new name. gencc.rs
+  stays line-neutral at its pinned 1,008.
+- Item 8 done (batch 2): BIOMCP_HEALTH_PROBE_BASE is a test-only
+  address override that rewrites a health probe's scheme and
+  authority onto a fixture origin (path and query kept; unset or
+  unshapely leaves the catalog URL unchanged), applied at every
+  URL-taking probe arm; classified in the configuration docs
+  contract. The handshake test drives the real binary with
+  `health --api MyGene` against the TLS fixture and proves the shared
+  client completes the request: one TLS session and the rewritten
+  /v3/query?q=BRAF&size=1 request line both asserted.
+- Items 10-12: not started; next batch (item 9, the pending-review
+  check, landed on main separately).
 - Code review (batches 2-3): pending (batch 1 accepted below)
 - Code review (batch 1): ACCEPT with three report-only P2s
   (unused parameter dropped; local-read line recorded; floor

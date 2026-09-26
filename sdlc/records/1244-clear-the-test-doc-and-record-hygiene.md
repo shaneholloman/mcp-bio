@@ -51,4 +51,8 @@ needed one formatter collapse of the flag binding).
 
 Residuals: the clingen-cspec 180-second block limit and retry/request-
 log items remain open in the issue file; the freshness warning is
-deliberately unenforced.
+deliberately unenforced. Correction 2026-09-26 (ticket 1254 batch 2):
+the three near-duplicate raw-ctgov-total issue files were NOT merged
+at landing, although the issue's Resolved section said all items
+landed; they were merged 2026-09-26 and the Resolved section now
+says so.

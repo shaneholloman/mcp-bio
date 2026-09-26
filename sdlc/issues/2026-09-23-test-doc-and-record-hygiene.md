@@ -38,7 +38,11 @@ Allow about 30 seconds for readiness and print `server.log` and the report JSON 
 
 ## Resolved
 
-Ticket 1244. All listed items landed: the staleness check warns instead
+Ticket 1244. Every listed item except the ctgov merge landed at the
+time (the three near-duplicate 2026-09-13 raw-ctgov-total files were
+merged 2026-09-26 by ticket 1254 batch 2, not at landing; the
+canonical file now carries the full root-cause and frame-table
+history): the staleness check warns instead
 of failing, the migration test asserts the settle flag, the three test
 weaknesses are fixed, the audit bans the count form off the blog, the
 cspec fixture waits 30s and prints diagnostics, CI records the three

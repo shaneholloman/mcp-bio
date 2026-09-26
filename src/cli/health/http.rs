@@ -133,13 +133,40 @@ pub(in crate::cli::health) async fn send_request(
     }
 }
 
+/// Rewrites a probe URL's scheme and authority onto a test endpoint
+/// when `BIOMCP_HEALTH_PROBE_BASE` is set, keeping the path and query.
+/// Test-only seam (ticket 1254, item 8): the health probes carry
+/// static catalog URLs, so the handshake test needs one address
+/// override through the shared client. Unset, empty, or unshapely ->
+/// the original URL unchanged.
+fn probe_url(url: &str) -> String {
+    let Ok(base) = std::env::var("BIOMCP_HEALTH_PROBE_BASE") else {
+        return url.to_string();
+    };
+    let base = base.trim().to_string();
+    if base.is_empty() {
+        return url.to_string();
+    }
+    let authority_start = url.find("://").map(|i| i + 3).unwrap_or(0);
+    let path_start = url[authority_start..]
+        .find('/')
+        .map(|i| i + authority_start)
+        .or_else(|| {
+            url[authority_start..]
+                .find('?')
+                .map(|i| i + authority_start)
+        })
+        .unwrap_or(url.len());
+    format!("{base}{}", &url[path_start..])
+}
+
 pub(in crate::cli::health) async fn check_get(
     client: reqwest::Client,
     api: &str,
     url: &str,
     affects: Option<&'static str>,
 ) -> ProbeOutcome {
-    send_request(api, affects, client.get(url), None).await
+    send_request(api, affects, client.get(probe_url(url)), None).await
 }
 
 pub(in crate::cli::health) async fn check_post_json(
@@ -153,7 +180,7 @@ pub(in crate::cli::health) async fn check_post_json(
         api,
         affects,
         client
-            .post(url)
+            .post(probe_url(url))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(payload.to_string()),
         None,
@@ -179,7 +206,7 @@ pub(in crate::cli::health) async fn check_auth_get(
     send_request(
         api,
         affects,
-        client.get(url).header(header_name, header_value),
+        client.get(probe_url(url)).header(header_name, header_value),
         Some(true),
     )
     .await
@@ -210,7 +237,7 @@ pub(in crate::cli::health) async fn check_orcid_get(
                 api,
                 affects,
                 client
-                    .get(url)
+                    .get(probe_url(url))
                     .header("Accept", "application/vnd.orcid+json")
                     .header("Authorization", format!("Bearer {token}")),
                 Some(true),
@@ -286,7 +313,7 @@ pub(in crate::cli::health) async fn check_optional_auth_get(
         Some(key) => client
             .get(url)
             .header(header_name, format!("{header_value_prefix}{key}")),
-        None => client.get(url),
+        None => client.get(probe_url(url)),
     };
     let start = Instant::now();
     let error_outcome = |latency: String| {
@@ -318,7 +345,7 @@ pub(in crate::cli::health) async fn check_auth_query_param(
         return excluded_outcome(api, env_var, affects);
     };
 
-    let req = match reqwest::Url::parse(url) {
+    let req = match reqwest::Url::parse(&probe_url(url)) {
         Ok(mut parsed) => {
             parsed.query_pairs_mut().append_pair(param_name, &key);
             client.get(parsed)
@@ -361,7 +388,7 @@ pub(in crate::cli::health) async fn check_auth_post_json(
         api,
         affects,
         client
-            .post(url)
+            .post(probe_url(url))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .header(header_name, header_value)
             .body(payload.to_string()),
