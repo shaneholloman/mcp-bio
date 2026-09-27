@@ -98,7 +98,7 @@ fn raw_label_and_safety_together_print_the_ordinary_warnings_once() {
     assert!(markdown.contains("Immune-mediated adverse reactions."));
     assert!(
         markdown.contains("### Boxed Warning"),
-        "the boxed warning still renders in the safety block"
+        "the boxed warning renders under the label section heading on this card"
     );
 }
 

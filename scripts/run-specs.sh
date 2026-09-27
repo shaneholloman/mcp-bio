@@ -295,6 +295,9 @@ cleanup_variant_identity_fixture() {
 }
 
 run_variant_identity_fixture() {
+  # Copied-workspace tolerance: the lifecycle tests run this lane in
+  # scratch checkouts that stub only some fixture scripts.
+  [[ -x spec/fixtures/setup-variant-identity-spec-fixture.sh ]] || return 0
   bash spec/fixtures/setup-variant-identity-spec-fixture.sh "$ROOT"
   source_if_present "$ROOT/.cache/spec-variant-identity-env"
   register_cleanup cleanup_variant_identity_fixture

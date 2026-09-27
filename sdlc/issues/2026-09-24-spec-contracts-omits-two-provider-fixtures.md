@@ -19,6 +19,11 @@ responses from the same fixtures normal `spec` mode starts
 (`run_variant_identity_fixture` brings its Clingen CSPEC sourcing
 along as in full mode). The lifecycle contract test's spec-contracts
 case passes; the remaining lifecycle-test failures in that file are
-pre-existing on the base tree (verified by stashing) and not from
-this change. First live `make spec-contracts` confirmation runs in
+pre-existing on the base tree (verified by stashing). Correction
+from code review: the routine_fixture_recovery and
+disease-survival lifecycle failures in copied workspaces WERE
+caused by the first cut of this change (the variant-identity
+fixture start had no existence guard, so bash exited 127 there);
+the guard now restores those workspaces to skipping the fixture,
+matching every sibling fixture runner. First live `make spec-contracts` confirmation runs in
 the batch's yellow gate.
