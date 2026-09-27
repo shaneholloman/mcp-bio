@@ -25,6 +25,14 @@ OnceLock. The two existing setters convert to the guard so they
 cannot leak. While there, make the two readers agree on one
 function so a future mode value cannot split them again.
 
+## Review
+
+- Design review: n/a (Ian's issue specified option 2)
+- Code review: REJECT on two P1s (unserialized unit test on the
+  shared override slot; stale line pin), fixed and verified 2026-09-27
+- Verification: yellow gate at 8c37f045 — lint, test, spec, stress
+  OK, zero failed lines
+
 ## Acceptance
 
 - A regression test sets the mode to `off`, lets the guard drop,

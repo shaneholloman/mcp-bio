@@ -1,6 +1,6 @@
 # Cache mode is fixed for the whole test process
 
-Filed 2026-09-27 from GitHub #286: https://github.com/genomoncology/biomcp/issues/286. Status: open. Close #286 when the fix ships.
+Filed 2026-09-27 from GitHub #286: https://github.com/genomoncology/biomcp/issues/286. Status: fixed on main (ticket 1261, gate 8c37f045). Close #286 when a release ships it.
 
 ## Symptom
 
