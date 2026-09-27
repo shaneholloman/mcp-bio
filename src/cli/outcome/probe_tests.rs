@@ -46,8 +46,9 @@ fn the_run_fallthrough_future_stays_under_the_size_ceiling() {
 }
 
 mod runtime_split {
-    use super::super::{ONE_SHOT_RUNTIMES_BUILT, WorkerDrive, run_outcome_with_worker_stack};
+    use super::super::run_outcome_with_worker_stack;
     use crate::cli::Cli;
+    use crate::cli::worker::{ONE_SHOT_RUNTIMES_BUILT, WorkerDrive};
     use clap::Parser;
     use std::sync::atomic::Ordering;
     use std::time::{Duration, Instant};

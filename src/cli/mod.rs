@@ -40,6 +40,7 @@ mod trial;
 mod types;
 pub mod update;
 mod variant;
+pub(super) mod worker;
 
 pub use self::article::ArticleCommand;
 pub use self::author::AuthorCommand;
