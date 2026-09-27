@@ -5,6 +5,14 @@ point 1: stop saying finished; mark every review item fixed, deferred
 or open, with the commit. This ticket is documentation only; every
 claim must name its evidence (a commit, a file, a run).
 
+## Review
+
+- Design review: n/a (documentation)
+- Code review: n/a (documentation)
+- Verification: both review files carry complete dispositions;
+  `grep -L "Decision\|Resolved"` over sdlc/issues returns only
+  deliberately-open files; CI green over the edited files
+
 ## Problem
 
 - The 1238 record says every open issue file has a decision. Four
