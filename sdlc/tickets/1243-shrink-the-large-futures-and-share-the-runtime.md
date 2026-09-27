@@ -82,4 +82,7 @@ deeply nested document on a 2 MiB blocking thread can overflow.
   per-call runtime at outcome.rs:610-626 serves the MCP path too;
   probe misstated; depth-cap placement unspecified; two issue items
   dropped silently), findings folded, re-review ACCEPT 2026-09-25
-- Code review: pending
+- Code review: ACCEPT with five P2s folded 2026-09-27
+- Verification: yellow gate at b0930b51 lint/test/spec/stress OK;
+  see
+  `sdlc/records/1243-shrink-the-large-futures-and-share-the-runtime.md`
