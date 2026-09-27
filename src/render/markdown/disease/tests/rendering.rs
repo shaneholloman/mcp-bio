@@ -817,7 +817,7 @@ fn disease_markdown_heading_and_provenance_credit_the_disgenet_seed() {
     disease
         .section_outcomes
         .complete("genes", crate::entities::section_outcome::SectionOutcome::data_sources([
-            "MyDisease.info",
+            "DisGeNET",
         ]));
 
     // The heading lives on the main card; the association table is
