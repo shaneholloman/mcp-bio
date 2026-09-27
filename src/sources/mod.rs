@@ -557,7 +557,7 @@ fn set_test_cache_mode(mode: CacheMode) -> TestCacheModeGuard {
     let mut slot = TEST_CACHE_MODE_OVERRIDE
         .lock()
         .expect("test cache-mode override lock poisoned");
-    let guard = TestCacheModeGuard(slot.clone());
+    let guard = TestCacheModeGuard(*slot);
     *slot = Some(mode);
     guard
 }

@@ -271,6 +271,9 @@ mod tests {
         /// latching the process mode (ticket 1261). Replaces the former
         /// `BIOMCP_CACHE_MODE=off` entry, which the once-read could not
         /// forget after the variable was restored.
+        /// Held (never read) so the guard outlives the environment
+        /// and restores the mode when the environment drops.
+        #[allow(dead_code)]
         cache_mode: crate::sources::TestCacheModeGuard,
     }
 
