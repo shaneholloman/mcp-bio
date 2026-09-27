@@ -200,9 +200,9 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
     # Format: any review-ish logical line that is not exactly the
     # grammar is a failure, whatever spelling it used.
     for number, marker, logical_text in _logical_lines(text_lines):
-        if marker == "-" and REVIEW_LINE.match(text) is not None:
+        if marker == "-" and REVIEW_LINE.match(logical_text) is not None:
             continue
-        if REVIEWISH.match(text) or VERIFICATION_ISH.match(text):
+        if REVIEWISH.match(logical_text) or VERIFICATION_ISH.match(logical_text):
             failures.append(f"{relative}:{number}: review line is not the grammar: {logical_text[:70]}")
 
     # Scope conflicts: a pending scoped line whose kind+scope already
