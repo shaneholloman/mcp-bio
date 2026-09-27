@@ -820,16 +820,18 @@ fn disease_markdown_heading_and_provenance_credit_the_disgenet_seed() {
             "MyDisease.info",
         ]));
 
-    // The association table is the genes section; the main card with
-    // no sections shows only the heading.
-    let markdown = disease_markdown(&disease, &["genes".to_string()]).expect("disease markdown");
+    // The heading lives on the main card; the association table is
+    // the genes section. Assert each against its own card.
+    let main_card = disease_markdown(&disease, &[]).expect("main disease markdown");
     assert!(
-        markdown.contains("Genes (DisGeNET): HTT"),
-        "the heading must credit the DisGeNET seed, not Open Targets: {markdown}"
+        main_card.contains("Genes (DisGeNET): HTT"),
+        "the heading must credit the DisGeNET seed, not Open Targets: {main_card}"
     );
+    let genes_card =
+        disease_markdown(&disease, &["genes".to_string()]).expect("genes disease markdown");
     assert!(
-        markdown.contains("DisGeNET (via MyDisease.info)"),
-        "the association table keeps the full seed provenance: {markdown}"
+        genes_card.contains("DisGeNET (via MyDisease.info)"),
+        "the association table keeps the full seed provenance: {genes_card}"
     );
 
     let provenance = crate::render::provenance::disease_section_sources(&disease);
