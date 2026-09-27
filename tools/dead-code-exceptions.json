@@ -1101,6 +1101,15 @@
       "owner": "render-contracts",
       "reason": "Ticket 1186 freezes the Unicode-16 provider sanitizer; ticket 1142 is the first consumer.",
       "removal_condition": "Remove when a Markdown renderer consumes sanitize_provider_inline."
+    },
+    {
+      "path": "src/cli/discover.rs",
+      "scope": "field",
+      "item": "cache_mode: crate::sources::TestCacheModeGuard",
+      "occurrence": 1,
+      "owner": "1261",
+      "reason": "Held for its Drop (restores the test cache-mode override); the field itself is never read by design",
+      "removal_condition": "Goes when the discover tests stop pinning the cache mode or the guard moves into a shared fixture helper"
     }
   ]
 }
