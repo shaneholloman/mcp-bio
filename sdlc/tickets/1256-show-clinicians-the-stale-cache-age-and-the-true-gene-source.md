@@ -56,6 +56,15 @@ age through a layer that has no notes field yet), open an issue file
 naming the gap and reference it from the record; do not let it
 silently drop.
 
+## Review
+
+- Design review: n/a (Ian's order named the items and the shape)
+- Code review: REJECT once (three P0s: label double-match, unearned
+  fixture assertion, MCP path bypassing the stale-notes scope),
+  fixed and re-reviewed ACCEPT 2026-09-27
+- Verification: yellow gate at 5754b910 — lint, test, spec, stress
+  OK, zero failed lines, after eight cycles; see the record
+
 ## Acceptance
 
 - A stale serve shows its age in an MCP card and a JSON body (tests
