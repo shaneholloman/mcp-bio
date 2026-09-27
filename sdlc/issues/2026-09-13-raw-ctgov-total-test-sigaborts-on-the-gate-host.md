@@ -54,3 +54,12 @@ remainder is about 2.85 MiB.
 Merged 2026-09-26 from the two "-only" files (typo and spelling
 variants of this same investigation) by ticket 1254 batch 2; no
 observation was dropped.
+
+## Resolved
+
+Root cause confirmed 2026-09-14 (8 MiB execute-thread stack overflow
+in recursive XML walking) and fixed by ticket 1191's real stack
+margin (backlog outcome commit `c716dc88`); the three duplicate
+issue files were merged into this one by ticket 1254 batch 2
+(2026-09-26). Ticket 1243's XML depth cap adds the mechanical guard
+so the class cannot recur.

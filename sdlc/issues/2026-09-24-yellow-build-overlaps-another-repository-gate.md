@@ -36,3 +36,11 @@ one-gate-at-a-time check by pgrep is no longer the primary guard,
 only a fallback. The other repository's runner holds the same lock,
 so a job that starts while the lock is taken waits instead of
 overlapping.
+
+## Resolved
+
+The process rule is in force and recorded here: one gate at a time,
+checked before launch; since 2026-09-26 BioMCP gate scripts take
+`~/.yellow-gate.lock` for the entire job (flock), so a starting job
+waits rather than overlaps. The single overlap that motivated this
+file was the last; none since.

@@ -34,3 +34,12 @@ The boundary constant: the true packaged count after the 1251 merge
 is 1,361 — `sdlc/planning/adr/` is excluded from the crate, so the
 ADR adds nothing; the +1 reasoned value was corrected after a real
 `cargo package` measurement and a green count test.
+
+## Resolved
+
+The server was the leaked child of the 1251 contract failure (see
+the Resolution section); no active run was affected and nothing
+needed repeating. The follow-up idea — a runner refusal must
+identify the process it refuses next to, never invite terminating
+it — is recorded here as the standing rule; no separate ticket until
+a refusal actually misleads someone.

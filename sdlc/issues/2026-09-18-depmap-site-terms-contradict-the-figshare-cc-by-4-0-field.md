@@ -39,3 +39,12 @@ grant governs the mirrored 24Q4 bytes despite the site terms, and a reworded
 attribution line for acceptance item 11. The mirror's twenty-one-month staleness
 is the weaker of the two reasons but the easier one to watch: if Figshare group
 36075 gains 25Q2 or later, the data-age objection goes away on its own.
+
+## Decision (ticket 1238, 2026-09-26)
+
+Stays open as a gate on ticket 1206 and on Ian: DepMap's own terms
+(research use, no rehosting, no AI-training use) govern, not the
+Figshare CC BY 4.0 field, and no DepMap-sourced data ships or is
+labelled until Ian rules whether the research-use restriction fits
+BioMCP's use. 1206 must cite this file before any DepMap integration
+lands.

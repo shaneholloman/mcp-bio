@@ -7,3 +7,10 @@ Observed 2026-09-11 while agents ran molecular tumor board work against live dat
 A not-found result reads as "nothing to see" rather than "you are looking at the wrong transcript." An agent checking whether a lab's variant-of-uncertain-significance call is current will conclude the variant is not found. One agent only resolved it by going to ClinVar directly.
 
 Worth considering: display both transcript numberings, or accept either as a lookup key and say which transcript the answer is on.
+
+## Decision (ticket 1238, 2026-09-26)
+
+Stays open as a 1.0 UX candidate: a real clinical-report failure
+mode (the wrong-transcript not-found), but display normalization is
+a deliberate change needing curated transcript rules, not a 0.9.1
+hygiene item.
