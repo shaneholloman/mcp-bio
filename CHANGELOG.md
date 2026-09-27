@@ -35,6 +35,23 @@
 
 ### Changed
 
+- A response served from cache past the provider's freshness window
+  now says so in the output a clinician sees, not only the log: the
+  markdown card (CLI and MCP) gains a trailing `Cache note:` line
+  naming the provider and age, and search JSON carries the sentence
+  in `_meta.notes`. (1256)
+
+- Disease cards credit the source that actually seeded the top-gene
+  list: genes seeded by MyDisease's embedded DisGeNET block are
+  labeled DisGeNET (the combined seed string no longer double-credits
+  MyDisease), a pure MyDisease seed is labeled MyDisease.info, and
+  Open Targets is never credited for another source's genes. (1256)
+
+- The search-all dropped-filter note names the failed source in plain
+  words instead of pasting upstream error text, and a DDInter
+  download that answers HTML is reported as the download failure it
+  is instead of an unreadable bundle. (1256)
+
 - In-body MCP argument validation now comes back as `isError` tool
   results instead of `-32602` protocol errors, so a model can read the
   message (which names the field and its bounds) and self-correct.

@@ -1,10 +1,13 @@
 # Get-JSON bodies have no notes channel for the stale-cache age
 
-Filed from ticket 1256. The stale-cache age now reaches the markdown
-card (a trailing `Cache note:` line) and search JSON (`_meta.notes`),
-but single-entity `get ... --json` bodies have no notes or `_meta`
-field to carry it: they serialize the entity struct directly (for
-example `src/cli/disease/dispatch.rs` `render_loaded_card` with
+Filed from ticket 1256 (scope corrected after the review's P0-3
+fix). The stale-cache age reaches three of the four output channels:
+the CLI markdown card (a trailing `Cache note:` line), the MCP
+markdown card (same line, appended before MCP redaction), and search
+JSON (`_meta.notes`). The gap is the fourth channel: single-entity
+`get ... --json` bodies have no notes or `_meta` field to carry it —
+they serialize the entity struct directly (for example
+`src/cli/disease/dispatch.rs` `render_loaded_card` with
 `json_output`).
 
 ## Why deferred
@@ -12,9 +15,9 @@ example `src/cli/disease/dispatch.rs` `render_loaded_card` with
 Adding a `_meta.notes` shape to every get-JSON body changes the
 public JSON surface for all entities at once. That deserves its own
 ticket with a schema decision (a shared wrapper versus per-entity
-fields), not a rider on the wording fix. The markdown path — the
-clinician-facing MCP card — is covered today, and the JSON gap fails
-quietly: the note simply does not appear, the same as before ticket
+fields), not a rider on the wording fix. Both markdown paths and the
+search JSON path are covered today; the get-JSON gap fails quietly:
+the note simply does not appear there, the same as before ticket
 1256.
 
 ## Revisit trigger

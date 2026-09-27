@@ -152,7 +152,10 @@ async fn stale_serve_fixture_server()
                 let body = if request.starts_with("GET /query?") {
                     r#"{"total":1,"hits":[{"_id":"MONDO:0007959","mondo":{"name":"medulloblastoma"}}]}"#
                 } else if request.starts_with("GET /disease/MONDO:0007959") {
-                    r#"{"_id":"MONDO:0007959","mondo":{"synonym":["cerebellum embryonal neoplasm"]}}"#
+                    // Same DisGeNET seed as the card fixture: the stale
+                    // card must still credit DisGeNET for its genes, so
+                    // the fixture has to seed them (ticket 1256).
+                    r#"{"_id":"MONDO:0007959","mondo":{"synonym":["cerebellum embryonal neoplasm"]},"disgenet":{"genes_related_to_disease":[{"gene_symbol":"PIK3CA","score":0.7}]}"#
                 } else if request.contains("query.cond=Medulloblastoma") {
                     r#"{"studies":[],"totalCount":36}"#
                 } else {
@@ -295,6 +298,102 @@ async fn stale_search_json_carries_the_cache_age_in_the_meta_notes() {
     assert!(
         joined.contains("older than the provider's freshness window)."),
         "the note keeps the log line's honest wording: {joined}"
+    );
+}
+
+#[tokio::test]
+#[serial_test::serial(source_env)]
+async fn a_stale_mcp_call_tells_the_clinician_the_cache_age_on_both_channels() {
+    // Ticket 1256, review P0-3: the MCP path drives the alias arm of
+    // run_outcome_with_worker_stack, which once called run_outcome_inner
+    // directly — outside the stale-serve scope — so neither the card note
+    // nor the JSON _meta.notes sentence could ever appear over MCP. This
+    // test drives execute_mcp (the MCP entry) against the stale fixture
+    // and proves both channels.
+    let (base, _requests, server) = stale_serve_fixture_server().await;
+    let root = crate::test_support::TempDirGuard::new("stale-mcp-cache");
+    let mut env = DiseaseCardFixtureEnv::new();
+    stale_serve_env(&mut env, root.path(), &base);
+
+    let fresh_card = crate::cli::execute_mcp(vec![
+        "biomcp".to_string(),
+        "get".to_string(),
+        "disease".to_string(),
+        "Medulloblastoma".to_string(),
+    ])
+    .await
+    .expect("fresh mcp card");
+    assert!(
+        !fresh_card.text.contains("Cache note:"),
+        "a fresh MCP serve carries no cache note: {}",
+        fresh_card.text
+    );
+    let fresh_json = crate::cli::execute_mcp(vec![
+        "biomcp".to_string(),
+        "search".to_string(),
+        "disease".to_string(),
+        "-q".to_string(),
+        "Medulloblastoma".to_string(),
+        "--json".to_string(),
+    ])
+    .await
+    .expect("fresh mcp search json");
+    assert!(
+        !fresh_json.text.contains("served from cache"),
+        "a fresh MCP serve carries no stale note: {}",
+        fresh_json.text
+    );
+
+    tokio::time::sleep(std::time::Duration::from_millis(1600)).await; // watchdog: freshness-window wait, bounded at 1.6 s
+    server.abort();
+
+    let stale_card = crate::cli::execute_mcp(vec![
+        "biomcp".to_string(),
+        "get".to_string(),
+        "disease".to_string(),
+        "Medulloblastoma".to_string(),
+    ])
+    .await
+    .expect("stale mcp card");
+    assert!(
+        stale_card
+            .text
+            .contains("Cache note: MyDisease.info data served from cache,"),
+        "the MCP card states the provider and the cache fact: {}",
+        stale_card.text
+    );
+    assert!(
+        stale_card
+            .text
+            .contains("older than the provider's freshness window)."),
+        "the MCP note keeps the log line's honest wording: {}",
+        stale_card.text
+    );
+
+    let stale_json = crate::cli::execute_mcp(vec![
+        "biomcp".to_string(),
+        "search".to_string(),
+        "disease".to_string(),
+        "-q".to_string(),
+        "Medulloblastoma".to_string(),
+        "--json".to_string(),
+    ])
+    .await
+    .expect("stale mcp search json");
+    let body: serde_json::Value =
+        serde_json::from_str(&stale_json.text).expect("mcp search json parses");
+    let notes = body
+        .pointer("/_meta/notes")
+        .and_then(|v| v.as_array())
+        .unwrap_or_else(|| panic!("_meta.notes must exist over MCP: {}", stale_json.text));
+    let joined = notes
+        .iter()
+        .filter_map(|v| v.as_str())
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(
+        joined.contains("MyDisease.info data served from cache,"),
+        "the MCP JSON consumer sees the provider and the cache fact: {joined}"
     );
 }
 

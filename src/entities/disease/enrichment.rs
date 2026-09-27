@@ -606,9 +606,13 @@ pub(super) fn assign_top_genes(disease: &mut Disease, open_targets_owns: bool) {
         fallback_sources.push("CIViC");
     }
     if disease.gene_associations.iter().any(|row| {
-        row.source
-            .as_deref()
-            .is_some_and(|s| s.to_ascii_lowercase().contains("mydisease"))
+        row.source.as_deref().is_some_and(|s| {
+            let lower = s.to_ascii_lowercase();
+            // "DisGeNET (via MyDisease.info)" is the MyDisease hit's
+            // embedded DisGeNET block: credit DisGeNET alone. Only a
+            // source string without DisGeNET credits MyDisease.
+            lower.contains("mydisease") && !lower.contains("disgenet")
+        })
     }) {
         fallback_sources.push("MyDisease.info");
     }
