@@ -19,9 +19,11 @@ pub(super) static ONE_SHOT_RUNTIMES_BUILT: std::sync::atomic::AtomicUsize =
 /// counts one-shot constructions only while armed, and the probe test
 /// arms it for exactly its own `execute_mcp_cli` drive: under nextest
 /// (one process per test) the window is fully isolated, and under
-/// cargo test a false failure needs another test's one-shot to land
-/// inside that microsecond window — which the probe comment states so
-/// a future flake is diagnosable. `drive_one_shot` increments it
+/// cargo test a false failure needs another test's one-shot drive to
+/// land inside the armed window — which spans a whole blocking-thread
+/// spawn plus command run (milliseconds, not microseconds), so it is
+/// a real residual flake under the plain runner; the gate and CI both
+/// use nextest, where no other test shares the process. `drive_one_shot` increments it
 /// alongside the production counter; the test asserts both so the
 /// seam cannot drift from what production counts.
 #[cfg(test)]

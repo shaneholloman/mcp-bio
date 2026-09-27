@@ -206,18 +206,19 @@ mod tests {
 
     #[test]
     fn comments_cdata_and_self_closing_tags_do_not_move_the_depth() {
-        // The hidden opens outnumber the cap (64) on purpose: if
-        // the scanner ever counted comment, CDATA, or processing
-        // instruction text as markup, this document would exceed
-        // the depth limit and fail instead of parsing. Real depth
-        // stays at one (the root).
-        let hidden = 40;
+        // Each family's hidden opens outnumber the cap (64) on
+        // their own: if the scanner ever counted any one of comment,
+        // CDATA, or processing instruction text as markup, that
+        // family alone would exceed the depth limit and fail instead
+        // of parsing. Real depth stays at one (the root).
+        let hidden = 65;
         let comment_opens = format!("<!--{}-->", "<d>".repeat(hidden));
-        let cdata_opens = format!("<![CDATA[<a><b><c>{}]]>", "<e>".repeat(hidden));
+        let cdata = format!("<![CDATA[<a><b><c>{}]]>", "<e>".repeat(hidden));
         let pi_opens = format!("<?pi {}?>", "<f>".repeat(hidden));
-        let xml = format!(
-            "<root>text<self/>{comment_opens}{cdata_opens}{pi_opens}</root>"
-        );
+        // roxmltree's Element::text() returns only the FIRST text
+        // child, so the CDATA block leads the root's content; the
+        // self-closing tag and the comment come after it.
+        let xml = format!("<root>{cdata}<self/>{comment_opens}{pi_opens}</root>");
         let doc = parse_external_xml(&xml, 1_000).expect(
             "opens hidden in comments, CDATA, and PIs must not move the depth counter",
         );
