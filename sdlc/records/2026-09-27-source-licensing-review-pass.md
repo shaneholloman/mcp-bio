@@ -26,10 +26,18 @@ evidence pass recorded in its own issue file.
   whose licensing page (© 2026) restricts academic use to
   not-for-profit organisations and requires a commercial licence
   for commercial use, expressly including "patient services and
-  clinical reporting". The registry's license summary, reuse
-  wording, and terms URL now say this. BioMCP carries COSMIC only
-  through MyVariant-cached fields; clinical-reporting consumers of
-  those fields need to know the clause.
+  clinical reporting". First write applied that clause to
+  BioMCP's cached fields. Ian corrected it the same day: BioMCP
+  reads COSMIC only through MyVariant.info, and MyVariant's
+  metadata
+  (`http://myvariant.info/metadata`, checked 2026-09-27) says
+  "COSMIC v68 was imported from UCSC database dump. This is the
+  last freely available somatic variants from COSMIC before their
+  licence change." The v68-era terms — not the current clause —
+  govern the fields BioMCP surfaces; the current licence governs
+  COSMIC's current direct offering only. The registry records
+  both, with the snapshot's age (not its licence) as the practical
+  limit.
 - CPIC — cpicpgx.org now 302-redirects to ClinPGx and the former
   CC0 licence pages are gone. The successor data-usage policy page
   states ClinPGx data is CC BY-SA 4.0; no live page says whether
