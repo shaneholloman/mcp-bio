@@ -604,9 +604,23 @@ async fn stdio_rejects_invalid_explicit_bundle_before_session_acceptance() {
 async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
     let dir = tempfile::tempdir().expect("bundle directory");
     let missing = dir.path().join("missing.pem");
+    // Ticket 1257: `biomcp version` builds no HTTP client, so the two
+    // version calls below prove only the warning-once behavior. The
+    // third call drives an adverse-event fetch whose base points at
+    // the private-CA TLS fixture: the fallback bundle was unreadable,
+    // so the shared client carries default roots and the fixture
+    // handshake fails — but the fixture's connection counter proves
+    // the client was constructed and dialed on the warned server, and
+    // the warning count must stay one across all three calls.
+    let fixture = TlsFixture::start().await;
     // stdout must be piped here so the tool responses can be awaited;
     // server_command nulls it, so build the command and adjust.
     let mut command = server_command(&["serve"], None, Some(&missing));
+    command
+        .env("BIOMCP_OPENFDA_BASE", &fixture.origin)
+        .env("RUST_LOG", "warn")
+        .env("NO_PROXY", "*")
+        .env("no_proxy", "*");
     command.stdout(Stdio::piped());
     let mut child = command.spawn().expect("spawn stdio");
     let mut stdin = child.stdin.take().expect("stdio stdin");
@@ -615,11 +629,13 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
     let initialize = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"warn-once-test","version":"0"}}}"#;
     let initialized = r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#;
     let version_call = r#"{"jsonrpc":"2.0","id":CALL_ID,"method":"tools/call","params":{"name":"biomcp","arguments":{"command":"version"}}}"#;
+    let fetch_call = r#"{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"biomcp","arguments":{"command":"--no-cache get adverse-event 1001 reactions"}}}"#;
     for line in [
         initialize.to_string(),
         initialized.to_string(),
         version_call.replace("CALL_ID", "2"),
         version_call.replace("CALL_ID", "3"),
+        fetch_call.to_string(),
     ] {
         stdin
             .write_all(format!("{line}\n").as_bytes())
@@ -629,13 +645,15 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
     }
     drop(stdin);
 
-    // Await both tool responses so the calls finish before the
+    // Await all three tool responses so the calls finish before the
     // warning count is read; then the server exits on end-of-input.
     let mut seen_two = false;
     let mut seen_three = false;
+    let mut seen_four = false;
+    let mut fetch_errored = false;
     let mut reader = tokio::io::BufReader::new(stdout);
     let mut line = String::new();
-    while !(seen_two && seen_three) {
+    while !(seen_two && seen_three && seen_four) {
         line.clear();
         match tokio::time::timeout(Duration::from_secs(10), reader.read_line(&mut line)).await {
             Ok(Ok(0)) | Ok(Err(_)) | Err(_) => break,
@@ -646,10 +664,28 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
                 if line.contains("\"id\":3") {
                     seen_three = true;
                 }
+                if line.contains("\"id\":4") {
+                    seen_four = true;
+                    fetch_errored = line.contains("\"isError\":true");
+                }
             }
         }
     }
-    assert!(seen_two && seen_three, "both tool calls answered");
+    assert!(
+        seen_two && seen_three && seen_four,
+        "all three tool calls answered"
+    );
+    assert!(
+        fetch_errored,
+        "the fetch must surface its error: the fallback bundle never became the client's roots"
+    );
+    assert!(
+        fixture
+            .connections
+            .load(std::sync::atomic::Ordering::SeqCst)
+            >= 1,
+        "the warned server constructed an HTTP client and dialed the fixture"
+    );
     let _ = tokio::time::timeout(Duration::from_secs(5), child.wait()).await;
     let stderr = stop_and_stderr(&mut child).await;
     assert_eq!(

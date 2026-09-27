@@ -46,27 +46,35 @@ fn the_run_fallthrough_future_stays_under_the_size_ceiling() {
 }
 
 mod runtime_split {
-    use super::super::run_outcome_with_worker_stack;
     use crate::cli::Cli;
-    use crate::cli::worker::{ONE_SHOT_RUNTIMES_BUILT, WorkerDrive};
+    use crate::cli::worker::ONE_SHOT_RUNTIMES_BUILT;
+    use crate::cli::worker::mcp_runtime_probe;
     use clap::Parser;
     use std::sync::atomic::Ordering;
     use std::time::{Duration, Instant};
 
     /// The MCP path drives on the caller's runtime and builds no
-    /// one-shot runtime of its own: the counter at the construction
-    /// site is the seam.
+    /// one-shot runtime of its own. Ticket 1257 rewrote the proof:
+    /// the drive goes through `execute_mcp_cli` — the real MCP entry
+    /// (`mcp/shell.rs` calls it), so `for_shared_call` picks the
+    /// shared drive under this ambient test runtime exactly as it
+    /// does inside the server — and the assertion reads the
+    /// probe-counter seam in `cli::worker` (see its comment) plus
+    /// the production counter, so no parallel `run_outcome` test can
+    /// move the number the test owns.
     #[tokio::test]
     async fn the_mcp_path_builds_no_one_shot_runtime() {
-        let before = ONE_SHOT_RUNTIMES_BUILT.load(Ordering::SeqCst);
         let cli = Cli::try_parse_from(["biomcp", "cache", "path"]).expect("cache path parses");
-        let outcome = run_outcome_with_worker_stack(
-            cli,
-            true,
-            WorkerDrive::Shared(tokio::runtime::Handle::current()),
-        )
-        .await;
+        let before = ONE_SHOT_RUNTIMES_BUILT.load(Ordering::SeqCst);
+        mcp_runtime_probe::arm();
+        let outcome = crate::cli::execute_mcp_cli(cli).await;
+        mcp_runtime_probe::disarm();
         assert!(outcome.is_ok(), "{outcome:?}");
+        assert_eq!(
+            mcp_runtime_probe::ONE_SHOTS_DURING_PROBE.load(Ordering::SeqCst),
+            0,
+            "the MCP path constructed a one-shot runtime inside the probe window"
+        );
         assert_eq!(
             ONE_SHOT_RUNTIMES_BUILT.load(Ordering::SeqCst),
             before,

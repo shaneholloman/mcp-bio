@@ -383,13 +383,13 @@
     },
     {
       "path": "src/sources/gencc/store.rs",
-      "baseline_lines": 1148,
+      "baseline_lines": 1208,
       "floor_lines": 1000,
       "authorized_increase": {
-        "ticket": "1254",
-        "delta": 148,
-        "reason": "Ticket 1254: the DDInter/GenCC review follow-ups (tests and classification).",
-        "removal_condition": "Fold the new tests into shared fixtures when the modules next shrink."
+        "ticket": "1257",
+        "delta": 208,
+        "reason": "The wrong-owner (EACCES stand-in) and not-a-directory cleanup tests the 2026-09-26 review named as dropped.",
+        "removal_condition": "Shrink if the cleanup tests fold into a shared gencc store fixture module."
       }
     },
     {

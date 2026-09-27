@@ -206,9 +206,29 @@ mod tests {
 
     #[test]
     fn comments_cdata_and_self_closing_tags_do_not_move_the_depth() {
-        let xml = "<a><b>text<c/><!-- <d><d><d> --><?pi <a><a> ?><d/></b></a>";
-        let doc = parse_external_xml(xml, 32).expect("parses");
-        assert!(doc.root_element().has_tag_name("a"));
+        // Each family's hidden opens outnumber the cap (64) on
+        // their own: if the scanner ever counted any one of comment,
+        // CDATA, or processing instruction text as markup, that
+        // family alone would exceed the depth limit and fail instead
+        // of parsing. Real depth stays at one (the root).
+        let hidden = 65;
+        let comment_opens = format!("<!--{}-->", "<d>".repeat(hidden));
+        let cdata = format!("<![CDATA[<a><b><c>{}]]>", "<e>".repeat(hidden));
+        let pi_opens = format!("<?pi {}?>", "<f>".repeat(hidden));
+        // roxmltree's Element::text() returns only the FIRST text
+        // child, so the CDATA block leads the root's content; the
+        // self-closing tag and the comment come after it.
+        let xml = format!("<root>{cdata}<self/>{comment_opens}{pi_opens}</root>");
+        let doc = parse_external_xml(&xml, 1_000)
+            .expect("opens hidden in comments, CDATA, and PIs must not move the depth counter");
+        assert!(doc.root_element().has_tag_name("root"));
+        // The CDATA content is text that looks like markup and must
+        // survive the parse as text.
+        let text = doc.root_element().text().unwrap_or_default();
+        assert!(
+            text.contains("<a><b><c>"),
+            "CDATA kept its markup-looking text"
+        );
     }
 
     #[test]
