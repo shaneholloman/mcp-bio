@@ -297,7 +297,6 @@ def _normalize_step_text(text: str) -> str:
 
 def _canonical_step(step: dict) -> str:
     import copy
-    import hashlib
     import json as _json
 
     normalized = copy.deepcopy(step)

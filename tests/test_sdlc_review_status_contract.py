@@ -64,8 +64,8 @@ REVIEW_LINE = re.compile(
 # other words) is a format failure. `\breview\b` keeps prose like
 # "the reviewer confirmed" out of the net.
 REVIEWISH = re.compile(
-    rf"^\s*[#*+>]?\s*\**\s*\(?\s*\**\s*(?:\([^)]*\)\s*)?\**\s*"
-    rf"(?:design\s+|code\s+)?\**\s*re(?:view|-review)\b",
+    r"^\s*[#*+>]?\s*\**\s*\(?\s*\**\s*(?:\([^)]*\)\s*)?\**\s*"
+    r"(?:design\s+|code\s+)?\**\s*re(?:view|-review)\b",
     re.IGNORECASE,
 )
 VERIFICATION_ISH = re.compile(r"^\s*[#*+>]?\s*\**\s*verifica(?:tion|tions)\b", re.IGNORECASE)
