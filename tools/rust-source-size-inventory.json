@@ -110,13 +110,13 @@
     },
     {
       "path": "src/entities/discover.rs",
-      "baseline_lines": 4044,
+      "baseline_lines": 4053,
       "floor_lines": 3694,
       "authorized_increase": {
-        "ticket": "0979, 1086, 1201",
-        "delta": 350,
-        "reason": "Bounded typed identity and page-scoped executable guidance participate directly in the existing concurrent discovery merge, ranking, pagination, and traced-test timing contract; ticket 1201 adds the inline article-search result and its captured render inputs.",
-        "removal_condition": "Extract discovery provider orchestration and its tests when the discovery entity is next decomposed."
+        "ticket": "1243",
+        "delta": 359,
+        "reason": "Boxed the four-way OLS/UMLS/Medline/identity join onto the heap.",
+        "removal_condition": "None; the boxing is the point."
       }
     },
     {
