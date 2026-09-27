@@ -28,3 +28,10 @@ skipping the fixture, matching every sibling fixture runner. The
 base-tree failures that remain after the guard are tracked in
 `sdlc/issues/2026-09-27-lifecycle-tests-fail-in-copied-workspaces.md`. First live `make spec-contracts` confirmation runs in
 the batch's yellow gate.
+
+## Decision (2026-09-27, ticket 1259)
+
+Resolved by ticket 1254 batch 3: the spec-contracts lane starts
+both fixtures this issue named, with the copied-workspace guard.
+The base-tree lifecycle failures that remain are tracked separately
+in `sdlc/issues/2026-09-27-lifecycle-tests-fail-in-copied-workspaces.md`.

@@ -57,3 +57,16 @@ compare futex/wait-channel traces across the four CPU cells.
 Only the stress lane's pinning choice today; the handshake is correct
 everywhere else and the lane now pins to two CPUs. Do not "fix" the
 test by adding sleeps; find the mechanism.
+
+## Decision (2026-09-27, ticket 1259)
+
+Stays open at P3 with the shipped control as the answer: the stress
+lane pins two CPUs and a contract test forbids one-CPU pinning, no
+production path pins CPUs, and the failure is deterministic (a 60 s
+watchdog panic), not silent. The mechanism stays unknown on purpose
+for now: the 2026-09-26 probe corrected the steal-read observation
+(unreliable), so a diagnosis would need a dedicated one-CPU
+debugging session on the gate host, and the ticket queue has higher
+value ahead of it. Owner: the biomcp queue. Revisit trigger: any
+lease-test failure that reproduces with two CPUs, or a consumer
+running BioMCP tests inside a one-CPU container.
