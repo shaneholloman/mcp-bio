@@ -77,6 +77,17 @@ about — prove that with a mutation the check was not built from.
    ADR 0002's "wider in accepted values" to the precise rule the
    code enforces.
 
+## Review
+
+- Design review: n/a (Ian's feedback specified the structure)
+- Code review: BLOCK once (dead ruff-breaking block, fmt indent,
+  missing scope-vocabulary check), folded and verified 2026-09-27;
+  report-only P2s (REJECTED inflection, prose rejections,
+  sleep_ms, *_tests.rs sidecars, PINNED_STEPS completeness) are
+  candidates for the next pass
+- Verification: yellow gate at 3f6916db — lint, test, spec, stress
+  OK, zero failed lines
+
 ## Acceptance
 
 - Each rebuilt check has at least one mutation test proving it
