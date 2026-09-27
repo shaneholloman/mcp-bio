@@ -60,3 +60,72 @@ Filed 2026-09-26 from an independent read-only review of main at `9908ca6a`. Fiv
 - `src/transform/drug.rs:519` now takes brand names from the anchor record only. The ticket does not record this change.
 - GenCC tests cover the wrong-mode case only. Wrong owner and not-a-directory have no test.
 - Ticket 1254 omits the 1244 release-prep checklist items from the source issue.
+
+## Disposition (2026-09-27, ticket 1259)
+
+Item by item, as Ian's 2026-09-27 feedback required. Fixed lines
+name the ticket; the commit is its merge on main.
+
+Paperwork and process — all fixed: the pending-review check landed
+and caught seven stale tickets (Fixed, ticket 1254 b2 and the
+pending-review merge); the landing rule now removes worktrees and
+branches at merge time (Fixed, decision
+`2026-09-26-landing-agent-removes-its-worktree.md`, enforced by
+`workspace sweep` issues in dotfiles); the conflict-marker guard
+runs before every merge commit (Fixed, landed with the check; merge
+7206240b's markers were the red case); the 1251 Resolved section
+was restored and multi-step git scripts stop on first failure
+(Fixed, the 1251 fix merge); ticket 1253 now carries the observed
+dry-run count — 26, not 24 or 15 (Fixed, ticket 1259, commit
+"Update 1253 to the observed 26-bullet list"); spec-contracts
+triaged and wired (Fixed, ticket 1254 b3).
+
+1246 — the stdio guard's stdin gap and cfg(test) stop were fixed in
+the 1250/1254 fix merges; the 1246 record's Windows claim was
+corrected with the PR #285 fails-on-old-code run (Fixed). The
+remaining alias leak (`Command as Cmd`) is ticket 1258's structural
+rebuild (Open, owner the queue, trigger: 1258 lands).
+
+1249 — the launcher-binary scan gap was fixed in the 1249 follow-ups
+(`check-wheel-glibc-floor.py` scans `biomcp-cli`; Fixed). The
+REJECT-without-ACCEPT verdict line in ticket 1249 is Open in ticket
+1258's review-grammar rebuild.
+
+1250 — the named mutations (continue-on-error spellings, set +e,
+trap, expected_ifs, assertion specificity, bullet stoplist) were
+fixed in the 1250 fix merge (Fixed, proven by the 22-mutation
+suite). The 2026-09-27 review found neighboring spellings those
+fixes miss (`|| echo skip`, `set +o errexit`, defaults-level shell,
+runner.os if) — Open, ticket 1258's hash-pinning closes the class.
+
+1251 — the ADR was corrected, merge_property panics on covered
+clashes, the changelog bullets were rewritten, and the Gemini
+acceptance claim is marked unverified in ADR 0002 (Fixed, the 1251
+fix merge). The tripwire's expected-value construction was fixed
+with the keys-from-branches shape (Fixed, verified 2026-09-27 by
+reading shell.rs:1910). One-sided constraints (`uniqueItems`,
+`maxLength`) still narrow silently — Open, ticket 1258.
+
+1252/1248 — one-CPU wording corrected everywhere named (Fixed); the
+1248 close recorded the watch (Fixed, `make stress` in CI and the
+contract guard); the wait-ratchet gaps named then were fixed, the
+new spellings from 2026-09-27 are ticket 1258's; make stress is a
+CI job (Fixed); the single-CPU issue has severity, owner, and now a
+Decision section (Fixed, ticket 1259); the stress contract catches
+any single-number pin in any spelling (Fixed, verified by reading
+tests/test_stress_lane_contract.py:74).
+
+1242 batch 1 — all five findings fixed with real tests (Fixed,
+verified by the 1242 b1 fix merge and the 2026-09-27 review's own
+read); the partial-count note reaches JSON (Fixed); the age filter
+runs before the unchecked-trial count (Fixed).
+
+1254 batch 1 — the DDInter HTML label is Fixed in ticket 1256
+(merge "Record ticket 1256"); the anchor-only brand-name change is
+now recorded in ticket 1241 (Fixed, ticket 1259); the GenCC
+wrong-owner and not-a-directory tests are Open in ticket 1257
+(owner the queue, trigger: 1257's gate); the 1244 release-prep
+items missing from 1253 are folded into 1253's checklist (Fixed,
+ticket 1259).
+
+Nothing from this file is left unaccounted for.
