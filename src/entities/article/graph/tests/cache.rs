@@ -380,9 +380,10 @@ async fn infinite_mode_serves_an_expired_entry() {
     .expect("first call");
     assert_eq!(sidecar_records(fx.cache.path()).len(), 1);
 
-    // The mode is set after the first call so the HTTP middleware's cached
-    // mode resolution never observes it.
-    fx.set("BIOMCP_CACHE_MODE", "infinite");
+    // The mode takes effect through the test-only guard after the first
+    // call, so the once-read process mode is already resolved and only the
+    // override can change it (ticket 1261).
+    let _infinite = crate::sources::test_cache_mode::infinite();
     fx.cold_http_cache();
     fx.clear_log();
 
@@ -393,6 +394,66 @@ async fn infinite_mode_serves_an_expired_entry() {
     .await
     .expect("second call");
     assert_eq!(json(&second), json(&first));
+    let logged = fx.logged();
+    assert_eq!(logged.matches("s2:seed").count(), 2, "{logged}");
+    assert!(!logged.contains("s2:graph"), "{logged}");
+}
+
+#[tokio::test]
+#[serial_test::serial(source_env)]
+async fn an_off_mode_guard_does_not_latch_the_bypass_for_later_reads() {
+    let fx = FixtureEnv::new(
+        "citation-sidecar-off-guard",
+        vec![page(0, None, edge(vec!["Provider context"]))],
+        Some(JATS_LINKED),
+    )
+    .await;
+
+    // While the guard lives, every cache reader is bypassed: the call
+    // answers but the sidecar is not written.
+    let first = {
+        let _off = crate::sources::test_cache_mode::off();
+        let first = with_test_client(
+            fx.client(),
+            citation_evidence(CITING_PMID, CITED_PMID, false),
+        )
+        .await
+        .expect("bypassed call");
+        assert_eq!(first.status, CitationEvidenceStatus::ContextFromProvider);
+        assert!(
+            sidecar_records(fx.cache.path()).is_empty(),
+            "off mode must not write the sidecar"
+        );
+        first
+    };
+
+    // The guard is gone: the same binary now writes the sidecar...
+    fx.cold_http_cache();
+    fx.clear_log();
+    let second = with_test_client(
+        fx.client(),
+        citation_evidence(CITING_PMID, CITED_PMID, false),
+    )
+    .await
+    .expect("post-guard call");
+    assert_eq!(json(&second), json(&first));
+    assert_eq!(sidecar_records(fx.cache.path()).len(), 1);
+    let logged = fx.logged();
+    assert_eq!(logged.matches("s2:seed").count(), 2, "{logged}");
+    assert!(logged.contains("s2:graph"), "{logged}");
+
+    // ...and a later cache read hits it (the issue's success criterion,
+    // GitHub #286: restoring the variable used to leave the whole test
+    // process bypassed).
+    fx.cold_http_cache();
+    fx.clear_log();
+    let third = with_test_client(
+        fx.client(),
+        citation_evidence(CITING_PMID, CITED_PMID, false),
+    )
+    .await
+    .expect("cached call");
+    assert_eq!(json(&third), json(&first));
     let logged = fx.logged();
     assert_eq!(logged.matches("s2:seed").count(), 2, "{logged}");
     assert!(!logged.contains("s2:graph"), "{logged}");

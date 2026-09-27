@@ -107,9 +107,10 @@ fn orphan_cache_key(base: &str, candidate: &str) -> String {
 fn fda_orphan_cache_modes_and_expiry_are_exact() {
     use super::super::fda_orphan::{SourceCacheMode, cache_entry_is_usable, source_cache_mode};
     use SourceCacheMode::{Infinite, Normal, Off};
-    assert_eq!(source_cache_mode(true, Some("infinite")), Off);
-    assert_eq!(source_cache_mode(false, Some("off")), Off);
-    assert_eq!(source_cache_mode(false, Some("infinite")), Infinite);
+    use http_cache_reqwest::CacheMode::{ForceCache, NoStore};
+    assert_eq!(source_cache_mode(true, Some(ForceCache)), Off);
+    assert_eq!(source_cache_mode(false, Some(NoStore)), Off);
+    assert_eq!(source_cache_mode(false, Some(ForceCache)), Infinite);
     assert_eq!(source_cache_mode(false, None), Normal);
     assert!(cache_entry_is_usable(Normal, 100, 99));
     assert!(!cache_entry_is_usable(Normal, 86_401, 0));
