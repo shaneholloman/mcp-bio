@@ -137,7 +137,7 @@ fn windows_stdio_stream_stays_json_through_a_managed_write() {
 
     client.drain_remaining();
     assert!(
-        started.elapsed() < Duration::from_secs(120),
+        started.elapsed() < Duration::from_secs(120), // watchdog: whole-contract upper bound, two minutes
         "contract took unexpectedly long"
     );
 }

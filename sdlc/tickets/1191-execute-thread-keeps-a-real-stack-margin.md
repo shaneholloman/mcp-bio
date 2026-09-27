@@ -99,8 +99,6 @@ None.
   raise-the-stack rejection affirmed (the downstream 1.0 integration branch's 16 MiB
   stopgap should be dropped in favor of this structural pin at its next
   merge with main — reconciliation recorded here).
-- Code review: pending
-
 - Code review: ACCEPT 2026-09-14 at 012dbcb5; one file, one line, confirmed
   by the primary agent with git show; placement, Send reasoning, and the
   tokio auto-box nuance verified from registry source. P2s closed: hunk

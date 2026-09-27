@@ -35,12 +35,23 @@ some branches and a list on others (`disease`, `drug`) publishes
 `type: ["string", "array"]` with both sides' constraints. Any clash
 the rule does not cover panics at build and test time, so an
 unforeseen collision fails the drift tripwire instead of publishing
-the first branch's value quietly. The union is wider in accepted
-values, not unconditionally wider: a first-seen constraint survives
-the merge even when another branch was more permissive (the merged
+the first branch's value quietly. Precise rule (corrected 2026-09-27,
+ticket 1258): the merged root never accepts less than any one branch.
+A constraint keyword (`uniqueItems`, `maxLength`, `minLength`,
+`pattern`, `format`, `multipleOf`, the numeric and item-count bounds,
+`items`, `additionalProperties`) present on exactly one side of a
+same-type merge is a named clash and panics — it would narrow the
+root to the stricter branch. The flat text-or-list pair is the one
+deliberate exception: each arm's constraints ride together, because a
+validator applies `minLength`/`maxLength` only to string values and
+`minItems`/`uniqueItems`/`items` only to array values, so neither
+arm narrows the other. The first version of this ADR said the merged
 `sections` keeps `uniqueItems` although the adverse-event branch
-accepts duplicates), so the root can be narrower than one permissive
-branch — the body stays prescriptive per entity. The flat lists are
+accepts duplicates — that quiet narrowing was the bug ticket 1258
+closed: the get branches no longer publish `uniqueItems` on
+`sections` at all, per-entity duplicate rejection stays body-side
+(`reject_duplicate_sections`), and the tripwire pins the merged
+`sections` free of the keyword. The flat lists are
 derived from the same constants and capability tables the branch
 builders and the body checks use, so they cannot drift.
 

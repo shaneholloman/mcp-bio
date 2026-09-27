@@ -316,11 +316,10 @@ fn typed_search_schema(schema: &mut schemars::Schema) {
 /// Merges branch property maps into one flat root map. Same-named fields
 /// keep one schema when identical; otherwise the collision rule applies:
 /// enum/const values union into one enum, and string-vs-array fields
-/// publish `["string","array"]` with both sides' constraints. The union
-/// widens the accepted fields, but a first-seen constraint can be
-/// narrower than a permissive branch (sections keep `uniqueItems` even
-/// though adverse-event accepts duplicates); the body stays prescriptive
-/// per entity.
+/// publish `["string","array"]` with each arm's constraints. The union
+/// never narrows what any branch accepted — a constraint on one side of
+/// a same-type merge is a named clash in `merge_property`, not a quiet
+/// keep (ticket 1258) — and the body stays prescriptive per entity.
 fn merge_branch_properties(branches: &[Value]) -> serde_json::Map<String, Value> {
     let mut properties = serde_json::Map::new();
     for branch in branches {
@@ -343,6 +342,29 @@ fn merge_branch_properties(branches: &[Value]) -> serde_json::Map<String, Value>
     }
     properties
 }
+
+/// Constraint keywords that narrow what a schema accepts. A value on
+/// exactly one side of a same-type merge silently narrowed the flat
+/// root until ticket 1258 made it a named clash; the enum/const pair
+/// has its own union rule above.
+const ONE_SIDED_CONSTRAINT_KEYS: [&str; 16] = [
+    "uniqueItems",
+    "maxLength",
+    "minLength",
+    "pattern",
+    "format",
+    "multipleOf",
+    "minimum",
+    "maximum",
+    "exclusiveMinimum",
+    "exclusiveMaximum",
+    "minItems",
+    "maxItems",
+    "minProperties",
+    "maxProperties",
+    "items",
+    "additionalProperties",
+];
 
 fn merge_property(left: &Value, right: &Value) -> Value {
     if left == right {
@@ -396,6 +418,23 @@ fn merge_property(left: &Value, right: &Value) -> Value {
             panic!(
                 "one-sided enum or const clash the collision rule does not cover: {left} vs {right}"
             );
+        }
+        // A constraint keyword on exactly one side of a SAME-type
+        // merge narrows the root to the stricter branch: that is a
+        // clash, and it names the keyword. The flat text-or-list pair
+        // is exempt — each arm's constraints (minLength/maxLength for
+        // the string arm, minItems/uniqueItems/items for the array
+        // arm) ride together by design, because a JSON Schema
+        // validator applies each keyword only to its own type.
+        if !flat_types {
+            for key in ONE_SIDED_CONSTRAINT_KEYS {
+                if l.contains_key(*key) != r.contains_key(*key) {
+                    panic!(
+                        "one-sided `{key}` constraint narrows the merged root \
+                         (present on one branch only): {left} vs {right}"
+                    );
+                }
+            }
         }
         let mut merged = l.clone();
         if flat_types {
@@ -1735,8 +1774,9 @@ mod tests {
         LOCAL_INPUT_MCP_REJECTION_MESSAGE, ShellCommand, TypedGeneCspec, TypedGet, TypedSearch,
         TypedVariantArticles, TypedVariantCar, binary_download_rejection_for_args,
         cli_may_return_article_fulltext, get_args, is_allowed_mcp_args,
-        mcp_rejection_message_for_args, merge_branch_properties, redact_mcp_json_text,
-        redact_mcp_text, search_args, typed_get_capabilities, typed_search_branch,
+        mcp_rejection_message_for_args, merge_branch_properties, merge_property,
+        redact_mcp_json_text, redact_mcp_text, search_args, typed_get_capabilities,
+        typed_search_branch,
     };
     use serde_json::{Value, json};
     mod ticket_1120;
@@ -2015,6 +2055,15 @@ mod tests {
             get["properties"]["sections"]["items"]["enum"],
             Value::Array(sections)
         );
+        // The descriptive root never narrows below adverse-event, the
+        // branch that accepts duplicate sections (ticket 1258): the
+        // merged property carries no `uniqueItems`, and duplicate
+        // rejection stays body-side per entity.
+        assert!(
+            get["properties"]["sections"].get("uniqueItems").is_none(),
+            "the flat get root must not carry uniqueItems on sections"
+        );
+        assert_eq!(get["properties"]["sections"]["maxItems"], json!(16));
         assert_eq!(
             get["properties"]["entity"]["enum"],
             json!(
@@ -2061,6 +2110,35 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "one-sided `uniqueItems` constraint")]
+    fn a_one_sided_unique_items_clash_panics_instead_of_narrowing() {
+        let _ = merge_property(
+            &json!({"type":"array","maxItems":16,"uniqueItems":true}),
+            &json!({"type":"array","maxItems":16}),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "one-sided `maxLength` constraint")]
+    fn a_one_sided_max_length_clash_panics_instead_of_narrowing() {
+        let _ = merge_property(
+            &json!({"type":"string","maxLength":256}),
+            &json!({"type":"string","minLength":1}),
+        );
+    }
+
+    #[test]
+    fn flat_pairs_keep_each_arms_constraints_without_panicking() {
+        let merged = merge_property(
+            &json!({"type":"string","minLength":1,"maxLength":256}),
+            &json!({"type":"array","minItems":1,"maxItems":3,"uniqueItems":true}),
+        );
+        assert_eq!(merged["type"], json!(["string", "array"]));
+        assert_eq!(merged["minLength"], json!(1));
+        assert_eq!(merged["uniqueItems"], json!(true));
+    }
+
+#[test]
     #[should_panic(expected = "unmerged schema clash")]
     fn a_conflicting_scalar_bound_panics_instead_of_first_value_wins() {
         let branches = [

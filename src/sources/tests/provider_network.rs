@@ -343,7 +343,7 @@ async fn fda_orphan_contended_key_lock_cancels_without_a_late_write() {
         result.outcome,
         super::super::fda_orphan::FdaOrphanOutcome::Unavailable
     );
-    assert!(started.elapsed() < std::time::Duration::from_millis(500));
+    assert!(started.elapsed() < std::time::Duration::from_millis(500)); // watchdog: shared client drains under half a second
     drop(held);
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     assert!(

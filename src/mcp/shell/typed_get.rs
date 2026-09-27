@@ -70,10 +70,14 @@ pub(super) fn typed_get_schema(schema: &mut rmcp::schemars::Schema) {
                 ("json".into(), json!({"type":"boolean","default":false})),
             ]);
             if let Some(section_names) = &capability.sections {
-                let mut sections = json!({"type":"array","maxItems":16,"items":{"enum":section_names}});
-                if capability.reject_duplicate_sections {
-                    sections["uniqueItems"] = json!(true);
-                }
+                // No `uniqueItems` here: adverse-event accepts duplicate
+                // sections, and a flat descriptive root may never narrow
+                // below its widest branch (ticket 1258; the one-sided
+                // constraint is a named clash in merge_property).
+                // Per-entity duplicate rejection stays body-side,
+                // enforced by `reject_duplicate_sections`.
+                let sections =
+                    json!({"type":"array","maxItems":16,"items":{"enum":section_names}});
                 properties.insert("sections".into(), sections);
             }
             if entity == "variant" {

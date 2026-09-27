@@ -240,16 +240,76 @@ ALLOWED_STEP_IFS = {
     "runner.os != 'Linux'",
 }
 
-# Exit-code swallows inside run scripts. Substring bans miss spacing
-# variants, so each escape is a regex.
-RUN_ESCAPE_PATTERNS = [
-    (re.compile(r"\|\|\s*true\b"), "|| true"),
-    (re.compile(r"\|\|\s*:"), "|| :"),
-    (re.compile(r"\|\|\s*exit\s+0\b"), "|| exit 0"),
-    (re.compile(r";\s*exit\s+0\b"), "; exit 0"),
-    (re.compile(r"\bset\s+\+e\b"), "set +e"),
-    (re.compile(r"\btrap\s+['\"]exit\s+0['\"]"), "trap 'exit 0'"),
-]
+# Exit-code swallows are not banned by phrase: every step of the
+# pinned jobs below is hash-pinned, so `|| echo skip`,
+# `set +o errexit`, `trap -- 'exit 0' EXIT`, `|| exit $((0))`, or any
+# other spelling changes the step's text and fails the hash. The
+# patterns are gone on purpose — structure closed the class.
+#
+# Hash pinning: each load-bearing step is serialized from the parsed
+# workflow (so YAML folding cannot hide a change), its `run` body is
+# normalized to trivial whitespace (per-line trailing space stripped,
+# blank runs collapsed to one blank line), and the SHA-256 of the
+# canonical JSON is recorded below. ANY edit to a pinned step — run
+# text, `if:`, `shell:`, `with:`, `continue-on-error`, `env:` — fails
+# with the step's name and the new hash; deliberate changes update
+# the hash here in the same commit.
+    # Steps of the three pipeline jobs plus version-check's gate
+    # steps, pinned 2026-09-27 (ticket 1258). Update a hash only in
+    # the same commit as the deliberate workflow edit it records.
+PINNED_STEPS: dict[tuple[str, str], str] = {
+    ("pypi-build", "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"): "435261111ae8c13c6efd4c0122d30af2df68e5cbc57a7e92ccd1568897ae4024",
+    ("pypi-build", "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065"): "004630710366bff7851b00b676ce5044490a91b7220ce97a1f1e48fa16679424",
+    ("pypi-build", "dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c"): "e5cf6427d1b42e2b776f2589adc36320874f109751f02494b68ee9068c79b0d5",
+    ("pypi-build", "arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b"): "4e605dbe89d4dcacdf70d170853634c9f4c518e1a41f5d2c5e2bd27cf4c89e7c",
+    ("pypi-build", "Install pinned maturin"): "996e8a6336fff6d3d0b3a74230bb8b24021e34e7d06390412ac88bd2308173e0",
+    ("pypi-build", "Build wheels"): "a6e876869ef10c81eb4b505376e37e1a370b4ca36b809a68bc6ea20d52b87d3e",
+    ("pypi-build", "Build wheels inside the manylinux 2_28 container"): "21a93b7950bc2976defc9c23424265ac57d9cd4c2daf4a40940ad5ee683a8563",
+    ("pypi-build", "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"): "b9b6cca0e685928f03d3f444bac8c0825b2ee3510663d6503c24525218de1e23",
+    ("wheel-smoke", "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065"): "53e861877de3017c6e648667b07f052d923c6c50c065f7b9b60d72589c0887e0",
+    ("wheel-smoke", "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093"): "7da61a5393486e202557314e916ce6b47390f55bd62478135e9c7911337da88e",
+    ("wheel-smoke", "Install the wheel into a clean venv"): "362a4ba663ff744574ec1f229c6ecd32e1f0f308ae95f0000f79efbf089bf6f9",
+    ("wheel-smoke", "Run the wheel inside the manylinux 2_28 container"): "d5495643fdb712f52fbaa636b5198909e890806d92a309d073dfc1bb328cffc4",
+    ("wheel-smoke", "Smoke the installed wheel on every shipped platform"): "a80bfec3bd118fc0be28eedcc5f76f48c1ef734fea95d49f8aa9d926a359aa9f",
+    ("docs-live", "Check out the gate helper"): "afce43fafcab696d9cef03f29b0c43b6c9849baf126b749e198bdb9d83555430",
+    ("docs-live", "Resolve the tag commit"): "b52e25a4026bed9172a0eff4b90f6a706ec984875307d7e89f9d450878a96e44",
+    ("docs-live", "Require the live documentation revision to equal or descend from the tag"): "d8e88f95d2e890e14d314242bcce698767ddd834b4ccbab56469d5fd684eb54d",
+    ("version-check", "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"): "3ffb87228f0c77aecb87c34ee83d661a80bff50e397e911e917de5891db2a5fb",
+    ("version-check", "Require the tag and committed versions to agree"): "8bdcc74fd872a7a77d8341bd5049e3a3845a89825f02875f4258e5d665243b8b",
+    ("version-check", "Require the changelog to cover merged tickets"): "8dcf47fdb31ff44771a511058fa05d8e17d1a551744dcc1e8631fa7f8979118e",
+}
+
+
+def _normalize_step_text(text: str) -> str:
+    lines = [line.rstrip() for line in text.splitlines()]
+    out: list[str] = []
+    blank = 0
+    for line in lines:
+        if line == "":
+            blank += 1
+            if blank <= 1:
+                out.append(line)
+        else:
+            blank = 0
+            out.append(line)
+    return "\n".join(out).strip("\n")
+
+
+def _canonical_step(step: dict) -> str:
+    import copy
+    import hashlib
+    import json as _json
+
+    normalized = copy.deepcopy(step)
+    if isinstance(normalized.get("run"), str):
+        normalized["run"] = _normalize_step_text(normalized["run"])
+    return _json.dumps(normalized, sort_keys=True, ensure_ascii=False, indent=1)
+
+
+def _step_sha(step: dict) -> str:
+    import hashlib
+
+    return hashlib.sha256(_canonical_step(step).encode("utf-8")).hexdigest()
 
 EXPECTED_MATRICES = {
     "pypi-build": [
@@ -323,6 +383,35 @@ def _step_by_name(parsed: dict, job: str, needle: str) -> dict:
     raise AssertionError(f"no step matching {needle!r} in {job}")
 
 
+def _assert_step_hashes(parsed: dict) -> None:
+    """Every pinned step matches its recorded SHA-256 exactly."""
+    for (job, needle), expected in PINNED_STEPS.items():
+        step = _step_by_name(parsed, job, needle)
+        actual = _step_sha(step)
+        assert actual == expected, (
+            f"{job}/{needle}: step text drifted from its pinned hash.\n"
+            f"  expected sha256: {expected}\n"
+            f"  actual   sha256: {actual}\n"
+            f"If the edit is deliberate, update PINNED_STEPS in this file "
+            f"in the same commit (the workflow comment names the pins)."
+        )
+
+
+def _assert_no_defaults_shell(parsed: dict) -> None:
+    """`shell:` may exist only inside a step.
+
+    A job- or workflow-level `defaults.run.shell: bash {0}` would
+    swallow step failures for every step at once, so no `defaults`
+    key may exist anywhere in the release workflow.
+    """
+    assert "defaults" not in parsed, (
+        "workflow-level defaults are forbidden (a defaults.run.shell "
+        "would apply to every step at once)"
+    )
+    for job, spec in parsed["jobs"].items():
+        assert "defaults" not in spec, f"{job}: job-level defaults are forbidden"
+
+
 def _assert_pipeline_contract(parsed: dict) -> None:
     # The trigger block: tag pushes only, never a release publication
     # event (the YAML 1.1 `on:` key parses as boolean True).
@@ -358,13 +447,6 @@ def _assert_pipeline_contract(parsed: dict) -> None:
             assert shell in (None, "bash"), (
                 f"{job}: custom shell {shell!r} is forbidden; declare shell: bash"
             )
-            run = step.get("run")
-            if run is None:
-                continue
-            for pattern, label in RUN_ESCAPE_PATTERNS:
-                assert not pattern.search(run), (
-                    f"{job}: banned escape {label!r} in a run step"
-                )
 
     # Matrix entries are pinned exactly, so a swapped runner, a new
     # leg, or a dropped leg (including the ARM wheel build and smoke)
@@ -428,6 +510,8 @@ def test_pipeline_jobs_contract() -> None:
     parsed = _load_release_pipeline()
     _assert_pipeline_contract(parsed)
     _assert_publish_gating(parsed)
+    _assert_no_defaults_shell(parsed)
+    _assert_step_hashes(parsed)
 
 
 # Every job's condition, asserted exactly. A suffix like
@@ -522,7 +606,77 @@ def _retarget_matrix_os(job: str, key: str, value: str, os_name: str):
     return mutate
 
 
+HASH_DRIFT = "step text drifted from its pinned hash"
+
 PIPELINE_MUTATIONS = {
+    # --- Leak spellings the old phrase bans never named (ticket
+    # --- 1258): each edits a pinned step, so the hash fails.
+    "or_echo_skip_on_the_venv_smoke": (
+        _mutate_run(
+            "wheel-smoke",
+            "Smoke the installed wheel",
+            lambda run: run.replace("set -euo pipefail", "set -euo pipefail || echo skip", 1)
+            if "set -euo pipefail" in run
+            else run + "\ntrue || echo skip\n",
+        ),
+        HASH_DRIFT,
+    ),
+    "set_plus_o_errexit_in_the_venv_smoke": (
+        _mutate_run(
+            "wheel-smoke", "Smoke the installed wheel", lambda run: "set +o errexit\n" + run
+        ),
+        HASH_DRIFT,
+    ),
+    "trap_dash_dash_exit_zero_in_the_venv_smoke": (
+        _mutate_run(
+            "wheel-smoke",
+            "Smoke the installed wheel",
+            lambda run: run + "\ntrap -- 'exit 0' EXIT\n",
+        ),
+        HASH_DRIFT,
+    ),
+    "arithmetic_exit_zero_on_the_floor_check": (
+        _mutate_run(
+            "pypi-build",
+            "Build wheels inside the manylinux 2_28 container",
+            lambda run: run.replace(
+                "check-wheel-glibc-floor.py target/wheels/*.whl 2.28",
+                "check-wheel-glibc-floor.py target/wheels/*.whl 2.28 || exit $((0))",
+            ),
+        ),
+        HASH_DRIFT,
+    ),
+    "one_character_edit_in_a_pinned_step": (
+        # A single character of pinned prose fails the hash: the pin
+        # covers everything, not a list of known escapes. (The step's
+        # exit-1 branch has its own content assertion, so the mutated
+        # character is prose, not the exit code.)
+        _mutate_run(
+            "docs-live",
+            "Require the live documentation revision",
+            lambda run: run.replace("revision", "revixion", 1),
+        ),
+        HASH_DRIFT,
+    ),
+    "runner_os_linux_if_on_the_main_smoke_step": (
+        # Would turn off the macOS and Windows smoke legs entirely.
+        _set_step_flag(
+            "wheel-smoke", "Smoke the installed wheel", "if", "runner.os == 'Linux'"
+        ),
+        HASH_DRIFT,
+    ),
+    "workflow_level_defaults_shell_bash_brace_zero": (
+        lambda parsed: parsed.update(
+            {"defaults": {"run": {"shell": "bash {0}"}}}
+        ),
+        "workflow-level defaults are forbidden",
+    ),
+    "job_level_defaults_shell_bash_brace_zero": (
+        lambda parsed: parsed["jobs"]["wheel-smoke"].update(
+            {"defaults": {"run": {"shell": "bash {0}"}}}
+        ),
+        "job-level defaults are forbidden",
+    ),
     "continue_on_error_on_venv_smoke": (
         _set_step_flag(
             "wheel-smoke", "Smoke the installed wheel", "continue-on-error", True
@@ -566,7 +720,7 @@ PIPELINE_MUTATIONS = {
                 "check-wheel-glibc-floor.py target/wheels/*.whl 2.28 || true",
             ),
         ),
-        "banned escape",
+        "step text drifted from its pinned hash",
     ),
     "or_exit_zero_on_the_floor_check": (
         _mutate_run(
@@ -577,7 +731,7 @@ PIPELINE_MUTATIONS = {
                 "check-wheel-glibc-floor.py target/wheels/*.whl 2.28||exit 0",
             ),
         ),
-        "banned escape",
+        "step text drifted from its pinned hash",
     ),
     "set_plus_e_in_the_venv_smoke": (
         _mutate_run(
@@ -585,7 +739,7 @@ PIPELINE_MUTATIONS = {
             "Smoke the installed wheel",
             lambda run: "set +e\n" + run,
         ),
-        "banned escape",
+        "step text drifted from its pinned hash",
     ),
     "trap_exit_zero_in_the_venv_smoke": (
         _mutate_run(
@@ -593,7 +747,7 @@ PIPELINE_MUTATIONS = {
             "Smoke the installed wheel",
             lambda run: run + "\ntrap 'exit 0' EXIT\n",
         ),
-        "banned escape",
+        "step text drifted from its pinned hash",
     ),
     "tag_lookup_or_exit_zero": (
         _mutate_run(
@@ -603,7 +757,7 @@ PIPELINE_MUTATIONS = {
                 'test -n "$TAG_SHA"', 'test -n "$TAG_SHA" || exit 0'
             ),
         ),
-        "banned escape",
+        "step text drifted from its pinned hash",
     ),
     "removing_the_floor_check": (
         _mutate_run(
@@ -711,7 +865,7 @@ PIPELINE_MUTATIONS = {
                 ]
             }
         ),
-        "banned escape",
+        "step text drifted from its pinned hash",
     ),
 }
 
@@ -723,6 +877,8 @@ def test_pipeline_mutations_break_the_contract(name: str) -> None:
     with pytest.raises(AssertionError, match=re.escape(expected_message)):
         _assert_pipeline_contract(mutated)
         _assert_publish_gating(mutated)
+        _assert_no_defaults_shell(mutated)
+        _assert_step_hashes(mutated)
 
 
 @pytest.mark.parametrize(

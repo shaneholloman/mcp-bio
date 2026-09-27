@@ -18,7 +18,7 @@
       "language": "rust"
     },
     "src/cli/system/tests/dev2_contracts.rs": {
-      "count": 1,
+      "count": 2,
       "language": "rust"
     },
     "src/entities/article/assets.rs": {
@@ -41,6 +41,11 @@
       "count": 2,
       "language": "rust"
     },
+    "src/entities/disease/get/tests.rs": {
+      "count": 0,
+      "language": "rust",
+      "markers": 3
+    },
     "src/entities/disease/search.rs": {
       "count": 4,
       "language": "rust"
@@ -49,8 +54,13 @@
       "count": 3,
       "language": "rust"
     },
-    "src/sources/clingen/tests/mod.rs": {
+    "src/entities/gene/gencc/tests.rs": {
       "count": 1,
+      "language": "rust",
+      "markers": 1
+    },
+    "src/sources/clingen/tests/mod.rs": {
+      "count": 3,
       "language": "rust"
     },
     "src/sources/clingen_cspec.rs": {
@@ -59,7 +69,8 @@
     },
     "src/sources/gencc.rs": {
       "count": 7,
-      "language": "rust"
+      "language": "rust",
+      "markers": 1
     },
     "src/sources/gencc/store.rs": {
       "count": 3,
@@ -79,11 +90,13 @@
     },
     "src/sources/rate_limit.rs": {
       "count": 2,
-      "language": "rust"
+      "language": "rust",
+      "markers": 1
     },
     "src/sources/tests/provider_network.rs": {
       "count": 3,
-      "language": "rust"
+      "language": "rust",
+      "markers": 1
     },
     "tests/article_usage_stderr.rs": {
       "count": 2,
@@ -105,6 +118,11 @@
       "count": 6,
       "language": "rust"
     },
+    "tests/support.py": {
+      "count": 0,
+      "language": "python",
+      "markers": 1
+    },
     "tests/test_article_spec_fixture_lifecycle.py": {
       "count": 1,
       "language": "python"
@@ -116,6 +134,11 @@
     "tests/test_ctgov_spec_fixture_lifecycle.py": {
       "count": 1,
       "language": "python"
+    },
+    "tests/test_disease_survival_fixture_lifecycle.py": {
+      "count": 0,
+      "language": "python",
+      "markers": 1
     },
     "tests/test_mcp_2026_protocol.py": {
       "count": 1,
@@ -137,9 +160,20 @@
       "count": 1,
       "language": "python"
     },
+    "tests/test_test_wait_ratchet_check.py": {
+      "count": 1,
+      "language": "python",
+      "markers": 14
+    },
     "tests/tls_ca_bundle_contract.rs": {
       "count": 2,
       "language": "rust"
+    },
+    "tests/windows_stdio_contract.rs": {
+      "count": 0,
+      "language": "rust",
+      "markers": 1
     }
-  }
+  },
+  "marker_total_ceiling": 24
 }

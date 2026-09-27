@@ -172,4 +172,5 @@ No production code, no page content, no production constants change.
   `BIOMCP_PROVIDER_CONTRACT_READY_FILE`, and `BIOMCP_TEST_UNPACED_ORIGIN`
   are not rewritten; the indent is fixed. Verification item 6 records the
   run.
-- Re-review: pending (parent orchestrator).
+- Re-review: record not kept at the time (the review process before ticket 1219 recorded no verdict; the remediation evidence above landed)
+- Verification: shipped in the 0.8.x series; see git history (e089005a records the review findings and remediation evidence)

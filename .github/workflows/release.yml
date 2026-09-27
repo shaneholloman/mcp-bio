@@ -1,3 +1,9 @@
+# Step hashes: every step of pypi-build, wheel-smoke, docs-live, and
+# version-check is pinned by SHA-256 in
+# tests/test_release_workflow_provenance.py (PINNED_STEPS, ticket
+# 1258). Any edit to those steps — run text, if:, shell:, with:,
+# continue-on-error, env: — must update the hash there in the same
+# commit; the test failure names the step and the new hash.
 name: Release
 
 on:

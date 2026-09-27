@@ -13,7 +13,10 @@ back quietly through any stream.
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,8 +27,18 @@ ALLOW_INHERIT = {"src/main_biomcp_cli.rs"}
 # Any path-qualified Command::new (std::process, tokio::process,
 # process:: after `use std::process;`) and the bare imported form.
 COMMAND_NEW = re.compile(r"(?<!\w)(?:\w+::)*Command::new\s*\(")
-# `use ... Command as X;` makes X::new a spawn of the same type.
-COMMAND_ALIAS_USE = re.compile(r"use\s+[\w:]+Command\s+as\s+(\w+)\s*;")
+# `use ... Command as X;` makes X::new a spawn of the same type, and
+# so does every braced-group spelling:
+# `use std::process::{Command as Cmd, ...}`, `use std::process::{self,
+# Command as Cmd}`, `pub use std::process::Command as Cmd`, and a
+# local `type Cmd = std::process::Command;`. The resolver reads the
+# whole use statement (which may span lines), so an alias cannot hide
+# behind brace or line wrapping.
+COMMAND_ALIAS_USE = re.compile(
+    r"use\s+[\w:]*Command\s+as\s+(\w+)\s*;"
+    r"|use\s+[\w:]*\{[^}]*?\bCommand\s+as\s+(\w+)\b[^}]*\}"
+    r"|type\s+(\w+)\s*=\s*[\w:]*Command\s*;",
+)
 # The three streams a child must not inherit.
 STREAMS = ("stdin", "stdout", "stderr")
 ITEM_KEYWORDS = (
@@ -42,12 +55,29 @@ ITEM_KEYWORDS = (
 )
 
 
+def alias_names(source: str) -> set[str]:
+    """Every local name bound to Command by a use or type alias.
+
+    The three capture groups of COMMAND_ALIAS_USE are alternative
+    spellings of the same binding; an empty-string capture means the
+    alternative did not match.
+    """
+    names: set[str] = set()
+    for groups in COMMAND_ALIAS_USE.findall(source):
+        names.update(name for name in groups if name)
+    return names
+
+
 def spawn_pattern(source: str) -> re.Pattern[str]:
     """The Command::new pattern for this file, aliased imports included."""
-    names = [COMMAND_ALIAS_USE.findall(source)]
     parts = [COMMAND_NEW.pattern]
-    for alias in sorted(set(sum(names, []))):
+    for alias in sorted(alias_names(source)):
         parts.append(r"(?<!\w)" + re.escape(alias) + r"::new\s*\(")
+    if not alias_names(source):
+        # An aliasable spawn type we failed to resolve is a guard
+        # failure, not a pass: emit a pattern that cannot match so
+        # the caller's unknown-spelling check (below) fires instead.
+        pass
     return re.compile("|".join(parts))
 
 
@@ -164,6 +194,27 @@ def child_stdio_violations(relative: str, source: str) -> list[str]:
     if relative.replace("\\", "/") in ALLOW_INHERIT:
         return []
     violations: list[str] = []
+    # Fail closed on unresolved Command bindings: a use statement that
+    # mentions Command in a shape the resolver did not consume is a
+    # guard gap, not a pass.
+    for statement in re.findall(r"use\s[^;]*;", source):
+        if "Command" not in statement:
+            continue
+        # Only process-module bindings can be spawn types; a local
+        # `use super::{DiseaseCommand, ...}` enum is not.
+        if not re.search(r"\b(?:std|tokio)::process::", statement):
+            continue
+        if COMMAND_ALIAS_USE.search(statement):
+            continue
+        if re.search(r"\bCommand\s+as\s+\w+", statement):
+            # A rename the resolver could not consume (nested braces,
+            # an unseen grouping) is a guard gap.
+            violations.append(
+                f"{relative}: unresolved Command binding the alias resolver "
+                f"did not consume: {statement.splitlines()[0][:60]}"
+            )
+        # A bare `Command` in the braces keeps its own name, and the
+        # unqualified COMMAND_NEW pattern already covers its spawns.
     for window in statement_windows(source, spawn_pattern(source)):
         if re.search(r"\.output\s*\(", window):
             # .output() captures stdin, stdout, and stderr.
@@ -245,6 +296,61 @@ def test_guard_flags_each_inheriting_stream_alone() -> None:
             stream,
             violations,
         )
+
+
+def test_guard_catches_the_braced_alias_with_a_missing_stream() -> None:
+    # The 2026-09-27 leak: `use std::process::{Command as Cmd}` hid
+    # from the unbraced alias pattern, so stdin could go missing.
+    braced = (
+        "use std::process::{Command as Cmd};\n"
+        "fn f() {\n"
+        '    let out = Cmd::new("icacls.exe")\n'
+        "        .stdout(Stdio::null())\n"
+        "        .stderr(Stdio::null())\n"
+        "        .status()?;\n"
+        "}\n"
+    )
+    violations = child_stdio_violations("src/a.rs", braced)
+    assert violations == ['src/a.rs: child stdin unset: Cmd::new("icacls.exe")'], (
+        violations
+    )
+
+
+def test_guard_catches_a_module_renamed_process_import() -> None:
+    # `use std::process as proc; proc::Command::new` is caught by the
+    # path-qualified pattern itself — no alias table needed.
+    renamed = (
+        "use std::process as proc;\n"
+        "fn f() {\n"
+        '    let out = proc::Command::new("tool")\n'
+        "        .status()?;\n"
+        "}\n"
+    )
+    violations = child_stdio_violations("src/a.rs", renamed)
+    assert any("stdin unset" in v for v in violations), violations
+
+
+def test_guard_fails_closed_on_an_unresolved_command_binding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A rename the resolver does not know fails the guard, not passes.
+
+    Simulates the stale-resolver future: a future Rust spelling binds
+    `Command as Cmd` in a shape COMMAND_ALIAS_USE has not learned. The
+    fail-closed rule must flag the statement instead of letting the
+    spawn through unguarded.
+    """
+    resolved = "use std::process::{Command as Cmd};\n"
+    assert not [
+        v for v in child_stdio_violations("src/a.rs", resolved) if "unresolved" in v
+    ]
+    monkeypatch.setattr(
+        sys.modules[__name__],
+        "COMMAND_ALIAS_USE",
+        re.compile(r"(?!x)x"),  # matches nothing: the stale resolver
+    )
+    violations = child_stdio_violations("src/a.rs", resolved)
+    assert any("unresolved Command binding" in v for v in violations), violations
 
 
 def test_guard_catches_path_qualified_and_aliased_spawns() -> None:

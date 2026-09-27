@@ -177,4 +177,5 @@ These choices follow the 2026-09-17 source survey. Ian can overturn any of them.
 ## Review
 
 - Design review: done 2026-09-17, `sdlc/planning/notes/2026-09-17-cell-line-1202-design-review.md`. All four blocking findings and the seven polish items are applied.
-- Code review: pending
+- Code review: record not kept at the time (the review process before ticket 1219 recorded no verdict; the work landed without one)
+- Verification: shipped in the 0.8.x series (no gate record was kept before ticket 1219 introduced records); see CHANGELOG and git history
