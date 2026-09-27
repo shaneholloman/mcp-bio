@@ -67,7 +67,7 @@ async fn disease_card_fixture_server()
                     // The embedded DisGeNET block seeds the card's genes
                     // (ticket 1256): with Open Targets unreachable these
                     // genes must carry DisGeNET's name, not Open Targets'.
-                    r#"{"_id":"MONDO:0007959","mondo":{"synonym":["cerebellum embryonal neoplasm"]},"disgenet":{"genes_related_to_disease":[{"gene_symbol":"PIK3CA","score":0.7}]}"#
+                    r#"{"_id":"MONDO:0007959","mondo":{"synonym":["cerebellum embryonal neoplasm"]},"disgenet":{"genes_related_to_disease":[{"gene_symbol":"PIK3CA","score":0.7}]}}"#
                 } else if request.contains("query.cond=Medulloblastoma") {
                     r#"{"studies":[],"totalCount":36}"#
                 } else {
@@ -155,7 +155,7 @@ async fn stale_serve_fixture_server()
                     // Same DisGeNET seed as the card fixture: the stale
                     // card must still credit DisGeNET for its genes, so
                     // the fixture has to seed them (ticket 1256).
-                    r#"{"_id":"MONDO:0007959","mondo":{"synonym":["cerebellum embryonal neoplasm"]},"disgenet":{"genes_related_to_disease":[{"gene_symbol":"PIK3CA","score":0.7}]}"#
+                    r#"{"_id":"MONDO:0007959","mondo":{"synonym":["cerebellum embryonal neoplasm"]},"disgenet":{"genes_related_to_disease":[{"gene_symbol":"PIK3CA","score":0.7}]}}"#
                 } else if request.contains("query.cond=Medulloblastoma") {
                     r#"{"studies":[],"totalCount":36}"#
                 } else {
