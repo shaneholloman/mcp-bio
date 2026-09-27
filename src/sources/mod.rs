@@ -530,8 +530,7 @@ fn env_cache_mode() -> Option<CacheMode> {
 /// above. Compiled only into test builds, so release reads never touch
 /// it.
 #[cfg(test)]
-static TEST_CACHE_MODE_OVERRIDE: std::sync::Mutex<Option<CacheMode>> =
-    std::sync::Mutex::new(None);
+static TEST_CACHE_MODE_OVERRIDE: std::sync::Mutex<Option<CacheMode>> = std::sync::Mutex::new(None);
 
 #[cfg(test)]
 fn test_cache_mode_override() -> Option<CacheMode> {
