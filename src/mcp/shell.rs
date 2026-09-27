@@ -428,7 +428,7 @@ fn merge_property(left: &Value, right: &Value) -> Value {
         // validator applies each keyword only to its own type.
         if !flat_types {
             for key in ONE_SIDED_CONSTRAINT_KEYS {
-                if l.contains_key(*key) != r.contains_key(*key) {
+                if l.contains_key(key) != r.contains_key(key) {
                     panic!(
                         "one-sided `{key}` constraint narrows the merged root \
                          (present on one branch only): {left} vs {right}"
