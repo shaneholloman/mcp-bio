@@ -47,6 +47,14 @@ Each check now catches the named cases, and a neighboring spelling still passes.
 - **Stdio guard** (`tests/test_source_child_stdio_guard.py:27`): `use std::process::{Command as Cmd}` passes with stdin removed from the icacls call.
 - **Schema merge** (`src/mcp/shell.rs:391-402`): a constraint present on one side only, such as `uniqueItems` or `maxLength`, is copied silently and narrows the root. ADR 0002 still says "wider in accepted values".
 
+## Earlier review file
+
+The previous review file,
+`sdlc/issues/2026-09-26-review-follow-ups-for-1242-through-1254.md`,
+now carries its own item-by-item disposition section (added with
+this file's follow-ups); its four dropped findings are accounted
+for there.
+
 ## Records
 
 - The 1238 record says every open issue file has a decision. Four have neither a Resolved nor a Decision section:
