@@ -937,9 +937,8 @@ mod tests {
             projection.message,
             "DDInter bundle could not be read: ddinter_downloads_code_A.csv could not be parsed: bad quote"
         );
-        // The marker is consumed by the projection prefix; what must
-        // never leak is the other arm's sentinel (a read failure
-        // surfacing as download wording).
+        // The internal read sentinel must not surface in the public
+        // wording.
         assert!(
             !projection
                 .message
@@ -976,7 +975,12 @@ mod tests {
             "DDInter bundle download failed: endpoint answered HTML (content-type: text/html), not the CSV bundle",
             "an HTML reply says the download failed; it is not an unreadable bundle"
         );
-        assert!(!projection.message.contains(marker));
+        // The marker is consumed by the projection prefix; what must
+        // never leak is the other arm's sentinel (a read failure
+        // surfacing as download wording).
+        assert!(!projection
+            .message
+            .contains(crate::sources::ddinter::DDINTER_BUNDLE_READ_MARKER));
     }
 
     #[test]
