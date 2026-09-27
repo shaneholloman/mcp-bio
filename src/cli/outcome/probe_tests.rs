@@ -44,3 +44,56 @@ fn the_run_fallthrough_future_stays_under_the_size_ceiling() {
          see the measured history in the dispatch-future probe"
     );
 }
+
+mod runtime_split {
+    use super::super::{ONE_SHOT_RUNTIMES_BUILT, WorkerDrive, run_outcome_with_worker_stack};
+    use crate::cli::Cli;
+    use clap::Parser;
+    use std::sync::atomic::Ordering;
+    use std::time::{Duration, Instant};
+
+    /// The MCP path drives on the caller's runtime and builds no
+    /// one-shot runtime of its own: the counter at the construction
+    /// site is the seam.
+    #[tokio::test]
+    async fn the_mcp_path_builds_no_one_shot_runtime() {
+        let before = ONE_SHOT_RUNTIMES_BUILT.load(Ordering::SeqCst);
+        let cli = Cli::try_parse_from(["biomcp", "cache", "path"]).expect("cache path parses");
+        let outcome = run_outcome_with_worker_stack(
+            cli,
+            true,
+            WorkerDrive::Shared(tokio::runtime::Handle::current()),
+        )
+        .await;
+        assert!(outcome.is_ok(), "{outcome:?}");
+        assert_eq!(
+            ONE_SHOT_RUNTIMES_BUILT.load(Ordering::SeqCst),
+            before,
+            "the shared drive must not construct a per-call runtime"
+        );
+    }
+
+    /// The CLI one-shot drops its runtime without waiting for a
+    /// started blocking task: an eviction-shaped sleeper must not
+    /// delay the reply. `drive_one_shot` is the production drop path.
+    #[test]
+    fn a_one_shot_drop_does_not_wait_for_background_blocking_work() {
+        // watchdog: red-side hang — the sleeper outlives the reply by
+        // design; a plain 2 s bound keeps the whole test well under a
+        // minute even on a loaded host.
+        let started = Instant::now();
+        let reply = super::super::drive_one_shot(async {
+            tokio::task::spawn_blocking(|| {
+                // watchdog: red-side hang — the sleeper must outlive the reply
+                std::thread::sleep(Duration::from_secs(2));
+            });
+            anyhow::Ok(())
+        });
+        assert!(reply.is_ok());
+        let elapsed = started.elapsed();
+        assert!(
+            elapsed < Duration::from_secs(1),
+            "the one-shot reply waited {elapsed:?} for background blocking work"
+        );
+    }
+}

@@ -602,24 +602,86 @@ fn panic_payload_message(payload: &(dyn std::any::Any + Send)) -> &str {
     }
 }
 
+/// Blocking-thread stack headroom above the XML depth cap (the cap is
+/// the control; this is margin for the recursive JATS and ClinVar
+/// walkers that run on blocking threads). Ticket 1243.
+const BLOCKING_STACK_BYTES: usize = 4 * 1024 * 1024;
+
+/// Per-process count of one-shot runtime constructions. The MCP path
+/// must drive on the shared server runtime and build none; the counter
+/// is the seam the dispatch test asserts against.
+static ONE_SHOT_RUNTIMES_BUILT: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
+/// How the dedicated execute thread drives the command future
+/// (ticket 1243).
+enum WorkerDrive {
+    /// The server's long-lived runtime: every MCP tool call reuses it,
+    /// so pooled connections and timers survive between calls instead
+    /// of dying with a per-call runtime.
+    Shared(tokio::runtime::Handle),
+    /// A per-call runtime dropped with `shutdown_background`, so the
+    /// reply never waits for background blocking work.
+    OneShot,
+}
+
+impl WorkerDrive {
+    /// The shared handle when an ambient runtime exists (the server
+    /// process, or a test), one-shot otherwise.
+    fn for_shared_call() -> Self {
+        match tokio::runtime::Handle::try_current() {
+            Ok(handle) => Self::Shared(handle),
+            Err(_) => Self::OneShot,
+        }
+    }
+}
+
+/// Build the per-call runtime, drive the future, and drop the runtime
+/// without waiting for background work. Safety invariant: every cache
+/// put is awaited inline in the request path
+/// (`src/cache/manager.rs:222-289`); the only background work is
+/// eviction (`spawn_eviction_task`, `src/cache/manager.rs:407-431`),
+/// and a partially run eviction leaves atomic cacache removals, never
+/// corruption. Fire-and-forget puts would be lost under
+/// `shutdown_background` + `process::exit` — do not add them.
+fn drive_one_shot<F>(fut: F) -> anyhow::Result<F::Output>
+where
+    F: std::future::Future,
+{
+    ONE_SHOT_RUNTIMES_BUILT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .thread_stack_size(BLOCKING_STACK_BYTES)
+        .build()?;
+    let output = runtime.block_on(fut);
+    runtime.shutdown_background();
+    Ok(output)
+}
+
 async fn run_outcome_with_worker_stack(
     cli: Cli,
     alias_suggestions_as_json: bool,
+    drive: WorkerDrive,
 ) -> anyhow::Result<CommandOutcome> {
+    // Ticket 1225 pins the execute stack at 8 MiB: the command futures
+    // once reached 145 KB, and deep render recursion needs the margin.
     const EXECUTE_STACK_BYTES: usize = 8 * 1024 * 1024;
     tokio::task::spawn_blocking(move || {
         let handle = std::thread::Builder::new()
             .name("biomcp-cli-execute".into())
             .stack_size(EXECUTE_STACK_BYTES)
             .spawn(move || -> anyhow::Result<CommandOutcome> {
-                let runtime = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()?;
-                if alias_suggestions_as_json {
-                    runtime.block_on(Box::pin(run_outcome_inner(cli, true)))
-                } else {
-                    runtime.block_on(run_outcome_on_current_stack(cli))
-                }
+                let command = async {
+                    if alias_suggestions_as_json {
+                        Box::pin(run_outcome_inner(cli, true)).await
+                    } else {
+                        run_outcome_on_current_stack(cli).await
+                    }
+                };
+                Ok(match drive {
+                    WorkerDrive::Shared(handle) => handle.block_on(command)?,
+                    WorkerDrive::OneShot => drive_one_shot(command)??,
+                })
             })?;
 
         handle.join().map_err(|payload| {
@@ -636,7 +698,7 @@ async fn run_outcome_with_worker_stack(
 /// Execute a parsed CLI command on the bounded worker stack used by every
 /// in-process caller, including the native CLI and MCP transports.
 pub async fn run_outcome(cli: Cli) -> anyhow::Result<CommandOutcome> {
-    run_outcome_with_worker_stack(cli, false).await
+    run_outcome_with_worker_stack(cli, false, WorkerDrive::OneShot).await
 }
 /// Main CLI execution - called by the MCP `biomcp` tool.
 ///
@@ -648,7 +710,7 @@ pub async fn execute(mut args: Vec<String>) -> anyhow::Result<String> {
         args.push("biomcp".to_string());
     }
     let cli = crate::cli::try_parse_cli(args)?;
-    let outcome = run_outcome_with_worker_stack(cli, false).await?;
+    let outcome = run_outcome_with_worker_stack(cli, false, WorkerDrive::OneShot).await?;
     outcome_to_string(outcome)
 }
 
@@ -663,7 +725,11 @@ pub async fn execute_mcp(mut args: Vec<String>) -> anyhow::Result<CliOutput> {
 /// Execute a parsed CLI command through MCP without reparsing it.
 pub async fn execute_mcp_cli(mut cli: Cli) -> anyhow::Result<CliOutput> {
     prepare_mcp_chart(&mut cli)?;
-    let outcome = run_outcome_with_worker_stack(cli, true).await?;
+    // The MCP path drives on the shared server runtime (falling back
+    // to a one-shot only when no ambient runtime exists, e.g. a
+    // standalone embedder): pooled connections survive between tool
+    // calls and no runtime is built per call (ticket 1243).
+    let outcome = run_outcome_with_worker_stack(cli, true, WorkerDrive::for_shared_call()).await?;
     outcome_to_mcp_output(outcome)
 }
 #[cfg(test)]
