@@ -244,11 +244,11 @@
     },
     {
       "path": "src/error.rs",
-      "baseline_lines": 1242,
+      "baseline_lines": 1256,
       "floor_lines": 1122,
       "authorized_increase": {
         "ticket": "1256",
-        "delta": 120,
+        "delta": 134,
         "reason": "The DDInter HTML-download projection arm and its test.",
         "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
       }
@@ -405,11 +405,11 @@
     },
     {
       "path": "src/sources/mod.rs",
-      "baseline_lines": 2558,
+      "baseline_lines": 2557,
       "floor_lines": 1847,
       "authorized_increase": {
         "ticket": "1256",
-        "delta": 711,
+        "delta": 710,
         "reason": "The stale-serve task-local scope, the note recording, the wording helpers, the MCP drive-through helper, and their tests.",
         "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
       }
@@ -477,11 +477,11 @@
     },
     {
       "path": "src/transform/disease.rs",
-      "baseline_lines": 1122,
+      "baseline_lines": 1121,
       "floor_lines": 1050,
       "authorized_increase": {
         "ticket": "1256",
-        "delta": 72,
+        "delta": 71,
         "reason": "The seeded gene-association helper and its tests.",
         "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
       }
