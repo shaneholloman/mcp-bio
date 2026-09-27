@@ -14,3 +14,9 @@ Stays open as a 1.0 UX candidate: a real clinical-report failure
 mode (the wrong-transcript not-found), but display normalization is
 a deliberate change needing curated transcript rules, not a 0.9.1
 hygiene item.
+
+## Ticket (2026-09-27)
+
+`sdlc/tickets/1260-unify-variant-transcript-numbering-in-lookup-and-display.md`
+now carries the work, with an owner (the biomcp queue) and a
+revisit trigger. This issue stays as the observation record.
