@@ -49,3 +49,11 @@ classification no longer delete healthy generations (errno taxonomy
 plus variant discrimination in `store.rs`), with a deterministic
 fault-injection test. See
 `sdlc/records/1239-make-the-gencc-lease-test-deterministic-or-fix-the-interlock.md`.
+
+## Occurrence 2026-09-27 (ticket 1257's gate, 16:29 run)
+
+A sibling test, `post_rename_200_and_304_deadlines_return_committed_public_rows`,
+failed in the full `make test` lane with the same class of shape
+(assertions left 0, right 3) and passed alone three times in a row
+(0.02 s each) at the same SHA (a9dee294). The branch did not touch
+gencc tests; this is the load flake again, not a regression.
