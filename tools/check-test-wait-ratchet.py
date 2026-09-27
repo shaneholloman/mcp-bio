@@ -34,14 +34,20 @@ from pathlib import Path
 # builder and does not count; every other deadline addition does.
 # `\bsleep(` catches the bare form that follows a `use
 # std::thread::sleep` import (and subsumes the qualified forms);
-# `elapsed() >` (strictly greater, not `>=` floor assertions) is the
-# deadline-poll guard shape.
+# `sleep_until(` parks a timer on the clock like any sleep; and ANY
+# comparison against an `elapsed()` value on either side of the
+# operator is a deadline poll (a `<` on the right, a chained
+# `.as_millis()` on the left — the shapes the old `>` -only pattern
+# missed). `>=` floor assertions are not comparisons against a
+# deadline, so they stay out.
 RUST_PATTERNS = [
     re.compile(pattern)
     for pattern in (
         r"Instant::now\(\)\s*\+\s*(?!.*\bwatchdog\()",
         r"\bsleep\s*\(",
-        r"elapsed\(\)\s*>\s*(?!=)",
+        r"\bsleep_until\s*\(",
+        r"elapsed\(\)(?:\s*\.\s*\w+\(\))*\s*[<>](?!=)",
+        r"[<>]\s*[\w.:]*elapsed\(",
     )
 ]
 PYTHON_PATTERNS = [
@@ -49,10 +55,19 @@ PYTHON_PATTERNS = [
     for pattern in (
         r"time\.sleep",
         r"asyncio\.sleep",
+        r"anyio\.sleep",
         r"(?<![\w.])sleep\s*\(",
         r"from\s+time\s+import\s+[^\n]*\bsleep\b",
     )
 ]
+# Aliased imports resolve to per-file local names:
+# `import time as t` makes `t.sleep(` a timed wait, and
+# `from time import sleep as snooze` makes `snooze(` one. The bare
+# `from time import sleep` form is covered by its own pattern.
+TIME_MODULE_ALIAS = re.compile(r"^\s*import\s+time\s+as\s+(\w+)", re.MULTILINE)
+SLEEP_RENAME_IMPORT = re.compile(
+    r"^\s*from\s+time\s+import\s+sleep\s+as\s+(\w+)", re.MULTILINE
+)
 # A `watchdog:` marker vouches for a wait only when it carries a
 # reason: at least one word of three or more characters after the
 # colon. A bare `watchdog:` (or `watchdog: x`) does not pass.
@@ -83,7 +98,8 @@ def tracked(root: Path, directory: str, suffix: str) -> list[str]:
 def rust_test_region(path: Path) -> str | None:
     """Whole file for test-only files; after the first #[cfg(test)] otherwise."""
     text = path.read_text(encoding="utf-8")
-    if "/tests/" in path.as_posix() or TEST_FILE_NAME.search(path.as_posix()):
+    posix = path.as_posix()
+    if "/tests/" in posix or posix.startswith("tests/") or TEST_FILE_NAME.search(posix):
         return text
     marker = text.find("#[cfg(test)]")
     if marker == -1:
@@ -92,30 +108,51 @@ def rust_test_region(path: Path) -> str | None:
 
 
 def count_waits(
-    lines: list[str], patterns: list[re.Pattern[str]]
-) -> tuple[int, list[str]]:
+    lines: list[str],
+    patterns: list[re.Pattern[str]],
+    alias_patterns: list[re.Pattern[str]] | None = None,
+) -> tuple[int, list[str], int]:
+    """Unmarked waits, their line numbers, and the marked count.
+
+    `alias_patterns` are the per-file local names bound to the time
+    module or its sleep (from `import time as t` / `from time import
+    sleep as s`): a call through any of them is a timed wait.
+    """
     marked = 0
     violations: list[str] = []
     in_heartbeat_helper = False
+    alias_patterns = alias_patterns or []
     for number, line in enumerate(lines, start=1):
         if DEFINITION.search(line):
             in_heartbeat_helper = True
         elif re.match(r"^\s*(?:pub(?:\(.+?\))?\s+)?(?:async\s+)?fn\s|^\s*def\s", line):
             in_heartbeat_helper = False
+        waited = any(p.search(line) for p in patterns) or any(
+            p.search(line) for p in alias_patterns
+        )
         if "watchdog:" in line:
-            if WATCHDOG_REASON.search(line) and any(p.search(line) for p in patterns):
+            if WATCHDOG_REASON.search(line) and waited:
                 marked += 1
                 continue
             # A marker without a reason text does not vouch for the
             # wait; fall through and count it like any other.
-        if any(p.search(line) for p in patterns):
+        if waited:
             if in_heartbeat_helper:
                 violations.append(
                     f"{number} heartbeat helper contains a bare timed wait"
                 )
             else:
                 violations.append(f"{number}")
-    return len(violations), violations
+    return len(violations), violations, marked
+
+
+def local_time_aliases(text: str) -> list[re.Pattern[str]]:
+    aliases: list[str] = []
+    for match in TIME_MODULE_ALIAS.finditer(text):
+        aliases.append(re.escape(match.group(1)) + r"\.sleep\s*\(")
+    for match in SLEEP_RENAME_IMPORT.finditer(text):
+        aliases.append(r"(?<![\w.])" + re.escape(match.group(1)) + r"\s*\(")
+    return [re.compile(a) for a in aliases]
 
 
 def scan(root: Path) -> dict[str, dict[str, object]]:
@@ -126,16 +163,23 @@ def scan(root: Path) -> dict[str, dict[str, object]]:
         region = rust_test_region(path)
         if region is None:
             continue
-        count, _ = count_waits(region.splitlines(), RUST_PATTERNS)
-        if count:
-            files[relative] = {"count": count, "language": "rust"}
+        count, _, marked = count_waits(region.splitlines(), RUST_PATTERNS)
+        if count or marked:
+            entry: dict[str, object] = {"count": count, "language": "rust"}
+            if marked:
+                entry["markers"] = marked
+            files[relative] = entry
     for relative in tracked(root, "tests", ".py"):
         path = root / relative
-        count, _ = count_waits(
-            path.read_text(encoding="utf-8").splitlines(), PYTHON_PATTERNS
+        text = path.read_text(encoding="utf-8")
+        count, _, marked = count_waits(
+            text.splitlines(), PYTHON_PATTERNS, local_time_aliases(text)
         )
-        if count:
-            files[relative] = {"count": count, "language": "python"}
+        if count or marked:
+            entry = {"count": count, "language": "python"}
+            if marked:
+                entry["markers"] = marked
+            files[relative] = entry
     return files
 
 
@@ -152,33 +196,61 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args()
     inventory_path = args.root / "tools/test-wait-inventory.json"
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
-    pinned: dict[str, int] = {
-        name: entry["count"] if isinstance(entry, dict) else entry
+    pinned: dict[str, dict] = {
+        name: (entry if isinstance(entry, dict) else {"count": entry})
         for name, entry in inventory.get("files", {}).items()
     }
     current = scan(args.root)
 
     failures: list[str] = []
     notes: list[str] = []
-    for name, count in sorted((n, e["count"]) for n, e in current.items()):
+    total_markers = sum(int(e.get("markers", 0)) for e in current.values())
+    marker_ceiling = int(inventory.get("marker_total_ceiling", total_markers))
+    for name, entry in sorted(current.items()):
+        count = entry["count"]
         ceiling = pinned.get(name)
-        if ceiling is None:
+        if ceiling is None and count:
             failures.append(
                 f"new unmarked timed waits in {name} ({count}); convert to a signal or mark each with `watchdog:`"
             )
-        elif count > ceiling:
+        elif ceiling is None:
+            # Markers only (count 0): pin the file so its marker count
+            # is ratcheted too.
             failures.append(
-                f"{name} has {count} unmarked waits, above the pinned ceiling {ceiling}"
+                f"{name} carries `watchdog:` markers but is not in the inventory; "
+                f"run with --update to pin it"
             )
-        elif count < ceiling:
+        elif count > ceiling.get("count", count):
+            failures.append(
+                f"{name} has {count} unmarked waits, above the pinned ceiling {ceiling.get('count')}"
+            )
+        elif count < ceiling.get("count", count):
             notes.append(
-                f"{name} dropped {ceiling} -> {count}; re-pin down with --update"
+                f"{name} dropped {ceiling.get('count')} -> {count}; re-pin down with --update"
+            )
+        pinned_markers = int(ceiling.get("markers", 0)) if ceiling else 0
+        file_markers = int(entry.get("markers", 0))
+        if ceiling is not None and file_markers > pinned_markers:
+            failures.append(
+                f"{name} carries {file_markers} `watchdog:` markers, above its pinned "
+                f"{pinned_markers}; a new marker needs a reason and a same-commit "
+                f"inventory raise"
             )
     for name in sorted(set(pinned) - set(current)):
         notes.append(f"{name} now has zero unmarked waits; re-pin down with --update")
+    if total_markers > marker_ceiling:
+        failures.append(
+            f"the tree carries {total_markers} `watchdog:` markers, above the global "
+            f"ceiling {marker_ceiling}; raise marker_total_ceiling in the same commit "
+            f"as the new marker, with its reason"
+        )
 
     if args.update:
-        inventory["files"] = {name: entry for name, entry in sorted(current.items())}
+        fresh = {name: entry for name, entry in sorted(current.items())}
+        inventory["files"] = fresh
+        inventory["marker_total_ceiling"] = sum(
+            int(e.get("markers", 0)) for e in fresh.values()
+        )
         inventory_path.write_text(
             json.dumps(inventory, indent=2) + "\n", encoding="utf-8"
         )
@@ -192,7 +264,10 @@ def main(argv: list[str]) -> int:
         for failure in failures:
             print(f"  {failure}")
         return 1
-    print(f"test-wait ratchet ok ({len(current)} files with pinned ceilings)")
+    print(
+        f"test-wait ratchet ok ({len(current)} files with pinned ceilings, "
+        f"{total_markers} watchdog markers under the ceiling {marker_ceiling})"
+    )
     return 0
 
 

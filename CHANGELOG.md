@@ -35,6 +35,15 @@
 
 ### Changed
 
+- The `get` tool's flat schema no longer carries `uniqueItems` on
+  `sections`: adverse-event accepts duplicate sections, so the
+  descriptive root must accept them too on every entity. Per-entity
+  duplicate rejection is unchanged (the body rejects duplicates where
+  the entity demands uniqueness). A schema constraint present on only
+  one side of a merge is now a named build-time clash instead of a
+  silent narrowing. (1258)
+
+
 - A response served from cache past the provider's freshness window
   now says so in the output a clinician sees, not only the log: the
   markdown card (CLI and MCP) gains a trailing `Cache note:` line

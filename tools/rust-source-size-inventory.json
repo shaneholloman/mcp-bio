@@ -261,13 +261,13 @@
     },
     {
       "path": "src/mcp/shell.rs",
-      "baseline_lines": 2630,
+      "baseline_lines": 2708,
       "floor_lines": 1956,
       "authorized_increase": {
-        "ticket": "1254",
-        "delta": 674,
-        "reason": "Poison-recovery scoping (get.rs) and the shared panic-payload helper (shell.rs).",
-        "removal_condition": "Revisit when the trial-alias cache moves behind a type and the panic arm shrinks."
+        "ticket": "1258",
+        "delta": 752,
+        "reason": "One-sided-constraint clash rule in merge_property, the constraint keyword table, the get-sections uniqueItems resolution pins, and should-panic tests for the clash.",
+        "removal_condition": "Shrink when the should-panic clash tests fold into a shared schema merge test module."
       }
     },
     {
