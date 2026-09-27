@@ -139,7 +139,7 @@ def _logical_lines(text: str) -> list[tuple[int, str]]:
 def _non_review_body(text: str) -> str:
     """The ticket text outside grammar-parsed review records."""
     keep: list[str] = []
-    for _, marker, text_line in _logical_lines(text.splitlines()):
+    for _, _marker, text_line in _logical_lines(text):
         if REVIEW_LINE.match(text_line):
             continue
         keep.append(text_line)
@@ -216,7 +216,7 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
             failures.append(
                 f'{relative}:{record["line"]}: scope {scope!r} names no batch or item slice'
             )
-        elif not _scope_names_a_real_slice(scope, _non_review_body(text_lines)):
+        elif not _scope_names_a_real_slice(scope, _non_review_body(text)):
             failures.append(
                 f'{relative}:{record["line"]}: scope {scope!r} names a batch or item '
                 f"the ticket never mentions"
@@ -314,7 +314,7 @@ def test_the_grammar_catches_shapes_it_was_never_told_about(
     )
     assert (
         probe(
-            "## Order\n\nItems 5-9 are a second batch.\n\n## Review\n\n"
+            "## Order\n\nItems 5-9 are batch 2.\n\n## Review\n\n"
             "- Code review (batch 2): pending\n"
         )
         is None
