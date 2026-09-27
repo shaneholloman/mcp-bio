@@ -882,8 +882,7 @@ mod tests {
     #[test]
     fn from_mydisease_hit_without_disgenet_data_seeds_no_rows() {
         let hit: MyDiseaseHit =
-            serde_json::from_value(serde_json::json!({"_id": "MONDO:0017309"}))
-                .expect("valid hit");
+            serde_json::from_value(serde_json::json!({"_id": "MONDO:0017309"})).expect("valid hit");
         let disease = from_mydisease_hit(hit);
         assert!(disease.associated_genes.is_empty());
         assert!(disease.gene_associations.is_empty());

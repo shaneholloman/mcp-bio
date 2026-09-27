@@ -631,12 +631,9 @@ async fn run_outcome_with_worker_stack(
                         let trusted_terminal_chart =
                             is_charted_mcp_study_command(&cli).unwrap_or(false);
                         crate::sources::with_stale_serve_notes(async {
-                            let mut outcome =
-                                Box::pin(run_outcome_inner(cli, true)).await?;
+                            let mut outcome = Box::pin(run_outcome_inner(cli, true)).await?;
                             if !json && outcome.bytes.is_none() && !trusted_terminal_chart {
-                                crate::sources::append_stale_serve_notes_to_text(
-                                    &mut outcome.text,
-                                );
+                                crate::sources::append_stale_serve_notes_to_text(&mut outcome.text);
                             }
                             Ok::<CommandOutcome, anyhow::Error>(outcome)
                         })

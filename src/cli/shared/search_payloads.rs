@@ -183,20 +183,17 @@ pub(in crate::cli) fn search_meta_with_workflow(
     // JSON consumer here, not only the log (ticket 1256). Draining at
     // payload build time states each note once.
     let notes = crate::sources::take_stale_serve_sentences();
-    (!next_commands.is_empty()
-        || suggestions.is_some()
-        || workflow.is_some()
-        || !notes.is_empty())
-    .then_some(SearchJsonMeta {
-        next_commands,
-        suggestions,
-        workflow,
-        workflow_rationale,
-        workflow_playbook,
-        section_sources: Vec::new(),
-        upstream_total: None,
-        notes,
-    })
+    (!next_commands.is_empty() || suggestions.is_some() || workflow.is_some() || !notes.is_empty())
+        .then_some(SearchJsonMeta {
+            next_commands,
+            suggestions,
+            workflow,
+            workflow_rationale,
+            workflow_playbook,
+            section_sources: Vec::new(),
+            upstream_total: None,
+            notes,
+        })
 }
 
 pub(in crate::cli) fn search_json_with_meta<T: serde::Serialize>(

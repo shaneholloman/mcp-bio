@@ -498,7 +498,8 @@ impl BioMcpError {
             // content-type is our header, not upstream body text.
             Self::Api { message, .. }
                 if source == "DDInter"
-                    && message.starts_with(crate::sources::ddinter::DDINTER_BUNDLE_DOWNLOAD_MARKER) =>
+                    && message
+                        .starts_with(crate::sources::ddinter::DDINTER_BUNDLE_DOWNLOAD_MARKER) =>
             {
                 format!(
                     "DDInter bundle download failed: {}",
@@ -939,9 +940,11 @@ mod tests {
         // The marker is consumed by the projection prefix; what must
         // never leak is the other arm's sentinel (a read failure
         // surfacing as download wording).
-        assert!(!projection
-            .message
-            .contains(crate::sources::ddinter::DDINTER_BUNDLE_READ_MARKER));
+        assert!(
+            !projection
+                .message
+                .contains(crate::sources::ddinter::DDINTER_BUNDLE_READ_MARKER)
+        );
     }
 
     #[test]

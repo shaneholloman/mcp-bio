@@ -175,11 +175,7 @@ async fn stale_serve_fixture_server()
     (base, requests, task)
 }
 
-fn stale_serve_env(
-    env: &mut DiseaseCardFixtureEnv,
-    cache_root: &std::path::Path,
-    base: &str,
-) {
+fn stale_serve_env(env: &mut DiseaseCardFixtureEnv, cache_root: &std::path::Path, base: &str) {
     env.set(
         "BIOMCP_CACHE_DIR",
         cache_root.to_str().expect("utf-8 cache root"),
@@ -280,8 +276,7 @@ async fn stale_search_json_carries_the_cache_age_in_the_meta_notes() {
     ])
     .await
     .expect("stale search json");
-    let body: serde_json::Value =
-        serde_json::from_str(&stale).expect("search json parses");
+    let body: serde_json::Value = serde_json::from_str(&stale).expect("search json parses");
     let notes = body
         .pointer("/_meta/notes")
         .and_then(|v| v.as_array())

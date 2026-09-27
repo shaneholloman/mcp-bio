@@ -196,7 +196,11 @@ fn html_download_replies_are_download_failures_not_read_failures() {
     assert!(message.starts_with(super::super::DDINTER_BUNDLE_DOWNLOAD_MARKER));
 
     // The bundle's own content types and a missing header stay fine.
-    for okay in ["text/csv", "text/csv; charset=utf-8", "application/octet-stream"] {
+    for okay in [
+        "text/csv",
+        "text/csv; charset=utf-8",
+        "application/octet-stream",
+    ] {
         let header = reqwest::header::HeaderValue::from_str(okay).expect("header");
         assert!(super::super::ensure_csv_content_type(Some(&header)).is_ok());
     }

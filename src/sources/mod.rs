@@ -260,9 +260,7 @@ fn record_stale_serve(note: StaleServeNote) {
 /// draining them so each output channel states them once.
 pub(crate) fn take_stale_serve_sentences() -> Vec<String> {
     STALE_SERVE_NOTES
-        .try_with(|notes| {
-            std::mem::take(&mut *notes.lock().expect("stale-serve notes lock"))
-        })
+        .try_with(|notes| std::mem::take(&mut *notes.lock().expect("stale-serve notes lock")))
         .unwrap_or_default()
         .iter()
         .map(StaleServeNote::sentence)
@@ -1855,10 +1853,7 @@ mod tests {
             (header_gone, take_stale_serve_sentences())
         })
         .await;
-        assert!(
-            header_gone,
-            "the marker must not cross the wire"
-        );
+        assert!(header_gone, "the marker must not cross the wire");
         assert_eq!(
             sentences,
             vec![
