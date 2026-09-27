@@ -93,8 +93,21 @@ fn init_tracing() {
         .try_init();
 }
 
-#[tokio::main]
-async fn main() -> std::process::ExitCode {
+fn main() -> std::process::ExitCode {
+    // An explicit multi-thread runtime (ticket 1243): blocking threads
+    // carry 4 MiB stacks as headroom above the XML depth cap, which is
+    // the control for the recursive JATS and ClinVar walkers. The 8 MiB
+    // execute stack for command futures is pinned separately in
+    // src/cli/outcome.rs (ticket 1225).
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .thread_stack_size(4 * 1024 * 1024)
+        .build()
+        .expect("server runtime");
+    runtime.block_on(async_main())
+}
+
+async fn async_main() -> std::process::ExitCode {
     biomcp_cli::build_identity::install(biomcp_cli::build_identity::BuildIdentity {
         version: BUILD_VERSION,
         git_revision: BUILD_GIT_SHA,
