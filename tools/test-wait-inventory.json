@@ -138,7 +138,7 @@
       "language": "python"
     },
     "tests/tls_ca_bundle_contract.rs": {
-      "count": 3,
+      "count": 2,
       "language": "rust"
     }
   }

@@ -12,6 +12,41 @@ const BLOCKING_STACK_BYTES: usize = 4 * 1024 * 1024;
 pub(super) static ONE_SHOT_RUNTIMES_BUILT: std::sync::atomic::AtomicUsize =
     std::sync::atomic::AtomicUsize::new(0);
 
+/// Test-only seam for the MCP-path runtime probe (ticket 1257). The
+/// production counter is process-wide, so under a single-process test
+/// runner (`cargo test --lib`) any parallel `run_outcome` test also
+/// bumps it and a delta assertion on it can fail at random. The probe
+/// counts one-shot constructions only while armed, and the probe test
+/// arms it for exactly its own `execute_mcp_cli` drive: under nextest
+/// (one process per test) the window is fully isolated, and under
+/// cargo test a false failure needs another test's one-shot to land
+/// inside that microsecond window — which the probe comment states so
+/// a future flake is diagnosable. `drive_one_shot` increments it
+/// alongside the production counter; the test asserts both so the
+/// seam cannot drift from what production counts.
+#[cfg(test)]
+pub(crate) mod mcp_runtime_probe {
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+    static ARMED: AtomicBool = AtomicBool::new(false);
+    pub(crate) static ONE_SHOTS_DURING_PROBE: AtomicUsize = AtomicUsize::new(0);
+
+    pub(crate) fn arm() {
+        ARMED.store(true, Ordering::SeqCst);
+        ONE_SHOTS_DURING_PROBE.store(0, Ordering::SeqCst);
+    }
+
+    pub(crate) fn disarm() {
+        ARMED.store(false, Ordering::SeqCst);
+    }
+
+    pub(crate) fn count_increment() {
+        if ARMED.load(Ordering::SeqCst) {
+            ONE_SHOTS_DURING_PROBE.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+}
+
 /// How the dedicated execute thread drives the command future
 /// (ticket 1243).
 pub(super) enum WorkerDrive {
@@ -48,6 +83,8 @@ where
     F: std::future::Future,
 {
     ONE_SHOT_RUNTIMES_BUILT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    #[cfg(test)]
+    mcp_runtime_probe::count_increment();
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .thread_stack_size(BLOCKING_STACK_BYTES)

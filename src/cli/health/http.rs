@@ -550,13 +550,17 @@ mod probe_override_tests {
     }
 
     #[test]
+    #[serial_test::serial(unpaced_origin)]
     fn an_unparseable_base_leaves_the_catalog_url_unchanged() {
+        // Serial with the other override tests: both set process
+        // variables. The base cannot parse, so in release builds the
+        // gate blocks the rewrite and in debug builds the parse
+        // fallback returns the original — the observable is the same
+        // URL either way, which is what this pins (ticket 1257).
         unsafe {
             std::env::set_var("BIOMCP_HEALTH_PROBE_BASE", "::not a url::");
         }
         let url = "https://mygene.info/v3/query?q=BRAF&size=1";
-        // Debug builds allow any base through the gate, but the parse
-        // fallback must still return the original URL.
         assert_eq!(probe_url(url), url.to_string());
         unsafe {
             std::env::remove_var("BIOMCP_HEALTH_PROBE_BASE");
@@ -564,14 +568,22 @@ mod probe_override_tests {
     }
 
     #[test]
+    #[serial_test::serial(unpaced_origin)]
     fn an_allowed_base_keeps_the_path_and_query() {
+        // The exact pair the release gate demands: the base names the
+        // same loopback origin as the signal, so `probe_url` rewrites
+        // in debug AND release builds — the old test set only the
+        // base, which debug builds let through and release builds
+        // correctly refused (ticket 1257).
         unsafe {
             std::env::set_var("BIOMCP_HEALTH_PROBE_BASE", "https://127.0.0.1:9443");
+            std::env::set_var("BIOMCP_TEST_UNPACED_ORIGIN", "https://127.0.0.1:9443");
         }
         let rewritten = probe_url("https://mygene.info/v3/query?q=BRAF&size=1");
         assert_eq!(rewritten, "https://127.0.0.1:9443/v3/query?q=BRAF&size=1");
         unsafe {
             std::env::remove_var("BIOMCP_HEALTH_PROBE_BASE");
+            std::env::remove_var("BIOMCP_TEST_UNPACED_ORIGIN");
         }
     }
 }

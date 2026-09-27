@@ -1116,6 +1116,66 @@ mod errno_tests {
     }
 
     #[test]
+    fn an_unreadable_generation_directory_retains_like_a_wrong_owner_one() {
+        // Wrong-owner stand-in (ticket 1257): a directory another uid
+        // owns with no permissions for this process fails the same
+        // openat with EACCES, which classifies Unavailable — an
+        // environmental cause — so cleanup retains the generation
+        // instead of pruning it (decision recorded in ticket 1254).
+        use std::os::unix::fs::PermissionsExt;
+        let temp = tempfile::tempdir().expect("tempdir");
+        let generations = temp.path().join("generations");
+        std::fs::create_dir_all(&generations).expect("generations dir");
+        let name = "g1234-ef01";
+        let generation = generations.join(name);
+        std::fs::create_dir(&generation).expect("generation dir");
+        std::fs::write(generation.join("lease.lock"), b"lease").expect("lease file");
+        std::fs::set_permissions(&generation, std::fs::Permissions::from_mode(0o000))
+            .expect("0000");
+
+        let parent = std::fs::File::open(&generations).expect("parent handle");
+        assert!(matches!(
+            open_directory_at(&parent, name.as_ref()),
+            Err(StoreError::Unavailable)
+        ));
+        assert!(
+            matches!(
+                remove_generation_if_unleased(&parent, &generations, name),
+                Err(StoreError::Unavailable)
+            ),
+            "an EACCES open must stop the removal, not prune"
+        );
+        assert!(generation.exists(), "the unreadable generation is retained");
+
+        // Restore so the tempdir cleanup can remove it.
+        std::fs::set_permissions(&generation, std::fs::Permissions::from_mode(0o700))
+            .expect("restore 0700");
+    }
+
+    #[test]
+    fn a_regular_file_where_the_generation_belongs_classifies_invalid() {
+        // Not-a-directory (ticket 1257): openat carries O_DIRECTORY,
+        // so a regular file named as a generation fails with ENOTDIR,
+        // a deliberate mismatch that classifies Invalid — the entry
+        // is not a generation and removal reports nothing to remove
+        // (the scan never forwards such entries either).
+        let temp = tempfile::tempdir().expect("tempdir");
+        let generations = temp.path().join("generations");
+        std::fs::create_dir_all(&generations).expect("generations dir");
+        let name = "g1234-beef";
+        let impostor = generations.join(name);
+        std::fs::write(&impostor, b"not a generation").expect("regular file");
+
+        let parent = std::fs::File::open(&generations).expect("parent handle");
+        assert!(matches!(
+            open_directory_at(&parent, name.as_ref()),
+            Err(StoreError::Invalid)
+        ));
+        assert!(!remove_generation_if_unleased(&parent, &generations, name).expect("no removal"));
+        assert!(impostor.exists(), "a non-generation entry is left alone");
+    }
+
+    #[test]
     fn a_wrong_mode_directory_classifies_invalid_and_prunes() {
         use std::os::unix::fs::PermissionsExt;
         let temp = tempfile::tempdir().expect("tempdir");

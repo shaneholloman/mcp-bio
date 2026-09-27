@@ -367,3 +367,41 @@ def test_enclosed_runner_revalidates_privilege_and_network_state() -> None:
     assert "offline network controls: public DNS blocked; direct public TCP blocked" in completed.stdout
     assert "offline network controls: loopback TCP and Unix sockets available" in completed.stdout
     assert completed.stdout.rstrip().endswith("reused")
+
+
+def test_release_panic_contract_runs_in_ci_and_is_pinned() -> None:
+    # Ticket 1257: the release-mode panic-recovery test moved from
+    # the opt-in `make verify` lane onto the canonical CI lane. The
+    # job's build and test commands are pinned exactly so a
+    # profile swap, a filter change, or a dropped job breaks here
+    # first.
+    parsed = yaml.safe_load(WORKFLOW)
+    job = parsed["jobs"].get("release-panic")
+    assert job is not None, "ci.yml must run the release-panic job"
+    assert job["runs-on"] == "ubuntu-24.04"
+
+    run_steps = [s for s in job["steps"] if "run" in s]
+    assert len(run_steps) == 2, "release-panic: install step plus one contract step"
+
+    contract = run_steps[-1]["run"]
+    assert contract == (
+        "cargo build --release --locked\n"
+        "cargo nextest run --release --test rmcp_client_contract"
+        " rmcp_stdio_recovers_from_tool_panic\n"
+    ), "release-panic: the contract step must build release and run the panic test"
+    assert "run-offline" not in contract, (
+        "release-panic: the lane must not enter the offline namespace"
+    )
+    for step in job["steps"]:
+        assert step.get("continue-on-error") is None, (
+            "release-panic: no step may continue on error"
+        )
+        assert "if:" not in step, "release-panic: no step may be conditional"
+
+    # `make verify` keeps its release invocation: the CI job and the
+    # live lane must not drift apart silently.
+    verify = MAKEFILE.split("verify:\n", 1)[1].split("\nrelease-live-smoke:", 1)[0]
+    assert (
+        "nextest run --release --test rmcp_client_contract"
+        " rmcp_stdio_recovers_from_tool_panic" in verify
+    ), "make verify must keep the release-mode panic contract"
