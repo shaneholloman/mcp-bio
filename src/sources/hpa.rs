@@ -432,12 +432,11 @@ fn normalize_ensembl_id(value: &str) -> Result<String, BioMcpError> {
 }
 
 fn parse_gene_hpa(xml: &str) -> Result<GeneHpa, BioMcpError> {
-    let doc = parse_external_xml(xml, ARTICLE_XML_NODE_LIMIT).map_err(|source| {
-        BioMcpError::Api {
+    let doc =
+        parse_external_xml(xml, ARTICLE_XML_NODE_LIMIT).map_err(|source| BioMcpError::Api {
             api: HPA_API.to_string(),
             message: format!("Invalid XML response: {source}"),
-        }
-    })?;
+        })?;
     let root = doc.root_element();
     let entry = if root.has_tag_name("entry") {
         root

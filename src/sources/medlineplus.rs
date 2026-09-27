@@ -182,12 +182,11 @@ fn clean_text(value: &str) -> String {
 }
 
 fn parse_topics(xml: &str) -> Result<Vec<MedlinePlusTopic>, BioMcpError> {
-    let doc = parse_external_xml(xml, ARTICLE_XML_NODE_LIMIT).map_err(|source| {
-        BioMcpError::Api {
+    let doc =
+        parse_external_xml(xml, ARTICLE_XML_NODE_LIMIT).map_err(|source| BioMcpError::Api {
             api: MEDLINEPLUS_API.to_string(),
             message: format!("Invalid XML response: {source}"),
-        }
-    })?;
+        })?;
 
     let mut out = Vec::new();
     for document in doc

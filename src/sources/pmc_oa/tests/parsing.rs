@@ -284,8 +284,10 @@ fn parse_archive_manifest_xml_rejects_a_nesting_bomb() {
     // limit.
     let bomb = format!("<ListBucketResult>{}", "<Version>".repeat(100));
     let err = parse_archive_manifest_xml(&bomb).expect_err("depth bomb rejected");
-    let expected =
-        format!("nesting exceeds {} levels", crate::xml::EXTERNAL_XML_DEPTH_LIMIT);
+    let expected = format!(
+        "nesting exceeds {} levels",
+        crate::xml::EXTERNAL_XML_DEPTH_LIMIT
+    );
     let msg = format!("{err:?}");
     assert!(msg.contains(&expected), "got: {msg}");
 }

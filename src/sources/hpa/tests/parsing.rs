@@ -78,8 +78,10 @@ fn parse_gene_hpa_rejects_a_nesting_bomb() {
     // rejection surfaces as the site's Api error naming the limit.
     let bomb = format!("<entry>{}", "<tissueExpression>".repeat(100));
     let err = parse_gene_hpa(&bomb).expect_err("depth bomb rejected");
-    let expected =
-        format!("nesting exceeds {} levels", crate::xml::EXTERNAL_XML_DEPTH_LIMIT);
+    let expected = format!(
+        "nesting exceeds {} levels",
+        crate::xml::EXTERNAL_XML_DEPTH_LIMIT
+    );
     let msg = format!("{err:?}");
     assert!(msg.contains(&expected), "got: {msg}");
 }

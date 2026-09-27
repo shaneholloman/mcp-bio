@@ -327,12 +327,11 @@ fn decode_aggregate_response(
 }
 
 fn parse_aggregate_response(xml: &str) -> Result<VaersAggregateTable, BioMcpError> {
-    let doc = parse_external_xml(xml, ARTICLE_XML_NODE_LIMIT).map_err(|source| {
-        BioMcpError::Api {
+    let doc =
+        parse_external_xml(xml, ARTICLE_XML_NODE_LIMIT).map_err(|source| BioMcpError::Api {
             api: VAERS_API.to_string(),
             message: format!("Invalid CDC WONDER VAERS XML response: {source}"),
-        }
-    })?;
+        })?;
 
     if let Some(message) = processing_error_message(&doc) {
         return Err(BioMcpError::Api {

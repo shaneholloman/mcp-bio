@@ -97,8 +97,10 @@ fn parse_aggregate_response_rejects_a_nesting_bomb() {
     // happens before the unclosed document reaches the parser.
     let bomb = format!("<page>{}", "<e>".repeat(100));
     let err = parse_aggregate_response(&bomb).expect_err("depth bomb rejected");
-    let expected =
-        format!("nesting exceeds {} levels", crate::xml::EXTERNAL_XML_DEPTH_LIMIT);
+    let expected = format!(
+        "nesting exceeds {} levels",
+        crate::xml::EXTERNAL_XML_DEPTH_LIMIT
+    );
     let msg = format!("{err:?}");
     assert!(msg.contains(&expected), "got: {msg}");
 }
