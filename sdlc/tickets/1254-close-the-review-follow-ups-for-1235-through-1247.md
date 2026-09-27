@@ -108,12 +108,10 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
   because they are environmental — permission changes, NFS stale
   handles, transient contention — and pruning a healthy generation
   over them would be destructive; the errno unit tests record it.
-- Items 5-12: not started; next batch.
-- Code review (batch 3): REJECT once (the unguarded variant-identity
-  fixture start broke two lifecycle tests in copied workspaces),
-  fixed and verified 2026-09-26; batches 1 and 2 accepted below
-- Verification (batch 3): yellow gate at ffd0fcee
-  lint/test/spec/stress OK; see the record
+- Items 5-12: done in batches 2 and 3 (this line said "not
+  started" past the landing; corrected 2026-09-27 — the batch
+  sections below carry the state).
+
 - Item 5 done (batch 2): the licensing guard warns then fails —
   reviewed_on dates 300-365 days old raise a UserWarning naming the
   source and age; anything past 365 fails the canonical test gate
@@ -184,8 +182,9 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
 - Spec fixtures done (batch 3): the spec-contracts lane starts the
   provider-contract and variant-identity fixtures; see the issue's
   verification section.
-- Code review (batch 3): pending review of this branch (batches 1 and 2 accepted below)
-origin/tickets/1254-batch2
+- Code review (batch 3): REJECT once (the unguarded fixture start
+  broke two lifecycle tests in copied workspaces), fixed and
+  verified 2026-09-26; batches 1 and 2 accepted below.
 - Code review (batch 1): ACCEPT with three report-only P2s
   (unused parameter dropped; local-read line recorded; floor
   attestation confirmed) 2026-09-25
@@ -250,4 +249,3 @@ changelog coverage and release provenance suites 92 passed.
   tripwire + ADR/changelog corrections; wait-ratchet hardening,
   stress lane in CI, one-CPU wording, 1248 watch record. See
   `sdlc/records/review-fixes-for-1251-and-1252.md`.
-origin/tickets/1251-1252-review-fixes

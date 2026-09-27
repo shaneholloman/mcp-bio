@@ -41,8 +41,8 @@ deeply nested document on a 2 MiB blocking thread can overflow.
    per-call runtime but drops it with `shutdown_background`, so the
    reply never blocks on background work. Background work today is
    only cache eviction (`spawn_eviction_task`,
-   `src/cache/manager.rs:407-431`); all cache puts are awaited inline
-   (`manager.rs:222-289`), and that invariant is what makes
+   `src/cache/manager.rs`, `spawn_eviction_task`); all cache puts are awaited
+   inline (`put` in the same file), and that invariant is what makes
    `shutdown_background` safe — record it in the code comment, since
    fire-and-forget puts would be lost under `shutdown_background` +
    `process::exit`. Acceptance: a test that MCP tool dispatch
@@ -112,7 +112,7 @@ Items:
    runtime) on the server's long-lived runtime; `WorkerDrive::OneShot`
    keeps a per-call runtime dropped with `shutdown_background`
    (commit b3e390db). The eviction-safety invariant is recorded at
-   `drive_one_shot` (puts awaited inline at manager.rs:222-289, only
+   `drive_one_shot` (puts awaited inline in `manager.rs` `put`, only
    eviction backgrounded at manager.rs:407-431). Acceptance tests
    landed: MCP dispatch builds no runtime (counter seam) and a
    2 s blocking sleeper does not delay a one-shot reply (elapsed
@@ -131,6 +131,7 @@ Items:
    unchanged and commented.
 6. Nothing to do (deferrals already recorded above).
 
-Unverified here: the yellow gate, the full suite, and
-`cargo check --test rmcp_client_contract` after the final XML edit
-(it checked clean after item 4); the gate run owns them.
+Checkpoint at implementation time: the yellow gate, the full
+suite, and `cargo check --test rmcp_client_contract` were unverified
+after the final XML edit. The gate has since run — see the Review
+section's verification line (b0930b51, all four phases OK).

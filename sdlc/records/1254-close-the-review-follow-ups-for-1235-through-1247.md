@@ -1,6 +1,6 @@
 ---
 base: f8c1f223
-head: d8475987
+head: fe90d348 (batch 3 merge; d8475987 was the batch-1 head)
 ---
 
 Batch 1 of the review follow-ups: the DDInter and GenCC items
@@ -55,9 +55,14 @@ first merge dropped), the dangling references repointed, and the
 product does not have, with the stress lane's filters following. The
 health handshake gained a real end-to-end test through a test-only
 address override — and the review's P1 closed it properly: the
-override is gated exactly like the GenCC endpoint (debug assertions
-or an exact loopback test signal), so operator credentials on the
-authed probe arms can never be redirected in release builds; both
+override is gated exactly like the GenCC endpoint: it activates
+only when debug assertions are on, or when the override base is an
+exact loopback address AND the test signal variable is set (2026-09-27
+correction: the earlier wording said "never in release builds" — a
+release build does honor the override when both test variables point
+at loopback; the protection is the loopback-plus-signal pair, which
+an unconfigured attacker cannot satisfy, not the build mode alone);
+both
 sides now parse as URLs with a fallback, and every probe arm
 including the keyed one routes through the gate. Code review REJECT
 once on the ungated override, all eight findings fixed and

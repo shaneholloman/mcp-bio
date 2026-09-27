@@ -169,8 +169,9 @@ The per-item state:
 - Batch 2 (2026-09-26): implemented; validation is fmt + clippy
   (-D warnings) clean and the focused filters green (search_all 41,
   civic 9, cache::manager 27, root_tests 10, entities::disease 77);
-  the yellow gate has NOT run — this state lands for review and gate
-  as the next step
+  the yellow gate had not run at write time; it ran afterward —
+  see the Verification line below (bb516645 per the record). This
+  paragraph is kept as the batch-2 checkpoint, not the final state.
 - Code review (batch 1): ACCEPT with P2s (spacing fixed; JSON note
   and offset wording recorded for batch 2) 2026-09-25
 - Verification (batch 1): yellow gate at 66c55c55 lint/test/spec OK;
