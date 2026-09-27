@@ -153,9 +153,38 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
   `health --api MyGene` against the TLS fixture and proves the shared
   client completes the request: one TLS session and the rewritten
   /v3/query?q=BRAF&size=1 request line both asserted.
-- Items 10-12: not started; next batch (item 9, the pending-review
-  check, landed on main separately).
-- Code review (batches 2-3): pending (batch 1 accepted below)
+- Item 10 done (batch 3): `make verify` runs the panic-recovery
+  contract test in release (a second nextest line next to the
+  ignored-only sweep, the Makefile:109 pattern);
+  `panic_payload_message` lives once in `src/utils/mod.rs`, used by
+  both the MCP tool wrapper and the CLI runner, unit-tested for
+  String, &str, and other payloads; the trial-alias cache locks
+  (read path scoped so the recovered guard never crosses the
+  resolution await) and the cache-operation lease registry (including
+  its condvar wait) recover through the shared helper, with the
+  per-file count test extended (drug/get 2, cache/clear 3).
+- Item 11 done (batch 3): the provider-network inventory counts code
+  only (whole-line comments dropped) and now covers the two shared
+  pool builders in `src/sources/mod.rs`; a fresh-process test builds
+  the real shared pool, ORCID, and CSPEC clients against a VALID
+  bundle and asserts one parse (the loader child resolves lazily so
+  the constructors' parse is the first); `stdio_bad_fallback` now
+  drives initialize + two `biomcp version` calls, awaits both
+  responses, and asserts exactly one warning; a loader case runs a
+  real file named `ca-\xff.pem` and loads it; the `unreachable!` in
+  resolve() degrades to the cached-error shape instead of panicking
+  inside client construction.
+- Item 12 done (batch 3): with label and safety both requested in raw
+  mode, the safety block skips its ordinary Warnings subsection when
+  the raw label section is rendering the same text (the caller passes
+  whether that section renders; a test pins one Warnings heading
+  total, boxed warning kept); `dailymed_setid_url` lives once in
+  `src/entities/drug/label.rs` with the evidence renderer delegating;
+  the drug tests inventory floor is 954 as directed.
+- Spec fixtures done (batch 3): the spec-contracts lane starts the
+  provider-contract and variant-identity fixtures; see the issue's
+  verification section.
+- Code review (batch 3): pending review of this branch (batches 1 and 2 accepted below)
 origin/tickets/1254-batch2
 - Code review (batch 1): ACCEPT with three report-only P2s
   (unused parameter dropped; local-read line recorded; floor

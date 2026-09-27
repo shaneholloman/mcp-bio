@@ -3,7 +3,7 @@
 pub(crate) mod cell_lines;
 mod get;
 pub(crate) mod interactions;
-mod label;
+pub(crate) mod label;
 mod metadata;
 mod query;
 mod search;

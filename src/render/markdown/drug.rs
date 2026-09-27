@@ -107,7 +107,7 @@ pub fn drug_markdown_with_region(
         show_interactions_section => show_interactions_section,
         show_civic_section => show_civic_section,
         regulatory_block => if show_regulatory_section { render_regulatory_block(drug, region) } else { String::new() },
-        safety_block => if show_safety_section { render_safety_block(drug, region, safety_status, safety_state.payload_allowed, show_safety_boxed_warning) } else { String::new() },
+        safety_block => if show_safety_section { render_safety_block(drug, region, safety_status, safety_state.payload_allowed, show_safety_boxed_warning, raw_label && show_label_section) } else { String::new() },
         shortage_block => if show_shortage_section { render_shortage_block(drug, region) } else { String::new() },
         approvals_block => if show_approvals_section {
             match drug.section_outcomes.get("approvals").map(|value| value.outcome()) {

@@ -8,3 +8,22 @@ Filed 2026-09-24 from a 2026-09-13 workspace report. Rechecked on main at `2d985
 - The diagnostic block requires the provider-contract fixture for its GTR response. The variant block requires the variant-identity fixture for its MyVariant response. Normal `spec` mode starts both fixtures. Current-main ticket 1143 records a successful normal specification gate.
 - Manual stdio initialization passed. Manual diagnostic CLI calls followed by stdio initialization also passed after the available specification fixtures were started. No incoming commit changed stdio startup or request execution.
 - The two failures therefore measure missing `spec-contracts` fixture setup. They do not show a product regression in the rich author-papers merge. A BioMCP-owned correction can make the `spec-contracts` branch start and source the existing provider-contract and variant-identity fixtures with their existing cleanup paths.
+
+## Verification (2026-09-26, ticket 1254 batch 3)
+
+The fix is the one this issue named: the `spec-contracts` branch of
+`scripts/run-specs.sh` now runs `run_provider_contract_fixture` and
+`run_variant_identity_fixture` after the article, study, and CTGov
+fixtures, so the two mcp.md blocks read their GTR and MyVariant
+responses from the same fixtures normal `spec` mode starts
+(`run_variant_identity_fixture` brings its Clingen CSPEC sourcing
+along as in full mode). The lifecycle contract test's spec-contracts
+case passes; the remaining lifecycle-test failures in that file are
+pre-existing on the base tree (verified by stashing). Correction
+from code review: the routine_fixture_recovery and
+disease-survival lifecycle failures in copied workspaces WERE
+caused by the first cut of this change (the variant-identity
+fixture start had no existence guard, so bash exited 127 there);
+the guard now restores those workspaces to skipping the fixture,
+matching every sibling fixture runner. First live `make spec-contracts` confirmation runs in
+the batch's yellow gate.
