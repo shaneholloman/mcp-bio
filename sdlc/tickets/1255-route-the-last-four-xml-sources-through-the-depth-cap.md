@@ -33,6 +33,19 @@ can still overflow the parser stack. Ian confirmed this himself.
    it, and must show the checker ignoring a comment that merely
    mentions the call.
 
+## Review
+
+- Design review: n/a (the ticket fixed findings Ian confirmed
+  himself; the fix shape was his direction)
+- Code review: ACCEPT with notes 2026-09-27 — the P1 (record the
+  revert red run) is discharged in the record; the P2s (guard
+  evasion spellings, the single-alias test, the archived probe
+  outside src/) are recorded for ticket 1258's hardening class
+- Verification: yellow gate at 8bf9884a — lint, test, spec, and
+  stress all OK, zero failed lines in the clean log (one earlier
+  gate log was corrupted by two overlapping script instances and
+  was discarded; the clean re-run is the evidence)
+
 ## Acceptance
 
 - The guard test passes on the fixed tree and fails when any one of
