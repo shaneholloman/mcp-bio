@@ -245,6 +245,29 @@ where
     STALE_SERVE_NOTES.scope(std::sync::Arc::new(std::sync::Mutex::new(Vec::new())), fut)
 }
 
+
+/// Run a command future inside the stale-serve scope and append the
+/// text note to a non-JSON text outcome, mirroring what
+/// `run_outcome_on_current_stack` does for the CLI path (ticket
+/// 1256). MCP callers use this so the task-local exists on their
+/// drive thread too.
+pub(crate) async fn run_command_with_stale_serve_notes<F>(
+    fut: F,
+    wants_text_note: bool,
+) -> anyhow::Result<crate::cli::CommandOutcome>
+where
+    F: Future<Output = anyhow::Result<crate::cli::CommandOutcome>>,
+{
+    with_stale_serve_notes(async move {
+        let mut outcome = fut.await?;
+        if wants_text_note && outcome.bytes.is_none() {
+            append_stale_serve_notes_to_text(&mut outcome.text);
+        }
+        Ok(outcome)
+    })
+    .await
+}
+
 /// Record a stale serve when a command scope is active. Sends outside a
 /// command (background syncs) only log.
 fn record_stale_serve(note: StaleServeNote) {

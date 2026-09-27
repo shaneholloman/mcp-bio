@@ -1,512 +1,512 @@
 {
- "schema": "biomcp-rust-source-size-v1",
- "threshold": 1000,
- "entries": [
-  {
-   "path": "src/cache/manager.rs",
-   "baseline_lines": 1115,
-   "floor_lines": 985,
-   "authorized_increase": {
-    "ticket": "1242",
-    "delta": 130,
-    "reason": "Batch 2: stale-serve marker helpers, the cache note consumer, the honest top-gene source label, and the required new struct field.",
-    "removal_condition": "Shrink when the stale label moves into per-source status plumbing and the test field inserts fold into shared fixtures."
-   }
-  },
-  {
-   "path": "src/cache/migration.rs",
-   "baseline_lines": 1088,
-   "floor_lines": 927,
-   "authorized_increase": {
-    "ticket": "1244",
-    "delta": 161,
-    "reason": "The deadline-settle test asserts a post-yield flag instead of vacuous disk checks.",
-    "removal_condition": "Shrink when the migration test module is next reorganized."
-   }
-  },
-  {
-   "path": "src/cache/provider_capture.rs",
-   "baseline_lines": 1508,
-   "floor_lines": 1507,
-   "authorized_increase": {
-    "ticket": "1246",
-    "delta": 1,
-    "reason": "cfg(unix) gates so the Windows contract job can compile the lib tests.",
-    "removal_condition": "Move the unix-only tests behind a shared cfg or split them out."
-   }
-  },
-  {
-   "path": "src/entities/adverse_event.rs",
-   "baseline_lines": 2663,
-   "floor_lines": 2663,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/entities/article/assets.rs",
-   "baseline_lines": 2909,
-   "floor_lines": 2570,
-   "authorized_increase": {
-    "ticket": "1044",
-    "delta": 339,
-    "reason": "JATS-linked captions need candidate transport and field-wise asset merging beside the existing resolver.",
-    "removal_condition": "Extract linked candidate and asset merge handling when the article asset resolver is decomposed."
-   }
-  },
-  {
-   "path": "src/entities/article/fulltext.rs",
-   "baseline_lines": 1727,
-   "floor_lines": 1727,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/entities/article/graph/tests.rs",
-   "baseline_lines": 1733,
-   "floor_lines": 998,
-   "authorized_increase": {
-    "ticket": "1246",
-    "delta": 735,
-    "reason": "cfg(unix) gates so the Windows contract job can compile the lib tests.",
-    "removal_condition": "Move the unix-only tests behind a shared cfg or split them out."
-   }
-  },
-  {
-   "path": "src/entities/article/identity_verification.rs",
-   "baseline_lines": 1398,
-   "floor_lines": 1398,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/entities/article/mod.rs",
-   "baseline_lines": 1385,
-   "floor_lines": 1314,
-   "authorized_increase": {
-    "ticket": "1144",
-    "delta": 71,
-    "reason": "Keep the public citation and reference pagination envelope beside the existing article graph result contract without adding a package file beyond the fixed 1300-file boundary.",
-    "removal_condition": "Extract article graph result types when a package-neutral module split can preserve the exact 1300-file source package boundary."
-   }
-  },
-  {
-   "path": "src/entities/article/variant_search.rs",
-   "baseline_lines": 6116,
-   "floor_lines": 4828,
-   "authorized_increase": {
-    "ticket": "1150",
-    "delta": 1288,
-    "reason": "Invocation deadline ownership, terminal aggregation, debug metadata, and deterministic tests participate directly in the existing variant-literature orchestrator.",
-    "removal_condition": "Extract the variant-literature execution ledger when the orchestrator is next decomposed."
-   }
-  },
-  {
-   "path": "src/entities/author/papers.rs",
-   "baseline_lines": 1597,
-   "floor_lines": 931,
-   "authorized_increase": {
-    "ticket": "1142",
-    "delta": 666,
-    "reason": "The claimed-works algorithm and its proofs live together in the author papers module: group mapping, representative selection, identifier canonicalization, stable deduplication, local slicing, the author-owned compact paper type with its ORCID-only fields, and the transport, bounds, dedupe, pagination, and excluded-identifier suites that prove them, including the review-remediation tests.",
-    "removal_condition": "Extract the ORCID claimed-works mapping into its own module when the author papers surface is next decomposed."
-   }
-  },
-  {
-   "path": "src/entities/discover.rs",
-   "baseline_lines": 4053,
-   "floor_lines": 3694,
-   "authorized_increase": {
-    "ticket": "1243",
-    "delta": 359,
-    "reason": "Boxed the four-way OLS/UMLS/Medline/identity join onto the heap.",
-    "removal_condition": "None; the boxing is the point."
-   }
-  },
-  {
-   "path": "src/entities/drug/get.rs",
-   "baseline_lines": 1122,
-   "floor_lines": 1103,
-   "authorized_increase": {
-    "ticket": "1254",
-    "delta": 19,
-    "reason": "Poison-recovery scoping (get.rs) and the shared panic-payload helper (shell.rs).",
-    "removal_condition": "Revisit when the trial-alias cache moves behind a type and the panic arm shrinks."
-   }
-  },
-  {
-   "path": "src/entities/gene.rs",
-   "baseline_lines": 3858,
-   "floor_lines": 3812,
-   "authorized_increase": {
-    "ticket": "0973, 1213",
-    "delta": 46,
-    "reason": "Canonical MyGene alias identity reuses the existing gene query and ambiguity rules rather than duplicating them in discovery, and the cell_lines helper module declaration (ticket 1213, +1).",
-    "removal_condition": "Extract MyGene identity resolution when the gene entity provider helpers are next decomposed."
-   }
-  },
-  {
-   "path": "src/entities/gene/cspec.rs",
-   "baseline_lines": 1105,
-   "floor_lines": 1068,
-   "authorized_increase": {
-    "ticket": "1033",
-    "delta": 37,
-    "reason": "Short-version selection tests and exact-IRI duplicate validation preserve manifest identity guarantees.",
-    "removal_condition": "Remove when CSpec selection tests move out of this source module."
-   }
-  },
-  {
-   "path": "src/entities/gene/gencc/tests.rs",
-   "floor_lines": 976,
-   "baseline_lines": 1019,
-   "authorized_increase": {
-    "ticket": "1252",
-    "delta": 43,
-    "reason": "the lease handshake conversion and the end-of-input orphan proof",
-    "removal_condition": "Move the helper out or shrink when the size budget tightens."
-   }
-  },
-  {
-   "path": "src/entities/pathway.rs",
-   "baseline_lines": 1314,
-   "floor_lines": 1314,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/entities/pgx.rs",
-   "baseline_lines": 1139,
-   "floor_lines": 1139,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/entities/study.rs",
-   "baseline_lines": 1774,
-   "floor_lines": 1774,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/entities/trial/search/ctgov.rs",
-   "baseline_lines": 1066,
-   "floor_lines": 1000,
-   "authorized_increase": {
-    "ticket": "1242",
-    "delta": 66,
-    "reason": "Batch 1 fixes: plain-word partial note, age filter before detail verification, and the keep-path tests.",
-    "removal_condition": "Shrink when the partial-count telemetry moves behind a shared report type."
-   }
-  },
-  {
-   "path": "src/entities/trial/search/ctgov/tests.rs",
-   "baseline_lines": 1123,
-   "floor_lines": 975,
-   "authorized_increase": {
-    "ticket": "1242",
-    "delta": 148,
-    "reason": "Batch 1 fixes: plain-word partial note, age filter before detail verification, and the keep-path tests.",
-    "removal_condition": "Shrink when the partial-count telemetry moves behind a shared report type."
-   }
-  },
-  {
-   "path": "src/entities/variant/erepo.rs",
-   "baseline_lines": 1026,
-   "floor_lines": 1026,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/entities/variant/get.rs",
-   "baseline_lines": 1255,
-   "floor_lines": 1128,
-   "authorized_increase": {
-    "ticket": "1022, 1035, 1086, 1154",
-    "delta": 127,
-    "reason": "Add narrow dbSNP RefSNP resolution, population-detail selection, traced-test timing support, and direct ClinVar section dispatch.",
-    "removal_condition": "Extract population resolution and section selection when the variant workflow is next decomposed."
-   }
-  },
-  {
-   "path": "src/entities/variant/resolution.rs",
-   "baseline_lines": 1316,
-   "floor_lines": 1291,
-   "authorized_increase": {
-    "ticket": "1056, 1155",
-    "delta": 25,
-    "reason": "Genomic HGVS indel grammar and guidance keep emitted complex variant IDs parseable, and one shared protein equivalence helper prevents exact admission and transcript-role drift.",
-    "removal_condition": "Remove this allowance when variant identity resolution is decomposed."
-   }
-  },
-  {
-   "path": "src/entities/variant/search/mod.rs",
-   "baseline_lines": 1113,
-   "floor_lines": 1000,
-   "authorized_increase": {
-    "ticket": "1155, 1150",
-    "delta": 113,
-    "reason": "Keep exact-search transcript role assignment, all-or-nothing page accounting, bounded projection, and invocation-deadline propagation beside the existing identity filter and pagination owner without adding a package file beyond the fixed 1300-file boundary.",
-    "removal_condition": "Split exact-search result projection when a package-neutral module extraction can preserve the exact 1300-file source package boundary."
-   }
-  },
-  {
-   "path": "src/error.rs",
-   "baseline_lines": 1242,
-   "floor_lines": 1122,
-   "authorized_increase": {
-    "ticket": "1256",
-    "delta": 120,
-    "reason": "The DDInter HTML-download projection arm and its test.",
-    "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
-   }
-  },
-  {
-   "path": "src/generated/google.gdm.gdmscience.alphagenome.v1main.rs",
-   "baseline_lines": 1486,
-   "floor_lines": 1486,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/mcp/shell.rs",
-   "baseline_lines": 2630,
-   "floor_lines": 1956,
-   "authorized_increase": {
-    "ticket": "1254",
-    "delta": 674,
-    "reason": "Poison-recovery scoping (get.rs) and the shared panic-payload helper (shell.rs).",
-    "removal_condition": "Revisit when the trial-alias cache moves behind a type and the panic arm shrinks."
-   }
-  },
-  {
-   "path": "src/render/chart.rs",
-   "baseline_lines": 2068,
-   "floor_lines": 2068,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/render/json.rs",
-   "baseline_lines": 1590,
-   "floor_lines": 1561,
-   "authorized_increase": {
-    "ticket": "1241",
-    "delta": 29,
-    "reason": "DDInter coverage on the drug card, cached-basis freshness, synonyms, and bundle-error naming.",
-    "removal_condition": "Shrink when the drug card model is next refactored."
-   }
-  },
-  {
-   "path": "src/render/markdown/article/tests.rs",
-   "baseline_lines": 1262,
-   "floor_lines": 1207,
-   "authorized_increase": {
-    "ticket": "1144, 1201",
-    "delta": 55,
-    "reason": "Pin the graph pagination footer and shared continuation command on the existing article Markdown renderer test without adding a package file beyond the fixed 1300-file boundary; ticket 1201 adds the header parameter to every article render context literal.",
-    "removal_condition": "Extract graph renderer tests when a package-neutral module split can preserve the exact 1300-file source package boundary."
-   }
-  },
-  {
-   "path": "src/render/markdown/drug/tests.rs",
-   "floor_lines": 954,
-   "baseline_lines": 1004,
-   "authorized_increase": {
-    "ticket": "1254",
-    "delta": 50,
-    "reason": "The 1237 review set the floor to 954; the 1241 baseline sat above it.",
-    "removal_condition": "Shrink when the card fixtures share a builder."
-   }
-  },
-  {
-   "path": "src/render/markdown/related.rs",
-   "baseline_lines": 1140,
-   "floor_lines": 1123,
-   "authorized_increase": {
-    "ticket": "1202",
-    "delta": 17,
-    "reason": "Cell-line next commands beside the other entity related-command builders (ticket 1202, +17).",
-    "removal_condition": "Fold per-entity next-command builders into a shared table when the related renderer is next decomposed."
-   }
-  },
-  {
-   "path": "src/render/markdown/variant/tests.rs",
-   "baseline_lines": 1098,
-   "floor_lines": 1000,
-   "authorized_increase": {
-    "ticket": "1155",
-    "delta": 98,
-    "reason": "Keep byte-exact transcript explanation placement, trusted-slot sentinel, and hostile inline-sanitization regressions beside the existing variant Markdown contract without adding a package file beyond the fixed 1300-file boundary.",
-    "removal_condition": "Split variant-search renderer tests when a package-neutral module extraction can preserve the exact 1300-file source package boundary."
-   }
-  },
-  {
-   "path": "src/render/provenance.rs",
-   "baseline_lines": 1916,
-   "floor_lines": 1847,
-   "authorized_increase": {
-    "ticket": "1256",
-    "delta": 69,
-    "reason": "The DisGeNET seed contribution to the associated-genes provenance row.",
-    "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
-   }
-  },
-  {
-   "path": "src/sources/cbioportal_study.rs",
-   "baseline_lines": 3195,
-   "floor_lines": 3195,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/sources/ema.rs",
-   "baseline_lines": 1003,
-   "floor_lines": 1000,
-   "authorized_increase": {
-    "ticket": "1196",
-    "delta": 3,
-    "reason": "The sync change-flag wrapper records a before/after bundle fingerprint so EMA sync reports a real changed value.",
-    "removal_condition": "Fold the per-source sync fingerprint wrappers into one shared wrapper when the sync layer is next decomposed."
-   }
-  },
-  {
-   "path": "src/sources/fda_orphan.rs",
-   "baseline_lines": 1003,
-   "floor_lines": 999,
-   "authorized_increase": {
-    "ticket": "1221",
-    "delta": 4,
-    "reason": "The bounded acquisition and health-probe clients route through the shared operator CA bundle helper so a private root CA is trusted without disabling verification.",
-    "removal_condition": "Fold the two fixed-route clients into the shared bounded client builder when the FDA orphan lane is decomposed."
-   }
-  },
-  {
-   "path": "src/sources/gencc.rs",
-   "floor_lines": 1000,
-   "baseline_lines": 1008,
-   "authorized_increase": {
-    "ticket": "1252",
-    "delta": 8,
-    "reason": "the settle diagnostic names leaked temporaries",
-    "removal_condition": "Move the helper out or shrink when the size budget tightens."
-   }
-  },
-  {
-   "path": "src/sources/gencc/store.rs",
-   "baseline_lines": 1148,
-   "floor_lines": 1000,
-   "authorized_increase": {
-    "ticket": "1254",
-    "delta": 148,
-    "reason": "Ticket 1254: the DDInter/GenCC review follow-ups (tests and classification).",
-    "removal_condition": "Fold the new tests into shared fixtures when the modules next shrink."
-   }
-  },
-  {
-   "path": "src/sources/gencc/tests.rs",
-   "baseline_lines": 1189,
-   "floor_lines": 982,
-   "authorized_increase": {
-    "ticket": "1254",
-    "delta": 207,
-    "reason": "Ticket 1254: the DDInter/GenCC review follow-ups (tests and classification).",
-    "removal_condition": "Fold the new tests into shared fixtures when the modules next shrink."
-   }
-  },
-  {
-   "path": "src/sources/mod.rs",
-   "baseline_lines": 2540,
-   "floor_lines": 1847,
-   "authorized_increase": {
-    "ticket": "1256",
-    "delta": 693,
-    "reason": "The stale-serve task-local scope, the note recording, the wording helpers, and their tests.",
-    "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
-   }
-  },
-  {
-   "path": "src/sources/myvariant.rs",
-   "baseline_lines": 1469,
-   "floor_lines": 1033,
-   "authorized_increase": {
-    "ticket": "1091, 1154, 1155, 1150",
-    "delta": 436,
-    "reason": "Probe trusted MyGene aliases, preserve ClinVar fallback freshness, stream-isolate bounded SnpEff annotations, and expose deadline-aware construction without adding a package file beyond the fixed 1300-file boundary.",
-    "removal_condition": "Split MyVariant request planning and SnpEff decoding when a package-neutral module extraction can preserve the exact 1300-file source package boundary."
-   }
-  },
-  {
-   "path": "src/sources/ncbi_efetch.rs",
-   "baseline_lines": 1217,
-   "floor_lines": 1000,
-   "authorized_increase": {
-    "ticket": "1154",
-    "delta": 217,
-    "reason": "Keep direct ClinVar transport, bounded typed parsing, and adversarial allocation tests beside the existing NCBI EFetch client without adding a package file beyond the fixed 1300-file boundary.",
-    "removal_condition": "Split the ClinVar transport, parser, and tests when a package-neutral module extraction can preserve the exact 1300-file source package boundary."
-   }
-  },
-  {
-   "path": "src/sources/opentargets.rs",
-   "baseline_lines": 2088,
-   "floor_lines": 2088,
-   "authorized_increase": null
-  },
-  {
-   "path": "src/sources/semantic_scholar.rs",
-   "baseline_lines": 1003,
-   "floor_lines": 959,
-   "authorized_increase": {
-    "ticket": "1143",
-    "delta": 44,
-    "reason": "The rich author-papers wire contract adds full-page field lists, rich response fields, and page validation beside the existing client; dead-code allowances for now-live items were pruned.",
-    "removal_condition": "Extract the author-papers wire types and validation when the source module is next decomposed."
-   }
-  },
-  {
-   "path": "src/sources/tests/provider_network.rs",
-   "baseline_lines": 1005,
-   "floor_lines": 994,
-   "authorized_increase": {
-    "ticket": "1221",
-    "delta": 11,
-    "reason": "The FDA orphan fetch chain now returns a result so an unusable operator CA bundle fails the command; each existing fetch assertion unwraps that result explicitly.",
-    "removal_condition": "Return to a single fetch helper when the FDA orphan cache and client fixtures are consolidated."
-   }
-  },
-  {
-   "path": "src/sources/who_pq.rs",
-   "baseline_lines": 1123,
-   "floor_lines": 1117,
-   "authorized_increase": {
-    "ticket": "1196",
-    "delta": 6,
-    "reason": "The sync change-flag wrapper records a before/after bundle fingerprint so WHO Prequalification sync reports a real changed value.",
-    "removal_condition": "Fold the per-source sync fingerprint wrappers into one shared wrapper when the sync layer is next decomposed."
-   }
-  },
-  {
-   "path": "src/transform/disease.rs",
-   "baseline_lines": 1122,
-   "floor_lines": 1050,
-   "authorized_increase": {
-    "ticket": "1256",
-    "delta": 72,
-    "reason": "The seeded gene-association helper and its tests.",
-    "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
-   }
-  },
-  {
-   "path": "src/transform/drug.rs",
-   "floor_lines": 1000,
-   "baseline_lines": 1062,
-   "authorized_increase": {
-    "ticket": "1254",
-    "delta": 62,
-    "reason": "Anchor-only synonym fold plus the end-to-end identity tests.",
-    "removal_condition": "Split the merge tests into a dedicated tests submodule."
-   }
-  },
-  {
-   "path": "src/transform/variant.rs",
-   "baseline_lines": 1385,
-   "floor_lines": 1335,
-   "authorized_increase": {
-    "ticket": "1154, 1155",
-    "delta": 50,
-    "reason": "Keep MyVariant ClinVar fallback freshness fields and selected SnpEff annotation identity explicit in the existing transformation owner.",
-    "removal_condition": "Remove when ClinVar fallback transformation tests move into their own module."
-   }
-  }
- ]
+  "schema": "biomcp-rust-source-size-v1",
+  "threshold": 1000,
+  "entries": [
+    {
+      "path": "src/cache/manager.rs",
+      "baseline_lines": 1115,
+      "floor_lines": 985,
+      "authorized_increase": {
+        "ticket": "1242",
+        "delta": 130,
+        "reason": "Batch 2: stale-serve marker helpers, the cache note consumer, the honest top-gene source label, and the required new struct field.",
+        "removal_condition": "Shrink when the stale label moves into per-source status plumbing and the test field inserts fold into shared fixtures."
+      }
+    },
+    {
+      "path": "src/cache/migration.rs",
+      "baseline_lines": 1088,
+      "floor_lines": 927,
+      "authorized_increase": {
+        "ticket": "1244",
+        "delta": 161,
+        "reason": "The deadline-settle test asserts a post-yield flag instead of vacuous disk checks.",
+        "removal_condition": "Shrink when the migration test module is next reorganized."
+      }
+    },
+    {
+      "path": "src/cache/provider_capture.rs",
+      "baseline_lines": 1508,
+      "floor_lines": 1507,
+      "authorized_increase": {
+        "ticket": "1246",
+        "delta": 1,
+        "reason": "cfg(unix) gates so the Windows contract job can compile the lib tests.",
+        "removal_condition": "Move the unix-only tests behind a shared cfg or split them out."
+      }
+    },
+    {
+      "path": "src/entities/adverse_event.rs",
+      "baseline_lines": 2663,
+      "floor_lines": 2663,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/entities/article/assets.rs",
+      "baseline_lines": 2909,
+      "floor_lines": 2570,
+      "authorized_increase": {
+        "ticket": "1044",
+        "delta": 339,
+        "reason": "JATS-linked captions need candidate transport and field-wise asset merging beside the existing resolver.",
+        "removal_condition": "Extract linked candidate and asset merge handling when the article asset resolver is decomposed."
+      }
+    },
+    {
+      "path": "src/entities/article/fulltext.rs",
+      "baseline_lines": 1727,
+      "floor_lines": 1727,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/entities/article/graph/tests.rs",
+      "baseline_lines": 1733,
+      "floor_lines": 998,
+      "authorized_increase": {
+        "ticket": "1246",
+        "delta": 735,
+        "reason": "cfg(unix) gates so the Windows contract job can compile the lib tests.",
+        "removal_condition": "Move the unix-only tests behind a shared cfg or split them out."
+      }
+    },
+    {
+      "path": "src/entities/article/identity_verification.rs",
+      "baseline_lines": 1398,
+      "floor_lines": 1398,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/entities/article/mod.rs",
+      "baseline_lines": 1385,
+      "floor_lines": 1314,
+      "authorized_increase": {
+        "ticket": "1144",
+        "delta": 71,
+        "reason": "Keep the public citation and reference pagination envelope beside the existing article graph result contract without adding a package file beyond the fixed 1300-file boundary.",
+        "removal_condition": "Extract article graph result types when a package-neutral module split can preserve the exact 1300-file source package boundary."
+      }
+    },
+    {
+      "path": "src/entities/article/variant_search.rs",
+      "baseline_lines": 6116,
+      "floor_lines": 4828,
+      "authorized_increase": {
+        "ticket": "1150",
+        "delta": 1288,
+        "reason": "Invocation deadline ownership, terminal aggregation, debug metadata, and deterministic tests participate directly in the existing variant-literature orchestrator.",
+        "removal_condition": "Extract the variant-literature execution ledger when the orchestrator is next decomposed."
+      }
+    },
+    {
+      "path": "src/entities/author/papers.rs",
+      "baseline_lines": 1597,
+      "floor_lines": 931,
+      "authorized_increase": {
+        "ticket": "1142",
+        "delta": 666,
+        "reason": "The claimed-works algorithm and its proofs live together in the author papers module: group mapping, representative selection, identifier canonicalization, stable deduplication, local slicing, the author-owned compact paper type with its ORCID-only fields, and the transport, bounds, dedupe, pagination, and excluded-identifier suites that prove them, including the review-remediation tests.",
+        "removal_condition": "Extract the ORCID claimed-works mapping into its own module when the author papers surface is next decomposed."
+      }
+    },
+    {
+      "path": "src/entities/discover.rs",
+      "baseline_lines": 4053,
+      "floor_lines": 3694,
+      "authorized_increase": {
+        "ticket": "1243",
+        "delta": 359,
+        "reason": "Boxed the four-way OLS/UMLS/Medline/identity join onto the heap.",
+        "removal_condition": "None; the boxing is the point."
+      }
+    },
+    {
+      "path": "src/entities/drug/get.rs",
+      "baseline_lines": 1122,
+      "floor_lines": 1103,
+      "authorized_increase": {
+        "ticket": "1254",
+        "delta": 19,
+        "reason": "Poison-recovery scoping (get.rs) and the shared panic-payload helper (shell.rs).",
+        "removal_condition": "Revisit when the trial-alias cache moves behind a type and the panic arm shrinks."
+      }
+    },
+    {
+      "path": "src/entities/gene.rs",
+      "baseline_lines": 3858,
+      "floor_lines": 3812,
+      "authorized_increase": {
+        "ticket": "0973, 1213",
+        "delta": 46,
+        "reason": "Canonical MyGene alias identity reuses the existing gene query and ambiguity rules rather than duplicating them in discovery, and the cell_lines helper module declaration (ticket 1213, +1).",
+        "removal_condition": "Extract MyGene identity resolution when the gene entity provider helpers are next decomposed."
+      }
+    },
+    {
+      "path": "src/entities/gene/cspec.rs",
+      "baseline_lines": 1105,
+      "floor_lines": 1068,
+      "authorized_increase": {
+        "ticket": "1033",
+        "delta": 37,
+        "reason": "Short-version selection tests and exact-IRI duplicate validation preserve manifest identity guarantees.",
+        "removal_condition": "Remove when CSpec selection tests move out of this source module."
+      }
+    },
+    {
+      "path": "src/entities/gene/gencc/tests.rs",
+      "floor_lines": 976,
+      "baseline_lines": 1019,
+      "authorized_increase": {
+        "ticket": "1252",
+        "delta": 43,
+        "reason": "the lease handshake conversion and the end-of-input orphan proof",
+        "removal_condition": "Move the helper out or shrink when the size budget tightens."
+      }
+    },
+    {
+      "path": "src/entities/pathway.rs",
+      "baseline_lines": 1314,
+      "floor_lines": 1314,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/entities/pgx.rs",
+      "baseline_lines": 1139,
+      "floor_lines": 1139,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/entities/study.rs",
+      "baseline_lines": 1774,
+      "floor_lines": 1774,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/entities/trial/search/ctgov.rs",
+      "baseline_lines": 1066,
+      "floor_lines": 1000,
+      "authorized_increase": {
+        "ticket": "1242",
+        "delta": 66,
+        "reason": "Batch 1 fixes: plain-word partial note, age filter before detail verification, and the keep-path tests.",
+        "removal_condition": "Shrink when the partial-count telemetry moves behind a shared report type."
+      }
+    },
+    {
+      "path": "src/entities/trial/search/ctgov/tests.rs",
+      "baseline_lines": 1123,
+      "floor_lines": 975,
+      "authorized_increase": {
+        "ticket": "1242",
+        "delta": 148,
+        "reason": "Batch 1 fixes: plain-word partial note, age filter before detail verification, and the keep-path tests.",
+        "removal_condition": "Shrink when the partial-count telemetry moves behind a shared report type."
+      }
+    },
+    {
+      "path": "src/entities/variant/erepo.rs",
+      "baseline_lines": 1026,
+      "floor_lines": 1026,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/entities/variant/get.rs",
+      "baseline_lines": 1255,
+      "floor_lines": 1128,
+      "authorized_increase": {
+        "ticket": "1022, 1035, 1086, 1154",
+        "delta": 127,
+        "reason": "Add narrow dbSNP RefSNP resolution, population-detail selection, traced-test timing support, and direct ClinVar section dispatch.",
+        "removal_condition": "Extract population resolution and section selection when the variant workflow is next decomposed."
+      }
+    },
+    {
+      "path": "src/entities/variant/resolution.rs",
+      "baseline_lines": 1316,
+      "floor_lines": 1291,
+      "authorized_increase": {
+        "ticket": "1056, 1155",
+        "delta": 25,
+        "reason": "Genomic HGVS indel grammar and guidance keep emitted complex variant IDs parseable, and one shared protein equivalence helper prevents exact admission and transcript-role drift.",
+        "removal_condition": "Remove this allowance when variant identity resolution is decomposed."
+      }
+    },
+    {
+      "path": "src/entities/variant/search/mod.rs",
+      "baseline_lines": 1113,
+      "floor_lines": 1000,
+      "authorized_increase": {
+        "ticket": "1155, 1150",
+        "delta": 113,
+        "reason": "Keep exact-search transcript role assignment, all-or-nothing page accounting, bounded projection, and invocation-deadline propagation beside the existing identity filter and pagination owner without adding a package file beyond the fixed 1300-file boundary.",
+        "removal_condition": "Split exact-search result projection when a package-neutral module extraction can preserve the exact 1300-file source package boundary."
+      }
+    },
+    {
+      "path": "src/error.rs",
+      "baseline_lines": 1242,
+      "floor_lines": 1122,
+      "authorized_increase": {
+        "ticket": "1256",
+        "delta": 120,
+        "reason": "The DDInter HTML-download projection arm and its test.",
+        "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
+      }
+    },
+    {
+      "path": "src/generated/google.gdm.gdmscience.alphagenome.v1main.rs",
+      "baseline_lines": 1486,
+      "floor_lines": 1486,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/mcp/shell.rs",
+      "baseline_lines": 2630,
+      "floor_lines": 1956,
+      "authorized_increase": {
+        "ticket": "1254",
+        "delta": 674,
+        "reason": "Poison-recovery scoping (get.rs) and the shared panic-payload helper (shell.rs).",
+        "removal_condition": "Revisit when the trial-alias cache moves behind a type and the panic arm shrinks."
+      }
+    },
+    {
+      "path": "src/render/chart.rs",
+      "baseline_lines": 2068,
+      "floor_lines": 2068,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/render/json.rs",
+      "baseline_lines": 1590,
+      "floor_lines": 1561,
+      "authorized_increase": {
+        "ticket": "1241",
+        "delta": 29,
+        "reason": "DDInter coverage on the drug card, cached-basis freshness, synonyms, and bundle-error naming.",
+        "removal_condition": "Shrink when the drug card model is next refactored."
+      }
+    },
+    {
+      "path": "src/render/markdown/article/tests.rs",
+      "baseline_lines": 1262,
+      "floor_lines": 1207,
+      "authorized_increase": {
+        "ticket": "1144, 1201",
+        "delta": 55,
+        "reason": "Pin the graph pagination footer and shared continuation command on the existing article Markdown renderer test without adding a package file beyond the fixed 1300-file boundary; ticket 1201 adds the header parameter to every article render context literal.",
+        "removal_condition": "Extract graph renderer tests when a package-neutral module split can preserve the exact 1300-file source package boundary."
+      }
+    },
+    {
+      "path": "src/render/markdown/drug/tests.rs",
+      "floor_lines": 954,
+      "baseline_lines": 1004,
+      "authorized_increase": {
+        "ticket": "1254",
+        "delta": 50,
+        "reason": "The 1237 review set the floor to 954; the 1241 baseline sat above it.",
+        "removal_condition": "Shrink when the card fixtures share a builder."
+      }
+    },
+    {
+      "path": "src/render/markdown/related.rs",
+      "baseline_lines": 1140,
+      "floor_lines": 1123,
+      "authorized_increase": {
+        "ticket": "1202",
+        "delta": 17,
+        "reason": "Cell-line next commands beside the other entity related-command builders (ticket 1202, +17).",
+        "removal_condition": "Fold per-entity next-command builders into a shared table when the related renderer is next decomposed."
+      }
+    },
+    {
+      "path": "src/render/markdown/variant/tests.rs",
+      "baseline_lines": 1098,
+      "floor_lines": 1000,
+      "authorized_increase": {
+        "ticket": "1155",
+        "delta": 98,
+        "reason": "Keep byte-exact transcript explanation placement, trusted-slot sentinel, and hostile inline-sanitization regressions beside the existing variant Markdown contract without adding a package file beyond the fixed 1300-file boundary.",
+        "removal_condition": "Split variant-search renderer tests when a package-neutral module extraction can preserve the exact 1300-file source package boundary."
+      }
+    },
+    {
+      "path": "src/render/provenance.rs",
+      "baseline_lines": 1916,
+      "floor_lines": 1847,
+      "authorized_increase": {
+        "ticket": "1256",
+        "delta": 69,
+        "reason": "The DisGeNET seed contribution to the associated-genes provenance row.",
+        "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
+      }
+    },
+    {
+      "path": "src/sources/cbioportal_study.rs",
+      "baseline_lines": 3195,
+      "floor_lines": 3195,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/sources/ema.rs",
+      "baseline_lines": 1003,
+      "floor_lines": 1000,
+      "authorized_increase": {
+        "ticket": "1196",
+        "delta": 3,
+        "reason": "The sync change-flag wrapper records a before/after bundle fingerprint so EMA sync reports a real changed value.",
+        "removal_condition": "Fold the per-source sync fingerprint wrappers into one shared wrapper when the sync layer is next decomposed."
+      }
+    },
+    {
+      "path": "src/sources/fda_orphan.rs",
+      "baseline_lines": 1003,
+      "floor_lines": 999,
+      "authorized_increase": {
+        "ticket": "1221",
+        "delta": 4,
+        "reason": "The bounded acquisition and health-probe clients route through the shared operator CA bundle helper so a private root CA is trusted without disabling verification.",
+        "removal_condition": "Fold the two fixed-route clients into the shared bounded client builder when the FDA orphan lane is decomposed."
+      }
+    },
+    {
+      "path": "src/sources/gencc.rs",
+      "floor_lines": 1000,
+      "baseline_lines": 1008,
+      "authorized_increase": {
+        "ticket": "1252",
+        "delta": 8,
+        "reason": "the settle diagnostic names leaked temporaries",
+        "removal_condition": "Move the helper out or shrink when the size budget tightens."
+      }
+    },
+    {
+      "path": "src/sources/gencc/store.rs",
+      "baseline_lines": 1148,
+      "floor_lines": 1000,
+      "authorized_increase": {
+        "ticket": "1254",
+        "delta": 148,
+        "reason": "Ticket 1254: the DDInter/GenCC review follow-ups (tests and classification).",
+        "removal_condition": "Fold the new tests into shared fixtures when the modules next shrink."
+      }
+    },
+    {
+      "path": "src/sources/gencc/tests.rs",
+      "baseline_lines": 1189,
+      "floor_lines": 982,
+      "authorized_increase": {
+        "ticket": "1254",
+        "delta": 207,
+        "reason": "Ticket 1254: the DDInter/GenCC review follow-ups (tests and classification).",
+        "removal_condition": "Fold the new tests into shared fixtures when the modules next shrink."
+      }
+    },
+    {
+      "path": "src/sources/mod.rs",
+      "baseline_lines": 2558,
+      "floor_lines": 1847,
+      "authorized_increase": {
+        "ticket": "1256",
+        "delta": 711,
+        "reason": "The stale-serve task-local scope, the note recording, the wording helpers, the MCP drive-through helper, and their tests.",
+        "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
+      }
+    },
+    {
+      "path": "src/sources/myvariant.rs",
+      "baseline_lines": 1469,
+      "floor_lines": 1033,
+      "authorized_increase": {
+        "ticket": "1091, 1154, 1155, 1150",
+        "delta": 436,
+        "reason": "Probe trusted MyGene aliases, preserve ClinVar fallback freshness, stream-isolate bounded SnpEff annotations, and expose deadline-aware construction without adding a package file beyond the fixed 1300-file boundary.",
+        "removal_condition": "Split MyVariant request planning and SnpEff decoding when a package-neutral module extraction can preserve the exact 1300-file source package boundary."
+      }
+    },
+    {
+      "path": "src/sources/ncbi_efetch.rs",
+      "baseline_lines": 1217,
+      "floor_lines": 1000,
+      "authorized_increase": {
+        "ticket": "1154",
+        "delta": 217,
+        "reason": "Keep direct ClinVar transport, bounded typed parsing, and adversarial allocation tests beside the existing NCBI EFetch client without adding a package file beyond the fixed 1300-file boundary.",
+        "removal_condition": "Split the ClinVar transport, parser, and tests when a package-neutral module extraction can preserve the exact 1300-file source package boundary."
+      }
+    },
+    {
+      "path": "src/sources/opentargets.rs",
+      "baseline_lines": 2088,
+      "floor_lines": 2088,
+      "authorized_increase": null
+    },
+    {
+      "path": "src/sources/semantic_scholar.rs",
+      "baseline_lines": 1003,
+      "floor_lines": 959,
+      "authorized_increase": {
+        "ticket": "1143",
+        "delta": 44,
+        "reason": "The rich author-papers wire contract adds full-page field lists, rich response fields, and page validation beside the existing client; dead-code allowances for now-live items were pruned.",
+        "removal_condition": "Extract the author-papers wire types and validation when the source module is next decomposed."
+      }
+    },
+    {
+      "path": "src/sources/tests/provider_network.rs",
+      "baseline_lines": 1005,
+      "floor_lines": 994,
+      "authorized_increase": {
+        "ticket": "1221",
+        "delta": 11,
+        "reason": "The FDA orphan fetch chain now returns a result so an unusable operator CA bundle fails the command; each existing fetch assertion unwraps that result explicitly.",
+        "removal_condition": "Return to a single fetch helper when the FDA orphan cache and client fixtures are consolidated."
+      }
+    },
+    {
+      "path": "src/sources/who_pq.rs",
+      "baseline_lines": 1123,
+      "floor_lines": 1117,
+      "authorized_increase": {
+        "ticket": "1196",
+        "delta": 6,
+        "reason": "The sync change-flag wrapper records a before/after bundle fingerprint so WHO Prequalification sync reports a real changed value.",
+        "removal_condition": "Fold the per-source sync fingerprint wrappers into one shared wrapper when the sync layer is next decomposed."
+      }
+    },
+    {
+      "path": "src/transform/disease.rs",
+      "baseline_lines": 1122,
+      "floor_lines": 1050,
+      "authorized_increase": {
+        "ticket": "1256",
+        "delta": 72,
+        "reason": "The seeded gene-association helper and its tests.",
+        "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
+      }
+    },
+    {
+      "path": "src/transform/drug.rs",
+      "floor_lines": 1000,
+      "baseline_lines": 1062,
+      "authorized_increase": {
+        "ticket": "1254",
+        "delta": 62,
+        "reason": "Anchor-only synonym fold plus the end-to-end identity tests.",
+        "removal_condition": "Split the merge tests into a dedicated tests submodule."
+      }
+    },
+    {
+      "path": "src/transform/variant.rs",
+      "baseline_lines": 1385,
+      "floor_lines": 1335,
+      "authorized_increase": {
+        "ticket": "1154, 1155",
+        "delta": 50,
+        "reason": "Keep MyVariant ClinVar fallback freshness fields and selected SnpEff annotation identity explicit in the existing transformation owner.",
+        "removal_condition": "Remove when ClinVar fallback transformation tests move into their own module."
+      }
+    }
+  ]
 }

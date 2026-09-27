@@ -619,24 +619,17 @@ async fn run_outcome_with_worker_stack(
             .spawn(move || -> anyhow::Result<CommandOutcome> {
                 let command = async {
                     if alias_suggestions_as_json {
-                        // MCP path: the stale-serve scope must wrap the
-                        // command the same way run_outcome_on_current_stack
-                        // wraps the CLI path, or the task-local never
-                        // exists here and no recording lands (ticket 1256).
-                        // The text note is appended inside this scope,
-                        // before shell.rs redacts MCP output; JSON bodies
-                        // drain their notes into _meta.notes at payload
-                        // build time, inside run_outcome_inner.
-                        let json = cli.json || command_requests_json(&cli.command);
-                        let trusted_terminal_chart =
-                            is_charted_mcp_study_command(&cli).unwrap_or(false);
-                        crate::sources::with_stale_serve_notes(async {
-                            let mut outcome = Box::pin(run_outcome_inner(cli, true)).await?;
-                            if !json && outcome.bytes.is_none() && !trusted_terminal_chart {
-                                crate::sources::append_stale_serve_notes_to_text(&mut outcome.text);
-                            }
-                            Ok::<CommandOutcome, anyhow::Error>(outcome)
-                        })
+                        // MCP path (ticket 1256): the helper scopes the
+                        // command with the stale-serve task-local (JSON
+                        // bodies drain notes into _meta.notes inside
+                        // run_outcome_inner) and appends the text note
+                        // before shell.rs redacts MCP output.
+                        let wants_text_note = !(cli.json || command_requests_json(&cli.command))
+                            && !is_charted_mcp_study_command(&cli).unwrap_or(false);
+                        crate::sources::run_command_with_stale_serve_notes(
+                            Box::pin(run_outcome_inner(cli, true)),
+                            wants_text_note,
+                        )
                         .await
                     } else {
                         run_outcome_on_current_stack(cli).await
