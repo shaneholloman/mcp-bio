@@ -639,8 +639,8 @@ impl WorkerDrive {
 /// Build the per-call runtime, drive the future, and drop the runtime
 /// without waiting for background work. Safety invariant: every cache
 /// put is awaited inline in the request path
-/// (`src/cache/manager.rs:222-289`); the only background work is
-/// eviction (`spawn_eviction_task`, `src/cache/manager.rs:407-431`),
+/// (src/cache/manager.rs put at :267); the only background work is
+/// eviction (spawn_eviction_task, src/cache/manager.rs at :441),
 /// and a partially run eviction leaves atomic cacache removals, never
 /// corruption. Fire-and-forget puts would be lost under
 /// `shutdown_background` + `process::exit` — do not add them.

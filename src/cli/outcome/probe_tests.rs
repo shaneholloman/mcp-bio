@@ -85,7 +85,7 @@ mod runtime_split {
         let reply = super::super::drive_one_shot(async {
             tokio::task::spawn_blocking(|| {
                 // watchdog: red-side hang — the sleeper must outlive the reply
-                std::thread::sleep(Duration::from_secs(2));
+                std::thread::sleep(Duration::from_secs(2)); // watchdog: bounded blocking-sleeper fixture
             });
             anyhow::Ok(())
         });

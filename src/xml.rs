@@ -183,9 +183,10 @@ mod tests {
 
     #[test]
     fn rejects_a_nesting_bomb_with_an_error() {
-        // 100k nested elements parse (iteratively, under the node
-        // limit) and the depth walk rejects them; a recursive parse
-        // or walker would overflow the blocking-thread stack here.
+        // the scan rejects the document before parse: roxmltree's
+        // parser recurses per open tag (the recorded deviation), so a
+        // recursive parse would overflow the blocking-thread stack
+        // here without the pre-parse rejection.
         let opens = "<b>".repeat(100_000);
         let bomb = format!("<a>{opens}");
         assert!(matches!(
