@@ -14,7 +14,7 @@ pub(crate) const EXTERNAL_XML_DEPTH_LIMIT: u32 = 64;
 pub(crate) enum ExternalXmlError {
     #[error("XML entity declarations are not supported")]
     EntityDeclaration,
-    #[error("invalid XML")]
+    #[error("invalid XML: {0}")]
     Parse(#[source] roxmltree::Error),
     #[error("XML nesting exceeds {0} levels")]
     DepthLimitExceeded(u32),
