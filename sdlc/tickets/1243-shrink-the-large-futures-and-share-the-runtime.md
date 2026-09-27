@@ -82,4 +82,53 @@ deeply nested document on a 2 MiB blocking thread can overflow.
   per-call runtime at outcome.rs:610-626 serves the MCP path too;
   probe misstated; depth-cap placement unspecified; two issue items
   dropped silently), findings folded, re-review ACCEPT 2026-09-25
+## Implementation state (2026-09-27)
+
+Measured future sizes (bytes, debug test profile, via the probe's
+assert messages):
+
+- base fe691c48: dispatch 225,312; run 227,856
+- after the scoped no-cache return: dispatch 113,520; run 114,512
+- after boxing the arms and join: dispatch 2,240; run 2,656
+
+Items:
+
+1. DONE — `with_no_cache` returns `NO_CACHE.scope(no_cache, fut)`
+   (commit b39881ea).
+2. DONE — all 15 `with_no_cache` dispatch arms boxed in
+   `run_outcome_inner`, 47 handler awaits boxed in `run`, and the
+   four-way OLS/UMLS/Medline/identity join boxed in discover
+   (all-to-completion semantics unchanged) (commit 5a8f2909).
+3. DONE — the stable probe lives in
+   `src/cli/outcome/probe_tests.rs` with the measured history in its
+   doc comment; ceilings 4,096 (dispatch) and 8,192 (run)
+   (commit 5a8f2909).
+4. DONE — `WorkerDrive::Shared(Handle)` drives MCP calls
+   (`execute_mcp_cli`, falling back to one-shot with no ambient
+   runtime) on the server's long-lived runtime; `WorkerDrive::OneShot`
+   keeps a per-call runtime dropped with `shutdown_background`
+   (commit b3e390db). The eviction-safety invariant is recorded at
+   `drive_one_shot` (puts awaited inline at manager.rs:222-289, only
+   eviction backgrounded at manager.rs:407-431). Acceptance tests
+   landed: MCP dispatch builds no runtime (counter seam) and a
+   2 s blocking sleeper does not delay a one-shot reply (elapsed
+   asserted under 1 s).
+5. DONE — XML depth cap at 64 levels, set from the corpus (deepest
+   tracked fixture nests 9; JATS stays an order below). DEVIATION
+   RECORDED: the design placed the walk post-parse, but the
+   nesting-bomb test proved roxmltree's own parse recurses per open
+   tag (the test overflowed the stack inside Document::parse), so the
+   counter runs in the pre-parse byte scan and rejects before
+   parsing; the revision is commented in the code. Blocking-thread
+   stacks raised to 4 MiB on both runtimes item 4 touched: the
+   one-shot builder (`thread_stack_size` in `drive_one_shot`) and the
+   shared server runtime (main.rs replaced `#[tokio::main]` with an
+   explicit Builder); the 8 MiB execute-stack pin from ticket 1225 is
+   unchanged and commented.
+6. Nothing to do (deferrals already recorded above).
+
+Unverified here: the yellow gate, the full suite, and
+`cargo check --test rmcp_client_contract` after the final XML edit
+(it checked clean after item 4); the gate run owns them.
+
 - Code review: pending
