@@ -137,13 +137,31 @@ def _logical_lines(text: str) -> list[tuple[int, str]]:
 
 
 def _non_review_body(text: str) -> str:
-    """The ticket text outside grammar-parsed review records."""
+    """The ticket text outside grammar-parsed review records.
+
+    Mirrors `_logical_lines`' joining so a wrapped review bullet is
+    removed whole, while plain prose lines pass through untouched.
+    """
     keep: list[str] = []
-    for _, _marker, text_line in _logical_lines(text):
-        if REVIEW_LINE.match(text_line):
-            continue
-        keep.append(text_line)
-    return "\n".join(keep)
+    current: list[str] | None = None
+    for line in text.splitlines():
+        bullet = re.match(r"^\s*(-|\*|\+|\d+\.)\s+(.*)$", line)
+        if bullet is not None:
+            if current is not None:
+                keep.append(" ".join(current))
+            current = [bullet.group(2)]
+        elif current is not None and (line.startswith("  ") or line.strip()):
+            current.append(line.strip())
+        else:
+            if current is not None:
+                keep.append(" ".join(current))
+                current = None
+            keep.append(line)
+    if current is not None:
+        keep.append(" ".join(current))
+    return "\n".join(
+        joined for joined in keep if REVIEW_LINE.match(joined) is None
+    )
 
 
 def _review_records(path: Path) -> list[dict[str, object]]:
@@ -181,11 +199,11 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
 
     # Format: any review-ish logical line that is not exactly the
     # grammar is a failure, whatever spelling it used.
-    for number, marker, text in _logical_lines(text_lines):
+    for number, marker, logical_text in _logical_lines(text_lines):
         if marker == "-" and REVIEW_LINE.match(text) is not None:
             continue
         if REVIEWISH.match(text) or VERIFICATION_ISH.match(text):
-            failures.append(f"{relative}:{number}: review line is not the grammar: {text[:70]}")
+            failures.append(f"{relative}:{number}: review line is not the grammar: {logical_text[:70]}")
 
     # Scope conflicts: a pending scoped line whose kind+scope already
     # carries a verdict somewhere in the file is stale, wherever the
@@ -216,7 +234,7 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
             failures.append(
                 f'{relative}:{record["line"]}: scope {scope!r} names no batch or item slice'
             )
-        elif not _scope_names_a_real_slice(scope, _non_review_body(text)):
+        elif not _scope_names_a_real_slice(scope, _non_review_body(text_lines)):
             failures.append(
                 f'{relative}:{record["line"]}: scope {scope!r} names a batch or item '
                 f"the ticket never mentions"
