@@ -1,8 +1,6 @@
 //! How the bounded execute thread drives a command future.
 //! Split from `cli/outcome.rs` under the 700-line CLI cap.
 
-use std::future::Future;
-
 /// Blocking-thread stack headroom above the XML depth cap (the cap is
 /// the control; this is margin for the recursive JATS and ClinVar
 /// walkers that run on blocking threads). Ticket 1243.
