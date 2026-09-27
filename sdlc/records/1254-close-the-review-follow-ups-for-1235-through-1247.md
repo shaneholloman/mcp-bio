@@ -63,3 +63,26 @@ including the keyed one routes through the gate. Code review REJECT
 once on the ungated override, all eight findings fixed and
 re-verified; yellow gate at 43e86ff6 — lint, test, and spec OK.
 Batch 3 (items 10-12, the 1235/1236/1237 minors) remains.
+
+## Batch 3 (2026-09-26)
+
+Items 10-12 and the spec-fixtures triage landed; the ticket is
+complete. The panic-recovery contract test now runs in release under
+`make verify`; `panic_payload_message` has one definition and unit
+tests; the trial-alias and lease locks recover through the shared
+poison helper with the read guard scoped before its await; the
+provider-network inventory counts code only and covers the two real
+pool builders, with a fresh-process test proving the real shared,
+ORCID, and CSPEC constructors parse a valid bundle exactly once; the
+stdio fallback test drives two tool calls and asserts one warning;
+the loader handles a real `ca-\xff.pem`; the unreachable arm degrades
+honestly; the doubled Warnings heading is gone with one-heading
+pinned; `dailymed_setid_url` has one home; the drug tests floor is
+back to 954. The spec-contracts lane runs the provider-contract and
+variant-identity fixtures the issue named, with the copied-workspace
+guard every sibling runner carries — the review caught that the
+first cut broke two lifecycle tests in scratch checkouts (bash 127)
+and the correction is recorded in the issue file. Code review REJECT
+once on exactly that, fixed; the issue's verification section now
+tells the truth about which local failures were pre-existing.
+Yellow gate at ffd0fcee — lint, test, spec, and stress all OK.

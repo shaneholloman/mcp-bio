@@ -109,7 +109,11 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
   handles, transient contention — and pruning a healthy generation
   over them would be destructive; the errno unit tests record it.
 - Items 5-12: not started; next batch.
-- Code review (batch 3): pending (batches 1 and 2 accepted below)
+- Code review (batch 3): REJECT once (the unguarded variant-identity
+  fixture start broke two lifecycle tests in copied workspaces),
+  fixed and verified 2026-09-26; batches 1 and 2 accepted below
+- Verification (batch 3): yellow gate at ffd0fcee
+  lint/test/spec/stress OK; see the record
 - Item 5 done (batch 2): the licensing guard warns then fails —
   reviewed_on dates 300-365 days old raise a UserWarning naming the
   source and age; anything past 365 fails the canonical test gate

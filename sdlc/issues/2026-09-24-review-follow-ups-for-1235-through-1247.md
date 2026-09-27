@@ -25,3 +25,13 @@ Filed 2026-09-24 from reviews of the tickets merged 2026-09-23 and 2026-09-24. T
 - 1239: EACCES, ESTALE, and EAGAIN map to prune. Decide and record whether that is intended.
 - Tickets 1239, 1240, 1241, and 1245 still say "Code review: pending" after acceptance. Add a check that fails when a ticket with a record file still says pending.
 - cf22293c replaced the other repository's name with "BD". That is invented shorthand. Write "another repository's gate", or fix the coupling gate if naming that public repository is allowed.
+
+## Resolved
+
+Ticket 1254, all three batches, plus the pending-review check
+(landed first), the 1251/1252 review fixes, and the 1242 batches.
+Every should-fix from this review landed or is recorded as a named
+residual in the owning ticket (the default-card owns=true mislabel,
+the dispatch-level drive test, the CIViC double-rename shape, the
+1243 blocking-stack raise verification). See the 1254 record and
+`sdlc/records/review-fixes-for-1251-and-1252.md`.
