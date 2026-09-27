@@ -412,11 +412,16 @@ fn resolve_cache_mode(
     env_mode
 }
 
-pub(crate) async fn with_no_cache<R, F>(no_cache: bool, fut: F) -> R
+/// A plain function returning the scoped future. Taking the future
+/// by value inside an `async fn` kept the generator holding both the
+/// `Scope` future and the inner future's state, doubling the dispatch
+/// future's size; returning the scope directly keeps one copy (ticket
+/// 1243).
+pub(crate) fn with_no_cache<R, F>(no_cache: bool, fut: F) -> impl Future<Output = R>
 where
     F: Future<Output = R>,
 {
-    NO_CACHE.scope(no_cache, fut).await
+    NO_CACHE.scope(no_cache, fut)
 }
 
 pub(crate) fn is_no_cache_enabled() -> bool {

@@ -405,13 +405,13 @@
     },
     {
       "path": "src/sources/mod.rs",
-      "baseline_lines": 2324,
+      "baseline_lines": 2329,
       "floor_lines": 1847,
       "authorized_increase": {
-        "ticket": "1242",
-        "delta": 477,
-        "reason": "Batch 2: stale-serve marker helpers, the cache note consumer, the honest top-gene source label, and the required new struct field.",
-        "removal_condition": "Shrink when the stale label moves into per-source status plumbing and the test field inserts fold into shared fixtures."
+        "ticket": "1243",
+        "delta": 482,
+        "reason": "The doc comment on the desugared with_no_cache return.",
+        "removal_condition": "Fold into the existing module docs on the next edit."
       }
     },
     {
