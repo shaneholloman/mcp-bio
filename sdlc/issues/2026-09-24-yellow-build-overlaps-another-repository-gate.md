@@ -1,6 +1,6 @@
 # Yellow build overlaps another repository gate
 
-Status: open. Reported 2026-09-24 during the other repository's ticket 0171 verification.
+Status: resolved. Reported 2026-09-24 during the other repository's ticket 0171 verification; the decision and lock protocol below supersede the open status.
 
 ## Observation
 
@@ -20,11 +20,24 @@ Edit 2026-09-24 (queue owner): the original text named the other
 repository, which this repository's zero-coupling gate forbids; the
 name is now the generic phrase "the other repository". No observation changed.
 
-## Shared-lock protocol (2026-09-26, Ian's direction)
+## Shared-lock protocol (2026-09-26, Ian's direction; wording
+## corrected 2026-09-27)
 
-BioMCP's gate scripts now take `~/.yellow-gate.lock` for the ENTIRE
-job — acquire before `make lint` and release after `GATES-DONE` —
-using `flock` (verified working on the host):
+Correction (2026-09-27 review): the paragraphs below first claimed
+BioMCP's gate scripts already take the lock. They do not. The
+flock-acquisition code lives in the dotfiles-side runner, and the
+dotfiles issue
+`sdlc/issues/2026-09-24-yellow-lock-available-during-active-checks.md`
+records the lock free during BioMCP checks twice, including a
+recurrence on 2026-09-26 involving an agent's `run-gates-*.sh`
+wrapper. The protocol below is the recorded rule for when host
+coordination resumes; it is not mechanically wired into BioMCP's
+own scripts, and the ad-hoc agent gates run since 2026-09-26 relied
+on Ian's "you own yellow for now" grant, not on the lock.
+
+The protocol itself, when coordination resumes: take
+`~/.yellow-gate.lock` for the ENTIRE job — acquire before
+`make lint` and release after `GATES-DONE` — using `flock`:
 
     exec 9>"$HOME/.yellow-gate.lock"
     flock 9
@@ -40,7 +53,11 @@ overlapping.
 ## Resolved
 
 The process rule is in force and recorded here: one gate at a time,
-checked before launch; since 2026-09-26 BioMCP gate scripts take
-`~/.yellow-gate.lock` for the entire job (flock), so a starting job
-waits rather than overlaps. The single overlap that motivated this
+checked before launch; when host coordination resumes the runner
+takes `~/.yellow-gate.lock` for the entire job (flock), so a
+starting job waits rather than overlaps. Until the lock is wired
+into the runner (dotfiles issue
+`2026-09-24-yellow-lock-available-during-active-checks.md`), the
+grant "you own yellow for now" is the working control and the pgrep
+idle check is the fallback.
 file was the last; none since.

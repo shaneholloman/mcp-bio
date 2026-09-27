@@ -1,6 +1,6 @@
 # Test server terminated without confirmed ownership
 
-Status: open; impact unverified. Reported September 25, 2026 during a shared build-host gate attempt from another repository. This is an incident record, not a runtime change or release handoff.
+Status: resolved (see the Decision section); impact unverified at the time of the report. Reported September 25, 2026 during a shared build-host gate attempt from another repository. This is an incident record, not a runtime change or release handoff.
 
 ## Reported action and evidence
 
