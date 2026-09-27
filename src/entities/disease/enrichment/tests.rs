@@ -481,11 +481,6 @@ fn top_genes_label_names_the_fallback_when_open_targets_did_not_produce_them() {
     assert_eq!(disease.top_gene_source, None);
 }
 
-    // Open Targets owning the list keeps the default heading.
-    super::assign_top_genes(&mut disease, true);
-    assert_eq!(disease.top_gene_source, None);
-}
-
 #[test]
 fn top_genes_label_names_the_disgenet_seed_from_the_mydisease_hit() {
     // Open Targets produced nothing; the MyDisease hit's embedded DisGeNET
