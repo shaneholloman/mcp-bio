@@ -26,29 +26,6 @@ pub(super) static ONE_SHOT_RUNTIMES_BUILT: std::sync::atomic::AtomicUsize =
 /// use nextest, where no other test shares the process. `drive_one_shot` increments it
 /// alongside the production counter; the test asserts both so the
 /// seam cannot drift from what production counts.
-#[cfg(test)]
-pub(crate) mod mcp_runtime_probe {
-    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-
-    static ARMED: AtomicBool = AtomicBool::new(false);
-    pub(crate) static ONE_SHOTS_DURING_PROBE: AtomicUsize = AtomicUsize::new(0);
-
-    pub(crate) fn arm() {
-        ARMED.store(true, Ordering::SeqCst);
-        ONE_SHOTS_DURING_PROBE.store(0, Ordering::SeqCst);
-    }
-
-    pub(crate) fn disarm() {
-        ARMED.store(false, Ordering::SeqCst);
-    }
-
-    pub(crate) fn count_increment() {
-        if ARMED.load(Ordering::SeqCst) {
-            ONE_SHOTS_DURING_PROBE.fetch_add(1, Ordering::SeqCst);
-        }
-    }
-}
-
 /// How the dedicated execute thread drives the command future
 /// (ticket 1243).
 pub(super) enum WorkerDrive {
@@ -94,4 +71,27 @@ where
     let output = runtime.block_on(fut);
     runtime.shutdown_background();
     Ok(output)
+}
+
+#[cfg(test)]
+pub(crate) mod mcp_runtime_probe {
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+    static ARMED: AtomicBool = AtomicBool::new(false);
+    pub(crate) static ONE_SHOTS_DURING_PROBE: AtomicUsize = AtomicUsize::new(0);
+
+    pub(crate) fn arm() {
+        ARMED.store(true, Ordering::SeqCst);
+        ONE_SHOTS_DURING_PROBE.store(0, Ordering::SeqCst);
+    }
+
+    pub(crate) fn disarm() {
+        ARMED.store(false, Ordering::SeqCst);
+    }
+
+    pub(crate) fn count_increment() {
+        if ARMED.load(Ordering::SeqCst) {
+            ONE_SHOTS_DURING_PROBE.fetch_add(1, Ordering::SeqCst);
+        }
+    }
 }
