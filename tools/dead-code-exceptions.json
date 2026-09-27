@@ -1104,8 +1104,8 @@
     },
     {
       "path": "src/cli/discover.rs",
-      "scope": "field",
-      "item": "cache_mode: crate::sources::TestCacheModeGuard",
+      "scope": "item",
+      "item": "cache_mode: crate::sources::TestCacheModeGuard,",
       "occurrence": 1,
       "owner": "1261",
       "reason": "Held for its Drop (restores the test cache-mode override); the field itself is never read by design",
