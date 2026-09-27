@@ -82,6 +82,18 @@ RESOLVED_BY = re.compile(
 # only when that slice is genuinely open (no sibling verdict line for
 # the same kind and scope anywhere in the file).
 SCOPE_SLICE = re.compile(r"\b(batch|item)s?\b", re.IGNORECASE)
+SCOPE_TOKEN = re.compile(r"\b\d+\b")
+
+
+def _scope_names_a_real_slice(scope: str, body: str) -> bool:
+    """A pending scope may only name slices the ticket itself defines.
+
+    Every numeric token in the scope must appear word-bounded in the
+    ticket's non-review body; a scope with no numeric token (a bare
+    "batches" or "items") stays allowed.
+    """
+    tokens = SCOPE_TOKEN.findall(scope)
+    return all(re.search(rf"\b{re.escape(token)}\b", body) for token in tokens)
 
 
 def _ticket_number(path: Path) -> str:
@@ -122,6 +134,16 @@ def _logical_lines(text: str) -> list[tuple[int, str]]:
     if current is not None:
         lines.append((current[0], current[1], " ".join(current[2])))
     return lines
+
+
+def _non_review_body(text: str) -> str:
+    """The ticket text outside grammar-parsed review records."""
+    keep: list[str] = []
+    for _, marker, text_line in _logical_lines(text.splitlines()):
+        if REVIEW_LINE.match(text_line):
+            continue
+        keep.append(text_line)
+    return "\n".join(keep)
 
 
 def _review_records(path: Path) -> list[dict[str, object]]:
@@ -193,6 +215,11 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
         elif not SCOPE_SLICE.search(scope):
             failures.append(
                 f'{relative}:{record["line"]}: scope {scope!r} names no batch or item slice'
+            )
+        elif not _scope_names_a_real_slice(scope, _non_review_body(text_lines)):
+            failures.append(
+                f'{relative}:{record["line"]}: scope {scope!r} names a batch or item '
+                f"the ticket never mentions"
             )
 
     # Rejections resolve: a REJECT/BLOCK state needs a later ACCEPT
@@ -266,6 +293,12 @@ def test_the_grammar_catches_shapes_it_was_never_told_about(
     assert probe("## Review\n\n- Code review: REJECT once (bad)\n")
     # Never-told-about mutation 7: a kind glued to other words.
     assert probe("## Review\n\n- Code review verdict: pending\n")
+    # Never-told-about mutation 8: a scope naming a batch the ticket
+    # never mentions.
+    assert probe(
+        "## Order\n\nItems 1-4 land in one batch.\n\n## Review\n\n"
+        "- Code review (batch 7): pending\n"
+    )
 
     # The honest shapes stay green.
     assert probe("## Review\n\n- Code review: ACCEPT 2026-09-25\n") is None
@@ -279,41 +312,19 @@ def test_the_grammar_catches_shapes_it_was_never_told_about(
     (tmp_path / "tickets" / "9002-open.md").write_text(
         "## Review\n\n- Code review: pending\n", encoding="utf-8"
     )
+    assert (
+        probe(
+            "## Order\n\nItems 5-9 are a second batch.\n\n## Review\n\n"
+            "- Code review (batch 2): pending\n"
+        )
+        is None
+    )
     assert _review_failures(tmp_path / "tickets" / "9002-open.md", landed=False) == []
 
 
 MARKER_START = re.compile(r"^<{7} ")
 MARKER_END = re.compile(r"^>{7} ")
 MARKER_SEP = re.compile(r"^={7}$")
-
-
-def _ticket_number(path: Path) -> str:
-    return path.name.split("-", 1)[0]
-
-
-def _landed_ticket_paths() -> list[Path]:
-    records_dir = REPO_ROOT / "sdlc" / "records"
-    landed_numbers = {
-        _ticket_number(record) for record in records_dir.glob("[0-9]" * 4 + "-*.md")
-    }
-    tickets = sorted((REPO_ROOT / "sdlc" / "tickets").glob("[0-9]" * 4 + "-*.md"))
-    return [t for t in tickets if _ticket_number(t) in landed_numbers]
-
-
-def _pending_review_lines(ticket: Path) -> list[tuple[int, str]]:
-    offenses: list[tuple[int, str]] = []
-    text = ticket.read_text(encoding="utf-8")
-    for match in REVIEW_LINE.finditer(text):
-        if not PENDING.search(match.group("verdict")):
-            continue
-        scope_text = match.group("scope_text") or match.group("scope_text_pre")
-        if scope_text and SCOPED.search(scope_text):
-            # A pending slice of an otherwise landed ticket: the scope
-            # names the part (batch, item) that has not landed yet.
-            continue
-        line = text.count("\n", 0, match.start()) + 1
-        offenses.append((line, match.group(0).strip()))
-    return offenses
 
 
 def _tracked_files() -> list[str]:
@@ -384,4 +395,4 @@ def test_review_scan_requires_a_records_directory(
     import sys
 
     monkeypatch.setattr(sys.modules[__name__], "REPO_ROOT", tmp_path)
-    assert _landed_ticket_paths() == []
+    assert _landed_ticket_numbers() == set()

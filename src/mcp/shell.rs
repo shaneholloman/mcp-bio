@@ -2138,7 +2138,7 @@ mod tests {
         assert_eq!(merged["uniqueItems"], json!(true));
     }
 
-#[test]
+    #[test]
     #[should_panic(expected = "unmerged schema clash")]
     fn a_conflicting_scalar_bound_panics_instead_of_first_value_wins() {
         let branches = [
