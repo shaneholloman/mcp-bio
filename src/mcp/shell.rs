@@ -1549,13 +1549,7 @@ impl ServerHandler for BioMcpServer {
         {
             Ok(result) => result,
             Err(payload) => {
-                let message = if let Some(message) = payload.downcast_ref::<String>() {
-                    message.as_str()
-                } else if let Some(message) = payload.downcast_ref::<&str>() {
-                    message
-                } else {
-                    "unknown panic payload"
-                };
+                let message = crate::utils::panic_payload_message(payload.as_ref());
                 Ok(Self::tool_error(format!(
                     "Error: MCP tool panicked: {message}"
                 )))

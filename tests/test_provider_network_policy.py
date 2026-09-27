@@ -137,10 +137,21 @@ def test_no_path_disables_certificate_verification_or_replaces_bundled_roots() -
     assert "tls_built_in_root_certs" not in helper
 
 
+def production_text(path) -> str:
+    # Count code, not commented-out code: drop whole-line comments.
+    # (Trailing comments cannot be stripped without Rust-aware
+    # parsing; a call spelling inside a string literal is not a
+    # realistic regression here.)
+    lines = path.read_text().splitlines()
+    return "\n".join(line for line in lines if not line.lstrip().startswith("//"))
+
+
 def test_every_touched_production_builder_applies_the_operator_ca_bundle() -> None:
     # The inventory above counts constructions; this pins that every builder
     # this ticket touched routes through the shared CA-bundle helper so an
     # operator-supplied private root is trusted without disabling verification.
+    # src/sources/mod.rs carries the two shared-pool builders (cached and
+    # uncached) and is counted here, not skipped.
     for relative, calls in {
         "src/sources/ordinary_url_policy.rs": {
             "ca_bundle::configure(": 2,
@@ -154,7 +165,8 @@ def test_every_touched_production_builder_applies_the_operator_ca_bundle() -> No
         "src/cli/health/runner.rs": {"ca_bundle::build_client(": 1},
         "src/sources/orcid.rs": {"ca_bundle::build(": 1},
         "src/sources/clingen_cspec.rs": {"ca_bundle::build(": 1},
+        "src/sources/mod.rs": {"ca_bundle::build(": 2},
     }.items():
-        text = (ROOT / relative).read_text()
+        text = production_text(ROOT / relative)
         for call, expected in calls.items():
             assert text.count(call) == expected, (relative, call)

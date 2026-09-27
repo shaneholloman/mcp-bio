@@ -30,6 +30,17 @@ fn label_text(value: Option<&serde_json::Value>) -> Option<String> {
     }
 }
 
+/// The DailyMed full-label URL for a SET ID; empty ids map to None.
+pub(crate) fn dailymed_setid_url(set_id: &str) -> Option<String> {
+    let set_id = set_id.trim();
+    if set_id.is_empty() {
+        return None;
+    }
+    let mut url = reqwest::Url::parse("https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm").ok()?;
+    url.query_pairs_mut().append_pair("setid", set_id);
+    Some(url.into())
+}
+
 fn truncate_with_note(value: &str, max_chars: usize, label_set_id: Option<&str>) -> String {
     if value.chars().count() <= max_chars {
         return value.to_string();
@@ -37,15 +48,7 @@ fn truncate_with_note(value: &str, max_chars: usize, label_set_id: Option<&str>)
 
     let truncated = value.chars().take(max_chars).collect::<String>();
     let total = value.chars().count();
-    let full_label = label_set_id
-        .map(str::trim)
-        .filter(|set_id| !set_id.is_empty())
-        .and_then(|set_id| {
-            let mut url =
-                reqwest::Url::parse("https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm").ok()?;
-            url.query_pairs_mut().append_pair("setid", set_id);
-            Some(url.to_string())
-        });
+    let full_label = label_set_id.and_then(dailymed_setid_url);
     match full_label {
         Some(url) => format!("{truncated}\n\n(truncated, {total} chars total; full label: {url})"),
         None => format!("{truncated}\n\n(truncated, {total} chars total)"),

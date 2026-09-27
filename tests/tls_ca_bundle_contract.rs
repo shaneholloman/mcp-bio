@@ -8,7 +8,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 
@@ -601,14 +601,56 @@ async fn stdio_rejects_invalid_explicit_bundle_before_session_acceptance() {
 }
 
 #[tokio::test]
-async fn stdio_bad_fallback_starts_and_warns_once() {
+async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
     let dir = tempfile::tempdir().expect("bundle directory");
     let missing = dir.path().join("missing.pem");
-    let mut child = server_command(&["serve"], None, Some(&missing))
-        .spawn()
-        .expect("spawn stdio");
-    tokio::time::sleep(Duration::from_millis(300)).await;
-    assert!(child.try_wait().expect("poll stdio").is_none());
+    // stdout must be piped here so the tool responses can be awaited;
+    // server_command nulls it, so build the command and adjust.
+    let mut command = server_command(&["serve"], None, Some(&missing));
+    command.stdout(Stdio::piped());
+    let mut child = command.spawn().expect("spawn stdio");
+    let mut stdin = child.stdin.take().expect("stdio stdin");
+    let stdout = child.stdout.take().expect("stdio stdout");
+
+    let initialize = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"warn-once-test","version":"0"}}}"#;
+    let initialized = r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#;
+    let version_call = r#"{"jsonrpc":"2.0","id":CALL_ID,"method":"tools/call","params":{"name":"biomcp","arguments":{"command":"version"}}}"#;
+    for line in [
+        initialize.to_string(),
+        initialized.to_string(),
+        version_call.replace("CALL_ID", "2"),
+        version_call.replace("CALL_ID", "3"),
+    ] {
+        stdin
+            .write_all(format!("{line}\n").as_bytes())
+            .await
+            .expect("write request");
+        stdin.flush().await.expect("flush request");
+    }
+    drop(stdin);
+
+    // Await both tool responses so the calls finish before the
+    // warning count is read; then the server exits on end-of-input.
+    let mut seen_two = false;
+    let mut seen_three = false;
+    let mut reader = tokio::io::BufReader::new(stdout);
+    let mut line = String::new();
+    while !(seen_two && seen_three) {
+        line.clear();
+        match tokio::time::timeout(Duration::from_secs(10), reader.read_line(&mut line)).await {
+            Ok(Ok(0)) | Ok(Err(_)) | Err(_) => break,
+            Ok(Ok(_)) => {
+                if line.contains("\"id\":2") {
+                    seen_two = true;
+                }
+                if line.contains("\"id\":3") {
+                    seen_three = true;
+                }
+            }
+        }
+    }
+    assert!(seen_two && seen_three, "both tool calls answered");
+    let _ = tokio::time::timeout(Duration::from_secs(5), child.wait()).await;
     let stderr = stop_and_stderr(&mut child).await;
     assert_eq!(
         stderr.matches("SSL_CERT_FILE could not be read").count(),

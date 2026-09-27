@@ -682,6 +682,11 @@ case "$mode" in
       run_ctgov_fixture
       require_ctgov_fixture_env
     fi
+    # mcp.md's diagnostic provenance and variant filter blocks read the
+    # provider-contract and variant-identity fixtures; without them the
+    # two blocks fail as missing setup, not as product regressions.
+    run_provider_contract_fixture
+    run_variant_identity_fixture
     ;;
   verify)
     timeout_args=(--timeout 180)

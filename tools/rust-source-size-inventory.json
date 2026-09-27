@@ -121,13 +121,13 @@
     },
     {
       "path": "src/entities/drug/get.rs",
-      "baseline_lines": 1118,
+      "baseline_lines": 1122,
       "floor_lines": 1103,
       "authorized_increase": {
-        "ticket": "1241",
-        "delta": 15,
-        "reason": "DDInter coverage on the drug card, cached-basis freshness, synonyms, and bundle-error naming.",
-        "removal_condition": "Shrink when the drug card model is next refactored."
+        "ticket": "1254",
+        "delta": 19,
+        "reason": "Poison-recovery scoping (get.rs) and the shared panic-payload helper (shell.rs).",
+        "removal_condition": "Revisit when the trial-alias cache moves behind a type and the panic arm shrinks."
       }
     },
     {
@@ -261,13 +261,13 @@
     },
     {
       "path": "src/mcp/shell.rs",
-      "baseline_lines": 2636,
+      "baseline_lines": 2630,
       "floor_lines": 1956,
       "authorized_increase": {
-        "ticket": "1251",
-        "delta": 680,
-        "reason": "Drift-tripwire restructure (literal key-set and scalar pins), the clash panics, and their tests.",
-        "removal_condition": "Move the schema merge into a submodule when shell.rs next shrinks."
+        "ticket": "1254",
+        "delta": 674,
+        "reason": "Poison-recovery scoping (get.rs) and the shared panic-payload helper (shell.rs).",
+        "removal_condition": "Revisit when the trial-alias cache moves behind a type and the panic arm shrinks."
       }
     },
     {
@@ -300,13 +300,13 @@
     },
     {
       "path": "src/render/markdown/drug/tests.rs",
-      "floor_lines": 974,
+      "floor_lines": 954,
       "baseline_lines": 1004,
       "authorized_increase": {
-        "ticket": "1241",
-        "delta": 30,
-        "reason": "Coverage-state expectations for the drug interactions card.",
-        "removal_condition": "Shrink when the card test fixtures share a builder."
+        "ticket": "1254",
+        "delta": 50,
+        "reason": "The 1237 review set the floor to 954; the 1241 baseline sat above it.",
+        "removal_condition": "Shrink when the card fixtures share a builder."
       }
     },
     {

@@ -27,7 +27,11 @@ mod tests {
     fn every_reconstructible_lock_uses_the_shared_helper() {
         let ddinter = include_str!("../sources/ddinter.rs");
         let gencc = include_str!("../sources/gencc/store.rs");
+        let drug_get = include_str!("../entities/drug/get.rs");
+        let cache_clear = include_str!("../cache/clear.rs");
         assert_eq!(ddinter.matches("recover_poison(").count(), 3);
         assert_eq!(gencc.matches("recover_poison(").count(), 2);
+        assert_eq!(drug_get.matches("recover_poison(").count(), 2);
+        assert_eq!(cache_clear.matches("recover_poison(").count(), 3);
     }
 }

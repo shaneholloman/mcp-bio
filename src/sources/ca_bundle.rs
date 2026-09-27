@@ -103,7 +103,13 @@ fn resolve() -> Result<Option<LoadedBundle>, CachedBundleError> {
             path: PathBuf::from(path),
             reason,
         },
-        _ => unreachable!("CA bundle resolution only returns CA bundle errors"),
+        // Resolution only builds CA bundle errors today; if a future
+        // path returns something else, degrade to the cached-error
+        // shape instead of panicking inside client construction.
+        other => CachedBundleError {
+            path: PathBuf::new(),
+            reason: other.to_string(),
+        },
     })
 }
 
@@ -234,7 +240,7 @@ mod tests {
         std::fs::write(&malformed, b"not a certificate").expect("write malformed bundle");
         std::fs::write(&empty, b"").expect("write empty bundle");
         std::fs::create_dir(&directory).expect("create directory");
-        let cases = [
+        let mut cases = vec![
             (Some(valid.as_os_str()), None, "some"),
             (
                 Some(std::ffi::OsStr::new("   ")),
@@ -248,7 +254,21 @@ mod tests {
             (None, Some(directory.as_os_str()), "none"),
             (None, Some(std::ffi::OsStr::new("   ")), "none"),
         ];
-        for (explicit, fallback, expected) in cases {
+        // A real file whose NAME is not valid UTF-8 loads like any
+        // other bundle: the path is handled as raw bytes end to end.
+        // The binding stays at function scope so the borrowed element
+        // outlives the case list.
+        #[cfg(unix)]
+        let non_utf8 = {
+            use std::os::unix::ffi::OsStringExt;
+            dir.path()
+                .join(std::ffi::OsString::from_vec(b"ca-\xff.pem".to_vec()))
+        };
+        #[cfg(unix)]
+        valid_bundle(&non_utf8);
+        #[cfg(unix)]
+        cases.push((Some(non_utf8.as_os_str()), None, "some"));
+        for (explicit, fallback, expected) in cases.iter().copied() {
             let mut command =
                 std::process::Command::new(std::env::current_exe().expect("test executable"));
             command
@@ -279,11 +299,33 @@ mod tests {
     #[test]
     #[ignore = "reentered by loader_cases_run_in_fresh_processes"]
     fn bundle_loader_child() {
-        let result = resolve_inner();
+        // Resolve lazily: the real-builder arm must observe the
+        // process's FIRST parse coming from the constructors, not a
+        // parse this dispatcher triggered.
+        let result = std::cell::LazyCell::new(resolve_inner);
         match std::env::var("BIOMCP_CA_TEST_EXPECT").as_deref() {
-            Ok("some") => assert!(matches!(result, Ok(Some(_)))),
-            Ok("none") => assert!(matches!(result, Ok(None))),
-            Ok("error") => assert!(matches!(result, Err(BioMcpError::CaBundle { .. }))),
+            Ok("some") => assert!(matches!(*result, Ok(Some(_)))),
+            Ok("none") => assert!(matches!(*result, Ok(None))),
+            Ok("error") => assert!(matches!(*result, Err(BioMcpError::CaBundle { .. }))),
+            Ok("valid-real-builders") => {
+                // The real constructors, not the bare builders: the
+                // shared provider pool, ORCID, and Clingen CSPEC all
+                // route through the operator bundle, and one valid
+                // parse serves all three.
+                let uncached = crate::sources::build_uncached_http_client(
+                    crate::sources::SharedHttpClientKind::Default,
+                    None,
+                );
+                let orcid = crate::sources::orcid::OrcidClient::new();
+                let cspec = crate::sources::clingen_cspec::CspecClient::new();
+                let uncached = uncached.expect("shared provider pool builds");
+                drop(uncached);
+                let orcid = orcid.expect("orcid client builds");
+                drop(orcid);
+                let cspec = cspec.expect("cspec client builds");
+                drop(cspec);
+                assert_eq!(PARSE_COUNT.load(std::sync::atomic::Ordering::SeqCst), 1);
+            }
             other => panic!("unexpected loader child expectation: {other:?}"),
         }
     }
@@ -319,6 +361,30 @@ mod tests {
                 .matches("SSL_CERT_FILE is not a usable certificate bundle")
                 .count(),
             1
+        );
+    }
+
+    #[test]
+    fn the_real_constructors_parse_a_valid_bundle_once() {
+        let dir = tempfile::tempdir().expect("bundle directory");
+        let valid = dir.path().join("valid.pem");
+        valid_bundle(&valid);
+        let output = std::process::Command::new(std::env::current_exe().expect("test executable"))
+            .args([
+                "--ignored",
+                "--exact",
+                "sources::ca_bundle::tests::bundle_loader_child",
+            ])
+            .env(CA_BUNDLE_ENV, &valid)
+            .env_remove(CA_BUNDLE_FALLBACK_ENV)
+            .env("BIOMCP_CA_TEST_EXPECT", "valid-real-builders")
+            .env("RUST_LOG", "warn")
+            .output()
+            .expect("run real-builder child");
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
         );
     }
 

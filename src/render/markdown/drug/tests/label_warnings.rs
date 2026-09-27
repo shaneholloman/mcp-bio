@@ -83,6 +83,26 @@ fn drug_markdown_renders_label_boxed_warning_ahead_of_other_label_sections() {
 }
 
 #[test]
+fn raw_label_and_safety_together_print_the_ordinary_warnings_once() {
+    let drug = warning_drug();
+    let markdown = drug_markdown_with_region(
+        &drug,
+        &["label".to_string(), "safety".to_string()],
+        DrugRegion::Us,
+        true,
+    )
+    .expect("markdown");
+    // One Warnings heading total: the raw label section carries the
+    // ordinary warnings, and the safety block does not repeat them.
+    assert_eq!(markdown.matches("### Warnings").count(), 1, "{markdown}");
+    assert!(markdown.contains("Immune-mediated adverse reactions."));
+    assert!(
+        markdown.contains("### Boxed Warning"),
+        "the boxed warning still renders in the safety block"
+    );
+}
+
+#[test]
 fn drug_markdown_us_safety_block_renders_boxed_warning_first() {
     let drug = warning_drug();
     let markdown = drug_markdown_with_region(&drug, &["safety".to_string()], DrugRegion::Us, false)
