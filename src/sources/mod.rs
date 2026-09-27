@@ -245,7 +245,6 @@ where
     STALE_SERVE_NOTES.scope(std::sync::Arc::new(std::sync::Mutex::new(Vec::new())), fut)
 }
 
-
 /// Run a command future inside the stale-serve scope and append the
 /// text note to a non-JSON text outcome, mirroring what
 /// `run_outcome_on_current_stack` does for the CLI path (ticket
