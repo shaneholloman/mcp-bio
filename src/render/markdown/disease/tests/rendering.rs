@@ -820,7 +820,9 @@ fn disease_markdown_heading_and_provenance_credit_the_disgenet_seed() {
             "MyDisease.info",
         ]));
 
-    let markdown = disease_markdown(&disease, &[]).expect("disease markdown");
+    // The association table is the genes section; the main card with
+    // no sections shows only the heading.
+    let markdown = disease_markdown(&disease, &["genes"]).expect("disease markdown");
     assert!(
         markdown.contains("Genes (DisGeNET): HTT"),
         "the heading must credit the DisGeNET seed, not Open Targets: {markdown}"
