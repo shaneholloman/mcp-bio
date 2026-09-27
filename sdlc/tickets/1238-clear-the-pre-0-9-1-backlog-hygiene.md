@@ -33,3 +33,11 @@ Filed from the review instruction "then the rest, all before 0.9.1". Umbrella ti
 
 - Design review: pending
 - Code review: pending
+
+## Review
+
+- Design review: n/a (umbrella; the split tickets carry their own)
+- Code review: n/a (umbrella)
+- Verification: closed 2026-09-27 with all children landed and every
+  open issue file decided; see
+  `sdlc/records/1238-clear-the-pre-0-9-1-backlog-hygiene.md`.
