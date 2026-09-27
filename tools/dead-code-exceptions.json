@@ -1108,7 +1108,7 @@
       "item": "cache_mode: crate::sources::TestCacheModeGuard,",
       "occurrence": 1,
       "owner": "1261",
-      "reason": "Held for its Drop (restores the test cache-mode override); the field itself is never read by design",
+      "reason": "held-for-drop test cache-mode guard restores the override when the environment drops",
       "removal_condition": "Goes when the discover tests stop pinning the cache mode or the guard moves into a shared fixture helper"
     }
   ]
