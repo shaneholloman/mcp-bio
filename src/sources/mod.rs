@@ -523,6 +523,74 @@ fn env_cache_mode() -> Option<CacheMode> {
     })
 }
 
+/// Test-only override slot for the process cache mode (ticket 1261).
+/// The guard sets the mode on creation and restores the previous value
+/// on drop, so a test cannot latch a mode for the rest of the binary the
+/// way a set-and-restore of `BIOMCP_CACHE_MODE` latched the `OnceLock`
+/// above. Compiled only into test builds, so release reads never touch
+/// it.
+#[cfg(test)]
+static TEST_CACHE_MODE_OVERRIDE: std::sync::Mutex<Option<CacheMode>> =
+    std::sync::Mutex::new(None);
+
+#[cfg(test)]
+fn test_cache_mode_override() -> Option<CacheMode> {
+    *TEST_CACHE_MODE_OVERRIDE
+        .lock()
+        .expect("test cache-mode override lock poisoned")
+}
+
+#[cfg(test)]
+pub(crate) struct TestCacheModeGuard(Option<CacheMode>);
+
+#[cfg(test)]
+impl Drop for TestCacheModeGuard {
+    fn drop(&mut self) {
+        if let Ok(mut slot) = TEST_CACHE_MODE_OVERRIDE.lock() {
+            *slot = self.0.take();
+        }
+    }
+}
+
+#[cfg(test)]
+fn set_test_cache_mode(mode: CacheMode) -> TestCacheModeGuard {
+    let mut slot = TEST_CACHE_MODE_OVERRIDE
+        .lock()
+        .expect("test cache-mode override lock poisoned");
+    let guard = TestCacheModeGuard(slot.clone());
+    *slot = Some(mode);
+    guard
+}
+
+/// Test-only scoped cache modes. Hold the guard for the duration of the
+/// test (or its fixture environment); every cache-mode reader sees the
+/// mode while the guard lives and the previous mode returns after it.
+#[cfg(test)]
+pub(crate) mod test_cache_mode {
+    /// Bypass every cache for the guard's lifetime (`off`).
+    pub(crate) fn off() -> super::TestCacheModeGuard {
+        super::set_test_cache_mode(http_cache_reqwest::CacheMode::NoStore)
+    }
+
+    /// Serve expired entries without revalidation (`infinite`).
+    pub(crate) fn infinite() -> super::TestCacheModeGuard {
+        super::set_test_cache_mode(http_cache_reqwest::CacheMode::ForceCache)
+    }
+}
+
+/// The process's one cache-mode read: the test override while a guard
+/// holds one, otherwise the once-read environment mode. Every reader —
+/// the HTTP middleware, the bypass and infinite checks, the FDA orphan
+/// sidecar — goes through here, so no two readers can disagree about
+/// when a mode change takes effect (ticket 1261).
+pub(crate) fn current_cache_mode() -> Option<CacheMode> {
+    #[cfg(test)]
+    if let Some(mode) = test_cache_mode_override() {
+        return Some(mode);
+    }
+    env_cache_mode()
+}
+
 fn resolve_cache_mode(
     no_cache: bool,
     authenticated: bool,
@@ -551,25 +619,23 @@ pub(crate) fn is_no_cache_enabled() -> bool {
 }
 
 pub(crate) fn cache_is_bypassed() -> bool {
-    is_no_cache_enabled() || env_cache_mode() == Some(CacheMode::NoStore)
+    is_no_cache_enabled() || current_cache_mode() == Some(CacheMode::NoStore)
 }
 
 /// Whether cache reads ignore entry expiry (`BIOMCP_CACHE_MODE=infinite`).
 ///
-/// Unlike the HTTP middleware, the citation-evidence sidecar resolves the
-/// mode per call from the environment; the operator knob does not change
-/// mid-process, and the fresh read lets the debug-only test seam exercise
-/// the infinite mode in-process.
+/// Reads the process mode through [`current_cache_mode`] like every other
+/// cache-mode reader: the test override applies here too, and the
+/// once-read environment mode keeps this check in agreement with the HTTP
+/// middleware (ticket 1261; the earlier per-call environment read let the
+/// two readers disagree about when a change takes effect).
 pub(crate) fn cache_is_infinite() -> bool {
-    let mode = std::env::var("BIOMCP_CACHE_MODE")
-        .ok()
-        .map(|value| value.trim().to_ascii_lowercase());
-    parse_cache_mode(mode.as_deref()) == Some(CacheMode::ForceCache)
+    current_cache_mode() == Some(CacheMode::ForceCache)
 }
 
 pub(crate) fn apply_cache_mode(req: RequestBuilder) -> RequestBuilder {
     let no_cache = is_no_cache_enabled();
-    if let Some(mode) = resolve_cache_mode(no_cache, false, env_cache_mode()) {
+    if let Some(mode) = resolve_cache_mode(no_cache, false, current_cache_mode()) {
         return req.with_extension(mode);
     }
     attach_variant_article_deadline(req)
@@ -580,7 +646,7 @@ pub(crate) fn apply_cache_mode_with_auth(
     authenticated: bool,
 ) -> RequestBuilder {
     let no_cache = is_no_cache_enabled();
-    if let Some(mode) = resolve_cache_mode(no_cache, authenticated, env_cache_mode()) {
+    if let Some(mode) = resolve_cache_mode(no_cache, authenticated, current_cache_mode()) {
         return req.with_extension(mode);
     }
     req
@@ -2026,6 +2092,37 @@ mod tests {
     #[test]
     fn resolve_cache_mode_defaults_to_none() {
         assert!(resolve_cache_mode(false, false, None).is_none());
+    }
+
+    #[test]
+    fn the_test_cache_mode_guard_applies_and_restores_the_mode() {
+        let baseline = current_cache_mode();
+        {
+            let _off = test_cache_mode::off();
+            assert!(matches!(current_cache_mode(), Some(CacheMode::NoStore)));
+            assert!(cache_is_bypassed());
+            assert!(!cache_is_infinite());
+            // A nested guard restores the outer mode, not the baseline.
+            {
+                let _infinite = test_cache_mode::infinite();
+                assert!(matches!(current_cache_mode(), Some(CacheMode::ForceCache)));
+                assert!(cache_is_infinite());
+            }
+            assert!(matches!(current_cache_mode(), Some(CacheMode::NoStore)));
+        }
+        // The drop restores whatever the process mode was before the
+        // guard, so a test cannot latch `off` for the rest of the binary
+        // (ticket 1261).
+        let after = current_cache_mode();
+        assert_eq!(
+            after == Some(CacheMode::NoStore),
+            baseline == Some(CacheMode::NoStore),
+            "the guard must restore the mode it found, not latch off",
+        );
+        assert_eq!(
+            after == Some(CacheMode::ForceCache),
+            baseline == Some(CacheMode::ForceCache),
+        );
     }
 
     #[test]

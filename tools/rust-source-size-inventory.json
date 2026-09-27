@@ -361,12 +361,12 @@
     },
     {
       "path": "src/sources/fda_orphan.rs",
-      "baseline_lines": 1003,
+      "baseline_lines": 1006,
       "floor_lines": 999,
       "authorized_increase": {
-        "ticket": "1221",
-        "delta": 4,
-        "reason": "The bounded acquisition and health-probe clients route through the shared operator CA bundle helper so a private root CA is trusted without disabling verification.",
+        "ticket": "1221+1261",
+        "delta": 7,
+        "reason": "The cache-mode read routes through the shared once-read reader so all cache-mode readers agree on when a change takes effect (ticket 1261).",
         "removal_condition": "Fold the two fixed-route clients into the shared bounded client builder when the FDA orphan lane is decomposed."
       }
     },
@@ -405,12 +405,12 @@
     },
     {
       "path": "src/sources/mod.rs",
-      "baseline_lines": 2557,
+      "baseline_lines": 2646,
       "floor_lines": 1847,
       "authorized_increase": {
-        "ticket": "1256",
-        "delta": 710,
-        "reason": "The stale-serve task-local scope, the note recording, the wording helpers, the MCP drive-through helper, and their tests.",
+        "ticket": "1256+1261",
+        "delta": 799,
+        "reason": "The stale-serve task-local scope, the note recording, the wording helpers, the MCP drive-through helper, their tests, and the test-only cache-mode guard (ticket 1261).",
         "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
       }
     },
@@ -455,12 +455,12 @@
     },
     {
       "path": "src/sources/tests/provider_network.rs",
-      "baseline_lines": 1005,
+      "baseline_lines": 1006,
       "floor_lines": 994,
       "authorized_increase": {
-        "ticket": "1221",
-        "delta": 11,
-        "reason": "The FDA orphan fetch chain now returns a result so an unusable operator CA bundle fails the command; each existing fetch assertion unwraps that result explicitly.",
+        "ticket": "1221+1261",
+        "delta": 12,
+        "reason": "The cache-mode table takes the shared CacheMode type (ticket 1261).",
         "removal_condition": "Return to a single fetch helper when the FDA orphan cache and client fixtures are consolidated."
       }
     },
