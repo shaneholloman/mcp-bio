@@ -196,11 +196,86 @@ fn ensure_variant_article_time() -> Result<(), BioMcpError> {
     Ok(())
 }
 
+/// One stale-cache serve observed during a command: the provider whose
+/// cached data was served past its freshness window, and the age of that
+/// data in seconds. Recorded at the send seam so the clinician-facing
+/// outputs can carry the same honesty the log line has.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct StaleServeNote {
+    provider: &'static str,
+    age_seconds: u64,
+}
+
+impl StaleServeNote {
+    /// The user-facing sentence, matching the log wording: age plus the
+    /// freshness-window fact, never implying a revalidation failure.
+    pub(crate) fn sentence(&self) -> String {
+        let age = stale_serve_age_wording(self.age_seconds);
+        format!(
+            "{} data served from cache, {age} old (older than the provider's freshness window).",
+            self.provider
+        )
+    }
+}
+
+fn stale_serve_age_wording(age_seconds: u64) -> String {
+    let hours = age_seconds / 3600;
+    if hours >= 1 {
+        format!("{hours} h")
+    } else {
+        format!("{} s", age_seconds.max(1))
+    }
+}
+
+tokio::task_local! {
+    /// Per-command stale-cache serves. Scoped around the command future
+    /// (see `with_stale_serve_notes`) so concurrent commands never mix
+    /// notes; the value is an `Arc<Mutex<_>>` because the command future
+    /// must stay `Send` across the worker-thread boundary (ticket 1243).
+    static STALE_SERVE_NOTES: std::sync::Arc<std::sync::Mutex<Vec<StaleServeNote>>>;
+}
+
+/// Scope stale-serve recording around a command future. A plain function
+/// returning the scoped future, mirroring `with_no_cache` so the dispatch
+/// future keeps one copy of its state (ticket 1243).
+pub(crate) fn with_stale_serve_notes<R, F>(fut: F) -> impl Future<Output = R>
+where
+    F: Future<Output = R>,
+{
+    STALE_SERVE_NOTES.scope(std::sync::Arc::new(std::sync::Mutex::new(Vec::new())), fut)
+}
+
+/// Record a stale serve when a command scope is active. Sends outside a
+/// command (background syncs) only log.
+fn record_stale_serve(note: StaleServeNote) {
+    let _ = STALE_SERVE_NOTES.try_with(|notes| {
+        let mut notes = notes.lock().expect("stale-serve notes lock");
+        if !notes.contains(&note) {
+            notes.push(note);
+        }
+    });
+}
+
+/// The stale-serve sentences for this command, oldest-recording order,
+/// draining them so each output channel states them once.
+pub(crate) fn take_stale_serve_sentences() -> Vec<String> {
+    STALE_SERVE_NOTES
+        .try_with(|notes| {
+            std::mem::take(&mut *notes.lock().expect("stale-serve notes lock"))
+        })
+        .unwrap_or_default()
+        .iter()
+        .map(StaleServeNote::sentence)
+        .collect()
+}
+
 /// Read the stale-serve marker and log the honest wording. The label says
 /// the entry is older than the provider's freshness window — it never
 /// implies a revalidation failure, because a revalidated response cannot
-/// carry the marker (put strips it).
-fn note_stale_cache_serve(response: &mut reqwest::Response) {
+/// carry the marker (put strips it). The age is also recorded for the
+/// command's output notes so MCP and JSON consumers see it, not just the
+/// log (ticket 1256).
+fn note_stale_cache_serve(response: &mut reqwest::Response, provider: &'static str) {
     if let Some(value) = response
         .headers()
         .get(crate::cache::manager::STALE_SERVE_AGE_HEADER)
@@ -217,10 +292,37 @@ fn note_stale_cache_serve(response: &mut reqwest::Response) {
             age_seconds = value,
             "served from cache, older than the provider's freshness window ({wording})"
         );
+        record_stale_serve(StaleServeNote {
+            provider,
+            age_seconds: value,
+        });
     }
     response
         .headers_mut()
         .remove(crate::cache::manager::STALE_SERVE_AGE_HEADER);
+}
+
+/// Append the stale-cache notes to a rendered text body (the markdown card
+/// path). Must run inside the command scope: it drains the notes. JSON
+/// bodies get their notes through the `_meta.notes` channel at payload
+/// build time instead, so this must never touch JSON.
+pub(crate) fn append_stale_serve_notes_to_text(text: &mut String) {
+    if text.is_empty() {
+        return;
+    }
+    let sentences = take_stale_serve_sentences();
+    if sentences.is_empty() {
+        return;
+    }
+    if !text.ends_with('\n') {
+        text.push('\n');
+    }
+    text.push('\n');
+    for sentence in sentences {
+        text.push_str("Cache note: ");
+        text.push_str(&sentence);
+        text.push('\n');
+    }
 }
 
 fn attach_variant_article_deadline(request: RequestBuilder) -> RequestBuilder {
@@ -263,7 +365,7 @@ impl RequestBuilderSourceContextExt for RequestBuilder {
             };
             error.with_source_context(context)
         })?;
-        note_stale_cache_serve(&mut response);
+        note_stale_cache_serve(&mut response, context.provider().label());
         Ok(response)
     }
 }
@@ -278,7 +380,7 @@ impl RequestBuilderSourceContextExt for reqwest::RequestBuilder {
             .await
             .map_err(BioMcpError::from)
             .map_err(|error| error.with_source_context(context))?;
-        note_stale_cache_serve(&mut response);
+        note_stale_cache_serve(&mut response, context.provider().label());
         Ok(response)
     }
 }
@@ -1727,6 +1829,115 @@ mod tests {
             .body(reqwest::Body::from(body))
             .expect("test response")
             .into()
+    }
+
+    #[test]
+    fn stale_serve_age_wording_uses_hours_only_past_an_hour() {
+        assert_eq!(stale_serve_age_wording(30), "30 s");
+        assert_eq!(stale_serve_age_wording(3599), "3599 s");
+        assert_eq!(stale_serve_age_wording(3600), "1 h");
+        assert_eq!(stale_serve_age_wording(7200), "2 h");
+    }
+
+    #[tokio::test]
+    async fn note_stale_cache_serve_records_the_age_and_strips_the_header() {
+        let (header_gone, sentences) = with_stale_serve_notes(async {
+            let mut response = test_response(
+                StatusCode::OK,
+                &[("x-biomcp-cache-stale-age", "7200")],
+                "payload",
+            );
+            note_stale_cache_serve(&mut response, "MyDisease.info");
+            let header_gone = response
+                .headers()
+                .get(crate::cache::manager::STALE_SERVE_AGE_HEADER)
+                .is_none();
+            (header_gone, take_stale_serve_sentences())
+        })
+        .await;
+        assert!(
+            header_gone,
+            "the marker must not cross the wire"
+        );
+        assert_eq!(
+            sentences,
+            vec![
+                "MyDisease.info data served from cache, 2 h old (older than the provider's freshness window)."
+                    .to_string(),
+            ],
+            "the age reaches the output-note channel with the log line's honesty"
+        );
+        assert!(
+            take_stale_serve_sentences().is_empty(),
+            "taking the sentences drains them so each channel states them once"
+        );
+    }
+
+    #[tokio::test]
+    async fn note_stale_cache_serve_ignores_absent_and_malformed_markers() {
+        let sentences = with_stale_serve_notes(async {
+            let mut plain = test_response(StatusCode::OK, &[], "payload");
+            note_stale_cache_serve(&mut plain, "MyDisease.info");
+            let mut malformed = test_response(
+                StatusCode::OK,
+                &[("x-biomcp-cache-stale-age", "not-a-number")],
+                "payload",
+            );
+            note_stale_cache_serve(&mut malformed, "MyDisease.info");
+            take_stale_serve_sentences()
+        })
+        .await;
+        assert!(sentences.is_empty(), "no honest note without a real age");
+        assert!(
+            take_stale_serve_sentences().is_empty(),
+            "sends outside a command scope record nothing"
+        );
+    }
+
+    #[tokio::test]
+    async fn stale_serve_notes_do_not_leak_between_scopes() {
+        with_stale_serve_notes(async {
+            let mut response = test_response(
+                StatusCode::OK,
+                &[("x-biomcp-cache-stale-age", "60")],
+                "payload",
+            );
+            note_stale_cache_serve(&mut response, "DisGeNET");
+        })
+        .await;
+        assert!(
+            take_stale_serve_sentences().is_empty(),
+            "a completed command's notes die with its scope"
+        );
+    }
+
+    #[tokio::test]
+    async fn append_stale_serve_notes_to_text_adds_plain_cache_note_lines() {
+        let mut text = String::from("# Marfan syndrome\n");
+        with_stale_serve_notes(async {
+            let mut response = test_response(
+                StatusCode::OK,
+                &[("x-biomcp-cache-stale-age", "10800")],
+                "payload",
+            );
+            note_stale_cache_serve(&mut response, "MyDisease.info");
+            append_stale_serve_notes_to_text(&mut text);
+        })
+        .await;
+        assert!(
+            text.contains(
+                "\nCache note: MyDisease.info data served from cache, 3 h old (older than the provider's freshness window).\n"
+            ),
+            "the markdown card carries the note: {text}"
+        );
+    }
+
+    #[test]
+    fn append_stale_serve_notes_to_text_leaves_bodies_without_notes_alone() {
+        // Outside a scope no notes exist; the text must pass through intact.
+        let mut text = String::from("unchanged\n");
+        append_stale_serve_notes_to_text(&mut text);
+        assert_eq!(text, "unchanged\n");
     }
 
     fn test_cache_config(cache_root: impl Into<std::path::PathBuf>) -> ResolvedCacheConfig {

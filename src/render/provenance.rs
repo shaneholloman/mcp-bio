@@ -520,12 +520,23 @@ pub(crate) fn disease_section_sources(disease: &Disease) -> Vec<SectionSource> {
         "Genes",
         top_gene_sources,
     );
+    // Seeded DisGeNET rows (the MyDisease hit's embedded block) contribute
+    // to the associated-genes provenance when they are present (ticket
+    // 1256); otherwise the row keeps its existing sources.
+    let mut associated_gene_sources = vec!["Monarch Initiative", "Open Targets"];
+    if disease.gene_associations.iter().any(|row| {
+        row.source
+            .as_deref()
+            .is_some_and(|s| s.to_ascii_lowercase().contains("disgenet"))
+    }) {
+        associated_gene_sources.insert(0, "DisGeNET");
+    }
     push_section(
         &mut out,
         !disease.associated_genes.is_empty() || !disease.gene_associations.is_empty(),
         "associated_genes",
         "Associated Genes",
-        ["Monarch Initiative", "Open Targets"],
+        associated_gene_sources,
     );
     out.extend(outcome_section_sources(
         "disease",

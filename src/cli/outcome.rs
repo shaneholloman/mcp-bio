@@ -568,7 +568,18 @@ async fn run_outcome_on_current_stack(cli: Cli) -> anyhow::Result<CommandOutcome
     let json = cli.json || command_requests_json(&cli.command);
     let trusted_terminal_chart = is_charted_mcp_study_command(&cli).unwrap_or(false);
     let contract = JsonResponseContract::for_command(&cli.command);
-    match Box::pin(run_outcome_inner(cli, false)).await {
+    // The stale-cache scope wraps the command so every send inside it can
+    // record what it served stale (ticket 1256). The markdown note is
+    // appended inside the scope, before sanitization; JSON bodies get
+    // their notes through the `_meta.notes` channel at payload build time.
+    let command = crate::sources::with_stale_serve_notes(async {
+        let mut outcome = Box::pin(run_outcome_inner(cli, false)).await?;
+        if !json && outcome.bytes.is_none() && !trusted_terminal_chart {
+            crate::sources::append_stale_serve_notes_to_text(&mut outcome.text);
+        }
+        Ok::<CommandOutcome, anyhow::Error>(outcome)
+    });
+    match command.await {
         Ok(mut outcome) => Ok(if json {
             outcome = finalize_structured_error(outcome, contract);
             require_json_document(outcome)

@@ -481,6 +481,86 @@ fn top_genes_label_names_the_fallback_when_open_targets_did_not_produce_them() {
     assert_eq!(disease.top_gene_source, None);
 }
 
+    // Open Targets owning the list keeps the default heading.
+    super::assign_top_genes(&mut disease, true);
+    assert_eq!(disease.top_gene_source, None);
+}
+
+#[test]
+fn top_genes_label_names_the_disgenet_seed_from_the_mydisease_hit() {
+    // Open Targets produced nothing; the MyDisease hit's embedded DisGeNET
+    // block seeded the genes (ticket 1256). The label must credit
+    // DisGeNET, not Open Targets.
+    let mut disease = test_disease("MONDO:0007947", "Huntington disease");
+    disease.associated_genes = vec!["HTT".into()];
+    disease.gene_associations = vec![DiseaseGeneAssociation {
+        gene: "HTT".into(),
+        relationship: None,
+        source: Some("DisGeNET (via MyDisease.info)".into()),
+        opentargets_score: None,
+    }];
+
+    super::assign_top_genes(&mut disease, false);
+    assert_eq!(disease.top_genes, vec!["HTT".to_string()]);
+    assert_eq!(
+        disease.top_gene_source.as_deref(),
+        Some("DisGeNET"),
+        "the heading and provenance row must credit the embedded DisGeNET seed"
+    );
+
+    // Open Targets produced the list: no fallback credit even with seed
+    // rows still attached.
+    super::assign_top_genes(&mut disease, true);
+    assert_eq!(disease.top_gene_source, None);
+}
+
+#[test]
+fn top_genes_label_names_a_direct_mydisease_seed() {
+    // A source string naming MyDisease alone maps to its display name.
+    let mut disease = test_disease("MONDO:0018096", "Parkinson disease");
+    disease.associated_genes = vec!["SNCA".into()];
+    disease.gene_associations = vec![DiseaseGeneAssociation {
+        gene: "SNCA".into(),
+        relationship: None,
+        source: Some("MyDisease.info".into()),
+        opentargets_score: None,
+    }];
+
+    super::assign_top_genes(&mut disease, false);
+    assert_eq!(
+        disease.top_gene_source.as_deref(),
+        Some("MyDisease.info"),
+        "a MyDisease-named seed gets MyDisease's display name"
+    );
+}
+
+#[test]
+fn top_genes_label_joins_the_disgenet_seed_with_other_fallbacks() {
+    let mut disease = test_disease("MONDO:0005180", "Parkinson disease");
+    disease.associated_genes = vec!["SNCA".into(), "LRRK2".into()];
+    disease.gene_associations = vec![
+        DiseaseGeneAssociation {
+            gene: "SNCA".into(),
+            relationship: None,
+            source: Some("DisGeNET (via MyDisease.info)".into()),
+            opentargets_score: None,
+        },
+        DiseaseGeneAssociation {
+            gene: "SNCA".into(),
+            relationship: None,
+            source: Some("Monarch".into()),
+            opentargets_score: None,
+        },
+    ];
+
+    super::assign_top_genes(&mut disease, false);
+    assert_eq!(
+        disease.top_gene_source.as_deref(),
+        Some("Monarch Initiative, DisGeNET"),
+        "both real fallback sources are credited, Monarch order unchanged"
+    );
+}
+
 #[test]
 fn top_genes_label_joins_both_fallback_sources() {
     let mut disease = test_disease("MONDO:0007947", "Huntington disease");

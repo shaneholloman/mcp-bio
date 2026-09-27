@@ -167,3 +167,38 @@ fn bundle_parse_errors_carry_the_read_marker() {
     assert!(message.starts_with(super::super::DDINTER_BUNDLE_READ_MARKER));
     assert!(message.contains("ddinter_downloads_code_A.csv"));
 }
+
+#[test]
+fn html_download_replies_are_download_failures_not_read_failures() {
+    // The endpoint answered an HTML page where the CSV bundle was
+    // expected: a download failure with our own content-type fact, never
+    // an "unreadable bundle" (ticket 1256).
+    let header = reqwest::header::HeaderValue::from_static("text/html; charset=utf-8");
+    let error = super::super::ensure_csv_content_type(Some(&header)).expect_err("html reply");
+    let BioMcpError::Api { message, .. } = &error else {
+        panic!("expected Api error, got {error:?}");
+    };
+    assert!(
+        message.starts_with(super::super::DDINTER_BUNDLE_DOWNLOAD_MARKER),
+        "the HTML reply must carry the download marker: {message}"
+    );
+    assert!(
+        !message.starts_with(super::super::DDINTER_BUNDLE_READ_MARKER),
+        "an HTML reply is not an unreadable bundle: {message}"
+    );
+    assert!(message.contains("not the CSV bundle"));
+
+    let xhtml = reqwest::header::HeaderValue::from_static("application/xhtml+xml");
+    let error = super::super::ensure_csv_content_type(Some(&xhtml)).expect_err("xhtml reply");
+    let BioMcpError::Api { message, .. } = &error else {
+        panic!("expected Api error, got {error:?}");
+    };
+    assert!(message.starts_with(super::super::DDINTER_BUNDLE_DOWNLOAD_MARKER));
+
+    // The bundle's own content types and a missing header stay fine.
+    for okay in ["text/csv", "text/csv; charset=utf-8", "application/octet-stream"] {
+        let header = reqwest::header::HeaderValue::from_str(okay).expect("header");
+        assert!(super::super::ensure_csv_content_type(Some(&header)).is_ok());
+    }
+    assert!(super::super::ensure_csv_content_type(None).is_ok());
+}

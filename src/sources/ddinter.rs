@@ -59,6 +59,13 @@ const DDINTER_BUNDLE: [(&str, &str); 8] = [
 /// so no upstream body text leaks (ticket 1254).
 pub(crate) const DDINTER_BUNDLE_READ_MARKER: &str = "DDInter bundle file ";
 
+/// Message prefix marking DDInter download replies that are not the
+/// expected bundle — an HTML page where the CSV should be. Distinct from
+/// the read marker so the public wording names the download, not a
+/// corrupted bundle (ticket 1256). The content-type is ours, not upstream
+/// body text, so it is safe to surface.
+pub(crate) const DDINTER_BUNDLE_DOWNLOAD_MARKER: &str = "DDInter bundle download ";
+
 pub(crate) const DDINTER_REQUIRED_FILES: &[&str] = &[
     DDINTER_BUNDLE[0].0,
     DDINTER_BUNDLE[1].0,
@@ -468,7 +475,7 @@ fn ensure_csv_content_type(
             // No body excerpt: the content-type alone names the failure
             // and upstream text must not leak (ticket 1254).
             message: format!(
-                "{DDINTER_BUNDLE_READ_MARKER}unexpected HTML response (content-type: {raw})"
+                "{DDINTER_BUNDLE_DOWNLOAD_MARKER}endpoint answered HTML (content-type: {raw}), not the CSV bundle"
             ),
         });
     }

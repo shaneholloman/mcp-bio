@@ -493,6 +493,20 @@ impl BioMcpError {
                         .unwrap_or(message)
                 )
             }
+            // An HTML reply where the bundle was expected is a download
+            // failure, not an unreadable bundle (ticket 1256). The
+            // content-type is our header, not upstream body text.
+            Self::Api { message, .. }
+                if source == "DDInter"
+                    && message.starts_with(crate::sources::ddinter::DDINTER_BUNDLE_DOWNLOAD_MARKER) =>
+            {
+                format!(
+                    "DDInter bundle download failed: {}",
+                    message
+                        .strip_prefix(crate::sources::ddinter::DDINTER_BUNDLE_DOWNLOAD_MARKER)
+                        .unwrap_or(message)
+                )
+            }
             Self::Api { .. } => format!("API request to {source} failed."),
             Self::ApiJson { api, .. } if source == "DDInter" => {
                 format!("DDInter bundle could not be decoded ({api})")
@@ -937,6 +951,24 @@ mod tests {
         assert_eq!(projection.message, "API request to DDInter failed.");
         assert!(!projection.message.contains("503"));
         assert!(!projection.message.contains("upstream outage html"));
+    }
+
+    #[test]
+    fn ddinter_html_download_replies_name_the_download_not_the_bundle_read() {
+        let marker = crate::sources::ddinter::DDINTER_BUNDLE_DOWNLOAD_MARKER;
+        let error = BioMcpError::Api {
+            api: "DDInter".to_string(),
+            message: format!(
+                "{marker}endpoint answered HTML (content-type: text/html), not the CSV bundle"
+            ),
+        };
+        let projection = error.public_projection();
+        assert_eq!(
+            projection.message,
+            "DDInter bundle download failed: endpoint answered HTML (content-type: text/html), not the CSV bundle",
+            "an HTML reply says the download failed; it is not an unreadable bundle"
+        );
+        assert!(!projection.message.contains(marker));
     }
 
     #[test]

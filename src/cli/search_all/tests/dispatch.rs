@@ -192,12 +192,30 @@ fn trial_recruiting_filter_note_names_the_failure_and_the_widening() {
 
     let err = crate::error::BioMcpError::Api {
         api: "ClinicalTrials.gov".to_string(),
-        message: "HTTP 503".to_string(),
+        message: "HTTP 503 Service Unavailable: upstream outage html".to_string(),
     };
     let note = super::super::dispatch::trial_recruiting_filter_note(&Some(err)).expect("note");
-    assert!(note.contains("Recruiting-status filter unavailable"));
-    assert!(note.contains("ClinicalTrials.gov") || note.contains("HTTP 503"));
-    assert!(note.contains("may include trials that are not recruiting"));
+    assert_eq!(
+        note,
+        "Recruiting-status filter unavailable for ClinicalTrials.gov. Results may include trials that are not recruiting.",
+        "the note names the source in our words and states the widening"
+    );
+    assert!(
+        !note.contains("503") && !note.contains("upstream outage html"),
+        "raw upstream text must not paste into the note: {note}"
+    );
+
+    // An error without a recognized provider still names something plain
+    // instead of pasting the raw error text.
+    let opaque = crate::error::BioMcpError::Api {
+        api: "not-a-real-source".to_string(),
+        message: "secret internals must not leak".to_string(),
+    };
+    let note = super::super::dispatch::trial_recruiting_filter_note(&Some(opaque)).expect("note");
+    assert!(
+        !note.contains("secret internals"),
+        "no upstream or internal text in the note: {note}"
+    );
 }
 
 #[test]

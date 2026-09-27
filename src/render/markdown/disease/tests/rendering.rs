@@ -768,6 +768,82 @@ fn disease_markdown_renders_survival_summary_and_note() {
 }
 
 #[test]
+fn disease_markdown_heading_and_provenance_credit_the_disgenet_seed() {
+    // Open Targets failed; the MyDisease hit's embedded DisGeNET block
+    // seeded the genes (ticket 1256). The heading, the association table,
+    // and the provenance rows must all say so — none may credit Open
+    // Targets for the seed.
+    let mut disease = Disease {
+        top_gene_source: None,
+        id: "MONDO:0007947".to_string(),
+        name: "Huntington disease".to_string(),
+        definition: None,
+        synonyms: Vec::new(),
+        parents: Vec::new(),
+        associated_genes: vec!["HTT".to_string()],
+        gene_associations: vec![crate::entities::disease::DiseaseGeneAssociation {
+            gene: "HTT".to_string(),
+            relationship: None,
+            source: Some("DisGeNET (via MyDisease.info)".to_string()),
+            opentargets_score: None,
+        }],
+        top_genes: Vec::new(),
+        top_gene_scores: Vec::new(),
+        treatment_landscape: Vec::new(),
+        recruiting_trial_count: None,
+        pathways: Vec::new(),
+        phenotypes: Vec::new(),
+        clinical_features: Vec::new(),
+        key_features: Vec::new(),
+        variants: Vec::new(),
+        top_variant: None,
+        models: Vec::new(),
+        prevalence: Vec::new(),
+        prevalence_note: None,
+        survival: None,
+        survival_note: None,
+        funding: None,
+        funding_note: None,
+        diagnostics: None,
+        diagnostics_note: None,
+        civic: None,
+        disgenet: None,
+        section_outcomes: crate::entities::disease::default_disease_section_outcomes(),
+        xrefs: std::collections::HashMap::new(),
+    };
+    crate::entities::disease::enrichment::assign_top_genes_for_render_test(&mut disease, false);
+
+    let markdown = disease_markdown(&disease, &[]).expect("disease markdown");
+    assert!(
+        markdown.contains("Genes (DisGeNET): HTT"),
+        "the heading must credit the DisGeNET seed, not Open Targets: {markdown}"
+    );
+    assert!(
+        markdown.contains("DisGeNET (via MyDisease.info)"),
+        "the association table keeps the full seed provenance: {markdown}"
+    );
+
+    let provenance = crate::render::provenance::disease_section_sources(&disease);
+    let top_gene_row = provenance
+        .iter()
+        .find(|row| row.key == "top_genes")
+        .expect("the top-gene provenance row exists");
+    assert_eq!(
+        top_gene_row.sources,
+        vec!["DisGeNET".to_string()],
+        "the top-gene row credits the seed: {provenance:?}"
+    );
+    let associated_row = provenance
+        .iter()
+        .find(|row| row.key == "associated_genes")
+        .expect("the associated-genes provenance row exists");
+    assert!(
+        associated_row.sources.contains(&"DisGeNET".to_string()),
+        "the associated-genes row names the seed: {provenance:?}"
+    );
+}
+
+#[test]
 fn disease_markdown_heading_and_provenance_credit_the_fallback_source() {
     // Open Targets failed; Monarch produced the top-gene list. The card
     // heading and the provenance row must both name Monarch — neither may

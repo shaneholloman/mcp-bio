@@ -575,9 +575,10 @@ async fn add_disgenet_section(disease: &mut Disease) -> Result<(), BioMcpError> 
 ///
 /// Open Targets owns the list when its base fetch produced it; otherwise
 /// the list comes from whatever fallback pushed associated genes (Monarch,
-/// CIViC) — even when a later Open Targets augment attached scores — and
-/// the label names the fallback so the heading and the provenance row
-/// cannot credit Open Targets for another source's genes.
+/// CIViC, or the DisGeNET data MyDisease embeds) — even when a later Open
+/// Targets augment attached scores — and the label names the fallback so
+/// the heading and the provenance row cannot credit Open Targets for
+/// another source's genes.
 pub(super) fn assign_top_genes(disease: &mut Disease, open_targets_owns: bool) {
     if !disease.top_gene_scores.is_empty() {
         disease.top_genes = disease
@@ -604,6 +605,20 @@ pub(super) fn assign_top_genes(disease: &mut Disease, open_targets_owns: bool) {
     }) {
         fallback_sources.push("CIViC");
     }
+    if disease.gene_associations.iter().any(|row| {
+        row.source
+            .as_deref()
+            .is_some_and(|s| s.to_ascii_lowercase().contains("mydisease"))
+    }) {
+        fallback_sources.push("MyDisease.info");
+    }
+    if disease.gene_associations.iter().any(|row| {
+        row.source
+            .as_deref()
+            .is_some_and(|s| s.to_ascii_lowercase().contains("disgenet"))
+    }) {
+        fallback_sources.push("DisGeNET");
+    }
     disease.top_gene_source =
         (!open_targets_owns && !disease.top_genes.is_empty() && !fallback_sources.is_empty())
             .then(|| fallback_sources.join(", "));
@@ -619,7 +634,11 @@ pub(crate) fn assign_top_genes_for_render_test(disease: &mut Disease, owns: bool
 pub(super) async fn enrich_base_context(disease: &mut Disease) {
     let _ = add_genes_section(disease).await;
 
-    assign_top_genes(disease, true);
+    // Open Targets owns the list only when its fetch produced one; when it
+    // returned nothing (or failed) the MyDisease-seeded genes survive and
+    // must carry their real source label, not Open Targets' (ticket 1256).
+    let open_targets_owns = !disease.top_gene_scores.is_empty();
+    assign_top_genes(disease, open_targets_owns);
 
     if let Err(err) = add_treatment_landscape(disease).await {
         warn!("Drug lookup unavailable for disease treatment landscape: {err}");
@@ -671,6 +690,15 @@ pub(super) async fn apply_requested_sections(
             })
         {
             contributors.push("CIViC");
+        }
+        // Seeded DisGeNET rows are present data, not a fetch result, so
+        // they contribute whenever they survived (ticket 1256).
+        if disease.gene_associations.iter().any(|row| {
+            row.source
+                .as_deref()
+                .is_some_and(|source| source.to_ascii_lowercase().contains("disgenet"))
+        }) {
+            contributors.push("DisGeNET");
         }
         let failed = opentargets_base_result.is_err()
             || monarch_result.is_err()
