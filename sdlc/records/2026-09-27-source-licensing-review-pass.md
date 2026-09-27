@@ -1,0 +1,84 @@
+# Source licensing review pass (delegated), 2026-09-27
+
+Ian moved the source licensing review from himself to the developer
+on 2026-09-27
+(`sdlc/issues/2026-09-27-review-follow-ups-after-the-1238-close.md`,
+direction section). This is that review's first pass. Its immediate
+job was the 2027-03 crossing: 48 sources carried `reviewed_on`
+2026-03-20 and would cross the guard's 365-day fail on 2027-03-20.
+
+## Method
+
+Four read-only research agents split the 48 (12 each). Each read
+the recorded entry in `docs/reference/sources.json` and
+`docs/reference/source-licensing.md`, then fetched the live terms
+page (curl, or web search where the page is JS-walled) and reported
+per source: reachable and date-stamped, contradiction or not, one
+verbatim governing sentence, its URL. DepMap got a separate
+evidence pass recorded in its own issue file.
+
+## Findings
+
+**Two sources changed materially and are updated in the registry:**
+
+- COSMIC — the recorded `sanger.ac.uk/legal/cosmic-licensing/` URL
+  is dead; cancer.sanger.ac.uk/cosmic redirects to cosmickb.org,
+  whose licensing page (© 2026) restricts academic use to
+  not-for-profit organisations and requires a commercial licence
+  for commercial use, expressly including "patient services and
+  clinical reporting". The registry's license summary, reuse
+  wording, and terms URL now say this. BioMCP carries COSMIC only
+  through MyVariant-cached fields; clinical-reporting consumers of
+  those fields need to know the clause.
+- CPIC — cpicpgx.org now 302-redirects to ClinPGx and the former
+  CC0 licence pages are gone. The successor data-usage policy page
+  states ClinPGx data is CC BY-SA 4.0; no live page says whether
+  that licence governs CPIC content. The registry records exactly
+  that state and treats CPIC as attribution-plus-share-alike until
+  CPIC publishes terms on its own domain again.
+
+**One summary corrected:** ChEMBL is CC BY-SA 3.0; the earlier
+summary omitted the share-alike obligation.
+
+**Four sources were not re-dated** because their terms could not be
+verified from this network: CIViC (Angular SPA serves no terms text
+to curl; needs a browser check), PharmGKB (API host unresolvable,
+successor page is a JS shell, archives hold only the shell),
+WikiPathways (terms page retired in the GitHub transition; no live
+licence statement anywhere), Enrichr (terms body 404s provider-side;
+the loader script is broken for every visitor). Their
+`reviewed_on` stays 2026-03-20; the guard will warn at 300 days
+(2026-12-15) and fail at 365 (2027-03-20). Revisit trigger: the
+next pass, or a browser-capable verification session.
+
+**Improvements folded in:** the four BioThings services
+(MyGene/MyVariant/MyDisease/MyChem) now carry the shared footer's
+research-purposes disclaimer in their reuse notes — a clinical-facing
+tool should show it. InterPro, OLS4, and QuickGO terms URLs now
+point at the plain-HTML EMBL-EBI terms-of-use page instead of their
+JS-walled app pages.
+
+**Everything else unchanged** (44 of 48 verified against live or
+bundle-extracted text; the JS-walled terms of DisGeNET, g:Profiler,
+GTEx, CGI, and cbioportal were read from their live JS bundles,
+which are the citable sources). Evidence tables with verbatim
+sentences and URLs live in the four research reports (agent session
+archives, 2026-09-27); this record names the material findings.
+
+## Registry state
+
+45 markdown sections dated 2026-09-27 (the 44 batch-verified JSON
+entries plus the PMC OA section, verified directly against
+<https://pmc.ncbi.nlm.nih.gov/about/copyright/> the same day: US
+government journal articles are public domain, and open-access
+articles still carry article-level licences and third-party
+material, matching the recorded summary); the four named-unverifiable
+entries stay 2026-03-20. `tools/check-source-registry.py`
+status=pass; the licensing docs contract suite is green (17
+passed).
+
+## Decision authority
+
+No money, agreement, or provider contact was involved. Ian can
+overturn any of this; the DepMap decision (separate file) names its
+own overturn path.
