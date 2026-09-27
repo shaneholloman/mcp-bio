@@ -65,6 +65,16 @@ product behavior; each needs an honest test.
    and not-a-directory (a regular file where the directory should
    be), asserting the retain/classify behavior 1254 b1 recorded.
 
+## Review
+
+- Design review: n/a (the review file named each fix)
+- Code review: BLOCK once (the CDATA first-text-child assertion
+  could never pass; per-family sensitivity; window wording), fixed
+  and verified 2026-09-27
+- Verification: yellow gate at a9dee294 — lint, test, spec, stress
+  OK, zero failed lines (one known GenCC load flake on the first
+  run, recorded in its watch issue)
+
 ## Acceptance
 
 - The shared-runtime test drives `execute_mcp_cli`, uses a counter
