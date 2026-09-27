@@ -2095,6 +2095,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial(source_env)]
     fn the_test_cache_mode_guard_applies_and_restores_the_mode() {
         let baseline = current_cache_mode();
         {
