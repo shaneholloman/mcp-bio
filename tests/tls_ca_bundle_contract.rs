@@ -671,13 +671,19 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
             }
         }
     }
-    assert!(seen_two && seen_three && seen_four, "all three tool calls answered");
+    assert!(
+        seen_two && seen_three && seen_four,
+        "all three tool calls answered"
+    );
     assert!(
         fetch_errored,
         "the fetch must surface its error: the fallback bundle never became the client's roots"
     );
     assert!(
-        fixture.connections.load(std::sync::atomic::Ordering::SeqCst) >= 1,
+        fixture
+            .connections
+            .load(std::sync::atomic::Ordering::SeqCst)
+            >= 1,
         "the warned server constructed an HTTP client and dialed the fixture"
     );
     let _ = tokio::time::timeout(Duration::from_secs(5), child.wait()).await;

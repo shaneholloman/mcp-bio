@@ -219,14 +219,16 @@ mod tests {
         // child, so the CDATA block leads the root's content; the
         // self-closing tag and the comment come after it.
         let xml = format!("<root>{cdata}<self/>{comment_opens}{pi_opens}</root>");
-        let doc = parse_external_xml(&xml, 1_000).expect(
-            "opens hidden in comments, CDATA, and PIs must not move the depth counter",
-        );
+        let doc = parse_external_xml(&xml, 1_000)
+            .expect("opens hidden in comments, CDATA, and PIs must not move the depth counter");
         assert!(doc.root_element().has_tag_name("root"));
         // The CDATA content is text that looks like markup and must
         // survive the parse as text.
         let text = doc.root_element().text().unwrap_or_default();
-        assert!(text.contains("<a><b><c>"), "CDATA kept its markup-looking text");
+        assert!(
+            text.contains("<a><b><c>"),
+            "CDATA kept its markup-looking text"
+        );
     }
 
     #[test]
