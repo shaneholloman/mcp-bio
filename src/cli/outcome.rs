@@ -624,8 +624,9 @@ async fn run_outcome_with_worker_stack(
                         // bodies drain notes into _meta.notes inside
                         // run_outcome_inner) and appends the text note
                         // before shell.rs redacts MCP output.
-                        let wants_text_note = !(cli.json || command_requests_json(&cli.command))
-                            && !is_charted_mcp_study_command(&cli).unwrap_or(false);
+                        let wants_text_note = !(cli.json
+                            || command_requests_json(&cli.command)
+                            || is_charted_mcp_study_command(&cli).unwrap_or(false));
                         crate::sources::run_command_with_stale_serve_notes(
                             Box::pin(run_outcome_inner(cli, true)),
                             wants_text_note,
