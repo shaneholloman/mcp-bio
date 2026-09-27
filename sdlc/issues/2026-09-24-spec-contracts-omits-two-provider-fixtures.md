@@ -18,12 +18,13 @@ fixtures, so the two mcp.md blocks read their GTR and MyVariant
 responses from the same fixtures normal `spec` mode starts
 (`run_variant_identity_fixture` brings its Clingen CSPEC sourcing
 along as in full mode). The lifecycle contract test's spec-contracts
-case passes; the remaining lifecycle-test failures in that file are
-pre-existing on the base tree (verified by stashing). Correction
-from code review: the routine_fixture_recovery and
-disease-survival lifecycle failures in copied workspaces WERE
-caused by the first cut of this change (the variant-identity
-fixture start had no existence guard, so bash exited 127 there);
-the guard now restores those workspaces to skipping the fixture,
-matching every sibling fixture runner. First live `make spec-contracts` confirmation runs in
+case passes. Two lifecycle failures in copied workspaces were first
+called pre-existing (verified by stashing the branch); code review
+corrected that: the routine_fixture_recovery and disease-survival
+failures WERE caused by the first cut of this change — the
+variant-identity fixture start had no existence guard, so bash
+exited 127 there. The guard now restores those workspaces to
+skipping the fixture, matching every sibling fixture runner. The
+base-tree failures that remain after the guard are tracked in
+`sdlc/issues/2026-09-27-lifecycle-tests-fail-in-copied-workspaces.md`. First live `make spec-contracts` confirmation runs in
 the batch's yellow gate.

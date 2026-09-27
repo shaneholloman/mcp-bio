@@ -96,3 +96,14 @@ the reviewer verified every seam against the code).
   mixup that broke the build, and the synonym population edit silently
   missing so the seam shipped dead), both fixed and verified ACCEPT
   2026-09-24
+
+## Change recorded late (2026-09-27)
+
+The 2026-09-26 review caught that this ticket never recorded the
+brand-name change that landed with it: `src/transform/drug.rs`
+(~:515-525) now folds brand synonyms only from the chosen anchor
+hit (`if Some(hit_index) == anchor_index`), not from every
+MyChem hit, for the same reason synonyms stopped being pooled — a
+combination product's brand list must not name a real interaction
+partner. The record's "anchor-only" wording covered synonyms; it
+now covers brands too.
