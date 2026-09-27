@@ -812,6 +812,13 @@ fn disease_markdown_heading_and_provenance_credit_the_disgenet_seed() {
         xrefs: std::collections::HashMap::new(),
     };
     crate::entities::disease::enrichment::assign_top_genes_for_render_test(&mut disease, false);
+    // The association table renders only when the genes section
+    // carried a payload; a seeded card has one.
+    disease
+        .section_outcomes
+        .complete("genes", crate::entities::section_outcome::SectionOutcome::data_sources([
+            "MyDisease.info",
+        ]));
 
     let markdown = disease_markdown(&disease, &[]).expect("disease markdown");
     assert!(
