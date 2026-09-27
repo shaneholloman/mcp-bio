@@ -936,7 +936,12 @@ mod tests {
             projection.message,
             "DDInter bundle could not be read: ddinter_downloads_code_A.csv could not be parsed: bad quote"
         );
-        assert!(!projection.message.contains(marker));
+        // The marker is consumed by the projection prefix; what must
+        // never leak is the other arm's sentinel (a read failure
+        // surfacing as download wording).
+        assert!(!projection
+            .message
+            .contains(crate::sources::ddinter::DDINTER_BUNDLE_READ_MARKER));
     }
 
     #[test]
