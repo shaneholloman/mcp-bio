@@ -66,12 +66,17 @@ tool should show it. InterPro, OLS4, and QuickGO terms URLs now
 point at the plain-HTML EMBL-EBI terms-of-use page instead of their
 JS-walled app pages.
 
-**Everything else unchanged** (44 of 48 verified against live or
-bundle-extracted text; the JS-walled terms of DisGeNET, g:Profiler,
+**Everything else unchanged** — 42 of 48 (count corrected
+2026-09-28; the first write said 44, double-counting two of the
+unverifiable four). The JS-walled terms of DisGeNET, g:Profiler,
 GTEx, CGI, and cbioportal were read from their live JS bundles,
-which are the citable sources). Evidence tables with verbatim
-sentences and URLs live in the four research reports (agent session
-archives, 2026-09-27); this record names the material findings.
+which are the citable sources. The per-source evidence table with
+URL, access date, and finding for all 48 is committed at
+`docs/reference/source-licensing-evidence-2026-09-27.md`
+(corrected 2026-09-28: PharmGKB reconciled to verified against the
+same ClinPGx page CPIC used, leaving three unverifiable; the
+warning date is 2027-01-15 and the fail date 2027-03-21 for those
+three — the 2027-03 crossing is handled for the other 45 only).
 
 ## Registry state
 
