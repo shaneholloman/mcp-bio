@@ -276,9 +276,7 @@ where
 /// every other spawned fetch in the tree is test scaffolding, which
 /// this audit confirmed by module.
 pub(crate) fn stale_serve_notes_handle() -> Option<StaleServeNotesHandle> {
-    STALE_SERVE_NOTES
-        .try_with(std::sync::Arc::clone)
-        .ok()
+    STALE_SERVE_NOTES.try_with(std::sync::Arc::clone).ok()
 }
 
 /// Re-enter the parent command's stale-serve scope inside a spawned
@@ -2030,11 +2028,13 @@ mod tests {
         .await;
         assert_eq!(
             sentences,
-            vec![StaleServeNote {
-                provider: "ClinGen",
-                age_seconds: 90,
-            }
-            .sentence()],
+            vec![
+                StaleServeNote {
+                    provider: "ClinGen",
+                    age_seconds: 90,
+                }
+                .sentence()
+            ],
             "the spawned task's note reaches the parent command's output"
         );
     }

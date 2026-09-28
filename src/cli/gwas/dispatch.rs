@@ -55,14 +55,12 @@ pub(in crate::cli) async fn handle_search(
     let pagination = page.pagination;
     let text = if json {
         let next_commands = crate::render::markdown::search_next_commands_gwas(&results);
-        let notes = crate::sources::take_stale_serve_sentences();
-        crate::render::json::to_pretty(&GwasJsonResponse {
+crate::render::json::to_pretty(&GwasJsonResponse {
             count: results.len(),
             results,
             _meta: GwasJsonMeta {
                 pagination,
                 next_commands,
-                notes,
             },
         })?
     } else {

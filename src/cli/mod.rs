@@ -94,6 +94,6 @@ use self::shared::{
 };
 
 #[cfg(test)]
-mod tests;
-#[cfg(test)]
 mod stale_json_note_tests;
+#[cfg(test)]
+mod tests;

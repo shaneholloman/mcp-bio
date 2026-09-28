@@ -141,11 +141,10 @@ pub(crate) fn json_body(
     notes: Vec<String>,
 ) -> Result<serde_json::Value, BioMcpError> {
     let mut body = if counts_only {
-        serde_json::to_value(counts_only_json(results))
-            .map_err(|error| BioMcpError::Api {
-                api: "search-all".to_string(),
-                message: format!("counts-only JSON serialization failed: {error}"),
-            })?
+        serde_json::to_value(counts_only_json(results)).map_err(|error| BioMcpError::Api {
+            api: "search-all".to_string(),
+            message: format!("counts-only JSON serialization failed: {error}"),
+        })?
     } else {
         serde_json::to_value(results).map_err(|error| BioMcpError::Api {
             api: "search-all".to_string(),

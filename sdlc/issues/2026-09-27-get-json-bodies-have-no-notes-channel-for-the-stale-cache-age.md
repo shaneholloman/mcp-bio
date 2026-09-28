@@ -27,3 +27,12 @@ body, or when the flat-schema work (ADR 0002 follow-ups) next touches
 the JSON envelope shape. Then: pick the envelope, add the notes
 channel once, and reuse `crate::sources::take_stale_serve_sentences`
 at the single build site.
+
+## GWAS search, resolved 2026-09-28 (ticket 1263)
+
+GWAS search JSON also cannot carry the stale-cache note, for a
+different reason than get-JSON: the GWAS client sends every request
+with `CacheMode::NoStore` (`src/sources/gwas.rs`, a deliberate
+bypass after cache decode failures), so no stale serve exists to
+describe. If that bypass is ever revisited, the notes channel added
+for article and search-all is the pattern to copy.
