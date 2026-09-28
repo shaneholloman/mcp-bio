@@ -605,17 +605,11 @@ pub(super) fn assign_top_genes(disease: &mut Disease, open_targets_owns: bool) {
     }) {
         fallback_sources.push("CIViC");
     }
-    if disease.gene_associations.iter().any(|row| {
-        row.source.as_deref().is_some_and(|s| {
-            let lower = s.to_ascii_lowercase();
-            // "DisGeNET (via MyDisease.info)" is the MyDisease hit's
-            // embedded DisGeNET block: credit DisGeNET alone. Only a
-            // source string without DisGeNET credits MyDisease.
-            lower.contains("mydisease") && !lower.contains("disgenet")
-        })
-    }) {
-        fallback_sources.push("MyDisease.info");
-    }
+    // MyDisease seeds genes only through its embedded DisGeNET block
+    // ("DisGeNET (via MyDisease.info)" — see seeded_gene_associations
+    // in transform/disease.rs), which the DisGeNET arm below credits;
+    // a bare "MyDisease.info" gene source has no producer, so no
+    // branch reads for it (2026-09-28 review).
     if disease.gene_associations.iter().any(|row| {
         row.source
             .as_deref()

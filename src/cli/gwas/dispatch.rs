@@ -18,6 +18,10 @@ struct GwasJsonMeta {
     pagination: crate::entities::variant::GwasPagination,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     next_commands: Vec<String>,
+    /// Stale-cache serves recorded during this command (ticket 1263):
+    /// the same `_meta.notes` channel the other searches use.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    notes: Vec<String>,
 }
 
 fn pagination_footer(meta: &crate::entities::variant::GwasPagination) -> String {
@@ -51,12 +55,14 @@ pub(in crate::cli) async fn handle_search(
     let pagination = page.pagination;
     let text = if json {
         let next_commands = crate::render::markdown::search_next_commands_gwas(&results);
+        let notes = crate::sources::take_stale_serve_sentences();
         crate::render::json::to_pretty(&GwasJsonResponse {
             count: results.len(),
             results,
             _meta: GwasJsonMeta {
                 pagination,
                 next_commands,
+                notes,
             },
         })?
     } else {

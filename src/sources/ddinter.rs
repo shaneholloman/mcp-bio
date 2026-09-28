@@ -62,8 +62,10 @@ pub(crate) const DDINTER_BUNDLE_READ_MARKER: &str = "DDInter bundle file ";
 /// Message prefix marking DDInter download replies that are not the
 /// expected bundle — an HTML page where the CSV should be. Distinct from
 /// the read marker so the public wording names the download, not a
-/// corrupted bundle (ticket 1256). The content-type is ours, not upstream
-/// body text, so it is safe to surface.
+/// corrupted bundle (ticket 1256). The content-type value comes from the
+/// upstream response header, not the body, so no upstream body text
+/// leaks through it (2026-09-28 review corrected this comment: the
+/// header is upstream's, not ours).
 pub(crate) const DDINTER_BUNDLE_DOWNLOAD_MARKER: &str = "DDInter bundle download ";
 
 pub(crate) const DDINTER_REQUIRED_FILES: &[&str] = &[

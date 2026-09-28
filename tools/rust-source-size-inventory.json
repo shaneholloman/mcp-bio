@@ -132,13 +132,13 @@
     },
     {
       "path": "src/entities/gene.rs",
-      "baseline_lines": 3858,
+      "baseline_lines": 3865,
       "floor_lines": 3812,
       "authorized_increase": {
-        "ticket": "0973, 1213",
-        "delta": 46,
-        "reason": "Canonical MyGene alias identity reuses the existing gene query and ambiguity rules rather than duplicating them in discovery, and the cell_lines helper module declaration (ticket 1213, +1).",
-        "removal_condition": "Extract MyGene identity resolution when the gene entity provider helpers are next decomposed."
+        "ticket": "1263",
+        "delta": 53,
+        "reason": "The stale-serve spawn-inheritance seam (ClinGen prefetch) and its tests in sources; the prefetch re-scope comment in gene.",
+        "removal_condition": "Fold the handle helpers into the shared task-local plumbing if a second production spawn appears."
       }
     },
     {
@@ -405,13 +405,13 @@
     },
     {
       "path": "src/sources/mod.rs",
-      "baseline_lines": 2654,
+      "baseline_lines": 2717,
       "floor_lines": 1847,
       "authorized_increase": {
-        "ticket": "1256+1261",
-        "delta": 807,
-        "reason": "The stale-serve task-local scope, the note recording, the wording helpers, the MCP drive-through helper, their tests, and the test-only cache-mode guard (ticket 1261).",
-        "removal_condition": "Shrink when the note and seed logic move into shared plumbing or the tests fold into shared fixtures."
+        "ticket": "1263",
+        "delta": 870,
+        "reason": "The stale-serve spawn-inheritance seam (ClinGen prefetch) and its tests in sources; the prefetch re-scope comment in gene.",
+        "removal_condition": "Fold the handle helpers into the shared task-local plumbing if a second production spawn appears."
       }
     },
     {
