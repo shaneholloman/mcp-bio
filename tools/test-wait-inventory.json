@@ -70,7 +70,7 @@
     "src/sources/gencc.rs": {
       "count": 7,
       "language": "rust",
-      "markers": 6
+      "markers": 7
     },
     "src/sources/gencc/store.rs": {
       "count": 3,

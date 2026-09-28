@@ -372,8 +372,8 @@ impl GenCcClient {
             Some(dataset) => dataset,
             None => return failed_refresh_now(store, snapshot, state, timeout_operation),
         };
-        if tokio::time::Instant::now() >= deadline {
-            // watchdog: bounded drain deadline
+        // watchdog: bounded drain poll sits on the compare line
+        if tokio::time::Instant::now() >= deadline { // watchdog: bounded drain deadline
             return failed_refresh_now(store, snapshot, state, timeout_operation);
         }
         let now = timestamp(now_utc());
@@ -464,8 +464,8 @@ async fn lock_refresh_until(store: &Store, deadline: tokio::time::Instant) -> Re
             Ok(false) => {}
             Err(_) => return Err(()),
         }
-        if tokio::time::Instant::now() >= deadline {
-            // watchdog: bounded drain deadline
+        // watchdog: bounded drain poll sits on the compare line
+        if tokio::time::Instant::now() >= deadline { // watchdog: bounded drain deadline
             return Ok(false);
         }
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -908,11 +908,9 @@ async fn cancelling_stalled_headers_and_streamed_body_drops_request_and_store_wo
         drop(store);
         let task = tokio::spawn(async { GenCcClient::new().unwrap().acquire(Duration::from_secs(30)).await });
         tokio::time::timeout(Duration::from_secs(60), entered.notified()).await.expect("request barrier"); task.abort(); assert!(task.await.unwrap_err().is_cancelled()); release.notify_waiters();
-        // watchdog: bounded cancellation poll (the marker sits on the
-        // deadline line; the comment cannot sit inside the block)
         let deadline = tokio::time::Instant::now() + Duration::from_secs(60); // watchdog: bounded cancellation poll
         while active.load(Ordering::Acquire) != 0 {
-            assert!(tokio::time::Instant::now() < deadline, "provider request survived cancellation");
+            assert!(tokio::time::Instant::now() < deadline, "provider request survived cancellation"); // watchdog: bounded cancellation poll
             tokio::time::sleep(Duration::from_millis(5)).await;
         }
         assert_cancelled_store_settles(&root, expected).await;
