@@ -2,6 +2,13 @@
 
 Filed 2026-09-28 from an independent read-only review of main at `7d2d85a7`. Three fresh reviewers covered the release fixes in `4d05cfd8` and `064cac91`, GitHub #287, ticket 1263, ticket 1264, the licensing evidence table, the records round and the README source count. Reviewers ran local dry runs and mutation probes in scratch copies, read-only GitHub queries and public web fetches only. The release fixes hold. Nothing here blocks the 0.9.1 tag. The items below are claims that went further than the code, and gaps left open.
 
+## Ian's direction, 2026-09-28
+
+- Resolve every issue before tagging 0.9.1. That covers every item in this file, every item in `2026-09-28-review-follow-ups-after-1255-through-1261.md`, and each point the reporter raised in GitHub #287.
+- Resolved means fixed and proven, or given a recorded decision with a reason. A deferral needs Ian's OK.
+- Ticket 1260 and the other items already assigned to 1.0 stay with 1.0.
+- Before asking for the go, add a disposition section to each review file. Each line names the commit and the CI run that proves it. Main must stay green across the whole round.
+
 ## Release
 
 - The changelog gate now reports 32 missing tickets at `7d2d85a7`, not 30. Tickets 1263 and 1264 landed after the count was taken. The missing list is 1220, 1222 through 1224, 1226 through 1239, 1241 through 1244, 1247, 1248, 1250, 1254, 1255, 1257, 1259, 1261, 1263 and 1264.
