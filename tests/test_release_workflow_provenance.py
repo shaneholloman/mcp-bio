@@ -1189,3 +1189,16 @@ def test_no_other_workflow_exposes_release_publication() -> None:
         if path != RELEASE_WORKFLOW:
             text = path.read_text(encoding="utf-8")
             assert not any(route in text for route in routes), path.name
+
+def test_rust_embed_carries_debug_embed_github_287() -> None:
+    """GitHub #287: the 0.9.0 wheels shipped a debug-profile binary
+    whose rust_embed read assets from the build machine at runtime.
+    The feature makes debug builds embed like release builds; this
+    pin fails if it leaves Cargo.toml silently.
+    """
+    manifest = (REPO_ROOT / "Cargo.toml").read_text(encoding="utf-8")
+    match = re.search(r"rust-embed\s*=\s*\{[^}]*\}", manifest)
+    assert match is not None, "rust-embed entry not found as a table"
+    assert 'features = ["debug-embed"]' in match.group(0), (
+        f"rust-embed must keep debug-embed (GitHub #287): {match.group(0)}"
+    )
