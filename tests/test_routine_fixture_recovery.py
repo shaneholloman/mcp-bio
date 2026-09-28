@@ -388,12 +388,11 @@ def test_nested_article_fixtures_keep_caches_inside_owned_roots() -> None:
 
 
 def _wait_until(predicate, timeout: float = 10.0) -> None:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if predicate():
-            return
-        time.sleep(0.05)
-    assert predicate()
+    # Delegates to the shared, scaled, marked helper (ticket 1269):
+    # one wait implementation instead of per-file duplicates.
+    from tests.support import wait_until
+
+    wait_until(predicate, watchdog_secs=timeout)
 
 
 def _read_exports(path: Path) -> dict[str, str]:

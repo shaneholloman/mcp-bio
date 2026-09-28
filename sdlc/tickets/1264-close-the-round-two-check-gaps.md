@@ -29,14 +29,18 @@ spelling it was never told about.
 
 ## Deferred gaps
 
-- Only the four pinned jobs get exact step lists; a new first step
-  in pypi-publish, homebrew-tap, build, or publish-release is
-  guarded by text assertions only.
-- A Rust function-pointer binding (`let nap = std::thread::sleep`)
-  escapes alias resolution.
-- The multi-line assert! floor exemption has no dedicated test.
-- The gencc.rs pin has slack of one (pinned 1, actual 0) — re-pin
-  down with the tool's --update.
+- Closed by ticket 1269: every release job's step list is pinned
+  (pypi-publish included); a Rust function-pointer binding counts;
+  the multi-line assert! floor exemption is tested; gencc's unmarked
+  pin repins to its true count.
+- Still open after 1269, recorded here because the round-three
+  review listed them: an expression-form env carrying PATH or ENV
+  (not only BASH_ENV and BASH_FUNC_) is not banned at job level;
+  `<Command>::new`-style generics in an expression position outside
+  a statement window, and setters bound through function returns,
+  remain fail-closed rather than named. The wait ratchet counts
+  Python `time.monotonic()` polls but not `time.perf_counter()`
+  ones.
 
 ## Review
 

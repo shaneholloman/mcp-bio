@@ -43,7 +43,10 @@ from pathlib import Path
 RUST_PATTERNS = [
     re.compile(pattern)
     for pattern in (
-        r"Instant::now\(\)\s*\+\s*(?!.*\bwatchdog\()",
+        # Only the SCALED HELPER call exempts a deadline addition; a
+        # `watchdog(` word in a comment is not the helper (ticket
+        # 1269).
+        r"Instant::now\(\)\s*\+\s*(?!.*\b[\w:]*test_support::watchdog\()",
         r"\bsleep\s*\(",
         r"\bsleep_until\s*\(",
         # Any comparison against elapsed() in either operand order
@@ -56,6 +59,9 @@ RUST_PATTERNS = [
         # in either order (`+` additions are the allowed builder).
         r"Instant::now\(\)\s*[<>]=?",
         r"[<>]=?\s*[\w.:]*Instant::now\(\)",
+        # `Instant::now().duration_since(s) < d` is the same poll in
+        # its method form.
+        r"duration_since\([^()]*\)\s*[<>]=?",
     )
 ]
 PYTHON_PATTERNS = [
@@ -66,30 +72,46 @@ PYTHON_PATTERNS = [
         r"anyio\.sleep",
         r"(?<![\w.])sleep\s*\(",
         r"from\s+time\s+import\s+[^\n]*\bsleep\b",
+        # Monotonic-clock polls are waits like any sleep.
+        r"time\.monotonic\(\)\s*[<>]=?",
+        r"[<>]=?\s*[\w.]*time\.monotonic\(\)",
     )
 ]
 # Aliased imports resolve to per-file local names:
 # `import time as t` makes `t.sleep(` a timed wait, and
 # `from time import sleep as snooze` makes `snooze(` one. The bare
 # `from time import sleep` form is covered by its own pattern.
-TIME_MODULE_ALIAS = re.compile(r"^\s*import\s+time\s+as\s+(\w+)", re.MULTILINE)
+TIME_MODULE_ALIAS = re.compile(
+    r"^\s*import\s+[\w\s,]*?\btime\s+as\s+(\w+)", re.MULTILINE
+)
 # Rust use-aliases: `use std::thread::sleep as nap` (and the tokio
 # timer) make `nap(` a timed wait, resolved per file.
 RUST_SLEEP_ALIAS = re.compile(
-    r"use\s+(?:std::thread|tokio::time)::sleep\s+as\s+(\w+)", re.MULTILINE
+    r"use\s+(?:std::thread|tokio::time)::sleep\s+as\s+(\w+)"
+    r"|use\s+(?:std::thread|tokio::time)::\{[^}]*?\bsleep\s+as\s+(\w+)\b[^}]*\}",
+    re.MULTILINE,
+)
+# Stored clock values: `let e = start.elapsed();` then `if e < d` is
+# a poll through a binding; so is a duration_since stored the same
+# way. The comparison patterns gain the bound name per file.
+RUST_TIME_BINDING = re.compile(
+    r"let\s+(?:mut\s+)?(\w+)\s*=\s*[\w.:]*(?:elapsed\(\)"
+    r"|Instant::now\(\)\s*\.\s*duration_since\([^)]*\))\s*(?:\.[\w.]+\(\))*\s*;",
 )
 # Python module-object assignment: `t = time` makes `t.sleep(` one.
 PYTHON_TIME_ASSIGN = re.compile(r"^\s*(\w+)\s*=\s*time\s*$", re.MULTILINE)
 SLEEP_RENAME_IMPORT = re.compile(
     r"^\s*from\s+time\s+import\s+sleep\s+as\s+(\w+)", re.MULTILINE
 )
-# A `>=` floor assertion says the test took at least this long; it
-# is a lower bound on elapsed effort, not a wait, and is subtracted
-# from the comparison patterns above.
+# An ASSERTION on a clock value bounds the test's own duration
+# (took at least/at most this long); it does not park a timer, so it
+# is subtracted from the comparison patterns above — either operator,
+# either operand order.
 FLOOR_ASSERTION = re.compile(
     r"assert[^;]*?(?:[\w.:]*(?:elapsed|Instant::now))\(\)"
-    r"(?:\s*\.\s*\w+\(\))*\s*>="
-    r"|assert[^;]*?>=\s*[\w.:]*(?:elapsed|Instant::now)\("
+    r"(?:\s*\.\s*\w+\(\))*\s*[<>]=?"
+    r"|assert[^;]*?[<>]=?\s*[\w.:]*(?:elapsed|Instant::now)\("
+    r"|assert[^;]*?duration_since\([^;]*?\)\s*[<>]=?"
 )
 
 # A `watchdog:` marker vouches for a wait only when it carries a
@@ -155,7 +177,10 @@ def count_waits(
         waited = any(p.search(line) for p in patterns) or any(
             p.search(line) for p in alias_patterns
         )
-        if waited and (FLOOR_ASSERTION.search(line) or (assert_open and ">=" in line)):
+        if waited and (
+            FLOOR_ASSERTION.search(line)
+            or (assert_open and re.search(r"[<>]=", line))
+        ):
             waited = False
         # A multi-line assert! opens here: a following `elapsed >=`
         # line is its floor assertion.
@@ -190,8 +215,25 @@ def local_time_aliases(text: str) -> list[re.Pattern[str]]:
 def rust_sleep_aliases(text: str) -> list[re.Pattern[str]]:
     aliases: list[str] = []
     for match in RUST_SLEEP_ALIAS.finditer(text):
-        aliases.append(r"(?<![\w.])" + re.escape(match.group(1)) + r"\s*\(")
+        name = next((g for g in match.groups() if g), None)
+        if name:
+            aliases.append(r"(?<![\w.])" + re.escape(name) + r"\s*\(")
     return [re.compile(a) for a in aliases]
+
+
+def rust_time_bindings(text: str) -> list[re.Pattern[str]]:
+    """Comparison patterns for stored clock values.
+
+    `let e = start.elapsed();` then `if e < d` is a deadline poll
+    through a name; a `>=` floor assertion stays exempt like the
+    direct form.
+    """
+    patterns: list[str] = []
+    for match in RUST_TIME_BINDING.finditer(text):
+        name = re.escape(match.group(1))
+        patterns.append(r"\b" + name + r"\b\s*[<>]=?")
+        patterns.append(r"[<>]=?\s*\b" + name + r"\b")
+    return [re.compile(a) for a in patterns]
 
 
 def scan(root: Path) -> dict[str, dict[str, object]]:
@@ -205,7 +247,7 @@ def scan(root: Path) -> dict[str, dict[str, object]]:
         count, _, marked = count_waits(
             region.splitlines(),
             RUST_PATTERNS,
-            rust_sleep_aliases(region),
+            rust_sleep_aliases(region) + rust_time_bindings(region),
         )
         if count or marked:
             entry: dict[str, object] = {"count": count, "language": "rust"}
@@ -226,6 +268,56 @@ def scan(root: Path) -> dict[str, dict[str, object]]:
     return files
 
 
+def raise_is_accepted(root: Path, record: dict) -> tuple[bool, str]:
+    """A ceiling raise counts only with a reason and an ACCEPTED review.
+
+    The record names the ticket whose Review accepted the raise; the
+    ratchet reads that ticket file and requires an accepted code
+    review. A raise citing the ticket currently in review fails the
+    gate until the reviewer accepts — that is the discipline: no
+    unreviewed raise reaches a green gate.
+    """
+    reason = str(record.get("reason", "")).strip()
+    ticket = str(record.get("ticket", "")).strip()
+    if not reason or not ticket:
+        return False, "raise record needs a reason and a ticket"
+    matches = sorted((root / "sdlc" / "tickets").glob(f"{ticket}-*.md"))
+    if not matches:
+        return False, f"raise cites ticket {ticket}, which has no file"
+    text = matches[0].read_text(encoding="utf-8")
+    accepted = re.search(
+        r"^\s*-?\s*\**code\s+re(?:view|-review)\**\s*(?:\([^)]*\))?\s*:"
+        r".{0,200}?\bACCEPT\b",
+        text,
+        re.IGNORECASE | re.MULTILINE,
+    )
+    if not accepted:
+        return False, (
+            f"raise cites ticket {ticket}, whose code review has not "
+            f"been accepted — the gate stays red until it is"
+        )
+    return True, ""
+
+
+def accepted_raise_for(
+    raises: list[dict], name: str, field: str, value: int, root: Path
+) -> tuple[bool, str]:
+    for record in raises:
+        if (
+            record.get("file") == name
+            and record.get("field") == field
+            and int(record.get("to", -1)) == value
+        ):
+            ok, why = raise_is_accepted(root, record)
+            if ok:
+                return True, ""
+            return False, why
+    return False, (
+        f"no accepted raise record for {name} {field} -> {value}; add one "
+        f"with a reason and the ticket whose review accepted it"
+    )
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -239,6 +331,7 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args()
     inventory_path = args.root / "tools/test-wait-inventory.json"
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    raises = list(inventory.get("raises", []))
     pinned: dict[str, dict] = {
         name: (entry if isinstance(entry, dict) else {"count": entry})
         for name, entry in inventory.get("files", {}).items()
@@ -264,9 +357,14 @@ def main(argv: list[str]) -> int:
                 f"run with --update to pin it"
             )
         elif count > ceiling.get("count", count):
-            failures.append(
-                f"{name} has {count} unmarked waits, above the pinned ceiling {ceiling.get('count')}"
+            ok, why = accepted_raise_for(
+                raises, name, "count", count, args.root
             )
+            if not ok:
+                failures.append(
+                    f"{name} has {count} unmarked waits, above the pinned ceiling "
+                    f"{ceiling.get('count')} ({why})"
+                )
         elif count < ceiling.get("count", count):
             notes.append(
                 f"{name} dropped {ceiling.get('count')} -> {count}; re-pin down with --update"
@@ -274,19 +372,51 @@ def main(argv: list[str]) -> int:
         pinned_markers = int(ceiling.get("markers", 0)) if ceiling else 0
         file_markers = int(entry.get("markers", 0))
         if ceiling is not None and file_markers > pinned_markers:
-            failures.append(
-                f"{name} carries {file_markers} `watchdog:` markers, above its pinned "
-                f"{pinned_markers}; a new marker needs a reason and a same-commit "
-                f"inventory raise"
+            ok, why = accepted_raise_for(
+                raises, name, "markers", file_markers, args.root
             )
+            if not ok:
+                failures.append(
+                    f"{name} carries {file_markers} `watchdog:` markers, above its "
+                    f"pinned {pinned_markers} ({why})"
+                )
     for name in sorted(set(pinned) - set(current)):
         notes.append(f"{name} now has zero unmarked waits; re-pin down with --update")
+    # The raises list is the append-only history of every raise; a
+    # pin that disagrees with its head is a silent edit bypassing
+    # review (the tool cannot see yesterday's value any other way).
+    by_key: dict[tuple[str, str], list[dict]] = {}
+    for record in raises:
+        by_key.setdefault((str(record.get("file")), str(record.get("field"))), []).append(record)
+    for (name, field), records in by_key.items():
+        head = records[-1]
+        target = int(head.get("to", -1))
+        if field == "marker_total_ceiling":
+            actual = marker_ceiling
+        else:
+            entry = pinned.get(name) or {}
+            actual = int(entry.get(field, -1)) if isinstance(entry, dict) else -1
+        if actual != target:
+            failures.append(
+                f"{name} pin for {field} is {actual} but the last accepted raise "
+                f"record says {target}; the raises list is the only history — "
+                f"either restore the pin or append a reviewed raise"
+            )
+        steps = [(int(r.get("from", -1)), int(r.get("to", -1))) for r in records]
+        for (earlier_from, earlier_to), (later_from, _) in zip(steps, steps[1:]):
+            if earlier_to != later_from:
+                failures.append(
+                    f"{name} {field} raise chain is discontinuous: {steps}"
+                )
     if total_markers > marker_ceiling:
-        failures.append(
-            f"the tree carries {total_markers} `watchdog:` markers, above the global "
-            f"ceiling {marker_ceiling}; raise marker_total_ceiling in the same commit "
-            f"as the new marker, with its reason"
+        ok, why = accepted_raise_for(
+            raises, "(global)", "marker_total_ceiling", total_markers, args.root
         )
+        if not ok:
+            failures.append(
+                f"the tree carries {total_markers} `watchdog:` markers, above the "
+                f"global ceiling {marker_ceiling} ({why})"
+            )
 
     if args.update:
         fresh = {name: entry for name, entry in sorted(current.items())}

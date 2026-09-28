@@ -66,13 +66,29 @@ REVIEW_LINE = re.compile(
 # followed by a scope and a colon, in any decoration (bullet, bold,
 # heading, plain paragraph). The next spelling over cannot pass
 # because the test is on what the line IS, not on a phrase list.
-DECORATION = re.compile(r"^[\s#*>`_-]*")
+DECORATION = re.compile(r"^[\s#*>|`_-]*")
 STATE_ANYWHERE = re.compile(r"\b(ACCEPT|REJECT|BLOCK|pending)\b", re.IGNORECASE)
 STATUS_DECLARATION = re.compile(
-    r"(?:design\s+|code\s+|security\s+|ticket\s+)?re(?:view|-review)s?"
+    r"(?:design\s+|code\s+)?re(?:view|-review)s?"
     r"[\s*]*(?:\([^)]*\))?[\s*]*:",
     re.IGNORECASE,
 )
+# The kind vocabulary is an allowlist: design, code, bare, or
+# verification. These are ANCHORED shapes — a status line begins
+# (after decoration, including table pipes) with a kind word and a
+# colon or a table pipe. Mid-sentence prose ("change from the
+# review: ...") is not a status line, and a paragraph describing
+# what a review returned ("review returned REJECT ...") does not
+# carry the colon shape.
+STATUS_HEAD = re.compile(
+    r"^(?:design\s+|code\s+)?re(?:view|-review)s?\s*(?:\([^)]*\))?\s*(?::|\|)",
+    re.IGNORECASE,
+)
+UNKNOWN_KIND_HEAD = re.compile(
+    r"^(\w[\w-]*)\s+re(?:view|-review)s?\s*(?::|\|)",
+    re.IGNORECASE,
+)
+ALLOWED_KIND_WORDS = {"design", "code", "review", "re-review", "verification"}
 VERIFICATION_DECLARATION = re.compile(r"verifica(?:tion|tions)?\s*:", re.IGNORECASE)
 # Honest legacy null states: the backfilled verdicts for tickets
 # that predate the review-record convention say exactly this.
@@ -108,7 +124,8 @@ RESOLVED_BY = re.compile(
 # A resolution word negated is not a resolution: "REJECT, not yet
 # fixed" declares the fix has NOT happened.
 NOT_RESOLVED = re.compile(
-    r"\bnot(?:\s+yet)?\s+(?:fixed|folded|verified|superseded|accepted)\b",
+    r"\b(?:not(?:\s+yet)?|never|to\s+be)\s+"
+    r"(?:fixed|folded|verified|superseded|accepted)\b",
     re.IGNORECASE,
 )
 # A scope names a slice of the ticket; it exempts a pending verdict
@@ -236,11 +253,17 @@ def _review_records(path: Path) -> list[dict[str, object]]:
         # A review verdict must declare a state (the "awaiting
         # reviewer" hole); a verification verdict states evidence,
         # and its completion words vary with what was run.
+        # Ticket 1269: the review state vocabulary is an allowlist —
+        # the four state tokens, the recorded null states, or the
+        # exact recorded null forms. Completion words (done, passed,
+        # skipped, merged) state evidence for VERIFICATION lines and
+        # cannot smuggle a review verdict through "not done".
+        REVIEW_NULL_FORM = re.compile(r"^(?:n/a\b|not required\b)", re.IGNORECASE)
         declares_review_state = (
             STATE_TOKEN.search(verdict)
             or RESOLVED_BY.search(verdict)
             or NULL_STATE.search(verdict)
-            or COMPLETION.search(verdict)
+            or REVIEW_NULL_FORM.match(verdict.strip())
         )
         if "review" in kind and not declares_review_state:
             _last_no_state_failures.append(
@@ -297,12 +320,22 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
         # (an ACCEPT quoted mid-explanation) stay prose.
         head = " ".join(unquoted.split()[:3])
         head_status = bool(re.search(r"review|verifica", head, re.IGNORECASE))
-        bullet_status = (
-            marker == "-" and head_status and STATE_ANYWHERE.search(unquoted)
+        # A status line begins with a kind head (colon or table
+        # pipe after decoration); anything else is prose even when
+        # it mentions review states mid-sentence. An unknown kind
+        # word in the head position fails whatever follows it.
+        head_word = UNKNOWN_KIND_HEAD.match(unquoted)
+        unknown_kind = bool(
+            head_word and head_word.group(1).lower() not in ALLOWED_KIND_WORDS
         )
-        # A declaration alone is prose ("review: the code above
-        # ..."); a status line declares AND carries a state word.
-        if (declared and STATE_ANYWHERE.search(unquoted)) or only_state or bullet_status:
+        status_head = bool(STATUS_HEAD.match(unquoted))
+        grammar_bullet = marker == "-" and REVIEW_LINE.match(logical_text) is not None
+        if (
+            unknown_kind
+            or only_state
+            or (declared and STATE_ANYWHERE.search(unquoted))
+            or (status_head and STATE_ANYWHERE.search(unquoted) and not grammar_bullet)
+        ):
             failures.append(
                 f"{relative}:{number}: review line is not the grammar: {logical_text[:70]}"
             )
@@ -441,6 +474,16 @@ def test_the_grammar_catches_shapes_it_was_never_told_about(
     # Never-told-about mutation 8c: a stray state word on its own
     # unindented line under an accepted verdict.
     assert probe("## Review\n\n- Code review: ACCEPT 2026-09-25\n\npending\n")
+    # Round-three mutations (ticket 1269): smuggled completion words,
+    # unknown kinds, table rows, and negated resolutions.
+    assert probe("## Review\n\n- Code review: not done\n")
+    assert probe("## Review\n\n- Code review: not yet passed\n")
+    assert probe("## Review\n\n- Code review: skipped\n")
+    assert probe("## Review\n\n- Security review: awaiting\n")
+    assert probe("## Review\n\n- Ticket review: pending\n")
+    assert probe("| Code review | pending |\n")
+    assert probe("## Review\n\n- Code review: REJECT, never fixed\n")
+    assert probe("## Review\n\n- Code review: REJECT, to be folded\n")
 
     # Mutation 9 (2026-09-28): a verdict with no state word at all.
     assert probe("## Review\n\n- Code review: awaiting reviewer\n")

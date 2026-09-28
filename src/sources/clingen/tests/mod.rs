@@ -147,7 +147,7 @@ async fn handle(State(state): State<FixtureState>, uri: Uri) -> Response<Body> {
     if let Some(barrier) = state.barrier {
         barrier.wait().await;
     }
-    tokio::time::sleep(spec.delay).await;
+    tokio::time::sleep(spec.delay).await; // watchdog: fixture serves on a programmed bounded delay
     Response::builder()
         .status(spec.status)
         .header("content-type", spec.content_type)

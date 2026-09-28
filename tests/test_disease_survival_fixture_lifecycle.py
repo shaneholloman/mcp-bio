@@ -351,7 +351,7 @@ def test_real_bounded_runner_timeout_reaps_disease_server_and_root(
     )
     kill_deadline = time.monotonic() + 3
     while timed_run.poll() is None:
-        if time.monotonic() >= kill_deadline:
+        if time.monotonic() >= kill_deadline:  # watchdog: bounded kill-window check
             os.kill(timed_run.pid, signal.SIGKILL)
             break
         time.sleep(0.05)  # watchdog: bounded kill-window poll

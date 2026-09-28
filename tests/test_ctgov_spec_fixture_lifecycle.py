@@ -16,12 +16,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _wait_until(predicate, timeout: float = 10.0) -> None:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if predicate():
-            return
-        time.sleep(0.05)
-    assert predicate()
+    # Delegates to the shared, scaled, marked helper (ticket 1269):
+    # one wait implementation instead of per-file duplicates.
+    from tests.support import wait_until
+
+    wait_until(predicate, watchdog_secs=timeout)
 
 
 _FATAL_RUNNER_SIGNALS = (

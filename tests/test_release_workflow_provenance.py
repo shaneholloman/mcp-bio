@@ -330,6 +330,50 @@ PINNED_JOB_STEP_LISTS: dict[str, list[str]] = {
         "Require the tag and committed versions to agree",
         "Require the changelog to cover merged tickets",
     ],
+    # 2026-09-28 round three: EVERY release job is pinned, not only
+    # the four above — pypi-publish uploads to PyPI, so a new first
+    # step there (a BASH_ENV writer via $GITHUB_ENV, a swapped uv)
+    # must fail even when no hash exists to drift.
+    "pypi-publish": [
+        "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+        "Install pinned uv",
+        "Publish to PyPI with trusted publishing",
+    ],
+    "homebrew-tap": [
+        "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+        "Download checksums from the release",
+        "Update Homebrew tap",
+    ],
+    "build": [
+        "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+        "dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c",
+        "arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b",
+        "Build release binary",
+        "Build and package inside the manylinux 2_28 container",
+        "Package (macOS)",
+        "Package (Windows)",
+        "Upload release assets",
+    ],
+    "container-publish": [
+        "Check out the packaging ref",
+        "Resolve the image version and source revision",
+        "Stage the released Linux executables",
+        "Set up QEMU",
+        "Set up Buildx",
+        "Log in to GHCR",
+        "Build and push the versioned image",
+        "Smoke the linux/amd64 image from the registry",
+        "Smoke the linux/arm64 image from the registry",
+    ],
+    "publish-release": [
+        "Publish the GitHub release after every publisher succeeds",
+        "docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435",
+        "docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567",
+        "Move latest after both platform smokes pass",
+    ],
+    "create-draft": [
+        "Create the draft release",
+    ],
 }
 
 
@@ -359,12 +403,39 @@ def _assert_no_bash_env(parsed: dict) -> None:
     """
     def check_env(env: object, where: str) -> None:
         if isinstance(env, dict):
+            for name in env:
+                # BASH_ENV reinterprets every bash -e run; BASH_FUNC_
+                # names are imported as shell functions by bash.
+                assert "BASH_ENV" not in name, (
+                    f"{where}: BASH_ENV is forbidden in every env block"
+                )
+                assert not name.startswith("BASH_FUNC_"), (
+                    f"{where}: {name} is a bash function-import variable "
+                    f"(BASH_FUNC_name%% is executed by every bash run)"
+                )
+        elif isinstance(env, str) and env:
+            # Expression-form env blocks parse as strings, not dicts;
+            # a fromJSON payload can still carry the same names.
             assert "BASH_ENV" not in env, (
-                f"{where}: BASH_ENV is forbidden in every env block"
+                f"{where}: expression env names BASH_ENV: {env[:60]}"
+            )
+            assert "BASH_FUNC_" not in env, (
+                f"{where}: expression env names a BASH_FUNC_ variable"
             )
 
     check_env(parsed.get("env"), "workflow-level env")
     assert "BASH_ENV" not in parsed, "workflow-level BASH_ENV key is forbidden"
+    # Workflow-level PATH or ENV rewrites the environment of every
+    # job in the file — a hijacked bin dir or options file reaches
+    # even the pinned steps. Job and step PATH stay legal (toolchain
+    # paths are set there legitimately).
+    workflow_env = parsed.get("env") or {}
+    if isinstance(workflow_env, dict):
+        for name in workflow_env:
+            assert name not in ("PATH", "ENV"), (
+                f"workflow-level env {name} rewrites every job's "
+                f"environment; set it per job or per step"
+            )
     for job, spec in parsed["jobs"].items():
         check_env(spec.get("env"), f"{job} job env")
         for index, step in enumerate(spec.get("steps", [])):
@@ -996,6 +1067,49 @@ PIPELINE_MUTATIONS = {
             }
         ),
         "step text drifted from its pinned hash",
+    ),
+    # --- Round three (ticket 1269): expression envs, hijack
+    # --- variable names, workflow-level PATH/ENV, and a new first
+    # --- step in pypi-publish itself.
+    "expression_env_carrying_bash_env": (
+        lambda parsed: parsed["jobs"]["wheel-smoke"].update(
+            {"env": 'FAKE_EXPRESSION{ "BASH_ENV": "/tmp/poison.sh" }'}
+        ),
+        "expression env names BASH_ENV",
+    ),
+    "bash_func_import_at_job_level": (
+        lambda parsed: parsed["jobs"]["wheel-smoke"].update(
+            {"env": {"BASH_FUNC_python%%": "() { exit 0; }"}}
+        ),
+        "is a bash function-import variable",
+    ),
+    "bash_func_import_at_workflow_level": (
+        lambda parsed: parsed.update(
+            {"env": {"BASH_FUNC_python%%": "() { exit 0; }"}}
+        ),
+        "is a bash function-import variable",
+    ),
+    "path_at_workflow_level": (
+        lambda parsed: parsed.update(
+            {"env": {**parsed.get("env", {}), "PATH": "/hijack/bin:/usr/bin"}}
+        ),
+        "rewrites every job's",
+    ),
+    "env_options_at_workflow_level": (
+        lambda parsed: parsed.update(
+            {"env": {**parsed.get("env", {}), "ENV": "/hijack/options"}}
+        ),
+        "rewrites every job's",
+    ),
+    "a_new_first_step_slipped_into_pypi_publish": (
+        lambda parsed: parsed["jobs"]["pypi-publish"]["steps"].insert(
+            0,
+            {
+                "name": "Prepare environment",
+                "run": 'echo "BASH_ENV=/tmp/poison.sh" >> "$GITHUB_ENV"',
+            },
+        ),
+        "the pinned job's step list must match exactly",
     ),
 }
 
