@@ -372,7 +372,7 @@ impl GenCcClient {
             Some(dataset) => dataset,
             None => return failed_refresh_now(store, snapshot, state, timeout_operation),
         };
-        if tokio::time::Instant::now() >= deadline {
+        if tokio::time::Instant::now() >= deadline { // watchdog: bounded drain deadline
             return failed_refresh_now(store, snapshot, state, timeout_operation);
         }
         let now = timestamp(now_utc());
@@ -463,7 +463,7 @@ async fn lock_refresh_until(store: &Store, deadline: tokio::time::Instant) -> Re
             Ok(false) => {}
             Err(_) => return Err(()),
         }
-        if tokio::time::Instant::now() >= deadline {
+        if tokio::time::Instant::now() >= deadline { // watchdog: bounded drain deadline
             return Ok(false);
         }
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -869,7 +869,7 @@ async fn assert_cancelled_store_settles(root: &std::path::Path, expected_etag: O
             return;
         }
         assert!(
-            tokio::time::Instant::now() < deadline,
+            tokio::time::Instant::now() < deadline, // watchdog: bounded child-exit poll
             "cancelled GenCC work survived; leaked temporaries: {leaked:?}"
         );
         tokio::time::sleep(Duration::from_millis(5)).await; // watchdog: settle poll
@@ -906,7 +906,7 @@ async fn cancelling_stalled_headers_and_streamed_body_drops_request_and_store_wo
         drop(store);
         let task = tokio::spawn(async { GenCcClient::new().unwrap().acquire(Duration::from_secs(30)).await });
         tokio::time::timeout(Duration::from_secs(60), entered.notified()).await.expect("request barrier"); task.abort(); assert!(task.await.unwrap_err().is_cancelled()); release.notify_waiters();
-        let deadline = tokio::time::Instant::now() + Duration::from_secs(60); while active.load(Ordering::Acquire) != 0 { assert!(tokio::time::Instant::now() < deadline, "provider request survived cancellation"); tokio::time::sleep(Duration::from_millis(5)).await; }
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(60); while active.load(Ordering::Acquire) != 0 { assert!(tokio::time::Instant::now() < deadline, "provider request survived cancellation"); // watchdog: bounded cancellation poll tokio::time::sleep(Duration::from_millis(5)).await; }
         assert_cancelled_store_settles(&root, expected).await;
         server.abort(); unsafe { std::env::remove_var("BIOMCP_GENCC_TEST_NOW"); std::env::remove_var("BIOMCP_GENCC_BASE"); std::env::remove_var("BIOMCP_GENCC_DIR"); }
     }
@@ -987,7 +987,7 @@ async fn cancelled_publication_settles_and_the_previous_generation_survives() {
             () = tokio::time::sleep(Duration::from_millis(5)) => {}
         }
         assert!(
-            tokio::time::Instant::now() < marker_deadline,
+            tokio::time::Instant::now() < marker_deadline, // watchdog: bounded marker drain poll
             "GenCC publication never reached cancellation barrier"
         );
     }

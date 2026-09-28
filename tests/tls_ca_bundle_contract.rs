@@ -785,7 +785,7 @@ async fn http_bad_fallback_binds_and_warns_once() {
         {
             break;
         }
-        assert!(Instant::now() < deadline, "HTTP readiness deadline");
+        assert!(Instant::now() < deadline, "HTTP readiness deadline"); // watchdog: bounded readiness poll
         tokio::time::sleep(Duration::from_millis(25)).await;
     }
     let stderr = stop_and_stderr(&mut child).await;

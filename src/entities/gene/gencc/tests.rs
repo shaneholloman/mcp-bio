@@ -966,7 +966,7 @@ fn subprocess_lease_child_exits_on_parent_end_of_input() {
             break;
         }
         assert!(
-            std::time::Instant::now() < deadline,
+            std::time::Instant::now() < deadline, // watchdog: bounded poll
             "handshake child did not exit on end-of-input"
         );
         std::thread::sleep(std::time::Duration::from_millis(25)); // watchdog: exit poll

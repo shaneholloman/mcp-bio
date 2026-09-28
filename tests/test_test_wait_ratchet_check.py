@@ -66,6 +66,34 @@ def test_a_new_unmarked_wait_fails(tmp_path: Path) -> None:
     assert "new unmarked timed waits in tests/test_example.py (1)" in result.stdout
 
 
+def test_the_new_poll_and_alias_shapes_fail() -> None:
+    """The 2026-09-28 review shapes: each must count as a wait."""
+    RUST_PATTERNS = MODULE.RUST_PATTERNS
+    rust_sleep_aliases = MODULE.rust_sleep_aliases
+
+    rust_lines = [
+        "    while start.elapsed() <= limit { poll(); }",
+        "    while limit >= start.elapsed() { poll(); }",
+        "    assert!(Instant::now() < deadline, \"readiness\");",
+        "    while deadline > Instant::now() { poll(); }",
+    ]
+    for line in rust_lines:
+        assert any(pat.search(line) for pat in RUST_PATTERNS), line
+
+    aliased = "use std::thread::sleep as nap;\n    nap(2);"
+    assert any(
+        pat.search("    nap(2);")
+        for pat in rust_sleep_aliases(aliased)
+    ), "aliased Rust sleep must resolve"
+
+    local_time_aliases = MODULE.local_time_aliases
+
+    python_alias = "t = time\n    t.sleep(1)"
+    assert any(
+        pat.search("    t.sleep(1)") for pat in local_time_aliases(python_alias)
+    ), "assigned Python time module must resolve"
+
+
 def test_a_watchdog_marker_passes() -> None:
     lines = ["    time.sleep(0.05)  # watchdog: shared poll interval inside the helper"]
     count, violations, _ = count_waits(lines, [MODULE.PYTHON_PATTERNS[0]])

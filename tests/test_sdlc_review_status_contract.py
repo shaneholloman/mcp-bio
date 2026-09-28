@@ -59,16 +59,43 @@ REVIEW_LINE = re.compile(
     rf"^(?P<kind>{KIND})(?:\s*\((?P<scope>[^)]*)\))?\s*:\s*(?P<verdict>\S.*)$",
     re.IGNORECASE,
 )
-# Any line that looks like a review status but is not exactly the
-# grammar above (bold kind names, starred bullets, a kind glued to
-# other words) is a format failure. `\breview\b` keeps prose like
-# "the reviewer confirmed" out of the net.
-REVIEWISH = re.compile(
-    r"^\s*[#*+>]?\s*\**\s*\(?\s*\**\s*(?:\([^)]*\)\s*)?\**\s*"
-    r"(?:design\s+|code\s+)?\**\s*re(?:view|-review)\b",
+# Whole-line allowlist: a logical line is either an exact grammar
+# record (a `-` bullet matching REVIEW_LINE) or plain text. A line is
+# NOT plain text when it contains a state word anywhere, or when it
+# declares a review/verification status — a review-ish phrase
+# followed by a scope and a colon, in any decoration (bullet, bold,
+# heading, plain paragraph). The next spelling over cannot pass
+# because the test is on what the line IS, not on a phrase list.
+DECORATION = re.compile(r"^[\s#*>`_-]*")
+STATE_ANYWHERE = re.compile(r"\b(ACCEPT|REJECT|BLOCK|pending)\b", re.IGNORECASE)
+STATUS_DECLARATION = re.compile(
+    r"(?:design\s+|code\s+|security\s+|ticket\s+)?re(?:view|-review)s?"
+    r"[\s*]*(?:\([^)]*\))?[\s*]*:",
     re.IGNORECASE,
 )
-VERIFICATION_ISH = re.compile(r"^\s*[#*+>]?\s*\**\s*verifica(?:tion|tions)\b", re.IGNORECASE)
+VERIFICATION_DECLARATION = re.compile(r"verifica(?:tion|tions)?\s*:", re.IGNORECASE)
+# Honest legacy null states: the backfilled verdicts for tickets
+# that predate the review-record convention say exactly this.
+NULL_STATE = re.compile(
+    r"\b(?:record not kept at the time|no gate record was kept|shipped in the 0\.8\.x series)\b",
+    re.IGNORECASE,
+)
+# Completion words a verdict may declare instead of the four state
+# tokens: a verification line that says it merged, passed, or was
+# not required has declared an outcome.
+COMPLETION = re.compile(
+    r"\b(?:merged|done|shipped|passed|skipped|n/a|not required)\b",
+    re.IGNORECASE,
+)
+
+
+# A line that is nothing but state/resolution words (an unindented
+# wrapped verdict, e.g. "pending") is a status line, not prose.
+STATE_AND_RESOLUTION = re.compile(
+    r"(?:\b(?:ACCEPT|REJECT|BLOCK|pending|fixed|folded|verified|superseded|accepted)"
+    r"[\s.,;:|!-]*)+",
+    re.IGNORECASE,
+)
 
 # Verdict state tokens, in the order they appear in the text.
 STATE_TOKEN = re.compile(r"\b(ACCEPT|REJECT|BLOCK|pending)\b", re.IGNORECASE)
@@ -77,6 +104,12 @@ STATE_TOKEN = re.compile(r"\b(ACCEPT|REJECT|BLOCK|pending)\b", re.IGNORECASE)
 # "REJECT once (bad)" cannot smuggle itself through.
 RESOLVED_BY = re.compile(
     r"\b(fixed|folded|verified|superseded|accepted)\b", re.IGNORECASE
+)
+# A resolution word negated is not a resolution: "REJECT, not yet
+# fixed" declares the fix has NOT happened.
+NOT_RESOLVED = re.compile(
+    r"\bnot(?:\s+yet)?\s+(?:fixed|folded|verified|superseded|accepted)\b",
+    re.IGNORECASE,
 )
 # A scope names a slice of the ticket; it exempts a pending verdict
 # only when that slice is genuinely open (no sibling verdict line for
@@ -94,6 +127,20 @@ def _scope_names_a_real_slice(scope: str, body: str) -> bool:
     """
     tokens = SCOPE_TOKEN.findall(scope)
     return all(re.search(rf"\b{re.escape(token)}\b", body) for token in tokens)
+
+
+def _scope_is_only_slice_words(scope: str) -> bool:
+    """A scope may contain only batch/item words and numbers/ranges.
+
+    `(batch 3)` and `items 1-4` are slices; `(batch final)` and
+    `(eventually)` are not — "final" is a word, and words outside
+    the slice vocabulary have no defined meaning here.
+    """
+    words = scope.replace(",", " ").split()
+    return all(
+        SCOPE_SLICE.fullmatch(word) or re.fullmatch(r"[0-9][0-9\-/]*", word)
+        for word in words
+    )
 
 
 def _ticket_number(path: Path) -> str:
@@ -164,9 +211,14 @@ def _non_review_body(text: str) -> str:
     )
 
 
+_last_no_state_failures: list[str] = []
+
+
 def _review_records(path: Path) -> list[dict[str, object]]:
     """Parsed Review lines: kind, scope, verdict, states, line number."""
     records: list[dict[str, object]] = []
+    global _last_no_state_failures
+    _last_no_state_failures = []
     for number, marker, text in _logical_lines(path.read_text(encoding="utf-8")):
         if marker != "-":
             continue
@@ -174,6 +226,21 @@ def _review_records(path: Path) -> list[dict[str, object]]:
         if match is None:
             continue
         verdict = match.group("verdict")
+        kind = re.sub(r"\s+", " ", match.group("kind")).lower()
+        # A review verdict must declare a state (the "awaiting
+        # reviewer" hole); a verification verdict states evidence,
+        # and its completion words vary with what was run.
+        declares_review_state = (
+            STATE_TOKEN.search(verdict)
+            or RESOLVED_BY.search(verdict)
+            or NULL_STATE.search(verdict)
+            or COMPLETION.search(verdict)
+        )
+        if "review" in kind and not declares_review_state:
+            _last_no_state_failures.append(
+                f"{path.relative_to(REPO_ROOT)}:{number}: verdict declares no state: "
+                f"{verdict[:60]}"
+            )
         records.append(
             {
                 "line": number,
@@ -196,14 +263,41 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
     relative = path.relative_to(REPO_ROOT)
     text_lines = path.read_text(encoding="utf-8")
     records = _review_records(path)
+    failures.extend(_last_no_state_failures)
 
-    # Format: any review-ish logical line that is not exactly the
-    # grammar is a failure, whatever spelling it used.
+    # Format: the whole-line allowlist. A logical line is either an
+    # exact grammar record or plain text; a state word anywhere, or a
+    # review/verification declaration in any decoration, makes it a
+    # status line that must be the grammar.
     for number, marker, logical_text in _logical_lines(text_lines):
         if marker == "-" and REVIEW_LINE.match(logical_text) is not None:
             continue
-        if REVIEWISH.match(logical_text) or VERIFICATION_ISH.match(logical_text):
-            failures.append(f"{relative}:{number}: review line is not the grammar: {logical_text[:70]}")
+        stripped = DECORATION.sub("", logical_text)
+        # Quoted status text is prose about the grammar ("Update the
+        # stale 'Code review: pending' line"), not a status line.
+        unquoted = re.sub(r'"[^"]*"', '""', stripped)
+        declared = STATUS_DECLARATION.search(unquoted) or VERIFICATION_DECLARATION.search(
+            unquoted
+        )
+        # A wrapped continuation can leave a bare state word alone on
+        # an unindented line ("pending"); a whole line that is only
+        # state/resolution words and punctuation is a status line.
+        only_state = STATE_AND_RESOLUTION.fullmatch(
+            unquoted.replace("|", " ").replace(",", " ").replace(";", " ").strip(" .:!-")
+        )
+        # A bullet whose HEAD is review/verification-ish and that
+        # carries a state word is a glued status bullet ("Code
+        # review verdict: pending"); state words in prose bodies
+        # (an ACCEPT quoted mid-explanation) stay prose.
+        head = " ".join(unquoted.split()[:3])
+        head_status = bool(re.search(r"review|verifica", head, re.IGNORECASE))
+        bullet_status = (
+            marker == "-" and head_status and STATE_ANYWHERE.search(unquoted)
+        )
+        if declared or only_state or bullet_status:
+            failures.append(
+                f"{relative}:{number}: review line is not the grammar: {logical_text[:70]}"
+            )
 
     # Scope conflicts: a pending scoped line whose kind+scope already
     # carries a verdict somewhere in the file is stale, wherever the
@@ -234,11 +328,21 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
             failures.append(
                 f'{relative}:{record["line"]}: scope {scope!r} names no batch or item slice'
             )
+        elif not _scope_is_only_slice_words(scope):
+            failures.append(
+                f'{relative}:{record["line"]}: scope {scope!r} carries words other than '
+                f"slice names and numbers"
+            )
         elif not _scope_names_a_real_slice(scope, _non_review_body(text_lines)):
             failures.append(
                 f'{relative}:{record["line"]}: scope {scope!r} names a batch or item '
                 f"the ticket never mentions"
             )
+
+    # A landed ticket carries at least one grammar record: a ticket
+    # with no Review lines at all has no recorded verdict.
+    if landed and not records:
+        failures.append(f"{relative}: no Review lines on a landed ticket")
 
     # Rejections resolve: a REJECT/BLOCK state needs a later ACCEPT
     # for the same kind, or its own line must say what resolved it.
@@ -250,7 +354,10 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
             "accept" in r["states"] and _base_kind(r["kind"]) == _base_kind(record["kind"])
             for r in records[index + 1 :]
         )
-        resolved_inline = RESOLVED_BY.search(record["verdict"]) is not None
+        resolved_inline = (
+            RESOLVED_BY.search(record["verdict"]) is not None
+            and NOT_RESOLVED.search(record["verdict"]) is None
+        )
         if not later_accept and not resolved_inline:
             failures.append(
                 f'{relative}:{record["line"]}: {terminal} without a later ACCEPT or an '
@@ -317,6 +424,25 @@ def test_the_grammar_catches_shapes_it_was_never_told_about(
         "## Order\n\nItems 1-4 land in one batch.\n\n## Review\n\n"
         "- Code review (batch 7): pending\n"
     )
+    # Mutation 9 (2026-09-28): a verdict with no state word at all.
+    assert probe("## Review\n\n- Code review: awaiting reviewer\n")
+    # Mutation 10: a kind outside the house set.
+    assert probe("## Review\n\n- Security review: pending\n")
+    assert probe("## Review\n\n- Ticket review: pending\n")
+    # Mutation 11: a heading-shaped status.
+    assert probe("## Review\n\n### Code review: pending\n")
+    # Mutation 12: a plain-paragraph status.
+    assert probe("## Review\n\nCode review: pending, not started\n")
+    # Mutation 13: a scope word outside the slice vocabulary.
+    assert probe("## Review\n\n- Code review (batch final): pending\n")
+    # Mutation 14: a negated resolution word is not a resolution.
+    assert probe("## Review\n\n- Code review: REJECT, not yet fixed\n")
+    # Mutation 15: an unindented wrapped verdict leaves a bare state
+    # word on its own line.
+    assert probe("## Review\n\n- Code review: re-review\npending\n")
+
+    # A landed ticket with no Review lines at all fails.
+    assert probe("## Order\n\nNothing here but work.\n")
 
     # The honest shapes stay green.
     assert probe("## Review\n\n- Code review: ACCEPT 2026-09-25\n") is None

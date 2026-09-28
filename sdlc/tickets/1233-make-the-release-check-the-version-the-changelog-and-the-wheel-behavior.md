@@ -59,7 +59,7 @@ with `-j`.
   reviewer checklist (job graph, version shapes, smoke fit, helper style,
   missing entries, runbook paragraphs) because the subagent harness broke
   mid-ticket; an independent review is queued before the 0.9.1 tag
-- Code review: same deviation; enforcement is mechanical (provenance
+- Code review: ACCEPT same deviation; enforcement is mechanical (provenance
   mutation pins, fake-gh coverage tests, exact package-boundary count)
 - Verification: yellow at 379dc571 lint/spec OK and Rust 3,780/3,780
   twice; boundary pins fixed at 086f40e5, 40/40; see
