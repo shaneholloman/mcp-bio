@@ -19,7 +19,15 @@ EXPECTED_NEEDS = {
     "docs-live": ["version-check"],
     # PyPI last (2026-09-28): every build and smoke job first.
     "pypi-publish": ["pypi-build", "wheel-smoke", "docs-live", "build", "container-publish"],
-    "homebrew-tap": ["build", "docs-live", "wheel-smoke", "container-publish", "pypi-publish"],
+    # Ticket 1266: the release is public before the tap lands.
+    "homebrew-tap": [
+        "build",
+        "docs-live",
+        "wheel-smoke",
+        "container-publish",
+        "pypi-publish",
+        "publish-release",
+    ],
     "container-publish": [
         "build",
         "docs-live",
@@ -30,7 +38,6 @@ EXPECTED_NEEDS = {
     "publish-release": [
         "build",
         "pypi-publish",
-        "homebrew-tap",
         "container-publish",
         "docs-live",
     ],

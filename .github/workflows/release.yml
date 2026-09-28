@@ -485,10 +485,11 @@ jobs:
         run: uv publish --trusted-publishing always dist/*
 
   homebrew-tap:
-    # The tap formula's sha256 comes from the published artifacts,
-    # so it waits for the container job and for PyPI (ticket 1253's
-    # ordering, now enforced).
-    needs: [build, docs-live, wheel-smoke, container-publish, pypi-publish]
+    # The tap formula points at release tarballs, so the release
+    # must be PUBLIC first: this job waits for publish-release
+    # (ticket 1266; before, the formula landed on a draft release
+    # and a failed publish broke `brew install`).
+    needs: [build, docs-live, wheel-smoke, container-publish, pypi-publish, publish-release]
     if: github.event_name == 'push'
     permissions:
       contents: read
@@ -666,7 +667,10 @@ jobs:
           echo "linux/arm64 $IMAGE runs as uid $UID_IN_CONTAINER with revision $REVISION"
 
   publish-release:
-    needs: [build, pypi-publish, homebrew-tap, container-publish, docs-live]
+    # No longer waits for homebrew-tap (ticket 1266): the tap now
+    # waits for this job, so the release is public before the
+    # formula's tarball URLs are installable.
+    needs: [build, pypi-publish, container-publish, docs-live]
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:
