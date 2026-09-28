@@ -293,7 +293,7 @@ def test_described_tickets_rejects_label_only_bullets_directly() -> None:
     # Real description words survive the stoplist.
     assert described_tickets("- Restored container publication (1219)") == {"1219"}
 
-def test_dated_and_yearly_records_do_not_count_as_tickets(tmp_path: Path) -> None:
+def test_dated_and_yearly_records_do_not_count_as_tickets(tmp_path: Path, monkeypatch) -> None:
     """Only ticket-range numbers count, whatever the slug looks like.
 
     Found by the 2026-09-28 review: the leading year parsed as a
@@ -326,5 +326,6 @@ def test_dated_and_yearly_records_do_not_count_as_tickets(tmp_path: Path) -> Non
     subprocess.run(["git", "-C", str(repo), "commit", "-qm", "records"], check=True, env=git_env)
     base = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD~1"],
                           capture_output=True, text=True, check=True).stdout.strip()
+    monkeypatch.chdir(repo)
     found = _MODULE.record_tickets(base, "HEAD")
     assert found == {"1265", "0843", "1255"}, found
