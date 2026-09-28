@@ -391,8 +391,23 @@ jobs:
             echo "skill list must name skills (exit $status): #287 regression" >&2
             exit 1
           fi
-          require_exit 0 skill article-follow-up
-          require_exit 0 chart bar
+          # Ticket 1266: exit codes alone let the 0.9.0 debug-wheel
+          # failure through (errors exited 0), so assert known
+          # content from the embedded assets too — no network.
+          status=0
+          output="$("$BIOMCP" skill article-follow-up 2>&1)" || status=$?
+          printf '%s\n' "$output" | head -n 20
+          if [ "$status" -ne 0 ] || ! printf '%s\n' "$output" | grep -q "Article follow-up via citations and recommendations"; then
+            echo "skill article-follow-up must show its content (exit $status): #287 regression" >&2
+            exit 1
+          fi
+          status=0
+          output="$("$BIOMCP" chart bar 2>&1)" || status=$?
+          printf '%s\n' "$output" | head -n 20
+          if [ "$status" -ne 0 ] || ! printf '%s\n' "$output" | grep -q "Bar Chart"; then
+            echo "chart bar must show the Bar Chart heading (exit $status): #287 regression" >&2
+            exit 1
+          fi
           require_json --json get article 32794606
 
   docs-live:
