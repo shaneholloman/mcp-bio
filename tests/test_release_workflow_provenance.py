@@ -17,8 +17,9 @@ EXPECTED_NEEDS = {
     "pypi-build": ["version-check"],
     "wheel-smoke": ["pypi-build"],
     "docs-live": ["version-check"],
-    "pypi-publish": ["pypi-build", "wheel-smoke", "docs-live"],
-    "homebrew-tap": ["build", "docs-live", "wheel-smoke"],
+    # PyPI last (2026-09-28): every build and smoke job first.
+    "pypi-publish": ["pypi-build", "wheel-smoke", "docs-live", "build", "container-publish"],
+    "homebrew-tap": ["build", "docs-live", "wheel-smoke", "container-publish", "pypi-publish"],
     "container-publish": [
         "build",
         "docs-live",
@@ -270,7 +271,7 @@ PINNED_STEPS: dict[tuple[str, str], str] = {
     ("wheel-smoke", "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093"): "7da61a5393486e202557314e916ce6b47390f55bd62478135e9c7911337da88e",
     ("wheel-smoke", "Install the wheel into a clean venv"): "362a4ba663ff744574ec1f229c6ecd32e1f0f308ae95f0000f79efbf089bf6f9",
     ("wheel-smoke", "Run the wheel inside the manylinux 2_28 container"): "d5495643fdb712f52fbaa636b5198909e890806d92a309d073dfc1bb328cffc4",
-    ("wheel-smoke", "Smoke the installed wheel on every shipped platform"): "a80bfec3bd118fc0be28eedcc5f76f48c1ef734fea95d49f8aa9d926a359aa9f",
+    ("wheel-smoke", "Smoke the installed wheel on every shipped platform"): "44f29b558048218716d5792acc0095cb487178adacc0be3c9afdd0681b8659dd",
     ("docs-live", "Check out the gate helper"): "afce43fafcab696d9cef03f29b0c43b6c9849baf126b749e198bdb9d83555430",
     ("docs-live", "Resolve the tag commit"): "b52e25a4026bed9172a0eff4b90f6a706ec984875307d7e89f9d450878a96e44",
     ("docs-live", "Require the live documentation revision to equal or descend from the tag"): "d8e88f95d2e890e14d314242bcce698767ddd834b4ccbab56469d5fd684eb54d",

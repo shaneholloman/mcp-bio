@@ -643,20 +643,20 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
             .expect("write request");
         stdin.flush().await.expect("flush request");
     }
-    drop(stdin);
-
-    // Await all three tool responses so the calls finish before the
-    // warning count is read; then the server exits on end-of-input.
+    // stdin stays open until every reply arrives: rmcp 1.7.0 gives
+    // in-flight requests five seconds after end-of-input and then
+    // drops them (2026-09-28 review, service.rs:1052-1080), which
+    // read as the child exiting at exactly ~5 s — the CI flake.
+    // Await all three tool responses first, then close stdin.
     let mut seen_two = false;
     let mut seen_three = false;
     let mut seen_four = false;
     let mut fetch_errored = false;
     let mut reader = tokio::io::BufReader::new(stdout);
     let mut line = String::new();
-    // watchdog: bounded total budget, CI-proven — a slow line (the
-    // post-kill dial chain) retries within the budget instead of
-    // aborting the read loop the way the old per-line timeout did.
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(45); // watchdog: bounded total read budget for the CI-slow dial chain
+    // watchdog: bounded total read budget — a slow line retries
+    // within the budget instead of aborting the read loop.
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(45); // watchdog: bounded total read budget
     while !(seen_two && seen_three && seen_four) {
         let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
         if remaining.is_zero() {
@@ -680,13 +680,17 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
             Err(_) => continue,
         }
     }
+    // Every reply arrived; closing stdin now lets the server exit
+    // cleanly instead of dropping in-flight requests.
+    drop(stdin);
+
     let early_stderr = {
         // A child that exits early (CI-only so far) hides its reason in
         // stderr; surface it in the failure instead of a bare flag.
         let mut text = String::new();
         if let Some(mut pipe) = child.stderr.take() {
             use tokio::io::AsyncReadExt;
-            let _ = pipe.read_to_string(&mut text).await;
+            let _ = tokio::time::timeout(Duration::from_secs(2), pipe.read_to_string(&mut text)).await;
         }
         text
     };

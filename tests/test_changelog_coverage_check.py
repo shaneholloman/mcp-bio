@@ -292,3 +292,20 @@ def test_described_tickets_rejects_label_only_bullets_directly() -> None:
     assert described_tickets("- Added 1226") == set()
     # Real description words survive the stoplist.
     assert described_tickets("- Restored container publication (1219)") == {"1219"}
+
+def test_dated_records_do_not_count_as_tickets(monkeypatch, tmp_path: Path) -> None:
+    """A dated note like 2026-09-27-slug.md is not ticket 2026.
+
+    Found by the 2026-09-28 review: the leading year parsed as a
+    ticket number and the release dry run reported a fake entry.
+    """
+    (tmp_path / "git").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    (tmp_path / "git").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+    names = [
+        "sdlc/records/2026-09-27-source-licensing-review-pass.md",
+        "sdlc/records/1255-route-the-last-four-xml-sources-through-the-depth-cap.md",
+        "sdlc/records/2026-03-20-some-other-note.md",
+    ]
+    tickets = {m.group(1) for n in names if (m := _MODULE.RECORD_TICKET.match(n))}
+    assert tickets == {"1255"}, tickets

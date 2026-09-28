@@ -379,6 +379,22 @@ jobs:
           require_json get drug --region us aspirin regulatory -j
           require_json search trial --condition diabetes --limit 1 -j
 
+          # GitHub #287: the 0.9.0 debug-profile wheel embedded no
+          # assets, so skill, chart, and --json ladders failed on
+          # every PyPI install. Exercise those paths positively:
+          # each must succeed AND name real content, not an empty
+          # or missing-asset answer.
+          status=0
+          output="$("$BIOMCP" skill list 2>&1)" || status=$?
+          printf '%s\n' "$output" | head -n 20
+          if [ "$status" -ne 0 ] || printf '%s\n' "$output" | grep -q "No skills found"; then
+            echo "skill list must name skills (exit $status): #287 regression" >&2
+            exit 1
+          fi
+          require_exit 0 skill article-follow-up
+          require_exit 0 chart bar
+          require_json --json get article 32794606
+
   docs-live:
     needs: [version-check]
     runs-on: ubuntu-24.04
@@ -441,7 +457,12 @@ jobs:
           done
 
   pypi-publish:
-    needs: [pypi-build, wheel-smoke, docs-live]
+    # PyPI last (2026-09-28 review): a version number published over
+    # a failed container or tarball job is burned for good — PyPI
+    # never accepts the same version twice. Every build and smoke
+    # job must pass first, so a failed tag run can be deleted and
+    # retried without losing 0.9.1.
+    needs: [pypi-build, wheel-smoke, docs-live, build, container-publish]
     if: github.event_name == 'push'
     permissions:
       contents: read
@@ -464,7 +485,10 @@ jobs:
         run: uv publish --trusted-publishing always dist/*
 
   homebrew-tap:
-    needs: [build, docs-live, wheel-smoke]
+    # The tap formula's sha256 comes from the published artifacts,
+    # so it waits for the container job and for PyPI (ticket 1253's
+    # ordering, now enforced).
+    needs: [build, docs-live, wheel-smoke, container-publish, pypi-publish]
     if: github.event_name == 'push'
     permissions:
       contents: read

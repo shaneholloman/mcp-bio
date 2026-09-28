@@ -10,7 +10,10 @@ import subprocess
 import sys
 
 MERGE_TICKET = re.compile(r"^Merge .*\btickets/([0-9]+)-")
-RECORD_TICKET = re.compile(r"^sdlc/records/([0-9]+)-")
+# Ticket-numbered records only: dated notes (2026-09-27-slug.md)
+# carry no ticket to cover, so a leading YYYY-MM-DD shape never
+# counts — the ticket form is four digits then a lettered slug.
+RECORD_TICKET = re.compile(r"^sdlc/records/([0-9]{4})-(?![0-9]{2}-[0-9]{2}-)[a-z]")
 STABLE_TAG = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
 
 
