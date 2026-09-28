@@ -310,7 +310,7 @@ def test_dated_and_yearly_records_do_not_count_as_tickets(tmp_path: Path, monkey
         "1265-3-sources-behind-one-api.md",
         "1265-Alpha-sort-the-catalog.md",
         "0843-something-old.md",
-        "123456-five-digit.md",
+        "12345-five-digit.md",
         "1255-route-the-last-four-xml-sources-through-the-depth-cap.md",
     ]
     git_env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",

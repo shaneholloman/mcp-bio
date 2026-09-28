@@ -21,11 +21,6 @@ STABLE_TAG = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
 TICKET_NUMBER_MAX = 1999
 
 
-def _is_ticket_record(name: str) -> bool:
-    match = RECORD_TICKET.match(name)
-    return match is not None and int(match.group(1)) <= TICKET_NUMBER_MAX
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", required=True)

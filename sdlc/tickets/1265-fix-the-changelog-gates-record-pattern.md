@@ -22,5 +22,8 @@ directory shape.
 ## Review
 
 - Design review: n/a (the review file named the rule)
-- Code review: pending
-- Verification: pending (full gate before merge)
+- Code review: ACCEPT with three report-only P2s (dead helper
+  removed; the sample renamed five-digit; this verification line
+  filled) 2026-09-28
+- Verification: yellow gate at 21d42b2a — lint, test, spec,
+  stress OK, zero failed lines; pytest 20 passed locally
