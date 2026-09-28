@@ -70,8 +70,8 @@ def _run(
 def test_version_section_at_end_of_file_passes(tmp_path: Path) -> None:
     result = _run(
         tmp_path,
-        subjects=["Merge remote-tracking branch 'origin/tickets/2000-fix'"],
-        changelog="# C\n\n## 0.9.1 — 2026-09-23\n\n- Fixed release publication. (2000)\n",
+        subjects=["Merge remote-tracking branch 'origin/tickets/1995-fix'"],
+        changelog="# C\n\n## 0.9.1 — 2026-09-23\n\n- Fixed release publication. (1995)\n",
     )
     assert result.returncode == 0, result.stderr
 
@@ -146,20 +146,20 @@ def test_described_number_only_bullet_after_numbers_removed(tmp_path: Path) -> N
 def test_record_only_ticket_requires_a_bullet(tmp_path: Path) -> None:
     result = _run(
         tmp_path,
-        subjects=["Record ticket 2001 directly"],
-        records=["sdlc/records/2001-fix-the-gate.md"],
+        subjects=["Record ticket 1998 directly"],
+        records=["sdlc/records/1998-fix-the-gate.md"],
         changelog="# C\n\n## Unreleased\n\n- Something else entirely. (1234)\n",
     )
     assert result.returncode == 1
-    assert "2001" in result.stderr
+    assert "1998" in result.stderr
 
 
 def test_record_only_ticket_passes_with_a_described_bullet(tmp_path: Path) -> None:
     result = _run(
         tmp_path,
-        subjects=["Record ticket 2001 directly"],
-        records=["sdlc/records/2001-fix-the-gate.md"],
-        changelog="# C\n\n## Unreleased\n\n- Fixed the coverage gate. (2001)\n",
+        subjects=["Record ticket 1998 directly"],
+        records=["sdlc/records/1998-fix-the-gate.md"],
+        changelog="# C\n\n## Unreleased\n\n- Fixed the coverage gate. (1998)\n",
     )
     assert result.returncode == 0, result.stderr
 
@@ -170,19 +170,19 @@ def test_union_of_merge_subjects_and_records_requires_both_bullets(
     result = _run(
         tmp_path,
         subjects=["Merge branch 'tickets/1234-gate'"],
-        records=["sdlc/records/2002-record-only.md"],
+        records=["sdlc/records/1996-record-only.md"],
         changelog="# C\n\n## Unreleased\n\n- Reworked the gates. (1234)\n",
     )
     assert result.returncode == 1
-    assert "2002" in result.stderr
+    assert "1996" in result.stderr
 
 
 def test_union_passes_when_both_have_bullets(tmp_path: Path) -> None:
     result = _run(
         tmp_path,
         subjects=["Merge branch 'tickets/1234-gate'"],
-        records=["sdlc/records/2002-record-only.md"],
-        changelog="# C\n\n## Unreleased\n\n- Reworked the gates. (1234)\n- Widened the ticket scan. (2002)\n",
+        records=["sdlc/records/1996-record-only.md"],
+        changelog="# C\n\n## Unreleased\n\n- Reworked the gates. (1234)\n- Widened the ticket scan. (1996)\n",
     )
     assert result.returncode == 0, result.stderr
 
@@ -205,16 +205,16 @@ def test_record_discovery_uses_real_git_history(
     git("add", "-A", cwd=repo)
     git("commit", "-q", "-m", "base", cwd=repo)
     git("tag", "v0.9.0", cwd=repo)
-    (repo / "sdlc" / "records" / "2001-real-history.md").write_text(
+    (repo / "sdlc" / "records" / "1997-real-history.md").write_text(
         "x\n", encoding="utf-8"
     )
     git("add", "-A", cwd=repo)
-    git("commit", "-q", "-m", "ticket 2001", cwd=repo)
+    git("commit", "-q", "-m", "ticket 1997", cwd=repo)
     git("tag", "v0.9.1", cwd=repo)
 
     monkeypatch.chdir(repo)
     tickets = record_tickets("v0.9.0", "v0.9.1")
-    assert "2001" in tickets
+    assert "1997" in tickets
 
 
 def test_non_ticket_record_files_do_not_count(tmp_path: Path) -> None:
@@ -293,19 +293,47 @@ def test_described_tickets_rejects_label_only_bullets_directly() -> None:
     # Real description words survive the stoplist.
     assert described_tickets("- Restored container publication (1219)") == {"1219"}
 
-def test_dated_records_do_not_count_as_tickets(monkeypatch, tmp_path: Path) -> None:
-    """A dated note like 2026-09-27-slug.md is not ticket 2026.
+def test_dated_and_yearly_records_do_not_count_as_tickets(tmp_path: Path) -> None:
+    """Only ticket-range numbers count, whatever the slug looks like.
 
     Found by the 2026-09-28 review: the leading year parsed as a
-    ticket number and the release dry run reported a fake entry.
+    ticket number, and the first fix dropped digit- and capital-start
+    slugs. This drives `record_tickets()` itself against a real
+    records-directory shape.
     """
-    (tmp_path / "git").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    (tmp_path / "git").chmod(0o755)
-    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+    records = tmp_path / "records" / "sdlc" / "records"
+    records.mkdir(parents=True)
     names = [
-        "sdlc/records/2026-09-27-source-licensing-review-pass.md",
-        "sdlc/records/1255-route-the-last-four-xml-sources-through-the-depth-cap.md",
-        "sdlc/records/2026-03-20-some-other-note.md",
+        "2026-09-27-source-licensing-review-pass.md",
+        "2026-q3-review.md",
+        "2026-sept-review.md",
+        "1265-3-sources-behind-one-api.md",
+        "1265-Alpha-sort-the-catalog.md",
+        "0843-something-old.md",
+        "123456-five-digit.md",
+        "1255-route-the-last-four-xml-sources-through-the-depth-cap.md",
     ]
-    tickets = {m.group(1) for n in names if (m := _MODULE.RECORD_TICKET.match(n))}
-    assert tickets == {"1255"}, tickets
+    for name in names:
+        (records / name).write_text("record\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "init", "-q", str(tmp_path / "records")],
+        check=True,
+        env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+             "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
+    )
+    subprocess.run(
+        ["git", "-C", str(tmp_path / "records"), "add", "-A"], check=True,
+        env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+             "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
+    )
+    subprocess.run(
+        ["git", "-C", str(tmp_path / "records"), "commit", "-qm", "records"],
+        check=True,
+        env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+             "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
+    )
+    base = tmp_path / "records"
+    a = subprocess.run(["git", "-C", str(base), "rev-list", "--max-parents=0", "HEAD"],
+                       capture_output=True, text=True, check=True).stdout.strip()
+    found = _MODULE.record_tickets(a, "HEAD")
+    assert found == {"1265", "0843", "1255"}, found

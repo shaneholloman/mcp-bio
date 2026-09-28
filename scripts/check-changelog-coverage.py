@@ -10,11 +10,20 @@ import subprocess
 import sys
 
 MERGE_TICKET = re.compile(r"^Merge .*\btickets/([0-9]+)-")
-# Ticket-numbered records only: dated notes (2026-09-27-slug.md)
-# carry no ticket to cover, so a leading YYYY-MM-DD shape never
-# counts — the ticket form is four digits then a lettered slug.
-RECORD_TICKET = re.compile(r"^sdlc/records/([0-9]{4})-(?![0-9]{2}-[0-9]{2}-)[a-z]")
+# Ticket-numbered records only. The structural fact: ticket numbers
+# are four digits BELOW 2000 (years are 2026 and up), and any slug
+# may follow the number (digit-start and capital-start included).
+# A dated or yearly note therefore never counts, and a future
+# "1265-3-sources-..." or "1265-Alpha-slug" record does.
+RECORD_TICKET = re.compile(r"^sdlc/records/([0-9]{4})-")
 STABLE_TAG = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
+
+TICKET_NUMBER_MAX = 1999
+
+
+def _is_ticket_record(name: str) -> bool:
+    match = RECORD_TICKET.match(name)
+    return match is not None and int(match.group(1)) <= TICKET_NUMBER_MAX
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,7 +65,11 @@ def record_tickets(previous: str, tag: str) -> set[str]:
     names = run_git(
         "diff", "--name-only", "--diff-filter=A", previous, tag, "--", "sdlc/records/"
     ).splitlines()
-    return {match.group(1) for name in names if (match := RECORD_TICKET.match(name))}
+    return {
+        match.group(1)
+        for name in names
+        if (match := RECORD_TICKET.match(name)) and int(match.group(1)) <= TICKET_NUMBER_MAX
+    }
 
 
 def merged_tickets(previous: str, tag: str) -> set[str]:
