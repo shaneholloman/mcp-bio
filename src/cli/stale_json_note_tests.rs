@@ -45,6 +45,9 @@ async fn run(args: &[&str]) -> String {
 }
 
 struct StaleNoteEnv {
+    /// Held (never read) so the cache directory outlives the env.
+    // dead-code reason: held-for-drop guard keeps the temp cache root alive
+    #[allow(dead_code)]
     root: crate::test_support::TempDirGuard,
     /// (key, previous value) pairs restored on drop, so one test's
     /// fixture bases never leak into the next.

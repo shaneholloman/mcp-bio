@@ -151,7 +151,9 @@ pub(crate) fn json_body(
             message: format!("JSON serialization failed: {error}"),
         })?
     };
-    if !notes.is_empty() && let Some(object) = body.as_object_mut() {
+    if !notes.is_empty()
+        && let Some(object) = body.as_object_mut()
+    {
         object.insert("_meta".to_string(), serde_json::json!({ "notes": notes }));
     }
     Ok(body)
