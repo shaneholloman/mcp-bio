@@ -509,25 +509,10 @@ fn top_genes_label_names_the_disgenet_seed_from_the_mydisease_hit() {
     assert_eq!(disease.top_gene_source, None);
 }
 
-#[test]
-fn top_genes_label_names_a_direct_mydisease_seed() {
-    // A source string naming MyDisease alone maps to its display name.
-    let mut disease = test_disease("MONDO:0018096", "Parkinson disease");
-    disease.associated_genes = vec!["SNCA".into()];
-    disease.gene_associations = vec![DiseaseGeneAssociation {
-        gene: "SNCA".into(),
-        relationship: None,
-        source: Some("MyDisease.info".into()),
-        opentargets_score: None,
-    }];
-
-    super::assign_top_genes(&mut disease, false);
-    assert_eq!(
-        disease.top_gene_source.as_deref(),
-        Some("MyDisease.info"),
-        "a MyDisease-named seed gets MyDisease's display name"
-    );
-}
+// Removed 2026-09-28: `top_genes_label_names_a_direct_mydisease_seed`
+// asserted a bare "MyDisease.info" gene source, which no producer
+// creates — MyDisease seeds genes only through its embedded DisGeNET
+// block, and that path has its own tests below.
 
 #[test]
 fn top_genes_label_joins_the_disgenet_seed_with_other_fallbacks() {

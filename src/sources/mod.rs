@@ -227,6 +227,8 @@ fn stale_serve_age_wording(age_seconds: u64) -> String {
     }
 }
 
+type StaleServeNotesHandle = std::sync::Arc<std::sync::Mutex<Vec<StaleServeNote>>>;
+
 tokio::task_local! {
     /// Per-command stale-cache serves. Scoped around the command future
     /// (see `with_stale_serve_notes`) so concurrent commands never mix
@@ -265,6 +267,34 @@ where
         Ok(outcome)
     })
     .await
+}
+
+/// The current command's stale-serve collector, for handing to a task
+/// started with `tokio::spawn`: the spawned task does not inherit the
+/// task-local, so a stale serve inside it would only log. The ClinGen
+/// prefetch in `get gene` is the production case (2026-09-28 review);
+/// every other spawned fetch in the tree is test scaffolding, which
+/// this audit confirmed by module.
+pub(crate) fn stale_serve_notes_handle() -> Option<StaleServeNotesHandle> {
+    STALE_SERVE_NOTES.try_with(std::sync::Arc::clone).ok()
+}
+
+/// Re-enter the parent command's stale-serve scope inside a spawned
+/// task. `None` (no active command scope, e.g. a background sync)
+/// scopes onto a private collector nobody drains — log-only, exactly
+/// as before this seam existed.
+pub(crate) fn with_stale_serve_notes_handle<R, F>(
+    handle: Option<StaleServeNotesHandle>,
+    fut: F,
+) -> impl Future<Output = R>
+where
+    F: Future<Output = R>,
+{
+    // None scopes onto a fresh collector nobody drains — the same
+    // behavior as before this seam: log-only, never reaching output.
+    let collector =
+        handle.unwrap_or_else(|| std::sync::Arc::new(std::sync::Mutex::new(Vec::new())));
+    STALE_SERVE_NOTES.scope(collector, fut)
 }
 
 /// Record a stale serve when a command scope is active. Sends outside a
@@ -1973,6 +2003,39 @@ mod tests {
         assert!(
             take_stale_serve_sentences().is_empty(),
             "sends outside a command scope record nothing"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_spawned_task_inherits_the_command_note_scope() {
+        // The ClinGen prefetch runs under tokio::spawn, which drops the
+        // task-local: without the handle seam its stale serves would
+        // only log. This test drives the seam the prefetch uses.
+        let sentences = with_stale_serve_notes(async {
+            let handle = stale_serve_notes_handle();
+            let spawned = tokio::spawn(with_stale_serve_notes_handle(handle, async {
+                let mut response = test_response(
+                    StatusCode::OK,
+                    &[("x-biomcp-cache-stale-age", "90")],
+                    "payload",
+                );
+                note_stale_cache_serve(&mut response, "ClinGen");
+            }))
+            .await;
+            assert!(spawned.is_ok(), "the spawned scope must join cleanly");
+            take_stale_serve_sentences()
+        })
+        .await;
+        assert_eq!(
+            sentences,
+            vec![
+                StaleServeNote {
+                    provider: "ClinGen",
+                    age_seconds: 90,
+                }
+                .sentence()
+            ],
+            "the spawned task's note reaches the parent command's output"
         );
     }
 

@@ -2516,14 +2516,21 @@ pub async fn get_with_report(
         strategy == GeneGetStrategy::ParallelTop && should_use_parallel_top(&include);
     let mut clingen_prefetch = if use_parallel_top && include.contains(&GeneIncludeType::ClinGen) {
         let symbol = symbol.trim().to_string();
-        Some(ClinGenPrefetch::new(tokio::spawn(async move {
-            timed_section(
-                "clingen",
-                fetch_clingen_section(&symbol, optional_timeout),
-                classify_clingen_section,
-            )
-            .await
-        })))
+        // tokio::spawn drops the command's stale-serve task-local, so
+        // a stale ClinGen serve inside the prefetch would only log and
+        // never reach the output notes. Re-scope onto the parent's
+        // collector (2026-09-28 review).
+        let stale_notes = crate::sources::stale_serve_notes_handle();
+        Some(ClinGenPrefetch::new(tokio::spawn(
+            crate::sources::with_stale_serve_notes_handle(stale_notes, async move {
+                timed_section(
+                    "clingen",
+                    fetch_clingen_section(&symbol, optional_timeout),
+                    classify_clingen_section,
+                )
+                .await
+            }),
+        )))
     } else {
         None
     };
