@@ -2,16 +2,17 @@
 //! (ticket 1263). Article search, GWAS search, search-all, and the
 //! ClinGen prefetch inside `get gene` must all carry the note a
 //! clinician or JSON consumer sees, not only the log line. The
-//! fixture shape follows the disease stale-serve test: a raw TCP
+//! fixture shape follows the disease stale-serve test: an axum
 //! server answering 200 with a one-second freshness window, then
 //! killed so the next command serves stale from the cache.
-
-use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
 
 /// Answer every request with `body` as JSON, fresh-cacheable for one
 /// second: after the window, with the server gone, the cache serves
 /// stale and stamps the age marker the note reads.
 async fn stale_note_fixture_server(body: &'static str) -> (String, tokio::task::JoinHandle<()>) {
+    use axum::http::{header, StatusCode};
+    use axum::response::IntoResponse;
+
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .expect("bind stale-note fixture");
@@ -19,21 +20,18 @@ async fn stale_note_fixture_server(body: &'static str) -> (String, tokio::task::
         "http://{}",
         listener.local_addr().expect("fixture address")
     );
-    let task = tokio::spawn(async move {
-        while let Ok((mut stream, _)) = listener.accept().await {
-            let body = body;
-            tokio::spawn(async move {
-                let mut request = vec![0_u8; 16 * 1024];
-                let len = stream.read(&mut request).await.unwrap_or(0);
-                let _ = String::from_utf8_lossy(&request[..len]);
-                let response = format!(
-                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: max-age=1\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-                    body.len()
-                );
-                let _ = stream.write_all(response.as_bytes()).await;
-            });
-        }
+    let app = axum::Router::new().fallback(move || async move {
+        (
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, "application/json"),
+                (header::CACHE_CONTROL, "max-age=1"),
+            ],
+            body,
+        )
+            .into_response()
     });
+    let task = tokio::spawn(async move { axum::serve(listener, app).await.expect("fixture serves") });
     (base, task)
 }
 
