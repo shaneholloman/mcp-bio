@@ -61,7 +61,9 @@ def test_readme_landing_copy_matches_public_contract() -> None:
     quick_start = _markdown_section_block(readme, "## Quick start\n\n", "\n```bash\n")
 
     assert _paragraph_count(hero) == 1
-    assert "single command grammar that reaches ~30 trusted" in description
+    # 2026-09-28: the count states the registry's real number (70
+    # direct of 78) so marketing quotes cannot drift from the source.
+    assert "single command grammar that reaches 70 trusted" in description
     assert "MCP (Model Context Protocol) server" in description
     assert "plus local study analytics" in description
     assert "First useful query in under 30 seconds:" in quick_start
