@@ -684,20 +684,15 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
     // cleanly instead of dropping in-flight requests.
     drop(stdin);
 
-    let early_stderr = {
-        // A child that exits early (CI-only so far) hides its reason in
-        // stderr; surface it in the failure instead of a bare flag.
-        let mut text = String::new();
-        if let Some(mut pipe) = child.stderr.take() {
-            use tokio::io::AsyncReadExt;
-            let _ =
-                tokio::time::timeout(Duration::from_secs(2), pipe.read_to_string(&mut text)).await;
-        }
-        text
-    };
+    // Read stderr ONCE, after the wait: taking the pipe early with a
+    // short timeout raced the server's exit under load, and the
+    // discarded partial read left the later find nothing (2026-09-28
+    // review) — the warning count read 0 and the assert fired.
+    let _ = tokio::time::timeout(Duration::from_secs(10), child.wait()).await; // watchdog: bounded child exit wait
+    let stderr = stop_and_stderr(&mut child).await;
     assert!(
         seen_two && seen_three && seen_four,
-        "all three tool calls answered; child stderr: {early_stderr}"
+        "all three tool calls answered; child stderr: {stderr}"
     );
     assert!(
         fetch_errored,
@@ -710,13 +705,11 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
             >= 1,
         "the warned server constructed an HTTP client and dialed the fixture"
     );
-    let _ = tokio::time::timeout(Duration::from_secs(5), child.wait()).await;
-    let stderr = stop_and_stderr(&mut child).await;
-    let warn_count = stderr.matches("SSL_CERT_FILE could not be read").count()
-        + early_stderr
-            .matches("SSL_CERT_FILE could not be read")
-            .count();
-    assert_eq!(warn_count, 1, "stderr: {early_stderr}{stderr}");
+    assert_eq!(
+        stderr.matches("SSL_CERT_FILE could not be read").count(),
+        1,
+        "stderr: {stderr}"
+    );
 }
 
 fn unused_port() -> u16 {

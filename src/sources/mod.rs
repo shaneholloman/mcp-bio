@@ -11,7 +11,10 @@ use http_cache_reqwest::{Cache, CacheMode, CacheOptions, HttpCache, HttpCacheOpt
 use reqwest::header::{CACHE_CONTROL, CONTENT_LENGTH, HeaderMap, HeaderValue, RETRY_AFTER};
 use reqwest::{ResponseBuilderExt, StatusCode};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware, Middleware, Next, RequestBuilder};
-use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
+use reqwest_retry::{
+    DefaultRetryableStrategy, RetryTransientMiddleware, Retryable, RetryableStrategy,
+    policies::ExponentialBackoff,
+};
 use serde::de::DeserializeOwned;
 use tracing::warn;
 
@@ -636,6 +639,23 @@ fn resolve_cache_mode(
 /// `Scope` future and the inner future's state, doubling the dispatch
 /// future's size; returning the scope directly keeps one copy (ticket
 /// 1243).
+/// Re-enter the parent command's no-cache scope inside a spawned
+/// task (2026-09-28 review): `tokio::spawn` drops the NO_CACHE
+/// task-local the way it drops the stale-serve scope, so a prefetch
+/// that runs outside the command's `--no-cache` would read and write
+/// the cache the caller asked to bypass.
+pub(crate) fn no_cache_flag() -> bool {
+    is_no_cache_enabled()
+}
+
+/// Scope a carried no-cache flag back onto a spawned future.
+pub(crate) fn with_no_cache_flag<R, F>(flag: bool, fut: F) -> impl Future<Output = R>
+where
+    F: Future<Output = R>,
+{
+    NO_CACHE.scope(flag, fut)
+}
+
 pub(crate) fn with_no_cache<R, F>(no_cache: bool, fut: F) -> impl Future<Output = R>
 where
     F: Future<Output = R>,
@@ -1130,6 +1150,48 @@ where
     }
 }
 
+/// A retry strategy that refuses to retry TLS trust failures.
+/// reqwest-retry's default marks every connect-layer error
+/// transient, but a rejected certificate is deterministic:
+/// retrying cannot fix a trust mismatch, and the backoff turned
+/// each untrusted-host dial into a ~2 s stall (2026-09-28 review).
+#[derive(Debug, Default)]
+struct NoTrustFailureStrategy;
+
+const TRUST_FAILURE_MARKERS: &[&str] = &[
+    "invalid peer certificate",
+    "unknown certificate",
+    "certificate verify failed",
+    "CertNotValidForName",
+    "self-signed certificate",
+];
+
+fn is_trust_failure(error: &reqwest_middleware::Error) -> bool {
+    let mut source: Option<&dyn std::error::Error> = Some(error);
+    while let Some(error) = source {
+        let text = error.to_string();
+        if TRUST_FAILURE_MARKERS.iter().any(|marker| text.contains(marker)) {
+            return true;
+        }
+        source = error.source();
+    }
+    false
+}
+
+impl reqwest_retry::RetryableStrategy for NoTrustFailureStrategy {
+    fn handle(
+        &self,
+        res: &Result<reqwest::Response, reqwest_middleware::Error>,
+    ) -> Option<reqwest_retry::Retryable> {
+        if let Err(error) = res
+            && is_trust_failure(error)
+        {
+            return None;
+        }
+        reqwest_retry::DefaultRetryableStrategy.handle(res)
+    }
+}
+
 fn build_http_client(kind: SharedHttpClientKind) -> Result<ClientWithMiddleware, BioMcpError> {
     if is_no_cache_enabled() {
         return build_uncached_http_client(kind, None);
@@ -1155,7 +1217,7 @@ pub(crate) fn build_uncached_http_client(
     let builder = ordinary_url_policy::with_initial_policy(builder, provider_policy);
     let builder = builder.with(rate_limit::RateLimitMiddleware::provider_pool());
     let builder = builder.with(
-        RetryTransientMiddleware::new_with_policy(retry)
+        RetryTransientMiddleware::new_with_policy_and_strategy(retry, NoTrustFailureStrategy)
             .with_retry_log_level(tracing::Level::DEBUG),
     );
     let builder = match kind {
@@ -1256,8 +1318,11 @@ pub(crate) fn finish_cached_http_client(
         options: cache_options,
     }));
     let builder = builder.with(
-        RetryTransientMiddleware::new_with_policy(retry_policy)
-            .with_retry_log_level(tracing::Level::DEBUG),
+        RetryTransientMiddleware::new_with_policy_and_strategy(
+            retry_policy,
+            NoTrustFailureStrategy,
+        )
+        .with_retry_log_level(tracing::Level::DEBUG),
     );
     let builder = match kind {
         SharedHttpClientKind::Default => builder.with(RetryAfterTooManyRequestsMiddleware),
