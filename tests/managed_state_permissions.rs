@@ -159,8 +159,8 @@ fn start_mygene_fixture() -> MyGeneFixture {
                     Err(error) => return Err(format!("fixture final accept: {error}")),
                 }
             }
-            // watchdog: bounded readiness poll sits on the compare line
-            if Instant::now() >= deadline { // watchdog: bounded readiness timeout
+            let timed_out = Instant::now() >= deadline; // watchdog: bounded readiness timeout
+            if timed_out {
                 return Err("local MyGene fixture timed out before contact".to_string());
             }
             match listener.accept() {
