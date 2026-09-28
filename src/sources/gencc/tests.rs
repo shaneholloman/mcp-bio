@@ -1022,7 +1022,7 @@ async fn cross_process_first_use_elects_one_leader_and_settles_followers() {
                 assert!(status.success());
                 return;
             }
-            assert!(tokio::time::Instant::now() < deadline, "GenCC child hung");
+            assert!(tokio::time::Instant::now() < deadline, "GenCC child hung"); // watchdog: bounded child-liveness poll
             tokio::time::sleep(Duration::from_millis(5)).await;
         }
     }
@@ -1034,7 +1034,7 @@ async fn cross_process_first_use_elects_one_leader_and_settles_followers() {
                 "leader exited before HTTP"
             );
             assert!(
-                tokio::time::Instant::now() < deadline,
+                tokio::time::Instant::now() < deadline, // watchdog: bounded drain poll
                 "leader never entered HTTP"
             );
             tokio::time::sleep(Duration::from_millis(5)).await;
@@ -1169,7 +1169,7 @@ async fn cross_process_first_use_elects_one_leader_and_settles_followers() {
         });
         let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
         while !entered.exists() {
-            assert!(!leader.is_finished() && tokio::time::Instant::now() < deadline);
+            assert!(!leader.is_finished() && tokio::time::Instant::now() < deadline); // watchdog: bounded leader poll
             tokio::time::sleep(Duration::from_millis(5)).await;
         }
         assert_eq!(

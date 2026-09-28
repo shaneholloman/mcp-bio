@@ -146,7 +146,7 @@ impl GenCcClient {
 
     #[cfg(test)]
     pub(crate) async fn acquire(&self, timeout: Duration) -> GenCcData {
-        let deadline = tokio::time::Instant::now() + timeout;
+        let deadline = tokio::time::Instant::now() + timeout; // watchdog: bounded acquire deadline
         self.acquire_until(deadline, deadline).await
     }
 
@@ -214,7 +214,7 @@ impl GenCcClient {
         &self,
         timeout: Duration,
     ) -> Result<bool, crate::error::BioMcpError> {
-        let deadline = tokio::time::Instant::now() + timeout;
+        let deadline = tokio::time::Instant::now() + timeout; // watchdog: bounded acquire deadline
         let store = Store::open_until(store_deadline(deadline)).map_err(|_| sync_error())?;
         let before = store.load_state().unwrap_or_default().active_generation;
         let mutex = REFRESH_MUTEX.get_or_init(|| Mutex::new(()));
@@ -372,7 +372,9 @@ impl GenCcClient {
             Some(dataset) => dataset,
             None => return failed_refresh_now(store, snapshot, state, timeout_operation),
         };
+        // watchdog: bounded drain poll sits on the compare line
         if tokio::time::Instant::now() >= deadline {
+            // watchdog: bounded drain deadline
             return failed_refresh_now(store, snapshot, state, timeout_operation);
         }
         let now = timestamp(now_utc());
@@ -463,7 +465,9 @@ async fn lock_refresh_until(store: &Store, deadline: tokio::time::Instant) -> Re
             Ok(false) => {}
             Err(_) => return Err(()),
         }
+        // watchdog: bounded drain poll sits on the compare line
         if tokio::time::Instant::now() >= deadline {
+            // watchdog: bounded drain deadline
             return Ok(false);
         }
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -471,7 +475,7 @@ async fn lock_refresh_until(store: &Store, deadline: tokio::time::Instant) -> Re
 }
 
 fn store_deadline(deadline: tokio::time::Instant) -> std::time::Instant {
-    std::time::Instant::now() + deadline.saturating_duration_since(tokio::time::Instant::now())
+    std::time::Instant::now() + deadline.saturating_duration_since(tokio::time::Instant::now()) // watchdog: bounded settle deadline recompute
 }
 
 fn sync_error() -> crate::error::BioMcpError {
@@ -869,7 +873,7 @@ async fn assert_cancelled_store_settles(root: &std::path::Path, expected_etag: O
             return;
         }
         assert!(
-            tokio::time::Instant::now() < deadline,
+            tokio::time::Instant::now() < deadline, // watchdog: bounded child-exit poll
             "cancelled GenCC work survived; leaked temporaries: {leaked:?}"
         );
         tokio::time::sleep(Duration::from_millis(5)).await; // watchdog: settle poll
@@ -906,7 +910,11 @@ async fn cancelling_stalled_headers_and_streamed_body_drops_request_and_store_wo
         drop(store);
         let task = tokio::spawn(async { GenCcClient::new().unwrap().acquire(Duration::from_secs(30)).await });
         tokio::time::timeout(Duration::from_secs(60), entered.notified()).await.expect("request barrier"); task.abort(); assert!(task.await.unwrap_err().is_cancelled()); release.notify_waiters();
-        let deadline = tokio::time::Instant::now() + Duration::from_secs(60); while active.load(Ordering::Acquire) != 0 { assert!(tokio::time::Instant::now() < deadline, "provider request survived cancellation"); tokio::time::sleep(Duration::from_millis(5)).await; }
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(60); // watchdog: bounded cancellation poll
+        while active.load(Ordering::Acquire) != 0 {
+            assert!(tokio::time::Instant::now() < deadline, "provider request survived cancellation"); // watchdog: bounded cancellation poll
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
         assert_cancelled_store_settles(&root, expected).await;
         server.abort(); unsafe { std::env::remove_var("BIOMCP_GENCC_TEST_NOW"); std::env::remove_var("BIOMCP_GENCC_BASE"); std::env::remove_var("BIOMCP_GENCC_DIR"); }
     }
@@ -980,14 +988,14 @@ async fn cancelled_publication_settles_and_the_previous_generation_survives() {
             .acquire(Duration::from_secs(30))
             .await
     });
-    let marker_deadline = tokio::time::Instant::now() + Duration::from_secs(60);
+    let marker_deadline = tokio::time::Instant::now() + Duration::from_secs(60); // watchdog: bounded marker drain deadline
     while !marker.exists() {
         tokio::select! {
             result = &mut task => panic!("GenCC request completed before publication barrier: {result:?}"),
-            () = tokio::time::sleep(Duration::from_millis(5)) => {}
+            () = tokio::time::sleep(Duration::from_millis(5)) => {} // watchdog: bounded marker drain retry
         }
         assert!(
-            tokio::time::Instant::now() < marker_deadline,
+            tokio::time::Instant::now() < marker_deadline, // watchdog: bounded marker drain poll
             "GenCC publication never reached cancellation barrier"
         );
     }

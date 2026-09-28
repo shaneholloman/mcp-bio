@@ -73,11 +73,6 @@ def spawn_pattern(source: str) -> re.Pattern[str]:
     parts = [COMMAND_NEW.pattern]
     for alias in sorted(alias_names(source)):
         parts.append(r"(?<!\w)" + re.escape(alias) + r"::new\s*\(")
-    if not alias_names(source):
-        # An aliasable spawn type we failed to resolve is a guard
-        # failure, not a pass: emit a pattern that cannot match so
-        # the caller's unknown-spelling check (below) fires instead.
-        pass
     return re.compile("|".join(parts))
 
 
@@ -216,16 +211,30 @@ def child_stdio_violations(relative: str, source: str) -> list[str]:
         # A bare `Command` in the braces keeps its own name, and the
         # unqualified COMMAND_NEW pattern already covers its spawns.
     for window in statement_windows(source, spawn_pattern(source)):
-        if re.search(r"\.output\s*\(", window):
-            # .output() captures stdin, stdout, and stderr.
-            continue
         head = window.splitlines()[0].strip()
         for stream in STREAMS:
             setter = re.search(r"\." + stream + r"\s*\(\s*([^)]*)", window)
             if setter is None:
                 violations.append(f"{relative}: child {stream} unset: {head}")
-            elif "Stdio::inherit" in setter.group(1):
-                violations.append(f"{relative}: child {stream} inherits: {head}")
+                continue
+            argument = setter.group(1)
+            if "Stdio::inherit" in argument or "inherit()" in argument:
+                violations.append(
+                    f"{relative}: child {stream} inherits: {head}"
+                )
+                continue
+            if re.search(r"\bstd::io::(stdout|stderr|stdin)\b", argument):
+                violations.append(
+                    f"{relative}: child {stream} is the parent's live stream: {head}"
+                )
+                continue
+            if not re.search(r"Stdio::(?:null|piped)\b", argument):
+                # A variable or expression the guard cannot see
+                # through (pre-bound elsewhere) fails closed.
+                violations.append(
+                    f"{relative}: child {stream} setting not provably "
+                    f"null/piped ({argument.strip()[:40]}): {head}"
+                )
     return violations
 
 
@@ -432,9 +441,14 @@ def test_guard_passes_safe_shapes() -> None:
         "let mut cmd = tokio::process::Command::new(exe);\n"
         "cmd.kill_on_drop(true).stdin(Stdio::null())\n"
         "    .stdout(Stdio::piped()).stderr(Stdio::piped());\n",
-        # .output() captures all three streams.
+        # .output() with explicit non-inheriting setters: the
+        # exemption is closed (1264) — a bare .output() with an
+        # .stderr(Stdio::inherit()) before it still inherits.
         "let smoke = std::process::Command::new(&stage_path)\n"
         '    .arg("version")\n'
+        "    .stdin(std::process::Stdio::null())\n"
+        "    .stdout(std::process::Stdio::piped())\n"
+        "    .stderr(std::process::Stdio::piped())\n"
         "    .output()?;\n",
         # Setters chained on the binding in following statements count.
         "let mut command = Command::new(sibling);\n"
@@ -445,6 +459,32 @@ def test_guard_passes_safe_shapes() -> None:
         "    .stderr(Stdio::null());\n",
     ):
         assert not child_stdio_violations("src/a.rs", safe), safe
+
+
+def test_output_exemption_is_closed() -> None:
+    """The shapes the 2026-09-28 review listed must fail the guard."""
+    bad_shapes = (
+        # .output() no longer exempts an inheriting stderr.
+        "let out = std::process::Command::new(x)\n"
+        "    .stderr(Stdio::inherit())\n"
+        "    .output()?;\n",
+        # The parent's live stream object is an inherit in disguise.
+        "let out = std::process::Command::new(x)\n"
+        "    .stdin(Stdio::null())\n"
+        "    .stdout(std::io::stdout())\n"
+        "    .stderr(Stdio::null())\n"
+        "    .status()?;\n",
+        # A pre-bound inheriting variable fails closed.
+        "let s = Stdio::inherit();\n"
+        "std::process::Command::new(x)\n"
+        "    .stdin(Stdio::null())\n"
+        "    .stdout(s)\n"
+        "    .stderr(Stdio::null())\n"
+        "    .status()?;\n",
+    )
+    for bad in bad_shapes:
+        violations = child_stdio_violations("src/a.rs", bad)
+        assert violations, f"guard must fail this shape:\n{bad}"
 
 
 def test_the_launcher_stays_the_only_allowed_inheritor() -> None:

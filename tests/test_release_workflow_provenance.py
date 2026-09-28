@@ -61,6 +61,23 @@ def _assert_release_contract(workflow: str) -> None:
     assert "github.event.release.tag_name" not in workflow
     for job, needs in EXPECTED_NEEDS.items():
         assert _needs(_job_block(workflow, job)) == needs, job
+        # The text read takes the FIRST needs line; the YAML parser
+        # keeps the LAST. A duplicated needs line diverges here, and
+        # each job block may carry at most one.
+        block = _job_block(workflow, job)
+        try:
+            parsed_needs = yaml.safe_load(workflow)["jobs"][job].get("needs", [])
+        except yaml.YAMLError as error:
+            raise AssertionError(
+                f"the release workflow no longer parses as YAML: {error}"
+            ) from error
+        assert list(parsed_needs) == needs, (
+            f"{job}: needs as the runner parses them must be exactly "
+            f"{needs}; a duplicated needs line shows up here"
+        )
+        assert len(re.findall(r"^    needs: ", block, re.MULTILINE)) <= 1, (
+            f"{job}: duplicated needs line"
+        )
 
     expected_ifs = {
         "create-draft": "if: github.event_name == 'push'",
@@ -281,6 +298,84 @@ PINNED_STEPS: dict[tuple[str, str], str] = {
 }
 
 
+# The ENTIRE step list of each pinned job, in order. The hash pins
+# catch edits to a pinned step; this catches a step ADDED before or
+# between them — the BASH_ENV-writer attack, where a new first step
+# poisons the environment and every pinned step still hashes clean.
+PINNED_JOB_STEP_LISTS: dict[str, list[str]] = {
+    "pypi-build": [
+        "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+        "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+        "dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c",
+        "arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b",
+        "Install pinned maturin",
+        "Build wheels",
+        "Build wheels inside the manylinux 2_28 container",
+        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+    ],
+    "wheel-smoke": [
+        "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+        "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+        "Install the wheel into a clean venv",
+        "Run the wheel inside the manylinux 2_28 container",
+        "Smoke the installed wheel on every shipped platform",
+    ],
+    "docs-live": [
+        "Check out the gate helper",
+        "Resolve the tag commit",
+        "Require the live documentation revision to equal or descend from the tag",
+    ],
+    "version-check": [
+        "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+        "Require the tag and committed versions to agree",
+        "Require the changelog to cover merged tickets",
+    ],
+}
+
+
+def _step_id(step: dict) -> str:
+    return step.get("name") or step.get("uses") or "<unnamed>"
+
+
+def _assert_pinned_step_lists(parsed: dict) -> None:
+    """Each pinned job's step list matches exactly: ids, order, count."""
+    for job, expected in PINNED_JOB_STEP_LISTS.items():
+        actual = [_step_id(step) for step in _pipeline_steps(parsed, job)]
+        assert actual == expected, (
+            f"{job}: the pinned job's step list must match exactly.\n"
+            f"  expected: {expected}\n"
+            f"  actual:   {actual}\n"
+            f"A new or reordered step in a pinned job fails here even "
+            f"when every pinned step still hashes clean."
+        )
+
+
+def _assert_no_bash_env(parsed: dict) -> None:
+    """BASH_ENV is banned in every env block and as a workflow key.
+
+    A BASH_ENV pointing at `trap 'exit 0' EXIT` reinterprets every
+    `bash -e` run in the job; hash pins cannot see it because the
+    step text never changes.
+    """
+    def check_env(env: object, where: str) -> None:
+        if isinstance(env, dict):
+            assert "BASH_ENV" not in env, (
+                f"{where}: BASH_ENV is forbidden in every env block"
+            )
+
+    check_env(parsed.get("env"), "workflow-level env")
+    assert "BASH_ENV" not in parsed, "workflow-level BASH_ENV key is forbidden"
+    for job, spec in parsed["jobs"].items():
+        check_env(spec.get("env"), f"{job} job env")
+        for index, step in enumerate(spec.get("steps", [])):
+            check_env(step.get("env"), f"{job} step {index} env")
+            for key, value in (step.get("with") or {}).items():
+                if isinstance(value, str):
+                    assert "BASH_ENV" not in value, (
+                        f"{job} step {index} with.{key} names BASH_ENV"
+                    )
+
+
 def _normalize_step_text(text: str) -> str:
     lines = [line.rstrip() for line in text.splitlines()]
     out: list[str] = []
@@ -413,6 +508,8 @@ def _assert_no_defaults_shell(parsed: dict) -> None:
 
 
 def _assert_pipeline_contract(parsed: dict) -> None:
+    _assert_pinned_step_lists(parsed)
+    _assert_no_bash_env(parsed)
     # The trigger block: tag pushes only, never a release publication
     # event (the YAML 1.1 `on:` key parses as boolean True).
     triggers = parsed[True]
@@ -844,6 +941,39 @@ PIPELINE_MUTATIONS = {
         ),
         "not-found exit check must follow",
     ),
+    "a_new_first_step_slipped_into_a_pinned_job": (
+        lambda parsed: parsed["jobs"]["pypi-build"]["steps"].insert(
+            0,
+            {
+                "name": "Prepare environment",
+                "run": "echo \"trap 'exit 0' EXIT\" > /tmp/poison.sh && "
+                "echo \"BASH_ENV=/tmp/poison.sh\" >> \"$GITHUB_ENV\"",
+            },
+        ),
+        "the pinned job's step list must match exactly",
+    ),
+    "bash_env_at_job_level": (
+        lambda parsed: parsed["jobs"]["wheel-smoke"].update(
+            {"env": {"BASH_ENV": "/tmp/poison.sh"}}
+        ),
+        "BASH_ENV is forbidden",
+    ),
+    "bash_env_at_workflow_level": (
+        lambda parsed: parsed.update({"env": {"BASH_ENV": "/tmp/poison.sh"}}),
+        "BASH_ENV is forbidden",
+    ),
+    "bash_env_at_step_level": (
+        lambda parsed: _pipeline_steps(parsed, "docs-live")[0].update(
+            {"env": {"BASH_ENV": "/tmp/poison.sh"}}
+        ),
+        "BASH_ENV is forbidden",
+    ),
+    "bash_env_named_in_a_with_block": (
+        lambda parsed: _step_by_name(
+            parsed, "version-check", "actions/checkout"
+        ).update({"with": {"something": "BASH_ENV=/tmp/poison.sh"}}),
+        "names BASH_ENV",
+    ),
     "restoring_a_release_published_trigger": (
         lambda parsed: parsed[True].update({"release": {"types": ["published"]}}),
         "trigger block must be tag pushes only",
@@ -924,6 +1054,11 @@ def test_removing_each_needs_edge_breaks_the_contract(
         (
             "      - name: Require the tag and committed versions to agree\n",
             "      - name: Require the tag and committed versions to agree\n        if: false\n",
+        ),
+        (
+            "    needs: [pypi-build, wheel-smoke, docs-live, build, container-publish]\n",
+            "    needs: [pypi-build, wheel-smoke, docs-live, build, container-publish]\n"
+            "    needs: [docs-live]\n",
         ),
     ],
 )

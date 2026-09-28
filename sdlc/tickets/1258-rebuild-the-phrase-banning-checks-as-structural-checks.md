@@ -88,12 +88,40 @@ about — prove that with a mutation the check was not built from.
 - Verification: yellow gate at 3f6916db — lint, test, spec, stress
   OK, zero failed lines
 
+## Deferred gaps (recorded 2026-09-28; closed by ticket 1264)
+
+The review named these report-only holes in the first cut, plus two
+new ones it proved. Ticket 1264 (this branch) closes them:
+
+- A new step slipped before a pinned step, writing BASH_ENV or
+  swapping the binary, kept every pinned hash clean. Fixed by the
+  exact step-list pins: job id, order, count.
+- BASH_ENV in any env block (job, workflow, step) or named in a
+  `with:` value reinterprets every bash run invisibly. Banned
+  everywhere.
+- A duplicated needs line in a pinned job: the YAML parser keeps
+  the last, the text scan read the first. Both the parsed needs and
+  a one-line-per-job count now enforce the expected list.
+- The verdict grammar was a phrase net, not an allowlist:
+  "awaiting reviewer", Security/Ticket review kinds, headings,
+  paragraphs, "(batch final)", "REJECT, not yet fixed", bare
+  wrapped state words, and landed tickets with no Review lines all
+  passed. The whole-line allowlist plus scope-word, negation, and
+  no-record rules close them.
+- The wait ratchet missed reversed and `<=` deadline comparisons,
+  `Instant::now() <` polls, Rust use-aliases, and assigned Python
+  time modules.
+- The stdio guard exempted `.output()` wholesale and had a dead
+  fail-closed branch; unknown stream settings now fail closed.
+- P2s from the first review that remain open in 1264's scope
+  check: none — all closed here.
+
 ## Acceptance
 
 - Each rebuilt check has at least one mutation test proving it
   catches a spelling not in its original ban list (name it).
-- The pending-review check passes on the fixed tree, flags the
-  current 1249 REJECT-without-ACCEPT red run, and covers every
+- The verdict-grammar check passes on the fixed tree, flags the
+  unresolved-rejection red run recorded in 1249, and covers every
   ticket file including the backfilled 1191-1218.
 - The workflow contract fails on a one-character edit to any pinned
   step (prove one), and on each leak spelling from the problem list.

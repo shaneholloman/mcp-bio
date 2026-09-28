@@ -57,7 +57,7 @@
     "src/entities/gene/gencc/tests.rs": {
       "count": 1,
       "language": "rust",
-      "markers": 1
+      "markers": 2
     },
     "src/sources/clingen/tests/mod.rs": {
       "count": 3,
@@ -70,7 +70,7 @@
     "src/sources/gencc.rs": {
       "count": 7,
       "language": "rust",
-      "markers": 1
+      "markers": 10
     },
     "src/sources/gencc/store.rs": {
       "count": 3,
@@ -78,7 +78,8 @@
     },
     "src/sources/gencc/tests.rs": {
       "count": 12,
-      "language": "rust"
+      "language": "rust",
+      "markers": 3
     },
     "src/sources/mod.rs": {
       "count": 5,
@@ -108,11 +109,13 @@
     },
     "tests/json_error_contract.rs": {
       "count": 5,
-      "language": "rust"
+      "language": "rust",
+      "markers": 1
     },
     "tests/managed_state_permissions.rs": {
       "count": 3,
-      "language": "rust"
+      "language": "rust",
+      "markers": 1
     },
     "tests/rmcp_client_contract.rs": {
       "count": 6,
@@ -168,13 +171,23 @@
     "tests/tls_ca_bundle_contract.rs": {
       "count": 2,
       "language": "rust",
-      "markers": 1
+      "markers": 2
     },
     "tests/windows_stdio_contract.rs": {
       "count": 0,
       "language": "rust",
       "markers": 1
+    },
+    "src/entities/gene/gencc.rs": {
+      "count": 1,
+      "language": "rust",
+      "markers": 1
+    },
+    "src/entities/article/graph/citation_evidence.rs": {
+      "count": 0,
+      "language": "rust",
+      "markers": 2
     }
   },
-  "marker_total_ceiling": 25
+  "marker_total_ceiling": 42
 }

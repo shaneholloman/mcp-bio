@@ -46,8 +46,16 @@ RUST_PATTERNS = [
         r"Instant::now\(\)\s*\+\s*(?!.*\bwatchdog\()",
         r"\bsleep\s*\(",
         r"\bsleep_until\s*\(",
-        r"elapsed\(\)(?:\s*\.\s*\w+\(\))*\s*[<>](?!=)",
-        r"[<>]\s*[\w.:]*elapsed\(",
+        # Any comparison against elapsed() in either operand order
+        # and either operator is a deadline poll; the only exception
+        # is a `>=` floor assertion (test took AT LEAST this long),
+        # which the floor-exemption below subtracts.
+        r"elapsed\(\)(?:\s*\.\s*\w+\(\))*\s*[<>]=?",
+        r"[<>]=?\s*[\w.:]*elapsed\(",
+        # A poll against the clock itself: `Instant::now() < deadline`
+        # in either order (`+` additions are the allowed builder).
+        r"Instant::now\(\)\s*[<>]=?",
+        r"[<>]=?\s*[\w.:]*Instant::now\(\)",
     )
 ]
 PYTHON_PATTERNS = [
@@ -65,9 +73,25 @@ PYTHON_PATTERNS = [
 # `from time import sleep as snooze` makes `snooze(` one. The bare
 # `from time import sleep` form is covered by its own pattern.
 TIME_MODULE_ALIAS = re.compile(r"^\s*import\s+time\s+as\s+(\w+)", re.MULTILINE)
+# Rust use-aliases: `use std::thread::sleep as nap` (and the tokio
+# timer) make `nap(` a timed wait, resolved per file.
+RUST_SLEEP_ALIAS = re.compile(
+    r"use\s+(?:std::thread|tokio::time)::sleep\s+as\s+(\w+)", re.MULTILINE
+)
+# Python module-object assignment: `t = time` makes `t.sleep(` one.
+PYTHON_TIME_ASSIGN = re.compile(r"^\s*(\w+)\s*=\s*time\s*$", re.MULTILINE)
 SLEEP_RENAME_IMPORT = re.compile(
     r"^\s*from\s+time\s+import\s+sleep\s+as\s+(\w+)", re.MULTILINE
 )
+# A `>=` floor assertion says the test took at least this long; it
+# is a lower bound on elapsed effort, not a wait, and is subtracted
+# from the comparison patterns above.
+FLOOR_ASSERTION = re.compile(
+    r"assert[^;]*?(?:[\w.:]*(?:elapsed|Instant::now))\(\)"
+    r"(?:\s*\.\s*\w+\(\))*\s*>="
+    r"|assert[^;]*?>=\s*[\w.:]*(?:elapsed|Instant::now)\("
+)
+
 # A `watchdog:` marker vouches for a wait only when it carries a
 # reason: at least one word of three or more characters after the
 # colon. A bare `watchdog:` (or `watchdog: x`) does not pass.
@@ -122,6 +146,7 @@ def count_waits(
     violations: list[str] = []
     in_heartbeat_helper = False
     alias_patterns = alias_patterns or []
+    assert_open = False
     for number, line in enumerate(lines, start=1):
         if DEFINITION.search(line):
             in_heartbeat_helper = True
@@ -130,6 +155,11 @@ def count_waits(
         waited = any(p.search(line) for p in patterns) or any(
             p.search(line) for p in alias_patterns
         )
+        if waited and (FLOOR_ASSERTION.search(line) or (assert_open and ">=" in line)):
+            waited = False
+        # A multi-line assert! opens here: a following `elapsed >=`
+        # line is its floor assertion.
+        assert_open = bool(re.search(r"assert\w*[!(]?\s*\($", line))
         if "watchdog:" in line:
             if WATCHDOG_REASON.search(line) and waited:
                 marked += 1
@@ -152,6 +182,15 @@ def local_time_aliases(text: str) -> list[re.Pattern[str]]:
         aliases.append(re.escape(match.group(1)) + r"\.sleep\s*\(")
     for match in SLEEP_RENAME_IMPORT.finditer(text):
         aliases.append(r"(?<![\w.])" + re.escape(match.group(1)) + r"\s*\(")
+    for match in PYTHON_TIME_ASSIGN.finditer(text):
+        aliases.append(re.escape(match.group(1)) + r"\.sleep\s*\(")
+    return [re.compile(a) for a in aliases]
+
+
+def rust_sleep_aliases(text: str) -> list[re.Pattern[str]]:
+    aliases: list[str] = []
+    for match in RUST_SLEEP_ALIAS.finditer(text):
+        aliases.append(r"(?<![\w.])" + re.escape(match.group(1)) + r"\s*\(")
     return [re.compile(a) for a in aliases]
 
 
@@ -163,7 +202,11 @@ def scan(root: Path) -> dict[str, dict[str, object]]:
         region = rust_test_region(path)
         if region is None:
             continue
-        count, _, marked = count_waits(region.splitlines(), RUST_PATTERNS)
+        count, _, marked = count_waits(
+            region.splitlines(),
+            RUST_PATTERNS,
+            rust_sleep_aliases(region),
+        )
         if count or marked:
             entry: dict[str, object] = {"count": count, "language": "rust"}
             if marked:
