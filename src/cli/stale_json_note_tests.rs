@@ -88,7 +88,7 @@ impl Drop for StaleNoteEnv {
     }
 }
 
-const EPMC_BODY: &str = r#"{"hitCount":1,"resultList":{"result":[{"id":32794606,"source":"MED","title":"Aspirin","firstPublicationDate":"1990-01-01"}]}}"#;
+const EPMC_BODY: &str = r#"{"hitCount":1,"resultList":{"result":[{"id":"32794606","source":"MED","title":"Aspirin","firstPublicationDate":"1990-01-01"}]}}"#;
 const GWAS_BODY: &str = r#"{"_embedded":{"associations":[{"snps":[{"rsId":"rs1000000"}],"efoTraits":[{"trait":"Aspirin response"}]}]}}"#;
 
 #[tokio::test]
