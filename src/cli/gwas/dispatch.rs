@@ -104,6 +104,7 @@ mod tests {
             _meta: GwasJsonMeta {
                 pagination: pagination(10, false, None, true),
                 next_commands: Vec::new(),
+                notes: Vec::new(),
             },
         };
         let value = serde_json::to_value(response).expect("serialize GWAS response");

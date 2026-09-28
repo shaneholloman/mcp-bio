@@ -96,14 +96,14 @@ const GWAS_BODY: &str = r#"{"_embedded":{"associations":[{"snps":[{"rsId":"rs100
 async fn a_stale_article_search_json_states_the_cache_age() {
     let (base, server) = stale_note_fixture_server(EPMC_BODY).await;
     let _env = StaleNoteEnv::new(&base, &["BIOMCP_EUROPEPMC_BASE"]);
-    let fresh = run(&["--json", "search", "article", "--keyword", "aspirin", "--limit", "1"]).await;
+    let fresh = run(&["--json", "search", "article", "--keyword", "aspirin", "--limit", "1", "--source", "europepmc"]).await;
     assert!(!fresh.contains("Cache note"), "fresh serve: {fresh}");
     assert!(!fresh.contains("older than the provider's freshness window"), "{fresh}");
 
     tokio::time::sleep(std::time::Duration::from_millis(1600)).await; // watchdog: freshness-window wait, bounded at 1.6 s
     server.abort();
 
-    let stale = run(&["--json", "search", "article", "--keyword", "aspirin", "--limit", "1"]).await;
+    let stale = run(&["--json", "search", "article", "--keyword", "aspirin", "--limit", "1", "--source", "europepmc"]).await;
     assert!(
         stale.contains("older than the provider's freshness window"),
         "the stale article search JSON carries the note: {stale}"
