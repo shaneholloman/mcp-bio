@@ -86,7 +86,7 @@ gates ran green at the SHAs in each ticket's Review section.
 Product — all fixed: the four XML sources route through the depth
 cap with a structural guard on any direct parse (ticket 1255, merged 9148e874, gate 8bf9884a); the stale-cache age reaches the MCP card,
 the CLI card, and search JSON `_meta.notes`, and MyDisease/DisGeNET
-genes carry their real labels on both paths (ticket 1256, rebased landing at 16952792, gate 5754b910);
+genes carry their real labels on both paths (ticket 1256, rebased landing at 16952792);
 the search-all note names the failed source in plain words and the
 DDInter HTML reply is a download failure (both in ticket 1256's landing); the DDInter
 HTML label from the 2026-09-26 file closed with it.
@@ -117,12 +117,14 @@ close), 1.0 owners and triggers (variant transcripts → ticket
 Direction items — done: the Mac DDInter run executed on the M5 at
 a7d503be with all three checks passing (its issue file carries the
 run and numbers); the licensing review pass covered all 48 sources
-due 2026-03-20 (44 verified unchanged, COSMIC and CPIC materially
-changed and updated, four unverifiable and kept dated, record
+due 2026-03-20 (45 verified after the 2026-09-28 corrections, COSMIC
+and CPIC materially changed and updated, Enrichr unverifiable and
+kept dated, record
 `sdlc/records/2026-09-27-source-licensing-review-pass.md`);
 DepMap decided under the delegation with citations (stays out; the
 2026-09-19 note's reservation superseded by the recorded decision);
-the 2027-03 crossing handled by the pass itself.
+the 2027-03 crossing handled for 47 of 48 — Enrichr fails 2027-03-21
+unless its terms page is fixed and verified first.
 
 Beyond this file: ticket 1261 fixed the cache-mode leak from
 GitHub #286 (Ian's filing; close #286 at the release).
