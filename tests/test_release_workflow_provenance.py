@@ -616,6 +616,53 @@ def test_pipeline_jobs_contract() -> None:
     _assert_publish_gating(parsed)
     _assert_no_defaults_shell(parsed)
     _assert_step_hashes(parsed)
+    _assert_release_locked_builds(parsed)
+
+
+def _assert_release_locked_builds(parsed: dict) -> None:
+    """Ticket 1266: every build step in the release pipeline names
+    --release and --locked directly, not only through a hash pin a
+    repin could clear. The 0.9.0 debug-profile wheel shipped because
+    no assertion stated the profile (#287).
+    """
+    offenders: list[str] = []
+    for job_id in ("pypi-build", "build"):
+        steps = parsed["jobs"][job_id]["steps"]
+        for index, step in enumerate(steps):
+            run = step.get("run", "")
+            is_build = "maturin build" in run or "cargo build" in run
+            if not is_build:
+                continue
+            has_release = "--release" in run
+            has_locked = "--locked" in run
+            if not (has_release and has_locked):
+                offenders.append(
+                    f"{job_id} step {index} ({step.get('name', 'run')}): "
+                    f"release={has_release} locked={has_locked}"
+                )
+    assert not offenders, (
+        "every wheel and tarball build must pass --release --locked "
+        f"(GitHub #287): {offenders}"
+    )
+
+
+def test_release_locked_build_assertion_catches_a_dropped_flag(tmp_path: Path) -> None:
+    """Red proof: planting a workflow copy with --release dropped
+    from one build step fails the assertion."""
+    import copy
+
+    parsed = _load_release_pipeline()
+    planted = copy.deepcopy(parsed)
+    steps = planted["jobs"]["pypi-build"]["steps"]
+    for step in steps:
+        run = step.get("run", "")
+        if "maturin build" in run:
+            step["run"] = run.replace(" --release", "")
+            break
+    else:
+        pytest.fail("pypi-build carries no maturin build step to plant")
+    with pytest.raises(AssertionError, match="--release"):
+        _assert_release_locked_builds(planted)
 
 
 # Every job's condition, asserted exactly. A suffix like
