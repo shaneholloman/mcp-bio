@@ -656,7 +656,7 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
     // watchdog: bounded total budget, CI-proven — a slow line (the
     // post-kill dial chain) retries within the budget instead of
     // aborting the read loop the way the old per-line timeout did.
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(45);
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(45); // watchdog: bounded total read budget for the CI-slow dial chain
     while !(seen_two && seen_three && seen_four) {
         let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
         if remaining.is_zero() {
