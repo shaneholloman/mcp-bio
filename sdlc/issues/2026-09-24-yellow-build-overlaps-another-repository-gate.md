@@ -59,5 +59,5 @@ starting job waits rather than overlaps. Until the lock is wired
 into the runner (dotfiles issue
 `2026-09-24-yellow-lock-available-during-active-checks.md`), the
 grant "you own yellow for now" is the working control and the pgrep
-idle check is the fallback.
-file was the last; none since.
+idle check is the fallback. The 2026-09-24 overlap this file
+records was the last observed; none since.

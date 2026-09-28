@@ -3,7 +3,7 @@
 Filed 2026-09-24 from the review of ticket 1241 (merge 02447388).
 Ticket 1241's cap check and real-bundle verification were deferred to
 the Mac because the Linux gate host has no synced DDInter data and
-must stay otherwise idle. Ian runs these; nothing here blocks coding.
+must stay otherwise idle. Originally Ian's to run; he assigned it to the developer on 2026-09-27 (see the 2026-09-27 review file's direction section).
 
 ## The 8 MB cap check against real sizes
 
@@ -41,8 +41,10 @@ anchor hit JSON.
 Record the outputs of all three in a comment on this file, then close
 it.
 
-## Resolved — the run, 2026-09-27 (Ian assigned it to the developer
-## that day; see the 2026-09-27 review file's direction section)
+## Resolved — the run, 2026-09-27
+
+Ian assigned the run to the developer that day (the 2026-09-27
+review file's direction section).
 
 Environment: M5 (macOS, arm64), release binary built at repo commit
 a7d503be (`cargo build --release`, rustc 1.95.0), reporting
@@ -77,8 +79,9 @@ coverage miss, not evidence of no interactions" — not a raw "no
 matching rows", and zero fabricated rows appeared, so the
 pooled-synonym bug did not resurface. Observation, not a finding of
 this issue: the card titles itself with the full combination-product
-name because that is the chosen anchor; preferring a
-single-ingredient anchor when one matches is an anchor-policy
-choice for a future ticket, not a regression from 1241.
+name because that is the chosen anchor, so this check never
+exercised the single-ingredient path — tracked as its own issue,
+`sdlc/issues/2026-09-28-aspirin-mac-run-never-tested-the-single-ingredient-anchor.md`.
+Not a regression from 1241.
 
 All three checks pass. Nothing here blocks.

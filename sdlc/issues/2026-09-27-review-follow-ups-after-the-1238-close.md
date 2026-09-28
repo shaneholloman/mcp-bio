@@ -84,12 +84,11 @@ Every item in this file, marked. Tickets name their merge; the
 gates ran green at the SHAs in each ticket's Review section.
 
 Product — all fixed: the four XML sources route through the depth
-cap with a structural guard on any direct parse (1255 @ dbefb4d0's
-parent, gate 8bf9884a); the stale-cache age reaches the MCP card,
+cap with a structural guard on any direct parse (ticket 1255, merged 9148e874, gate 8bf9884a); the stale-cache age reaches the MCP card,
 the CLI card, and search JSON `_meta.notes`, and MyDisease/DisGeNET
-genes carry their real labels on both paths (1256, gate 5754b910);
+genes carry their real labels on both paths (ticket 1256, rebased landing at 16952792, gate 5754b910);
 the search-all note names the failed source in plain words and the
-DDInter HTML reply is a download failure (both 1256); the DDInter
+DDInter HTML reply is a download failure (both in ticket 1256's landing); the DDInter
 HTML label from the 2026-09-26 file closed with it.
 
 Tests — all fixed: the shared-runtime test drives `execute_mcp_cli`

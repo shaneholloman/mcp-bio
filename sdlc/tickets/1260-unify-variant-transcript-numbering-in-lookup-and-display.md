@@ -34,6 +34,33 @@ against that output fails, and the failure mode is silent.
   keys resolve and the display labels its transcripts.
 - The transcript-priority data records its source and date.
 
+## Retained behavior
+
+Single-transcript output is unchanged. The ClinVar Variation ID and
+rsID lookups keep their current resolution. No existing identifier
+stops resolving; the change only adds alternate keys and names the
+transcript in use.
+
+## Code paths
+
+The variant entity's parse and render sites (`src/entities/variant/`,
+the markdown and JSON renderers) and the lookup argument parsing in
+the variant CLI module carry the numbering today; the exact sites
+are named at implementation after a tracing pass, because the
+2026-09-11 report names the display shape, not the files.
+
+## Proof
+
+The acceptance tests are the proof: both transcript numberings of
+the MUTYH case resolve to ClinVar 5294 with the transcript named,
+and a two-numbering fixture proves both keys work and the display
+labels its transcripts.
+
+## Deferred gaps
+
+None yet; anything deferred during implementation gets its own
+issue file with an owner and a revisit trigger, per house rule.
+
 ## Owner and trigger
 
 Owner: the biomcp queue (developer agents; no clinical judgement
