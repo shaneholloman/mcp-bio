@@ -163,7 +163,10 @@ def _logical_lines(text: str) -> list[tuple[int, str]]:
 
     A Review bullet's verdict wraps onto following indented lines
     (the house style). Joining before matching is what makes wrapped
-    spellings ("re-review\n  pending") impossible to miss.
+    spellings ("re-review\npending") impossible to miss. Non-bullet
+    lines (headings, paragraphs, stray state words) pass through as
+    plain entries so the format scan sees them too — a status
+    heading next to an honest record must still fail.
     """
     lines: list[tuple[int, str, str]] = []
     current: tuple[int, str, list[str]] | None = None
@@ -175,9 +178,12 @@ def _logical_lines(text: str) -> list[tuple[int, str]]:
             current = (number, bullet.group(1), [bullet.group(2)])
         elif current is not None and line.startswith((" ", "\t")) and line.strip():
             current[2].append(line.strip())
-        elif current is not None:
-            lines.append((current[0], current[1], " ".join(current[2])))
-            current = None
+        else:
+            if current is not None:
+                lines.append((current[0], current[1], " ".join(current[2])))
+                current = None
+            if line.strip():
+                lines.append((number, "", line.strip()))
     if current is not None:
         lines.append((current[0], current[1], " ".join(current[2])))
     return lines
@@ -294,7 +300,9 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
         bullet_status = (
             marker == "-" and head_status and STATE_ANYWHERE.search(unquoted)
         )
-        if declared or only_state or bullet_status:
+        # A declaration alone is prose ("review: the code above
+        # ..."); a status line declares AND carries a state word.
+        if (declared and STATE_ANYWHERE.search(unquoted)) or only_state or bullet_status:
             failures.append(
                 f"{relative}:{number}: review line is not the grammar: {logical_text[:70]}"
             )
@@ -424,6 +432,16 @@ def test_the_grammar_catches_shapes_it_was_never_told_about(
         "## Order\n\nItems 1-4 land in one batch.\n\n## Review\n\n"
         "- Code review (batch 7): pending\n"
     )
+    # Never-told-about mutation 8b: a status heading next to an
+    # honest record (the compound shape the whole-line allowlist
+    # exists to catch).
+    assert probe(
+        "## Review\n\n- Code review: ACCEPT 2026-09-25\n\n### Code review: pending\n"
+    )
+    # Never-told-about mutation 8c: a stray state word on its own
+    # unindented line under an accepted verdict.
+    assert probe("## Review\n\n- Code review: ACCEPT 2026-09-25\n\npending\n")
+
     # Mutation 9 (2026-09-28): a verdict with no state word at all.
     assert probe("## Review\n\n- Code review: awaiting reviewer\n")
     # Mutation 10: a kind outside the house set.

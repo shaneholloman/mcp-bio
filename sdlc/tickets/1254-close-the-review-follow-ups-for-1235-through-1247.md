@@ -79,7 +79,7 @@ GenCC follow-ups), items 5-9 a second (hygiene and guards), items
 
 ## Review
 
-- Design review: ACCEPT — this ticket is the design; deviations recorded here
+- Design review: not required — this ticket is the design itself; its deviations are recorded here
 - Item 1 done: the fold takes synonyms from the chosen anchor hit only
   (the first hit with a best name); `merge_mychem_hits` tests prove
   the >3-synonym passthrough into `ddinter_synonyms` and that a pooled
