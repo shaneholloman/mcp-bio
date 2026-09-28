@@ -653,10 +653,18 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
     let mut fetch_errored = false;
     let mut reader = tokio::io::BufReader::new(stdout);
     let mut line = String::new();
+    // watchdog: bounded total budget, CI-proven — a slow line (the
+    // post-kill dial chain) retries within the budget instead of
+    // aborting the read loop the way the old per-line timeout did.
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(45);
     while !(seen_two && seen_three && seen_four) {
+        let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
+        if remaining.is_zero() {
+            break;
+        }
         line.clear();
-        match tokio::time::timeout(Duration::from_secs(10), reader.read_line(&mut line)).await {
-            Ok(Ok(0)) | Ok(Err(_)) | Err(_) => break,
+        match tokio::time::timeout(remaining, reader.read_line(&mut line)).await {
+            Ok(Ok(0)) | Ok(Err(_)) => break,
             Ok(Ok(_)) => {
                 if line.contains("\"id\":2") {
                     seen_two = true;
@@ -669,6 +677,7 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
                     fetch_errored = line.contains("\"isError\":true");
                 }
             }
+            Err(_) => continue,
         }
     }
     assert!(
