@@ -690,7 +690,8 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
         let mut text = String::new();
         if let Some(mut pipe) = child.stderr.take() {
             use tokio::io::AsyncReadExt;
-            let _ = tokio::time::timeout(Duration::from_secs(2), pipe.read_to_string(&mut text)).await;
+            let _ =
+                tokio::time::timeout(Duration::from_secs(2), pipe.read_to_string(&mut text)).await;
         }
         text
     };

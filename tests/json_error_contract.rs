@@ -35,7 +35,8 @@ fn run_biomcp_with_env(args: &[&str], env: &[(&str, &str)]) -> CommandResult {
                 stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
             };
         }
-        if Instant::now() >= deadline { // watchdog: bounded readiness timeout
+        if Instant::now() >= deadline {
+            // watchdog: bounded readiness timeout
             let _ = child.kill();
             let output = child
                 .wait_with_output()

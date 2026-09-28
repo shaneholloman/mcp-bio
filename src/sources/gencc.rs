@@ -372,7 +372,8 @@ impl GenCcClient {
             Some(dataset) => dataset,
             None => return failed_refresh_now(store, snapshot, state, timeout_operation),
         };
-        if tokio::time::Instant::now() >= deadline { // watchdog: bounded drain deadline
+        if tokio::time::Instant::now() >= deadline {
+            // watchdog: bounded drain deadline
             return failed_refresh_now(store, snapshot, state, timeout_operation);
         }
         let now = timestamp(now_utc());
@@ -463,7 +464,8 @@ async fn lock_refresh_until(store: &Store, deadline: tokio::time::Instant) -> Re
             Ok(false) => {}
             Err(_) => return Err(()),
         }
-        if tokio::time::Instant::now() >= deadline { // watchdog: bounded drain deadline
+        if tokio::time::Instant::now() >= deadline {
+            // watchdog: bounded drain deadline
             return Ok(false);
         }
         tokio::time::sleep(Duration::from_millis(10)).await;
