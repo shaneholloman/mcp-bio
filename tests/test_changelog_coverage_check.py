@@ -313,27 +313,18 @@ def test_dated_and_yearly_records_do_not_count_as_tickets(tmp_path: Path) -> Non
         "123456-five-digit.md",
         "1255-route-the-last-four-xml-sources-through-the-depth-cap.md",
     ]
+    git_env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+               "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+    repo = tmp_path / "records"
+    (repo / "seed.txt").write_text("base\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q", str(repo)], check=True, env=git_env)
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True, env=git_env)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "base"], check=True, env=git_env)
     for name in names:
         (records / name).write_text("record\n", encoding="utf-8")
-    subprocess.run(
-        ["git", "init", "-q", str(tmp_path / "records")],
-        check=True,
-        env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
-             "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
-    )
-    subprocess.run(
-        ["git", "-C", str(tmp_path / "records"), "add", "-A"], check=True,
-        env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
-             "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
-    )
-    subprocess.run(
-        ["git", "-C", str(tmp_path / "records"), "commit", "-qm", "records"],
-        check=True,
-        env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
-             "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
-    )
-    base = tmp_path / "records"
-    a = subprocess.run(["git", "-C", str(base), "rev-list", "--max-parents=0", "HEAD"],
-                       capture_output=True, text=True, check=True).stdout.strip()
-    found = _MODULE.record_tickets(a, "HEAD")
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True, env=git_env)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "records"], check=True, env=git_env)
+    base = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD~1"],
+                          capture_output=True, text=True, check=True).stdout.strip()
+    found = _MODULE.record_tickets(base, "HEAD")
     assert found == {"1265", "0843", "1255"}, found
