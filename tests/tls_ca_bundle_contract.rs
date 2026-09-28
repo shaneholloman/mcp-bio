@@ -680,9 +680,19 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
             Err(_) => continue,
         }
     }
+    let early_stderr = {
+        // A child that exits early (CI-only so far) hides its reason in
+        // stderr; surface it in the failure instead of a bare flag.
+        let mut text = String::new();
+        if let Some(mut pipe) = child.stderr.take() {
+            use tokio::io::AsyncReadExt;
+            let _ = pipe.read_to_string(&mut text).await;
+        }
+        text
+    };
     assert!(
         seen_two && seen_three && seen_four,
-        "all three tool calls answered"
+        "all three tool calls answered; child stderr: {early_stderr}"
     );
     assert!(
         fetch_errored,
@@ -697,11 +707,11 @@ async fn stdio_bad_fallback_starts_and_warns_once_across_tool_calls() {
     );
     let _ = tokio::time::timeout(Duration::from_secs(5), child.wait()).await;
     let stderr = stop_and_stderr(&mut child).await;
-    assert_eq!(
-        stderr.matches("SSL_CERT_FILE could not be read").count(),
-        1,
-        "{stderr}"
-    );
+    let warn_count = stderr.matches("SSL_CERT_FILE could not be read").count()
+        + early_stderr
+            .matches("SSL_CERT_FILE could not be read")
+            .count();
+    assert_eq!(warn_count, 1, "stderr: {early_stderr}{stderr}");
 }
 
 fn unused_port() -> u16 {
