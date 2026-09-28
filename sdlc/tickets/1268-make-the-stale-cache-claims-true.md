@@ -48,6 +48,16 @@ and the records agree.
   the armed window — is documented in the module comment and
   accepted: the lane that matters never runs that shape.
 
+## Pins raised (reviewer verdict required)
+
+- `tools/rust-source-size-inventory.json` src/sources/mod.rs
+  2717 -> 2782: the retry-strategy wrapper and the no-cache carry
+  helpers. The reason is in the inventory entry; accept or reject
+  with this branch.
+- No wait-ratchet ceilings changed; the four marked
+  freshness-window waits in the new test file are all on their sleep
+  lines.
+
 ## Review
 
 - Design review: n/a (the review file named the fixes)
