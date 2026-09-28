@@ -44,5 +44,6 @@ spelling it was never told about.
 - Code review: REJECT once (the allowlist never scanned non-bullet
   lines; two normalizations invented verdicts; one truncated a
   recorded verification), folded and verified 2026-09-28
-- Verification: 132 tests green across the five suites; the wait
-  ratchet passes on the real tree; the yellow gate runs at landing
+- Verification: yellow gate at 4de8e686 — lint, test, spec, stress
+  OK, zero failed lines; the ratchet and the five suites green
+  locally and on the host
