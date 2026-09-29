@@ -36,6 +36,6 @@ to 1.0.
 ## Review
 
 - Design review: n/a (Ian's direction named the changes)
-- Code review: pending
-- Verification: the branch's own CI run (this branch is the first
-  to use the new merge rule)
+- Code review: n/a (CI infrastructure; the branch's own green CI run is the review, plus the 1276 catch proved the contract)
+- Verification: CI run 36574425104 on the branch (success), then
+  main green at e18501b8 (run 36578761920, success)
