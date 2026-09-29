@@ -11,8 +11,7 @@ use http_cache_reqwest::{Cache, CacheMode, CacheOptions, HttpCache, HttpCacheOpt
 use reqwest::header::{CACHE_CONTROL, CONTENT_LENGTH, HeaderMap, HeaderValue, RETRY_AFTER};
 use reqwest::{ResponseBuilderExt, StatusCode};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware, Middleware, Next, RequestBuilder};
-use reqwest_retry::{
-    DefaultRetryableStrategy, RetryTransientMiddleware, Retryable, RetryableStrategy,
+use reqwest_retry::{RetryTransientMiddleware, RetryableStrategy,
     policies::ExponentialBackoff,
 };
 use serde::de::DeserializeOwned;
@@ -1217,8 +1216,7 @@ pub(crate) fn build_uncached_http_client(
     let builder = ordinary_url_policy::with_initial_policy(builder, provider_policy);
     let builder = builder.with(rate_limit::RateLimitMiddleware::provider_pool());
     let builder = builder.with(
-        RetryTransientMiddleware::new_with_policy_and_strategy(retry, NoTrustFailureStrategy)
-            .with_retry_log_level(tracing::Level::DEBUG),
+        RetryTransientMiddleware::new_with_policy_and_strategy(retry, NoTrustFailureStrategy),
     );
     let builder = match kind {
         SharedHttpClientKind::Default => builder.with(RetryAfterTooManyRequestsMiddleware),
@@ -1321,8 +1319,7 @@ pub(crate) fn finish_cached_http_client(
         RetryTransientMiddleware::new_with_policy_and_strategy(
             retry_policy,
             NoTrustFailureStrategy,
-        )
-        .with_retry_log_level(tracing::Level::DEBUG),
+        ),
     );
     let builder = match kind {
         SharedHttpClientKind::Default => builder.with(RetryAfterTooManyRequestsMiddleware),
