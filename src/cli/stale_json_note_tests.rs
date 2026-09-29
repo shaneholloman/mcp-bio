@@ -307,7 +307,6 @@ async fn a_stale_article_search_json_states_the_cache_age_in_meta_notes() {
 /// said a stale serve was impossible — under BIOMCP_CACHE_MODE
 /// infinite, which once replaced the no-store mark with force-cache.
 
-
 #[tokio::test]
 #[serial_test::serial(source_env)]
 async fn a_stale_search_all_json_states_the_cache_age_in_meta_notes() {
@@ -358,7 +357,6 @@ async fn a_stale_search_all_json_states_the_cache_age_in_meta_notes() {
         "the stale search-all JSON carries the note in _meta.notes: {stale}"
     );
 }
-
 
 const MYGENE_BODY: &str =
     r#"{"total":1,"hits":[{"symbol":"BRAF","name":"B-Raf proto-oncogene","entrezgene":"673"}]}"#;
@@ -483,12 +481,8 @@ async fn gwas_requests_keep_no_store_even_under_infinite_cache_mode() {
     let _env = StaleNoteEnv::new("http://127.0.0.1:9", &["BIOMCP_GWAS_BASE"])
         .with_extra(&[("BIOMCP_CACHE_MODE", "infinite")]);
     let client = crate::sources::GwasClient::new().expect("gwas client");
-    let plan = crate::sources::GwasClient::association_search_plan(
-        None,
-        Some("aspirin"),
-        1,
-    )
-    .expect("plan");
+    let plan = crate::sources::GwasClient::association_search_plan(None, Some("aspirin"), 1)
+        .expect("plan");
     let request = client
         .request_no_store_for_test(&plan)
         .build()
