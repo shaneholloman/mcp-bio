@@ -4,6 +4,12 @@ Filed 2026-09-29 from an independent read-only review of main at `9eb9a121`, ran
 
 The earlier review files stay open: `2026-09-28-review-follow-ups-after-1263-and-1264.md` and `2026-09-29-review-follow-ups-after-the-0.9.1-resolution-round.md`. This file adds findings and records which claims in the latest report are false.
 
+## Ian's direction, 2026-09-29
+
+- Approved for 1.0: the leftover check spellings move to the 1.0 compiler-tool replacement, and the marked waits move to the 1.0 signal-wait rewrite.
+- Approved: the four 1.0 plan files dated 2026-09-29 (signal waits, compiler tools, workflow linters, test-suite speed). Each file must cite this approval, not the earlier direction.
+- Refused: the search-all end-to-end test does not move to 1.0. Restore it before 0.9.1 with the fixture fix below.
+
 ## What holds
 
 - Both ticket branches merged only after their branch CI runs finished green. The records commit `d251cc43` passed its own branch run (36589139221) before it reached main by fast-forward.

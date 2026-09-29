@@ -17,7 +17,7 @@ The product fixes hold. The job order, the stdio test, #287's build profile, the
 ## Decisions for Ian
 
 - Enrichr's terms are readable. The help page loads an empty `templates/help/terms-content.html`. The sibling `https://maayanlab.cloud/Enrichr/templates/help/terms-submenu.html` holds the terms in plain HTML. They say the tools are free for academic and non-profit use, and commercial use needs a licence from Mount Sinai Innovation Partners. They also say Enrichr is not to be used for treating or diagnosing human subjects. The registry calls Enrichr tier 1 (`docs/reference/sources.json`, `docs/reference/source-licensing.md:60`, `:352`). The commercial-licence limit is a tier 3 fact, as with CGI. Any choice that contacts Mount Sinai or buys a licence is Ian's.
-- The deferrals below need Ian's OK under his 2026-09-28 direction:
+- The deferrals below need Ian's OK under his 2026-09-28 direction. (Decided 2026-09-29: Ian approved the first three and refused the search-all deferral. See `2026-09-29-review-of-the-enrichr-cache-and-records-round.md`.)
   - The leftover check spellings, moved to the 1.0 compiler-tool replacement.
   - The marked waits, moved to the 1.0 signal-wait rewrite.
   - The four 1.0 issue files dated 2026-09-29. Each cites Ian's direction, and Ian has not confirmed.
