@@ -195,17 +195,7 @@ impl StaleNoteEnv {
     }
 
     /// Extra fixed env pairs (e.g. BIOMCP_CACHE_MODE) recorded and
-    /// restored the same way as the fixture bases.
-    fn with_extra(mut self, pairs: &[(&'static str, &str)]) -> Self {
-        for (key, value) in pairs {
-            // SAFETY: serialized on the source_env key; restored on drop.
-            unsafe {
-                self.previous.push((key, std::env::var(key).ok()));
-                std::env::set_var(key, value);
-            }
-        }
-        self
-    }
+
 
     fn new(base: &str, keys: &[&'static str]) -> Self {
         let root = crate::test_support::TempDirGuard::new("stale-json-notes");
