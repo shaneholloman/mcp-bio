@@ -10,7 +10,9 @@ The product fixes hold. The job order, the stdio test, #287's build profile, the
 - The same answer holds for every source from now on. BioMCP states each source's terms plainly in its registry and licensing page. Users are responsible for their own licences.
 - Add a visible warning near the top of the README. It says that upstream terms govern the use of retrieved data, that some sources restrict commercial or clinical use, and that users must check the terms. It links to the Source Licensing and Terms page.
 - The developer adds this rule to `AGENTS.md`, so every future source change follows it.
-- Main stays unprotected. No branch protection. The merge rule stays a discipline: merge to main only after the branch's CI run has finished green.
+- Main stays unprotected. No branch protection.
+- Ian cuts releases, and users install releases. Main is a development branch, and anyone who installs from main takes that risk. A red main is not a release blocker. The bar is the tagged commit: it must have a finished green CI run and pass the release workflow.
+- Merging only after the branch's CI run is green stays the recommended practice. A red main costs the developer time and hides the next failure.
 
 ## Decisions for Ian
 

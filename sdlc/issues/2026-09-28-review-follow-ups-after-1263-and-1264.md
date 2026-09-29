@@ -7,7 +7,7 @@ Filed 2026-09-28 from an independent read-only review of main at `7d2d85a7`. Thr
 - Resolve every issue before tagging 0.9.1. That covers every item in this file, every item in `2026-09-28-review-follow-ups-after-1255-through-1261.md`, and each point the reporter raised in GitHub #287.
 - Resolved means fixed and proven, or given a recorded decision with a reason. A deferral needs Ian's OK.
 - Ticket 1260 and the other items already assigned to 1.0 stay with 1.0.
-- Before asking for the go, add a disposition section to each review file. Each line names the commit and the CI run that proves it. Main must stay green across the whole round.
+- Before asking for the go, add a disposition section to each review file. Each line names the commit and the CI run that proves it. The commit Ian tags must have a finished green CI run. (Amended 2026-09-29: main may go red between releases.)
 
 ## Release
 
