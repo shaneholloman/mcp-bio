@@ -10,6 +10,7 @@ The product fixes hold. The job order, the stdio test, #287's build profile, the
 - The same answer holds for every source from now on. BioMCP states each source's terms plainly in its registry and licensing page. Users are responsible for their own licences.
 - Add a visible warning near the top of the README. It says that upstream terms govern the use of retrieved data, that some sources restrict commercial or clinical use, and that users must check the terms. It links to the Source Licensing and Terms page.
 - The developer adds this rule to `AGENTS.md`, so every future source change follows it.
+- Main stays unprotected. No branch protection. The merge rule stays a discipline: merge to main only after the branch's CI run has finished green.
 
 ## Decisions for Ian
 
