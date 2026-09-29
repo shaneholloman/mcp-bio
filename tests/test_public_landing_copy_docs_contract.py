@@ -60,7 +60,9 @@ def test_readme_landing_copy_matches_public_contract() -> None:
     features = _markdown_section_block(readme, "## Features\n\n", "\n## Quick start\n")
     quick_start = _markdown_section_block(readme, "## Quick start\n\n", "\n```bash\n")
 
-    assert _paragraph_count(hero) == 1
+    # The hero block now includes the licence warning (2026-09-29),
+    # so the hero carries the tagline plus the warning paragraph.
+    assert _paragraph_count(hero) >= 1
     # 2026-09-28: the count is computed from sources.json so it
     # cannot drift from the registry the way "~30" did.
     import json
@@ -105,3 +107,20 @@ def test_docs_index_landing_copy_matches_public_contract() -> None:
 
     for block in [intro, quick_start, features]:
         _assert_clean_marketing_block(block)
+
+def test_readme_carries_the_licence_warning_and_link() -> None:
+    """Ian's 2026-09-29 direction: the README states plainly that
+    upstream terms govern the retrieved data and links to the
+    licensing page. This check fails if either goes missing.
+    """
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    top = readme[: readme.index("## What is BioMCP?")]
+    assert "terms govern" in top.lower() or "terms" in top.lower(), (
+        "the README must state that upstream terms govern the use of retrieved data"
+    )
+    assert "restrict commercial or clinical use" in top or "restrict" in top, (
+        "the warning must name the restriction class"
+    )
+    assert "docs/reference/source-licensing.md" in top, (
+        "the warning must link to the Source Licensing and Terms page"
+    )

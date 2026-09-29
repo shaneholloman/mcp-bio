@@ -101,3 +101,10 @@ enforce it.
 Do not commit secrets, PHI, absolute local paths, planning notes, or March
 runtime artifacts. Keep `.march/` runtime state, `.march-runtime/`, local caches,
 and generated build outputs out of git.
+
+## Source licensing
+
+State each source's terms plainly in its registry entry and on the
+licensing page. Label restricted terms as restricted. Users are
+responsible for their own licenses. BioMCP never buys a license or
+contacts a provider without Ian's approval.
