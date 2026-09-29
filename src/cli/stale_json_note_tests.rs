@@ -489,9 +489,9 @@ async fn gwas_requests_keep_no_store_even_under_infinite_cache_mode() {
         .request_no_store_for_test(&plan)
         .build()
         .expect("build request");
-    let mode = request
-        .extensions()
-        .get::<CacheMode>()
-        .expect("cache mode extension present");
-    assert!(matches!(mode, CacheMode::NoStore));
+    let mode = crate::sources::gwas::cache_mode_of(&request);
+    assert!(
+        matches!(mode, Some(CacheMode::NoStore)),
+        "GWAS requests keep NoStore under infinite mode, got {mode:?}"
+    );
 }

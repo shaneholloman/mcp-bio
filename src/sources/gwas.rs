@@ -475,3 +475,11 @@ pub struct GwasAuthor {
 
 #[cfg(test)]
 mod tests;
+
+/// Test seam (ticket 1268): read a built request's cache mode —
+/// `extensions()` is private on reqwest's Request, so the invariant
+/// is read here where the crate can see it.
+#[cfg(test)]
+pub(crate) fn cache_mode_of(request: &reqwest::Request) -> Option<CacheMode> {
+    request.extensions().get::<CacheMode>().cloned()
+}
