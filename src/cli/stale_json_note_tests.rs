@@ -182,7 +182,7 @@ impl StaleNoteEnv {
             };
             // SAFETY: serialized on the source_env key; restored on drop.
             unsafe {
-                previous.push((*key, std::env::var(key).ok()));
+                previous.push((key, std::env::var(key).ok()));
                 std::env::set_var(key, value);
             }
         }
