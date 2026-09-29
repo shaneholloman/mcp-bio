@@ -4,6 +4,13 @@ Filed 2026-09-29 from an independent read-only review of main at `c62b6594`, ran
 
 The product fixes hold. The job order, the stdio test, #287's build profile, the asset smoke, the exit codes and `debug-embed` are confirmed. The ClinGen `--no-cache` test fails when the carry is reverted. Ian's direction from 2026-09-28 is not yet met: main did not stay green, neither disposition names a CI run, several deferrals lack Ian's OK, and some records claim fixes that did not happen. The CI run for `c62b6594` (36583345352) had not finished when this was filed, so "main is green at `c62b6594`" was unproven.
 
+## Ian's direction, 2026-09-29
+
+- Enrichr: relabel it as restricted, the way CGI is labeled. State its terms plainly, including the commercial-licence limit and the statement that it is not for treating or diagnosing human subjects. Enrichr stays on by default. BioMCP does not buy a licence or contact Mount Sinai.
+- The same answer holds for every source from now on. BioMCP states each source's terms plainly in its registry and licensing page. Users are responsible for their own licences.
+- Add a visible warning near the top of the README. It says that upstream terms govern the use of retrieved data, that some sources restrict commercial or clinical use, and that users must check the terms. It links to the Source Licensing and Terms page.
+- The developer adds this rule to `AGENTS.md`, so every future source change follows it.
+
 ## Decisions for Ian
 
 - Enrichr's terms are readable. The help page loads an empty `templates/help/terms-content.html`. The sibling `https://maayanlab.cloud/Enrichr/templates/help/terms-submenu.html` holds the terms in plain HTML. They say the tools are free for academic and non-profit use, and commercial use needs a licence from Mount Sinai Innovation Partners. They also say Enrichr is not to be used for treating or diagnosing human subjects. The registry calls Enrichr tier 1 (`docs/reference/sources.json`, `docs/reference/source-licensing.md:60`, `:352`). The commercial-licence limit is a tier 3 fact, as with CGI. Any choice that contacts Mount Sinai or buys a licence is Ian's.
