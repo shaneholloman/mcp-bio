@@ -85,9 +85,13 @@ fn is_terminal_textual_article_asset(media_type: Option<&str>) -> bool {
 
 fn init_tracing() {
     let _ = tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn")),
-        )
+        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+            // reqwest-retry's with_retry_log_level exists only for
+            // the default strategy; a custom one logs at WARN,
+            // which pollutes every CLI error surface (ticket
+            // 1268). Downgrade it unless the operator asked.
+            EnvFilter::new("warn,reqwest_retry=error")
+        }))
         .with_writer(std::io::stderr)
         .with_ansi(std::io::stderr().is_terminal())
         .try_init();

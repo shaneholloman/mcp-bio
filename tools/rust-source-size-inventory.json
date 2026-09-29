@@ -132,11 +132,11 @@
     },
     {
       "path": "src/entities/gene.rs",
-      "baseline_lines": 3865,
+      "baseline_lines": 3871,
       "floor_lines": 3812,
       "authorized_increase": {
         "ticket": "1263",
-        "delta": 53,
+        "delta": 59,
         "reason": "The stale-serve spawn-inheritance seam (ClinGen prefetch) and its tests in sources; the prefetch re-scope comment in gene.",
         "removal_condition": "Fold the handle helpers into the shared task-local plumbing if a second production spawn appears."
       }
@@ -405,12 +405,12 @@
     },
     {
       "path": "src/sources/mod.rs",
-      "baseline_lines": 2717,
+      "baseline_lines": 2779,
       "floor_lines": 1847,
       "authorized_increase": {
-        "ticket": "1263",
-        "delta": 870,
-        "reason": "The stale-serve spawn-inheritance seam (ClinGen prefetch) and its tests in sources; the prefetch re-scope comment in gene.",
+        "ticket": "1268",
+        "delta": 932,
+        "reason": "Ticket 1268: the no-trust-failure retry strategy (a RetryableStrategy wrapper walking the error chain for certificate-trust markers, plus its marker table) and the no-cache task-local carry helpers for spawned fetches. REVIEWER: accept or reject this raise with the branch.",
         "removal_condition": "Fold the handle helpers into the shared task-local plumbing if a second production spawn appears."
       }
     },
