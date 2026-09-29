@@ -387,7 +387,10 @@ async fn a_stale_search_all_json_states_the_cache_age_in_meta_notes() {
     );
 }
 
-const GWAS_BODY: &str = r#"{"_embedded":{"associations":[{"snps":[{"rsId":"rs1000000"}],"efoTraits":[{"trait":"Aspirin response"}]}]}}"#;
+// The search parser (GwasAssociationSummary) reads snake_case field
+// names with only efoTraits renamed; GwasV2Trait's field is
+// efo_trait.
+const GWAS_BODY: &str = r#"{"_embedded":{"associations":[{"snp_allele":[{"rs_id":"rs1000000","effect_allele":null}],"efo_traits":[{"efo_trait":"Aspirin response"}],"reported_trait":["Aspirin response"],"mapped_genes":[]}]},"page":{"totalElements":1}}"#;
 
 const MYGENE_BODY: &str =
     r#"{"total":1,"hits":[{"symbol":"BRAF","name":"B-Raf proto-oncogene","entrezgene":"673"}]}"#;

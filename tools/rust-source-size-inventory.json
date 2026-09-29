@@ -132,11 +132,11 @@
     },
     {
       "path": "src/entities/gene.rs",
-      "baseline_lines": 3865,
+      "baseline_lines": 3871,
       "floor_lines": 3812,
       "authorized_increase": {
         "ticket": "1263",
-        "delta": 53,
+        "delta": 59,
         "reason": "The stale-serve spawn-inheritance seam (ClinGen prefetch) and its tests in sources; the prefetch re-scope comment in gene.",
         "removal_condition": "Fold the handle helpers into the shared task-local plumbing if a second production spawn appears."
       }
