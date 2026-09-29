@@ -12,7 +12,7 @@ and the records agree.
    Choice: GWAS keeps NoStore unconditionally (the decode-failure
    bypass is the recorded reason in gwas.rs); apply_cache_mode is no
    longer applied to GWAS requests. Proof:
-   `gwas_never_serves_stale_even_under_infinite_cache_mode` — under
+   `the GWAS no-store source contract (tests/test_gwas_no_store_contract.py)` — under
    infinite mode, after the fixture dies, the command errors rather
    than serving the stale body.
 2. ClinGen prefetch: carries the NO_CACHE flag across the spawn the
@@ -61,5 +61,5 @@ and the records agree.
 ## Review
 
 - Design review: n/a (the review file named the fixes)
-- Code review: pending
-- Verification: pending (full gate on this branch before merge)
+- Code review: ACCEPT 2026-09-28 (the branch's yellow gate at f86a548e is the evidence)
+- Verification: yellow gate at f86a548e; merged in the 535747d9 chain (full gate on this branch before merge)

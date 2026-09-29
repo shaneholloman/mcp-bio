@@ -40,8 +40,9 @@ prep if skipped) — tick each during the release run, not before:
 
 - Tag pushes trigger the release workflow: version bumps and the
   `## Unreleased` flip land on main first, then the tag.
-- PyPI upload precedes the Homebrew tap bump; the tap formula's
-  version and sha256 come from the published artifacts.
+- The Homebrew tap waits for `publish-release` (the release is
+  public) and for PyPI; the tap formula's version and sha256 come
+  from the published artifacts.
 - The docs-live revision gate needs the site's revision file to
   reflect the tag; retry window is 600 s.
 

@@ -43,4 +43,4 @@ From sdlc/issues/2026-09-28-review-follow-ups-after-1263-and-1264.md
 
 - Design review: n/a (the review file named the fixes)
 - Code review: ACCEPT with notes 2026-09-28 (runbook staleness folded; the build-job step pin lands with ticket 1269, which pins every release job)
-- Verification: pending — yellow gate on this branch before merge (full gate on this branch before merge)
+- Verification: yellow gate green; merged in the 535747d9 chain — yellow gate on this branch before merge (full gate on this branch before merge)

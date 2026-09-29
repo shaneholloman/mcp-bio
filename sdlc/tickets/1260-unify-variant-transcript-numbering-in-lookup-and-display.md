@@ -46,9 +46,9 @@ transcript in use.
 - `src/entities/variant/` — the entity's parse and normalization
   sites, including the ClinVar and MyVariant payload readers that
   hold per-transcript numbering today.
-- `src/render/markdown/variant.rs` and the variant JSON payload
-  builder — where the cDNA/protein pair renders without naming its
-  transcripts (the 2026-09-11 failure shape).
+- `src/cli/variant/dispatch.rs`, `src/cli/variant/normalization_json.rs`
+  and `src/transform/variant.rs` — where the cDNA/protein pair
+  renders without naming its transcripts.
 - The variant lookup argument parser in the variant CLI module —
   where an alternate numbering must be accepted as a key.
 
@@ -63,10 +63,14 @@ labels its transcripts.
 
 The curated transcript-priority table (which transcript is primary
 per gene, with source and date) does not exist yet; sourcing it is
-the first implementation step, not an afterthought. Prior evidence:
-`experiments/05-pi-botassembly-demos/06-depth-experiment/opus-run/`
-(the 2026-09-11 report's two independent agent failures on MUTYH
-c.1187G>A). Anything else deferred during implementation gets its
+the first implementation step, not an afterthought. Prior evidence: two independent agents hit the same failure on
+MUTYH c.1187G>A during a molecular-tumor-board experiment
+(2026-09-11) — the report's `c.1187G>A` found no match because the
+display mixed protein numbering from one transcript with cDNA
+numbering from another (p.Gly396Asp on the common transcript,
+p.Gly382Asp as legacy numbering); the variant is ClinVar 5294,
+rs36053993, Pathogenic/Likely pathogenic. A not-found result read
+as "nothing to see" rather than "wrong transcript." Anything else deferred during implementation gets its
 own issue file with an owner and a revisit trigger, per house rule.
 
 ## Owner and trigger
