@@ -7,7 +7,6 @@ import shutil
 import signal
 import socket
 import subprocess
-import time
 
 import pytest
 
@@ -18,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 def _wait_until(predicate, timeout: float = 10.0) -> None:
     # Delegates to the shared, scaled, marked helper (ticket 1269):
     # one wait implementation instead of per-file duplicates.
-    from tests.support import wait_until
+    from support import wait_until
 
     wait_until(predicate, watchdog_secs=timeout)
 
