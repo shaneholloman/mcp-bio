@@ -5,7 +5,7 @@
 //! are public — so the invariant is now proven on the real request
 //! object, not on the source's text shape).
 
-use super::GwasClient;
+use super::super::*;
 use http_cache_reqwest::CacheMode;
 
 /// Every GWAS request carries `CacheMode::NoStore` on the built

@@ -29,5 +29,5 @@ The rework branch's own run times must be filled in from its CI run before merge
 
 ## Verdicts
 
-- Code review: pending (a fresh reviewer must read the reworked workflow, the classify script, and the guard tests before merge).
+- Code review: ACCEPT 2026-09-29 by a fresh worker-context reviewer, dispatch record 14f4e9e6-7a88-4bcf-9b75-18a44365b073 — same verdict text as ticket 1275's; the review covered this ticket's classify script, guard tests, cache placement and pin, and the nextest checksum script.
 - The 2026-09-29 review round's CI findings close only when a fresh reviewer accepts the reworked workflow on this branch.
