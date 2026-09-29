@@ -355,7 +355,9 @@ async fn a_stale_search_all_json_states_the_cache_age_in_meta_notes() {
     let stale = run(&args).await;
     let notes = meta_notes(&stale);
     assert!(
-        notes.iter().any(|note| note.contains("older than the provider's freshness window")),
+        notes
+            .iter()
+            .any(|note| note.contains("older than the provider's freshness window")),
         "the stale search-all JSON carries the parsed note: {stale}"
     );
 }

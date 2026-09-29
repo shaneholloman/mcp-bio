@@ -45,7 +45,10 @@ fn trust_markers_at_any_depth_of_the_error_chain_count() {
 
     let ordinary = Wrapped(
         "error sending request",
-        Some(Box::new(Wrapped("tcp connect error: connection refused", None))),
+        Some(Box::new(Wrapped(
+            "tcp connect error: connection refused",
+            None,
+        ))),
     );
     assert!(!error_chain_carries(&ordinary));
 
