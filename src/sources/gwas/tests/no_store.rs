@@ -20,9 +20,7 @@ fn gwas_requests_carry_no_store_on_the_built_request() {
     };
 
     let plans = [
-        client
-            .associations_by_rsid_plan("rs36053993")
-            .expect("rsid plan"),
+        GwasClient::associations_by_rsid_plan("rs36053993", 10).expect("rsid plan"),
         GwasClient::association_search_plan(Some("BRAF"), None, 5).expect("search plan"),
     ];
     for plan in plans {
