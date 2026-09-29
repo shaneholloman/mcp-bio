@@ -52,9 +52,9 @@ def test_authoritative_linux_job_installs_unpinned_gate_tools() -> None:
 
 def test_authoritative_linux_job_fetches_release_history_for_version_contracts() -> None:
     workflow = yaml.safe_load(WORKFLOW)
-    checkout = workflow["jobs"]["canonical-gates"]["steps"][0]
+    steps = workflow["jobs"]["canonical-gates"]["steps"]
+    checkout = next(s for s in steps if s.get("name") == "Check out the exact revision")
 
-    assert checkout["name"] == "Check out the exact revision"
     assert checkout["with"]["fetch-depth"] == 0
     assert checkout["with"]["filter"] == "blob:none"
     full_history_checkouts = [
@@ -87,8 +87,10 @@ def test_authoritative_linux_job_loads_scoped_apparmor_before_compilation() -> N
     )
     for contract in expected:
         assert contract in canonical
+    # nextest installs as a prebuilt binary now (ticket 1275); the
+    # sandbox still loads before any cargo install runs.
     assert canonical.index("tools/run-offline -- true") < canonical.index(
-        "cargo install cargo-nextest"
+        "cargo install cargo-deny"
     )
     assert canonical.index("tools/run-offline -- true") < canonical.index("make lint")
 
