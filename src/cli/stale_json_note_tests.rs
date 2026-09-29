@@ -307,8 +307,6 @@ async fn a_stale_article_search_json_states_the_cache_age_in_meta_notes() {
 /// said a stale serve was impossible — under BIOMCP_CACHE_MODE
 /// infinite, which once replaced the no-store mark with force-cache.
 
-
-
 const MYGENE_BODY: &str =
     r#"{"total":1,"hits":[{"symbol":"BRAF","name":"B-Raf proto-oncogene","entrezgene":"673"}]}"#;
 const CLINGEN_LOOKUP_BODY: &str = r#"[{"label":"BRAF","hgnc":"HGNC:1097","curated":true}]"#;
@@ -441,12 +439,14 @@ fn search_all_json_body_carries_notes_only_when_present() {
         vec!["Europe PMC data served from cache, 2 h old (older than the provider's freshness window).".to_string()],
     )
     .expect("json body builds");
-    assert!(with["_meta"]["notes"][0]
-        .as_str()
-        .expect("note text")
-        .contains("older than the provider's freshness window"));
+    assert!(
+        with["_meta"]["notes"][0]
+            .as_str()
+            .expect("note text")
+            .contains("older than the provider's freshness window")
+    );
 
-    let without = crate::cli::search_all::json_body(&results, false, Vec::new())
-        .expect("json body builds");
+    let without =
+        crate::cli::search_all::json_body(&results, false, Vec::new()).expect("json body builds");
     assert!(without.get("_meta").is_none());
 }
