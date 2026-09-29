@@ -2,7 +2,7 @@
 
 One binary. One grammar. Evidence from the biomedical sources you already trust.
 
-## License and terms
+## Data terms
 
 BioMCP retrieves data from upstream biomedical sources. Those sources' terms govern how you use the data they return: some restrict commercial or clinical use. Check each source's terms and obtain any licence you need before relying on the data. See [Source Licensing and Terms](docs/reference/source-licensing.md) for the per-source breakdown.
 
