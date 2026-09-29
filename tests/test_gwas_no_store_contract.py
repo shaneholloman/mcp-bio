@@ -2,11 +2,13 @@
 
 `BIOMCP_CACHE_MODE=infinite` once replaced GWAS's no-store mark with
 force-cache and served stale bodies — the decode-failure class the
-bypass exists to prevent. The invariant is structural: GWAS sends
-every request through `request_no_store`, sets `CacheMode::NoStore`
-there, and never calls `apply_cache_mode`. reqwest hides request
-extensions outside its crate, so the pin lives here at the source
-shape, like the external-XML guard.
+bypass exists to prevent. The runtime pin is
+`src/sources/gwas/tests/no_store.rs`: it calls the real
+`request_no_store` builder and asserts `CacheMode::NoStore` on the
+built request's public extensions (the 2026-09-29 review corrected
+the earlier claim that reqwest hides extensions outside its crate).
+This text contract stays as the structural belt: GWAS never calls
+`apply_cache_mode`, like the external-XML guard.
 """
 
 from __future__ import annotations
