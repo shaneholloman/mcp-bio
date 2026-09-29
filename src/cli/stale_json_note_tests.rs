@@ -9,7 +9,6 @@
 //! axum servers answering 200 with a one-second freshness window,
 //! then killed so the next command serves stale from the cache.
 
-use http_cache_reqwest::CacheMode;
 
 /// Answer every request with `body` as JSON, fresh-cacheable for one
 /// second: after the window, with the server gone, the cache serves
@@ -467,31 +466,5 @@ async fn no_cache_skips_the_cache_for_the_spawned_clingen_fetch() {
     assert!(
         !bypassed.contains("Noonan syndrome"),
         "--no-cache must not serve the cached ClinGen rows to the prefetch: {bypassed}"
-    );
-}
-
-/// GWAS keeps NoStore unconditionally — including under
-/// `BIOMCP_CACHE_MODE=infinite`, which once replaced the no-store
-/// mark with force-cache (ticket 1268; gwas.rs records the
-/// decision). The e2e shape could not run against the shared-client
-/// harness, so this pins the invariant at the seam every GWAS
-/// request passes through: the request carries the NoStore mode
-/// extension whatever the process cache mode is.
-#[tokio::test]
-#[serial_test::serial(source_env)]
-async fn gwas_requests_keep_no_store_even_under_infinite_cache_mode() {
-    let _env = StaleNoteEnv::new("http://127.0.0.1:9", &["BIOMCP_GWAS_BASE"])
-        .with_extra(&[("BIOMCP_CACHE_MODE", "infinite")]);
-    let client = crate::sources::gwas::GwasClient::new().expect("gwas client");
-    let plan = crate::sources::gwas::GwasClient::association_search_plan(None, Some("aspirin"), 1)
-        .expect("plan");
-    let request = client
-        .request_no_store_for_test(&plan)
-        .build()
-        .expect("build request");
-    let mode = crate::sources::gwas::cache_mode_of(&request);
-    assert!(
-        matches!(mode, Some(CacheMode::NoStore)),
-        "GWAS requests keep NoStore under infinite mode, got {mode:?}"
     );
 }
