@@ -1219,7 +1219,7 @@ pub(crate) fn build_uncached_http_client(
     let builder = builder.with(RetryTransientMiddleware::new_with_policy_and_strategy(
         retry,
         NoTrustFailureStrategy,
-    ).with_retry_log_level(tracing::Level::DEBUG));
+    ));
     let builder = match kind {
         SharedHttpClientKind::Default => builder.with(RetryAfterTooManyRequestsMiddleware),
         SharedHttpClientKind::SemanticScholarSharedPool => {
@@ -1320,7 +1320,7 @@ pub(crate) fn finish_cached_http_client(
     let builder = builder.with(RetryTransientMiddleware::new_with_policy_and_strategy(
         retry_policy,
         NoTrustFailureStrategy,
-    ).with_retry_log_level(tracing::Level::DEBUG));
+    ));
     let builder = match kind {
         SharedHttpClientKind::Default => builder.with(RetryAfterTooManyRequestsMiddleware),
         SharedHttpClientKind::SemanticScholarSharedPool => {
