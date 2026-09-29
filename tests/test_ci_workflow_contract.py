@@ -126,6 +126,9 @@ CARGO_DRIVER_MODULES = {
     "test_sdlc_clean_contract.py",
     "test_source_package_boundary.py",
     "test_ticket_401_surface_ratchets.py",
+    # Toolchain drivers (bubblewrap, offline runner, lint bootstrap):
+    "test_offline_gate_contract.py",
+    "test_quality_ratchet_contract.py",
 }
 NEEDS_BINARY_MODULES_PATTERN = re.compile(
     r"BIOMCP_BIN|target/release|target/debug|target/spec"

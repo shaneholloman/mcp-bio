@@ -10,6 +10,8 @@ import subprocess
 import pytest
 import yaml
 
+pytestmark = [pytest.mark.needs_binary]  # needs bubblewrap/offline toolchain; docs-only CI excludes this module
+
 
 ROOT = Path(__file__).resolve().parents[1]
 MAKEFILE = (ROOT / "Makefile").read_text(encoding="utf-8")
