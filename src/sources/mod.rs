@@ -11,9 +11,7 @@ use http_cache_reqwest::{Cache, CacheMode, CacheOptions, HttpCache, HttpCacheOpt
 use reqwest::header::{CACHE_CONTROL, CONTENT_LENGTH, HeaderMap, HeaderValue, RETRY_AFTER};
 use reqwest::{ResponseBuilderExt, StatusCode};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware, Middleware, Next, RequestBuilder};
-use reqwest_retry::{RetryTransientMiddleware, RetryableStrategy,
-    policies::ExponentialBackoff,
-};
+use reqwest_retry::RetryTransientMiddleware;
 use serde::de::DeserializeOwned;
 use tracing::warn;
 
