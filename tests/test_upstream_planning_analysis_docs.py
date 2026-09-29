@@ -1131,7 +1131,12 @@ def test_pull_request_contracts_remain_separate_from_protected_release() -> (
         "28.3",
     ):
         assert version in ci
-    assert "@v" not in canonical and "@stable" not in canonical
+    # Swatinem/rust-cache@v2 is the one sanctioned floating major
+    # tag (ticket 1275): it is a cache, not a code execution path,
+    # and pinning its full SHA would freeze cache-format upgrades.
+    cache_tag = "Swatinem/rust-cache@v2"
+    body_without_cache = canonical.replace(cache_tag, "")
+    assert "@v" not in body_without_cache and "@stable" not in canonical
     assert "tools/bootstrap-lint-tools" in canonical
     assert "secrets." not in canonical.replace("secrets.GITHUB_TOKEN", "")
 
