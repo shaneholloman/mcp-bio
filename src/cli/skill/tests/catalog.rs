@@ -371,7 +371,10 @@ fn debug_builds_embed_the_skill_and_chart_assets_github_287() {
 
     let chart = crate::cli::chart::show(Some(&crate::cli::chart::ChartCommand::Bar))
         .expect("bar.md is embedded in debug");
-    assert!(!chart.trim().is_empty(), "the embedded chart doc has content");
+    assert!(
+        !chart.trim().is_empty(),
+        "the embedded chart doc has content"
+    );
 }
 
 #[test]
