@@ -9,6 +9,8 @@
 //! axum servers answering 200 with a one-second freshness window,
 //! then killed so the next command serves stale from the cache.
 
+use http_cache_reqwest::CacheMode;
+
 /// Answer every request with `body` as JSON, fresh-cacheable for one
 /// second: after the window, with the server gone, the cache serves
 /// stale and stamps the age marker the note reads.
@@ -480,8 +482,8 @@ async fn no_cache_skips_the_cache_for_the_spawned_clingen_fetch() {
 async fn gwas_requests_keep_no_store_even_under_infinite_cache_mode() {
     let _env = StaleNoteEnv::new("http://127.0.0.1:9", &["BIOMCP_GWAS_BASE"])
         .with_extra(&[("BIOMCP_CACHE_MODE", "infinite")]);
-    let client = crate::sources::GwasClient::new().expect("gwas client");
-    let plan = crate::sources::GwasClient::association_search_plan(None, Some("aspirin"), 1)
+    let client = crate::sources::gwas::GwasClient::new().expect("gwas client");
+    let plan = crate::sources::gwas::GwasClient::association_search_plan(None, Some("aspirin"), 1)
         .expect("plan");
     let request = client
         .request_no_store_for_test(&plan)
