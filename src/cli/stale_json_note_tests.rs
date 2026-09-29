@@ -61,8 +61,7 @@ async fn clingen_split_fixture(
             .await
             .expect("bind split fixture");
         let base = format!("http://{}", listener.local_addr().expect("fixture address"));
-        let routes: std::sync::Arc<Vec<(String, &'static str, u64)>> =
-            std::sync::Arc::new(routes);
+        let routes: std::sync::Arc<Vec<(String, &'static str, u64)>> = std::sync::Arc::new(routes);
         let app = axum::Router::new().fallback(move |uri: axum::http::Uri| {
             let routes = std::sync::Arc::clone(&routes);
             async move {
@@ -76,8 +75,15 @@ async fn clingen_split_fixture(
                         (
                             StatusCode::OK,
                             [
-                                (header::CONTENT_TYPE, header::HeaderValue::from_static("application/json")),
-                                (header::CACHE_CONTROL, header::HeaderValue::from_str(&cache).expect("valid cache-control header")),
+                                (
+                                    header::CONTENT_TYPE,
+                                    header::HeaderValue::from_static("application/json"),
+                                ),
+                                (
+                                    header::CACHE_CONTROL,
+                                    header::HeaderValue::from_str(&cache)
+                                        .expect("valid cache-control header"),
+                                ),
                             ],
                             *body,
                         )
@@ -87,7 +93,11 @@ async fn clingen_split_fixture(
                 }
             }
         });
-        let task = tokio::spawn(async move { axum::serve(listener, app).await.expect("split fixture serves") });
+        let task = tokio::spawn(async move {
+            axum::serve(listener, app)
+                .await
+                .expect("split fixture serves")
+        });
         (base, task)
     }
     let (mygene_base, mygene_task) = serve(mygene_routes).await;
@@ -105,8 +115,7 @@ async fn stale_note_routes_server(
         .await
         .expect("bind stale-note routes fixture");
     let base = format!("http://{}", listener.local_addr().expect("fixture address"));
-    let routes: std::sync::Arc<Vec<(String, &'static str, u64)>> =
-        std::sync::Arc::new(routes);
+    let routes: std::sync::Arc<Vec<(String, &'static str, u64)>> = std::sync::Arc::new(routes);
     let app = axum::Router::new().fallback(move |uri: axum::http::Uri| {
         let routes = std::sync::Arc::clone(&routes);
         async move {
@@ -165,11 +174,7 @@ struct StaleNoteEnv {
 }
 
 impl StaleNoteEnv {
-    fn two_bases(
-        mygene: &str,
-        clingen: &str,
-        keys: &[&'static str],
-    ) -> Self {
+    fn two_bases(mygene: &str, clingen: &str, keys: &[&'static str]) -> Self {
         let root = crate::test_support::TempDirGuard::new("stale-json-notes");
         let mut previous = Vec::new();
         for key in keys.iter().copied().chain(["BIOMCP_CACHE_DIR"]) {
@@ -260,8 +265,15 @@ async fn a_stale_article_search_json_states_the_cache_age_in_meta_notes() {
     let (base, server) = stale_note_fixture_server(EPMC_BODY).await;
     let _env = StaleNoteEnv::new(&base, &["BIOMCP_EUROPEPMC_BASE"]);
     let args = [
-        "--json", "search", "article", "--keyword", "aspirin", "--limit", "1",
-        "--source", "europepmc",
+        "--json",
+        "search",
+        "article",
+        "--keyword",
+        "aspirin",
+        "--limit",
+        "1",
+        "--source",
+        "europepmc",
     ];
     let fresh = run(&args).await;
     assert!(
@@ -300,7 +312,10 @@ async fn gwas_never_serves_stale_even_under_infinite_cache_mode() {
     let (base, server) = stale_note_fixture_server(GWAS_BODY).await;
     let _env = StaleNoteEnv::new(&base, &["BIOMCP_GWAS_BASE"])
         .with_extra(&[("BIOMCP_CACHE_MODE", "infinite")]);
-    let fresh = run(&["--json", "search", "gwas", "--trait", "aspirin", "--limit", "1"]).await;
+    let fresh = run(&[
+        "--json", "search", "gwas", "--trait", "aspirin", "--limit", "1",
+    ])
+    .await;
     assert!(
         fresh.contains("Aspirin response"),
         "fresh GWAS serve answers from the fixture: {fresh}"
@@ -311,7 +326,10 @@ async fn gwas_never_serves_stale_even_under_infinite_cache_mode() {
 
     // NoStore means nothing was persisted: with the server gone the
     // command must fail rather than serve the stale body.
-    let stale = run(&["--json", "search", "gwas", "--trait", "aspirin", "--limit", "1"]).await;
+    let stale = run(&[
+        "--json", "search", "gwas", "--trait", "aspirin", "--limit", "1",
+    ])
+    .await;
     assert!(
         stale.contains("\"error\"") && !stale.contains("Aspirin response"),
         "no stale GWAS serve under infinite mode: {stale}"
@@ -337,7 +355,15 @@ async fn a_stale_search_all_json_states_the_cache_age_in_meta_notes() {
             "BIOMCP_S2_BASE",
         ],
     );
-    let args = ["--json", "search", "all", "--keyword", "aspirin", "--limit", "1"];
+    let args = [
+        "--json",
+        "search",
+        "all",
+        "--keyword",
+        "aspirin",
+        "--limit",
+        "1",
+    ];
     let fresh = run(&args).await;
     assert!(
         meta_notes(&fresh).is_empty(),
@@ -363,7 +389,8 @@ async fn a_stale_search_all_json_states_the_cache_age_in_meta_notes() {
 
 const GWAS_BODY: &str = r#"{"_embedded":{"associations":[{"snps":[{"rsId":"rs1000000"}],"efoTraits":[{"trait":"Aspirin response"}]}]}}"#;
 
-const MYGENE_BODY: &str = r#"{"total":1,"hits":[{"symbol":"BRAF","name":"B-Raf proto-oncogene","entrezgene":"673"}]}"#;
+const MYGENE_BODY: &str =
+    r#"{"total":1,"hits":[{"symbol":"BRAF","name":"B-Raf proto-oncogene","entrezgene":"673"}]}"#;
 const CLINGEN_LOOKUP_BODY: &str = r#"[{"label":"BRAF","hgnc":"HGNC:1097","curated":true}]"#;
 const CLINGEN_VALIDITY_BODY: &str = "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,CLASSIFICATION,CLASSIFICATION DATE,MOI\nBRAF,HGNC:1097,Noonan syndrome,Definitive,2024-01-01,AD\n";
 const CLINGEN_DOSAGE_BODY: &str = "GENE SYMBOL,HGNC ID,HAPLOINSUFFICIENCY,TRIPLOSENSITIVITY,DATE\nBRAF,HGNC:1097,3,3,2024-01-01\n";
@@ -380,8 +407,16 @@ async fn a_stale_clingen_prefetch_note_reaches_the_gene_card() {
     let (base, server) = stale_note_routes_server(vec![
         ("/query".to_string(), MYGENE_BODY, 3600),
         ("/api/genes/look/BRAF".to_string(), CLINGEN_LOOKUP_BODY, 1),
-        ("/kb/gene-validity/download".to_string(), CLINGEN_VALIDITY_BODY, 1),
-        ("/kb/gene-dosage/download".to_string(), CLINGEN_DOSAGE_BODY, 1),
+        (
+            "/kb/gene-validity/download".to_string(),
+            CLINGEN_VALIDITY_BODY,
+            1,
+        ),
+        (
+            "/kb/gene-dosage/download".to_string(),
+            CLINGEN_DOSAGE_BODY,
+            1,
+        ),
     ])
     .await;
     // Both bases point at one fixture server; the path router picks
@@ -402,7 +437,8 @@ async fn a_stale_clingen_prefetch_note_reaches_the_gene_card() {
 
     let stale = run(&["get", "gene", "BRAF", "clingen"]).await;
     assert!(
-        stale.contains("Cache note:") && stale.contains("older than the provider's freshness window"),
+        stale.contains("Cache note:")
+            && stale.contains("older than the provider's freshness window"),
         "the stale ClinGen prefetch serve reaches the card note: {stale}"
     );
 }
@@ -417,9 +453,21 @@ async fn no_cache_skips_the_cache_for_the_spawned_clingen_fetch() {
     let ((mygene_base, clingen_base), _mygene_task, clingen_routes) = clingen_split_fixture(
         vec![("/query".to_string(), MYGENE_BODY, 3600)],
         vec![
-            ("/api/genes/look/BRAF".to_string(), CLINGEN_LOOKUP_BODY, 3600),
-            ("/kb/gene-validity/download".to_string(), CLINGEN_VALIDITY_BODY, 3600),
-            ("/kb/gene-dosage/download".to_string(), CLINGEN_DOSAGE_BODY, 3600),
+            (
+                "/api/genes/look/BRAF".to_string(),
+                CLINGEN_LOOKUP_BODY,
+                3600,
+            ),
+            (
+                "/kb/gene-validity/download".to_string(),
+                CLINGEN_VALIDITY_BODY,
+                3600,
+            ),
+            (
+                "/kb/gene-dosage/download".to_string(),
+                CLINGEN_DOSAGE_BODY,
+                3600,
+            ),
         ],
     )
     .await;

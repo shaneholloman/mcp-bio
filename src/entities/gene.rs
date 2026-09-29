@@ -2528,12 +2528,12 @@ pub async fn get_with_report(
             crate::sources::with_no_cache_flag(
                 no_cache,
                 crate::sources::with_stale_serve_notes_handle(stale_notes, async move {
-                timed_section(
-                    "clingen",
-                    fetch_clingen_section(&symbol, optional_timeout),
-                    classify_clingen_section,
-                )
-                .await
+                    timed_section(
+                        "clingen",
+                        fetch_clingen_section(&symbol, optional_timeout),
+                        classify_clingen_section,
+                    )
+                    .await
                 }),
             ),
         )))

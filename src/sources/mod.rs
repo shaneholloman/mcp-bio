@@ -1167,7 +1167,10 @@ fn is_trust_failure(error: &reqwest_middleware::Error) -> bool {
     let mut source: Option<&dyn std::error::Error> = Some(error);
     while let Some(error) = source {
         let text = error.to_string();
-        if TRUST_FAILURE_MARKERS.iter().any(|marker| text.contains(marker)) {
+        if TRUST_FAILURE_MARKERS
+            .iter()
+            .any(|marker| text.contains(marker))
+        {
             return true;
         }
         source = error.source();
@@ -1213,9 +1216,10 @@ pub(crate) fn build_uncached_http_client(
     let builder = ClientBuilder::new(base);
     let builder = ordinary_url_policy::with_initial_policy(builder, provider_policy);
     let builder = builder.with(rate_limit::RateLimitMiddleware::provider_pool());
-    let builder = builder.with(
-        RetryTransientMiddleware::new_with_policy_and_strategy(retry, NoTrustFailureStrategy),
-    );
+    let builder = builder.with(RetryTransientMiddleware::new_with_policy_and_strategy(
+        retry,
+        NoTrustFailureStrategy,
+    ));
     let builder = match kind {
         SharedHttpClientKind::Default => builder.with(RetryAfterTooManyRequestsMiddleware),
         SharedHttpClientKind::SemanticScholarSharedPool => {
@@ -1313,12 +1317,10 @@ pub(crate) fn finish_cached_http_client(
         manager,
         options: cache_options,
     }));
-    let builder = builder.with(
-        RetryTransientMiddleware::new_with_policy_and_strategy(
-            retry_policy,
-            NoTrustFailureStrategy,
-        ),
-    );
+    let builder = builder.with(RetryTransientMiddleware::new_with_policy_and_strategy(
+        retry_policy,
+        NoTrustFailureStrategy,
+    ));
     let builder = match kind {
         SharedHttpClientKind::Default => builder.with(RetryAfterTooManyRequestsMiddleware),
         SharedHttpClientKind::SemanticScholarSharedPool => {
