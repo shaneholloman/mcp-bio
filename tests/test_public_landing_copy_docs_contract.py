@@ -61,9 +61,24 @@ def test_readme_landing_copy_matches_public_contract() -> None:
     quick_start = _markdown_section_block(readme, "## Quick start\n\n", "\n```bash\n")
 
     assert _paragraph_count(hero) == 1
-    # 2026-09-28: the count states the registry's real number (70
-    # direct of 78) so marketing quotes cannot drift from the source.
-    assert "single command grammar that reaches 70 trusted" in description
+    # 2026-09-28: the count is computed from sources.json so it
+    # cannot drift from the registry the way "~30" did.
+    import json
+    from pathlib import Path as _Path
+    sources = json.loads(
+        (_Path(__file__).resolve().parents[1] / "docs" / "reference" / "sources.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    direct = sum(1 for item in sources if item.get("integration_mode") == "direct_api")
+    indirect = len(sources) - direct
+    assert f"single command grammar that reaches {direct} trusted" in description
+    # The README names the indirect count in words today; accept the
+    # word form for eight and the digit form otherwise, so a drift
+    # forces an intentional edit either way.
+    words = {8: "eight further"}
+    expected = words.get(indirect, f"{indirect} further")
+    assert expected in description, f"indirect count {indirect} not stated: {expected!r}"
     assert "MCP (Model Context Protocol) server" in description
     assert "plus local study analytics" in description
     assert "First useful query in under 30 seconds:" in quick_start

@@ -43,11 +43,14 @@ transcript in use.
 
 ## Code paths
 
-The variant entity's parse and render sites (`src/entities/variant/`,
-the markdown and JSON renderers) and the lookup argument parsing in
-the variant CLI module carry the numbering today; the exact sites
-are named at implementation after a tracing pass, because the
-2026-09-11 report names the display shape, not the files.
+- `src/entities/variant/` — the entity's parse and normalization
+  sites, including the ClinVar and MyVariant payload readers that
+  hold per-transcript numbering today.
+- `src/render/markdown/variant.rs` and the variant JSON payload
+  builder — where the cDNA/protein pair renders without naming its
+  transcripts (the 2026-09-11 failure shape).
+- The variant lookup argument parser in the variant CLI module —
+  where an alternate numbering must be accepted as a key.
 
 ## Proof
 
@@ -58,8 +61,13 @@ labels its transcripts.
 
 ## Deferred gaps
 
-None yet; anything deferred during implementation gets its own
-issue file with an owner and a revisit trigger, per house rule.
+The curated transcript-priority table (which transcript is primary
+per gene, with source and date) does not exist yet; sourcing it is
+the first implementation step, not an afterthought. Prior evidence:
+`experiments/05-pi-botassembly-demos/06-depth-experiment/opus-run/`
+(the 2026-09-11 report's two independent agent failures on MUTYH
+c.1187G>A). Anything else deferred during implementation gets its
+own issue file with an owner and a revisit trigger, per house rule.
 
 ## Owner and trigger
 

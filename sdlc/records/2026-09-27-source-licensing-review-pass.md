@@ -48,16 +48,15 @@ evidence pass recorded in its own issue file.
 **One summary corrected:** ChEMBL is CC BY-SA 3.0; the earlier
 summary omitted the share-alike obligation.
 
-**Four sources were not re-dated** because their terms could not be
-verified from this network: CIViC (Angular SPA serves no terms text
-to curl; needs a browser check), PharmGKB (API host unresolvable,
-successor page is a JS shell, archives hold only the shell),
-WikiPathways (terms page retired in the GitHub transition; no live
-licence statement anywhere), Enrichr (terms body 404s provider-side;
-the loader script is broken for every visitor). Their
-`reviewed_on` stays 2026-03-20; the guard will warn at 300 days
-(2026-12-15) and fail at 365 (2027-03-20). Revisit trigger: the
-next pass, or a browser-capable verification session.
+Corrected 2026-09-28 (twice): CIViC and WikiPathways ARE
+verifiable — their current docs and terms pages are plain HTML
+(CIViC's FAQ states CC0 1.0 Universal; WikiPathways' terms page
+adopts the CC0 waiver; both cited in the evidence table) — and
+PharmGKB verified against the same ClinPGx policy page CPIC uses.
+Only Enrichr stays undated (its terms loader 404s provider-side).
+The guard warns for Enrichr on 2027-01-15 and fails on 2027-03-21;
+the owner of the retry is the developer agent working Ian's ordered
+BioMCP queue.
 
 **Improvements folded in:** the four BioThings services
 (MyGene/MyVariant/MyDisease/MyChem) now carry the shared footer's
@@ -66,27 +65,28 @@ tool should show it. InterPro, OLS4, and QuickGO terms URLs now
 point at the plain-HTML EMBL-EBI terms-of-use page instead of their
 JS-walled app pages.
 
-**Everything else unchanged** — 42 of 48 (count corrected
-2026-09-28; the first write said 44, double-counting two of the
-unverifiable four). The JS-walled terms of DisGeNET, g:Profiler,
+**Everything else unchanged** — 45 of 48 after the 2026-09-28
+corrections (42 verified on the day, CIViC, WikiPathways and
+PharmGKB verified the next day against pages the first pass could
+not read). The JS-walled terms of DisGeNET, g:Profiler,
 GTEx, CGI, and cbioportal were read from their live JS bundles,
 which are the citable sources. The per-source evidence table with
 URL, access date, and finding for all 48 is committed at
 `docs/reference/source-licensing-evidence-2026-09-27.md`
-(corrected 2026-09-28: PharmGKB reconciled to verified against the
-same ClinPGx page CPIC used, leaving three unverifiable; the
-warning date is 2027-01-15 and the fail date 2027-03-21 for those
-three — the 2027-03 crossing is handled for the other 45 only).
+(corrected 2026-09-28: PharmGKB, CIViC and WikiPathways all verified against live pages, leaving one unverifiable; the
+warning date is 2027-01-15 and the fail date 2027-03-21 for
+Enrichr alone — the 2027-03 crossing is handled for the other 47).
 
 ## Registry state
 
-45 markdown sections dated 2026-09-27 (the 44 batch-verified JSON
-entries plus the PMC OA section, verified directly against
+45 markdown sections dated 2026-09-27 (the batch-verified entries
+plus the PMC OA section, verified directly against
 <https://pmc.ncbi.nlm.nih.gov/about/copyright/> the same day: US
 government journal articles are public domain, and open-access
 articles still carry article-level licences and third-party
-material, matching the recorded summary); the four named-unverifiable
-entries stay 2026-03-20. `tools/check-source-registry.py`
+material, matching the recorded summary). The 2026-09-28
+corrections re-dated CIViC and WikiPathways to 09-28 in both
+registries; Enrichr alone stays 2026-03-20. `tools/check-source-registry.py`
 status=pass; the licensing docs contract suite is green (17
 passed).
 
