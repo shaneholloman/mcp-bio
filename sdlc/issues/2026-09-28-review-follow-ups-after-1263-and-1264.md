@@ -106,3 +106,88 @@ found" with exit 0); `debug-embed` enabled (decision recorded in
 ticket 1267 with the reason); the 0.8.x wheel-size check is the
 supervisor's (needs PyPI); the reply waits for Ian's go and for
 0.9.1 on PyPI.
+
+## Disposition (2026-09-29, tickets 1265-1270)
+
+Every item, with the merge commit and the proof. Yellow gate SHAs
+are the branch gates; the CI run on the final tip proves the whole
+round on main.
+
+Release — the changelog count now 32: fixed in 535747d9's chain
+(ticket 1265, merge of b1393806, yellow gates 21d42b2a and
+b1393806); 1253 carries the list. The record pattern: fixed by
+ticket 1265 (same commits; the regression test drives
+record_tickets end to end). The tap-before-public order: fixed by
+ticket 1266 (merge of 80095256, gate 80095256; publish-release now
+precedes homebrew-tap and the runbook states it). The smoke's
+content claims: fixed by ticket 1266 (the skill title and the Bar
+Chart heading are asserted, not just exit codes). The --release
+assertion: fixed by ticket 1266 (_assert_release_locked_builds,
+with its red proof).
+
+GitHub #287 — build profile: fixed and proven (ticket 1266's flag
+assertion; ticket 1267's provenance pin keeps debug-embed in
+Cargo.toml, merge e01a39f1, gate e01a39f1). Exit 0 on errors:
+fixed by ticket 1267 (missing skill and empty catalog exit 1 with
+diagnostics naming the embedded tree; chart misses pinned through
+the real path). debug-embed: DECIDED by ticket 1267 — enabled,
+reason recorded (a debug binary can never carry a runtime lookup
+root); the cost is a rebuild on asset edits. The 0.8.x wheels:
+DECIDED here — the published 0.8.22 wheels are 21-24 MB where
+release builds compress to ~14 MB, consistent with debug-profile
+binaries; they are immutable, the defect could not manifest as it
+did in 0.9.0 (the asset features postdate them), and the reply
+will tell the reporter to move to 0.9.1. No yank. The issue stays
+open until the reply posts after the release (Ian's OK recorded
+2026-09-28).
+
+Stale-cache — GWAS: fixed by ticket 1268 (merge f86a548e, gate
+f86a548e; apply_cache_mode never runs for GWAS, pinned by a source
+contract because reqwest hides request extensions outside its
+crate). The ClinGen --no-cache carry: fixed by ticket 1268 (both
+task-locals travel; the test fails with the carry reverted — a
+split fixture keeps MyGene live). Tests parsing _meta.notes:
+fixed by ticket 1268 (parsed channels, hermetic search-all, the
+ClinGen e2e, the header claims exactly what runs). The TLS retry:
+fixed by ticket 1268 (NoTrustFailureStrategy; deterministic
+certificate rejections are no longer retried; the WARN pollution
+it exposed is downgraded in the default filter because the
+version's log-level method exists only for the default strategy).
+The probe counter: DECIDED by ticket 1268 — keep asserting both
+counters; nextest isolates per process; the plain-cargo-test
+residual is documented in the module comment.
+
+Checks — every bypass the file lists: closed by ticket 1269
+(merge 535747d9's chain, gate 346068be; pypi-publish and every
+release job's step list pinned; expression env, BASH_FUNC,
+workflow-level PATH/ENV, table rows, unknown kinds, braced
+aliases, stored clocks, monotonic polls). The ceiling discipline:
+MECHANIZED by ticket 1269 — every raise cites a ticket whose
+review line must carry ACCEPT, enforced in the chain check, not
+just the over-pin path; the 1264-era raises carry the round-three
+acceptance; gencc's unmarked pin is 4. The residual spellings the
+1269 review named (ratchet time bindings, with: BASH_FUNC_,
+container env) are recorded in ticket 1264's Deferred gaps.
+
+Stdio test — fixed by ticket 1268 (stderr read once after a
+bounded wait; no pipe-take race).
+
+Licensing and records — the pass record's stale counts and dates:
+fixed in c1b2ab0d (PharmGKB verified; CIViC and WikiPathways
+verified against live plain-HTML pages with the quotes in the
+evidence table; only Enrichr stays unverifiable, warning
+2027-01-15, fail 2027-03-21, owner named as the developer agent
+working Ian's ordered queue). The stale addresses: fixed in
+c1b2ab0d (WikiPathways terms.html, PharmGKB's ClinPGx policy page,
+CPIC's dead /license/ URL retired, the redirect note corrected).
+The 2026-09-27 file's counts and the 5754b910 citation: fixed in
+c1b2ab0d. The 09-26 disposition: rewritten in c1b2ab0d (unwrapped,
+commit citations, 1264 marked landed, shorthand removed). Ticket
+1260's sections: made concrete in c1b2ab0d. The README count:
+computed from sources.json in the landing contract (c1b2ab0d).
+The hard-wrapped files: unwrapped in c1b2ab0d.
+
+Main's run history — the discipline is now the gate.sh-before-
+every-merge flow this round used: every ticket branch gated on
+yellow at its merged SHA before its merge commit, and no commit
+went straight to main after 9eea4a86.

@@ -67,7 +67,7 @@ Item by item, as Ian's 2026-09-27 feedback required. Fixed lines
 name the ticket; the commit is its merge on main.
 
 Paperwork and process — all fixed: the pending-review check landed
-and caught seven stale tickets (fixed in ticket 1254's second batch, merge fe691c48, and the
+and caught seven stale tickets (fixed in fe691c48 and
 pending-review merge); the landing rule now removes worktrees and
 branches at merge time (Fixed, decision
 `2026-09-26-landing-agent-removes-its-worktree.md`, enforced by
@@ -78,8 +78,7 @@ was restored and multi-step git scripts stop on first failure
 (Fixed, the 1251 fix merge); ticket 1253 now carries the observed
 dry-run count — 26, not 24 or 15 (Fixed, ticket 1259, commit
 "Update 1253 to the observed 26-bullet list"); spec-contracts
-triaged and wired (fixed in ticket 1254's third batch, merge
-fe90d348).
+triaged and wired (fe90d348).
 
 1246 — the stdio guard's stdin gap and cfg(test) stop were fixed
 (in 3dfec0a2 and fe691c48); the 1246 record's Windows claim was
@@ -98,7 +97,7 @@ trap, expected_ifs, assertion specificity, bullet stoplist) were
 fixed in the 1250 fix merge (Fixed, proven by the 22-mutation
 suite). The 2026-09-27 review found neighboring spellings those
 fixes miss (`|| echo skip`, `set +o errexit`, defaults-level shell,
-runner.os if) — closed by ticket 1258's hash-pinning (merged dbefb4d0).
+runner.os if) — closed by dbefb4d0's hash-pinning.
 
 1251 — the ADR was corrected, merge_property panics on covered
 clashes, the changelog bullets were rewritten, and the Gemini
@@ -106,8 +105,7 @@ acceptance claim is marked unverified in ADR 0002 (Fixed, the 1251
 fix merge). The tripwire's expected-value construction was fixed
 with the keys-from-branches shape (Fixed, verified 2026-09-27 by
 reading shell.rs:1910). One-sided constraints (`uniqueItems`,
-`maxLength`) now panic by name (closed by ticket 1258, merged
-dbefb4d0).
+`maxLength`) now panic by name (closed by dbefb4d0).
 
 1252/1248 — one-CPU wording corrected everywhere named (Fixed); the
 1248 close recorded the watch (Fixed, `make stress` in CI and the
@@ -124,12 +122,9 @@ verified by the 1242 b1 fix merge and the 2026-09-27 review's own
 read); the partial-count note reaches JSON (Fixed); the age filter
 runs before the unchecked-trial count (Fixed).
 
-1254 batch 1 — the DDInter HTML label is fixed (ticket 1256's rebased landing,
-tip 16952792, record commit 0976717b); the anchor-only brand-name change is
+1254 batch 1 — the DDInter HTML label is fixed (0976717b records 1256's rebased landing at tip 16952792); the anchor-only brand-name change is
 now recorded in ticket 1241 (Fixed, ticket 1259); the GenCC
-wrong-owner and not-a-directory tests landed with ticket 1257
-(merged 65e140de; the wrong-owner test stands in with an
-unreadable directory, named in the test's comment); the 1244 release-prep
+wrong-owner and not-a-directory tests landed with 65e140de (the wrong-owner test stands in with an unreadable directory, named in the test's comment); the 1244 release-prep
 items missing from 1253 are folded into 1253's checklist (Fixed,
 ticket 1259).
 
