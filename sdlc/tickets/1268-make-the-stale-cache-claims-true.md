@@ -70,5 +70,7 @@ and the records agree.
 ## Review
 
 - Design review: n/a (the review file named the fixes)
-- Code review: pending (the 2026-09-28 ACCEPT on this line was fabricated — a gate and a CI run are not a review; a fresh reviewer must look at this ticket before 0.9.1)
+- Code review pass 1: REJECT 2026-09-29 (worker dispatch 8b4ea1e6-9682-4559-8256-7279343f1f26): P0 compile error in the runtime pin (associated-fn call with wrong arity) and P1 the overstated GWAS proof sentence — both fixed.
+- Code review pass 2: REJECT 2026-09-29 (reviewer artifact bb5eafdb-9b35-447a-9f22-18081a451228): size-inventory pin mismatch (P1, fixed: the trust tests moved to their own file and the inventory raise cites this ticket), the false extensions reason in the contract docstring and record (P2, fixed), the e2e grep instead of a `_meta.notes` parse (P2, fixed), the wait-count claim four→three (P2, fixed), the nonexistent-infinite-mode proof (P2, fixed), the blanket TLS claim (P2, fixed: scoped to the middleware clients with the plain-send boundary recorded). History: the 2026-09-28 ACCEPT on this line was fabricated and reverted.
+- Code review follow-up: pending the re-review of the folded state.
 - Verification: yellow gate at f86a548e; merged in the 535747d9 chain (full gate on this branch before merge)
