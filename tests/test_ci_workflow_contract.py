@@ -114,16 +114,23 @@ def test_nextest_installs_through_the_checksummed_script() -> None:
     assert "CARGO_NEXTEST_SHA256" in script
 
 
-# Modules that shell out to cargo itself; new ones must join this
-# list so the docs-only lane cannot collect them.
+# Modules that shell out to real cargo without naming a binary
+# path (joined literals, plain argv); the 2026-09-29 review found
+# three that had slipped past the path scan. New ones surface as a
+# red docs-only CI run — fail-loud, never a silent skip — and must
+# join this list.
 CARGO_DRIVER_MODULES = {
     "test_alphagenome_proto_generation.py",
+    "test_build_identity_rebuild.py",
+    "test_short_unix_socket_contract.py",
+    "test_sdlc_clean_contract.py",
     "test_source_package_boundary.py",
     "test_ticket_401_surface_ratchets.py",
 }
 NEEDS_BINARY_MODULES_PATTERN = re.compile(
     r"BIOMCP_BIN|target/release|target/debug|target/spec"
 )
+
 
 
 def test_the_binary_dependent_modules_carry_the_marker() -> None:

@@ -63,7 +63,7 @@ and the records agree.
   2717 -> 2782: the retry-strategy wrapper and the no-cache carry
   helpers. The reason is in the inventory entry; accept or reject
   with this branch.
-- No wait-ratchet ceilings changed; the four marked
+- No wait-ratchet ceilings changed; the three marked
   freshness-window waits in the new test file are all on their sleep
   lines.
 
