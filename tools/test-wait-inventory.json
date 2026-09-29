@@ -29,6 +29,11 @@
       "count": 1,
       "language": "rust"
     },
+    "src/entities/article/graph/citation_evidence.rs": {
+      "count": 0,
+      "language": "rust",
+      "markers": 1
+    },
     "src/entities/article/graph/tests.rs": {
       "count": 4,
       "language": "rust"
@@ -52,6 +57,10 @@
     },
     "src/entities/disease/search/tests.rs": {
       "count": 3,
+      "language": "rust"
+    },
+    "src/entities/gene/gencc.rs": {
+      "count": 1,
       "language": "rust"
     },
     "src/entities/gene/gencc/tests.rs": {
@@ -97,8 +106,7 @@
     },
     "src/sources/tests/provider_network.rs": {
       "count": 3,
-      "language": "rust",
-      "markers": 0
+      "language": "rust"
     },
     "tests/article_usage_stderr.rs": {
       "count": 2,
@@ -153,7 +161,7 @@
       "language": "python"
     },
     "tests/test_test_wait_ratchet_check.py": {
-      "count": 1,
+      "count": 0,
       "language": "python",
       "markers": 17
     },
@@ -166,19 +174,9 @@
       "count": 0,
       "language": "rust",
       "markers": 1
-    },
-    "src/entities/gene/gencc.rs": {
-      "count": 1,
-      "language": "rust",
-      "markers": 0
-    },
-    "src/entities/article/graph/citation_evidence.rs": {
-      "count": 0,
-      "language": "rust",
-      "markers": 1
     }
   },
-  "marker_total_ceiling": 46,
+  "marker_total_ceiling": 43,
   "raises": [
     {
       "file": "(global)",

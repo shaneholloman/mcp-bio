@@ -408,6 +408,18 @@ def main(argv: list[str]) -> int:
                 failures.append(
                     f"{name} {field} raise chain is discontinuous: {steps}"
                 )
+        # Every raise in the chain must cite a ticket whose review
+        # carries an ACCEPT — a folded raise (pin moved and record
+        # appended in one commit) is checked here, not only on the
+        # over-pin failure path, so no unreviewed raise can sit
+        # green under a matching pin.
+        for record in records:
+            ok, why = raise_is_accepted(args.root, record)
+            if not ok:
+                failures.append(
+                    f"{name} {field} raise {record.get('from')}->"
+                    f"{record.get('to')} lacks an accepted review ({why})"
+                )
     if total_markers > marker_ceiling:
         ok, why = accepted_raise_for(
             raises, "(global)", "marker_total_ceiling", total_markers, args.root

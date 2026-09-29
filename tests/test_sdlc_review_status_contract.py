@@ -319,7 +319,10 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
         # review verdict: pending"); state words in prose bodies
         # (an ACCEPT quoted mid-explanation) stay prose.
         head = " ".join(unquoted.split()[:3])
-        head_status = bool(re.search(r"review|verifica", head, re.IGNORECASE))
+        # A glued status bullet ("- Code review verdict: pending")
+        # carries a review-ish head AND a state word; the term is
+        # restored after round three's review caught its loss.
+        bullet_status = bool(marker == "-" and re.search(r"review|verifica", head, re.IGNORECASE) and STATE_ANYWHERE.search(unquoted))
         # A status line begins with a kind head (colon or table
         # pipe after decoration); anything else is prose even when
         # it mentions review states mid-sentence. An unknown kind
@@ -333,6 +336,7 @@ def _review_failures(path: Path, landed: bool) -> list[str]:
         if (
             unknown_kind
             or only_state
+            or bullet_status
             or (declared and STATE_ANYWHERE.search(unquoted))
             or (status_head and STATE_ANYWHERE.search(unquoted) and not grammar_bullet)
         ):
@@ -474,6 +478,12 @@ def test_the_grammar_catches_shapes_it_was_never_told_about(
     # Never-told-about mutation 8c: a stray state word on its own
     # unindented line under an accepted verdict.
     assert probe("## Review\n\n- Code review: ACCEPT 2026-09-25\n\npending\n")
+    # Never-told-about mutation 8d: a glued status bullet beside an
+    # honest record (round three's regression shape, restored).
+    assert probe(
+        "## Review\n\n- Code review: ACCEPT 2026-09-25\n\n- Code review verdict: pending\n"
+    )
+
     # Round-three mutations (ticket 1269): smuggled completion words,
     # unknown kinds, table rows, and negated resolutions.
     assert probe("## Review\n\n- Code review: not done\n")

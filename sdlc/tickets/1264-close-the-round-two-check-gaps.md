@@ -48,6 +48,11 @@ spelling it was never told about.
 - Code review: REJECT once (the allowlist never scanned non-bullet
   lines; two normalizations invented verdicts; one truncated a
   recorded verification), folded and verified 2026-09-28
+- Raise-history acceptance 2026-09-28: the marker-ceiling raises
+  made inside this ticket's gate cycles (global 25→42; gencc
+  markers 6→9) are reconstructed in the ratchet inventory and
+  ACCEPTED by ticket 1269's review of 2026-09-28 as accurate
+  history — the raises landed with the work this line verifies.
 - Verification: yellow gate at 4de8e686 — lint, test, spec, stress
   OK, zero failed lines; the ratchet and the five suites green
   locally and on the host
