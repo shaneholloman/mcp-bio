@@ -196,7 +196,6 @@ impl StaleNoteEnv {
 
     /// Extra fixed env pairs (e.g. BIOMCP_CACHE_MODE) recorded and
 
-
     fn new(base: &str, keys: &[&'static str]) -> Self {
         let root = crate::test_support::TempDirGuard::new("stale-json-notes");
         let mut previous = Vec::new();
