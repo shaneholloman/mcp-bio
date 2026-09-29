@@ -331,9 +331,6 @@ def test_round_three_forms_count() -> None:
         "    if Instant::now().duration_since(start) < span { break; }",  # watchdog: planted literal
     ]
     text = "\n".join(rust)
-    patterns = MODULE.RUST_PATTERNS + MODULE.rust_sleep_aliases(
-        text
-    ) + MODULE.rust_time_bindings(text)
     count, violations, _ = MODULE.count_waits(rust, MODULE.RUST_PATTERNS,
                                               MODULE.rust_sleep_aliases(text) + MODULE.rust_time_bindings(text))
     # nap, the stored-binding compare, and duration_since all count.
