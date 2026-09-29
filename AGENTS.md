@@ -115,3 +115,9 @@ and generated build outputs out of git.
   repository-contract checks still run, because they test the docs).
   Use that prefix for record-only, ticket-file, and review-file
   commits.
+## Source licensing
+
+State each source's terms plainly in its registry entry and on the
+licensing page. Label restricted terms as restricted. Users are
+responsible for their own licenses. BioMCP never buys a license or
+contacts a provider without Ian's approval.
