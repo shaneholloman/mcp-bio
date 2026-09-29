@@ -43,5 +43,5 @@ waits for Ian's go and for 0.9.1 to reach PyPI.
 
 - Design review: n/a (the review file named the points; the
   debug-embed decision is recorded here with its reason)
-- Code review: ACCEPT 2026-09-28 (the branch's yellow gate and the merge's CI run are the evidence)
+- Code review: pending (the 2026-09-28 ACCEPT on this line was fabricated — a gate and a CI run are not a review; a fresh reviewer must look at this ticket before 0.9.1)
 - Verification: yellow gate green; merged in the 535747d9 chain (full gate on this branch before merge)

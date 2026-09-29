@@ -36,6 +36,6 @@ to 1.0.
 ## Review
 
 - Design review: n/a (Ian's direction named the changes)
-- Code review: n/a (CI infrastructure; the branch's own green CI run is the review, plus the 1276 catch proved the contract)
+- Code review: pending (the 2026-09-29 review found the first landing's docs: message skip unsound and the cache pinned to a nonexistent commit; a fresh reviewer must look at the reworked workflow before 0.9.1)
 - Verification: CI run 36574425104 on the branch (success), then
   main green at e18501b8 (run 36578761920, success)

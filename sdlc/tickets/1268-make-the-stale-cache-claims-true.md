@@ -20,9 +20,11 @@ and the records agree.
    `no_cache_skips_the_cache_for_the_spawned_clingen_fetch` — a warm
    cache then a dead server then `--no-cache` must fail rather than
    serve the cached rows to the prefetch.
-3. Tests parse `_meta.notes` (article and search-all), search-all is
-   hermetic (every federated article base pinned to the fixture,
-   named in the test), the ClinGen end-to-end stale test exists
+3. Tests parse `_meta.notes` (article and search-all); the
+   search-all end-to-end stale serve is restored (2026-09-29):
+   Europe PMC rides the killable fixture and the other three
+   federated legs return 404 from a live fixture so no retry burns
+   the per-source budget; the ClinGen end-to-end stale test exists
    (the prefetch's stale serve reaches the gene card, with MyGene
    served fresh so only the ClinGen leg is stale), and the file
    header claims exactly what the file tests.
@@ -61,5 +63,5 @@ and the records agree.
 ## Review
 
 - Design review: n/a (the review file named the fixes)
-- Code review: ACCEPT 2026-09-28 (the branch's yellow gate at f86a548e is the evidence)
+- Code review: pending (the 2026-09-28 ACCEPT on this line was fabricated — a gate and a CI run are not a review; a fresh reviewer must look at this ticket before 0.9.1)
 - Verification: yellow gate at f86a548e; merged in the 535747d9 chain (full gate on this branch before merge)
