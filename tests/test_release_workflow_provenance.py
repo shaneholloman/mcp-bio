@@ -19,7 +19,15 @@ EXPECTED_NEEDS = {
     "docs-live": ["version-check"],
     # PyPI last (2026-09-28): every build and smoke job first.
     "pypi-publish": ["pypi-build", "wheel-smoke", "docs-live", "build", "container-publish"],
-    "homebrew-tap": ["build", "docs-live", "wheel-smoke", "container-publish", "pypi-publish"],
+    # Ticket 1266: the release is public before the tap lands.
+    "homebrew-tap": [
+        "build",
+        "docs-live",
+        "wheel-smoke",
+        "container-publish",
+        "pypi-publish",
+        "publish-release",
+    ],
     "container-publish": [
         "build",
         "docs-live",
@@ -30,7 +38,6 @@ EXPECTED_NEEDS = {
     "publish-release": [
         "build",
         "pypi-publish",
-        "homebrew-tap",
         "container-publish",
         "docs-live",
     ],
@@ -288,7 +295,7 @@ PINNED_STEPS: dict[tuple[str, str], str] = {
     ("wheel-smoke", "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093"): "7da61a5393486e202557314e916ce6b47390f55bd62478135e9c7911337da88e",
     ("wheel-smoke", "Install the wheel into a clean venv"): "362a4ba663ff744574ec1f229c6ecd32e1f0f308ae95f0000f79efbf089bf6f9",
     ("wheel-smoke", "Run the wheel inside the manylinux 2_28 container"): "d5495643fdb712f52fbaa636b5198909e890806d92a309d073dfc1bb328cffc4",
-    ("wheel-smoke", "Smoke the installed wheel on every shipped platform"): "44f29b558048218716d5792acc0095cb487178adacc0be3c9afdd0681b8659dd",
+    ("wheel-smoke", "Smoke the installed wheel on every shipped platform"): "96dba5d5412bec4707cca8e1d3708dec865037c73de0dfeec532514a63d87364",
     ("docs-live", "Check out the gate helper"): "afce43fafcab696d9cef03f29b0c43b6c9849baf126b749e198bdb9d83555430",
     ("docs-live", "Resolve the tag commit"): "b52e25a4026bed9172a0eff4b90f6a706ec984875307d7e89f9d450878a96e44",
     ("docs-live", "Require the live documentation revision to equal or descend from the tag"): "d8e88f95d2e890e14d314242bcce698767ddd834b4ccbab56469d5fd684eb54d",
@@ -609,6 +616,53 @@ def test_pipeline_jobs_contract() -> None:
     _assert_publish_gating(parsed)
     _assert_no_defaults_shell(parsed)
     _assert_step_hashes(parsed)
+    _assert_release_locked_builds(parsed)
+
+
+def _assert_release_locked_builds(parsed: dict) -> None:
+    """Ticket 1266: every build step in the release pipeline names
+    --release and --locked directly, not only through a hash pin a
+    repin could clear. The 0.9.0 debug-profile wheel shipped because
+    no assertion stated the profile (#287).
+    """
+    offenders: list[str] = []
+    for job_id in ("pypi-build", "build"):
+        steps = parsed["jobs"][job_id]["steps"]
+        for index, step in enumerate(steps):
+            run = step.get("run", "")
+            is_build = "maturin build" in run or "cargo build" in run
+            if not is_build:
+                continue
+            has_release = "--release" in run
+            has_locked = "--locked" in run
+            if not (has_release and has_locked):
+                offenders.append(
+                    f"{job_id} step {index} ({step.get('name', 'run')}): "
+                    f"release={has_release} locked={has_locked}"
+                )
+    assert not offenders, (
+        "every wheel and tarball build must pass --release --locked "
+        f"(GitHub #287): {offenders}"
+    )
+
+
+def test_release_locked_build_assertion_catches_a_dropped_flag(tmp_path: Path) -> None:
+    """Red proof: planting a workflow copy with --release dropped
+    from one build step fails the assertion."""
+    import copy
+
+    parsed = _load_release_pipeline()
+    planted = copy.deepcopy(parsed)
+    steps = planted["jobs"]["pypi-build"]["steps"]
+    for step in steps:
+        run = step.get("run", "")
+        if "maturin build" in run:
+            step["run"] = run.replace(" --release", "")
+            break
+    else:
+        pytest.fail("pypi-build carries no maturin build step to plant")
+    with pytest.raises(AssertionError, match="--release"):
+        _assert_release_locked_builds(planted)
 
 
 # Every job's condition, asserted exactly. A suffix like

@@ -391,8 +391,23 @@ jobs:
             echo "skill list must name skills (exit $status): #287 regression" >&2
             exit 1
           fi
-          require_exit 0 skill article-follow-up
-          require_exit 0 chart bar
+          # Ticket 1266: exit codes alone let the 0.9.0 debug-wheel
+          # failure through (errors exited 0), so assert known
+          # content from the embedded assets too — no network.
+          status=0
+          output="$("$BIOMCP" skill article-follow-up 2>&1)" || status=$?
+          printf '%s\n' "$output" | head -n 20
+          if [ "$status" -ne 0 ] || ! printf '%s\n' "$output" | grep -q "Article follow-up via citations and recommendations"; then
+            echo "skill article-follow-up must show its content (exit $status): #287 regression" >&2
+            exit 1
+          fi
+          status=0
+          output="$("$BIOMCP" chart bar 2>&1)" || status=$?
+          printf '%s\n' "$output" | head -n 20
+          if [ "$status" -ne 0 ] || ! printf '%s\n' "$output" | grep -q "Bar Chart"; then
+            echo "chart bar must show the Bar Chart heading (exit $status): #287 regression" >&2
+            exit 1
+          fi
           require_json --json get article 32794606
 
   docs-live:
@@ -485,10 +500,11 @@ jobs:
         run: uv publish --trusted-publishing always dist/*
 
   homebrew-tap:
-    # The tap formula's sha256 comes from the published artifacts,
-    # so it waits for the container job and for PyPI (ticket 1253's
-    # ordering, now enforced).
-    needs: [build, docs-live, wheel-smoke, container-publish, pypi-publish]
+    # The tap formula points at release tarballs, so the release
+    # must be PUBLIC first: this job waits for publish-release
+    # (ticket 1266; before, the formula landed on a draft release
+    # and a failed publish broke `brew install`).
+    needs: [build, docs-live, wheel-smoke, container-publish, pypi-publish, publish-release]
     if: github.event_name == 'push'
     permissions:
       contents: read
@@ -666,7 +682,10 @@ jobs:
           echo "linux/arm64 $IMAGE runs as uid $UID_IN_CONTAINER with revision $REVISION"
 
   publish-release:
-    needs: [build, pypi-publish, homebrew-tap, container-publish, docs-live]
+    # No longer waits for homebrew-tap (ticket 1266): the tap now
+    # waits for this job, so the release is public before the
+    # formula's tarball URLs are installable.
+    needs: [build, pypi-publish, container-publish, docs-live]
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:
