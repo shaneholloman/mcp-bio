@@ -96,3 +96,13 @@ Every bypass the prior review listed is now caught. These neighboring spellings 
 ## Main's run history
 
 Main had seven failed CI runs and three green runs on 2026-09-28. The fix commit `4d05cfd8` failed lint, and `a236173d` and `84920f31` failed too. Three runs failed on a package file count of 1370 against a pin of 1369 and a missing `llms.txt` entry. One failed the README landing contract. None was the stdio flake, which passed every run in 2.6 to 4.2 seconds. Every failing commit went straight to main, and main stayed red for about five of six hours. Run the full canonical gate on the ticket branch before merging, including docs-only and record commits.
+
+## Addendum 2026-09-28 (ticket 1267, pre-disposition note)
+
+The #287 product points, decided: exit codes fixed with tests (a
+missing skill exits 1; an empty skill catalog now fails loudly
+naming the embedded skills/ tree instead of printing "No skills
+found" with exit 0); `debug-embed` enabled (decision recorded in
+ticket 1267 with the reason); the 0.8.x wheel-size check is the
+supervisor's (needs PyPI); the reply waits for Ian's go and for
+0.9.1 on PyPI.
