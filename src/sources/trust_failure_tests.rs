@@ -1,7 +1,8 @@
 //! Unit tests for the no-trust-failure retry strategy's error-chain
 //! walk (ticket 1268 follow-up, 2026-09-29 review: the strategy had
-//! no test; the tests live in their own file so mod.rs keeps its
-//! size-inventory baseline).
+//! no test; the tests live in their own file so mod.rs keeps only the
+//! delegation and the module declaration, and its size-inventory
+//! baseline rose by exactly that: 2779 to 2786, delta 932 to 939).
 
 use super::error_chain_carries;
 
