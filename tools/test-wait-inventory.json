@@ -249,6 +249,14 @@
       "to": 17,
       "reason": "the round-three probes carry their planted literals as marked source lines; each marker vouches for a literal inside a string the test plants",
       "ticket": "1269"
+    },
+    {
+      "file": "(global)",
+      "field": "marker_total_ceiling",
+      "from": 46,
+      "to": 43,
+      "reason": "re-pinned down to the tree's true marker count after the both-operator floor rule made several polls exempt; decreases are safe and need no review",
+      "ticket": "1269"
     }
   ]
 }
