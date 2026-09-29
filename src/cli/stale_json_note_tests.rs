@@ -9,7 +9,6 @@
 //! axum servers answering 200 with a one-second freshness window,
 //! then killed so the next command serves stale from the cache.
 
-
 /// Answer every request with `body` as JSON, fresh-cacheable for one
 /// second: after the window, with the server gone, the cache serves
 /// stale and stamps the age marker the note reads.

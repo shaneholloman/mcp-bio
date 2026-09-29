@@ -76,7 +76,6 @@ impl GwasClient {
         request_from_plan(&self.client, self.base.as_ref(), plan).with_extension(CacheMode::NoStore)
     }
 
-
     pub(crate) fn decode_json_optional<T: DeserializeOwned>(
         status: StatusCode,
         content_type: Option<&HeaderValue>,
