@@ -1115,7 +1115,9 @@ def test_pull_request_contracts_remain_separate_from_protected_release() -> (
     canonical = _workflow_job_block(ci, "canonical-gates")
     ci_generated_sources = _workflow_job_block(ci, "generated-sources")
     assert "pull_request:" in ci
-    assert "push:" in ci and "branches: [main]" in ci
+    # 2026-09-29 (ticket 1275): ticket branches run CI too; the
+    # push trigger still names main first.
+    assert "push:" in ci and "main" in ci and "tickets/**" in ci
     for command in ("make lint", "make test", "make spec"):
         assert f"run: {command}" in canonical
     for version in (
