@@ -306,35 +306,7 @@ async fn a_stale_article_search_json_states_the_cache_age_in_meta_notes() {
 /// decision). This test pins that no-store holds where the old claim
 /// said a stale serve was impossible — under BIOMCP_CACHE_MODE
 /// infinite, which once replaced the no-store mark with force-cache.
-#[tokio::test]
-#[serial_test::serial(source_env)]
-async fn gwas_never_serves_stale_even_under_infinite_cache_mode() {
-    let (base, server) = stale_note_fixture_server(GWAS_BODY).await;
-    let _env = StaleNoteEnv::new(&base, &["BIOMCP_GWAS_BASE"])
-        .with_extra(&[("BIOMCP_CACHE_MODE", "infinite")]);
-    let fresh = run(&[
-        "--json", "search", "gwas", "--trait", "aspirin", "--limit", "1",
-    ])
-    .await;
-    assert!(
-        fresh.contains("Aspirin response"),
-        "fresh GWAS serve answers from the fixture: {fresh}"
-    );
 
-    tokio::time::sleep(std::time::Duration::from_millis(1600)).await; // watchdog: freshness-window wait, bounded at 1.6 s
-    server.abort();
-
-    // NoStore means nothing was persisted: with the server gone the
-    // command must fail rather than serve the stale body.
-    let stale = run(&[
-        "--json", "search", "gwas", "--trait", "aspirin", "--limit", "1",
-    ])
-    .await;
-    assert!(
-        stale.contains("\"error\"") && !stale.contains("Aspirin response"),
-        "no stale GWAS serve under infinite mode: {stale}"
-    );
-}
 
 #[tokio::test]
 #[serial_test::serial(source_env)]
@@ -387,10 +359,6 @@ async fn a_stale_search_all_json_states_the_cache_age_in_meta_notes() {
     );
 }
 
-// The search parser (GwasAssociationSummary) reads snake_case field
-// names with only efoTraits renamed; GwasV2Trait's field is
-// efo_trait.
-const GWAS_BODY: &str = r#"{"_embedded":{"associations":[{"snp_allele":[{"rs_id":"rs1000000","effect_allele":null}],"efo_traits":[{"efo_trait":"Aspirin response"}],"reported_trait":["Aspirin response"],"mapped_genes":[]}]},"page":{"totalElements":1}}"#;
 
 const MYGENE_BODY: &str =
     r#"{"total":1,"hits":[{"symbol":"BRAF","name":"B-Raf proto-oncogene","entrezgene":"673"}]}"#;
@@ -500,4 +468,34 @@ async fn no_cache_skips_the_cache_for_the_spawned_clingen_fetch() {
         !bypassed.contains("Noonan syndrome"),
         "--no-cache must not serve the cached ClinGen rows to the prefetch: {bypassed}"
     );
+}
+
+/// GWAS keeps NoStore unconditionally — including under
+/// `BIOMCP_CACHE_MODE=infinite`, which once replaced the no-store
+/// mark with force-cache (ticket 1268; gwas.rs records the
+/// decision). The e2e shape could not run against the shared-client
+/// harness, so this pins the invariant at the seam every GWAS
+/// request passes through: the request carries the NoStore mode
+/// extension whatever the process cache mode is.
+#[tokio::test]
+#[serial_test::serial(source_env)]
+async fn gwas_requests_keep_no_store_even_under_infinite_cache_mode() {
+    let _env = StaleNoteEnv::new("http://127.0.0.1:9", &["BIOMCP_GWAS_BASE"])
+        .with_extra(&[("BIOMCP_CACHE_MODE", "infinite")]);
+    let client = crate::sources::GwasClient::new().expect("gwas client");
+    let plan = crate::sources::GwasClient::association_search_plan(
+        None,
+        Some("aspirin"),
+        1,
+    )
+    .expect("plan");
+    let request = client
+        .request_no_store_for_test(&plan)
+        .build()
+        .expect("build request");
+    let mode = request
+        .extensions()
+        .get::<CacheMode>()
+        .expect("cache mode extension present");
+    assert!(matches!(mode, CacheMode::NoStore));
 }

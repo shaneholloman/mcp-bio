@@ -76,6 +76,18 @@ impl GwasClient {
         request_from_plan(&self.client, self.base.as_ref(), plan).with_extension(CacheMode::NoStore)
     }
 
+    /// Test seam (ticket 1268): every GWAS request goes through
+    /// `request_no_store`; this exposes the built request so the
+    /// NoStore invariant can be pinned whatever the process cache
+    /// mode is.
+    #[cfg(test)]
+    pub(crate) fn request_no_store_for_test(
+        &self,
+        plan: &RequestPlan,
+    ) -> reqwest_middleware::RequestBuilder {
+        self.request_no_store(plan)
+    }
+
     pub(crate) fn decode_json_optional<T: DeserializeOwned>(
         status: StatusCode,
         content_type: Option<&HeaderValue>,
