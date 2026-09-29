@@ -173,9 +173,9 @@ impl StaleNoteEnv {
         let root = crate::test_support::TempDirGuard::new("stale-json-notes");
         let mut previous = Vec::new();
         for key in keys.iter().copied().chain(["BIOMCP_CACHE_DIR"]) {
-            let value = if *key == "BIOMCP_CACHE_DIR" {
+            let value = if key == "BIOMCP_CACHE_DIR" {
                 root.path().to_str().expect("utf-8 cache root").to_string()
-            } else if *key == "BIOMCP_MYGENE_BASE" {
+            } else if key == "BIOMCP_MYGENE_BASE" {
                 mygene.to_string()
             } else {
                 clingen.to_string()
@@ -282,11 +282,11 @@ async fn a_stale_article_search_json_states_the_cache_age_in_meta_notes() {
     );
 }
 
-/// GWAS search cannot carry a stale-cache note: its client sends
-/// every request with `CacheMode::NoStore` (src/sources/gwas.rs —
-/// always bypass persistence, recorded after cache decode failures),
-/// so no stale serve exists to describe. The exclusion is recorded
-/// in sdlc/issues/2026-09-27-get-json-bodies-have-no-notes-channel-for-the-stale-cache-age.md.
+// GWAS search cannot carry a stale-cache note: its client sends
+// every request with `CacheMode::NoStore` (src/sources/gwas.rs —
+// always bypass persistence, recorded after cache decode failures),
+// so no stale serve exists to describe. The exclusion is recorded
+// in sdlc/issues/2026-09-27-get-json-bodies-have-no-notes-channel-for-the-stale-cache-age.md.
 
 /// GWAS never serves stale, even in infinite cache mode: its client
 /// keeps NoStore unconditionally (the decode-failure bypass), so
