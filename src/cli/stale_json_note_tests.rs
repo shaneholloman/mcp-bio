@@ -40,6 +40,61 @@ async fn stale_note_fixture_server(body: &'static str) -> (String, tokio::task::
 /// second (the freshness windows can differ per route via the
 /// max_age map; the ClinGen test pins MyGene fresh and ClinGen
 /// stale so the note can only come from the stale leg).
+/// A routes fixture whose ClinGen routes live on a separate
+/// listener, so a test can kill only ClinGen and leave MyGene live.
+#[allow(clippy::type_complexity)]
+async fn clingen_split_fixture(
+    mygene_routes: Vec<(String, &'static str, u64)>,
+    clingen_routes_in: Vec<(String, &'static str, u64)>,
+) -> (
+    (String, String),
+    tokio::task::JoinHandle<()>,
+    tokio::task::JoinHandle<()>,
+) {
+    use axum::http::{StatusCode, header};
+    use axum::response::IntoResponse;
+
+    async fn serve(
+        routes: Vec<(String, &'static str, u64)>,
+    ) -> (String, tokio::task::JoinHandle<()>) {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind split fixture");
+        let base = format!("http://{}", listener.local_addr().expect("fixture address"));
+        let routes: std::sync::Arc<Vec<(String, &'static str, u64)>> =
+            std::sync::Arc::new(routes);
+        let app = axum::Router::new().fallback(move |uri: axum::http::Uri| {
+            let routes = std::sync::Arc::clone(&routes);
+            async move {
+                let path = uri.path().to_string();
+                let matched = routes.iter().find(|(prefix, _, _)| {
+                    path == prefix.as_str() || path.starts_with(&format!("{prefix}?"))
+                });
+                match matched {
+                    Some((_, body, max_age)) => {
+                        let cache = format!("max-age={max_age}");
+                        (
+                            StatusCode::OK,
+                            [
+                                (header::CONTENT_TYPE, header::HeaderValue::from_static("application/json")),
+                                (header::CACHE_CONTROL, header::HeaderValue::from_str(&cache).expect("valid cache-control header")),
+                            ],
+                            *body,
+                        )
+                            .into_response()
+                    }
+                    None => StatusCode::NOT_FOUND.into_response(),
+                }
+            }
+        });
+        let task = tokio::spawn(async move { axum::serve(listener, app).await.expect("split fixture serves") });
+        (base, task)
+    }
+    let (mygene_base, mygene_task) = serve(mygene_routes).await;
+    let (clingen_base, clingen_task) = serve(clingen_routes_in).await;
+    ((mygene_base, clingen_base), mygene_task, clingen_task)
+}
+
 async fn stale_note_routes_server(
     routes: Vec<(String, &'static str, u64)>,
 ) -> (String, tokio::task::JoinHandle<()>) {
@@ -110,6 +165,30 @@ struct StaleNoteEnv {
 }
 
 impl StaleNoteEnv {
+    fn two_bases(
+        mygene: &str,
+        clingen: &str,
+        keys: &[&'static str],
+    ) -> Self {
+        let root = crate::test_support::TempDirGuard::new("stale-json-notes");
+        let mut previous = Vec::new();
+        for key in keys.iter().copied().chain(["BIOMCP_CACHE_DIR"]) {
+            let value = if *key == "BIOMCP_CACHE_DIR" {
+                root.path().to_str().expect("utf-8 cache root").to_string()
+            } else if *key == "BIOMCP_MYGENE_BASE" {
+                mygene.to_string()
+            } else {
+                clingen.to_string()
+            };
+            // SAFETY: serialized on the source_env key; restored on drop.
+            unsafe {
+                previous.push((*key, std::env::var(key).ok()));
+                std::env::set_var(key, value);
+            }
+        }
+        Self { root, previous }
+    }
+
     /// Extra fixed env pairs (e.g. BIOMCP_CACHE_MODE) recorded and
     /// restored the same way as the fixture bases.
     fn with_extra(mut self, pairs: &[(&'static str, &str)]) -> Self {
@@ -335,30 +414,37 @@ async fn a_stale_clingen_prefetch_note_reaches_the_gene_card() {
 #[tokio::test]
 #[serial_test::serial(source_env)]
 async fn no_cache_skips_the_cache_for_the_spawned_clingen_fetch() {
-    let (base, server) = stale_note_routes_server(vec![
-        ("/query".to_string(), MYGENE_BODY, 3600),
-        ("/api/genes/look/BRAF".to_string(), CLINGEN_LOOKUP_BODY, 3600),
-        (
-            "/kb/gene-validity/download".to_string(),
-            CLINGEN_VALIDITY_BODY,
-            3600,
-        ),
-        (
-            "/kb/gene-dosage/download".to_string(),
-            CLINGEN_DOSAGE_BODY,
-            3600,
-        ),
-    ])
+    let ((mygene_base, clingen_base), _mygene_task, clingen_routes) = clingen_split_fixture(
+        vec![("/query".to_string(), MYGENE_BODY, 3600)],
+        vec![
+            ("/api/genes/look/BRAF".to_string(), CLINGEN_LOOKUP_BODY, 3600),
+            ("/kb/gene-validity/download".to_string(), CLINGEN_VALIDITY_BODY, 3600),
+            ("/kb/gene-dosage/download".to_string(), CLINGEN_DOSAGE_BODY, 3600),
+        ],
+    )
     .await;
-    let _env = StaleNoteEnv::new(&base, &["BIOMCP_MYGENE_BASE", "BIOMCP_CLINGEN_BASE"]);
+    let _env = StaleNoteEnv::two_bases(
+        &mygene_base,
+        &clingen_base,
+        &["BIOMCP_MYGENE_BASE", "BIOMCP_CLINGEN_BASE"],
+    );
     let warm = run(&["get", "gene", "BRAF", "clingen"]).await;
     assert!(
         warm.contains("ClinGen") || warm.contains("Noonan syndrome"),
         "the warm run populated the cache: {warm}"
     );
-    server.abort();
+    // Kill ONLY the ClinGen routes; MyGene stays live so the parent's
+    // own uncached fetch succeeds and the card renders. A prefetch
+    // that wrongly reads the cache then visibly serves the cached
+    // Noonan rows; with the carry, it hits the dead routes and its
+    // absence is the observable.
+    clingen_routes.abort();
 
     let bypassed = run(&["--no-cache", "get", "gene", "BRAF", "clingen"]).await;
+    assert!(
+        bypassed.contains("BRAF"),
+        "the parent gene fetch rendered (MyGene live): {bypassed}"
+    );
     assert!(
         !bypassed.contains("Noonan syndrome"),
         "--no-cache must not serve the cached ClinGen rows to the prefetch: {bypassed}"
