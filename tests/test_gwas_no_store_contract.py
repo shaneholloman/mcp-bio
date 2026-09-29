@@ -32,9 +32,12 @@ def test_gwas_pins_no_store_on_every_request() -> None:
 
 def test_gwas_never_applies_the_process_cache_mode() -> None:
     text = GWAS.read_text(encoding="utf-8")
-    assert "apply_cache_mode" not in text.replace(
-        "apply_cache_mode is not applied", ""
-    ), (
+    # The reason comment may NAME apply_cache_mode; only a real call
+    # is forbidden.
+    code = "\n".join(
+        line for line in text.splitlines() if not line.lstrip().startswith("//")
+    )
+    assert "apply_cache_mode" not in code, (
         "GWAS must not call apply_cache_mode — infinite mode once swapped "
         "its no-store mark for force-cache (ticket 1268)"
     )
