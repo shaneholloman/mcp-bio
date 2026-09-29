@@ -33,7 +33,7 @@ def wait_until(
 ) -> None:
     """Assert `predicate()` becomes true inside a scaled watchdog window."""
     deadline = time.monotonic() + watchdog_secs * _timeout_scale()
-    while time.monotonic() < deadline:
+    while time.monotonic() < deadline:  # watchdog: shared wait_until poll window
         if predicate():
             return
         time.sleep(poll_secs)  # watchdog: shared poll interval inside wait_until

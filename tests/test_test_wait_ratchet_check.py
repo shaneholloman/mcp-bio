@@ -116,12 +116,16 @@ def test_a_heartbeat_helper_with_a_bare_sleep_counts() -> None:
 def test_watchdog_builder_deadlines_do_not_count() -> None:
     lines = [
         "    let deadline = std::time::Instant::now() + crate::test_support::watchdog(30);",
-        "    let deadline = tokio::time::Instant::now() + watchdog(60);",
+        "    let deadline = tokio::time::Instant::now() + test_support::watchdog(60);",
         "    let deadline = tokio::time::Instant::now() + Duration::from_secs(60);",  # watchdog: synthetic literal
+        # The word watchdog( in a comment is not the scaled helper
+        # and does not exempt the line; with no `watchdog:` marker
+        # the line counts as an unmarked wait (ticket 1269).
+        "    let d2 = tokio::time::Instant::now() + Duration::from_secs(5); // mirrors watchdog(60)",
     ]
     count, violations, _ = count_waits(lines, MODULE.RUST_PATTERNS)
-    assert count == 1
-    assert violations == ["3"]
+    assert count == 2
+    assert violations == ["3", "4"]
 
 
 def test_an_inventory_decrease_passes_and_notes_the_ratchet_down(
@@ -205,12 +209,13 @@ def test_a_watchdog_marker_without_a_reason_does_not_pass() -> None:
 
 
 def test_the_helpers_own_poll_sleep_is_marked() -> None:
-    """tests/support.py carries no unmarked wait, and its one marker
-    is pinned so a second marker there needs a same-commit raise."""
+    """tests/support.py carries no unmarked wait; its two markers
+    (the poll-loop line and the sleep it paces) are pinned with a
+    reviewed raise so a third needs another one."""
     current = scan(ROOT)
     entry = current.get("tests/support.py")
     assert entry is not None and entry["count"] == 0, entry
-    assert entry.get("markers") == 1, entry
+    assert entry.get("markers") == 2, entry
 
 
 def _planted_repo(tmp_path: Path, inventory: dict, files: dict[str, str]):
@@ -235,22 +240,24 @@ def test_the_new_wait_forms_go_red_on_planted_files(tmp_path: Path) -> None:
         root,
         {"schema": "biomcp-test-wait-inventory-v1", "files": {}},
         {
+            # Poll forms, not assert bounds: an assertion on a clock
+            # value bounds duration and is exempt; a poll waits.
             "tests/test_elapsed_left.rs": (
-                "#[test]\nfn t() {\n    assert!(start.elapsed() < D(5));\n}\n"
+                "#[test]\nfn t() {\n    if start.elapsed() < D(5) { break; }\n}\n"
             ),
             "tests/test_elapsed_right.rs": (
-                "#[test]\nfn t() {\n    assert!(deadline < start.elapsed());\n}\n"
+                "#[test]\nfn t() {\n    if deadline < start.elapsed() { break; }\n}\n"
             ),
             "tests/test_chained_elapsed.rs": (
                 "#[test]\nfn t() {\n"
-                "    assert!(start.elapsed().as_millis() > 5);\n}\n"
+                "    while start.elapsed().as_millis() > 5 { break; }\n}\n"
             ),
             "tests/test_anyio.py": "def t():\n    await anyio.sleep(0.1)\n",  # watchdog: planted literal
             "tests/test_alias_time.py": (
                 "import time as t\n\ndef test_waits():\n    t.sleep(0.1)\n"  # watchdog: planted literal
             ),
             "tests/test_alias_sleep.py": (
-                "from time import sleep as snooze\n\ndef test_waits():\n"
+                "from time import sleep as snooze\n\ndef test_waits():\n"  # watchdog: planted literal
                 "    snooze(0.1)\n"  # watchdog: planted literal
             ),
         },
@@ -271,9 +278,10 @@ def test_the_new_wait_forms_go_red_on_planted_files(tmp_path: Path) -> None:
 def test_rust_sleep_until_and_elapsed_go_red(tmp_path: Path) -> None:
     lines = [
         "    tokio::time::sleep_until(deadline).await;",
-        "    assert!(deadline < start.elapsed());",
-        "    assert!(start.elapsed().as_millis() > 5);",
+        "    if deadline < start.elapsed() { break; }",
+        "    while start.elapsed().as_millis() > 5 { break; }",
         "    let x = start.elapsed();",  # no comparison: not a wait
+        "    assert!(deadline < start.elapsed());",  # a bound, not a wait
     ]
     count, _, _ = MODULE.count_waits(lines, MODULE.RUST_PATTERNS)
     assert count == 3
@@ -312,3 +320,67 @@ def test_marker_counts_are_ratcheted(tmp_path: Path) -> None:
     # would pass once pinned; and the unpinned marker file is named.
     assert "above the global ceiling 1" in result.stdout, result.stdout
     assert "not in the inventory" in result.stdout, result.stdout
+
+def test_round_three_forms_count() -> None:
+    """Ticket 1269: the neighboring spellings the prior ratchet missed."""
+    rust = [
+        "use std::thread::{sleep as nap};",
+        "    nap(Duration::from_millis(5));",  # watchdog: planted literal
+        "    let e = start.elapsed();",
+        "    if e < limit { break; }",  # watchdog: planted literal
+        "    if Instant::now().duration_since(start) < span { break; }",  # watchdog: planted literal
+    ]
+    text = "\n".join(rust)
+    count, violations, _ = MODULE.count_waits(rust, MODULE.RUST_PATTERNS,
+                                              MODULE.rust_sleep_aliases(text) + MODULE.rust_time_bindings(text))
+    # nap, the stored-binding compare, and duration_since all count.
+    assert count == 3, (count, violations)
+
+    python = [
+        "import os, time as t",
+        "    while time.monotonic() < deadline:",  # watchdog: planted literal
+        "        t.sleep(0.05)",  # watchdog: planted literal
+    ]
+    count, violations, _ = MODULE.count_waits(
+        python, MODULE.PYTHON_PATTERNS, MODULE.local_time_aliases("\n".join(python))
+    )
+    assert count == 2, (count, violations)
+
+
+def test_a_raise_without_an_accepted_review_fails(tmp_path: Path) -> None:
+    """The ceiling-raise mechanism demands a reviewed reason."""
+    root = tmp_path / "repo"
+    (root / "tools").mkdir(parents=True)
+    (root / "tools" / "test-wait-inventory.json").write_text(
+        json.dumps(
+            {
+                "schema": "biomcp-test-wait-inventory-v1",
+                "files": {
+                    "tests/test_one.py": {"count": 0, "language": "python"}
+                },
+                "raises": [
+                    {
+                        "file": "tests/test_one.py",
+                        "field": "count",
+                        "from": 0,
+                        "to": 1,
+                        "reason": "planted",
+                        "ticket": "1269",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    target = root / "tests" / "test_one.py"
+    target.parent.mkdir(parents=True)
+    target.write_text("def t():\n    time.sleep(0.1)\n", encoding="utf-8")  # watchdog: planted literal
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    result = _run(root)
+    assert result.returncode == 1
+    # This scratch repo has no sdlc/tickets directory, so the raise
+    # cannot show an accepted review and must fail.
+    assert "1269" in result.stdout and ("accepted" in result.stdout or "no file" in result.stdout), (
+        result.stdout
+    )

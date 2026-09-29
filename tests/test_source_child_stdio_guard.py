@@ -26,7 +26,10 @@ ALLOW_INHERIT = {"src/main_biomcp_cli.rs"}
 
 # Any path-qualified Command::new (std::process, tokio::process,
 # process:: after `use std::process;`) and the bare imported form.
-COMMAND_NEW = re.compile(r"(?<!\w)(?:\w+::)*Command::new\s*\(")
+COMMAND_NEW = re.compile(
+    r"(?<!\w)(?:\w+::)*Command::new\s*\("
+    r"|<(?:\w+::)*Command>\s*::\s*new\s*\("
+)
 # `use ... Command as X;` makes X::new a spawn of the same type, and
 # so does every braced-group spelling:
 # `use std::process::{Command as Cmd, ...}`, `use std::process::{self,
@@ -68,12 +71,95 @@ def alias_names(source: str) -> set[str]:
     return names
 
 
+COMMAND_NEW_BINDING = re.compile(
+    r"let\s+(?:mut\s+)?(\w+)\s*=\s*<?[\w:]*Command>?\s*::\s*new\s*;"
+)
+
+
 def spawn_pattern(source: str) -> re.Pattern[str]:
-    """The Command::new pattern for this file, aliased imports included."""
+    """The Command::new pattern for this file, aliased imports included.
+
+    A function binding (`let mk = Command::new;`) spawns through the
+    bare name, so its call sites join the pattern too.
+    """
     parts = [COMMAND_NEW.pattern]
     for alias in sorted(alias_names(source)):
         parts.append(r"(?<!\w)" + re.escape(alias) + r"::new\s*\(")
+    for binding in COMMAND_NEW_BINDING.findall(source):
+        parts.append(r"(?<!\w)" + re.escape(binding) + r"\s*\(")
     return re.compile("|".join(parts))
+
+
+def inherit_bindings(source: str) -> set[str]:
+    """Names bound to an inheriting Stdio anywhere in the file.
+
+    `.stdout(io)` where `io` was bound from `Stdio::inherit()` is an
+    inherit set through a reborrow; the violation names it as one.
+    """
+    return set(
+        re.findall(
+            r"let\s+(?:mut\s+)?(\w+)\s*=\s*(?:&\s*)?Stdio::inherit\s*\(",
+            source,
+        )
+    )
+
+
+def strip_comments_and_strings(text: str) -> str:
+    """Blank comments and string/char literals, preserving offsets.
+
+    Setter-looking text inside prose comments or string literals is
+    not a setter call; scanning must not false-positive on it.
+    """
+    out = list(text)
+    i, n = 0, len(text)
+    mode = None
+    start = 0
+    while i < n:
+        c = text[i]
+        nxt = text[i + 1] if i + 1 < n else ""
+        if mode is None:
+            if c == "/" and nxt == "/":
+                mode, start = "line", i
+                i += 2
+            elif c == "/" and nxt == "*":
+                mode, start = "block", i
+                i += 2
+            elif c == '"':
+                mode, start = "str", i
+                i += 1
+            # Apostrophes are lifetimes here: a char literal is at
+            # most a few characters and cannot hold a setter call, so
+            # scanning never opens char mode.
+            else:
+                i += 1
+            continue
+        if mode == "line":
+            if c == "\n":
+                for k in range(start, i):
+                    out[k] = " "
+                mode = None
+            i += 1
+        elif mode == "block":
+            if c == "*" and nxt == "/":
+                for k in range(start, min(i + 2, n)):
+                    out[k] = " "
+                mode = None
+                i += 2
+            else:
+                i += 1
+        else:
+            if c == "\\":
+                i += 2
+                continue
+            if mode == "str" and c == '"':
+                for k in range(start, min(i + 1, n)):
+                    out[k] = " "
+                mode = None
+            i += 1
+    if mode is not None:
+        for k in range(start, n):
+            out[k] = " "
+    return "".join(out)
 
 
 def strip_test_regions(source: str) -> str:
@@ -92,7 +178,17 @@ def strip_test_regions(source: str) -> str:
     out: list[str] = []
     cursor = 0
     for attribute in re.finditer(r"#\[cfg\(([^)]*)\)\]", source):
-        if "test" not in attribute.group(1):
+        # Only a BARE test predicate marks test code. A quoted
+        # feature name containing "test" (`feature = "test-utils"`)
+        # is production code behind a feature flag and stays scanned.
+        predicates = [
+            piece.strip()
+            for piece in re.split(r"[(),]+", attribute.group(1))
+            if piece.strip()
+        ]
+        if not any(
+            predicate == "test" and '"' not in predicate for predicate in predicates
+        ):
             continue
         if attribute.start() < cursor:
             continue
@@ -210,31 +306,44 @@ def child_stdio_violations(relative: str, source: str) -> list[str]:
             )
         # A bare `Command` in the braces keeps its own name, and the
         # unqualified COMMAND_NEW pattern already covers its spawns.
+    inherits = inherit_bindings(source)
     for window in statement_windows(source, spawn_pattern(source)):
         head = window.splitlines()[0].strip()
+        # Setter-looking text inside comments or string literals is
+        # prose, not a call.
+        scanned = strip_comments_and_strings(window)
         for stream in STREAMS:
-            setter = re.search(r"\." + stream + r"\s*\(\s*([^)]*)", window)
-            if setter is None:
+            setters = re.findall(r"\." + stream + r"\s*\(\s*([^)]*)", scanned)
+            if not setters:
                 violations.append(f"{relative}: child {stream} unset: {head}")
                 continue
-            argument = setter.group(1)
-            if "Stdio::inherit" in argument or "inherit()" in argument:
-                violations.append(
-                    f"{relative}: child {stream} inherits: {head}"
-                )
-                continue
-            if re.search(r"\bstd::io::(stdout|stderr|stdin)\b", argument):
-                violations.append(
-                    f"{relative}: child {stream} is the parent's live stream: {head}"
-                )
-                continue
-            if not re.search(r"Stdio::(?:null|piped)\b", argument):
-                # A variable or expression the guard cannot see
-                # through (pre-bound elsewhere) fails closed.
-                violations.append(
-                    f"{relative}: child {stream} setting not provably "
-                    f"null/piped ({argument.strip()[:40]}): {head}"
-                )
+            for argument in setters:
+                if "Stdio::inherit" in argument or "inherit()" in argument:
+                    violations.append(
+                        f"{relative}: child {stream} inherits: {head}"
+                    )
+                    continue
+                if re.search(r"\bstd::io::(stdout|stderr|stdin)\b", argument):
+                    violations.append(
+                        f"{relative}: child {stream} is the parent's live stream: {head}"
+                    )
+                    continue
+                if any(
+                    re.search(r"\b" + re.escape(name) + r"\b", argument)
+                    for name in inherits
+                ):
+                    violations.append(
+                        f"{relative}: child {stream} inherits through a "
+                        f"reborrowed binding: {head}"
+                    )
+                    continue
+                if not re.search(r"Stdio::(?:null|piped)\b", argument):
+                    # A variable or expression the guard cannot see
+                    # through (pre-bound elsewhere) fails closed.
+                    violations.append(
+                        f"{relative}: child {stream} setting not provably "
+                        f"null/piped ({argument.strip()[:40]}): {head}"
+                    )
     return violations
 
 
@@ -490,3 +599,79 @@ def test_output_exemption_is_closed() -> None:
 def test_the_launcher_stays_the_only_allowed_inheritor() -> None:
     launcher = (ROOT / "src" / "main_biomcp_cli.rs").read_text(encoding="utf-8")
     assert "Stdio::inherit()" in launcher, "launcher contract moved; update the guard"
+
+def test_guard_catches_round_three_shapes() -> None:
+    """Ticket 1269: the neighboring spellings the prior guard missed."""
+    full = (
+        'Command::new("tool").arg("x")\n'
+        "    .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())\n"
+        "    .status()?;\n"
+    )
+    # A second inherit setter after the null one: the last setter
+    # wins at spawn time, so any inherit anywhere in the chain fails.
+    sneak = full.replace(
+        ".stderr(Stdio::null())",
+        ".stderr(Stdio::null()).stderr(Stdio::inherit())",
+    )
+    assert child_stdio_violations("src/a.rs", sneak) == [
+        'src/a.rs: child stderr inherits: Command::new("tool").arg("x")'
+    ], sneak
+
+    # Setter-looking text in comments and strings is prose.
+    prose = (
+        full
+        + 'let note = ".stdin(Stdio::inherit()) looks dangerous";\n'
+        + "// .stdout(Stdio::inherit()) discussed in review\n"
+    )
+    assert not child_stdio_violations("src/a.rs", prose), prose
+
+    # Turbofish generics and function bindings are spawns.
+    turbo = full.replace('Command::new("tool")', '<Command>::new("tool")')
+    assert child_stdio_violations(
+        "src/a.rs", "use std::process::Command;\n" + turbo.replace(
+            ".stdin(Stdio::null())", ""
+        ).replace(".stdout(Stdio::null())", "").replace(".stderr(Stdio::null())", "")
+    ), turbo
+
+    binding = (
+        "use std::process::Command;\n"
+        "fn f() {\n"
+        "    let mk = Command::new;\n"
+        '    mk("tool").stdin(Stdio::null())\n'
+        "        .stdout(Stdio::null()).stderr(Stdio::null()).status()?;\n"
+        "}\n"
+    )
+    # The binding itself is a legal full-null spawn shape; removing a
+    # stream from its chain must fail.
+    broken_binding = binding.replace(".stderr(Stdio::null())", "")
+    assert child_stdio_violations("src/a.rs", broken_binding), broken_binding
+
+    # An inherit through a reborrowed binding names the reborrow.
+    reborrow = (
+        "fn f() {\n"
+        "    let io = Stdio::inherit();\n"
+        '    Command::new("tool").arg("x")\n'
+        "        .stdin(Stdio::null()).stdout(&io).stderr(Stdio::null())\n"
+        "        .status()?;\n"
+        "}\n"
+    )
+    assert child_stdio_violations("src/a.rs", reborrow) == [
+        "src/a.rs: child stdout inherits through a reborrowed binding: "
+        'Command::new("tool").arg("x")'
+    ], reborrow
+
+    # A cfg whose FEATURE name contains "test" is production code.
+    featured = (
+        "#[cfg(feature = \"test-utils\")]\n"
+        "fn f() {\n"
+        '    Command::new("tool").arg("x")\n'
+        "        .stdin(Stdio::inherit())\n"
+        "        .stdout(Stdio::inherit()).stderr(Stdio::inherit())\n"
+        "        .status()?;\n"
+        "}\n"
+    )
+    stripped = strip_test_regions(featured)
+    assert "Command::new" in stripped, "feature cfg must not strip production code"
+    assert any(
+        "inherits" in v for v in child_stdio_violations("src/a.rs", stripped)
+    ), featured

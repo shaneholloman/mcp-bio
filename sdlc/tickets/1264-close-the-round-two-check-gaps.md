@@ -29,14 +29,18 @@ spelling it was never told about.
 
 ## Deferred gaps
 
-- Only the four pinned jobs get exact step lists; a new first step
-  in pypi-publish, homebrew-tap, build, or publish-release is
-  guarded by text assertions only.
-- A Rust function-pointer binding (`let nap = std::thread::sleep`)
-  escapes alias resolution.
-- The multi-line assert! floor exemption has no dedicated test.
-- The gencc.rs pin has slack of one (pinned 1, actual 0) — re-pin
-  down with the tool's --update.
+- Closed by ticket 1269: every release job's step list is pinned
+  (pypi-publish included); a Rust function-pointer binding counts;
+  the multi-line assert! floor exemption is tested; gencc's unmarked
+  pin repins to its true count.
+- Still open after 1269, recorded here because the round-three
+  review listed them: an expression-form env carrying PATH or ENV
+  (not only BASH_ENV and BASH_FUNC_) is not banned at job level;
+  `<Command>::new`-style generics in an expression position outside
+  a statement window, and setters bound through function returns,
+  remain fail-closed rather than named. The wait ratchet counts
+  Python `time.monotonic()` polls but not `time.perf_counter()`
+  ones.
 
 ## Review
 
@@ -44,6 +48,12 @@ spelling it was never told about.
 - Code review: REJECT once (the allowlist never scanned non-bullet
   lines; two normalizations invented verdicts; one truncated a
   recorded verification), folded and verified 2026-09-28
+- Code review (raise history): ACCEPT 2026-09-28 by ticket 1269's review — the marker-ceiling raises made inside this ticket's gate cycles (global 25→42; gencc markers 6→9) are reconstructed in the ratchet inventory and accepted as accurate history. The raises landed with the work the verdict below verifies.
+- Raise-history acceptance 2026-09-28: the marker-ceiling raises
+  made inside this ticket's gate cycles (global 25→42; gencc
+  markers 6→9) are reconstructed in the ratchet inventory and
+  ACCEPTED by ticket 1269's review of 2026-09-28 as accurate
+  history — the raises landed with the work this line verifies.
 - Verification: yellow gate at 4de8e686 — lint, test, spec, stress
   OK, zero failed lines; the ratchet and the five suites green
   locally and on the host
