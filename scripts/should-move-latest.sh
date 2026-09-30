@@ -19,10 +19,6 @@ if ! printf '%s' "$publishing" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
     exit 1
 fi
 
-# shellcheck disable=SC2207 # the tag shape is pinned above; the
-# split yields exactly three numeric fields.
-read -r -a publishing_fields <<< "${publishing#v}."
-
 key_of() {
     local tag="$1"
     if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
