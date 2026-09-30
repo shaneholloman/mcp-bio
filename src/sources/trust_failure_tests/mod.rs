@@ -20,7 +20,10 @@ impl std::fmt::Display for Wrapped {
 
 impl std::error::Error for Wrapped {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        self.1.as_ref().map(|inner| inner.as_ref())
+        // The Send+Sync box coerces to the plain trait object here.
+        self.1
+            .as_ref()
+            .map(|inner| inner.as_ref() as &(dyn std::error::Error + 'static))
     }
 }
 
