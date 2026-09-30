@@ -17,6 +17,8 @@
 
 ### New features
 
+- A new `cell-line` entity searches and resolves cell lines: `biomcp search cell-line <name>` normalizes spellings against Cellosaurus (exact identifiers and human lines rank first), and `biomcp get cell-line <CVCL_xxxx>` prints one card with synonyms, species, disease, cross-references and variants, accepting DepMap, Cell Model Passports, ChEMBL and PharmacoDB identifiers too. Ian confirmed the entity ships 2026-09-30. (1202)
+- Cell-line cards carry research sections: drug response and cell-line drug panels from PharmacoDB, protein expression across cell lines from the Human Protein Atlas, and target compounds from ChEMBL — each naming its source and release. (1205, 1213, 1214)
 - Linux wheels target `manylinux_2_28` (built and verified in the official containers) and a Linux ARM64 wheel ships, so `pip install biomcp-cli` works on current glibc systems and ARM servers. (1245)
 - The Linux tarballs build in the same containers as the wheels and pass the same glibc floor scan, so the documented 2.28 floor holds for both artifact families. (1249)
 - The release publishes a multi-architecture container image (`linux/amd64` and `linux/arm64`), smokes both platforms from the registry, and moves the `latest` tag only after the smokes pass. (1219, 1229)
@@ -33,7 +35,7 @@
 - The cache mode no longer leaks between tests: a test that flips it restores it, closing the cross-test pollution behind flaky suites. GitHub #286. (1261)
 - CI runs on every ticket branch and is the merge gate: a branch merges only after its own run finishes green, and the docs-only skip is decided by the files changed since the merge-base with main; the commit message decides nothing. Bookkeeping pushes still run the record tests. (1220, 1250, 1252, 1275, 1278)
 - Flaky tests were fixed at their mechanisms: waits that polled the clock now wait on signals, the load-sensitive lanes are pinned to a deterministic CPU set, the known-flaky set runs in its own stress lane, and the release-panic, TLS and Windows contracts run the real behavior they name. (1239, 1247, 1248, 1252, 1257)
-- The check suite that guards the repository (review-status grammar, workflow provenance, wait ratchet, licensing tiers) was rebuilt as structural checks that fail when the behavior they guard is removed, and the flat MCP tool schemas are published for client authors. (1251, 1255, 1258, 1264, 1269, 1279)
+- The check suite that guards the repository (review-status grammar, workflow provenance, wait ratchet, licensing tiers) was rebuilt as structural checks that fail when the behavior they guard is removed. (1251, 1255, 1258, 1264, 1269, 1279)
 - Maintenance: records, docs, and test hygiene across the release cycle (1224, 1228, 1238, 1244, 1254, 1259, 1260, 1265, 1270, 1279, 1280, 1281).
 
 ## 0.9.0 — 2026-09-16
