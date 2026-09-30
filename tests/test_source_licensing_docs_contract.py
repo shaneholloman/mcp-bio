@@ -476,3 +476,21 @@ def test_the_licensing_page_tier_table_agrees_with_the_registry() -> None:
         if row is None and name.lower() not in sections:
             mismatches.append(f"{name}: absent from the page tier table and sections")
     assert not mismatches, "\n".join(mismatches)
+
+
+def test_the_evidence_table_keeps_one_row_per_line() -> None:
+    """2026-09-30 review: an unwrap pass collapsed the 49-row table
+    onto a single physical line, which markdown renders as a wall of
+    text. Each table row must start its own line.
+    """
+    text = _read("docs/reference/source-licensing-evidence-2026-09-27.md")
+    table_lines = [l for l in text.splitlines() if l.startswith("|")]
+    assert len(table_lines) >= 49, (
+        f"the evidence table lost its rows: {len(table_lines)} pipe-prefixed lines"
+    )
+    assert all(l.count("|") >= 4 for l in table_lines), (
+        "a table row is malformed (fewer than four cells)"
+    )
+    # The separator row must be its own line, not glued to the header.
+    header = table_lines[0]
+    assert header.count("|") == header.count(" | ") + 1, "the header row carries extra rows"
