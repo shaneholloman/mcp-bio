@@ -31,6 +31,16 @@ def test_a_draft_newer_than_every_published_release_moves_latest() -> None:
     assert ok
 
 
+def test_a_two_digit_minor_sorts_newer_than_v9() -> None:
+    """Plain text comparison would call v0.10.0 older than v0.9.0
+    ("1" < "9"); the numeric key must not (third go-request review).
+    """
+    ok, _ = _decide("v0.10.0", ["v0.9.0", "v0.9.9"])
+    assert ok
+    ok_back, _ = _decide("v0.9.9", ["v0.10.0"])
+    assert not ok_back
+
+
 def test_an_older_tag_never_moves_latest() -> None:
     ok, reason = _decide("v0.8.9", ["v0.9.0"])
     assert not ok
