@@ -2,6 +2,100 @@
 
 ## Unreleased
 
+### Bug fixes
+
+- CI runs again on every push to main and on every ticket branch, so a broken
+  trunk is visible immediately instead of surfacing at release time. (1220)
+- The release workflow no longer uploads artifacts that were built with
+  mismatched versions, and retired release steps that no longer ran were
+  removed. (1222)
+- The MCP server now answers with the correct 2026-07-28 protocol metadata,
+  and malformed tool arguments return structured errors instead of silent
+  success. (1223)
+- A release gate now verifies the published documentation matches the tagged
+  revision, so the docs site can never lag the shipped version. (1226)
+- Release notes and the runbook now state only facts that still hold; vacuous
+  assertions that tested nothing were removed. (1227)
+- The cache-expiry test is deterministic: it no longer depends on wall-clock
+  timing and cannot flake under load. (1228)
+- The removed dispatch publish path is gone for good, and runtime container
+  image parsing rejects malformed digests instead of panicking. (1229)
+- A panicking tool call no longer takes the MCP server down: the server
+  isolates the panic, answers the client with an error, and keeps serving. (1230)
+- An unusable SSL_CERT_FILE now degrades to a clear warning at startup instead
+  of aborting the run. (1231)
+- Drug label output now shows boxed warnings and surfaces legacy warning text
+  that was previously dropped. (1232)
+- The release checks the shipped version, the changelog contents, and the
+  wheel behavior together, so a mismatched artifact cannot publish. (1233)
+- The release gates were reworked so v0.9.1 can actually pass them, with each
+  gate testing a real property of the artifacts. (1234)
+- Panic-recovery gaps closed across the CLI: remaining unwrap paths that could
+  kill a command now degrade into reported errors. (1235)
+- A user-supplied CA bundle is parsed once at startup with a clear failure,
+  instead of failing per request with opaque TLS errors. (1236)
+- Label warnings render completely: truncated and multi-part warnings now
+  appear in full on drug cards. (1237)
+- The GenCC lease test no longer flakes: its interlock waits on a signal
+  instead of racing the clock. (1239)
+- DDInter coverage is carried through to drug cards, and the card no longer
+  drops interaction evidence rows. (1241)
+- Source failures render honestly on cards: a failing provider shows its
+  failure instead of an empty section that looks like no data. (1242)
+- Large futures were shrunk and the runtime shared, cutting stack growth on
+  deep queries and fixing crashes on complex searches. (1243)
+- GenCC cancellation now settles and waits for generation temps, so cancelled
+  queries never leave lock files behind. (1247)
+- The disease survival reap test tolerates suite load and no longer fails when
+  the machine is busy. (1248)
+- The changelog gate and workflow tests are total: every path through the gate
+  is exercised, not just the happy one. (1250)
+- The review follow-ups for tickets 1235 through 1247 are closed, including
+  the worktree cleanup rule and the record hygiene they demanded. (1254)
+- The last four XML sources now route through the external-XML depth cap, so a
+  hostile feed cannot blow the stack. (1255)
+- Named tests now prove their claims: release-panic, TLS dial-and-refuse,
+  CDATA depth, and GenCC ownership paths all test the real behavior. (1257)
+- Every record and issue file carries an honest disposition, with stale
+  pending lines closed and owners named for what remains. (1259)
+- The cache mode no longer leaks across tests: a test that flips it restores
+  it, so suites cannot inherit a wrong mode. (1261)
+- Stale cache ages now reach every search JSON body as _meta.notes, and TLS
+  trust failures are no longer retried. (1263)
+- The check suite's round-two gaps closed: review-status grammar, stdio
+  guards, and the wait ratchet were rebuilt as structural checks. (1264)
+- The changelog gate accepts any four-digit ticket number that is not a date-
+  shaped record name, fixing the record-pattern false rejections. (1265)
+- The release path waits for the public release before the Homebrew tap, and
+  the wheel smoke test asserts real asset content. (1266)
+- A missing skill or empty catalog exits with a clear diagnostic (exit code
+  1), and debug builds embed the same skill assets as release builds. GitHub
+  #287. (1267)
+- Stale-cache claims are now true in code: GWAS never serves stale bodies, the
+  ClinGen prefetch carries the no-cache flag, and the search-all end-to-end
+  stale test is restored. (1268)
+- The check suite's round-three gaps closed: every release job's steps are
+  pinned, and ceiling raises require an accepted review. (1269)
+- The records round finished: dispositions written, run IDs recorded, and the
+  flake chases documented. (1270)
+- CI now runs on ticket branches and is the merge gate: a branch merges only
+  after its own run finishes green, and docs-only pushes still run the record
+  and docs tests. (1275)
+- Enrichr is labelled restricted with its terms stated plainly, and the README
+  carries a data-terms warning linking the licensing page. (1276)
+- The CI cache restores after checkout under a pinned action and caches
+  workspace crates; nextest installs through a checksum-verified script. (1278)
+
+### Documentation
+
+- The documentation is current with 0.9.0: new commands, renamed flags, and
+  the configuration reference match the shipped binary. (1224)
+- Backlog hygiene cleared: stale notes removed, shorthand expanded, and every
+  ticket file states its real status. (1238)
+- Test, doc, and record hygiene cleared: duplicate tests removed, orphaned doc
+  comments deleted, and records matched to their commits. (1244)
+
+
 ### New features
 
 - Linux wheels now target `manylinux_2_28` (built in the official
