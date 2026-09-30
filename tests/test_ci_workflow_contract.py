@@ -48,10 +48,14 @@ def test_the_skip_rule_reads_the_changed_files_never_the_message() -> None:
         "the docs-only skip must never read the commit message"
     )
     classify = (REPO_ROOT / "scripts" / "ci-classify-push.sh").read_text(encoding="utf-8")
-    # The docs-only class is *.md, sdlc/ and notes/ — everything
-    # else is a full-CI push.
-    assert "docs_only=false" in classify
-    assert 'case "$path" in' in classify
+    # The base is the merge-base with origin/main (a failed tip
+    # followed by a markdown commit must not skip the Rust jobs),
+    # and executable markdown (spec/, skills/, src/, the compiled
+    # CLI reference) never counts as docs.
+    assert "git merge-base" in classify
+    assert "docs/user-guide/cli-reference.md) docs_only=false" in classify
+    assert "sdlc/*|notes/*" in classify
+    assert "spec/*" not in classify.split("case")[1].split("esac")[0].replace("sdlc/*", "")
 
 
 def test_every_rust_job_waits_on_the_changes_job() -> None:
@@ -68,7 +72,7 @@ def test_the_changes_job_covers_the_whole_push() -> None:
     assert changes["outputs"]["docs_only"] == "${{ steps.classify.outputs.docs_only }}"
     run_step = next(s for s in changes["steps"] if s.get("id") == "classify")
     assert run_step["run"] == "scripts/ci-classify-push.sh"
-    assert run_step["env"]["PUSH_BEFORE"] == "${{ github.event.before }}"
+    assert run_step["env"]["PUSH_BASE_REF"] == "origin/main"
     assert run_step["env"]["PUSH_AFTER"] == "${{ github.sha }}"
 
 
@@ -119,6 +123,14 @@ def test_nextest_installs_through_the_checksummed_script() -> None:
 # three that had slipped past the path scan. New ones surface as a
 # red docs-only CI run — fail-loud, never a silent skip — and must
 # join this list.
+# Modules that mention a cargo argv but only write FAKE cargo
+# executables into scratch PATH fixtures (verified by reading them):
+# they never run real cargo, so the docs-only lane may run them.
+CARGO_FAKE_FIXTURE_MODULES = {
+    "test_lint.py",
+    "test_pre_commit_reject_march_artifacts.py",  # names a scratch cargo.log; runs no cargo
+}
+
 CARGO_DRIVER_MODULES = {
     "test_alphagenome_proto_generation.py",
     "test_build_identity_rebuild.py",
@@ -142,12 +154,51 @@ def test_the_binary_dependent_modules_carry_the_marker() -> None:
     tests will fail on docs-only runners that have no binary.
     """
     for path in sorted((REPO_ROOT / "tests").rglob("test_*.py")):
+        if path.name == "test_ci_workflow_contract.py":
+            continue  # this scan's own literals must not match itself
         text = path.read_text(encoding="utf-8")
+        import ast
+
         needs = bool(NEEDS_BINARY_MODULES_PATTERN.search(text))
-        if needs or path.name in CARGO_DRIVER_MODULES:
+        if not needs and re.search(r'[\"\']cargo[\"\']', text):
+            needs = path.name not in CARGO_FAKE_FIXTURE_MODULES
+        if path.name in CARGO_DRIVER_MODULES:
             needs = True
         if needs:
-            assert "pytest.mark.needs_binary" in text, (
+            # The marker must be a real module statement, not a
+            # comment or string mentioning it.
+            def _marker_in(value: object) -> bool:
+                # Both spellings count: pytest.mark.needs_binary used
+                # bare (an Attribute) and pytest.mark.needs_binary()
+                # (a Call). A comment or string never parses as
+                # either.
+                if isinstance(value, ast.Attribute):
+                    return getattr(value, "attr", "") == "needs_binary"
+                if isinstance(value, ast.Call):
+                    if getattr(value.func, "attr", "") == "needs_binary":
+                        return True
+                    return (
+                        getattr(value.func, "attr", "") == "mark"
+                        and any(
+                            getattr(a, "attr", "") == "needs_binary"
+                            for a in value.args
+                        )
+                    )
+                if isinstance(value, (ast.List, ast.Tuple)):
+                    return any(_marker_in(elt) for elt in value.elts)
+                return False
+
+            has_marker = any(
+                _marker_in(node.value)
+                for node in ast.walk(ast.parse(text))
+                if isinstance(node, ast.Assign)
+                and any(
+                    getattr(t, "id", "") == "pytestmark"
+                    for t in node.targets
+                    if isinstance(t, ast.Name)
+                )
+            )
+            assert has_marker, (
                 f"{path} drives a built binary or cargo; it needs the "
                 "needs_binary marker or the docs-only CI lane will fail it"
             )

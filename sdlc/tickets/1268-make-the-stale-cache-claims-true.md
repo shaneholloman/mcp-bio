@@ -13,14 +13,15 @@ and the records agree.
    bypass is the recorded reason in gwas.rs); apply_cache_mode is no
    longer applied to GWAS requests. Proof, stated at what it really
    shows (2026-09-29 reviews corrected an overstated sentence here):
-   the text contract `tests/test_gwas_no_store_contract.py` pins the
-   source shape (every request path routes through the builder;
-   `apply_cache_mode` never runs for GWAS). A runtime pin asserting
-   the extension on the built request was attempted and rejected by
-   the compiler: the vendored reqwest keeps `Request::extensions`
-   private outside its crate (CI run 36619750222, error E0624). No
-   test runs the command under `BIOMCP_CACHE_MODE=infinite` against
-   a dead fixture.
+   the runtime pin `src/sources/gwas/tests/no_store.rs` calls the
+   real `request_no_store` builder for both plan entry points and
+   reads `CacheMode::NoStore` from the public
+   `RequestBuilder::extensions()` on reqwest-middleware 0.4.2 (the
+   first attempt read reqwest's private `Request::extensions()`
+   after `build()`; CI run 36619750222, error E0624), and the text
+   contract `tests/test_gwas_no_store_contract.py` pins the source
+   shape. No test runs the command under
+   `BIOMCP_CACHE_MODE=infinite` against a dead fixture.
 2. ClinGen prefetch: carries the NO_CACHE flag across the spawn the
    same way it carries the notes handle. Proof:
    `no_cache_skips_the_cache_for_the_spawned_clingen_fetch` — a warm

@@ -701,9 +701,22 @@ def _assert_release_locked_builds(parsed: dict) -> None:
         steps = parsed["jobs"][job_id]["steps"]
         for index, step in enumerate(steps):
             run = step.get("run", "")
-            is_build = "maturin build" in run or "cargo build" in run
-            if not is_build:
+            # Per command, not per step (2026-09-29 second review):
+            # a step mixing an unlocked build with a locked one
+            # passed the substring check.
+            build_commands = [
+                line
+                for line in run.splitlines()
+                if "maturin build" in line or "cargo build" in line
+            ]
+            if not build_commands:
                 continue
+            offenders.extend(
+                f"{job_id} step {index}: {line.strip()[:70]}"
+                for line in build_commands
+                if "--release" not in line or "--locked" not in line
+            )
+            continue
             has_release = "--release" in run
             has_locked = "--locked" in run
             if not (has_release and has_locked):

@@ -38,7 +38,7 @@ jobs:
       - name: Decide whether the push touches only docs
         id: classify
         env:
-          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_BASE_REF: origin/main
           PUSH_AFTER: ${{ github.sha }}
         run: scripts/ci-classify-push.sh
 

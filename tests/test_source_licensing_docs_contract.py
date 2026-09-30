@@ -444,23 +444,35 @@ def test_the_licensing_page_tier_table_agrees_with_the_registry() -> None:
         m = re.match(r"^\|\s*([A-Za-z0-9 .&/-]+?)\s*\|\s*(\d)\s*\|", line)
         if m:
             rows[m.group(1).strip().lower()] = int(m.group(2))
-    sections = set(
-        m.group(1).strip().lower()
-        for m in re.finditer(r"^### (.+)$", page, re.M)
-    )
+    sections: dict[str, int] = {}
+    current_tier: int | None = None
+    for line in page.splitlines():
+        m = re.match(r"^## Tier (\d)", line)
+        if m:
+            current_tier = int(m.group(1))
+            continue
+        m = re.match(r"^### (.+)$", line)
+        if m and current_tier is not None:
+            sections[m.group(1).strip().lower()] = current_tier
     inventory = _source_inventory()
     assert inventory, "the registry must parse"
     mismatches = []
     for entry in inventory:
         name = str(entry.get("name") or "")
+        tier = int(entry.get("tier", 0))
         row = rows.get(name.lower())
-        if row is None:
-            # A few grouped services carry a detail section instead
-            # of a table row; they must still appear somewhere.
-            if name.lower() not in sections:
-                mismatches.append(f"{name}: absent from the page tier table and sections")
-        elif row != int(entry.get("tier", 0)):
+        if row is not None and row != tier:
             mismatches.append(
-                f"{name}: page says tier {row}, registry says tier {entry.get('tier')}"
+                f"{name}: table says tier {row}, registry says tier {tier}"
             )
+        # Every source with a detail section must sit under the
+        # heading tier that matches the registry (2026-09-29 second
+        # review: eight tier-1 sections sat under Tier 3 and Enrichr
+        # sat under Tier 1, and no test looked at headings).
+        if name.lower() in sections and sections[name.lower()] != tier:
+            mismatches.append(
+                f"{name}: heading tier {sections[name.lower()]}, registry tier {tier}"
+            )
+        if row is None and name.lower() not in sections:
+            mismatches.append(f"{name}: absent from the page tier table and sections")
     assert not mismatches, "\n".join(mismatches)

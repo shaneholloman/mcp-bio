@@ -298,6 +298,14 @@ def raise_is_accepted(root: Path, record: dict) -> tuple[bool, str]:
     # a real acceptance (2026-09-29 review).
     for verdict in verdicts:
         rest = verdict.group("rest")
+        # The acceptance must be an actual verdict, not a promise or
+        # a pending note that mentions ACCEPT (2026-09-29 second
+        # review): "pending; reviewer returns ACCEPT or findings"
+        # and "will ACCEPT after fixes" stay rejections.
+        if re.search(r"\bpending\b", rest, re.IGNORECASE) or re.search(
+            r"\bwill\s+ACCEPT\b", rest, re.IGNORECASE
+        ):
+            continue
         if re.search(r"(?<!not )\bACCEPT\b", rest) and not re.search(
             r"\bACCEPT\b\s+(?:is|was)\s+(?:not|missing|pending)", rest, re.IGNORECASE
         ):

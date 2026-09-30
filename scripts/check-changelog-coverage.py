@@ -23,8 +23,6 @@ STABLE_TAG = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
 # Sequential ticket numbers live far below 2000; a year-valued number
 # is a yearly note, not a ticket. Raise deliberately when the ticket
 # sequence approaches it.
-TICKET_NUMBER_MAX = 1999
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -68,7 +66,7 @@ def record_tickets(previous: str, tag: str) -> set[str]:
     return {
         match.group(1)
         for name in names
-        if (match := RECORD_TICKET.match(name)) and int(match.group(1)) <= TICKET_NUMBER_MAX
+        if (match := RECORD_TICKET.match(name)) is not None
     }
 
 

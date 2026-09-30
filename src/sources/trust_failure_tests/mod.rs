@@ -55,3 +55,70 @@ fn trust_markers_at_any_depth_of_the_error_chain_count() {
     let empty = Wrapped("", None);
     assert!(!error_chain_carries(&empty));
 }
+
+/// Driving the real trait method (the 2026-09-29 second review:
+/// deleting the early return in `handle` passed every test).
+/// `reqwest_middleware::Error::Middleware` is public, so a synthetic
+/// marker-carrying error rides the exact path `handle` inspects.
+#[test]
+fn handle_returns_no_retry_for_a_trust_failure_error() {
+    use reqwest_retry::RetryableStrategy;
+
+    let strategy = super::NoTrustFailureStrategy;
+    let trust_err = reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+        "invalid peer certificate: chain incomplete",
+        None,
+    )));
+    assert_eq!(
+        strategy.handle(&Err(trust_err)),
+        None,
+        "a certificate rejection must not be retried"
+    );
+
+    // A non-trust middleware error keeps the default strategy's
+    // verdict (whatever it is) — the wrapper only strips trust
+    // failures. The observable contract: the trust marker changes
+    // the answer from the default's to no-retry.
+    let ordinary_err = reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+        "tcp connect error: connection refused",
+        None,
+    )));
+    let default = reqwest_retry::DefaultRetryableStrategy.handle(&Err(
+        reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+            "tcp connect error: connection refused",
+            None,
+        ))),
+    ));
+    assert_eq!(
+        strategy.handle(&Err(ordinary_err)),
+        default,
+        "a non-trust error keeps the default retry verdict"
+    );
+}
+
+/// The plain-send retry loop (Enrichr, UniProt) stops at the first
+/// trust failure instead of burning its retries (2026-09-29 second
+/// review): one closure call, then the error surfaces.
+#[tokio::test]
+async fn plain_send_retry_stops_at_a_trust_failure() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    let calls = AtomicUsize::new(0);
+    let context = crate::error::SourceContext::retry(crate::sources::SourceProvider::ENRICHR);
+    let result = crate::sources::retry_middleware_send(context, 3, || {
+        calls.fetch_add(1, Ordering::SeqCst);
+        async {
+            Err(reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+                "invalid peer certificate: chain incomplete",
+                None,
+            ))))
+        }
+    })
+    .await;
+    assert!(result.is_err(), "the trust failure must surface as an error");
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        1,
+        "a trust failure must not be retried on the plain-send path"
+    );
+}
