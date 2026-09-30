@@ -86,9 +86,19 @@ def _commit(repo: Path, files: dict[str, str], message: str) -> str:
 
 
 def test_docs_only_push_classifies_true(scratch_repo: Path) -> None:
-    _commit(scratch_repo, {"sdlc/tickets/x.md": "x", "docs/reference/page.md": "y"}, "docs")
+    _commit(scratch_repo, {"sdlc/tickets/x.md": "x", "notes/plan.md": "y"}, "docs")
     sha = _commit(scratch_repo, {"notes/thing.md": "z"}, "more docs")
     assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=true"
+
+
+def test_readme_and_docs_pages_run_full_ci(scratch_repo: Path) -> None:
+    """README.md and every docs/ page are read or compiled by Rust
+    tests (benchmark_cli_structure, chart assets), so a push touching
+    only them runs the full suite (2026-09-30 review).
+    """
+    for path in ("README.md", "docs/reference/source-licensing.md", "docs/charts/bar.md"):
+        sha = _commit(scratch_repo, {path: "changed"}, "docs page")
+        assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=false", path
 
 
 def test_source_change_classifies_false_even_with_markdown(scratch_repo: Path) -> None:

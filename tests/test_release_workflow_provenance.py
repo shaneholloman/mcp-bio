@@ -373,10 +373,11 @@ PINNED_JOB_STEP_LISTS: dict[str, list[str]] = {
         "Smoke the linux/arm64 image from the registry",
     ],
     "publish-release": [
-        "Publish the GitHub release after every publisher succeeds",
+        # Docker work precedes the public flip (2026-09-30 review).
         "docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435",
         "docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567",
         "Move latest after both platform smokes pass",
+        "Publish the GitHub release after every publisher succeeds",
     ],
     "create-draft": [
         "Create the draft release",

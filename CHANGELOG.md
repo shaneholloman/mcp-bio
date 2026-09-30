@@ -2,232 +2,41 @@
 
 ## 0.9.1 — 2026-09-30
 
-### Bug fixes
+### Fixes
 
-- CI runs again on every push to main and on every ticket branch, so a broken
-  trunk is visible immediately instead of surfacing at release time. (1220)
-- The release workflow no longer uploads artifacts that were built with
-  mismatched versions, and retired release steps that no longer ran were
-  removed. (1222)
-- The MCP server now answers with the correct 2026-07-28 protocol metadata,
-  and malformed tool arguments return structured errors instead of silent
-  success. (1223)
-- A release gate now verifies the published documentation matches the tagged
-  revision, so the docs site can never lag the shipped version. (1226)
-- Release notes and the runbook now state only facts that still hold; vacuous
-  assertions that tested nothing were removed. (1227)
-- The cache-expiry test is deterministic: it no longer depends on wall-clock
-  timing and cannot flake under load. (1228)
-- The removed dispatch publish path is gone for good, and runtime container
-  image parsing rejects malformed digests instead of panicking. (1229)
-- A panicking tool call no longer takes the MCP server down: the server
-  isolates the panic, answers the client with an error, and keeps serving. (1230)
-- An unusable SSL_CERT_FILE now degrades to a clear warning at startup instead
-  of aborting the run. (1231)
-- Drug label output now shows boxed warnings and surfaces legacy warning text
-  that was previously dropped. (1232)
-- The release checks the shipped version, the changelog contents, and the
-  wheel behavior together, so a mismatched artifact cannot publish. (1233)
-- The release gates were reworked so v0.9.1 can actually pass them, with each
-  gate testing a real property of the artifacts. (1234)
-- Panic-recovery gaps closed across the CLI: remaining unwrap paths that could
-  kill a command now degrade into reported errors. (1235)
-- A user-supplied CA bundle is parsed once at startup with a clear failure,
-  instead of failing per request with opaque TLS errors. (1236)
-- Label warnings render completely: truncated and multi-part warnings now
-  appear in full on drug cards. (1237)
-- The GenCC lease test no longer flakes: its interlock waits on a signal
-  instead of racing the clock. (1239)
-- DDInter coverage is carried through to drug cards, and the card no longer
-  drops interaction evidence rows. (1241)
-- Source failures render honestly on cards: a failing provider shows its
-  failure instead of an empty section that looks like no data. (1242)
-- Large futures were shrunk and the runtime shared, cutting stack growth on
-  deep queries and fixing crashes on complex searches. (1243)
-- GenCC cancellation now settles and waits for generation temps, so cancelled
-  queries never leave lock files behind. (1247)
-- The disease survival reap test tolerates suite load and no longer fails when
-  the machine is busy. (1248)
-- The changelog gate and workflow tests are total: every path through the gate
-  is exercised, not just the happy one. (1250)
-- The review follow-ups for tickets 1235 through 1247 are closed, including
-  the worktree cleanup rule and the record hygiene they demanded. (1254)
-- The last four XML sources now route through the external-XML depth cap, so a
-  hostile feed cannot blow the stack. (1255)
-- Named tests now prove their claims: release-panic, TLS dial-and-refuse,
-  CDATA depth, and GenCC ownership paths all test the real behavior. (1257)
-- Every record and issue file carries an honest disposition, with stale
-  pending lines closed and owners named for what remains. (1259)
-- The cache mode no longer leaks across tests: a test that flips it restores
-  it, so suites cannot inherit a wrong mode. (1261)
-- Stale cache ages now reach every search JSON body as _meta.notes, and TLS
-  trust failures are no longer retried. (1263)
-- The check suite's round-two gaps closed: review-status grammar, stdio
-  guards, and the wait ratchet were rebuilt as structural checks. (1264)
-- The changelog gate accepts any four-digit ticket number that is not a date-
-  shaped record name, fixing the record-pattern false rejections. (1265)
-- The release path waits for the public release before the Homebrew tap, and
-  the wheel smoke test asserts real asset content. (1266)
-- A missing skill or empty catalog exits with a clear diagnostic (exit code
-  1), and debug builds embed the same skill assets as release builds. GitHub
-  #287. (1267)
-- Stale-cache claims are now true in code: GWAS never serves stale bodies, the
-  ClinGen prefetch carries the no-cache flag, and the search-all end-to-end
-  stale test is restored. (1268)
-- The check suite's round-three gaps closed: every release job's steps are
-  pinned, and ceiling raises require an accepted review. (1269)
-- The records round finished: dispositions written, run IDs recorded, and the
-  flake chases documented. (1270)
-- The CI's docs-only skip classifies by the files changed since the merge-base with main, so a failed commit followed by a markdown commit can never skip the Rust jobs; certificate-trust failures are also no longer retried on the plain-send path, and the record hygiene rounds closed every open disposition. (1279)
-- CI now runs on ticket branches and is the merge gate: a branch merges only
-  after its own run finishes green, and docs-only pushes still run the record
-  and docs tests. (1275)
-- Enrichr is labelled restricted with its terms stated plainly, and the README
-  carries a data-terms warning linking the licensing page. (1276)
-- The CI cache restores after checkout under a pinned action and caches
-  workspace crates; nextest installs through a checksum-verified script. (1278)
-
-### Docs
-
-- The documentation is current with 0.9.0: new commands, renamed flags, and
-  the configuration reference match the shipped binary. (1224)
-- Backlog hygiene cleared: stale notes removed, shorthand expanded, and every
-  ticket file states its real status. (1238)
-- Test, doc, and record hygiene cleared: duplicate tests removed, orphaned doc
-  comments deleted, and records matched to their commits. (1244)
-
+- A panicking tool call no longer takes the MCP server down: the server isolates the failure, answers your client with an error, and keeps serving the rest of the session. (1230, 1235)
+- Drug label output now shows boxed warnings and legacy warning text that was previously dropped, so the strongest FDA warnings are visible on every drug card. (1232, 1237)
+- Provider failures now render honestly on cards: a failing source shows its failure instead of an empty section that reads as "no data". (1242)
+- Windows: `biomcp serve` no longer lets `icacls.exe` write into the stdio MCP stream, which broke strict clients between JSON-RPC frames on localized consoles. GitHub #283. (1246)
+- DDInter coverage is carried through to drug cards, and interaction evidence rows are no longer dropped. (1241)
+- Complex searches no longer overflow the stack: large queries that crashed the trial search, drug trials, and adverse-event paths now complete, and the published wheel runs them. GitHub #282. (1243, 1225)
+- An unusable `SSL_CERT_FILE` now degrades to a clear warning at startup instead of aborting the run, and a user-supplied CA bundle is trusted for every outbound connection after a single startup validation. GitHub #250. (1221, 1231, 1236)
+- The typed MCP `search` and `get` tool schemas now declare a top-level `"type": "object"`, so strict clients validate arguments as objects. GitHub #284. (1223)
+- Stale cached data now says so: search results carry the cache age and the true source in `_meta.notes`, GWAS never serves a stale body, and certificate-trust failures fail immediately instead of retrying. (1256, 1263, 1268)
+- A missing skill or empty catalog exits with a clear diagnostic instead of an empty success, and debug builds embed the same skill and chart assets as release builds. GitHub #287. (1267)
+- The variant, gene, and trial JSON paths now agree with their Markdown cards on what they show and what they call their sources. (1261)
 
 ### New features
 
-- Linux wheels now target `manylinux_2_28` (built in the official
-  manylinux containers and verified against the glibc 2.28 symbol floor)
-  and a Linux ARM64 wheel ships, so `pip install biomcp-cli` works on
-  RHEL 8, Debian 10, and Ubuntu 20.04 onward (with a current pip) and
-  on ARM64 Linux (1245).
+- Linux wheels target `manylinux_2_28` (built and verified in the official containers) and a Linux ARM64 wheel ships, so `pip install biomcp-cli` works on current glibc systems and ARM servers. (1245)
+- The wheel binary no longer aborts on the deep paths: wheels build with the same locked release profile as the tarballs, and a pre-publish smoke exercises them from the installed wheel. (1225)
+- The Linux tarballs build in the same containers as the wheels and pass the same glibc floor scan, so the documented 2.28 floor holds for both artifact families. (1249)
+- The release publishes a multi-architecture container image (`linux/amd64` and `linux/arm64`), smokes both platforms from the registry, and moves the `latest` tag only after the smokes pass. (1219, 1229)
+- The release gates now test real properties of the artifacts — versions, changelog contents, wheel behavior, live documentation revision — so a mismatched artifact cannot publish, and a failed tag run can be deleted and retried. (1226, 1227, 1233, 1234)
+- The Homebrew formula updates only after the release is public and PyPI has the artifacts, so its tarball URLs are installable the moment it lands. (1222, 1266)
 
-- Added the `cell-line` entity: `search cell-line <name>` resolves common
-  spellings to Cellosaurus accessions, and `get cell-line <CVCL_xxxx>` returns
-  name, synonyms, species, disease, category, sex, age, cross-references, and
-  curated variants. DepMap, Cell Model Passports, ChEMBL, and PharmacoDB IDs
-  resolve through one cross-reference search, and every output names the
-  Cellosaurus release with its CC BY 4.0 attribution. (1202)
-- Added PharmacoDB drug-response evidence: `get cell-line <CVCL_xxxx>
-  drug_response` counts the experiments per dataset for the line with a
-  per-dataset drill-down, and `get drug <name> cell_lines` resolves to the
-  matched lines and per-experiment metrics (AAC, IC50, EC50, Einf, HS, DSS1)
-  filterable by cell line or dataset. (bccd2871)
-- Added `gene cell-lines <symbol> --group <cancer>` for Human Protein Atlas
-  expression across one cancer group of cell lines, paginated with the
-  per-line expression level and the HPA attribution. (6d8fd435)
-- Added `get cell-line <CVCL_xxxx> chembl` for the ChEMBL molecule record
-  behind a Cellosaurus cross-reference. (fd6a100c)
-- Added `BIOMCP_CA_BUNDLE` for outbound TLS behind a private root: the bundle
-  adds to the built-in Mozilla roots for every ordinary HTTP client, is
-  validated in-process before any request, and fails closed naming the path.
-  A set `SSL_CERT_FILE` is honored as a fallback when it parses; a fallback
-  that cannot be parsed warns and continues with the bundled roots. GitHub
-  #250. (1221)
+### Docs
 
-### Changed
-
-- The `get` tool's flat schema no longer carries `uniqueItems` on
-  `sections`: adverse-event accepts duplicate sections, so the
-  descriptive root must accept them too on every entity. Per-entity
-  duplicate rejection is unchanged (the body rejects duplicates where
-  the entity demands uniqueness). A schema constraint present on only
-  one side of a merge is now a named build-time clash instead of a
-  silent narrowing. (1258)
-
-
-- A response served from cache past the provider's freshness window
-  now says so in the output a clinician sees, not only the log: the
-  markdown card (CLI and MCP) gains a trailing `Cache note:` line
-  naming the provider and age, and search JSON carries the sentence
-  in `_meta.notes`. (1256)
-
-- Disease cards credit the source that actually seeded the top-gene
-  list: genes seeded by MyDisease's embedded DisGeNET block are
-  labeled DisGeNET (the combined seed string no longer double-credits
-  MyDisease), a pure MyDisease seed is labeled MyDisease.info, and
-  Open Targets is never credited for another source's genes. (1256)
-
-- The search-all dropped-filter note names the failed source in plain
-  words instead of pasting upstream error text, and a DDInter
-  download that answers HTML is reported as the download failure it
-  is instead of an unreadable bundle. (1256)
-
-- In-body MCP argument validation now comes back as `isError` tool
-  results instead of `-32602` protocol errors, so a model can read the
-  message (which names the field and its bounds) and self-correct.
-  Failures rmcp raises while deserializing the arguments before the
-  handler runs — a missing required field, a wrong type, an unknown
-  `variant_erepo` field — still return `-32602`, with the message
-  visible either way. (1240)
-
-- An unknown non-empty cursor on `tools/list`, `resources/list`,
-  `resources/templates/list`, or `prompts/list` is now rejected with
-  `-32602` instead of silently returning the full list; the server
-  never paginates, so any cursor it did not issue is unknown. (1240)
-
-- Every MCP tool publishes one flat JSON Schema root — the merged
-  union of its per-entity fields, with no top-level `oneOf` — so
-  OpenAI and Gemini function calling, which reject `oneOf` roots, see
-  the real argument shape. Same-named fields merge: source enums
-  union, and fields that are text on some entities and lists on
-  others accept either form. `variant_erepo` now rejects unknown
-  fields (a `-32602` deserialization error), and a wrong-type `limit`
-  or `offset` errors instead of being ignored. Per-entity validation
-  in the tool bodies is unchanged. (1251)
-
-### Fixes
-
-- The glibc floor check now compares versions as integer pairs, the
-  way the dynamic loader orders them, so a highest reference of 2.9
-  passes a 2.28 floor and 2.30 no longer reads as 2.3. The Linux
-  tarballs build in the same `manylinux_2_28` containers as the wheels
-  and pass the same floor scan over the pre-tar binary, so the install
-  docs' single glibc 2.28 floor now holds for both artifact families,
-  and the release containers install a checksum-pinned rustup instead
-  of piping a remote script into a shell. (1249)
-
-- Windows: `biomcp serve` no longer lets `icacls.exe` write into the
-  stdio MCP stream. Its localized success line broke strict clients
-  between JSON-RPC frames (GBK bytes on zh-CN consoles); the child's
-  streams are now discarded, and steady-state managed writes spawn no
-  `icacls` at all. GitHub #283. (1246)
-- Restored container image publication on release. The `Release` workflow
-  verifies the published sidecars of the release's Linux tarballs, pushes
-  `ghcr.io/genomoncology/biomcp:<version>` with `linux/amd64` and `linux/arm64`
-  in one image index, and smokes both platforms from the registry. It moves
-  `latest` only after those smokes pass and only when the tag is the
-  repository's latest release, so a `container_only` dispatch can rebuild the
-  image for an already-published release, starting with v0.9.0, without moving
-  the shared pointer. (1219)
-- Fixed the PyPI wheel binary aborting with a stack overflow on the trial
-  search, drug trial, and adverse-event paths and failing in JSON mode with a
-  missing skill-asset error. The wheel was built in the debug profile; wheels
-  now build with `--release --locked` like the tarballs, the skills tree is
-  compiled into the binary, and a pre-publish smoke runs the deep paths, the
-  not-found adverse-event fallback, and JSON-mode commands from the installed
-  wheel. The execute stack keeps its designed 8 MiB. GitHub #282. (1225)
-- Declared a top-level `"type": "object"` on the typed MCP `search` and `get`
-  tool schemas, so strict clients validate arguments as objects instead of
-  accepting any value. (e559cae2)
+- The 48 biomedical sources' licensing evidence lives in the repository, Enrichr is labelled restricted with its terms stated plainly, and the README carries a data-terms warning linking the per-source breakdown. (1276)
+- The documentation is current with the shipped binary: new commands, renamed flags, and the configuration reference match 0.9.1. (1224)
 
 ### Internal
 
-- Test waits that polled the clock now wait on signals: the GenCC lease
-  child handshakes over a pipe and exits when its parent's stdin closes
-  (a dying parent can no longer leave it polling for two minutes), the
-  cancellation settle failure names the leaked temporary paths, and the
-  disease-survival reap test reads `/proc` instead of sampling heartbeats.
-  A `make stress` lane runs the known load-flaky tests pinned to a
-  two-CPU set, a lint ratchets against new timed waits, and
-  `BIOMCP_TEST_TIMEOUT_SCALE` stretches the watchdogs built through
-  the test helpers at once for slow hosts. (1252)
-- Advanced the development package identity to Rust `0.9.1-dev.1` and Python
-  `0.9.1.dev1` after the public 0.9.0 release. Citation, MCP directory,
-  registry, and Homebrew metadata stay on the latest published release, v0.9.0.
+- CI runs on every ticket branch and is the merge gate: a branch merges only after its own run finishes green, docs-only bookkeeping pushes still run the record tests, and the docs-only skip is decided by the files changed since the merge-base with main — never by the commit message. (1220, 1250, 1252, 1275, 1278)
+- Flaky tests were fixed at their mechanisms: waits that polled the clock now wait on signals, the load-sensitive lanes are pinned to a deterministic CPU set, the known-flaky set runs in its own stress lane, and the release-panic, TLS and Windows contracts run the real behavior they name. (1239, 1247, 1248, 1252, 1257)
+- The check suite that guards the repository (review-status grammar, workflow provenance, wait ratchet, licensing tiers) was rebuilt as structural checks that fail when the behavior they guard is removed, and the flat MCP tool schemas are published for client authors. (1251, 1255, 1258, 1264, 1269, 1279)
+- MCP conformance follow-ups from the 2026-07-28 suite: correct protocol metadata, structured argument errors, and flat tool schemas. (1223, 1240)
+- Maintenance: records, docs, and test hygiene across the release cycle (1224, 1228, 1238, 1244, 1254, 1259, 1260, 1265, 1270, part of 1279).
 
 ## 0.9.0 — 2026-09-16
 

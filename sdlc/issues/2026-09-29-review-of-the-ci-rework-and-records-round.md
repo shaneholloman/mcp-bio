@@ -58,3 +58,19 @@ The three earlier review files stay open until each finding below is closed: `20
 13. Still hard-wrapped: tickets 1253, 1260, 1264, 1267, 1268 and 1275, the pass record and the evidence file header.
 14. The Enrichr and UniProt plain-send path still retries trust failures. Record 1268 defers it with no approval from Ian. Fix it, or bring it to Ian as a deferral with its reason.
 15. The changelog gate reports 41 missing bullets for a v0.9.1 tag at `37951529`. `Cargo.toml` is at 0.9.1-dev.1.
+
+## Disposition (2026-09-30, ticket 1280 branch)
+
+1. The green-run-on-broken-tree hole: closed — the classify base is the merge-base with origin/main, proven by a behavioral test that replays the exact 95a4998b/7e9b42c5 shape (a code commit followed by a markdown commit classifies full CI).
+2. Executable markdown: closed — the allow list is sdlc/, notes/, CHANGELOG.md, AGENTS.md and .github/*.md; spec/, skills/, src/, docs/ and README.md all run the full suite (docs/charts is compiled in and benchmark_cli_structure reads README and every docs page), each pinned by contract and behavioral tests.
+3. The needs_binary guard: tightened — the marker must parse as a real module-level pytestmark (AST), and any quoted cargo argv marks the module unless it is a recorded fake-fixture; the poisoned marker inside a generated fixture string was caught by exactly this check.
+4. Tag pushes never start ci.yml: recorded in the release record and the runbook — the go request names a main run on the exact tag commit; the release workflow runs on the tag push itself.
+5. Review vendor: the round's ACCEPT came from a read-only Claude-vendor reviewer (dispatch 4e671b58); its file-read-only limitation is recorded in ticket 1279, and the go-request review re-verified the post-ACCEPT commits with mutations.
+6. Three REJECTs on 1268: the ticket's history records all three; the earlier report's "two" was corrected.
+7. Records 1267/1268 verdicts: both match their tickets (ACCEPT with dispatch records); record 1268's plain-send boundary text and test path corrected 2026-09-30.
+8. The GWAS extension claim: resolved — reqwest-middleware 0.4.2 exposes RequestBuilder::extensions publicly; the pin reads it before build(); the false "vendored reqwest" text is gone from the contract, the record and the 1255-1261 disposition.
+9. Gate cap: removed; the gate test plants tickets 2000 and 2027 counting.
+10. --release --locked per command, raise-review promise phrases, README/hero strictness, licensing headings, records, dispositions, shorthand and wraps: closed on the 1279 branch and re-verified by the 2026-09-30 review's mutations.
+11. The plain-send trust retry (Enrichr, UniProt): fixed, not deferred — the loop returns at the first trust failure with an async single-attempt proof.
+12. The changelog and version bump: landed after the ACCEPT and re-verified; the go-request review confirmed a scratch tag passes version sync, release checks and the 53-ticket changelog gate.
+13. Twelve bisect-breaking intermediate commits: recorded in ticket 1279's evidence; the tip runs are green and the branch is deleted.

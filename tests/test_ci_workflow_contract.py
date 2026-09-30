@@ -53,9 +53,12 @@ def test_the_skip_rule_reads_the_changed_files_never_the_message() -> None:
     # and executable markdown (spec/, skills/, src/, the compiled
     # CLI reference) never counts as docs.
     assert "git merge-base" in classify
-    assert "docs/user-guide/cli-reference.md) docs_only=false" in classify
     assert "sdlc/*|notes/*" in classify
-    assert "spec/*" not in classify.split("case")[1].split("esac")[0].replace("sdlc/*", "")
+    allow_list = classify.split("case")[1].split("esac")[0]
+    for executable in ("docs/*", "README.md|", "|README"):
+        assert executable not in allow_list.replace("sdlc/*|notes/*|CHANGELOG.md|AGENTS.md|.github/*.md)", ""), (
+            "docs/ and README.md are read by Rust tests and compiled in; they must run full CI"
+        )
 
 
 def test_every_rust_job_waits_on_the_changes_job() -> None:

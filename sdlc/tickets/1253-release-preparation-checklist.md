@@ -14,7 +14,7 @@ Checklist form (the 2026-09-26 review asked for items that fail the prep if skip
 - [ ] 1222: the release upload itself (container, wheels, tarballs, formula) and the Homebrew formula's honesty against the tag.
 - [ ] 1225: the wheel-stack smoke args after the container legs run.
 - [ ] 1245/1249: the container build path's first live exercise at the tag — watch the pypi-build and build jobs actually run, not skip.
-- [ ] 1254 b2: the oldest real licensing review date crosses the 365-day fail on 2027-03-20; confirm the review pass happened and the registry dates moved (see the 2026-09-27 licensing pass record).
+- [ ] Ticket 1254's second follow-up batch: the oldest real licensing review date crosses the 365-day fail on 2027-03-20; confirm the review pass happened and the registry dates moved (see the 2026-09-27 licensing pass record).
 
 ## Ordering
 
