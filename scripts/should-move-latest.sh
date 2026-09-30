@@ -8,7 +8,10 @@
 # newer, this tag becomes latest once published.
 #
 # Usage: should-move-latest.sh <publishing-tag> <published-tag>...
-# Exit 0 when latest should move; exit 1 (with a reason) when not.
+# Exit 0 when latest should move; exit 3 when it legitimately stays;
+# exit 1 or 2 on error, so the workflow step can fail on anything but
+# an explicit stay (fourth go-request review: a missing script reads
+# as 127 and must not count as "stay" either).
 set -euo pipefail
 
 publishing="${1:?usage: should-move-latest.sh <publishing-tag> <published-tag>...}"
@@ -16,14 +19,14 @@ shift
 
 if ! printf '%s' "$publishing" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
     echo "not a stable tag: $publishing" >&2
-    exit 1
+    exit 2
 fi
 
 key_of() {
     local tag="$1"
     if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
         echo "not a stable tag: $tag" >&2
-        return 1
+        return 2
     fi
     local major minor patch
     major="${tag#v}"
@@ -39,7 +42,7 @@ for published in "$@"; do
     published_key="$(key_of "$published")"
     if [[ "$published_key" > "$publishing_key" ]]; then
         echo "$published sorts newer than $publishing; latest stays" >&2
-        exit 1
+        exit 3
     fi
 done
 exit 0
