@@ -70,7 +70,8 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
         reqwest_middleware::Error::Middleware(Box::new(Wrapped(
             "invalid peer certificate: chain incomplete",
             None,
-        )) as Box<dyn std::error::Error + Send + Sync>)
+        ))
+            as Box<dyn std::error::Error + Send + Sync>)
     };
     assert!(
         matches!(strategy.handle(&Err(trust_err())), None),
@@ -85,7 +86,8 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
         reqwest_middleware::Error::Middleware(Box::new(Wrapped(
             "tcp connect error: connection refused",
             None,
-        )) as Box<dyn std::error::Error + Send + Sync>)
+        ))
+            as Box<dyn std::error::Error + Send + Sync>)
     };
     let default_some = reqwest_retry::DefaultRetryableStrategy
         .handle(&Err(ordinary_err()))
@@ -105,19 +107,22 @@ async fn plain_send_retry_stops_at_a_trust_failure() {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     let calls = AtomicUsize::new(0);
-    let context =
-        crate::error::SourceContext::retry(crate::error::SourceProvider::ENRICHR);
+    let context = crate::error::SourceContext::retry(crate::error::SourceProvider::ENRICHR);
     let result = crate::sources::retry_middleware_send(context, 3, || {
         calls.fetch_add(1, Ordering::SeqCst);
         async {
             Err(reqwest_middleware::Error::Middleware(Box::new(Wrapped(
                 "invalid peer certificate: chain incomplete",
                 None,
-            )) as Box<dyn std::error::Error + Send + Sync>))
+            ))
+                as Box<dyn std::error::Error + Send + Sync>))
         }
     })
     .await;
-    assert!(result.is_err(), "the trust failure must surface as an error");
+    assert!(
+        result.is_err(),
+        "the trust failure must surface as an error"
+    );
     assert_eq!(
         calls.load(Ordering::SeqCst),
         1,
