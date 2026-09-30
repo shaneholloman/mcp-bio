@@ -14,3 +14,11 @@ Filed 2026-09-30 under Ian's branch direction (second go-request review): `ticke
 - The entity-track planning notes and the 0.9.1-1.0 backlog edits: superseded by the planning files on main.
 
 After this lands, the branch is deleted; its remaining diff against main is exactly the superseded material above.
+
+## This round's own work and review
+
+Beyond the kids26 carry, this ticket carried the second go-request round: the latest-tag version decision (scripts/should-move-latest.sh wired into publish-release, pinned by tests and the docker-image spec), the per-path classifier tests, the exact evidence-table guard, the raise-review separator phrases, the ratchet in repository-contracts, the changelog corrections, the records (1279 restored, 1280 added, 1276 filed), the backfill gate marker, and the zero-coupling redaction of the review file's branch names (main was red from the literal name).
+
+- Code review (pass 1): REJECT 2026-09-30 (dispatch 85cf92fc-5419-48d9-80cd-2d3ed6357d11, Claude vendor) — the kids26 carry made the tag-time changelog gate demand bullets for 1202/1205/1213/1214 (the scratch-tag artifact showed it), and the 1257 unwrap had collapsed the numbered lists; folded (fixed): backfill frontmatter plus a gate that reads the committed body, and the lists restored.
+- Code review (pass 2): REJECT 2026-09-30 (dispatch 94c43888-e700-4969-a919-c7dc07e8ca79) — the Fix section still ran on (my first repair dropped items), and the CI artifact predated the fixing HEAD; folded (fixed) in c7fbd83a and e759120c, with branch run 36754521995 green at e759120c.
+- Code review (final pass): ACCEPT 2026-09-30 (dispatch 598c0b9a-a9df-46f8-ac8d-7c614809d438) — both folds verified, no findings.
