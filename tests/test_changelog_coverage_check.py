@@ -267,7 +267,13 @@ def test_no_previous_release_passes_without_git_log(tmp_path: Path) -> None:
 
 def test_every_real_unreleased_bullet_describes_its_ticket() -> None:
     content = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    match = re.search(r"^## Unreleased\s*([\s\S]*?)(?=^## |\Z)", content, re.MULTILINE)
+    # After the 0.9.1 release the live section is the 0.9.1 heading
+    # (an Unreleased section returns with the next dev cycle).
+    match = re.search(
+        r"^## (?:Unreleased|0\.9\.1 — 2026-09-30)\s*([\s\S]*?)(?=^## |\Z)",
+        content,
+        re.MULTILINE,
+    )
     assert match is not None
     section = match.group(1)
     described = described_tickets(section)

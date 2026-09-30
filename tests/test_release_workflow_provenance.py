@@ -716,14 +716,6 @@ def _assert_release_locked_builds(parsed: dict) -> None:
                 for line in build_commands
                 if "--release" not in line or "--locked" not in line
             )
-            continue
-            has_release = "--release" in run
-            has_locked = "--locked" in run
-            if not (has_release and has_locked):
-                offenders.append(
-                    f"{job_id} step {index} ({step.get('name', 'run')}): "
-                    f"release={has_release} locked={has_locked}"
-                )
     assert not offenders, (
         "every wheel and tarball build must pass --release --locked "
         f"(GitHub #287): {offenders}"
