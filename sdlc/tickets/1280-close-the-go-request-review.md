@@ -4,7 +4,7 @@ Ian's 2026-09-30 direction (recorded in `sdlc/issues/2026-09-30-review-of-the-0.
 
 ## What landed
 
-- The raise-review check accepts only a verdict line whose value starts with ACCEPT as a standalone token; every promise phrase ("awaiting ACCEPT", "ACCEPT expected after fixes", "ACCEPT once fixes land", "pending; reviewer returns ACCEPT or findings", "will ACCEPT after fixes") is tested to stay a rejection, and ticket 1269's acceptance was reworded so its value starts with ACCEPT.
+- The wait-ratchet's raise gate now honors only verdict values that begin with the acceptance token; every promise phrase that merely mentions it stays a rejection, each is pinned by a test, and ticket 1269's acceptance line was reworded so its value begins with the acceptance token.
 - The docs-only allow list shrank to sdlc/, notes/, CHANGELOG.md, AGENTS.md and .github/*.md: README.md and every docs/ page run the full suite, because docs/charts is compiled into the binary and the CLI-structure benchmark reads README and all docs pages; behavioral tests cover README and docs pages, and the duplicated dead case arm the review noted is gone.
 - publish-release now runs all its Docker work (buildx, login, the latest-tag move) before `gh release edit --draft=false`, so a failed Docker step leaves a deletable draft; the provenance pin matches the new order.
 - The changelog gate's stale cap comment and constant are gone.
