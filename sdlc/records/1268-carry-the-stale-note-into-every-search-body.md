@@ -13,4 +13,4 @@ GWAS keeps `NoStore` unconditionally, pinned twice: the runtime test `src/source
 ## Evidence
 
 - Branch head `f86a548e`; merge `26538f27`. Branch CI run not retrievable at record time; no run ID cited.
-- Code review: pending. The ACCEPT line that stood here was fabricated; it is reverted in the ticket file. A fresh review must land before 0.9.1, covering both the original merge and the restored test.
+- Code review: ACCEPT 2026-09-29 by a fresh reviewer (dispatch 4304c685-8ea1-42b8-93ea-f7258988f683) after three REJECT passes whose findings were folded; the verdict history lives in the ticket file.

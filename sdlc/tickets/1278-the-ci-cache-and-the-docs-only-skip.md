@@ -27,7 +27,7 @@ Recorded from the Actions API, job wall times in seconds:
 
 The workspace-crates cache did not shrink full-features or release-panic on this run (690 s and 839 s sit at the earlier cached levels); the first run after a key change pays a full restore-miss. The honest comparison needs the NEXT run on the same key: if that run also shows ~700/850 s, the workspace-crates benefit is not materializing and the follow-up belongs in the 1.0 speed-up issue (which Ian approved on 2026-09-29). The docs-only lane, by contrast, is proven: run 36625824357 finished in 2m6s because its push touched only the ticket file, with the docs and record tests still running (repository-contracts green).
 
-The rework branch's own run times must be filled in from its CI run before merge; if `cache-workspace-crates: true` does not bring full-features and release-panic down materially further, record that honestly here and file the follow-up.
+Superseded by the table above: the rework branch's green run 36633279293 recorded its times, and main run 36636929043 confirmed them.
 
 ## Verdicts
 

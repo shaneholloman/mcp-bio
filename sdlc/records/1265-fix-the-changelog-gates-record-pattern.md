@@ -16,5 +16,5 @@ The 2026-09-29 review flagged the under-2000 cap as a defect: it is a magic numb
 
 ## Evidence
 
-- Branch head `b1393806` ("Fold the review P2s"); the branch's CI run at record time is beyond the retrievable window of the Actions API, so no run ID is cited here. The merge chain reached main; the runs readable at the merge are recorded in the 1269 entry.
+- Branch head `b1393806` ("Fold the review pass-two findings"); the branch's CI run at record time is beyond the retrievable window of the Actions API, so no run ID is cited here. The merge chain reached main; the runs readable at the merge are recorded in the 1269 entry.
 - Code review: none recorded before the merge; the ticket file carries the round's verdict lines.
