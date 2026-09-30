@@ -21,7 +21,7 @@ Do not tag `2523f29b`. The GHCR `latest` tag still would not move, and the chang
 ## Release blockers
 
 1. The `publish-release` job has no `actions/checkout` step (`release.yml:684-731`), and line 720 runs `scripts/should-move-latest.sh`. On the runner the file does not exist. The call fails, the `if` takes the else branch, the step logs "latest stays put" and exits 0. `latest` stays on 0.9.0. `tests/test_release_workflow_provenance.py:168` only checks that the script name appears. Add the checkout and a test that fails when the job lacks one.
-2. Records 1202, 1205, 1213 and 1214 carry `backfill: v0.9.0`, but their work is not in v0.9.0. v0.9.0 is `a4503038`, dated 2026-09-17. The cell-line commits (`37336c22`, `eed4f2c1`, `fd6a100c`, `bccd2871`) date from 2026-09-18 on and are not ancestors of v0.9.0. `src/cli/cell_line/` is missing from v0.9.0. At `2523f29b` the command exists (`src/cli/commands.rs:46`). So 0.9.1 is the first release to ship the cell-line entity and its PharmacoDB, HPA and ChEMBL sections, and the changelog never mentions them. Ticket 1281 lines 3 and 7 say the code landed long ago, which hides that it was never released. Remove the markers and add a changelog entry, unless Ian decides otherwise (see below).
+2. Records 1202, 1205, 1213 and 1214 carry `backfill: v0.9.0`, but their work is not in v0.9.0. v0.9.0 is `a4503038`, dated 2026-09-17. The cell-line commits (`37336c22`, `eed4f2c1`, `fd6a100c`, `bccd2871`) date from 2026-09-18 on and are not ancestors of v0.9.0. `src/cli/cell_line/` is missing from v0.9.0. At `2523f29b` the command exists (`src/cli/commands.rs:46`). So 0.9.1 is the first release to ship the cell-line entity and its PharmacoDB, HPA and ChEMBL sections, and the changelog never mentions them. Ticket 1281 lines 3 and 7 say the code landed long ago, which hides that it was never released. Remove the markers and add a changelog entry for the new entity.
 
 ## Gate and test holes
 
@@ -39,13 +39,8 @@ Do not tag `2523f29b`. The GHCR `latest` tag still would not move, and the chang
 - Ticket 1269 and record 1264 (from line 7) are still hard-wrapped. `tests/test_ci_classify_push_script.py:3` says "P1".
 - The CHANGELOG line 36 ending "the flat MCP tool schemas are published for client authors" repeats line 7.
 
-## Decision for Ian
+## Ian's direction, 2026-09-30
 
-The cell-line entity ships for the first time in 0.9.1. It reports cell-line data from PharmacoDB, HPA and ChEMBL. Ian's 2026-09-14 ruling puts bench research outside the work.
-
-- Ship it and document it in the changelog. This is the cheapest option and adds no code change.
-- Remove or hide the command before 0.9.1. This needs a ticket, a review and a CI round, and it changes shipped behavior late.
-
-## Ian's direction
-
-(Pending.)
+- Ship the cell-line entity in 0.9.1 and document it in the changelog as a new entity type.
+- BioMCP may search and report public research data, including cell-line data. Nothing in BioMCP needs to be cancer-only.
+- BioMCP does not process primary data files locally, such as FASTQ files.
