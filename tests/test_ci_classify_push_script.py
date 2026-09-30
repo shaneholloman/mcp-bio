@@ -91,14 +91,49 @@ def test_docs_only_push_classifies_true(scratch_repo: Path) -> None:
     assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=true"
 
 
-def test_readme_and_docs_pages_run_full_ci(scratch_repo: Path) -> None:
-    """README.md and every docs/ page are read or compiled by Rust
-    tests (benchmark_cli_structure, chart assets), so a push touching
-    only them runs the full suite (2026-09-30 review).
+@pytest.mark.parametrize(
+    "path",
+    [
+        "README.md",
+        "docs/reference/source-licensing.md",
+        "docs/charts/bar.md",
+        "docs/user-guide/cli-reference.md",
+        "skills/oncology-treatment.md",
+        "spec/surface/mcp.md",
+        "src/cli/list_reference.md",
+    ],
+)
+def test_each_executable_markdown_path_runs_full_ci_alone(
+    tmp_path: Path, path: str
+) -> None:
+    """Each executable-markdown path gets its own fresh repo (the
+    second go-request review found the shared-repo form let README's
+    earlier commit mask the other paths: the merge-base diff kept
+    README in every later case).
     """
-    for path in ("README.md", "docs/reference/source-licensing.md", "docs/charts/bar.md"):
-        sha = _commit(scratch_repo, {path: "changed"}, "docs page")
-        assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=false", path
+    import os
+
+    git_env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@t",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@t",
+    }
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True, env=git_env)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "empty", "--allow-empty"], check=True, env=git_env)
+    subprocess.run(["git", "-C", str(repo), "update-ref", "refs/remotes/origin/main", "HEAD"], check=True, env=git_env)
+    target = repo / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("changed", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True, env=git_env)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "one path"], check=True, env=git_env)
+    sha = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+    assert _run_script(repo, "origin/main", sha) == "docs_only=false", path
 
 
 def test_source_change_classifies_false_even_with_markdown(scratch_repo: Path) -> None:

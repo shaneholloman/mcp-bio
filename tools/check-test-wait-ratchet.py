@@ -306,7 +306,9 @@ def raise_is_accepted(root: Path, record: dict) -> tuple[bool, str]:
         # ACCEPT must be the verdict itself: the token starts the
         # value AND is not immediately an expectation ("ACCEPT
         # expected after fixes", "ACCEPT once fixes land").
-        if re.match(r"ACCEPT\b(?!\s+(?:expected|once|pending|after|is|was|if|when|awaited))", rest):
+        if re.match(
+            r"ACCEPT\b(?![,:;]?\s*(?:expected|once|pending|after|awaited|is|was|if|when))", rest
+        ):
             return True, ""
     return False, (
         f"raise cites ticket {ticket}, whose code review has not "

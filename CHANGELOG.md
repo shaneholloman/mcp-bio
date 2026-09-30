@@ -4,21 +4,20 @@
 
 ### Fixes
 
+- The typed MCP `search` and `get` tool schemas now declare a top-level `"type": "object"` and are published flat for client authors, and malformed tool arguments return a structured error naming the field instead of a silent success. GitHub #284. (1223, 1240)
 - A panicking tool call no longer takes the MCP server down: the server isolates the failure, answers your client with an error, and keeps serving the rest of the session. (1230, 1235)
 - Drug label output now shows boxed warnings and legacy warning text that was previously dropped, so the strongest FDA warnings are visible on every drug card. (1232, 1237)
 - Provider failures now render honestly on cards: a failing source shows its failure instead of an empty section that reads as "no data". (1242)
 - Windows: `biomcp serve` no longer lets `icacls.exe` write into the stdio MCP stream, which broke strict clients between JSON-RPC frames on localized consoles. GitHub #283. (1246)
 - DDInter coverage is carried through to drug cards, and interaction evidence rows are no longer dropped. (1241)
-- Complex searches no longer overflow the stack: large queries that crashed the trial search, drug trials, and adverse-event paths now complete, and the published wheel runs them. GitHub #282. (1243, 1225)
-- An unusable `SSL_CERT_FILE` now degrades to a clear warning at startup instead of aborting the run, and a user-supplied CA bundle is trusted for every outbound connection after a single startup validation. GitHub #250. (1221, 1231, 1236)
-- The typed MCP `search` and `get` tool schemas now declare a top-level `"type": "object"`, so strict clients validate arguments as objects. GitHub #284. (1223)
+- Simple queries no longer crash the executable: `trial search`, drug trials, drug interactions and `drug adverse-events <unknown>` aborted on the 0.9.0 wheel because it carried a debug-profile binary; the wheel now builds with the locked release profile and every one of those paths runs. GitHub #282. (1243, 1225)
+- An unusable `SSL_CERT_FILE` now degrades to a clear warning at startup instead of aborting the run, and a CA bundle supplied through `BIOMCP_CA_BUNDLE` is parsed once at startup and trusted for every outbound connection. GitHub #250. (1221, 1231, 1236)
 - Stale cached data now says so: search results carry the cache age and the true source in `_meta.notes`, GWAS never serves a stale body, and certificate-trust failures fail immediately instead of retrying. (1256, 1263, 1268)
 - A missing skill or empty catalog exits with a clear diagnostic instead of an empty success, and debug builds embed the same skill and chart assets as release builds. GitHub #287. (1267)
 
 ### New features
 
 - Linux wheels target `manylinux_2_28` (built and verified in the official containers) and a Linux ARM64 wheel ships, so `pip install biomcp-cli` works on current glibc systems and ARM servers. (1245)
-- The wheel binary no longer aborts on the deep paths: wheels build with the same locked release profile as the tarballs, and a pre-publish smoke exercises them from the installed wheel. (1225)
 - The Linux tarballs build in the same containers as the wheels and pass the same glibc floor scan, so the documented 2.28 floor holds for both artifact families. (1249)
 - The release publishes a multi-architecture container image (`linux/amd64` and `linux/arm64`), smokes both platforms from the registry, and moves the `latest` tag only after the smokes pass. (1219, 1229)
 - The release gates now test real properties of the artifacts — versions, changelog contents, wheel behavior, live documentation revision — so a mismatched artifact cannot publish, and a failed tag run can be deleted and retried. (1226, 1227, 1233, 1234)
@@ -32,11 +31,10 @@
 ### Internal
 
 - The cache mode no longer leaks between tests: a test that flips it restores it, closing the cross-test pollution behind flaky suites. GitHub #286. (1261)
-- CI runs on every ticket branch and is the merge gate: a branch merges only after its own run finishes green, docs-only bookkeeping pushes still run the record tests, and the docs-only skip is decided by the files changed since the merge-base with main — never by the commit message. (1220, 1250, 1252, 1275, 1278)
+- CI runs on every ticket branch and is the merge gate: a branch merges only after its own run finishes green, and the docs-only skip is decided by the files changed since the merge-base with main; the commit message decides nothing. Bookkeeping pushes still run the record tests. (1220, 1250, 1252, 1275, 1278)
 - Flaky tests were fixed at their mechanisms: waits that polled the clock now wait on signals, the load-sensitive lanes are pinned to a deterministic CPU set, the known-flaky set runs in its own stress lane, and the release-panic, TLS and Windows contracts run the real behavior they name. (1239, 1247, 1248, 1252, 1257)
 - The check suite that guards the repository (review-status grammar, workflow provenance, wait ratchet, licensing tiers) was rebuilt as structural checks that fail when the behavior they guard is removed, and the flat MCP tool schemas are published for client authors. (1251, 1255, 1258, 1264, 1269, 1279)
-- MCP conformance follow-ups from the 2026-07-28 suite: correct protocol metadata, structured argument errors, and flat tool schemas. (1223, 1240)
-- Maintenance: records, docs, and test hygiene across the release cycle (1224, 1228, 1238, 1244, 1254, 1259, 1260, 1265, 1270, part of 1279).
+- Maintenance: records, docs, and test hygiene across the release cycle (1224, 1228, 1238, 1244, 1254, 1259, 1260, 1265, 1270, 1279, 1280, 1281).
 
 ## 0.9.0 — 2026-09-16
 
