@@ -78,6 +78,7 @@
   pinned, and ceiling raises require an accepted review. (1269)
 - The records round finished: dispositions written, run IDs recorded, and the
   flake chases documented. (1270)
+- The CI's docs-only skip classifies by the files changed since the merge-base with main, so a failed commit followed by a markdown commit can never skip the Rust jobs; certificate-trust failures are also no longer retried on the plain-send path, and the record hygiene rounds closed every open disposition. (1279)
 - CI now runs on ticket branches and is the merge gate: a branch merges only
   after its own run finishes green, and docs-only pushes still run the record
   and docs tests. (1275)
