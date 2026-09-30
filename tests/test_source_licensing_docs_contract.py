@@ -492,7 +492,7 @@ def test_the_evidence_table_keeps_one_row_per_line() -> None:
         "a table row is malformed (fewer than four cells)"
     )
     # The separator row must be its own line, not glued to the header.
-    header, separator = table_lines[0], table_lines[1]
+    separator = table_lines[1]
     assert set(separator.replace("|", "").replace("-", "").strip()) == set(), (
         "the second table line must be the pure separator row"
     )
