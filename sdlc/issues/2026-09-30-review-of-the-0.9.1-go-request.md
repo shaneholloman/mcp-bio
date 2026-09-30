@@ -2,6 +2,14 @@
 
 Filed 2026-09-30 from an independent read-only review of main at `7d2c6c13`, range `857a2ba4..7d2c6c13`. Two fresh reviewers covered release readiness and re-ran a mutation for every fix claimed in the go request. Reviewers used scratch clones with scratch tags, offline fixture tests and read-only GitHub queries.
 
+## Ian's direction, 2026-09-30
+
+- Fix every finding in this file before tagging 0.9.1, including the ones listed as follow-ups. There is no rush.
+- Bring the changelog up to date and describe what changed for users.
+- Merge everything, then remove leftover branches and anything else left over.
+- The tag must be clean, the version numbers must check out, and the release must publish the container image.
+- The open GitHub issues fixed in 0.9.1 must be solved in the published release. The issues are #250, #282, #283, #284, #286 and #287.
+
 ## Verdict
 
 The release is ready. No finding blocks tagging `v0.9.1` on `7d2c6c13`. The product fixes are proven. The findings below are record text, one check's coverage, and wording in the public changelog.
