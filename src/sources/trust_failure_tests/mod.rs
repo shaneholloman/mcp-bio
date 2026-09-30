@@ -67,11 +67,10 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
 
     let strategy = super::NoTrustFailureStrategy;
     let trust_err = || {
-        reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+        reqwest_middleware::Error::Middleware(anyhow::Error::new(Wrapped(
             "invalid peer certificate: chain incomplete",
             None,
-        ))
-            as Box<dyn std::error::Error + Send + Sync>)
+        )))
     };
     assert!(
         matches!(strategy.handle(&Err(trust_err())), None),
@@ -83,11 +82,10 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
     // failures. The observable contract: the trust marker changes
     // the answer from the default's to no-retry.
     let ordinary_err = || {
-        reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+        reqwest_middleware::Error::Middleware(anyhow::Error::new(Wrapped(
             "tcp connect error: connection refused",
             None,
-        ))
-            as Box<dyn std::error::Error + Send + Sync>)
+        )))
     };
     let default_some = reqwest_retry::DefaultRetryableStrategy
         .handle(&Err(ordinary_err()))
@@ -111,11 +109,9 @@ async fn plain_send_retry_stops_at_a_trust_failure() {
     let result = crate::sources::retry_middleware_send(context, 3, || {
         calls.fetch_add(1, Ordering::SeqCst);
         async {
-            Err(reqwest_middleware::Error::Middleware(Box::new(Wrapped(
-                "invalid peer certificate: chain incomplete",
-                None,
-            ))
-                as Box<dyn std::error::Error + Send + Sync>))
+            Err(reqwest_middleware::Error::Middleware(anyhow::Error::new(
+                Wrapped("invalid peer certificate: chain incomplete", None),
+            )))
         }
     })
     .await;
