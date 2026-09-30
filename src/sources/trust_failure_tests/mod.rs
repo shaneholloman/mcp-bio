@@ -10,7 +10,7 @@ use super::error_chain_carries;
 /// A synthetic error chain: each level wraps the next the way
 /// hyper/tls errors nest inside a reqwest_middleware error.
 #[derive(Debug)]
-struct Wrapped(&'static str, Option<Box<dyn std::error::Error + 'static>>);
+struct Wrapped(&'static str, Option<Box<dyn std::error::Error + Send + Sync + 'static>>);
 
 impl std::fmt::Display for Wrapped {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
