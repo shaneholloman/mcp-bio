@@ -9,6 +9,9 @@ pytestmark = [pytest.mark.needs_binary]  # docs-only CI excludes this module
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_RELEASE_TICKETS = {
+    "0.9.1": {
+        1202, 1219, 1220, 1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1248, 1249, 1250, 1251, 1252, 1254, 1255, 1256, 1257, 1258, 1259, 1261, 1263, 1264, 1265, 1266, 1267, 1268, 1269, 1270, 1275, 1276, 1278,
+    },
     "0.9.0": {
         1145,
         1198,
@@ -182,6 +185,26 @@ PUBLISHED_V0_8_25_CHANGELOG_BLOCK_SHA256 = (
 )
 
 EXPECTED_RELEASE_MARKERS = {
+    "0.9.1": {
+        "fixes": [
+            "glibc floor check",
+            "stack overflow",
+            "stdio MCP stream",
+        ],
+        "new_features": [
+            "manylinux_2_28",
+            "ARM64",
+        ],
+        "docs": [
+            "documentation is current",
+            "Backlog hygiene",
+            "record hygiene",
+        ],
+        "internal": [
+            "wait on signals",
+            "make stress",
+        ],
+    },
     "0.9.0": {
         "fixes": [
             "servers",
@@ -383,14 +406,21 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
         previous_release_block, "### New features"
     )
 
-    assert changelog.startswith("# Changelog\n\n## Unreleased\n")
+    # After the 0.9.1 release the changelog opens with the release
+    # heading; a fresh Unreleased section returns with the next dev
+    # cycle.
+    assert changelog.startswith("# Changelog\n\n## 0.9.1 — 2026-09-30\n")
     assert current_release_heading in changelog
     assert "## 0.8.21 — 2026-04-16" in changelog
     assert changelog.index(current_release_heading) < changelog.index("## 0.8.21 — 2026-04-16")
     assert "## 0.8.20 — 2026-03-30" in changelog
     assert "## 0.8.19 — 2026-03-26" in changelog
     assert "## 0.8.18 — 2026-03-25" in changelog
-    assert changelog.index("## Unreleased") < changelog.index(current_release_heading)
+    # The Unreleased section is gone at release; it returns with the
+    # next development cycle, ahead of the then-current heading.
+    assert "## Unreleased" not in changelog or changelog.index(
+        "## Unreleased"
+    ) < changelog.index(current_release_heading)
 
     assert "article date-range filtering" in previous_release_block
     assert "Expanded trial search with drug alias union" in previous_release_block

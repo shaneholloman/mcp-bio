@@ -86,7 +86,7 @@
 - The CI cache restores after checkout under a pinned action and caches
   workspace crates; nextest installs through a checksum-verified script. (1278)
 
-### Documentation
+### Docs
 
 - The documentation is current with 0.9.0: new commands, renamed flags, and
   the configuration reference match the shipped binary. (1224)
