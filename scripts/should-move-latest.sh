@@ -14,25 +14,34 @@ set -euo pipefail
 publishing="${1:?usage: should-move-latest.sh <publishing-tag> <published-tag>...}"
 shift
 
-version_of() {
-    local tag="$1"
-    printf '%s' "${tag#v}" | tr '.' ' '
-}
-
-version_key() {
-    # zero-padded fields so lexicographic sort equals version order
-    # for the pre-1.0 shapes this project ships (major.minor.patch).
-    local tag="$1"
-    printf '%03d.%03d.%03d' $(version_of "$tag")
-}
-
 if ! printf '%s' "$publishing" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
     echo "not a stable tag: $publishing" >&2
     exit 1
 fi
 
+# shellcheck disable=SC2207 # the tag shape is pinned above; the
+# split yields exactly three numeric fields.
+read -r -a publishing_fields <<< "${publishing#v}."
+
+key_of() {
+    local tag="$1"
+    if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo "not a stable tag: $tag" >&2
+        return 1
+    fi
+    local major minor patch
+    major="${tag#v}"
+    minor="${major#*.}"
+    patch="${minor#*.}"
+    major="${major%%.*}"
+    minor="${minor%%.*}"
+    printf '%06d%06d%06d' "$major" "$minor" "$patch"
+}
+
+publishing_key="$(key_of "$publishing")"
 for published in "$@"; do
-    if [ "$(version_key "$published")" \> "$(version_key "$publishing")" ]; then
+    published_key="$(key_of "$published")"
+    if [[ "$published_key" > "$publishing_key" ]]; then
         echo "$published sorts newer than $publishing; latest stays" >&2
         exit 1
     fi
