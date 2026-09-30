@@ -79,7 +79,10 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
         )))
     };
     let verdict = strategy.handle(&Err(trust_err()));
-    assert!(verdict.is_none(), "a certificate rejection must not be retried");
+    assert!(
+        verdict.is_none(),
+        "a certificate rejection must not be retried"
+    );
 
     // A non-trust middleware error keeps the default strategy's
     // verdict (whatever it is) — the wrapper only strips trust
