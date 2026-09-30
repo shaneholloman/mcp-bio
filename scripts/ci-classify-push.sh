@@ -39,12 +39,11 @@ while IFS= read -r path; do
     # nothing compiles, embeds or reads. Everything else — code,
     # workflow, spec/, skills/, any src/ markdown, the compiled CLI
     # reference — runs the full suite.
-    sdlc/*|notes/*|CHANGELOG.md|AGENTS.md|.github/*.md) ;;
     # docs/ and README.md are NOT docs-only: docs/charts/ is compiled
     # into the binary (src/cli/chart.rs) and tests/benchmark_cli_
     # structure.rs reads README.md and every docs/**/*.md, so any of
     # them can change Rust-verified behavior (2026-09-30 review).
-    *) docs_only=false; break ;;
+    sdlc/*|notes/*|CHANGELOG.md|AGENTS.md|.github/*.md) ;;
     *) docs_only=false; break ;;
   esac
 done < <(git diff --name-only "$before" "$after")

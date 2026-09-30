@@ -14,7 +14,6 @@
 - The typed MCP `search` and `get` tool schemas now declare a top-level `"type": "object"`, so strict clients validate arguments as objects. GitHub #284. (1223)
 - Stale cached data now says so: search results carry the cache age and the true source in `_meta.notes`, GWAS never serves a stale body, and certificate-trust failures fail immediately instead of retrying. (1256, 1263, 1268)
 - A missing skill or empty catalog exits with a clear diagnostic instead of an empty success, and debug builds embed the same skill and chart assets as release builds. GitHub #287. (1267)
-- The variant, gene, and trial JSON paths now agree with their Markdown cards on what they show and what they call their sources. (1261)
 
 ### New features
 
@@ -32,6 +31,7 @@
 
 ### Internal
 
+- The cache mode no longer leaks between tests: a test that flips it restores it, closing the cross-test pollution behind flaky suites. GitHub #286. (1261)
 - CI runs on every ticket branch and is the merge gate: a branch merges only after its own run finishes green, docs-only bookkeeping pushes still run the record tests, and the docs-only skip is decided by the files changed since the merge-base with main — never by the commit message. (1220, 1250, 1252, 1275, 1278)
 - Flaky tests were fixed at their mechanisms: waits that polled the clock now wait on signals, the load-sensitive lanes are pinned to a deterministic CPU set, the known-flaky set runs in its own stress lane, and the release-panic, TLS and Windows contracts run the real behavior they name. (1239, 1247, 1248, 1252, 1257)
 - The check suite that guards the repository (review-status grammar, workflow provenance, wait ratchet, licensing tiers) was rebuilt as structural checks that fail when the behavior they guard is removed, and the flat MCP tool schemas are published for client authors. (1251, 1255, 1258, 1264, 1269, 1279)

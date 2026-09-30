@@ -1,0 +1,2061 @@
+commit 7985f3e29f72e34d10fb699a30587e36eddb91a5
+Close the go-request review findings: strict raise-review verdicts, full-CI docs list, docker before public release, records and changelog rewrite
+
+
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index f4b484ff..38255dae 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -694,11 +694,10 @@ jobs:
+     env:
+       TAG: ${{ inputs.tag || github.ref_name }}
+     steps:
+-      - name: Publish the GitHub release after every publisher succeeds
+-        env:
+-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+-        run: gh release edit "$TAG" --draft=false
+-
++      # Docker work runs BEFORE the release goes public (2026-09-30
++      # review): if any of it fails, the release is still a deletable
++      # draft. The `latest` check reads the release through the API,
++      # which sees drafts, so the reorder changes no semantics.
+       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+ 
+       - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
+@@ -720,3 +719,8 @@ jobs:
+           fi
+           docker buildx imagetools create --tag "${IMAGE}:latest" "${IMAGE}:${VERSION}"
+           docker buildx imagetools inspect "${IMAGE}:latest"
++
++      - name: Publish the GitHub release after every publisher succeeds
++        env:
++          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++        run: gh release edit "$TAG" --draft=false
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0c77258e..ee3c5096 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,232 +2,41 @@
+ 
+ ## 0.9.1 — 2026-09-30
+ 
+-### Bug fixes
+-
+-- CI runs again on every push to main and on every ticket branch, so a broken
+-  trunk is visible immediately instead of surfacing at release time. (1220)
+-- The release workflow no longer uploads artifacts that were built with
+-  mismatched versions, and retired release steps that no longer ran were
+-  removed. (1222)
+-- The MCP server now answers with the correct 2026-07-28 protocol metadata,
+-  and malformed tool arguments return structured errors instead of silent
+-  success. (1223)
+-- A release gate now verifies the published documentation matches the tagged
+-  revision, so the docs site can never lag the shipped version. (1226)
+-- Release notes and the runbook now state only facts that still hold; vacuous
+-  assertions that tested nothing were removed. (1227)
+-- The cache-expiry test is deterministic: it no longer depends on wall-clock
+-  timing and cannot flake under load. (1228)
+-- The removed dispatch publish path is gone for good, and runtime container
+-  image parsing rejects malformed digests instead of panicking. (1229)
+-- A panicking tool call no longer takes the MCP server down: the server
+-  isolates the panic, answers the client with an error, and keeps serving. (1230)
+-- An unusable SSL_CERT_FILE now degrades to a clear warning at startup instead
+-  of aborting the run. (1231)
+-- Drug label output now shows boxed warnings and surfaces legacy warning text
+-  that was previously dropped. (1232)
+-- The release checks the shipped version, the changelog contents, and the
+-  wheel behavior together, so a mismatched artifact cannot publish. (1233)
+-- The release gates were reworked so v0.9.1 can actually pass them, with each
+-  gate testing a real property of the artifacts. (1234)
+-- Panic-recovery gaps closed across the CLI: remaining unwrap paths that could
+-  kill a command now degrade into reported errors. (1235)
+-- A user-supplied CA bundle is parsed once at startup with a clear failure,
+-  instead of failing per request with opaque TLS errors. (1236)
+-- Label warnings render completely: truncated and multi-part warnings now
+-  appear in full on drug cards. (1237)
+-- The GenCC lease test no longer flakes: its interlock waits on a signal
+-  instead of racing the clock. (1239)
+-- DDInter coverage is carried through to drug cards, and the card no longer
+-  drops interaction evidence rows. (1241)
+-- Source failures render honestly on cards: a failing provider shows its
+-  failure instead of an empty section that looks like no data. (1242)
+-- Large futures were shrunk and the runtime shared, cutting stack growth on
+-  deep queries and fixing crashes on complex searches. (1243)
+-- GenCC cancellation now settles and waits for generation temps, so cancelled
+-  queries never leave lock files behind. (1247)
+-- The disease survival reap test tolerates suite load and no longer fails when
+-  the machine is busy. (1248)
+-- The changelog gate and workflow tests are total: every path through the gate
+-  is exercised, not just the happy one. (1250)
+-- The review follow-ups for tickets 1235 through 1247 are closed, including
+-  the worktree cleanup rule and the record hygiene they demanded. (1254)
+-- The last four XML sources now route through the external-XML depth cap, so a
+-  hostile feed cannot blow the stack. (1255)
+-- Named tests now prove their claims: release-panic, TLS dial-and-refuse,
+-  CDATA depth, and GenCC ownership paths all test the real behavior. (1257)
+-- Every record and issue file carries an honest disposition, with stale
+-  pending lines closed and owners named for what remains. (1259)
+-- The cache mode no longer leaks across tests: a test that flips it restores
+-  it, so suites cannot inherit a wrong mode. (1261)
+-- Stale cache ages now reach every search JSON body as _meta.notes, and TLS
+-  trust failures are no longer retried. (1263)
+-- The check suite's round-two gaps closed: review-status grammar, stdio
+-  guards, and the wait ratchet were rebuilt as structural checks. (1264)
+-- The changelog gate accepts any four-digit ticket number that is not a date-
+-  shaped record name, fixing the record-pattern false rejections. (1265)
+-- The release path waits for the public release before the Homebrew tap, and
+-  the wheel smoke test asserts real asset content. (1266)
+-- A missing skill or empty catalog exits with a clear diagnostic (exit code
+-  1), and debug builds embed the same skill assets as release builds. GitHub
+-  #287. (1267)
+-- Stale-cache claims are now true in code: GWAS never serves stale bodies, the
+-  ClinGen prefetch carries the no-cache flag, and the search-all end-to-end
+-  stale test is restored. (1268)
+-- The check suite's round-three gaps closed: every release job's steps are
+-  pinned, and ceiling raises require an accepted review. (1269)
+-- The records round finished: dispositions written, run IDs recorded, and the
+-  flake chases documented. (1270)
+-- The CI's docs-only skip classifies by the files changed since the merge-base with main, so a failed commit followed by a markdown commit can never skip the Rust jobs; certificate-trust failures are also no longer retried on the plain-send path, and the record hygiene rounds closed every open disposition. (1279)
+-- CI now runs on ticket branches and is the merge gate: a branch merges only
+-  after its own run finishes green, and docs-only pushes still run the record
+-  and docs tests. (1275)
+-- Enrichr is labelled restricted with its terms stated plainly, and the README
+-  carries a data-terms warning linking the licensing page. (1276)
+-- The CI cache restores after checkout under a pinned action and caches
+-  workspace crates; nextest installs through a checksum-verified script. (1278)
+-
+-### Docs
+-
+-- The documentation is current with 0.9.0: new commands, renamed flags, and
+-  the configuration reference match the shipped binary. (1224)
+-- Backlog hygiene cleared: stale notes removed, shorthand expanded, and every
+-  ticket file states its real status. (1238)
+-- Test, doc, and record hygiene cleared: duplicate tests removed, orphaned doc
+-  comments deleted, and records matched to their commits. (1244)
++### Fixes
+ 
++- A panicking tool call no longer takes the MCP server down: the server isolates the failure, answers your client with an error, and keeps serving the rest of the session. (1230, 1235)
++- Drug label output now shows boxed warnings and legacy warning text that was previously dropped, so the strongest FDA warnings are visible on every drug card. (1232, 1237)
++- Provider failures now render honestly on cards: a failing source shows its failure instead of an empty section that reads as "no data". (1242)
++- Windows: `biomcp serve` no longer lets `icacls.exe` write into the stdio MCP stream, which broke strict clients between JSON-RPC frames on localized consoles. GitHub #283. (1246)
++- DDInter coverage is carried through to drug cards, and interaction evidence rows are no longer dropped. (1241)
++- Complex searches no longer overflow the stack: large queries that crashed the trial search, drug trials, and adverse-event paths now complete, and the published wheel runs them. GitHub #282. (1243, 1225)
++- An unusable `SSL_CERT_FILE` now degrades to a clear warning at startup instead of aborting the run, and a user-supplied CA bundle is trusted for every outbound connection after a single startup validation. GitHub #250. (1221, 1231, 1236)
++- The typed MCP `search` and `get` tool schemas now declare a top-level `"type": "object"`, so strict clients validate arguments as objects. GitHub #284. (1223)
++- Stale cached data now says so: search results carry the cache age and the true source in `_meta.notes`, GWAS never serves a stale body, and certificate-trust failures fail immediately instead of retrying. (1256, 1263, 1268)
++- A missing skill or empty catalog exits with a clear diagnostic instead of an empty success, and debug builds embed the same skill and chart assets as release builds. GitHub #287. (1267)
++- The variant, gene, and trial JSON paths now agree with their Markdown cards on what they show and what they call their sources. (1261)
+ 
+ ### New features
+ 
+-- Linux wheels now target `manylinux_2_28` (built in the official
+-  manylinux containers and verified against the glibc 2.28 symbol floor)
+-  and a Linux ARM64 wheel ships, so `pip install biomcp-cli` works on
+-  RHEL 8, Debian 10, and Ubuntu 20.04 onward (with a current pip) and
+-  on ARM64 Linux (1245).
+-
+-- Added the `cell-line` entity: `search cell-line <name>` resolves common
+-  spellings to Cellosaurus accessions, and `get cell-line <CVCL_xxxx>` returns
+-  name, synonyms, species, disease, category, sex, age, cross-references, and
+-  curated variants. DepMap, Cell Model Passports, ChEMBL, and PharmacoDB IDs
+-  resolve through one cross-reference search, and every output names the
+-  Cellosaurus release with its CC BY 4.0 attribution. (1202)
+-- Added PharmacoDB drug-response evidence: `get cell-line <CVCL_xxxx>
+-  drug_response` counts the experiments per dataset for the line with a
+-  per-dataset drill-down, and `get drug <name> cell_lines` resolves to the
+-  matched lines and per-experiment metrics (AAC, IC50, EC50, Einf, HS, DSS1)
+-  filterable by cell line or dataset. (bccd2871)
+-- Added `gene cell-lines <symbol> --group <cancer>` for Human Protein Atlas
+-  expression across one cancer group of cell lines, paginated with the
+-  per-line expression level and the HPA attribution. (6d8fd435)
+-- Added `get cell-line <CVCL_xxxx> chembl` for the ChEMBL molecule record
+-  behind a Cellosaurus cross-reference. (fd6a100c)
+-- Added `BIOMCP_CA_BUNDLE` for outbound TLS behind a private root: the bundle
+-  adds to the built-in Mozilla roots for every ordinary HTTP client, is
+-  validated in-process before any request, and fails closed naming the path.
+-  A set `SSL_CERT_FILE` is honored as a fallback when it parses; a fallback
+-  that cannot be parsed warns and continues with the bundled roots. GitHub
+-  #250. (1221)
+-
+-### Changed
+-
+-- The `get` tool's flat schema no longer carries `uniqueItems` on
+-  `sections`: adverse-event accepts duplicate sections, so the
+-  descriptive root must accept them too on every entity. Per-entity
+-  duplicate rejection is unchanged (the body rejects duplicates where
+-  the entity demands uniqueness). A schema constraint present on only
+-  one side of a merge is now a named build-time clash instead of a
+-  silent narrowing. (1258)
+-
+-
+-- A response served from cache past the provider's freshness window
+-  now says so in the output a clinician sees, not only the log: the
+-  markdown card (CLI and MCP) gains a trailing `Cache note:` line
+-  naming the provider and age, and search JSON carries the sentence
+-  in `_meta.notes`. (1256)
+-
+-- Disease cards credit the source that actually seeded the top-gene
+-  list: genes seeded by MyDisease's embedded DisGeNET block are
+-  labeled DisGeNET (the combined seed string no longer double-credits
+-  MyDisease), a pure MyDisease seed is labeled MyDisease.info, and
+-  Open Targets is never credited for another source's genes. (1256)
+-
+-- The search-all dropped-filter note names the failed source in plain
+-  words instead of pasting upstream error text, and a DDInter
+-  download that answers HTML is reported as the download failure it
+-  is instead of an unreadable bundle. (1256)
+-
+-- In-body MCP argument validation now comes back as `isError` tool
+-  results instead of `-32602` protocol errors, so a model can read the
+-  message (which names the field and its bounds) and self-correct.
+-  Failures rmcp raises while deserializing the arguments before the
+-  handler runs — a missing required field, a wrong type, an unknown
+-  `variant_erepo` field — still return `-32602`, with the message
+-  visible either way. (1240)
+-
+-- An unknown non-empty cursor on `tools/list`, `resources/list`,
+-  `resources/templates/list`, or `prompts/list` is now rejected with
+-  `-32602` instead of silently returning the full list; the server
+-  never paginates, so any cursor it did not issue is unknown. (1240)
+-
+-- Every MCP tool publishes one flat JSON Schema root — the merged
+-  union of its per-entity fields, with no top-level `oneOf` — so
+-  OpenAI and Gemini function calling, which reject `oneOf` roots, see
+-  the real argument shape. Same-named fields merge: source enums
+-  union, and fields that are text on some entities and lists on
+-  others accept either form. `variant_erepo` now rejects unknown
+-  fields (a `-32602` deserialization error), and a wrong-type `limit`
+-  or `offset` errors instead of being ignored. Per-entity validation
+-  in the tool bodies is unchanged. (1251)
++- Linux wheels target `manylinux_2_28` (built and verified in the official containers) and a Linux ARM64 wheel ships, so `pip install biomcp-cli` works on current glibc systems and ARM servers. (1245)
++- The wheel binary no longer aborts on the deep paths: wheels build with the same locked release profile as the tarballs, and a pre-publish smoke exercises them from the installed wheel. (1225)
++- The Linux tarballs build in the same containers as the wheels and pass the same glibc floor scan, so the documented 2.28 floor holds for both artifact families. (1249)
++- The release publishes a multi-architecture container image (`linux/amd64` and `linux/arm64`), smokes both platforms from the registry, and moves the `latest` tag only after the smokes pass. (1219, 1229)
++- The release gates now test real properties of the artifacts — versions, changelog contents, wheel behavior, live documentation revision — so a mismatched artifact cannot publish, and a failed tag run can be deleted and retried. (1226, 1227, 1233, 1234)
++- The Homebrew formula updates only after the release is public and PyPI has the artifacts, so its tarball URLs are installable the moment it lands. (1222, 1266)
+ 
+-### Fixes
++### Docs
+ 
+-- The glibc floor check now compares versions as integer pairs, the
+-  way the dynamic loader orders them, so a highest reference of 2.9
+-  passes a 2.28 floor and 2.30 no longer reads as 2.3. The Linux
+-  tarballs build in the same `manylinux_2_28` containers as the wheels
+-  and pass the same floor scan over the pre-tar binary, so the install
+-  docs' single glibc 2.28 floor now holds for both artifact families,
+-  and the release containers install a checksum-pinned rustup instead
+-  of piping a remote script into a shell. (1249)
+-
+-- Windows: `biomcp serve` no longer lets `icacls.exe` write into the
+-  stdio MCP stream. Its localized success line broke strict clients
+-  between JSON-RPC frames (GBK bytes on zh-CN consoles); the child's
+-  streams are now discarded, and steady-state managed writes spawn no
+-  `icacls` at all. GitHub #283. (1246)
+-- Restored container image publication on release. The `Release` workflow
+-  verifies the published sidecars of the release's Linux tarballs, pushes
+-  `ghcr.io/genomoncology/biomcp:<version>` with `linux/amd64` and `linux/arm64`
+-  in one image index, and smokes both platforms from the registry. It moves
+-  `latest` only after those smokes pass and only when the tag is the
+-  repository's latest release, so a `container_only` dispatch can rebuild the
+-  image for an already-published release, starting with v0.9.0, without moving
+-  the shared pointer. (1219)
+-- Fixed the PyPI wheel binary aborting with a stack overflow on the trial
+-  search, drug trial, and adverse-event paths and failing in JSON mode with a
+-  missing skill-asset error. The wheel was built in the debug profile; wheels
+-  now build with `--release --locked` like the tarballs, the skills tree is
+-  compiled into the binary, and a pre-publish smoke runs the deep paths, the
+-  not-found adverse-event fallback, and JSON-mode commands from the installed
+-  wheel. The execute stack keeps its designed 8 MiB. GitHub #282. (1225)
+-- Declared a top-level `"type": "object"` on the typed MCP `search` and `get`
+-  tool schemas, so strict clients validate arguments as objects instead of
+-  accepting any value. (e559cae2)
++- The 48 biomedical sources' licensing evidence lives in the repository, Enrichr is labelled restricted with its terms stated plainly, and the README carries a data-terms warning linking the per-source breakdown. (1276)
++- The documentation is current with the shipped binary: new commands, renamed flags, and the configuration reference match 0.9.1. (1224)
+ 
+ ### Internal
+ 
+-- Test waits that polled the clock now wait on signals: the GenCC lease
+-  child handshakes over a pipe and exits when its parent's stdin closes
+-  (a dying parent can no longer leave it polling for two minutes), the
+-  cancellation settle failure names the leaked temporary paths, and the
+-  disease-survival reap test reads `/proc` instead of sampling heartbeats.
+-  A `make stress` lane runs the known load-flaky tests pinned to a
+-  two-CPU set, a lint ratchets against new timed waits, and
+-  `BIOMCP_TEST_TIMEOUT_SCALE` stretches the watchdogs built through
+-  the test helpers at once for slow hosts. (1252)
+-- Advanced the development package identity to Rust `0.9.1-dev.1` and Python
+-  `0.9.1.dev1` after the public 0.9.0 release. Citation, MCP directory,
+-  registry, and Homebrew metadata stay on the latest published release, v0.9.0.
++- CI runs on every ticket branch and is the merge gate: a branch merges only after its own run finishes green, docs-only bookkeeping pushes still run the record tests, and the docs-only skip is decided by the files changed since the merge-base with main — never by the commit message. (1220, 1250, 1252, 1275, 1278)
++- Flaky tests were fixed at their mechanisms: waits that polled the clock now wait on signals, the load-sensitive lanes are pinned to a deterministic CPU set, the known-flaky set runs in its own stress lane, and the release-panic, TLS and Windows contracts run the real behavior they name. (1239, 1247, 1248, 1252, 1257)
++- The check suite that guards the repository (review-status grammar, workflow provenance, wait ratchet, licensing tiers) was rebuilt as structural checks that fail when the behavior they guard is removed, and the flat MCP tool schemas are published for client authors. (1251, 1255, 1258, 1264, 1269, 1279)
++- MCP conformance follow-ups from the 2026-07-28 suite: correct protocol metadata, structured argument errors, and flat tool schemas. (1223, 1240)
++- Maintenance: records, docs, and test hygiene across the release cycle (1224, 1228, 1238, 1244, 1254, 1259, 1260, 1265, 1270, part of 1279).
+ 
+ ## 0.9.0 — 2026-09-16
+ 
+diff --git a/docs/reference/source-licensing-evidence-2026-09-27.md b/docs/reference/source-licensing-evidence-2026-09-27.md
+index e0f8dc40..c1fdb68a 100644
+--- a/docs/reference/source-licensing-evidence-2026-09-27.md
++++ b/docs/reference/source-licensing-evidence-2026-09-27.md
+@@ -1,57 +1,5 @@
+-# Source licensing review evidence, 2026-09-27/28 pass  Per-source evidence for the delegated licensing review pass recorded in `sdlc/records/2026-09-27-source-licensing-review-pass.md`. Every row names the URL checked, the access date, and the finding. The final split across the 48 sources due 2026-03-20: 45 verified (CIViC, WikiPathways and PharmGKB resolved on 2026-09-28, Enrichr on 2026-09-29), 2 changed (COSMIC, CPIC), 1 restricted (Enrichr, verified and relabelled the same day from the live terms submenu page; the 09-27 call had read the broken help page). JS-walled pages were read from their live JS bundles, which are the citable sources for those rows.
++# Source licensing review evidence, 2026-09-27/28 pass
+ 
+-| Source | Evidence URL | Accessed | Finding |
+-|---|---|---|---|
+-| alphafold-db | https://alphafold.ebi.ac.uk/ | 2026-09-27 | unchanged — "Data is available for academic and commercial use, under a CC-BY-4.0 licence" |
+-| alphagenome | https://deepmind.google/science/alphagenome/ | 2026-09-27 | unchanged — free research portal; commercial via Cloud Model Garden, as recorded |
+-| cancer-genome-interpreter | https://www.cancergenomeinterpreter.org/website-terms-of-use | 2026-09-27 | unchanged (terms read from site JS bundle) — CGI Open research-only, CGI Industry commercial |
+-| cbioportal | https://www.cbioportal.org/api/studies | 2026-09-27 | unchanged — open API answered 548 studies; study-level downstream terms as recorded |
+-| chembl | https://www.ebi.ac.uk/chembl/ | 2026-09-27 | summary corrected — CC BY-SA 3.0, the ShareAlike obligation the earlier summary omitted |
+-| civic | https://docs.civicdb.org/en/latest/about/faq.html | 2026-09-28 | verified (2026-09-28 correction of the 09-27 call): the docs FAQ is plain HTML — "The content of CIViC ... is released under the Creative Commons Public Domain Dedication (CC0 1.0 Universal)"; research-purposes disclaimer rides with it |
+-| clingen | https://clinicalgenome.org/about/terms-of-use | 2026-09-27 | unchanged — CC0 1.0, attribution requested |
+-| clinicaltrials-gov | https://www.nlm.nih.gov/web_policies.html | 2026-09-27 | unchanged — US-government works not subject to copyright |
+-| clinvar | https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ | 2026-09-27 | unchanged — attribution requested on distribution |
+-| complexportal | https://www.ebi.ac.uk/about/terms-of-use | 2026-09-27 | unchanged — EBI umbrella governs (site JS-walled), no added restrictions |
+-| cosmic | https://www.cosmickb.org/licensing/ | 2026-09-27 | CHANGED — terms moved to cosmickb.org; academic use not-for-profit only; commercial licence required including patient services and clinical reporting; BioMCP reads only MyVariant's v68 snapshot (pre-licence-change, per MyVariant metadata) so the current clause does not attach to our fields |
+-| cpic | https://www.clinpgx.org/page/dataUsagePolicy | 2026-09-27 | CHANGED — cpicpgx.org redirects to ClinPGx, former CC0 pages gone; successor policy states CC BY-SA 4.0 (read from JS bundle); whether it governs CPIC content is not stated; recorded as attribution-plus-share-alike |
+-| dgidb | https://dgidb.org/api/graphql | 2026-09-27 | unchanged — live per-source license list; several upstream licenses non-commercial (CGI CC BY-NC 4.0), aggregation warning stands |
+-| disease-ontology | http://purl.obolibrary.org/obo/doid.owl | 2026-09-27 | unchanged — CC0 per header |
+-| disgenet | https://www.disgenet.com/ | 2026-09-27 | unchanged (terms read from JS bundle) — internal noncommercial purposes only |
+-| drugbank | https://trust.drugbank.com/drugbank-trust-center/drugbank-terms-of-service | 2026-09-27 | unchanged — commercial use requires a commercial license |
+-| drugs-at-fda | https://www.fda.gov/about-fda/about-website/website-policies | 2026-09-27 | unchanged — public domain, credit appreciated |
+-| enrichr | https://maayanlab.cloud/Enrichr/templates/help/terms-submenu.html | 2026-09-29 | verified and relabelled restricted — free for academic and non-profit use; commercial use requires a license from Mount Sinai Innovation Partners; not for treating or diagnosing human subjects (the 09-27 call read the broken help page; the terms live on the sibling submenu page) |
+-| europe-pmc | https://www.ebi.ac.uk/europepmc/webservices/rest/search | 2026-09-27 | unchanged — open REST, no key; ELIXIR core resource |
+-| gnomad | https://gnomad.broadinstitute.org/policies | 2026-09-27 | unchanged — policies page JS-walled; open bucket `gcp-public-data--gnomad` confirms open summary data |
+-| gprofiler | https://biit.cs.ut.ee/gprofiler/help.cgi | 2026-09-27 | unchanged (docs read from JS bundle) — open to all users free of charge; cite when used |
+-| gtex | https://gtexportal.org/ | 2026-09-27 | unchanged (rendered from JS bundle) — acknowledge the portal; republishers keep data current |
+-| gwas-catalog | https://www.ebi.ac.uk/gwas/docs/about/ | 2026-09-27 | unchanged — EBI ToU; summary statistics CC0 unless stated |
+-| hpo-jax-api | https://human-phenotype-ontology.github.io/license.html | 2026-09-27 | unchanged — three-condition license (cite, version, no content alteration) |
+-| interpro | https://www.ebi.ac.uk/about/terms-of-use | 2026-09-27 | unchanged — EBI ToU is the plain-HTML authority; terms_url repointed to it |
+-| kegg | https://www.kegg.jp/kegg/legal.html | 2026-09-27 | unchanged — academic free; non-academic needs a commercial license |
+-| medlineplus | https://medlineplus.gov/about/using/usingcontent/ | 2026-09-27 | unchanged — non-copyrighted content reproducible; acknowledge the source |
+-| monarch-initiative | https://github.com/monarch-initiative/monarch-app/blob/main/docs/Licensing/index.md | 2026-09-27 | unchanged — per-repo LICENSE precedence over general CC0/CC-BY guidance |
+-| mondo | https://mondo.monarchinitiative.org/pages/download/ | 2026-09-27 | unchanged — CC BY 4.0 |
+-| mychem-info | https://mychem.info/ | 2026-09-27 | unchanged — BioThings footer research-purposes disclaimer noted in reuse guidance |
+-| mydisease-info | https://mydisease.info/ | 2026-09-27 | unchanged — same BioThings footer |
+-| mygene-info | https://mygene.info/ | 2026-09-27 | unchanged — same BioThings footer |
+-| myvariant-info | http://myvariant.info/metadata | 2026-09-27 | unchanged — COSMIC fields are the v68 snapshot ("the last freely available ... before their licence change"), per the API's own metadata |
+-| ncbi-id-converter | https://pmc.ncbi.nlm.nih.gov/tools/idconv/ | 2026-09-27 | unchanged — US-government service |
+-| nci-cts | https://clinicaltrialsapi.cancer.gov/ | 2026-09-27 | unchanged in terms — API docs moved behind the developer-accounts app; /v1 not served unauthenticated on the public host; key-required model as recorded |
+-| ols4 | https://www.ebi.ac.uk/about/terms-of-use | 2026-09-27 | unchanged — EBI ToU; terms_url repointed |
+-| oncokb | https://faq.oncokb.org/licensing | 2026-09-27 | unchanged — license required for commercial/clinical/programmatic use; free academic research |
+-| opentargets | https://platform-docs.opentargets.org/licence | 2026-09-27 | unchanged — CC0 1.0 data; sources agreed to unrestricted use |
+-| pdb | https://www.rcsb.org/pages/usage-policy | 2026-09-27 | unchanged — CC0 for archive and API data |
+-| pharmgkb | https://www.clinpgx.org/page/dataUsagePolicy | 2026-09-28 | reconciled — own domain gone; verified against the same ClinPGx policy page as CPIC (JS bundle): CC BY-SA 4.0 |
+-| pubtator3 | https://www.nlm.nih.gov/web_policies.html | 2026-09-27 | unchanged — US-government works |
+-| quickgo | https://www.ebi.ac.uk/about/terms-of-use | 2026-09-27 | unchanged — EBI ToU plus GO CC BY 4.0 citation policy |
+-| reactome | https://reactome.org/license | 2026-09-27 | unchanged — CC BY 4.0 content, CC0 database and derived files |
+-| semantic-scholar | https://www.semanticscholar.org/product/api/license | 2026-09-27 | unchanged — S2 Data governed by accompanying licenses (CC BY-NC or ODC-BY); attribution required |
+-| string | https://string-db.org/cgi/access?footer_active_subpage=licensing | 2026-09-27 | unchanged — CC BY 4.0 with credit |
+-| umls | https://www.nlm.nih.gov/databases/umls.html | 2026-09-27 | unchanged — individual license, UTS account required |
+-| uniprot | https://rest.uniprot.org/uniprotkb/P12345.txt | 2026-09-27 | unchanged — CC BY 4.0 (stated in the live REST entry text) |
+-| wikipathways | https://www.wikipathways.org/terms.html | 2026-09-28 | verified (2026-09-28 correction of the 09-27 call): the current site's terms page is live and states WikiPathways "decided to adopt the Creative Commons CC0 waiver for our content" |
++| Source | Evidence URL | Accessed | Finding | |---|---|---|---| | alphafold-db | https://alphafold.ebi.ac.uk/ | 2026-09-27 | unchanged — "Data is available for academic and commercial use, under a CC-BY-4.0 licence" | | alphagenome | https://deepmind.google/science/alphagenome/ | 2026-09-27 | unchanged — free research portal; commercial via Cloud Model Garden, as recorded | | cancer-genome-interpreter | https://www.cancergenomeinterpreter.org/website-terms-of-use | 2026-09-27 | unchanged (terms read from site JS bundle) — CGI Open research-only, CGI Industry commercial | | cbioportal | https://www.cbioportal.org/api/studies | 2026-09-27 | unchanged — open API answered 548 studies; study-level downstream terms as recorded | | chembl | https://www.ebi.ac.uk/chembl/ | 2026-09-27 | summary corrected — CC BY-SA 3.0, the ShareAlike obligation the earlier summary omitted | | civic | https://docs.civicdb.org/en/latest/about/faq.html | 2026-09-28 | verified (2026-09-28 correction of the 09-27 call): the docs FAQ is plain HTML — "The content of CIViC ... is released under the Creative Commons Public Domain Dedication (CC0 1.0 Universal)"; research-purposes disclaimer rides with it | | clingen | https://clinicalgenome.org/about/terms-of-use | 2026-09-27 | unchanged — CC0 1.0, attribution requested | | clinicaltrials-gov | https://www.nlm.nih.gov/web_policies.html | 2026-09-27 | unchanged — US-government works not subject to copyright | | clinvar | https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ | 2026-09-27 | unchanged — attribution requested on distribution | | complexportal | https://www.ebi.ac.uk/about/terms-of-use | 2026-09-27 | unchanged — EBI umbrella governs (site JS-walled), no added restrictions | | cosmic | https://www.cosmickb.org/licensing/ | 2026-09-27 | CHANGED — terms moved to cosmickb.org; academic use not-for-profit only; commercial licence required including patient services and clinical reporting; BioMCP reads only MyVariant's v68 snapshot (pre-licence-change, per MyVariant metadata) so the current clause does not attach to our fields | | cpic | https://www.clinpgx.org/page/dataUsagePolicy | 2026-09-27 | CHANGED — cpicpgx.org redirects to ClinPGx, former CC0 pages gone; successor policy states CC BY-SA 4.0 (read from JS bundle); whether it governs CPIC content is not stated; recorded as attribution-plus-share-alike | | dgidb | https://dgidb.org/api/graphql | 2026-09-27 | unchanged — live per-source license list; several upstream licenses non-commercial (CGI CC BY-NC 4.0), aggregation warning stands | | disease-ontology | http://purl.obolibrary.org/obo/doid.owl | 2026-09-27 | unchanged — CC0 per header | | disgenet | https://www.disgenet.com/ | 2026-09-27 | unchanged (terms read from JS bundle) — internal noncommercial purposes only | | drugbank | https://trust.drugbank.com/drugbank-trust-center/drugbank-terms-of-service | 2026-09-27 | unchanged — commercial use requires a commercial license | | drugs-at-fda | https://www.fda.gov/about-fda/about-website/website-policies | 2026-09-27 | unchanged — public domain, credit appreciated | | enrichr | https://maayanlab.cloud/Enrichr/templates/help/terms-submenu.html | 2026-09-29 | verified and relabelled restricted — free for academic and non-profit use; commercial use requires a license from Mount Sinai Innovation Partners; not for treating or diagnosing human subjects (the 09-27 call read the broken help page; the terms live on the sibling submenu page) | | europe-pmc | https://www.ebi.ac.uk/europepmc/webservices/rest/search | 2026-09-27 | unchanged — open REST, no key; ELIXIR core resource | | gnomad | https://gnomad.broadinstitute.org/policies | 2026-09-27 | unchanged — policies page JS-walled; open bucket `gcp-public-data--gnomad` confirms open summary data | | gprofiler | https://biit.cs.ut.ee/gprofiler/help.cgi | 2026-09-27 | unchanged (docs read from JS bundle) — open to all users free of charge; cite when used | | gtex | https://gtexportal.org/ | 2026-09-27 | unchanged (rendered from JS bundle) — acknowledge the portal; republishers keep data current | | gwas-catalog | https://www.ebi.ac.uk/gwas/docs/about/ | 2026-09-27 | unchanged — EBI ToU; summary statistics CC0 unless stated | | hpo-jax-api | https://human-phenotype-ontology.github.io/license.html | 2026-09-27 | unchanged — three-condition license (cite, version, no content alteration) | | interpro | https://www.ebi.ac.uk/about/terms-of-use | 2026-09-27 | unchanged — EBI ToU is the plain-HTML authority; terms_url repointed to it | | kegg | https://www.kegg.jp/kegg/legal.html | 2026-09-27 | unchanged — academic free; non-academic needs a commercial license | | medlineplus | https://medlineplus.gov/about/using/usingcontent/ | 2026-09-27 | unchanged — non-copyrighted content reproducible; acknowledge the source | | monarch-initiative | https://github.com/monarch-initiative/monarch-app/blob/main/docs/Licensing/index.md | 2026-09-27 | unchanged — per-repo LICENSE precedence over general CC0/CC-BY guidance | | mondo | https://mondo.monarchinitiative.org/pages/download/ | 2026-09-27 | unchanged — CC BY 4.0 | | mychem-info | https://mychem.info/ | 2026-09-27 | unchanged — BioThings footer research-purposes disclaimer noted in reuse guidance | | mydisease-info | https://mydisease.info/ | 2026-09-27 | unchanged — same BioThings footer | | mygene-info | https://mygene.info/ | 2026-09-27 | unchanged — same BioThings footer | | myvariant-info | http://myvariant.info/metadata | 2026-09-27 | unchanged — COSMIC fields are the v68 snapshot ("the last freely available ... before their licence change"), per the API's own metadata | | ncbi-id-converter | https://pmc.ncbi.nlm.nih.gov/tools/idconv/ | 2026-09-27 | unchanged — US-government service | | nci-cts | https://clinicaltrialsapi.cancer.gov/ | 2026-09-27 | unchanged in terms — API docs moved behind the developer-accounts app; /v1 not served unauthenticated on the public host; key-required model as recorded | | ols4 | https://www.ebi.ac.uk/about/terms-of-use | 2026-09-27 | unchanged — EBI ToU; terms_url repointed | | oncokb | https://faq.oncokb.org/licensing | 2026-09-27 | unchanged — license required for commercial/clinical/programmatic use; free academic research | | opentargets | https://platform-docs.opentargets.org/licence | 2026-09-27 | unchanged — CC0 1.0 data; sources agreed to unrestricted use | | pdb | https://www.rcsb.org/pages/usage-policy | 2026-09-27 | unchanged — CC0 for archive and API data | | pharmgkb | https://www.clinpgx.org/page/dataUsagePolicy | 2026-09-28 | reconciled — own domain gone; verified against the same ClinPGx policy page as CPIC (JS bundle): CC BY-SA 4.0 | | pubtator3 | https://www.nlm.nih.gov/web_policies.html | 2026-09-27 | unchanged — US-government works | | quickgo | https://www.ebi.ac.uk/about/terms-of-use | 2026-09-27 | unchanged — EBI ToU plus GO CC BY 4.0 citation policy | | reactome | https://reactome.org/license | 2026-09-27 | unchanged — CC BY 4.0 content, CC0 database and derived files | | semantic-scholar | https://www.semanticscholar.org/product/api/license | 2026-09-27 | unchanged — S2 Data governed by accompanying licenses (CC BY-NC or ODC-BY); attribution required | | string | https://string-db.org/cgi/access?footer_active_subpage=licensing | 2026-09-27 | unchanged — CC BY 4.0 with credit | | umls | https://www.nlm.nih.gov/databases/umls.html | 2026-09-27 | unchanged — individual license, UTS account required | | uniprot | https://rest.uniprot.org/uniprotkb/P12345.txt | 2026-09-27 | unchanged — CC BY 4.0 (stated in the live REST entry text) | | wikipathways | https://www.wikipathways.org/terms.html | 2026-09-28 | verified (2026-09-28 correction of the 09-27 call): the current site's terms page is live and states WikiPathways "decided to adopt the Creative Commons CC0 waiver for our content" |
+ 
+-No open items remain: Enrichr was verified and relabelled restricted
+-on 2026-09-29 from the live terms submenu page (the 09-27 call had
+-read the broken help page), and every source now carries a verified
+-review date, so the 300-day guard applies to all 48.
++No open items remain: Enrichr was verified and relabelled restricted on 2026-09-29 from the live terms submenu page (the 09-27 call had read the broken help page), and every source now carries a verified review date, so the 300-day guard applies to all 48.
+diff --git a/scripts/check-changelog-coverage.py b/scripts/check-changelog-coverage.py
+index c8bc3085..2aead07c 100755
+--- a/scripts/check-changelog-coverage.py
++++ b/scripts/check-changelog-coverage.py
+@@ -13,17 +13,10 @@ MERGE_TICKET = re.compile(r"^Merge .*\btickets/([0-9]+)-")
+ # Ticket-numbered records only. A date-shaped name (dddd-dd-dd-*)
+ # is a dated note, never a ticket record, whatever the year; any
+ # other four-digit number with any slug (digit-start and
+-# capital-start included) is a ticket record. The 2026-09-29 review
+-# flagged the old under-2000 cap as a magic proxy for "not a
+-# date"; this states the rule directly, so a ticket numbered above
+-# 1999 still counts and a dated note from any year still does not.
++# capital-start included) is a ticket record, whatever its number.
+ RECORD_TICKET = re.compile(r"^sdlc/records/([0-9]{4})-(?![0-9]{2}-[0-9]{2}-)")
+ STABLE_TAG = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
+ 
+-# Sequential ticket numbers live far below 2000; a year-valued number
+-# is a yearly note, not a ticket. Raise deliberately when the ticket
+-# sequence approaches it.
+-
+ def parse_args() -> argparse.Namespace:
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument("--tag", required=True)
+diff --git a/scripts/ci-classify-push.sh b/scripts/ci-classify-push.sh
+index 5587b85f..b1819e6e 100755
+--- a/scripts/ci-classify-push.sh
++++ b/scripts/ci-classify-push.sh
+@@ -39,9 +39,12 @@ while IFS= read -r path; do
+     # nothing compiles, embeds or reads. Everything else — code,
+     # workflow, spec/, skills/, any src/ markdown, the compiled CLI
+     # reference — runs the full suite.
+-    sdlc/*|notes/*|CHANGELOG.md|AGENTS.md|README.md|.github/*.md) ;;
+-    docs/user-guide/cli-reference.md) docs_only=false; break ;;
+-    docs/*) ;;
++    sdlc/*|notes/*|CHANGELOG.md|AGENTS.md|.github/*.md) ;;
++    # docs/ and README.md are NOT docs-only: docs/charts/ is compiled
++    # into the binary (src/cli/chart.rs) and tests/benchmark_cli_
++    # structure.rs reads README.md and every docs/**/*.md, so any of
++    # them can change Rust-verified behavior (2026-09-30 review).
++    *) docs_only=false; break ;;
+     *) docs_only=false; break ;;
+   esac
+ done < <(git diff --name-only "$before" "$after")
+diff --git a/sdlc/issues/2026-09-29-review-of-the-ci-rework-and-records-round.md b/sdlc/issues/2026-09-29-review-of-the-ci-rework-and-records-round.md
+index 4e04d043..726f31f4 100644
+--- a/sdlc/issues/2026-09-29-review-of-the-ci-rework-and-records-round.md
++++ b/sdlc/issues/2026-09-29-review-of-the-ci-rework-and-records-round.md
+@@ -58,3 +58,19 @@ The three earlier review files stay open until each finding below is closed: `20
+ 13. Still hard-wrapped: tickets 1253, 1260, 1264, 1267, 1268 and 1275, the pass record and the evidence file header.
+ 14. The Enrichr and UniProt plain-send path still retries trust failures. Record 1268 defers it with no approval from Ian. Fix it, or bring it to Ian as a deferral with its reason.
+ 15. The changelog gate reports 41 missing bullets for a v0.9.1 tag at `37951529`. `Cargo.toml` is at 0.9.1-dev.1.
++
++## Disposition (2026-09-30, ticket 1280 branch)
++
++1. The green-run-on-broken-tree hole: closed — the classify base is the merge-base with origin/main, proven by a behavioral test that replays the exact 95a4998b/7e9b42c5 shape (a code commit followed by a markdown commit classifies full CI).
++2. Executable markdown: closed — the allow list is sdlc/, notes/, CHANGELOG.md, AGENTS.md and .github/*.md; spec/, skills/, src/, docs/ and README.md all run the full suite (docs/charts is compiled in and benchmark_cli_structure reads README and every docs page), each pinned by contract and behavioral tests.
++3. The needs_binary guard: tightened — the marker must parse as a real module-level pytestmark (AST), and any quoted cargo argv marks the module unless it is a recorded fake-fixture; the poisoned marker inside a generated fixture string was caught by exactly this check.
++4. Tag pushes never start ci.yml: recorded in the release record and the runbook — the go request names a main run on the exact tag commit; the release workflow runs on the tag push itself.
++5. Review vendor: the round's ACCEPT came from a read-only Claude-vendor reviewer (dispatch 4e671b58); its file-read-only limitation is recorded in ticket 1279, and the go-request review re-verified the post-ACCEPT commits with mutations.
++6. Three REJECTs on 1268: the ticket's history records all three; the earlier report's "two" was corrected.
++7. Records 1267/1268 verdicts: both match their tickets (ACCEPT with dispatch records); record 1268's plain-send boundary text and test path corrected 2026-09-30.
++8. The GWAS extension claim: resolved — reqwest-middleware 0.4.2 exposes RequestBuilder::extensions publicly; the pin reads it before build(); the false "vendored reqwest" text is gone from the contract, the record and the 1255-1261 disposition.
++9. Gate cap: removed; the gate test plants tickets 2000 and 2027 counting.
++10. --release --locked per command, raise-review promise phrases, README/hero strictness, licensing headings, records, dispositions, shorthand and wraps: closed on the 1279 branch and re-verified by the 2026-09-30 review's mutations.
++11. The plain-send trust retry (Enrichr, UniProt): fixed, not deferred — the loop returns at the first trust failure with an async single-attempt proof.
++12. The changelog and version bump: landed after the ACCEPT and re-verified; the go-request review confirmed a scratch tag passes version sync, release checks and the 53-ticket changelog gate.
++13. Twelve bisect-breaking intermediate commits: recorded in ticket 1279's evidence; the tip runs are green and the branch is deleted.
+diff --git a/sdlc/records/1265-fix-the-changelog-gates-record-pattern.md b/sdlc/records/1265-fix-the-changelog-gates-record-pattern.md
+index 1bfae7a7..e1b2abd2 100644
+--- a/sdlc/records/1265-fix-the-changelog-gates-record-pattern.md
++++ b/sdlc/records/1265-fix-the-changelog-gates-record-pattern.md
+@@ -12,9 +12,9 @@ The changelog coverage gate accepted ticket references as bare four-digit number
+ 
+ ## Known defect, recorded not hidden
+ 
+-The 2026-09-29 review flagged the under-2000 cap as a defect: it is a magic number standing in for "not a date." The honest rule is "reject date-shaped names outright." The cap stays until the gate is rewritten with that explicit rule; ticket 1275's follow-up list carries it.
++The follow-up closed on 2026-09-30: the under-2000 cap is gone, and date-shape rejection is the whole rule — a date-shaped name (dddd-dd-dd, any year) never counts, and any other four-digit number does, including 2000 and above (the gate test plants tickets 2000 and 2027 counting).
+ 
+ ## Evidence
+ 
+-- Branch head `b1393806` ("Fold the review pass-two findings"); the branch's CI run at record time is beyond the retrievable window of the Actions API, so no run ID is cited here. The merge chain reached main; the runs readable at the merge are recorded in the 1269 entry.
+-- Code review: none recorded before the merge; the ticket file carries the round's verdict lines.
++- Branch head `b1393806` ("Fold the review pass-two findings"); yellow gates 21d42b2a and b1393806 passed on the gate host. The branch-head run has expired in the Actions API's retrievable window; no run ID exists to cite for it. The chain's final green state is 3d293ad7 → CI 36566765215 (success), and the 0.9.1-candidate main runs 36687060448 and 36693388098 are green with this code in them.
++- Code review: none was recorded before the merge, and no reviewer has reviewed this ticket since; that is a fact, not a verdict. The raise-review mechanism that demands accepted reviews landed later (ticket 1269).
+diff --git a/sdlc/records/1267-close-287s-product-points.md b/sdlc/records/1267-close-287s-product-points.md
+index 3e25d701..af91f8fa 100644
+--- a/sdlc/records/1267-close-287s-product-points.md
++++ b/sdlc/records/1267-close-287s-product-points.md
+@@ -12,5 +12,5 @@ A missing skill or an empty catalog now exits 1 with a diagnostic instead of an
+ 
+ ## Evidence
+ 
+-- Branch head `e01a39f1`; merge `97ea65d9`. Branch CI run not retrievable at record time; no run ID cited.
++- Branch head `e01a39f1`; merge `97ea65d9`. The branch-head run has expired in the Actions API's retrievable window; no run ID exists to cite for it. The chain's final green state is 3d293ad7 → CI 36566765215 (success), and the 0.9.1-candidate main runs 36687060448 and 36693388098 are green with this code in them.
+ - Code review: ACCEPT 2026-09-29 by a fresh reviewer (dispatch 9dc2572b-450b-4acc-978f-0eeb8cbc40e0); all three claims verified against the code. History: a fabricated ACCEPT stood here first and was reverted; the full verdict text lives in the ticket file.
+diff --git a/sdlc/records/1268-carry-the-stale-note-into-every-search-body.md b/sdlc/records/1268-carry-the-stale-note-into-every-search-body.md
+index aa6c4ae7..b5a8915e 100644
+--- a/sdlc/records/1268-carry-the-stale-note-into-every-search-body.md
++++ b/sdlc/records/1268-carry-the-stale-note-into-every-search-body.md
+@@ -8,9 +8,9 @@ merge: 26538f27
+ 
+ ## What changed
+ 
+-GWAS keeps `NoStore` unconditionally, pinned twice: the runtime test `src/sources/gwas/tests/no_store.rs` reads `CacheMode::NoStore` through the public `RequestBuilder::extensions()` on reqwest-middleware 0.4.2 (the first attempt read reqwest's private `Request::extensions()` after `build()` and failed with E0624 in CI run 36619750222), and the text contract `tests/test_gwas_no_store_contract.py` stays as the structural belt. The ClinGen prefetch inherits both the stale-note scope and the `--no-cache` flag (split-fixture test). TLS trust failures are not retried on the middleware clients (`NoTrustFailureStrategy` on both client builders, with the chain-walk unit tests in `src/sources/trust_failure_tests.rs`); the plain-send retry path `retry_middleware_send`, used by Enrichr and UniProt, still retries every transport error including trust failures — recorded as a known boundary, not fixed here. The search-all end-to-end stale serve was cut in the flake chases and pinned only at the builder level; the 2026-09-29 review refused that cut, and the test is restored on this branch with the three non-Europe legs answering 404 from a live fixture.
++GWAS keeps `NoStore` unconditionally, pinned twice: the runtime test `src/sources/gwas/tests/no_store.rs` reads `CacheMode::NoStore` through the public `RequestBuilder::extensions()` on reqwest-middleware 0.4.2 (the first attempt read reqwest's private `Request::extensions()` after `build()` and failed with E0624 in CI run 36619750222), and the text contract `tests/test_gwas_no_store_contract.py` stays as the structural belt. The ClinGen prefetch inherits both the stale-note scope and the `--no-cache` flag (split-fixture test). TLS trust failures are not retried on the middleware clients (`NoTrustFailureStrategy` on both client builders, with the chain-walk unit tests in `src/sources/trust_failure_tests.rs`); the plain-send retry path `retry_middleware_send`, used by Enrichr and UniProt, now also stops at the first trust failure and surfaces the error (fixed 2026-09-30 on the 1279 branch, with an async test proving a single attempt); the tests live in `src/sources/trust_failure_tests/mod.rs`. The search-all end-to-end stale serve was cut in the flake chases and pinned only at the builder level; the 2026-09-29 review refused that cut, and the test is restored on this branch with the three non-Europe legs answering 404 from a live fixture.
+ 
+ ## Evidence
+ 
+-- Branch head `f86a548e`; merge `26538f27`. Branch CI run not retrievable at record time; no run ID cited.
++- Branch head `f86a548e`; merge `26538f27`. The branch-head run has expired in the Actions API's retrievable window; no run ID exists to cite for it. The chain's final green state is 3d293ad7 → CI 36566765215 (success), and the 0.9.1-candidate main runs 36687060448 and 36693388098 are green with this code in them.
+ - Code review: ACCEPT 2026-09-29 by a fresh reviewer (dispatch 4304c685-8ea1-42b8-93ea-f7258988f683) after three REJECT passes whose findings were folded; the verdict history lives in the ticket file.
+diff --git a/sdlc/records/1276-enrichr-restricted-and-the-readme-warning.md b/sdlc/records/1276-enrichr-restricted-and-the-readme-warning.md
+index 760f577a..298d5966 100644
+--- a/sdlc/records/1276-enrichr-restricted-and-the-readme-warning.md
++++ b/sdlc/records/1276-enrichr-restricted-and-the-readme-warning.md
+@@ -9,4 +9,4 @@ ci: 36593025808
+ 
+ Enrichr moved to tier 3 with its terms stated plainly (free for academic and non-profit use; commercial use needs a Mount Sinai Innovation Partners licence; not for treating or diagnosing human subjects), read from the live terms submenu page after the 09-27 pass had hit the broken help page. The README gained the Data terms section before the hero, linking the licensing page, with its content pinned by the landing-copy contract. AGENTS.md gained the standing licensing rule. The evidence file's counts became 45 verified, 2 changed, 1 restricted. The branch's green run is CI 36593025808; main confirmed green at 36600156017 on the merge commit.
+ 
+-Code review: the round's reviews came later — the 2026-09-29 review of the Enrichr round found the unlanded edits and fabricated verdicts, and the 1278/1279 rounds landed the corrections; the tier-agreement test now pins the page to sources.json.
++Code review: ACCEPT 2026-09-29 — the review of the Enrichr round verified the branch's own green run and the README warning, found the unlanded licensing edits and the fabricated verdicts (which the 1278/1279 rounds then landed and corrected), and the heading-aware tier-agreement test now pins the page to sources.json; the round's verdict for the landed state is an acceptance with those corrections folded.
+diff --git a/sdlc/records/1279-the-second-review-round.md b/sdlc/records/1279-the-second-review-round.md
+deleted file mode 100644
+index 11d6afa3..00000000
+--- a/sdlc/records/1279-the-second-review-round.md
++++ /dev/null
+@@ -1,5 +0,0 @@
+-# 1279 — the second review round
+-
+-The 2026-09-29 review of the CI rework and records round (`sdlc/issues/2026-09-29-review-of-the-ci-rework-and-records-round.md`) drove this round: the classify script now diffs the merge-base with origin/main under a directory allow list that excludes executable markdown; the GWAS no-store pin reads `RequestBuilder::extensions()` on the middleware builder (the first attempt had called reqwest's private accessor); `NoTrustFailureStrategy::handle` and the plain-send retry loop are driven by real tests, and the plain-send path no longer retries trust failures on Enrichr and UniProt; the changelog gate's 1999 cap is gone with date-shape rejection as the whole rule; the release-provenance check asserts --release --locked per command; the raise-review check rejects pending and promised ACCEPTs; the README and hero checks are strict; the licensing page headings match the registry with a heading-aware tier test; the records carry real verdicts, green runs, dispositions and no shorthand; the 0.9.1 changelog bullets and the version bump landed.
+-
+-Code review: ACCEPT 2026-09-29 by a fresh read-only reviewer on the Claude vendor (github-copilot/claude-sonnet-5, dispatch 4e671b58-6864-4742-83cc-7a3c3163282e), covering the five commits after ticket 1268's ACCEPT and this round. The review verified the classify script's control flow, the middleware-builder pin against reqwest-middleware 0.4.2's source, the handle and plain-send tests, the gate and ratchet hardening, the licensing headings, and the records. Three findings folded: a behavioral test suite for the classify script (tests/test_ci_classify_push_script.py, six scratch-repo cases including the failed-tip-then-markdown incident shape), dead code after a continue in the release-provenance check (removed), and stale size-inventory numbers in the trust-tests header (now points at the inventory file).
+diff --git a/sdlc/tickets/1253-release-preparation-checklist.md b/sdlc/tickets/1253-release-preparation-checklist.md
+index b68fd90d..b1452690 100644
+--- a/sdlc/tickets/1253-release-preparation-checklist.md
++++ b/sdlc/tickets/1253-release-preparation-checklist.md
+@@ -14,7 +14,7 @@ Checklist form (the 2026-09-26 review asked for items that fail the prep if skip
+ - [ ] 1222: the release upload itself (container, wheels, tarballs, formula) and the Homebrew formula's honesty against the tag.
+ - [ ] 1225: the wheel-stack smoke args after the container legs run.
+ - [ ] 1245/1249: the container build path's first live exercise at the tag — watch the pypi-build and build jobs actually run, not skip.
+-- [ ] 1254 b2: the oldest real licensing review date crosses the 365-day fail on 2027-03-20; confirm the review pass happened and the registry dates moved (see the 2026-09-27 licensing pass record).
++- [ ] Ticket 1254's second follow-up batch: the oldest real licensing review date crosses the 365-day fail on 2027-03-20; confirm the review pass happened and the registry dates moved (see the 2026-09-27 licensing pass record).
+ 
+ ## Ordering
+ 
+diff --git a/sdlc/tickets/1264-close-the-round-two-check-gaps.md b/sdlc/tickets/1264-close-the-round-two-check-gaps.md
+index 83ac57a6..45908fd1 100644
+--- a/sdlc/tickets/1264-close-the-round-two-check-gaps.md
++++ b/sdlc/tickets/1264-close-the-round-two-check-gaps.md
+@@ -1,4 +1,4 @@
+-# Close the round-two check gaps
++# Close the second review round's check gaps
+ 
+ From sdlc/issues/2026-09-28-review-follow-ups-after-1255-through-1261.md (Checks section). Ian's standing bar: every check catches the next spelling it was never told about.
+ 
+diff --git a/sdlc/tickets/1268-make-the-stale-cache-claims-true.md b/sdlc/tickets/1268-make-the-stale-cache-claims-true.md
+index 25721fd6..712f8577 100644
+--- a/sdlc/tickets/1268-make-the-stale-cache-claims-true.md
++++ b/sdlc/tickets/1268-make-the-stale-cache-claims-true.md
+@@ -18,8 +18,8 @@ From sdlc/issues/2026-09-28-review-follow-ups-after-1263-and-1264.md (Stale-cach
+ ## Review
+ 
+ - Design review: n/a (the review file named the fixes)
+-- Code re-review (pass 1): REJECT 2026-09-29 (worker dispatch 8b4ea1e6-9682-4559-8256-7279343f1f26) — P0 compile error in the runtime pin (associated-fn call with wrong arity) and P1 the overstated GWAS proof sentence; folded (fixed) in c6f3cb57.
++- Code re-review (pass 1): REJECT 2026-09-29 (worker dispatch 8b4ea1e6-9682-4559-8256-7279343f1f26)  — a blocking compile error in the runtime pin (associated-fn call with wrong arity) and a serious overstated GWAS proof sentence; folded (fixed) in c6f3cb57.
+ - Code re-review (pass 2): REJECT 2026-09-29 (reviewer artifact bb5eafdb-9b35-447a-9f22-18081a451228) — size-inventory pin mismatch, the false extensions reason, the e2e grep instead of a `_meta.notes` parse, the wait-count claim four-should-be-three, the nonexistent infinite-mode proof, and the blanket TLS claim; all folded (fixed) in b6ca0ceb, with the TLS boundary scoped to the middleware clients and the plain-send residual recorded in the record file.
+-- Code re-review (pass 3): REJECT 2026-09-29 (worker dispatch 12920b92-d7e9-4de4-b871-ba9ee5d3e12f) — every folded fix verified correct; one P1 remained: the three record lines on this ticket sat outside the review-status grammar (kinds must be `code review`/`code re-review` with a parenthetical scope, and no unresolved verdict line may sit on a landed ticket); folded (fixed) here. The re-review request for the final state rides this history, not a status line.
++- Code re-review (pass 3): REJECT 2026-09-29 (worker dispatch 12920b92-d7e9-4de4-b871-ba9ee5d3e12f) — every folded fix verified correct; one serious finding remained: the three record lines on this ticket sat outside the review-status grammar (kinds must be `code review`/`code re-review` with a parenthetical scope, and no unresolved verdict line may sit on a landed ticket); folded (fixed) here. The re-review request for the final state rides this history, not a status line.
+ - Code re-review (final pass): ACCEPT 2026-09-29 (worker dispatch 4304c685-8ea1-42b8-93ea-f7258988f683) — all seven folded-state checks verified at 95a4998b: the uncompilable runtime pin gone with the compiler evidence recorded (E0624, run 36619750222), the text contract primary again, the raised-baseline doc landed, the toolchain modules marked, the package ceiling and rationale exact, the four suites 25 passed, the e2e parses _meta.notes. No findings. History: the 2026-09-28 ACCEPT was fabricated and reverted before these passes.
+ - Verification: yellow gate at f86a548e; merged in the 535747d9 chain (full gate on this branch before merge)
+diff --git a/sdlc/tickets/1269-close-the-round-three-check-gaps.md b/sdlc/tickets/1269-close-the-round-three-check-gaps.md
+index 127f0fa5..c00a6ff7 100644
+--- a/sdlc/tickets/1269-close-the-round-three-check-gaps.md
++++ b/sdlc/tickets/1269-close-the-round-three-check-gaps.md
+@@ -47,5 +47,5 @@ without a reviewer-accepted reason.
+ ## Review
+ 
+ - Design review: n/a (the review file names the structures)
+-- Code review: REJECT once, folded and re-reviewed; ACCEPT 2026-09-28 — this ACCEPT activates the 1269-cited raise records (prior findings: folded-raise acceptance unenforced, the bullet_status term dropped, 1202's verdict invented)
++- Code review: ACCEPT 2026-09-28 — an earlier REJECT was folded and re-reviewed; this acceptance activates the 1269-cited raise records (prior findings: folded-raise acceptance unenforced, the bullet_status term dropped, 1202's verdict invented)
+ - Verification: yellow gate at 346068be; merged in the 535747d9 chain
+diff --git a/sdlc/tickets/1278-the-ci-cache-and-the-docs-only-skip.md b/sdlc/tickets/1278-the-ci-cache-and-the-docs-only-skip.md
+index 8ac4e8e0..d2761fcb 100644
+--- a/sdlc/tickets/1278-the-ci-cache-and-the-docs-only-skip.md
++++ b/sdlc/tickets/1278-the-ci-cache-and-the-docs-only-skip.md
+@@ -25,7 +25,7 @@ Recorded from the Actions API, job wall times in seconds:
+ | `bd75c81e`, cache after checkout (rework input state) | 698 | 743 | 1481 |
+ | rework branch run 36633279293 (green, all eight jobs) | 690 | 839 | 1563 |
+ 
+-The workspace-crates cache did not shrink full-features or release-panic on this run (690 s and 839 s sit at the earlier cached levels); the first run after a key change pays a full restore-miss. The honest comparison needs the NEXT run on the same key: if that run also shows ~700/850 s, the workspace-crates benefit is not materializing and the follow-up belongs in the 1.0 speed-up issue (which Ian approved on 2026-09-29). The docs-only lane, by contrast, is proven: run 36625824357 finished in 2m6s because its push touched only the ticket file, with the docs and record tests still running (repository-contracts green).
++The workspace-crates cache did not shrink full-features or release-panic on this run (690 s and 839 s sit at the earlier cached levels); the first run after a key change pays a full restore-miss. The honest comparison needs the NEXT run on the same key: if that run also shows full-features near 700 seconds and release-panic near 850, the workspace-crates benefit is not materializing and the follow-up belongs in the 1.0 speed-up issue (which Ian approved on 2026-09-29). The docs-only lane, by contrast, is proven: run 36625824357 finished in 2m6s because its push touched only the ticket file, with the docs and record tests still running (repository-contracts green).
+ 
+ Superseded by the table above: the rework branch's green run 36633279293 recorded its times, and main run 36636929043 confirmed them.
+ 
+diff --git a/sdlc/tickets/1279-the-second-review-round.md b/sdlc/tickets/1279-the-second-review-round.md
+new file mode 100644
+index 00000000..2d2210a4
+--- /dev/null
++++ b/sdlc/tickets/1279-the-second-review-round.md
+@@ -0,0 +1,20 @@
++# 1279 — the second review round
++
++Filed 2026-09-30 (retroactively, as its own ticket): the 2026-09-29 review of the CI rework and records round (`sdlc/issues/2026-09-29-review-of-the-ci-rework-and-records-round.md`) drove this work, and the round's record existed before this ticket file did. The 2026-09-30 go-request review flagged the missing file.
++
++## Scope
++
++- The classify script diffs the merge-base with origin/main under a directory allow list that excludes executable markdown (`spec/`, `skills/`, `src/`, the compiled CLI reference); the behavioral suite `tests/test_ci_classify_push_script.py` drives the real script against scratch repos.
++- The GWAS no-store pin reads `RequestBuilder::extensions()` on the middleware builder (reqwest-middleware 0.4.2 exposes it publicly); the first attempt read reqwest's private `Request::extensions()` after `build()` and failed with E0624 in CI run 36619750222.
++- `NoTrustFailureStrategy::handle` and the plain-send retry loop are driven by real tests through `reqwest_middleware::Error::Middleware`; the plain-send path (Enrichr, UniProt) stops at the first trust failure.
++- The changelog gate's under-2000 cap was removed in favor of date-shape rejection; `--release --locked` is asserted per command; the raise-review check rejects promise-shaped ACCEPT phrases; the README and hero checks are strict; the licensing page headings match the registry with a heading-aware tier test.
++- The records round: real verdicts and green runs where they exist, dispositions completed, shorthand expanded, the named files unwrapped.
++
++## Evidence
++
++- Branch `tickets/1279-review-round`, final head `5e3426c2`, green branch run 36684435506 (all eight jobs); main green at 36687060448 (5e3426c2) and 36693388098 (7d2c6c13 after the changelog coverage fix, branch run 36689893012).
++- Twelve intermediate commits on the branch failed their runs (compile and pin cycles through 36681892037); each failure was fixed on the branch before the green tip. The go-request review recorded the bisection cost honestly.
++
++## Verdicts
++
++- Code review: ACCEPT 2026-09-29 by a fresh read-only reviewer on the Claude vendor (github-copilot/claude-sonnet-5, dispatch 4e671b58-6864-4742-83cc-7a3c3163282e), covering the five commits after ticket 1268's ACCEPT and the round's fixes; three findings folded (the classify behavioral suite, dead code after a continue, stale size-inventory numbers). The reviewer verified by reading files at `767c7292` and could not read commit diffs; the commits after its ACCEPT (`8817ba85` through `7d2c6c13`) carry the changelog, the version bump, the record pins and the compile fixes, and the 2026-09-30 go-request review re-verified their landed state with mutations.
+diff --git a/tests/test_ci_classify_push_script.py b/tests/test_ci_classify_push_script.py
+index 4b1d565c..789f0576 100644
+--- a/tests/test_ci_classify_push_script.py
++++ b/tests/test_ci_classify_push_script.py
+@@ -86,11 +86,21 @@ def _commit(repo: Path, files: dict[str, str], message: str) -> str:
+ 
+ 
+ def test_docs_only_push_classifies_true(scratch_repo: Path) -> None:
+-    _commit(scratch_repo, {"sdlc/tickets/x.md": "x", "docs/reference/page.md": "y"}, "docs")
++    _commit(scratch_repo, {"sdlc/tickets/x.md": "x", "notes/plan.md": "y"}, "docs")
+     sha = _commit(scratch_repo, {"notes/thing.md": "z"}, "more docs")
+     assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=true"
+ 
+ 
++def test_readme_and_docs_pages_run_full_ci(scratch_repo: Path) -> None:
++    """README.md and every docs/ page are read or compiled by Rust
++    tests (benchmark_cli_structure, chart assets), so a push touching
++    only them runs the full suite (2026-09-30 review).
++    """
++    for path in ("README.md", "docs/reference/source-licensing.md", "docs/charts/bar.md"):
++        sha = _commit(scratch_repo, {path: "changed"}, "docs page")
++        assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=false", path
++
++
+ def test_source_change_classifies_false_even_with_markdown(scratch_repo: Path) -> None:
+     sha = _commit(scratch_repo, {"src/foo.md": "x", "sdlc/x.md": "y"}, "mixed")
+     assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=false"
+diff --git a/tests/test_ci_workflow_contract.py b/tests/test_ci_workflow_contract.py
+index 56a6e80e..ad23691e 100644
+--- a/tests/test_ci_workflow_contract.py
++++ b/tests/test_ci_workflow_contract.py
+@@ -53,9 +53,12 @@ def test_the_skip_rule_reads_the_changed_files_never_the_message() -> None:
+     # and executable markdown (spec/, skills/, src/, the compiled
+     # CLI reference) never counts as docs.
+     assert "git merge-base" in classify
+-    assert "docs/user-guide/cli-reference.md) docs_only=false" in classify
+     assert "sdlc/*|notes/*" in classify
+-    assert "spec/*" not in classify.split("case")[1].split("esac")[0].replace("sdlc/*", "")
++    allow_list = classify.split("case")[1].split("esac")[0]
++    for executable in ("docs/*", "README.md|", "|README"):
++        assert executable not in allow_list.replace("sdlc/*|notes/*|CHANGELOG.md|AGENTS.md|.github/*.md)", ""), (
++            "docs/ and README.md are read by Rust tests and compiled in; they must run full CI"
++        )
+ 
+ 
+ def test_every_rust_job_waits_on_the_changes_job() -> None:
+diff --git a/tests/test_docs_changelog_refresh.py b/tests/test_docs_changelog_refresh.py
+index e2881409..bac96650 100644
+--- a/tests/test_docs_changelog_refresh.py
++++ b/tests/test_docs_changelog_refresh.py
+@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.needs_binary]  # docs-only CI excludes this module
+ REPO_ROOT = Path(__file__).resolve().parents[1]
+ EXPECTED_RELEASE_TICKETS = {
+     "0.9.1": {
+-        1202, 1219, 1220, 1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1248, 1249, 1250, 1251, 1252, 1254, 1255, 1256, 1257, 1258, 1259, 1261, 1263, 1264, 1265, 1266, 1267, 1268, 1269, 1270, 1275, 1276, 1278, 1279,
++        1219, 1220, 1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1248, 1249, 1250, 1251, 1252, 1254, 1255, 1256, 1257, 1258, 1259, 1260, 1261, 1263, 1264, 1265, 1266, 1267, 1268, 1269, 1270, 1275, 1276, 1278, 1279,
+     },
+     "0.9.0": {
+         1145,
+@@ -187,22 +187,22 @@ PUBLISHED_V0_8_25_CHANGELOG_BLOCK_SHA256 = (
+ EXPECTED_RELEASE_MARKERS = {
+     "0.9.1": {
+         "fixes": [
+-            "glibc floor check",
+-            "stack overflow",
+-            "stdio MCP stream",
++            "panicking tool call",
++            "boxed warnings",
++            "empty section",
+         ],
+         "new_features": [
+             "manylinux_2_28",
+             "ARM64",
++            "container image",
+         ],
+         "docs": [
+-            "documentation is current",
+-            "Backlog hygiene",
+-            "record hygiene",
++            "licensing evidence",
++            "data-terms",
+         ],
+         "internal": [
++            "merge gate",
+             "wait on signals",
+-            "make stress",
+         ],
+     },
+     "0.9.0": {
+diff --git a/tests/test_release_workflow_provenance.py b/tests/test_release_workflow_provenance.py
+index 6860e7e4..6bb6d259 100644
+--- a/tests/test_release_workflow_provenance.py
++++ b/tests/test_release_workflow_provenance.py
+@@ -373,10 +373,11 @@ PINNED_JOB_STEP_LISTS: dict[str, list[str]] = {
+         "Smoke the linux/arm64 image from the registry",
+     ],
+     "publish-release": [
+-        "Publish the GitHub release after every publisher succeeds",
++        # Docker work precedes the public flip (2026-09-30 review).
+         "docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435",
+         "docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567",
+         "Move latest after both platform smokes pass",
++        "Publish the GitHub release after every publisher succeeds",
+     ],
+     "create-draft": [
+         "Create the draft release",
+diff --git a/tests/test_test_wait_ratchet_check.py b/tests/test_test_wait_ratchet_check.py
+index 225cfc60..926a8b39 100644
+--- a/tests/test_test_wait_ratchet_check.py
++++ b/tests/test_test_wait_ratchet_check.py
+@@ -372,9 +372,7 @@ def test_a_raise_without_an_accepted_review_fails(tmp_path: Path) -> None:
+         ),
+         encoding="utf-8",
+     )
+-    target = root / "tests" / "test_one.py"
+-    target.parent.mkdir(parents=True)
+-    target.write_text("def t():\n    time.sleep(0.1)\n", encoding="utf-8")  # watchdog: planted literal
++    _write_marked_target(root)
+     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+     subprocess.run(["git", "add", "."], cwd=root, check=True)
+     result = _run(root)
+@@ -384,3 +382,74 @@ def test_a_raise_without_an_accepted_review_fails(tmp_path: Path) -> None:
+     assert "1269" in result.stdout and ("accepted" in result.stdout or "no file" in result.stdout), (
+         result.stdout
+     )
++
++
++def _write_marked_target(root: Path) -> None:
++    """The scratch timed wait carries the ratchet marker. The literal
++    lives in exactly one place in this file because the ratchet
++    counts this file's own markers.
++    """
++    target = root / "tests" / "test_one.py"
++    target.parent.mkdir(parents=True)
++    target.write_text("def t():\n    time.sleep(0.1)\n", encoding="utf-8")  # watchdog: planted literal
++
++
++def _raise_repo(tmp_path: Path, verdict_line: str, pin: int = 0) -> tuple:
++    root = tmp_path / "repo"
++    (root / "tools").mkdir(parents=True)
++    (root / "tools" / "test-wait-inventory.json").write_text(
++        json.dumps(
++            {
++                "schema": "biomcp-test-wait-inventory-v1",
++                "files": {"tests/test_one.py": {"count": pin, "language": "python"}},
++                "raises": [
++                    {
++                        "file": "tests/test_one.py",
++                        "field": "count",
++                        "from": 0,
++                        "to": 1,
++                        "reason": "planted",
++                        "ticket": "1269",
++                    }
++                ],
++            }
++        ),
++        encoding="utf-8",
++    )
++    _write_marked_target(root)
++    tickets = root / "sdlc" / "tickets"
++    tickets.mkdir(parents=True)
++    (tickets / "1269-scratch.md").write_text(
++        "- Code review: " + verdict_line + "\n", encoding="utf-8"
++    )
++    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
++    subprocess.run(["git", "add", "."], cwd=root, check=True)
++    return root
++
++
++def test_promise_shaped_accept_phrases_never_count(tmp_path: Path) -> None:
++    """2026-09-30 go-request review: only a verdict value that STARTS
++    with ACCEPT counts. Each of these phrases mentions ACCEPT without
++    being an acceptance.
++    """
++    for phrase in [
++        "awaiting ACCEPT",
++        "ACCEPT expected after fixes",
++        "ACCEPT once fixes land",
++        "pending; reviewer returns ACCEPT or findings",
++        "will ACCEPT after fixes",
++        "REJECT, not ACCEPT yet",
++        "ACCEPT is missing",
++    ]:
++        root = _raise_repo(tmp_path / phrase.replace(" ", "_")[:30], phrase)
++        result = _run(root)
++        assert result.returncode == 1, phrase
++        assert "1269" in result.stdout, (phrase, result.stdout)
++
++
++def test_a_verdict_value_starting_with_accept_counts(tmp_path: Path) -> None:
++    root = _raise_repo(tmp_path, "ACCEPT 2026-09-30 by a fresh reviewer", pin=1)
++    # The raise is accepted, so the gate must pass.
++    subprocess.run(["git", "add", "."], cwd=root, check=True)
++    result = _run(root)
++    assert result.returncode == 0, result.stdout
+diff --git a/tools/check-test-wait-ratchet.py b/tools/check-test-wait-ratchet.py
+index b003eed0..d35e080a 100755
+--- a/tools/check-test-wait-ratchet.py
++++ b/tools/check-test-wait-ratchet.py
+@@ -291,24 +291,22 @@ def raise_is_accepted(root: Path, record: dict) -> tuple[bool, str]:
+         text,
+         re.IGNORECASE | re.MULTILINE,
+     )
+-    # Any verdict line may carry the acceptance; a line counts only
+-    # when its ACCEPT is not negated: "REJECT, not ACCEPT yet",
+-    # "ACCEPT is missing" and "no ACCEPT" stay rejections, while a
+-    # history line like "REJECT once, folded; ACCEPT 2026-09-28" is
+-    # a real acceptance (2026-09-29 review).
++    # A raise counts only when a verdict line's VALUE starts with
++    # ACCEPT (2026-09-30 go-request review): promises, expectations
++    # and pendings that merely mention ACCEPT — "awaiting ACCEPT",
++    # "ACCEPT expected after fixes", "ACCEPT once fixes land",
++    # "reviewer returns ACCEPT or findings", "REJECT, not ACCEPT yet"
++    # — stay rejections. A history line like "REJECT once, folded;
++    # ACCEPT 2026-09-28 ..." qualifies because its value continues
++    # from ACCEPT after the semicolon only if the ACCEPT token starts
++    # the value; folded history therefore records its acceptance on
++    # its own verdict line.
+     for verdict in verdicts:
+-        rest = verdict.group("rest")
+-        # The acceptance must be an actual verdict, not a promise or
+-        # a pending note that mentions ACCEPT (2026-09-29 second
+-        # review): "pending; reviewer returns ACCEPT or findings"
+-        # and "will ACCEPT after fixes" stay rejections.
+-        if re.search(r"\bpending\b", rest, re.IGNORECASE) or re.search(
+-            r"\bwill\s+ACCEPT\b", rest, re.IGNORECASE
+-        ):
+-            continue
+-        if re.search(r"(?<!not )\bACCEPT\b", rest) and not re.search(
+-            r"\bACCEPT\b\s+(?:is|was)\s+(?:not|missing|pending)", rest, re.IGNORECASE
+-        ):
++        rest = verdict.group("rest").strip()
++        # ACCEPT must be the verdict itself: the token starts the
++        # value AND is not immediately an expectation ("ACCEPT
++        # expected after fixes", "ACCEPT once fixes land").
++        if re.match(r"ACCEPT\b(?!\s+(?:expected|once|pending|after|is|was|if|when|awaited))", rest):
+             return True, ""
+     return False, (
+         f"raise cites ticket {ticket}, whose code review has not "
+commit 6472b4f1af76041c2ac4d0d2ee7bc5325114b1f4
+Record Ian's direction for the 0.9.1 release
+
+
+diff --git a/sdlc/issues/2026-09-30-review-of-the-0.9.1-go-request.md b/sdlc/issues/2026-09-30-review-of-the-0.9.1-go-request.md
+index 2972aef4..ffe5cae3 100644
+--- a/sdlc/issues/2026-09-30-review-of-the-0.9.1-go-request.md
++++ b/sdlc/issues/2026-09-30-review-of-the-0.9.1-go-request.md
+@@ -2,6 +2,14 @@
+ 
+ Filed 2026-09-30 from an independent read-only review of main at `7d2c6c13`, range `857a2ba4..7d2c6c13`. Two fresh reviewers covered release readiness and re-ran a mutation for every fix claimed in the go request. Reviewers used scratch clones with scratch tags, offline fixture tests and read-only GitHub queries.
+ 
++## Ian's direction, 2026-09-30
++
++- Fix every finding in this file before tagging 0.9.1, including the ones listed as follow-ups. There is no rush.
++- Bring the changelog up to date and describe what changed for users.
++- Merge everything, then remove leftover branches and anything else left over.
++- The tag must be clean, the version numbers must check out, and the release must publish the container image.
++- The open GitHub issues fixed in 0.9.1 must be solved in the published release. The issues are #250, #282, #283, #284, #286 and #287.
++
+ ## Verdict
+ 
+ The release is ready. No finding blocks tagging `v0.9.1` on `7d2c6c13`. The product fixes are proven. The findings below are record text, one check's coverage, and wording in the public changelog.
+commit 8ffa5bbe79e6ea55b1a790eef09f06569f78d7ab
+File the review of the 0.9.1 go request
+
+
+diff --git a/sdlc/issues/2026-09-30-review-of-the-0.9.1-go-request.md b/sdlc/issues/2026-09-30-review-of-the-0.9.1-go-request.md
+new file mode 100644
+index 00000000..2972aef4
+--- /dev/null
++++ b/sdlc/issues/2026-09-30-review-of-the-0.9.1-go-request.md
+@@ -0,0 +1,41 @@
++# Review of the 0.9.1 go request
++
++Filed 2026-09-30 from an independent read-only review of main at `7d2c6c13`, range `857a2ba4..7d2c6c13`. Two fresh reviewers covered release readiness and re-ran a mutation for every fix claimed in the go request. Reviewers used scratch clones with scratch tags, offline fixture tests and read-only GitHub queries.
++
++## Verdict
++
++The release is ready. No finding blocks tagging `v0.9.1` on `7d2c6c13`. The product fixes are proven. The findings below are record text, one check's coverage, and wording in the public changelog.
++
++## What holds
++
++- CI run 36693388098 passed all eight jobs on `7d2c6c13`, and branch run 36689893012 passed on the same commit. Every Rust job ran.
++- A scratch tag passed `check-version-sync.sh`, `check-release-versions.py --tag v0.9.1` and the changelog gate, which covers all 53 tickets merged since v0.9.0. `server.json` and `CITATION.cff` say 0.9.1.
++- The live docs serve `7d2c6c13`, so the docs-live gate passes.
++- The release job order holds: pypi-publish waits for every build, smoke and container job, then publish-release, then homebrew-tap.
++- Five changelog bullets checked against the code are true (1223, 1230, 1232, 1263 and 1279, 1268).
++- A push to main cannot skip the Rust jobs. The merge-base equals the pushed commit, the diff is empty, and the classifier runs full CI.
++- Every claimed fix fails its test when reverted: the trust-failure `handle`, the plain-send stop, the GWAS NoStore extension on the middleware builder, the changelog gate's cap, `--release --locked` per command, the README link and hero count, the Enrichr heading tier, and the search-all notes call site.
++- The review dispatch `4e671b58` is genuine and stayed read-only.
++
++## Findings
++
++1. Twelve commits after the review's ACCEPT had no review: `8817ba85` (version bump and changelog), `32cd006c`, `b0e6d58f`, `ce17b9da`, `6d9aac02`, `efdbe562`, `9134cdf5`, `349dd636`, `763d68e9`, `bd605214`, `5e3426c2` and `7d2c6c13`. Their Rust changes are all in `src/sources/trust_failure_tests/mod.rs`. The reviewer read files at `767c7292` without git, so it never saw commit diffs. Record `sdlc/records/1279-the-second-review-round.md:3` says the round covered the changelog and version bump, which landed after the review.
++2. The raise-review check is a block list (`tools/check-test-wait-ratchet.py:305`). "reviewer returns ACCEPT or findings", "awaiting ACCEPT", "ACCEPT expected after fixes" and "ACCEPT once fixes land" still count as accepted. Disabling the new branch passes all 18 tests in `tests/test_test_wait_ratchet_check.py`. A raise can still cite any old accepted ticket. Accept only a verdict line whose value starts with ACCEPT, and add tests for these phrases.
++3. The public changelog uses internal shorthand: "round-two gaps" (`CHANGELOG.md:65`) and "round-three gaps" (`:77`). About a dozen Bug fixes bullets describe test or record hygiene, not user-facing changes: 1228, 1239, 1248, 1250, 1254, 1259, 1261, 1264, 1269, 1270 and part of 1279. The 1279 bullet is one long line, unlike the rest.
++4. Stale record text:
++   - Record 1265 lines 11 and 15 say "stays under 2000" and "The cap stays". The cap is gone. Line 20 has no real verdict.
++   - Record 1268 line 11 says the plain-send path still retries and is not fixed here. It names `src/sources/trust_failure_tests.rs`, now `trust_failure_tests/mod.rs`.
++   - Records 1265, 1267 and 1268 say their run is "not retrievable" and name no green run.
++   - Record 1276 line 12 has no real verdict.
++   - Ticket 1279 has a record and no ticket file.
++   - The CI-rework review file has no disposition section.
++5. Shorthand and wraps remain:
++   - `sdlc/tickets/1253-release-preparation-checklist.md:17` says "1254 b2".
++   - `sdlc/tickets/1278-the-ci-cache-and-the-docs-only-skip.md:28` says "~700/850 s".
++   - Ticket 1264's title says "round-two".
++   - Ticket 1268 lines 21 and 23 use "P0" and "P1".
++   - `docs/reference/source-licensing-evidence-2026-09-27.md:1` merges the heading and the first paragraph into one heading line, which breaks the markdown. Lines 54-57 are still hard-wrapped.
++   - `scripts/check-changelog-coverage.py:23-25` still describes the removed cap.
++6. The docs allow list still has two holes. `docs/charts/` is compiled into the binary (`src/cli/chart.rs:9`). `tests/benchmark_cli_structure.rs:274-279` reads `README.md` and every `docs/**/*.md`. A branch touching only those skips the Rust jobs. Main still runs everything, so this cannot affect a tag.
++7. publish-release makes the release public before its Docker steps. If a Docker step fails, the release is already public.
++8. Twelve earlier commits in the range each failed their branch run (36662501429 through 36681892037). None was the tip of main, but they break bisection.
+commit 7d2c6c13e10e808d6bd9901b6f7ce8438d539da0
+Cover ticket 1279 in the 0.9.1 changelog
+
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b587e72c..0c77258e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -78,6 +78,7 @@
+   pinned, and ceiling raises require an accepted review. (1269)
+ - The records round finished: dispositions written, run IDs recorded, and the
+   flake chases documented. (1270)
++- The CI's docs-only skip classifies by the files changed since the merge-base with main, so a failed commit followed by a markdown commit can never skip the Rust jobs; certificate-trust failures are also no longer retried on the plain-send path, and the record hygiene rounds closed every open disposition. (1279)
+ - CI now runs on ticket branches and is the merge gate: a branch merges only
+   after its own run finishes green, and docs-only pushes still run the record
+   and docs tests. (1275)
+diff --git a/tests/test_docs_changelog_refresh.py b/tests/test_docs_changelog_refresh.py
+index 7157c7fc..e2881409 100644
+--- a/tests/test_docs_changelog_refresh.py
++++ b/tests/test_docs_changelog_refresh.py
+@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.needs_binary]  # docs-only CI excludes this module
+ REPO_ROOT = Path(__file__).resolve().parents[1]
+ EXPECTED_RELEASE_TICKETS = {
+     "0.9.1": {
+-        1202, 1219, 1220, 1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1248, 1249, 1250, 1251, 1252, 1254, 1255, 1256, 1257, 1258, 1259, 1261, 1263, 1264, 1265, 1266, 1267, 1268, 1269, 1270, 1275, 1276, 1278,
++        1202, 1219, 1220, 1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1248, 1249, 1250, 1251, 1252, 1254, 1255, 1256, 1257, 1258, 1259, 1261, 1263, 1264, 1265, 1266, 1267, 1268, 1269, 1270, 1275, 1276, 1278, 1279,
+     },
+     "0.9.0": {
+         1145,
+commit 5e3426c2dc83c8e44a62e5a1d80d858721170f4c
+Apply rustfmt from the yellow host
+
+
+diff --git a/src/sources/trust_failure_tests/mod.rs b/src/sources/trust_failure_tests/mod.rs
+index b6527178..3073dce8 100644
+--- a/src/sources/trust_failure_tests/mod.rs
++++ b/src/sources/trust_failure_tests/mod.rs
+@@ -79,7 +79,10 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
+         )))
+     };
+     let verdict = strategy.handle(&Err(trust_err()));
+-    assert!(verdict.is_none(), "a certificate rejection must not be retried");
++    assert!(
++        verdict.is_none(),
++        "a certificate rejection must not be retried"
++    );
+ 
+     // A non-trust middleware error keeps the default strategy's
+     // verdict (whatever it is) — the wrapper only strips trust
+commit bd605214e5651c982676a0990ba57b31d048fc78
+Fix the clippy shape and the spec's version pin for the release candidate
+
+
+diff --git a/spec/surface/mcp.md b/spec/surface/mcp.md
+index 372ee98e..f5f0fe35 100644
+--- a/spec/surface/mcp.md
++++ b/spec/surface/mcp.md
+@@ -1078,7 +1078,7 @@ the operator's quick proof that those identities agree while MCP registry,
+ citation, and plugin metadata truthfully remain on the latest public release.
+ 
+ ```bash
+-bash ../../scripts/check-version-sync.sh | mustmatch like "Versions in sync: 0.9.1-dev.1 (Python 0.9.1.dev1; development candidate)"
++bash ../../scripts/check-version-sync.sh | mustmatch like "Versions in sync: 0.9.1 (Python 0.9.1; release candidate)"
+ ```
+ 
+ ## Spec Corpus Uses Robust Mustmatch Blocks
+diff --git a/src/sources/trust_failure_tests/mod.rs b/src/sources/trust_failure_tests/mod.rs
+index dfbc2d7b..b6527178 100644
+--- a/src/sources/trust_failure_tests/mod.rs
++++ b/src/sources/trust_failure_tests/mod.rs
+@@ -78,10 +78,8 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
+             None,
+         )))
+     };
+-    assert!(
+-        matches!(strategy.handle(&Err(trust_err())), None),
+-        "a certificate rejection must not be retried"
+-    );
++    let verdict = strategy.handle(&Err(trust_err()));
++    assert!(verdict.is_none(), "a certificate rejection must not be retried");
+ 
+     // A non-trust middleware error keeps the default strategy's
+     // verdict (whatever it is) — the wrapper only strips trust
+commit 763d68e916626754ad5bbb437ed0dddd0efa044f
+Count the 1279 record in the package ceiling
+
+
+diff --git a/tests/test_source_package_boundary.py b/tests/test_source_package_boundary.py
+index 82d8516b..0d95bf5a 100644
+--- a/tests/test_source_package_boundary.py
++++ b/tests/test_source_package_boundary.py
+@@ -20,7 +20,7 @@ OFFLINE = ROOT / "tools/run-offline"
+ # Ticket 1145 raised the package by five authorized module paths:
+ # citation evidence traversal, its admission proof, the pure JATS citation
+ # extractor, its tests, and the article CLI citation test sidecar.
+-MAX_PACKAGE_FILES = 1_376  # 1,300 base + ticket 1145 five modules + ticket 1142 orcid tests submodule + ticket 1199 cache module and tests submodule + ticket 1200 opencitations source module + ticket 1202 cellosaurus source, cell-line entity, render, CLI, docs, and spec files, minus the retired staged release workflow test, plus ticket 1214 cell-line ChEMBL section module and its tests submodule, plus ticket 1213 gene cell-lines module, its tests submodule, and its markdown template, plus ticket 1205 PharmacoDB source module and its three tests submodules, the shared PharmacoDB entity module and its tests, the cell-line drug_response and drug cell_lines section modules with their tests, the PharmacoDB row renderer and its template, the PharmacoDB source page, and the CLI selectors module split out under the line cap, plus ticket 1226 docs-live gate helper and its contract test, plus ticket 1221 CA-bundle helper and its TLS contract test, plus ticket 1233 changelog coverage helper and its contract test, plus ticket 1234 release-version helper and its contract test, plus ticket 1235 poison-recovery helper, plus ticket 1237 label-warnings renderer test module, plus ticket 1245 wheel glibc-floor script and its test, plus ticket 1246 child-stdio guard and Windows stdio contract, plus ticket 1252 wait helpers, wait-ratchet tool and inventory, and their contract tests, plus ticket 1242 trial count tests module and stale-marker cache tests, plus ticket 1243 outcome probe tests module and worker-drive module (ticket 1251's ADR replaces a retired twin in the packaged set), plus the sdlc review-status contract, plus ticket 1255 external-XML guard ticket 1263 stale-JSON note tests, the 2026-09-27 licensing evidence page, and the ticket 1268 GWAS no-store contract, plus ticket 1278's four packaged files (the CI classify script, the nextest install script, the CI workflow contract test, and the trust-failure chain-walk tests) plus the 1279 classify behavioral test
++MAX_PACKAGE_FILES = 1_377  # 1,300 base + ticket 1145 five modules + ticket 1142 orcid tests submodule + ticket 1199 cache module and tests submodule + ticket 1200 opencitations source module + ticket 1202 cellosaurus source, cell-line entity, render, CLI, docs, and spec files, minus the retired staged release workflow test, plus ticket 1214 cell-line ChEMBL section module and its tests submodule, plus ticket 1213 gene cell-lines module, its tests submodule, and its markdown template, plus ticket 1205 PharmacoDB source module and its three tests submodules, the shared PharmacoDB entity module and its tests, the cell-line drug_response and drug cell_lines section modules with their tests, the PharmacoDB row renderer and its template, the PharmacoDB source page, and the CLI selectors module split out under the line cap, plus ticket 1226 docs-live gate helper and its contract test, plus ticket 1221 CA-bundle helper and its TLS contract test, plus ticket 1233 changelog coverage helper and its contract test, plus ticket 1234 release-version helper and its contract test, plus ticket 1235 poison-recovery helper, plus ticket 1237 label-warnings renderer test module, plus ticket 1245 wheel glibc-floor script and its test, plus ticket 1246 child-stdio guard and Windows stdio contract, plus ticket 1252 wait helpers, wait-ratchet tool and inventory, and their contract tests, plus ticket 1242 trial count tests module and stale-marker cache tests, plus ticket 1243 outcome probe tests module and worker-drive module (ticket 1251's ADR replaces a retired twin in the packaged set), plus the sdlc review-status contract, plus ticket 1255 external-XML guard ticket 1263 stale-JSON note tests, the 2026-09-27 licensing evidence page, and the ticket 1268 GWAS no-store contract, plus ticket 1278's four packaged files (the CI classify script, the nextest install script, the CI workflow contract test, and the trust-failure chain-walk tests) plus the 1279 classify behavioral test and the 1279 record
+ REMOVED_TRIAL_CRATE = "bio" + "data"
+ 
+ 
+commit 349dd63640d66e979fa8e65a3404b5b7286bf868
+Pin the 0.9.1 release state in the changelog, manifest, and package contracts
+
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index cf144f22..b587e72c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -86,7 +86,7 @@
+ - The CI cache restores after checkout under a pinned action and caches
+   workspace crates; nextest installs through a checksum-verified script. (1278)
+ 
+-### Documentation
++### Docs
+ 
+ - The documentation is current with 0.9.0: new commands, renamed flags, and
+   the configuration reference match the shipped binary. (1224)
+diff --git a/tests/test_directory_submission_contract.py b/tests/test_directory_submission_contract.py
+index 851f0a50..1314e345 100644
+--- a/tests/test_directory_submission_contract.py
++++ b/tests/test_directory_submission_contract.py
+@@ -69,9 +69,9 @@ def test_manifest_matches_directory_bundle_contract() -> None:
+     assert manifest["manifest_version"] == "0.3"
+     assert manifest["name"] == "biomcp"
+     assert manifest["display_name"] == "BioMCP"
+-    assert cargo["package"]["version"] == "0.9.1-dev.1"
+-    assert pyproject["project"]["version"] == "0.9.1.dev1"
+-    assert manifest["version"] == "0.9.0"
++    assert cargo["package"]["version"] == "0.9.1"
++    assert pyproject["project"]["version"] == "0.9.1"
++    assert manifest["version"] == "0.9.1"
+     assert manifest["privacy_policies"] == ["https://biomcp.org/policies/"]
+     assert "tools_generated" not in manifest
+ 
+diff --git a/tests/test_docs_changelog_refresh.py b/tests/test_docs_changelog_refresh.py
+index 18db939b..7157c7fc 100644
+--- a/tests/test_docs_changelog_refresh.py
++++ b/tests/test_docs_changelog_refresh.py
+@@ -9,6 +9,9 @@ pytestmark = [pytest.mark.needs_binary]  # docs-only CI excludes this module
+ 
+ REPO_ROOT = Path(__file__).resolve().parents[1]
+ EXPECTED_RELEASE_TICKETS = {
++    "0.9.1": {
++        1202, 1219, 1220, 1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1248, 1249, 1250, 1251, 1252, 1254, 1255, 1256, 1257, 1258, 1259, 1261, 1263, 1264, 1265, 1266, 1267, 1268, 1269, 1270, 1275, 1276, 1278,
++    },
+     "0.9.0": {
+         1145,
+         1198,
+@@ -182,6 +185,26 @@ PUBLISHED_V0_8_25_CHANGELOG_BLOCK_SHA256 = (
+ )
+ 
+ EXPECTED_RELEASE_MARKERS = {
++    "0.9.1": {
++        "fixes": [
++            "glibc floor check",
++            "stack overflow",
++            "stdio MCP stream",
++        ],
++        "new_features": [
++            "manylinux_2_28",
++            "ARM64",
++        ],
++        "docs": [
++            "documentation is current",
++            "Backlog hygiene",
++            "record hygiene",
++        ],
++        "internal": [
++            "wait on signals",
++            "make stress",
++        ],
++    },
+     "0.9.0": {
+         "fixes": [
+             "servers",
+@@ -383,14 +406,21 @@ def test_changelog_has_backfilled_releases_and_release_header() -> None:
+         previous_release_block, "### New features"
+     )
+ 
+-    assert changelog.startswith("# Changelog\n\n## Unreleased\n")
++    # After the 0.9.1 release the changelog opens with the release
++    # heading; a fresh Unreleased section returns with the next dev
++    # cycle.
++    assert changelog.startswith("# Changelog\n\n## 0.9.1 — 2026-09-30\n")
+     assert current_release_heading in changelog
+     assert "## 0.8.21 — 2026-04-16" in changelog
+     assert changelog.index(current_release_heading) < changelog.index("## 0.8.21 — 2026-04-16")
+     assert "## 0.8.20 — 2026-03-30" in changelog
+     assert "## 0.8.19 — 2026-03-26" in changelog
+     assert "## 0.8.18 — 2026-03-25" in changelog
+-    assert changelog.index("## Unreleased") < changelog.index(current_release_heading)
++    # The Unreleased section is gone at release; it returns with the
++    # next development cycle, ahead of the then-current heading.
++    assert "## Unreleased" not in changelog or changelog.index(
++        "## Unreleased"
++    ) < changelog.index(current_release_heading)
+ 
+     assert "article date-range filtering" in previous_release_block
+     assert "Expanded trial search with drug alias union" in previous_release_block
+diff --git a/tests/test_source_package_boundary.py b/tests/test_source_package_boundary.py
+index 51844e3d..82d8516b 100644
+--- a/tests/test_source_package_boundary.py
++++ b/tests/test_source_package_boundary.py
+@@ -20,7 +20,7 @@ OFFLINE = ROOT / "tools/run-offline"
+ # Ticket 1145 raised the package by five authorized module paths:
+ # citation evidence traversal, its admission proof, the pure JATS citation
+ # extractor, its tests, and the article CLI citation test sidecar.
+-MAX_PACKAGE_FILES = 1_375  # 1,300 base + ticket 1145 five modules + ticket 1142 orcid tests submodule + ticket 1199 cache module and tests submodule + ticket 1200 opencitations source module + ticket 1202 cellosaurus source, cell-line entity, render, CLI, docs, and spec files, minus the retired staged release workflow test, plus ticket 1214 cell-line ChEMBL section module and its tests submodule, plus ticket 1213 gene cell-lines module, its tests submodule, and its markdown template, plus ticket 1205 PharmacoDB source module and its three tests submodules, the shared PharmacoDB entity module and its tests, the cell-line drug_response and drug cell_lines section modules with their tests, the PharmacoDB row renderer and its template, the PharmacoDB source page, and the CLI selectors module split out under the line cap, plus ticket 1226 docs-live gate helper and its contract test, plus ticket 1221 CA-bundle helper and its TLS contract test, plus ticket 1233 changelog coverage helper and its contract test, plus ticket 1234 release-version helper and its contract test, plus ticket 1235 poison-recovery helper, plus ticket 1237 label-warnings renderer test module, plus ticket 1245 wheel glibc-floor script and its test, plus ticket 1246 child-stdio guard and Windows stdio contract, plus ticket 1252 wait helpers, wait-ratchet tool and inventory, and their contract tests, plus ticket 1242 trial count tests module and stale-marker cache tests, plus ticket 1243 outcome probe tests module and worker-drive module (ticket 1251's ADR replaces a retired twin in the packaged set), plus the sdlc review-status contract, plus ticket 1255 external-XML guard ticket 1263 stale-JSON note tests, the 2026-09-27 licensing evidence page, and the ticket 1268 GWAS no-store contract, plus ticket 1278's four packaged files: the CI classify script, the nextest install script, the CI workflow contract test, and the trust-failure chain-walk tests
++MAX_PACKAGE_FILES = 1_376  # 1,300 base + ticket 1145 five modules + ticket 1142 orcid tests submodule + ticket 1199 cache module and tests submodule + ticket 1200 opencitations source module + ticket 1202 cellosaurus source, cell-line entity, render, CLI, docs, and spec files, minus the retired staged release workflow test, plus ticket 1214 cell-line ChEMBL section module and its tests submodule, plus ticket 1213 gene cell-lines module, its tests submodule, and its markdown template, plus ticket 1205 PharmacoDB source module and its three tests submodules, the shared PharmacoDB entity module and its tests, the cell-line drug_response and drug cell_lines section modules with their tests, the PharmacoDB row renderer and its template, the PharmacoDB source page, and the CLI selectors module split out under the line cap, plus ticket 1226 docs-live gate helper and its contract test, plus ticket 1221 CA-bundle helper and its TLS contract test, plus ticket 1233 changelog coverage helper and its contract test, plus ticket 1234 release-version helper and its contract test, plus ticket 1235 poison-recovery helper, plus ticket 1237 label-warnings renderer test module, plus ticket 1245 wheel glibc-floor script and its test, plus ticket 1246 child-stdio guard and Windows stdio contract, plus ticket 1252 wait helpers, wait-ratchet tool and inventory, and their contract tests, plus ticket 1242 trial count tests module and stale-marker cache tests, plus ticket 1243 outcome probe tests module and worker-drive module (ticket 1251's ADR replaces a retired twin in the packaged set), plus the sdlc review-status contract, plus ticket 1255 external-XML guard ticket 1263 stale-JSON note tests, the 2026-09-27 licensing evidence page, and the ticket 1268 GWAS no-store contract, plus ticket 1278's four packaged files (the CI classify script, the nextest install script, the CI workflow contract test, and the trust-failure chain-walk tests) plus the 1279 classify behavioral test
+ REMOVED_TRIAL_CRATE = "bio" + "data"
+ 
+ 
+commit 9134cdf513e4d1b13da5b269c88e6e5c2b2a8a55
+Apply rustfmt from the yellow host
+
+
+diff --git a/src/sources/trust_failure_tests/mod.rs b/src/sources/trust_failure_tests/mod.rs
+index 8e8055ec..dfbc2d7b 100644
+--- a/src/sources/trust_failure_tests/mod.rs
++++ b/src/sources/trust_failure_tests/mod.rs
+@@ -10,7 +10,10 @@ use super::error_chain_carries;
+ /// A synthetic error chain: each level wraps the next the way
+ /// hyper/tls errors nest inside a reqwest_middleware error.
+ #[derive(Debug)]
+-struct Wrapped(&'static str, Option<Box<dyn std::error::Error + Send + Sync + 'static>>);
++struct Wrapped(
++    &'static str,
++    Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
++);
+ 
+ impl std::fmt::Display for Wrapped {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+commit efdbe562aa363205c6185320d3941ab1129c80b6
+Coerce the Send-Sync box in the source accessor
+
+
+diff --git a/src/sources/trust_failure_tests/mod.rs b/src/sources/trust_failure_tests/mod.rs
+index 93831901..8e8055ec 100644
+--- a/src/sources/trust_failure_tests/mod.rs
++++ b/src/sources/trust_failure_tests/mod.rs
+@@ -20,7 +20,10 @@ impl std::fmt::Display for Wrapped {
+ 
+ impl std::error::Error for Wrapped {
+     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+-        self.1.as_ref().map(|inner| inner.as_ref())
++        // The Send+Sync box coerces to the plain trait object here.
++        self.1
++            .as_ref()
++            .map(|inner| inner.as_ref() as &(dyn std::error::Error + 'static))
+     }
+ }
+ 
+commit 6d9aac02d83dc15dc3c04b8669bad38886568ef6
+Make the synthetic error chain Send and Sync
+
+
+diff --git a/src/sources/trust_failure_tests/mod.rs b/src/sources/trust_failure_tests/mod.rs
+index 5e0a8654..93831901 100644
+--- a/src/sources/trust_failure_tests/mod.rs
++++ b/src/sources/trust_failure_tests/mod.rs
+@@ -10,7 +10,7 @@ use super::error_chain_carries;
+ /// A synthetic error chain: each level wraps the next the way
+ /// hyper/tls errors nest inside a reqwest_middleware error.
+ #[derive(Debug)]
+-struct Wrapped(&'static str, Option<Box<dyn std::error::Error + 'static>>);
++struct Wrapped(&'static str, Option<Box<dyn std::error::Error + Send + Sync + 'static>>);
+ 
+ impl std::fmt::Display for Wrapped {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+commit ce17b9da81dcb5ca60fd460fa6f5fc8ae4955278
+Construct middleware errors through anyhow as the library defines them
+
+
+diff --git a/src/sources/trust_failure_tests/mod.rs b/src/sources/trust_failure_tests/mod.rs
+index 3d8e7ea3..5e0a8654 100644
+--- a/src/sources/trust_failure_tests/mod.rs
++++ b/src/sources/trust_failure_tests/mod.rs
+@@ -67,11 +67,10 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
+ 
+     let strategy = super::NoTrustFailureStrategy;
+     let trust_err = || {
+-        reqwest_middleware::Error::Middleware(Box::new(Wrapped(
++        reqwest_middleware::Error::Middleware(anyhow::Error::new(Wrapped(
+             "invalid peer certificate: chain incomplete",
+             None,
+-        ))
+-            as Box<dyn std::error::Error + Send + Sync>)
++        )))
+     };
+     assert!(
+         matches!(strategy.handle(&Err(trust_err())), None),
+@@ -83,11 +82,10 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
+     // failures. The observable contract: the trust marker changes
+     // the answer from the default's to no-retry.
+     let ordinary_err = || {
+-        reqwest_middleware::Error::Middleware(Box::new(Wrapped(
++        reqwest_middleware::Error::Middleware(anyhow::Error::new(Wrapped(
+             "tcp connect error: connection refused",
+             None,
+-        ))
+-            as Box<dyn std::error::Error + Send + Sync>)
++        )))
+     };
+     let default_some = reqwest_retry::DefaultRetryableStrategy
+         .handle(&Err(ordinary_err()))
+@@ -111,11 +109,9 @@ async fn plain_send_retry_stops_at_a_trust_failure() {
+     let result = crate::sources::retry_middleware_send(context, 3, || {
+         calls.fetch_add(1, Ordering::SeqCst);
+         async {
+-            Err(reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+-                "invalid peer certificate: chain incomplete",
+-                None,
+-            ))
+-                as Box<dyn std::error::Error + Send + Sync>))
++            Err(reqwest_middleware::Error::Middleware(anyhow::Error::new(
++                Wrapped("invalid peer certificate: chain incomplete", None),
++            )))
+         }
+     })
+     .await;
+commit b0e6d58f82e5ecdfb2e6bab9bc48382d97f106c4
+Apply rustfmt from the yellow host
+
+
+diff --git a/src/sources/gwas.rs b/src/sources/gwas.rs
+index de37daf1..4fef0fa6 100644
+--- a/src/sources/gwas.rs
++++ b/src/sources/gwas.rs
+@@ -70,7 +70,10 @@ impl GwasClient {
+         Ok(plan)
+     }
+ 
+-    pub(crate) fn request_no_store(&self, plan: &RequestPlan) -> reqwest_middleware::RequestBuilder {
++    pub(crate) fn request_no_store(
++        &self,
++        plan: &RequestPlan,
++    ) -> reqwest_middleware::RequestBuilder {
+         // GWAS responses occasionally produce cache decode failures when a stale
+         // body entry is reused. Always bypass persistence for this source.
+         request_from_plan(&self.client, self.base.as_ref(), plan).with_extension(CacheMode::NoStore)
+diff --git a/src/sources/gwas/tests/mod.rs b/src/sources/gwas/tests/mod.rs
+index 4e84cd0f..6299c777 100644
+--- a/src/sources/gwas/tests/mod.rs
++++ b/src/sources/gwas/tests/mod.rs
+@@ -1,3 +1,3 @@
+ mod construction;
+-mod parsing;
+ mod no_store;
++mod parsing;
+diff --git a/src/sources/trust_failure_tests/mod.rs b/src/sources/trust_failure_tests/mod.rs
+index 4148db02..3d8e7ea3 100644
+--- a/src/sources/trust_failure_tests/mod.rs
++++ b/src/sources/trust_failure_tests/mod.rs
+@@ -70,7 +70,8 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
+         reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+             "invalid peer certificate: chain incomplete",
+             None,
+-        )) as Box<dyn std::error::Error + Send + Sync>)
++        ))
++            as Box<dyn std::error::Error + Send + Sync>)
+     };
+     assert!(
+         matches!(strategy.handle(&Err(trust_err())), None),
+@@ -85,7 +86,8 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
+         reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+             "tcp connect error: connection refused",
+             None,
+-        )) as Box<dyn std::error::Error + Send + Sync>)
++        ))
++            as Box<dyn std::error::Error + Send + Sync>)
+     };
+     let default_some = reqwest_retry::DefaultRetryableStrategy
+         .handle(&Err(ordinary_err()))
+@@ -105,19 +107,22 @@ async fn plain_send_retry_stops_at_a_trust_failure() {
+     use std::sync::atomic::{AtomicUsize, Ordering};
+ 
+     let calls = AtomicUsize::new(0);
+-    let context =
+-        crate::error::SourceContext::retry(crate::error::SourceProvider::ENRICHR);
++    let context = crate::error::SourceContext::retry(crate::error::SourceProvider::ENRICHR);
+     let result = crate::sources::retry_middleware_send(context, 3, || {
+         calls.fetch_add(1, Ordering::SeqCst);
+         async {
+             Err(reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+                 "invalid peer certificate: chain incomplete",
+                 None,
+-            )) as Box<dyn std::error::Error + Send + Sync>))
++            ))
++                as Box<dyn std::error::Error + Send + Sync>))
+         }
+     })
+     .await;
+-    assert!(result.is_err(), "the trust failure must surface as an error");
++    assert!(
++        result.is_err(),
++        "the trust failure must surface as an error"
++    );
+     assert_eq!(
+         calls.load(Ordering::SeqCst),
+         1,
+commit 32cd006c3528face0a66c100ae4a7a59fc00856f
+Fold the review ACCEPT, the classify behavioral tests, and the release flip
+
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f1664ab2..cf144f22 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,6 @@
+ # Changelog
+ 
+-## Unreleased
++## 0.9.1 — 2026-09-30
+ 
+ ### Bug fixes
+ 
+diff --git a/CITATION.cff b/CITATION.cff
+index 17c58181..8418a636 100644
+--- a/CITATION.cff
++++ b/CITATION.cff
+@@ -7,7 +7,7 @@ abstract: >-
+   databases with one command grammar, compact markdown output, and local study
+   analytics.
+ version: 0.9.1
+-date-released: 2026-09-16
++date-released: 2026-09-30
+ license: MIT
+ repository-code: https://github.com/genomoncology/biomcp
+ url: https://biomcp.org
+diff --git a/docs/reference/release-process.md b/docs/reference/release-process.md
+index dbd00acf..c2597ebd 100644
+--- a/docs/reference/release-process.md
++++ b/docs/reference/release-process.md
+@@ -37,7 +37,7 @@ The site publishes from pushes to `main`, not from the release workflow. Every d
+ 
+ ## Version metadata
+ 
+-Package versions are committed metadata, not values stamped from tags. `scripts/check-version-sync.sh` checks Cargo, Python, lockfiles, `manifest.json`, both `server.json` fields, `CITATION.cff`, and the concrete Homebrew version. `scripts/check-release-versions.py` adds tag equality and stable-tag enforcement. Commit the complete version change before pushing the tag. The private development candidate is Cargo `0.9.1-dev.1` and Python `0.9.1.dev1`; public metadata stays on the latest published release, v0.9.0, until one reviewed commit moves it.
++Package versions are committed metadata, not values stamped from tags. `scripts/check-version-sync.sh` checks Cargo, Python, lockfiles, `manifest.json`, both `server.json` fields, `CITATION.cff`, and the concrete Homebrew version. `scripts/check-release-versions.py` adds tag equality and stable-tag enforcement. Commit the complete version change before pushing the tag. The committed release candidate is Cargo `0.9.1` and Python `0.9.1`; public metadata follows the same reviewed commit, and the next private development candidate after the release is Cargo `0.9.2-dev.1` and Python `0.9.2.dev1`.
+ 
+ ## Permissions and concurrency
+ 
+diff --git a/sdlc/records/1279-the-second-review-round.md b/sdlc/records/1279-the-second-review-round.md
+new file mode 100644
+index 00000000..11d6afa3
+--- /dev/null
++++ b/sdlc/records/1279-the-second-review-round.md
+@@ -0,0 +1,5 @@
++# 1279 — the second review round
++
++The 2026-09-29 review of the CI rework and records round (`sdlc/issues/2026-09-29-review-of-the-ci-rework-and-records-round.md`) drove this round: the classify script now diffs the merge-base with origin/main under a directory allow list that excludes executable markdown; the GWAS no-store pin reads `RequestBuilder::extensions()` on the middleware builder (the first attempt had called reqwest's private accessor); `NoTrustFailureStrategy::handle` and the plain-send retry loop are driven by real tests, and the plain-send path no longer retries trust failures on Enrichr and UniProt; the changelog gate's 1999 cap is gone with date-shape rejection as the whole rule; the release-provenance check asserts --release --locked per command; the raise-review check rejects pending and promised ACCEPTs; the README and hero checks are strict; the licensing page headings match the registry with a heading-aware tier test; the records carry real verdicts, green runs, dispositions and no shorthand; the 0.9.1 changelog bullets and the version bump landed.
++
++Code review: ACCEPT 2026-09-29 by a fresh read-only reviewer on the Claude vendor (github-copilot/claude-sonnet-5, dispatch 4e671b58-6864-4742-83cc-7a3c3163282e), covering the five commits after ticket 1268's ACCEPT and this round. The review verified the classify script's control flow, the middleware-builder pin against reqwest-middleware 0.4.2's source, the handle and plain-send tests, the gate and ratchet hardening, the licensing headings, and the records. Three findings folded: a behavioral test suite for the classify script (tests/test_ci_classify_push_script.py, six scratch-repo cases including the failed-tip-then-markdown incident shape), dead code after a continue in the release-provenance check (removed), and stale size-inventory numbers in the trust-tests header (now points at the inventory file).
+diff --git a/src/sources/trust_failure_tests/mod.rs b/src/sources/trust_failure_tests/mod.rs
+index 928604cc..4148db02 100644
+--- a/src/sources/trust_failure_tests/mod.rs
++++ b/src/sources/trust_failure_tests/mod.rs
+@@ -1,8 +1,9 @@
+ //! Unit tests for the no-trust-failure retry strategy's error-chain
+ //! walk (ticket 1268 follow-up, 2026-09-29 review: the strategy had
+ //! no test; the tests live in their own file so mod.rs keeps only the
+-//! delegation and the module declaration, and its size-inventory
+-//! baseline rose by exactly that: 2779 to 2786, delta 932 to 939).
++//! delegation, the module declaration and the plain-send trust stop,
++//! and its size-inventory baseline rose accordingly — the gate reads
++//! the exact numbers from tools/rust-source-size-inventory.json).
+ 
+ use super::error_chain_carries;
+ 
+@@ -65,13 +66,14 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
+     use reqwest_retry::RetryableStrategy;
+ 
+     let strategy = super::NoTrustFailureStrategy;
+-    let trust_err = reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+-        "invalid peer certificate: chain incomplete",
+-        None,
+-    )));
+-    assert_eq!(
+-        strategy.handle(&Err(trust_err)),
+-        None,
++    let trust_err = || {
++        reqwest_middleware::Error::Middleware(Box::new(Wrapped(
++            "invalid peer certificate: chain incomplete",
++            None,
++        )) as Box<dyn std::error::Error + Send + Sync>)
++    };
++    assert!(
++        matches!(strategy.handle(&Err(trust_err())), None),
+         "a certificate rejection must not be retried"
+     );
+ 
+@@ -79,19 +81,18 @@ fn handle_returns_no_retry_for_a_trust_failure_error() {
+     // verdict (whatever it is) — the wrapper only strips trust
+     // failures. The observable contract: the trust marker changes
+     // the answer from the default's to no-retry.
+-    let ordinary_err = reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+-        "tcp connect error: connection refused",
+-        None,
+-    )));
+-    let default = reqwest_retry::DefaultRetryableStrategy.handle(&Err(
++    let ordinary_err = || {
+         reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+             "tcp connect error: connection refused",
+             None,
+-        ))),
+-    ));
++        )) as Box<dyn std::error::Error + Send + Sync>)
++    };
++    let default_some = reqwest_retry::DefaultRetryableStrategy
++        .handle(&Err(ordinary_err()))
++        .is_some();
+     assert_eq!(
+-        strategy.handle(&Err(ordinary_err)),
+-        default,
++        strategy.handle(&Err(ordinary_err())).is_some(),
++        default_some,
+         "a non-trust error keeps the default retry verdict"
+     );
+ }
+@@ -104,14 +105,15 @@ async fn plain_send_retry_stops_at_a_trust_failure() {
+     use std::sync::atomic::{AtomicUsize, Ordering};
+ 
+     let calls = AtomicUsize::new(0);
+-    let context = crate::error::SourceContext::retry(crate::sources::SourceProvider::ENRICHR);
++    let context =
++        crate::error::SourceContext::retry(crate::error::SourceProvider::ENRICHR);
+     let result = crate::sources::retry_middleware_send(context, 3, || {
+         calls.fetch_add(1, Ordering::SeqCst);
+         async {
+             Err(reqwest_middleware::Error::Middleware(Box::new(Wrapped(
+                 "invalid peer certificate: chain incomplete",
+                 None,
+-            ))))
++            )) as Box<dyn std::error::Error + Send + Sync>))
+         }
+     })
+     .await;
+diff --git a/tests/test_changelog_coverage_check.py b/tests/test_changelog_coverage_check.py
+index 41d862d8..39341ec5 100644
+--- a/tests/test_changelog_coverage_check.py
++++ b/tests/test_changelog_coverage_check.py
+@@ -267,7 +267,13 @@ def test_no_previous_release_passes_without_git_log(tmp_path: Path) -> None:
+ 
+ def test_every_real_unreleased_bullet_describes_its_ticket() -> None:
+     content = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+-    match = re.search(r"^## Unreleased\s*([\s\S]*?)(?=^## |\Z)", content, re.MULTILINE)
++    # After the 0.9.1 release the live section is the 0.9.1 heading
++    # (an Unreleased section returns with the next dev cycle).
++    match = re.search(
++        r"^## (?:Unreleased|0\.9\.1 — 2026-09-30)\s*([\s\S]*?)(?=^## |\Z)",
++        content,
++        re.MULTILINE,
++    )
+     assert match is not None
+     section = match.group(1)
+     described = described_tickets(section)
+diff --git a/tests/test_ci_classify_push_script.py b/tests/test_ci_classify_push_script.py
+new file mode 100644
+index 00000000..4b1d565c
+--- /dev/null
++++ b/tests/test_ci_classify_push_script.py
+@@ -0,0 +1,144 @@
++"""Behavioral tests for scripts/ci-classify-push.sh.
++
++The 2026-09-29 second review's P1: the contract suite only asserted
++substrings of the script, which would pass with broken logic around
++them — and a broken classify flow is exactly what once let a failed
++tree look green (a failed commit followed by a markdown-only commit
++skipped every Rust job). These tests run the real script against
++scratch git repositories.
++"""
++
++from __future__ import annotations
++
++import os
++import subprocess
++from pathlib import Path
++
++import pytest
++
++REPO_ROOT = Path(__file__).resolve().parents[1]
++SCRIPT = REPO_ROOT / "scripts" / "ci-classify-push.sh"
++
++
++def _run_script(cwd: Path, base_ref: str | None, sha: str, event: str = "push") -> str:
++    env = dict(os.environ)
++    env["GITHUB_EVENT_NAME"] = event
++    env["GITHUB_REF"] = "refs/heads/tickets/scratch"
++    if base_ref is not None:
++        env["PUSH_BASE_REF"] = base_ref
++    else:
++        env.pop("PUSH_BASE_REF", None)
++    env["PUSH_AFTER"] = sha
++    out = Path(cwd / "github_output")
++    env["GITHUB_OUTPUT"] = str(out)
++    out.write_text("", encoding="utf-8")
++    result = subprocess.run(
++        ["bash", str(SCRIPT)],
++        cwd=cwd,
++        env=env,
++        capture_output=True,
++        text=True,
++        check=False,
++    )
++    assert result.returncode == 0, result.stderr
++    return out.read_text(encoding="utf-8").strip()
++
++
++@pytest.fixture()
++def scratch_repo(tmp_path: Path) -> Path:
++    git_env = {
++        **os.environ,
++        "GIT_AUTHOR_NAME": "t",
++        "GIT_AUTHOR_EMAIL": "t@t",
++        "GIT_COMMITTER_NAME": "t",
++        "GIT_COMMITTER_EMAIL": "t@t",
++    }
++    repo = tmp_path / "repo"
++    repo.mkdir()
++    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True, env=git_env)
++    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "empty", "--allow-empty"], check=True, env=git_env)
++    # origin/main points at the trunk tip.
++    subprocess.run(["git", "-C", str(repo), "branch", "main2"], check=False, env=git_env)
++    subprocess.run(["git", "-C", str(repo), "update-ref", "refs/remotes/origin/main", "HEAD"], check=True, env=git_env)
++    return repo
++
++
++def _commit(repo: Path, files: dict[str, str], message: str) -> str:
++    git_env = {
++        **os.environ,
++        "GIT_AUTHOR_NAME": "t",
++        "GIT_AUTHOR_EMAIL": "t@t",
++        "GIT_COMMITTER_NAME": "t",
++        "GIT_COMMITTER_EMAIL": "t@t",
++    }
++    for name, body in files.items():
++        target = repo / name
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.write_text(body, encoding="utf-8")
++    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True, env=git_env)
++    subprocess.run(["git", "-C", str(repo), "commit", "-qm", message], check=True, env=git_env)
++    return subprocess.run(
++        ["git", "-C", str(repo), "rev-parse", "HEAD"],
++        capture_output=True,
++        text=True,
++        check=True,
++    ).stdout.strip()
++
++
++def test_docs_only_push_classifies_true(scratch_repo: Path) -> None:
++    _commit(scratch_repo, {"sdlc/tickets/x.md": "x", "docs/reference/page.md": "y"}, "docs")
++    sha = _commit(scratch_repo, {"notes/thing.md": "z"}, "more docs")
++    assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=true"
++
++
++def test_source_change_classifies_false_even_with_markdown(scratch_repo: Path) -> None:
++    sha = _commit(scratch_repo, {"src/foo.md": "x", "sdlc/x.md": "y"}, "mixed")
++    assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=false"
++
++
++def test_executable_markdown_never_counts_as_docs(scratch_repo: Path) -> None:
++    for path in ("spec/contract.md", "skills/skill.md", "src/cli/list_reference.md",
++                 "docs/user-guide/cli-reference.md"):
++        scratch_repo2 = scratch_repo
++        sha = _commit(scratch_repo2, {path: "x"}, "spec change")
++        assert _run_script(scratch_repo2, "origin/main", sha) == "docs_only=false", path
++
++
++def test_empty_diff_and_missing_base_fail_closed(scratch_repo: Path) -> None:
++    sha = subprocess.run(
++        ["git", "-C", str(scratch_repo), "rev-parse", "HEAD"],
++        capture_output=True, text=True, check=True,
++    ).stdout.strip()
++    # Empty diff (same commit as the base): full CI.
++    assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=false"
++    # Missing base ref: full CI.
++    assert _run_script(scratch_repo, "origin/absent", sha) == "docs_only=false"
++
++
++def test_pull_request_and_tag_events_run_everything(scratch_repo: Path) -> None:
++    sha = _commit(scratch_repo, {"sdlc/x.md": "docs only"}, "docs")
++    assert _run_script(scratch_repo, "origin/main", sha, event="pull_request") == "docs_only=false"
++    env_tag = dict(os.environ)
++    env_tag["GITHUB_REF"] = "refs/tags/v0.9.1"
++    # (the helper always sets refs/heads; run the tag case directly)
++    out = Path(scratch_repo / "github_output")
++    env_tag.update(
++        GITHUB_EVENT_NAME="push",
++        GITHUB_REF="refs/tags/v0.9.1",
++        PUSH_BASE_REF="origin/main",
++        PUSH_AFTER=sha,
++        GITHUB_OUTPUT=str(out),
++    )
++    out.write_text("", encoding="utf-8")
++    subprocess.run(["bash", str(SCRIPT)], cwd=scratch_repo, env=env_tag, check=True, capture_output=True)
++    assert out.read_text(encoding="utf-8").strip() == "docs_only=false"
++
++
++def test_a_failed_tip_then_markdown_still_classifies_false(scratch_repo: Path) -> None:
++    """The production incident shape: a code commit (whatever its CI
++    result) followed by a markdown commit must never skip the Rust
++    jobs, because the classify base is the merge-base with main.
++    """
++    _commit(scratch_repo, {"src/lib.rs": "fn a() {}"}, "code")
++    sha = _commit(scratch_repo, {"sdlc/only-markdown.md": "x"}, "docs:")
++    assert _run_script(scratch_repo, "origin/main", sha) == "docs_only=false"
+diff --git a/tests/test_citation_contract.py b/tests/test_citation_contract.py
+index 83e74103..33c35be8 100644
+--- a/tests/test_citation_contract.py
++++ b/tests/test_citation_contract.py
+@@ -65,10 +65,10 @@ def test_citation_cff_release_metadata_matches_repo_metadata() -> None:
+ 
+     assert changelog_match is not None, "missing release header in CHANGELOG.md"
+ 
+-    assert citation_version == "0.9.0"
+-    assert citation_date == "2026-09-16"
+-    assert cargo["package"]["version"] == "0.9.1-dev.1"
+-    assert pyproject["project"]["version"] == "0.9.1.dev1"
++    assert citation_version == "0.9.1"
++    assert citation_date == "2026-09-30"
++    assert cargo["package"]["version"] == "0.9.1"
++    assert pyproject["project"]["version"] == "0.9.1"
+     assert citation_version == changelog_match.group("version")
+     assert citation_date == changelog_match.group("date")
+ 
+diff --git a/tests/test_cli_surface_contract_ratchet.py b/tests/test_cli_surface_contract_ratchet.py
+index 40021a0b..56a6072a 100644
+--- a/tests/test_cli_surface_contract_ratchet.py
++++ b/tests/test_cli_surface_contract_ratchet.py
+@@ -308,17 +308,17 @@ def test_cli_surface_contract_compares_release_process_versions_to_metadata(
+     (root / "docs" / "reference").mkdir(parents=True)
+     cargo = root / "Cargo.toml"
+     cargo.write_text(
+-        '[package]\nname = "biomcp-cli"\nversion = "0.9.1-dev.1"\n',
++        '[package]\nname = "biomcp-cli"\nversion = "0.9.2-dev.1"\n',
+         encoding="utf-8",
+     )
+     (root / "pyproject.toml").write_text(
+-        '[project]\nname = "biomcp-cli"\nversion = "0.9.1.dev1"\n',
++        '[project]\nname = "biomcp-cli"\nversion = "0.9.2.dev1"\n',
+         encoding="utf-8",
+     )
+     release_process = root / "docs" / "reference" / "release-process.md"
+     release_process.write_text(
+-        "The private development candidate is Cargo `0.9.1-dev.1` and Python\n"
+-        "`0.9.1.dev1`; public metadata stays on the latest published release.\n",
++        "The private development candidate is Cargo `0.9.2-dev.1` and Python\n"
++        "`0.9.2.dev1`; public metadata stays on the latest published release.\n",
+         encoding="utf-8",
+     )
+ 
+@@ -329,30 +329,31 @@ def test_cli_surface_contract_compares_release_process_versions_to_metadata(
+     )
+ 
+     release_process.write_text(
+-        "The private development candidate is Cargo `0.8.0` and Python `0.9.1.dev1`.\n",
++        "The private development candidate is Cargo `0.8.0` and Python `0.9.2.dev1`.\n",
+         encoding="utf-8",
+     )
+     result = module.check_release_process_versions_match_package_metadata(root)
+ 
+     assert result["status"] == "fail"
+     assert any(
+-        finding.get("fragment") == "Cargo `0.9.1-dev.1`"
++        finding.get("fragment") == "Cargo `0.9.2-dev.1`"
+         for finding in result["findings"]
+     )
+ 
+     release_process.write_text(
+-        "The private development candidate is Cargo `0.9.1-dev.1` and Python `0.9.1.dev1`.\n",
++        "The private development candidate is Cargo `0.9.2-dev.1` and Python `0.9.2.dev1`.\n",
+         encoding="utf-8",
+     )
++    # The page is now stale again: Cargo advanced past the named pair.
+     cargo.write_text(
+-        '[package]\nname = "biomcp-cli"\nversion = "0.9.2-dev.1"\n',
++        '[package]\nname = "biomcp-cli"\nversion = "0.9.3-dev.1"\n',
+         encoding="utf-8",
+     )
+     result = module.check_release_process_versions_match_package_metadata(root)
+ 
+     assert result["status"] == "fail"
+     assert any(
+-        finding.get("fragment") == "Cargo `0.9.2-dev.1`"
++        finding.get("fragment") == "Cargo `0.9.3-dev.1`"
+         for finding in result["findings"]
+     )
+ 
+diff --git a/tests/test_release_metadata_contract.py b/tests/test_release_metadata_contract.py
+index 05ae4beb..647424c2 100644
+--- a/tests/test_release_metadata_contract.py
++++ b/tests/test_release_metadata_contract.py
+@@ -153,7 +153,9 @@ def test_version_lock_rejects_formula_version_drift(tmp_path: Path) -> None:
+ 
+ def test_version_lock_rejects_dirty_future_release_rewrite(tmp_path: Path) -> None:
+     repo = _copy_release_metadata_fixture(tmp_path)
+-    _set_every_concrete_version(repo, "0.9.1")
++    # The tree itself is the committed 0.9.1 release now, so the dirty
++    # rewrite must reach one version FURTHER to stay a rewrite.
++    _set_every_concrete_version(repo, "0.9.2")
+ 
+     result = _run_version_lock(repo)
+ 
+diff --git a/tests/test_release_workflow_provenance.py b/tests/test_release_workflow_provenance.py
+index 79a21ae7..6860e7e4 100644
+--- a/tests/test_release_workflow_provenance.py
++++ b/tests/test_release_workflow_provenance.py
+@@ -716,14 +716,6 @@ def _assert_release_locked_builds(parsed: dict) -> None:
+                 for line in build_commands
+                 if "--release" not in line or "--locked" not in line
+             )
+-            continue
+-            has_release = "--release" in run
+-            has_locked = "--locked" in run
+-            if not (has_release and has_locked):
+-                offenders.append(
+-                    f"{job_id} step {index} ({step.get('name', 'run')}): "
+-                    f"release={has_release} locked={has_locked}"
+-                )
+     assert not offenders, (
+         "every wheel and tarball build must pass --release --locked "
+         f"(GitHub #287): {offenders}"
+diff --git a/tests/test_version_sync_script.py b/tests/test_version_sync_script.py
+index 969ac346..af1cc9a9 100644
+--- a/tests/test_version_sync_script.py
++++ b/tests/test_version_sync_script.py
+@@ -153,19 +153,18 @@ def test_version_sync_script_passes_for_development_candidate(tmp_path: Path) ->
+     repo_root = _copy_version_sync_fixture(tmp_path)
+     rust_version = _read_version(repo_root / "Cargo.toml")
+     python_version = _read_version(repo_root / "pyproject.toml")
+-    assert rust_version == "0.9.1-dev.1"
+-    assert python_version == "0.9.1.dev1"
+-    assert _read_manifest_version(repo_root / "manifest.json") == "0.9.0"
+-    assert _read_server_versions(repo_root / "server.json") == ("0.9.0", "0.9.0")
+-    assert _read_citation_version(repo_root / "CITATION.cff") == "0.9.0"
++    # The 0.9.1 release moved every field to 0.9.1 (the fixture copies
++    # the committed tree); the sync script must confirm them together.
++    assert rust_version == "0.9.1"
++    assert python_version == "0.9.1"
++    assert _read_manifest_version(repo_root / "manifest.json") == "0.9.1"
++    assert _read_server_versions(repo_root / "server.json") == ("0.9.1", "0.9.1")
++    assert _read_citation_version(repo_root / "CITATION.cff") == "0.9.1"
+ 
+     result = _run_version_sync_script(repo_root)
+ 
+     assert result.returncode == 0
+-    assert result.stdout.strip() == (
+-        "Versions in sync: 0.9.1-dev.1 "
+-        "(Python 0.9.1.dev1; development candidate)"
+-    )
++    assert result.stdout.strip() == "Versions in sync: 0.9.1 (Python 0.9.1; release candidate)"
+     assert result.stderr == ""
+ 
+ 
+@@ -220,7 +219,7 @@ def test_version_sync_script_reports_pyproject_mismatch(tmp_path: Path) -> None:
+ 
+     assert result.returncode == 1
+     assert (
+-        "Version mismatch: Cargo.toml mapping=0.9.1.dev1, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"pyproject.toml={mismatched_version}"
+     ) in result.stderr
+ 
+@@ -252,7 +251,7 @@ def test_version_sync_script_reports_manifest_mismatch(tmp_path: Path) -> None:
+ 
+     assert result.returncode == 1
+     assert (
+-        "Version mismatch: latest stable tag=0.9.0, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"manifest.json={mismatched_version}"
+     ) in result.stderr
+ 
+@@ -268,7 +267,7 @@ def test_version_sync_script_reports_citation_mismatch(tmp_path: Path) -> None:
+ 
+     assert result.returncode == 1
+     assert (
+-        "Version mismatch: latest stable tag=0.9.0, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"CITATION.cff={mismatched_version}"
+     ) in result.stderr
+ 
+@@ -284,7 +283,7 @@ def test_version_sync_script_reports_server_json_mismatch(tmp_path: Path) -> Non
+ 
+     assert result.returncode == 1
+     assert (
+-        "Version mismatch: latest stable tag=0.9.0, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"server.json={mismatched_version}"
+     ) in result.stderr
+ 
+@@ -300,7 +299,7 @@ def test_version_sync_script_reports_server_package_mismatch(tmp_path: Path) ->
+ 
+     assert result.returncode == 1
+     assert (
+-        "Version mismatch: latest stable tag=0.9.0, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"server.json biomcp-cli={mismatched_version}"
+     ) in result.stderr
+ 
+@@ -330,7 +329,7 @@ def test_version_sync_script_reports_all_mismatches_in_one_run(tmp_path: Path) -
+ 
+     assert result.returncode == 1
+     assert (
+-        "Version mismatch: Cargo.toml mapping=0.9.1.dev1, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"pyproject.toml={pyproject_mismatch}"
+     ) in result.stderr
+     assert (
+@@ -338,19 +337,19 @@ def test_version_sync_script_reports_all_mismatches_in_one_run(tmp_path: Path) -
+         f"Cargo.lock={lock_mismatch}"
+     ) in result.stderr
+     assert (
+-        "Version mismatch: latest stable tag=0.9.0, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"manifest.json={manifest_mismatch}"
+     ) in result.stderr
+     assert (
+-        "Version mismatch: latest stable tag=0.9.0, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"CITATION.cff={citation_mismatch}"
+     ) in result.stderr
+     assert (
+-        "Version mismatch: latest stable tag=0.9.0, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"server.json={server_mismatch}"
+     ) in result.stderr
+     assert (
+-        "Version mismatch: latest stable tag=0.9.0, "
++        "Version mismatch: Cargo.toml=0.9.1, "
+         f"server.json biomcp-cli={server_package_mismatch}"
+     ) in result.stderr
+ 
+@@ -359,11 +358,11 @@ def test_manifest_and_citation_versions_match_repo_metadata() -> None:
+     cargo = tomllib.loads((REPO_ROOT / "Cargo.toml").read_text(encoding="utf-8"))
+     pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+ 
+-    assert cargo["package"]["version"] == "0.9.1-dev.1"
+-    assert pyproject["project"]["version"] == "0.9.1.dev1"
+-    assert _read_manifest_version(REPO_ROOT / "manifest.json") == "0.9.0"
+-    assert _read_server_versions(REPO_ROOT / "server.json") == ("0.9.0", "0.9.0")
+-    assert _read_citation_version(REPO_ROOT / "CITATION.cff") == "0.9.0"
++    assert cargo["package"]["version"] == "0.9.1"
++    assert pyproject["project"]["version"] == "0.9.1"
++    assert _read_manifest_version(REPO_ROOT / "manifest.json") == "0.9.1"
++    assert _read_server_versions(REPO_ROOT / "server.json") == ("0.9.1", "0.9.1")
++    assert _read_citation_version(REPO_ROOT / "CITATION.cff") == "0.9.1"
+ 
+ 
+ def test_uv_lock_matches_release_version_and_excludes_mustmatch_package() -> None:
+@@ -372,7 +371,7 @@ def test_uv_lock_matches_release_version_and_excludes_mustmatch_package() -> Non
+     root_match = UV_LOCK_ROOT_VERSION_PATTERN.search(uv_lock)
+ 
+     assert root_match is not None, "missing biomcp-cli package entry in uv.lock"
+-    assert root_match.group(2) == "0.9.1.dev1"
++    assert root_match.group(2) == "0.9.1"
+     assert 'name = "mustmatch"' not in uv_lock
+     assert "mustmatch" + "==0.0.4" not in uv_lock
+     assert 'specifier = "==0.0.4"' not in uv_lock
+commit 8817ba85f9e659b016993a468863c16581756bc7
+Write the 0.9.1 changelog bullets and bump the version to 0.9.1
+
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 138b32cd..f1664ab2 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,100 @@
+ 
+ ## Unreleased
+ 
++### Bug fixes
++
++- CI runs again on every push to main and on every ticket branch, so a broken
++  trunk is visible immediately instead of surfacing at release time. (1220)
++- The release workflow no longer uploads artifacts that were built with
++  mismatched versions, and retired release steps that no longer ran were
++  removed. (1222)
++- The MCP server now answers with the correct 2026-07-28 protocol metadata,
++  and malformed tool arguments return structured errors instead of silent
++  success. (1223)
++- A release gate now verifies the published documentation matches the tagged
++  revision, so the docs site can never lag the shipped version. (1226)
++- Release notes and the runbook now state only facts that still hold; vacuous
++  assertions that tested nothing were removed. (1227)
++- The cache-expiry test is deterministic: it no longer depends on wall-clock
++  timing and cannot flake under load. (1228)
++- The removed dispatch publish path is gone for good, and runtime container
++  image parsing rejects malformed digests instead of panicking. (1229)
++- A panicking tool call no longer takes the MCP server down: the server
++  isolates the panic, answers the client with an error, and keeps serving. (1230)
++- An unusable SSL_CERT_FILE now degrades to a clear warning at startup instead
++  of aborting the run. (1231)
++- Drug label output now shows boxed warnings and surfaces legacy warning text
++  that was previously dropped. (1232)
++- The release checks the shipped version, the changelog contents, and the
++  wheel behavior together, so a mismatched artifact cannot publish. (1233)
++- The release gates were reworked so v0.9.1 can actually pass them, with each
++  gate testing a real property of the artifacts. (1234)
++- Panic-recovery gaps closed across the CLI: remaining unwrap paths that could
++  kill a command now degrade into reported errors. (1235)
++- A user-supplied CA bundle is parsed once at startup with a clear failure,
++  instead of failing per request with opaque TLS errors. (1236)
++- Label warnings render completely: truncated and multi-part warnings now
++  appear in full on drug cards. (1237)
++- The GenCC lease test no longer flakes: its interlock waits on a signal
++  instead of racing the clock. (1239)
++- DDInter coverage is carried through to drug cards, and the card no longer
++  drops interaction evidence rows. (1241)
++- Source failures render honestly on cards: a failing provider shows its
++  failure instead of an empty section that looks like no data. (1242)
++- Large futures were shrunk and the runtime shared, cutting stack growth on
++  deep queries and fixing crashes on complex searches. (1243)
++- GenCC cancellation now settles and waits for generation temps, so cancelled
++  queries never leave lock files behind. (1247)
++- The disease survival reap test tolerates suite load and no longer fails when
++  the machine is busy. (1248)
++- The changelog gate and workflow tests are total: every path through the gate
++  is exercised, not just the happy one. (1250)
++- The review follow-ups for tickets 1235 through 1247 are closed, including
++  the worktree cleanup rule and the record hygiene they demanded. (1254)
++- The last four XML sources now route through the external-XML depth cap, so a
++  hostile feed cannot blow the stack. (1255)
++- Named tests now prove their claims: release-panic, TLS dial-and-refuse,
++  CDATA depth, and GenCC ownership paths all test the real behavior. (1257)
++- Every record and issue file carries an honest disposition, with stale
++  pending lines closed and owners named for what remains. (1259)
++- The cache mode no longer leaks across tests: a test that flips it restores
++  it, so suites cannot inherit a wrong mode. (1261)
++- Stale cache ages now reach every search JSON body as _meta.notes, and TLS
++  trust failures are no longer retried. (1263)
++- The check suite's round-two gaps closed: review-status grammar, stdio
++  guards, and the wait ratchet were rebuilt as structural checks. (1264)
++- The changelog gate accepts any four-digit ticket number that is not a date-
++  shaped record name, fixing the record-pattern false rejections. (1265)
++- The release path waits for the public release before the Homebrew tap, and
++  the wheel smoke test asserts real asset content. (1266)
++- A missing skill or empty catalog exits with a clear diagnostic (exit code
++  1), and debug builds embed the same skill assets as release builds. GitHub
++  #287. (1267)
++- Stale-cache claims are now true in code: GWAS never serves stale bodies, the
++  ClinGen prefetch carries the no-cache flag, and the search-all end-to-end
++  stale test is restored. (1268)
++- The check suite's round-three gaps closed: every release job's steps are
++  pinned, and ceiling raises require an accepted review. (1269)
++- The records round finished: dispositions written, run IDs recorded, and the
++  flake chases documented. (1270)
++- CI now runs on ticket branches and is the merge gate: a branch merges only
++  after its own run finishes green, and docs-only pushes still run the record
++  and docs tests. (1275)
++- Enrichr is labelled restricted with its terms stated plainly, and the README
++  carries a data-terms warning linking the licensing page. (1276)
++- The CI cache restores after checkout under a pinned action and caches
++  workspace crates; nextest installs through a checksum-verified script. (1278)
++
++### Documentation
++
++- The documentation is current with 0.9.0: new commands, renamed flags, and
++  the configuration reference match the shipped binary. (1224)
++- Backlog hygiene cleared: stale notes removed, shorthand expanded, and every
++  ticket file states its real status. (1238)
++- Test, doc, and record hygiene cleared: duplicate tests removed, orphaned doc
++  comments deleted, and records matched to their commits. (1244)
++
++
+ ### New features
+ 
+ - Linux wheels now target `manylinux_2_28` (built in the official
+diff --git a/CITATION.cff b/CITATION.cff
+index c41b95ef..17c58181 100644
+--- a/CITATION.cff
++++ b/CITATION.cff
+@@ -6,7 +6,7 @@ abstract: >-
+   BioMCP is a single-binary CLI and MCP server for querying biomedical
+   databases with one command grammar, compact markdown output, and local study
+   analytics.
+-version: 0.9.0
++version: 0.9.1
+ date-released: 2026-09-16
+ license: MIT
+ repository-code: https://github.com/genomoncology/biomcp
+diff --git a/Cargo.lock b/Cargo.lock
+index 25a1d4f6..8b404cf6 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -293,7 +293,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "biomcp-cli"
+-version = "0.9.1-dev.1"
++version = "0.9.1"
+ dependencies = [
+  "anyhow",
+  "async-trait",
+diff --git a/Cargo.toml b/Cargo.toml
+index 1ce04799..eab1b211 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,6 +1,6 @@
+ [package]
+ name = "biomcp-cli"
+-version = "0.9.1-dev.1"
++version = "0.9.1"
+ edition = "2024"
+ description = "Biomedical CLI and MCP server — genes, variants, trials, articles, drugs, diseases, pathways, proteins, adverse events, PGx"
+ homepage = "https://biomcp.org"
+diff --git a/manifest.json b/manifest.json
+index 5ad4c78f..8abf1e69 100644
+--- a/manifest.json
++++ b/manifest.json
+@@ -2,7 +2,7 @@
+   "manifest_version": "0.3",
+   "name": "biomcp",
+   "display_name": "BioMCP",
+-  "version": "0.9.0",
++  "version": "0.9.1",
+   "description": "Portable read-only biomedical search and retrieval for desktop MCP clients.",
+   "long_description": "BioMCP bundles verified macOS and Windows executables as a local read-only MCP server. The separate PyPI distribution remains biomcp-cli; the unrelated biomcp PyPI package is not this project.",
+   "author": {
+diff --git a/pyproject.toml b/pyproject.toml
+index bdf95190..d11f1a1c 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -4,7 +4,7 @@ build-backend = "maturin"
+ 
+ [project]
+ name = "biomcp-cli"
+-version = "0.9.1.dev1"
++version = "0.9.1"
+ description = "Biomedical MCP CLI: install biomcp-cli from PyPI, not unrelated biomcp; provides the biomcp binary."
+ readme = "README.md"
+ license = { text = "MIT" }
+diff --git a/server.json b/server.json
+index bcea54cc..fc8c7dd5 100644
+--- a/server.json
++++ b/server.json
+@@ -3,7 +3,7 @@
+   "name": "io.github.genomoncology/biomcp",
+   "title": "BioMCP",
+   "description": "Read-only biomedical search via the biomcp-cli PyPI package.",
+-  "version": "0.9.0",
++  "version": "0.9.1",
+   "websiteUrl": "https://biomcp.org",
+   "repository": {
+     "url": "https://github.com/genomoncology/biomcp",
+@@ -13,7 +13,7 @@
+     {
+       "registryType": "pypi",
+       "identifier": "biomcp-cli",
+-      "version": "0.9.0",
++      "version": "0.9.1",
+       "transport": {
+         "type": "stdio"
+       },
+diff --git a/uv.lock b/uv.lock
+index eddc1a53..dbad5149 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -45,7 +45,7 @@ wheels = [
+ 
+ [[package]]
+ name = "biomcp-cli"
+-version = "0.9.1.dev1"
++version = "0.9.1"
+ source = { editable = "." }
+ 
+ [package.optional-dependencies]
