@@ -258,7 +258,7 @@ Reviewed on: `2026-09-27`
 
 ### ChEMBL
 
-- BioMCP surfaces: `get drug <name> targets; get drug <name> indications`
+- BioMCP surfaces: `get drug <name> targets; get drug <name> indications; get cell-line <id> chembl`
 - Integration mode: `direct_api`
 - BioMCP auth: `none`
 - Provider access / registration: open public API
