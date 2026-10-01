@@ -8,7 +8,7 @@ Filed 2026-10-01 with `sdlc/records/1284-close-the-fifth-go-request-round.md`; c
 - The exit-code case is pinned (`test_the_decision_case_accepts_exactly_zero_three_and_catchall`; widening `3)` to `3|*)` fails), and the gh guard finds gh mid-line (`if ! gh`, `$(gh …)`), verified on samples.
 - The raise-review grammar's reference is now a hex dispatch ID or a one/two-word capitalized reviewer name; the review's five values plus the two fake dispatch-shaped references are tested rejections. Tickets 1264 and 1269 cite no dispatch because none exists, and say so plainly.
 - Record 1283 written with all eight run IDs, both failures included. Dispositions appended to the fourth and fifth review files.
-- The changelog says "RNA levels (nTPM) for the gene across one cancer group of cell lines" (the CLI help's own words) and drops the internal "bookkeeping" phrasing.
+- The changelog says "RNA levels (nTPM) for the gene across one cancer group of cell lines" (the CLI help's own words) and drops the internal phrasing ("bookkeeping" is gone; the sentence now says a push that skips the Rust jobs still runs the record tests).
 - DepMap and Cell Model Passports: terms_url points at DepMap's own licensing guidance thread and the Sanger DepMap Data Usage Policy; the summaries state only what those pages say; two evidence rows added to the 2026-09-27 evidence file (52 rows pinned); "fourth go-request review" and "Ian's rule" removed from sources.json.
 - The rehearsal item landed in checklist section 1, and the rehearsal itself runs on `genomoncology/biomcp-release-rehearsal` (private scratch copy; main carries this branch plus one commit pointing the image at the scratch repository and the publish step at TestPyPI).
 
@@ -33,4 +33,4 @@ sources.json entry moves (re-sorts) stay out of content commits; the 1283-round 
 
 ## Review
 
-- Pending: the verdict line lands with the dispatch when it returns; the round does not merge before it.
+- Code review: ACCEPT 2026-10-01 dispatch 16d922f8-6baa-4a4a-be90-959000d4580b (Claude vendor, read-only) — the blocker fix, the case pin, the mid-line gh guard, the grammar's five rejections, the records and dispositions, the changelog wording and the sources terms all verified; one P2 folded at this commit (the word "bookkeeping" still in the changelog line; now reworded away), and one note that the scratch repository's commit graph is external to the clone — the go request carries the run URL instead.
