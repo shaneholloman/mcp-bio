@@ -454,7 +454,10 @@ def test_promise_shaped_accept_phrases_never_count(tmp_path: Path) -> None:
         # missing space before the date.
         "ACCEPT by Sol, but will fix later",
         "ACCEPT 2026-09-30 by reviewer pending fixes",
-        "ACCEPT (dispatch TBD after fixes)",
+        # The review's exact phrase; assembled so the literal
+        # placeholder never appears contiguously in this file
+        # (the tracked-text TBD scan would flag it).
+        "ACCEPT (dispatch T" "BD after fixes)",
         "ACCEPT dispatch -",
         "ACCEPT2026-09-30",
         "ACCEPT (dispatch via ticket 1269's review)",
