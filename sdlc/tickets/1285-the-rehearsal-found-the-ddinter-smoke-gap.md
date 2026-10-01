@@ -14,3 +14,7 @@ wheel-smoke runs `require_exit 0 ddinter sync` before the interactions query, wi
 
 - Rehearsal run 36872650687: version-check, docs-live (stubbed), all five pypi-build legs, all five build legs, create-draft green; all five wheel-smoke legs failed twice (initial and the failed-job rerun) at the same line; container-publish and everything after skipped.
 - Local reproduction: the run's wheel artifact, installed into a clean venv, prints the same error cold and answers the query after `ddinter sync`.
+
+## Review
+
+- Pending: the verdict line lands with the dispatch before the merge.
