@@ -29,7 +29,7 @@ sources.json entry moves (re-sorts) stay out of content commits; the 1283-round 
 - [x] Candidate main run green: recorded in the go request (eight jobs).
 - [x] Live docs serve the candidate commit: recorded in the go request.
 - [x] GH_REPO/checkout guard and draft-write guard: pinned by tests (above).
-- [ ] Rehearsal: the scratch repository `genomoncology/biomcp-release-rehearsal` is prepared (main at this branch plus the rehearsal commit); the tag fires when TestPyPI trusted publishing is registered for it (Ian's action), and the run URL lands here and in the go request.
+- [ ] Rehearsal: in progress, blocked on org billing, not on code. Ian redirected the rehearsal away from TestPyPI (2026-10-01): the publish step becomes a credential-free `uvx twine check dist/*` and docs-live is stubbed, both listed as stated differences in the rehearsal copy's header. The rehearsal then found and fixed two real release blockers, both landed, reviewed and merged: ticket 1285 (wheel-smoke queried DDInter on a cold cache, which errors by design — the smoke now syncs first; every leg green after the fix) and ticket 1286 (GitHub moved macos-latest to arm64 mid-day, so the x86_64 wheel-smoke leg pins macos-15-intel). Third run 36896962624: 18 jobs green through all five wheel-smoke legs; container-publish was NOT STARTED because the org's Actions spending limit was reached (annotation: "The job was not started because recent account payments have failed or your spending limit needs to be increased") — the draft download, both image smokes, the latest move, the public flip and the Homebrew skip remain unexercised until billing is lifted. The scratch repository keeps its draft release and tag for that continuation.
 
 ## Review
 
