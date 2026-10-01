@@ -17,4 +17,4 @@ The x86_64-apple-darwin wheel-smoke leg runs on `macos-15-intel` (the documented
 
 ## Review
 
-- Pending: the verdict line lands with the dispatch before the merge.
+- Code review: ACCEPT 2026-10-01 dispatch 944e8046-1a7c-48ea-9719-6295869163a3 (Claude vendor, read-only) — every macos-latest use in the repo checked (two cross-compile legs and one test pin, none run the binary), the arm64 leg confirmed correct as-is, the matrix pin verified against the workflow, no other hardcoded runner labels in docs. One non-defect note: the changelog bucket is a judgment call.
