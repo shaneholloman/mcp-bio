@@ -36,7 +36,7 @@
 - CI runs on every ticket branch and is the merge gate: a branch merges only after its own run finishes green, and the docs-only skip is decided by the files changed since the merge-base with main; the commit message decides nothing. A push that skips the Rust jobs still runs the record tests. (1220, 1250, 1252, 1275, 1278)
 - Flaky tests were fixed at their mechanisms: waits that polled the clock now wait on signals, the load-sensitive lanes are pinned to a deterministic CPU set, the known-flaky set runs in its own stress lane, and the release-panic, TLS and Windows contracts run the real behavior they name. (1239, 1247, 1248, 1252, 1257)
 - The check suite that guards the repository (review-status grammar, workflow provenance, wait ratchet, licensing tiers) was rebuilt as structural checks that fail when the behavior they guard is removed. (1251, 1255, 1258, 1264, 1269, 1279)
-- Maintenance: records, docs, and test hygiene across the release cycle (1224, 1228, 1238, 1244, 1254, 1259, 1265, 1270, 1279, 1280, 1281, 1282, 1283, 1284).
+- Maintenance: records, docs, and test hygiene across the release cycle (1224, 1228, 1238, 1244, 1254, 1259, 1265, 1270, 1279, 1280, 1281, 1282, 1283, 1284, 1285).
 
 ## 0.9.0 — 2026-09-16
 
