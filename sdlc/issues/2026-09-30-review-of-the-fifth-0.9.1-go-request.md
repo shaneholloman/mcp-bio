@@ -54,7 +54,7 @@ Do not tag `09567779`. The container-publish job cannot download from the draft 
 ## Dispositions (recorded 2026-10-01, fifth round)
 
 - Blocker (container-publish contents): fixed — `contents: write` with the comment naming this review, and `test_jobs_downloading_the_draft_release_can_write_contents` fails any job that downloads the release before publish-release without write access (mutation-verified: reverting to read fails the test).
-- Rehearsal: done — the release workflow ran end to end on a scratch repository with a test tag, TestPyPI and a test image name; the run URL and evidence are in ticket 1284 and the checklist item is added to section 1.
+- Rehearsal: prepared, not yet run — the private scratch repository genomoncology/biomcp-release-rehearsal carries merged main plus one commit pointing the image and TestPyPI at itself (the checklist item is in section 1); the tag is not pushed because the publish step needs TestPyPI trusted publishing registered for the scratch repository (Ian's action), and the go request is withheld until the run URL exists.
 - Raise-review grammar: fixed — the reference is now a hex dispatch ID or a one/two-word capitalized reviewer name; the five values from this review are tested rejections; tickets 1264 and 1269 cite no dispatch (none exists) and say so plainly on their own lines.
 - Exit-code case pin and the mid-line gh guard: fixed — `test_the_decision_case_accepts_exactly_zero_three_and_catchall` (widening `3)` to `3|*)` fails) and the guard now matches gh anywhere in a run line.
 - Record 1283: written with its run IDs, including both failing runs.
