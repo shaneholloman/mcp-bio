@@ -16,3 +16,7 @@ Filed 2026-09-30 with its record; the round closes `sdlc/issues/2026-09-30-revie
 ## Evidence
 
 Branch green runs recorded in the go request; the worked checklist is section 5 of `sdlc/release-checklist.md`'s source review file.
+
+## Review
+
+- Code review: ACCEPT-with-notes 2026-10-01 (dispatch 3a612275-a823-46a6-b19f-6e929b88aab5, Claude vendor) — the reviewer walked every job of the tag-push path as if the tag were pushed: create-draft's repository discovery fixed and extended to every gh-calling job, no step-level GH_REPO overrides, the fail-closed query and the stay exit code verified against the workflow case, the whole-value verdict grammar traced by hand with the nine older verdicts confirmed non-load-bearing, the changelog and sources corrections verified, the checklist landing and runbook step 8 verified against the fixed workflow. Two notes folded at e84d83f6: the ChEMBL detail section now lists the cell-line surface (the two registries agree), and AGENTS.md carries one Releases section with the checklist pointer merged in.
