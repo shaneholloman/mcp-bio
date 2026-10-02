@@ -57,4 +57,4 @@ Per-source evidence for the delegated licensing review pass recorded in `sdlc/re
 
 Counts: the 2026-09-27/28 pass reviewed 48 sources (the split above). The two 2026-10-01 rows extend the table to 50 for the identifier-only entries added later, and the 300-day guard applies to all 50 rows. The Cell Model Passports row cites the Sanger DepMap Data Usage Policy because the Cell Model Passports portal documents itself under Sanger DepMap's documentation and data-usage policy — the portal's own pages link there for licensing.
 
-No open items remain: Enrichr was verified and relabelled restricted on 2026-09-29 from the live terms submenu page (the 09-27 call had read the broken help page), and every source now carries a verified review date, so the 300-day guard applies to all 48.
+No open items remain: Enrichr was verified and relabelled restricted on 2026-09-29 from the live terms submenu page (the 09-27 call had read the broken help page), and every row in the table carries a verified review date (the counts paragraph above states the coverage).
