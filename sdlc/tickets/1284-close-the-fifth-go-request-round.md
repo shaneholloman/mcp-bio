@@ -33,4 +33,4 @@ sources.json entry moves (re-sorts) stay out of content commits; the 1283-round 
 
 ## Review
 
-- Code review: ACCEPT 2026-10-01 dispatch 16d922f8-6baa-4a4a-be90-959000d4580b (Claude vendor, read-only) — the blocker fix, the case pin, the mid-line gh guard, the grammar's five rejections, the records and dispositions, the changelog wording and the sources terms all verified; one P2 folded at this commit (the word "bookkeeping" still in the changelog line; now reworded away), and one note that the scratch repository's commit graph is external to the clone — the go request carries the run URL instead.
+- Code review: ACCEPT 2026-10-01 dispatch 16d922f8-6baa-4a4a-be90-959000d4580b (Claude vendor, read-only) — the blocker fix, the case pin, the mid-line gh guard, the grammar's five rejections, the records and dispositions, the changelog wording and the sources terms all verified; one second-priority finding folded at this commit (the word "bookkeeping" still in the changelog line; now reworded away), and one note that the scratch repository's commit graph is external to the clone — the go request carries the run URL instead.
