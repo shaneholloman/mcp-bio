@@ -16,4 +16,4 @@ The sixth review verified the content of the three commits that landed after tic
 
 ## Review
 
-- Pending: the verdict line lands with the dispatch before the merge.
+- Code review: ACCEPT 2026-10-02 dispatch 6158707d-b816-4906-b061-0c278967199e (Claude vendor, read-only), the branch's third pass — the first BLOCKed on the checklist edit that had landed outside the branch, the count contradiction and the shorthand scope; the second BLOCKed on the scope note still naming 1221 as historical and a duplicated checklist sentence; the third verified both fixes against the live files. Its one tooling gap (commit-range isolation) is closed by command: `git log --stat 13b48114..24dbd151` shows exactly the two named files.
