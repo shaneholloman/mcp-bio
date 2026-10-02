@@ -31,3 +31,7 @@ A real citation edge returns its bounded passage (or the `reference_confirmed_wi
 ## Reproduce
 
 `biomcp article citation-evidence 35063965 31392741 -j` on the 0.9.1 wheel.
+
+## Diagnosis, 2026-10-02 (experiment 421 follow-up)
+
+`RUST_LOG=debug` shows the command's only network hop is `api.semanticscholar.org`, and direct probes of the Semantic Scholar graph API from this network answer HTTP 429 (rate limit) while every Europe PMC path works. So the proximate cause is Semantic Scholar refusing unauthenticated traffic, and the two defects stand: the command has no degradation path when its first hop is refused (no OpenCitations-first fallback, no honest "provider rate-limited" answer), and the rendered error names "BioMCP source" instead of the provider. A user on a rate-limited network sees a configuration error for a condition they cannot configure around.
