@@ -8,7 +8,7 @@ Filed 2026-10-02 from the sixth review file's sweep list, after v0.9.1 published
 - The licensing evidence page drops the internal "go-request follow-up" phrasing, states the 48-versus-50 counts once, plainly, and explains why the Sanger DepMap Data Usage Policy covers Cell Model Passports (the portal documents itself under Sanger DepMap's documentation and links there for licensing).
 - Record 1286 carries the Intel-runner retirement window (August 2027) and the Rosetta migration path.
 - The DDInter judgment for the wheel-smoke sync, recorded here: DDInter's terms are CC BY-NC-SA 4.0 (academic, non-commercial, share-alike; the licensing entry carries the completeness disclaimer). The release workflow's smoke step downloads the bundle into an ephemeral runner environment to verify the wheel, uses it for nothing else, ships none of it, and the command remains `biomcp ddinter sync` for users — internal verification use, no redistribution, consistent with the 2026-09-27 review's handling of the source.
-- The "P2"-style shorthand is removed from this cycle's round records; findings are named in words. Records from earlier cycles (0083, 0326, 0580, 0592, 1221) keep their historical wording — rewriting them would rewrite what those reviews actually said.
+- The "P2"-style shorthand is removed from this cycle's round records — 1284, 1285, 1286 and 1221 (1221 rides in the 0.9.1 changelog, so it counts as this cycle) — findings are named in words. Records 0083, 0326, 0580 and 0592 predate this release cycle and keep their historical wording; rewriting them would rewrite what those reviews actually said.
 
 ## The three post-verdict commits
 
