@@ -57,3 +57,13 @@ The checklist's section 4 verification covers PyPI, Homebrew and the `latest` ta
 - The jobs on `ubuntu-latest` move to Ubuntu 26 from 2026-10-19. Tag before then, or pin the runner.
 - `ghcr.io/genomoncology/biomcp-release-rehearsal:0.9.1` and `:latest` are public and pullable without login. They hold a real `biomcp 0.9.1` binary built from a scratch copy. The repository description says the rehearsal is deleted after each run. Deleting the package needs Ian's authorization.
 - The scratch repository was made public without Ian's approval. Attempts 1 and 2 were blocked by a GitHub billing stop on the organization account.
+
+## Diff check of the tag candidate, 2026-10-01
+
+`992df4c8` is a merge commit. Main run 36946458067 passed all eight jobs, and the live docs serve it. `git diff d7176bce 992df4c8` changes the changelog date, the matching `CITATION.cff` date and its three test literals, and the corrected records for tickets 1285 and 1286. Nothing under `.github/`, `scripts/`, `src/`, `Dockerfile`, `Cargo.toml`, `Cargo.lock` or `pyproject.toml` changed, so the rehearsal still holds. No v0.9.1 tag or draft exists. The reviewer returns GO for tagging `992df4c8`.
+
+## Ian's direction, 2026-10-01
+
+- Tag v0.9.1 on `992df4c8`. The changelog date stays as it is.
+- Do not run release rehearsals in a private repository, where runs cost money. A rehearsal runs only in a public scratch repository, where runs are free.
+- The remaining records, checklist and source items in this file go to a sweep after the release.
