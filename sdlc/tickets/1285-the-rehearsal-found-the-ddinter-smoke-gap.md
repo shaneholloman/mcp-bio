@@ -4,7 +4,7 @@ Filed 2026-10-01 from the first release rehearsal (scratch repository `genomonco
 
 ## The finding
 
-The rehearsal's tag push (the first time the release workflow ever ran its tag-push path) failed all five wheel-smoke legs with "Source unavailable: DDInter is not available". Reproduced locally with the rehearsal's own wheel: `drug interactions apixaban` on a cold cache errors by design (the DDInter bundle is a local dataset; the query path never downloads it), `biomcp ddinter sync` succeeds, and the query works after. The smoke step called `drug interactions` in a clean venv with no sync, so the real v0.9.1 tag would have failed wheel-smoke on every platform and stopped before PyPI. The DDInter provider itself was healthy (all eight CSVs answer 200 with the biomcp user agent).
+The rehearsal's tag push (the first time the release workflow ever ran its tag-push path) failed four of the five wheel-smoke legs (windows, macos-14 arm64, ubuntu x86_64, ubuntu arm64) with "Source unavailable: DDInter is not available" (corrected 2026-10-01 from the run logs: the fifth leg, macos-latest x86_64, failed at wheel install on the arm64 image and never reached the DDInter line — that failure is ticket 1286's). Reproduced locally with the rehearsal's own wheel: `drug interactions apixaban` on a cold cache errors by design (the DDInter bundle is a local dataset; the query path never downloads it), `biomcp ddinter sync` succeeds, and the query works after. The smoke step called `drug interactions` in a clean venv with no sync, so the real v0.9.1 tag would have failed wheel-smoke on every platform and stopped before PyPI. The DDInter provider itself was healthy (all eight CSVs answer 200 with the biomcp user agent).
 
 ## The fix
 
@@ -12,7 +12,7 @@ wheel-smoke runs `require_exit 0 ddinter sync` before the interactions query, wi
 
 ## Evidence
 
-- Rehearsal run 36872650687: version-check, docs-live (stubbed), all five pypi-build legs, all five build legs, create-draft green; all five wheel-smoke legs failed twice (initial and the failed-job rerun) at the same line; container-publish and everything after skipped.
+- Rehearsal run 36872650687: version-check, docs-live (stubbed), all five pypi-build legs, all five build legs, create-draft green; four wheel-smoke legs failed at the DDInter line on both attempts, and the macos-latest x86_64 leg failed at pip install on both attempts (log line "Image: macos-26-arm64"); container-publish and everything after skipped.
 - Local reproduction: the run's wheel artifact, installed into a clean venv, prints the same error cold and answers the query after `ddinter sync`.
 
 ## Review
