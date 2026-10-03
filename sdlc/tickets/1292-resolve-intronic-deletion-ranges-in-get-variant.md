@@ -22,7 +22,7 @@ A table of input forms (substitution, deletion range, intronic offsets, Variatio
 
 ## Deferred
 
-HGVS parsing moves to BioData in 1.0. This ticket fixes the 0.9 behavior only.
+HGVS parsing moves to a shared parser in 1.0. This ticket fixes the 0.9 behavior only.
 
 ## Review
 
