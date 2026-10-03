@@ -1,6 +1,6 @@
 # 1290 — make the variant headline match current ClinVar
 
-Proposed 2026-10-03 by the BioMCP owner for the next 0.9 release. Status: awaiting ticket review.
+Proposed 2026-10-03 by the BioMCP owner for the next 0.9 release. Status: accepted, ready to build.
 
 ## Evidence
 
@@ -33,3 +33,7 @@ The headline `significance` is set in `from_myvariant_hit` (`src/transform/varia
 ## Deferred
 
 Somatic and oncogenicity classifications. The other 2 misses (a variant BioMCP could not resolve) belong to ticket 1292.
+
+## Review
+
+- Ticket review: ACCEPT 2026-10-03 on the second pass, dispatch 26de9b8f (fresh SWE-2 researcher, read-only). The first pass returned FIX; the revision addressed every finding.

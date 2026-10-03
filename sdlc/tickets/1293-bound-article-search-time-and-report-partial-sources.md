@@ -1,6 +1,6 @@
 # 1293 — bound article search time and report partial sources
 
-Proposed 2026-10-03 by the BioMCP owner for the next 0.9 release. Status: awaiting ticket review.
+Proposed 2026-10-03 by the BioMCP owner for the next 0.9 release. Status: accepted, ready to build.
 
 ## Evidence
 
@@ -24,3 +24,7 @@ A spec case with a recorded slow source that returns partial rows and names the 
 ## Deferred
 
 Changing rate-limit handling for NCBI keys.
+
+## Review
+
+- Ticket review: ACCEPT 2026-10-03 on the first pass, dispatch 26de9b8f (fresh SWE-2 researcher, read-only).
