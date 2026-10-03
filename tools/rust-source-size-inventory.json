@@ -77,12 +77,12 @@
     },
     {
       "path": "src/entities/article/mod.rs",
-      "baseline_lines": 1385,
+      "baseline_lines": 1406,
       "floor_lines": 1314,
       "authorized_increase": {
-        "ticket": "1144",
-        "delta": 71,
-        "reason": "Keep the public citation and reference pagination envelope beside the existing article graph result contract without adding a package file beyond the fixed 1300-file boundary.",
+        "ticket": "1144, 1293",
+        "delta": 92,
+        "reason": "Keep the public citation and reference pagination envelope beside the existing article graph result contract without adding a package file beyond the fixed 1300-file boundary; ticket 1293 adds the article search diagnostics record beside the search page contract it describes.",
         "removal_condition": "Extract article graph result types when a package-neutral module split can preserve the exact 1300-file source package boundary."
       }
     },
