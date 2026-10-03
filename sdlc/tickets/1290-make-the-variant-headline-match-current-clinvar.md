@@ -36,4 +36,4 @@ Somatic and oncogenicity classifications. The other 2 misses (a variant BioMCP c
 
 ## Review
 
-- Ticket review: ACCEPT 2026-10-03 on the second pass, dispatch 26de9b8f (fresh SWE-2 researcher, read-only). The first pass returned FIX; the revision addressed every finding.
+- Design review: ACCEPT 2026-10-03 on the second pass, dispatch 26de9b8f (fresh SWE-2 researcher, read-only). The first pass returned FIX; the revision addressed every finding.

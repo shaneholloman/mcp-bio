@@ -27,4 +27,4 @@ Changing rate-limit handling for NCBI keys.
 
 ## Review
 
-- Ticket review: ACCEPT 2026-10-03 on the first pass, dispatch 26de9b8f (fresh SWE-2 researcher, read-only).
+- Design review: ACCEPT 2026-10-03 on the first pass, dispatch 26de9b8f (fresh SWE-2 researcher, read-only).
